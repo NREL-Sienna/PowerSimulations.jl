@@ -25,7 +25,7 @@ julia> Pkg.clone("https://github.com/NREL/PowerSimulations.jl")
 Once installed, the `PowerSimulations` package can by used by typing
 
 ```julia
-using PSModelsv2
+using PowerSimulations
 ```
 
 - ed_models: Contains models and modifiers for the [Economic Distpatch (ED) Problem](https://en.wikipedia.org/wiki/Economic_dispatch). 
