@@ -7,6 +7,7 @@ struct AbstractPowerModel
     device::Any
     dynamics::Function
     network::Function
+    system::PowerSystems.PowerSystem
     model::Jump.Model
 end
 
