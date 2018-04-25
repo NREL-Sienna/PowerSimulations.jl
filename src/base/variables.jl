@@ -4,13 +4,13 @@
 # 3. Add limits to the constraints when creating the variable
 
 function GenerationVariables(m::JuMP.Model, PowerSystem::PowerSystem) 
-    g_on_set = [g.name for g in PowerSystem.generators if g.status == true]
+    g_on_set = [g.name for g in PowerSystem.generators if g.status]
     t = 1:PowerSystem.timesteps
     @variable(m, P_g[g_on_set,t]) # Power output of generators
 end
 
 function CommitmentVariables(m::JuMP.Model, PowerSystem::PowerSystem)
-    g_on_set = [g.name for g in PowerSystem.generators if g.status == true]
+    g_on_set = [g.name for g in PowerSystem.generators if g.status]
     t = 1:PowerSystem.timesteps
     @variable(uc, start[g_on_set,t], Bin)
     @variable(uc, stop[g_on_set,t], Bin)
@@ -18,16 +18,16 @@ function CommitmentVariables(m::JuMP.Model, PowerSystem::PowerSystem)
 end
 
 function BranchFlowVariables(m::JuMP.Model, PowerSystem::PowerSystem)
-    b_on_set = [b.name for b in PowerSystem.network.branches if b.status == true]
+    br_on_set = [br.name for br in PowerSystem.network.branches if br.status]
     t = 1:PowerSystem.timesteps
-    @variable(m, f_b[b_on_set,t])
+    @variable(m, f_br[br_on_set,t])
 end
 
 
-function InterruptibleLoadVariables(m::JuMP.Model, PowerSystem::PowerSystem)
-    il_on_set = [il.name for il in PowerSystem.loads if (il.status == true && typeof(il) != StaticLoad)]
+function ControlableLoadVariables(m::JuMP.Model, PowerSystem::PowerSystem)
+    cl_on_set = [cl.name for cl in PowerSystem.loads if (cl.status && typeof(cl) != StaticLoad)]
     t = 1:PowerSystem.timesteps
-    @variable(m, P_l[il_on_set,t]) 
+    @variable(m, P_cl[cl_on_set,t]) 
 end
 
 #=
