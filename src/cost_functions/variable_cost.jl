@@ -1,6 +1,6 @@
-export VariableGenCost 
+export VariableGen 
 
-function VariableGenCost(P_g::JuMP.JuMPArray{JuMP.Variable}, generators::Array{ThermalGen})
+function VariableGen(P_g::JuMP.JuMPArray{JuMP.Variable}, generators::Array{ThermalGen})
 
     cost = 0.0;
 

@@ -1,4 +1,4 @@
-function power_limits(P_g::JuMP.JuMPArray{JuMP.Variable})
+function powerconstraints(P_g::JuMP.JuMPArray{JuMP.Variable})
 
 for (ix, name) in enumerate(P_g.indexsets[1])
     if name == generators5[ix].name
