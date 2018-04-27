@@ -8,7 +8,7 @@ struct AbstractPowerModel
     dynamics::Function
     network::Function
     system::PowerSystems.PowerSystem
-    model::Jump.Model
+    model::JuMP.Model
 end
 
 struct SimulationModel
