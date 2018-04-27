@@ -15,8 +15,8 @@ struct SimulationModel
     model::AbstractPowerModel
     periods::Int
     resolution::Int
-    date_from::Datetime
-    date_to::Datetime
+    date_from::DateTime
+    date_to::DateTime
     lookahead_periods::Int
     lookahead_resolution::Int
     reserve_products::Any
