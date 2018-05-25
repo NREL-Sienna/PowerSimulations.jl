@@ -1,15 +1,17 @@
 export AbstractPowerModel
-export SimulationModel
-export PowerResults
+#export SimulationModel
+#export PowerResults
 
 struct AbstractPowerModel
-    cost::Function
-    device::Any
-    dynamics::Function
+    cost::Tuple
+    devices::Tuple
+    dynamics::Bool
     network::Function
     system::PowerSystems.PowerSystem
     model::JuMP.Model
 end
+
+
 
 struct SimulationModel
     model::AbstractPowerModel
