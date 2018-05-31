@@ -1,4 +1,4 @@
-function VariableGen(P_g::JuMP.JuMPArray{JuMP.Variable}, generators::Array{ThermalGen})
+function VariableCostGen(P_g::JuMP.JuMPArray{JuMP.Variable}, generators::Array{ThermalGen})
 
     cost = 0.0;
 
