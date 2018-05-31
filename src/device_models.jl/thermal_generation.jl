@@ -1,23 +1,39 @@
 
+"""
+This function add the variables for power generation output to the model
+"""
+function GenerationVariables(m::JuMP.Model, devices::Array{T,1}, T) where T <: Thermal 
+    on_set = [d.name for d in devices if d.status == true]
+    t = 1:T
+    @variable(m::JuMP.Model, P_th[on_set,t]) # Power output of generators
+    return true    
+end
 
-
-
-function GenerationVariables(m::JuMP.Model, PowerSystem::PowerSystem) 
-    th_on_set = [g.name for g in PowerSystem.generators if (g.status == true && !isa(g,ReFix))]
-    t = 1:PowerSystem.timesteps
-    @variable(m::JuMP.Model, P_th[g_on_set,t]) # Power output of generators
+"""
+This function add the variables for power generation commitment to the model
+"""
+function CommitmentVariables(m::JuMP.Model, devices::Array{T,1}, T) where T <: Thermal 
+    on_set = [d.name for d in devices if d.status == true]
+    t = 1:T
+    @variable(m::JuMP.Model, on_th[on_set,t]) # Power output of generators
+    @variable(m::JuMP.Model, start_th[on_set,t]) # Power output of generators
+    @variable(m::JuMP.Model, stop_th[on_set,t]) # Power output of generators
     return true    
 end
 
 
+function powerconstraints(P_th::JuMP.JuMPArray{JuMP.Variable}, devices::Array{T,1}, T) where T <: Thermal 
 
-function PowerConstraints(m::JuMP.Model, P_g::JuMP.JuMPArray{JuMP.Variable}, source::ThermalGen)
-    for var in P_g
-        @constraint(m::JuMP.Model, var >= source.tech.realpowerlimits.min)
-        @constraint(m::JuMP.Model, var <= source.tech.realpowerlimits.max)
+    for (ix, name) in enumerate(P_th.indexsets[1])
+        if name == devices[ix].name
+            powerconstraints(EconomicDispatch, P_g[name,:], generators5[ix])
+        
+        else
+            error("Bus name in Array and variable do not match")
+        end
     end
-end
-
+    
+    end
 function RampConstraints(m::JuMP.Model, P_g::JuMP.JuMPArray{JuMP.Variable}, source::ThermalGen)
 
 
