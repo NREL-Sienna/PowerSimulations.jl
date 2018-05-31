@@ -1,9 +1,6 @@
-function KCL(m::JuMP.Model, bus, network, p_g, f_b, loads)
-    
-    sum(P_g[generators[i].name, t] for i = 1:n_g
-       if generators[i].bus.Number == )  == 
-sum(loads[i].maxrealpower*loads[i].scalingfactor.values[t] for i = 1:n_l
-       if loads[i].bus.Number == n))
-
-
-end   
+function BranchFlowVariables(m::JuMP.Model, devices::Array{T,1}, T) where T <: Branch
+    on_set = [d.name for d in devices if d.status == true]
+    t = 1:PowerSystem.timesteps
+    @variable(m, f_br[on_set,t])
+    return true   
+end
