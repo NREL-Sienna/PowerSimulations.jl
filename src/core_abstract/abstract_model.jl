@@ -1,5 +1,5 @@
 export AbstractPowerModel
-#export SimulationModel
+export SimulationModel
 #export PowerResults
 
 struct AbstractPowerModel
@@ -10,8 +10,6 @@ struct AbstractPowerModel
     system::PowerSystems.PowerSystem
     model::JuMP.Model
 end
-
-
 
 struct SimulationModel
     model::AbstractPowerModel
