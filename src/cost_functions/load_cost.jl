@@ -1,11 +1,11 @@
-function VariableCostLoad(P_l::JuMP.JuMPArray{JuMP.Variable}, loads::Array{InterruptibleLoad})
+function VariableCostLoad(P_cl::JuMP.JuMPArray{JuMP.Variable}, loads::Array{InterruptibleLoad})
 
     cost = 0.0;
 
     for (ix, name) in enumerate(P_l.indexsets[1])
         if name == loads[ix].name
             for time in P_l.indexsets[2]
-                cost = cost + LoadCost(P_l[string(name),time], loads[ix].sheddingcost)
+                cost = cost + LoadCost(P_cl[string(name),time], loads[ix].sheddingcost)
             end
         else
             error("Bus name in Array and variable do not match")
