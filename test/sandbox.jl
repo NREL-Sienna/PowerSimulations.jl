@@ -8,9 +8,3 @@ using JuMP
 m = Model()
 
 
-function GenerationVariables(m::JuMP.Model, PowerSystem::PowerSystem) 
-    g_on_set = [g.name for g in PowerSystem.generators if g.status == true]
-    t = 1:PowerSystem.timesteps
-    @variable(m::JuMP.Model, P_g[g_on_set,t]) # Power output of generators
-end
-

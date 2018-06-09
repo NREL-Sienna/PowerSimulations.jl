@@ -4,3 +4,4 @@ function BranchFlowVariables(m::JuMP.Model, devices::Array{T,1}, T) where T <: B
     @variable(m, f_br[on_set,t])
     return true   
 end
+
