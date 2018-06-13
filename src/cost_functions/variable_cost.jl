@@ -1,11 +1,11 @@
-function VariableCostGen(P_th::JuMP.JuMPArray{JuMP.Variable}, generators::Array{ThermalGen})
+function VariableCostGen(pth::JuMP.JuMPArray{JuMP.Variable}, generators::Array{ThermalGen})
 
     cost = 0.0;
 
     for (ix, name) in enumerate(P_g.indexsets[1])
         if name == generators[ix].name
             for time in P_g.indexsets[2]
-                cost = cost + GenCost(P_th[string(name),time], generators[ix].econ.variablecost)
+                cost = cost + GenCost(pth[string(name),time], generators[ix].econ.variablecost)
             end
         else
             error("Bus name in Array and variable do not match")

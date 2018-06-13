@@ -1,23 +1,23 @@
 function GenerationVariables(m::JuMP.Model, devices::Array{T,1}, time_steps) where T <: RenewableGen
     on_set = [d.name for d in devices if d.status == true && !isa(d, RenewableFix)]
     t = 1:time_steps
-    @variable(m::JuMP.Model, P_re[on_set,t]) # Power output of generators
-    return P_re   
+    @variable(m::JuMP.Model, pre[on_set,t]) # Power output of generators
+    return pre   
 end
 
 """
 This function adds the power limits of generators when there are no CommitmentVariables
 """
-function PowerConstraints(m::JuMP.Model, P_re::JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}}, devices::Array{T,1}, time_periods::Int) where T <: RenewableCurtailment
-    (length(P_re.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
+function PowerConstraints(m::JuMP.Model, pre::JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}}, devices::Array{T,1}, time_periods::Int) where T <: RenewableCurtailment
+    (length(pre.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
-    @constraintref Pmax_re[1:length(P_re.indexsets[1]),1:length(P_re.indexsets[2])]
-    @constraintref Pmin_re[1:length(P_re.indexsets[1]),1:length(P_re.indexsets[2])]
-    for (ix, name) in enumerate(P_re.indexsets[1])
+    @constraintref Pmax_re[1:length(pre.indexsets[1]),1:length(pre.indexsets[2])]
+    @constraintref Pmin_re[1:length(pre.indexsets[1]),1:length(pre.indexsets[2])]
+    for (ix, name) in enumerate(pre.indexsets[1])
             if name == devices[ix].name
-                for t in P_re.indexsets[2]
-                    Pmin_re[ix, t] = @constraint(m, P_re[name, t] >= 0.0)
-                    Pmax_re[ix, t] = @constraint(m, P_re[name, t] <= devices[ix].tech.installedcapacity*devices[ix].scalingfactor.values[t])
+                for t in pre.indexsets[2]
+                    Pmin_re[ix, t] = @constraint(m, pre[name, t] >= 0.0)
+                    Pmax_re[ix, t] = @constraint(m, pre[name, t] <= devices[ix].tech.installedcapacity*devices[ix].scalingfactor.values[t])
                 end    
             else
                 error("Bus name in Array and variable do not match")

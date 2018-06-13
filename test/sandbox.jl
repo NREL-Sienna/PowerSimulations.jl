@@ -51,19 +51,18 @@ generators_re = [
             ];
 
 #Variable Creation Testing            
-P_th = PowerSimulations.GenerationVariables(m, generators_th, tp)
-on_th, start_th, stop_th = PowerSimulations.CommitmentVariables(m, generators_th, tp)
-P_re = PowerSimulations.GenerationVariables(m, generators_re, tp)
+pth = PowerSimulations.GenerationVariables(m, generators_th, tp)
+on_th, start_th, stopth = PowerSimulations.CommitmentVariables(m, generators_th, tp)
+pre = PowerSimulations.GenerationVariables(m, generators_re, tp)
 Pin, Pout = PowerSimulations.GenerationVariables(m, [battery], tp)
 Es = PowerSimulations.StorageVariables(m, [battery], tp);
 fl = PowerSimulations.BranchFlowVariables(m, sys5.network.branches, tp)
-P_cl = PowerSimulations.LoadVariables(m, sys5.loads, tp)
+pcl = PowerSimulations.LoadVariables(m, sys5.loads, tp)
 
 #Device Constraint creation testing 
-PowerSimulations.PowerConstraints(m, P_th, generators_th, tp)
-PowerSimulations.PowerConstraints(m, P_re, [generators_re[2]], tp)
-PowerSimulations.PowerConstraints(m, P_cl, [sys5.loads[4]], tp)
+PowerSimulations.PowerConstraints(m, pth, generators_th, tp)
+PowerSimulations.PowerConstraints(m, pre, [generators_re[2]], tp)
+PowerSimulations.PowerConstraints(m, pcl, [sys5.loads[4]], tp)
 PowerSimulations.PowerConstraints(m, Pin, Pout, [battery], tp)
 
 
-true
