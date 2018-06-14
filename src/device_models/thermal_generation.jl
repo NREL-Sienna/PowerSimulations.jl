@@ -64,3 +64,52 @@ function PowerConstraints(m::JuMP.Model, pth, on_th, devices::Array{T,1}, time_p
     end
     return true
 end
+
+"""
+This function adds the ramping limits of generators when there are no CommitmentVariables
+"""
+function RampingConstraints(m::JuMP.Model, pth::JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}} , devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
+
+    (length(pth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
+    @constraintref Up[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])] 
+    @constraintref Down[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])] 
+    for (ix,name) in enumerate(pth.indexsets[1])
+        if name == devices[ix].name
+            t1 = pth.indexsets[2][1]
+            Down[ix,t1] = @constraint(m,  devices[ix].tech.realpower - pth[name,t1] <= devices[ix].tech.ramplimits.down)
+            Up[ix,t1] = @constraint(m,  pth[name,t1] - devices[ix].tech.realpower <= devices[ix].tech.ramplimits.up)
+            for t in pth.indexsets[2][2:end] 
+                Down[ix,t] = @constraint(m,  pth[name,t-1] - pth[name,t] <= devices[ix].tech.ramplimits.down)
+                Up[ix,t] = @constraint(m,  pth[name,t] - pth[name,t-1] <= devices[ix].tech.ramplimits.up)
+            end
+        else
+            error("Bus name in Array and variable do not match")
+        end
+    end
+    return true
+end
+
+"""
+This function adds the ramping limits of generators when there are CommitmentVariables
+"""
+
+function RampingConstraints(m::JuMP.Model, pth::JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}}, on_th, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
+
+    (length(pth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
+    @constraintref Up[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])] 
+    @constraintref Down[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])] 
+    for (ix,name) in enumerate(pth.indexsets[1])
+        if name == devices[ix].name
+            t1 = pth.indexsets[2][1]
+            Down[ix,t1] = @constraint(m,  devices[ix].tech.realpower - pth[name,t1] <= devices[ix].tech.ramplimits.down * on_th[name,t1])
+            Up[ix,t1] = @constraint(m,  pth[name,t1] - devices[ix].tech.realpower <= devices[ix].tech.ramplimits.up  * on_th[name,t1])
+            for t in pth.indexsets[2][2:end]
+                Down[ix,t] = @constraint(m,  pth[name,t-1] - pth[name,t] <= devices[ix].tech.ramplimits.down * on_th[name,t])
+                Up[ix,t] = @constraint(m,  pth[name,t] - pth[name,t-1] <= devices[ix].tech.ramplimits.up * on_th[name,t] )
+            end
+        else
+            error("Bus name in Array and variable do not match")
+        end
+    end
+    return true
+end
