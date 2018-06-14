@@ -19,23 +19,23 @@ m = Model()
 tp = 5; 
 
 generators_th = [  ThermalDispatch("Alta", true, nodes5[1],
-                    TechThermal(40.0, @NT(min=0.0, max=40.0), 10.0, @NT(min = -30.0, max = 30.0), @NT(up = 10.0, down = 10.0), nothing),
+                    TechThermal(40.0, @NT(min=0.0, max=40.0), 10.0, @NT(min = -30.0, max = 30.0), @NT(up = 10.0, down = 10.0), @NT(up = 1.0, down = 1.0)),
                     EconThermal(40.0, 14.0, 0.0, 0.0, 0.0, nothing)
                 ),
                 ThermalDispatch("Park City", true, nodes5[1],
-                    TechThermal(170.0, @NT(min=0.0, max=170.0), 20.0, @NT(min =-127.5, max=127.5), @NT(up = 10.0, down = 10.0), nothing),
+                    TechThermal(170.0, @NT(min=0.0, max=170.0), 20.0, @NT(min =-127.5, max=127.5), @NT(up = 10.0, down = 10.0), @NT(up = 1.0, down = 1.0)),
                     EconThermal(170.0, 15.0, 0.0, 0.0, 0.0, nothing)
                 ),
                 ThermalDispatch("Solitude", true, nodes5[3],
-                    TechThermal(520.0, @NT(min=0.0, max=520.0), 100.0, @NT(min =-390.0, max=390.0), @NT(up = 10.0, down = 10.0), nothing),
+                    TechThermal(520.0, @NT(min=0.0, max=520.0), 100.0, @NT(min =-390.0, max=390.0), @NT(up = 10.0, down = 10.0), @NT(up = 1.0, down = 1.0)),
                     EconThermal(520.0, 30.0, 0.0, 0.0, 0.0, nothing)
                 ),
                 ThermalDispatch("Sundance", true, nodes5[4],
-                    TechThermal(200.0, @NT(min=0.0, max=200.0), 40.0, @NT(min =-150.0, max=150.0), @NT(up = 10.0, down = 10.0), nothing),
+                    TechThermal(200.0, @NT(min=0.0, max=200.0), 40.0, @NT(min =-150.0, max=150.0), @NT(up = 10.0, down = 10.0), @NT(up = 1.0, down = 1.0)),
                     EconThermal(200.0, 40.0, 0.0, 0.0, 0.0, nothing)
                 ),
                 ThermalDispatch("Brighton", true, nodes5[5],
-                    TechThermal(600.0, @NT(min=0.0, max=600.0), 150.0, @NT(min =-450.0, max=450.0), @NT(up = 10.0, down = 10.0), nothing),
+                    TechThermal(600.0, @NT(min=0.0, max=600.0), 150.0, @NT(min =-450.0, max=450.0), @NT(up = 10.0, down = 10.0), @NT(up = 1.0, down = 1.0)),
                     EconThermal(600.0, 10.0, 0.0, 0.0, 0.0, nothing)
                 )];
 
@@ -65,6 +65,9 @@ PowerSimulations.PowerConstraints(m, pth, generators_th, tp)
 PowerSimulations.PowerConstraints(m, pre, [generators_re[2]], tp)
 PowerSimulations.PowerConstraints(m, pcl, [sys5.loads[4]], tp)
 PowerSimulations.PowerConstraints(m, Pin, Pout, [battery], tp)
-PowerSimulations.RampingConstraints(m,pth ,generators_th, tp)
+PowerSimulations.RampingConstraints_th(m,pth ,generators_th, tp)
 PowerSimulations.EnergyLimitConstraint(m , Es, [battery], tp)
 PowerSimulations.EnergyBalanceConstraint(m ,Pin ,Pout, Es, [battery], tp)
+PowerSimulations.CommitmentStatus_th(m ,on_th ,start_th, stopth, generators_th, tp)
+PowerSimulations.MinimumUpTime_th(m ,on_th ,start_th ,generators_th, tp)
+PowerSimulations.MinimumDownTime_th(m ,on_th ,stopth ,generators_th, tp)
