@@ -1,5 +1,5 @@
 function GenerationVariables(m::JuMP.Model, devices::Array{T,1}, time_steps) where T <: RenewableGen
-    on_set = [d.name for d in devices if d.status == true && !isa(d, RenewableFix)]
+    on_set = [d.name for d in devices if d.available == true && !isa(d, RenewableFix)]
     t = 1:time_steps
     @variable(m::JuMP.Model, pre[on_set,t]) # Power output of generators
     return pre   
