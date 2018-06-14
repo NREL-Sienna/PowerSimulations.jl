@@ -50,6 +50,15 @@ generators_re = [
                     TimeSeries.TimeArray(DayAhead,wind_ts_DA)
                 )
             ];
+generators_hg = [
+                HydroFix("HydroFix",true,nodes5[2],
+                    TechHydro(60.0, @NT(min = 0.0, max = 60.0), nothing, nothing, nothing, nothing),
+                    TimeSeries.TimeArray(DayAhead,solar_ts_DA)
+                ),
+                HydroCurtailment("HydroCurtailment",true,nodes5[3],
+                    TechHydro(60.0, @NT(min = 0.0, max = 60.0), nothing, nothing, @NT(up = 10.0, down = 10.0), nothing),
+                    1000.0,TimeSeries.TimeArray(DayAhead,wind_ts_DA) )
+]
 
 #Variable Creation Testing            
 pth = PowerSimulations.GenerationVariables(m, generators_th, tp)
@@ -57,6 +66,7 @@ on_th, start_th, stopth = PowerSimulations.CommitmentVariables(m, generators_th,
 pre = PowerSimulations.GenerationVariables(m, generators_re, tp)
 Pin, Pout = PowerSimulations.GenerationVariables(m, [battery], tp)
 Es = PowerSimulations.StorageVariables(m, [battery], tp);
+phg = PowerSimulations.GenerationVariables(m, generators_hg, tp)
 fl = PowerSimulations.BranchFlowVariables(m, sys5.network.branches, tp)
 pcl = PowerSimulations.LoadVariables(m, sys5.loads, tp)
 
@@ -65,9 +75,10 @@ PowerSimulations.PowerConstraints(m, pth, generators_th, tp)
 PowerSimulations.PowerConstraints(m, pre, [generators_re[2]], tp)
 PowerSimulations.PowerConstraints(m, pcl, [sys5.loads[4]], tp)
 PowerSimulations.PowerConstraints(m, Pin, Pout, [battery], tp)
+PowerSimulations.PowerConstraints(m, phg, [generators_hg[2]], tp)
 PowerSimulations.RampingConstraints_th(m,pth ,generators_th, tp)
-PowerSimulations.EnergyLimitConstraint(m , Es, [battery], tp)
-PowerSimulations.EnergyBalanceConstraint(m ,Pin ,Pout, Es, [battery], tp)
+PowerSimulations.EnergyLimitConstraint_bt(m , Es, [battery], tp)
+PowerSimulations.EnergyBalanceConstraint_bt(m ,Pin ,Pout, Es, [battery], tp)
 PowerSimulations.CommitmentStatus_th(m ,on_th ,start_th, stopth, generators_th, tp)
 PowerSimulations.MinimumUpTime_th(m ,on_th ,start_th ,generators_th, tp)
 PowerSimulations.MinimumDownTime_th(m ,on_th ,stopth ,generators_th, tp)
