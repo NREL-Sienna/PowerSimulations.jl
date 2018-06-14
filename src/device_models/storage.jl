@@ -34,11 +34,12 @@ function PowerConstraints(m::JuMP.Model, pbtin::JuMP.JuMPArray{JuMP.Variable,2,T
 end
 
 function EnergyBalanceConstraint(m::JuMP.Model, pbtin::JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}}, pbtout::JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}}, ebt::JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}}, devices::Array{T,1}, time_periods::Int) where T <: GenericBattery
-    (length(pbtin.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
-    (length(pbtout.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
-    (length(ebt.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
+    (length(pbtin.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent in P_bt_in"): true
+    (length(pbtout.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent in P_bt_out"): true
+    (length(ebt.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent in E_bt"): true
     @constraintref Balance[1:length(ebt.indexsets[1]),1:length(ebt.indexsets[2])] 
     (pbtin.indexsets[1] !== pbtout.indexsets[1]) ? warn("Input/Output variables indexes are inconsistent"): true
+    (pbtin.indexsets[1] !== ebt.indexsets[1]) ? warn("Input/Output and Battery Power variables indexes are inconsistent"): true
     for (ix,name) in enumerate(ebt.indexsets[1])
         if name == devices[ix].name
             t1 = pbtin.indexsets[2][1]
@@ -46,6 +47,8 @@ function EnergyBalanceConstraint(m::JuMP.Model, pbtin::JuMP.JuMPArray{JuMP.Varia
             for t in ebt.indexsets[2][2:end] 
                 Balance[ix,t] = @constraint(m,ebt[name,t] == ebt[name,t-1] -  pbtout[name,t]/devices[ix].efficiency.out + pbtin[name,t]*devices[ix].efficiency.in)    
             end
+        else
+            error("Bus name in Array and variable do not match")
         end
     end
     return true
@@ -60,6 +63,8 @@ function EnergyLimitConstraint(m::JuMP.Model, ebt::JuMP.JuMPArray{JuMP.Variable,
             for t in ebt.indexsets[2]
                 Limit[ix,t] =@constraint(m,ebt[name,t] <= devices[ix].capacity.max)
             end
+        else
+            error("Bus name in Array and variable do not match")
         end
     end
     return true
