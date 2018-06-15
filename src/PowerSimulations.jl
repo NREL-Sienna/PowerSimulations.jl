@@ -15,7 +15,8 @@ include("device_models/storage.jl")
 include("device_models/hydro_generation.jl")
 include("device_models/electric_loads.jl")
 
-
 include("network_models/node_balance.jl")
+
+include("cost_functions/variable_cost.jl")
 
 end # module

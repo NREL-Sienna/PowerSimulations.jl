@@ -2,7 +2,7 @@ function LoadVariables(m::JuMP.Model, devices::Array{T,1}, time_steps) where T <
     on_set = [d.name for d in devices if d.available == true && !isa(d, StaticLoad)]
     t = 1:time_steps
     @variable(m::JuMP.Model, pcl[on_set,t] >= 0.0) # Power output of generators
-    return pcl    
+    return pcl
 end
 
 """
@@ -16,7 +16,7 @@ function PowerConstraints(m::JuMP.Model, pcl::JuMP.JuMPArray{JuMP.Variable,2,Tup
             if name == devices[ix].name
                 for t in pcl.indexsets[2]
                     Pmax_cl[ix, t] = @constraint(m, pcl[name, t] <= devices[ix].maxrealpower*devices[ix].scalingfactor.values[t])
-                end    
+                end
             else
                 error("Bus name in Array and variable do not match")
             end

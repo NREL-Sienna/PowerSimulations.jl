@@ -40,7 +40,7 @@ function KCLBalance(m, sys, fbr, pth, pcl, tp)
 
             isempty(loads) ? total_cl = 0.0 : total_cl = sum(pcl[i,t] for i in loads)
 
-            staticload = [sl.maxrealpower*sl.scalingfactor.values[t] for sl in sys.loads if sl.bus == b && isa(sl, StaticLoad)]
+            staticload = [sl.maxrealpower*sl.scalingfactor.values[t] for sl in sys.loads if sl.bus == b]
 
             isempty(staticload) ? total_staticload = 0.0 : total_staticload = sum(staticload)
             # FixedRenewables = sum([sl.maxrealpower*sl.scalingfactor.values[t] for sl in sys.loads if sl.bus == b && isa(sl, StaticLoad)])
