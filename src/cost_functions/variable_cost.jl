@@ -2,9 +2,9 @@ function VariableCostGen(pth::JuMP.JuMPArray{JuMP.Variable}, generators::Array{T
 
     cost = 0.0;
 
-    for (ix, name) in enumerate(P_g.indexsets[1])
+    for (ix, name) in enumerate(pth.indexsets[1])
         if name == generators[ix].name
-            for time in P_g.indexsets[2]
+            for time in pth.indexsets[2]
                 cost = cost + GenCost(pth[string(name),time], generators[ix].econ.variablecost)
             end
         else
@@ -16,7 +16,7 @@ function VariableCostGen(pth::JuMP.JuMPArray{JuMP.Variable}, generators::Array{T
 
 end
 
-function GenCost(X::JuMP.Variable, cost_component::Real) 
+function GenCost(X::JuMP.Variable, cost_component::Real)
 
     return cost = X*cost_component
 end
