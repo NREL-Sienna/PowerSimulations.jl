@@ -18,5 +18,6 @@ include("device_models/electric_loads.jl")
 include("network_models/node_balance.jl")
 
 include("cost_functions/variable_cost.jl")
+include("power_models/economic_dispatch.jl")
 
 end # module
