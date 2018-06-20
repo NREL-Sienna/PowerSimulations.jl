@@ -8,7 +8,7 @@ end
 """
 This function adds the power limits of generators when there are no CommitmentVariables
 """
-function PowerConstraints(m::JuMP.Model, pcl::JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}}, devices::Array{T,1}, time_periods::Int) where T <: ElectricLoad
+function PowerConstraints(m::JuMP.Model, pcl::PowerVariable, devices::Array{T,1}, time_periods::Int) where T <: ElectricLoad
     (length(pcl.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
     @constraintref Pmax_cl[1:length(pcl.indexsets[1]),1:length(pcl.indexsets[2])]

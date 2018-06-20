@@ -32,7 +32,7 @@ end
 """
 This function adds the power limits of generators when there are no CommitmentVariables
 """
-function PowerConstraints(m::JuMP.Model, pth::JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}}, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
+function PowerConstraints(m::JuMP.Model, pth::PowerVariable, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
     (length(pth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
     @constraintref Pmaxth[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
@@ -74,7 +74,7 @@ end
 """
 This function adds the ramping limits of generators when there are no CommitmentVariables
 """
-function RampingConstraintsth(m::JuMP.Model, pth::JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}} , devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
+function RampingConstraintsth(m::JuMP.Model, pth::PowerVariable , devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
 
     (length(pth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
     @constraintref Up[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
@@ -99,7 +99,7 @@ end
 This function adds the ramping limits of generators when there are CommitmentVariables
 """
 
-function RampingConstraintsth(m::JuMP.Model, pth::JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}}, onth, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
+function RampingConstraintsth(m::JuMP.Model, pth::PowerVariable, onth, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
 
     (length(pth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
     @constraintref Up[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
