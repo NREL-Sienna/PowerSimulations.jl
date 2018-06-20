@@ -21,6 +21,7 @@ include("device_models/branches.jl")
 
 #Network related components
 include("network_models/node_balance.jl")
+include("network_models/copperplate.jl")
 
 #Cost Components
 include("cost_functions/thermalgenvariable_cost.jl")
