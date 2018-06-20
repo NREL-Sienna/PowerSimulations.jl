@@ -134,7 +134,7 @@ end
 This function adds the Commitment Status constraint when there are CommitmentVariables
 """
 
-function CommitmentConstraints(m::JuMP.Model,onth::PowerVariable, startth::PowerVariable stopth::PowerVariable, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
+function CommitmentConstraints(m::JuMP.Model,onth::PowerVariable, startth::PowerVariable, stopth::PowerVariable, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
 
     (length(onth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
     (length(startth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
@@ -152,7 +152,7 @@ function CommitmentConstraints(m::JuMP.Model,onth::PowerVariable, startth::Power
             else
                 init =0
             end
-            Status[ix,t1] = @constraint(m, onth[name,t1] == init + startth[name,t1] - stopth[name,t1] )
+            commitment_th[ix,t1] = @constraint(m, onth[name,t1] == init + startth[name,t1] - stopth[name,t1])
             for t in onth.indexsets[2][2:end]
                 commitment_th[ix,t] = @constraint(m, onth[name,t] == onth[name,t-1] + startth[name,t] - stopth[name,t])
             end
@@ -163,7 +163,7 @@ function CommitmentConstraints(m::JuMP.Model,onth::PowerVariable, startth::Power
     return true
 end
 
-function TimeConstraints(m::JuMP.Model,onth, startth, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
+function TimeConstraints(m::JuMP.Model, onth::PowerVariable, startth::PowerVariable, stopth::PowerVariable, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
 
     # TODO: This constraint also doesn't work as implemented, it requires the generator having the min/max time constraint created
 
