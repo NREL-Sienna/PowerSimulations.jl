@@ -19,3 +19,6 @@ on_th, start_th, stop_th = PowerSimulations.CommitmentVariables(m, sys5.generato
 PowerSimulations.PowerConstraints(m, pth, on_th, sys5.generators.thermal, sys5.timesteps)
 #PowerSimulations.RampConstraints(m, pth, on_th, sys5.generators.thermal, sys5.timesteps)
 PowerSimulations.CommitmentConstraints(m, on_th, start_th, stop_th, sys5.generators.thermal, sys5.timesteps)
+#PowerSimulations.TimeConstraints(m, on_th, start_th, stop_th, sys5.generators.thermal, sys5.timesteps)
+
+true

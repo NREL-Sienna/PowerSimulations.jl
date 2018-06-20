@@ -25,18 +25,8 @@ generators_hg = [
 
 sys5b = PowerSystem(nodes5, append!(generators5, generators_hg), loads5_DA, branches5, battery, 230.0, 1000.0)
 
-m=Model()
 
-pth = PowerSimulations.GenerationVariables(m, sys5b.generators.thermal, sys5b.timesteps)
-pre = PowerSimulations.GenerationVariables(m, sys5b.generators.renewable, sys5b.timesteps)
-Pin, Pout = PowerSimulations.GenerationVariables(m, sys5b.storage, sys5b.timesteps)
-phg = PowerSimulations.GenerationVariables(m, generators_hg, sys5b.timesteps)
-fl = PowerSimulations.BranchFlowVariables(m, sys5b.network.branches, sys5b.timesteps)
-pcl = PowerSimulations.LoadVariables(m, sys5b.loads, sys5b.timesteps)
-
-#Injection Array
-Nets = PowerSimulations.InjectionExpressions(m, sys5b, var_th = pth, var_re=pre, var_cl = pcl, var_in = Pin, var_out = Pout, phy = phg)
-#CopperPlate Network test
-PowerSimulations.CopperPlateNetwork(m, Nets, sys5b.timesteps)
+phg = PowerSimulations.GenerationVariables(m, sys5b.generators.hydro, sys5b.timesteps)
+PowerSimulations.PowerConstraints(m, phg, [generators_hg[2]], sys5b.timesteps)
 
 true
