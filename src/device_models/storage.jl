@@ -14,9 +14,12 @@ function StorageVariables(m::JuMP.Model, devices::Array{T,1}, time_steps) where 
 end
 
 function PowerConstraints(m::JuMP.Model, pbtin::PowerVariable, pbtout::PowerVariable, devices::Array{T,1}, time_periods::Int) where T <: GenericBattery
+
     (length(pbtin.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
     (length(pbtout.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
+
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
+
     @constraintref Pmax_in[1:length(pbtin.indexsets[1]),1:length(pbtin.indexsets[2])]
     @constraintref Pmax_out[1:length(pbtout.indexsets[1]),1:length(pbtout.indexsets[2])]
     (pbtin.indexsets[1] !== pbtout.indexsets[1]) ? warn("Input/Output variables indexes are inconsistent"): true
@@ -33,19 +36,23 @@ function PowerConstraints(m::JuMP.Model, pbtin::PowerVariable, pbtout::PowerVari
     return true
 end
 
-function EnergyBalanceConstraint_bt(m::JuMP.Model, pbtin::PowerVariable, pbtout::PowerVariable, ebt::PowerVariable, devices::Array{T,1}, time_periods::Int) where T <: GenericBattery
+function EnergyBookKeeping(m::JuMP.Model, pbtin::PowerVariable, pbtout::PowerVariable, ebt::PowerVariable, devices::Array{T,1}, time_periods::Int) where T <: GenericBattery
+
     (length(pbtin.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent in P_bt_in"): true
     (length(pbtout.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent in P_bt_out"): true
     (length(ebt.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent in E_bt"): true
-    @constraintref Balance[1:length(ebt.indexsets[1]),1:length(ebt.indexsets[2])]
+
+    @constraintref BookKeep_bt[1:length(ebt.indexsets[1]),1:length(ebt.indexsets[2])]
+
     (pbtin.indexsets[1] !== pbtout.indexsets[1]) ? warn("Input/Output variables indexes are inconsistent"): true
     (pbtout.indexsets[1] !== ebt.indexsets[1]) ? warn("Input/Output and Battery Power variables indexes are inconsistent"): true
+
     for (ix,name) in enumerate(ebt.indexsets[1])
         if name == devices[ix].name
             t1 = pbtin.indexsets[2][1]
-            Balance[ix,t1] = @constraint(m,ebt[name,t1] == devices[ix].energy -  pbtout[name,t1]/devices[ix].efficiency.out + pbtin[name,t1]*devices[ix].efficiency.in)
+            BookKeep_bt[ix,t1] = @constraint(m,ebt[name,t1] == devices[ix].energy -  pbtout[name,t1]/devices[ix].efficiency.out + pbtin[name,t1]*devices[ix].efficiency.in)
             for t in ebt.indexsets[2][2:end]
-                Balance[ix,t] = @constraint(m,ebt[name,t] == ebt[name,t-1] -  pbtout[name,t]/devices[ix].efficiency.out + pbtin[name,t]*devices[ix].efficiency.in)
+                BookKeep_bt[ix,t] = @constraint(m,ebt[name,t] == ebt[name,t-1] -  pbtout[name,t]/devices[ix].efficiency.out + pbtin[name,t]*devices[ix].efficiency.in)
             end
         else
             error("Bus name in Array and variable do not match")
@@ -54,14 +61,14 @@ function EnergyBalanceConstraint_bt(m::JuMP.Model, pbtin::PowerVariable, pbtout:
     return true
 end
 
-function EnergyLimitConstraint_bt(m::JuMP.Model, ebt::PowerVariable, devices::Array{T,1}, time_periods::Int) where T <: GenericBattery
+function EnergyConstraint(m::JuMP.Model, ebt::PowerVariable, devices::Array{T,1}, time_periods::Int) where T <: GenericBattery
 
     (length(ebt.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
-    @constraintref Limit[1:length(ebt.indexsets[1]),1:length(ebt.indexsets[2])]
+    @constraintref EnergyLimit_bt[1:length(ebt.indexsets[1]),1:length(ebt.indexsets[2])]
     for (ix,name) in enumerate(ebt.indexsets[1])
         if name == devices[ix].name
             for t in ebt.indexsets[2]
-                Limit[ix,t] =@constraint(m,ebt[name,t] <= devices[ix].capacity.max)
+                EnergyLimit_bt[ix,t] = @constraint(m,ebt[name,t] <= devices[ix].capacity.max)
             end
         else
             error("Bus name in Array and variable do not match")
