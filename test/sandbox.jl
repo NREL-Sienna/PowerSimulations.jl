@@ -7,16 +7,15 @@ battery = GenericBattery(name = "Bat",
                 status = true,
                 energy = 10.0,
                 realpower = 10.0,
-                capacity = @NT(min = 0.0, max = 10.0,), 
+                capacity = @NT(min = 0.0, max = 10.0,),
                 inputrealpowerlimit = 10.0,
                 outputrealpowerlimit = 10.0,
-                efficiency = @NT(in = 0.90, out = 0.80), 
+                efficiency = @NT(in = 0.90, out = 0.80),
                 );
-sys5b = PowerSystem(nodes5, generators5, loads5_DA, branches5, [battery], 230.0, 1000.0) 
+sys5b = PowerSystem(nodes5, generators5, loads5_DA, branches5, [battery], 230.0, 1000.0)
 ;
 
-m = Model() 
-tp = 5; 
+m = Model()
 
 generators_th = [  ThermalDispatch("Alta", true, nodes5[1],
                     TechThermal(40.0, @NT(min=0.0, max=40.0), 10.0, @NT(min = -30.0, max = 30.0), @NT(up = 10.0, down = 10.0), @NT(up = 1.0, down = 1.0)),
@@ -52,33 +51,39 @@ generators_re = [
             ];
 generators_hg = [
                 HydroFix("HydroFix",true,nodes5[2],
-                    TechHydro(60.0, @NT(min = 0.0, max = 60.0), nothing, nothing, nothing, nothing),
+                    TechHydro(60.0, 15.0, @NT(min = 0.0, max = 60.0), nothing, nothing, nothing, nothing),
                     TimeSeries.TimeArray(DayAhead,solar_ts_DA)
                 ),
                 HydroCurtailment("HydroCurtailment",true,nodes5[3],
-                    TechHydro(60.0, @NT(min = 0.0, max = 60.0), nothing, nothing, @NT(up = 10.0, down = 10.0), nothing),
+                    TechHydro(60.0, 10.0, @NT(min = 0.0, max = 60.0), nothing, nothing, @NT(up = 10.0, down = 10.0), nothing),
                     1000.0,TimeSeries.TimeArray(DayAhead,wind_ts_DA) )
 ]
 
-#Variable Creation Testing            
-pth = PowerSimulations.GenerationVariables(m, generators_th, tp)
-on_th, start_th, stopth = PowerSimulations.CommitmentVariables(m, generators_th, tp)
-pre = PowerSimulations.GenerationVariables(m, generators_re, tp)
-Pin, Pout = PowerSimulations.GenerationVariables(m, [battery], tp)
-Es = PowerSimulations.StorageVariables(m, [battery], tp);
-phg = PowerSimulations.GenerationVariables(m, generators_hg, tp)
-fl = PowerSimulations.BranchFlowVariables(m, sys5.network.branches, tp)
-pcl = PowerSimulations.LoadVariables(m, sys5.loads, tp)
+#Variable Creation Testing
+pth = PowerSimulations.GenerationVariables(m, sys5b.generators.thermal, sys5b.timesteps)
+on_th, start_th, stopth = PowerSimulations.CommitmentVariables(m, sys5b.generators.thermal, sys5b.timesteps)
+pre = PowerSimulations.GenerationVariables(m, sys5b.generators.renewable, sys5b.timesteps)
+Pin, Pout = PowerSimulations.GenerationVariables(m, sys5b.storage, sys5b.timesteps)
+Es = PowerSimulations.StorageVariables(m, sys5b.storage, sys5b.timesteps);
+phg = PowerSimulations.GenerationVariables(m, generators_hg, sys5b.timesteps)
+fl = PowerSimulations.BranchFlowVariables(m, sys5b.network.branches, sys5b.timesteps)
+pcl = PowerSimulations.LoadVariables(m, sys5b.loads, sys5b.timesteps)
 
-#Device Constraint creation testing 
-PowerSimulations.PowerConstraints(m, pth, generators_th, tp)
-PowerSimulations.PowerConstraints(m, pre, [generators_re[2]], tp)
-PowerSimulations.PowerConstraints(m, pcl, [sys5.loads[4]], tp)
-PowerSimulations.PowerConstraints(m, Pin, Pout, [battery], tp)
-PowerSimulations.PowerConstraints(m, phg, [generators_hg[2]], tp)
-PowerSimulations.RampingConstraints_th(m,pth ,generators_th, tp)
-PowerSimulations.EnergyLimitConstraint_bt(m , Es, [battery], tp)
-PowerSimulations.EnergyBalanceConstraint_bt(m ,Pin ,Pout, Es, [battery], tp)
-PowerSimulations.CommitmentStatus_th(m ,on_th ,start_th, stopth, generators_th, tp)
-PowerSimulations.MinimumUpTime_th(m ,on_th ,start_th ,generators_th, tp)
-PowerSimulations.MinimumDownTime_th(m ,on_th ,stopth ,generators_th, tp)
+#Injection testing
+Nets = PowerSimulations.InjectionExpressions(m, sys5b, var_th = pth, var_re=pre, var_cl = pcl, var_in = Pin, var_out = Pout);
+
+#Constraint Generation
+PowerSimulations.PowerConstraints(m, pth, generators_th, sys5b.timesteps)
+PowerSimulations.PowerConstraints(m, pre, [generators_re[2]], sys5b.timesteps)
+PowerSimulations.PowerConstraints(m, pcl, [sys5.loads[4]], sys5b.timesteps)
+PowerSimulations.PowerConstraints(m, Pin, Pout, sys5b.storage, sys5b.timesteps)
+PowerSimulations.PowerConstraints(m, phg, [generators_hg[2]], sys5b.timesteps)
+#=
+PowerSimulations.RampingConstraints_th(m,pth ,generators_th, sys5b.timesteps)
+PowerSimulations.EnergyLimitConstraint_bt(m , Es, [battery], sys5b.timesteps)
+PowerSimulations.EnergyBalanceConstraint_bt(m ,Pin ,Pout, Es, [battery], sys5b.timesteps)
+PowerSimulations.CommitmentStatus_th(m ,on_th ,start_th, stopth, generators_th, sys5b.timesteps)
+PowerSimulations.MinimumUpTime_th(m ,on_th ,start_th ,generators_th, sys5b.timesteps)
+PowerSimulations.MinimumDownTime_th(m ,on_th ,stopth ,generators_th, sys5b.timesteps)
+=#
+true
