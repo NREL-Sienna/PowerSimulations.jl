@@ -53,7 +53,7 @@ end
 """
 This function adds the power limits of generators when there are CommitmentVariables
 """
-function PowerConstraints(m::JuMP.Model, pth, onth, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
+function PowerConstraints(m::JuMP.Model, pth::PowerVariable, onth::PowerVariable, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
 
     (length(pth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
     @constraintref Pmaxth[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
@@ -74,24 +74,32 @@ end
 """
 This function adds the ramping limits of generators when there are no CommitmentVariables
 """
-function RampingConstraintsth(m::JuMP.Model, pth::PowerVariable , devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
+function RampConstraints(m::JuMP.Model, pth::PowerVariable , devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
 
     (length(pth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
-    @constraintref Up[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
-    @constraintref Down[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
+
+    # TODO: Implement consistency checks to avoid creating RampConstraints where not needed.
+
+    @constraintref RampDown_th[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
+    @constraintref RampUp_th[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
+
+
     for (ix,name) in enumerate(pth.indexsets[1])
+
         if name == devices[ix].name
             t1 = pth.indexsets[2][1]
-            Down[ix,t1] = @constraint(m,  devices[ix].tech.realpower - pth[name,t1] <= devices[ix].tech.ramplimits.down)
-            Up[ix,t1] = @constraint(m,  pth[name,t1] - devices[ix].tech.realpower <= devices[ix].tech.ramplimits.up)
+            RampDown_th[ix,t1] = @constraint(m,  devices[ix].tech.realpower - pth[name,t1] <= devices[ix].tech.ramplimits.down)
+            RampUp_th[ix,t1] = @constraint(m,  pth[name,t1] - devices[ix].tech.realpower <= devices[ix].tech.ramplimits.up)
+
             for t in pth.indexsets[2][2:end]
-                Down[ix,t] = @constraint(m,  pth[name,t-1] - pth[name,t] <= devices[ix].tech.ramplimits.down)
-                Up[ix,t] = @constraint(m,  pth[name,t] - pth[name,t-1] <= devices[ix].tech.ramplimits.up)
+                RampDown_th[ix,t] = @constraint(m,  pth[name,t-1] - pth[name,t] <= devices[ix].tech.ramplimits.down)
+                RampUp_th[ix,t] = @constraint(m,  pth[name,t] - pth[name,t-1] <= devices[ix].tech.ramplimits.up)
             end
         else
             error("Bus name in Array and variable do not match")
         end
     end
+
     return true
 end
 
@@ -99,19 +107,21 @@ end
 This function adds the ramping limits of generators when there are CommitmentVariables
 """
 
-function RampingConstraintsth(m::JuMP.Model, pth::PowerVariable, onth, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
+function RampConstraints(m::JuMP.Model, pth::PowerVariable, onth::PowerVariable, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
 
     (length(pth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
-    @constraintref Up[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
-    @constraintref Down[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
+
+    @constraintref RampDown_th[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
+    @constraintref RampUp_th[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
+
     for (ix,name) in enumerate(pth.indexsets[1])
         if name == devices[ix].name
             t1 = pth.indexsets[2][1]
-            Down[ix,t1] = @constraint(m,  devices[ix].tech.realpower - pth[name,t1] <= devices[ix].tech.ramplimits.down * onth[name,t1])
-            Up[ix,t1] = @constraint(m,  pth[name,t1] - devices[ix].tech.realpower <= devices[ix].tech.ramplimits.up  * onth[name,t1])
+            RampDown_th[ix,t1] = @constraint(m,  devices[ix].tech.realpower - pth[name,t1] <= devices[ix].tech.ramplimits.down * onth[name,t1])
+            RampUp_th[ix,t1] = @constraint(m,  pth[name,t1] - devices[ix].tech.realpower <= devices[ix].tech.ramplimits.up  * onth[name,t1])
             for t in pth.indexsets[2][2:end]
-                Down[ix,t] = @constraint(m,  pth[name,t-1] - pth[name,t] <= devices[ix].tech.ramplimits.down * onth[name,t])
-                Up[ix,t] = @constraint(m,  pth[name,t] - pth[name,t-1] <= devices[ix].tech.ramplimits.up * onth[name,t] )
+                RampDown_th[ix,t] = @constraint(m,  pth[name,t-1] - pth[name,t] <= devices[ix].tech.ramplimits.down * onth[name,t])
+                RampUp_th[ix,t] = @constraint(m,  pth[name,t] - pth[name,t-1] <= devices[ix].tech.ramplimits.up * onth[name,t] )
             end
         else
             error("Bus name in Array and variable do not match")
@@ -124,13 +134,16 @@ end
 This function adds the Commitment Status constraint when there are CommitmentVariables
 """
 
-function CommitmentStatusth(m::JuMP.Model,onth, startth, stopth, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
+function CommitmentConstraints(m::JuMP.Model,onth::PowerVariable, startth::PowerVariable stopth::PowerVariable, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
+
     (length(onth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
     (length(startth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
     (length(stopth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
+
     (stopth.indexsets[1] !== startth.indexsets[1]) ? warn("Start/Stop variables indexes are inconsistent"): true
     (onth.indexsets[1] !== stopth.indexsets[1]) ? warn("Start/Stop and Commitment Status variables indexes are inconsistent"): true
-    @constraintref Status[1:length(onth.indexsets[1]),1:length(onth.indexsets[2])]
+
+    @constraintref commitment_th[1:length(onth.indexsets[1]),1:length(onth.indexsets[2])]
     for (ix,name) in enumerate(onth.indexsets[1])
         if name == devices[ix].name
             t1 = onth.indexsets[2][1]
@@ -141,7 +154,7 @@ function CommitmentStatusth(m::JuMP.Model,onth, startth, stopth, devices::Array{
             end
             Status[ix,t1] = @constraint(m, onth[name,t1] == init + startth[name,t1] - stopth[name,t1] )
             for t in onth.indexsets[2][2:end]
-                Status[ix,t] = @constraint(m, onth[name,t] == onth[name,t-1] + startth[name,t] - stopth[name,t])
+                commitment_th[ix,t] = @constraint(m, onth[name,t] == onth[name,t-1] + startth[name,t] - stopth[name,t])
             end
         else
             error("Bus name in Array and variable do not match")
@@ -150,31 +163,19 @@ function CommitmentStatusth(m::JuMP.Model,onth, startth, stopth, devices::Array{
     return true
 end
 
-function MinimumUpTimeth(m::JuMP.Model,onth, startth, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
+function TimeConstraints(m::JuMP.Model,onth, startth, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
+
+    # TODO: This constraint also doesn't work as implemented, it requires the generator having the min/max time constraint created
+
     (length(onth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
     (length(startth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
     (onth.indexsets[1] !== startth.indexsets[1]) ? warn("Start and Commitment Status variables indexes are inconsistent"): true
     @constraintref Uptime[1:length(onth.indexsets[1]),1:length(onth.indexsets[2])]
-    for (ix,name) in enumerate(onth.indexsets[1])
-        if name == devices[ix].name
-            for t in onth.indexsets[2][2:end] #TODO : add initial condition constraint
-                Uptime[ix,t] = @constraint(m,sum([startth[name,Int(i)] for i in ((t-devices[ix].tech.timelimits.up+1):t) if i > 0 ]) <= onth[name,t])
-            end
-        else
-            error("Bus name in Array and variable do not match")
-        end
-    end
-    return true
-end
-
-function MinimumDownTimeth(m::JuMP.Model,onth, stopth, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
-    (length(onth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
-    (length(stopth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
-    (onth.indexsets[1] !== stopth.indexsets[1]) ? warn("Stop and Commitment Status variables indexes are inconsistent"): true
     @constraintref DownTime[1:length(onth.indexsets[1]),1:length(onth.indexsets[2])]
     for (ix,name) in enumerate(onth.indexsets[1])
         if name == devices[ix].name
             for t in onth.indexsets[2][2:end] #TODO : add initial condition constraint
+                Uptime[ix,t] = @constraint(m,sum([startth[name,Int(i)] for i in ((t-devices[ix].tech.timelimits.up+1):t) if i > 0 ]) <= onth[name,t])
                 DownTime[ix,t] = @constraint(m,sum([stopth[name,Int(i)] for i in ((t-devices[ix].tech.timelimits.down + 1):t) if i > 0]) <= (1 - onth[name,t]) )
             end
         else
