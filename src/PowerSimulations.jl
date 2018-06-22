@@ -5,11 +5,14 @@ using TimeSeries
 using PowerSystems
 using Compat
 
-#include("core/parameters.jl")
-#include("core/models.jl")
-#include("core/simulations.jl")
-
 const PowerVariable = JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}}
+
+
+#base and core
+#include("core/abstract_models.jl")
+#include("core/dynamic_model.jl")
+#include("base/simulation_constructors.jl")
+#include("base/solve_routines.jl")
 
 #Device Modeling components
 include("device_models/renewable_generation.jl")
@@ -20,14 +23,17 @@ include("device_models/electric_loads.jl")
 include("device_models/branches.jl")
 
 #Network related components
-include("network_models/node_balance.jl")
+include("network_models/node_injections.jl")
 include("network_models/copperplate.jl")
+include("network_models/powerflow.jl")
 
 #Cost Components
 include("cost_functions/thermalgenvariable_cost.jl")
 include("cost_functions/thermalgencommitment_cost.jl")
 include("cost_functions/renewablegencurtailment_cost.jl")
 include("cost_functions/controlableload_cost.jl")
+
+#PowerModels
 #include("power_models/economic_dispatch.jl")
 
 end # module
