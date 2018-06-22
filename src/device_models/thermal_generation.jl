@@ -17,9 +17,9 @@ This function add the variables for power generation commitment to the model
 function CommitmentVariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
     onset = [d.name for d in devices if d.available == true]
     t = 1:time_periods
-    @variable(m::JuMP.Model, onth[onset,t], Bin) # Power output of generators
-    @variable(m::JuMP.Model, startth[onset,t], Bin) # Power output of generators
-    @variable(m::JuMP.Model, stopth[onset,t], Bin) # Power output of generators
+    @variable(m, onth[onset,t], Bin) # Power output of generators
+    @variable(m, startth[onset,t], Bin) # Power output of generators
+    @variable(m, stopth[onset,t], Bin) # Power output of generators
     return onth, startth, stopth
 end
 
@@ -112,6 +112,8 @@ function RampConstraints(m::JuMP.Model, pth::PowerVariable, onth::PowerVariable,
 
     (length(pth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
 
+
+
     @constraintref RampDown_th[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
     @constraintref RampUp_th[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
 
@@ -164,7 +166,7 @@ function CommitmentConstraints(m::JuMP.Model,onth::PowerVariable, startth::Power
     return true
 end
 
-function TimeConstraints(m::JuMP.Model, onth::PowerVariable, startth::PowerVariable, stopth::PowerVariable, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
+function TimeConstraints(m::JuMP.Model, onth::PowerVariable, startth::PowerVariable, stopth::PowerVariable, devices::Array{T,1}, time_periods::Int; Initial = 999) where T <: ThermalGen
 
     # TODO: This constraint also doesn't work as implemented, it requires the generator having the min/max time constraint created
 
