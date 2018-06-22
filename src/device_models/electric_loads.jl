@@ -11,6 +11,7 @@ This function adds the power limits of generators when there are no CommitmentVa
 function PowerConstraints(m::JuMP.Model, pcl::PowerVariable, devices::Array{T,1}, time_periods::Int) where T <: ElectricLoad
     (length(pcl.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
+    # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
     @constraintref Pmax_cl[1:length(pcl.indexsets[1]),1:length(pcl.indexsets[2])]
     for (ix, name) in enumerate(pcl.indexsets[1])
             if name == devices[ix].name

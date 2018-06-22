@@ -19,7 +19,7 @@ function PowerConstraints(m::JuMP.Model, pbtin::PowerVariable, pbtout::PowerVari
     (length(pbtout.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
 
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
-
+    # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
     @constraintref Pmax_in[1:length(pbtin.indexsets[1]),1:length(pbtin.indexsets[2])]
     @constraintref Pmax_out[1:length(pbtout.indexsets[1]),1:length(pbtout.indexsets[2])]
     (pbtin.indexsets[1] !== pbtout.indexsets[1]) ? warn("Input/Output variables indexes are inconsistent"): true

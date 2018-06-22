@@ -35,6 +35,7 @@ This function adds the power limits of generators when there are no CommitmentVa
 function PowerConstraints(m::JuMP.Model, pth::PowerVariable, devices::Array{T,1}, time_periods::Int) where T <: ThermalGen
     (length(pth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
+    # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
     @constraintref Pmaxth[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
     @constraintref Pminth[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
     for (ix, name) in enumerate(pth.indexsets[1])
