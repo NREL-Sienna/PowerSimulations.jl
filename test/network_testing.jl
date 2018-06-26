@@ -37,6 +37,6 @@ pcl = PowerSimulations.LoadVariables(m, sys5b.loads, sys5b.timesteps)
 #Injection Array
 Nets = PowerSimulations.InjectionExpressions(m, sys5b, var_th = pth, var_re=pre, var_cl = pcl, var_in = Pin, var_out = Pout, phy = phg)
 #CopperPlate Network test
-PowerSimulations.CopperPlateNetwork(m, Nets, sys5b.timesteps)
+PowerSimulations.CopperPlateBalance(m, Nets, sys5b.timesteps)
 
 true

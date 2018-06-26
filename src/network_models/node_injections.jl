@@ -1,6 +1,6 @@
 function NetInjectIterate!(NetInjection::Array{JuMP.AffExpr}, buses::Array{Bus}, variable::PowerVariable, tp::Int, device::Array{T}) where T <: PowerSystems.ThermalGen
 
-        for (idx, b) in enumerate(buses)
+        for b in buses
 
             for t = 1:tp
 
@@ -8,7 +8,7 @@ function NetInjectIterate!(NetInjection::Array{JuMP.AffExpr}, buses::Array{Bus},
 
                 isempty(set) ? break : total = sum(variable[i,t] for i in set)
 
-                isassigned(NetInjection, idx,t) ? append!(NetInjection[idx,t], total): NetInjection[idx,t] = total;
+                isassigned(NetInjection, b.number,t) ? append!(NetInjection[b.number,t], total): NetInjection[b.number,t] = total;
 
             end
         end
@@ -19,7 +19,7 @@ end
 
 function NetInjectIterate!(NetInjection::Array{JuMP.AffExpr}, buses::Array{Bus}, variable::PowerVariable, tp::Int, device::Array{T}) where T <: PowerSystems.RenewableGen
 
-        for (idx, b) in enumerate(buses)
+        for b in buses
 
             for t = 1:tp
 
@@ -34,7 +34,7 @@ function NetInjectIterate!(NetInjection::Array{JuMP.AffExpr}, buses::Array{Bus},
 
                 end
 
-                isassigned(NetInjection, idx,t) ? append!(NetInjection[idx,t], total): NetInjection[idx,t] = total;
+                isassigned(NetInjection, b.number,t) ? append!(NetInjection[b.number,t], total): NetInjection[b.number,t] = total;
 
             end
         end
@@ -45,7 +45,7 @@ end
 
 function NetInjectIterate!(NetInjection::Array{JuMP.AffExpr}, buses::Array{Bus}, variable::PowerVariable, tp::Int, device::Array{T}) where T <: PowerSystems.HydroGen
 
-        for (idx, b) in enumerate(buses)
+        for b in buses
 
             for t = 1:tp
 
@@ -60,7 +60,7 @@ function NetInjectIterate!(NetInjection::Array{JuMP.AffExpr}, buses::Array{Bus},
 
                 end
 
-                isassigned(NetInjection, idx,t) ? append!(NetInjection[idx,t], total): NetInjection[idx,t] = total;
+                isassigned(NetInjection, b.number,t) ? append!(NetInjection[b.number,t], total): NetInjection[b.number,t] = total;
 
             end
         end
@@ -70,7 +70,7 @@ end
 
 function NetInjectIterate!(NetInjection::Array{JuMP.AffExpr}, buses::Array{Bus}, variable::PowerVariable, tp::Int, device::Array{T}) where T <: PowerSystems.ElectricLoad
 
-    for (idx, b) in enumerate(buses)
+    for  b in buses
 
         for t = 1:tp
 
@@ -85,7 +85,7 @@ function NetInjectIterate!(NetInjection::Array{JuMP.AffExpr}, buses::Array{Bus},
 
             end
 
-            isassigned(NetInjection, idx,t) ? append!(NetInjection[idx,t], total): NetInjection[idx,t] = total;
+            isassigned(NetInjection, b.number,t) ? append!(NetInjection[b.number,t], total): NetInjection[b.number,t] = total;
 
         end
     end
@@ -96,7 +96,7 @@ end
 
 function NetInjectIterate!(NetInjection::Array{JuMP.AffExpr}, buses::Array{Bus}, variable_in::PowerVariable, variable_out::PowerVariable, tp::Int, device::Array{T}) where T <: PowerSystems.Storage
 
-        for (idx, b) in enumerate(buses)
+        for b in buses
 
             for t = 1:tp
 
@@ -105,7 +105,7 @@ function NetInjectIterate!(NetInjection::Array{JuMP.AffExpr}, buses::Array{Bus},
                 #Detects if there is a device connected at the node, if not, breaks the time loop and goes to the next bus.
                 isempty(set) ? break : total = sum(variable_in[i,t] - variable_out[i,t] for i in set)
 
-                isassigned(NetInjection, idx,t) ? append!(NetInjection[idx,t], total): NetInjection[idx,t] = total;
+                isassigned(NetInjection, b.number,t) ? append!(NetInjection[b.number,t], total): NetInjection[b.number,t] = total;
 
             end
         end
