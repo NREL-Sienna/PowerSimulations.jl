@@ -39,4 +39,17 @@ Nets = PowerSimulations.InjectionExpressions(m, sys5b, var_th = pth, var_re=pre,
 #CopperPlate Network test
 PowerSimulations.CopperPlateBalance(m, Nets, sys5b.timesteps)
 
+m=Model()
+
+pth = PowerSimulations.GenerationVariables(m, sys5b.generators.thermal, sys5b.timesteps)
+pre = PowerSimulations.GenerationVariables(m, sys5b.generators.renewable, sys5b.timesteps)
+Pin, Pout = PowerSimulations.GenerationVariables(m, sys5b.storage, sys5b.timesteps)
+phg = PowerSimulations.GenerationVariables(m, generators_hg, sys5b.timesteps)
+fl = PowerSimulations.BranchFlowVariables(m, sys5b.network.branches, sys5b.timesteps)
+pcl = PowerSimulations.LoadVariables(m, sys5b.loads, sys5b.timesteps)
+
+Nets = PowerSimulations.InjectionExpressions(m, sys5b, var_th = pth, var_re=pre, var_cl = pcl, var_in = Pin, var_out = Pout, phy = phg)
+Net = PowerSimulations.BranchInjection!(Nets, fl, sys5b.network.branches, sys5b.timesteps)
+PowerSimulations.NodalFlowBalance(m, Nets);
+
 true
