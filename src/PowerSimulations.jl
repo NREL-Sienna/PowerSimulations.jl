@@ -11,6 +11,7 @@ const PowerVariable = JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitR
 #base and core
 #include("core/abstract_models.jl")
 #include("core/dynamic_model.jl")
+include("base/node_injections.jl")
 #include("base/simulation_constructors.jl")
 #include("base/solve_routines.jl")
 
@@ -23,10 +24,8 @@ include("device_models/electric_loads.jl")
 include("device_models/branches.jl")
 
 #Network related components
-include("network_models/node_injections.jl")
 include("network_models/copperplate_balance.jl")
 include("network_models/nodal_balance.jl")
-include("network_models/powerflow.jl")
 
 #Cost Components
 include("cost_functions/thermalgenvariable_cost.jl")
