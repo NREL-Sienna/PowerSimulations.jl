@@ -16,7 +16,7 @@ function BranchInjection!(NetInjection::Array{JuMP.AffExpr}, fbr::PowerVariable,
     return NetInjection
 end
 
-function PowerFlowBalance(m::JuMP.Model, NetInjection::Array{JuMP.AffExpr})
+function NodalFlowBalance(m::JuMP.Model, NetInjection::Array{JuMP.AffExpr})
         @constraintref PFBalance[1:size(NetInjection)[1], 1:size(NetInjection)[2]]
 
         for (n, c) in enumerate(IndexCartesian(), NetInjection)
@@ -24,5 +24,5 @@ function PowerFlowBalance(m::JuMP.Model, NetInjection::Array{JuMP.AffExpr})
 
         end
 
-
+    return true
 end
