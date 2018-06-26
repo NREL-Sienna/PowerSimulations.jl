@@ -1,4 +1,4 @@
-function PowerFlowBalance(m::JuMP.Model, NetInjection::Array{JuMP.AffExpr}, fbr::PowerVariable, branches::Array{Branch}, tp::Int)
+function BranchInjection!(NetInjection::Array{JuMP.AffExpr}, fbr::PowerVariable, branches::Array{Branch}, tp::Int)
 
     for branch in fbr.indexsets[1]
         node_from = [device.connectionpoints.from.number for device in branches if device.name == branch][1]
@@ -14,4 +14,15 @@ function PowerFlowBalance(m::JuMP.Model, NetInjection::Array{JuMP.AffExpr}, fbr:
     end
 
     return NetInjection
+end
+
+function PowerFlowBalance(m::JuMP.Model, NetInjection::Array{JuMP.AffExpr})
+        @constraintref PFBalance[1:size(NetInjection)[1], 1:size(NetInjection)[2]]
+
+        for (n, c) in enumerate(IndexCartesian(), NetInjection)
+            PFBalance[n[1],n[2]] = @constraint(m, c == 0)
+
+        end
+
+
 end

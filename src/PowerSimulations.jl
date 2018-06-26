@@ -24,7 +24,8 @@ include("device_models/branches.jl")
 
 #Network related components
 include("network_models/node_injections.jl")
-include("network_models/copperplate.jl")
+include("network_models/copperplate_balance.jl")
+include("network_models/nodal_balance.jl")
 include("network_models/powerflow.jl")
 
 #Cost Components
