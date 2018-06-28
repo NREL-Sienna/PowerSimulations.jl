@@ -38,15 +38,13 @@ function PowerConstraints(m::JuMP.Model, pth::PowerVariable, devices::Array{T,1}
     # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
     @constraintref Pmaxth[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
     @constraintref Pminth[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
-    for (ix, name) in enumerate(pth.indexsets[1])
-            if name == devices[ix].name
-                for t in pth.indexsets[2]
-                    Pminth[ix, t] = @constraint(m, pth[name, t] >= devices[ix].tech.realpowerlimits.min)
-                    Pmaxth[ix, t] = @constraint(m, pth[name, t] <= devices[ix].tech.realpowerlimits.max)
-                end
-            else
-                error("Bus name in Array and variable do not match")
-            end
+    for t in pth.indexsets[2], (ix, name) in enumerate(pth.indexsets[1])
+        if name == devices[ix].name
+            Pminth[ix, t] = @constraint(m, pth[name, t] >= devices[ix].tech.realpowerlimits.min)
+            Pmaxth[ix, t] = @constraint(m, pth[name, t] <= devices[ix].tech.realpowerlimits.max)
+        else
+            error("Bus name in Array and variable do not match")
+        end
     end
     return true
 end
@@ -59,15 +57,13 @@ function PowerConstraints(m::JuMP.Model, pth::PowerVariable, onth::PowerVariable
     (length(pth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
     @constraintref Pmaxth[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
     @constraintref Pminth[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
-    for (ix, name) in enumerate(pth.indexsets[1])
-            if name == devices[ix].name
-                for t in pth.indexsets[2]
-                    Pminth[ix, t] = @constraint(m, pth[name, t] >= devices[ix].tech.realpowerlimits.min*onth[name,t])
-                    Pmaxth[ix, t] = @constraint(m, pth[name, t] <= devices[ix].tech.realpowerlimits.max*onth[name,t])
-                end
-            else
-                error("Bus name in Array and variable do not match")
-            end
+    for t in pth.indexsets[2], (ix, name) in enumerate(pth.indexsets[1])
+        if name == devices[ix].name
+            Pminth[ix, t] = @constraint(m, pth[name, t] >= devices[ix].tech.realpowerlimits.min*onth[name,t])
+            Pmaxth[ix, t] = @constraint(m, pth[name, t] <= devices[ix].tech.realpowerlimits.max*onth[name,t])
+        else
+            error("Bus name in Array and variable do not match")
+        end
     end
     return true
 end
@@ -80,10 +76,10 @@ function RampConstraints(m::JuMP.Model, pth::PowerVariable , devices::Array{T,1}
     (length(pth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
 
     # TODO: Implement consistency checks to avoid creating RampConstraints where not needed.
+    # TODO: Change loop orders, loop over time first and then over the device names
 
     @constraintref RampDown_th[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
     @constraintref RampUp_th[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
-
 
     for (ix,name) in enumerate(pth.indexsets[1])
 
@@ -112,7 +108,8 @@ function RampConstraints(m::JuMP.Model, pth::PowerVariable, onth::PowerVariable,
 
     (length(pth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-
+    # TODO: Implement consistency checks to avoid creating RampConstraints where not needed.
+    # TODO: Change loop orders, loop over time first and then over the device names
 
     @constraintref RampDown_th[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
     @constraintref RampUp_th[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
@@ -143,6 +140,9 @@ function CommitmentConstraints(m::JuMP.Model,onth::PowerVariable, startth::Power
     (length(startth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
     (length(stopth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
 
+    # TODO: Implement consistency checks to avoid creating RampConstraints where not needed.
+    # TODO: Change loop orders, loop over time first and then over the device names
+
     (stopth.indexsets[1] !== startth.indexsets[1]) ? warn("Start/Stop variables indexes are inconsistent"): true
     (onth.indexsets[1] !== stopth.indexsets[1]) ? warn("Start/Stop and Commitment Status variables indexes are inconsistent"): true
 
@@ -168,7 +168,8 @@ end
 
 function TimeConstraints(m::JuMP.Model, onth::PowerVariable, startth::PowerVariable, stopth::PowerVariable, devices::Array{T,1}, time_periods::Int; Initial = 999) where T <: ThermalGen
 
-    # TODO: This constraint also doesn't work as implemented, it requires the generator having the min/max time constraint created
+    # TODO: Implement consistency checks to avoid creating RampConstraints where not needed.
+    # TODO: Change loop orders, loop over time first and then over the device names
 
     (length(onth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
     (length(startth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
