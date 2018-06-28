@@ -13,14 +13,12 @@ function PowerConstraints(m::JuMP.Model, pcl::PowerVariable, devices::Array{T,1}
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
     # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
     @constraintref Pmax_cl[1:length(pcl.indexsets[1]),1:length(pcl.indexsets[2])]
-    for (ix, name) in enumerate(pcl.indexsets[1])
-            if name == devices[ix].name
-                for t in pcl.indexsets[2]
-                    Pmax_cl[ix, t] = @constraint(m, pcl[name, t] <= devices[ix].maxrealpower*devices[ix].scalingfactor.values[t])
-                end
-            else
-                error("Bus name in Array and variable do not match")
-            end
+    for t in pcl.indexsets[2], (ix, name) in enumerate(pcl.indexsets[1])
+        if name == devices[ix].name
+            Pmax_cl[ix, t] = @constraint(m, pcl[name, t] <= devices[ix].maxrealpower*devices[ix].scalingfactor.values[t])
+        else
+            error("Bus name in Array and variable do not match")
+        end
     end
     return true
 end

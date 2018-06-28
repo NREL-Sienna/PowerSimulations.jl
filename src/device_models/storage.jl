@@ -20,18 +20,17 @@ function PowerConstraints(m::JuMP.Model, pbtin::PowerVariable, pbtout::PowerVari
 
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
     # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
+
     @constraintref Pmax_in[1:length(pbtin.indexsets[1]),1:length(pbtin.indexsets[2])]
     @constraintref Pmax_out[1:length(pbtout.indexsets[1]),1:length(pbtout.indexsets[2])]
     (pbtin.indexsets[1] !== pbtout.indexsets[1]) ? warn("Input/Output variables indexes are inconsistent"): true
-    for (ix, name) in enumerate(pbtin.indexsets[1])
-            if name == devices[ix].name
-                for t in pbtin.indexsets[2]
-                    Pmax_out[ix, t] = @constraint(m, pbtin[name, t] <= devices[ix].inputrealpowerlimit)
-                    Pmax_out[ix, t] = @constraint(m, pbtout[name, t] <= devices[ix].outputrealpowerlimit)
-                end
-            else
-                error("Bus name in Array and variable do not match")
-            end
+    for t in pbtin.indexsets[2], (ix, name) in enumerate(pbtin.indexsets[1])
+        if name == devices[ix].name
+            Pmax_out[ix, t] = @constraint(m, pbtin[name, t] <= devices[ix].inputrealpowerlimit)
+            Pmax_out[ix, t] = @constraint(m, pbtout[name, t] <= devices[ix].outputrealpowerlimit)
+        else
+            error("Bus name in Array and variable do not match")
+        end
     end
     return true
 end
@@ -47,6 +46,7 @@ function EnergyBookKeeping(m::JuMP.Model, pbtin::PowerVariable, pbtout::PowerVar
     (pbtin.indexsets[1] !== pbtout.indexsets[1]) ? warn("Input/Output variables indexes are inconsistent"): true
     (pbtout.indexsets[1] !== ebt.indexsets[1]) ? warn("Input/Output and Battery Power variables indexes are inconsistent"): true
 
+    # TODO: Change loop order
     for (ix,name) in enumerate(ebt.indexsets[1])
         if name == devices[ix].name
             t1 = pbtin.indexsets[2][1]
@@ -65,11 +65,9 @@ function EnergyConstraint(m::JuMP.Model, ebt::PowerVariable, devices::Array{T,1}
 
     (length(ebt.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
     @constraintref EnergyLimit_bt[1:length(ebt.indexsets[1]),1:length(ebt.indexsets[2])]
-    for (ix,name) in enumerate(ebt.indexsets[1])
+    for t in ebt.indexsets[2], (ix,name) in enumerate(ebt.indexsets[1])
         if name == devices[ix].name
-            for t in ebt.indexsets[2]
-                EnergyLimit_bt[ix,t] = @constraint(m,ebt[name,t] <= devices[ix].capacity.max)
-            end
+            EnergyLimit_bt[ix,t] = @constraint(m,ebt[name,t] <= devices[ix].capacity.max)
         else
             error("Bus name in Array and variable do not match")
         end

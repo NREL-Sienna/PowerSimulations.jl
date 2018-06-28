@@ -14,15 +14,13 @@ function PowerConstraints(m::JuMP.Model, pre::PowerVariable, devices::Array{T,1}
     # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
     @constraintref Pmax_re[1:length(pre.indexsets[1]),1:length(pre.indexsets[2])]
     @constraintref Pmin_re[1:length(pre.indexsets[1]),1:length(pre.indexsets[2])]
-    for (ix, name) in enumerate(pre.indexsets[1])
-            if name == devices[ix].name
-                for t in pre.indexsets[2]
-                    Pmin_re[ix, t] = @constraint(m, pre[name, t] >= 0.0)
-                    Pmax_re[ix, t] = @constraint(m, pre[name, t] <= devices[ix].tech.installedcapacity*devices[ix].scalingfactor.values[t])
-                end
-            else
-                error("Bus name in Array and variable do not match")
-            end
+    for t in pre.indexsets[2], (ix, name) in enumerate(pre.indexsets[1])
+        if name == devices[ix].name
+            Pmin_re[ix, t] = @constraint(m, pre[name, t] >= 0.0)
+            Pmax_re[ix, t] = @constraint(m, pre[name, t] <= devices[ix].tech.installedcapacity*devices[ix].scalingfactor.values[t])
+        else
+            error("Bus name in Array and variable do not match")
+        end
     end
     return true
 end
