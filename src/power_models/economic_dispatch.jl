@@ -1,14 +1,14 @@
-export EconomicDispatch 
+export EconomicDispatch
 
 """
-This function populates a particular AbstractPowerModel and populates the fields according to the 
+This function populates a particular AbstractPowerModel and populates the fields according to the
     data in the system and stablishes the device models included which effectively are calls to the construction
-    functions. 
+    functions.
 """
 
 function EconomicDispatch(sys,tp)
     m = JuMP.Model()
-    #Variable Creation             
+    #Variable Creation
     pth = GenerationVariables(m, sys.generators["Thermal"], tp);
     # on_th, start_th, stopth = PowerSimulations.CommitmentVariables(m, system.generators["Thermal"], tp)
 
@@ -26,7 +26,7 @@ function EconomicDispatch(sys,tp)
 
     device = sys.loads[4]
     for i in [device.name]
-        for t in 1:tp
+        for t in 1:time_periods
             objective = objective + 5000*(pcl[i, t] - device.maxrealpower*device.scalingfactor.values[t])
         end
     end
