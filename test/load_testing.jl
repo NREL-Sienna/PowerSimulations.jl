@@ -6,7 +6,7 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, 230.0, 1000.0)
 
 m = Model()
 
-pcl = PowerSimulations.LoadVariables(m, sys5b.loads, sys5b.timesteps)
-PowerSimulations.PowerConstraints(m, pcl, [sys5.loads[4]], sys5b.timesteps)
+pcl = PowerSimulations.LoadVariables(m, sys5b.loads, sys5b.time_periods)
+PowerSimulations.PowerConstraints(m, pcl, [sys5.loads[4]], sys5b.time_periods)
 
 true

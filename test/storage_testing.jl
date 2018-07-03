@@ -17,10 +17,10 @@ sys5b = PowerSystem(nodes5, generators5, loads5_DA, branches5, battery, 230.0, 1
 
 m = Model()
 
-Pin, Pout = PowerSimulations.GenerationVariables(m, sys5b.storage, sys5b.timesteps)
-Es = PowerSimulations.StorageVariables(m, sys5b.storage, sys5b.timesteps);
-PowerSimulations.PowerConstraints(m, Pin, Pout, sys5b.storage, sys5b.timesteps)
-PowerSimulations.EnergyConstraint(m , Es, sys5b.storage, sys5b.timesteps)
-PowerSimulations.EnergyBookKeeping(m ,Pin ,Pout, Es, sys5b.storage, sys5b.timesteps)
+Pin, Pout = PowerSimulations.GenerationVariables(m, sys5b.storage, sys5b.time_periods)
+Es = PowerSimulations.StorageVariables(m, sys5b.storage, sys5b.time_periods);
+PowerSimulations.PowerConstraints(m, Pin, Pout, sys5b.storage, sys5b.time_periods)
+PowerSimulations.EnergyConstraint(m , Es, sys5b.storage, sys5b.time_periods)
+PowerSimulations.EnergyBookKeeping(m ,Pin ,Pout, Es, sys5b.storage, sys5b.time_periods)
 
 true

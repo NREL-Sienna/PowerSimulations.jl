@@ -26,7 +26,7 @@ generators_hg = [
 sys5b = PowerSystem(nodes5, append!(generators5, generators_hg), loads5_DA, branches5, battery, 230.0, 1000.0)
 
 
-phg = PowerSimulations.GenerationVariables(m, sys5b.generators.hydro, sys5b.timesteps)
-PowerSimulations.PowerConstraints(m, phg, [generators_hg[2]], sys5b.timesteps)
+phg = PowerSimulations.GenerationVariables(m, sys5b.generators.hydro, sys5b.time_periods)
+PowerSimulations.PowerConstraints(m, phg, [generators_hg[2]], sys5b.time_periods)
 
 true

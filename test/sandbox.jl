@@ -30,8 +30,8 @@ generators_hg = [
 #Variable Creation Testing
 
 
-phg = PowerSimulations.GenerationVariables(m, generators_hg, sys5b.timesteps)
-pcl = PowerSimulations.LoadVariables(m, sys5b.loads, sys5b.timesteps)
+phg = PowerSimulations.GenerationVariables(m, generators_hg, sys5b.time_periods)
+pcl = PowerSimulations.LoadVariables(m, sys5b.loads, sys5b.time_periods)
 
 
 
@@ -39,22 +39,22 @@ pcl = PowerSimulations.LoadVariables(m, sys5b.loads, sys5b.timesteps)
 
 
 #Controllable Load Constraints
-PowerSimulations.PowerConstraints(m, pcl, [sys5.loads[4]], sys5b.timesteps)
+PowerSimulations.PowerConstraints(m, pcl, [sys5.loads[4]], sys5b.time_periods)
 
 #Storage Constraints
 
 
 
 #Hydro Generation Constraints
-PowerSimulations.PowerConstraints(m, phg, [generators_hg[2]], sys5b.timesteps)
+PowerSimulations.PowerConstraints(m, phg, [generators_hg[2]], sys5b.time_periods)
 
 
 #=
 
 
-PowerSimulations.CommitmentStatus_th(m ,on_th ,start_th, stopth, generators_th, sys5b.timesteps)
-PowerSimulations.MinimumUpTime_th(m ,on_th ,start_th ,generators_th, sys5b.timesteps)
-PowerSimulations.MinimumDownTime_th(m ,on_th ,stopth ,generators_th, sys5b.timesteps)
+PowerSimulations.CommitmentStatus_th(m ,on_th ,start_th, stopth, generators_th, sys5b.time_periods)
+PowerSimulations.MinimumUpTime_th(m ,on_th ,start_th ,generators_th, sys5b.time_periods)
+PowerSimulations.MinimumDownTime_th(m ,on_th ,stopth ,generators_th, sys5b.time_periods)
 =#
 
 #Cost Functions
