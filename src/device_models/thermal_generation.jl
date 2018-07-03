@@ -7,6 +7,7 @@ function GenerationVariables(m::JuMP.Model, devices::Array{T,1}, time_periods::I
     on_set = [d.name for d in devices if d.available == true]
     t = 1:time_periods
     @variable(m::JuMP.Model, pth[on_set,t]) # Power output of generators
+
     return pth
 end
 
@@ -20,6 +21,7 @@ function CommitmentVariables(m::JuMP.Model, devices::Array{T,1}, time_periods::I
     @variable(m, onth[onset,t], Bin) # Power output of generators
     @variable(m, startth[onset,t], Bin) # Power output of generators
     @variable(m, stopth[onset,t], Bin) # Power output of generators
+
     return onth, startth, stopth
 end
 
@@ -46,7 +48,11 @@ function PowerConstraints(m::JuMP.Model, pth::PowerVariable, devices::Array{T,1}
             error("Bus name in Array and variable do not match")
         end
     end
-    return true
+
+    JuMP.registercon(m, :PmaxThermal, Pmaxth)
+    JuMP.registercon(m, :PminThermal, Pminth)
+
+    return m
 end
 
 """
@@ -65,7 +71,11 @@ function PowerConstraints(m::JuMP.Model, pth::PowerVariable, onth::PowerVariable
             error("Bus name in Array and variable do not match")
         end
     end
-    return true
+
+    JuMP.registercon(m, :PmaxThermal, Pmaxth)
+    JuMP.registercon(m, :PminThermal, Pminth)
+
+    return m
 end
 
 """
@@ -97,7 +107,10 @@ function RampConstraints(m::JuMP.Model, pth::PowerVariable , devices::Array{T,1}
         end
     end
 
-    return true
+    JuMP.registercon(m, :RampDownThermal, RampDown_th)
+    JuMP.registercon(m, :RampUpThermal, RampUp_th)
+
+    return m
 end
 
 """
@@ -127,7 +140,11 @@ function RampConstraints(m::JuMP.Model, pth::PowerVariable, onth::PowerVariable,
             error("Bus name in Array and variable do not match")
         end
     end
-    return true
+
+    JuMP.registercon(m, :RampDownThermal, RampDown_th)
+    JuMP.registercon(m, :RampUpThermal, RampUp_th)
+
+    return m
 end
 
 """
@@ -163,7 +180,10 @@ function CommitmentConstraints(m::JuMP.Model,onth::PowerVariable, startth::Power
             error("Bus name in Array and variable do not match")
         end
     end
-    return true
+
+    JuMP.registercon(m, :commitment_th, commitment_th)
+
+    return m
 end
 
 function TimeConstraints(m::JuMP.Model, onth::PowerVariable, startth::PowerVariable, stopth::PowerVariable, devices::Array{T,1}, time_periods::Int; Initial = 999) where T <: ThermalGen
@@ -179,12 +199,16 @@ function TimeConstraints(m::JuMP.Model, onth::PowerVariable, startth::PowerVaria
     for (ix,name) in enumerate(onth.indexsets[1])
         if name == devices[ix].name
             for t in onth.indexsets[2][2:end] #TODO : add initial condition constraint
-                Uptime[ix,t] = @constraint(m,sum([startth[name,Int(i)] for i in ((t-devices[ix].tech.timelimits.up+1):t) if i > 0 ]) <= onth[name,t])
-                DownTime[ix,t] = @constraint(m,sum([stopth[name,Int(i)] for i in ((t-devices[ix].tech.timelimits.down + 1):t) if i > 0]) <= (1 - onth[name,t]) )
+                Uptime_th[ix,t] = @constraint(m,sum([startth[name,Int(i)] for i in ((t-devices[ix].tech.timelimits.up+1):t) if i > 0 ]) <= onth[name,t])
+                DownTime_th[ix,t] = @constraint(m,sum([stopth[name,Int(i)] for i in ((t-devices[ix].tech.timelimits.down + 1):t) if i > 0]) <= (1 - onth[name,t]) )
             end
         else
             error("Bus name in Array and variable do not match")
         end
     end
-    return true
+
+    JuMP.registercon(m, :MinUp_thermal, Uptime_th)
+    JuMP.registercon(m, :MinDown_thermal, DownTime_th)
+
+    return m
 end
