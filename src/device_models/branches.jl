@@ -20,7 +20,7 @@ function FlowConstraints(m::JuMP.Model, fbr::PowerVariable, devices::Array{T,1},
     return true
 end
 
-function PTDFNetworkModel(m::JuMP.Model, fbr::PowerVariable, NetInjection::Array{JuMP.AffExpr}, time_periods::Int)
+function PTDFNetworkModel(m::JuMP.Model, fbr::PowerVariable, NetInjection::A, time_periods::Int) where A <: PowerExpressionArray
 
     (length(fbr.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.

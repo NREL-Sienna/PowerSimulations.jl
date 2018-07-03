@@ -6,7 +6,10 @@ using PowerSystems
 using Compat
 
 const PowerVariable = JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}}
+const PowerExpressionArray = Matrix{<:JuMP.GenericAffExpr}
 
+#utils
+include("utils/undef_check.jl")
 
 #base and core
 #include("core/abstract_models.jl")
@@ -35,5 +38,8 @@ include("cost_functions/controlableload_cost.jl")
 
 #PowerModels
 #include("power_models/economic_dispatch.jl")
+
+#Utils
+
 
 end # module

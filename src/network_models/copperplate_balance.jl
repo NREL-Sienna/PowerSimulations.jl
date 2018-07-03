@@ -1,10 +1,15 @@
-function CopperPlateBalance(m::JuMP.Model, NetInjection::Array{JuMP.AffExpr}, time_periods::Int)
+function CopperPlateBalance(m::JuMP.Model, VarNetInjection::A, TsInjectionBalance:: Array{Float64}, time_periods::Int) where A <: PowerExpressionArray
+
+    TsInjectionBalance = sum(TsInjectionBalance, 1)
+    VarNetInjection = PowerSimulations.RemoveUndef!(VarNetInjection)
     @constraintref cpn[1:time_periods]
 
     for t in 1:time_periods
         # TODO: Check is sum() is the best way to do this. Update in JuMP 0.19 to append!()
-        cpn[t] = @constraint(m, sum(NetInjection[:,t]) == 0)
+        cpn[t] = @constraint(m, sum(VarNetInjection[:,t]) == TsInjectionBalance[t])
     end
 
-    return true
+    JuMP.registercon(m, :CopperPlateBalance, cpn)
+
+    return m
 end
