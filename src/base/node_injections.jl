@@ -1,4 +1,4 @@
-function VarNetInjectIterate!(NetInjectionVar::A, buses::Array{Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.ThermalGen, A <: PowerExpressionArray}
+function varnetinjectiterate!(NetInjectionVar::A, buses::Array{Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.ThermalGen, A <: PowerExpressionArray}
 
         for b in buses
 
@@ -17,7 +17,7 @@ function VarNetInjectIterate!(NetInjectionVar::A, buses::Array{Bus}, variable::P
 
 end
 
-function VarNetInjectIterate!(NetInjectionVar::A, buses::Array{Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.RenewableGen, A <: PowerExpressionArray}
+function varnetinjectiterate!(NetInjectionVar::A, buses::Array{Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.RenewableGen, A <: PowerExpressionArray}
 
         for b in buses
 
@@ -36,7 +36,7 @@ function VarNetInjectIterate!(NetInjectionVar::A, buses::Array{Bus}, variable::P
 
 end
 
-function VarNetInjectIterate!(NetInjectionVar::A, buses::Array{Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.HydroGen, A <: PowerExpressionArray}
+function varnetinjectiterate!(NetInjectionVar::A, buses::Array{Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.HydroGen, A <: PowerExpressionArray}
 
     for b in buses
 
@@ -54,7 +54,7 @@ function VarNetInjectIterate!(NetInjectionVar::A, buses::Array{Bus}, variable::P
     return NetInjectionVar
 end
 
-function VarNetInjectIterate!(NetInjectionVar::A, buses::Array{Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.ElectricLoad,A <: PowerExpressionArray}
+function varnetinjectiterate!(NetInjectionVar::A, buses::Array{Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.ElectricLoad,A <: PowerExpressionArray}
 
     for b in buses
 
@@ -73,7 +73,7 @@ function VarNetInjectIterate!(NetInjectionVar::A, buses::Array{Bus}, variable::P
 
 end
 
-function VarNetInjectIterate!(NetInjectionVar::A, buses::Array{Bus}, variable_in::PowerVariable, variable_out::PowerVariable, time_periods::Int, device::Array{T}) where{T <: PowerSystems.Storage, A <: PowerExpressionArray}
+function varnetinjectiterate!(NetInjectionVar::A, buses::Array{Bus}, variable_in::PowerVariable, variable_out::PowerVariable, time_periods::Int, device::Array{T}) where{T <: PowerSystems.Storage, A <: PowerExpressionArray}
 
         for b in buses
 
@@ -96,21 +96,21 @@ end
 """
 This function generates an Array of affine expressions where each entry represents the LHS of the nodal balance equations. The corresponding expressions are the sum of the relevant JuMP variables for each node and each time-step
 """
-function VarInjectionExpressions(sys::PowerSystems.PowerSystem; var_th=nothing, var_re=nothing, phy=nothing, var_cl=nothing, var_in=nothing, var_out=nothing)
+function varinjectionexpressions(sys::PowerSystems.PowerSystem; var_th=nothing, var_re=nothing, phy=nothing, var_cl=nothing, var_in=nothing, var_out=nothing)
 
     NetInjectionVar =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys.buses), sys.time_periods)
 
     # TODO: Iterate over generator types in PowerSystems.Generators to enable any type of possible future generation types
 
-    !isa(sys.generators.thermal,Nothing)? NetInjectionVar = VarNetInjectIterate!(NetInjectionVar, sys.buses, var_th, sys.time_periods, sys.generators.thermal): true
+    !isa(sys.generators.thermal,Nothing)? NetInjectionVar = varnetinjectiterate!(NetInjectionVar, sys.buses, var_th, sys.time_periods, sys.generators.thermal): true
 
-    !isa(sys.generators.renewable,Nothing)? NetInjectionVar = VarNetInjectIterate!(NetInjectionVar, sys.buses, var_re, sys.time_periods, sys.generators.renewable): true
+    !isa(sys.generators.renewable,Nothing)? NetInjectionVar = varnetinjectiterate!(NetInjectionVar, sys.buses, var_re, sys.time_periods, sys.generators.renewable): true
 
-    !isa(sys.generators.hydro,Nothing)? NetInjectionVar = VarNetInjectIterate!(NetInjectionVar, sys.buses, phy, sys.time_periods, sys.generators.hydro): true
+    !isa(sys.generators.hydro,Nothing)? NetInjectionVar = varnetinjectiterate!(NetInjectionVar, sys.buses, phy, sys.time_periods, sys.generators.hydro): true
 
-    !isa(sys.storage,Nothing)? NetInjectionVar = VarNetInjectIterate!(NetInjectionVar, sys.buses, var_in, var_out, sys.time_periods, sys.storage) : true
+    !isa(sys.storage,Nothing)? NetInjectionVar = varnetinjectiterate!(NetInjectionVar, sys.buses, var_in, var_out, sys.time_periods, sys.storage) : true
 
-    NetInjectionVar = VarNetInjectIterate!(NetInjectionVar, sys.buses, var_cl, sys.time_periods, sys.loads)
+    NetInjectionVar = varnetinjectiterate!(NetInjectionVar, sys.buses, var_cl, sys.time_periods, sys.loads)
 
     return NetInjectionVar
 end
@@ -119,7 +119,7 @@ end
 """
 This function generates an Array of floats where each entry represents the RHS of the nodal balance equations. The corresponding values are the net-load values for each node and each time-step
 """
-function TsInjectionBalance(sys::PowerSystems.PowerSystem)
+function tsinjectionbalance(sys::PowerSystems.PowerSystem)
 
     NetInjectionTs =  zeros(Float64, length(sys.buses), sys.time_periods)
 

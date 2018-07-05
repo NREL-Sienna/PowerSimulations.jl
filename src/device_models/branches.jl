@@ -1,4 +1,4 @@
-function BranchFlowVariables(m::JuMP.Model, devices::Array{T,1}, time_periods) where T <: Branch
+function branchflowvariables(m::JuMP.Model, devices::Array{T,1}, time_periods) where T <: Branch
     on_set = [d.name for d in devices if d.available == true]
     t = 1:time_periods
     @variable(m, fbr[on_set,t])
@@ -8,7 +8,7 @@ end
 # TODO: Add the Flow limits for a DC Line
 # TODO: Add the Flow limits for a Transformer
 
-function FlowConstraints(m::JuMP.Model, fbr::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: Branch
+function flowconstraints(m::JuMP.Model, fbr::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: Branch
     (length(fbr.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
 
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
@@ -30,7 +30,7 @@ function FlowConstraints(m::JuMP.Model, fbr::PowerVariable, devices::Array{T,1},
     return m
 end
 
-function PTDFNetworkModel(m::JuMP.Model, sys::PowerSystems.PowerSystem, fbr::PowerVariable, NetInjection::A, time_periods::Int64) where A <: PowerExpressionArray
+function PTDFnetworkmodel(m::JuMP.Model, sys::PowerSystems.PowerSystem, fbr::PowerVariable, NetInjection::A, time_periods::Int64) where A <: PowerExpressionArray
 
     (length(fbr.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
 

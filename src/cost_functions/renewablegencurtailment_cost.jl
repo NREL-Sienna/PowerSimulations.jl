@@ -1,4 +1,4 @@
-function VariableCostRe(P_re::JuMP.JuMPArray{JuMP.Variable}, Device::Array{RenewableCurtailment})
+function variablecostre(P_re::JuMP.JuMPArray{JuMP.Variable}, Device::Array{RenewableCurtailment})
 
     cost = 0.0;
 
@@ -16,7 +16,7 @@ function VariableCostRe(P_re::JuMP.JuMPArray{JuMP.Variable}, Device::Array{Renew
 
 end
 
-function LoadCost(X::JuMP.Variable, cost_component::Float64)
+function loadcost(X::JuMP.Variable, cost_component::Float64)
 
     return cost = X*cost_component
 end

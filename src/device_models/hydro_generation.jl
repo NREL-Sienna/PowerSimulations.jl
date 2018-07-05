@@ -1,4 +1,4 @@
-function GenerationVariables(m::JuMP.Model, devices::Array{T,1}, time_periods) where T <: HydroGen
+function generationvariables(m::JuMP.Model, devices::Array{T,1}, time_periods) where T <: HydroGen
     on_set = [d.name for d in devices if d.available == true && !isa(d, HydroFix) ]
     t = 1:time_periods
     @variable(m::JuMP.Model, phg[on_set,t]) # Power output of generators
@@ -8,7 +8,7 @@ end
 """
 This function adds the power limits of  hydro generators when there are no CommitmentVariables
 """
-function PowerConstraints(m::JuMP.Model, phg::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: HydroCurtailment
+function powerconstraints(m::JuMP.Model, phg::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: HydroCurtailment
     (length(phg.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
     # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])

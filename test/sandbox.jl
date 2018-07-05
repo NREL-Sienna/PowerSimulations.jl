@@ -30,7 +30,7 @@ generators_hg = [
 #Variable Creation Testing
 
 
-phg = PowerSimulations.GenerationVariables(m, generators_hg, sys5b.time_periods)
+phg = PowerSimulations.generationvariables(m, generators_hg, sys5b.time_periods)
 pcl = PowerSimulations.LoadVariables(m, sys5b.loads, sys5b.time_periods)
 
 
@@ -39,14 +39,14 @@ pcl = PowerSimulations.LoadVariables(m, sys5b.loads, sys5b.time_periods)
 
 
 #Controllable Load Constraints
-PowerSimulations.PowerConstraints(m, pcl, [sys5.loads[4]], sys5b.time_periods)
+PowerSimulations.powerconstraints(m, pcl, [sys5.loads[4]], sys5b.time_periods)
 
 #Storage Constraints
 
 
 
 #Hydro Generation Constraints
-PowerSimulations.PowerConstraints(m, phg, [generators_hg[2]], sys5b.time_periods)
+PowerSimulations.powerconstraints(m, phg, [generators_hg[2]], sys5b.time_periods)
 
 
 #=

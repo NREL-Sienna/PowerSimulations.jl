@@ -1,6 +1,4 @@
-export CommitmentCost 
-
-function CommitmentCost(start::JuMP.JuMPArray{JuMP.Variable}, stop::JuMP.JuMPArray{JuMP.Variable}, status::JuMP.JuMPArray{JuMP.Variable}, generators::Array{ThermalGen})
+function commitmentcost(start::JuMP.JuMPArray{JuMP.Variable}, stop::JuMP.JuMPArray{JuMP.Variable}, status::JuMP.JuMPArray{JuMP.Variable}, generators::Array{ThermalGen})
 
     cost = 0.0;
 

@@ -1,4 +1,4 @@
-function VariableCostLoad(pcl::JuMP.JuMPArray{JuMP.Variable}, loads::Array{InterruptibleLoad})
+function variablecostload(pcl::JuMP.JuMPArray{JuMP.Variable}, loads::Array{InterruptibleLoad})
 
     cost = 0.0;
 
@@ -16,7 +16,7 @@ function VariableCostLoad(pcl::JuMP.JuMPArray{JuMP.Variable}, loads::Array{Inter
 
 end
 
-function CLoadCost(X::JuMP.Variable, cost_component::Float64)
+function cloadcost(X::JuMP.Variable, cost_component::Float64)
 
     return cost = X*cost_component
 end

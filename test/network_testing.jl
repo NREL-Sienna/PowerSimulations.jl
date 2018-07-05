@@ -27,10 +27,10 @@ sys5b = PowerSystem(nodes5, append!(generators5, generators_hg), loads5_DA, bran
 
 m=Model()
 
-pth = PowerSimulations.GenerationVariables(m, sys5b.generators.thermal, sys5b.time_periods)
-pre = PowerSimulations.GenerationVariables(m, sys5b.generators.renewable, sys5b.time_periods)
-Pin, Pout = PowerSimulations.GenerationVariables(m, sys5b.storage, sys5b.time_periods)
-phg = PowerSimulations.GenerationVariables(m, generators_hg, sys5b.time_periods)
+pth = PowerSimulations.generationvariables(m, sys5b.generators.thermal, sys5b.time_periods)
+pre = PowerSimulations.generationvariables(m, sys5b.generators.renewable, sys5b.time_periods)
+Pin, Pout = PowerSimulations.generationvariables(m, sys5b.storage, sys5b.time_periods)
+phg = PowerSimulations.generationvariables(m, generators_hg, sys5b.time_periods)
 fl = PowerSimulations.BranchFlowVariables(m, sys5b.network.branches, sys5b.time_periods)
 pcl = PowerSimulations.LoadVariables(m, sys5b.loads, sys5b.time_periods)
 
@@ -42,10 +42,10 @@ m = PowerSimulations.CopperPlateBalance(m, VarNets, TsNets, sys5b.time_periods);
 
 m=Model()
 
-pth = PowerSimulations.GenerationVariables(m, sys5b.generators.thermal, sys5b.time_periods)
-pre = PowerSimulations.GenerationVariables(m, sys5b.generators.renewable, sys5b.time_periods)
-Pin, Pout = PowerSimulations.GenerationVariables(m, sys5b.storage, sys5b.time_periods)
-phg = PowerSimulations.GenerationVariables(m, generators_hg, sys5b.time_periods)
+pth = PowerSimulations.generationvariables(m, sys5b.generators.thermal, sys5b.time_periods)
+pre = PowerSimulations.generationvariables(m, sys5b.generators.renewable, sys5b.time_periods)
+Pin, Pout = PowerSimulations.generationvariables(m, sys5b.storage, sys5b.time_periods)
+phg = PowerSimulations.generationvariables(m, generators_hg, sys5b.time_periods)
 fl = PowerSimulations.BranchFlowVariables(m, sys5b.branches, sys5b.time_periods)
 pcl = PowerSimulations.LoadVariables(m, sys5b.loads, sys5b.time_periods)
 

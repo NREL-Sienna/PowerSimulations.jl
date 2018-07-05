@@ -1,7 +1,7 @@
-function CopperPlateBalance(m::JuMP.Model, VarNetInjection::A, TsInjectionBalance:: Array{Float64}, time_periods::Int64) where A <: PowerExpressionArray
+function copperplatebalance(m::JuMP.Model, VarNetInjection::A, TsInjectionBalance:: Array{Float64}, time_periods::Int64) where A <: PowerExpressionArray
 
     TsInjectionBalance = sum(TsInjectionBalance, 1)
-    VarNetInjection = PowerSimulations.RemoveUndef!(VarNetInjection)
+    VarNetInjection = remove_undef!(VarNetInjection)
     @constraintref cpn[1:time_periods]
 
     for t in 1:time_periods

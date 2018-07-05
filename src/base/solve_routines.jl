@@ -1,6 +1,6 @@
 ## All this code breaks with JumP 0.19.
 
-function SolvePSModel(Psmodel::JuMP.Model; Solver = nothing)
+function solvepsmodel(Psmodel::JuMP.Model; Solver = nothing)
 
     model_type = JuMP.ProblemTraits(Psmodel)
 
