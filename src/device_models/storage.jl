@@ -43,8 +43,8 @@ function energybookkeeping(m::JuMP.Model, pbtin::PowerVariable, pbtout::PowerVar
 
     @constraintref BookKeep_bt[1:length(ebt.indexsets[1]),1:length(ebt.indexsets[2])]
 
-    (pbtin.indexsets[1] !== pbtout.indexsets[1]) ? warn("Input/Output variables indexes are inconsistent"): true
-    (pbtout.indexsets[1] !== ebt.indexsets[1]) ? warn("Input/Output and Battery Power variables indexes are inconsistent"): true
+    (pbtin.indexsets[1] !== pbtout.indexsets[1]) ? warn("Input/Output Power variables indexes are inconsistent"): true
+    (pbtout.indexsets[1] !== ebt.indexsets[1]) ? warn("Input/Output and Battery Energy variables indexes are inconsistent"): true
 
     # TODO: Change loop order
     # TODO: Add Initial SOC for storage
