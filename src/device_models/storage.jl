@@ -6,7 +6,7 @@ function generationvariables(m::JuMP.Model, devices::Array{T,1}, time_periods::I
     return pbtin, pbtout
 end
 
-function StorageVariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: GenericBattery
+function storagevariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: GenericBattery
     on_set = [d.name for d in devices if d.available]
     t = 1:time_periods
     @variable(m, ebt[on_set,t] >= 0.0)
