@@ -5,7 +5,7 @@ function variablecostre(P_re::JuMP.JuMPArray{JuMP.Variable}, Device::Array{Renew
     for (ix, name) in enumerate(P_re.indexsets[1])
         if name == loads[ix].name
             for time in P_l.indexsets[2]
-                cost = cost + LoadCost(P_l[string(name),time], Device[ix].sheddingcost)
+                cost = cost + loadcost(P_l[string(name),time], Device[ix].sheddingcost)
             end
         else
             error("Bus name in Array and variable do not match")

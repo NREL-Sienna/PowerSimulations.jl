@@ -8,19 +8,19 @@ function commitmentcost(start::JuMP.JuMPArray{JuMP.Variable}, stop::JuMP.JuMPArr
 
                 if generators[ix].econ.startupcost > 0
 
-                    cost = cost + Cost(start[string(name),time], generators[ix].econ.startupcost)
+                    cost = cost + cost(start[string(name),time], generators[ix].econ.startupcost)
 
                 end
 
                 if generators[ix].econ.shutdncost > 0
 
-                    cost = cost + Cost(stop[string(name),time], generators[ix].econ.shutdncost)
+                    cost = cost + cost(stop[string(name),time], generators[ix].econ.shutdncost)
 
                 end
 
                 if generators[ix].econ.fixedcost > 0
 
-                    cost = cost + Cost(status[string(name),time], generators[ix].econ.fixedcost)
+                    cost = cost + cost(status[string(name),time], generators[ix].econ.fixedcost)
 
                 end
 
