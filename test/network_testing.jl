@@ -49,9 +49,10 @@ phg = PowerSimulations.GenerationVariables(m, generators_hg, sys5b.time_periods)
 fl = PowerSimulations.BranchFlowVariables(m, sys5b.branches, sys5b.time_periods)
 pcl = PowerSimulations.LoadVariables(m, sys5b.loads, sys5b.time_periods)
 
+m = PowerSimulations.FlowConstraints(m, fl, sys5b.branches, sys5b.time_periods)
 VarNets = PowerSimulations.VarInjectionExpressions(sys5b, var_th = pth, var_re=pre, var_cl = pcl, var_in = Pin, var_out = Pout, phy = phg)
 VarNet = PowerSimulations.VarBranchInjection!(VarNets, fl, sys5b.branches, sys5b.time_periods)
 TsNets = PowerSimulations.TsInjectionBalance(sys5b)
-m = PowerSimulations.NodalFlowBalance(m, VarNets, TsNets);
+m = PowerSimulations.NodalFlowBalance(m, VarNets, TsNets, sys5b.time_periods);
 
 true

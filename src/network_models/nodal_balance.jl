@@ -1,4 +1,4 @@
-function VarBranchInjection!(VarNetInjection::A, fbr::PowerVariable, branches::Array{B}, time_periods::Int) where {A <: PowerExpressionArray, B <:Branch}
+function VarBranchInjection!(VarNetInjection::A, fbr::PowerVariable, branches::Array{B}, time_periods::Int64) where {A <: PowerExpressionArray, B <:Branch}
 
     for t = 1:time_periods, branch in fbr.indexsets[1]
 
@@ -13,12 +13,12 @@ function VarBranchInjection!(VarNetInjection::A, fbr::PowerVariable, branches::A
     return VarNetInjection
 end
 
-function NodalFlowBalance(m::JuMP.Model, VarNetInjection::A, TsInjectionBalance:: Array{Float64}, time_steps::Int64) where  A <: PowerExpressionArray
+function NodalFlowBalance(m::JuMP.Model, VarNetInjection::A, TsInjectionBalance:: Array{Float64}, time_periods::Int64) where  A <: PowerExpressionArray
 
         # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
         # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
 
-        @constraintref PFBalance[1:size(VarNetInjection)[1], 1:time_steps::Int64]
+        @constraintref PFBalance[1:size(VarNetInjection)[1], 1:time_periods::Int64]
 
         for (n, c) in enumerate(IndexCartesian(), VarNetInjection)
 
