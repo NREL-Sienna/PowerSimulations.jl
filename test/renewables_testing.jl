@@ -2,7 +2,7 @@ using PowerSystems
 using JuMP
 
 include(string(homedir(),"/.julia/v0.6/PowerSystems/data/data_5bus.jl"))
-sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, 230.0, 1000.0)
+sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing, 230.0, 1000.0)
 
 m = Model()
 

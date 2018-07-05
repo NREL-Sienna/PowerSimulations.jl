@@ -23,6 +23,7 @@ generators_hg = [
         1000.0,TimeSeries.TimeArray(DayAhead,wind_ts_DA) )
 ]
 
+m = Model()
 sys5b = PowerSystem(nodes5, append!(generators5, generators_hg), loads5_DA, branches5, battery, 230.0, 1000.0)
 
 
