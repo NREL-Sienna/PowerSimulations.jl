@@ -31,14 +31,14 @@ pth = PowerSimulations.generationvariables(m, sys5b.generators.thermal, sys5b.ti
 pre = PowerSimulations.generationvariables(m, sys5b.generators.renewable, sys5b.time_periods)
 Pin, Pout = PowerSimulations.generationvariables(m, sys5b.storage, sys5b.time_periods)
 phg = PowerSimulations.generationvariables(m, generators_hg, sys5b.time_periods)
-fl = PowerSimulations.BranchFlowVariables(m, sys5b.network.branches, sys5b.time_periods)
-pcl = PowerSimulations.LoadVariables(m, sys5b.loads, sys5b.time_periods)
+fl = PowerSimulations.branchflowvariables(m, sys5b.network.branches, sys5b.time_periods)
+pcl = PowerSimulations.loadvariables(m, sys5b.loads, sys5b.time_periods)
 
 #Injection Array
-VarNets = PowerSimulations.VarInjectionExpressions(sys5b, var_th = pth, var_re=pre, var_cl = pcl, var_in = Pin, var_out = Pout, phy = phg)
-TsNets = PowerSimulations.TsInjectionBalance(sys5b)
+VarNets = PowerSimulations.varinjectionexpressions(sys5b, var_th = pth, var_re=pre, var_cl = pcl, var_in = Pin, var_out = Pout, phy = phg)
+TsNets = PowerSimulations.tsinjectionbalance(sys5b)
 #CopperPlate Network test
-m = PowerSimulations.CopperPlateBalance(m, VarNets, TsNets, sys5b.time_periods);
+m = PowerSimulations.copperplatebalance(m, VarNets, TsNets, sys5b.time_periods);
 
 m=Model()
 
@@ -46,13 +46,13 @@ pth = PowerSimulations.generationvariables(m, sys5b.generators.thermal, sys5b.ti
 pre = PowerSimulations.generationvariables(m, sys5b.generators.renewable, sys5b.time_periods)
 Pin, Pout = PowerSimulations.generationvariables(m, sys5b.storage, sys5b.time_periods)
 phg = PowerSimulations.generationvariables(m, generators_hg, sys5b.time_periods)
-fl = PowerSimulations.BranchFlowVariables(m, sys5b.branches, sys5b.time_periods)
-pcl = PowerSimulations.LoadVariables(m, sys5b.loads, sys5b.time_periods)
+fl = PowerSimulations.branchflowvariables(m, sys5b.branches, sys5b.time_periods)
+pcl = PowerSimulations.loadvariables(m, sys5b.loads, sys5b.time_periods)
 
 m = PowerSimulations.FlowConstraints(m, fl, sys5b.branches, sys5b.time_periods)
-VarNets = PowerSimulations.VarInjectionExpressions(sys5b, var_th = pth, var_re=pre, var_cl = pcl, var_in = Pin, var_out = Pout, phy = phg)
-VarNet = PowerSimulations.VarBranchInjection!(VarNets, fl, sys5b.branches, sys5b.time_periods)
-TsNets = PowerSimulations.TsInjectionBalance(sys5b)
-m = PowerSimulations.NodalFlowBalance(m, VarNets, TsNets, sys5b.time_periods);
+VarNets = PowerSimulations.varinjectionexpressions(sys5b, var_th = pth, var_re=pre, var_cl = pcl, var_in = Pin, var_out = Pout, phy = phg)
+VarNet = PowerSimulations.varbranchinjection!(VarNets, fl, sys5b.branches, sys5b.time_periods)
+TsNets = PowerSimulations.tsinjectionbalance(sys5b)
+m = PowerSimulations.nodalflowbalance(m, VarNets, TsNets, sys5b.time_periods);
 
 true
