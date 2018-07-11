@@ -1,11 +1,11 @@
-function variablecostload(pcl::JuMP.JuMPArray{JuMP.Variable}, loads::Array{InterruptibleLoad})
+function variablecost(pcl::PowerVariable, devices::Array{PowerSystems.InterruptibleLoad})
 
-    cost = 0.0;
+    cost = JuMP.AffExpr()
 
-    for (ix, name) in enumerate(Pcl.indexsets[1])
-        if name == loads[ix].name
-            for time in P_l.indexsets[2]
-                cost = cost + cloadcost(pcl[string(name),time], loads[ix].sheddingcost)
+    for (ix, name) in enumerate(pcl.indexsets[1])
+        if name == devices[ix].name
+            for t in pcl.indexsets[2]
+                append!(cost,cloadcost(pcl[name,t], devices[ix]))
             end
         else
             error("Bus name in Array and variable do not match")
@@ -16,7 +16,7 @@ function variablecostload(pcl::JuMP.JuMPArray{JuMP.Variable}, loads::Array{Inter
 
 end
 
-function cloadcost(X::JuMP.Variable, cost_component::Float64)
+function cloadcost(X::JuMP.Variable, device::PowerSystems.InterruptibleLoad)
 
-    return cost = X*cost_component
+    return cost = device.sheddingcost*X
 end
