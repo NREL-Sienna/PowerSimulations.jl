@@ -1,11 +1,11 @@
-function variablecostre(P_re::JuMP.JuMPArray{JuMP.Variable}, Device::Array{RenewableCurtailment})
+function variablecost(pre::PowerVariable, devices::Array{T}) where T <: PowerSystems.RenewableGen
 
-    cost = 0.0;
+    cost = JuMP.AffExpr()
 
-    for (ix, name) in enumerate(P_re.indexsets[1])
-        if name == loads[ix].name
-            for time in P_l.indexsets[2]
-                cost = cost + loadcost(P_l[string(name),time], Device[ix].sheddingcost)
+    for (ix, name) in enumerate(pre.indexsets[1])
+        if name == devices[ix].name
+            for t in pre.indexsets[2]
+                append!(cost,precost(pre[name,t], devices[ix]))
             end
         else
             error("Bus name in Array and variable do not match")
@@ -16,7 +16,7 @@ function variablecostre(P_re::JuMP.JuMPArray{JuMP.Variable}, Device::Array{Renew
 
 end
 
-function loadcost(X::JuMP.Variable, cost_component::Float64)
+function precost(X::JuMP.Variable, device::Union{PowerSystems.RenewableCurtailment,PowerSystems.RenewableFullDispatch})
 
-    return cost = X*cost_component
+    return cost = device.econ.curtailcost*(-X)
 end
