@@ -5,9 +5,6 @@ function branchflowvariables(m::JuMP.Model, devices::Array{T,1}, time_periods) w
     return fbr
 end
 
-# TODO: Add the Flow limits for a DC Line
-# TODO: Add the Flow limits for a Transformer
-
 function flowconstraints(m::JuMP.Model, fbr::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: Branch
     (length(fbr.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
 
@@ -30,21 +27,35 @@ function flowconstraints(m::JuMP.Model, fbr::PowerVariable, devices::Array{T,1},
     return m
 end
 
-function PTDFnetworkmodel(m::JuMP.Model, sys::PowerSystems.PowerSystem, fbr::PowerVariable, NetInjection::A, time_periods::Int64) where A <: PowerExpressionArray
+
+function ptdf_powerflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, fbr::PowerVariable, DeviceNetInjection::A, TsInjectionBalance::Array{Float64}, time_periods::Int64) where A <: PowerExpressionArray
 
     (length(fbr.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
 
-    PTDF, A = PowerSystems.BuildPTDF(sys.branches, sys.buses)
+    PTDF, = PowerSystems.BuildPTDF(sys.branches, sys.buses)
 
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
     # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
-    @constraintref BranchFlow[1:length(fbr.indexsets[1]),1:length(fbr.indexsets[2])]
+    @constraintref branch_flow[1:length(fbr.indexsets[1]),1:length(fbr.indexsets[2])]
 
-    for t = 1:time_periods, branch in fbr.indexsets[1]
+    for t in 1:time_periods, (ix,branch) in enumerate(fbr.indexsets[1])
+
+        for bus in 1:size(TsInjectionBalance)[1]
+
+            branch_exp = JuMP.AffExpr(fbr[branch,t], 1.0)
+
+            append!(varnets[bus,t], tsnets[bus,t])
+
+            append!(branch_exp, -1*PTDF[ix,bus] * varnets[bus,t])
+
+            branch_flow[ix,t] = @constraint(m, branch_exp == 0)
+
+        end
 
     end
 
-    JuMP.registercon(m, :BranchFlow, BranchFlow)
+    JuMP.registercon(m, :BranchFlow, branch_flow)
 
     return m
 end
+
