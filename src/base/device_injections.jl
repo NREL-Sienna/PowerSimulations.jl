@@ -1,4 +1,4 @@
-function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.ThermalGen, A <: PowerExpressionArray}
+function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{PowerSystems.Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.ThermalGen, A <: PowerExpressionArray}
 
         for b in buses
 
@@ -17,7 +17,7 @@ function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{Bus}, variabl
 
 end
 
-function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.RenewableGen, A <: PowerExpressionArray}
+function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{PowerSystems.Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.RenewableGen, A <: PowerExpressionArray}
 
         for b in buses
 
@@ -36,7 +36,7 @@ function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{Bus}, variabl
 
 end
 
-function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.HydroGen, A <: PowerExpressionArray}
+function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{PowerSystems.Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.HydroGen, A <: PowerExpressionArray}
 
     for b in buses
 
@@ -54,7 +54,7 @@ function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{Bus}, variabl
     return DevicesNetInjection
 end
 
-function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.ElectricLoad,A <: PowerExpressionArray}
+function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{PowerSystems.Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.ElectricLoad,A <: PowerExpressionArray}
 
     for b in buses
 
@@ -73,7 +73,7 @@ function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{Bus}, variabl
 
 end
 
-function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{Bus}, variable_in::PowerVariable, variable_out::PowerVariable, time_periods::Int, device::Array{T}) where{T <: PowerSystems.Storage, A <: PowerExpressionArray}
+function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{PowerSystems.Bus}, variable_in::PowerVariable, variable_out::PowerVariable, time_periods::Int, device::Array{T}) where{T <: PowerSystems.Storage, A <: PowerExpressionArray}
 
         for b in buses
 

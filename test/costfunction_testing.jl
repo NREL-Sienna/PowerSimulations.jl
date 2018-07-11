@@ -35,3 +35,4 @@ tl = PowerSimulations.variablecost(pcl_vars, pcl)
 pre_vars = PowerSimulations.generationvariables(m, sys5b.generators.renewable, sys5b.time_periods)
 pre = [d for d in sys5b.generators.renewable if !isa(d, PowerSystems.RenewableFix)]
 tre = PowerSimulations.variablecost(pre_vars, pre)
+

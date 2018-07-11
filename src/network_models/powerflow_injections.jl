@@ -1,4 +1,4 @@
-function varbranchinjection(fbr::PowerVariable, branches::Array{B}, bus_number::Int64, time_periods::Int64) where {B <:Branch}
+function varbranchinjection(fbr::PowerVariable, branches::Array{B}, bus_number::Int64, time_periods::Int64) where {B <:PowerSystems.Branch}
 
     PowerFlowNetInjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(bus_number, time_periods)
 

@@ -1,4 +1,4 @@
-function generationvariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: GenericBattery
+function generationvariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.GenericBattery
     on_set = [d.name for d in devices if d.available]
     t = 1:time_periods
     @variable(m, pbtin[on_set,t] >= 0.0)
@@ -6,14 +6,14 @@ function generationvariables(m::JuMP.Model, devices::Array{T,1}, time_periods::I
     return pbtin, pbtout
 end
 
-function storagevariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: GenericBattery
+function storagevariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.GenericBattery
     on_set = [d.name for d in devices if d.available]
     t = 1:time_periods
     @variable(m, ebt[on_set,t] >= 0.0)
     return ebt
 end
 
-function powerconstraints(m::JuMP.Model, pbtin::PowerVariable, pbtout::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: GenericBattery
+function powerconstraints(m::JuMP.Model, pbtin::PowerVariable, pbtout::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.GenericBattery
 
     (length(pbtin.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
     (length(pbtout.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
@@ -35,7 +35,7 @@ function powerconstraints(m::JuMP.Model, pbtin::PowerVariable, pbtout::PowerVari
     return true
 end
 
-function energybookkeeping(m::JuMP.Model, pbtin::PowerVariable, pbtout::PowerVariable, ebt::PowerVariable, devices::Array{T,1}, time_periods::Int64; ini_cond = 0.0) where T <: GenericBattery
+function energybookkeeping(m::JuMP.Model, pbtin::PowerVariable, pbtout::PowerVariable, ebt::PowerVariable, devices::Array{T,1}, time_periods::Int64; ini_cond = 0.0) where T <: PowerSystems.GenericBattery
 
     (length(pbtin.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent in P_bt_in"): true
     (length(pbtout.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent in P_bt_out"): true
@@ -62,7 +62,7 @@ function energybookkeeping(m::JuMP.Model, pbtin::PowerVariable, pbtout::PowerVar
     return true
 end
 
-function energyconstraint(m::JuMP.Model, ebt::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: GenericBattery
+function energyconstraint(m::JuMP.Model, ebt::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.GenericBattery
 
     (length(ebt.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
     @constraintref EnergyLimit_bt[1:length(ebt.indexsets[1]),1:length(ebt.indexsets[2])]
