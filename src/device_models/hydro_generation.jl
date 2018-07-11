@@ -1,6 +1,6 @@
 function generationvariables(m::JuMP.Model, devices::Array{T,1}, time_periods) where T <: HydroGen
     on_set = [d.name for d in devices if d.available == true && !isa(d, HydroFix) ]
-    t = 1:time_periods
+    t in 1:time_periods
     @variable(m::JuMP.Model, phg[on_set,t]) # Power output of generators
     return phg
 end

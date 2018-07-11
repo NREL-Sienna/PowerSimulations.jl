@@ -4,7 +4,7 @@ function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{Bus}, variabl
 
             set = [d.name for d in device if d.bus == b]
 
-            for t = 1:time_periods
+            for t in 1:time_periods
 
                 isempty(set) ? break : total = sum(variable[i,t] for i in set)
 
@@ -23,7 +23,7 @@ function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{Bus}, variabl
 
             set = [d.name for d in device if d.bus == b && !isa(d, PowerSystems.RenewableFix)]
 
-            for t = 1:time_periods
+            for t in 1:time_periods
 
                 isempty(set) ? break : total = sum(variable[i,t] for i in set)
 
@@ -42,7 +42,7 @@ function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{Bus}, variabl
 
         set = [d.name for d in device if d.bus == b && !isa(d, PowerSystems.HydroFix)]
 
-        for t = 1:time_periods
+        for t in 1:time_periods
 
             isempty(set) ? break : total = sum(variable[i,t] for i in set)
 
@@ -60,7 +60,7 @@ function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{Bus}, variabl
 
         set = [d.name for d in device if d.bus == b && !isa(d, PowerSystems.StaticLoad)]
 
-        for t = 1:time_periods
+        for t in 1:time_periods
 
             isempty(set) ? break : total = sum(variable[i,t] for i in set)
 
@@ -79,7 +79,7 @@ function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{Bus}, variabl
 
             set = [d.name for d in device if d.bus == b]
 
-            for t = 1:time_periods
+            for t in 1:time_periods
 
                 #Detects if there is a device connected at the node, if not, breaks the time loop and goes to the next bus.
                 isempty(set) ? break : total = sum(variable_in[i,t] - variable_out[i,t] for i in set)

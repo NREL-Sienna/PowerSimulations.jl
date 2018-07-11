@@ -15,7 +15,7 @@ function tsinjectionbalance(sys::PowerSystems.PowerSystem)
 
             for b in sys.buses
 
-                for t = 1:sys.time_periods
+                for t in 1:sys.time_periods
 
                     fixed_source = [fs.tech.installedcapacity*fs.scalingfactor.values[t] for fs in source if fs.bus == b]
 
@@ -29,7 +29,7 @@ function tsinjectionbalance(sys::PowerSystems.PowerSystem)
 
         for b in sys.buses
 
-                for t = 1:sys.time_periods
+                for t in 1:sys.time_periods
 
                 staticload = [sl.maxrealpower*sl.scalingfactor.values[t] for sl in sys.loads if sl.bus == b]
 
