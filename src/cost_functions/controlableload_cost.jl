@@ -2,7 +2,7 @@ function variablecostload(pcl::JuMP.JuMPArray{JuMP.Variable}, loads::Array{Inter
 
     cost = 0.0;
 
-    for (ix, name) in enumerate(P_l.indexsets[1])
+    for (ix, name) in enumerate(Pcl.indexsets[1])
         if name == loads[ix].name
             for time in P_l.indexsets[2]
                 cost = cost + cloadcost(pcl[string(name),time], loads[ix].sheddingcost)
