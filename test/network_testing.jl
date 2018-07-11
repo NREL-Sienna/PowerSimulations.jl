@@ -53,5 +53,6 @@ m = PowerSimulations.flowconstraints(m, fl, sys5b.branches, sys5b.time_periods)
 VarNets = PowerSimulations.deviceinjectionexpressions(sys5b, var_th = pth, var_re=pre, var_cl = pcl, var_in = Pin, var_out = Pout, phy = phg)
 TsNets = PowerSimulations.tsinjectionbalance(sys5b)
 PFNets = PowerSimulations.varbranchinjection(fl, sys5b.branches, length(sys5b.buses), sys5b.time_periods)
-m = PowerSimulations.copperplatebalance(m, VarNets, TsNets, sys5b.time_periods)
+m = PowerSimulations.nodalflowbalance(m, VarNets, PFNets, TsNets, sys5b.time_periods);
+m = PowerSimulations.ptdf_powerflow(m, sys5b, fl, VarNets, TsNets)
 true

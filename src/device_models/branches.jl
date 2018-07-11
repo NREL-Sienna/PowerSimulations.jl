@@ -28,7 +28,7 @@ function flowconstraints(m::JuMP.Model, fbr::PowerVariable, devices::Array{T,1},
 end
 
 
-function ptdf_powerflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, fbr::PowerVariable, DeviceNetInjection::A, TsInjectionBalance::Array{Float64}, time_periods::Int64) where A <: PowerExpressionArray
+function ptdf_powerflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, fbr::PowerVariable, DeviceNetInjection::A, TsInjectionBalance::Array{Float64}) where A <: PowerExpressionArray
 
     (length(fbr.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
 
