@@ -5,7 +5,7 @@ This function add the variables for power generation output to the model
 """
 function generationvariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: ThermalGen
     on_set = [d.name for d in devices if d.available == true]
-    t in 1:time_periods
+    t = 1:time_periods
     @variable(m::JuMP.Model, pth[on_set,t]) # Power output of generators
 
     return pth
@@ -17,7 +17,7 @@ This function add the variables for power generation commitment to the model
 """
 function CommitmentVariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: ThermalGen
     onset = [d.name for d in devices if d.available == true]
-    t in 1:time_periods
+    t = 1:time_periods
     @variable(m, onth[onset,t], Bin) # Power output of generators
     @variable(m, startth[onset,t], Bin) # Power output of generators
     @variable(m, stopth[onset,t], Bin) # Power output of generators

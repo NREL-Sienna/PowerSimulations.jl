@@ -1,6 +1,6 @@
 function loadvariables(m::JuMP.Model, devices::Array{T,1}, time_periods) where T <: ElectricLoad
     on_set = [d.name for d in devices if d.available == true && !isa(d, StaticLoad)]
-    t in 1:time_periods
+    t = 1:time_periods
     @variable(m::JuMP.Model, pcl[on_set,t] >= 0.0) # Power output of generators
     return pcl
 end
