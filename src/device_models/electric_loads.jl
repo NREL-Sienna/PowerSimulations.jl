@@ -20,5 +20,8 @@ function powerconstraints(m::JuMP.Model, pcl::PowerVariable, devices::Array{T,1}
             error("Bus name in Array and variable do not match")
         end
     end
-    return true
+
+    JuMP.registercon(m, :LoadControlLimit, Pmax_cl)
+
+    return m
 end
