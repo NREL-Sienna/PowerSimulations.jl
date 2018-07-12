@@ -37,18 +37,24 @@ end
 
 function pwl_gencost(m::JuMP.Model, variable::JuMP.Variable, cost_component::Array{Tuple})
 
-    pwlvars = @variable(m, [i = 1:(length(cost_component)-1)], lowerbound = 0.0, upperbound = (cost_component[i+1][1] - cost_component[i][1]))
+    pwlvars = @variable(m, [i = 1:(length(cost_component)-1)], basename = "{pwl{$(X)}}", lowerbound = 0.0, upperbound = (cost_component[i+1][1] - cost_component[i][1]))
     @constraint(m, sum(pwlvars) == var)
 
     cost = JuMP.GenericAffExpr(pwlvars, [c[2]/c[1] for c in cost_component[2:end]], 0.0)
 
+    return cost
 end
 
 function gencost(m::JuMP.Model, X::JuMP.JuMPArray{JuMP.Variable}, cost_component::Function)
 
+    cost = JuMP.AffExpr()
+
     for var in X
-        pwl_gencost(m, var, cost_component::Function)
+        c = pwl_gencost(m, var, cost_component::Function)
+        append!(cost,c)
     end
+
+    return cost
 
 end
 
