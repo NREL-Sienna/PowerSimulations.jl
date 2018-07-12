@@ -1,4 +1,4 @@
-function variablecost(pre::PowerVariable, devices::Array{T}) where T <: PowerSystems.RenewableGen
+function variablecost(m::JuMP.Model, pre::PowerVariable, devices::Array{T}) where T <: PowerSystems.RenewableGen
 
     cost = JuMP.AffExpr()
 
@@ -14,7 +14,8 @@ function variablecost(pre::PowerVariable, devices::Array{T}) where T <: PowerSys
 
 end
 
-function precost(X::JuMP.Variable, device::Union{PowerSystems.RenewableCurtailment,PowerSystems.RenewableFullDispatch})
+function precost(vars::Array{JuMP.Variable,1}, device::Union{PowerSystems.RenewableCurtailment,PowerSystems.RenewableFullDispatch})
 
-    return cost =sum(device.econ.curtailcost*(-X))
+    return cost =sum(device.econ.curtailpenalty*(-vars))
+
 end

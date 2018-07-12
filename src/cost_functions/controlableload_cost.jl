@@ -9,11 +9,13 @@ function variablecost(m::JuMP.Model, pcl::PowerVariable, devices::Array{PowerSys
             error("Bus name in Array and variable do not match")
         end
     end
-    return m
+
+    return cost
 
 end
 
-function cloadcost(X::JuMP.Variable, device::PowerSystems.InterruptibleLoad)
+function cloadcost(variable::Array{JuMP.Variable,1}, device::PowerSystems.InterruptibleLoad)
 
-    return cost = sum(device.sheddingcost*X)
+    return cost = sum(device.sheddingcost*variable)
+
 end

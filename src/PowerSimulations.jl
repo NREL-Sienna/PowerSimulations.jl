@@ -34,10 +34,10 @@ include("network_models/copperplate_balance.jl")
 include("network_models/nodal_balance.jl")
 
 #Cost Components
+include("cost_functions/controlableload_cost.jl")
+include("cost_functions/renewablegen_cost.jl")
 include("cost_functions/thermalgenvariable_cost.jl")
 include("cost_functions/thermalgencommitment_cost.jl")
-include("cost_functions/renewablegencurtailment_cost.jl")
-include("cost_functions/controlableload_cost.jl")
 
 #PowerModels
 #include("power_models/economic_dispatch.jl")
