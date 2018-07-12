@@ -1,6 +1,6 @@
 function commitmentcost(start::JuMP.JuMPArray{JuMP.Variable}, stop::JuMP.JuMPArray{JuMP.Variable}, status::JuMP.JuMPArray{JuMP.Variable}, generators::Array{ThermalGen})
 
-    cost = 0.0;
+    cost = JuMP.AffExpr()
 
     for (ix, name) in enumerate(status.indexsets[1])
         if name == generators[ix].name
@@ -8,19 +8,19 @@ function commitmentcost(start::JuMP.JuMPArray{JuMP.Variable}, stop::JuMP.JuMPArr
 
                 if generators[ix].econ.startupcost > 0
 
-                    cost = cost + cost(start[string(name),time], generators[ix].econ.startupcost)
+                    append!(cost,cost(start[string(name),time], generators[ix].econ.startupcost))
 
                 end
 
                 if generators[ix].econ.shutdncost > 0
 
-                    cost = cost + cost(stop[string(name),time], generators[ix].econ.shutdncost)
+                    append!(cost,cost(stop[string(name),time], generators[ix].econ.shutdncost))
 
                 end
 
                 if generators[ix].econ.fixedcost > 0
 
-                    cost = cost + cost(status[string(name),time], generators[ix].econ.fixedcost)
+                    append!(cost,cost(status[string(name),time], generators[ix].econ.fixedcost))
 
                 end
 
