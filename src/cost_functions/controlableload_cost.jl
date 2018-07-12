@@ -1,4 +1,4 @@
-function variablecost(pcl::PowerVariable, devices::Array{PowerSystems.InterruptibleLoad})
+function variablecost(m::JuMP.Model, pcl::PowerVariable, devices::Array{PowerSystems.InterruptibleLoad})
 
     cost = JuMP.AffExpr()
 
@@ -12,7 +12,9 @@ function variablecost(pcl::PowerVariable, devices::Array{PowerSystems.Interrupti
         end
     end
 
-    return cost
+
+
+    return m
 
 end
 
