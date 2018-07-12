@@ -36,3 +36,6 @@ pre_vars = PowerSimulations.generationvariables(m, sys5b.generators.renewable, s
 pre = [d for d in sys5b.generators.renewable if !isa(d, PowerSystems.RenewableFix)]
 tre = PowerSimulations.variablecost(pre_vars, pre)
 
+pth = PowerSimulations.generationvariables(m, sys5.generators.thermal, sys5.time_periods)
+on_th, start_th, stop_th = PowerSimulations.CommitmentVariables(m, sys5.generators.thermal, sys5.time_periods)
+
