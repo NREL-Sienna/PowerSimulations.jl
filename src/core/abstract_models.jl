@@ -15,12 +15,12 @@ end
 
 mutable struct SimulationModel
     model::PowerSimulationModel
-    periods::Int
-    resolution::Int
+    periods::Int64
+    resolution::Int64
     date_from::DateTime
     date_to::DateTime
-    lookahead_periods::Int
-    lookahead_resolution::Int
+    lookahead_periods::Int64
+    lookahead_resolution::Int64
     reserve_products::Any
     dynamic_analysis::Bool
     forecast::Any #Need to define this properly
