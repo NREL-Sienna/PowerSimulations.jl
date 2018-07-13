@@ -6,15 +6,15 @@ end
 
 function run_simulations(power_model::T) where T <: PowerSimulations.SimulationModel
 
-CheckPowerModel(m::M) where M <: PowerSimulations.AbstractPowerModel
-AssignSolver(m::M) where M <: PowerSimulations.AbstractPowerModel
-WarmUpModel(m::M) where M <: PowerSimulations.AbstractPowerModel
+CheckPowerModel(m::M) where M <: PowerSimulations.AbstractPowerSimulationModel
+AssignSolver(m::M) where M <: PowerSimulations.AbstractPowerSimulationModel
+WarmUpModel(m::M) where M <: PowerSimulations.AbstractPowerSimulationModel
 
 for st in simulation_steps
 
 
 
-    SolveModel(m::M) where M <: PowerSimulations.AbstractPowerModel
+    SolveModel(m::M) where M <: PowerSimulations.AbstractPowerSimulationModel
 
 end
 

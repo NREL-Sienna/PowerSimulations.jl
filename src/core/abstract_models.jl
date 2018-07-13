@@ -1,8 +1,8 @@
-export AbstractPowerModel
+export AbstractPowerSimulationModel
 export SimulationModel
 export PowerResults
 
-mutable struct AbstractPowerModel
+mutable struct AbstractPowerSimulationModel
     cost::Function
     device::Any
     dynamics::Function
@@ -12,7 +12,7 @@ mutable struct AbstractPowerModel
 end
 
 mutable struct SimulationModel
-    model::AbstractPowerModel
+    model::AbstractPowerSimulationModel
     periods::Int
     resolution::Int
     date_from::DateTime
