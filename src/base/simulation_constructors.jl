@@ -1,8 +1,9 @@
 export construct_model
 
 """
-The constructor takes de information from the AbstractPowerModel to build the variables and the constraints. 
+The constructor takes de information from the AbstractPowerModel to build the variables and the constraints.
 """
+
 
 function construct_model(model::AbstractPowerModel, data)
 

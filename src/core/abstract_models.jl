@@ -2,7 +2,7 @@ export AbstractPowerModel
 export SimulationModel
 export PowerResults
 
-struct AbstractPowerModel
+mutable struct AbstractPowerModel
     cost::Function
     device::Any
     dynamics::Function
@@ -11,7 +11,7 @@ struct AbstractPowerModel
     model::JuMP.Model
 end
 
-struct SimulationModel
+mutable struct SimulationModel
     model::AbstractPowerModel
     periods::Int
     resolution::Int
@@ -25,8 +25,11 @@ struct SimulationModel
     #A constructor here has to return the model based on the data, the time is AbstractModel
 end
 
-struct PowerResults 
-    Dispatch::TimeSeries.TimeArray
-    Solveroutput::Any 
-end 
-
+ mutable struct PowerResults
+    ThermalGeneration::Union{Nothing,DataFrame}
+    RenewableGEneration::Union{Nothing,DataFrame}
+    HydroGeneration::Union{Nothing,DataFrame}
+    Storage::Union{Nothing,DataFrame}
+    Load::Union{Nothing,DataFrame}
+    SolverOutput::Union{Nothing,Dict}
+end
