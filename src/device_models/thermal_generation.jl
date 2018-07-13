@@ -15,7 +15,7 @@ end
 """
 This function add the variables for power generation commitment to the model
 """
-function CommitmentVariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
+function commitmentvariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
     onset = [d.name for d in devices if d.available == true]
     t = 1:time_periods
     @variable(m, onth[onset,t], Bin) # Power output of generators
