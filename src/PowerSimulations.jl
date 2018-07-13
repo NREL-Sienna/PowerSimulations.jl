@@ -4,7 +4,7 @@ using JuMP
 using TimeSeries
 using PowerSystems
 using Compat
-using Base.LinAlg.BLAS.gemm
+using Base.LinAlg
 
 const PowerVariable = JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}}
 const PowerExpressionArray = Matrix{<:JuMP.GenericAffExpr}

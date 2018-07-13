@@ -1,5 +1,6 @@
 function varbranchinjection(fbr::PowerVariable, branches::Array{B}, bus_number::Int64, time_periods::Int64) where {B <:PowerSystems.Branch}
 
+    # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
     PowerFlowNetInjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(bus_number, time_periods)
 
     for t in 1:time_periods, (ix,branch) in enumerate(fbr.indexsets[1])

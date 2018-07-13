@@ -98,6 +98,7 @@ This function generates an Array of affine expressions where each entry represen
 """
 function deviceinjectionexpressions(sys::PowerSystems.PowerSystem; var_th=nothing, var_re=nothing, phy=nothing, var_cl=nothing, var_in=nothing, var_out=nothing)
 
+    # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
     DevicesNetInjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys.buses), sys.time_periods)
 
     # TODO: Iterate over generator types in PowerSystems.Generators to enable any type of possible future generation types

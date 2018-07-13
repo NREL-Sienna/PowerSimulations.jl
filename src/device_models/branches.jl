@@ -33,7 +33,7 @@ function ptdf_powerflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, fbr::Power
     (length(fbr.indexsets[2]) != sys.time_periods) ? error("Length of time dimension inconsistent"): true
 
     PTDF, = PowerSystems.build_ptdf(sys.branches, sys.buses)
-    RHS = gemm('N','N', PTDF, TsInjectionBalance)
+    RHS = BLAS.gemm('N','N', PTDF, TsInjectionBalance)
 
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
     # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
