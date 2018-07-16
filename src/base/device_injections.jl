@@ -1,17 +1,17 @@
 function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{PowerSystems.Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.ThermalGen, A <: PowerExpressionArray}
 
-        for b in buses
+    for b in buses
 
-            set = [d.name for d in device if d.bus == b]
+        set = [d.name for d in device if d.bus == b]
 
-            for t in 1:time_periods
+        for t in 1:time_periods
 
-                isempty(set) ? break : total = sum(variable[i,t] for i in set)
+            isempty(set) ? break : total = sum(variable[i,t] for i in set)
 
-                isassigned(DevicesNetInjection, b.number,t) ? append!(DevicesNetInjection[b.number,t], total): DevicesNetInjection[b.number,t] = total;
+            isassigned(DevicesNetInjection, b.number,t) ? append!(DevicesNetInjection[b.number,t], total): DevicesNetInjection[b.number,t] = total;
 
-            end
         end
+    end
 
     return DevicesNetInjection
 
@@ -19,18 +19,18 @@ end
 
 function varnetinjectiterate!(DevicesNetInjection::A, buses::Array{PowerSystems.Bus}, variable::PowerVariable, time_periods::Int, device::Array{T}) where {T <: PowerSystems.RenewableGen, A <: PowerExpressionArray}
 
-        for b in buses
+    for b in buses
 
-            set = [d.name for d in device if d.bus == b && !isa(d, PowerSystems.RenewableFix)]
+        set = [d.name for d in device if d.bus == b && !isa(d, PowerSystems.RenewableFix)]
 
-            for t in 1:time_periods
+        for t in 1:time_periods
 
-                isempty(set) ? break : total = sum(variable[i,t] for i in set)
+            isempty(set) ? break : total = sum(variable[i,t] for i in set)
 
-                isassigned(DevicesNetInjection, b.number,t) ? append!(DevicesNetInjection[b.number,t], total): DevicesNetInjection[b.number,t] = total;
+            isassigned(DevicesNetInjection, b.number,t) ? append!(DevicesNetInjection[b.number,t], total): DevicesNetInjection[b.number,t] = total;
 
-            end
         end
+    end
 
     return DevicesNetInjection
 
