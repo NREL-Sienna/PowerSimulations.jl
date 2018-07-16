@@ -1,8 +1,10 @@
-export AbstractPowerSimulationModel
+export PowerSimulationModel
 export SimulationModel
 export PowerResults
 
-mutable struct AbstractPowerSimulationModel
+abstract type AbstractPowerSimulationType end
+
+mutable struct PowerSimulationModel{T<:AbstractPowerSimulationType}
     cost::Function
     device::Any
     dynamics::Function
@@ -12,13 +14,13 @@ mutable struct AbstractPowerSimulationModel
 end
 
 mutable struct SimulationModel
-    model::AbstractPowerSimulationModel
-    periods::Int
-    resolution::Int
+    model::PowerSimulationModel
+    periods::Int64
+    resolution::Int64
     date_from::DateTime
     date_to::DateTime
-    lookahead_periods::Int
-    lookahead_resolution::Int
+    lookahead_periods::Int64
+    lookahead_resolution::Int64
     reserve_products::Any
     dynamic_analysis::Bool
     forecast::Any #Need to define this properly
