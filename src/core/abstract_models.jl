@@ -4,7 +4,9 @@ export PowerResults
 
 abstract type AbstractPowerSimulationType end
 
-mutable struct PowerSimulationModel{T<:AbstractPowerSimulationType}
+abstract type EconomicDispatchType <: AbstractPowerSimulationType end
+
+mutable struct PowerOperationsModel{T<:AbstractPowerSimulationType}
     cost::Function
     device::Any
     dynamics::Function
@@ -13,8 +15,8 @@ mutable struct PowerSimulationModel{T<:AbstractPowerSimulationType}
     model::JuMP.Model
 end
 
-mutable struct SimulationModel
-    model::PowerSimulationModel
+mutable struct PowerSimulationsModel
+    model::PowerOperationsModel
     periods::Int64
     resolution::Int64
     date_from::DateTime
