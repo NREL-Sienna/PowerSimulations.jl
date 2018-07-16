@@ -4,7 +4,7 @@ function modify_constraint(m::JuMP.Model, time_series, consname::Symbol)
 
 end
 
-function run_simulations(power_model::PowerSimulationModel{T}) where T<:AbstractPowerSimulationType
+function run_simulations(power_model::PowerSimulationsModel{T}) where T<:AbstractPowerSimulationType
 
     # CheckPowerModel(m::PowerSimulationModel{T}) where T<:AbstractPowerSimulationType
     # AssignSolver(m::PowerSimulationModel{T}) where T<:AbstractPowerSimulationType
