@@ -48,8 +48,8 @@ function powerconstraints(m::JuMP.Model, pth::PowerVariable, devices::Array{T,1}
         end
     end
 
-    JuMP.registercon(m, :PmaxThermal, Pmaxth)
-    JuMP.registercon(m, :PminThermal, Pminth)
+    JuMP.registercon(m, :Pmax_Thermal, Pmaxth)
+    JuMP.registercon(m, :Pmin_Thermal, Pminth)
 
     return m
 end
@@ -71,8 +71,8 @@ function powerconstraints(m::JuMP.Model, pth::PowerVariable, onth::PowerVariable
         end
     end
 
-    JuMP.registercon(m, :PmaxThermal, Pmaxth)
-    JuMP.registercon(m, :PminThermal, Pminth)
+    JuMP.registercon(m, :Pmax_Thermal, Pmaxth)
+    JuMP.registercon(m, :Pmin_Thermal, Pminth)
 
     return m
 end
@@ -108,8 +108,8 @@ function rampconstraints(m::JuMP.Model, pth::PowerVariable, devices::Array{T,1},
         end
     end
 
-    JuMP.registercon(m, :RampDownThermal, RampDown_th)
-    JuMP.registercon(m, :RampUpThermal, RampUp_th)
+    JuMP.registercon(m, :RampDown_Thermal, RampDown_th)
+    JuMP.registercon(m, :RampUp_Thermal, RampUp_th)
 
     return m
 end
@@ -144,8 +144,8 @@ function rampconstraints(m::JuMP.Model, pth::PowerVariable, onth::PowerVariable,
         end
     end
 
-    JuMP.registercon(m, :RampDownThermal, RampDown_th)
-    JuMP.registercon(m, :RampUpThermal, RampUp_th)
+    JuMP.registercon(m, :RampDown_Thermal, RampDown_th)
+    JuMP.registercon(m, :RampUp_Thermal, RampUp_th)
 
     return m
 end
@@ -166,6 +166,7 @@ function commitmentconstraints(m::JuMP.Model, onth::PowerVariable, startth::Powe
     (onth.indexsets[1] !== stopth.indexsets[1]) ? warn("Start/Stop and Commitment Status variables indexes are inconsistent"): true
 
     @constraintref commitment_th[1:length(onth.indexsets[1]),1:length(onth.indexsets[2])]
+
     for (ix,name) in enumerate(onth.indexsets[1])
         if name == devices[ix].name
             t1 = onth.indexsets[2][1]
@@ -183,7 +184,7 @@ function commitmentconstraints(m::JuMP.Model, onth::PowerVariable, startth::Powe
         end
     end
 
-    JuMP.registercon(m, :commitment_th, commitment_th)
+    JuMP.registercon(m, :Commitment_thermal, commitment_th)
 
     return m
 end
@@ -195,6 +196,7 @@ function timeconstraints(m::JuMP.Model, onth::PowerVariable, startth::PowerVaria
     (length(onth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
     (length(startth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
     (onth.indexsets[1] !== startth.indexsets[1]) ? warn("Start and Commitment Status variables indexes are inconsistent"): true
+
     @constraintref Uptime[1:length(onth.indexsets[1]),1:length(onth.indexsets[2])]
     @constraintref DownTime[1:length(onth.indexsets[1]),1:length(onth.indexsets[2])]
     for (ix,name) in enumerate(onth.indexsets[1])
