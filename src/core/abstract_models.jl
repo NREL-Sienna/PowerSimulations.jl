@@ -1,4 +1,4 @@
-export PowerSimulationModel
+export PowerSimulationsModel
 export SimulationModel
 export PowerResults
 

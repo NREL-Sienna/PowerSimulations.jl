@@ -5,7 +5,7 @@ The constructor takes the information from the PowerSimulationModel to build the
 """
 
 
-function construct_model(model::PowerSimulationModel{T}, data) where T<:AbstractPowerSimulationType
+function construct_model(model::PowerSimulationsModel{T}, data) where T<:AbstractPowerSimulationType
 
     add_variables(m::JuMP.Model, data)
     power_limits(m::JuMP.Model, data)
