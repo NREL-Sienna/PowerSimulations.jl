@@ -15,15 +15,14 @@ mutable struct PowerOperationsModel{T<:AbstractPowerSimulationType}
     model::JuMP.Model
 end
 
-mutable struct PowerSimulationsModel
-    model::PowerOperationsModel
+mutable struct PowerSimulationsModel{T<:AbstractPowerSimulationType}
+    model::PowerOperationsModel{T}
     periods::Int64
     resolution::Int64
     date_from::DateTime
     date_to::DateTime
     lookahead_periods::Int64
     lookahead_resolution::Int64
-    reserve_products::Any
     dynamic_analysis::Bool
     forecast::Any #Need to define this properly
     #A constructor here has to return the model based on the data, the time is AbstractModel
