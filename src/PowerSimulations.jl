@@ -29,7 +29,6 @@ include("device_models/electric_loads.jl")
 include("device_models/branches.jl")
 
 #Network related components
-include("network_models/powerflow_injections.jl")
 include("network_models/copperplate_balance.jl")
 include("network_models/nodal_balance.jl")
 

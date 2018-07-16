@@ -3,12 +3,16 @@
 """
 This function add the variables for power generation output to the model
 """
-function generationvariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
+function generationvariables(m::JuMP.Model, DevicesNetInjection::A, devices::Array{T,1}, time_periods::Int64) where {A <: PowerExpressionArray, T <: PowerSystems.ThermalGen}
     on_set = [d.name for d in devices if d.available == true]
-    t = 1:time_periods
-    @variable(m::JuMP.Model, pth[on_set,t]) # Power output of generators
 
-    return pth
+    t = 1:time_periods
+
+    pth = @variable(m::JuMP.Model, pth[on_set,t]) # Power output of generators
+
+    varnetinjectiterate!(DevicesNetInjection, pth, t, devices)
+
+    return pth, DevicesNetInjection
 end
 
 
@@ -16,8 +20,11 @@ end
 This function add the variables for power generation commitment to the model
 """
 function commitmentvariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
+
     onset = [d.name for d in devices if d.available == true]
+
     t = 1:time_periods
+
     @variable(m, onth[onset,t], Bin) # Power output of generators
     @variable(m, startth[onset,t], Bin) # Power output of generators
     @variable(m, stopth[onset,t], Bin) # Power output of generators
@@ -25,9 +32,8 @@ function commitmentvariables(m::JuMP.Model, devices::Array{T,1}, time_periods::I
     return onth, startth, stopth
 end
 
-# TODO : add the Knueven model variable
+# TODO: add the Knueven model variable
 # function IndicatorArcVariable(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64)
-
 
 # end
 
@@ -81,11 +87,10 @@ end
 """
 This function adds the ramping limits of generators when there are no CommitmentVariables
 """
-function rampconstraints(m::JuMP.Model, pth::PowerVariable , devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
+function rampconstraints(m::JuMP.Model, pth::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
 
     (length(pth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-    # TODO: Implement consistency checks to avoid creating RampConstraints where not needed.
     # TODO: Change loop orders, loop over time first and then over the device names
 
     @constraintref RampDown_th[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
@@ -102,6 +107,7 @@ function rampconstraints(m::JuMP.Model, pth::PowerVariable , devices::Array{T,1}
                 RampDown_th[ix,t] = @constraint(m,  pth[name,t-1] - pth[name,t] <= devices[ix].tech.ramplimits.down)
                 RampUp_th[ix,t] = @constraint(m,  pth[name,t] - pth[name,t-1] <= devices[ix].tech.ramplimits.up)
             end
+
         else
             error("Bus name in Array and variable do not match")
         end
@@ -151,13 +157,12 @@ end
 This function adds the Commitment Status constraint when there are CommitmentVariables
 """
 
-function commitmentconstraints(m::JuMP.Model,onth::PowerVariable, startth::PowerVariable, stopth::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
+function commitmentconstraints(m::JuMP.Model, onth::PowerVariable, startth::PowerVariable, stopth::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
 
     (length(onth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
     (length(startth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
     (length(stopth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-    # TODO: Implement consistency checks to avoid creating RampConstraints where not needed.
     # TODO: Change loop orders, loop over time first and then over the device names
 
     (stopth.indexsets[1] !== startth.indexsets[1]) ? warn("Start/Stop variables indexes are inconsistent"): true
@@ -188,7 +193,6 @@ end
 
 function timeconstraints(m::JuMP.Model, onth::PowerVariable, startth::PowerVariable, stopth::PowerVariable, devices::Array{T,1}, time_periods::Int; Initial = 999) where T <: PowerSystems.ThermalGen
 
-    # TODO: Implement consistency checks to avoid creating RampConstraints where not needed.
     # TODO: Change loop orders, loop over time first and then over the device names
 
     (length(onth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true

@@ -1,8 +1,21 @@
-function branchflowvariables(m::JuMP.Model, devices::Array{T,1}, time_periods) where T <: PowerSystems.Branch
+function branchflowvariables(m::JuMP.Model, devices::Array{T,1}, bus_number::Int64, time_periods::Int64) where T <: PowerSystems.Branch
+
     on_set = [d.name for d in devices if d.available == true]
-    t = 1:time_periods
-    @variable(m, fbr[on_set,t])
-    return fbr
+
+    time_range = 1:time_periods
+
+    fbr = @variable(m, fbr[on_set,time_range])
+
+    PowerFlowNetInjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(bus_number, time_periods)
+
+    for t in time_range, (ix,branch) in enumerate(fbr.indexsets[1])
+
+        !isassigned(PowerFlowNetInjection,devices[ix].connectionpoints.from.number,t) ? PowerFlowNetInjection[devices[ix].connectionpoints.from.number,t] = -fbr[branch,t]: append!(PowerFlowNetInjection[devices[ix].connectionpoints.from.number,t],-fbr[branch,t])
+        !isassigned(PowerFlowNetInjection,devices[ix].connectionpoints.to.number,t) ? PowerFlowNetInjection[devices[ix].connectionpoints.to.number,t] = fbr[branch,t] : append!(PowerFlowNetInjection[devices[ix].connectionpoints.to.number,t],fbr[branch,t])
+
+    end
+
+    return fbr, PowerFlowNetInjection
 end
 
 function flowconstraints(m::JuMP.Model, fbr::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.Branch
