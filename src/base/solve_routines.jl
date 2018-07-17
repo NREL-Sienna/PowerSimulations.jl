@@ -36,7 +36,7 @@ function solvepsmodel(Psmodel::JuMP.Model; Solver = nothing)
 
         elseif model_type.lin & !(model_type.qc|model_type.qp|model_type.nlp)
 
-            JuMP.setsolver(Psmodel, Clp.ClpSolver(SolveType = 5, logLevel = 5))
+            JuMP.setsolver(Psmodel, Clp.ClpSolver(SolveType = 5, LogLevel = 4))
 
             warn("The model is linear, by default the solver is Clp Solver")
 

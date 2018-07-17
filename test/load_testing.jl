@@ -1,4 +1,5 @@
 using PowerSystems
+using PowerSimulations
 using JuMP
 
 include(string(homedir(),"/.julia/v0.6/PowerSystems/data/data_5bus.jl"))
@@ -10,6 +11,8 @@ DevicesNetInjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(lengt
 
 test_cl = [d for d in sys5.loads if !isa(d, PowerSystems.StaticLoad)] # Filter StaticLoads Out
 
-pcl, IArray = PowerSimulations.loadvariables(m, DevicesNetInjection, sys5.loads, sys5.time_periods);
+pcl, IArray = PowerSimulations.loadvariables(m, DevicesNetInjection, test_cl, sys5.time_periods);
+m = PowerSimulations.powerconstraints(m, pcl, test_cl, sys5.time_periods)
+
 
 true

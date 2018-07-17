@@ -16,6 +16,6 @@ end
 
 function cloadcost(variable::Array{JuMP.Variable,1}, device::PowerSystems.InterruptibleLoad)
 
-    return cost = sum(device.sheddingcost*variable)
+    return cost = sum(-1*device.sheddingcost*variable)
 
 end

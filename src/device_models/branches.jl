@@ -58,7 +58,7 @@ function ptdf_powerflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, fbr::Power
 
         for bus in 1:size(TsInjectionBalance)[1]
 
-            append!(branch_exp, -1*PTDF[ix,bus] * DeviceNetInjection[bus,t])
+            isassigned(DeviceNetInjection,bus,t) ? append!(branch_exp, -1*PTDF[ix,bus] * DeviceNetInjection[bus,t]) : continue
 
         end
 

@@ -1,5 +1,5 @@
 function loadvariables(m::JuMP.Model, DevicesNetInjection::A, devices::Array{T,1}, time_periods) where {A <: PowerExpressionArray, T <: PowerSystems.ElectricLoad}
-    on_set = [d.name for d in devices if d.available == true]
+    on_set = [d.name for d in devices if (d.available == true && !isa(d,PowerSystems.StaticLoad))]
 
     t = 1:time_periods
 

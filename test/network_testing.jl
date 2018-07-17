@@ -1,4 +1,5 @@
 using PowerSystems
+using PowerSimulations
 using JuMP
 
 include(string(homedir(),"/.julia/v0.6/PowerSystems/data/data_5bus.jl"))
@@ -34,7 +35,7 @@ pth, IArray = PowerSimulations.generationvariables(m, DevicesNetInjection,  sys5
 pre_set = [d for d in sys5b.generators.renewable if !isa(d, RenewableFix)]
 pre, IArray = PowerSimulations.generationvariables(m, DevicesNetInjection, pre_set, sys5b.time_periods)
 test_cl = [d for d in sys5b.loads if !isa(d, PowerSystems.StaticLoad)] # Filter StaticLoads Out
-pcl, IArray = PowerSimulations.loadvariables(m, DevicesNetInjection, sys5b.loads, sys5b.time_periods);
+pcl, IArray = PowerSimulations.loadvariables(m, DevicesNetInjection, test_cl, sys5b.time_periods);
 test_hy = [d for d in generators_hg if !isa(d, PowerSystems.HydroFix)] # Filter StaticLoads Out
 phg, IArray = PowerSimulations.generationvariables(m, DevicesNetInjection, test_hy, sys5b.time_periods)
 pbtin, pbtout, IArray = PowerSimulations.powerstoragevariables(m, DevicesNetInjection, sys5b.storage, sys5b.time_periods)
@@ -44,13 +45,16 @@ TsNets = PowerSimulations.tsinjectionbalance(sys5b)
 #CopperPlate Network test
 m = PowerSimulations.copperplatebalance(m, IArray, TsNets, sys5b.time_periods);
 
+
+#Reset EveryThing to Build the nodebalance network
 m=Model()
+DevicesNetInjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys5b.buses), sys5b.time_periods)
 
 pth, IArray = PowerSimulations.generationvariables(m, DevicesNetInjection,  sys5b.generators.thermal, sys5b.time_periods);
 pre_set = [d for d in sys5b.generators.renewable if !isa(d, RenewableFix)]
 pre, IArray = PowerSimulations.generationvariables(m, DevicesNetInjection, pre_set, sys5b.time_periods)
 test_cl = [d for d in sys5b.loads if !isa(d, PowerSystems.StaticLoad)] # Filter StaticLoads Out
-pcl, IArray = PowerSimulations.loadvariables(m, DevicesNetInjection, sys5b.loads, sys5b.time_periods);
+pcl, IArray = PowerSimulations.loadvariables(m, DevicesNetInjection, test_cl, sys5b.time_periods);
 test_hy = [d for d in generators_hg if !isa(d, PowerSystems.HydroFix)] # Filter StaticLoads Out
 phg, IArray = PowerSimulations.generationvariables(m, DevicesNetInjection, test_hy, sys5b.time_periods)
 pbtin, pbtout, IArray = PowerSimulations.powerstoragevariables(m, DevicesNetInjection, sys5b.storage, sys5b.time_periods)
