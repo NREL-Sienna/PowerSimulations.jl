@@ -25,6 +25,13 @@ TsNets = PowerSimulations.tsinjectionbalance(sys5b)
 #CopperPlate Network test
 m = PowerSimulations.copperplatebalance(m, IArray, TsNets, sys5b.time_periods);
 
+fl, PFNets = PowerSimulations.branchflowvariables(m, sys5b.branches, length(sys5b.buses), sys5b.time_periods)
+
+#m = PowerSimulations.flowconstraints(m, fl, sys5b.branches, sys5b.time_periods)
+TsNets = PowerSimulations.tsinjectionbalance(sys5b)
+m = PowerSimulations.nodalflowbalance(m, IArray, PFNets, TsNets, sys5b.time_periods);
+m = PowerSimulations.ptdf_powerflow(m, sys5b, fl, IArray, TsNets)
+
 #Cost Components
 tl = PowerSimulations.variablecost(m, pcl, test_cl);
 tre = PowerSimulations.variablecost(m, pre, pre_set)
@@ -34,3 +41,5 @@ tth = PowerSimulations.variablecost(m, pth, sys5b.generators.thermal);
 @objective(m, Min, tl+tre+tth);
 
 m = PowerSimulations.solvepsmodel(m);
+
+true
