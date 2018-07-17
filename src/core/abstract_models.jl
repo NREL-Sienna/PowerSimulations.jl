@@ -1,8 +1,12 @@
-export AbstractPowerSimulationModel
+export PowerSimulationsModel
 export SimulationModel
 export PowerResults
 
-mutable struct AbstractPowerSimulationModel
+abstract type AbstractPowerSimulationType end
+
+abstract type EconomicDispatchType <: AbstractPowerSimulationType end
+
+mutable struct PowerOperationsModel{T<:AbstractPowerSimulationType}
     cost::Function
     device::Any
     dynamics::Function
@@ -11,15 +15,14 @@ mutable struct AbstractPowerSimulationModel
     model::JuMP.Model
 end
 
-mutable struct SimulationModel
-    model::AbstractPowerSimulationModel
-    periods::Int
-    resolution::Int
+mutable struct PowerSimulationsModel{T<:AbstractPowerSimulationType}
+    model::PowerOperationsModel{T}
+    periods::Int64
+    resolution::Int64
     date_from::DateTime
     date_to::DateTime
-    lookahead_periods::Int
-    lookahead_resolution::Int
-    reserve_products::Any
+    lookahead_periods::Int64
+    lookahead_resolution::Int64
     dynamic_analysis::Bool
     forecast::Any #Need to define this properly
     #A constructor here has to return the model based on the data, the time is AbstractModel

@@ -5,19 +5,18 @@ function modify_constraint(m::JuMP.Model, time_series, consname::Symbol)
 
 end
 
-function run_simulations(power_model::T) where T <: PowerSimulations.SimulationModel
+function run_simulations(power_model::PowerSimulationsModel{T}) where T<:AbstractPowerSimulationType
 
-CheckPowerModel(m::M) where M <: PowerSimulations.AbstractPowerSimulationModel
-AssignSolver(m::M) where M <: PowerSimulations.AbstractPowerSimulationModel
-WarmUpModel(m::M) where M <: PowerSimulations.AbstractPowerSimulationModel
+    # CheckPowerModel(m::PowerSimulationsModel{T}) where T<:AbstractPowerSimulationType
+    # AssignSolver(m::PowerSimulationsModel{T}) where T<:AbstractPowerSimulationType
+    # WarmUpModel(m::PowerSimulationsModel{T}) where T<:AbstractPowerSimulationType
 
-for st in simulation_steps
+    for st in simulation_steps
+        continue
 
+        # SolveModel(m)
 
-
-    SolveModel(m::M) where M <: PowerSimulations.AbstractPowerSimulationModel
-
-end
+    end
 
 
 end
