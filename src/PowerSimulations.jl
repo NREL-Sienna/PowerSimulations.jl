@@ -4,6 +4,7 @@ using JuMP
 using TimeSeries
 using PowerSystems
 using Compat
+using Clp
 using Base.LinAlg
 
 const PowerVariable = JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}}
@@ -18,7 +19,7 @@ include("utils/undef_check.jl")
 include("base/device_injections.jl")
 include("base/timeseries_injections.jl")
 #include("base/simulation_constructors.jl")
-#include("base/solve_routines.jl")
+include("base/solve_routines.jl")
 
 #Device Modeling components
 include("device_models/renewable_generation.jl")
