@@ -1,4 +1,5 @@
 using PowerSystems
+using PowerSimulations
 using JuMP
 
 include(string(homedir(),"/.julia/v0.6/PowerSystems/data/data_5bus.jl"))
@@ -9,5 +10,6 @@ DevicesNetInjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(lengt
 
 pre_set = [d for d in sys5.generators.renewable if !isa(d, RenewableFix)]
 pre, IArray = PowerSimulations.generationvariables(m, DevicesNetInjection, pre_set, sys5.time_periods)
+m = PowerSimulations.powerconstraints(m, pre, pre_set, sys5.time_periods)
 
 true
