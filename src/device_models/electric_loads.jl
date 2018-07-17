@@ -1,8 +1,13 @@
-function loadvariables(m::JuMP.Model, devices::Array{T,1}, time_periods) where T <: PowerSystems.ElectricLoad
-    on_set = [d.name for d in devices if d.available == true && !isa(d, StaticLoad)]
+function loadvariables(m::JuMP.Model, DevicesNetInjection::A, devices::Array{T,1}, time_periods) where {A <: PowerExpressionArray, T <: PowerSystems.ElectricLoad}
+    on_set = [d.name for d in devices if d.available == true]
+
     t = 1:time_periods
-    @variable(m::JuMP.Model, pcl[on_set,t] >= 0.0) # Power output of generators
-    return pcl
+
+    pcl = @variable(m::JuMP.Model, pcl[on_set,t] >= 0.0) # Power output of generators
+
+    varnetinjectiterate!(DevicesNetInjection, pcl, t, devices)
+
+    return pcl, DevicesNetInjection
 end
 
 """
