@@ -1,4 +1,4 @@
-function loadvariables(m::JuMP.Model, DevicesNetInjection::A, devices::Array{T,1}, time_periods) where {A <: PowerExpressionArray, T <: PowerSystems.ElectricLoad}
+function loadvariables(m::JuMP.Model, devices_netinjection:: A, devices::Array{T,1}, time_periods) where {A <: PowerExpressionArray, T <: PowerSystems.ElectricLoad}
     on_set = [d.name for d in devices if (d.available == true && !isa(d,PowerSystems.StaticLoad))]
 
     t = 1:time_periods
@@ -7,7 +7,7 @@ function loadvariables(m::JuMP.Model, DevicesNetInjection::A, devices::Array{T,1
 
     varnetinjectiterate!(devices_netinjection,  pcl, t, devices)
 
-    return pcl, DevicesNetInjection
+    return pcl, devices_netinjection
 end
 
 """

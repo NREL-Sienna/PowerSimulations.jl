@@ -1,4 +1,4 @@
-function generationvariables(m::JuMP.Model, DevicesNetInjection::A, devices::Array{T,1}, time_periods) where {A <: PowerExpressionArray, T <: PowerSystems.RenewableGen}
+function generationvariables(m::JuMP.Model, devices_netinjection:: A, devices::Array{T,1}, time_periods) where {A <: PowerExpressionArray, T <: PowerSystems.RenewableGen}
 
     on_set = [d.name for d in devices if d.available == true]
 
@@ -8,7 +8,7 @@ function generationvariables(m::JuMP.Model, DevicesNetInjection::A, devices::Arr
 
     devices_netinjection = varnetinjectiterate!(devices_netinjection,  pre, t, devices)
 
-    return pre, DevicesNetInjection
+    return pre, devices_netinjection
 end
 
 """

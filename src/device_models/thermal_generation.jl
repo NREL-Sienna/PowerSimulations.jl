@@ -1,7 +1,7 @@
 """
 This function add the variables for power generation output to the model
 """
-function generationvariables(m::JuMP.Model, DevicesNetInjection::A, devices::Array{T,1}, time_periods::Int64) where {A <: PowerExpressionArray, T <: PowerSystems.ThermalGen}
+function generationvariables(m::JuMP.Model, devices_netinjection:: A, devices::Array{T,1}, time_periods::Int64) where {A <: PowerExpressionArray, T <: PowerSystems.ThermalGen}
     on_set = [d.name for d in devices if d.available == true]
 
     t = 1:time_periods
@@ -10,7 +10,7 @@ function generationvariables(m::JuMP.Model, DevicesNetInjection::A, devices::Arr
 
     varnetinjectiterate!(devices_netinjection,  pth, t, devices)
 
-    return pth, DevicesNetInjection
+    return pth, devices_netinjection
 end
 
 

@@ -1,4 +1,4 @@
-function powerstoragevariables(m::JuMP.Model, DevicesNetInjection::A, devices::Array{T,1}, time_periods::Int64) where {A <: PowerExpressionArray, T <: PowerSystems.Storage}
+function powerstoragevariables(m::JuMP.Model, devices_netinjection:: A, devices::Array{T,1}, time_periods::Int64) where {A <: PowerExpressionArray, T <: PowerSystems.Storage}
 
     on_set = [d.name for d in devices if d.available]
     t = 1:time_periods
@@ -8,7 +8,7 @@ function powerstoragevariables(m::JuMP.Model, DevicesNetInjection::A, devices::A
 
     devices_netinjection = varnetinjectiterate!(devices_netinjection,  pstin, pstout, t, devices)
 
-    return pstin, pstout, DevicesNetInjection
+    return pstin, pstout, devices_netinjection
 end
 
 function energystoragevariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.Storage
