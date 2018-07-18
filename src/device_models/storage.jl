@@ -6,7 +6,7 @@ function powerstoragevariables(m::JuMP.Model, DevicesNetInjection::A, devices::A
     pstin = @variable(m, pstin[on_set,t])
     pstout = @variable(m, pstout[on_set,t])
 
-    DevicesNetInjection = varnetinjectiterate!(DevicesNetInjection, pstin, pstout, t, devices)
+    devices_netinjection = varnetinjectiterate!(DevicesNetInjection, pstin, pstout, t, devices)
 
     return pstin, pstout, DevicesNetInjection
 end

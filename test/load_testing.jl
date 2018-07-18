@@ -7,7 +7,7 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing, 230.0, 10
 
 m = Model()
 
-DevicesNetInjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys5.buses), sys5.time_periods)
+devices_netinjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys5.buses), sys5.time_periods)
 
 test_cl = [d for d in sys5.loads if !isa(d, PowerSystems.StaticLoad)] # Filter StaticLoads Out
 

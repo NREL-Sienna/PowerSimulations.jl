@@ -6,7 +6,7 @@ include(string(homedir(),"/.julia/v0.6/PowerSystems/data/data_5bus.jl"))
 sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing, 230.0, 1000.0)
 
 m = JuMP.Model()
-DevicesNetInjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys5.buses), sys5.time_periods)
+devices_netinjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys5.buses), sys5.time_periods)
 
 #Test ED
 pth, IArray = PowerSimulations.generationvariables(m, DevicesNetInjection,  sys5.generators.thermal, sys5.time_periods);
