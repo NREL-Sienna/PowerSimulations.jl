@@ -61,7 +61,7 @@ function energybookkeeping(m::JuMP.Model, pstin::PowerVariable, pstout::PowerVar
     (length(pstout.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent in P_bt_out"): true
     (length(ebt.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent in E_bt"): true
 
-    @constraintref BookKeep_bt[1:length(ebt.indexsets[1]),1:length(ebt.indexsets[2])]
+    @constraintref bookkeep_bt[1:length(ebt.indexsets[1]),1:length(ebt.indexsets[2])]
 
     (pstin.indexsets[1] !== pstout.indexsets[1]) ? warn("Input/Output Power variables indexes are inconsistent"): true
     (pstin.indexsets[1] !== ebt.indexsets[1]) ? warn("Input/Output and Battery Energy variables indexes are inconsistent"): true
@@ -71,16 +71,16 @@ function energybookkeeping(m::JuMP.Model, pstin::PowerVariable, pstout::PowerVar
     for (ix,name) in enumerate(ebt.indexsets[1])
         if name == devices[ix].name
             t1 = pstin.indexsets[2][1]
-            BookKeep_bt[ix,t1] = @constraint(m,ebt[name,t1] == devices[ix].energy -  pstout[name,t1]/devices[ix].efficiency.out + pstin[name,t1]*devices[ix].efficiency.in)
+            bookkeep_bt[ix,t1] = @constraint(m,ebt[name,t1] == devices[ix].energy -  pstout[name,t1]/devices[ix].efficiency.out + pstin[name,t1]*devices[ix].efficiency.in)
             for t in ebt.indexsets[2][2:end]
-                BookKeep_bt[ix,t] = @constraint(m,ebt[name,t] == ebt[name,t-1] -  pstout[name,t]/devices[ix].efficiency.out + pstin[name,t]*devices[ix].efficiency.in)
+                bookkeep_bt[ix,t] = @constraint(m,ebt[name,t] == ebt[name,t-1] -  pstout[name,t]/devices[ix].efficiency.out + pstin[name,t]*devices[ix].efficiency.in)
             end
         else
             error("Bus name in Array and variable do not match")
         end
     end
 
-    JuMP.registercon(m, :BookKeep, BookKeep_bt)
+    JuMP.registercon(m, :book_keep, bookkeep_bt)
 
     return m
 
@@ -89,16 +89,16 @@ end
 function energyconstraints(m::JuMP.Model, ebt::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.GenericBattery
 
     (length(ebt.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
-    @constraintref EnergyLimit_bt[1:length(ebt.indexsets[1]),1:length(ebt.indexsets[2])]
+    @constraintref energylimit_bt[1:length(ebt.indexsets[1]),1:length(ebt.indexsets[2])]
     for t in ebt.indexsets[2], (ix,name) in enumerate(ebt.indexsets[1])
         if name == devices[ix].name
-            EnergyLimit_bt[ix,t] = @constraint(m,ebt[name,t] <= devices[ix].capacity.max)
+            energylimit_bt[ix,t] = @constraint(m,ebt[name,t] <= devices[ix].capacity.max)
         else
             error("Bus name in Array and variable do not match")
         end
     end
 
-    JuMP.registercon(m, :EmaxMit, EnergyLimit_bt)
+    JuMP.registercon(m, :energystoragelimit, energylimit_bt)
 
     return m
 end
