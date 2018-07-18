@@ -6,16 +6,16 @@ function branchflowvariables(m::JuMP.Model, devices::Array{T,1}, bus_number::Int
 
     fbr = @variable(m, fbr[on_set,time_range])
 
-    PowerFlowNetInjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(bus_number, time_periods::Int64)
+    network_netinjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(bus_number, time_periods::Int64)
 
     for t in time_range, (ix,branch) in enumerate(fbr.indexsets[1])
 
-        !isassigned(PowerFlowNetInjection,devices[ix].connectionpoints.from.number,t) ? PowerFlowNetInjection[devices[ix].connectionpoints.from.number,t] = -fbr[branch,t]: append!(PowerFlowNetInjection[devices[ix].connectionpoints.from.number,t],-fbr[branch,t])
-        !isassigned(PowerFlowNetInjection,devices[ix].connectionpoints.to.number,t) ? PowerFlowNetInjection[devices[ix].connectionpoints.to.number,t] = fbr[branch,t] : append!(PowerFlowNetInjection[devices[ix].connectionpoints.to.number,t],fbr[branch,t])
+        !isassigned(network_netinjection,devices[ix].connectionpoints.from.number,t) ? network_netinjection[devices[ix].connectionpoints.from.number,t] = -fbr[branch,t]: append!(network_netinjection[devices[ix].connectionpoints.from.number,t],-fbr[branch,t])
+        !isassigned(network_netinjection,devices[ix].connectionpoints.to.number,t) ? network_netinjection[devices[ix].connectionpoints.to.number,t] = fbr[branch,t] : append!(network_netinjection[devices[ix].connectionpoints.to.number,t],fbr[branch,t])
 
     end
 
-    return fbr, PowerFlowNetInjection
+    return fbr, network_netinjection
 end
 
 function flowconstraints(m::JuMP.Model, fbr::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.Branch
