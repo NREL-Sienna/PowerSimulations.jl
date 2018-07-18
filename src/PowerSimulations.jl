@@ -5,6 +5,8 @@ using TimeSeries
 using PowerSystems
 using Compat
 using Clp
+using Cbc
+using DataFrames
 using Base.LinAlg
 
 const PowerVariable = JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}}

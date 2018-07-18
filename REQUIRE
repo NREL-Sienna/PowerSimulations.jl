@@ -3,7 +3,7 @@ JuMP
 PowerSystems
 Clp
 Ipopt
-DifferentialEquations
-NLsolve
-StaticArrays 
+Cbc
 Compat
+DataFrames
+
