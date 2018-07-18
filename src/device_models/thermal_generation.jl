@@ -48,8 +48,8 @@ function powerconstraints(m::JuMP.Model, pth::PowerVariable, devices::Array{T,1}
         end
     end
 
-    JuMP.registercon(m, :pmax_Thermal, pmax_th)
-    JuMP.registercon(m, :pmin_Thermal, pmin_th)
+    JuMP.registercon(m, :pmax_thermal, pmax_th)
+    JuMP.registercon(m, :pmin_thermal, pmin_th)
 
     return m
 end
@@ -71,8 +71,8 @@ function powerconstraints(m::JuMP.Model, pth::PowerVariable, onth::PowerVariable
         end
     end
 
-    JuMP.registercon(m, :pmax_Thermal, pmax_th)
-    JuMP.registercon(m, :pmin_Thermal, pmin_th)
+    JuMP.registercon(m, :pmax_thermal, pmax_th)
+    JuMP.registercon(m, :pmin_thermal, pmin_th)
 
     return m
 end
@@ -108,8 +108,8 @@ function rampconstraints(m::JuMP.Model, pth::PowerVariable, devices::Array{T,1},
         end
     end
 
-    JuMP.registercon(m, :RampDown_Thermal, RampDown_th)
-    JuMP.registercon(m, :RampUp_Thermal, RampUp_th)
+    JuMP.registercon(m, :RampDown_thermal, RampDown_th)
+    JuMP.registercon(m, :RampUp_thermal, RampUp_th)
 
     return m
 end
@@ -144,8 +144,8 @@ function rampconstraints(m::JuMP.Model, pth::PowerVariable, onth::PowerVariable,
         end
     end
 
-    JuMP.registercon(m, :RampDown_Thermal, RampDown_th)
-    JuMP.registercon(m, :RampUp_Thermal, RampUp_th)
+    JuMP.registercon(m, :RampDown_thermal, RampDown_th)
+    JuMP.registercon(m, :RampUp_thermal, RampUp_th)
 
     return m
 end
