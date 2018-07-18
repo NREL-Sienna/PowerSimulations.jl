@@ -9,7 +9,7 @@ m = JuMP.Model()
 devices_netinjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys5.buses), sys5.time_periods)
 
 #Test ED
-pth, IArray = PowerSimulations.generationvariables(m, devices_netinjection,   sys5.generators.thermal, sys5.time_periods);
+pth, inyeciton_array = PowerSimulations.generationvariables(m, devices_netinjection,   sys5.generators.thermal, sys5.time_periods);
 PowerSimulations.powerconstraints(m, pth, sys5.generators.thermal, sys5.time_periods)
 gen_ramp = [d for d in sys5.generators.thermal if !isa(d.tech.ramplimits,Nothing)]
 !isempty(gen_ramp) ? PowerSimulations.rampconstraints(m, pth, gen_ramp, sys5.time_periods) : true
@@ -17,7 +17,7 @@ gen_ramp = [d for d in sys5.generators.thermal if !isa(d.tech.ramplimits,Nothing
 
 #Test UC
 m=Model()
-pth, IArray = PowerSimulations.generationvariables(m, devices_netinjection,   sys5.generators.thermal, sys5.time_periods);
+pth, inyeciton_array = PowerSimulations.generationvariables(m, devices_netinjection,   sys5.generators.thermal, sys5.time_periods);
 on_th, start_th, stop_th = PowerSimulations.commitmentvariables(m, sys5.generators.thermal, sys5.time_periods)
 PowerSimulations.powerconstraints(m, pth, on_th, sys5.generators.thermal, sys5.time_periods)
 gen_ramp = [d for d in sys5.generators.thermal if !isa(d.tech.ramplimits,Nothing)]

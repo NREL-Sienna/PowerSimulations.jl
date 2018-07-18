@@ -11,7 +11,7 @@ devices_netinjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(leng
 
 test_cl = [d for d in sys5.loads if !isa(d, PowerSystems.StaticLoad)] # Filter StaticLoads Out
 
-pcl, IArray = PowerSimulations.loadvariables(m, devices_netinjection,  test_cl, sys5.time_periods);
+pcl, inyeciton_array = PowerSimulations.loadvariables(m, devices_netinjection,  test_cl, sys5.time_periods);
 m = PowerSimulations.powerconstraints(m, pcl, test_cl, sys5.time_periods)
 
 
