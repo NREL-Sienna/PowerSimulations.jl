@@ -7,12 +7,14 @@ abstract type AbstractPowerSimulationType end
 abstract type EconomicDispatchType <: AbstractPowerSimulationType end
 
 mutable struct PowerOperationsModel{T<:AbstractPowerSimulationType}
+    generation::Array{Function}
+    demand::Array{Function}
+    storage::Array{Function}
     cost::Function
-    device::Any
-    dynamics::Function
-    network::Function
+    transmission::Function
     system::PowerSystems.PowerSystem
     model::JuMP.Model
+    dynamics::Function
 end
 
 mutable struct PowerSimulationsModel{T<:AbstractPowerSimulationType}
