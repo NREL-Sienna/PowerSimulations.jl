@@ -6,7 +6,7 @@ function generationvariables(m::JuMP.Model, DevicesNetInjection::A, devices::Arr
 
     phy = @variable(m::JuMP.Model, phy[on_set,t]) # Power output of generators
 
-    devices_netinjection = varnetinjectiterate!(DevicesNetInjection, phy, t, devices)
+    devices_netinjection = varnetinjectiterate!(devices_netinjection,  phy, t, devices)
 
     return phy, DevicesNetInjection
 

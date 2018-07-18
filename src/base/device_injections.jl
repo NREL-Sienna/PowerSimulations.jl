@@ -2,7 +2,7 @@ function varnetinjectiterate!(DevicesNetInjection::A, variable::PowerVariable, t
 
     for t in time_range, d in devices
 
-        isassigned(DevicesNetInjection, d.bus.number,t) ? append!(DevicesNetInjection[d.bus.number,t], variable[d.name, t]): DevicesNetInjection[d.bus.number,t] = variable[d.name, t];
+        isassigned(devices_netinjection,  d.bus.number,t) ? append!(DevicesNetInjection[d.bus.number,t], variable[d.name, t]): DevicesNetInjection[d.bus.number,t] = variable[d.name, t];
 
     end
 
@@ -14,7 +14,7 @@ function varnetinjectiterate!(DevicesNetInjection::A, variable::PowerVariable, t
 
     for t in time_range, d in devices
 
-        isassigned(DevicesNetInjection, d.bus.number,t) ? append!(DevicesNetInjection[d.bus.number,t], -1*variable[d.name, t]): DevicesNetInjection[d.bus.number,t] = -1*variable[d.name, t];
+        isassigned(devices_netinjection,  d.bus.number,t) ? append!(DevicesNetInjection[d.bus.number,t], -1*variable[d.name, t]): DevicesNetInjection[d.bus.number,t] = -1*variable[d.name, t];
 
     end
 
@@ -26,7 +26,7 @@ function varnetinjectiterate!(DevicesNetInjection::A, variable_in::PowerVariable
 
         for t in time_range, d in devices
 
-            isassigned(DevicesNetInjection, d.bus.number,t) ? append!(DevicesNetInjection[d.bus.number,t], variable_in[d.name,t] - variable_out[d.name,t]): DevicesNetInjection[d.bus.number,t] = variable_in[d.name,t] - variable_out[d.name,t];
+            isassigned(devices_netinjection,  d.bus.number,t) ? append!(DevicesNetInjection[d.bus.number,t], variable_in[d.name,t] - variable_out[d.name,t]): DevicesNetInjection[d.bus.number,t] = variable_in[d.name,t] - variable_out[d.name,t];
 
         end
 
