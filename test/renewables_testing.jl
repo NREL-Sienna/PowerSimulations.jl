@@ -9,7 +9,7 @@ m = JuMP.Model()
 devices_netinjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys5.buses), sys5.time_periods)
 
 pre_set = [d for d in sys5.generators.renewable if !isa(d, RenewableFix)]
-pre, inyeciton_array = PowerSimulations.generationvariables(m, devices_netinjection,  pre_set, sys5.time_periods)
+pre, inyection_array = PowerSimulations.generationvariables(m, devices_netinjection,  pre_set, sys5.time_periods)
 m = PowerSimulations.powerconstraints(m, pre, pre_set, sys5.time_periods)
 
 true
