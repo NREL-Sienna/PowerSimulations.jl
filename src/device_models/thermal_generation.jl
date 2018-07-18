@@ -210,8 +210,8 @@ function timeconstraints(m::JuMP.Model, onth::PowerVariable, startth::PowerVaria
         end
     end
 
-    JuMP.registercon(m, :MinUp_thermal, Uptime_th)
-    JuMP.registercon(m, :Mindown_thermal, downTime_th)
+    JuMP.registercon(m, :minup_thermal, Uptime_th)
+    JuMP.registercon(m, :mindown_thermal, downTime_th)
 
     return m
 end
