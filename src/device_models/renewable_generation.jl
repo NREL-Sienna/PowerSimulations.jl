@@ -33,8 +33,8 @@ function powerconstraints(m::JuMP.Model, pre::PowerVariable, devices::Array{T,1}
         end
     end
 
-    JuMP.registercon(m, :PmaxRenewable, pmax_re)
-    JuMP.registercon(m, :PminRenewable, pmin_re)
+    JuMP.registercon(m, :pmax_renewable, pmax_re)
+    JuMP.registercon(m, :pmin_renewable, pmin_re)
 
     return m
 end
