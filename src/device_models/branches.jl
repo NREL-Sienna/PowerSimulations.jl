@@ -6,16 +6,16 @@ function branchflowvariables(m::JuMP.Model, devices::Array{T,1}, bus_number::Int
 
     fbr = @variable(m, fbr[on_set,time_range])
 
-    PowerFlowNetInjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(bus_number, time_periods)
+    network_netinjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(bus_number, time_periods::Int64)
 
     for t in time_range, (ix,branch) in enumerate(fbr.indexsets[1])
 
-        !isassigned(PowerFlowNetInjection,devices[ix].connectionpoints.from.number,t) ? PowerFlowNetInjection[devices[ix].connectionpoints.from.number,t] = -fbr[branch,t]: append!(PowerFlowNetInjection[devices[ix].connectionpoints.from.number,t],-fbr[branch,t])
-        !isassigned(PowerFlowNetInjection,devices[ix].connectionpoints.to.number,t) ? PowerFlowNetInjection[devices[ix].connectionpoints.to.number,t] = fbr[branch,t] : append!(PowerFlowNetInjection[devices[ix].connectionpoints.to.number,t],fbr[branch,t])
+        !isassigned(network_netinjection,devices[ix].connectionpoints.from.number,t) ? network_netinjection[devices[ix].connectionpoints.from.number,t] = -fbr[branch,t]: append!(network_netinjection[devices[ix].connectionpoints.from.number,t],-fbr[branch,t])
+        !isassigned(network_netinjection,devices[ix].connectionpoints.to.number,t) ? network_netinjection[devices[ix].connectionpoints.to.number,t] = fbr[branch,t] : append!(network_netinjection[devices[ix].connectionpoints.to.number,t],fbr[branch,t])
 
     end
 
-    return fbr, PowerFlowNetInjection
+    return fbr, network_netinjection
 end
 
 function flowconstraints(m::JuMP.Model, fbr::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.Branch
@@ -41,12 +41,12 @@ function flowconstraints(m::JuMP.Model, fbr::PowerVariable, devices::Array{T,1},
 end
 
 
-function ptdf_powerflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, fbr::PowerVariable, DeviceNetInjection::A, TsInjectionBalance::Array{Float64}) where A <: PowerExpressionArray
+function networkflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, fbr::PowerVariable, DeviceNetInjection::A, timeseries_netinjection::Array{Float64}) where A <: PowerExpressionArray
 
     (length(fbr.indexsets[2]) != sys.time_periods) ? error("Length of time dimension inconsistent"): true
 
-    PTDF, = PowerSystems.build_ptdf(sys.branches, sys.buses)
-    RHS = BLAS.gemm('N','N', PTDF, TsInjectionBalance)
+    PTDF, = PowerSystems.buildptdf(sys.branches, sys.buses)
+    RHS = BLAS.gemm('N','N', PTDF, timeseries_netinjection)
 
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
     # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
@@ -56,7 +56,7 @@ function ptdf_powerflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, fbr::Power
 
         branch_exp = JuMP.AffExpr([fbr[branch,t]], [1.0], RHS[ix,t])
 
-        for bus in 1:size(TsInjectionBalance)[1]
+        for bus in 1:size(timeseries_netinjection)[1]
 
             isassigned(DeviceNetInjection,bus,t) ? append!(branch_exp, -1*PTDF[ix,bus] * DeviceNetInjection[bus,t]) : continue
 

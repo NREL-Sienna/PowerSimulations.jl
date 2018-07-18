@@ -28,9 +28,9 @@ generators_hg = [
 sys5b = PowerSystem(nodes5, append!(generators5, generators_hg), loads5_DA, branches5, battery, 230.0, 1000.0)
 
 m = Model()
-DevicesNetInjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys5b.buses), sys5b.time_periods)
+devices_netinjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys5b.buses), sys5b.time_periods)
 
-Pin, Pout, IArray = PowerSimulations.powerstoragevariables(m, DevicesNetInjection, sys5b.storage, sys5b.time_periods)
+Pin, Pout, inyection_array = PowerSimulations.powerstoragevariables(m, devices_netinjection,  sys5b.storage, sys5b.time_periods)
 Es = PowerSimulations.energystoragevariables(m, sys5b.storage, sys5b.time_periods);
 PowerSimulations.powerconstraints(m, Pin, Pout, sys5b.storage, sys5b.time_periods)
 PowerSimulations.energyconstraints(m , Es, sys5b.storage, sys5b.time_periods)

@@ -28,40 +28,40 @@ generators_hg = [
 sys5b = PowerSystem(nodes5, append!(generators5, generators_hg), loads5_DA, branches5, battery, 230.0, 1000.0)
 
 m=Model()
-DevicesNetInjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys5b.buses), sys5b.time_periods)
+devices_netinjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys5b.buses), sys5b.time_periods)
 
 #Thermal Generator Models
-pth, IArray = PowerSimulations.generationvariables(m, DevicesNetInjection,  sys5b.generators.thermal, sys5b.time_periods);
+pth, inyection_array = PowerSimulations.generationvariables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);
 pre_set = [d for d in sys5b.generators.renewable if !isa(d, RenewableFix)]
-pre, IArray = PowerSimulations.generationvariables(m, DevicesNetInjection, pre_set, sys5b.time_periods)
+pre, inyection_array = PowerSimulations.generationvariables(m, devices_netinjection,  pre_set, sys5b.time_periods)
 test_cl = [d for d in sys5b.loads if !isa(d, PowerSystems.StaticLoad)] # Filter StaticLoads Out
-pcl, IArray = PowerSimulations.loadvariables(m, DevicesNetInjection, test_cl, sys5b.time_periods);
+pcl, inyection_array = PowerSimulations.loadvariables(m, devices_netinjection,  test_cl, sys5b.time_periods);
 test_hy = [d for d in generators_hg if !isa(d, PowerSystems.HydroFix)] # Filter StaticLoads Out
-phg, IArray = PowerSimulations.generationvariables(m, DevicesNetInjection, test_hy, sys5b.time_periods)
-pbtin, pbtout, IArray = PowerSimulations.powerstoragevariables(m, DevicesNetInjection, sys5b.storage, sys5b.time_periods)
+phg, inyection_array = PowerSimulations.generationvariables(m, devices_netinjection,  test_hy, sys5b.time_periods)
+pbtin, pbtout, inyection_array = PowerSimulations.powerstoragevariables(m, devices_netinjection,  sys5b.storage, sys5b.time_periods)
 
 #Injection Array
-TsNets = PowerSimulations.tsinjectionbalance(sys5b)
+TsNets = PowerSimulations.timeseries_netinjection(sys5b)
 #CopperPlate Network test
-m = PowerSimulations.copperplatebalance(m, IArray, TsNets, sys5b.time_periods);
+m = PowerSimulations.copperplatebalance(m, inyection_array, TsNets, sys5b.time_periods);
 
 
 #Reset EveryThing to Build the nodebalance network
 m=Model()
-DevicesNetInjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys5b.buses), sys5b.time_periods)
+devices_netinjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys5b.buses), sys5b.time_periods)
 
-pth, IArray = PowerSimulations.generationvariables(m, DevicesNetInjection,  sys5b.generators.thermal, sys5b.time_periods);
+pth, inyection_array = PowerSimulations.generationvariables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);
 pre_set = [d for d in sys5b.generators.renewable if !isa(d, RenewableFix)]
-pre, IArray = PowerSimulations.generationvariables(m, DevicesNetInjection, pre_set, sys5b.time_periods)
+pre, inyection_array = PowerSimulations.generationvariables(m, devices_netinjection,  pre_set, sys5b.time_periods)
 test_cl = [d for d in sys5b.loads if !isa(d, PowerSystems.StaticLoad)] # Filter StaticLoads Out
-pcl, IArray = PowerSimulations.loadvariables(m, DevicesNetInjection, test_cl, sys5b.time_periods);
+pcl, inyection_array = PowerSimulations.loadvariables(m, devices_netinjection,  test_cl, sys5b.time_periods);
 test_hy = [d for d in generators_hg if !isa(d, PowerSystems.HydroFix)] # Filter StaticLoads Out
-phg, IArray = PowerSimulations.generationvariables(m, DevicesNetInjection, test_hy, sys5b.time_periods)
-pbtin, pbtout, IArray = PowerSimulations.powerstoragevariables(m, DevicesNetInjection, sys5b.storage, sys5b.time_periods)
+phg, inyection_array = PowerSimulations.generationvariables(m, devices_netinjection,  test_hy, sys5b.time_periods)
+pbtin, pbtout, inyection_array = PowerSimulations.powerstoragevariables(m, devices_netinjection,  sys5b.storage, sys5b.time_periods)
 fl, PFNets = PowerSimulations.branchflowvariables(m, sys5b.branches, length(sys5b.buses), sys5b.time_periods)
 
 m = PowerSimulations.flowconstraints(m, fl, sys5b.branches, sys5b.time_periods)
-TsNets = PowerSimulations.tsinjectionbalance(sys5b)
-m = PowerSimulations.nodalflowbalance(m, IArray, PFNets, TsNets, sys5b.time_periods);
-m = PowerSimulations.ptdf_powerflow(m, sys5b, fl, IArray, TsNets)
+TsNets = PowerSimulations.timeseries_netinjection(sys5b)
+m = PowerSimulations.nodalflowbalance(m, inyection_array, PFNets, TsNets, sys5b.time_periods);
+m = PowerSimulations.networkflow(m, sys5b, fl, inyection_array, TsNets)
 true

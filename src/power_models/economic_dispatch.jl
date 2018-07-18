@@ -8,7 +8,7 @@ function economic_dispatch(sys,tp)
     m = JuMP.Model()
     #Variable Creation
     pth = generationvariables(m, sys.generators["Thermal"], tp);
-    # on_th, start_th, stopth = PowerSimulations.CommitmentVariables(m, system.generators["Thermal"], tp)
+    # on_thermal, start_thermal, stopth = PowerSimulations.CommitmentVariables(m, system.generators["Thermal"], tp)
 
     fl = BranchFlowVariables(m, sys.network.branches, tp);
     pcl = PowerSimulations.LoadVariables(m, sys.loads, tp);

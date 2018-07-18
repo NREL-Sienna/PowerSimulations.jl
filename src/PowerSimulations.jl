@@ -14,7 +14,7 @@ const PowerExpressionArray = Matrix{<:JuMP.GenericAffExpr}
 include("utils/undef_check.jl")
 
 #base and core
-#include("core/abstract_models.jl")
+include("core/abstract_models.jl")
 #include("core/dynamic_model.jl")
 include("base/device_injections.jl")
 include("base/timeseries_injections.jl")
