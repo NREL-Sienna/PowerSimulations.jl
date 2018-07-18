@@ -1,4 +1,4 @@
-function build_model(sys::PowerSystems.PowerSystem, model::PowerSimulationsModel)
+function buildmodel(sys::PowerSystems.PowerSystem, model::PowerSimulationsModel)
     PSModel = JuMP.Model()
 
 

@@ -63,5 +63,5 @@ fl, PFNets = PowerSimulations.branchflowvariables(m, sys5b.branches, length(sys5
 m = PowerSimulations.flowconstraints(m, fl, sys5b.branches, sys5b.time_periods)
 TsNets = PowerSimulations.tsinjectionbalance(sys5b)
 m = PowerSimulations.nodalflowbalance(m, inyeciton_array, PFNets, TsNets, sys5b.time_periods);
-m = PowerSimulations.ptdf_powerflow(m, sys5b, fl, inyeciton_array, TsNets)
+m = PowerSimulations.networkflow(m, sys5b, fl, inyeciton_array, TsNets)
 true
