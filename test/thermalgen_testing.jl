@@ -18,12 +18,12 @@ gen_ramp = [d for d in sys5.generators.thermal if !isa(d.tech.ramplimits,Nothing
 #Test UC
 m=Model()
 pth, inyection_array = PowerSimulations.generationvariables(m, devices_netinjection,   sys5.generators.thermal, sys5.time_periods);
-on_th, start_th, stop_th = PowerSimulations.commitmentvariables(m, sys5.generators.thermal, sys5.time_periods)
-PowerSimulations.powerconstraints(m, pth, on_th, sys5.generators.thermal, sys5.time_periods)
+on_thermal, start_thermal, stop_thermal = PowerSimulations.commitmentvariables(m, sys5.generators.thermal, sys5.time_periods)
+PowerSimulations.powerconstraints(m, pth, on_thermal, sys5.generators.thermal, sys5.time_periods)
 gen_ramp = [d for d in sys5.generators.thermal if !isa(d.tech.ramplimits,Nothing)]
-!isempty(gen_ramp) ? PowerSimulations.rampConstraints(m, pth, on_th, sys5.generators.thermal, sys5.time_periods) : true
-PowerSimulations.commitmentconstraints(m, on_th, start_th, stop_th, sys5.generators.thermal, sys5.time_periods)
+!isempty(gen_ramp) ? PowerSimulations.rampConstraints(m, pth, on_thermal, sys5.generators.thermal, sys5.time_periods) : true
+PowerSimulations.commitmentconstraints(m, on_thermal, start_thermal, stop_thermal, sys5.generators.thermal, sys5.time_periods)
 gen_time = [d for d in sys5.generators.thermal if !isa(d.tech.timelimits,Nothing)]
-!isempty(gen_time) ? PowerSimulations.timeconstraints(m, on_th, start_th, stop_th, gen_time, sys5.time_periods) : true
+!isempty(gen_time) ? PowerSimulations.timeconstraints(m, on_thermal, start_thermal, stop_thermal, gen_time, sys5.time_periods) : true
 
 true
