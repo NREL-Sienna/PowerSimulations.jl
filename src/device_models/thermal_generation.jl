@@ -37,19 +37,19 @@ function powerconstraints(m::JuMP.Model, pth::PowerVariable, devices::Array{T,1}
     (length(pth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
     # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
-    @constraintref Pmaxth[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
-    @constraintref Pminth[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
+    @constraintref pmax_th[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
+    @constraintref pmin_th[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
     for t in pth.indexsets[2], (ix, name) in enumerate(pth.indexsets[1])
         if name == devices[ix].name
-            Pminth[ix, t] = @constraint(m, pth[name, t] >= devices[ix].tech.realpowerlimits.min)
-            Pmaxth[ix, t] = @constraint(m, pth[name, t] <= devices[ix].tech.realpowerlimits.max)
+            pmin_th[ix, t] = @constraint(m, pth[name, t] >= devices[ix].tech.realpowerlimits.min)
+            pmax_th[ix, t] = @constraint(m, pth[name, t] <= devices[ix].tech.realpowerlimits.max)
         else
             error("Bus name in Array and variable do not match")
         end
     end
 
-    JuMP.registercon(m, :pmax_Thermal, Pmaxth)
-    JuMP.registercon(m, :pmin_Thermal, Pminth)
+    JuMP.registercon(m, :pmax_Thermal, pmax_th)
+    JuMP.registercon(m, :pmin_Thermal, pmin_th)
 
     return m
 end
@@ -60,19 +60,19 @@ This function adds the power limits of generators when there are CommitmentVaria
 function powerconstraints(m::JuMP.Model, pth::PowerVariable, onth::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
 
     (length(pth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
-    @constraintref Pmaxth[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
-    @constraintref Pminth[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
+    @constraintref pmax_th[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
+    @constraintref pmin_th[1:length(pth.indexsets[1]),1:length(pth.indexsets[2])]
     for t in pth.indexsets[2], (ix, name) in enumerate(pth.indexsets[1])
         if name == devices[ix].name
-            Pminth[ix, t] = @constraint(m, pth[name, t] >= devices[ix].tech.realpowerlimits.min*onth[name,t])
-            Pmaxth[ix, t] = @constraint(m, pth[name, t] <= devices[ix].tech.realpowerlimits.max*onth[name,t])
+            pmin_th[ix, t] = @constraint(m, pth[name, t] >= devices[ix].tech.realpowerlimits.min*onth[name,t])
+            pmax_th[ix, t] = @constraint(m, pth[name, t] <= devices[ix].tech.realpowerlimits.max*onth[name,t])
         else
             error("Bus name in Array and variable do not match")
         end
     end
 
-    JuMP.registercon(m, :pmax_Thermal, Pmaxth)
-    JuMP.registercon(m, :pmin_Thermal, Pminth)
+    JuMP.registercon(m, :pmax_Thermal, pmax_th)
+    JuMP.registercon(m, :pmin_Thermal, pmin_th)
 
     return m
 end
