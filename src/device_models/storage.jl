@@ -29,28 +29,28 @@ function powerconstraints(m::JuMP.Model, pstin::PowerVariable, pstout::PowerVari
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
     # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
 
-    @constraintref Pmax_in[1:length(pstin.indexsets[1]),1:length(pstin.indexsets[2])]
-    @constraintref Pmax_out[1:length(pstout.indexsets[1]),1:length(pstout.indexsets[2])]
-    @constraintref Pmin_in[1:length(pstin.indexsets[1]),1:length(pstin.indexsets[2])]
-    @constraintref Pmin_out[1:length(pstout.indexsets[1]),1:length(pstout.indexsets[2])]
+    @constraintref pmax_in[1:length(pstin.indexsets[1]),1:length(pstin.indexsets[2])]
+    @constraintref pmax_out[1:length(pstout.indexsets[1]),1:length(pstout.indexsets[2])]
+    @constraintref pmin_in[1:length(pstin.indexsets[1]),1:length(pstin.indexsets[2])]
+    @constraintref pmin_out[1:length(pstout.indexsets[1]),1:length(pstout.indexsets[2])]
 
     (pstin.indexsets[1] !== pstout.indexsets[1]) ? warn("Input/Output variables indexes are inconsistent"): true
 
     for t in pstin.indexsets[2], (ix, name) in enumerate(pstin.indexsets[1])
         if name == devices[ix].name
-            Pmin_in[ix, t] = @constraint(m, pstin[name, t] <= devices[ix].inputrealpowerlimits.min)
-            Pmin_out[ix, t] = @constraint(m, pstout[name, t] <= devices[ix].outputrealpowerlimits.min)
-            Pmax_in[ix, t] = @constraint(m, pstin[name, t] <= devices[ix].inputrealpowerlimits.max)
-            Pmax_out[ix, t] = @constraint(m, pstout[name, t] <= devices[ix].outputrealpowerlimits.max)
+            pmin_in[ix, t] = @constraint(m, pstin[name, t] <= devices[ix].inputrealpowerlimits.min)
+            pmin_out[ix, t] = @constraint(m, pstout[name, t] <= devices[ix].outputrealpowerlimits.min)
+            pmax_in[ix, t] = @constraint(m, pstin[name, t] <= devices[ix].inputrealpowerlimits.max)
+            pmax_out[ix, t] = @constraint(m, pstout[name, t] <= devices[ix].outputrealpowerlimits.max)
         else
             error("Bus name in Array and variable do not match")
         end
     end
 
-    JuMP.registercon(m, :PmaxIn, Pmax_in)
-    JuMP.registercon(m, :PmaxOut, Pmax_out)
-    JuMP.registercon(m, :PminIn, Pmin_in)
-    JuMP.registercon(m, :PminOut, Pmin_out)
+    JuMP.registercon(m, :PmaxIn, pmax_in)
+    JuMP.registercon(m, :PmaxOut, pmax_out)
+    JuMP.registercon(m, :PminIn, pmin_in)
+    JuMP.registercon(m, :PminOut, pmin_out)
 
     return m
 end

@@ -48,8 +48,8 @@ function powerconstraints(m::JuMP.Model, pth::PowerVariable, devices::Array{T,1}
         end
     end
 
-    JuMP.registercon(m, :Pmax_Thermal, Pmaxth)
-    JuMP.registercon(m, :Pmin_Thermal, Pminth)
+    JuMP.registercon(m, :pmax_Thermal, Pmaxth)
+    JuMP.registercon(m, :pmin_Thermal, Pminth)
 
     return m
 end
@@ -71,8 +71,8 @@ function powerconstraints(m::JuMP.Model, pth::PowerVariable, onth::PowerVariable
         end
     end
 
-    JuMP.registercon(m, :Pmax_Thermal, Pmaxth)
-    JuMP.registercon(m, :Pmin_Thermal, Pminth)
+    JuMP.registercon(m, :pmax_Thermal, Pmaxth)
+    JuMP.registercon(m, :pmin_Thermal, Pminth)
 
     return m
 end

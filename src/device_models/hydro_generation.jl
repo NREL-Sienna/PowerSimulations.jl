@@ -21,20 +21,20 @@ function powerconstraints(m::JuMP.Model, phy::PowerVariable, devices::Array{T,1}
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
     # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
 
-    @constraintref Pmax_hg[1:length(phy.indexsets[1]),1:length(phy.indexsets[2])]
-    @constraintref Pmin_hg[1:length(phy.indexsets[1]),1:length(phy.indexsets[2])]
+    @constraintref pmax_hg[1:length(phy.indexsets[1]),1:length(phy.indexsets[2])]
+    @constraintref pmin_hg[1:length(phy.indexsets[1]),1:length(phy.indexsets[2])]
 
     for t in phy.indexsets[2], (ix, name) in enumerate(phy.indexsets[1])
         if name == devices[ix].name
-            Pmin_hg[ix, t] = @constraint(m, phy[name, t] >= 0.0)
-            Pmax_hg[ix, t] = @constraint(m, phy[name, t] <= devices[ix].tech.realpowerlimits.max * devices[ix].scalingfactor.values[t])
+            pmin_hg[ix, t] = @constraint(m, phy[name, t] >= 0.0)
+            pmax_hg[ix, t] = @constraint(m, phy[name, t] <= devices[ix].tech.realpowerlimits.max * devices[ix].scalingfactor.values[t])
         else
             error("Bus name in Array and variable do not match")
         end
     end
 
-    JuMP.registercon(m, :PmaxHydro, Pmax_hg)
-    JuMP.registercon(m, :PminHydro, Pmin_hg)
+    JuMP.registercon(m, :PmaxHydro, pmax_hg)
+    JuMP.registercon(m, :PminHydro, pmin_hg)
 
     return m
 
