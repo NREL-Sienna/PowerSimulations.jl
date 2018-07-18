@@ -197,21 +197,21 @@ function timeconstraints(m::JuMP.Model, onth::PowerVariable, startth::PowerVaria
     (length(startth.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
     (onth.indexsets[1] !== startth.indexsets[1]) ? warn("Start and Commitment Status variables indexes are inconsistent"): true
 
-    @constraintref uptime[1:length(onth.indexsets[1]),1:length(onth.indexsets[2])]
-    @constraintref downtime[1:length(onth.indexsets[1]),1:length(onth.indexsets[2])]
+    @constraintref minup_thermal[1:length(onth.indexsets[1]),1:length(onth.indexsets[2])]
+    @constraintref mindown_thermal[1:length(onth.indexsets[1]),1:length(onth.indexsets[2])]
     for (ix,name) in enumerate(onth.indexsets[1])
         if name == devices[ix].name
             for t in onth.indexsets[2][2:end] #TODO : add initial condition constraint
-                uptime_thermal[ix,t] = @constraint(m,sum([startth[name,Int(i)] for i in ((t-devices[ix].tech.timelimits.up+1):t) if i > 0 ]) <= onth[name,t])
-                downtime_thermal[ix,t] = @constraint(m,sum([stopth[name,Int(i)] for i in ((t-devices[ix].tech.timelimits.down + 1):t) if i > 0]) <= (1 - onth[name,t]) )
+                minup_thermal[ix,t] = @constraint(m,sum([startth[name,Int(i)] for i in ((t-devices[ix].tech.timelimits.up+1):t) if i > 0 ]) <= onth[name,t])
+                mindown_thermal[ix,t] = @constraint(m,sum([stopth[name,Int(i)] for i in ((t-devices[ix].tech.timelimits.down + 1):t) if i > 0]) <= (1 - onth[name,t]) )
             end
         else
             error("Bus name in Array and variable do not match")
         end
     end
 
-    JuMP.registercon(m, :minup_thermal, uptime_th)
-    JuMP.registercon(m, :mindown_thermal, downtime_th)
+    JuMP.registercon(m, :minup_thermal, minup_thermal)
+    JuMP.registercon(m, :mindown_thermal, mindown_thermal)
 
     return m
 end
