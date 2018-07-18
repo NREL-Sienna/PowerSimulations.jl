@@ -41,12 +41,12 @@ function flowconstraints(m::JuMP.Model, fbr::PowerVariable, devices::Array{T,1},
 end
 
 
-function networkflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, fbr::PowerVariable, DeviceNetInjection::A, TsInjectionBalance::Array{Float64}) where A <: PowerExpressionArray
+function networkflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, fbr::PowerVariable, DeviceNetInjection::A, timeseries_netinjection::Array{Float64}) where A <: PowerExpressionArray
 
     (length(fbr.indexsets[2]) != sys.time_periods) ? error("Length of time dimension inconsistent"): true
 
     PTDF, = PowerSystems.buildptdf(sys.branches, sys.buses)
-    RHS = BLAS.gemm('N','N', PTDF, TsInjectionBalance)
+    RHS = BLAS.gemm('N','N', PTDF, timeseries_netinjection)
 
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
     # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
@@ -56,7 +56,7 @@ function networkflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, fbr::PowerVar
 
         branch_exp = JuMP.AffExpr([fbr[branch,t]], [1.0], RHS[ix,t])
 
-        for bus in 1:size(TsInjectionBalance)[1]
+        for bus in 1:size(timeseries_netinjection)[1]
 
             isassigned(DeviceNetInjection,bus,t) ? append!(branch_exp, -1*PTDF[ix,bus] * DeviceNetInjection[bus,t]) : continue
 

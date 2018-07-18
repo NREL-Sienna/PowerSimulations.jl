@@ -1,7 +1,7 @@
 """
 This function generates an Array of floats where each entry represents the RHS of the nodal balance equations. The corresponding values are the net-load values for each node and each time-step
 """
-function tsinjectionbalance(sys::PowerSystems.PowerSystem)
+function timeseries_netinjection(sys::PowerSystems.PowerSystem)
 
     TsNetInjection =  zeros(Float64, length(sys.buses), sys.time_periods)
 

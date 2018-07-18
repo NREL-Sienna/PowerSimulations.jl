@@ -21,7 +21,7 @@ pcl, inyeciton_array = PowerSimulations.loadvariables(m, devices_netinjection,  
 m = PowerSimulations.powerconstraints(m, pcl, test_cl, sys5b.time_periods)
 
 #Injection Array
-TsNets = PowerSimulations.tsinjectionbalance(sys5b)
+TsNets = PowerSimulations.timeseries_netinjection(sys5b)
 #CopperPlate Network test
 m = PowerSimulations.copperplatebalance(m, inyeciton_array, TsNets, sys5b.time_periods);
 
