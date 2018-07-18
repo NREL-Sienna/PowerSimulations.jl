@@ -26,7 +26,7 @@ function powerconstraints(m::JuMP.Model, pcl::PowerVariable, devices::Array{T,1}
         end
     end
 
-    JuMP.registercon(m, :LoadControlLimit, pmax_cl)
+    JuMP.registercon(m, :loadcontrollimit, pmax_cl)
 
     return m
 end
