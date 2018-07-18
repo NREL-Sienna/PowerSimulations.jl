@@ -47,10 +47,10 @@ function powerconstraints(m::JuMP.Model, pstin::PowerVariable, pstout::PowerVari
         end
     end
 
-    JuMP.registercon(m, :PmaxIn, pmax_in)
+    JuMP.registercon(m, :pmax_in, pmax_in)
     JuMP.registercon(m, :PmaxOut, pmax_out)
-    JuMP.registercon(m, :PminIn, pmin_in)
-    JuMP.registercon(m, :PminOut, pmin_out)
+    JuMP.registercon(m, :pmin_in, pmin_in)
+    JuMP.registercon(m, :pmin_out, pmin_out)
 
     return m
 end
