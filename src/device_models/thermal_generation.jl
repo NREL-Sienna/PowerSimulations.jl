@@ -184,7 +184,7 @@ function commitmentconstraints(m::JuMP.Model, onth::PowerVariable, startth::Powe
         end
     end
 
-    JuMP.registercon(m, :Commitment_thermal, commitment_th)
+    JuMP.registercon(m, :commitment_thermal, commitment_th)
 
     return m
 end
