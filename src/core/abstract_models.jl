@@ -1,5 +1,5 @@
 export PowerSimulationsModel
-export SimulationModel
+export PowerSimulationsModel
 export PowerResults
 
 abstract type AbstractPowerSimulationType end
