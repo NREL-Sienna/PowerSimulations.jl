@@ -13,7 +13,7 @@ function nodalflowbalance(m::JuMP.Model, devices_netinjection::AD, network_netin
 
         end
 
-        JuMP.registercon(m, :NodalPowerBalance, pf_balance)
+        JuMP.registercon(m, :nodalpowerbalance, pf_balance)
 
     return m
 end
