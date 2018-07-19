@@ -6,6 +6,7 @@ using PowerSystems
 using Compat
 using Clp
 using Cbc
+using Ipopt
 using DataFrames
 using Base.LinAlg
 
