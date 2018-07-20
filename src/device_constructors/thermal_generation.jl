@@ -32,7 +32,7 @@ function commitment(m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.Po
 
 end
 
-function constructdevice(device::Type{Thermal}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where T <: PowerExpressionArray
+function constructdevice(category::Type{Thermal}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where T <: PowerExpressionArray
 
     if commitmentconstraints in constraints
 
