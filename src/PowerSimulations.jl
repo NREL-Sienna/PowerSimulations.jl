@@ -3,6 +3,7 @@ module PowerSimulations
 #################################################################################
 # Exports
 
+#Device Relevant Exports
 export Thermal
 export powerconstraints
 export commitmentconstraints
@@ -11,6 +12,9 @@ export timeconstraints
 
 export Renewable
 export curtailconstraints
+
+#Functions
+export buildmodel!
 
 #################################################################################
 # Imports
@@ -43,6 +47,7 @@ include("core/abstract_models.jl")
 #include("core/dynamic_model.jl")
 include("base/device_injections.jl")
 include("base/timeseries_injections.jl")
+include("base/model_constructors.jl")
 #include("base/simulation_constructors.jl")
 include("base/solve_routines.jl")
 
@@ -55,8 +60,8 @@ include("device_models/electric_loads.jl")
 include("device_models/branches.jl")
 
 #Device constructors
-include("device_constructors/thermal_generation.jl")
-include("device_constructors/renewable_generation.jl")
+include("component_constructors/thermal_generation.jl")
+include("component_constructors/renewable_generation.jl")
 
 #Network related components
 include("network_models/copperplate_balance.jl")
