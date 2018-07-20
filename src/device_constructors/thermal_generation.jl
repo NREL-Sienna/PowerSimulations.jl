@@ -2,18 +2,13 @@ struct Thermal end
 
 function dispatch(m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}) where T <: PowerExpressionArray
 
-    pth, inyection_array = generationvariables(m, devices_netinjection, sys.generators.thermal, sys.time_periods, );
+    pth, inyection_array = generationvariables(m, devices_netinjection, sys.generators.thermal, sys.time_periods);
 
-    m = powerconstraints(m, pth, sys.generators.thermal, sys.time_periods)
-
-
-    if !isa(constraints,Nothing)
         for c in constraints
 
-            m = c(m, pth, sys.generators.thermal, sys.time_periods)
+            m = c(m, sys.generators.thermal, sys.time_periods)
 
         end
-    end
 
     return m, devices_netinjection
 
@@ -25,25 +20,19 @@ function commitment(m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.Po
 
     on_thermal, start_thermal, stop_thermal = commitmentvariables(m, sys.generators.thermal, sys.time_periods)
 
-    m = powerconstraints(m, pth, on_thermal, sys.generators.thermal, sys.time_periods)
+    for c in constraints
 
+        # TODO: Find a smarter way to pass on the variables, or rewrite to pass just m and call the variable from inside the function.
 
-    if !isa(constraints,Nothing)
-        for c in constraints
+        m = c(m, sys.generators.thermal, sys.time_periods, true)
 
-            # TODO: Find a smarter way to pass on the variables, or rewrite to pass just m and call the variable from inside the function.
-
-            m = c(m, pth, on_thermal, start_thermal, stop_thermal, sys.generators.thermal, sys.time_periods)
-
-        end
     end
 
     return m, devices_netinjection
 
 end
 
-
-function constructdevice(device::Type{Thermal}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}) where T <: PowerExpressionArray
+function constructdevice(device::Type{Thermal}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where T <: PowerExpressionArray
 
     if commitmentconstraints in constraints
 
