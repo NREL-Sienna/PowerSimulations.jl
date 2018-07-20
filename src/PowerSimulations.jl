@@ -23,6 +23,8 @@ using Cbc
 using Ipopt
 using DataFrames
 using Base.LinAlg
+# TODO: To be removed with Julia 0.7
+using NamedTuples
 
 #################################################################################
 # Type Alias
