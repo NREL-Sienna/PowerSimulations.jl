@@ -3,13 +3,15 @@ module PowerSimulations
 #################################################################################
 # Exports
 
-export create_constraints
+export constructdevice
 
 export Thermal
 export commitmentconstraints
 export rampconstraints
 export timeconstraints
 
+export Renewable
+export curtailconstraints
 
 #################################################################################
 # Imports
@@ -53,6 +55,7 @@ include("device_models/branches.jl")
 
 #Device constructors
 include("device_constructors/thermal_generation.jl")
+include("device_constructors/renewable_generation.jl")
 
 #Network related components
 include("network_models/copperplate_balance.jl")
