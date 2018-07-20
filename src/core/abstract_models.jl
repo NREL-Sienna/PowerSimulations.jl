@@ -11,8 +11,9 @@ mutable struct PowerOperationsModel{T<:AbstractPowerSimulationType, F <: Array{<
     generation::Array{@NT(device::DataType,constraints::F)}
     demand::Array{@NT(device::DataType,constraints::F)}
     storage::Array{@NT(device::DataType,constraints::F)}
+    branches::Array{@NT(device::DataType,constraints::F)}
     services::Array{@NT(device::DataType,constraints::F)}
-    transmission::Array{@NT(device::DataType,constraints::F)}
+    transmission::DataType
     cost::Array{@NT(device::DataType,components::F)}
     system::PowerSystems.PowerSystem
     psmodel::JuMP.Model
