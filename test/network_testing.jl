@@ -25,7 +25,7 @@ generators_hg = [
         1000.0,TimeSeries.TimeArray(DayAhead,wind_ts_DA) )
 ]
 
-sys5b = PowerSystem(nodes5, append!(generators5, generators_hg), loads5_DA, branches5, battery, 230.0, 1000.0)
+sys5b = PowerSystem(nodes5, append!(generators5, generators_hg), loads5_DA, branches5, battery,  1000.0)
 
 m=Model()
 devices_netinjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys5b.buses), sys5b.time_periods)

@@ -6,4 +6,5 @@ Ipopt
 Cbc
 Compat
 DataFrames
+NamedTuples
 

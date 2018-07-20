@@ -3,17 +3,21 @@ export PowerResults
 
 abstract type AbstractPowerSimulationType end
 
-abstract type EconomicDispatchType <: AbstractPowerSimulationType end
+abstract type EconomicDispatch <: AbstractPowerSimulationType end
 
-mutable struct PowerOperationsModel{T<:AbstractPowerSimulationType}
-    generation::Array{Function}
-    demand::Array{Function}
-    storage::Array{Function}
-    cost::Function
-    transmission::Function
+abstract type UnitCommitment <: AbstractPowerSimulationType end
+
+mutable struct PowerOperationsModel{T<:AbstractPowerSimulationType, F <: Array{<:Function}}
+    generation::Array{@NT(device::DataType,constraints::F)}
+    demand::Array{@NT(device::DataType,constraints::F)}
+    storage::Array{@NT(device::DataType,constraints::F)}
+    branches::Array{@NT(device::DataType,constraints::F)}
+    services::Array{@NT(device::DataType,constraints::F)}
+    transmission::DataType
+    cost::Array{@NT(device::DataType,components::F)}
     system::PowerSystems.PowerSystem
-    model::JuMP.Model
-    dynamics::Function
+    psmodel::JuMP.Model
+    dynamics::Bool
 end
 
 mutable struct PowerSimulationsModel{T<:AbstractPowerSimulationType}
