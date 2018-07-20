@@ -1,6 +1,6 @@
-function generationvariables(m::JuMP.Model, devices_netinjection:: A, devices::Array{T,1}, time_periods::Int64) where {A <: PowerExpressionArray, T <: PowerSystems.RenewableGen}
+function generationvariables(m::JuMP.Model, devices_netinjection::A, devices::Array{T,1}, time_periods::Int64) where {A <: PowerExpressionArray, T <: PowerSystems.RenewableGen}
 
-    on_set = [d.name for d in devices if d.available == true]
+    on_set = [d.name for d in devices]
 
     t = 1:time_periods
 
@@ -14,7 +14,7 @@ end
 """
 This function adds the power limits of generators when there are no CommitmentVariables
 """
-function powerconstraints(m::JuMP.Model, pre::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.RenewableCurtailment
+function powerconstraints(m::JuMP.Model, pre::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.RenewableGen
 
     (length(pre.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
 
@@ -37,4 +37,5 @@ function powerconstraints(m::JuMP.Model, pre::PowerVariable, devices::Array{T,1}
     JuMP.registercon(m, :pmin_renewable, pmin_re)
 
     return m
+
 end
