@@ -3,9 +3,8 @@ module PowerSimulations
 #################################################################################
 # Exports
 
-export constructdevice
-
 export Thermal
+export powerconstraints
 export commitmentconstraints
 export rampconstraints
 export timeconstraints
