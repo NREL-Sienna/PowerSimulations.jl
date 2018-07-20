@@ -6,10 +6,13 @@ function dispatch(m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.Powe
 
     m = powerconstraints(m, pth, sys.generators.thermal, sys.time_periods)
 
-    for c in constraints
 
-        m = c(m, pth, sys.generators.thermal, sys.time_periods)
+    if !isa(constraints,Nothing)
+        for c in constraints
 
+            m = c(m, pth, sys.generators.thermal, sys.time_periods)
+
+        end
     end
 
     return m, devices_netinjection
@@ -24,12 +27,15 @@ function commitment(m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.Po
 
     m = powerconstraints(m, pth, on_thermal, sys.generators.thermal, sys.time_periods)
 
-    for c in constraints
 
-        # TODO: Find a smarter way to pass on the variables, or rewrite to pass just m and call the variable from inside the function.
+    if !isa(constraints,Nothing)
+        for c in constraints
 
-        m = c(m, pth, on_thermal, start_thermal, stop_thermal, sys.generators.thermal, sys.time_periods)
+            # TODO: Find a smarter way to pass on the variables, or rewrite to pass just m and call the variable from inside the function.
 
+            m = c(m, pth, on_thermal, start_thermal, stop_thermal, sys.generators.thermal, sys.time_periods)
+
+        end
     end
 
     return m, devices_netinjection
@@ -37,7 +43,7 @@ function commitment(m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.Po
 end
 
 
-function create_constraints(device::Type{Thermal}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}) where T <: PowerExpressionArray
+function constructdevice(device::Type{Thermal}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}) where T <: PowerExpressionArray
 
     if commitmentconstraints in constraints
 
