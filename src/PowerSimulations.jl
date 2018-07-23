@@ -15,6 +15,7 @@ export curtailconstraints
 
 #Functions
 export buildmodel!
+export simulatemodel
 
 #################################################################################
 # Imports
@@ -48,7 +49,7 @@ include("core/abstract_models.jl")
 include("base/device_injections.jl")
 include("base/timeseries_injections.jl")
 include("base/model_constructors.jl")
-#include("base/simulation_constructors.jl")
+include("base/simulation_routines.jl")
 include("base/solve_routines.jl")
 
 #Device Modeling components
