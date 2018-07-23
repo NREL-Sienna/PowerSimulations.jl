@@ -5,11 +5,11 @@ function nodalflowbalance(m::JuMP.Model, devices_netinjection::AD, network_netin
 
         @constraintref pf_balance[1:size(network_netinjection)[1], 1:time_periods::Int64]
 
-        for (n, c) in enumerate(IndexCartesian(), network_netinjection)
+        for (n, c) in enumerate(IndexCartesian(2), network_netinjection)
 
             isassigned(devices_netinjection,n[1],n[2]) ? append!(c, devices_netinjection[n[1],n[2]]) : c
 
-            pf_balance[n[1],n[2]] = @constraint(m, c == timeseries_netinjection[n[1],n[2]])
+            pf_balance[n[1],n[2]] = @constraint(m, c == timeseries_netinjection[n])
 
         end
 
