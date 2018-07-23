@@ -18,7 +18,8 @@ function branchflowvariables(m::JuMP.Model, devices::Array{T,1}, bus_number::Int
     return fbr, network_netinjection
 end
 
-function flowconstraints(m::JuMP.Model, fbr::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.Branch
+function flowconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.Branch
+    fbr = m[:fbr]
     (length(fbr.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
 
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
@@ -41,8 +42,9 @@ function flowconstraints(m::JuMP.Model, fbr::PowerVariable, devices::Array{T,1},
 end
 
 
-function networkflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, fbr::PowerVariable, DeviceNetInjection::A, timeseries_netinjection::Array{Float64}) where A <: PowerExpressionArray
-
+function networkflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, DeviceNetInjection::A, timeseries_netinjection::Array{Float64}) where A <: PowerExpressionArray
+    fbr = m[:fbr]
+    
     (length(fbr.indexsets[2]) != sys.time_periods) ? error("Length of time dimension inconsistent"): true
 
     PTDF, = PowerSystems.buildptdf(sys.branches, sys.buses)

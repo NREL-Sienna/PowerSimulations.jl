@@ -13,6 +13,13 @@ export timeconstraints
 export Renewable
 export curtailconstraints
 
+#Network Relevant Exports
+export Network
+export copperplate
+export dcopf
+export flowconstraints
+export networkflow
+
 #Functions
 export buildmodel!
 
@@ -66,6 +73,9 @@ include("component_constructors/renewable_generation.jl")
 #Network related components
 include("network_models/copperplate_balance.jl")
 include("network_models/nodal_balance.jl")
+
+#Network constructors
+include("component_constructors/network_constructor.jl")
 
 #Cost Components
 include("cost_functions/controlableload_cost.jl")
