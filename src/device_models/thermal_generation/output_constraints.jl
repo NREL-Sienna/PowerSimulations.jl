@@ -2,7 +2,7 @@
 """
 This function adds the power limits of generators when there are no CommitmentVariables
 """
-function power_dispatch(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
+function activepower_dispatch(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
 
     pth = m[:pth]
     time_index = m[:pth].indexsets[2]
@@ -36,10 +36,11 @@ function power_dispatch(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64)
 end
 
 
+
 """
 This function adds the power limits of generators when there are CommitmentVariables
 """
-function power_commitment(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
+function activepower_commitment(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
 
     pth = m[:pth]
     onth = m[:onth]
@@ -71,7 +72,7 @@ end
 
 function powerconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64, commitment::Bool = false) where T <: PowerSystems.ThermalGen
 
-    commitment ? m = power_commitment(m, devices, time_periods) : m = power_dispatch(m, devices, time_periods)
+    commitment ? m = activepower_commitment(m, devices, time_periods) : m = activepower_dispatch(m, devices, time_periods)
 
     return m
 

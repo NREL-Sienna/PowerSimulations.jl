@@ -18,14 +18,19 @@ function branchflowvariables(m::JuMP.Model, devices::Array{T,1}, bus_number::Int
     return fbr, network_netinjection
 end
 
-function flowconstraints(m::JuMP.Model, fbr::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.Branch
+function flowconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.Branch
+
+    fbr = m[:fbr]
+    name_index = m[:fbr].indexsets[1]
+    time_index = m[:fbr].indexsets[2]
+
     (length(fbr.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
 
     # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
     # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
-    @constraintref Flow_max_tf[1:length(fbr.indexsets[1]),1:length(fbr.indexsets[2])]
-    @constraintref Flow_max_ft[1:length(fbr.indexsets[1]),1:length(fbr.indexsets[2])]
-    for t in fbr.indexsets[2], (ix, name) in enumerate(fbr.indexsets[1])
+    @constraintref Flow_max_tf[1:length(name_index),1:length(time_index)]
+    @constraintref Flow_max_ft[1:length(name_index),1:length(time_index)]
+    for t in time_index, (ix, name) in enumerate(name_index)
         if name == devices[ix].name
             Flow_max_tf[ix, t] = @constraint(m, fbr[name, t] <= devices[ix].rate.to_from)
             Flow_max_ft[ix, t] = @constraint(m, fbr[name, t] >= -1*devices[ix].rate.from_to)
@@ -40,34 +45,5 @@ function flowconstraints(m::JuMP.Model, fbr::PowerVariable, devices::Array{T,1},
     return m
 end
 
-
-function networkflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, fbr::PowerVariable, DeviceNetInjection::A, timeseries_netinjection::Array{Float64}) where A <: PowerExpressionArray
-
-    (length(fbr.indexsets[2]) != sys.time_periods) ? error("Length of time dimension inconsistent"): true
-
-    PTDF, = PowerSystems.buildptdf(sys.branches, sys.buses)
-    RHS = BLAS.gemm('N','N', PTDF, timeseries_netinjection)
-
-    # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
-    # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
-    @constraintref branch_flow[1:length(fbr.indexsets[1]),1:length(fbr.indexsets[2])]
-
-    for t in 1:sys.time_periods, (ix,branch) in enumerate(fbr.indexsets[1])
-
-        branch_exp = JuMP.AffExpr([fbr[branch,t]], [1.0], RHS[ix,t])
-
-        for bus in 1:size(timeseries_netinjection)[1]
-
-            isassigned(DeviceNetInjection,bus,t) ? append!(branch_exp, -1*PTDF[ix,bus] * DeviceNetInjection[bus,t]) : continue
-
-        end
-
-        branch_flow[ix,t] = @constraint(m, branch_exp == 0.0)
-
-    end
-
-    JuMP.registercon(m, :BranchFlow, branch_flow)
-
-    return m
-end
-
+include("branches/network_flow.jl")
+include("branches/dc_powerflow.jl")

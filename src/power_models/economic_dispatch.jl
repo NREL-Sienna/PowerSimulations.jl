@@ -7,7 +7,7 @@ This function populates a particular AbstractPowerSimulationModel and populates 
 function economic_dispatch(sys,tp)
     m = JuMP.Model()
     #Variable Creation
-    pth = generationvariables(m, sys.generators["Thermal"], tp);
+    pth = activepowervariables(m, sys.generators["Thermal"], tp);
     # on_thermal, start_thermal, stopth = PowerSimulations.CommitmentVariables(m, system.generators["Thermal"], tp)
 
     fl = BranchFlowVariables(m, sys.network.branches, tp);

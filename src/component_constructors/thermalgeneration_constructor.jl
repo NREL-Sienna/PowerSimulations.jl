@@ -1,8 +1,8 @@
 struct Thermal end
 
-function dispatch(m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}) where T <: PowerExpressionArray
+function dispatch(m::JuMP.Model, devices_netinjection::T, network:: N, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}) where T <: PowerExpressionArray
 
-    pth, inyection_array = generationvariables(m, devices_netinjection, sys.generators.thermal, sys.time_periods);
+    pth, inyection_array = activepowervariables(m, devices_netinjection, sys.generators.thermal, sys.time_periods);
 
         for c in constraints
 
@@ -16,7 +16,7 @@ end
 
 function commitment(m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}) where T <: PowerExpressionArray
 
-    pth, inyection_array = generationvariables(m, devices_netinjection, sys.generators.thermal, sys.time_periods);
+    pth, inyection_array = activepowervariables(m, devices_netinjection, sys.generators.thermal, sys.time_periods);
 
     on_thermal, start_thermal, stop_thermal = commitmentvariables(m, sys.generators.thermal, sys.time_periods)
 
@@ -32,7 +32,7 @@ function commitment(m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.Po
 
 end
 
-function constructdevice(category::Type{Thermal}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where T <: PowerExpressionArray
+function constructdevice(category::Type{Thermal}, transmission::N, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where {T <: PowerExpressionArray, N <: RealNetwork}
 
     if commitmentconstraints in constraints
 

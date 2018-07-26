@@ -16,3 +16,6 @@ sys5b = PowerSystem(nodes5, generators5, loads5_DA, branches5, [battery],  1000.
 ;
 
 m = Model()
+
+PTDF, = PowerSystems.buildptdf(sys.branches, sys.buses)
+RHS = BLAS.gemm('N','N', PTDF, timeseries_netinjection)

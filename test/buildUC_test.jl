@@ -11,10 +11,10 @@ m=JuMP.Model()
 devices_netinjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys5b.buses), sys5b.time_periods)
 
 #Thermal Generator Models
-pth, inyection_array = PowerSimulations.generationvariables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);
+pth, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);
 m = PowerSimulations.powerconstraints(m, pth, sys5b.generators.thermal, sys5b.time_periods)
 pre_set = [d for d in sys5b.generators.renewable if !isa(d, RenewableFix)]
-pre, inyection_array = PowerSimulations.generationvariables(m, devices_netinjection,  pre_set, sys5b.time_periods)
+pre, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,  pre_set, sys5b.time_periods)
 m = PowerSimulations.powerconstraints(m, pre, pre_set, sys5b.time_periods)
 test_cl = [d for d in sys5b.loads if !isa(d, PowerSystems.StaticLoad)] # Filter StaticLoads Out
 pcl, inyection_array = PowerSimulations.loadvariables(m, devices_netinjection,  test_cl, sys5b.time_periods);
