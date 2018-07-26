@@ -1,23 +1,90 @@
 struct CopperPlate end
-struct NodalBalance end
+struct NetworkFlow end
+struct DCPowerFlow end
+abstract type ACPowerFlow end
 
-function constructnetwork(category::Type{CopperPlate}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem) where T <: PowerExpressionArray
+function constructnetwork(category::Type{CopperPlate}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where T <: PowerExpressionArray
 
-    TsNets = PowerSimulations.timeseries_netinjection(sys);
-
-    m = PowerSimulations.copperplatebalance(m, devices_netinjection, TsNets, sys.time_periods);
+    m = PowerSimulations.copperplatebalance(m, devices_netinjection, sys.time_periods);
 
     return m
 
 end
 
-function constructnetwork(category::Type{NodalBalance}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem) where T <: PowerExpressionArray
+function constructnetwork(category::Type{NetworkFlow}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where T <: PowerExpressionArray
 
-    TsNets = PowerSimulations.timeseries_netinjection(sys);
+    fl, flow_injections = PowerSimulations.branchflowvariables(m, sys.branches, length(sys.buses), sys.time_periods);
 
-    #assume the devices_netinjection already has the branch_flow variables. nodalflow balances needs to be updated.
+    m = networkflow(m, sys, devices_netinjection);
 
-    m = PowerSimulations.nodalflowbalance(m, devices_netinjection, TsNets, sys.time_periods);
+    #= if conditions for the kwargs
+
+    for category in
+        model.psmodel = constructdevice(category.service, model.psmodel, devices_netinjection, sys, category.constraints)
+    end
+
+    =#
+
+    for (n, c) in enumerate(IndexCartesian(), flow_netinjections)
+
+        isassigned(devices_netinjection,n[1],n[2]) ? append!(c, devices_netinjection[n[1],n[2]]) : c
+
+    end
+
+    m = PowerSimulations.nodalflowbalance(m, devices_netinjection, sys.time_periods);
+
+    return m
+
+end
+
+function constructnetwork(category::Type{DCPowerFlow}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs ...) where T <: PowerExpressionArray
+
+    fl, flow_injections = PowerSimulations.branchflowvariables(m, sys.branches, length(sys.buses), sys.time_periods);
+
+    # m = dcpf(m, sys, fl)
+
+    #= if conditions for the kwargs
+
+    for category in
+        model.psmodel = constructdevice(category.service, model.psmodel, devices_netinjection, sys, category.constraints)
+    end
+
+    =#
+
+    for (n, c) in enumerate(IndexCartesian(), flow_netinjections)
+
+        isassigned(devices_netinjection,n[1],n[2]) ? append!(c, devices_netinjection[n[1],n[2]]) : c
+
+    end
+
+    m = PowerSimulations.nodalflowbalance(m, devices_netinjection, sys.time_periods);
+
+    return m
+
+end
+
+function constructnetwork(category::Type{F}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs ...) where {F<: ACPowerFlow, T <: PowerExpressionArray}
+
+    fl, flow_injections = PowerSimulations.branchflowvariables(m, sys.branches, length(sys.buses), sys.time_periods);
+    #theta = anglevariables(m, sys.buses, time_periods)
+    #voltage = anglevariables(m, sys.buses, time_periods)
+    # m = acpf(formualtion, m, sys, fl)
+
+    #= if conditions for the kwargs
+
+    for category in
+        model.psmodel = constructdevice(category.service, model.psmodel, devices_netinjection, sys, category.constraints)
+    end
+
+    =#
+
+    for (n, c) in enumerate(IndexCartesian(), flow_netinjections)
+
+        isassigned(devices_netinjection,n[1],n[2]) ? append!(c, devices_netinjection[n[1],n[2]]) : c
+
+    end
+
+    m = PowerSimulations.nodalflowbalance(m, devices_netinjection, sys.time_periods);
 
     return m
 
