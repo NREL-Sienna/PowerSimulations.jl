@@ -4,7 +4,7 @@
 """
 This function add the variables for power generation output to the model
 """
-function generationvariables(m::JuMP.Model, devices_netinjection::A, devices::Array{T,1}, time_periods::Int64) where {A <: PowerExpressionArray, T <: PowerSystems.ThermalGen}
+function activepowervariables(m::JuMP.Model, devices_netinjection::A, devices::Array{T,1}, time_periods::Int64) where {A <: PowerExpressionArray, T <: PowerSystems.ThermalGen}
     on_set = [d.name for d in devices if d.available == true]
 
     t = 1:time_periods
@@ -33,6 +33,6 @@ function commitmentvariables(m::JuMP.Model, devices::Array{T,1}, time_periods::I
     return onth, startth, stopth
 end
 
-include("thermal_generation/powerlimits_constraints.jl")
+include("thermal_generation/output_constraints.jl")
 include("thermal_generation/ramping_constraints.jl")
 include("thermal_generation/unitcommitment_constraints.jl")
