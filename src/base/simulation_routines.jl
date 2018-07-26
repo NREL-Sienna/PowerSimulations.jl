@@ -1,6 +1,15 @@
-function modify_constraint(m::JuMP.Model, time_series, consname::Symbol)
+export simulatemodel
 
-    JuMP.setRHS
+function modify_constraint(m::JuMP.Model, consname::Symbol, data::Array{Float64,2})
+
+    !(size(m[consmane]) == size(data)) ? error("The data and the constraint are size inconsistent") : true
+
+    for (n, c) in enumerate(IndexCartesian(), data)
+
+        JuMP.setRHS(m[consname][n] = data)
+
+    end
+
     return m
 
 end
@@ -20,4 +29,12 @@ function run_simulations(power_model::PowerSimulationsModel{T}) where T<:Abstrac
 
 
 end
+
+
+function simulatemodel(model::PowerSimulationsModel{T}) where T<:AbstractPowerSimulationType
+
+
+
+end
+
 
