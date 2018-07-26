@@ -32,11 +32,11 @@ pcl = [d for d in sys5b.loads if isa(d, PowerSystems.InterruptibleLoad)]
 
 tl = PowerSimulations.variablecost(m, pcl_vars, pcl)
 
-pre_vars = PowerSimulations.generationvariables(m, sys5b.generators.renewable, sys5b.time_periods)
+pre_vars = PowerSimulations.activepowervariables(m, sys5b.generators.renewable, sys5b.time_periods)
 pre = [d for d in sys5b.generators.renewable if !isa(d, PowerSystems.RenewableFix)]
 tre = PowerSimulations.variablecost(m, pre_vars, pre)
 
-pth = PowerSimulations.generationvariables(m, sys5b.generators.thermal, sys5b.time_periods)
+pth = PowerSimulations.activepowervariables(m, sys5b.generators.thermal, sys5b.time_periods)
 on_thermal, start_thermal, stop_thermal = PowerSimulations.CommitmentVariables(m, sys5b.generators.thermal, sys5b.time_periods)
 tth = PowerSimulations.variablecost(m, pth, sys5b.generators.thermal)
 tcth = PowerSimulations.commitmentcost(m, on_thermal, start_thermal, stop_thermal, sys5b.generators.thermal)
