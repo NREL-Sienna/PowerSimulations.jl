@@ -11,11 +11,17 @@ function constructnetwork(category::Type{CopperPlate}, m::JuMP.Model, devices_ne
 
 end
 
-function constructnetwork(category::Type{NetworkFlow}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where T <: PowerExpressionArray
+function constructnetwork(category::Type{NetworkFlow}, branches::Array{@NT(device::DataType,constraints::F)}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where {F <: Function, T <: PowerExpressionArray}
 
     fl, flow_injections = PowerSimulations.branchflowvariables(m, sys.branches, length(sys.buses), sys.time_periods);
 
-    m = networkflow(m, sys, devices_netinjection);
+    if :ptdf in keys(kwargs) #check if the KEY PTDF is present
+
+        m = networkflow(m, sys, devices_netinjection, PTDF);
+
+    else
+        error("No PTDF")
+    end
 
     #= if conditions for the kwargs
 

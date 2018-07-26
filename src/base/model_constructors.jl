@@ -23,7 +23,7 @@ function buildmodel!(sys::PowerSystems.PowerSystem, model::PowerSimulationsModel
     timeseries_nets = PowerSimulations.timeseries_netinjection(sys)
 
     #This function hasn't been created yet
-    model.psmodel = constructnetwork(model.transmission, model.branches, model.psmodel, timeseries_nets, devices_netinjection, sys)
+    model.psmodel = constructnetwork(model.transmission, model.branches, model.psmodel, timeseries_nets, devices_netinjection, sys; kwargs...)
 
     for category in model.services
         model.psmodel = constructservice(category.service, model.psmodel, devices_netinjection, sys, category.constraints)
