@@ -16,9 +16,11 @@ export curtailconstraints
 #Network Relevant Exports
 export Network
 export copperplate
-export dcopf
-export flowconstraints
 export networkflow
+export DCPowerFlow
+export ACPowerFlow
+export flowconstraints
+
 
 #Functions
 export buildmodel!
@@ -67,8 +69,10 @@ include("device_models/electric_loads.jl")
 include("device_models/branches.jl")
 
 #Device constructors
-include("component_constructors/thermal_generation.jl")
-include("component_constructors/renewable_generation.jl")
+include("component_constructors/thermalgeneration_constructor.jl")
+include("component_constructors/renewablegeneration_constructor.jl")
+include("component_constructors/network_constructor.jl")
+include("component_constructors/services_constructor.jl")
 
 #Network related components
 include("network_models/copperplate_balance.jl")
