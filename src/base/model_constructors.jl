@@ -1,11 +1,14 @@
 function buildmodel!(sys::PowerSystems.PowerSystem, model::PowerSimulationsModel)
 
     PSModel = JuMP.Model()
-    # TODO: this syntax might change with JuMP 0.19
+
     devices_netinjection =  BusTimeJuMPMapping(length(sys.buses), sys.time_periods)
 
     #Knowing the network model => create reactive power constraints or not.
     network_model = model.transmission.category
+
+    # TODO: Rename constructdevice to constructdevice! since it modifies the JuMP model.
+    # It does not need to return ::JuMP.model
 
     for category in model.generation
         model.psmodel = constructdevice(category.device, network_model, model.psmodel, devices_netinjection, sys, category.constraints)
