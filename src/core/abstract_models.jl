@@ -7,7 +7,7 @@ abstract type EconomicDispatch <: AbstractOperationsModel end
 
 abstract type UnitCommitment <: AbstractOperationsModel end
 
-mutable struct PowerModel{T<:AbstractOperationsModel, F <: Array{<:Function}}
+mutable struct PowerOperationModel{T<:AbstractOperationsModel, F <: Array{<:Function}}
     psmodel:: T
     generation::Array{@NT(device::DataType,constraints::F)}
     demand::Array{@NT(device::DataType,constraints::F)}
@@ -23,7 +23,7 @@ end
 
 mutable struct PowerSimulationsModel{T<:AbstractOperationsModel}
     name::String
-    model::PowersModel{T}
+    model::PowerOperationModel{T}
     periods::Int64
     resolution::Int64
     date_from::DateTime
