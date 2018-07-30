@@ -77,7 +77,6 @@ include("network_models/nodal_balance.jl")
 #Device constructors
 include("component_constructors/thermalgeneration_constructor.jl")
 include("component_constructors/renewablegeneration_constructor.jl")
-include("component_constructors/network_constructor.jl")
 include("component_constructors/services_constructor.jl")
 
 #Network constructors
