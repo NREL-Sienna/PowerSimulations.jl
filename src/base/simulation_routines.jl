@@ -6,7 +6,7 @@ function modify_constraint(m::JuMP.Model, consname::Symbol, data::Array{Float64,
 
     for (n, c) in enumerate(IndexCartesian(), data)
 
-        JuMP.setRHS(m[consname][n] = data)
+        JuMP.setRHS(m[consname], data[n])
 
     end
 
