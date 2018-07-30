@@ -1,7 +1,3 @@
-struct CopperPlate end
-struct NetworkFlow end
-struct DCPowerFlow end
-abstract type ACPowerFlow end
 
 function constructnetwork(category::Type{CopperPlate}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where T <: PowerExpressionArray
 
