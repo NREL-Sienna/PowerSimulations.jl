@@ -3,7 +3,7 @@ This function generates an Array of floats where each entry represents the RHS o
 """
 function timeseries_netinjection(sys::PowerSystems.PowerSystem)
 
-    TsNetInjection =  zeros(Float64, length(sys.buses), sys.time_periods)
+    tsnetinjection =  zeros(Float64, length(sys.buses), sys.time_periods)
 
     # TODO: Change syntax to for source in sys.generators when implemented in Julia v0.7 with Named Tuples
 
@@ -19,7 +19,7 @@ function timeseries_netinjection(sys::PowerSystems.PowerSystem)
 
                  fixed_source = [fs.tech.installedcapacity*fs.scalingfactor.values[t] for fs in source if fs.bus == b]
 
-                 isempty(fixed_source)? break : fixed_source = TsNetInjection[b.number,t] -= sum(fixed_source)
+                 isempty(fixed_source)? break : fixed_source = tsnetinjection[b.number,t] -= sum(fixed_source)
 
              end
 
@@ -33,11 +33,11 @@ function timeseries_netinjection(sys::PowerSystems.PowerSystem)
 
              staticload = [sl.maxrealpower*sl.scalingfactor.values[t] for sl in sys.loads if sl.bus == b]
 
-             isempty(staticload) ? break : TsNetInjection[b.number,t] = sum(staticload)
+             isempty(staticload) ? break : tsnetinjection[b.number,t] = sum(staticload)
 
          end
      end
 
 
-    return  TsNetInjection
+    return  tsnetinjection
 end
