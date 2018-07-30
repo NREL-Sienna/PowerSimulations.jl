@@ -1,8 +1,9 @@
 ## All this code breaks with JumP 0.19.
 
-function solvepsmodel(Psmodel::JuMP.Model; Solver = nothing)
+function solve(model::PowerOperationModel{T, F}; Solver = nothing) where (T <: AbstractOperationsModel, F <: Array{<:Function})
 
-    model_type = JuMP.ProblemTraits(Psmodel)
+    psmodel = model.model # JuMP model
+    model_type = JuMP.ProblemTraits(psmodel)
 
     #==
     function ProblemTraits(m::Model; relaxation=false)
@@ -26,17 +27,17 @@ function solvepsmodel(Psmodel::JuMP.Model; Solver = nothing)
                 error("The model is a Mixed Integer Non-Linear Problem, please define an appropiate solver manually using the Solver= argument")
             end
 
-            JuMP.setsolver(Psmodel, Ipopt.IpoptSolver())
+            JuMP.setsolver(psmodel, Ipopt.IpoptSolver())
             warn("The model contains non-linear elements (QP, QC, NLP), by default the solver is Ipopt Solver")
 
         elseif model_type.lin & model_type.int & !(model_type.qc|model_type.qp|model_type.nlp)
 
-            JuMP.setsolver(Psmodel, Cbc.CbcSolver(logLevel = 1))
+            JuMP.setsolver(psmodel, Cbc.CbcSolver(logLevel = 1))
             warn("The model is Mixed Integer Linear, the default is Cbc Solver")
 
         elseif model_type.lin & !(model_type.qc|model_type.qp|model_type.nlp)
 
-            JuMP.setsolver(Psmodel, Clp.ClpSolver(SolveType = 5, LogLevel = 4))
+            JuMP.setsolver(psmodel, Clp.ClpSolver(SolveType = 5, LogLevel = 4))
 
             warn("The model is linear, by default the solver is Clp Solver")
 
@@ -47,19 +48,17 @@ function solvepsmodel(Psmodel::JuMP.Model; Solver = nothing)
         end
 
     else
-        JuMP.setsolver(Psmodel, Solver)
+        JuMP.setsolver(psmodel, Solver)
         warn("A solver has been defined manually, this might break the results output function")
 
     end
 
-    JuMP.build(Psmodel)
-    status = solve(Psmodel)
+    JuMP.build(psmodel)
+    status = solve(psmodel)
 
     if status != :Optimal
         println(status)
         error("Problem has no solution.")
     end
-
-    return Psmodel
 
 end
