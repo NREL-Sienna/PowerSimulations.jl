@@ -14,7 +14,7 @@ function modify_constraint(m::JuMP.Model, consname::Symbol, data::Array{Float64,
 
 end
 
-function run_simulations(power_model::PowerSimulationsModel{T}) where T<:AbstractPowerSimulationType
+function run_simulations(power_model::PowerSimulationsModel{T}) where T<:AbstractOperationsModel
 
     # CheckPowerModel(m::PowerSimulationsModel{T}) where T<:AbstractPowerSimulationType
     # AssignSolver(m::PowerSimulationsModel{T}) where T<:AbstractPowerSimulationType
@@ -31,7 +31,7 @@ function run_simulations(power_model::PowerSimulationsModel{T}) where T<:Abstrac
 end
 
 
-function simulatemodel(model::PowerSimulationsModel{T}) where T<:AbstractPowerSimulationType
+function simulatemodel(model::PowerSimulationsModel{T}) where T<:AbstractOperationsModel
 
 
 
