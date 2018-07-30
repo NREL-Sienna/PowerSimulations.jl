@@ -1,6 +1,6 @@
 ## All this code breaks with JumP 0.19.
 
-function solve(model::PowerOperationModel{T, F}; Solver = nothing) where (T <: AbstractOperationsModel, F <: Array{<:Function})
+function solve(model::PowerOperationModel{T, F}; Solver = nothing) where {T <: AbstractOperationsModel, F <: Array{<:Function}}
 
     psmodel = model.model # JuMP model
     model_type = JuMP.ProblemTraits(psmodel)
