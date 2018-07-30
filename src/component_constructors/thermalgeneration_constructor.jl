@@ -1,6 +1,6 @@
 struct Thermal end
 
-function dispatch(m::JuMP.Model, devices_netinjection::T, network:: N, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}) where T <: PowerExpressionArray
+function dispatch(m::JuMP.Model, devices_netinjection::T, network::N, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}) where {T <: PowerExpressionArray, N <: NetworkType}
 
     pth, inyection_array = activepowervariables(m, devices_netinjection, sys.generators.thermal, sys.time_periods);
 
