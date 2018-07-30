@@ -7,36 +7,36 @@ function timeseries_netinjection(sys::PowerSystems.PowerSystem)
 
     # TODO: Change syntax to for source in sys.generators when implemented in Julia v0.7 with Named Tuples
 
-       for source_name in fieldnames(sys.generators)
+    for source_name in fieldnames(sys.generators)
 
-            source = getfield(sys.generators,source_name)
+         source = getfield(sys.generators,source_name)
 
-            typeof(source) <: Array{<:ThermalGen} ? continue : (isa(source, Nothing) ? continue : true)
+         typeof(source) <: Array{<:ThermalGen} ? continue : (isa(source, Nothing) ? continue : true)
 
-            for b in sys.buses
+         for b in sys.buses
 
-                for t in 1:sys.time_periods
+             for t in 1:sys.time_periods
 
-                    fixed_source = [fs.tech.installedcapacity*fs.scalingfactor.values[t] for fs in source if fs.bus == b]
+                 fixed_source = [fs.tech.installedcapacity*fs.scalingfactor.values[t] for fs in source if fs.bus == b]
 
-                    isempty(fixed_source)? break : fixed_source = TsNetInjection[b.number,t] -= sum(fixed_source)
+                 isempty(fixed_source)? break : fixed_source = TsNetInjection[b.number,t] -= sum(fixed_source)
 
-                end
+             end
 
-            end
+         end
 
-        end
+     end
 
-        for b in sys.buses
+     for b in sys.buses
 
-                for t in 1:sys.time_periods
+             for t in 1:sys.time_periods
 
-                staticload = [sl.maxrealpower*sl.scalingfactor.values[t] for sl in sys.loads if sl.bus == b]
+             staticload = [sl.maxrealpower*sl.scalingfactor.values[t] for sl in sys.loads if sl.bus == b]
 
-                isempty(staticload) ? break : TsNetInjection[b.number,t] = sum(staticload)
+             isempty(staticload) ? break : TsNetInjection[b.number,t] = sum(staticload)
 
-            end
-        end
+         end
+     end
 
 
     return  TsNetInjection
