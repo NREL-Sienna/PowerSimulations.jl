@@ -45,6 +45,7 @@ using NamedTuples
 
 const PowerVariable = JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}}
 const PowerExpressionArray = Matrix{<:JuMP.GenericAffExpr}
+const BusTimeJuMPMapping = Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}
 
 #################################################################################
 # Includes

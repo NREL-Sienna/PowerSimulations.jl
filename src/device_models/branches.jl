@@ -6,7 +6,7 @@ function branchflowvariables(m::JuMP.Model, devices::Array{T,1}, bus_number::Int
 
     fbr = @variable(m, fbr[on_set,time_range])
 
-    network_netinjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(bus_number, time_periods::Int64)
+    network_netinjection =  BusTimeJuMPMapping(bus_number, time_periods::Int64)
 
     for t in time_range, (ix,branch) in enumerate(fbr.indexsets[1])
 

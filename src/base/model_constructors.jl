@@ -2,7 +2,7 @@ function buildmodel!(sys::PowerSystems.PowerSystem, model::PowerSimulationsModel
 
     PSModel = JuMP.Model()
     # TODO: this syntax might change with JuMP 0.19
-    devices_netinjection =  Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}(length(sys.buses), sys.time_periods)
+    devices_netinjection =  BusTimeJuMPMapping(length(sys.buses), sys.time_periods)
 
     #Knowing the network model => create reactive power constraints or not.
     network_model = model.transmission.category
