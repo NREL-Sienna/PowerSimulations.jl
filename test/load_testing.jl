@@ -7,7 +7,7 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  1000.0)
 
 m = Model()
 
-devices_netinjection =  BusTimeJuMPMapping(length(sys5.buses), sys5.time_periods)
+devices_netinjection =  JumpAffineExpressionArray(length(sys5.buses), sys5.time_periods)
 
 test_cl = [d for d in sys5.loads if !isa(d, PowerSystems.StaticLoad)] # Filter StaticLoads Out
 
