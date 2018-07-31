@@ -6,12 +6,12 @@ function branchflowvariables(m::JuMP.Model, devices::Array{T,1}, bus_number::Int
 
     fbr = @variable(m, fbr[on_set,time_range])
 
-    network_netinjection =  BusTimeJuMPMapping(bus_number, time_periods::Int64)
+    network_netinjection =  JumpAffineExpressionArray(bus_number, time_periods::Int64)
 
-    for t in time_range, (ix,branch) in enumerate(fbr.indexsets[1])
+    for t in time_range, (ix,branch) in enumerate(fbr.axes[1])
 
-        !isassigned(network_netinjection,devices[ix].connectionpoints.from.number,t) ? network_netinjection[devices[ix].connectionpoints.from.number,t] = -fbr[branch,t]: append!(network_netinjection[devices[ix].connectionpoints.from.number,t],-fbr[branch,t])
-        !isassigned(network_netinjection,devices[ix].connectionpoints.to.number,t) ? network_netinjection[devices[ix].connectionpoints.to.number,t] = fbr[branch,t] : append!(network_netinjection[devices[ix].connectionpoints.to.number,t],fbr[branch,t])
+        !isassigned(network_netinjection,devices[ix].connectionpoints.from.number,t) ? network_netinjection[devices[ix].connectionpoints.from.number,t] = -fbr[branch,t]: JuMP.add_to_expression!(network_netinjection[devices[ix].connectionpoints.from.number,t],-fbr[branch,t])
+        !isassigned(network_netinjection,devices[ix].connectionpoints.to.number,t) ? network_netinjection[devices[ix].connectionpoints.to.number,t] = fbr[branch,t] : JuMP.add_to_expression!(network_netinjection[devices[ix].connectionpoints.to.number,t],fbr[branch,t])
 
     end
 
@@ -21,15 +21,14 @@ end
 function flowconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.Branch
 
     fbr = m[:fbr]
-    name_index = m[:fbr].indexsets[1]
-    time_index = m[:fbr].indexsets[2]
+    name_index = m[:fbr].axes[1]
+    time_index = m[:fbr].axes[2]
 
-    (length(fbr.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
+    (length(fbr.axes[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
 
-    # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
-    # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
-    @constraintref Flow_max_tf[1:length(name_index),1:length(time_index)]
-    @constraintref Flow_max_ft[1:length(name_index),1:length(time_index)]
+    Flow_max_tf = JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), name_index, time_index)
+    Flow_max_ft = JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), name_index, time_index)
+
     for t in time_index, (ix, name) in enumerate(name_index)
         if name == devices[ix].name
             Flow_max_tf[ix, t] = @constraint(m, fbr[name, t] <= devices[ix].rate.to_from)
