@@ -2,7 +2,7 @@ struct Hydro end
 
 const curtailconstraints = PowerSimulations.powerconstraints
 
-function constructdevice(category::Type{Hydro}, transmission::Type{CopperPlate}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where T <: PowerExpressionArray
+function constructdevice!(category::Type{Hydro}, transmission::Type{CopperPlate}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where T <: JumpExpressionMatrix
 
     devices = [d for d in sys.generators.hydro if (d.available == true && !isa(d, HydroFix))]
 
