@@ -1,8 +1,6 @@
-struct Renewable end
-
 const curtailconstraints = PowerSimulations.powerconstraints
 
-function constructdevice!(category::Type{Renewable}, transmission::Type{CopperPlate}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where T <: JumpExpressionMatrix
+function constructdevice!(category::Type{PowerSystems.RenewableGen}, transmission::Type{CopperPlate}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where T <: JumpExpressionMatrix
 
     devices = [d for d in sys.generators.renewable if (d.available == true && !isa(d, RenewableFix))]
 

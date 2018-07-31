@@ -4,19 +4,17 @@ module PowerSimulations
 # Exports
 
 #Device Relevant Exports
-export Thermal
 export powerconstraints
 export commitmentconstraints
 export rampconstraints
 export timeconstraints
 
-export Renewable
 export curtailconstraints
 
 #Network Relevant Exports
 export Network
-export copperplate
-export networkflow
+export CopperPlate
+export NetworkFlow
 export DCPowerFlow
 export ACPowerFlow
 export flowconstraints

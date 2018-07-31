@@ -1,5 +1,3 @@
-struct Thermal end
-
 function dispatch(m::JuMP.Model, network::Type{N}, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}) where {T <: JumpExpressionMatrix, N <: RealNetwork}
 
     pth, inyection_array = activepowervariables(m, devices_netinjection, sys.generators.thermal, sys.time_periods);
@@ -32,7 +30,7 @@ function commitment(m::JuMP.Model, network::Type{N}, devices_netinjection::T, sy
 
 end
 
-function constructdevice!(category::Type{Thermal}, network::Type{N}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where {T <: JumpExpressionMatrix, N <: NetworkType}
+function constructdevice!(category::Type{PowerSystems.ThermalGen}, network::Type{N}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where {T <: JumpExpressionMatrix, N <: NetworkType}
 
     if commitmentconstraints in constraints
 
