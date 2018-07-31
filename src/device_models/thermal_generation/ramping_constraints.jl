@@ -9,13 +9,13 @@ function ramp_dispatch(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) 
     if !isempty(devices)
 
         pth = m[:pth]
-        time_index = m[:pth].indexsets[2]
-        name_index = m[:pth].indexsets[1]
+        time_index = m[:pth].axes[2]
+        name_index = [d.name for d in devices]
 
         (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-        @constraintref rampdown_thermal[1:length(name_index),1:length(time_index)]
-        @constraintref rampup_thermal[1:length(name_index),1:length(time_index)]
+        rampdown_thermal = JuMP.JuMPArray(Array{ConstraintRef}((length(name_index), time_periods)), name_index, time_index)
+        rampup_thermal = JuMP.JuMPArray(Array{ConstraintRef}((length(name_index), time_periods)), name_index, time_index)
 
         for (ix,name) in enumerate(name_index)
 
@@ -23,8 +23,8 @@ function ramp_dispatch(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) 
 
             if name == devices[ix].name
 
-                rampdown_thermal[ix,t1] = @constraint(m,  devices[ix].tech.realpower - pth[name,t1] <= devices[ix].tech.ramplimits.down)
-                rampup_thermal[ix,t1] = @constraint(m,  pth[name,t1] - devices[ix].tech.realpower <= devices[ix].tech.ramplimits.up)
+                rampdown_thermal[name,t1] = @constraint(m,  devices[ix].tech.realpower - pth[name,t1] <= devices[ix].tech.ramplimits.down)
+                rampup_thermal[name,t1] = @constraint(m,  pth[name,t1] - devices[ix].tech.realpower <= devices[ix].tech.ramplimits.up)
 
             else
                 error("Bus name in Array and variable do not match")
@@ -35,8 +35,8 @@ function ramp_dispatch(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) 
 
             if name == devices[ix].name
 
-                rampdown_thermal[ix,t] = @constraint(m,  pth[name,t-1] - pth[name,t] <= devices[ix].tech.ramplimits.down)
-                rampup_thermal[ix,t] = @constraint(m,  pth[name,t] - pth[name,t-1] <= devices[ix].tech.ramplimits.up)
+                rampdown_thermal[name,t] = @constraint(m,  pth[name,t-1] - pth[name,t] <= devices[ix].tech.ramplimits.down)
+                rampup_thermal[name,t] = @constraint(m,  pth[name,t] - pth[name,t-1] <= devices[ix].tech.ramplimits.up)
 
             else
                 error("Bus name in Array and variable do not match")
@@ -70,19 +70,19 @@ function ramp_commitment(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64
         pth = m[:pth]
         onth = m[:onth]
 
-        time_index = m[:pth].indexsets[2]
-        name_index = m[:pth].indexsets[1]
+        time_index = m[:pth].axes[2]
+        name_index = m[:pth].axes[1]
 
         (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-        @constraintref rampdown_thermal[1:length(name_index),1:length(time_index)]
-        @constraintref rampup_thermal[1:length(name_index),1:length(time_index)]
+        rampdown_thermal = JuMP.JuMPArray(Array{ConstraintRef}((length(name_index), time_periods)), name_index, time_index)
+        rampup_thermal = JuMP.JuMPArray(Array{ConstraintRef}((length(name_index), time_periods)), name_index, time_index)
 
         for (ix,name) in enumerate(name_index)
             if name == devices[ix].name
                 t1 = time_index[1]
-                rampdown_thermal[ix,t1] = @constraint(m,  devices[ix].tech.realpower - pth[name,t1] <= devices[ix].tech.ramplimits.down * onth[name,t1])
-                rampup_thermal[ix,t1] = @constraint(m,  pth[name,t1] - devices[ix].tech.realpower <= devices[ix].tech.ramplimits.up  * onth[name,t1])
+                rampdown_thermal[name,t1] = @constraint(m, devices[ix].tech.realpower - pth[name,t1] <= devices[ix].tech.ramplimits.down * onth[name,t1])
+                rampup_thermal[name,t1] = @constraint(m, pth[name,t1] - devices[ix].tech.realpower <= devices[ix].tech.ramplimits.up  * onth[name,t1])
             else
                 error("Bus name in Array and variable do not match")
             end
@@ -90,8 +90,8 @@ function ramp_commitment(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64
 
         for t in time_index[2:end], (ix,name) in enumerate(name_index)
             if name == devices[ix].name
-                rampdown_thermal[ix,t] = @constraint(m,  pth[name,t-1] - pth[name,t] <= devices[ix].tech.ramplimits.down * onth[name,t])
-                rampup_thermal[ix,t] = @constraint(m,  pth[name,t] - pth[name,t-1] <= devices[ix].tech.ramplimits.up * onth[name,t] )
+                rampdown_thermal[name,t] = @constraint(m, pth[name,t-1] - pth[name,t] <= devices[ix].tech.ramplimits.down * onth[name,t])
+                rampup_thermal[name,t] = @constraint(m, pth[name,t] - pth[name,t-1] <= devices[ix].tech.ramplimits.up * onth[name,t] )
             else
                 error("Bus name in Array and variable do not match")
             end
