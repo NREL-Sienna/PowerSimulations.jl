@@ -1,10 +1,10 @@
-function dispatch(m::JuMP.Model, network::Type{N}, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}) where {T <: JumpExpressionMatrix, N <: RealNetwork}
+function dispatch(m::JuMP.Model, network::Type{N}, devices_netinjection::T, devices::Array{D}, constraints::Array{<:Function}, time_periods::Int64) where {T <: JumpExpressionMatrix, N <: RealNetwork, D <: ThermalGen}
 
-    pth, inyection_array = activepowervariables(m, devices_netinjection, sys.generators.thermal, sys.time_periods);
+    pth, inyection_array = activepowervariables(m, devices_netinjection, devices, time_periods);
 
         for c in constraints
 
-            m = c(m, sys.generators.thermal, sys.time_periods)
+            m = c(m, devices, time_periods)
 
         end
 
@@ -12,17 +12,15 @@ function dispatch(m::JuMP.Model, network::Type{N}, devices_netinjection::T, sys:
 
 end
 
-function commitment(m::JuMP.Model, network::Type{N}, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}) where {T <: JumpExpressionMatrix, N <: RealNetwork}
+function commitment(m::JuMP.Model, network::Type{N}, devices_netinjection::T, devices::Array{D}, constraints::Array{<:Function}, time_periods::Int64) where {T <: JumpExpressionMatrix, N <: RealNetwork, D <: ThermalGen}
 
-    pth, inyection_array = activepowervariables(m, devices_netinjection, sys.generators.thermal, sys.time_periods);
+    pth, inyection_array = activepowervariables(m, devices_netinjection, devices, time_periods);
 
-    on_thermal, start_thermal, stop_thermal = commitmentvariables(m, sys.generators.thermal, sys.time_periods)
+    on_thermal, start_thermal, stop_thermal = commitmentvariables(m, devices, time_periods)
 
     for c in constraints
 
-        # TODO: Find a smarter way to pass on the variables, or rewrite to pass just m and call the variable from inside the function.
-
-        m = c(m, sys.generators.thermal, sys.time_periods, true)
+        m = c(m, devices, time_periods, true)
 
     end
 
@@ -34,11 +32,11 @@ function constructdevice!(category::Type{PowerSystems.ThermalGen}, network::Type
 
     if commitmentconstraints in constraints
 
-        m, devices_netinjection = commitment(m, network, devices_netinjection, sys, constraints)
+        m, devices_netinjection = commitment(m, network, devices_netinjection, sys.generators.thermal, constraints, sys.time_periods)
 
     else
 
-        m, devices_netinjection = dispatch(m, network, devices_netinjection, sys, constraints)
+        m, devices_netinjection = dispatch(m, network, devices_netinjection, sys.generators.thermal, constraints, sys.time_periods)
 
     end
 
