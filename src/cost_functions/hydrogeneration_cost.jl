@@ -1,10 +1,10 @@
-function variablecost(phy::PowerVariable, devices::Array{T}) where T <: PowerSystems.HydroGen
+function variablecost(phy::JumpVariable, devices::Array{T}) where T <: PowerSystems.HydroGen
 
     cost = JuMP.AffExpr()
 
-    for (ix, name) in enumerate(pre.indexsets[1])
+    for (ix, name) in enumerate(pre.axes[1])
         if name == devices[ix].name
-                append!(cost,precost(phy[name,:], devices[ix]))
+                JuMP.add_to_expression!(cost,precost(phy[name,:], devices[ix]))
         else
             error("Bus name in Array and variable do not match")
         end
@@ -14,7 +14,7 @@ function variablecost(phy::PowerVariable, devices::Array{T}) where T <: PowerSys
 
 end
 
-function precost(X::JuMP.Variable, device::Union{PowerSystems.RenewableCurtailment,PowerSystems.RenewableFullDispatch})
+function precost(X::JuMP.VariableRef, device::Union{PowerSystems.RenewableCurtailment,PowerSystems.RenewableFullDispatch})
 
     return cost = sum(device.econ.curtailcost*(-X))
 end

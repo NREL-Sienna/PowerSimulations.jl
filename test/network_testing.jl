@@ -28,7 +28,7 @@ generators_hg = [
 sys5b = PowerSystem(nodes5, append!(generators5, generators_hg), loads5_DA, branches5, battery,  1000.0)
 
 m=Model()
-devices_netinjection =  BusTimeJuMPMapping(length(sys5b.buses), sys5b.time_periods)
+devices_netinjection =  JumpAffineExpressionArray(length(sys5b.buses), sys5b.time_periods)
 
 #Thermal Generator Models
 pth, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);
@@ -45,7 +45,7 @@ m,TsNets = PowerSimulations.constructnetwork(m, devices_netinjection, sys5b, [co
 
 #Reset EveryThing to Build the nodebalance network
 m=Model()
-devices_netinjection =  BusTimeJuMPMapping(length(sys5b.buses), sys5b.time_periods)
+devices_netinjection =  JumpAffineExpressionArray(length(sys5b.buses), sys5b.time_periods)
 
 pth, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);
 pre_set = [d for d in sys5b.generators.renewable if !isa(d, RenewableFix)]

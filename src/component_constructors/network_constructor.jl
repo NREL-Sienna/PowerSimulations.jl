@@ -1,5 +1,5 @@
 
-function constructnetwork(category::Type{CopperPlate}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where T <: PowerExpressionArray
+function constructnetwork!(category::Type{CopperPlate}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where T <: JumpExpressionMatrix
 
     m = PowerSimulations.copperplatebalance(m, devices_netinjection, sys.time_periods);
 
@@ -7,7 +7,7 @@ function constructnetwork(category::Type{CopperPlate}, m::JuMP.Model, devices_ne
 
 end
 
-function constructnetwork(category::Type{NetworkFlow}, branches::Array{@NT(device::DataType,constraints::F)}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where {F <: Function, T <: PowerExpressionArray}
+function constructnetwork!(category::Type{NetworkFlow}, branches::Array{@NT(device::DataType,constraints::F)}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where {F <: Function, T <: JumpExpressionMatrix}
 
     fl, flow_injections = PowerSimulations.branchflowvariables(m, sys.branches, length(sys.buses), sys.time_periods);
 
@@ -29,7 +29,7 @@ function constructnetwork(category::Type{NetworkFlow}, branches::Array{@NT(devic
 
     for (n, c) in enumerate(IndexCartesian(), flow_netinjections)
 
-        isassigned(devices_netinjection,n[1],n[2]) ? append!(c, devices_netinjection[n[1],n[2]]) : c
+        isassigned(devices_netinjection,n[1],n[2]) ? JuMP.add_to_expression!(c, devices_netinjection[n[1],n[2]]) : c
 
     end
 
@@ -39,7 +39,7 @@ function constructnetwork(category::Type{NetworkFlow}, branches::Array{@NT(devic
 
 end
 
-function constructnetwork(category::Type{DCPowerFlow}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs ...) where T <: PowerExpressionArray
+function constructnetwork!(category::Type{DCPowerFlow}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs ...) where T <: JumpExpressionMatrix
 
     fl, flow_injections = PowerSimulations.branchflowvariables(m, sys.branches, length(sys.buses), sys.time_periods);
 
@@ -55,7 +55,7 @@ function constructnetwork(category::Type{DCPowerFlow}, m::JuMP.Model, devices_ne
 
     for (n, c) in enumerate(IndexCartesian(), flow_netinjections)
 
-        isassigned(devices_netinjection,n[1],n[2]) ? append!(c, devices_netinjection[n[1],n[2]]) : c
+        isassigned(devices_netinjection,n[1],n[2]) ? JuMP.add_to_expression!(c, devices_netinjection[n[1],n[2]]) : c
 
     end
 
@@ -65,7 +65,7 @@ function constructnetwork(category::Type{DCPowerFlow}, m::JuMP.Model, devices_ne
 
 end
 
-function constructnetwork(category::Type{F}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs ...) where {F<: ACPowerFlow, T <: PowerExpressionArray}
+function constructnetwork!(category::Type{F}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs ...) where {F<: ACPowerFlow, T <: JumpExpressionMatrix}
 
     fl, flow_injections = PowerSimulations.branchflowvariables(m, sys.branches, length(sys.buses), sys.time_periods);
     #theta = anglevariables(m, sys.buses, time_periods)
@@ -82,7 +82,7 @@ function constructnetwork(category::Type{F}, m::JuMP.Model, devices_netinjection
 
     for (n, c) in enumerate(IndexCartesian(), flow_netinjections)
 
-        isassigned(devices_netinjection,n[1],n[2]) ? append!(c, devices_netinjection[n[1],n[2]]) : c
+        isassigned(devices_netinjection,n[1],n[2]) ? JuMP.add_to_expression!(c, devices_netinjection[n[1],n[2]]) : c
 
     end
 

@@ -1,4 +1,4 @@
-function activepowervariables(m::JuMP.Model, devices_netinjection:: A, devices::Array{T,1}, time_periods::Int64) where {A <: PowerExpressionArray, T <: PowerSystems.HydroGen}
+function activepowervariables(m::JuMP.Model, devices_netinjection::A, devices::Array{T,1}, time_periods::Int64) where {A <: JumpExpressionMatrix, T <: PowerSystems.HydroGen}
 
     on_set = [d.name for d in devices if d.available == true]
 
@@ -15,19 +15,21 @@ end
 """
 This function adds the power limits of  hydro generators when there are no CommitmentVariables
 """
-function powerconstraints(m::JuMP.Model, phy::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.HydroCurtailment
-    (length(phy.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
+function powerconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.HydroCurtailment
 
-    # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
-    # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
+    phy = m[:phy]
+    time_index = m[:phy].axes[2]
+    name_index = m[:phy].axes[1]
 
-    @constraintref pmax_hg[1:length(phy.indexsets[1]),1:length(phy.indexsets[2])]
-    @constraintref pmin_hg[1:length(phy.indexsets[1]),1:length(phy.indexsets[2])]
+    (length(phy.axes[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
 
-    for t in phy.indexsets[2], (ix, name) in enumerate(phy.indexsets[1])
+    pmax_thermal = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(phy))), name_index, time_index)
+    pmin_thermal = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(phy))), name_index, time_index)
+
+    for t in phy.axes[2], (ix, name) in enumerate(phy.axes[1])
         if name == devices[ix].name
-            pmin_hg[ix, t] = @constraint(m, phy[name, t] >= 0.0)
-            pmax_hg[ix, t] = @constraint(m, phy[name, t] <= devices[ix].tech.realpowerlimits.max * devices[ix].scalingfactor.values[t])
+            pmin_hg[name, t] = @constraint(m, phy[name, t] >= 0.0)
+            pmax_hg[name, t] = @constraint(m, phy[name, t] <= devices[ix].tech.realpowerlimits.max * devices[ix].scalingfactor.values[t])
         else
             error("Bus name in Array and variable do not match")
         end

@@ -1,10 +1,10 @@
-function variablecost(m::JuMP.Model, pcl::PowerVariable, devices::Array{PowerSystems.InterruptibleLoad})
+function variablecost(m::JuMP.Model, pcl::JumpVariable, devices::Array{PowerSystems.InterruptibleLoad})
 
     cost = JuMP.AffExpr()
 
-    for (ix, name) in enumerate(pcl.indexsets[1])
+    for (ix, name) in enumerate(pcl.axes[1])
         if name == devices[ix].name
-                append!(cost,cloadcost(pcl[name,:], devices[ix]))
+                JuMP.add_to_expression!(cost,cloadcost(pcl[name,:], devices[ix]))
         else
             error("Bus name in Array and variable do not match")
         end
@@ -14,7 +14,7 @@ function variablecost(m::JuMP.Model, pcl::PowerVariable, devices::Array{PowerSys
 
 end
 
-function cloadcost(variable::Array{JuMP.Variable,1}, device::PowerSystems.InterruptibleLoad)
+function cloadcost(variable::Array{JuMP.VariableRef,1}, device::PowerSystems.InterruptibleLoad)
 
     return cost = sum(-1*device.sheddingcost*variable)
 

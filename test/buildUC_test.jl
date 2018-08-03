@@ -8,7 +8,7 @@ include(string(homedir(),"/.julia/v0.6/PowerSystems/data/data_5bus.jl"))
 sys5b = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  1000.0)
 
 m=JuMP.Model()
-devices_netinjection =  BusTimeJuMPMapping(length(sys5b.buses), sys5b.time_periods)
+devices_netinjection =  JumpAffineExpressionArray(length(sys5b.buses), sys5b.time_periods)
 
 #Thermal Generator Models
 pth, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);

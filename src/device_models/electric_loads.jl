@@ -1,4 +1,4 @@
-function loadvariables(m::JuMP.Model, devices_netinjection:: A, devices::Array{T,1}, time_periods::Int64) where {A <: PowerExpressionArray, T <: PowerSystems.ElectricLoad}
+function loadvariables(m::JuMP.Model, devices_netinjection:: A, devices::Array{T,1}, time_periods::Int64) where {A <: JumpExpressionMatrix, T <: PowerSystems.ElectricLoad}
     on_set = [d.name for d in devices if (d.available == true && !isa(d,PowerSystems.StaticLoad))]
 
     t = 1:time_periods
@@ -13,14 +13,18 @@ end
 """
 This function adds the power limits of generators when there are no CommitmentVariables
 """
-function powerconstraints(m::JuMP.Model, pcl::PowerVariable, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ElectricLoad
-    (length(pcl.indexsets[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
-    # TODO: @constraintref dissapears in JuMP 0.19. A new syntax goes here.
-    # JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), x.indexsets[1], x.indexsets[2])
-    @constraintref pmax_cl[1:length(pcl.indexsets[1]),1:length(pcl.indexsets[2])]
-    for t in pcl.indexsets[2], (ix, name) in enumerate(pcl.indexsets[1])
+function powerconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ElectricLoad
+
+    pcl = m[:pcl]
+    time_index = m[:pcl].axes[2]
+    name_index = m[:pcl].axes[1]
+
+    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent"): true
+
+    pmax_cl = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(pcl))), name_index, time_index)
+    for t in time_index, (ix, name) in enumerate(name_index)
         if name == devices[ix].name
-            pmax_cl[ix, t] = @constraint(m, pcl[name, t] <= devices[ix].maxrealpower*devices[ix].scalingfactor.values[t])
+            pmax_cl[name, t] = @constraint(m, pcl[name, t] <= devices[ix].maxrealpower*devices[ix].scalingfactor.values[t])
         else
             error("Bus name in Array and variable do not match")
         end

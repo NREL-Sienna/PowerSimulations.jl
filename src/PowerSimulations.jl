@@ -4,19 +4,17 @@ module PowerSimulations
 # Exports
 
 #Device Relevant Exports
-export Thermal
 export powerconstraints
 export commitmentconstraints
 export rampconstraints
 export timeconstraints
 
-export Renewable
 export curtailconstraints
 
 #Network Relevant Exports
 export Network
-export copperplate
-export networkflow
+export CopperPlate
+export NetworkFlow
 export DCPowerFlow
 export ACPowerFlow
 export flowconstraints
@@ -43,11 +41,11 @@ using NamedTuples
 #################################################################################
 # Type Alias
 
-const PowerVariable = JuMP.JuMPArray{JuMP.Variable,2,Tuple{Array{String,1},UnitRange{Int64}}}
-const PowerExpressionArray = Matrix{<:JuMP.GenericAffExpr}
+const JumpVariable = JuMP.JuMPArray{JuMP.VariableRef,2,Tuple{Array{String,1},UnitRange{Int64}}}
+const JumpExpressionMatrix = Matrix{<:JuMP.GenericAffExpr}
 
 # TODO: this syntax might change with JuMP 0.19
-const BusTimeJuMPMapping = Array{JuMP.GenericAffExpr{Float64,JuMP.Variable},2}
+const JumpAffineExpressionArray = Array{JuMP.GenericAffExpr{Float64,JuMP.VariableRef},2}
 
 #################################################################################
 # Includes

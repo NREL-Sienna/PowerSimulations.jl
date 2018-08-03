@@ -1,5 +1,5 @@
 julia 0.6-
-JuMP
+JuMP 0.19-
 PowerSystems
 Clp
 Ipopt

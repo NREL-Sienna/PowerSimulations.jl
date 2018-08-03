@@ -4,7 +4,7 @@
 """
 This function add the variables for power generation output to the model
 """
-function activepowervariables(m::JuMP.Model, devices_netinjection::A, devices::Array{T,1}, time_periods::Int64) where {A <: PowerExpressionArray, T <: PowerSystems.ThermalGen}
+function activepowervariables(m::JuMP.Model, devices_netinjection::A, devices::Array{T,1}, time_periods::Int64) where {A <: JumpExpressionMatrix, T <: PowerSystems.ThermalGen}
     on_set = [d.name for d in devices if d.available == true]
 
     t = 1:time_periods
