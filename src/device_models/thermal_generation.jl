@@ -9,7 +9,7 @@ function activepowervariables(m::JuMP.Model, devices_netinjection::A, devices::A
 
     t = 1:time_periods
 
-    pth = @variable(m::JuMP.Model, pth[on_set,t]) # Power output of generators
+    pth = @variable(m, pth[on_set,t]) # Power output of generators
 
     varnetinjectiterate!(devices_netinjection,  pth, t, devices)
 
