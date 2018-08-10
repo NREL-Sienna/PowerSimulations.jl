@@ -3,7 +3,7 @@ function loadvariables(m::JuMP.Model, devices_netinjection:: A, devices::Array{T
 
     t = 1:time_periods
 
-    pcl = @variable(m::JuMP.Model, pcl[on_set,t] >= 0.0) # Power output of generators
+    pcl = @variable(m, pcl[on_set,t] >= 0.0) # Power output of generators
 
     varnetinjectiterate!(devices_netinjection,  pcl, t, devices)
 
