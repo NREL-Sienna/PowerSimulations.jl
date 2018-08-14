@@ -9,13 +9,13 @@ abstract type UnitCommitment <: AbstractOperationsModel end
 
 mutable struct PowerOperationModel{T<:AbstractOperationsModel, F <: Array{<:Function}}
     psmodel::T
-    generation::Array{@NT(device::DataType,constraints::F)}
-    demand::Array{@NT(device::DataType,constraints::F)}
-    storage::Array{@NT(device::DataType,constraints::F)}
-    transmission::@NT(device::DataType,constraints::F)
-    branches::Array{@NT(device::DataType,constraints::F)}
-    services::Array{@NT(device::DataType,constraints::F)}
-    cost::Array{@NT(device::DataType,components::F)}
+    generation::Array{NamedTuple{(:device, :constraints), Tuple{DataType,F}}}
+    demand::Array{NamedTuple{(:device, :constraints), Tuple{DataType,F}}}
+    storage::Array{NamedTuple{(:device, :constraints), Tuple{DataType,F}}}
+    transmission::NamedTuple{(:device, :constraints), Tuple{DataType,F}}
+    branches::Array{NamedTuple{(:device, :constraints), Tuple{DataType,F}}}
+    services::Array{NamedTuple{(:device, :constraints), Tuple{DataType,F}}}
+    cost::Array{NamedTuple{(:device, :component), Tuple{DataType,F}}}
     system::PowerSystems.PowerSystem
     model::JuMP.Model
     dynamics::Bool
