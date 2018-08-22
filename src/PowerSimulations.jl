@@ -32,11 +32,9 @@ using PowerSystems
 using Compat
 using Clp
 using Cbc
-using Ipopt
+#using Ipopt
 using DataFrames
-using Base.LinAlg
-# TODO: To be removed with Julia 0.7
-using NamedTuples
+using LinearAlgebra
 
 #################################################################################
 # Type Alias
