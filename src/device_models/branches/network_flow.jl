@@ -6,11 +6,11 @@ function networkflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, DeviceNetInje
 
     (length(time_index) != sys.time_periods) ? error("Length of time dimension inconsistent"): true
 
-    branch_flow = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(fbr))), name_index, time_index)
+    branchflow = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(fbr))), name_index, time_index)
 
     for t in 1:sys.time_periods, (ix,branch) in enumerate(name_index)
 
-        branch_exp = JuMP.AffExpr([fbr[branch,t]], [1.0], RHS[ix,t])
+        branch_exp = JuMP.AffExpr([fbr[branch,t]], [1.0], 0.0) #This is not working
 
         for bus in 1:size(timeseries_netinjection)[1]
 
