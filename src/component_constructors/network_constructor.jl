@@ -7,7 +7,7 @@ function constructnetwork!(category::Type{CopperPlate}, m::JuMP.Model, devices_n
 
 end
 
-function constructnetwork!(category::Type{NetworkFlow}, branches::Array{@NT(device::DataType,constraints::F)}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where {F <: Function, T <: JumpExpressionMatrix}
+function constructnetwork!(category::Type{NetworkFlow}, branches::Array{NamedTuple{(:device, :constraints), Tuple{DataType,F}}}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where {F <: Function, T <: JumpExpressionMatrix}
 
     fl, flow_injections = PowerSimulations.branchflowvariables(m, sys.branches, length(sys.buses), sys.time_periods);
 

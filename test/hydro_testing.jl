@@ -5,11 +5,11 @@ include(string(homedir(),"/.julia/v0.6/PowerSystems/data/data_5bus.jl"))
 
 generators_hg = [
     HydroFix("HydroFix",true,nodes5[2],
-        TechHydro(60.0, 15.0, @NT(min = 0.0, max = 60.0), nothing, nothing, nothing, nothing),
+        TechHydro(60.0, 15.0, (min = 0.0, max = 60.0), nothing, nothing, nothing, nothing),
         TimeSeries.TimeArray(DayAhead,solar_ts_DA)
     ),
     HydroCurtailment("HydroCurtailment",true,nodes5[3],
-        TechHydro(60.0, 10.0, @NT(min = 0.0, max = 60.0), nothing, nothing, @NT(up = 10.0, down = 10.0), nothing),
+        TechHydro(60.0, 10.0, (min = 0.0, max = 60.0), nothing, nothing, (up = 10.0, down = 10.0), nothing),
         1000.0,TimeSeries.TimeArray(DayAhead,wind_ts_DA) )
 ]
 
