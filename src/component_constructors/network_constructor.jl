@@ -1,22 +1,28 @@
 
 function constructnetwork!(category::Type{CopperPlate}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where T <: JumpExpressionMatrix
 
-    m = PowerSimulations.copperplatebalance(m, devices_netinjection, sys.time_periods);
+    TsNets = PowerSimulations.timeseries_netinjection(sys);
+    m = PowerSimulations.copperplatebalance(m, devices_netinjection,TsNets, sys.time_periods);
 
     return m
 
 end
 
-function constructnetwork!(category::Type{NetworkFlow}, branches::Array{NamedTuple{(:device, :constraints), Tuple{DataType,F}}}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where {F <: Function, T <: JumpExpressionMatrix}
+function constructnetwork!(category::Type{NetworkFlow}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where {F <: Function, T <: JumpExpressionMatrix}
 
     fl, flow_injections = PowerSimulations.branchflowvariables(m, sys.branches, length(sys.buses), sys.time_periods);
+    TsNets = PowerSimulations.timeseries_netinjection(sys);
 
     if :ptdf in keys(kwargs) #check if the KEY PTDF is present
 
         m = networkflow(m, sys, devices_netinjection, PTDF);
 
     else
-        error("No PTDF")
+
+        warn("PTDF not defined, building")
+        PTDF,Adj = PowerSystems.buildptdf(sys.branches,sys.buses);
+        m = networkflow(m, sys, devices_netinjection, PTDF);
+
     end
 
     #= if conditions for the kwargs
