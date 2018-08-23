@@ -34,14 +34,17 @@ usable but should not be considered stable**.
 You can install it by typing
 
 ```julia
-julia> Pkg.clone("https://github.com/NREL/PowerSimulations.jl")
+julia> using Pkg
+julia> Pkg.develop("https://github.com/NREL/PowerSimulations.jl")
 ```
 ## Usage
 
-Once installed, the `PowerSimulations` package can by used by typing
+Once installed, the `PowerSimulations` package can by going to the folder `.julia/dev/PowerSimulations` used by typing
 
 ```julia
-using PowerSimulations
+julia> ]
+(v0.7) pkg> activate .
+(PowerSimulations) pkg> instantiate
 ```
 
 ## Development
