@@ -1,3 +1,8 @@
+name = "PowerSimulations"
+uuid = "ff4f32ec-a719-11e8-1e76-dd3f852a6b76"
+authors = ["Jose Daniel Lara", "Dheepak Krishnamurthy"]
+version = "0.1.0"
+
 [deps]
 Cbc = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"
 Clp = "e2554f3b-3117-50c0-817c-e040a3ddf72d"
