@@ -245,10 +245,12 @@ deps = ["Dates", "LibGit2", "Markdown", "Printf", "REPL", "Random", "SHA", "UUID
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[PowerModels]]
-deps = ["Compat", "InfrastructureModels", "JSON", "JuMP", "MathProgBase", "Memento"]
-git-tree-sha1 = "25173e126869821865dd5486ca84d9dc2c4ae611"
+deps = ["Compat", "InfrastructureModels", "JSON", "JuMP", "MathOptInterface", "Memento", "Pkg"]
+git-tree-sha1 = "f3063dfb1d3ea249c610192ade744e2849b4e115"
+repo-rev = "moi-julia-v0.7"
+repo-url = "https://github.com/lanl-ansi/PowerModels.jl.git"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
-version = "0.8.3"
+version = "0.7.0"
 
 [[PowerSystems]]
 deps = ["CSV", "Compat", "DataFrames", "Dates", "InfoZIP", "JuMP", "LinearAlgebra", "Memento", "PowerModels", "SparseArrays", "StatsBase", "TimeSeries", "ZipFile"]
