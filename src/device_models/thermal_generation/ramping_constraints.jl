@@ -60,7 +60,6 @@ end
 """
 This function adds the ramping limits of generators when there are CommitmentVariables
 """
-
 function ramp_commitment(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
 
     devices = [d for d in devices if !isa(d.tech.ramplimits,Nothing)]
