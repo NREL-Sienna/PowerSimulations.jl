@@ -19,7 +19,7 @@ function timeseries_netinjection(sys::PowerSystems.PowerSystem)
 
                  fixed_source = [fs.tech.installedcapacity*fs.scalingfactor.values[t] for fs in source if fs.bus == b]
 
-                 isempty(fixed_source)? break : fixed_source = tsnetinjection[b.number,t] -= sum(fixed_source)
+                 isempty(fixed_source) ? break : fixed_source = tsnetinjection[b.number,t] -= sum(fixed_source)
 
              end
 
