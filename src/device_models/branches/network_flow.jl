@@ -4,7 +4,7 @@ function networkflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, DeviceNetInje
     name_index = m[:fbr].axes[1]
     time_index = m[:fbr].axes[2]
 
-    (length(time_index) != sys.time_periods) ? error("Length of time dimension inconsistent"): true
+    (length(time_index) != sys.time_periods) ? error("Length of time dimension inconsistent") : true
 
     branchflow = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(fbr))), name_index, time_index)
 

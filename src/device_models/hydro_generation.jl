@@ -21,7 +21,7 @@ function powerconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int6
     time_index = m[:phy].axes[2]
     name_index = m[:phy].axes[1]
 
-    (length(phy.axes[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
+    (length(phy.axes[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
 
     pmax_thermal = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(phy))), name_index, time_index)
     pmin_thermal = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(phy))), name_index, time_index)

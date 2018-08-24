@@ -28,15 +28,15 @@ function powerconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int6
     name_index = m[:pstin].axes[1]
     time_index = m[:pstin].axes[2]
 
-    (length(pstin.axes[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
-    (length(pstout.axes[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
+    (length(pstin.axes[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
+    (length(pstout.axes[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
 
     pmax_in = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(pstin))), name_index, time_index)
     pmax_out= JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(pstout))), name_index, time_index)
     pmin_in = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(pstin))), name_index, time_index)
     pmin_out= JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(pstout))), name_index, time_index)
 
-    (pstin.axes[1] !== pstout.axes[1]) ? warn("Input/Output variables indexes are inconsistent"): true
+    (pstin.axes[1] !== pstout.axes[1]) ? warn("Input/Output variables indexes are inconsistent") : true
 
     for t in pstin.axes[2], (ix, name) in enumerate(pstin.axes[1])
         if name == devices[ix].name
@@ -65,8 +65,8 @@ function energybookkeeping(m::JuMP.Model, devices::Array{T,1}, time_periods::Int
     name_index = m[:ebt].axes[1]
     time_index = m[:ent].axes[2]
 
-    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent in E_bt"): true
-    (pstin.axes[1] !== time_index) ? warn("Input/Output and Battery Energy variables indexes are inconsistent"): true
+    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent in E_bt") : true
+    (pstin.axes[1] !== time_index) ? warn("Input/Output and Battery Energy variables indexes are inconsistent") : true
 
     bookkeep_bt = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(ebt))), name_index, time_index)
 
@@ -99,7 +99,7 @@ function energyconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int
     name_index = m[:ebt].axes[1]
     time_index = m[:ent].axes[2]
 
-    (length(ebt.axes[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
+    (length(ebt.axes[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
 
     energylimit_bt = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(ebt))), name_index, time_index)
 

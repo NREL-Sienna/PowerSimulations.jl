@@ -8,7 +8,7 @@ function activepower_dispatch(m::JuMP.Model, devices::Array{T,1}, time_periods::
     time_index = m[:pth].axes[2]
     name_index = m[:pth].axes[1]
 
-    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent"): true
+    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
     pmax_thermal = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(pth))), name_index, time_index)
     pmin_thermal = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(pth))), name_index, time_index)
@@ -45,7 +45,7 @@ function activepower_commitment(m::JuMP.Model, devices::Array{T,1}, time_periods
     time_index = m[:pth].axes[2]
     name_index = m[:pth].axes[1]
 
-    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent"): true
+    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
     pmax_thermal = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(pth))), name_index, time_index)
     pmin_thermal = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(pth))), name_index, time_index)

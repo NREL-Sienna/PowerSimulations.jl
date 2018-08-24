@@ -71,8 +71,8 @@ function timeconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int; 
             #TODO: add initial condition constraint
 
             if name == devices[ix].name
-                minup_thermal[name,t] = @constraint(m,sum([startth[name,Int(i)] for i in ((t-devices[ix].tech.timelimits.up+1):t) if i > 0 ]) <= onth[name,t])
-                mindown_thermal[name,t] = @constraint(m,sum([stopth[name,Int(i)] for i in ((t-devices[ix].tech.timelimits.down + 1):t) if i > 0]) <= (1 - onth[name,t]) )
+                minup_thermal[name,t] = @constraint(m,sum([startth[name,Int(i)] for i in ((t-devices[ix].tech.timelimits.up+1) :t) if i > 0 ]) <= onth[name,t])
+                mindown_thermal[name,t] = @constraint(m,sum([stopth[name,Int(i)] for i in ((t-devices[ix].tech.timelimits.down + 1) :t) if i > 0]) <= (1 - onth[name,t]) )
             else
                 error("Bus name in Array and variable do not match")
             end

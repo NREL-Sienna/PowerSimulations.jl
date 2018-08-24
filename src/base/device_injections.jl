@@ -2,7 +2,7 @@ function varnetinjectiterate!(devices_netinjection:: A, variable::JumpVariable, 
 
     for t in time_range, d in devices
 
-        isassigned(devices_netinjection,  d.bus.number,t) ? JuMP.add_to_expression!(devices_netinjection[d.bus.number,t], variable[d.name, t]): devices_netinjection[d.bus.number,t] = variable[d.name, t];
+        isassigned(devices_netinjection,  d.bus.number,t) ? JuMP.add_to_expression!(devices_netinjection[d.bus.number,t], variable[d.name, t]) : devices_netinjection[d.bus.number,t] = variable[d.name, t];
 
     end
 
@@ -14,7 +14,7 @@ function varnetinjectiterate!(devices_netinjection:: A, variable::JumpVariable, 
 
     for t in time_range, d in devices
 
-        isassigned(devices_netinjection,  d.bus.number,t) ? JuMP.add_to_expression!(devices_netinjection[d.bus.number,t], -1*variable[d.name, t]): devices_netinjection[d.bus.number,t] = -1*variable[d.name, t];
+        isassigned(devices_netinjection,  d.bus.number,t) ? JuMP.add_to_expression!(devices_netinjection[d.bus.number,t], -1*variable[d.name, t]) : devices_netinjection[d.bus.number,t] = -1*variable[d.name, t];
 
     end
 
@@ -26,7 +26,7 @@ function varnetinjectiterate!(devices_netinjection:: A, variable_in::JumpVariabl
 
         for t in time_range, d in devices
 
-            isassigned(devices_netinjection,  d.bus.number,t) ? JuMP.add_to_expression!(devices_netinjection[d.bus.number,t], variable_in[d.name,t] - variable_out[d.name,t]): devices_netinjection[d.bus.number,t] = variable_in[d.name,t] - variable_out[d.name,t];
+            isassigned(devices_netinjection,  d.bus.number,t) ? JuMP.add_to_expression!(devices_netinjection[d.bus.number,t], variable_in[d.name,t] - variable_out[d.name,t]) : devices_netinjection[d.bus.number,t] = variable_in[d.name,t] - variable_out[d.name,t];
 
         end
 

@@ -20,7 +20,7 @@ function powerconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int6
     time_index = m[:pre].axes[2]
     name_index = m[:pre].axes[1]
 
-    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent"): true
+    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
     pmax_re = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(pre))), name_index, time_index)
 

@@ -24,7 +24,7 @@ function flowconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64
     name_index = m[:fbr].axes[1]
     time_index = m[:fbr].axes[2]
 
-    (length(fbr.axes[2]) != time_periods) ? error("Length of time dimension inconsistent"): true
+    (length(fbr.axes[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
 
     Flow_max_tf = JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), name_index, time_index)
     Flow_max_ft = JuMP.JuMPArray(Array{ConstraintRef}(JuMP.size(x)), name_index, time_index)
