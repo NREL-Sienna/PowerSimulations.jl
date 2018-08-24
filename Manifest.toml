@@ -13,12 +13,6 @@ git-tree-sha1 = "b530fbeb6f41ab5a83fbe3db1fcbe879334bcd2d"
 uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
 version = "0.4.2"
 
-[[BufferedStreams]]
-deps = ["Compat", "Pkg", "Test"]
-git-tree-sha1 = "5d55b9486590fdda5905c275bb21ce1f0754020f"
-uuid = "e1450e63-4bb3-523b-b2a4-4ffa8c0fd77d"
-version = "1.0.0"
-
 [[CSV]]
 deps = ["CategoricalArrays", "DataFrames", "DataStreams", "Dates", "InternedStrings", "Missings", "Mmap", "Test", "WeakRefStrings"]
 git-tree-sha1 = "67134caa06fd033202d89385517e4d8b542f420c"
@@ -36,18 +30,6 @@ deps = ["Compat", "Future", "JSON", "Missings", "Printf", "Reexport"]
 git-tree-sha1 = "8009a507e2e3db040d6854a82ce959fb5971cb37"
 uuid = "324d7699-5711-5eae-9e2f-1d82baa6b597"
 version = "0.3.13"
-
-[[Cbc]]
-deps = ["BinDeps", "Homebrew", "Libdl", "MathProgBase", "WinRPM"]
-git-tree-sha1 = "dcd2bf0cca3d411410550b2ec0f8e456feacc332"
-uuid = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"
-version = "0.3.2"
-
-[[Clp]]
-deps = ["Cbc", "MathProgBase"]
-git-tree-sha1 = "cec4d60131805fc6b22793653d81f1d7bc355727"
-uuid = "e2554f3b-3117-50c0-817c-e040a3ddf72d"
-version = "0.4.0"
 
 [[CodecZlib]]
 deps = ["BinaryProvider", "Libdl", "Pkg", "Test", "TranscodingStreams"]
@@ -119,11 +101,13 @@ version = "0.8.5"
 deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
-[[HTTPClient]]
-deps = ["Compat", "LibCURL"]
-git-tree-sha1 = "161d5776ae8e585ac0b8c20fb81f17ab755b3671"
-uuid = "0862f596-cf2d-50af-8ef4-f2be67dfa83f"
-version = "0.2.1"
+[[GLPK]]
+deps = ["BinDeps", "Compat", "Homebrew", "Libdl", "LinQuadOptInterface"]
+git-tree-sha1 = "e5cdab58822ddd5d7a64b70c3c4683212cf390ab"
+repo-rev = "master"
+repo-url = "https://github.com/JuliaOpt/GLPK.jl.git"
+uuid = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
+version = "0.7.0+"
 
 [[Homebrew]]
 deps = ["BinDeps", "InteractiveUtils", "JSON", "Libdl", "Test", "Unicode"]
@@ -166,29 +150,17 @@ repo-url = "https://github.com/JuliaOpt/JuMP.jl.git"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
 version = "0.18.2+"
 
-[[LibCURL]]
-deps = ["BinaryProvider", "Compat", "Libdl", "Pkg"]
-git-tree-sha1 = "f7c4fd37291207ec6bd4b7b9abfc512d4bb8b88e"
-uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
-version = "0.3.1"
-
-[[LibExpat]]
-deps = ["Compat", "Pkg"]
-git-tree-sha1 = "fde352ec13479e2f90e57939da2440fb78c5e388"
-uuid = "522f3ed2-3f36-55e3-b6df-e94fee9b0c07"
-version = "0.5.0"
-
 [[LibGit2]]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
 
 [[Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 
-[[Libz]]
-deps = ["BufferedStreams", "Random", "Test"]
-git-tree-sha1 = "d405194ffc0293c3519d4f7251ce51baac9cc871"
-uuid = "2ec943e9-cfe8-584d-b93d-64dcb6d567b7"
-version = "1.0.0"
+[[LinQuadOptInterface]]
+deps = ["Compat", "MathOptInterface"]
+git-tree-sha1 = "356bd1b74cc27dd5459acb09db2f81a05120e482"
+uuid = "f8899e07-120b-5979-ab1d-7b97bb9e1a48"
+version = "0.3.0"
 
 [[LinearAlgebra]]
 deps = ["Libdl"]
@@ -206,12 +178,6 @@ deps = ["Compat", "Pkg", "Unicode"]
 git-tree-sha1 = "6bb3530fb9ed16a2f9324d6de54ec5ab9e5822e0"
 uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 version = "0.5.1"
-
-[[MathProgBase]]
-deps = ["Compat"]
-git-tree-sha1 = "a3df6da48fcbdb56d7571b0c6f950b02dcea1754"
-uuid = "fdba3010-5040-5b88-9595-932c9decdf73"
-version = "0.7.2"
 
 [[Memento]]
 deps = ["Compat", "JSON", "Nullables", "Syslogs"]
@@ -369,9 +335,3 @@ deps = ["Missings", "Random", "Test"]
 git-tree-sha1 = "d4631352d65840254d33ab703e2de3d9768cdb77"
 uuid = "ea10d353-3f73-51f8-a26c-33c1cb351aa5"
 version = "0.5.2"
-
-[[WinRPM]]
-deps = ["BinDeps", "Compat", "HTTPClient", "LibExpat", "Libdl", "Libz", "SHA", "URIParser"]
-git-tree-sha1 = "023faa2430b4ad3f9cf073c03cf100d80630fb6d"
-uuid = "c17dfb99-b4f7-5aad-8812-456da1ad7187"
-version = "0.4.0"

@@ -30,15 +30,17 @@ using JuMP
 using TimeSeries
 using PowerSystems
 using Compat
-using Clp
-using Cbc
+using GLPK
+using MathOptInterface
+#using Clp
+#using Cbc
 #using Ipopt
 using DataFrames
 using LinearAlgebra
 
 #################################################################################
 # Type Alias
-
+const MOI = MathOptInterface
 const JumpVariable = JuMP.JuMPArray{JuMP.VariableRef,2,Tuple{Array{String,1},UnitRange{Int64}}}
 const JumpExpressionMatrix = Matrix{<:JuMP.GenericAffExpr}
 
