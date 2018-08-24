@@ -10,7 +10,7 @@ function branchflowvariables(m::JuMP.Model, devices::Array{T,1}, bus_number::Int
 
     for t in time_range, (ix,branch) in enumerate(fbr.axes[1])
 
-        !isassigned(network_netinjection,devices[ix].connectionpoints.from.number,t) ? network_netinjection[devices[ix].connectionpoints.from.number,t] = -fbr[branch,t]: JuMP.add_to_expression!(network_netinjection[devices[ix].connectionpoints.from.number,t],-fbr[branch,t])
+        !isassigned(network_netinjection,devices[ix].connectionpoints.from.number,t) ? network_netinjection[devices[ix].connectionpoints.from.number,t] = -fbr[branch,t] : JuMP.add_to_expression!(network_netinjection[devices[ix].connectionpoints.from.number,t],-fbr[branch,t])
         !isassigned(network_netinjection,devices[ix].connectionpoints.to.number,t) ? network_netinjection[devices[ix].connectionpoints.to.number,t] = fbr[branch,t] : JuMP.add_to_expression!(network_netinjection[devices[ix].connectionpoints.to.number,t],fbr[branch,t])
 
     end

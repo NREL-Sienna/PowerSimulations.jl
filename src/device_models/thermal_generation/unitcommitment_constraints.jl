@@ -3,7 +3,6 @@
 """
 This function adds the Commitment Status constraint when there are CommitmentVariables
 """
-
 function commitmentconstraints(m::JuMP.Model, devices::Array{ T,1}, time_periods::Int64, commitment::Bool = true) where T <: PowerSystems.ThermalGen
 
     onth = m[:onth]
