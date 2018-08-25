@@ -50,7 +50,7 @@ function powerconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int6
     end
 
     JuMP.registercon(m, :pmax_in, pmax_in)
-    JuMP.registercon(m, pmax_out, pmax_out)
+    JuMP.registercon(m, :pmax_out, pmax_out)
     JuMP.registercon(m, :pmin_in, pmin_in)
     JuMP.registercon(m, :pmin_out, pmin_out)
 
@@ -63,7 +63,7 @@ function energybookkeeping(m::JuMP.Model, devices::Array{T,1}, time_periods::Int
     pstout = m[:pstout]
     ebt = m[:ebt]
     name_index = m[:ebt].axes[1]
-    time_index = m[:ent].axes[2]
+    time_index = m[:ebt].axes[2]
 
     (length(time_index) != time_periods) ? error("Length of time dimension inconsistent in E_bt") : true
     (pstin.axes[1] !== time_index) ? warn("Input/Output and Battery Energy variables indexes are inconsistent") : true
@@ -97,7 +97,7 @@ function energyconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int
 
     ebt = m[:ebt]
     name_index = m[:ebt].axes[1]
-    time_index = m[:ent].axes[2]
+    time_index = m[:ebt].axes[2]
 
     (length(ebt.axes[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
 
