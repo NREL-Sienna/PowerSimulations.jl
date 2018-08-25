@@ -1,4 +1,4 @@
-function networkflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, DeviceNetInjection::A, PTDF::Array{Float64}) where A <: JumpExpressionMatrix
+function networkflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, DeviceNetInjection::A, PTDF::Array{Float64},timeseries_netinjection::Array{Float64}) where A <: JumpExpressionMatrix
 
     fbr = m[:fbr]
     name_index = m[:fbr].axes[1]
@@ -10,7 +10,7 @@ function networkflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, DeviceNetInje
 
     for t in 1:sys.time_periods, (ix,branch) in enumerate(name_index)
 
-        branch_exp = JuMP.AffExpr([fbr[branch,t]], [1.0], 0.0) #This is not working
+        branch_exp = JuMP.AffExpr(1.0,Dict(fbr[branch,t]=>1.0)) #This is not working
 
         for bus in 1:size(timeseries_netinjection)[1]
 
@@ -18,7 +18,7 @@ function networkflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, DeviceNetInje
 
         end
 
-        branchflow[ix,t] = @constraint(m, branch_exp == 0.0)
+        branchflow[branch,t] = @constraint(m, branch_exp == 0.0)
 
     end
 
