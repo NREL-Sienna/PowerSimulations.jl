@@ -2,7 +2,7 @@ function nodalflowbalance(m::JuMP.Model, devices_netinjection::AD, network_netin
 
         pf_balance = JuMP.JuMPArray(Array{ConstraintRef}((size(network_netinjection)[1], time_periods)),1:size(network_netinjection)[1], 1:time_periods)
 
-        for (n, c) in enumerate(IndexCartesian(2), network_netinjection)
+        for (n, c) in enumerate(IndexCartesian(), network_netinjection)
 
             isassigned(devices_netinjection,n[1],n[2]) ? JuMP.add_to_expression!(c, devices_netinjection[n[1],n[2]]) : c
 

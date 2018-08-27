@@ -11,19 +11,16 @@ end
 function constructnetwork!(category::Type{NetworkFlow}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where {F <: Function, T <: JumpExpressionMatrix}
 
     fl, flow_injections = PowerSimulations.branchflowvariables(m, sys.branches, length(sys.buses), sys.time_periods);
-    TsNets = PowerSimulations.timeseries_netinjection(sys);
+    timeseries_netinjection = PowerSimulations.timeseries_netinjection(sys);
 
-    if :ptdf in keys(kwargs) #check if the KEY PTDF is present
-
-        m = networkflow(m, sys, devices_netinjection, PTDF);
-
-    else
+    if !(:ptdf in keys(kwargs)) #check if the KEY PTDF is present
 
         warn("PTDF not defined, building")
         PTDF,Adj = PowerSystems.buildptdf(sys.branches,sys.buses);
-        m = networkflow(m, sys, devices_netinjection, PTDF);
 
     end
+
+    m = PowerSimulations.networkflow(m, sys, devices_netinjection, PTDF, timeseries_netinjection);
 
     #= if conditions for the kwargs
 
@@ -33,13 +30,13 @@ function constructnetwork!(category::Type{NetworkFlow}, m::JuMP.Model, devices_n
 
     =#
 
-    for (n, c) in enumerate(IndexCartesian(), flow_netinjections)
+    for (n, c) in enumerate(IndexCartesian(),flow_injections)
 
         isassigned(devices_netinjection,n[1],n[2]) ? JuMP.add_to_expression!(c, devices_netinjection[n[1],n[2]]) : c
 
     end
 
-    m = PowerSimulations.nodalflowbalance(m, devices_netinjection, sys.time_periods);
+    m = PowerSimulations.nodalflowbalance(m, devices_netinjection, flow_injections, timeseries_netinjection, sys.time_periods);
 
     return m
 
@@ -59,7 +56,7 @@ function constructnetwork!(category::Type{DCPowerFlow}, m::JuMP.Model, devices_n
 
     =#
 
-    for (n, c) in enumerate(IndexCartesian(), flow_netinjections)
+    for (n, c) in enumerate(IndexCartesian(), flow_injections)
 
         isassigned(devices_netinjection,n[1],n[2]) ? JuMP.add_to_expression!(c, devices_netinjection[n[1],n[2]]) : c
 
@@ -86,7 +83,7 @@ function constructnetwork!(category::Type{F}, m::JuMP.Model, devices_netinjectio
 
     =#
 
-    for (n, c) in enumerate(IndexCartesian(), flow_netinjections)
+    for (n, c) in enumerate(IndexCartesian(), flow_injections)
 
         isassigned(devices_netinjection,n[1],n[2]) ? JuMP.add_to_expression!(c, devices_netinjection[n[1],n[2]]) : c
 

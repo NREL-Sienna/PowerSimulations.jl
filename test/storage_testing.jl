@@ -28,12 +28,13 @@ generators_hg = [
 sys5b = PowerSystem(nodes5, append!(generators5, generators_hg), loads5_DA, branches5, battery,  1000.0)
 
 m = Model()
-devices_netinjection =  JumpAffineExpressionArray(length(sys5b.buses), sys5b.time_periods)
+devices_netinjection =  PowerSimulations.JumpAffineExpressionArray(length(sys5b.buses), sys5b.time_periods)
 
 Pin, Pout, inyection_array = PowerSimulations.powerstoragevariables(m, devices_netinjection,  sys5b.storage, sys5b.time_periods)
 Es = PowerSimulations.energystoragevariables(m, sys5b.storage, sys5b.time_periods);
-PowerSimulations.powerconstraints(m, Pin, Pout, sys5b.storage, sys5b.time_periods)
-PowerSimulations.energyconstraints(m , Es, sys5b.storage, sys5b.time_periods)
-PowerSimulations.energybookkeeping(m ,Pin ,Pout, Es, sys5b.storage, sys5b.time_periods)
+PowerSimulations.powerconstraints(m, sys5b.storage, sys5b.time_periods)
+PowerSimulations.energyconstraints(m, sys5b.storage, sys5b.time_periods)
+println("defining energy bookkeeping")
+PowerSimulations.energybookkeeping(m , sys5b.storage, sys5b.time_periods)
 
 true
