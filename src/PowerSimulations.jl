@@ -12,6 +12,7 @@ export timeconstraints
 export curtailconstraints
 
 #Network Relevant Exports
+export AbstractDCPowerModel
 export CopperPlatePowerModel
 export PTDF
 export PTDFLosses
@@ -39,6 +40,8 @@ using LinearAlgebra
 #################################################################################
 # Type Alias
 const PM = PowerModels
+const NetworkType = PM.AbstractPowerFormulation
+const PS = PowerSimulations
 const MOI = MathOptInterface
 const JumpVariable = JuMP.JuMPArray{JuMP.VariableRef,2,Tuple{Array{String,1},UnitRange{Int64}}}
 const JumpExpressionMatrix = Matrix{<:JuMP.GenericAffExpr}
@@ -49,6 +52,9 @@ const JumpAffineExpressionArray = Array{JuMP.GenericAffExpr{Float64,JuMP.Variabl
 
 #utils
 include("utils/undef_check.jl")
+
+#Abstract Network Models
+include("network_models/networks.jl")
 
 #base and core
 include("core/abstract_models.jl")
@@ -68,7 +74,6 @@ include("device_models/electric_loads.jl")
 include("device_models/branches.jl")
 
 #Network related components
-include("network_models/networks.jl")
 include("network_models/copperplate_balance.jl")
 include("network_models/nodal_balance.jl")
 

@@ -1,4 +1,4 @@
-function dispatch(m::JuMP.Model, network::Type{N}, devices_netinjection::T, devices::Array{D}, constraints::Array{<:Function}, time_periods::Int64) where {T <: JumpExpressionMatrix, N <: RealNetwork, D <: ThermalGen}
+function dispatch(m::JuMP.Model, network::Type{N}, devices_netinjection::T, devices::Array{D}, constraints::Array{<:Function}, time_periods::Int64) where {T <: JumpExpressionMatrix, N <: AbstractDCPowerModel, D <: ThermalGen}
 
     pth, inyection_array = activepowervariables(m, devices_netinjection, devices, time_periods);
 
@@ -12,7 +12,7 @@ function dispatch(m::JuMP.Model, network::Type{N}, devices_netinjection::T, devi
 
 end
 
-function commitment(m::JuMP.Model, network::Type{N}, devices_netinjection::T, devices::Array{D}, constraints::Array{<:Function}, time_periods::Int64) where {T <: JumpExpressionMatrix, N <: RealNetwork, D <: ThermalGen}
+function commitment(m::JuMP.Model, network::Type{N}, devices_netinjection::T, devices::Array{D}, constraints::Array{<:Function}, time_periods::Int64) where {T <: JumpExpressionMatrix, N <: AbstractDCPowerModel, D <: ThermalGen}
 
     pth, inyection_array = activepowervariables(m, devices_netinjection, devices, time_periods);
 

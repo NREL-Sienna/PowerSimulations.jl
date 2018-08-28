@@ -1,5 +1,5 @@
 
-function constructnetwork!(category::Type{CopperPlate}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where T <: JumpExpressionMatrix
+function constructnetwork!(category::Type{CopperPlatePowerModel}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where T <: JumpExpressionMatrix
 
     TsNets = PowerSimulations.timeseries_netinjection(sys);
     m = PowerSimulations.copperplatebalance(m, devices_netinjection,TsNets, sys.time_periods);
@@ -8,7 +8,7 @@ function constructnetwork!(category::Type{CopperPlate}, m::JuMP.Model, devices_n
 
 end
 
-function constructnetwork!(category::Type{NetworkFlow}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where {F <: Function, T <: JumpExpressionMatrix}
+function constructnetwork!(category::Type{StandardPTDFForm}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where {F <: Function, T <: JumpExpressionMatrix}
 
     fl, flow_injections = PowerSimulations.branchflowvariables(m, sys.branches, length(sys.buses), sys.time_periods);
     TsNets = PowerSimulations.timeseries_netinjection(sys);
@@ -45,7 +45,7 @@ function constructnetwork!(category::Type{NetworkFlow}, m::JuMP.Model, devices_n
 
 end
 
-function constructnetwork!(category::Type{DCPowerFlow}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs ...) where T <: JumpExpressionMatrix
+function constructnetwork!(category::Type{DCPlosslessForm}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs ...) where T <: JumpExpressionMatrix
 
     fl, flow_injections = PowerSimulations.branchflowvariables(m, sys.branches, length(sys.buses), sys.time_periods);
 
@@ -71,7 +71,7 @@ function constructnetwork!(category::Type{DCPowerFlow}, m::JuMP.Model, devices_n
 
 end
 
-function constructnetwork!(category::Type{F}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs ...) where {F<: ACPowerFlow, T <: JumpExpressionMatrix}
+function constructnetwork!(category::Type{F}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs ...) where {F<: PM.StandardACPForm, T <: JumpExpressionMatrix}
 
     fl, flow_injections = PowerSimulations.branchflowvariables(m, sys.branches, length(sys.buses), sys.time_periods);
     #theta = anglevariables(m, sys.buses, time_periods)

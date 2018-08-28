@@ -41,7 +41,7 @@ phg, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjec
 pbtin, pbtout, inyection_array = PowerSimulations.powerstoragevariables(m, devices_netinjection,  sys5b.storage, sys5b.time_periods)
 
 #CopperPlate Network test
-m = PowerSimulations.constructnetwork!(CopperPlate, m, devices_netinjection, sys5b)
+m = PowerSimulations.constructnetwork!(CopperPlatePowerModel, m, devices_netinjection, sys5b)
 
 #Reset EveryThing to Build the nodebalance network
 m=Model()
@@ -56,6 +56,6 @@ test_hy = [d for d in generators_hg if !isa(d, PowerSystems.HydroFix)] # Filter 
 phg, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,  test_hy, sys5b.time_periods)
 pbtin, pbtout, inyection_array = PowerSimulations.powerstoragevariables(m, devices_netinjection,  sys5b.storage, sys5b.time_periods)
 
-m = PowerSimulations.constructnetwork!(NetworkFlow,m,devices_netinjection,sys5b)
+m = PowerSimulations.constructnetwork!(StandardPTDFForm,m,devices_netinjection,sys5b)
 
 true
