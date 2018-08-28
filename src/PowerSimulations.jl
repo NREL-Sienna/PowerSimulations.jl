@@ -12,13 +12,11 @@ export timeconstraints
 export curtailconstraints
 
 #Network Relevant Exports
-export Network
 export CopperPlate
 export NetworkFlow
 export DCPowerFlow
 export ACPowerFlow
 export flowconstraints
-
 
 #Functions
 export buildmodel!
@@ -29,6 +27,7 @@ export simulatemodel
 using JuMP
 using TimeSeries
 using PowerSystems
+import PowerModels
 using Compat
 using GLPK
 using MathOptInterface
@@ -40,11 +39,10 @@ using LinearAlgebra
 
 #################################################################################
 # Type Alias
+const PM = PowerModels
 const MOI = MathOptInterface
 const JumpVariable = JuMP.JuMPArray{JuMP.VariableRef,2,Tuple{Array{String,1},UnitRange{Int64}}}
 const JumpExpressionMatrix = Matrix{<:JuMP.GenericAffExpr}
-
-# TODO: this syntax might change with JuMP 0.19
 const JumpAffineExpressionArray = Array{JuMP.GenericAffExpr{Float64,JuMP.VariableRef},2}
 
 #################################################################################
