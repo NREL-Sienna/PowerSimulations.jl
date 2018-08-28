@@ -1,6 +1,6 @@
 const curtailconstraints = PowerSimulations.powerconstraints
 
-function dispatch(m::JuMP.Model, network::Type{N}, devices_netinjection::T, devices::Array{D}, constraints::Array{<:Function}, time_periods::Int64) where {T <: JumpExpressionMatrix, N <: RealNetwork, D <: RenewableGen}
+function dispatch(m::JuMP.Model, network::Type{N}, devices_netinjection::T, devices::Array{D}, constraints::Array{<:Function}, time_periods::Int64) where {T <: JumpExpressionMatrix, N <: AbstractDCPowerModel, D <: RenewableGen}
 
     pre, devices_netinjection = activepowervariables(m, devices_netinjection, devices, time_periods)
 

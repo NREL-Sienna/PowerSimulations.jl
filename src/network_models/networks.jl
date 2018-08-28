@@ -4,10 +4,10 @@ abstract type CopperPlatePowerModel <: PM.AbstractPowerFormulation end
 
 abstract type AbstractFlowForm <: AbstractDCPowerModel end
 
-abstract type StandardPTDFLLForm <: AbstractFlowForm end
+abstract type StandardPTDFForm <: AbstractFlowForm end
 
 abstract type StandardPTDFLossesForm <: AbstractFlowForm end
 
-const PTDF = StandardPTDFLLForm
+#This line is from PowerModels, needs to be removed later
+abstract type DCPlosslessForm <: PM.AbstractDCPForm end
 
-const PTDFLosses = StandardPTDFLossesForm
