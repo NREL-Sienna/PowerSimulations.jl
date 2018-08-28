@@ -12,10 +12,9 @@ export timeconstraints
 export curtailconstraints
 
 #Network Relevant Exports
-export CopperPlate
-export NetworkFlow
-export DCPowerFlow
-export ACPowerFlow
+export CopperPlatePowerModel
+export PTDF
+export PTDFLosses
 export flowconstraints
 
 #Functions
