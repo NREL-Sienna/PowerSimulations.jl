@@ -1,10 +1,13 @@
-abstract type NetworkType end
+abstract type AbstractDCPowerModel <: PM.AbstractPowerFormulation end
 
-abstract type RealNetwork <: NetworkType end
+abstract type CopperPlatePowerModel <: PM.AbstractPowerFormulation end
 
-abstract type CopperPlate <: RealNetwork end
+abstract type AbstractFlowForm <: AbstractDCPowerModel end
 
-abstract type NetworkFlow <: RealNetwork end
-abstract type DCPowerFlow <: RealNetwork end
-abstract type ACPowerFlow <: NetworkType end
+abstract type StandardPTDFLLForm <: AbstractFlowForm end
 
+abstract type StandardPTDFLossesForm <: AbstractFlowForm end
+
+const PTDF = StandardPTDFLLForm
+
+const PTDFLosses = StandardPTDFLossesForm
