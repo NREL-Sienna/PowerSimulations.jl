@@ -1,4 +1,3 @@
-
 ### Variables for Thermal Generation ####
 
 """

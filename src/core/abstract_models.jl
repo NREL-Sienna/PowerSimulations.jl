@@ -7,15 +7,16 @@ abstract type EconomicDispatch <: AbstractOperationsModel end
 
 abstract type UnitCommitment <: AbstractOperationsModel end
 
-mutable struct PowerOperationModel{T<:AbstractOperationsModel, F <: Array{<:Function}}
+abstract type CustomModel <: AbstractOperationsModel end
+
+mutable struct PowerOperationModel{T<:AbstractOperationsModel}
     psmodel::T
-    generation::Array{NamedTuple{(:device, :constraints), Tuple{DataType,F}}}
-    demand::Array{NamedTuple{(:device, :constraints), Tuple{DataType,F}}}
-    storage::Array{NamedTuple{(:device, :constraints), Tuple{DataType,F}}}
-    transmission::NamedTuple{(:device, :constraints), Tuple{DataType,F}}
-    branches::Array{NamedTuple{(:device, :constraints), Tuple{DataType,F}}}
-    services::Array{NamedTuple{(:device, :constraints), Tuple{DataType,F}}}
-    cost::Array{NamedTuple{(:device, :component), Tuple{DataType,F}}}
+    generation::Array{NamedTuple{(:device, :Formulation), Tuple{DataType,DataType}}}
+    demand::Array{NamedTuple{(:device, :Formulation), Tuple{DataType,DataType}}}
+    storage::Union{Nothing,Array{NamedTuple{(:device, :Formulation), Tuple{DataType,DataType}}}}
+    transmission::NamedTuple{(:device, :Formulation), Tuple{DataType,DataType}}
+    branches::Array{NamedTuple{(:device, :Formulation), Tuple{DataType,DataType}}}
+    services::Array{NamedTuple{(:device, :Formulation), Tuple{DataType,DataType}}}
     system::PowerSystems.PowerSystem
     model::JuMP.Model
     dynamics::Bool
