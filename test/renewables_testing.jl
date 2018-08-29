@@ -1,9 +1,11 @@
 using PowerSystems
 using PowerSimulations
 using JuMP
-using Compat
 
-include(string(homedir(),"/.julia/v0.6/PowerSystems/data/data_5bus.jl"))
+base_dir = string(dirname(dirname(pathof(PowerSystems))))
+println(joinpath(base_dir,"data/data_5bus.jl"))
+include(joinpath(base_dir,"data/data_5bus.jl"))
+
 sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  1000.0)
 
 m = JuMP.Model()
