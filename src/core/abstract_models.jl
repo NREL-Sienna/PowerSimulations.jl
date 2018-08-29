@@ -9,14 +9,14 @@ abstract type UnitCommitment <: AbstractOperationsModel end
 
 abstract type CustomModel <: AbstractOperationsModel end
 
-mutable struct PowerOperationModel{T<:AbstractOperationsModel}
-    psmodel::T
+mutable struct PowerOperationModel{M<:AbstractOperationsModel, T::NetworkModel}
+    psmodel::M
     generation::Array{NamedTuple{(:device, :Formulation), Tuple{DataType,DataType}}}
     demand::Array{NamedTuple{(:device, :Formulation), Tuple{DataType,DataType}}}
     storage::Union{Nothing,Array{NamedTuple{(:device, :Formulation), Tuple{DataType,DataType}}}}
-    transmission::NamedTuple{(:device, :Formulation), Tuple{DataType,DataType}}
     branches::Array{NamedTuple{(:device, :Formulation), Tuple{DataType,DataType}}}
-    services::Array{NamedTuple{(:device, :Formulation), Tuple{DataType,DataType}}}
+    transmission::T
+    services::Array{DataType}
     system::PowerSystems.PowerSystem
     model::JuMP.Model
     dynamics::Bool
