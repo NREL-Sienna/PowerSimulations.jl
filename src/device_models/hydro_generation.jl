@@ -1,4 +1,4 @@
-abstract type AbstractHydroFormulation end
+abstract type AbstractHydroForm end
 
 abstract type HydroCurtailmentForm <: AbstractHydroForm end
 

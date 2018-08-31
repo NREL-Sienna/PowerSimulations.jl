@@ -84,10 +84,10 @@ include("component_constructors/services_constructor.jl")
 include("component_constructors/network_constructor.jl")
 
 #Cost Components
-include("cost_functions/controlableload_cost.jl")
-include("cost_functions/renewablegen_cost.jl")
-include("cost_functions/thermalgenvariable_cost.jl")
-include("cost_functions/thermalgencommitment_cost.jl")
+include("device_models/electric_loads/controlableload_cost.jl")
+include("device_models/renewable_generation/renewablegen_cost.jl")
+include("device_models/thermal_generation/thermalgenvariable_cost.jl")
+include("device_models/thermal_generation/thermalgencommitment_cost.jl")
 
 #PowerModels
 #include("power_models/economic_dispatch.jl")

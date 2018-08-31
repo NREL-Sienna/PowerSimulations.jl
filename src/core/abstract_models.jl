@@ -9,7 +9,7 @@ abstract type UnitCommitment <: AbstractOperationsModel end
 
 abstract type CustomModel <: AbstractOperationsModel end
 
-mutable struct PowerOperationModel{M<:AbstractOperationsModel, T::NetworkModel}
+mutable struct PowerOperationModel{M <: AbstractOperationsModel, T<:PM.AbstractPowerFormulation}
     psmodel::M
     generation::Array{NamedTuple{(:device, :Formulation), Tuple{DataType,DataType}}}
     demand::Array{NamedTuple{(:device, :Formulation), Tuple{DataType,DataType}}}
