@@ -1,7 +1,9 @@
 using PowerSystems
 using JuMP
 
-include(string(homedir(),"/.julia/v0.6/PowerSystems/data/data_5bus.jl"))
+base_dir = string(dirname(dirname(pathof(PowerSystems))))
+println(joinpath(base_dir,"data/data_5bus.jl"))
+include(joinpath(base_dir,"data/data_5bus.jl"))
 
 generators_hg = [
     HydroFix("HydroFix",true,nodes5[2],

@@ -3,22 +3,18 @@ module PowerSimulations
 #################################################################################
 # Exports
 
-#Device Relevant Exports
-export powerconstraints
-export commitmentconstraints
-export rampconstraints
-export timeconstraints
+#Base Modeling Exports
+export CustomModel
+export EconomicDispatch
+export UnitCommitment
 
-export curtailconstraints
+#Device formulation Export
+
 
 #Network Relevant Exports
-export Network
-export CopperPlate
-export NetworkFlow
-export DCPowerFlow
-export ACPowerFlow
+export AbstractDCPowerModel
+export CopperPlatePowerModel
 export flowconstraints
-
 
 #Functions
 export buildmodel!
@@ -29,6 +25,7 @@ export simulatemodel
 using JuMP
 using TimeSeries
 using PowerSystems
+import PowerModels
 using Compat
 using GLPK
 using MathOptInterface
@@ -40,11 +37,12 @@ using LinearAlgebra
 
 #################################################################################
 # Type Alias
+const PM = PowerModels
+const NetworkType = PM.AbstractPowerFormulation
+const PS = PowerSimulations
 const MOI = MathOptInterface
 const JumpVariable = JuMP.JuMPArray{JuMP.VariableRef,2,Tuple{Array{String,1},UnitRange{Int64}}}
 const JumpExpressionMatrix = Matrix{<:JuMP.GenericAffExpr}
-
-# TODO: this syntax might change with JuMP 0.19
 const JumpAffineExpressionArray = Array{JuMP.GenericAffExpr{Float64,JuMP.VariableRef},2}
 
 #################################################################################
@@ -52,6 +50,9 @@ const JumpAffineExpressionArray = Array{JuMP.GenericAffExpr{Float64,JuMP.Variabl
 
 #utils
 include("utils/undef_check.jl")
+
+#Abstract Network Models
+include("network_models/networks.jl")
 
 #base and core
 include("core/abstract_models.jl")
@@ -71,7 +72,6 @@ include("device_models/electric_loads.jl")
 include("device_models/branches.jl")
 
 #Network related components
-include("network_models/networks.jl")
 include("network_models/copperplate_balance.jl")
 include("network_models/nodal_balance.jl")
 
