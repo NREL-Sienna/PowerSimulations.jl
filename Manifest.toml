@@ -13,12 +13,6 @@ git-tree-sha1 = "b530fbeb6f41ab5a83fbe3db1fcbe879334bcd2d"
 uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
 version = "0.4.2"
 
-[[CSV]]
-deps = ["CategoricalArrays", "DataFrames", "DataStreams", "Dates", "InternedStrings", "Missings", "Mmap", "Test", "WeakRefStrings"]
-git-tree-sha1 = "67134caa06fd033202d89385517e4d8b542f420c"
-uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-version = "0.3.1"
-
 [[Calculus]]
 deps = ["Compat"]
 git-tree-sha1 = "f60954495a7afcee4136f78d1d60350abd37a409"
@@ -99,21 +93,19 @@ version = "0.8.0"
 
 [[ForwardDiff]]
 deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "InteractiveUtils", "LinearAlgebra", "NaNMath", "Pkg", "Random", "SparseArrays", "SpecialFunctions", "StaticArrays", "Test"]
-git-tree-sha1 = "0dd11038da4efce9ce457b1cf47a52eaf6251bd3"
+git-tree-sha1 = "8425a7d4e060bc2ded32d090bce910a187d6cce7"
 uuid = "f6369f11-7733-5829-9624-2563aa707210"
-version = "0.8.5"
+version = "0.9.0"
 
 [[Future]]
 deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[GLPK]]
-deps = ["BinDeps", "Compat", "Homebrew", "Libdl", "LinQuadOptInterface"]
-git-tree-sha1 = "e5cdab58822ddd5d7a64b70c3c4683212cf390ab"
-repo-rev = "master"
-repo-url = "https://github.com/JuliaOpt/GLPK.jl.git"
+deps = ["BinDeps", "Compat", "Homebrew", "Libdl"]
+git-tree-sha1 = "0099c1bb064667c5196c457a85d589ce30cf88c9"
 uuid = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
-version = "0.7.0+"
+version = "0.5.1"
 
 [[Homebrew]]
 deps = ["BinDeps", "InteractiveUtils", "JSON", "Libdl", "Test", "Unicode"]
@@ -131,12 +123,6 @@ version = "0.0.9"
 deps = ["LinearAlgebra", "Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 
-[[InternedStrings]]
-deps = ["Random", "Test"]
-git-tree-sha1 = "eb05b5625bc5d821b8075a77e4c421933e20c76b"
-uuid = "7d512f48-7fb1-5a58-b986-67e6dc259f01"
-version = "0.7.0"
-
 [[JSON]]
 deps = ["Dates", "Distributed", "Mmap", "Pkg", "Sockets", "Test", "Unicode"]
 git-tree-sha1 = "fec8e4d433072731466d37ed0061b3ba7f70eeb9"
@@ -145,7 +131,7 @@ version = "0.19.0"
 
 [[JuMP]]
 deps = ["Calculus", "Compat", "DataStructures", "ForwardDiff", "MathOptInterface", "NaNMath"]
-git-tree-sha1 = "4a09b3a31e60926ce208c9e62804183948feb646"
+git-tree-sha1 = "fad7882951ac4e093b3479445b6b3595abcdb7b5"
 repo-rev = "master"
 repo-url = "https://github.com/JuliaOpt/JuMP.jl.git"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
@@ -156,12 +142,6 @@ uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
 
 [[Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
-
-[[LinQuadOptInterface]]
-deps = ["Compat", "MathOptInterface"]
-git-tree-sha1 = "356bd1b74cc27dd5459acb09db2f81a05120e482"
-uuid = "f8899e07-120b-5979-ab1d-7b97bb9e1a48"
-version = "0.3.0"
 
 [[LinearAlgebra]]
 deps = ["Libdl"]
@@ -175,10 +155,10 @@ deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[MathOptInterface]]
-deps = ["Compat", "Pkg", "Unicode"]
-git-tree-sha1 = "6bb3530fb9ed16a2f9324d6de54ec5ab9e5822e0"
+deps = ["Compat", "Unicode"]
+git-tree-sha1 = "f2791f990529b7aea1fcb9fd45b636cd3a9d1e79"
 uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
-version = "0.5.1"
+version = "0.6.0"
 
 [[Memento]]
 deps = ["Compat", "JSON", "Libdl", "Nullables", "Pkg", "Syslogs", "Test", "TimeZones"]
@@ -197,9 +177,9 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[Mocking]]
 deps = ["Compat", "Dates", "Pkg"]
-git-tree-sha1 = "accf54905788bc0ba63fd106302a21e8065c1db3"
+git-tree-sha1 = "4bf69aaf823b119b034e091e16b18311aa191663"
 uuid = "78c3b35d-d492-501b-9361-3d52fe80e533"
-version = "0.5.6"
+version = "0.5.7"
 
 [[NaNMath]]
 deps = ["Compat"]
@@ -219,19 +199,11 @@ uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[PowerModels]]
 deps = ["Compat", "InfrastructureModels", "JSON", "JuMP", "MathOptInterface", "Memento", "Pkg"]
-git-tree-sha1 = "f3063dfb1d3ea249c610192ade744e2849b4e115"
+git-tree-sha1 = "0bf574bf7e54f0400171bb1fff7fd87637d201fe"
 repo-rev = "moi-julia-v0.7"
 repo-url = "https://github.com/lanl-ansi/PowerModels.jl.git"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 version = "0.7.0"
-
-[[PowerSystems]]
-deps = ["CSV", "Compat", "DataFrames", "Dates", "JuMP", "LinearAlgebra", "Memento", "PowerModels", "SparseArrays", "StatsBase", "TimeSeries"]
-git-tree-sha1 = "1ced6571441e8ce4701ddfefb9eda0ff02a02c20"
-repo-rev = "master"
-repo-url = "https://github.com/NREL/PowerSystems.jl.git"
-uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
-version = "0.1.0"
 
 [[Printf]]
 deps = ["Unicode"]
