@@ -3,6 +3,10 @@ module PowerSimulations
 #################################################################################
 # Exports
 
+#Core Exports
+export PowerSimulationsModel
+export PowerResults
+
 #Base Modeling Exports
 export CustomModel
 export EconomicDispatch
@@ -36,14 +40,21 @@ using DataFrames
 using LinearAlgebra
 
 #################################################################################
-# Type Alias
+# Type Alias From other Packages
 const PM = PowerModels
-const NetworkType = PM.AbstractPowerFormulation
+const NetworkModel = PM.AbstractPowerFormulation
 const PS = PowerSimulations
 const MOI = MathOptInterface
+
+#Type Alias for JuMP containers
 const JumpVariable = JuMP.JuMPArray{JuMP.VariableRef,2,Tuple{Array{String,1},UnitRange{Int64}}}
 const JumpExpressionMatrix = Matrix{<:JuMP.GenericAffExpr}
 const JumpAffineExpressionArray = Array{JuMP.GenericAffExpr{Float64,JuMP.VariableRef},2}
+const BalanceNamedTuple = NamedTuple{(:var_active, :var_reactive, :timeseries_active, :timeseries_reactive),Tuple{Array{JuMP.GenericAffExpr{Float64,VariableRef},2},Nothing,Array{Float64,2},Nothing}}
+
+#Type Alias for Unions
+const fix_resource = Union{PowerSystems.RenewableFix, PowerSystems.HydroFix}
+
 
 #################################################################################
 # Includes
@@ -57,8 +68,7 @@ include("network_models/networks.jl")
 #base and core
 include("core/abstract_models.jl")
 #include("core/dynamic_model.jl")
-include("base/device_injections.jl")
-include("base/timeseries_injections.jl")
+include("base/instantiate_routines.jl")
 include("base/model_constructors.jl")
 include("base/simulation_routines.jl")
 include("base/solve_routines.jl")
@@ -74,6 +84,8 @@ include("device_models/branches.jl")
 #Network related components
 include("network_models/copperplate_balance.jl")
 include("network_models/nodal_balance.jl")
+include("network_models/timeseries_injections.jl")
+include("network_models/device_injections.jl")
 
 #Device constructors
 include("component_constructors/thermalgeneration_constructor.jl")
@@ -84,10 +96,10 @@ include("component_constructors/services_constructor.jl")
 include("component_constructors/network_constructor.jl")
 
 #Cost Components
-include("cost_functions/controlableload_cost.jl")
-include("cost_functions/renewablegen_cost.jl")
-include("cost_functions/thermalgenvariable_cost.jl")
-include("cost_functions/thermalgencommitment_cost.jl")
+include("device_models/electric_loads/controlableload_cost.jl")
+include("device_models/renewable_generation/renewablegen_cost.jl")
+include("device_models/thermal_generation/thermalgenvariable_cost.jl")
+include("device_models/thermal_generation/thermalgencommitment_cost.jl")
 
 #PowerModels
 #include("power_models/economic_dispatch.jl")
@@ -95,4 +107,4 @@ include("cost_functions/thermalgencommitment_cost.jl")
 #Utils
 
 
-end # module
+end 

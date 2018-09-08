@@ -1,6 +1,7 @@
 using PowerSimulations
 using Base.Test
 
+#=
 @testset "Device Constructors" begin
     @test include("thermalgen_testing.jl")
     @test include("renewables_testing.jl")
@@ -10,7 +11,7 @@ using Base.Test
     #@test include("network_testing.jl")
 end
 
-#=
+
 @testset "Model Constructors" begin
     @test include("buildED_CN_testing.jl")
     @test include("buildED_NB_testing.jl")

@@ -2,7 +2,7 @@
 """
 This function adds the power limits of generators when there are no CommitmentVariables
 """
-function activepower_dispatch(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
+function activepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {T <: PowerSystems.ThermalGen, D <: AbstractDispatchForm, S <: AbstractDCPowerModel}
 
     pth = m[:pth]
     time_index = m[:pth].axes[2]
@@ -10,8 +10,8 @@ function activepower_dispatch(m::JuMP.Model, devices::Array{T,1}, time_periods::
 
     (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-    pmax_thermal = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(pth))), name_index, time_index)
-    pmin_thermal = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(pth))), name_index, time_index)
+    pmax_thermal = JuMP.JuMPArray(Array{ConstraintRef}(undef,length.(axes(pth))), name_index, time_index)
+    pmin_thermal = JuMP.JuMPArray(Array{ConstraintRef}(undef,length.(axes(pth))), name_index, time_index)
 
     for t in time_index, (ix, name) in enumerate(name_index)
 
@@ -37,7 +37,7 @@ end
 """
 This function adds the power limits of generators when there are CommitmentVariables
 """
-function activepower_commitment(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
+function activepower(m::JuMP.Model, devices::Array{D,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {T <: PowerSystems.ThermalGen, D <: AbstractDispatchForm, S <: AbstractDCPowerModel}
 
     pth = m[:pth]
     onth = m[:onth]
@@ -47,8 +47,8 @@ function activepower_commitment(m::JuMP.Model, devices::Array{T,1}, time_periods
 
     (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-    pmax_thermal = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(pth))), name_index, time_index)
-    pmin_thermal = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(pth))), name_index, time_index)
+    pmax_thermal = JuMP.JuMPArray(Array{ConstraintRef}(undef,length.(axes(pth))), name_index, time_index)
+    pmin_thermal = JuMP.JuMPArray(Array{ConstraintRef}(undef,length.(axes(pth))), name_index, time_index)
 
     for t in time_index, (ix, name) in enumerate(name_index)
 
@@ -65,12 +65,4 @@ function activepower_commitment(m::JuMP.Model, devices::Array{T,1}, time_periods
     JuMP.registercon(m, :pmin_thermal, pmin_thermal)
 
     return m
-end
-
-function powerconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64, commitment::Bool = false) where T <: PowerSystems.ThermalGen
-
-    commitment ? m = activepower_commitment(m, devices, time_periods) : m = activepower_dispatch(m, devices, time_periods)
-
-    return m
-
 end

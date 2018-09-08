@@ -1,29 +1,37 @@
-function constructdevice!(category::Type{PowerSystems.ThermalGen}, network::Type{N}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where {T <: JumpExpressionMatrix, N <: NetworkType}
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_model::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {D <: AbstractDispatchForm, S <: AbstractDCPowerModel}
 
-    pth, inyection_array = activepowervariables(m, devices_netinjection, devices, time_periods);
+    pth = activepowervariables(m, sys.generators.thermal, sys.time_periods);
+
+    netinjection = varnetinjectiterate!(netinjection.var_active, pth, sys.time_periods, sys.generators.thermal)
+
+    constraints = [activepower]
 
         for c in constraints
 
-            m = c(m, devices, time_periods)
+            m = c(m, sys.generators.thermal, category_model, system_formulation, sys.time_periods)
 
         end
 
-    return m, devices_netinjection
+    return m, netinjection
 
 end
 
-function constructdevice!(category::Type{PowerSystems.ThermalGen}, network::Type{N}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where {T <: JumpExpressionMatrix, N <: NetworkType}
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_model::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {D <: AbstractUnitCommitmentForm, S <: AbstractDCPowerModel}
 
-    pth, inyection_array = activepowervariables(m, devices_netinjection, devices, time_periods);
+    pth = activepowervariables(m, sys.generators.thermal, sys.time_periods);
 
-    on_thermal, start_thermal, stop_thermal = commitmentvariables(m, devices, time_periods)
+    on_thermal, start_thermal, stop_thermal = commitmentvariables(m, sys.generators.thermal, sys.time_periods)
+
+    netinjection = varnetinjectiterate!(netinjection.var_active, pth, sys.time_periods, sys.generators.thermal)
+
+    constraints = [activepower]
 
     for c in constraints
 
-        m = c(m, devices, time_periods, true)
+        m = c(m, sys.generators.thermal, category_model, system_formulation, sys.time_periods)
 
     end
 
-    return m, devices_netinjection
+    return m, netinjection
 
 end

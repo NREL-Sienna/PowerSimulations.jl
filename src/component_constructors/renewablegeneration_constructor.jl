@@ -15,7 +15,7 @@ function dispatch(m::JuMP.Model, network::Type{N}, devices_netinjection::T, devi
 end
 
 
-function constructdevice!(category::Type{PowerSystems.RenewableGen}, network::Type{N}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where {T <: JumpExpressionMatrix, N <:NetworkType}
+function constructdevice!(category::Type{PowerSystems.RenewableGen}, network::Type{N}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where {T <: JumpExpressionMatrix, N <:NetworkModel}
 
     devices = [d for d in sys.generators.renewable if (d.available == true && !isa(d, RenewableFix))]
 

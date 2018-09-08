@@ -1,18 +1,16 @@
 function buildmodel!(sys::PowerSystems.PowerSystem, model::PowerSimulationsModel)
 
+    #TODO: Add check model spec vs data functions before trying to build 
+
     PSModel = JuMP.Model()
 
-    devices_netinjection =  JumpAffineExpressionArray(length(sys.buses), sys.time_periods)
-
-    #Knowing the network model => create reactive power constraints or not.
-    network_model = model.transmission.category
-
-    # TODO: Rename constructdevice to constructdevice! since it modifies the JuMP model.
-    # It does not need to return ::JuMP.model
+    netinjection = instantiate_network(model.network, sys)
 
     for category in model.generation
-        model.psmodel = constructdevice!(category.device, network_model, model.psmodel, devices_netinjection, sys, category.constraints)
+        netinjection = constructdevice!(category.device, category.formulation, model.transmission, model.psmodel, netinjection, sys)
     end
+
+#=
 
     for category in model.demand
         model.psmodel = constructdevice!(category.device, network_model, model.psmodel, devices_netinjection, sys, category.constraints)
@@ -40,6 +38,8 @@ function buildmodel!(sys::PowerSystems.PowerSystem, model::PowerSimulationsModel
     @objective(model.psmodel, Min, cost);
 
     model.psmodel
+
+    =#
 
     return model
 
