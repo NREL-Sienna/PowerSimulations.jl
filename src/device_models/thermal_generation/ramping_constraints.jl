@@ -2,7 +2,7 @@
 """
 This function adds the ramping limits of generators when there are no CommitmentVariables
 """
-function ramp_dispatch(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
+function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalDispatchForm, S <: AbstractDCPowerModel}
 
     devices = [d for d in devices if !isa(d.tech.ramplimits,Nothing)]
 
@@ -14,8 +14,8 @@ function ramp_dispatch(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) 
 
         (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-        rampdown_thermal = JuMP.JuMPArray(Array{ConstraintRef}((length(name_index), time_periods)), name_index, time_index)
-        rampup_thermal = JuMP.JuMPArray(Array{ConstraintRef}((length(name_index), time_periods)), name_index, time_index)
+        rampdown_thermal = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
+        rampup_thermal = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
 
         for (ix,name) in enumerate(name_index)
 
@@ -23,8 +23,8 @@ function ramp_dispatch(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) 
 
             if name == devices[ix].name
 
-                rampdown_thermal[name,t1] = @constraint(m,  devices[ix].tech.realpower - pth[name,t1] <= devices[ix].tech.ramplimits.down)
-                rampup_thermal[name,t1] = @constraint(m,  pth[name,t1] - devices[ix].tech.realpower <= devices[ix].tech.ramplimits.up)
+                rampdown_thermal[name,t1] = @constraint(m,  devices[ix].tech.activepower - pth[name,t1] <= devices[ix].tech.ramplimits.down)
+                rampup_thermal[name,t1] = @constraint(m,  pth[name,t1] - devices[ix].tech.activepower <= devices[ix].tech.ramplimits.up)
 
             else
                 error("Bus name in Array and variable do not match")
@@ -60,7 +60,7 @@ end
 """
 This function adds the ramping limits of generators when there are CommitmentVariables
 """
-function ramp_commitment(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.ThermalGen
+function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalCommitmentForm, S <: AbstractDCPowerModel}
 
     devices = [d for d in devices if !isa(d.tech.ramplimits,Nothing)]
 
@@ -74,14 +74,14 @@ function ramp_commitment(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64
 
         (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-        rampdown_thermal = JuMP.JuMPArray(Array{ConstraintRef}((length(name_index), time_periods)), name_index, time_index)
-        rampup_thermal = JuMP.JuMPArray(Array{ConstraintRef}((length(name_index), time_periods)), name_index, time_index)
+        rampdown_thermal = JuMP.JuMPArray(Array{ConstraintRef}((undef,length(name_index), time_periods)), name_index, time_index)
+        rampup_thermal = JuMP.JuMPArray(Array{ConstraintRef}((undef, length(name_index), time_periods)), name_index, time_index)
 
         for (ix,name) in enumerate(name_index)
             if name == devices[ix].name
                 t1 = time_index[1]
-                rampdown_thermal[name,t1] = @constraint(m, devices[ix].tech.realpower - pth[name,t1] <= devices[ix].tech.ramplimits.down * onth[name,t1])
-                rampup_thermal[name,t1] = @constraint(m, pth[name,t1] - devices[ix].tech.realpower <= devices[ix].tech.ramplimits.up  * onth[name,t1])
+                rampdown_thermal[name,t1] = @constraint(m, devices[ix].tech.activepower - pth[name,t1] <= devices[ix].tech.ramplimits.down * onth[name,t1])
+                rampup_thermal[name,t1] = @constraint(m, pth[name,t1] - devices[ix].tech.activepower <= devices[ix].tech.ramplimits.up  * onth[name,t1])
             else
                 error("Bus name in Array and variable do not match")
             end
@@ -101,12 +101,4 @@ function ramp_commitment(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64
 
         return m
     end
-end
-
-function rampconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64, commitment::Bool = false) where T <: PowerSystems.ThermalGen
-
-    commitment ? m = ramp_dispatch(m, devices, time_periods) : m = ramp_commitment(m, devices, time_periods)
-
-    return m
-
 end

@@ -18,7 +18,6 @@ export UnitCommitment
 #Network Relevant Exports
 export AbstractDCPowerModel
 export CopperPlatePowerModel
-export flowconstraints
 
 #Functions
 export buildmodel!
@@ -50,7 +49,7 @@ const MOI = MathOptInterface
 const JumpVariable = JuMP.JuMPArray{JuMP.VariableRef,2,Tuple{Array{String,1},UnitRange{Int64}}}
 const JumpExpressionMatrix = Matrix{<:JuMP.GenericAffExpr}
 const JumpAffineExpressionArray = Array{JuMP.GenericAffExpr{Float64,JuMP.VariableRef},2}
-const BalanceNamedTuple = NamedTuple{(:var_active, :var_reactive, :timeseries_active, :timeseries_reactive),Tuple{Array{JuMP.GenericAffExpr{Float64,VariableRef},2},Nothing,Array{Float64,2},Nothing}}
+const BalanceNamedTuple = NamedTuple{(:var_active, :var_reactive, :timeseries_active, :timeseries_reactive),Tuple{JumpAffineExpressionArray, UJ, Array{Float64,2}, UF}} where {UJ <: Union{Nothing,JumpAffineExpressionArray}, UF <: Union{Nothing, Array{Float64,2}}}
 
 #Type Alias for Unions
 const fix_resource = Union{PowerSystems.RenewableFix, PowerSystems.HydroFix}

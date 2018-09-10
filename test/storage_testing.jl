@@ -9,11 +9,11 @@ include(joinpath(base_dir,"data/data_5bus.jl"))
 battery = [GenericBattery(name = "Bat",
                 status = true,
                 bus = nodes5[1],
-                realpower = 10.0,
+                activepower = 10.0,
                 energy = 5.0,
                 capacity = (min = 0.0, max = 0.0),
-                inputrealpowerlimits = (min = 0.0, max = 50.0),
-                outputrealpowerlimits = (min = 0.0, max = 50.0),
+                inputactivepowerlimits = (min = 0.0, max = 50.0),
+                outputactivepowerlimits = (min = 0.0, max = 50.0),
                 efficiency = (in = 0.90, out = 0.80),
                 )];
 

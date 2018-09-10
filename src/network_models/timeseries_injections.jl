@@ -30,7 +30,7 @@ function timeseries_netinjection(sys::PowerSystems.PowerSystem)
 
              for t in 1:sys.time_periods
 
-             staticload = [sl.maxrealpower*sl.scalingfactor.values[t] for sl in sys.loads if sl.bus == b]
+             staticload = [sl.maxactivepower*sl.scalingfactor.values[t] for sl in sys.loads if sl.bus == b]
 
              isempty(staticload) ? break : tsnetinjection[b.number,t] += sum(staticload)
 

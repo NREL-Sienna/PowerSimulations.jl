@@ -3,7 +3,7 @@
 """
 This function adds the Commitment Status constraint when there are CommitmentVariables
 """
-function commitmentconstraints(m::JuMP.Model, devices::Array{ T,1}, time_periods::Int64, commitment::Bool = true) where T <: PowerSystems.ThermalGen
+function commitmentconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {T <: PowerSystems.ThermalGen, D <: StandardThermalCommitment, S <: AbstractDCPowerModel}
 
     onth = m[:onth]
     startth = m[:startth]
@@ -14,14 +14,14 @@ function commitmentconstraints(m::JuMP.Model, devices::Array{ T,1}, time_periods
 
     (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-    commitment_thermal = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(onth))), name_index, time_index)
+    commitment_thermal = JuMP.JuMPArray(Array{ConstraintRef}(undef,length.(indices(onth))), name_index, time_index)
 
     for (ix,name) in enumerate(name_index)
         if name == devices[ix].name
 
             t1 = time_index[1]
 
-            if devices[ix].tech.realpower > 0.0
+            if devices[ix].tech.activepower > 0.0
                 init = 1
             else
                 init = 0
@@ -46,7 +46,7 @@ function commitmentconstraints(m::JuMP.Model, devices::Array{ T,1}, time_periods
 end
 
 
-function timeconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int; Initial = 999) where T <: PowerSystems.ThermalGen
+function timeconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; initial = 9999) where {T <: PowerSystems.ThermalGen, D <: StandardThermalCommitment, S <: AbstractDCPowerModel}
 
     devices = [d for d in devices if !isa(d.tech.ramplimits,Nothing)]
 
@@ -61,9 +61,9 @@ function timeconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int; 
 
        (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-       minup_thermal = JuMP.JuMPArray(Array{ConstraintRef}((length(name_index), time_periods)), name_index, time_index)
+       minup_thermal = JuMP.JuMPArray(Array{ConstraintRef}((undef, length(name_index), time_periods)), name_index, time_index)
 
-       mindown_thermal = JuMP.JuMPArray(Array{ConstraintRef}((length(name_index), time_periods)), name_index, time_index)
+       mindown_thermal = JuMP.JuMPArray(Array{ConstraintRef}((undef, length(name_index), time_periods)), name_index, time_index)
 
         for t in time_index[2:end], (ix,name) in enumerate(onth.axes[1])
 
