@@ -32,12 +32,10 @@ function activepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::Typ
     return m
 end
 
-
-
 """
 This function adds the power limits of generators when there are CommitmentVariables
 """
-function activepower(m::JuMP.Model, devices::Array{D,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalDispatchForm, S <: PM.AbstractPowerFormulation}
+function activepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalCommitmentForm, S <: AbstractDCPowerModel}
 
     pth = m[:pth]
     onth = m[:onth]
@@ -106,7 +104,7 @@ end
 """
 This function adds the power limits of generators when there are CommitmentVariables
 """
-function reactivepower(m::JuMP.Model, devices::Array{D,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalDispatchForm, S <: AbstractACPowerModel}
+function reactivepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalCommitmentForm, S <: AbstractACPowerModel}
 
     qth = m[:pth]
     onth = m[:onth]

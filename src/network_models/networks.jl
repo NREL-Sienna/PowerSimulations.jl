@@ -4,7 +4,7 @@ abstract type AbstractACPowerModel <: PM.AbstractPowerFormulation end
 
 abstract type StandardAC <: AbstractACPowerModel end
 
-abstract type CopperPlatePowerModel <: PM.AbstractPowerFormulation end
+abstract type CopperPlatePowerModel <: AbstractDCPowerModel end
 
 abstract type AbstractFlowForm <: AbstractDCPowerModel end
 

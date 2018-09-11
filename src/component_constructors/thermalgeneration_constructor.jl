@@ -31,13 +31,7 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 end
 
 
-
-"""
-This function add constraints to the minimal thermal dispatch formulation
-"""
 function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{RampLimitDispatch}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; kwargs...) where {S <: AbstractDCPowerModel}
-
-    println("yes")
 
     m, netinjection = constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys)
 
@@ -59,10 +53,6 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 
     commitmentvariables(m, sys.generators.thermal, sys.time_periods)
 
-    #TODO: Add kwargs to include initial conditions
-
-    commitmentconstraints(m, sys.generators.thermal, sys.time_periods)
-
     netinjection = varnetinjectiterate!(netinjection.var_active, pth, sys.time_periods, sys.generators.thermal)
 
     activepower(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
@@ -77,9 +67,13 @@ This function adds constraints to the minimal thermal commitment formulation
 """
 function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{StandardThermalCommitment}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; kwargs...) where {S <: AbstractDCPowerModel}
 
-    m, netinjection = constructdevice!(m, netinjection, category, AbstractThermalCommitmentForm, PM.AbstractPowerFormulation, sys)
+    m, netinjection = constructdevice!(m, netinjection, category, AbstractThermalCommitmentForm, AbstractDCPowerModel, sys)
+
+    commitmentconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
 
     rampconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
+
+    timeconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
 
     return m, netinjection
 
