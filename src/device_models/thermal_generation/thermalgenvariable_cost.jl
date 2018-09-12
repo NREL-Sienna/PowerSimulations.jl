@@ -19,7 +19,7 @@ function variablecost(m::JuMP.Model, devices::Array{T,1}, device_formulation::Ty
 
 end
 
-function gencost(m::JuMP.Model, variable::Array{JuMP.VariableRef,1}, cost_component::Function)
+function gencost(m::JuMP.Model, variable::JuMPArray{JuMP.VariableRef}, cost_component::Function)
 
     # TODO: Make type stable later, now it can return AffExpr or GenericQuadExpr
 
@@ -31,7 +31,17 @@ function gencost(m::JuMP.Model, variable::Array{JuMP.VariableRef,1}, cost_compon
 
 end
 
-function pwlgencost(m::JuMP.Model, var::JuMP.VariableRef, cost_component::Array{Tuple{Float64, Float64}})
+function gencost(m::JuMP.Model, variable::JuMPArray{JuMP.VariableRef}, cost_component::Float64)
+
+    # TODO: Make type stable later, now it can return AffExpr or GenericQuadExpr
+
+    cost = @expression(m, sum(cost_component*variable))
+
+    return cost
+
+end
+
+function pwlgencost(m::JuMP.Model, var::JuMPArray{JuMP.VariableRef}, cost_component::Array{Tuple{Float64, Float64}})
 
     pwlvars = @variable(m, [i = 1:(length(cost_component)-1)], basename = "{pwl{$(var)}}", lowerbound = 0.0, upperbound = (cost_component[i+1][1] - cost_component[i][1]))
     @constraint(m, sum(pwlvars) == var)
@@ -41,7 +51,7 @@ function pwlgencost(m::JuMP.Model, var::JuMP.VariableRef, cost_component::Array{
     return cost
 end
 
-function gencost(m::JuMP.Model, variable::Array{JuMP.VariableRef,1}, cost_component::Array{Tuple{Float64, Float64}})
+function gencost(m::JuMP.Model, variable::JuMPArray{JuMP.VariableRef}, cost_component::Array{Tuple{Float64, Float64}})
 
     cost = JuMP.AffExpr()
 
