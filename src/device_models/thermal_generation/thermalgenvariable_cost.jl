@@ -41,11 +41,11 @@ function gencost(m::JuMP.Model, variable::JuMPArray{JuMP.VariableRef}, cost_comp
 
 end
 
-function pwlgencost(m::JuMP.Model, var::VariableRef, cost_component::Array{Tuple{Float64, Float64}})
+function pwlgencost(m::JuMP.Model, variable::VariableRef, cost_component::Array{Tuple{Float64, Float64}})
 
-    pwlvars = @variable(m, [i = 1:(length(cost_component)-1)], basename = "{pwl{$(var)}}", lower_bound = 0.0, upper_bound = (cost_component[i+1][1] - cost_component[i][1]))
+    pwlvars = @variable(m, [i = 1:(length(cost_component)-1)], basename = "pwl_{$(variable)}", lower_bound = 0.0, upper_bound = (cost_component[i+1][1] - cost_component[i][1]))
 
-    @constraint(m, sum(pwlvars) == var)
+    @constraint(m, sum(pwlvars) == variable)
 
     coefficients = [c[2]/c[1] for c in cost_component[2:end]]
 
@@ -53,9 +53,9 @@ function pwlgencost(m::JuMP.Model, var::VariableRef, cost_component::Array{Tuple
 
     cost = AffExpr()
 
-    for (ix, var) in enumerate(pwlvars)
+    for (ix, variable) in enumerate(pwlvars)
 
-        cost = JuMP.add_to_expression!(cost,coefficients[ix]*var)
+        cost = JuMP.add_to_expression!(cost,coefficients[ix]*variable)
 
     end
 
