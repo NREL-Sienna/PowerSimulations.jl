@@ -5,11 +5,15 @@ This function creates the minimal themal dispatch formulation depending on combi
 """
 function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; kwargs...) where {D <: AbstractThermalDispatchForm, S <: PM.AbstractPowerFormulation}
 
-    pth = activepowervariables(m, sys.generators.thermal, sys.time_periods);
+    p_th = activepowervariables(m, sys.generators.thermal, sys.time_periods);
 
-   varnetinjectiterate!(netinjection.var_active, pth, sys.time_periods, sys.generators.thermal)
+   varnetinjectiterate!(netinjection.var_active, p_th, sys.time_periods, sys.generators.thermal)
 
     m = activepower(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
+
+    cost = variablecost(m, sys.generators.thermal, category_formulation, system_formulation)
+
+    add_to_cost!(m, cost)
 
     return m, netinjection
 
@@ -49,13 +53,21 @@ This function creates the minimal the minimal thermal commitment formulation
 """
 function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; kwargs...) where {D <: AbstractThermalCommitmentForm, S <: AbstractDCPowerModel}
 
-    pth = activepowervariables(m, sys.generators.thermal, sys.time_periods);
+    p_th = activepowervariables(m, sys.generators.thermal, sys.time_periods);
 
     commitmentvariables(m, sys.generators.thermal, sys.time_periods)
 
-    netinjection = varnetinjectiterate!(netinjection.var_active, pth, sys.time_periods, sys.generators.thermal)
+    netinjection = varnetinjectiterate!(netinjection.var_active, p_th, sys.time_periods, sys.generators.thermal)
 
     activepower(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
+
+    variable_cost = variablecost(m, p_th, sys.generators.thermal)
+
+    commitment_cost = commitment_cost(m, sys.generators.thermal, category_formulation, system_formulation)
+
+    add_to_cost!(m, variable_cost)
+
+    add_to_cost!(m, commitment_cost)
 
     return m, netinjection
 

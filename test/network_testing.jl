@@ -33,7 +33,7 @@ m=Model()
 devices_netinjection =  PowerSimulations.JumpAffineExpressionArray(length(sys5b.buses), sys5b.time_periods)
 
 #Thermal Generator Models
-pth, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);
+p_th, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);
 pre_set = [d for d in sys5b.generators.renewable if !isa(d, RenewableFix)]
 pre, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,  pre_set, sys5b.time_periods)
 test_cl = [d for d in sys5b.loads if !isa(d, PowerSystems.StaticLoad)] # Filter StaticLoads Out
@@ -49,7 +49,7 @@ m = PowerSimulations.constructnetwork!(CopperPlatePowerModel, m, devices_netinje
 m=Model()
 devices_netinjection =  PowerSimulations.JumpAffineExpressionArray(length(sys5b.buses), sys5b.time_periods)
 
-pth, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);
+p_th, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);
 pre_set = [d for d in sys5b.generators.renewable if !isa(d, RenewableFix)]
 pre, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,  pre_set, sys5b.time_periods)
 test_cl = [d for d in sys5b.loads if !isa(d, PowerSystems.StaticLoad)] # Filter StaticLoads Out

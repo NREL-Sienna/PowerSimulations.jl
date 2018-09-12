@@ -30,7 +30,7 @@ using TimeSeries
 using PowerSystems
 import PowerModels
 using Compat
-using GLPK
+#using GLPK
 using MathOptInterface
 #using Clp
 #using Cbc
@@ -60,6 +60,7 @@ const fix_resource = Union{PowerSystems.RenewableFix, PowerSystems.HydroFix}
 
 #utils
 include("utils/undef_check.jl")
+include("utils/cost_addition.jl")
 
 #Abstract Network Models
 include("network_models/networks.jl")

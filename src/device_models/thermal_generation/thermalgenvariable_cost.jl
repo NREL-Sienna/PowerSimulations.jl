@@ -1,10 +1,14 @@
-function variablecost(m::JuMP.Model, pth::JumpVariable, devices::Array{T}) where T <: PowerSystems.ThermalGen
+function variablecost(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalDispatchForm, S <: PM.AbstractPowerFormulation}
+
+    p_th = m[:p_th]
+    time_index = m[:p_th].axes[2]
+    name_index = m[:p_th].axes[1]
 
     cost = JuMP.AffExpr()
 
-    for  (ix, name) in enumerate(pth.axes[1])
+    for  (ix, name) in enumerate(name_index)
         if name == devices[ix].name
-            c = gencost(m, pth[name,:], devices[ix].econ.variablecost)
+            c = gencost(m, p_th[name,:], devices[ix].econ.variablecost)
         else
             error("Bus name in Array and variable do not match")
         end

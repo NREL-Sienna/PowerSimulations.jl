@@ -9,9 +9,9 @@ function activepowervariables(m::JuMP.Model, devices::Array{T,1}, time_periods::
 
     t = 1:time_periods
 
-    pth = @variable(m, pth[on_set,t]) # Power output of generators
+    p_th = @variable(m, p_th[on_set,t]) # Power output of generators
 
-    return pth
+    return p_th
 end
 
 """
@@ -37,9 +37,9 @@ function commitmentvariables(m::JuMP.Model, devices::Array{T,1}, time_periods::I
 
     t = 1:time_periods
 
-    @variable(m, onth[on_set,t], Bin) # Power output of generators
-    @variable(m, startth[on_set,t], Bin) # Power output of generators
-    @variable(m, stopth[on_set,t], Bin) # Power output of generators
+    @variable(m, on_th[on_set,t], Bin) # Power output of generators
+    @variable(m, start_th[on_set,t], Bin) # Power output of generators
+    @variable(m, stop_th[on_set,t], Bin) # Power output of generators
 
-    return onth, startth, stopth
+    return on_th, start_th, stop_th
 end

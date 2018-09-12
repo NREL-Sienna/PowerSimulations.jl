@@ -69,9 +69,9 @@ version = "0.4.0"
 
 [[DataStructures]]
 deps = ["InteractiveUtils", "REPL", "Random", "Serialization", "Test"]
-git-tree-sha1 = "2afbbd0294306b0b74a753c196be50b35edb625c"
+git-tree-sha1 = "5162c360c52e9265e0bfafb71415c31f746f7e04"
 uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-version = "0.11.1"
+version = "0.12.0"
 
 [[DataValues]]
 deps = ["Dates", "InteractiveUtils", "LinearAlgebra", "Random", "Test"]
@@ -125,23 +125,11 @@ version = "0.9.0"
 deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
-[[GLPK]]
-deps = ["BinDeps", "Compat", "Homebrew", "Libdl"]
-git-tree-sha1 = "0099c1bb064667c5196c457a85d589ce30cf88c9"
-uuid = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
-version = "0.5.1"
-
 [[HTTP]]
 deps = ["Base64", "Dates", "Distributed", "IniFile", "MbedTLS", "Sockets", "Test"]
 git-tree-sha1 = "8a0f75e8b09df01d9f1ba9ad3fbf8b4983595d20"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 version = "0.6.14"
-
-[[Homebrew]]
-deps = ["BinDeps", "InteractiveUtils", "JSON", "Libdl", "Test", "Unicode"]
-git-tree-sha1 = "5582ec74f735cf8d12e562a2e65c47f34063bd51"
-uuid = "d9be37ee-ecc9-5288-90f1-b9ca67657a75"
-version = "0.7.0"
 
 [[InfrastructureModels]]
 deps = ["Compat", "JuMP", "Memento"]
@@ -196,6 +184,14 @@ uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
 
 [[Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+
+[[LinQuadOptInterface]]
+deps = ["Compat", "MathOptInterface"]
+git-tree-sha1 = "777c9d1c64b1fc5bd20b2b7b13b746c2c757df0d"
+repo-rev = "master"
+repo-url = "https://github.com/JuliaOpt/LinQuadOptInterface.jl.git"
+uuid = "f8899e07-120b-5979-ab1d-7b97bb9e1a48"
+version = "0.3.1+"
 
 [[LinearAlgebra]]
 deps = ["Libdl"]
