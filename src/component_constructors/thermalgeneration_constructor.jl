@@ -61,9 +61,9 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 
     activepower(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
 
-    variable_cost = variablecost(m, p_th, sys.generators.thermal)
+    variable_cost = variablecost(m, sys.generators.thermal, AbstractThermalDispatchForm, system_formulation)
 
-    commitment_cost = commitment_cost(m, sys.generators.thermal, category_formulation, system_formulation)
+    commitment_cost = commitmentcost(m, sys.generators.thermal, category_formulation, system_formulation)
 
     add_to_cost!(m, variable_cost)
 

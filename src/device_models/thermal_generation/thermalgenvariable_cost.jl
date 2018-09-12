@@ -21,11 +21,13 @@ end
 
 function gencost(m::JuMP.Model, variable::JuMPArray{JuMP.VariableRef}, cost_component::Function)
 
-    # TODO: Make type stable later, now it can return AffExpr or GenericQuadExpr
+    store = Array{JuMP.AbstractJuMPScalar,1}(undef,length(variable.axes[1]))
 
-    total = [cost_component(e) for e in variable]
+    for (ix, element) in enumerate(variable)
+        store[ix] = cost_component(element)
+    end
 
-    cost = @expression(m, sum(total))
+    cost = @expression(m, sum(store))
 
     return cost
 
@@ -33,20 +35,29 @@ end
 
 function gencost(m::JuMP.Model, variable::JuMPArray{JuMP.VariableRef}, cost_component::Float64)
 
-    # TODO: Make type stable later, now it can return AffExpr or GenericQuadExpr
-
     cost = @expression(m, sum(cost_component*variable))
 
     return cost
 
 end
 
-function pwlgencost(m::JuMP.Model, var::JuMPArray{JuMP.VariableRef}, cost_component::Array{Tuple{Float64, Float64}})
+function pwlgencost(m::JuMP.Model, var::VariableRef, cost_component::Array{Tuple{Float64, Float64}})
 
-    pwlvars = @variable(m, [i = 1:(length(cost_component)-1)], basename = "{pwl{$(var)}}", lowerbound = 0.0, upperbound = (cost_component[i+1][1] - cost_component[i][1]))
+    pwlvars = @variable(m, [i = 1:(length(cost_component)-1)], basename = "{pwl{$(var)}}", lower_bound = 0.0, upper_bound = (cost_component[i+1][1] - cost_component[i][1]))
+
     @constraint(m, sum(pwlvars) == var)
 
-    cost = JuMP.GenericAffExpr(pwlvars, [c[2]/c[1] for c in cost_component[2:end]], 0.0)
+    coefficients = [c[2]/c[1] for c in cost_component[2:end]]
+
+    # TODO: Check for performance this syntax, the changes in GenericAffExpr might require refactoring
+
+    cost = AffExpr()
+
+    for (ix, var) in enumerate(pwlvars)
+
+        cost = JuMP.add_to_expression!(cost,coefficients[ix]*var)
+
+    end
 
     return cost
 end
