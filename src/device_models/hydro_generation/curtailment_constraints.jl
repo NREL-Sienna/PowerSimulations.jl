@@ -9,13 +9,13 @@ function powerconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int6
 
     (length(phy.axes[2]) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-    pmax_thermal = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(phy))), name_index, time_index)
-    pmin_thermal = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(phy))), name_index, time_index)
+    pmax_th = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(phy))), name_index, time_index)
+    pmin_th = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(phy))), name_index, time_index)
 
     for t in phy.axes[2], (ix, name) in enumerate(phy.axes[1])
         if name == devices[ix].name
             pmin_hg[name, t] = @constraint(m, phy[name, t] >= 0.0)
-            pmax_hg[name, t] = @constraint(m, phy[name, t] <= devices[ix].tech.realpowerlimits.max * devices[ix].scalingfactor.values[t])
+            pmax_hg[name, t] = @constraint(m, phy[name, t] <= devices[ix].tech.activepowerlimits.max * devices[ix].scalingfactor.values[t])
         else
             error("Bus name in Array and variable do not match")
         end

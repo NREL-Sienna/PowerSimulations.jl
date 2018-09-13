@@ -2,15 +2,21 @@
 
 abstract type AbstractThermalFormulation end
 
-abstract type AbstractDispatchForm<: AbstractThermalFormulation end
+abstract type AbstractThermalDispatchForm <: AbstractThermalFormulation end
 
-abstract type AbstractUnitCommitmentForm <: AbstractThermalFormulation end
+abstract type AbstractThermalCommitmentForm <: AbstractThermalFormulation end
 
-abstract type KenuvenUnitCommitmentForm <: ThermalGenerationForm end
+abstract type KenuvenThermalCommitment <: AbstractThermalCommitmentForm end
 
-abstract type StandardDispatchForm <: AbstractDispatchFormF end
+abstract type StandardThermalCommitment <: AbstractThermalCommitmentForm end
 
-include("thermal_generation/thermal_variables.jl")
+abstract type Dispatch <: AbstractThermalDispatchForm end
+
+abstract type RampLimitDispatch <: AbstractThermalDispatchForm end
+
 include("thermal_generation/output_constraints.jl")
 include("thermal_generation/ramping_constraints.jl")
+include("thermal_generation/thermal_variables.jl")
+include("thermal_generation/thermalgencommitment_cost.jl")
+include("thermal_generation/thermalgenvariable_cost.jl")
 include("thermal_generation/unitcommitment_constraints.jl")

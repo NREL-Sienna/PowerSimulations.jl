@@ -7,25 +7,25 @@ This function populates a particular AbstractPowerSimulationModel and populates 
 function economic_dispatch(sys,tp)
     m = JuMP.Model()
     #Variable Creation
-    pth = activepowervariables(m, sys.generators["Thermal"], tp);
-    # on_thermal, start_thermal, stopth = PowerSimulations.CommitmentVariables(m, system.generators["Thermal"], tp)
+    p_th = activepowervariables(m, sys.generators["Thermal"], tp);
+    # on_th, start_th, stop_th = PowerSimulations.CommitmentVariables(m, system.generators["Thermal"], tp)
 
     fl = BranchFlowVariables(m, sys.network.branches, tp);
     pcl = PowerSimulations.LoadVariables(m, sys.loads, tp);
 
-    powerconstraints(m, pth, sys.generators["Thermal"], tp);
+    powerconstraints(m, p_th, sys.generators["Thermal"], tp);
     powerconstraints(m, pcl, [sys.loads[4]], tp);
 
 
-    KCLBalance(m, sys, fl, pth, pcl, tp);
+    KCLBalance(m, sys, fl, p_th, pcl, tp);
 
     CopperPlateNetwork(m, sys, fl, tp);
-    objective = PowerSimulations.VariableCostGen(pth, sys.generators["Thermal"]);
+    objective = PowerSimulations.VariableCostGen(p_th, sys.generators["Thermal"]);
 
     device = sys.loads[4]
     for i in [device.name]
         for t in 1:time_periods
-            objective = objective + 5000*(pcl[i, t] - device.maxrealpower*device.scalingfactor.values[t])
+            objective = objective + 5000*(pcl[i, t] - device.maxactivepower*device.scalingfactor.values[t])
         end
     end
 

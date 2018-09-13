@@ -9,11 +9,11 @@ include(joinpath(base_dir,"data/data_5bus.jl"))
 battery = [GenericBattery(name = "Bat",
                 status = true,
                 bus = nodes5[1],
-                realpower = 10.0,
+                activepower = 10.0,
                 energy = 5.0,
                 capacity = (min = 0.0, max = 0.0),
-                inputrealpowerlimits = (min = 0.0, max = 50.0),
-                outputrealpowerlimits = (min = 0.0, max = 50.0),
+                inputactivepowerlimits = (min = 0.0, max = 50.0),
+                outputactivepowerlimits = (min = 0.0, max = 50.0),
                 efficiency = (in = 0.90, out = 0.80),
                 )];
 
@@ -33,7 +33,7 @@ m=Model()
 devices_netinjection =  PowerSimulations.JumpAffineExpressionArray(length(sys5b.buses), sys5b.time_periods)
 
 #Thermal Generator Models
-pth, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);
+p_th, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);
 pre_set = [d for d in sys5b.generators.renewable if !isa(d, RenewableFix)]
 pre, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,  pre_set, sys5b.time_periods)
 test_cl = [d for d in sys5b.loads if !isa(d, PowerSystems.StaticLoad)] # Filter StaticLoads Out
@@ -49,7 +49,7 @@ m = PowerSimulations.constructnetwork!(CopperPlatePowerModel, m, devices_netinje
 m=Model()
 devices_netinjection =  PowerSimulations.JumpAffineExpressionArray(length(sys5b.buses), sys5b.time_periods)
 
-pth, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);
+p_th, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);
 pre_set = [d for d in sys5b.generators.renewable if !isa(d, RenewableFix)]
 pre, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,  pre_set, sys5b.time_periods)
 test_cl = [d for d in sys5b.loads if !isa(d, PowerSystems.StaticLoad)] # Filter StaticLoads Out
@@ -58,6 +58,6 @@ test_hy = [d for d in generators_hg if !isa(d, PowerSystems.HydroFix)] # Filter 
 phg, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,  test_hy, sys5b.time_periods)
 pbtin, pbtout, inyection_array = PowerSimulations.powerstoragevariables(m, devices_netinjection,  sys5b.storage, sys5b.time_periods)
 
-m = PowerSimulations.constructnetwork!(StandardPTDFForm,m,devices_netinjection,sys5b)
+m = PowerSimulations.constructnetwork!(StandardPTDF,m,devices_netinjection,sys5b)
 
 true

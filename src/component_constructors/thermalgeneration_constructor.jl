@@ -1,29 +1,92 @@
-function constructdevice!(category::Type{PowerSystems.ThermalGen}, network::Type{N}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where {T <: JumpExpressionMatrix, N <: NetworkType}
+###Dispatch Formulations##
 
-    pth, inyection_array = activepowervariables(m, devices_netinjection, devices, time_periods);
+"""
+This function creates the minimal themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
+"""
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; kwargs...) where {D <: AbstractThermalDispatchForm, S <: PM.AbstractPowerFormulation}
 
-        for c in constraints
+    p_th = activepowervariables(m, sys.generators.thermal, sys.time_periods);
 
-            m = c(m, devices, time_periods)
+   varnetinjectiterate!(netinjection.var_active, p_th, sys.time_periods, sys.generators.thermal)
 
-        end
+    m = activepower(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
 
-    return m, devices_netinjection
+    cost = variablecost(m, sys.generators.thermal, category_formulation, system_formulation)
+
+    add_to_cost!(m, cost)
+
+    return m, netinjection
 
 end
 
-function constructdevice!(category::Type{PowerSystems.ThermalGen}, network::Type{N}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where {T <: JumpExpressionMatrix, N <: NetworkType}
 
-    pth, inyection_array = activepowervariables(m, devices_netinjection, devices, time_periods);
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; kwargs...) where {D <: AbstractThermalDispatchForm, S <: AbstractACPowerModel}
 
-    on_thermal, start_thermal, stop_thermal = commitmentvariables(m, devices, time_periods)
+    m, netinjection = constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys)
 
-    for c in constraints
+    qth = reactivepowervariables(m, sys.generators.thermal, sys.time_periods);
 
-        m = c(m, devices, time_periods, true)
+    varnetinjectiterate!(netinjection.var_reactive, qth, sys.time_periods, sys.generators.thermal)
 
-    end
+    m = reactivepower(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
 
-    return m, devices_netinjection
+    return m, netinjection
+
+end
+
+
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{RampLimitDispatch}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; kwargs...) where {S <: AbstractDCPowerModel}
+
+    m, netinjection = constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys)
+
+    rampconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
+
+    return m, netinjection
+
+end
+
+
+###Commitment Formulations##
+
+"""
+This function creates the minimal the minimal thermal commitment formulation
+"""
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; kwargs...) where {D <: AbstractThermalCommitmentForm, S <: AbstractDCPowerModel}
+
+    p_th = activepowervariables(m, sys.generators.thermal, sys.time_periods);
+
+    commitmentvariables(m, sys.generators.thermal, sys.time_periods)
+
+    netinjection = varnetinjectiterate!(netinjection.var_active, p_th, sys.time_periods, sys.generators.thermal)
+
+    activepower(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
+
+    variable_cost = variablecost(m, sys.generators.thermal, AbstractThermalDispatchForm, system_formulation)
+
+    commitment_cost = commitmentcost(m, sys.generators.thermal, category_formulation, system_formulation)
+
+    add_to_cost!(m, variable_cost)
+
+    add_to_cost!(m, commitment_cost)
+
+    return m, netinjection
+
+end
+
+
+"""
+This function adds constraints to the minimal thermal commitment formulation
+"""
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{StandardThermalCommitment}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; kwargs...) where {S <: AbstractDCPowerModel}
+
+    m, netinjection = constructdevice!(m, netinjection, category, AbstractThermalCommitmentForm, AbstractDCPowerModel, sys)
+
+    commitmentconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
+
+    rampconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
+
+    timeconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
+
+    return m, netinjection
 
 end

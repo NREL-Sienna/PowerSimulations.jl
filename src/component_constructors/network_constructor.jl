@@ -8,7 +8,7 @@ function constructnetwork!(category::Type{CopperPlatePowerModel}, m::JuMP.Model,
 
 end
 
-function constructnetwork!(category::Type{StandardPTDFForm}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where {F <: Function, T <: JumpExpressionMatrix}
+function constructnetwork!(category::Type{StandardPTDF}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem; kwargs...) where {F <: Function, T <: JumpExpressionMatrix}
 
     fl, flow_injections = PowerSimulations.branchflowvariables(m, sys.branches, length(sys.buses), sys.time_periods);
     timeseries_netinjection = PowerSimulations.timeseries_netinjection(sys);

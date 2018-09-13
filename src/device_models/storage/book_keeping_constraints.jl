@@ -18,10 +18,10 @@ function powerconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int6
 
     for t in pstin.axes[2], (ix, name) in enumerate(pstin.axes[1])
         if name == devices[ix].name
-            pmin_in[name, t] = @constraint(m, pstin[name, t] <= devices[ix].inputrealpowerlimits.min)
-            pmin_out[name, t] = @constraint(m, pstout[name, t] <= devices[ix].outputrealpowerlimits.min)
-            pmax_in[name, t] = @constraint(m, pstin[name, t] <= devices[ix].inputrealpowerlimits.max)
-            pmax_out[name, t] = @constraint(m, pstout[name, t] <= devices[ix].outputrealpowerlimits.max)
+            pmin_in[name, t] = @constraint(m, pstin[name, t] <= devices[ix].inputactivepowerlimits.min)
+            pmin_out[name, t] = @constraint(m, pstout[name, t] <= devices[ix].outputactivepowerlimits.min)
+            pmax_in[name, t] = @constraint(m, pstin[name, t] <= devices[ix].inputactivepowerlimits.max)
+            pmax_out[name, t] = @constraint(m, pstout[name, t] <= devices[ix].outputactivepowerlimits.max)
         else
             error("Bus name in Array and variable do not match")
         end
