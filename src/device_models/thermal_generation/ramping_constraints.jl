@@ -7,7 +7,7 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
     if :initialpower in keys(args)
         initialpower = args[:initialpower]
     else
-        initialpower = 9999
+        initialpower = devices[ix].tech.activepower #should this be 9999?
     end
     
     devices = [d for d in devices if !isa(d.tech.ramplimits,Nothing)]
@@ -26,7 +26,7 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
         for (ix,name) in enumerate(name_index)
             t1 = time_index[1]
             rampdown_th[name,t1] = @constraint(m,  devices[ix].tech.activepower - p_th[name,t1] <= devices[ix].tech.ramplimits.down)
-            rampup_th[name,t1] = @constraint(m,  p_th[name,t1] - devices[ix].tech.activepower <= devices[ix].tech.ramplimits.up)
+            rampup_th[name,t1] = @constraint(m,  p_th[name,t1] - initialpower <= devices[ix].tech.ramplimits.up)
         end
 
         for t in time_index[2:end], (ix,name) in enumerate(name_index)
@@ -56,7 +56,7 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
     if :initialpower in keys(args)
         initialpower = args[:initialpower]
     else
-        initialpower = 9999
+        initialpower = devices[ix].tech.activepower #should this be 9999?
     end
 
     devices = [d for d in devices if !isa(d.tech.ramplimits,Nothing)]
@@ -77,7 +77,7 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
         for (ix,name) in enumerate(name_index)
             t1 = time_index[1]
             rampdown_th[name,t1] = @constraint(m, devices[ix].tech.activepower - p_th[name,t1] <= devices[ix].tech.ramplimits.down * on_th[name,t1])
-            rampup_th[name,t1] = @constraint(m, p_th[name,t1] - devices[ix].tech.activepower <= devices[ix].tech.ramplimits.up  * on_th[name,t1])
+            rampup_th[name,t1] = @constraint(m, p_th[name,t1] - initialpower <= devices[ix].tech.ramplimits.up  * on_th[name,t1])
         end
 
         for t in time_index[2:end], (ix,name) in enumerate(name_index)

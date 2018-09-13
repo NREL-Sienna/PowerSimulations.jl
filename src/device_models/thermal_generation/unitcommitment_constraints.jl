@@ -29,12 +29,12 @@ function commitmentconstraints(m::JuMP.Model, devices::Array{T,1}, device_formul
             t1 = time_index[1]
 
             if devices[ix].tech.activepower > 0.0
-                init = 1
+                initialstatus = 1
             else
-                init = 0
+                initialstatus = 0
             end
 
-            commitment_th[name,t1] = @constraint(m, on_th[name,t1] == init + start_th[name,t1] - stop_th[name,t1])
+            commitment_th[name,t1] = @constraint(m, on_th[name,t1] == initialstatus + start_th[name,t1] - stop_th[name,t1])
 
             for t in time_index[2:end]
 
