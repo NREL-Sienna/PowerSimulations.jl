@@ -83,11 +83,11 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 
     m, netinjection = constructdevice!(m, netinjection, category, AbstractThermalCommitmentForm, AbstractDCPowerModel, sys)
 
-    commitargs = pairs((;(k=>v for (k,v) in pairs(args) if k in [:initalstatus,:initialonduration,:initialoffduration])...)) #this strictly needed, could delete for cleanliness
+    commitargs = pairs((;(k=>v for (k,v) in pairs(args) if k in [:initalstatus,:initialonduration,:initialoffduration])...)) #this isn't strictly needed, could delete for cleanliness
 
     commitmentconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; commitargs...)
 
-    rampargs = pairs((;(k=>v for (k,v) in pairs(args) if k in [:initalpower])...)) #this strictly needed, could delete for cleanliness
+    rampargs = pairs((;(k=>v for (k,v) in pairs(args) if k in [:initalpower])...)) #this isn't strictly needed, could delete for cleanliness
 
     rampconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; rampargs...)
 
