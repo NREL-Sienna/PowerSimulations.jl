@@ -4,7 +4,7 @@ function variablecost(m::JuMP.Model, devices::Array{T,1}, device_formulation::Ty
     time_index = m[:p_th].axes[2]
     name_index = m[:p_th].axes[1]
 
-    cost = JuMP.AffExpr()
+    var_cost = JuMP.AffExpr()
 
     for  (ix, name) in enumerate(name_index)
         if name == devices[ix].name
@@ -12,10 +12,10 @@ function variablecost(m::JuMP.Model, devices::Array{T,1}, device_formulation::Ty
         else
             error("Bus name in Array and variable do not match")
         end
-            (isa(cost,JuMP.AffExpr) && isa(c,JuMP.AffExpr)) ? JuMP.add_to_expression!(cost,c) : (isa(cost,JuMP.GenericQuadExpr) && isa(c,JuMP.GenericQuadExpr) ? JuMP.add_to_expression!(cost,c) : cost += c)
+            (isa(var_cost,JuMP.AffExpr) && isa(c,JuMP.AffExpr)) ? JuMP.add_to_expression!(var_cost,c) : (isa(var_cost,JuMP.GenericQuadExpr) && isa(c,JuMP.GenericQuadExpr) ? JuMP.add_to_expression!(var_cost,c) : var_cost += c)
     end
 
-    return cost
+    return var_cost
 
 end
 
@@ -27,17 +27,17 @@ function gencost(m::JuMP.Model, variable::JuMPArray{JuMP.VariableRef}, cost_comp
         store[ix] = cost_component(element)
     end
 
-    cost = @expression(m, sum(store))
+    gen_cost = @expression(m, sum(store))
 
-    return cost
+    return gen_cost
 
 end
 
 function gencost(m::JuMP.Model, variable::JuMPArray{JuMP.VariableRef}, cost_component::Float64)
 
-    cost = @expression(m, sum(cost_component*variable))
+    gen_cost = @expression(m, sum(cost_component*variable))
 
-    return cost
+    return gen_cost
 
 end
 
@@ -51,26 +51,26 @@ function pwlgencost(m::JuMP.Model, variable::VariableRef, cost_component::Array{
 
     # TODO: Check for performance this syntax, the changes in GenericAffExpr might require refactoring
 
-    cost = AffExpr()
+    gen_cost = AffExpr()
 
     for (ix, variable) in enumerate(pwlvars)
 
-        cost = JuMP.add_to_expression!(cost,coefficients[ix]*variable)
+        gen_cost = JuMP.add_to_expression!(gen_cost,coefficients[ix]*variable)
 
     end
 
-    return cost
+    return gen_cost
 end
 
 function gencost(m::JuMP.Model, variable::JuMPArray{JuMP.VariableRef}, cost_component::Array{Tuple{Float64, Float64}})
 
-    cost = JuMP.AffExpr()
+    gen_cost = JuMP.AffExpr()
 
     for var in variable
         c = pwlgencost(m, var, cost_component)
-        JuMP.add_to_expression!(cost,c)
+        JuMP.add_to_expression!(gen_cost,c)
     end
 
-    return cost
+    return gen_cost
 
 end

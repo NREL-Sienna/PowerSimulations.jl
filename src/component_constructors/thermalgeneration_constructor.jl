@@ -33,13 +33,13 @@ end
 
 function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{RampLimitDispatch}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractDCPowerModel}
 
-    m, netinjection = constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys)
+    constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys)
 
     rampargs = pairs((;(k=>v for (k,v) in pairs(args) if k in [:initalpower])...))
 
     rampconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; rampargs...)
 
-    return m, netinjection
+    return 
 
 end
 
@@ -61,7 +61,7 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 
     variable_cost = variablecost(m, sys.generators.thermal, AbstractThermalDispatchForm, system_formulation)
 
-    commitment_cost = commitmentcost(m, sys.generators.thermal, category_formulation, system_formulation)
+    commitment_cost = commitmentcost(m, sys.generators.thermal, category_formulation, system_formulation) 
 
     add_to_cost!(m, variable_cost)
 
@@ -75,7 +75,7 @@ This function adds constraints to the minimal thermal commitment formulation
 """
 function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{StandardThermalCommitment}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractDCPowerModel}
 
-    m, netinjection = constructdevice!(m, netinjection, category, AbstractThermalCommitmentForm, AbstractDCPowerModel, sys)
+   constructdevice!(m, netinjection, category, AbstractThermalCommitmentForm, AbstractDCPowerModel, sys) 
 
     commitargs = pairs((;(k=>v for (k,v) in pairs(args) if k in [:initalstatus,:initialonduration,:initialoffduration])...)) #this isn't strictly needed, could delete for cleanliness
 
@@ -92,9 +92,9 @@ end
 """
 This function adds constraints to the minimal thermal commitment formulation
 """
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{StandardThermalCommitment}, system_formulation::Type{CopperPlatePowerModel}, sys::PowerSystems.PowerSystem; kwargs...)
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{StandardThermalCommitment}, system_formulation::Type{CopperPlatePowerModel}, sys::PowerSystems.PowerSystem; args...)
 
-    constructdevice!(m, netinjection, category, category_formulation, AbstractDCPowerModel, sys)
+    constructdevice!(m, netinjection, category, category_formulation, AbstractDCPowerModel, sys; args...)
 
 end
 

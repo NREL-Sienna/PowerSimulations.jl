@@ -81,9 +81,9 @@ function timeconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
 
         (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-        minup_th = JuMP.JuMPArray(Array{ConstraintRef}((undef, length(name_index), time_periods)), name_index, time_index)
+        minup_th = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
 
-        mindown_th = JuMP.JuMPArray(Array{ConstraintRef}((undef, length(name_index), time_periods)), name_index, time_index)
+        mindown_th = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
 
         for (ix,name) in enumerate(name_index)
             if name == devices[ix].name
@@ -95,8 +95,8 @@ function timeconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
 
                 for t in time_index[2:end]
                     #TODO: add initial condition constraint and check this formulation, we need to move the set calculation outside of here. 
-                    minup_th[name,t] = @constraint(m,sum([start_th[name,i] for i in ((t-devices[ix].tech.timelimits.up+1) :t) if i > 0 ]) <= on_th[name,t])
-                    mindown_th[name,t] = @constraint(m,sum([stop_th[name,i] for i in ((t-devices[ix].tech.timelimits.down + 1) :t) if i > 0]) <= (1 - on_th[name,t]) )
+                    minup_th[name,t] = @constraint(m,sum([start_th[name,i] for i in ((t-devices[ix].tech.timelimits.up + 1) : t) if i > 0 ]) <= on_th[name,t])
+                    mindown_th[name,t] = @constraint(m,sum([stop_th[name,i] for i in ((t-devices[ix].tech.timelimits.down + 1) : t) if i > 0]) <= (1 - on_th[name,t]) )
 
                 end
             else
