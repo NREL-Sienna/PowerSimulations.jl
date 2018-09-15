@@ -44,6 +44,7 @@ const PM = PowerModels
 const NetworkModel = PM.AbstractPowerFormulation
 const PS = PowerSimulations
 const MOI = MathOptInterface
+const MOIU = MathOptInterface.Utilities
 
 #Type Alias for JuMP containers
 const JumpVariable = JuMP.JuMPArray{JuMP.VariableRef,2,Tuple{Array{String,1},UnitRange{Int64}}}
@@ -69,7 +70,6 @@ include("network_models/networks.jl")
 include("core/abstract_models.jl")
 #include("core/dynamic_model.jl")
 include("base/instantiate_routines.jl")
-include("base/network_constructor.jl")
 include("base/model_constructors.jl")
 include("base/simulation_routines.jl")
 include("base/solve_routines.jl")
@@ -90,6 +90,7 @@ include("network_models/device_injections.jl")
 
 #Device constructors
 include("component_constructors/thermalgeneration_constructor.jl")
+include("component_constructors/branch_constructor.jl")
 include("component_constructors/renewablegeneration_constructor.jl")
 include("component_constructors/services_constructor.jl")
 

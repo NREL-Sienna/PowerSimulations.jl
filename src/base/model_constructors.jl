@@ -1,13 +1,13 @@
-function buildmodel!(sys::PowerSystems.PowerSystem, model::PowerSimulationsModel)
+function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerSimulationsModel)
 
     #TODO: Add check model spec vs data functions before trying to build
 
-    PSModel = JuMP.Model()
+    op_model.psmodel = JuMP.Model()
 
-    netinjection = instantiate_network(model.network, sys)
+    netinjection = instantiate_network(op_model.network, sys)
 
-    for category in model.generation
-        constructdevice!(PSModel, netinjection, category.device, category.formulation, model.transmission, sys)
+    for category in op_model.generation
+        constructdevice!(op_model.psmodel, netinjection, category.device, category.formulation, op_model.transmission, sys)
     end
 
     #=
@@ -23,11 +23,16 @@ function buildmodel!(sys::PowerSystems.PowerSystem, model::PowerSimulationsModel
         model.psmodel = constructservice!(category.service, model.psmodel, devices_netinjection, sys, category.constraints)
     end
 
-   =#
+    =#
 
-   constructnetwork!(PSModel, netinjection, model.transmission, model.branches, sys)
+    for category in model.branches
+        constructdevice!(op_model.psmodel, netinjection, category.device, category.formulation, op_model.transmission, sys)
+    end
 
-   #=
+
+    constructnetwork!(PSModel, netinjection, model.transmission, model.branches, sys)
+
+    #=
 
     @objective(model.psmodel, Min, cost);
 
