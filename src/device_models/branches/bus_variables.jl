@@ -1,4 +1,4 @@
-function anglevariables(m::JuMP.Model, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PowerSystems.Bus, S <: PM.AbstractACForm}
+function anglevariables(m::JuMP.Model, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PowerSystems.Bus, S <: Union{PM.AbstractDCPForm, AbstractACPowerModel}}
 
     on_set = [d.name for d in devices if d.available == true]
 
@@ -9,7 +9,7 @@ function anglevariables(m::JuMP.Model, system_formulation::Type{S}, devices::Arr
 end
 
 
-function voltagevariables(m::JuMP.Model, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PowerSystems.Bus, S <: PM.AbstractACForm}
+function voltagevariables(m::JuMP.Model, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PowerSystems.Bus, S <: AbstractACPowerModel}
 
     on_set = [d.name for d in devices if d.available == true]
 
