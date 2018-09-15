@@ -15,7 +15,7 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing, 100.0)
     Net = PS.StandardAC
     m = Model()
     netinjection = PS.instantiate_network(Net, sys5)
-    netinjection = PS.constructdevice!(m, netinjection, ThermalGen, PS.Dispatch, Net, sys5)
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.Dispatch, Net, sys5)
 true finally end
 
 #Cooper Plate and Dispatch
@@ -23,7 +23,7 @@ true finally end
     Net = PS.CopperPlatePowerModel
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
-    netinjection = PS.constructdevice!(m, netinjection, ThermalGen, PS.Dispatch, Net, sys5);
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.Dispatch, Net, sys5);
 true finally end
 
 #PTDF Plate and Dispatch
@@ -31,7 +31,7 @@ true finally end
     Net = PS.StandardPTDF
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
-    netinjection = PS.constructdevice!(m, netinjection, ThermalGen, PS.Dispatch, Net, sys5);
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.Dispatch, Net, sys5);
 true finally end
 
 #PTDF and Ramping
@@ -39,7 +39,7 @@ true finally end
     Net = PS.StandardPTDF
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
-    netinjection = PS.constructdevice!(m, netinjection, ThermalGen, PS.RampLimitDispatch, Net, sys5);
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.RampLimitDispatch, Net, sys5);
 true finally end
 
 #Cooper Plate and Ramping
@@ -47,7 +47,7 @@ true finally end
     Net = PS.CopperPlatePowerModel
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
-    netinjection = PS.constructdevice!(m, netinjection, ThermalGen, PS.RampLimitDispatch, Net, sys5);
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.RampLimitDispatch, Net, sys5);
 true finally end
 
 #PTDF and Commitment
@@ -55,7 +55,7 @@ true finally end
     Net = PS.StandardPTDF
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
-    netinjection = PS.constructdevice!(m, netinjection, ThermalGen, PS.StandardThermalCommitment, Net, sys5);
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.StandardThermalCommitment, Net, sys5);
 true finally end
 
 #Copper Plate and Commitment
@@ -63,7 +63,7 @@ true finally end
     Net = PS.CopperPlatePowerModel
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
-    netinjection = PS.constructdevice!(m, netinjection, ThermalGen, PS.StandardThermalCommitment, Net, sys5);
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.StandardThermalCommitment, Net, sys5);
 true finally end
 
 true
