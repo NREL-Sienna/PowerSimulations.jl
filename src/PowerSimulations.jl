@@ -44,6 +44,7 @@ const PM = PowerModels
 const NetworkModel = PM.AbstractPowerFormulation
 const PS = PowerSimulations
 const MOI = MathOptInterface
+const MOIU = MathOptInterface.Utilities
 
 #Type Alias for JuMP containers
 const JumpVariable = JuMP.JuMPArray{JuMP.VariableRef,2,Tuple{Array{String,1},UnitRange{Int64}}}
@@ -61,6 +62,8 @@ const fix_resource = Union{PowerSystems.RenewableFix, PowerSystems.HydroFix}
 #utils
 include("utils/undef_check.jl")
 include("utils/cost_addition.jl")
+include("utils/timeseries_injections.jl")
+include("utils/device_injections.jl")
 
 #Abstract Network Models
 include("network_models/networks.jl")
@@ -84,11 +87,11 @@ include("device_models/branches.jl")
 #Network related components
 include("network_models/copperplate_balance.jl")
 include("network_models/nodal_balance.jl")
-include("network_models/timeseries_injections.jl")
-include("network_models/device_injections.jl")
+include("network_models/ptdf_model.jl")
 
 #Device constructors
 include("component_constructors/thermalgeneration_constructor.jl")
+include("component_constructors/branch_constructor.jl")
 include("component_constructors/renewablegeneration_constructor.jl")
 include("component_constructors/services_constructor.jl")
 
