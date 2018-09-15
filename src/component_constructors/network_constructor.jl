@@ -15,22 +15,22 @@ function constructnetwork!(m::JuMP.Model, netinjection::BalanceNamedTuple, syste
 
     nodalflowbalance()
 
-    #add PTDF constraints 
-
 end
 
 
 function constructnetwork!(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; kwargs...) where {S <: StandardPTDF}
 
-    constructnetwork!(PM.AbstractDCPLLForm)
+    constructnetwork!(PM.AbstractDCPForm)
 
 end
 
 function constructnetwork!(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; kwargs...) where {S <: StandardPTDFLL}
 
-    #=
+    
 
     constructnetwork!(PM.AbstractDCPLLForm)
+
+    #=
 
     calculate PTDF
 
