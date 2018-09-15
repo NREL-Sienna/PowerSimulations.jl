@@ -15,7 +15,7 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
         if :initialpower in keys(args)
             initialpower = args[:initialpower]
         else
-            initialpower = Dict(zip(name_index,ones(Float64,length(devices))*99999))
+            initialpower = Dict([name=>devices[ix].tech.activepower for (ix,name) in enumerate(name_index)])
         end
 
         (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
@@ -25,7 +25,7 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
 
         for (ix,name) in enumerate(name_index)
             t1 = time_index[1]
-            rampdown_th[name,t1] = @constraint(m,  devices[ix].tech.activepower - p_th[name,t1] <= devices[ix].tech.ramplimits.down)
+            rampdown_th[name,t1] = @constraint(m,  initialpower[name] - p_th[name,t1] <= devices[ix].tech.ramplimits.down)
             rampup_th[name,t1] = @constraint(m,  p_th[name,t1] - initialpower[name] <= devices[ix].tech.ramplimits.up)
         end
 
@@ -66,7 +66,7 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
         if :initialpower in keys(args)
             initialpower = args[:initialpower]
         else
-            initialpower = Dict(zip(name_index,ones(Float64,length(devices))*99999))
+            initialpower = Dict([name=>devices[ix].tech.activepower for (ix,name) in enumerate(name_index)])
         end
 
         (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
@@ -76,7 +76,7 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
 
         for (ix,name) in enumerate(name_index)
             t1 = time_index[1]
-            rampdown_th[name,t1] = @constraint(m, devices[ix].tech.activepower - p_th[name,t1] <= devices[ix].tech.ramplimits.down * on_th[name,t1])
+            rampdown_th[name,t1] = @constraint(m, initialpower[name] - p_th[name,t1] <= devices[ix].tech.ramplimits.down * on_th[name,t1])
             rampup_th[name,t1] = @constraint(m, p_th[name,t1] - initialpower[name] <= devices[ix].tech.ramplimits.up  * on_th[name,t1])
         end
 
