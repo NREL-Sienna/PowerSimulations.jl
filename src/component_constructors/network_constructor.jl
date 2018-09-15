@@ -1,14 +1,41 @@
-function constructnetwork!(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, devices::Array{D,1}, sys::PowerSystems.PowerSystem; kwargs...) where {S <: CopperPlatePowerModel, D <: PowerSystems.Branch}
+function constructnetwork!(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; kwargs...) where {S <: CopperPlatePowerModel}
 
     copperplatebalance(m, netinjection, sys.time_periods)
 
 end
 
-#=
-for t in time_range, (ix,branch) in enumerate(fbr.axes[1])
 
-    !isassigned(netinjection.var_active,devices[ix].connectionpoints.from.number,t) ? netinjection.var_active[devices[ix].connectionpoints.from.number,t] = -fbr[branch,t] : JuMP.add_to_expression!(netinjection.var_active[devices[ix].connectionpoints.from.number,t],-fbr[branch,t])
-    !isassigned(netinjection.var_active,devices[ix].connectionpoints.to.number,t) ? netinjection.var_active[devices[ix].connectionpoints.to.number,t] = fbr[branch,t] : JuMP.add_to_expression!(netinjection.var_active[devices[ix].connectionpoints.to.number,t],fbr[branch,t])
+function constructnetwork!(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; kwargs...) where {S <: PM.AbstractDCPForm}
+
+    nodalflowbalance()
 
 end
-=#
+
+function constructnetwork!(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; kwargs...) where {S <: PM.AbstractDCPLLForm}
+
+    nodalflowbalance()
+
+    #add PTDF constraints 
+
+end
+
+
+function constructnetwork!(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; kwargs...) where {S <: StandardPTDF}
+
+    constructnetwork!(PM.AbstractDCPLLForm)
+
+end
+
+function constructnetwork!(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; kwargs...) where {S <: StandardPTDFLL}
+
+    #=
+
+    constructnetwork!(PM.AbstractDCPLLForm)
+
+    calculate PTDF
+
+    add PTDF constraints 
+
+    =#
+
+end
