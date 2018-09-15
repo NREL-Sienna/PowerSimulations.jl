@@ -8,7 +8,7 @@ abstract type AbstractTransformerForm <: AbstractBranchForm end
 
 abstract type PiLine <: AbstractLineForm end
 
-abstract type SerieLine <: AbstractLineForm end
+abstract type SeriesLine <: AbstractLineForm end
 
 abstract type SimpleHVDC <: AbstractDCLineForm end
 
