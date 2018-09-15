@@ -2,15 +2,21 @@
 """
 This function adds the ramping limits of generators when there are no CommitmentVariables
 """
-function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; initial = 9999) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalDispatchForm, S <: AbstractDCPowerModel}
+function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; args...) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalDispatchForm, S <: AbstractDCPowerModel}
 
     devices = [d for d in devices if !isa(d.tech.ramplimits,Nothing)]
-
+    
     if !isempty(devices)
 
         p_th = m[:p_th]
         time_index = m[:p_th].axes[2]
         name_index = [d.name for d in devices]
+
+        if :initialpower in keys(args)
+            initialpower = args[:initialpower]
+        else
+            initialpower = Dict([name=>devices[ix].tech.activepower for (ix,name) in enumerate(name_index)])
+        end
 
         (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
@@ -19,8 +25,8 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
 
         for (ix,name) in enumerate(name_index)
             t1 = time_index[1]
-            rampdown_th[name,t1] = @constraint(m,  devices[ix].tech.activepower - p_th[name,t1] <= devices[ix].tech.ramplimits.down)
-            rampup_th[name,t1] = @constraint(m,  p_th[name,t1] - devices[ix].tech.activepower <= devices[ix].tech.ramplimits.up)
+            rampdown_th[name,t1] = @constraint(m,  initialpower[name] - p_th[name,t1] <= devices[ix].tech.ramplimits.down)
+            rampup_th[name,t1] = @constraint(m,  p_th[name,t1] - initialpower[name] <= devices[ix].tech.ramplimits.up)
         end
 
         for t in time_index[2:end], (ix,name) in enumerate(name_index)
@@ -45,7 +51,7 @@ end
 """
 This function adds the ramping limits of generators when there are CommitmentVariables
 """
-function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; initial = 9999) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalCommitmentForm, S <: AbstractDCPowerModel}
+function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; args...) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalCommitmentForm, S <: AbstractDCPowerModel}
 
     devices = [d for d in devices if !isa(d.tech.ramplimits,Nothing)]
 
@@ -57,6 +63,12 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
         time_index = m[:p_th].axes[2]
         name_index = [d.name for d in devices]
 
+        if :initialpower in keys(args)
+            initialpower = args[:initialpower]
+        else
+            initialpower = Dict([name=>devices[ix].tech.activepower for (ix,name) in enumerate(name_index)])
+        end
+
         (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
         rampdown_th = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
@@ -64,8 +76,8 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
 
         for (ix,name) in enumerate(name_index)
             t1 = time_index[1]
-            rampdown_th[name,t1] = @constraint(m, devices[ix].tech.activepower - p_th[name,t1] <= devices[ix].tech.ramplimits.down * on_th[name,t1])
-            rampup_th[name,t1] = @constraint(m, p_th[name,t1] - devices[ix].tech.activepower <= devices[ix].tech.ramplimits.up  * on_th[name,t1])
+            rampdown_th[name,t1] = @constraint(m, initialpower[name] - p_th[name,t1] <= devices[ix].tech.ramplimits.down * on_th[name,t1])
+            rampup_th[name,t1] = @constraint(m, p_th[name,t1] - initialpower[name] <= devices[ix].tech.ramplimits.up  * on_th[name,t1])
         end
 
         for t in time_index[2:end], (ix,name) in enumerate(name_index)

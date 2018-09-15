@@ -5,8 +5,10 @@ using JuMP
 const PS = PowerSimulations
 
 base_dir = string(dirname(dirname(pathof(PowerSystems))))
-println(joinpath(base_dir,"data/data_5bus.jl"))
-include(joinpath(base_dir,"data/data_5bus.jl"))
+testfile = joinpath(base_dir,"data/data_5bus.jl")
+#testfile = joinpath(base_dir,"data/data_5bus_UC.jl")
+println(testfile)
+include(testfile)
 
 sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing, 100.0)
 
