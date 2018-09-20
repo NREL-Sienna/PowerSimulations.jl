@@ -126,12 +126,10 @@ deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[GLPK]]
-deps = ["BinaryProvider", "Compat", "Libdl", "LinQuadOptInterface"]
+deps = ["BinaryProvider", "Compat", "Libdl", "LinQuadOptInterface", "Pkg"]
 git-tree-sha1 = "5f4454c8a45a9ad203593ffe0a5a705587f434f5"
-repo-rev = "master"
-repo-url = "https://github.com/JuliaOpt/GLPK.jl.git"
 uuid = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
-version = "0.8.0+"
+version = "0.8.1"
 
 [[HTTP]]
 deps = ["Base64", "Dates", "Distributed", "IniFile", "MbedTLS", "Sockets", "Test"]
@@ -161,6 +159,12 @@ git-tree-sha1 = "eb05b5625bc5d821b8075a77e4c421933e20c76b"
 uuid = "7d512f48-7fb1-5a58-b986-67e6dc259f01"
 version = "0.7.0"
 
+[[Ipopt]]
+deps = ["BinDeps", "BinaryProvider", "Compat", "Libdl", "MathOptInterface", "MathProgBase"]
+git-tree-sha1 = "4335f96fb2382f86362a9a7827b0476624938a9b"
+uuid = "b6b21f68-93f8-5de0-b562-5493be1d77c9"
+version = "0.4.1"
+
 [[IterableTables]]
 deps = ["DataValues", "IteratorInterfaceExtensions", "Requires", "TableTraits", "TableTraitsUtils", "Test"]
 git-tree-sha1 = "6390a469cf0c28d475fdd43c6496a8c8614ef530"
@@ -181,7 +185,7 @@ version = "0.19.0"
 
 [[JuMP]]
 deps = ["Calculus", "Compat", "DataStructures", "ForwardDiff", "MathOptInterface", "NaNMath"]
-git-tree-sha1 = "17a38ecea0f1e6853644919bf91d931ff07476dd"
+git-tree-sha1 = "8b9a4745d42d1766f7272146829c93ae1911c1c7"
 repo-rev = "master"
 repo-url = "https://github.com/JuliaOpt/JuMP.jl.git"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
@@ -215,6 +219,12 @@ deps = ["Compat", "Unicode"]
 git-tree-sha1 = "f2791f990529b7aea1fcb9fd45b636cd3a9d1e79"
 uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 version = "0.6.0"
+
+[[MathProgBase]]
+deps = ["Compat"]
+git-tree-sha1 = "83b11194ca1c6353f39307f3221c804fff96350d"
+uuid = "fdba3010-5040-5b88-9595-932c9decdf73"
+version = "0.7.5"
 
 [[MbedTLS]]
 deps = ["BinaryProvider", "Compat", "Libdl", "Pkg", "Sockets"]
@@ -261,9 +271,9 @@ uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[PooledArrays]]
 deps = ["Test"]
-git-tree-sha1 = "8dd925dc69b7436ea8f074513f9c5923b3997fc6"
+git-tree-sha1 = "5c5ded7adc52867f599c21d3f43542fce491afda"
 uuid = "2dfb63ee-cc39-5dd5-95bd-886bf059d720"
-version = "0.4.0"
+version = "0.4.1"
 
 [[PowerModels]]
 deps = ["Compat", "InfrastructureModels", "JSON", "JuMP", "MathOptInterface", "Memento", "Pkg"]
@@ -363,10 +373,10 @@ uuid = "cea106d9-e007-5e6c-ad93-58fe2094e9c4"
 version = "0.2.0"
 
 [[TableShowUtils]]
-deps = ["Markdown", "Test"]
-git-tree-sha1 = "9646878d3e4a5e3be884d05b19ce15dbecd72b0a"
+deps = ["DataValues", "Dates", "JSON", "Markdown", "Test"]
+git-tree-sha1 = "7295e0ed103c41e71e0a893685090816527350ec"
 uuid = "5e66a065-1f0a-5976-b372-e0b8c017ca10"
-version = "0.1.1"
+version = "0.2.0"
 
 [[TableTraits]]
 deps = ["IteratorInterfaceExtensions", "Test"]
