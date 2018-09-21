@@ -11,7 +11,7 @@ function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerSimulationsMo
     end
 
     
-    for category in model.demand
+    for category in op_model.demand
         constructdevice!(op_model.psmodel, netinjection, category.device, category.formulation, op_model.transmission, sys)
     end
 
@@ -26,12 +26,7 @@ function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerSimulationsMo
 
     =#
 
-    for category in model.branches
-        constructdevice!(op_model.psmodel, netinjection, category.device, category.formulation, op_model.transmission, sys)
-    end
-
-
-    constructnetwork!(op_model.SModel, netinjection, model.transmission, model.branches, sys)
+    constructnetwork!(op_model.psmodel, op_model.branches, netinjection, op_model.transmission, op_model.branches, sys)
 
     #=
 

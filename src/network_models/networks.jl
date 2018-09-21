@@ -1,6 +1,6 @@
 #First Level Abstraction
 
-abstract type AbstractACPowerModel <: PM.AbstractPowerFormulation end
+const AbstractACPowerModel = Union{PM.AbstractACPForm, PM.AbstractACRForm}
 
 const AbstractDCPowerModel = Union{PM.AbstractDCPForm, PM.AbstractDCPLLForm} #Adopt from PowerModels, LL -> Line Losses
 
@@ -8,13 +8,17 @@ abstract type CopperPlatePowerModel <: PM.AbstractPowerFormulation end
 
 #Second Level Abstraction AC
 
-abstract type StandardAC <: AbstractACPowerModel end
+#adopted from PowerModels
+
+const StandardAC = PM.StandardACPForm
 
 #Second Level Abstraction DC 
 
 ##This line is from PowerModels, needs to be removed later
 
-abstract type DCPlosslessForm <: PM.AbstractDCPForm end
+abstract type DCAngleForm <: PM.AbstractDCPForm end
+
+abstract type DCAngleLLForm <: PM.AbstractDCPLLForm end
 
 #abstract type StandardDCPLLForm<: PM.AbstractDCPLLForm end
 

@@ -11,29 +11,27 @@ const PS = PowerSimulations
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.Dispatch, Net, sys5);
-    PS.constructnetwork!(m, netinjection, Net, sys5)
+    PS.constructnetwork!(m, [(device=Branch, formulation=PS.PiLine)], netinjection, Net, sys5)
     m.obj_dict
 true finally end
 
 # Flow Models 
 @test try
-    Net = PS.AbstractFlowForm
+    Net = PS.StandardNetFlow
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.Dispatch, Net, sys5);
-    PS.constructdevice!(m, netinjection, Branch, PS.PiLine, Net, sys5);
-    PS.constructnetwork!(m, netinjection, Net, sys5)
+    PS.constructnetwork!(m, [(device=Branch, formulation=PS.PiLine)], netinjection, Net, sys5)
     m.obj_dict
 true finally end
 
 @test try
-    Net = PS.AbstractFlowLLForm
+    Net = PS.StandardNetFlowLL
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.Dispatch, Net, sys5);
     #Branch models are not implemented yet. They don't reflect losses. 
-    PS.constructdevice!(m, netinjection, Branch, PS.PiLine, Net, sys5);
-    PS.constructnetwork!(m, netinjection, Net, sys5)
+    PS.constructnetwork!(m, [(device=Branch, formulation=PS.PiLine)], netinjection, Net, sys5)
     m.obj_dict
 true finally end
 

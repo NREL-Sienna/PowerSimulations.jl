@@ -14,6 +14,5 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 
     thermalflowlimits(m, system_formulation, sys.branches, sys.time_periods)
 
-    #Losses equations
-
+    
 end
