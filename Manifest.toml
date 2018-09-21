@@ -1,3 +1,9 @@
+[[AxisArrays]]
+deps = ["Compat", "Dates", "IntervalSets", "IterTools", "Pkg", "Random", "RangeArrays", "Test"]
+git-tree-sha1 = "2e2536e9e6f27c4f8d09d8442b61a7ae0b910c28"
+uuid = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
+version = "0.3.0"
+
 [[Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
@@ -159,11 +165,23 @@ git-tree-sha1 = "eb05b5625bc5d821b8075a77e4c421933e20c76b"
 uuid = "7d512f48-7fb1-5a58-b986-67e6dc259f01"
 version = "0.7.0"
 
+[[IntervalSets]]
+deps = ["Compat"]
+git-tree-sha1 = "bf1c727a12bbe0beb4888d439ee4e91b9ba7944a"
+uuid = "8197267c-284f-5f27-9208-e0e47529a953"
+version = "0.3.0"
+
 [[Ipopt]]
 deps = ["BinDeps", "BinaryProvider", "Compat", "Libdl", "MathOptInterface", "MathProgBase"]
 git-tree-sha1 = "4335f96fb2382f86362a9a7827b0476624938a9b"
 uuid = "b6b21f68-93f8-5de0-b562-5493be1d77c9"
 version = "0.4.1"
+
+[[IterTools]]
+deps = ["Pkg", "SparseArrays", "Test"]
+git-tree-sha1 = "ed0787e62dc46b8d8c7c3db54391d71e0da5fefd"
+uuid = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
+version = "1.0.0"
 
 [[IterableTables]]
 deps = ["DataValues", "IteratorInterfaceExtensions", "Requires", "TableTraits", "TableTraitsUtils", "Test"]
@@ -222,15 +240,15 @@ version = "0.6.0"
 
 [[MathProgBase]]
 deps = ["Compat"]
-git-tree-sha1 = "83b11194ca1c6353f39307f3221c804fff96350d"
+git-tree-sha1 = "eb8bcdf4cc7869651013df29ad6ee16dc8e53794"
 uuid = "fdba3010-5040-5b88-9595-932c9decdf73"
-version = "0.7.5"
+version = "0.7.6"
 
 [[MbedTLS]]
-deps = ["BinaryProvider", "Compat", "Libdl", "Pkg", "Sockets"]
-git-tree-sha1 = "17d5a81dbb1e682d4ff707c01f0afe5948068fa6"
+deps = ["BinaryProvider", "Libdl", "Pkg", "Random", "Sockets", "Test"]
+git-tree-sha1 = "3ad21c8ff4cb16a816eb628bcb16be819da5946b"
 uuid = "739be429-bea8-5141-9913-cc70e7f3736d"
-version = "0.6.0"
+version = "0.6.1"
 
 [[Memento]]
 deps = ["Compat", "JSON", "Libdl", "Nullables", "Pkg", "Syslogs", "Test", "TimeZones"]
@@ -284,8 +302,8 @@ uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 version = "0.7.0"
 
 [[PowerSystems]]
-deps = ["CSV", "CSVFiles", "Compat", "DataFrames", "Dates", "JuMP", "LinearAlgebra", "Memento", "PowerModels", "SparseArrays", "StatsBase", "TimeSeries"]
-git-tree-sha1 = "7a771696da48d2e9cb3110eb4cebed67a22065ea"
+deps = ["AxisArrays", "CSV", "CSVFiles", "Compat", "DataFrames", "Dates", "JuMP", "LinearAlgebra", "Memento", "PowerModels", "SparseArrays", "StatsBase", "TimeSeries"]
+git-tree-sha1 = "2568a5208f444c7b00d9aceb9a811f9f497d3e7f"
 repo-rev = "powersimulation-dev"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
@@ -302,6 +320,12 @@ uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 [[Random]]
 deps = ["Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+
+[[RangeArrays]]
+deps = ["Compat"]
+git-tree-sha1 = "d925adfd5b01cb46fde89dc9548d167b3b136f4a"
+uuid = "b3c3ace0-ae52-54e7-9d0b-2c1406fd6b9d"
+version = "0.3.1"
 
 [[RecipesBase]]
 deps = ["Pkg", "Random", "Test"]

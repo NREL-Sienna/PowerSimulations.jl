@@ -30,13 +30,14 @@ using TimeSeries
 using PowerSystems
 import PowerModels
 using Compat
-#using GLPK
+using GLPK
 using MathOptInterface
 #using Clp
 #using Cbc
-#using Ipopt
+using Ipopt
 using DataFrames
 using LinearAlgebra
+using AxisArrays
 
 #################################################################################
 # Type Alias From other Packages
@@ -45,6 +46,7 @@ const NetworkModel = PM.AbstractPowerFormulation
 const PS = PowerSimulations
 const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
+const PTDFArray = AxisArrays.AxisArray{Float64,2,Array{Float64,2},Tuple{AxisArrays.Axis{:branches,Array{String,1}},AxisArrays.Axis{:buses,Array{String,1}}}}
 
 #Type Alias for JuMP containers
 const JumpVariable = JuMP.JuMPArray{JuMP.VariableRef,2,Tuple{Array{String,1},UnitRange{Int64}}}

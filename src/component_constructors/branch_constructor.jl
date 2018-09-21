@@ -26,10 +26,10 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 
     ac_branches_set = [b.name for b in sys.branches if isa(b,category)]
 
-    println(PTDF)
+    isempty(PTDF) ? @error("NO PTDF matrix has been provided") : (size(PTDF.axes[1]) != length(ac_branches_set) ? @error("PTDF size is inconsistent") : true)
 
-    isempty(PTDF) ? @error("NO PTDF matrix has been provided") : (size(PTDF)[1] != length(ac_branches_set) ? @error("PTDF size is inconsistent") : true)
+    constructdevice!(m, netinjection, category, category_formulation, PM.AbstractDCPForm, sys)
 
-    constructdevice!(m, netinjection, category.device, category.formulation, PM.AbstractDCPForm, sys)
+    dc_networkflow(m, netinjection, PTDF)
 
 end
