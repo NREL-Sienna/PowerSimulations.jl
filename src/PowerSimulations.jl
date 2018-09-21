@@ -87,7 +87,6 @@ include("device_models/branches.jl")
 #Network related components
 include("network_models/copperplate_balance.jl")
 include("network_models/nodal_balance.jl")
-include("network_models/ptdf_model.jl")
 
 #Device constructors
 include("component_constructors/thermalgeneration_constructor.jl")
