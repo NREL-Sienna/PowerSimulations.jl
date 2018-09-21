@@ -8,7 +8,10 @@ using Test
     #include("hydro_testing.jl")
     #include("storage_testing.jl")
     #include("load_testing.jl")
-    #include("network_testing.jl")
+end
+
+@testset "Network Constructors" begin
+    include("network_testing.jl")
 end
 
 #=

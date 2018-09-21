@@ -1,4 +1,4 @@
-function networkflow(m::JuMP.Model, sys::PowerSystems.PowerSystem, DeviceNetInjection::A, PTDF::Array{Float64},timeseries_netinjection::Array{Float64}) where A <: JumpExpressionMatrix
+function dc_networkflow(m::JuMP.Model, netinjection::BalanceNamedTuple, sys::PowerSystems.PowerSystem, PTDF::Array{Float64}) 
 
     fbr = m[:fbr]
     name_index = m[:fbr].axes[1]
