@@ -74,10 +74,10 @@ uuid = "9a8bc11e-79be-5b39-94d7-1ccc349a1a85"
 version = "0.4.1"
 
 [[DataStructures]]
-deps = ["InteractiveUtils", "REPL", "Random", "Serialization", "Test"]
-git-tree-sha1 = "5162c360c52e9265e0bfafb71415c31f746f7e04"
+deps = ["InteractiveUtils", "OrderedCollections", "REPL", "Random", "Serialization", "Test"]
+git-tree-sha1 = "70c9a5215aa61d216f2f6ef209a8e190c3c17b40"
 uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-version = "0.12.0"
+version = "0.13.0"
 
 [[DataValues]]
 deps = ["Dates", "InteractiveUtils", "LinearAlgebra", "Random", "Test"]
@@ -139,9 +139,9 @@ version = "0.8.1"
 
 [[HTTP]]
 deps = ["Base64", "Dates", "Distributed", "IniFile", "MbedTLS", "Sockets", "Test"]
-git-tree-sha1 = "8a0f75e8b09df01d9f1ba9ad3fbf8b4983595d20"
+git-tree-sha1 = "16499da36240bf80df9a7e9b0f228710be1fe37c"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-version = "0.6.14"
+version = "0.7.0"
 
 [[InfrastructureModels]]
 deps = ["Compat", "JuMP", "Memento"]
@@ -257,10 +257,12 @@ uuid = "f28f55f0-a522-5efc-85c2-fe41dfb9b2d9"
 version = "0.10.0"
 
 [[Missings]]
-deps = ["Compat"]
-git-tree-sha1 = "866fb034899be6055dcb6cb1a70fbda379bb0b55"
+deps = ["Dates", "InteractiveUtils", "SparseArrays", "Test"]
+git-tree-sha1 = "196528fa1df03df435025f52f9c1ff8356f94738"
+repo-rev = "a496e12109aa7cd7686230ef999c9479e08e66b4"
+repo-url = "https://github.com/JuliaData/Missings.jl.git"
 uuid = "e1d29d7a-bbdc-5cf2-9ac0-f12de2c33e28"
-version = "0.2.10"
+version = "0.3.0+"
 
 [[Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
@@ -283,6 +285,12 @@ git-tree-sha1 = "ae1a63457e14554df2159b0b028f48536125092d"
 uuid = "4d1e1d77-625e-5b40-9113-a560ec7a8ecd"
 version = "0.0.8"
 
+[[OrderedCollections]]
+deps = ["Pkg", "Random", "Serialization", "Test"]
+git-tree-sha1 = "41da1edba028376b58520ca01d9a41e29f855d55"
+uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
+version = "1.0.1"
+
 [[Pkg]]
 deps = ["Dates", "LibGit2", "Markdown", "Printf", "REPL", "Random", "SHA", "UUIDs"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
@@ -302,9 +310,9 @@ uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 version = "0.7.0"
 
 [[PowerSystems]]
-deps = ["AxisArrays", "CSV", "CSVFiles", "Compat", "DataFrames", "Dates", "JuMP", "LinearAlgebra", "Memento", "PowerModels", "SparseArrays", "StatsBase", "TimeSeries"]
-git-tree-sha1 = "2568a5208f444c7b00d9aceb9a811f9f497d3e7f"
-repo-rev = "powersimulation-dev"
+deps = ["AxisArrays", "CSV", "CSVFiles", "Compat", "DataFrames", "Dates", "JuMP", "LinearAlgebra", "Memento", "Missings", "PowerModels", "SparseArrays", "TimeSeries"]
+git-tree-sha1 = "e091a2f4d5c6d707e73621967445ceeabac6f70d"
+repo-rev = "master"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
 version = "0.1.1"
@@ -427,8 +435,10 @@ version = "0.6.0"
 [[TimeSeries]]
 deps = ["RecipesBase"]
 git-tree-sha1 = "be34845fcf07f25c1f383a80347a90e65ad04807"
+repo-rev = "0b23a9a1b66c0b2c1f9dd6a0ccfe841d20de8944"
+repo-url = "https://github.com/JuliaStats/TimeSeries.jl.git"
 uuid = "9e3dc215-6440-5c97-bce1-76c03772f85e"
-version = "0.12.0"
+version = "0.12.0+"
 
 [[TimeZones]]
 deps = ["Compat", "EzXML", "Mocking", "Nullables", "Pkg"]
