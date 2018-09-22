@@ -8,7 +8,7 @@ function dc_networkflow(m::JuMP.Model, netinjection::BalanceNamedTuple, PTDF::PT
 
     ts_flow = gemm('N', 'N', PTDF.data, netinjection.timeseries_active)
 
-    branchflow = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(name_index), time_index), name_index, time_index)
+    branchflow = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_index[end]), name_index, time_index)
 
     #TODO: Make consistent with the use of AxisArrays. This syntax doesn't exploit it properly
     for t in time_index
