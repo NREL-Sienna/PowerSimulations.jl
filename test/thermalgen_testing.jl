@@ -67,4 +67,21 @@ true finally end
     PS.constructdevice!(m, netinjection, ThermalGen, PS.StandardThermalCommitment, Net, sys5);
 true finally end
 
+
+#Copper Plate and Commitment with args
+@test try
+    Net = PS.CopperPlatePowerModel
+    m = Model();
+    netinjection = PS.instantiate_network(Net, sys5);
+    name_index = [gen.name for gen in sys5.generators.thermal];
+    initialstatusdict = Dict(zip(name_index,ones(length(name_index))));
+    initialondurationdict = Dict(zip(name_index,ones(length(name_index))*100));
+    initialoffdurationdict = Dict(zip(name_index,zeros(length(name_index))));
+
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.StandardThermalCommitment, Net, sys5, 
+        initialstatus = initialstatusdict, 
+        initialonduration=initialondurationdict,
+        initialoffduration = initialoffdurationdict);
+true finally end
+
 true

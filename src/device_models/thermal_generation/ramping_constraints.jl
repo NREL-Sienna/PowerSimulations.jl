@@ -2,7 +2,7 @@
 """
 This function adds the ramping limits of generators when there are no CommitmentVariables
 """
-function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64, args...) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalDispatchForm, S <: AbstractDCPowerModel}
+function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; args...) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalDispatchForm, S <: AbstractDCPowerModel}
 
     devices = [d for d in devices if !isa(d.tech.ramplimits,Nothing)]
     
@@ -51,7 +51,7 @@ end
 """
 This function adds the ramping limits of generators when there are CommitmentVariables
 """
-function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64, args...) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalCommitmentForm, S <: AbstractDCPowerModel}
+function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; args...) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalCommitmentForm, S <: AbstractDCPowerModel}
 
     devices = [d for d in devices if !isa(d.tech.ramplimits,Nothing)]
 
