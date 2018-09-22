@@ -1,16 +1,55 @@
-function nodalflowbalance(m::JuMP.Model, devices_netinjection::AD, network_netinjection::AF, timeseries_netinjection::Array{Float64}, time_periods::Int64) where  {AD <: JumpExpressionMatrix, AF <: JumpExpressionMatrix}
+function add_flows(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: PM.AbstractDCPForm}
 
-        pf_balance = JuMP.JuMPArray(Array{ConstraintRef}((size(network_netinjection)[1], time_periods)),1:size(network_netinjection)[1], 1:time_periods)
+    fbr = m[:fbr]
+    branch_name_index = m[:fbr].axes[1]
+    time_index = m[:fbr].axes[2]
 
-        for (n, c) in enumerate(IndexCartesian(), network_netinjection)
+    for t in time_index, (ix,branch) in enumerate(branch_name_index)
 
-            isassigned(devices_netinjection,n[1],n[2]) ? JuMP.add_to_expression!(c, devices_netinjection[n[1],n[2]]) : c
+        !isassigned(netinjection.var_active,sys.branches[ix].connectionpoints.from.number,t) ? netinjection.var_active[sys.branches[ix].connectionpoints.from.number,t] = -fbr[branch,t] : JuMP.add_to_expression!(netinjection.var_active[sys.branches[ix].connectionpoints.from.number,t],-fbr[branch,t])
+        !isassigned(netinjection.var_active,sys.branches[ix].connectionpoints.to.number,t) ? netinjection.var_active[sys.branches[ix].connectionpoints.to.number,t] = fbr[branch,t] : JuMP.add_to_expression!(netinjection.var_active[sys.branches[ix].connectionpoints.to.number,t],fbr[branch,t])
 
-            pf_balance[n[1],n[2]] = @constraint(m, c == timeseries_netinjection[n])
+    end
 
+
+end
+
+function add_flows(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: PM.AbstractDCPLLForm}
+
+    fbr_fr = m[:fbr_fr]
+    fbr_to = m[:fbr_to]
+    time_index = m[:fbr_to].axes[2]
+    branch_name_index = m[:fbr_fr].axes[1]
+
+    for t in time_index, (ix,branch) in enumerate(branch_name_index)
+
+        !isassigned(netinjection.var_active,sys.branches[ix].connectionpoints.from.number,t) ? netinjection.var_active[sys.branches[ix].connectionpoints.from.number,t] = -fbr_fr[branch,t] : JuMP.add_to_expression!(netinjection.var_active[sys.branches[ix].connectionpoints.from.number,t],-fbr_fr[branch,t])
+        !isassigned(netinjection.var_active,sys.branches[ix].connectionpoints.to.number,t) ? netinjection.var_active[sys.branches[ix].connectionpoints.to.number,t] = fbr_to[branch,t] : JuMP.add_to_expression!(netinjection.var_active[sys.branches[ix].connectionpoints.to.number,t],fbr_to[branch,t])
+
+    end
+
+
+end
+
+function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: AbstractDCPowerModel}
+
+    time_index = 1:sys.time_periods
+    bus_name_index = [b.name for b in sys.buses]
+
+    add_flows(m, netinjection, system_formulation, sys)
+
+    pf_balance = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(bus_name_index), sys.time_periods), bus_name_index, time_index)
+
+        for t in time_index, (ix,bus) in enumerate(bus_name_index)
+
+            isassigned(netinjection.var_active,ix, t) ? true : @error("Islanded Bus in the system")
+
+            pf_balance[bus,t] = @constraint(m, netinjection.var_active[ix, t] == netinjection.timeseries_active[ix, t])
+        
         end
 
-        JuMP.registercon(m, :nodalpowerbalance, pf_balance)
+        JuMP.registercon(m, :NodalFlowBalance, pf_balance)
 
     return m
+    
 end

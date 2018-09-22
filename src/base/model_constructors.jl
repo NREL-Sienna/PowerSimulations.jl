@@ -1,39 +1,34 @@
-function buildmodel!(sys::PowerSystems.PowerSystem, model::PowerSimulationsModel)
+function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerSimulationsModel)
 
-    #TODO: Add check model spec vs data functions before trying to build 
+    #TODO: Add check model spec vs data functions before trying to build
 
-    PSModel = JuMP.Model()
+    op_model.psmodel = JuMP.Model()
 
-    netinjection = instantiate_network(model.network, sys)
+    netinjection = instantiate_network(op_model.network, sys)
 
-    for category in model.generation
-        netinjection = constructdevice!(category.device, category.formulation, model.transmission, model.psmodel, netinjection, sys)
+    for category in op_model.generation
+        constructdevice!(op_model.psmodel, netinjection, category.device, category.formulation, op_model.transmission, sys)
     end
 
-#=
-
-    for category in model.demand
-        model.psmodel = constructdevice!(category.device, network_model, model.psmodel, devices_netinjection, sys, category.constraints)
+    
+    for category in op_model.demand
+        constructdevice!(op_model.psmodel, netinjection, category.device, category.formulation, op_model.transmission, sys)
     end
 
+    #=
     for category in model.storage
         model.psmodel = constructdevice!(category.device, network_model, model.psmodel, devices_netinjection, sys, category.constraints)
     end
-
-    #Get Arrary with NetInjections from TimeSeries fields
-    timeseries_nets = PowerSimulations.timeseries_netinjection(sys)
-
-    #This function hasn't been created yet
-    model.psmodel = constructnetwork!(model.transmission, model.branches, model.psmodel, timeseries_nets, devices_netinjection, sys; kwargs...)
 
     for category in model.services
         model.psmodel = constructservice!(category.service, model.psmodel, devices_netinjection, sys, category.constraints)
     end
 
-    #This function hasn't been created ye
-    for caterogy in model.cost
-        cost = constructcost(category.device, model.psmodel, sys, category.components)
-    end
+    =#
+
+    constructnetwork!(op_model.psmodel, op_model.branches, netinjection, op_model.transmission, op_model.branches, sys)
+
+    #=
 
     @objective(model.psmodel, Min, cost);
 

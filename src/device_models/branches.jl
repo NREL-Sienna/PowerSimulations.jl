@@ -1,6 +1,18 @@
-abstract type AbstractBranchFormulation end
+abstract type AbstractBranchForm end
 
-abstract type AbstractFlowFormulation <: AbstractBranchFormulation end 
+abstract type AbstractLineForm <: AbstractBranchForm end
 
-include("branches/network_flow.jl")
-include("branches/dc_powerflow.jl")
+abstract type AbstractDCLineForm <: AbstractBranchForm end
+
+abstract type AbstractTransformerForm <: AbstractBranchForm end
+
+abstract type PiLine <: AbstractLineForm end
+
+abstract type SeriesLine <: AbstractLineForm end
+
+abstract type SimpleHVDC <: AbstractDCLineForm end
+
+include("branches/flow_variables.jl")
+include("branches/bus_variables.jl")
+include("branches/flow_constraints.jl")
+include("branches/ptdf_model.jl")

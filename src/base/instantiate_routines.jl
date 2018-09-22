@@ -1,4 +1,4 @@
-function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; kwargs...) where N <: AbstractDCPowerModel
+function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem, args...) where N <: AbstractDCPowerModel
    
     d_netinjection_p =  JumpAffineExpressionArray(undef, length(sys.buses), sys.time_periods)
 
@@ -10,7 +10,7 @@ function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; kw
 
 end
 
-function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; kwargs...) where N <: AbstractACPowerModel
+function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem, args...) where N <: AbstractACPowerModel
    
     d_netinjection_p =  JumpAffineExpressionArray(undef, length(sys.buses), sys.time_periods)
 
@@ -20,7 +20,7 @@ function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; kw
 
     ts_active = timeseries_netinjection(sys)
 
-    #TODO: Provide some pf for fixed sources using kwargs, for now assume 0
+    #TODO: Provide some pf for fixed sources using args, for now assume 0
     ts_reactive = timeseries_netinjection(sys)*0.0
     
     netinjection = (var_active = d_netinjection_p, var_reactive = d_netinjection_q, timeseries_active = ts_active, timeseries_reactive = ts_reactive)
@@ -29,13 +29,13 @@ function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; kw
 
 end
 
-function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; kwargs...) where N <: CopperPlatePowerModel
+function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem, args...) where N <: CopperPlatePowerModel
    
     return instantiate_network(AbstractDCPowerModel, sys)
 
 end
 
-function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; kwargs...) where N <: AbstractFlowForm
+function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem, args...) where N <: AbstractFlowForm
    
     return instantiate_network(AbstractDCPowerModel, sys)
 
