@@ -37,6 +37,7 @@ using MathOptInterface
 using Ipopt
 using DataFrames
 using LinearAlgebra
+using LinearAlgebra.BLAS
 using AxisArrays
 
 #################################################################################
