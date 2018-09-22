@@ -20,7 +20,7 @@ end
 
 function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem, args...) where {D <: AbstractThermalDispatchForm, S <: AbstractACPowerModel}
 
-    constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys)
+    constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys; args...)
 
     qth = reactivepowervariables(m, sys.generators.thermal, sys.time_periods);
 
@@ -33,11 +33,11 @@ end
 
 function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{RampLimitDispatch}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem, args...) where {S <: AbstractDCPowerModel}
 
-    constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys)
+    constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys; args...)
 
-    rampargs = pairs((;(k=>v for (k,v) in pairs(args) if k in [:initalpower])...))
+    #rampargs = pairs((;(k=>v for (k,v) in pairs(args) if k in [:initalpower])...))
 
-    rampconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; rampargs...)
+    rampconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; args...)
 
     return 
 
@@ -75,26 +75,26 @@ This function adds constraints to the minimal thermal commitment formulation
 """
 function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{StandardThermalCommitment}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem, args...) where {S <: AbstractDCPowerModel}
 
-   constructdevice!(m, netinjection, category, AbstractThermalCommitmentForm, AbstractDCPowerModel, sys) 
+    constructdevice!(m, netinjection, category, AbstractThermalCommitmentForm, AbstractDCPowerModel, sys; args...) 
 
-    commitargs = pairs((;(k=>v for (k,v) in pairs(args) if k in [:initalstatus,:initialonduration,:initialoffduration])...)) #this isn't strictly needed, could delete for cleanliness
+    #commitargs = pairs((;(k=>v for (k,v) in pairs(args) if k in [:initalstatus,:initialonduration,:initialoffduration])...)) #this isn't strictly needed, could delete for cleanliness
 
-    commitmentconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; commitargs...)
+    commitmentconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; args...)
 
-    rampargs = pairs((;(k=>v for (k,v) in pairs(args) if k in [:initalpower])...)) #this isn't strictly needed, could delete for cleanliness
+    #rampargs = pairs((;(k=>v for (k,v) in pairs(args) if k in [:initalpower])...)) #this isn't strictly needed, could delete for cleanliness
 
-    rampconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; rampargs...)
+    rampconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; args...)
 
-    timeconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; commitargs...)
+    timeconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; args...)
 
 end
 
 """
 This function adds constraints to the minimal thermal commitment formulation
 """
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{StandardThermalCommitment}, system_formulation::Type{CopperPlatePowerModel}, sys::PowerSystems.PowerSystem, args)
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{StandardThermalCommitment}, system_formulation::Type{CopperPlatePowerModel}, sys::PowerSystems.PowerSystem, args...)
 
-    constructdevice!(m, netinjection, category, category_formulation, AbstractDCPowerModel, sys, args)
+    constructdevice!(m, netinjection, category, category_formulation, AbstractDCPowerModel, sys; args...)
 
 end
 

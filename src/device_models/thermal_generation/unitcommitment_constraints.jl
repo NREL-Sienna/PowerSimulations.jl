@@ -21,8 +21,8 @@ function commitmentconstraints(m::JuMP.Model, devices::Array{T,1}, device_formul
 
     (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-    commitment_th = JuMP.JuMPArray(Array{ConstraintRef}(undef,length.(axes(on_th))), name_index, time_index)
-
+    commitment_th  = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
+    
     for (ix,name) in enumerate(name_index)
         if name == devices[ix].name
             t1 = time_index[1]
