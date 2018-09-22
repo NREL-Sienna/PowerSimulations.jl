@@ -1,4 +1,4 @@
-function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem, args...) where N <: AbstractDCPowerModel
+function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; args...) where N <: AbstractDCPowerModel
    
     d_netinjection_p =  JumpAffineExpressionArray(undef, length(sys.buses), sys.time_periods)
 
@@ -10,7 +10,7 @@ function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem, ar
 
 end
 
-function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem, args...) where N <: AbstractACPowerModel
+function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; args...) where N <: AbstractACPowerModel
    
     d_netinjection_p =  JumpAffineExpressionArray(undef, length(sys.buses), sys.time_periods)
 
@@ -29,13 +29,13 @@ function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem, ar
 
 end
 
-function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem, args...) where N <: CopperPlatePowerModel
+function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; args...) where N <: CopperPlatePowerModel
    
     return instantiate_network(AbstractDCPowerModel, sys)
 
 end
 
-function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem, args...) where N <: AbstractFlowForm
+function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; args...) where N <: AbstractFlowForm
    
     return instantiate_network(AbstractDCPowerModel, sys)
 

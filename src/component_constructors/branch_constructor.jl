@@ -1,4 +1,4 @@
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.Branch}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem, args...) where {D <: AbstractBranchForm, S <: PM.AbstractDCPForm}
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.Branch}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractBranchForm, S <: PM.AbstractDCPForm}
 
     flowvariables(m, system_formulation, sys.branches, sys.time_periods)
 
@@ -9,7 +9,7 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 end
 
 #=
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.Branch}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem, args...) where {D <: AbstractBranchForm, S <: PM.AbstractDCPLLForm}
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.Branch}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractBranchForm, S <: PM.AbstractDCPLLForm}
 
     flowvariables(m, system_formulation, sys.branches, sys.time_periods)
 
@@ -20,7 +20,7 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 end
 =#
 
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.Line}, category_formulation::Type{PiLine}, system_formulation::Type{StandardPTDF}, sys::PowerSystems.PowerSystem, args...)
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.Line}, category_formulation::Type{PiLine}, system_formulation::Type{StandardPTDF}, sys::PowerSystems.PowerSystem; args...)
 
     PTDF = [a.second for a in args if a.first == :PTDF][1]
 
