@@ -3,7 +3,7 @@
 """
 This function adds the Commitment Status constraint when there are CommitmentVariables
 """
-function commitmentconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64, args...) where {T <: PowerSystems.ThermalGen, D <: StandardThermalCommitment, S <: AbstractDCPowerModel}
+function commitmentconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; args...) where {T <: PowerSystems.ThermalGen, D <: StandardThermalCommitment, S <: AbstractDCPowerModel}
 
     on_th = m[:on_th]
     start_th = m[:start_th]
@@ -21,8 +21,8 @@ function commitmentconstraints(m::JuMP.Model, devices::Array{T,1}, device_formul
 
     (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-    commitment_th = JuMP.JuMPArray(Array{ConstraintRef}(undef,length.(axes(on_th))), name_index, time_index)
-
+    commitment_th  = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
+    
     for (ix,name) in enumerate(name_index)
         if name == devices[ix].name
             t1 = time_index[1]
@@ -46,7 +46,7 @@ function commitmentconstraints(m::JuMP.Model, devices::Array{T,1}, device_formul
 end
 
 
-function timeconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64, args...) where {T <: PowerSystems.ThermalGen, D <: StandardThermalCommitment, S <: AbstractDCPowerModel}
+function timeconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; args...) where {T <: PowerSystems.ThermalGen, D <: StandardThermalCommitment, S <: AbstractDCPowerModel}
     
     devices = [d for d in devices if !isa(d.tech.timelimits,Nothing)]
 
