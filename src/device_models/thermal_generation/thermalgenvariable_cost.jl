@@ -27,7 +27,7 @@ function gencost(m::JuMP.Model, variable::JuMPArray{JuMP.VariableRef}, cost_comp
         store[ix] = cost_component(element)
     end
 
-    gen_cost = @expression(m, sum(store))
+    gen_cost = sum(store)
 
     return gen_cost
 

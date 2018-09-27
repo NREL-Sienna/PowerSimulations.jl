@@ -1,10 +1,14 @@
-function variablecost(m::JuMP.Model, pre::JumpVariable, devices::Array{T}) where T <: PowerSystems.RenewableGen
+function variablecost(m::JuMP.Model, devices::Array{PowerSystems.RenewableCurtailment,1}, device_formulation::Type{D}, system_formulation::Type{S}) where {D <: AbstractRenewablelDispatchForm, S <: PM.AbstractPowerFormulation}
+
+    p_re = m[:p_re]
+    time_index = m[:p_re].axes[2]
+    name_index = m[:p_re].axes[1]
 
     cost = JuMP.AffExpr()
 
-    for (ix, name) in enumerate(pre.axes[1])
+    for (ix, name) in enumerate(name_index)
         if name == devices[ix].name
-                JuMP.add_to_expression!(cost,precost(pre[name,:], devices[ix]))
+                JuMP.add_to_expression!(cost,precost(p_re[name,:], devices[ix]))
         else
             error("Bus name in Array and variable do not match")
         end
