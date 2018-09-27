@@ -16,7 +16,7 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing, 100.0)
     Net = PS.StandardAC
     m = Model()
     netinjection = PS.instantiate_network(Net, sys5)
-    PS.constructdevice!(m, netinjection, ThermalGen, PS.Dispatch, Net, sys5)
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5)
 true finally end
 
 #Cooper Plate and Dispatch
@@ -24,7 +24,7 @@ true finally end
     Net = PS.CopperPlatePowerModel
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
-    PS.constructdevice!(m, netinjection, ThermalGen, PS.Dispatch, Net, sys5);
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
 true finally end
 
 #PTDF Plate and Dispatch
@@ -32,7 +32,7 @@ true finally end
     Net = PS.StandardPTDF
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
-    PS.constructdevice!(m, netinjection, ThermalGen, PS.Dispatch, Net, sys5);
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
 true finally end
 
 #PTDF and Ramping
@@ -40,7 +40,7 @@ true finally end
     Net = PS.StandardPTDF
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
-    PS.constructdevice!(m, netinjection, ThermalGen, PS.RampLimitDispatch, Net, sys5);
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalRampLimitDispatch, Net, sys5);
 true finally end
 
 #Cooper Plate and Ramping
@@ -48,7 +48,7 @@ true finally end
     Net = PS.CopperPlatePowerModel
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
-    PS.constructdevice!(m, netinjection, ThermalGen, PS.RampLimitDispatch, Net, sys5);
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalRampLimitDispatch, Net, sys5);
 true finally end
 
 #PTDF and Commitment
@@ -78,8 +78,8 @@ true finally end
     initialondurationdict = Dict(zip(name_index,ones(length(name_index))*100));
     initialoffdurationdict = Dict(zip(name_index,zeros(length(name_index))));
 
-    PS.constructdevice!(m, netinjection, ThermalGen, PS.StandardThermalCommitment, Net, sys5, 
-        initialstatus = initialstatusdict, 
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.StandardThermalCommitment, Net, sys5,
+        initialstatus = initialstatusdict,
         initialonduration=initialondurationdict,
         initialoffduration = initialoffdurationdict);
 true finally end

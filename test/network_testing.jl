@@ -10,17 +10,17 @@ const PS = PowerSimulations
     Net = PS.CopperPlatePowerModel
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
-    PS.constructdevice!(m, netinjection, ThermalGen, PS.Dispatch, Net, sys5);
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
     PS.constructnetwork!(m, [(device=Branch, formulation=PS.PiLine)], netinjection, Net, sys5)
     m.obj_dict
 true finally end
 
-# Flow Models 
+# Flow Models
 @test try
     Net = PS.StandardNetFlow
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
-    PS.constructdevice!(m, netinjection, ThermalGen, PS.Dispatch, Net, sys5);
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
     PS.constructnetwork!(m, [(device=Branch, formulation=PS.PiLine)], netinjection, Net, sys5)
     m.obj_dict
 true finally end
@@ -29,20 +29,20 @@ true finally end
     Net = PS.StandardNetFlowLL
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
-    PS.constructdevice!(m, netinjection, ThermalGen, PS.Dispatch, Net, sys5);
-    #Branch models are not implemented yet. They don't reflect losses. 
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
+    #Branch models are not implemented yet. They don't reflect losses.
     PS.constructnetwork!(m, [(device=Branch, formulation=PS.PiLine)], netinjection, Net, sys5)
     m.obj_dict
 true finally end
 
-# Flow Models 
+# Flow Models
 @test try
     Net = PS.StandardPTDF
     m = Model();
     ptdf,  A = PowerSystems.buildptdf(sys5.branches, sys5.buses)
     netinjection = PS.instantiate_network(Net, sys5);
-    PS.constructdevice!(m, netinjection, ThermalGen, PS.Dispatch, Net, sys5);
-    #Branch models are not implemented yet. They don't reflect losses. 
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
+    #Branch models are not implemented yet. They don't reflect losses.
     PS.constructnetwork!(m, [(device=Branch, formulation=PS.PiLine)], netinjection, Net, sys5, PTDF = ptdf)
     m.obj_dict
 true finally end

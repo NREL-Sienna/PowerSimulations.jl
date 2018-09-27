@@ -4,10 +4,10 @@ using Test
 
 @testset "Device Constructors" begin
     include("thermalgen_testing.jl")
-    #include("renewables_testing.jl")
+    include("renewables_testing.jl")
+    #include("load_testing.jl")
     #include("hydro_testing.jl")
     #include("storage_testing.jl")
-    #include("load_testing.jl")
 end
 
 @testset "Network Constructors" begin
