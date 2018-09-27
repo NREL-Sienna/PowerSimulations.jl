@@ -23,8 +23,6 @@ function activepower(m::JuMP.Model, devices::Array{R,1}, device_formulation::Typ
 
     JuMP.registercon(m, :pmax_re, pmax_re)
 
-    return m
-
 end
 
 
@@ -57,7 +55,5 @@ function reactivepower(m::JuMP.Model, devices::Array{R,1}, device_formulation::T
 
     JuMP.registercon(m, :qmax_re, qmax_re)
     JuMP.registercon(m, :qmin_re, qmin_re)
-
-    return m
 
 end
