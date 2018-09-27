@@ -29,9 +29,9 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 
         constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys; devices = dev_set)
 
-        q_th = reactivepowervariables(m, dev_set, sys.time_periods);
+        q_re = reactivepowervariables(m, dev_set, sys.time_periods);
 
-        varnetinjectiterate!(netinjection.var_reactive, q_th, sys.time_periods, dev_set)
+        varnetinjectiterate!(netinjection.var_reactive, q_re, sys.time_periods, dev_set)
 
         m = reactivepower(m, dev_set, category_formulation, system_formulation, sys.time_periods)
 
