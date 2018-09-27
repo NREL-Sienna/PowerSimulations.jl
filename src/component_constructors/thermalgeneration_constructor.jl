@@ -26,7 +26,7 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 
     varnetinjectiterate!(netinjection.var_reactive, q_th, sys.time_periods, sys.generators.thermal)
 
-    m = reactivepower(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
+    reactivepower(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
 
 end
 
