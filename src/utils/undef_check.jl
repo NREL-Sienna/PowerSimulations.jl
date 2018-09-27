@@ -4,5 +4,4 @@ function remove_undef!(ExpressionArray::T) where T <: JumpExpressionMatrix
             !isassigned(ExpressionArray,i,j) ? ExpressionArray[i,j] = AffExpr(0.0) : continue
         end
     end
-    return ExpressionArray
 end
