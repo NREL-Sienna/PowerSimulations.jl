@@ -79,7 +79,9 @@ include("base/model_constructors.jl")
 include("base/simulation_routines.jl")
 include("base/solve_routines.jl")
 
+
 #Device Modeling components
+include("device_models/common.jl")
 include("device_models/renewable_generation.jl")
 include("device_models/thermal_generation.jl")
 include("device_models/storage.jl")
