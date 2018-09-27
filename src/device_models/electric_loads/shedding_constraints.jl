@@ -9,7 +9,7 @@ function powerconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int6
 
     (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-    pmax_cl = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(pcl))), name_index, time_index)
+    pmax_cl = JuMP.JuMPArray(Array{ConstraintRef}(length.(JuMP.axes(pcl))), name_index, time_index)
     for t in time_index, (ix, name) in enumerate(name_index)
         if name == devices[ix].name
             pmax_cl[name, t] = @constraint(m, pcl[name, t] <= devices[ix].maxactivepower*devices[ix].scalingfactor.values[t])
