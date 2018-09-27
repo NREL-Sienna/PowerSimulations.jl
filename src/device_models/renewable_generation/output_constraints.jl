@@ -1,7 +1,7 @@
 """
 This function adds the power limits of generators when there are no CommitmentVariables
 """
-function activepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {T <: PowerSystems.RenewableGen, D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
+function activepower(m::JuMP.Model, devices::Array{R,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {R <: PowerSystems.RenewableGen, D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
 
     p_re = m[:p_re]
     time_index = m[:p_re].axes[2]
@@ -9,7 +9,7 @@ function activepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::Typ
 
     (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-    pmax_re = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(p_re))), name_index, time_index)
+    pmax_re = JuMP.JuMPArray(Array{ConstraintRef}(undef, length.(JuMP.axes(p_re))), name_index, time_index)
 
     for t in time_index, (ix, name) in enumerate(name_index)
 
@@ -31,7 +31,7 @@ end
 """
 This function adds the power limits of generators when there are no CommitmentVariables
 """
-function reactivepower(m::JuMP.Model, devices::Array{PowerSystems.RenewableFullDispatch,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {D <: AbstractRenewableDispatchForm,  S <: AbstractACPowerModel}
+function reactivepower(m::JuMP.Model, devices::Array{R,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {R <: PowerSystems.RenewableGen, D <: AbstractRenewableDispatchForm,  S <: AbstractACPowerModel}
 
     q_re = m[:q_re]
     time_index = m[:q_re].axes[2]
@@ -39,8 +39,8 @@ function reactivepower(m::JuMP.Model, devices::Array{PowerSystems.RenewableFullD
 
     (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
 
-    qmax_re = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(q_re))), name_index, time_index)
-    qmin_re = JuMP.JuMPArray(Array{ConstraintRef}(length.(indices(q_re))), name_index, time_index)
+    qmax_re = JuMP.JuMPArray(Array{ConstraintRef}(undef,length.(JuMP.axes(q_re))), name_index, time_index)
+    qmin_re = JuMP.JuMPArray(Array{ConstraintRef}(undef,length.(JuMP.axes(q_re))), name_index, time_index)
 
     for t in time_index, (ix, name) in enumerate(name_index)
 

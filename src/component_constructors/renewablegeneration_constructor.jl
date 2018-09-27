@@ -1,6 +1,8 @@
 function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.RenewableGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
 
-    devices = [d for d in sys.generators.renewable if (d.available == true && !isa(d, PowerSystems.RenewableFix))]
+    dev_set = [a.second for a in args if a.first == :devices]
+
+    isempty(dev_set) ? devices = [d for d in sys.generators.renewable if (d.available == true && !isa(d, PowerSystems.RenewableFix))] : devices = dev_set[1]
 
     p_re = activepowervariables(m, devices, sys.time_periods);
 
@@ -13,6 +15,25 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
         cost = variablecost(m, devices, category_formulation, system_formulation)
 
         add_to_cost!(m, cost)
+
+    end
+
+end
+
+
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.RenewableGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractRenewableDispatchForm, S <: AbstractACPowerModel}
+
+    dev_set = [d for d in sys.generators.renewable if (d.available == true && !isa(d, PowerSystems.RenewableFix))]
+
+    if !isempty(dev_set)
+
+        constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys; devices = dev_set)
+
+        q_th = reactivepowervariables(m, dev_set, sys.time_periods);
+
+        varnetinjectiterate!(netinjection.var_reactive, q_th, sys.time_periods, dev_set)
+
+        m = reactivepower(m, dev_set, category_formulation, system_formulation, sys.time_periods)
 
     end
 
