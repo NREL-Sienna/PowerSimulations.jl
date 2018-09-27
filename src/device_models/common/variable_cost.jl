@@ -14,7 +14,7 @@ end
 
 function gencost(m::JuMP.Model, variable::JuMPArray{JuMP.VariableRef}, cost_component::Float64)
 
-    gen_cost = @expression(m, sum(cost_component*variable))
+    gen_cost = sum(variable)*cost_component
 
     return gen_cost
 
