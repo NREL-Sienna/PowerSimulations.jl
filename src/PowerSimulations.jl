@@ -102,10 +102,6 @@ include("component_constructors/services_constructor.jl")
 #Network constructors
 include("component_constructors/network_constructor.jl")
 
-#Cost Components
-include("device_models/electric_loads/controlableload_cost.jl")
-include("device_models/renewable_generation/renewablegen_cost.jl")
-
 #PowerModels
 #include("power_models/economic_dispatch.jl")
 
