@@ -12,6 +12,7 @@ const PS = PowerSimulations
     netinjection = PS.instantiate_network(Net, sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
     PS.constructdevice!(m, netinjection, RenewableGen, PS.RenewableCurtail, Net, sys5);
+    PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
     PS.constructnetwork!(m, [(device=Branch, formulation=PS.PiLine)], netinjection, Net, sys5)
     m.obj_dict
 true finally end
@@ -23,6 +24,7 @@ true finally end
     netinjection = PS.instantiate_network(Net, sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
     PS.constructdevice!(m, netinjection, RenewableGen, PS.RenewableCurtail, Net, sys5);
+    PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
     PS.constructnetwork!(m, [(device=Branch, formulation=PS.PiLine)], netinjection, Net, sys5)
     m.obj_dict
 true finally end
@@ -33,6 +35,7 @@ true finally end
     netinjection = PS.instantiate_network(Net, sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
     PS.constructdevice!(m, netinjection, RenewableGen, PS.RenewableCurtail, Net, sys5);
+    PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
     #Branch models are not implemented yet. They don't reflect losses.
     PS.constructnetwork!(m, [(device=Branch, formulation=PS.PiLine)], netinjection, Net, sys5)
     m.obj_dict
@@ -46,6 +49,7 @@ true finally end
     netinjection = PS.instantiate_network(Net, sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
     PS.constructdevice!(m, netinjection, RenewableGen, PS.RenewableCurtail, Net, sys5);
+    PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
     #Branch models are not implemented yet. They don't reflect losses.
     PS.constructnetwork!(m, [(device=Branch, formulation=PS.PiLine)], netinjection, Net, sys5, PTDF = ptdf)
     m.obj_dict
