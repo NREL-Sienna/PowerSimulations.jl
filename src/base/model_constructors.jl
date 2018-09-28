@@ -10,7 +10,7 @@ function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerSimulationsMo
         constructdevice!(op_model.psmodel, netinjection, category.device, category.formulation, op_model.transmission, sys)
     end
 
-    
+
     for category in op_model.demand
         constructdevice!(op_model.psmodel, netinjection, category.device, category.formulation, op_model.transmission, sys)
     end
@@ -36,6 +36,6 @@ function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerSimulationsMo
 
     =#
 
-    return model
+    return op_model
 
 end

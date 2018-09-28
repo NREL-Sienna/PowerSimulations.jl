@@ -1,21 +1,16 @@
-function variablecost(m::JuMP.Model, pcl::JumpVariable, devices::Array{PowerSystems.InterruptibleLoad})
+function variablecost(m::JuMP.Model, devices::Array{PowerSystems.InterruptibleLoad,1}, device_formulation::Type{D}, system_formulation::Type{S}) where {D <: AbstractControllableLoadForm, S <: PM.AbstractPowerFormulation}
 
-    cost = JuMP.AffExpr()
+    p_cl = m[:p_cl]
+    time_index = m[:p_cl].axes[2]
+    name_index = m[:p_cl].axes[1]
 
-    for (ix, name) in enumerate(pcl.axes[1])
-        if name == devices[ix].name
-                JuMP.add_to_expression!(cost,cloadcost(pcl[name,:], devices[ix]))
-        else
-            error("Bus name in Array and variable do not match")
-        end
+    var_cost = AffExpr()
+
+    for  (ix, name) in enumerate(name_index)
+         c = gencost(m, p_cl[name,:], -1*devices[ix].sheddingcost)
+        JuMP.add_to_expression!(var_cost,c)
     end
 
-    return cost
-
-end
-
-function cloadcost(variable::Array{JuMP.VariableRef,1}, device::PowerSystems.InterruptibleLoad)
-
-    return cost = sum(-1*device.sheddingcost*variable)
+    return var_cost
 
 end

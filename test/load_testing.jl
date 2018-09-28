@@ -11,7 +11,7 @@ include(joinpath(base_dir,"data/data_5bus_uc.jl"))
 
 sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing, 100.0)
 
-#=Generator Active and Reactive Power Variables
+#=Load Active and Reactive Power Variables
 @test try
     Net = PS.StandardAC
     m = Model()
@@ -25,7 +25,7 @@ true finally end
     Net = PS.CopperPlatePowerModel
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
-    PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoadForm, Net, sys5);
+    PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
 true finally end
 
 #PTDF Plate and Dispatch
@@ -33,5 +33,5 @@ true finally end
     Net = PS.StandardPTDF
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
-    PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoadForm, Net, sys5);
+    PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
 true finally end

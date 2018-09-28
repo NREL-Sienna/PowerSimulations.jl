@@ -76,18 +76,19 @@ include("core/abstract_models.jl")
 #include("core/dynamic_model.jl")
 include("base/instantiate_routines.jl")
 include("base/model_constructors.jl")
-include("base/simulation_routines.jl")
-include("base/solve_routines.jl")
+#include("base/solve_routines.jl")
+#include("base/simulation_routines.jl")
 
 
 #Device Modeling components
 include("device_models/common.jl")
 include("device_models/renewable_generation.jl")
 include("device_models/thermal_generation.jl")
-include("device_models/storage.jl")
-include("device_models/hydro_generation.jl")
 include("device_models/electric_loads.jl")
 include("device_models/branches.jl")
+#include("device_models/storage.jl")
+#include("device_models/hydro_generation.jl")
+
 
 #Network related components
 include("network_models/copperplate_balance.jl")
@@ -97,7 +98,8 @@ include("network_models/nodal_balance.jl")
 include("component_constructors/thermalgeneration_constructor.jl")
 include("component_constructors/branch_constructor.jl")
 include("component_constructors/renewablegeneration_constructor.jl")
-include("component_constructors/services_constructor.jl")
+include("component_constructors/load_constructor.jl")
+#include("component_constructors/services_constructor.jl")
 
 #Network constructors
 include("component_constructors/network_constructor.jl")

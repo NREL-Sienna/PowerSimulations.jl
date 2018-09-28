@@ -41,7 +41,7 @@ function active_timeseries_netinjection(sys::PowerSystems.PowerSystem)
     return  tsnetinjection
 end
 
-function reactive_timeseries_netinjection(sys::PowerSystems.PowerSystem, network::Type{N}) where N <: AbstractACPowerModel
+function reactive_timeseries_netinjection(sys::PowerSystems.PowerSystem)
 
     tsnetinjection =  zeros(Float64, length(sys.buses), sys.time_periods)
 
