@@ -28,14 +28,9 @@ function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerSimulationsMo
 
     constructnetwork!(op_model.psmodel, op_model.branches, netinjection, op_model.transmission, op_model.branches, sys)
 
-    #=
+    @objective(model.psmodel, Min, op_model.psmodel.obj_dict[:objective_function])
 
-    @objective(model.psmodel, Min, cost);
-
-    model.psmodel
-
-    =#
-
-    return op_model
+   return op_model
 
 end
+
