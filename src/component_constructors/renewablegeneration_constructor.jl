@@ -1,35 +1,40 @@
-const curtailconstraints = PowerSimulations.powerconstraints
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.RenewableGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
 
-function dispatch(m::JuMP.Model, network::Type{N}, devices_netinjection::T, devices::Array{D}, constraints::Array{<:Function}, time_periods::Int64) where {T <: JumpExpressionMatrix, N <: AbstractDCPowerModel, D <: RenewableGen}
+    dev_set = [a.second for a in args if a.first == :devices]
 
-    pre, devices_netinjection = activepowervariables(m, devices_netinjection, devices, time_periods)
+    isempty(dev_set) ? devices = [d for d in sys.generators.renewable if (d.available == true && !isa(d, PowerSystems.RenewableFix))] : devices = dev_set[1]
 
-        for c in constraints
-
-            m = c(m, devices, time_periods)
-
-        end
-
-    return m, devices_netinjection
-
-end
-
-#=
-function constructdevice!(category::Type{PowerSystems.RenewableGen}, network::Type{N}, m::JuMP.Model, devices_netinjection::T, sys::PowerSystems.PowerSystem, constraints::Array{<:Function}=[powerconstraints]) where {T <: JumpExpressionMatrix, N <:NetworkModel}
-
-    devices = [d for d in sys.generators.renewable if (d.available == true && !isa(d, RenewableFix))]
+    p_re = activepowervariables(m, devices, sys.time_periods);
 
     if !isempty(devices)
 
-        dispatch(m, network, devices_netinjection, devices, constraints, sys.time_periods)
+        varnetinjectiterate!(netinjection.var_active, p_re, sys.time_periods, devices)
 
-    else
+        activepower(m, devices, category_formulation, system_formulation, sys.time_periods)
 
-        warn("Renewable dispatch variables created without constraints, the problem might be unbounded")
+        cost = variablecost(m, devices, category_formulation, system_formulation)
+
+        add_to_cost!(m, cost)
 
     end
 
-    return m, devices_netinjection
+end
+
+
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.RenewableGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractRenewableDispatchForm, S <: AbstractACPowerModel}
+
+    dev_set = [d for d in sys.generators.renewable if (d.available == true && !isa(d, PowerSystems.RenewableFix))]
+
+    if !isempty(dev_set)
+
+        constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys; devices = dev_set)
+
+        q_re = reactivepowervariables(m, dev_set, sys.time_periods);
+
+        varnetinjectiterate!(netinjection.var_reactive, q_re, sys.time_periods, dev_set)
+
+        m = reactivepower(m, dev_set, category_formulation, system_formulation, sys.time_periods)
+
+    end
 
 end
-=#

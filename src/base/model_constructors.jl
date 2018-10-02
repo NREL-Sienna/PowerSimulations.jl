@@ -10,7 +10,7 @@ function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerSimulationsMo
         constructdevice!(op_model.psmodel, netinjection, category.device, category.formulation, op_model.transmission, sys)
     end
 
-    
+
     for category in op_model.demand
         constructdevice!(op_model.psmodel, netinjection, category.device, category.formulation, op_model.transmission, sys)
     end
@@ -28,14 +28,9 @@ function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerSimulationsMo
 
     constructnetwork!(op_model.psmodel, op_model.branches, netinjection, op_model.transmission, op_model.branches, sys)
 
-    #=
+    @objective(model.psmodel, Min, op_model.psmodel.obj_dict[:objective_function])
 
-    @objective(model.psmodel, Min, cost);
-
-    model.psmodel
-
-    =#
-
-    return model
+   return op_model
 
 end
+

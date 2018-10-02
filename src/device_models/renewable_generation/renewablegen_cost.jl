@@ -1,21 +1,20 @@
-function variablecost(m::JuMP.Model, pre::JumpVariable, devices::Array{T}) where T <: PowerSystems.RenewableGen
+function variablecost(m::JuMP.Model, devices::Array{PowerSystems.RenewableCurtailment,1}, device_formulation::Type{D}, system_formulation::Type{S}) where {D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
 
-    cost = JuMP.AffExpr()
+    p_re = m[:p_re]
+    time_index = m[:p_re].axes[2]
+    name_index = m[:p_re].axes[1]
 
-    for (ix, name) in enumerate(pre.axes[1])
-        if name == devices[ix].name
-                JuMP.add_to_expression!(cost,precost(pre[name,:], devices[ix]))
+    var_cost = AffExpr()
+
+    for  (ix, name) in enumerate(name_index)
+        if !isa(devices[ix].econ.curtailpenalty,Nothing)
+            c = gencost(m, p_re[name,:], devices[ix].econ.curtailpenalty)
         else
-            error("Bus name in Array and variable do not match")
+            continue
         end
+            (isa(var_cost,JuMP.AffExpr) && isa(c,JuMP.AffExpr)) ? JuMP.add_to_expression!(var_cost,c) : (isa(var_cost,JuMP.GenericQuadExpr) && isa(c,JuMP.GenericQuadExpr) ? JuMP.add_to_expression!(var_cost,c) : var_cost += c)
     end
 
-    return cost
-
-end
-
-function precost(vars::Array{JuMP.VariableRef,1}, device::Union{PowerSystems.RenewableCurtailment,PowerSystems.RenewableFullDispatch})
-
-    return cost =sum(device.econ.curtailpenalty*(-vars))
+    return var_cost
 
 end

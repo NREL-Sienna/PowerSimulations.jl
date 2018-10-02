@@ -2,20 +2,35 @@ using PowerSystems
 using PowerSimulations
 using JuMP
 
+const PS = PowerSimulations
+
 base_dir = string(dirname(dirname(pathof(PowerSystems))))
-println(joinpath(base_dir,"data/data_5bus.jl"))
-include(joinpath(base_dir,"data/data_5bus.jl"))
-
-sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  1000.0)
-
-m = Model()
-
-devices_netinjection =  PowerSimulations.JumpAffineExpressionArray(length(sys5.buses), sys5.time_periods)
-
-test_cl = [d for d in sys5.loads if !isa(d, PowerSystems.StaticLoad)] # Filter StaticLoads Out
-
-pcl, inyection_array = PowerSimulations.loadvariables(m, devices_netinjection,  test_cl, sys5.time_periods);
-m = PowerSimulations.powerconstraints(m, test_cl, sys5.time_periods)
+println(joinpath(base_dir,"data/data_5bus_uc.jl"))
+include(joinpath(base_dir,"data/data_5bus_uc.jl"))
 
 
-true
+sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing, 100.0)
+
+#Load Active and Reactive Power Variables
+@test try
+    Net = PS.StandardAC
+    m = Model()
+    netinjection = PS.instantiate_network(Net, sys5)
+    PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5)
+true finally end
+
+#Cooper Plate and Dispatch
+@test try
+    Net = PS.CopperPlatePowerModel
+    m = Model();
+    netinjection = PS.instantiate_network(Net, sys5);
+    PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
+true finally end
+
+#PTDF Plate and Dispatch
+@test try
+    Net = PS.StandardPTDF
+    m = Model();
+    netinjection = PS.instantiate_network(Net, sys5);
+    PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
+true finally end

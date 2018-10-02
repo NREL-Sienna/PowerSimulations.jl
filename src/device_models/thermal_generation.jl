@@ -6,13 +6,13 @@ abstract type AbstractThermalDispatchForm <: AbstractThermalFormulation end
 
 abstract type AbstractThermalCommitmentForm <: AbstractThermalFormulation end
 
-abstract type KenuvenThermalCommitment <: AbstractThermalCommitmentForm end
+struct KenuvenThermalCommitment <: AbstractThermalCommitmentForm end
 
-abstract type StandardThermalCommitment <: AbstractThermalCommitmentForm end
+struct StandardThermalCommitment <: AbstractThermalCommitmentForm end
 
-abstract type Dispatch <: AbstractThermalDispatchForm end
+struct ThermalDispatch <: AbstractThermalDispatchForm end
 
-abstract type RampLimitDispatch <: AbstractThermalDispatchForm end
+struct ThermalRampLimitDispatch <: AbstractThermalDispatchForm end
 
 include("thermal_generation/output_constraints.jl")
 include("thermal_generation/ramping_constraints.jl")
