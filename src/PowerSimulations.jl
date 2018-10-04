@@ -68,8 +68,11 @@ include("utils/cost_addition.jl")
 include("utils/timeseries_injections.jl")
 include("utils/device_injections.jl")
 
-#Abstract Network Models
+#Abstract Models
 include("network_models/networks.jl")
+include("service_models/services.jl")
+#include("service_models/reserves.jl")
+
 
 #base and core
 include("core/abstract_models.jl")
