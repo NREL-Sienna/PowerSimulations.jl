@@ -1,31 +1,43 @@
+function all(arr, filter = [])
+    gens = []
+
+    for source in arr
+        if typeof(source) <: Array{<:PowerSystems.Generator}
+            for gen in source
+                gen.name in filter ? push!(gens,gen) : continue
+            end
+        end
+    end
+
+    return gens
+end
+
+#TODO: Make additional methods to handle other device types
+function get_pg(m::JuMP.Model, gen::G, t::Int64) where G <: PowerSystems.ThermalGen
+    return m.obj_dict[:p_th][gen.name,t]
+end
+
+
 function constructservice!(m::JuMP.Model, service::PowerSystems.StaticReserve, sys::PowerSystems.PowerSystem; args...)
 
-    qualifying_units =[]
+    qf = all(sys.generators,[gen.name for gen in service.contributingdevices])
 
-    for source in sys.generators
+    P_max = [gen.tech.activepowerlimits.max for gen in qf]
+    R_max = [(gen.tech.ramplimits != nothing  ? gen.tech.ramplimits.up : gen.tech.activepowerlimits.max ) for gen in qf]
 
-        if typeof(source) <: Array{<:PowerSystems.Generator}
-    
-            for gen in source
-    
-                gen.name in service.contributingdevices ? push!(qualifying_units,gen.name) : continue
-    
-            end
+    srp = JuMP.JuMPArray(Array{ConstraintRef}(undef,sys.time_periods), 1:sys.time_periods) #static reserve provision
+    srr = JuMP.JuMPArray(Array{ConstraintRef}(undef,sys.time_periods), 1:sys.time_periods) #static reserve ramp
 
-        end
+    for t in 1:sys.time_periods
+        # TODO: check the units of ramplimits
+        srp[t] = @constraint(m, sum([P_max[ix] - get_pg(m,g,t) for (ix,g) in enumerate(qf)]) >= service.requirement)
+        srr[t] = @constraint(m, sum([R_max[ix]/60 * service.timeframe for (ix,g) in enumerate(qf)]) >= service.requirement)
 
     end
 
-    srr = JuMP.JuMPArray(Array{ConstraintRef}(undef,sys.time_periods), 1:sys.time_periods)
+    JuMP.registercon(m, :StaticReserveProvision, srp)
+    JuMP.registercon(m, :StaticReserveRamp, srr)
 
-    for t in 1:time_periods
-        # TODO: Check is sum() is the best way to do this in terms of speed. 
-        # TODO: this doesn't have the correct syntax to access the P_max, P_g, rampup values.
-        srr[t] = @constraint(m, sum(minimum(P_max[qualifying_units] - P_g[qualifying_units,t],
-                                            gen[qualifying_units].rampup/60 * service.timeframe)) >= service.requirement)
-    end
-
-    JuMP.registercon(m, :StaticReserveRequirement, srr)
 
     return m
 

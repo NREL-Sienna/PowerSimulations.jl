@@ -6,14 +6,14 @@ abstract type UnitCommitment <: AbstractOperationsModel end
 
 abstract type CustomModel <: AbstractOperationsModel end
 
-mutable struct PowerOperationModel{ M<:AbstractOperationsModel, T<:NetworkModel}
+mutable struct PowerOperationModel{ M<:AbstractOperationsModel, T<:NetworkModel, S<:Union{Nothing,Array{ <: PowerSystems.Service}}}
     psmodel::Type{M}
     generation::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}
     demand::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}
     storage::Union{Nothing,Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}}
     branches::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}
     transmission::Type{T}
-    services::Array{DataType} #TODO: make this explicitly required to be a type of AbstractServiceForm or nothing
+    services::S
     system::PowerSystems.PowerSystem
     model::JuMP.Model
     dynamics::Bool
