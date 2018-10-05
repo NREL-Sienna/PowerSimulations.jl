@@ -1,27 +1,9 @@
-function all(arr, filter = [])
-    gens = []
-
-    for source in arr
-        if typeof(source) <: Array{<:PowerSystems.Generator}
-            for gen in source
-                gen.name in filter ? push!(gens,gen) : continue
-            end
-        end
-    end
-
-    return gens
-end
-
-#TODO: Make additional methods to handle other device types
-function get_pg(m::JuMP.Model, gen::G, t::Int64) where G <: PowerSystems.ThermalGen
-    return m.obj_dict[:p_th][gen.name,t]
-end
 
 
 function constructservice!(m::JuMP.Model, service::PowerSystems.StaticReserve, sys::PowerSystems.PowerSystem; args...)
 
-    qf = all(sys.generators,[gen.name for gen in service.contributingdevices])
-
+    dev_set = all_devices(sys,[gen.name for gen in service.contributingdevices])
+#=
     P_max = [gen.tech.activepowerlimits.max for gen in qf]
     R_max = [(gen.tech.ramplimits != nothing  ? gen.tech.ramplimits.up : gen.tech.activepowerlimits.max ) for gen in qf]
 
@@ -31,13 +13,22 @@ function constructservice!(m::JuMP.Model, service::PowerSystems.StaticReserve, s
     for t in 1:sys.time_periods
         # TODO: check the units of ramplimits
         srp[t] = @constraint(m, sum([P_max[ix] - get_pg(m,g,t) for (ix,g) in enumerate(qf)]) >= service.requirement)
-        srr[t] = @constraint(m, sum([R_max[ix]/60 * service.timeframe for (ix,g) in enumerate(qf)]) >= service.requirement)
+        srr[t] = @constraint(m, sum([get_pg(m,g,t) + R_max[ix]/60 * service.timeframe for (ix,g) in enumerate(qf)]) >= service.requirement)
 
     end
 
     JuMP.registercon(m, :StaticReserveProvision, srp)
     JuMP.registercon(m, :StaticReserveRamp, srr)
+=#
 
+
+    if !isempty(dev_set)
+
+        p_rsv =  reservevariables(m, dev_set, sys.time_periods)
+        print(typeof(dev_set))
+        m =  reserves(m, dev_set, service, sys.time_periods)
+
+    end
 
     return m
 
