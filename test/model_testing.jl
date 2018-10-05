@@ -21,4 +21,5 @@ simple_reserve = PowerSystems.StaticReserve("test_reserve",sys5.generators.therm
                             false)
     PS.buildmodel!(ED)
     ED.model.obj_dict
+    #JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
 true finally end
