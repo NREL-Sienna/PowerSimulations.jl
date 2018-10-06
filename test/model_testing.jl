@@ -23,3 +23,18 @@ simple_reserve = PowerSystems.StaticReserve("test_reserve",sys5.generators.therm
     ED.model.obj_dict
     #JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
 true finally end
+
+@test try
+    UC = PS.PowerOperationModel(PS.UnitCommitment, 
+                                [(device = ThermalGen, formulation =PS.StandardThermalCommitment)], 
+                                [(device = ElectricLoad, formulation = PS.InterruptibleLoad)],
+                                nothing, 
+                                [(device=Line, formulation=PS.PiLine)],
+                                PS.CopperPlatePowerModel,
+                                [simple_reserve], 
+                                sys5,
+                                Model(), 
+                                false)
+    PS.buildmodel!(UC)
+    UC.model.obj_dict
+true finally end
