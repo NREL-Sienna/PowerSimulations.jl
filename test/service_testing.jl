@@ -6,7 +6,8 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  1000.0);
 using PowerSimulations
 const PS = PowerSimulations
 
-simple_reserve = PowerSystems.StaticReserve("test_reserve",sys5.generators.thermal,60.0,[gen.tech for gen in sys5.generators.thermal])
+#simple_reserve = PowerSystems.StaticReserve("test_reserve",sys5.generators.thermal,60.0,[gen.tech for gen in sys5.generators.thermal])
+simple_reserve = PowerSystems.StaticReserve("test_reserve",sys5.generators.thermal,60.0,[sys5.generators.thermal[1].tech])
 
 @test try
     Net = PS.CopperPlatePowerModel

@@ -24,7 +24,7 @@ function reserves(m::JuMP.Model, devices::Array{R,1}, service::PowerSystems.Stat
 
     pmin_rsv = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(time_index)), time_index) #minimum system reserve provision
     pmax_rsv = JuMP.JuMPArray(Array{ConstraintRef}(undef, length.(JuMP.axes(p_rsv))), name_index, time_index) #maximum generator reserve provision
-    #pramp_rsv = JuMP.JuMPArray(Array{ConstraintRef}(undef, length.(JuMP.axes(p_rsv))), name_index, time_index) #maximum generator reserve provision
+    pramp_rsv = JuMP.JuMPArray(Array{ConstraintRef}(undef, length.(JuMP.axes(p_rsv))), name_index, time_index) #maximum generator reserve provision
 
 
     for t in time_index
@@ -33,7 +33,7 @@ function reserves(m::JuMP.Model, devices::Array{R,1}, service::PowerSystems.Stat
         for (ix, name) in enumerate(name_index)
             if name == devices[ix].name
                 pmax_rsv[name,t] = @constraint(m, get_pg(m,devices[ix],t) + p_rsv[name,t] <= P_max[ix])
-                #pramp_rsv[name,t] = @constraint(m, p_rsv[name,t] <= R_max[ix] * service.timeframe)
+                pramp_rsv[name,t] = @constraint(m, p_rsv[name,t] <= R_max[ix]/60 * service.timeframe)
             else
                 error("Gen name in Array and variable do not match")
             end
@@ -43,7 +43,7 @@ function reserves(m::JuMP.Model, devices::Array{R,1}, service::PowerSystems.Stat
 
     JuMP.registercon(m, :RsvProvisionMin, pmin_rsv)
     JuMP.registercon(m, :RsvProvisionMax, pmax_rsv)
-    #JuMP.registercon(m, :RsvProvisionRamp, pramp_rsv)
+    JuMP.registercon(m, :RsvProvisionRamp, pramp_rsv)
 
     return m
 
