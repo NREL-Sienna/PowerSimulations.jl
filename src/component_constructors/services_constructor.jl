@@ -1,6 +1,6 @@
 
 
-function constructservice!(m::JuMP.Model, service::PowerSystems.StaticReserve, sys::PowerSystems.PowerSystem; args...)
+function constructservice!(m::JuMP.Model, service::PowerSystems.StaticReserve, category_formulation::Type{RampLimitedReserve}, sys::PowerSystems.PowerSystem; args...)
 
     dev_set = all_devices(sys,[gen.name for gen in service.contributingdevices])
 

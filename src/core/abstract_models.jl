@@ -6,7 +6,7 @@ abstract type UnitCommitment <: AbstractOperationsModel end
 
 abstract type CustomModel <: AbstractOperationsModel end
 
-mutable struct PowerOperationModel{ M<:AbstractOperationsModel, T<:NetworkModel, S<:Union{Nothing,Array{ <: PowerSystems.Service}}}
+mutable struct PowerOperationModel{ M<:AbstractOperationsModel, T<:NetworkModel, S<:Union{Nothing,Array{NamedTuple{(:service, :formulation), Tuple{D,DataType}}}} where {D <: PowerSystems.Service}}
     psmodel::Type{M}
     generation::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}
     demand::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}

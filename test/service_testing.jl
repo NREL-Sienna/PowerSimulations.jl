@@ -17,6 +17,6 @@ simple_reserve = PowerSystems.StaticReserve("test_reserve",sys5.generators.therm
     PS.constructdevice!(m, netinjection, RenewableGen, PS.RenewableCurtail, Net, sys5);
     PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
     PS.constructnetwork!(m, [(device=Branch, formulation=PS.PiLine)], netinjection, Net, sys5)
-    PS.constructservice!(m,simple_reserve,sys5)
+    PS.constructservice!(m,simple_reserve,PS.RampLimitedReserve,sys5)
     m.obj_dict
 true finally end

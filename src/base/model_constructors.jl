@@ -19,8 +19,8 @@ function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerOperationMode
     end
     =#
     if op_model.services != nothing
-        for category in op_model.services
-            op_model.model = constructservice!(op_model.model, category, sys)
+        for service in op_model.services
+            op_model.model = constructservice!(op_model.model, service.service, service.formulation, sys)
         end
     end
 

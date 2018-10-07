@@ -15,7 +15,7 @@ simple_reserve = PowerSystems.StaticReserve("test_reserve",sys5.generators.therm
                             nothing, 
                             [(device=Line, formulation=PS.PiLine)],
                             PS.CopperPlatePowerModel,
-                            [simple_reserve], 
+                            [(service = simple_reserve, formulation = PS.RampLimitedReserve)], 
                             sys5,
                             Model(), 
                             false)
@@ -31,7 +31,7 @@ true finally end
                                 nothing, 
                                 [(device=Line, formulation=PS.PiLine)],
                                 PS.CopperPlatePowerModel,
-                                [simple_reserve], 
+                                [(service = simple_reserve, formulation = PS.RampLimitedReserve)], 
                                 sys5,
                                 Model(), 
                                 false)
