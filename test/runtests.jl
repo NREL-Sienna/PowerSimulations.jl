@@ -14,9 +14,12 @@ end
     include("network_testing.jl")
 end
 
-#=
-@testset "Model Constructors" begin
-    include("buildED_CN_testing.jl")
-    include("buildED_NB_testing.jl")
+@testset "Services Constructors" begin
+    include("service_testing.jl")
 end
-=#
+
+@testset "Model Constructors" begin
+    include("model_testing.jl")
+    #include("buildED_CN_testing.jl")
+    #include("buildED_NB_testing.jl")
+end

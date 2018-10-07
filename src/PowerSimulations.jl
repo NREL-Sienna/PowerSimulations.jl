@@ -67,9 +67,13 @@ include("utils/undef_check.jl")
 include("utils/cost_addition.jl")
 include("utils/timeseries_injections.jl")
 include("utils/device_injections.jl")
+include("utils/device_retreval.jl")
 
-#Abstract Network Models
+#Abstract Models
 include("network_models/networks.jl")
+include("service_models/services.jl")
+include("service_models/reserves.jl")
+
 
 #base and core
 include("core/abstract_models.jl")
@@ -99,7 +103,7 @@ include("component_constructors/thermalgeneration_constructor.jl")
 include("component_constructors/branch_constructor.jl")
 include("component_constructors/renewablegeneration_constructor.jl")
 include("component_constructors/load_constructor.jl")
-#include("component_constructors/services_constructor.jl")
+include("component_constructors/services_constructor.jl")
 
 #Network constructors
 include("component_constructors/network_constructor.jl")
