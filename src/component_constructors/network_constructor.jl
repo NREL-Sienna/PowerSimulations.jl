@@ -33,7 +33,5 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
     for category in branch_models
         constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args...)
     end
-
-   
-
+    
 end
