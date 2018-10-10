@@ -8,10 +8,11 @@ function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerOperationMode
         constructdevice!(op_model.model, netinjection, category.device, category.formulation, op_model.transmission, sys)
     end
 
-
-    for category in op_model.demand
-        constructdevice!(op_model.model, netinjection, category.device, category.formulation, op_model.transmission, sys)
-    end
+    if op_model.demand != nothing
+        for category in op_model.demand
+            constructdevice!(op_model.model, netinjection, category.device, category.formulation, op_model.transmission, sys)
+        end
+    end 
 
     #=
     for category in model.storage

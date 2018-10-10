@@ -40,7 +40,7 @@ function commitmentconstraints(m::JuMP.Model, devices::Array{T,1}, device_formul
         end
     end
 
-    JuMP.registercon(m, :commitment_th, commitment_th)
+    JuMP.register_object(m, :commitment_th, commitment_th)
 
     return m
 end
@@ -129,8 +129,8 @@ function timeconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
         end
         =#
 
-        JuMP.registercon(m, :minup_th, minup_th)
-        JuMP.registercon(m, :mindown_th, mindown_th)
+        JuMP.register_object(m, :minup_th, minup_th)
+        JuMP.register_object(m, :mindown_th, mindown_th)
 
     else
         @warn("There are no generators with Min-up -down limits data in the system")    

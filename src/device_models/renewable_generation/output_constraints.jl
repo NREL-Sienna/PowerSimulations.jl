@@ -21,7 +21,7 @@ function activepower(m::JuMP.Model, devices::Array{R,1}, device_formulation::Typ
 
     end
 
-    JuMP.registercon(m, :pmax_re, pmax_re)
+    JuMP.register_object(m, :pmax_re, pmax_re)
 
 end
 
@@ -53,7 +53,7 @@ function reactivepower(m::JuMP.Model, devices::Array{R,1}, device_formulation::T
 
     end
 
-    JuMP.registercon(m, :qmax_re, qmax_re)
-    JuMP.registercon(m, :qmin_re, qmin_re)
+    JuMP.register_object(m, :qmax_re, qmax_re)
+    JuMP.register_object(m, :qmin_re, qmin_re)
 
 end

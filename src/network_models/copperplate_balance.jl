@@ -10,7 +10,7 @@ function copperplatebalance(m::JuMP.Model, netinjection::BalanceNamedTuple, time
         cpn[t] = @constraint(m, sum(netinjection.var_active[:,t]) == timeseries_netinjection[t])
     end
 
-    JuMP.registercon(m, :CopperPlateBalance, cpn)
+    JuMP.register_object(m, :CopperPlateBalance, cpn)
 
     return m
 end

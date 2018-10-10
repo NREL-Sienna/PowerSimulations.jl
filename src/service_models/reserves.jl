@@ -41,9 +41,9 @@ function reserves(m::JuMP.Model, devices::Array{R,1}, service::PowerSystems.Stat
 
     end
 
-    JuMP.registercon(m, :RsvProvisionMin, pmin_rsv)
-    JuMP.registercon(m, :RsvProvisionMax, pmax_rsv)
-    JuMP.registercon(m, :RsvProvisionRamp, pramp_rsv)
+    JuMP.register_object(m, :RsvProvisionMin, pmin_rsv)
+    JuMP.register_object(m, :RsvProvisionMax, pmax_rsv)
+    JuMP.register_object(m, :RsvProvisionRamp, pramp_rsv)
 
     return m
 

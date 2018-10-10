@@ -19,7 +19,7 @@ function dc_networkflow(m::JuMP.Model, netinjection::BalanceNamedTuple, PTDF::PT
         end
     end
 
-    JuMP.registercon(m, :branchflow, branchflow)
+    JuMP.register_object(m, :branchflow, branchflow)
 
     return m
 end
