@@ -77,16 +77,42 @@ function timeconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
         mindown_th = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
         minup_th = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
 
+        for t in time_index, (ix,name) in enumerate(name_index)
+            if name==devices[ix].name
+                if t - devices[ix].tech.timelimits.up >= 1
+                    tst = devices[ix].tech.timelimits.up 
+                else
+                    tst = max(0, devices[ix].tech.timelimits.up - initialonduration[name])
+                end
+                if t - devices[ix].tech.timelimits.down >= 1
+                    tsd = devices[ix].tech.timelimits.down
+                else
+                    tsd = max(0, devices[ix].tech.timelimits.down - initialoffduration[name])
+                end
+
+                minup_th[name,t] = @constraint(m,sum([start_th[name,i] for i in ((t - tst - 1) :t) if i > 0 ]) <= on_th[name,t])
+                mindown_th[name,t] = @constraint(m,sum([stop_th[name,i] for i in ((t - tsd - 1) :t) if i > 0]) <= (1 - on_th[name,t]))
+        
+            else
+                error("Bus name in Array and variable do not match")
+                
+            end
+        end
+
+#=
         for (ix,name) in enumerate(name_index)
             if name == devices[ix].name
                 t1 = time_index[1]
 
                 if initialonduration[name] <= devices[ix].tech.timelimits.up
                     minup_th[name,t1] = @constraint(m,sum([start_th[name,i] for i in ((t1 - devices[ix].tech.timelimits.up + 1) :t1) if i > 0 ]) <= on_th[name,t1])
+                else
+                    minup_th[name,t1] = @constraint(m,1>=0) #is there a better way to not populate constraints here?
                 end
                 if initialoffduration[name] <= devices[ix].tech.timelimits.down
-                    mindown_th[name,t1] = @constraint(m,sum([stop_th[name,i] for i in ((t1 - devices[ix].tech.timelimits.down + 1) :t1) if i > 0]) <= (1 - on_th[name,t1]) )
-
+                    mindown_th[name,t1] = @constraint(m,sum([stop_th[name,i] for i in ((t1 - devices[ix].tech.timelimits.down + 1) :t1) if i > 0]) <= (1 - on_th[name,t1]))
+                else
+                    mindown_th[name,t1] = @constraint(m,1>=0) #is there a better way to not populate constraints here?
                 end
             else
                 error("Bus name in Array and variable do not match")
@@ -101,6 +127,7 @@ function timeconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
                 error("Bus name in Array and variable do not match")
             end
         end
+        =#
 
         JuMP.registercon(m, :minup_th, minup_th)
         JuMP.registercon(m, :mindown_th, mindown_th)
