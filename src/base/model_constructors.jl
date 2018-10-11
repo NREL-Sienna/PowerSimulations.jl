@@ -15,13 +15,15 @@ function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerOperationMode
     end 
 
     #=
-    for category in model.storage
+    for category in op_model.storage
         op_model.model = constructdevice!(category.device, network_model, op_model.model, devices_netinjection, sys, category.constraints)
     end
     =#
     if op_model.services != nothing
+        service_providers = Array{NamedTuple{(:device, :formulation),Tuple{DataType,DataType}}}([])
+        [push!(service_providers,x) for x in vcat(op_model.generation,op_model.demand,op_model.storage) if x != nothing]
         for service in op_model.services
-            op_model.model = constructservice!(op_model.model, service.service, service.formulation, sys)
+            op_model.model = constructservice!(op_model.model, service.service, service.formulation, service_providers, sys)
         end
     end
 

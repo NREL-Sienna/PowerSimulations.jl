@@ -58,7 +58,7 @@ function activepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::Typ
         end
 
     end
-``
+
     JuMP.register_object(m, :pmax_th, pmax_th)
     JuMP.register_object(m, :pmin_th, pmin_th)
 
