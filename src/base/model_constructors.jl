@@ -28,7 +28,9 @@ function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerOperationMode
     end
 
 
-    constructnetwork!(op_model.model, [(device=Branch, formulation=op_model.transmission)], netinjection, op_model.transmission, sys)
+    #constructnetwork!(op_model.model, [(device=Branch, formulation=op_model.transmission)], netinjection, op_model.transmission, sys)
+    constructnetwork!(op_model.model, op_model.branches, netinjection, op_model.transmission, sys)
+
 
     @objective(op_model.model, Min, op_model.model.obj_dict[:objective_function])
 
