@@ -72,7 +72,6 @@ include("utils/device_retreval.jl")
 #Abstract Models
 include("network_models/networks.jl")
 include("service_models/services.jl")
-include("service_models/reserves.jl")
 
 
 #base and core
@@ -92,6 +91,8 @@ include("device_models/electric_loads.jl")
 include("device_models/branches.jl")
 #include("device_models/storage.jl")
 #include("device_models/hydro_generation.jl")
+include("service_models/reserves.jl")
+
 
 
 #Network related components

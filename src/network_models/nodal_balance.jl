@@ -48,7 +48,7 @@ function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system
         
         end
 
-        JuMP.registercon(m, :NodalFlowBalance, pf_balance)
+        JuMP.register_object(m, :NodalFlowBalance, pf_balance)
 
     return m
     

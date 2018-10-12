@@ -1,6 +1,7 @@
 using PowerSystems
 using JuMP
-using PowerSimulations
+using PowerSimulations  
+using GLPK
 const PS = PowerSimulations
 
 # ED Testing
@@ -22,7 +23,8 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  1000.0);
                             Model(), 
                             false)
     PS.buildmodel!(sys5,ED)
-    #JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
+    JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
+    (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success) == true
 true finally end
 
 # ED with thermal and curtailable renewable gen, static load, copper plate
@@ -39,7 +41,8 @@ true finally end
                             Model(), 
                             false)
     PS.buildmodel!(sys5,ED)
-    #JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
+    JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
+    (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success) == true
 true finally end
 
 # ED with thermal and fixed renewable gen, interruptable load, copper plate
@@ -56,7 +59,8 @@ true finally end
                             Model(), 
                             false)
     PS.buildmodel!(sys5,ED)
-    #JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
+    JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
+    (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success) == true
 true finally end
 
 # ED with thermal gen, copper plate, and reserve
@@ -72,8 +76,8 @@ true finally end
                             Model(), 
                             false)
     PS.buildmodel!(sys5,ED)
-    #JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
-    #ED.model.moi_backend.model.optimizer.termination_status
+    JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
+    (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success) == true
 true finally end
 
 # UC Testing
@@ -94,7 +98,8 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  1000.0);
                             Model(), 
                             false)
     PS.buildmodel!(sys5,UC)
-    #JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
+    JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
+    (UC.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success) == true
 true finally end
 
 # UC with thermal and curtailable renewable gen, static load, copper plate
@@ -128,7 +133,8 @@ true finally end
                             Model(), 
                             false)
     PS.buildmodel!(sys5,UC)
-    #JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
+    JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
+    (UC.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success) == true
 true finally end
 
 # UC with thermal gen, copper plate, and reserve
@@ -144,6 +150,6 @@ true finally end
                             Model(), 
                             false)
     PS.buildmodel!(sys5,UC)
-    #JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
-    #UC.model.moi_backend.model.optimizer.termination_status
+    JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
+    (UC.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success) == true
 true finally end

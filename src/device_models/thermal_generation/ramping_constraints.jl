@@ -34,8 +34,8 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
             rampup_th[name,t] = @constraint(m,  p_th[name,t] - p_th[name,t-1] <= devices[ix].tech.ramplimits.up)
         end
 
-        JuMP.registercon(m, :rampdown_th, rampdown_th)
-        JuMP.registercon(m, :rampup_th, rampup_th)
+        JuMP.register_object(m, :rampdown_th, rampdown_th)
+        JuMP.register_object(m, :rampup_th, rampup_th)
 
 
     else
@@ -85,8 +85,8 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
             rampup_th[name,t] = @constraint(m, p_th[name,t] - p_th[name,t-1] <= devices[ix].tech.ramplimits.up * on_th[name,t] )
         end
 
-        JuMP.registercon(m, :rampdown_th, rampdown_th)
-        JuMP.registercon(m, :rampup_th, rampup_th)
+        JuMP.register_object(m, :rampdown_th, rampdown_th)
+        JuMP.register_object(m, :rampup_th, rampup_th)
 
     else
         @warn("There are no generators with Ramping Limits Data in the System")    

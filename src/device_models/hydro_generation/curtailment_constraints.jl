@@ -21,8 +21,8 @@ function powerconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int6
         end
     end
 
-    JuMP.registercon(m, :pmax_hydro, pmax_hg)
-    JuMP.registercon(m, :pmin_hydro, pmin_hg)
+    JuMP.register_object(m, :pmax_hydro, pmax_hg)
+    JuMP.register_object(m, :pmin_hydro, pmin_hg)
 
     return m
 

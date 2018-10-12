@@ -26,8 +26,8 @@ function activepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::Typ
 
     end
 
-    JuMP.registercon(m, :pmax_th, pmax_th)
-    JuMP.registercon(m, :pmin_th, pmin_th)
+    JuMP.register_object(m, :pmax_th, pmax_th)
+    JuMP.register_object(m, :pmin_th, pmin_th)
 
     return m
 end
@@ -58,9 +58,9 @@ function activepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::Typ
         end
 
     end
-``
-    JuMP.registercon(m, :pmax_th, pmax_th)
-    JuMP.registercon(m, :pmin_th, pmin_th)
+
+    JuMP.register_object(m, :pmax_th, pmax_th)
+    JuMP.register_object(m, :pmin_th, pmin_th)
 
     return m
 end
@@ -93,8 +93,8 @@ function reactivepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::T
 
     end
 
-    JuMP.registercon(m, :qmax_th, qmax_th)
-    JuMP.registercon(m, :qmin_th, qmin_th)
+    JuMP.register_object(m, :qmax_th, qmax_th)
+    JuMP.register_object(m, :qmin_th, qmin_th)
 
     return m
 end
@@ -128,8 +128,8 @@ function reactivepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::T
 
     end
 
-    JuMP.registercon(m, :qmax_th, qmax_th)
-    JuMP.registercon(m, :qmin_th, qmin_th)
+    JuMP.register_object(m, :qmax_th, qmax_th)
+    JuMP.register_object(m, :qmin_th, qmin_th)
 
     return m
 end

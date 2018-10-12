@@ -27,10 +27,10 @@ function powerconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int6
         end
     end
 
-    JuMP.registercon(m, :pmax_in, pmax_in)
-    JuMP.registercon(m, :pmax_out, pmax_out)
-    JuMP.registercon(m, :pmin_in, pmin_in)
-    JuMP.registercon(m, :pmin_out, pmin_out)
+    JuMP.register_object(m, :pmax_in, pmax_in)
+    JuMP.register_object(m, :pmax_out, pmax_out)
+    JuMP.register_object(m, :pmin_in, pmin_in)
+    JuMP.register_object(m, :pmin_out, pmin_out)
 
     return m
 end
@@ -65,7 +65,7 @@ function energybookkeeping(m::JuMP.Model, devices::Array{T,1}, time_periods::Int
         end
     end
 
-    JuMP.registercon(m, :book_keep, bookkeep_bt)
+    JuMP.register_object(m, :book_keep, bookkeep_bt)
 
     return m
 
@@ -89,7 +89,7 @@ function energyconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int
         end
     end
 
-    JuMP.registercon(m, :energystoragelimit, energylimit_bt)
+    JuMP.register_object(m, :energystoragelimit, energylimit_bt)
 
     return m
 end

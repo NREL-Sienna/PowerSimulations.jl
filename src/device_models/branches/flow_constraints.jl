@@ -16,8 +16,8 @@ function thermalflowlimits(m::JuMP.Model, system_formulation::Type{S}, devices::
         end
     end
 
-    JuMP.registercon(m, :Flow_max_ToFrom, Flow_max_tf)
-    JuMP.registercon(m, :Flow_max_FromTo, Flow_max_ft)
+    JuMP.register_object(m, :Flow_max_ToFrom, Flow_max_tf)
+    JuMP.register_object(m, :Flow_max_FromTo, Flow_max_ft)
 
     return m
 end
@@ -41,8 +41,8 @@ function thermalflowlimits(m::JuMP.Model, system_formulation::Type{S}, devices::
         end
     end
 
-    JuMP.registercon(m, :Flow_max_ToFrom, Flow_max_tf)
-    JuMP.registercon(m, :Flow_max_FromTo, Flow_max_ft)
+    JuMP.register_object(m, :Flow_max_ToFrom, Flow_max_tf)
+    JuMP.register_object(m, :Flow_max_FromTo, Flow_max_ft)
 
     return m
 end
