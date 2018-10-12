@@ -1,4 +1,4 @@
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.Branch}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractBranchForm, S <: PM.AbstractDCPForm}
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{B}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {B <: PowerSystems.Branch, D <: AbstractBranchForm, S <: PM.AbstractDCPForm}
 
     flowvariables(m, system_formulation, sys.branches, sys.time_periods)
 
