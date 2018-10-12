@@ -34,4 +34,6 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 
     dc_networkflow(m, netinjection, PTDF)
 
+    nodalflowbalance(m, netinjection, system_formulation, sys)
+
 end
