@@ -1,4 +1,4 @@
-function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerOperationModel)
+function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerOperationModel; args...)
 
     #TODO: Add check model spec vs data functions before trying to build
 
@@ -27,10 +27,13 @@ function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerOperationMode
         end
     end
 
-
-    #constructnetwork!(op_model.model, [(device=Branch, formulation=op_model.transmission)], netinjection, op_model.transmission, sys)
-    constructnetwork!(op_model.model, op_model.branches, netinjection, op_model.transmission, sys)
-
+    # TODO: make the op_model struct hold a PTDF and disptach constructnetwok! on it's existance
+    if op_model.transmission == PS.StandardPTDF
+        ptdf,  A = PowerSystems.buildptdf(sys.branches, sys.buses)
+        constructnetwork!(op_model.model, op_model.branches, netinjection, op_model.transmission, sys, PTDF = ptdf)
+    else
+        constructnetwork!(op_model.model, op_model.branches, netinjection, op_model.transmission, sys)
+    end
 
     @objective(op_model.model, Min, op_model.model.obj_dict[:objective_function])
 

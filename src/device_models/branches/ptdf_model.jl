@@ -15,7 +15,7 @@ function dc_networkflow(m::JuMP.Model, netinjection::BalanceNamedTuple, PTDF::PT
     #TODO: Make consistent with the use of AxisArrays. This syntax doesn't exploit it properly
     for t in time_index
         for (ix,branch) in enumerate(name_index)
-            branchflow[branch,t] = @constraint(m, fbr[branch,t] == sum(netinjection.var_active[i,t]*PTDF.data[ix,i] for i in node_set) + ts_flow[ix,t])
+            branchflow[branch,t] = @constraint(m, fbr[branch,t] == sum(netinjection.var_active[i,t]*PTDF.data[ix,i] for i in node_set) - ts_flow[ix,t])
         end
     end
 
