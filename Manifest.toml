@@ -234,9 +234,9 @@ version = "0.6.1"
 
 [[MathProgBase]]
 deps = ["Compat"]
-git-tree-sha1 = "eb8bcdf4cc7869651013df29ad6ee16dc8e53794"
+git-tree-sha1 = "3bf2e534e635df810e5f4b4f1a8b6de9004a0d53"
 uuid = "fdba3010-5040-5b88-9595-932c9decdf73"
-version = "0.7.6"
+version = "0.7.7"
 
 [[MbedTLS]]
 deps = ["BinaryProvider", "Libdl", "Pkg", "Random", "Sockets", "Test"]
@@ -309,7 +309,7 @@ version = "0.7.0"
 
 [[PowerSystems]]
 deps = ["AxisArrays", "CSV", "CSVFiles", "Compat", "DataFrames", "Dates", "JuMP", "LinearAlgebra", "Memento", "PowerModels", "SparseArrays", "TimeSeries"]
-git-tree-sha1 = "acc62605923c002eba6faa0711a77220ef09effe"
+git-tree-sha1 = "bcac659f46b3cad6d47c78d3c9c0b0f59c5518c1"
 repo-rev = "master"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
