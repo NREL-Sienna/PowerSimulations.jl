@@ -5,12 +5,12 @@ function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerOperationMode
     netinjection = instantiate_network(op_model.transmission, sys)
 
     for category in op_model.generation
-        constructdevice!(op_model.model, netinjection, category.device, category.formulation, op_model.transmission, sys)
+        constructdevice!(op_model.model, netinjection, category.device, category.formulation, op_model.transmission, sys; args...)
     end
 
     if op_model.demand != nothing
         for category in op_model.demand
-            constructdevice!(op_model.model, netinjection, category.device, category.formulation, op_model.transmission, sys)
+            constructdevice!(op_model.model, netinjection, category.device, category.formulation, op_model.transmission, sys; args...)
         end
     end 
 
@@ -23,12 +23,12 @@ function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerOperationMode
         service_providers = Array{NamedTuple{(:device, :formulation),Tuple{DataType,DataType}}}([])
         [push!(service_providers,x) for x in vcat(op_model.generation,op_model.demand,op_model.storage) if x != nothing]
         for service in op_model.services
-            op_model.model = constructservice!(op_model.model, service.service, service.formulation, service_providers, sys)
+            op_model.model = constructservice!(op_model.model, service.service, service.formulation, service_providers, sys; args...)
         end
     end
 
 
-    constructnetwork!(op_model.model, op_model.branches, netinjection, op_model.transmission, sys, PTDF = op_model.ptdf)
+    constructnetwork!(op_model.model, op_model.branches, netinjection, op_model.transmission, sys; args..., PTDF = op_model.ptdf)
 
     @objective(op_model.model, Min, op_model.model.obj_dict[:objective_function])
 
