@@ -8,16 +8,16 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
     if :PTDF in keys(args)
         PTDF = args[:PTDF]
     else
-        @warn("no PTDF supplied")
         PTDF = nothing
     end
 
-    if PTDF==nothing 
+    if !isa(PTDF,PTDFArray)
+        warn("no PTDF supplied")
         PTDF,  A = PowerSystems.buildptdf(sys.branches, sys.buses) 
     end
 
     for category in branch_models
-        constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args...)
+        constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args... , PTDF=PTDF)
     end 
     
 end
