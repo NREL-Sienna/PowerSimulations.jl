@@ -4,14 +4,6 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
 
 end
 
-function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractDCPowerModel}
-
-    for category in branch_models
-        constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args...)
-    end 
-    
-end
-
 function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{StandardPTDF}, sys::PowerSystems.PowerSystem; args...)
     if :PTDF in keys(args)
         PTDF = args[:PTDF]
@@ -24,10 +16,18 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
         PTDF,  A = PowerSystems.buildptdf(sys.branches, sys.buses) 
     end
 
-    constructnetwork!(m, branch_models, netinjection, AbstractDCPowerModel, sys; args..., PTDF=PTDF)
-    
+    for category in branch_models
+        constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args..., PTDF=PTDF)
+    end     
 end
 
+function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractDCPowerModel}
+
+    for category in branch_models
+        constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args...)
+    end 
+    
+end
 
 function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: Union{DCAngleLLForm, DCAngleForm}}
 
