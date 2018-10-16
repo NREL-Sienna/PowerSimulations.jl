@@ -4,7 +4,7 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
 
 end
 
-function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: Union{StandardNetFlow, StandardNetFlowLL}}
+function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{Union{StandardNetFlow, StandardNetFlowLL}}, sys::PowerSystems.PowerSystem; args...)
 
     for category in branch_models
         constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args...)
@@ -12,7 +12,7 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
     
 end
 
-function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: StandardPTDF}
+function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{StandardPTDF}, sys::PowerSystems.PowerSystem; args...)
     if :PTDF in keys(args)
         PTDF = args[:PTDF]
     else
