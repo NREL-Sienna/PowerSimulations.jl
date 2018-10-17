@@ -5,6 +5,10 @@
 # - why do non-qualified exported functions (e.g. ids, var) still throw warnings?
 #
 #
+# Comments
+#
+# - Ideally the net_injection variables would be bounded.  This can be done using an adhoc data model extention
+#
 
 
 #################################################################################
