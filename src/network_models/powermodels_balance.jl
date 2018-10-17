@@ -29,7 +29,7 @@ function post_nip(pm::PM.GenericPowerModel)
     end
 
     for i in PM.ids(pm, :bus)
-       	constraint_kcl_ni(pm, i)
+        constraint_kcl_ni(pm, i)
     end
 
     for i in PM.ids(pm, :branch)
