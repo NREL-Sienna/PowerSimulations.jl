@@ -38,10 +38,10 @@ true finally end
     JuMP.num_variables(pm.model) == 96
 true finally end
 
-#@test try
-#    pm = PowerSimulations.build_nip_model(case5_data, PM.SOCWRPowerModel, optimizer=ipopt_optimizer)
-#    JuMP.num_variables(pm.model) == 110
-#true finally end
+@test try
+    pm = PowerSimulations.build_nip_model(case5_data, PM.SOCWRPowerModel, optimizer=ipopt_optimizer)
+    JuMP.num_variables(pm.model) == 110
+true finally end
 
 
 # test PowerSimulations type extentions
