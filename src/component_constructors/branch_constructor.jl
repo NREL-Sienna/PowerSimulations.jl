@@ -4,8 +4,6 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 
     thermalflowlimits(m, system_formulation, sys.branches, sys.time_periods)
 
-    nodalflowbalance(m, netinjection, system_formulation, sys)
-
 end
 
 #=
@@ -33,7 +31,5 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
     thermalflowlimits(m, system_formulation, sys.branches, sys.time_periods)
 
     dc_networkflow(m, netinjection, PTDF)
-
-    nodalflowbalance(m, netinjection, system_formulation, sys)
 
 end
