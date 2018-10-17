@@ -16,13 +16,13 @@ const StandardAC = PM.StandardACPForm
 
 ##This line is from PowerModels, needs to be removed later
 
-abstract type DCAngleForm <: PM.AbstractDCPForm end
+abstract type DCAngleForm <: PM.DCPlosslessForm end
 
 abstract type DCAngleLLForm <: PM.AbstractDCPLLForm end
 
 #abstract type StandardDCPLLForm<: PM.AbstractDCPLLForm end
 
-abstract type AbstractFlowForm <: PM.AbstractDCPForm end
+abstract type AbstractFlowForm <: PM.NFAForm end
 
 abstract type AbstractFlowLLForm <: PM.AbstractDCPLLForm end
 

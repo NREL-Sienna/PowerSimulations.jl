@@ -52,7 +52,7 @@ StandardACModel = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(da
 
 @test try
     pm = PowerSimulations.build_nip_model(case5_data, DCAngleModel, optimizer=ipopt_optimizer)
-    JuMP.num_variables(pm.model) == 48
+    JuMP.num_variables(pm.model) == 34
 true finally end
 
 # test PowerSimulations type extentions
