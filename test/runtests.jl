@@ -11,6 +11,7 @@ using Test
 end
 
 @testset "Network Constructors" begin
+    include("powermodels_testing.jl")
     include("network_testing.jl")
 end
 
@@ -20,7 +21,7 @@ end
 
 @testset "Model Constructors" begin
     include("model_testing.jl")
-    include("model_solve_testing.jl")
+    #include("model_solve_testing.jl")
     #include("buildED_CN_testing.jl")
     #include("buildED_NB_testing.jl")
 end
