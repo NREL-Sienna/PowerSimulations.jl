@@ -144,11 +144,6 @@ uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 version = "0.7.1"
 
 [[InfrastructureModels]]
-deps = ["Compat", "JuMP", "Memento"]
-git-tree-sha1 = "811529796a8b52b8f31a1a8cf28a9d96bd90f53f"
-uuid = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
-version = "0.0.9"
-[[InfrastructureModels]]
 deps = ["Compat", "JuMP", "Juniper", "LinearAlgebra", "MathOptInterface", "Memento"]
 git-tree-sha1 = "c96fd194a82592b889be5d55f82c9648321786db"
 repo-rev = "moi"
@@ -315,20 +310,12 @@ uuid = "2dfb63ee-cc39-5dd5-95bd-886bf059d720"
 version = "0.4.1"
 
 [[PowerModels]]
-git-tree-sha1 = "51b0019db7b54def164b242e4c30ad0ff6669957"
-repo-rev = "moi-julia-v0.7"
+deps = ["Compat", "InfrastructureModels", "JSON", "JuMP", "Juniper", "LinearAlgebra", "MathOptInterface", "MathProgBase", "Memento", "Pkg", "SparseArrays"]
+git-tree-sha1 = "34a554aeae10289499a4b1ed401615ee772609f0"
+repo-rev = "v0.7-moi"
 repo-url = "https://github.com/lanl-ansi/PowerModels.jl.git"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
-version = "0.7.0"
-
-    [PowerModels.deps]
-    Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
-    InfrastructureModels = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
-    JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
-    JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
-    MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
-    Memento = "f28f55f0-a522-5efc-85c2-fe41dfb9b2d9"
-    Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+version = "0.8.4"
 
 [[PowerSystems]]
 deps = ["AxisArrays", "CSV", "CSVFiles", "Compat", "DataFrames", "Dates", "JuMP", "LinearAlgebra", "Memento", "PowerModels", "SparseArrays", "TimeSeries"]
