@@ -13,41 +13,35 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
 
     if !isa(PTDF,PTDFArray)
         warn("no PTDF supplied")
-        PTDF,  A = PowerSystems.buildptdf(sys.branches, sys.buses) 
+        PTDF,  A = PowerSystems.buildptdf(sys.branches, sys.buses)
     end
 
     for category in branch_models
         constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args..., PTDF=PTDF)
-    end     
+    end
 end
 
 function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractDCPowerModel}
 
-    for category in branch_models
-        constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args...)
-    end 
-    
-end
+    if :solver in keys(args)
+        solver = args[:solver]
+    else
+        @error("The optimizer is not defined ")
+    end
 
-function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: Union{DCAngleLLForm, DCAngleForm}}
+    PM_dict = pass_to_pm(sys)
 
-    anglevariables(m, system_formulation, sys)
+    PM_F = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
 
+    PM_object = PS.build_nip_model(PM_dict, PM_F, optimizer=solver);
+
+    #= TODO: Needs to be generalized later for other branch models not covered by PM.
     for category in branch_models
         constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args...)
     end
-    
+    =#
+
+    m = PM_object.model
+
 end
 
-
-function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractACPowerModel}
-
-    anglevariables(m, system_formulation, sys)
-
-    voltagevariables(m, system_formulation, sys)
-
-    for category in branch_models
-        constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args...)
-    end
-    
-end
