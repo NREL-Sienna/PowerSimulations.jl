@@ -22,7 +22,7 @@ end
 
 function pwlgencost(m::JuMP.Model, variable::VariableRef, cost_component::Array{Tuple{Float64, Float64}})
 
-    pwlvars = @variable(m, [i = 1:(length(cost_component)-1)], base_name = "pwl_{$(variable)}", lower_bound = 0.0, upper_bound = (cost_component[i+1][1] - cost_component[i][1]))
+    pwlvars = @variable(m, [i = 1:(length(cost_component)-1)], base_name = "pwl_{$(variable)}", start = 0.0, lower_bound = 0.0, upper_bound = (cost_component[i+1][1] - cost_component[i][1]))
 
     @constraint(m, sum(pwlvars) == variable)
 
