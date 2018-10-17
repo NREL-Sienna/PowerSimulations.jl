@@ -2,7 +2,7 @@ using PowerSystems
 using JuMP
 base_dir = dirname(dirname(pathof(PowerSystems)))
 include(joinpath(base_dir,"data/data_5bus_uc.jl"))
-sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  1000.0);
+sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);
 using PowerSimulations
 const PS = PowerSimulations
 
@@ -18,7 +18,7 @@ simple_reserve = PowerSystems.StaticReserve("test_reserve",vcat(sys5.generators.
     PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
     PS.constructnetwork!(m, [(device=Branch, formulation=PS.PiLine)], netinjection, Net, sys5)
     PS.constructservice!(m, simple_reserve, PS.RampLimitedReserve, [(device = ThermalGen, formulation =PS.ThermalDispatch),
-                                                              (device = RenewableGen, formulation = PS.RenewableCurtail)], 
+                                                              (device = RenewableGen, formulation = PS.RenewableCurtail)],
                                                               sys5)
     m.obj_dict
 true finally end
@@ -32,7 +32,7 @@ true finally end
     PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
     PS.constructnetwork!(m, [(device=Branch, formulation=PS.PiLine)], netinjection, Net, sys5)
     PS.constructservice!(m, simple_reserve, PS.RampLimitedReserve, [(device = ThermalGen, formulation =PS.StandardThermalCommitment),
-                                                              (device = RenewableGen, formulation = PS.RenewableCurtail)], 
+                                                              (device = RenewableGen, formulation = PS.RenewableCurtail)],
                                                               sys5)
     m.obj_dict
 true finally end

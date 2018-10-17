@@ -2,7 +2,7 @@ using PowerSystems
 using JuMP
 base_dir = dirname(dirname(pathof(PowerSystems)))
 include(joinpath(base_dir,"data/data_5bus_uc.jl"))
-sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  1000.0);
+sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);
 using PowerSimulations
 const PS = PowerSimulations
 
@@ -14,7 +14,6 @@ const PS = PowerSimulations
     PS.constructdevice!(m, netinjection, RenewableGen, PS.RenewableCurtail, Net, sys5);
     PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys5)
-    m.obj_dict
 true finally end
 
 # Flow Models
@@ -26,7 +25,6 @@ true finally end
     PS.constructdevice!(m, netinjection, RenewableGen, PS.RenewableCurtail, Net, sys5);
     PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys5)
-    m.obj_dict
 true finally end
 
 @test try
@@ -38,7 +36,6 @@ true finally end
     PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
     #Branch models are not implemented yet. They don't reflect losses.
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys5)
-    m.obj_dict
 true finally end
 
 # Flow Models
@@ -52,5 +49,14 @@ true finally end
     PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
     #Branch models are not implemented yet. They don't reflect losses.
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys5, PTDF = ptdf)
-    m.obj_dict
+true finally end
+
+@test try
+    Net = PS.DCAngleForm
+    m = Model();
+    netinjection = PS.instantiate_network(Net, sys5);
+    m = PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys5; solver = glpk_optimizer)
+    PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
+    PS.nodalflowbalance(m, netinjection,  Net, sys5)
+    @objective(m, Min, m.obj_dict[:objective_function])
 true finally end
