@@ -15,39 +15,41 @@
 # Model Definition
 
 ""
-function build_nip_model(data::Dict{String,Any}, model_constructor; kwargs...)
-    return PM.build_generic_model(data, model_constructor, post_nip; kwargs...)
+function build_nip_model(data::Dict{String,Any}, model_constructor; multinetwork=true, kwargs...)
+    return PM.build_generic_model(data, model_constructor, post_nip; multinetwork=multinetwork, kwargs...)
 end
 
 ""
 function post_nip(pm::PM.GenericPowerModel)
-    PM.variable_voltage(pm)
-    variable_net_injection(pm)
-    PM.variable_branch_flow(pm)
-    PM.variable_dcline_flow(pm)
+    for (n, network) in PM.nws(pm)
+        PM.variable_voltage(pm, nw=n)
+        variable_net_injection(pm, nw=n)
+        PM.variable_branch_flow(pm, nw=n)
+        PM.variable_dcline_flow(pm, nw=n)
 
-    PM.constraint_voltage(pm)
+        PM.constraint_voltage(pm)
 
-    for i in PM.ids(pm, :ref_buses)
-        PM.constraint_theta_ref(pm, i)
-    end
+        for i in PM.ids(pm, :ref_buses, nw=n)
+            PM.constraint_theta_ref(pm, i, nw=n)
+        end
 
-    for i in PM.ids(pm, :bus)
-        constraint_kcl_ni(pm, i)
-    end
+        for i in PM.ids(pm, :bus, nw=n)
+            constraint_kcl_ni(pm, i, nw=n)
+        end
 
-    for i in PM.ids(pm, :branch)
-        PM.constraint_ohms_yt_from(pm, i)
-        PM.constraint_ohms_yt_to(pm, i)
+        for i in PM.ids(pm, :branch, nw=n)
+            PM.constraint_ohms_yt_from(pm, i, nw=n)
+            PM.constraint_ohms_yt_to(pm, i, nw=n)
 
-        PM.constraint_voltage_angle_difference(pm, i)
+            PM.constraint_voltage_angle_difference(pm, i, nw=n)
 
-        PM.constraint_thermal_limit_from(pm, i)
-        PM.constraint_thermal_limit_to(pm, i)
-    end
+            PM.constraint_thermal_limit_from(pm, i, nw=n)
+            PM.constraint_thermal_limit_to(pm, i, nw=n)
+        end
 
-    for i in PM.ids(pm, :dcline)
-        PM.constraint_dcline(pm, i)
+        for i in PM.ids(pm, :dcline)
+            PM.constraint_dcline(pm, i, nw=n)
+        end
     end
 end
 
