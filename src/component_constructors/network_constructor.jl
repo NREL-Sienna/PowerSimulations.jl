@@ -42,7 +42,7 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
 
     PM_F = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
 
-    PM_object = PS.build_nip_model(PM_dict, PM.DCPPowerModel, optimizer=solver);
+    PM_object = PS.build_nip_model(PM_dict, PM_F, optimizer=solver);
 
     #= TODO: Needs to be generalized later for other branch models not covered by PM.
     for category in branch_models
