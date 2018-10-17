@@ -30,7 +30,6 @@ using TimeSeries
 using PowerSystems
 import PowerModels
 import InfrastructureModels
-using Compat
 using GLPK
 using MathOptInterface
 #using Clp

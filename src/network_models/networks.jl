@@ -12,7 +12,7 @@ abstract type CopperPlatePowerModel <: PM.AbstractPowerFormulation end
 
 const StandardAC = PM.StandardACPForm
 
-#Second Level Abstraction DC 
+#Second Level Abstraction DC
 
 ##This line is from PowerModels, needs to be removed later
 
@@ -28,10 +28,10 @@ abstract type AbstractFlowLLForm <: PM.AbstractDCPLLForm end
 
 #Third Level of Abstraction.
 
-abstract type StandardPTDF <: AbstractFlowForm end    
+abstract type StandardPTDF <: AbstractFlowForm end
 
 abstract type StandardPTDFLL <: AbstractFlowLLForm end
 
-abstract type StandardNetFlow <: AbstractFlowForm end    
+abstract type StandardNetFlow <: AbstractFlowForm end
 
 abstract type StandardNetFlowLL <: AbstractFlowLLForm end
