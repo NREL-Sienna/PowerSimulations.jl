@@ -60,5 +60,9 @@ function pass_to_pm(sys::PowerSystems.PowerSystem)
     "load"           => Dict{String,Any}(),
     )
 
+    # TODO: this function adds overhead in large number of time_steps
+    # We can do better later.
+    PM_translation = IM.replicate(PM_translation,sys.time_periods)
+
     return PM_translation
 end

@@ -29,6 +29,7 @@ using JuMP
 using TimeSeries
 using PowerSystems
 import PowerModels
+import InfrastructureModels
 using Compat
 using GLPK
 using MathOptInterface
@@ -43,6 +44,7 @@ using AxisArrays
 #################################################################################
 # Type Alias From other Packages
 const PM = PowerModels
+const IM = InfrastructureModels
 const NetworkModel = PM.AbstractPowerFormulation
 const PS = PowerSimulations
 const MOI = MathOptInterface
