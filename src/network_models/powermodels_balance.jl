@@ -27,7 +27,7 @@ function post_nip(pm::PM.GenericPowerModel)
         PM.variable_branch_flow(pm, nw=n)
         PM.variable_dcline_flow(pm, nw=n)
 
-        PM.constraint_voltage(pm)
+        PM.constraint_voltage(pm, nw=n)
 
         for i in PM.ids(pm, :ref_buses, nw=n)
             PM.constraint_theta_ref(pm, i, nw=n)
