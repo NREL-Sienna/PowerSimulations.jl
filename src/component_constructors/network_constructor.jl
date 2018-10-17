@@ -4,6 +4,12 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
 
 end
 
+function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractFlowForm}
+
+    nodalflowbalance(m, netinjection, system_formulation, sys)
+
+end
+
 function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{StandardPTDF}, sys::PowerSystems.PowerSystem; args...)
     if :PTDF in keys(args)
         PTDF = args[:PTDF]
@@ -19,6 +25,9 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
     for category in branch_models
         constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args..., PTDF=PTDF)
     end
+
+    nodalflowbalance(m, netinjection, system_formulation, sys)
+
 end
 
 function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractDCPowerModel}
@@ -33,7 +42,7 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
 
     PM_F = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
 
-    PM_object = PS.build_nip_model(PM_dict, PM_F, optimizer=solver);
+    PM_object = PS.build_nip_model(PM_dict, PM.DCPPowerModel, optimizer=solver);
 
     #= TODO: Needs to be generalized later for other branch models not covered by PM.
     for category in branch_models
@@ -41,7 +50,11 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
     end
     =#
 
-    m = PM_object.model
+    # this is a hack... do not try by yourself
+    PM_object.model.ext[:PM_object] = PM_object
 
+
+
+    return PM_object.model
 end
 

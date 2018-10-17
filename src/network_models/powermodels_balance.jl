@@ -66,7 +66,7 @@ end
 ""
 function variable_active_net_injection(pm::PM.GenericPowerModel; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
     PM.var(pm, nw, cnd)[:pni] = @variable(pm.model,
-        [i in PM.ids(pm, nw, :bus)], base_name="$(nw)_$(cnd)_pin",
+        [i in PM.ids(pm, nw, :bus)], base_name="$(nw)_$(cnd)_pni",
         start = 0.0
     )
 end
@@ -74,7 +74,7 @@ end
 ""
 function variable_reactive_net_injection(pm::PM.GenericPowerModel; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
     PM.var(pm, nw, cnd)[:qni] = @variable(pm.model,
-        [i in PM.ids(pm, nw, :bus)], base_name="$(nw)_$(cnd)_qin",
+        [i in PM.ids(pm, nw, :bus)], base_name="$(nw)_$(cnd)_qni",
         start = 0.0
     )
 end
