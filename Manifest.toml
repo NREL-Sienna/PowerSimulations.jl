@@ -207,7 +207,7 @@ version = "0.18.4+"
 
 [[Juniper]]
 deps = ["Distributed", "JSON", "JuMP", "LinearAlgebra", "MathProgBase", "Random", "Statistics"]
-git-tree-sha1 = "b21446f05d4730e0e76f921509602566661e915c"
+git-tree-sha1 = "63dd2ed8603fe384f8e9c7e9bf9a6eeb8f2b2e22"
 repo-rev = "0.7"
 repo-url = "https://github.com/lanl-ansi/Juniper.jl.git"
 uuid = "2ddba703-00a4-53a7-87a5-e8b9971dde84"
@@ -318,8 +318,8 @@ uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 version = "0.8.4"
 
 [[PowerSystems]]
-deps = ["AxisArrays", "CSV", "CSVFiles", "Compat", "DataFrames", "Dates", "JuMP", "LinearAlgebra", "Memento", "PowerModels", "SparseArrays", "TimeSeries"]
-git-tree-sha1 = "bcac659f46b3cad6d47c78d3c9c0b0f59c5518c1"
+deps = ["AxisArrays", "CSV", "CSVFiles", "Compat", "DataFrames", "Dates", "InfrastructureModels", "Juniper", "LinearAlgebra", "Memento", "PowerModels", "SparseArrays", "TimeSeries"]
+git-tree-sha1 = "64e3905a1f7581c88722c4a71ecfe529ed082c2f"
 repo-rev = "master"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
