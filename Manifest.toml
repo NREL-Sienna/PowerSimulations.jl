@@ -207,7 +207,7 @@ version = "0.18.4+"
 
 [[Juniper]]
 deps = ["Distributed", "JSON", "JuMP", "LinearAlgebra", "MathProgBase", "Random", "Statistics"]
-git-tree-sha1 = "a9bad433a38ac93e7b954ab7b125047f4b2fb180"
+git-tree-sha1 = "b21446f05d4730e0e76f921509602566661e915c"
 repo-rev = "0.7"
 repo-url = "https://github.com/lanl-ansi/Juniper.jl.git"
 uuid = "2ddba703-00a4-53a7-87a5-e8b9971dde84"
