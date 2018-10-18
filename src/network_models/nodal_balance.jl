@@ -63,7 +63,7 @@ function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system
 
             !isassigned(netinjection.var_active,ix,t) ? netinjection.var_active[ix,t] = -PM.var(m.ext[:PM_object],:pni, ix, nw = t) : JuMP.add_to_expression!(netinjection.var_active[ix,t],-PM.var(m.ext[:PM_object],:pni, ix, nw = t))
 
-            pf_balance[bus,t] = @constraint(m, netinjection.var_active[ix, t] == netinjection.timeseries_active[ix, t])
+            pf_balance[bus,t] = @constraint(m, netinjection.var_active[ix, t] == (netinjection.timeseries_active[ix, t]/sys.basepower))
 
         end
 
@@ -84,7 +84,7 @@ function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system
 
             !isassigned(netinjection.var_reactive,ix,t) ? netinjection.var_reactive[ix,t] = -PM.var(m.ext[:PM_object], :qni, ix, nw = t) : JuMP.add_to_expression!(netinjection.var_reactive[ix,t],-PM.var(m.ext[:PM_object], :qni, ix, nw = t))
 
-            qf_balance[bus,t] = @constraint(m, netinjection.var_reactive[ix, t] == netinjection.timeseries_reactive[ix, t])
+            qf_balance[bus,t] = @constraint(m, netinjection.var_reactive[ix, t] == (netinjection.timeseries_reactive[ix, t]/sys.basepower))
 
         end
 

@@ -1,28 +1,83 @@
-function get_branches_to_pm(lines::Array{PowerSystems.Line})
+function get_branch_to_pm(ix::Int64, branch::PowerSystems.Transformer2W)
+    PM_branch = Dict{String,Any}(
+        "br_r"        => branch.r,
+        "rate_a"      => branch.rate,
+        "shift"       => 0.0,
+        "rate_b"      => branch.rate,
+        "br_x"        => branch.r,
+        "rate_c"      => branch.rate,
+        "g_to"        => 0.0,
+        "g_fr"        => 0.0,
+        "b_fr"        => branch.primaryshunt/2,
+        "f_bus"       => branch.connectionpoints.from.number,
+        "br_status"   => Float64(branch.available),
+        "t_bus"       => branch.connectionpoints.to.number,
+        "b_to"        => branch.primaryshunt/2,
+        "index"       => ix,
+        "angmin"      => -1.50,
+        "angmax"      =>  1.50,
+        "transformer" => true,
+        "tap"         => 1.0,
+    )
+    return PM_branch
+end
+
+function get_branch_to_pm(ix::Int64, branch::PowerSystems.TapTransformer)
+    PM_branch = Dict{String,Any}(
+        "br_r"        => branch.r,
+        "rate_a"      => branch.rate,
+        "shift"       => 0.0,
+        "rate_b"      => branch.rate,
+        "br_x"        => branch.r,
+        "rate_c"      => branch.rate,
+        "g_to"        => 0.0,
+        "g_fr"        => 0.0,
+        "b_fr"        => branch.primaryshunt/2,
+        "f_bus"       => branch.connectionpoints.from.number,
+        "br_status"   => Float64(branch.available),
+        "t_bus"       => branch.connectionpoints.to.number,
+        "b_to"        => branch.primaryshunt/2,
+        "index"       => ix,
+        "angmin"      => -1.50,
+        "angmax"      =>  1.50,
+        "transformer" => true,
+        "tap"         => branch.tap
+    )
+    return PM_branch
+end
+
+function get_branch_to_pm(ix::Int64, branch::PowerSystems.Line)
+    PM_branch = Dict{String,Any}(
+        "br_r"        => branch.r,
+        "rate_a"      => branch.rate.from_to,
+        "shift"       => 0.0,
+        "rate_b"      => branch.rate.from_to,
+        "br_x"        => branch.r,
+        "rate_c"      => branch.rate.from_to,
+        "g_to"        => 0.0,
+        "g_fr"        => 0.0,
+        "b_fr"        => branch.b.from,
+        "f_bus"       => branch.connectionpoints.from.number,
+        "br_status"   => Float64(branch.available),
+        "t_bus"       => branch.connectionpoints.to.number,
+        "b_to"        => branch.b.to,
+        "index"       => ix,
+        "angmin"      => branch.anglelimits.min,
+        "angmax"      => branch.anglelimits.max,
+        "transformer" => false,
+        "tap"         => 1.0,
+    )
+    return PM_branch
+end
+
+
+function get_branches_to_pm(branches::Array{T}) where {T <: PowerSystems.Branch}
         PM_branches = Dict{String,Any}()
-        for (ix, branch) in enumerate(lines)
-            PM_branch = Dict{String,Any}(
-            "br_r"        => branch.r,
-            "rate_a"      => branch.rate.from_to,
-            "shift"       => 0.0,
-            "rate_b"      => branch.rate.from_to,
-            "br_x"        => branch.r,
-            "rate_c"      => branch.rate.from_to,
-            "g_to"        => 0.0,
-            "g_fr"        => 0.0,
-            "b_fr"        => branch.b.from,
-            "f_bus"       => branch.connectionpoints.from.number,
-            "br_status"   => Float64(branch.available),
-            "t_bus"       => branch.connectionpoints.to.number,
-            "b_to"        => branch.b.to,
-            "index"       => ix,
-            "angmin"      => branch.anglelimits.min,
-            "angmax"      => branch.anglelimits.max,
-            "transformer" => false,
-            "tap"         => 1.0,
-            )
-            PM_branches["$(ix)"] = PM_branch
+
+        for (ix, branch) in enumerate(branches)
+            PM_branches["$(ix)"] = get_branch_to_pm(ix, branch)
         end
+
     return PM_branches
 end
 
