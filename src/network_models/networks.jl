@@ -1,6 +1,6 @@
 #First Level Abstraction
 
-const AbstractACPowerModel = Union{PM.AbstractACPForm, PM.AbstractACRForm}
+const AbstractACPowerModel = Union{PM.AbstractACPForm, PM.AbstractACRForm, PM.AbstractWRForm}
 
 const AbstractDCPowerModel = Union{PM.AbstractDCPForm, PM.AbstractDCPLLForm} #Adopt from PowerModels, LL -> Line Losses
 

@@ -57,8 +57,31 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
     # this is a hack... do not try by yourself
     PM_object.model.ext[:PM_object] = PM_object
 
-
-
     return PM_object.model
 end
 
+function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractACPowerModel}
+
+    if :solver in keys(args)
+        solver = args[:solver]
+    else
+        @error("The optimizer is not defined ")
+    end
+
+    PM_dict = pass_to_pm(sys)
+
+    PM_F = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
+
+    PM_object = PS.build_nip_model(PM_dict, PM_F, optimizer=solver);
+
+    #= TODO: Needs to be generalized later for other branch models not covered by PM.
+    for category in branch_models
+        constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args...)
+    end
+    =#
+
+    # this is a hack... do not try by yourself
+    PM_object.model.ext[:PM_object] = PM_object
+
+    return PM_object.model
+end
