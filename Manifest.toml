@@ -144,8 +144,8 @@ uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 version = "0.7.1"
 
 [[InfrastructureModels]]
-deps = ["Compat", "JuMP", "Juniper", "LinearAlgebra", "MathOptInterface", "Memento"]
-git-tree-sha1 = "c96fd194a82592b889be5d55f82c9648321786db"
+deps = ["Compat", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento"]
+git-tree-sha1 = "d37591ba872ef0753fc72da31503880e122b0da1"
 repo-rev = "moi"
 repo-url = "https://github.com/lanl-ansi/InfrastructureModels.jl.git"
 uuid = "e8e45514-c753-11e8-2a1b-cd93cb9d98d1"
@@ -175,9 +175,9 @@ version = "0.4.2"
 
 [[IterTools]]
 deps = ["Pkg", "SparseArrays", "Test"]
-git-tree-sha1 = "3eb252416e1a5215530420cdd22b46208bb9d4c7"
+git-tree-sha1 = "79246285c43602384e6f1943b3554042a3712056"
 uuid = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
-version = "1.1.0"
+version = "1.1.1"
 
 [[IterableTables]]
 deps = ["DataValues", "IteratorInterfaceExtensions", "Requires", "TableTraits", "TableTraitsUtils", "Test"]
@@ -250,9 +250,9 @@ version = "0.7.7"
 
 [[MbedTLS]]
 deps = ["BinaryProvider", "Libdl", "Pkg", "Random", "Sockets", "Test"]
-git-tree-sha1 = "3775d205b09b624aa06d39012a8920ba99cb3b8b"
+git-tree-sha1 = "4b890362c0c2fdb14a575ce927f1f4eeac6dda9f"
 uuid = "739be429-bea8-5141-9913-cc70e7f3736d"
-version = "0.6.3"
+version = "0.6.4"
 
 [[Memento]]
 deps = ["Compat", "JSON", "Libdl", "Nullables", "Pkg", "Syslogs", "Test", "TimeZones"]
@@ -294,10 +294,10 @@ uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 version = "1.0.2"
 
 [[Parsers]]
-deps = ["Dates", "Mmap", "Pkg", "Test"]
-git-tree-sha1 = "d5252e3f228a513b9947585e95b94d146b7d66e4"
+deps = ["Dates", "Mmap", "Pkg", "Test", "WeakRefStrings"]
+git-tree-sha1 = "ea664eeba4e47c64dc38b12805835f8156d4d40c"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
-version = "0.2.7"
+version = "0.2.8"
 
 [[Pkg]]
 deps = ["Dates", "LibGit2", "Markdown", "Printf", "REPL", "Random", "SHA", "UUIDs"]
@@ -311,7 +311,7 @@ version = "0.4.1"
 
 [[PowerModels]]
 deps = ["Compat", "InfrastructureModels", "JSON", "JuMP", "Juniper", "LinearAlgebra", "MathOptInterface", "MathProgBase", "Memento", "Pkg", "SparseArrays"]
-git-tree-sha1 = "34a554aeae10289499a4b1ed401615ee772609f0"
+git-tree-sha1 = "33146f580fe2c2e6ccf8ff8ac2c22eed2316a576"
 repo-rev = "v0.7-moi"
 repo-url = "https://github.com/lanl-ansi/PowerModels.jl.git"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
@@ -319,7 +319,7 @@ version = "0.8.4"
 
 [[PowerSystems]]
 deps = ["AxisArrays", "CSV", "CSVFiles", "Compat", "DataFrames", "Dates", "InfrastructureModels", "Juniper", "LinearAlgebra", "Memento", "PowerModels", "SparseArrays", "TimeSeries"]
-git-tree-sha1 = "64e3905a1f7581c88722c4a71ecfe529ed082c2f"
+git-tree-sha1 = "0644c4f0ad38e10c053c1a322d68eccb137f3c71"
 repo-rev = "master"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
