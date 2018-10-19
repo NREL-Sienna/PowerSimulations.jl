@@ -163,8 +163,8 @@ function constraint_kcl_ni_expr(pm::PM.GenericPowerModel, i::Int; nw::Int=pm.cnw
     bus_arcs = PM.ref(pm, nw, :bus_arcs, i)
     bus_arcs_dc = PM.ref(pm, nw, :bus_arcs_dc, i)
 
-    pni_expr = PM.ref(pm, nw, :bus, i, "pni")
-    qni_expr = PM.ref(pm, nw, :bus, i, "qni")
+    pni_expr = PM.ref(pm, nw, :bus, i, "pni", cnd)
+    qni_expr = PM.ref(pm, nw, :bus, i, "qni", cnd)
 
     constraint_kcl_ni_expr(pm, nw, cnd, i, bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
 end
