@@ -42,7 +42,7 @@ function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system
 
         for t in time_index, (ix,bus) in enumerate(bus_name_index)
 
-            isassigned(netinjection.var_active,ix, t) ? true : @error("Islanded Bus in the system")
+            isassigned(netinjection.var_active,ix, t) ? true : error("Islanded Bus in the system")
 
             pf_balance[bus,t] = @constraint(m, netinjection.var_active[ix, t] == netinjection.timeseries_active[ix, t])
         

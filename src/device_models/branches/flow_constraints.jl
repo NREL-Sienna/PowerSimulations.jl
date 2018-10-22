@@ -4,15 +4,22 @@ function thermalflowlimits(m::JuMP.Model, system_formulation::Type{S}, devices::
     name_index = m[:fbr].axes[1]
     time_index = m[:fbr].axes[2]
 
+    device_index = Dict(value => key for (key, value) in Dict(collect(enumerate([d.name for d in devices]))))
+
     Flow_max_tf = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
     Flow_max_ft = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
 
     for t in time_index, (ix, name) in enumerate(name_index)
-        if name == devices[ix].name
-            Flow_max_tf[name, t] = @constraint(m, fbr[name, t] <= devices[ix].rate.to_from)
-            Flow_max_ft[name, t] = @constraint(m, fbr[name, t] >= -1*devices[ix].rate.from_to)
+        if name in keys(device_index)
+            if name == devices[device_index[name]].name
+                Fmax = get_Fmax(devices[device_index[name]])
+                Flow_max_tf[name, t] = @constraint(m, fbr[name, t] <= Fmax.to_from)
+                Flow_max_ft[name, t] = @constraint(m, fbr[name, t] >= -1*Fmax.from_to)
+            else
+                error("Branch name in Array and variable do not match")
+            end
         else
-            error("Branch name in Array and variable do not match")
+            warn("No flow limit constraint populated for $(name)")
         end
     end
 
@@ -29,15 +36,22 @@ function thermalflowlimits(m::JuMP.Model, system_formulation::Type{S}, devices::
     name_index = m[:fbr_fr].axes[1]
     time_index = m[:fbr_to].axes[2]
 
+    device_index = Dict(value => key for (key, value) in Dict(collect(enumerate([d.name for d in devices]))))
+
     Flow_max_tf = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
     Flow_max_ft = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
 
     for t in time_index, (ix, name) in enumerate(name_index)
-        if name == devices[ix].name
-            Flow_max_tf[name, t] = @constraint(m, fbr_fr[name, t] <= devices[ix].rate.to_from)
-            Flow_max_ft[name, t] = @constraint(m, fbr_to[name, t] >= -1*devices[ix].rate.from_to)
+        if name in keys(device_index)
+            if name == devices[device_index[name]].name
+                Fmax = get_Fmax(devices[device_index[name]])
+                Flow_max_tf[name, t] = @constraint(m, fbr_fr[name, t] <= Fmax.rate.to_from)
+                Flow_max_ft[name, t] = @constraint(m, fbr_to[name, t] >= -1*Fmax.rate.from_to)
+            else
+                error("Branch name in Array and variable do not match")
+            end
         else
-            error("Branch name in Array and variable do not match")
+            warn("No flow limit constraint populated for $(name)")
         end
     end
 
