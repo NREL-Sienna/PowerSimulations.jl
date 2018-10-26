@@ -79,7 +79,7 @@ function map_jump_vars(model::JuMP.Model)
     moivars = [moi_optimizer_vmap[v.index] for v in vars]
     return Dict(zip(vars,moivars))
 end
-    
+
 
 function map_optimizer_vars(model::JuMP.Model)
     # maps optimizer variablerefs (keys) to jump variable refs (values)
@@ -124,4 +124,68 @@ function map_optimizer_constraints(model::JuMP.Model)
     moi_optimizer_map = map_moi_opt_constraints(model)
     moiconstraints = [moi_optimizer_map[c.index] for c in constraints]
     return Dict(zip(moiconstraints,constraints))
+end
+
+
+function create_result_dict(jump_array, ::Type{Int64})
+
+    d = Dict{String, Array{Int64}}()
+
+    for var in jump_array.axes[1]
+        arr = Int64[]
+
+        for t in jump_array.axes[2]
+            push!(arr, Int64(JuMP.result_value(jump_array[var, t])))
+        end
+
+        d[var] = arr
+    end
+
+    return d
+
+end
+
+
+function create_result_dict(jump_array, ::Type{Float64})
+
+    d = Dict{String, Array{Float64}}()
+
+    for var in jump_array.axes[1]
+        arr = Float64[]
+
+        for t in jump_array.axes[2]
+            push!(arr, Float64(JuMP.result_value(jump_array[var, t])))
+        end
+
+        d[var] = arr
+    end
+
+    return d
+
+end
+
+
+function create_result_dict(jump_array, k)
+
+    if k in [:on_th, :start_th, :stop_th]
+        return create_result_dict(jump_array, Int64)
+    elseif k in [:p_th, :fbr]
+        return create_result_dict(jump_array, Float64)
+    end
+
+
+end
+
+
+function get_model_result(pspom::PS.PowerOperationModel)
+
+    d = Dict{Symbol, DataFrame}()
+    for (k, v) in pspom.model.obj_dict
+        if typeof(v) <: JuMPArray{VariableRef}
+            d[k] = create_result_dict(v, k)
+        end
+    end
+
+    return d
+
 end
