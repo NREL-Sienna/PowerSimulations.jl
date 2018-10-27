@@ -228,7 +228,7 @@ function commitment_duration(res::Dict, initial,  transition::Symbol, minutes_pe
     res_df = melt(res_df, :period, variable_name = :Device)
 
     res_df = join(res_df,on_devices, on = :Device)
-    res_df = by(res_df[res_df[:value] .== 1 ,[:Device,:period]], :Device, df -> tail(df[[:period]],1))
+    res_df = by(res_df[res_df[:value] .== 1 ,[:Device,:period]], :Device, df -> DataFrames.tail(df[[:period]],1))
 
     if size(res_df,1) > 0 
         res_df.value  = ((last_period + 1) .- res_df.period) .* minutes_per_step/60
