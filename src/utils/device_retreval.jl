@@ -215,10 +215,12 @@ function commitment_duration(res::Dict, initial,  transition::Symbol, minutes_pe
     elseif transition == :stop_th
         status = 0
     end
-    on_devices = on_devices[on_devices[:value].==status,[:Device]]
+    off_devices = copy(on_devices)
+    off_devices = off_devices[off_devices.value.!=status,[:Device]]
+    off_devices.value = 0.0
+    on_devices = on_devices[on_devices.value.==status,[:Device]]
 
     initial = melt(DataFrame(initial), variable_name = :Device)
-    #initial[:Device] = map(String, initial[:Device])
     initial.value = initial.value .+ (last_period * minutes_per_step/60) 
 
     # for devices that have changed status in the last step, calculate how long they have been at their current status
@@ -234,6 +236,7 @@ function commitment_duration(res::Dict, initial,  transition::Symbol, minutes_pe
         res_df.value  = ((last_period + 1) .- res_df.period) .* minutes_per_step/60
         res_df = join(on_devices,res_df[[:Device,:value]], on = :Device, kind = :outer)
         res_df[findall(ismissing,res_df.value),:] = join(initial, res_df[findall(ismissing,res_df.value),[:Device]], on=:Device)
+        res_df = join(res_df,off_devices,on=:Device,kind=:outer)
 
     else
         # for everything else, add the current step periods to initial status
