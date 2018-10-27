@@ -242,7 +242,7 @@ function commitment_duration(res::Dict, initial,  transition::Symbol, minutes_pe
         # for everything else, add the current step periods to initial status
         res_df = copy(on_devices)
         res_df = join(initial,res_df,on=:Device)
-        res_df = join(res_df,off_devices,on=:Device,kind=:outer)        
+        res_df = vcat(res_df,off_devices)        
     end
    
     return Dict(zip(map(String,res_df.Device),res_df.value))
