@@ -189,3 +189,58 @@ function get_model_result(pspom::PS.PowerOperationModel)
     return d
 
 end
+
+function get_previous_value_df(res::DataFrame)
+    res[:period] = 1:size(res, 1)
+    var_res = melt(res[end,:], :period, variable_name = :Device)
+    return var_res
+end
+
+function get_previous_value(res::DataFrame)
+    var_res = get_previous_value_df(res)
+    prev_val = Dict(zip(map(String,var_res[:Device]),var_res[:value]))
+    return prev_val
+end
+
+function commitment_duration(res::Dict, initial,  transition::Symbol, minutes_per_step = 60)
+    # res is the results df from the previous solution
+    # initial is the dict that defines the initial status (e.g. initialonduration)
+    # transition is the variable of commitment transition {:start_th or :stop_th}
+    
+    last_period = size(res[:on_th],1)
+    
+    on_devices = get_previous_value_df(res[:on_th])
+    if transition == :start_th
+        status = 1
+    elseif transition == :stop_th
+        status = 0
+    end
+    on_devices = on_devices[on_devices[:value].==status,[:Device]]
+
+    initial = melt(DataFrame(initial), variable_name = :Device)
+    #initial[:Device] = map(String, initial[:Device])
+    initial.value = initial.value .+ (last_period * minutes_per_step/60) 
+
+    # for devices that have changed status in the last step, calculate how long they have been at their current status
+    res_df = copy(res[transition])
+    res_df[:period] = 1:size(res_df, 1)
+
+    res_df = melt(res_df, :period, variable_name = :Device)
+
+    res_df = join(res_df,on_devices, on = :Device)
+    res_df = by(res_df[res_df[:value] .== 1 ,[:Device,:period]], :Device, df -> tail(df[[:period]],1))
+
+    if size(res_df,1) > 0 
+        res_df.value  = ((last_period + 1) .- res_df.period) .* minutes_per_step/60
+        res_df = join(on_devices,res_df[[:Device,:value]], on = :Device, kind = :outer)
+        res_df[findall(ismissing,res_df.value),:] = join(initial, res_df[findall(ismissing,res_df.value),[:Device]], on=:Device)
+
+    else
+        # for everything else, add the current step periods to initial status
+        res_df = copy(on_devices)
+        res_df = join(initial,res_df,on=:Device)        
+    end
+   
+    return Dict(zip(map(String,res_df.Device),res_df.value))
+end
+
