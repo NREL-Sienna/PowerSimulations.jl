@@ -236,14 +236,13 @@ function commitment_duration(res::Dict, initial,  transition::Symbol, minutes_pe
         res_df.value  = ((last_period + 1) .- res_df.period) .* minutes_per_step/60
         res_df = join(on_devices,res_df[[:Device,:value]], on = :Device, kind = :outer)
         res_df[findall(ismissing,res_df.value),:] = join(initial, res_df[findall(ismissing,res_df.value),[:Device]], on=:Device)
-        res_df = join(res_df,off_devices,on=:Device,kind=:outer)
-
     else
         # for everything else, add the current step periods to initial status
         res_df = copy(on_devices)
         res_df = join(initial,res_df,on=:Device)
-        res_df = vcat(res_df,off_devices)        
     end
+    res_df = vcat(res_df,off_devices)        
+
    
     return Dict(zip(map(String,res_df.Device),res_df.value))
 end
