@@ -12,8 +12,17 @@ function variablecost(m::JuMP.Model, devices::Array{T,1}, device_formulation::Ty
         else
             error("Bus name in Array and variable do not match")
         end
-            # TODO: Move this to a new function
-            (isa(var_cost,JuMP.AffExpr) && isa(c,JuMP.AffExpr)) ? JuMP.add_to_expression!(var_cost,c) : (isa(var_cost,JuMP.GenericQuadExpr) && isa(c,JuMP.GenericQuadExpr) ? JuMP.add_to_expression!(var_cost,c) : var_cost += c)
+
+        # TODO: Add no load costs?
+
+        # TODO: Move this to a new function
+        if isa(var_cost,JuMP.AffExpr) && isa(c,JuMP.AffExpr)
+            JuMP.add_to_expression!(var_cost,c)
+        elseif isa(var_cost,JuMP.GenericQuadExpr) && isa(c,JuMP.GenericQuadExpr)
+            JuMP.add_to_expression!(var_cost,c)
+        else
+            var_cost += c
+        end
     end
 
     return var_cost

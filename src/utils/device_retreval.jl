@@ -206,9 +206,9 @@ function commitment_duration(res::Dict, initial,  transition::Symbol, minutes_pe
     # res is the results df from the previous solution
     # initial is the dict that defines the initial status (e.g. initialonduration)
     # transition is the variable of commitment transition {:start_th or :stop_th}
-    
+
     last_period = size(res[:on_th],1)
-    
+
     on_devices = get_previous_value_df(res[:on_th])
     if transition == :start_th
         status = 1
@@ -221,7 +221,7 @@ function commitment_duration(res::Dict, initial,  transition::Symbol, minutes_pe
     on_devices = on_devices[on_devices.value.==status,[:Device]]
 
     initial = melt(DataFrame(initial), variable_name = :Device)
-    initial.value = initial.value .+ (last_period * minutes_per_step/60) 
+    initial.value = initial.value .+ (last_period * minutes_per_step/60)
 
     # for devices that have changed status in the last step, calculate how long they have been at their current status
     res_df = copy(res[transition])
@@ -232,7 +232,7 @@ function commitment_duration(res::Dict, initial,  transition::Symbol, minutes_pe
     res_df = join(res_df,on_devices, on = :Device)
     res_df = by(res_df[res_df[:value] .== 1 ,[:Device,:period]], :Device, df -> DataFrames.tail(df[[:period]],1))
 
-    if size(res_df,1) > 0 
+    if size(res_df,1) > 0
         res_df.value  = ((last_period + 1) .- res_df.period) .* minutes_per_step/60
         res_df = join(on_devices,res_df[[:Device,:value]], on = :Device, kind = :outer)
         res_df[findall(ismissing,res_df.value),:] = join(initial, res_df[findall(ismissing,res_df.value),[:Device]], on=:Device)
@@ -241,9 +241,9 @@ function commitment_duration(res::Dict, initial,  transition::Symbol, minutes_pe
         res_df = copy(on_devices)
         res_df = join(initial,res_df,on=:Device)
     end
-    res_df = vcat(res_df,off_devices)        
+    res_df = vcat(res_df,off_devices)
 
-   
+
     return Dict(zip(map(String,res_df.Device),res_df.value))
 end
 
