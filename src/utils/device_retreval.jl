@@ -135,7 +135,7 @@ function create_result_dict(jump_array, ::Type{Int64})
         arr = Int64[]
 
         for t in jump_array.axes[2]
-            push!(arr, Int64(JuMP.result_value(jump_array[var, t])))
+            push!(arr, Int64(round(JuMP.result_value(jump_array[var, t]))))
         end
 
         d[var] = arr
