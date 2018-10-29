@@ -36,7 +36,10 @@ function pwlgencost(m::JuMP.Model, variable::VariableRef, cost_component::Array{
 
     for (ix, pwlvar) in enumerate(pwlvars)
 
-        gen_cost = JuMP.add_to_expression!(gen_cost, (cost_component[ix + 1][1] * cost_component[ix + 1][2] - cost_component[ix][1] * cost_component[ix][2]) / (cost_component[ix + 1][2] - cost_component[ix][2])  * pwlvar)
+        gen_cost = JuMP.add_to_expression!(gen_cost, (
+                cost_component[ix + 1][1] * cost_component[ix + 1][2] - cost_component[ix][1] * cost_component[ix][2]
+            ) / ( cost_component[ix + 1][2] - cost_component[ix][2] ) * pwlvar
+        )
 
     end
 
