@@ -247,3 +247,28 @@ function commitment_duration(res::Dict, initial,  transition::Symbol, minutes_pe
     return Dict(zip(map(String,res_df.Device),res_df.value))
 end
 
+
+function collect_results(simulation_results)
+    dfs = []
+    vars = []
+
+    for (d,step) in simulation_results
+        for (v,df) in step
+            df.Date = d
+            df.period = 1:size(df,1)
+            df.DateTime = [(DateTime(df.Date[ix])+Hour(df.period[ix]-1)) for ix in df.period]
+            push!(dfs,df)
+            push!(vars,v)
+        end
+    end
+
+    sim_res = Dict()
+    for var in unique(vars)
+        ids = findall(vars -> vars == var,vars)
+        sim_res[var] = copy(dfs[ids[1]])
+        for id in ids[2:end]
+            sim_res[var] = vcat(sim_res[var],dfs[id])
+        end
+    end
+    return(sim_res)
+end
