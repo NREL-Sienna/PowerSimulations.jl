@@ -14,7 +14,7 @@ function activepower(m::JuMP.Model, devices::Array{R,1}, device_formulation::Typ
     for t in time_index, (ix, name) in enumerate(name_index)
 
         if name == devices[ix].name
-            pmax_re[name, t] = @constraint(m, p_re[name, t] <= devices[ix].tech.installedcapacity*devices[ix].scalingfactor.values[t])
+            pmax_re[name, t] = @constraint(m, p_re[name, t] <= devices[ix].tech.installedcapacity * values(devices[ix].scalingfactor)[t])
         else
             error("Bus name in Array and variable do not match")
         end

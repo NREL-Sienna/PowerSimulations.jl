@@ -15,7 +15,7 @@ function powerconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int6
     for t in phy.axes[2], (ix, name) in enumerate(phy.axes[1])
         if name == devices[ix].name
             pmin_hg[name, t] = @constraint(m, phy[name, t] >= 0.0)
-            pmax_hg[name, t] = @constraint(m, phy[name, t] <= devices[ix].tech.activepowerlimits.max * devices[ix].scalingfactor.values[t])
+            pmax_hg[name, t] = @constraint(m, phy[name, t] <= devices[ix].tech.activepowerlimits.max * values(devices[ix].scalingfactor)[t])
         else
             error("Bus name in Array and variable do not match")
         end

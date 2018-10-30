@@ -25,7 +25,7 @@ function economic_dispatch(sys,tp)
     device = sys.loads[4]
     for i in [device.name]
         for t in 1:time_periods
-            objective = objective + 5000*(pcl[i, t] - device.maxactivepower*device.scalingfactor.values[t])
+            objective = objective + 5000*(pcl[i, t] - device.maxactivepower * values(device.scalingfactor)[t])
         end
     end
 

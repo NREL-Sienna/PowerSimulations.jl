@@ -278,7 +278,7 @@ version = "0.8.4"
     SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [[PowerSystems]]
-git-tree-sha1 = "cfd2626b281d971a59d6d0e81218ee19d3a1fa90"
+git-tree-sha1 = "e7e2b23ced9af4622866413bf332f4484fa4ec16"
 repo-rev = "master"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
@@ -406,9 +406,9 @@ uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [[TimeSeries]]
 deps = ["Dates", "DelimitedFiles", "Random", "RecipesBase", "Statistics", "Test"]
-git-tree-sha1 = "3997f5a96c9738a19592950dfc37632a91fd57b0"
+git-tree-sha1 = "5a7bcdfbdac440ad5395b97701a21f423b338fc5"
 uuid = "9e3dc215-6440-5c97-bce1-76c03772f85e"
-version = "0.13.0"
+version = "0.14.0"
 
 [[TimeZones]]
 deps = ["Compat", "EzXML", "Mocking", "Nullables"]
