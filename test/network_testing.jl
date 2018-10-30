@@ -7,6 +7,7 @@ using PowerSimulations
 const PS = PowerSimulations
 
 @test try
+    @info "testing copper plate"
     Net = PS.CopperPlatePowerModel
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
@@ -19,6 +20,7 @@ true finally end
 
 # Flow Models
 @test try
+    @info "testing net flow"
     Net = PS.StandardNetFlow
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
@@ -30,6 +32,7 @@ true finally end
 true finally end
 
 @test try
+    @info "testing net flow with lost load"
     Net = PS.StandardNetFlowLL
     m = Model();
     netinjection = PS.instantiate_network(Net, sys5);
@@ -43,6 +46,7 @@ true finally end
 
 # Flow Models
 @test try
+    @info "testing PTDF"
     Net = PS.StandardPTDF
     m = Model();
     ptdf,  A = PowerSystems.buildptdf(sys5.branches, sys5.buses)
