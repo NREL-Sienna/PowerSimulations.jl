@@ -12,6 +12,7 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  1000.0);
 
 # ED with thermal gen, static load, copper plate
 @test try
+    @info "ED with thermal gen, static load, copper plate"
     ED = PS.PowerOperationModel(PS.EconomicDispatch, 
                             [(device = ThermalGen, formulation =PS.ThermalDispatch)], 
                             nothing,
@@ -30,6 +31,7 @@ true finally end
 
 # ED with thermal and curtailable renewable gen, static load, copper plate
 @test try
+    @info "ED with thermal and curtailable renewable gen, static load, copper plate"
     ED = PS.PowerOperationModel(PS.EconomicDispatch, 
                             [(device = ThermalGen, formulation =PS.ThermalDispatch),
                              (device = RenewableGen, formulation = PS.RenewableCurtail)], 
@@ -49,6 +51,7 @@ true finally end
 
 # ED with thermal and fixed renewable gen, interruptable load, copper plate
 @test try
+    @info "ED with thermal and fixed renewable gen, interruptable load, copper plate"
     ED = PS.PowerOperationModel(PS.EconomicDispatch, 
                             [(device = ThermalGen, formulation = PS.ThermalDispatch),
                              (device = RenewableGen, formulation = PS.RenewableCurtail)], 
@@ -68,6 +71,7 @@ true finally end
 
 # ED with thermal gen, copper plate, and reserve
 @test try
+    @info "ED with thermal gen, copper plate, and reserve"
     ED = PS.PowerOperationModel(PS.EconomicDispatch, 
                             [(device = ThermalGen, formulation =PS.ThermalDispatch)], 
                             nothing,
@@ -91,6 +95,7 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  1000.0);
 
 # UC with thermal gen, static load, copper plate
 @test try
+    @info "UC with thermal gen, static load, copper plate"
     UC = PS.PowerOperationModel(PS.EconomicDispatch, 
                             [(device = ThermalGen, formulation =PS.StandardThermalCommitment)], 
                             nothing,
@@ -109,6 +114,7 @@ true finally end
 
 # UC with thermal and curtailable renewable gen, static load, copper plate
 @test try
+    @info "UC with thermal and curtailable renewable gen, static load, copper plate"
     UC = PS.PowerOperationModel(PS.EconomicDispatch, 
                             [(device = ThermalGen, formulation =PS.StandardThermalCommitment),
                              (device = RenewableGen, formulation = PS.RenewableCurtail)], 
@@ -127,6 +133,7 @@ true finally end
 
 # UC with thermal and fixUC renewable gen, interruptable load, copper plate
 @test try
+    @info "UC with thermal and fixUC renewable gen, interruptable load, copper plate"
     UC = PS.PowerOperationModel(PS.EconomicDispatch, 
                             [(device = ThermalGen, formulation = PS.StandardThermalCommitment),
                              (device = RenewableGen, formulation = PS.RenewableCurtail)], 
@@ -146,6 +153,7 @@ true finally end
 
 # UC with thermal gen, copper plate, and reserve
 @test try
+    @info "UC with thermal gen, copper plate, and reserve"
     UC = PS.PowerOperationModel(PS.EconomicDispatch, 
                             [(device = ThermalGen, formulation =PS.StandardThermalCommitment)], 
                             nothing,
