@@ -12,7 +12,7 @@ function activepower(m::JuMP.Model, devices::Array{L,1}, device_formulation::Typ
     pmax_cl = JuMP.JuMPArray(Array{ConstraintRef}(undef, length.(JuMP.axes(p_cl))), name_index, time_index)
     for t in time_index, (ix, name) in enumerate(name_index)
         if name == devices[ix].name
-            pmax_cl[name, t] = @constraint(m, p_cl[name, t] <= devices[ix].maxactivepower*devices[ix].scalingfactor.values[t])
+            pmax_cl[name, t] = @constraint(m, p_cl[name, t] <= devices[ix].maxactivepower * values(devices[ix].scalingfactor)[t])
         else
             error("Bus name in Array and variable do not match")
         end

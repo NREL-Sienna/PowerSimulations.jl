@@ -16,7 +16,7 @@ function active_timeseries_netinjection(sys::PowerSystems.PowerSystem)
 
              for t in 1:sys.time_periods
 
-                 fixed_source = [fs.tech.installedcapacity*fs.scalingfactor.values[t] for fs in source if (fs.bus == b && isa(fs,fix_resource))]
+                 fixed_source = [fs.tech.installedcapacity * values(fs.scalingfactor)[t] for fs in source if (fs.bus == b && isa(fs,fix_resource))]
 
                  isempty(fixed_source) ? break : fixed_source = tsnetinjection[b.number,t] -= sum(fixed_source)
 
@@ -30,7 +30,7 @@ function active_timeseries_netinjection(sys::PowerSystems.PowerSystem)
 
              for t in 1:sys.time_periods
 
-             staticload = [sl.maxactivepower*sl.scalingfactor.values[t] for sl in sys.loads if sl.bus == b]
+             staticload = [sl.maxactivepower * values(sl.scalingfactor)[t] for sl in sys.loads if sl.bus == b]
 
              isempty(staticload) ? break : tsnetinjection[b.number,t] += sum(staticload)
 
@@ -56,7 +56,7 @@ function reactive_timeseries_netinjection(sys::PowerSystems.PowerSystem)
 
              for t in 1:sys.time_periods
 
-                 fixed_source = [fs.tech.installedcapacity*sin(acos(fs.tech.powerfactor))*fs.scalingfactor.values[t] for fs in source if (fs.bus == b && isa(fs,fix_resource))]
+                 fixed_source = [fs.tech.installedcapacity*sin(acos(fs.tech.powerfactor))* values(fs.scalingfactor)[t] for fs in source if (fs.bus == b && isa(fs,fix_resource))]
 
                  isempty(fixed_source) ? break : fixed_source = tsnetinjection[b.number,t] -= sum(fixed_source)
 
@@ -70,7 +70,7 @@ function reactive_timeseries_netinjection(sys::PowerSystems.PowerSystem)
 
              for t in 1:sys.time_periods
 
-             staticload = [sl.maxreactivepower*sl.scalingfactor.values[t] for sl in sys.loads if sl.bus == b]
+             staticload = [sl.maxreactivepower * values(sl.scalingfactor)[t] for sl in sys.loads if sl.bus == b]
 
              isempty(staticload) ? break : tsnetinjection[b.number,t] += sum(staticload)
 
