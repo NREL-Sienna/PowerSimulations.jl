@@ -169,7 +169,7 @@ function create_result_dict(jump_array, k)
 
     if k in [:on_th, :start_th, :stop_th]
         return create_result_dict(jump_array, Int64)
-    elseif k in [:p_th, :fbr]
+    elseif k in [:p_th, :fbr, :p_re, :p_cl, :p_rsv, :q_th, :q_cl, :q_re]
         return create_result_dict(jump_array, Float64)
     end
 
