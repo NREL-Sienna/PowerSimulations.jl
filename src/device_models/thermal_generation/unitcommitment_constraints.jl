@@ -99,36 +99,6 @@ function timeconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
             end
         end
 
-#=
-        for (ix,name) in enumerate(name_index)
-            if name == devices[ix].name
-                t1 = time_index[1]
-
-                if initialonduration[name] <= devices[ix].tech.timelimits.up
-                    minup_th[name,t1] = @constraint(m,sum([start_th[name,i] for i in ((t1 - devices[ix].tech.timelimits.up + 1) :t1) if i > 0 ]) <= on_th[name,t1])
-                else
-                    minup_th[name,t1] = @constraint(m,1>=0) #is there a better way to not populate constraints here?
-                end
-                if initialoffduration[name] <= devices[ix].tech.timelimits.down
-                    mindown_th[name,t1] = @constraint(m,sum([stop_th[name,i] for i in ((t1 - devices[ix].tech.timelimits.down + 1) :t1) if i > 0]) <= (1 - on_th[name,t1]))
-                else
-                    mindown_th[name,t1] = @constraint(m,1>=0) #is there a better way to not populate constraints here?
-                end
-            else
-                error("Bus name in Array and variable do not match")
-            end
-        end
-
-        for t in time_index[2:end], (ix,name) in enumerate(name_index)
-            if name == devices[ix].name
-                minup_th[name,t] = @constraint(m,sum([start_th[name,i] for i in ((t - devices[ix].tech.timelimits.up + 1) :t) if i > 0 ]) <= on_th[name,t])
-                mindown_th[name,t] = @constraint(m,sum([stop_th[name,i] for i in ((t - devices[ix].tech.timelimits.down + 1) :t) if i > 0]) <= (1 - on_th[name,t]) )
-            else
-                error("Bus name in Array and variable do not match")
-            end
-        end
-        =#
-
         JuMP.register_object(m, :minup_th, minup_th)
         JuMP.register_object(m, :mindown_th, mindown_th)
 
