@@ -83,8 +83,8 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
         end
 
         for t in time_index[2:end], (ix,name) in enumerate(name_index)
-            rampdown_th[name,t] = @constraint(m, p_th[name,t-1] * ( 1 - stop_th[name,t1] ) - p_th[name,t] <= devices[ix].tech.ramplimits.down)
-            rampup_th[name,t] = @constraint(m, p_th[name,t] * ( 1 - start_th[name,t1] ) - p_th[name,t-1] <= devices[ix].tech.ramplimits.up * on_th[name,t] )
+            rampdown_th[name,t] = @constraint(m, p_th[name,t-1] * ( 1 - stop_th[name,t] ) - p_th[name,t] <= devices[ix].tech.ramplimits.down )
+            rampup_th[name,t] = @constraint(m, p_th[name,t] * ( 1 - start_th[name,t] ) - p_th[name,t-1] <= devices[ix].tech.ramplimits.up )
         end
 
         JuMP.register_object(m, :rampdown_th, rampdown_th)
