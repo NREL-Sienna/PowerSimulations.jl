@@ -128,7 +128,7 @@ true finally end
                             false,
                             nothing)
     PS.buildmodel!(sys5,UC)
-    #JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
+    JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
 true finally end
 
 # UC with thermal and fixUC renewable gen, interruptable load, copper plate
