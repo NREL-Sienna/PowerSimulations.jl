@@ -16,7 +16,7 @@ function active_timeseries_netinjection(sys::PowerSystems.PowerSystem)
 
              for t in 1:sys.time_periods
 
-                 fixed_source = [fs.tech.installedcapacity * values(fs.scalingfactor)[t] for fs in source if (fs.bus == b && isa(fs,fix_resource))]
+                 fixed_source = [fs.tech.installedcapacity * values(fs.scalingfactor)[t] for fs in source if (fs.bus == b && isa(fs,fix_resource) && fs.active)]
 
                  isempty(fixed_source) ? break : fixed_source = tsnetinjection[b.number,t] -= sum(fixed_source)
 
