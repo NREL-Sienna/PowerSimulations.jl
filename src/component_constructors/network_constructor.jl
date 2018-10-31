@@ -44,14 +44,11 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
 
     nodalflowbalance(m, netinjection, system_formulation, sys)
 
-    PM_dict = pass_to_pm(sys, netinjection)
-
     PM_F = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
 
     PM_object = PS.build_nip_model(PM_dict, PM_F, jump_model=m);
 
     m = PM_object.model
-    m.ext[:PM_object] = PM_object
 
 end
 
@@ -65,14 +62,10 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
 
     nodalflowbalance(m, netinjection, system_formulation, sys)
 
-    PM_dict = pass_to_pm(sys, netinjection)
-
     PM_F = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
 
     PM_object = PS.build_nip_model(PM_dict, PM_F, jump_model=m);
 
-    # this is a hack... do not try by yourself
-    m = PM_object.model
     m.ext[:PM_object] = PM_object
 
 end

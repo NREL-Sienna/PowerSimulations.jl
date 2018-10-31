@@ -56,40 +56,33 @@ function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system
 
     time_index = 1:sys.time_periods
     bus_name_index = [b.name for b in sys.buses]
-    devices_netinjection = remove_undef!(netinjection.var_active)
 
-    pf_balance = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(bus_name_index), sys.time_periods), bus_name_index, time_index)
+    PM_dict = pass_to_pm(sys, netinjection)
 
-        for t in time_index, (ix,bus) in enumerate(bus_name_index)
+        for t in time_index, bus in sys.buses
 
-            #!isassigned(netinjection.var_active,ix,t) ? netinjection.var_active[ix,t] = -PM.var(m.ext[:PM_object],:pni, ix, nw = t) : JuMP.add_to_expression!(netinjection.var_active[ix,t],-PM.var(m.ext[:PM_object],:pni, ix, nw = t))
-
-            pf_balance[bus,t] = @constraint(m, netinjection.var_active[ix, t] == (netinjection.timeseries_active[ix, t]/sys.basepower))
+            !isassigned(netinjection.var_active,bus.number,t) ? PM_dict["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = -(netinjection.timeseries_active[bus.number, t]/sys.basepower) : PM_dict["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = JuMP.add_to_expression!(netinjection.var_active[bus.number,t],-(netinjection.timeseries_active[bus.number, t]/sys.basepower))
 
         end
 
-        JuMP.register_object(m, :NodalFlowBalance_active, pf_balance)
+        m.ext[:PM_object] = PM_dict
 
 end
 
 function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: AbstractACPowerModel}
 
     nodalflowbalance(m, netinjection, AbstractDCPowerModel, sys)
+    PM_dict = m.ext[:PM_object]
 
     time_index = 1:sys.time_periods
     bus_name_index = [b.name for b in sys.buses]
-    devices_netinjection = remove_undef!(netinjection.var_reactive)
 
-    qf_balance = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(bus_name_index), sys.time_periods), bus_name_index, time_index)
+        for t in time_index, bus in sys.buses
 
-        for t in time_index, (ix,bus) in enumerate(bus_name_index)
-
-            #!isassigned(netinjection.var_reactive,ix,t) ? netinjection.var_reactive[ix,t] = -PM.var(m.ext[:PM_object], :qni, ix, nw = t) : JuMP.add_to_expression!(netinjection.var_reactive[ix,t],-PM.var(m.ext[:PM_object], :qni, ix, nw = t))
-
-            qf_balance[bus,t] = @constraint(m, netinjection.var_reactive[ix, t] == (netinjection.timeseries_reactive[ix, t]/sys.basepower))
+            !isassigned(netinjection.var_reactive,bus.number,t) ? PM_dict["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = -(netinjection.timeseries_reactive[bus.number, t]/sys.basepower) : PM_dict["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = JuMP.add_to_expression!(netinjection.var_reactive[bus.number,t],-(netinjection.timeseries_reactive[bus.number, t]/sys.basepower))
 
         end
 
-        JuMP.register_object(m, :NodalFlowBalance_reactive, qf_balance)
+        m.ext[:PM_object] = PM_dict
 
 end

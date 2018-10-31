@@ -16,7 +16,7 @@
 
 ""
 function build_nip_model(data::Dict{String,Any}, model_constructor; multinetwork=true, kwargs...)
-    return PM.build_generic_model(data, model_constructor, post_nip; multinetwork=multinetwork, kwargs...)
+    return PM.build_generic_model(data, model_constructor, post_nip_expr; multinetwork=multinetwork, kwargs...)
 end
 
 ""
