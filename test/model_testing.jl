@@ -22,7 +22,7 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);
                             Model(),
                             false,
                             nothing)
-    PS.buildmodel!(sys5,ED)
+    PS.buildmodel!(ED,sys5)
     #JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
 true finally end
 
@@ -40,7 +40,7 @@ true finally end
                             Model(),
                             false,
                             nothing)
-    PS.buildmodel!(sys5,ED)
+    PS.buildmodel!(ED,sys5)
     #JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
 true finally end
 
@@ -58,7 +58,7 @@ true finally end
                             Model(),
                             false,
                             nothing)
-    PS.buildmodel!(sys5,ED)
+    PS.buildmodel!(ED,sys5)
     #JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
 true finally end
 
@@ -75,7 +75,7 @@ true finally end
                             Model(),
                             false,
                             nothing)
-    PS.buildmodel!(sys5,ED)
+    PS.buildmodel!(ED,sys5)
     #JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
     #ED.model.moi_backend.model.optimizer.termination_status
 true finally end
@@ -98,7 +98,7 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);
                             Model(),
                             false,
                             nothing)
-    PS.buildmodel!(sys5,UC)
+    PS.buildmodel!(UC,sys5)
     #JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
 true finally end
 
@@ -116,7 +116,7 @@ true finally end
                             Model(),
                             false,
                             nothing)
-    PS.buildmodel!(sys5,UC)
+    PS.buildmodel!(UC,sys5)
     #JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
 true finally end
 
@@ -134,7 +134,7 @@ true finally end
                             Model(),
                             false,
                             nothing)
-    PS.buildmodel!(sys5,UC)
+    PS.buildmodel!(UC,sys5)
     #JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
 true finally end
 
@@ -151,7 +151,7 @@ true finally end
                             Model(),
                             false,
                             nothing)
-    PS.buildmodel!(sys5,UC)
+    PS.buildmodel!(UC,sys5)
     #JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
     #UC.model.moi_backend.model.optimizer.termination_status
 true finally end
