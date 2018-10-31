@@ -35,13 +35,13 @@ true finally end
 # Flow Models
 @test try
     @info "testing net flow with lost load"
-    Net = PS.StandardNetFlowLL
+    Net = PS.StandardPTDF
     m = Model();
     ptdf,  A = PowerSystems.buildptdf(sys5.branches, sys5.buses)
     netinjection = PS.instantiate_network(Net, sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
-    PS.constructdevice!(m, netinjection, RenewableGen, PS.RenewableCurtail, Net, sys5);
-    PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
+    #PS.constructdevice!(m, netinjection, RenewableGen, PS.RenewableCurtail, Net, sys5);
+    #PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
     #Branch models are not implemented yet. They don't reflect losses.
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys5, PTDF = ptdf)
 true finally end
