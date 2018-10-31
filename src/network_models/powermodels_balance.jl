@@ -22,9 +22,10 @@ end
 ""
 function post_nip(pm::PM.GenericPowerModel)
     for (n, network) in PM.nws(pm)
+        @assert !PM.ismulticonductor(pm, nw=n)
         PM.variable_voltage(pm, nw=n)
         variable_net_injection(pm, nw=n)
-        PM.variable_branch_flow(pm, nw=n, bounded=false)
+        PM.variable_branch_flow(pm, nw=n)#, bounded=false)
         PM.variable_dcline_flow(pm, nw=n)
 
         PM.constraint_voltage(pm, nw=n)
@@ -62,8 +63,9 @@ end
 ""
 function post_nip_expr(pm::PM.GenericPowerModel)
     for (n, network) in PM.nws(pm)
+        @assert !PM.ismulticonductor(pm, nw=n)
         PM.variable_voltage(pm, nw=n)
-        PM.variable_branch_flow(pm, nw=n, bounded=false)
+        PM.variable_branch_flow(pm, nw=n)#, bounded=false)
         PM.variable_dcline_flow(pm, nw=n)
 
         PM.constraint_voltage(pm, nw=n)
@@ -163,8 +165,8 @@ function constraint_kcl_ni_expr(pm::PM.GenericPowerModel, i::Int; nw::Int=pm.cnw
     bus_arcs = PM.ref(pm, nw, :bus_arcs, i)
     bus_arcs_dc = PM.ref(pm, nw, :bus_arcs_dc, i)
 
-    pni_expr = PM.ref(pm, nw, :bus, i, "pni", cnd)
-    qni_expr = PM.ref(pm, nw, :bus, i, "qni", cnd)
+    pni_expr = PM.ref(pm, nw, :bus, i, "pni")
+    qni_expr = PM.ref(pm, nw, :bus, i, "qni")
 
     constraint_kcl_ni_expr(pm, nw, cnd, i, bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
 end
