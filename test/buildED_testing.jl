@@ -7,7 +7,7 @@ base_dir = string(dirname(dirname(pathof(PowerSystems))))
 println(joinpath(base_dir,"data/data_5bus.jl"))
 include(joinpath(base_dir,"data/data_5bus.jl"))
 
-sys5b = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  1000.0)
+sys5b = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0)
 
 m=JuMP.Model()
 devices_netinjection =  JumpAffineExpressionArray(length(sys5b.buses), sys5b.time_periods)
