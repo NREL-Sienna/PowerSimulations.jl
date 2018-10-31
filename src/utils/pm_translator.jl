@@ -95,6 +95,8 @@ function get_buses_to_pm(buses::Array{PowerSystems.Bus})
         "va"       => bus.angle,
         "vm"       => bus.voltage,
         "base_kv"  => bus.basevoltage,
+        "pni"      => 0.0,
+        "qni"      => 0.0,
         )
         PM_buses["$(bus.number)"] = PM_bus
     end
@@ -102,7 +104,27 @@ function get_buses_to_pm(buses::Array{PowerSystems.Bus})
     return PM_buses
 end
 
-function pass_to_pm(sys::PowerSystems.PowerSystem)
+function expression_to_pm_active(PM_dict::Dict{String,Any}, netinjection::BalanceNamedTuple, sys::PowerSystems.PowerSystem)
+
+    for bus in sys.buses, time in 1:sys.time_periods
+
+        PM_dict["nw"]["$(time)"]["bus"]["$(bus.number)"]["pni"] = netinjection.var_active[bus.number,time]
+
+    end
+
+end
+
+function expression_to_pm_reactive(PM_dict::Dict{String,Any}, netinjection::BalanceNamedTuple, sys::PowerSystems.PowerSystem)
+
+    for bus in sys.buses, time in 1:sys.time_periods
+
+        PM_dict["nw"]["$(time)"]["bus"]["$(bus.number)"]["qni"] = netinjection.var_reactive[bus.number,time]
+
+    end
+
+end
+
+function pass_to_pm(sys::PowerSystems.PowerSystem, netinjection::BalanceNamedTuple)
 
     PM_translation = Dict{String,Any}(
     "bus" => get_buses_to_pm(sys.buses),
@@ -117,7 +139,20 @@ function pass_to_pm(sys::PowerSystems.PowerSystem)
 
     # TODO: this function adds overhead in large number of time_steps
     # We can do better later.
+
     PM_translation = IM.replicate(PM_translation,sys.time_periods)
 
+    expression_to_pm_active(PM_translation, netinjection, sys)
+
+    if  !isa(netinjection.var_reactive,Nothing)
+
+        expression_to_pm_reactive(PM_translation, netinjection, sys)
+
+    end
+
     return PM_translation
+
 end
+
+
+
