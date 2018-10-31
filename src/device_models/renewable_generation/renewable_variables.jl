@@ -4,7 +4,7 @@ function activepowervariables(m::JuMP.Model, devices::Array{R,1}, time_periods::
 
     t = 1:time_periods
 
-    p_re = @variable(m, p_re[on_set,t] >= 0)
+    p_re = @variable(m, p_re[on_set,t] >= 0.0, start = 0.0)
 
     return p_re
 
@@ -16,7 +16,7 @@ function reactivepowervariables(m::JuMP.Model, devices::Array{R,1}, time_periods
 
     t = 1:time_periods
 
-    q_re = @variable(m, q_re[on_set,t]) # Power output of generators
+    q_re = @variable(m, q_re[on_set,t], start = 0.0) # Power output of generators
 
     return q_re
 end

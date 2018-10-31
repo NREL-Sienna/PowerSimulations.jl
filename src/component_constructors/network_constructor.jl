@@ -4,6 +4,16 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
 
 end
 
+function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractFlowForm}
+
+    for category in branch_models
+        constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args...)
+    end
+
+    nodalflowbalance(m, netinjection, system_formulation, sys)
+
+end
+
 function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{StandardPTDF}, sys::PowerSystems.PowerSystem; args...)
     if :PTDF in keys(args)
         PTDF = args[:PTDF]
@@ -13,41 +23,56 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
 
     if !isa(PTDF,PTDFArray)
         warn("no PTDF supplied")
-        PTDF,  A = PowerSystems.buildptdf(sys.branches, sys.buses) 
+        PTDF,  A = PowerSystems.buildptdf(sys.branches, sys.buses)
     end
 
     for category in branch_models
         constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args..., PTDF=PTDF)
-    end     
+    end
+
+    nodalflowbalance(m, netinjection, system_formulation, sys)
+
 end
 
 function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractDCPowerModel}
 
-    for category in branch_models
-        constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args...)
-    end 
-    
-end
-
-function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: Union{DCAngleLLForm, DCAngleForm}}
-
-    anglevariables(m, system_formulation, sys)
-
+    #= TODO: Needs to be generalized later for other branch models not covered by PM.
     for category in branch_models
         constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args...)
     end
-    
-end
+    =#
 
+    nodalflowbalance(m, netinjection, system_formulation, sys)
+
+    PM_dict = pass_to_pm(sys, netinjection)
+
+    PM_F = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
+
+    PM_object = PS.build_nip_model(PM_dict, PM_F, jump_model=m);
+
+    m = PM_object.model
+    m.ext[:PM_object] = PM_object
+
+end
 
 function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractACPowerModel}
 
-    anglevariables(m, system_formulation, sys)
-
-    voltagevariables(m, system_formulation, sys)
-
+    #= TODO: Needs to be generalized later for other branch models not covered by PM.
     for category in branch_models
         constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args...)
     end
-    
+    =#
+
+    nodalflowbalance(m, netinjection, system_formulation, sys)
+
+    PM_dict = pass_to_pm(sys, netinjection)
+
+    PM_F = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
+
+    PM_object = PS.build_nip_model(PM_dict, PM_F, jump_model=m);
+
+    # this is a hack... do not try by yourself
+    m = PM_object.model
+    m.ext[:PM_object] = PM_object
+
 end

@@ -29,7 +29,7 @@ using JuMP
 using TimeSeries
 using PowerSystems
 import PowerModels
-using Compat
+import InfrastructureModels
 using GLPK
 using MathOptInterface
 #using Clp
@@ -43,6 +43,7 @@ using AxisArrays
 #################################################################################
 # Type Alias From other Packages
 const PM = PowerModels
+const IM = InfrastructureModels
 const NetworkModel = PM.AbstractPowerFormulation
 const PS = PowerSimulations
 const MOI = MathOptInterface
@@ -62,6 +63,13 @@ const fix_resource = Union{PowerSystems.RenewableFix, PowerSystems.HydroFix}
 #################################################################################
 # Includes
 
+#utils
+include("utils/undef_check.jl")
+include("utils/cost_addition.jl")
+include("utils/timeseries_injections.jl")
+include("utils/device_injections.jl")
+include("utils/device_retreval.jl")
+include("utils/pm_translator.jl")
 
 #Abstract Models
 include("network_models/networks.jl")
@@ -98,6 +106,8 @@ include("service_models/reserves.jl")
 #Network related components
 include("network_models/copperplate_balance.jl")
 include("network_models/nodal_balance.jl")
+include("network_models/powermodels_balance.jl")
+
 
 #Device constructors
 include("component_constructors/thermalgeneration_constructor.jl")
