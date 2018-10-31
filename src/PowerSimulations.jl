@@ -63,14 +63,6 @@ const fix_resource = Union{PowerSystems.RenewableFix, PowerSystems.HydroFix}
 #################################################################################
 # Includes
 
-#utils
-include("utils/undef_check.jl")
-include("utils/cost_addition.jl")
-include("utils/timeseries_injections.jl")
-include("utils/device_injections.jl")
-include("utils/device_retreval.jl")
-include("utils/pm_translator.jl")
-
 #Abstract Models
 include("network_models/networks.jl")
 include("service_models/services.jl")
@@ -90,6 +82,7 @@ include("utils/cost_addition.jl")
 include("utils/timeseries_injections.jl")
 include("utils/device_injections.jl")
 include("utils/device_retreval.jl")
+include("utils/pm_translator.jl")
 
 #Device Modeling components
 include("device_models/common.jl")
