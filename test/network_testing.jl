@@ -105,7 +105,7 @@ finally end
 finally end
 
 # Flow Models
-@test try
+@test_skip try
     @info "testing PTDF 14-bus"
     Net = PS.StandardPTDF
     m = Model(ipopt_optimizer);
