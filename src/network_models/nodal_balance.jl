@@ -61,7 +61,7 @@ function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system
 
         for t in time_index, bus in sys.buses
 
-            !isassigned(netinjection.var_active,bus.number,t) ? PM_dict["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = -(netinjection.timeseries_active[bus.number, t]/sys.basepower) : PM_dict["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = JuMP.add_to_expression!(netinjection.var_active[bus.number,t],-(netinjection.timeseries_active[bus.number, t]/sys.basepower))
+            !isassigned(netinjection.var_active,bus.number,t) ? PM_dict["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = -(netinjection.timeseries_active[bus.number, t]) : PM_dict["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = JuMP.add_to_expression!(netinjection.var_active[bus.number,t],-(netinjection.timeseries_active[bus.number, t]))
 
         end
 
@@ -72,6 +72,7 @@ end
 function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: AbstractACPowerModel}
 
     nodalflowbalance(m, netinjection, AbstractDCPowerModel, sys)
+
     PM_dict = m.ext[:PM_object]
 
     time_index = 1:sys.time_periods
@@ -79,7 +80,7 @@ function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system
 
         for t in time_index, bus in sys.buses
 
-            !isassigned(netinjection.var_reactive,bus.number,t) ? PM_dict["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = -(netinjection.timeseries_reactive[bus.number, t]/sys.basepower) : PM_dict["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = JuMP.add_to_expression!(netinjection.var_reactive[bus.number,t],-(netinjection.timeseries_reactive[bus.number, t]/sys.basepower))
+            !isassigned(netinjection.var_reactive,bus.number,t) ? PM_dict["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = -(netinjection.timeseries_reactive[bus.number, t]) : PM_dict["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = JuMP.add_to_expression!(netinjection.var_reactive[bus.number,t],-(netinjection.timeseries_reactive[bus.number, t]))
 
         end
 
