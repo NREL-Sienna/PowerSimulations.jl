@@ -11,8 +11,8 @@ using Test
 end
 
 @testset "Network Constructors" begin
-    include("network_testing.jl")
     include("powermodels_testing.jl")
+    include("network_testing.jl")
 end
 
 @testset "Services Constructors" begin

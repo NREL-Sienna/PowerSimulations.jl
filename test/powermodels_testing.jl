@@ -1,5 +1,6 @@
 using InfrastructureModels
 using PowerModels
+using PowerSystems
 const PM = PowerModels
 
 # required for reducing logging during tests
@@ -18,10 +19,11 @@ using Ipopt
 ipopt_optimizer = with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 
 # is this the best way to find a file in a package?
-case5_data = PM.parse_file("../test/data/case5.m")
+base_dir = dirname(dirname(pathof(PowerSystems)))
+case5_data = PM.parse_file(joinpath(base_dir,"data/matpower/case5.m"))
 case5_data = InfrastructureModels.replicate(case5_data, 2)
 
-case5_dc_data = PM.parse_file("../test/data/case5_dc.m")
+case5_dc_data = PM.parse_file(joinpath(base_dir,"data/matpower/case5_dc.m"))
 case5_dc_data = InfrastructureModels.replicate(case5_dc_data, 2)
 
 
@@ -77,9 +79,10 @@ true finally end
 
 @test try
     base_dir = dirname(dirname(pathof(PowerSystems)))
-    include(joinpath(base_dir,"data/data_5bus.jl"))
+    include(joinpath(base_dir,"data/data_5bus_pu.jl"))
     PS_struct = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);
-    PM_dict = PowerSimulations.pass_to_pm(PS_struct)
+    netinjection = PS.instantiate_network(PM.DCPPowerModel, PS_struct);
+    PM_dict = PowerSimulations.pass_to_pm(PS_struct, netinjection)
     PM_object = PowerSimulations.build_nip_model(PM_dict, PM.DCPPowerModel, optimizer=ipopt_optimizer);
     JuMP.num_variables(PM_object.model) == 384
 true finally end
