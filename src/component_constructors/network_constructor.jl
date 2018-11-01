@@ -46,7 +46,7 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
 
     PM_F = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
 
-    PM_object = PS.build_nip_model(m.ext[:PM_object], PM_F, jump_model=m);
+    PM_object = PS.build_nip_expr_model(m.ext[:PM_object], PM_F, jump_model=m);
 
     m = PM_object.model
 
@@ -64,7 +64,7 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
 
     PM_F = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
 
-    PM_object = PS.build_nip_model(m.ext[:PM_object], PM_F, jump_model=m);
+    PM_object = PS.build_nip_expr_model(m.ext[:PM_object], PM_F, jump_model=m);
 
     m.ext[:PM_object] = PM_object
 
