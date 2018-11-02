@@ -31,9 +31,9 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 end
 
 
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{ThermalRampLimitDispatch}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractDCPowerModel}
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{ThermalRampLimitDispatch}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: PM.AbstractPowerFormulation}
 
-    constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys; args...)
+    constructdevice!(m, netinjection, category, AbstractThermalDispatchForm, PM.AbstractPowerFormulation, sys; args...)
 
     #rampargs = pairs((;(k=>v for (k,v) in pairs(args) if k in [:initalpower])...))
 
