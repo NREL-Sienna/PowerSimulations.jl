@@ -75,7 +75,7 @@ include("core/abstract_models.jl")
 include("base/instantiate_routines.jl")
 include("base/model_constructors.jl")
 #include("base/solve_routines.jl")
-#include("base/simulation_routines.jl")
+include("base/simulation_routines.jl")
 
 #utils
 include("utils/undef_check.jl")

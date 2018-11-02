@@ -278,7 +278,7 @@ version = "0.8.4"
     SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [[PowerSystems]]
-git-tree-sha1 = "e7e2b23ced9af4622866413bf332f4484fa4ec16"
+git-tree-sha1 = "6177b96b3765e384613fa26b0f796c31a60760db"
 repo-rev = "master"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
@@ -412,9 +412,9 @@ version = "0.14.0"
 
 [[TimeZones]]
 deps = ["Compat", "EzXML", "Mocking", "Nullables"]
-git-tree-sha1 = "43aec3094d7f88d77e01681722dfc93ef43907c5"
+git-tree-sha1 = "4a4ab113913e19ad62b67e6c5c056509eac00c19"
 uuid = "f269a46b-ccf7-5d73-abea-4c690281aa53"
-version = "0.8.1"
+version = "0.8.2"
 
 [[TranscodingStreams]]
 deps = ["Pkg", "Random", "Test"]
