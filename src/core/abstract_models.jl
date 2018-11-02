@@ -31,7 +31,7 @@ mutable struct PowerSimulationsModel{T<:AbstractOperationsModel, R<:Dates.Period
     lookahead_periods::Int64
     lookahead_resolution::R
     dynamic_analysis::Bool
-    timeseries::Any
+    timeseries::Dict{Any,Any}
 end
 
  mutable struct PowerResults

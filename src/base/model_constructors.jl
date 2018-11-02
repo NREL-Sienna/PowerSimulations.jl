@@ -36,7 +36,7 @@ function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerOperationMode
 end
 
 
-function build_sim_ts(ts_dict::Dict, steps, periods, resolution, date_from, lookahead_periods, lookahead_resolution ; args...)
+function build_sim_ts(ts_dict::Dict{String,Any}, steps, periods, resolution, date_from, lookahead_periods, lookahead_resolution ; args...)
     # exmaple of time series assembly
     # TODO: once we refactor PowerSystems, we can improve this process
 
@@ -60,7 +60,7 @@ function build_sim_ts(ts_dict::Dict, steps, periods, resolution, date_from, look
 end
 
 
-function buildsimulation!(sys::PowerSystems.PowerSystem, op_model::PowerOperationModel, ts_dict::Dict{Any}; args...)
+function buildsimulation!(sys::PowerSystems.PowerSystem, op_model::PowerOperationModel, ts_dict::Dict{String,Any}; args...)
     
     name = :name in keys(args) ? args[:name] : "my_simulation"
 
@@ -74,11 +74,17 @@ function buildsimulation!(sys::PowerSystems.PowerSystem, op_model::PowerOperatio
 
     periods = :periods in keys(args) ? args[:periods] : (resolution < Hour(1) ? 1 : 24) 
 
-    steps = :steps in keys(args) ? args[:steps] : length(sys.loads[1].scalingfactor[1])/periods
+    steps = :steps in keys(args) ? args[:steps] : Int64(floor((length(sys.loads[1].scalingfactor)-1)/periods))
 
+    if steps != (length(sys.loads[1].scalingfactor)-1)/periods 
+        @warn "Time series length and simulation definiton inconsistent, simulation may be truncated, simulating $steps steps."
+    end
+    
     lookahead_periods = :lookahead_periods in keys(args) ? args[:lookahead_periods] : 0
 
     lookahead_resolution = :lookahead_resolution in keys(args) ? args[:lookahead_resolution] : resolution
+
+    @info "Simulation defined for $steps steps with $periods * $resolution periods per step (plus $lookahead_periods * $lookahead_resolution lookahead periods), from $date_from to $date_to"
 
     dynamic_analysis = false;
 
@@ -91,7 +97,7 @@ end
 
 function buildsimulation!(sys::PowerSystems.PowerSystem, op_model::PowerOperationModel; args...)
 
-    ts_dict = Dict()
+    ts_dict = Dict{String,Any}()
 
     ts_dict["load"] = DataFrame(Dict([(l.name,values(l.scalingfactor)) for l in sys.loads]))
     ts_dict["load"][:DateTime] = TimeSeries.timestamp(sys.loads[1].scalingfactor)
