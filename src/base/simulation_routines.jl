@@ -42,7 +42,6 @@ function run_simulations(simulation::PowerSimulationsModel{S}, solver, ps_dict::
     # run a PCM
     for (step, step_ts) in sort(simulation.timeseries)
         # assign TS to ps_dict
-        @show step_ts
         ps_dict = PowerSystems.assign_ts_data(ps_dict,step_ts); 
 
         # build sys
