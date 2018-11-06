@@ -115,9 +115,9 @@ uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[GLPK]]
 deps = ["BinaryProvider", "Compat", "Libdl", "LinQuadOptInterface"]
-git-tree-sha1 = "ca8bd74b621e124f0c2ca2837b98b0053e131006"
+git-tree-sha1 = "fd8611745ac49689673fce6714893b3cd2301ab5"
 uuid = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
-version = "0.8.2"
+version = "0.8.3"
 
 [[InfrastructureModels]]
 deps = ["Compat", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento"]
@@ -250,9 +250,9 @@ version = "1.0.2"
 
 [[Parsers]]
 deps = ["Dates", "Mmap", "Test", "WeakRefStrings"]
-git-tree-sha1 = "1f4ab004d02b98ba8fd6a05faa7529fce7b4e066"
+git-tree-sha1 = "510eba237a97dfb73f8a0c16ed23f68e407885c1"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
-version = "0.2.10"
+version = "0.2.11"
 
 [[Pkg]]
 deps = ["Dates", "LibGit2", "Markdown", "Printf", "REPL", "Random", "SHA", "UUIDs"]
@@ -278,11 +278,11 @@ version = "0.8.4"
     SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [[PowerSystems]]
-git-tree-sha1 = "6177b96b3765e384613fa26b0f796c31a60760db"
-repo-rev = "master"
+git-tree-sha1 = "0ea4a8b734d879ce31deced9e44a0191a9bea037"
+repo-rev = "add-require"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
-version = "0.1.1"
+version = "0.1.2"
 
     [PowerSystems.deps]
     AxisArrays = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
