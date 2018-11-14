@@ -44,16 +44,6 @@ function get_pg(m::JuMP.Model, gen::G, t::Int64) where G <: PowerSystems.Renewab
     return m.obj_dict[:p_re][gen.name,t]
 end
 
-
-function get_Fmax(branch::PowerSystems.Line)
-    return (from_to = branch.rate.from_to, to_from = branch.rate.to_from)
-end
-
-function get_Fmax(branch::B) where B <: PowerSystems.Branch
-    return (from_to = branch.rate, to_from = branch.rate)
-end
-
-
 # Methods for accessing jump, moi, and optimizer variables
 function get_all_vars(obj_dict)
     # get all variables in a jump model
