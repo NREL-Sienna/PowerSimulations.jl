@@ -21,11 +21,11 @@ function make_pmax_rsv_constraint(m::JuMP.Model,t::Int64, device::G, formulation
 end
 
 function make_pmax_rsv_constraint(m::JuMP.Model,t::Int64, device::G, formulation::Type{D}) where {G<:PowerSystems.RenewableGen, D <: AbstractRenewableDispatchForm}
-    return @constraint(m, m[:p_re][device.name,t] + m[:p_rsv][device.name,t] <= device.tech.installedcapacity * device.scalingfactor.values[t])
+    return @constraint(m, m[:p_re][device.name,t] + m[:p_rsv][device.name,t] <= device.tech.installedcapacity * values(device.scalingfactor)[t])
 end
 
 function make_pmax_rsv_constraint(m::JuMP.Model,t::Int64, device::G, formulation::Type{D}) where {G<:PowerSystems.InterruptibleLoad, D <: AbstractControllableLoadForm}
-    return @constraint(m, m[:p_cl][device.name,t] + m[:p_rsv][device.name,t] <= device.maxactivepower * device.scalingfactor.values[t])
+    return @constraint(m, m[:p_cl][device.name,t] + m[:p_rsv][device.name,t] <= device.maxactivepower * values(device.scalingfactor)[t])
 end
 
 # ramp constraints
@@ -38,7 +38,7 @@ function make_pramp_rsv_constraint(m::JuMP.Model,t::Int64, device::G, formulatio
     return
 end
 function make_pramp_rsv_constraint(m::JuMP.Model,t::Int64, device::G, formulation::Type{D}, timeframe) where {G<:PowerSystems.InterruptibleLoad, D <: AbstractControllableLoadForm}
-    #rmax =  device.maxactivepower * device.scalingfactor.values[t] #nominally setting load ramp limit to full range within 1 min
+    #rmax =  device.maxactivepower * values(device.scalingfactor)[t] #nominally setting load ramp limit to full range within 1 min
     #return @constraint(m, m[:p_rsv][device.name,t] <= rmax/60 * timeframe)
     return
 end
@@ -50,7 +50,7 @@ function reserves(m::JuMP.Model, devices::Array{NamedTuple{(:device, :formulatio
     time_index = m[:p_rsv].axes[2]
     name_index = m[:p_rsv].axes[1]
 
-    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
+    (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
     pmin_rsv = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(time_index)), time_index) #minimum system reserve provision
     pmax_rsv = JuMP.JuMPArray(Array{ConstraintRef}(undef, length.(JuMP.axes(p_rsv))), name_index, time_index) #maximum generator reserve provision
@@ -63,7 +63,7 @@ function reserves(m::JuMP.Model, devices::Array{NamedTuple{(:device, :formulatio
             if name == devices[ix].device.name
                 pmax_rsv[name,t] = make_pmax_rsv_constraint(m, t, devices[ix].device,devices[ix].formulation)
             else
-                error("Gen name in Array and variable do not match")
+                @error "Gen name in Array and variable do not match"
             end
         end
 
@@ -80,7 +80,7 @@ function reserves(m::JuMP.Model, devices::Array{NamedTuple{(:device, :formulatio
             if name == rmp_devices[ix].device.name
                 pramp_rsv[name,t] = make_pramp_rsv_constraint(m, t, rmp_devices[ix].device, rmp_devices[ix].formulation, service.timeframe)
             else
-                error("Gen name in Array and variable do not match")
+                @error "Gen name in Array and variable do not match"
             end
         end
 

@@ -31,7 +31,7 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 
         dev_set_q = [d for d in dev_set if (d.tech.reactivepowerlimits != nothing)]
 
-        if !isempty(setdiff(dev_set,dev_set_q)) @warn("Some devices have no defined reactive injection capabilities and will not create q_re variables and constraints") end
+        if !isempty(setdiff(dev_set,dev_set_q)) @warn "Some devices have no defined reactive injection capabilities and will not create q_re variables and constraints"  end
 
         q_re = reactivepowervariables(m, dev_set_q, sys.time_periods);
 

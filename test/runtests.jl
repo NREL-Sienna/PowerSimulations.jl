@@ -24,3 +24,7 @@ end
     #include("buildED_CN_testing.jl")
     #include("buildED_NB_testing.jl")
 end
+
+@testset "Simulation routines" begin
+    include("simulations_testing.jl")
+end

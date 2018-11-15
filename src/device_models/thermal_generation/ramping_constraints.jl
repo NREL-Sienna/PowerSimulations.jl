@@ -18,7 +18,7 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
             initialpower = Dict([name=>devices[ix].tech.activepower for (ix,name) in enumerate(name_index)])
         end
 
-        (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
+        (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
         rampdown_th = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
         rampup_th = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
@@ -39,7 +39,7 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
 
 
     else
-        @warn("Data doesn't contain generators with ramping limits")
+        @warn "Data doesn't contain generators with ramping limits"
 
     end
 
@@ -58,7 +58,9 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
     if !isempty(devices)
 
         p_th = m[:p_th]
-        on_th = m[:on_th]
+        start_th = m[:start_th]
+        stop_th = m[:stop_th]
+
 
         time_index = m[:p_th].axes[2]
         name_index = [d.name for d in devices]
@@ -69,27 +71,27 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
             initialpower = Dict([name=>devices[ix].tech.activepower for (ix,name) in enumerate(name_index)])
         end
 
-        (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
+        (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
         rampdown_th = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
         rampup_th = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
 
         for (ix,name) in enumerate(name_index)
             t1 = time_index[1]
-            rampdown_th[name,t1] = @constraint(m, initialpower[name] - p_th[name,t1] <= devices[ix].tech.ramplimits.down * on_th[name,t1])
-            rampup_th[name,t1] = @constraint(m, p_th[name,t1] - initialpower[name] <= devices[ix].tech.ramplimits.up  * on_th[name,t1])
+            rampdown_th[name,t1] = @constraint(m, initialpower[name] - p_th[name,t1] <= devices[ix].tech.ramplimits.down + devices[ix].tech.activepowerlimits.max * stop_th[name,t1] )
+            rampup_th[name,t1] = @constraint(m, p_th[name,t1] - initialpower[name] <= devices[ix].tech.ramplimits.up + devices[ix].tech.activepowerlimits.min * start_th[name,t1] )
         end
 
         for t in time_index[2:end], (ix,name) in enumerate(name_index)
-            rampdown_th[name,t] = @constraint(m, p_th[name,t-1] - p_th[name,t] <= devices[ix].tech.ramplimits.down * on_th[name,t])
-            rampup_th[name,t] = @constraint(m, p_th[name,t] - p_th[name,t-1] <= devices[ix].tech.ramplimits.up * on_th[name,t] )
+            rampdown_th[name,t] = @constraint(m, p_th[name,t-1] - p_th[name,t] <= devices[ix].tech.ramplimits.down + devices[ix].tech.activepowerlimits.max * stop_th[name,t] )
+            rampup_th[name,t] = @constraint(m, p_th[name,t] - p_th[name,t-1] <= devices[ix].tech.ramplimits.up + devices[ix].tech.activepowerlimits.min * start_th[name,t] )
         end
 
         JuMP.register_object(m, :rampdown_th, rampdown_th)
         JuMP.register_object(m, :rampup_th, rampup_th)
 
     else
-        @warn("There are no generators with Ramping Limits Data in the System")    
+        @warn "There are no generators with Ramping Limits Data in the System"
         
     end
         

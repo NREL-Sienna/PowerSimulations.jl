@@ -6,7 +6,7 @@ function variablecost(phy::JumpVariable, devices::Array{T}) where T <: PowerSyst
         if name == devices[ix].name
                 JuMP.add_to_expression!(cost,precost(phy[name,:], devices[ix]))
         else
-            error("Bus name in Array and variable do not match")
+            @error "Bus name in Array and variable do not match"
         end
     end
 

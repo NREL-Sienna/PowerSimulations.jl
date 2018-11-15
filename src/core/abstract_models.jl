@@ -20,17 +20,18 @@ mutable struct PowerOperationModel{ M<:AbstractOperationsModel, T<:NetworkModel,
     ptdf::Union{Nothing,PTDFArray}
 end
 
-mutable struct PowerSimulationsModel{T<:AbstractOperationsModel}
+mutable struct PowerSimulationsModel{T<:AbstractOperationsModel, R<:Dates.Period}
     name::String
     model::PowerOperationModel{T}
+    steps::Int64
     periods::Int64
-    resolution::Int64
+    resolution::R
     date_from::DateTime
     date_to::DateTime
     lookahead_periods::Int64
-    lookahead_resolution::Int64
+    lookahead_resolution::R
     dynamic_analysis::Bool
-    timeseries::Any
+    timeseries::Dict{Any,Any}
 end
 
  mutable struct PowerResults

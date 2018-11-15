@@ -29,7 +29,7 @@ function commitmentcost(m::JuMP.Model, devices::Array{T,1}, device_formulation::
 
                 end
         else
-            error("Bus name in Array and variable do not match")
+            @error "Bus name in Array and variable do not match"
         end
     end
 

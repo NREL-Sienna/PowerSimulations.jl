@@ -39,6 +39,7 @@ using DataFrames
 using LinearAlgebra
 using LinearAlgebra.BLAS
 using AxisArrays
+using Dates
 
 #################################################################################
 # Type Alias From other Packages
@@ -62,12 +63,6 @@ const fix_resource = Union{PowerSystems.RenewableFix, PowerSystems.HydroFix}
 #################################################################################
 # Includes
 
-#utils
-include("utils/undef_check.jl")
-include("utils/cost_addition.jl")
-include("utils/timeseries_injections.jl")
-include("utils/device_injections.jl")
-include("utils/device_retreval.jl")
 
 #Abstract Models
 include("network_models/networks.jl")
@@ -80,8 +75,14 @@ include("core/abstract_models.jl")
 include("base/instantiate_routines.jl")
 include("base/model_constructors.jl")
 #include("base/solve_routines.jl")
-#include("base/simulation_routines.jl")
+include("base/simulation_routines.jl")
 
+#utils
+include("utils/undef_check.jl")
+include("utils/cost_addition.jl")
+include("utils/timeseries_injections.jl")
+include("utils/device_injections.jl")
+include("utils/device_retreval.jl")
 
 #Device Modeling components
 include("device_models/common.jl")

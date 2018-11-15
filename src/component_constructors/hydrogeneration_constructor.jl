@@ -18,7 +18,7 @@ function constructdevice!(category::Type{Hydro}, transmission::Type{CopperPlateP
 
     else
 
-        warn("Hydro dispatch variables created without constraints, the problem might be unbounded")
+        @warn "Hydro dispatch variables created without constraints, the problem might be unbounded" 
 
     end
 

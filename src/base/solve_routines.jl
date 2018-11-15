@@ -24,32 +24,32 @@ function solve(model::PowerOperationModel{T, F}; Solver = nothing) where {T <: A
         if (model_type.qc|model_type.qp|model_type.nlp)
 
             if model_type.int
-                error("The model is a Mixed Integer Non-Linear Problem, please define an appropiate solver manually using the Solver= argument")
+                @error "The model is a Mixed Integer Non-Linear Problem, please define an appropiate solver manually using the Solver= argument"
             end
 
             JuMP.setsolver(psmodel, Ipopt.IpoptSolver())
-            warn("The model contains non-linear elements (QP, QC, NLP), by default the solver is Ipopt Solver")
+            @warn "The model contains non-linear elements (QP, QC, NLP), by default the solver is Ipopt Solver"
 
         elseif model_type.lin & model_type.int & !(model_type.qc|model_type.qp|model_type.nlp)
 
             JuMP.setsolver(psmodel, Cbc.CbcSolver(logLevel = 1))
-            warn("The model is Mixed Integer Linear, the default is Cbc Solver")
+            @warn "The model is Mixed Integer Linear, the default is Cbc Solver"
 
         elseif model_type.lin & !(model_type.qc|model_type.qp|model_type.nlp)
 
             JuMP.setsolver(psmodel, Clp.ClpSolver(SolveType = 5, LogLevel = 4))
 
-            warn("The model is linear, by default the solver is Clp Solver")
+            @warn "The model is linear, by default the solver is Clp Solver"
 
         else
 
-            error("The PS Model is not a standard LP, MILP, QP, QC or NLP, please define an appropiate solver manually using the Solver argument")
+            @error "The PS Model is not a standard LP, MILP, QP, QC or NLP, please define an appropiate solver manually using the Solver argument"
 
         end
 
     else
         JuMP.setsolver(psmodel, Solver)
-        warn("A solver has been defined manually, this might break the results output function")
+        @warn "A solver has been defined manually, this might break the results output function"
 
     end
 
@@ -58,7 +58,7 @@ function solve(model::PowerOperationModel{T, F}; Solver = nothing) where {T <: A
 
     if status != :Optimal
         println(status)
-        error("Problem has no solution.")
+        @error "Problem has no solution."
     end
 
 end
