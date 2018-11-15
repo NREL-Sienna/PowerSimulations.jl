@@ -26,7 +26,7 @@ simple_reserve = PowerSystems.StaticReserve("test_reserve",sys5.generators.therm
                             nothing)
     PS.buildmodel!(sys5,ED)
     JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
-    (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status") 
+    (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status")
 true finally end
 
 # ED with thermal and curtailable renewable gen, static load, copper plate
@@ -46,7 +46,7 @@ true finally end
                             nothing)
     PS.buildmodel!(sys5,ED)
     JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
-    (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success) ? true : @error("solver returned with nonzero status") 
+    (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success) ? true : @error("solver returned with nonzero status")
 true finally end
 
 # ED with thermal and fixed renewable gen, interruptable load, copper plate
@@ -66,7 +66,7 @@ true finally end
                             nothing)
     PS.buildmodel!(sys5,ED)
     JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
-    (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status") 
+    (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status")
 true finally end
 
 # ED with thermal gen, copper plate, and reserve
@@ -85,7 +85,7 @@ true finally end
                             nothing)
     PS.buildmodel!(sys5,ED)
     JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
-    (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status") 
+    (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status")
 true finally end
 
 
@@ -106,7 +106,7 @@ true finally end
                             nothing)
     PS.buildmodel!(sys5,ED)
     JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
-    (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status") 
+    (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status")
 true finally end
 
 # UC Testing
@@ -131,7 +131,7 @@ simple_reserve = PowerSystems.StaticReserve("test_reserve",sys5.generators.therm
                             nothing)
     PS.buildmodel!(sys5,UC)
     JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
-    (UC.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status") 
+    (UC.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status")
 true finally end
 
 # UC with thermal and curtailable renewable gen, static load, copper plate
@@ -170,7 +170,7 @@ true finally end
                             nothing)
     PS.buildmodel!(sys5,UC)
     JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
-    (UC.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status") 
+    (UC.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status")
 true finally end
 
 # UC with thermal gen, copper plate, and reserve
@@ -190,7 +190,7 @@ true finally end
                             nothing)
     PS.buildmodel!(sys5,UC)
     JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
-    (UC.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status") 
+    (UC.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status")
 true finally end
 
 
@@ -211,5 +211,5 @@ true finally end
                             nothing)
     PS.buildmodel!(sys5,UC)
     JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
-    (UC.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status") 
+    (UC.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status")
 true finally end

@@ -2,7 +2,7 @@ export simulatemodel
 
 function modify_constraint(m::JuMP.Model, consname::Symbol, data::Array{Float64,2})
 
-    !(size(m[consmane]) == size(data)) ? error("The data and the constraint are size inconsistent") : true
+    !(size(m[consmane]) == size(data)) ? @error("The data and the constraint are size inconsistent") : true
 
     for (n, c) in enumerate(IndexCartesian(), data)
 

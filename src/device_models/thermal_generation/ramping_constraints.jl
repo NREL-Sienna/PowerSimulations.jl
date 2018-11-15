@@ -18,7 +18,7 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
             initialpower = Dict([name=>devices[ix].tech.activepower for (ix,name) in enumerate(name_index)])
         end
 
-        (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
+        (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
         rampdown_th = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
         rampup_th = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
@@ -39,7 +39,7 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
 
 
     else
-        @warn("Data doesn't contain generators with ramping limits")
+        @warn "Data doesn't contain generators with ramping limits"
 
     end
 
@@ -71,7 +71,7 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
             initialpower = Dict([name=>devices[ix].tech.activepower for (ix,name) in enumerate(name_index)])
         end
 
-        (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
+        (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
         rampdown_th = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
         rampup_th = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
@@ -91,7 +91,7 @@ function rampconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
         JuMP.register_object(m, :rampup_th, rampup_th)
 
     else
-        @warn("There are no generators with Ramping Limits Data in the System")    
+        @warn "There are no generators with Ramping Limits Data in the System"
         
     end
         

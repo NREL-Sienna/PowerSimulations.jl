@@ -7,7 +7,7 @@ function activepower(m::JuMP.Model, devices::Array{R,1}, device_formulation::Typ
     time_index = m[:p_re].axes[2]
     name_index = m[:p_re].axes[1]
 
-    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
+    (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
     pmax_re = JuMP.JuMPArray(Array{ConstraintRef}(undef, length.(JuMP.axes(p_re))), name_index, time_index)
 
@@ -16,7 +16,7 @@ function activepower(m::JuMP.Model, devices::Array{R,1}, device_formulation::Typ
         if name == devices[ix].name
             pmax_re[name, t] = @constraint(m, p_re[name, t] <= devices[ix].tech.installedcapacity * values(devices[ix].scalingfactor)[t])
         else
-            error("Bus name in Array and variable do not match")
+            @error "Bus name in Array and variable do not match"
         end
 
     end
@@ -35,7 +35,7 @@ function reactivepower(m::JuMP.Model, devices::Array{R,1}, device_formulation::T
     time_index = m[:q_re].axes[2]
     name_index = m[:q_re].axes[1]
 
-    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
+    (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
     qmax_re = JuMP.JuMPArray(Array{ConstraintRef}(undef,length.(JuMP.axes(q_re))), name_index, time_index)
     qmin_re = JuMP.JuMPArray(Array{ConstraintRef}(undef,length.(JuMP.axes(q_re))), name_index, time_index)
@@ -48,7 +48,7 @@ function reactivepower(m::JuMP.Model, devices::Array{R,1}, device_formulation::T
             qmin_re[name, t] = @constraint(m, q_re[name, t] >= devices[ix].tech.reactivepowerlimits.min)
 
         else
-            error("Bus name in Array and variable do not match")
+            @error "Bus name in Array and variable do not match"
         end
 
     end

@@ -10,7 +10,7 @@ function variablecost(m::JuMP.Model, devices::Array{T,1}, device_formulation::Ty
         if name == devices[ix].name
             c = gencost(m, p_th[name,:], devices[ix].econ.variablecost)
         else
-            error("Bus name in Array and variable do not match")
+            @error "Bus name in Array and variable do not match"
         end
 
         # TODO: Add no load costs?

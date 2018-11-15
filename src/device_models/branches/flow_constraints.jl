@@ -15,10 +15,10 @@ function thermalflowlimits(m::JuMP.Model, system_formulation::Type{S}, devices::
                 Flow_max_tf[name, t] = @constraint(m, fbr[name, t] <= devices[device_index[name]].rate)
                 Flow_max_ft[name, t] = @constraint(m, fbr[name, t] >= -1*devices[device_index[name]].rate)
             else
-                error("Branch name in Array and variable do not match")
+                @error "Branch name in Array and variable do not match"
             end
         else
-            warn("No flow limit constraint populated for $(name)")
+            @warn "No flow limit constraint populated for $(name)"
         end
     end
 
@@ -46,10 +46,10 @@ function thermalflowlimits(m::JuMP.Model, system_formulation::Type{S}, devices::
                 Flow_max_tf[name, t] = @constraint(m, fbr_fr[name, t] <= devices[device_index[name]].rate)
                 Flow_max_ft[name, t] = @constraint(m, fbr_to[name, t] >= -1*devices[device_index[name]].rate)
             else
-                error("Branch name in Array and variable do not match")
+                @error "Branch name in Array and variable do not match"
             end
         else
-            warn("No flow limit constraint populated for $(name)")
+            @warn "No flow limit constraint populated for $(name)"
         end
     end
 

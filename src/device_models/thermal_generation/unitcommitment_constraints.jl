@@ -19,7 +19,7 @@ function commitmentconstraints(m::JuMP.Model, devices::Array{T,1}, device_formul
         initialstatus = Dict(zip(name_index,[devices[ix].tech.activepower > 0.0 ? 1 : 0  for (ix,name) in enumerate(name_index) if name == devices[ix].name ]))
     end
 
-    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
+    (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
     commitment_th  = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
 
@@ -28,7 +28,7 @@ function commitmentconstraints(m::JuMP.Model, devices::Array{T,1}, device_formul
             t1 = time_index[1]
             commitment_th[name,t1] = @constraint(m, on_th[name,t1] == initialstatus[name] + start_th[name,t1] - stop_th[name,t1])
         else
-            error("Bus name in Array and variable do not match")
+            @error "Bus name in Array and variable do not match"
         end
     end
 
@@ -36,7 +36,7 @@ function commitmentconstraints(m::JuMP.Model, devices::Array{T,1}, device_formul
         if name == devices[ix].name
             commitment_th[name,t] = @constraint(m, on_th[name,t] == on_th[name,t-1] + start_th[name,t] - stop_th[name,t])
         else
-            error("Bus name in Array and variable do not match")
+            @error "Bus name in Array and variable do not match"
         end
     end
 
@@ -72,7 +72,7 @@ function timeconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
             initialoffduration = Dict(zip(name_index,ones(Float64,length(devices))*9999))
         end
 
-        (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
+        (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
         mindown_th = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
         minup_th = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
@@ -94,7 +94,7 @@ function timeconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
                 mindown_th[name,t] = @constraint(m,sum([stop_th[name,i] for i in ((t - tsd - 1) :t) if i > 0]) <= (1 - on_th[name,t]))
 
             else
-                error("Bus name in Array and variable do not match")
+                @error "Bus name in Array and variable do not match"
 
             end
         end
@@ -103,7 +103,7 @@ function timeconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation:
         JuMP.register_object(m, :mindown_th, mindown_th)
 
     else
-        @warn("There are no generators with Min-up -down limits data in the system")
+        @warn "There are no generators with Min-up -down limits data in the system"
 
     end
 

@@ -12,7 +12,7 @@ function constructnetwork!(m::JuMP.Model, branch_models::Array{NamedTuple{(:devi
     end
 
     if !isa(PTDF,PTDFArray)
-        warn("no PTDF supplied")
+        @warn "no PTDF supplied" 
         PTDF,  A = PowerSystems.buildptdf(sys.branches, sys.buses) 
     end
 

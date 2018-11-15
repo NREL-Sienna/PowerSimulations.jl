@@ -8,7 +8,7 @@ function activepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::Typ
     time_index = m[:p_th].axes[2]
     name_index = m[:p_th].axes[1]
 
-    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
+    (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
     pmax_th = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
     pmin_th = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
@@ -21,7 +21,7 @@ function activepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::Typ
             pmax_th[name, t] = @constraint(m, p_th[name, t] <= devices[ix].tech.activepowerlimits.max)
 
         else
-            error("Bus name in Array and variable do not match")
+            @error "Bus name in Array and variable do not match"
         end
 
     end
@@ -43,7 +43,7 @@ function activepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::Typ
     time_index = m[:p_th].axes[2]
     name_index = m[:p_th].axes[1]
 
-    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
+    (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
     pmax_th = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
     pmin_th = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
@@ -54,7 +54,7 @@ function activepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::Typ
             pmin_th[name, t] = @constraint(m, p_th[name, t] >= devices[ix].tech.activepowerlimits.min*on_th[name,t])
             pmax_th[name, t] = @constraint(m, p_th[name, t] <= devices[ix].tech.activepowerlimits.max*on_th[name,t])
         else
-            error("Bus name in Array and variable do not match")
+            @error "Bus name in Array and variable do not match"
         end
 
     end
@@ -75,7 +75,7 @@ function reactivepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::T
     time_index = m[:q_th].axes[2]
     name_index = m[:q_th].axes[1]
 
-    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
+    (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
     qmax_th = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
     qmin_th = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
@@ -88,7 +88,7 @@ function reactivepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::T
             qmax_th[name, t] = @constraint(m, q_th[name, t] <= devices[ix].tech.reactivepowerlimits.max)
 
         else
-            error("Bus name in Array and variable do not match")
+            @error "Bus name in Array and variable do not match"
         end
 
     end
@@ -112,7 +112,7 @@ function reactivepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::T
     time_index = m[:q_th].axes[2]
     name_index = m[:q_th].axes[1]
 
-    (length(time_index) != time_periods) ? error("Length of time dimension inconsistent") : true
+    (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
     qmax_th = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
     qmin_th = JuMP.JuMPArray(Array{ConstraintRef}(undef,llength(name_index), time_periods), name_index, time_index)
@@ -123,7 +123,7 @@ function reactivepower(m::JuMP.Model, devices::Array{T,1}, device_formulation::T
             qmin_th[name, t] = @constraint(m, q_th[name, t] >= devices[ix].tech.reactivepowerlimits.min*on_th[name,t])
             qmax_th[name, t] = @constraint(m, q_th[name, t] <= devices[ix].tech.reactivepowerlimits.max*on_th[name,t])
         else
-            error("Bus name in Array and variable do not match")
+            @error "Bus name in Array and variable do not match"
         end
 
     end
