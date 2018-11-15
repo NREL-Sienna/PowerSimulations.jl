@@ -89,7 +89,7 @@ function run_simulations(simulation::PowerSimulationsModel{S}, solver, ps_dict::
         simulation_results[step] = copy(res)
 
         # update initial...
-        initialpowerdict = :pth in keys(res) ? PS.get_previous_value(res[:p_th]) : nothing
+        initialpowerdict = :p_th in keys(res) ? PS.get_previous_value(res[:p_th]) : nothing
         initialstatusdict = :on_th in keys(res) ? PS.get_previous_value(res[:on_th]) : nothing
         initialondurationdict = :start_th in keys(res) ? PS.commitment_duration(res,initialondurationdict,:start_th) : nothing
         initialoffdurationdict = :stop_th in keys(res) ? PS.commitment_duration(res,initialoffdurationdict,:stop_th) : nothing

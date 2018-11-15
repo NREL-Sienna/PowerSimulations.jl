@@ -108,6 +108,8 @@ function buildsimulation!(sys::PowerSystems.PowerSystem, op_model::PowerOperatio
         # TODO: do a better job of classifying generators in the timeseries dict and reflect that here. For now, i'm just using PV as a placeholder
         ts_dict["gen"]["PV"] = DataFrame(Dict([(g.name,values(g.scalingfactor)) for g in sys.generators.renewable]))
         ts_dict["gen"]["PV"][:DateTime] = timestamp(sys.generators.renewable[1].scalingfactor)
+        ts_dict["gen"]["WIND"] = DataFrame(Dict([(g.name,values(g.scalingfactor)) for g in sys.generators.renewable]))
+        ts_dict["gen"]["WIND"][:DateTime] = timestamp(sys.generators.renewable[1].scalingfactor)
     end
 
     if !isa(sys.generators.hydro,Nothing)
