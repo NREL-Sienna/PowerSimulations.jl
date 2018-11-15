@@ -7,7 +7,7 @@ const PS = PowerSimulations
 # ED Testing
 base_dir = dirname(dirname(pathof(PowerSystems)))
 include(joinpath(base_dir,"data/data_5bus.jl"))
-sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  1000.0,runchecks=false);
+sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing, 100.0,runchecks=false);
 simple_reserve = PowerSystems.StaticReserve("test_reserve",sys5.generators.thermal,60.0,[gen.tech for gen in sys5.generators.thermal])
 
 # ED with thermal gen, static load, copper plate
@@ -112,7 +112,7 @@ true finally end
 # UC Testing
 base_dir = dirname(dirname(pathof(PowerSystems)))
 include(joinpath(base_dir,"data/data_5bus_uc.jl"))
-sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  1000.0, runchecks=false);
+sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing, 100.0, runchecks=false);
 simple_reserve = PowerSystems.StaticReserve("test_reserve",sys5.generators.thermal,60.0,[sys5.generators.thermal[1].tech])
 
 # UC with thermal gen, static load, copper plate

@@ -24,7 +24,7 @@ function run_simulations(simulation::PowerSimulationsModel{S}, solver, ps_dict::
     # Precalculate PTDF and initialize generator statuses
     sys = simulation.model.system
 
-    if simulation.model.transmission <: AbstractFlowForm
+    if simulation.model.transmission <: StandardPTDF
         PTDF,  A = PowerSystems.buildptdf(sys.branches, sys.buses)
     else
         PTDF = nothing
