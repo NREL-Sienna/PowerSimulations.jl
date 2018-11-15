@@ -128,9 +128,9 @@ uuid = "e8e45514-c753-11e8-2a1b-cd93cb9d98d1"
 version = "0.0.0"
 [[InfrastructureModels]]
 deps = ["Compat", "JuMP", "LinearAlgebra", "Memento", "Random", "Test"]
-git-tree-sha1 = "065f053ba74dffe8dbf40843d42ee96adacdc13e"
+git-tree-sha1 = "e2ed09bb6606d551390147b9a42f4f3432dcc7c4"
 uuid = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
-version = "0.0.10"
+version = "0.0.11"
 
 [[InteractiveUtils]]
 deps = ["LinearAlgebra", "Markdown"]
@@ -182,9 +182,9 @@ uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 
 [[LinQuadOptInterface]]
 deps = ["Compat", "MathOptInterface"]
-git-tree-sha1 = "c246e73894d2063ab0697be54ecbb122e604df19"
+git-tree-sha1 = "7baadee415b6fc86519152fdfafb1d3526488171"
 uuid = "f8899e07-120b-5979-ab1d-7b97bb9e1a48"
-version = "0.4.1"
+version = "0.4.2"
 
 [[LinearAlgebra]]
 deps = ["Libdl"]
@@ -278,11 +278,11 @@ version = "0.8.4"
     SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [[PowerSystems]]
-git-tree-sha1 = "0ea4a8b734d879ce31deced9e44a0191a9bea037"
-repo-rev = "add-require"
+git-tree-sha1 = "44d7af35a012c059dbc99114017568c0021e7f1a"
+repo-rev = "master"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
-version = "0.1.2"
+version = "0.2.1"
 
     [PowerSystems.deps]
     AxisArrays = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
@@ -396,9 +396,9 @@ version = "0.4.0"
 
 [[Tables]]
 deps = ["Requires", "Test"]
-git-tree-sha1 = "be3a3a28a1e6c4fdd838bdf21e796f7a592c565c"
+git-tree-sha1 = "c7fb447deab835fa70ce6717e78c68b0f466a42c"
 uuid = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
-version = "0.1.10"
+version = "0.1.11"
 
 [[Test]]
 deps = ["Distributed", "InteractiveUtils", "Logging", "Random"]
