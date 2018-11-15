@@ -120,17 +120,17 @@ uuid = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
 version = "0.8.3"
 
 [[InfrastructureModels]]
+deps = ["Compat", "JuMP", "LinearAlgebra", "Memento", "Random", "Test"]
+git-tree-sha1 = "e2ed09bb6606d551390147b9a42f4f3432dcc7c4"
+uuid = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
+version = "0.0.11"
+[[InfrastructureModels]]
 deps = ["Compat", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento"]
 git-tree-sha1 = "d37591ba872ef0753fc72da31503880e122b0da1"
 repo-rev = "moi"
 repo-url = "https://github.com/lanl-ansi/InfrastructureModels.jl.git"
 uuid = "e8e45514-c753-11e8-2a1b-cd93cb9d98d1"
 version = "0.0.0"
-[[InfrastructureModels]]
-deps = ["Compat", "JuMP", "LinearAlgebra", "Memento", "Random", "Test"]
-git-tree-sha1 = "e2ed09bb6606d551390147b9a42f4f3432dcc7c4"
-uuid = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
-version = "0.0.11"
 
 [[InteractiveUtils]]
 deps = ["LinearAlgebra", "Markdown"]
@@ -260,7 +260,7 @@ uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[PowerModels]]
 git-tree-sha1 = "c732dcd768d05f27d9ba3dae7086e97af6f50527"
-repo-rev = "v0.7-moi"
+repo-rev = "moi"
 repo-url = "https://github.com/lanl-ansi/PowerModels.jl.git"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 version = "0.8.4"
