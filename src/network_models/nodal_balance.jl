@@ -28,10 +28,9 @@ function add_flows(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formul
 
     end
 
-
 end
 
-function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: AbstractDCPowerModel}
+function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: AbstractFlowForm}
 
     time_index = 1:sys.time_periods
     bus_name_index = [b.name for b in sys.buses]
@@ -45,11 +44,46 @@ function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system
             isassigned(netinjection.var_active,ix, t) ? true : @error "Islanded Bus in the system"
 
             pf_balance[bus,t] = @constraint(m, netinjection.var_active[ix, t] == netinjection.timeseries_active[ix, t])
-        
+
         end
 
-        JuMP.register_object(m, :NodalFlowBalance, pf_balance)
+        JuMP.register_object(m, :NodalFlowBalance_active, pf_balance)
 
-    return m
-    
+end
+
+
+function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: AbstractDCPowerModel}
+
+    time_index = 1:sys.time_periods
+    bus_name_index = [b.name for b in sys.buses]
+
+    PM_dict = pass_to_pm(sys, netinjection)
+
+        for t in time_index, bus in sys.buses
+
+            !isassigned(netinjection.var_active,bus.number,t) ? PM_dict["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = -(netinjection.timeseries_active[bus.number, t]) : PM_dict["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = JuMP.add_to_expression!(netinjection.var_active[bus.number,t],-(netinjection.timeseries_active[bus.number, t]))
+
+        end
+
+        m.ext[:PM_object] = PM_dict
+
+end
+
+function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: AbstractACPowerModel}
+
+    nodalflowbalance(m, netinjection, AbstractDCPowerModel, sys)
+
+    PM_dict = m.ext[:PM_object]
+
+    time_index = 1:sys.time_periods
+    bus_name_index = [b.name for b in sys.buses]
+
+        for t in time_index, bus in sys.buses
+
+            !isassigned(netinjection.var_reactive,bus.number,t) ? PM_dict["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = -(netinjection.timeseries_reactive[bus.number, t]) : PM_dict["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = JuMP.add_to_expression!(netinjection.var_reactive[bus.number,t],-(netinjection.timeseries_reactive[bus.number, t]))
+
+        end
+
+        m.ext[:PM_object] = PM_dict
+
 end

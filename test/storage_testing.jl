@@ -24,10 +24,10 @@ generators_hg = [
     ),
     HydroCurtailment("HydroCurtailment",true,nodes5[3],
         TechHydro(60.0, 10.0, (min = 0.0, max = 60.0), nothing, nothing, (up = 10.0, down = 10.0), nothing),
-        1000.0,TimeSeries.TimeArray(DayAhead,wind_ts_DA) )
+        100.0,TimeSeries.TimeArray(DayAhead,wind_ts_DA) )
 ]
 
-sys5b = PowerSystem(nodes5, append!(generators5, generators_hg), loads5_DA, branches5, battery,  1000.0)
+sys5b = PowerSystem(nodes5, append!(generators5, generators_hg), loads5_DA, branches5, battery,  100.0)
 
 m = Model()
 devices_netinjection =  PowerSimulations.JumpAffineExpressionArray(length(sys5b.buses), sys5b.time_periods)

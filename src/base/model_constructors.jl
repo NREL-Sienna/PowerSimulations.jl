@@ -1,4 +1,4 @@
-function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerOperationModel; args...)
+function buildmodel!(op_model::PowerOperationModel, sys::PowerSystems.PowerSystem; args...)
 
     #TODO: Add check model spec vs data functions before trying to build
 
@@ -12,7 +12,7 @@ function buildmodel!(sys::PowerSystems.PowerSystem, op_model::PowerOperationMode
         for category in op_model.demand
             constructdevice!(op_model.model, netinjection, category.device, category.formulation, op_model.transmission, sys; args...)
         end
-    end 
+    end
 
     #=
     for category in op_model.storage

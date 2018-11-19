@@ -14,7 +14,7 @@ battery = GenericBattery(name = "Bat",
                 outputactivepowerlimit = 10.0,
                 efficiency = (in = 0.90, out = 0.80),
                 );
-sys5b = PowerSystem(nodes5, generators5, loads5_DA, branches5, [battery],  1000.0)
+sys5b = PowerSystem(nodes5, generators5, loads5_DA, branches5, [battery],  100.0)
 ;
 
 m = Model()

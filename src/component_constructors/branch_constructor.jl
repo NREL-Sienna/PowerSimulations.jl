@@ -1,24 +1,10 @@
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{B}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {B <: PowerSystems.Branch, D <: AbstractBranchForm, S <: PM.AbstractDCPForm}
+function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{B}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {B <: PowerSystems.Branch, D <: AbstractBranchForm, S <: AbstractFlowForm}
 
     flowvariables(m, system_formulation, sys.branches, sys.time_periods)
 
     thermalflowlimits(m, system_formulation, sys.branches, sys.time_periods)
 
-    nodalflowbalance(m, netinjection, system_formulation, sys)
-
 end
-
-#=
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.Branch}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractBranchForm, S <: PM.AbstractDCPLLForm}
-
-    flowvariables(m, system_formulation, sys.branches, sys.time_periods)
-
-    thermalflowlimits(m, system_formulation, sys.branches, sys.time_periods)
-
-    nodalflowbalance(m, netinjection, system_formulation, sys)
-
-end
-=#
 
 function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{B}, category_formulation::Type{PiLine}, system_formulation::Type{StandardPTDF}, sys::PowerSystems.PowerSystem; args...) where {B <: PowerSystems.Branch}
 
@@ -33,7 +19,5 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
     thermalflowlimits(m, system_formulation, sys.branches, sys.time_periods)
 
     dc_networkflow(m, netinjection, PTDF)
-
-    nodalflowbalance(m, netinjection, system_formulation, sys)
 
 end

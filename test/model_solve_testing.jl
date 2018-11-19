@@ -1,6 +1,6 @@
 using PowerSystems
 using JuMP
-using PowerSimulations  
+using PowerSimulations
 using GLPK
 const PS = PowerSimulations
 
@@ -13,18 +13,17 @@ simple_reserve = PowerSystems.StaticReserve("test_reserve",sys5.generators.therm
 # ED with thermal gen, static load, copper plate
 @test try
     @info "ED with thermal gen, static load, copper plate"
-    ED = PS.PowerOperationModel(PS.EconomicDispatch, 
-                            [(device = ThermalGen, formulation =PS.ThermalDispatch)], 
+    ED = PS.PowerOperationModel(PS.EconomicDispatch,
+                            [(device = ThermalGen, formulation =PS.ThermalDispatch)],
                             nothing,
-                            nothing, 
                             [(device=Line, formulation=PS.PiLine)],
                             PS.CopperPlatePowerModel,
-                            nothing, 
+                            nothing,
                             sys5,
-                            Model(), 
+                            Model(),
                             false,
                             nothing)
-    PS.buildmodel!(sys5,ED)
+    PS.buildmodel!(ED,sys5)
     JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
     (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status")
 true finally end
@@ -32,19 +31,19 @@ true finally end
 # ED with thermal and curtailable renewable gen, static load, copper plate
 @test try
     @info "ED with thermal and curtailable renewable gen, static load, copper plate"
-    ED = PS.PowerOperationModel(PS.EconomicDispatch, 
+    ED = PS.PowerOperationModel(PS.EconomicDispatch,
                             [(device = ThermalGen, formulation =PS.ThermalDispatch),
-                             (device = RenewableGen, formulation = PS.RenewableCurtail)], 
+                             (device = RenewableGen, formulation = PS.RenewableCurtail)],
                             nothing,
-                            nothing, 
+                            nothing,
                             [(device=Line, formulation=PS.PiLine)],
                             PS.CopperPlatePowerModel,
-                            nothing, 
+                            nothing,
                             sys5,
-                            Model(), 
+                            Model(),
                             false,
                             nothing)
-    PS.buildmodel!(sys5,ED)
+    PS.buildmodel!(ED,sys5)
     JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
     (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success) ? true : @error("solver returned with nonzero status")
 true finally end
@@ -52,19 +51,19 @@ true finally end
 # ED with thermal and fixed renewable gen, interruptable load, copper plate
 @test try
     @info "ED with thermal and fixed renewable gen, interruptable load, copper plate"
-    ED = PS.PowerOperationModel(PS.EconomicDispatch, 
+    ED = PS.PowerOperationModel(PS.EconomicDispatch,
                             [(device = ThermalGen, formulation = PS.ThermalDispatch),
-                            (device = RenewableGen, formulation = PS.RenewableCurtail)], 
+                             (device = RenewableGen, formulation = PS.RenewableCurtail)],
                             [(device = ElectricLoad, formulation = PS.InterruptibleLoad)],
-                            nothing, 
+                            nothing,
                             [(device=Line, formulation=PS.PiLine)],
                             PS.CopperPlatePowerModel,
-                            nothing, 
+                            nothing,
                             sys5,
-                            Model(), 
+                            Model(),
                             false,
                             nothing)
-    PS.buildmodel!(sys5,ED)
+    PS.buildmodel!(ED,sys5)
     JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
     (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status")
 true finally end
@@ -72,18 +71,17 @@ true finally end
 # ED with thermal gen, copper plate, and reserve
 @test try
     @info "ED with thermal gen, copper plate, and reserve"
-    ED = PS.PowerOperationModel(PS.EconomicDispatch, 
-                            [(device = ThermalGen, formulation =PS.ThermalDispatch)], 
+    ED = PS.PowerOperationModel(PS.EconomicDispatch,
+                            [(device = ThermalGen, formulation =PS.ThermalDispatch)],
                             nothing,
-                            nothing, 
                             [(device=Line, formulation=PS.PiLine)],
                             PS.CopperPlatePowerModel,
-                            [(service = simple_reserve, formulation = PS.RampLimitedReserve)], 
+                            [(service = simple_reserve, formulation = PS.RampLimitedReserve)],
                             sys5,
-                            Model(), 
+                            Model(),
                             false,
                             nothing)
-    PS.buildmodel!(sys5,ED)
+    PS.buildmodel!(ED,sys5)
     JuMP.optimize!(ED.model,with_optimizer(GLPK.Optimizer))
     (ED.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status")
 true finally end
@@ -92,16 +90,16 @@ true finally end
 # ED with thermal gen, PTDF
 @test try
     @info "ED with thermal gen, copper plate, and reserve"
-    ED = PS.PowerOperationModel(PS.EconomicDispatch, 
+    ED = PS.PowerOperationModel(PS.EconomicDispatch,
                             [(device = ThermalGen, formulation =PS.ThermalDispatch),
-                            (device = RenewableGen, formulation = PS.RenewableCurtail)], 
+                            (device = RenewableGen, formulation = PS.RenewableCurtail)],
                             nothing,
-                            nothing, 
+                            nothing,
                             [(device=Branch, formulation=PS.PiLine)],
                             PS.StandardPTDF,
-                            nothing, 
+                            nothing,
                             sys5,
-                            Model(), 
+                            Model(),
                             false,
                             nothing)
     PS.buildmodel!(sys5,ED)
@@ -118,18 +116,18 @@ simple_reserve = PowerSystems.StaticReserve("test_reserve",sys5.generators.therm
 # UC with thermal gen, static load, copper plate
 @test try
     @info "UC with thermal gen, static load, copper plate"
-    UC = PS.PowerOperationModel(PS.UnitCommitment, 
-                            [(device = ThermalGen, formulation =PS.StandardThermalCommitment)], 
+    UC = PS.PowerOperationModel(PS.UnitCommitment,
+                            [(device = ThermalGen, formulation =PS.StandardThermalCommitment)],
                             nothing,
-                            nothing, 
+                            nothing,
                             [(device=Branch, formulation=PS.PiLine)],
                             PS.CopperPlatePowerModel,
-                            nothing, 
+                            nothing,
                             sys5,
-                            Model(), 
+                            Model(),
                             false,
                             nothing)
-    PS.buildmodel!(sys5,UC)
+    PS.buildmodel!(UC,sys5)
     JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
     (UC.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status")
 true finally end
@@ -137,38 +135,38 @@ true finally end
 # UC with thermal and curtailable renewable gen, static load, copper plate
 @test try
     @info "UC with thermal and curtailable renewable gen, static load, copper plate"
-    UC = PS.PowerOperationModel(PS.EconomicDispatch, 
+    UC = PS.PowerOperationModel(PS.EconomicDispatch,
                             [(device = ThermalGen, formulation =PS.StandardThermalCommitment),
-                             (device = RenewableGen, formulation = PS.RenewableCurtail)], 
+                             (device = RenewableGen, formulation = PS.RenewableCurtail)],
                             nothing,
-                            nothing, 
+                            nothing,
                             [(device=Line, formulation=PS.PiLine)],
                             PS.CopperPlatePowerModel,
-                            nothing, 
+                            nothing,
                             sys5,
-                            Model(), 
+                            Model(),
                             false,
                             nothing)
-    PS.buildmodel!(sys5,UC)
+    PS.buildmodel!(UC,sys5)
     JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
 true finally end
 
 # UC with thermal and fixUC renewable gen, interruptable load, copper plate
 @test try
     @info "UC with thermal and fixUC renewable gen, interruptable load, copper plate"
-    UC = PS.PowerOperationModel(PS.UnitCommitment, 
+    UC = PS.PowerOperationModel(PS.UnitCommitment,
                             [(device = ThermalGen, formulation = PS.StandardThermalCommitment),
-                             (device = RenewableGen, formulation = PS.RenewableCurtail)], 
+                             (device = RenewableGen, formulation = PS.RenewableCurtail)],
                             [(device = ElectricLoad, formulation = PS.InterruptibleLoad)],
-                            nothing, 
+                            nothing,
                             [(device=Line, formulation=PS.PiLine)],
                             PS.CopperPlatePowerModel,
-                            nothing, 
+                            nothing,
                             sys5,
-                            Model(), 
+                            Model(),
                             false,
                             nothing)
-    PS.buildmodel!(sys5,UC)
+    PS.buildmodel!(UC,sys5)
     JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
     (UC.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status")
 true finally end
@@ -176,16 +174,15 @@ true finally end
 # UC with thermal gen, copper plate, and reserve
 @test try
     @info "UC with thermal gen, copper plate, and reserve"
-    UC = PS.PowerOperationModel(PS.EconomicDispatch, 
+    UC = PS.PowerOperationModel(PS.EconomicDispatch,
                             [(device = ThermalGen, formulation =PS.StandardThermalCommitment),
-                            (device = RenewableGen, formulation = PS.RenewableCurtail)], 
+                            (device = RenewableGen, formulation = PS.RenewableCurtail)],
                             nothing,
-                            nothing, 
                             [(device=Line, formulation=PS.PiLine)],
                             PS.CopperPlatePowerModel,
-                            [(service = simple_reserve, formulation = PS.RampLimitedReserve)], 
+                            [(service = simple_reserve, formulation = PS.RampLimitedReserve)],
                             sys5,
-                            Model(), 
+                            Model(),
                             false,
                             nothing)
     PS.buildmodel!(sys5,UC)
@@ -197,19 +194,19 @@ true finally end
 # UC with thermal gen, copper plate, and PTDF
 @test try
     @info "UC with thermal gen, copper plate, and reserve"
-    UC = PS.PowerOperationModel(PS.EconomicDispatch, 
+    UC = PS.PowerOperationModel(PS.EconomicDispatch,
                             [(device = ThermalGen, formulation =PS.StandardThermalCommitment),
-                            (device = RenewableGen, formulation = PS.RenewableCurtail)], 
+                            (device = RenewableGen, formulation = PS.RenewableCurtail)],
                             nothing,
-                            nothing, 
+                            nothing,
                             [(device=Branch, formulation=PS.PiLine)],
                             PS.StandardPTDF,
                             nothing,
                             sys5,
-                            Model(), 
+                            Model(),
                             false,
                             nothing)
-    PS.buildmodel!(sys5,UC)
+    PS.buildmodel!(UC,sys5)
     JuMP.optimize!(UC.model,with_optimizer(GLPK.Optimizer))
     (UC.model.moi_backend.model.optimizer.termination_status == JuMP.MOI.Success)  ? true : @error("solver returned with nonzero status")
 true finally end
