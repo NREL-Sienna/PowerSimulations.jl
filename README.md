@@ -1,5 +1,7 @@
 # PowerSimulations
 
+[![Build Status](https://travis-ci.org/NREL/PowerSimulations.jl.svg?branch=master)](https://travis-ci.org/NREL/PowerSimulations.jl)
+
 ## PowerSimulations is currently Work in Progress. Many of the functionalities are not currently available. Please follow the instructions below if you want to test some of the code already developed.
 
 ## The current implementation of the functionalities can be seen in the test codes.
