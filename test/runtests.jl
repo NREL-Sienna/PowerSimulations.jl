@@ -1,20 +1,66 @@
 using PowerSimulations
+using PowerSystems
+using JuMP
 using Test
 
+const PS = PowerSimulations
+
+base_dir = string(dirname(dirname(pathof(PowerSystems))));
+include(joinpath(base_dir,"data/data_5bus_pu.jl"));
+
+renewables = [RenewableCurtailment("WindBusA", true, nodes5[5],
+            120.0,
+            EconRenewable(22.0, nothing),
+            TimeSeries.TimeArray(DayAhead,wind_ts_DA)
+            ),
+            RenewableCurtailment("WindBusB", true, nodes5[4],
+            120.0,
+            EconRenewable(22.0, nothing),
+            TimeSeries.TimeArray(DayAhead,wind_ts_DA)
+            ),
+            RenewableCurtailment("WindBusC", true, nodes5[3],
+            120.0,
+            EconRenewable(22.0, nothing),
+            TimeSeries.TimeArray(DayAhead,wind_ts_DA)
+            )];
+
+battery = [GenericBattery(name = "Bat",
+                status = true,
+                bus = nodes5[1],
+                activepower = 10.0,
+                energy = 5.0,
+                capacity = (min = 0.0, max = 0.0),
+                inputactivepowerlimits = (min = 0.0, max = 50.0),
+                outputactivepowerlimits = (min = 0.0, max = 50.0),
+                efficiency = (in = 0.90, out = 0.80),
+                )];
+
+generators_hg = [
+    HydroFix("HydroFix",true,nodes5[2],
+        TechHydro(0.600, 0.150, (min = 0.0, max = 60.0), 0.0, (min = 0.0, max = 60.0), nothing, nothing),
+        TimeSeries.TimeArray(DayAhead,solar_ts_DA)
+    ),
+    HydroCurtailment("HydroCurtailment",true,nodes5[3],
+        TechHydro(0.600, 0.100, (min = 0.0, max = 60.0), 0.0, (min = 0.0, max = 60.0), (up = 10.0, down = 10.0), nothing),
+        100.0,TimeSeries.TimeArray(DayAhead,wind_ts_DA) )
+];
 
 @testset "Device Constructors" begin
-    include("thermalgen_testing.jl")
-    include("renewables_testing.jl")
-    include("load_testing.jl")
+    include("variables_testing.jl")
+    include("constraints_testing.jl")
+    #include("renewables_testing.jl")
+    #include("load_testing.jl")
     #include("hydro_testing.jl")
     #include("storage_testing.jl")
 end
 
+
 @testset "Network Constructors" begin
-    include("powermodels_testing.jl")
-    include("network_testing.jl")
+    #include("powermodels_testing.jl")
+    #include("network_testing.jl")
 end
 
+#=
 @testset "Services Constructors" begin
     include("service_testing.jl")
 end
@@ -29,3 +75,4 @@ end
 @testset "Simulation routines" begin
     include("simulations_testing.jl")
 end
+=#

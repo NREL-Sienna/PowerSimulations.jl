@@ -1,59 +1,33 @@
 """
-This function adds the power limits of generators when there are no CommitmentVariables
+This function adds the power limits of renewable energy generators that can be dispatched
 """
-function activepower(m::JuMP.AbstractModel, devices::Array{R,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {R <: PowerSystems.RenewableGen, D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
+function activepower(ps_m::CanonicalModel, devices::Array{R,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {R <: PowerSystems.RenewableGen, D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
 
-    p_re = m[:p_re]
-    time_index = m[:p_re].axes[2]
-    name_index = m[:p_re].axes[1]
+    ts_data = [(r.name, values(r.scalingfactor)*r.tech.installedcapacity) for r in devices]
 
-    (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
-
-    pmax_re = JuMP.JuMPArray(Array{ConstraintRef}(undef, length.(JuMP.axes(p_re))), name_index, time_index)
-
-    for t in time_index, (ix, name) in enumerate(name_index)
-
-        if name == devices[ix].name
-            pmax_re[name, t] = @constraint(m, p_re[name, t] <= devices[ix].tech.installedcapacity * values(devices[ix].scalingfactor)[t])
-        else
-            @error "Bus name in Array and variable do not match"
-        end
-
-    end
-
-    JuMP.register_object(m, :pmax_re, pmax_re)
+    device_timeseries_ub(ps_m, ts_data , time_range, "renewable_active_ub", "Pre")
 
 end
 
+"""
+This function adds the reactive power limits of renewable generators that can be dispatched
+"""
+function reactivepower(ps_m::CanonicalModel, devices::Array{R,1}, device_formulation::Type{RenewableFullDispatch}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {R <: PowerSystems.RenewableGen,  S <: AbstractACPowerModel}
+
+    range_data = [(r.name, r.tech.reactivepowerlimits) for r in devices]
+
+    device_range(ps_m, range_data , time_range, "renewable_reactive_range", "Qre")
+
+end
 
 """
-This function adds the power limits of generators when there are no CommitmentVariables
+This function adds the reactive power limits of renewable generators that can be dispatched
 """
-function reactivepower(m::JuMP.AbstractModel, devices::Array{R,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {R <: PowerSystems.RenewableGen, D <: AbstractRenewableDispatchForm,  S <: AbstractACPowerModel}
+function reactivepower(ps_m::CanonicalModel, devices::Array{R,1}, device_formulation::Type{RenewableConstantPowerFactor}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {R <: PowerSystems.RenewableGen,  S <: AbstractACPowerModel}
 
-    q_re = m[:q_re]
-    time_index = m[:q_re].axes[2]
-    name_index = m[:q_re].axes[1]
+    ts_data = [(r.name, values(r.scalingfactor)*r.tech.installedcapacity*sin(acos(r.tech.powerfactor))) for r in devices]
 
-    (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
-
-    qmax_re = JuMP.JuMPArray(Array{ConstraintRef}(undef,length.(JuMP.axes(q_re))), name_index, time_index)
-    qmin_re = JuMP.JuMPArray(Array{ConstraintRef}(undef,length.(JuMP.axes(q_re))), name_index, time_index)
-
-    for t in time_index, (ix, name) in enumerate(name_index)
-
-        if name == devices[ix].name
-
-            qmax_re[name, t] = @constraint(m, q_re[name, t] <= devices[ix].tech.reactivepowerlimits.max)
-            qmin_re[name, t] = @constraint(m, q_re[name, t] >= devices[ix].tech.reactivepowerlimits.min)
-
-        else
-            @error "Bus name in Array and variable do not match"
-        end
-
-    end
-
-    JuMP.register_object(m, :qmax_re, qmax_re)
-    JuMP.register_object(m, :qmin_re, qmin_re)
+    device_timeseries_ub(ps_m, ts_data , time_range, "renewable_reactive_ub", "Qre")
+    device_timeseries_lb(ps_m, ts_data , time_range, "renewable_reactive_lb", "Qre")
 
 end

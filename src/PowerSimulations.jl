@@ -52,7 +52,7 @@ const MOIU = MathOptInterface.Utilities
 const PTDFArray = AxisArrays.AxisArray{Float64,2,Array{Float64,2},Tuple{AxisArrays.Axis{:branches,Array{String,1}},AxisArrays.Axis{:buses,Array{String,1}}}}
 
 #Type Alias for JuMP containers
-const JumpVariable = JuMP.JuMPArray{JuMP.VariableRef,2,Tuple{Array{String,1},UnitRange{Int64}}}
+const JumpVariable = JuMP.Containers.DenseAxisArray{JuMP.VariableRef,2,Tuple{Array{String,1},UnitRange{Int64}}}
 const JumpExpressionMatrix = Matrix{<:JuMP.GenericAffExpr}
 const JumpAffineExpressionArray = Array{JuMP.GenericAffExpr{Float64,JuMP.VariableRef},2}
 const BalanceNamedTuple = NamedTuple{(:var_active, :var_reactive, :timeseries_active, :timeseries_reactive),Tuple{JumpAffineExpressionArray, UJ, Array{Float64,2}, UF}} where {UJ <: Union{Nothing,JumpAffineExpressionArray}, UF <: Union{Nothing, Array{Float64,2}}}
@@ -69,21 +69,17 @@ include("network_models/networks.jl")
 include("service_models/services.jl")
 
 
-#base and core
-include("core/abstract_models.jl")
-#include("core/dynamic_model.jl")
+#base
+include("base/core_models/CanonicalModel.jl")
+include("base/core_models/abstract_models.jl")
+#include("base/core_models/dynamic_model.jl")
 include("base/instantiate_routines.jl")
 include("base/model_constructors.jl")
 #include("base/solve_routines.jl")
 include("base/simulation_routines.jl")
 
 #utils
-include("utils/undef_check.jl")
-include("utils/cost_addition.jl")
-include("utils/timeseries_injections.jl")
-include("utils/device_injections.jl")
 include("utils/device_retreval.jl")
-include("utils/pm_translator.jl")
 
 #Device Modeling components
 include("device_models/common.jl")
@@ -91,11 +87,9 @@ include("device_models/renewable_generation.jl")
 include("device_models/thermal_generation.jl")
 include("device_models/electric_loads.jl")
 include("device_models/branches.jl")
-#include("device_models/storage.jl")
-#include("device_models/hydro_generation.jl")
+include("device_models/storage.jl")
+include("device_models/hydro_generation.jl")
 include("service_models/reserves.jl")
-
-
 
 #Network related components
 include("network_models/copperplate_balance.jl")

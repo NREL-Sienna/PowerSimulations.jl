@@ -13,15 +13,15 @@ solver = Ipopt.Optimizer
 
 @test try
 
-    ED = PS.PowerOperationModel(PS.EconomicDispatch, 
-        [(device = ThermalGen, formulation =PS.ThermalDispatch)], 
+    ED = PS.PowerOperationModel(PS.EconomicDispatch,
+        [(device = ThermalGen, formulation =PS.ThermalDispatch)],
         nothing,
-        nothing, 
+        nothing,
         [(device=Line, formulation=PS.PiLine)],
         PS.CopperPlatePowerModel,
-        nothing, 
+        nothing,
         sys5,
-        Model(), 
+        Model(),
         false,
         nothing)
 

@@ -15,7 +15,7 @@ mutable struct PowerOperationModel{ M<:AbstractOperationsModel, T<:NetworkModel,
     transmission::Type{T}
     services::S
     system::PowerSystems.PowerSystem
-    model::JuMP.AbstractModel
+    model::CanonicalModel
     dynamics::Bool
     ptdf::Union{Nothing,PTDFArray}
 end

@@ -1,13 +1,22 @@
-function activepowervariables(m::JuMP.AbstractModel, devices_netinjection::A, devices::Array{T,1}, time_periods::Int64) where {A <: JumpExpressionMatrix, T <: PowerSystems.HydroGen}
+function activepowervariables(ps_m::CanonicalModel, devices::Array{H,1}, time_range::UnitRange{Int64}) where {H <: PowerSystems.HydroGen}
 
-    on_set = [d.name for d in devices if d.available == true]
+    add_variable(ps_m, devices, time_range, "Phy", false, "var_active")
 
-    t = 1:time_periods
+end
 
-    phy = @variable(m, phy[on_set,t]) # Power output of generators
+function reactivepowervariables(ps_m::CanonicalModel, devices::Array{H,1}, time_range::UnitRange{Int64}) where {H <: PowerSystems.HydroGen}
 
-    devices_netinjection = varnetinjectiterate!(devices_netinjection,  phy, t, devices)
+    add_variable(ps_m, devices, time_range, "Qhy", false, "var_reactive")
 
-    return phy, devices_netinjection
+end
+
+"""
+This function add the variables for power generation commitment to the model
+"""
+function commitmentvariables(ps_m::CanonicalModel, devices::Array{H,1}, time_range::UnitRange{Int64}) where {H <: PowerSystems.HydroGen}
+
+    add_variable(ps_m, devices, time_range, "on_hy", true)
+    add_variable(ps_m, devices, time_range, "start_hy", true)
+    add_variable(ps_m, devices, time_range, "stop_hy", true)
 
 end

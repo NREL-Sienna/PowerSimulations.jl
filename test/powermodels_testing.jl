@@ -1,6 +1,6 @@
 using InfrastructureModels
 using PowerModels
-using PowerSystems
+
 const PM = PowerModels
 
 # required for reducing logging during tests
@@ -12,7 +12,6 @@ setlevel!(getlogger(PowerModels), "error")
 
 
 # required for "with_optimizer" function
-using JuMP
 
 # needed for model building (MOI does not currently suppot adding solvers after model creation)
 using Ipopt
@@ -20,10 +19,10 @@ ipopt_optimizer = with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 
 # is this the best way to find a file in a package?
 base_dir = dirname(dirname(pathof(PowerSystems)))
-case5_data = PM.parse_file(joinpath(base_dir,"data/matpower/case5.m"))
+case5_data = PowerSystems.parse_file(joinpath(base_dir,"data/matpower/case5.m"))
 case5_data = InfrastructureModels.replicate(case5_data, 2)
 
-case5_dc_data = PM.parse_file(joinpath(base_dir,"data/matpower/case5_dc.m"))
+case5_dc_data = PowerSystems.parse_file(joinpath(base_dir,"data/matpower/case5_dc.m"))
 case5_dc_data = InfrastructureModels.replicate(case5_dc_data, 2)
 
 

@@ -13,6 +13,5 @@ abstract type SeriesLine <: AbstractLineForm end
 abstract type SimpleHVDC <: AbstractDCLineForm end
 
 include("branches/flow_variables.jl")
-include("branches/bus_variables.jl")
 include("branches/flow_constraints.jl")
 include("branches/ptdf_model.jl")

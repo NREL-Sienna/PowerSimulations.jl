@@ -5,12 +5,26 @@ using JuMP
 const PS = PowerSimulations
 
 base_dir = string(dirname(dirname(pathof(PowerSystems))))
-println(joinpath(base_dir,"data/data_5bus_uc.jl"))
-include(joinpath(base_dir,"data/data_5bus_uc.jl"))
+println(joinpath(base_dir,"data/data_5bus_pu.jl"))
+include(joinpath(base_dir,"data/data_5bus_pu.jl"))
 
 
 sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing, 100.0)
 
+ps_model = PS.CanonicalModel(Model(),
+                              Dict{String, JuMP.Containers.DenseAxisArray{VariableRef}}(),
+                              Dict{String, JuMP.Containers.DenseAxisArray}(),
+                              Dict{String, PS.JumpAffineExpressionArray}("var_active" => PS.JumpAffineExpressionArray(undef, 14, 24)),
+                              Dict())
+
+@test try
+    PS.activepowervariables(ps_model, generators5, 1:24)
+    PS.activepowervariables(ps_model, loads5_DA, 1:24)
+    PS.commitmentvariables(ps_model, generators5, 1:24)
+    PS.flowvariables(ps_model, PS.DCAngleForm, branches5, 1:24)
+true finally end
+
+#=
 #Generator Active and Reactive Power Variables
 @test try
     Net = PS.StandardAC
@@ -84,4 +98,4 @@ true finally end
         initialoffduration = initialoffdurationdict);
 true finally end
 
-true
+=#

@@ -20,8 +20,8 @@ function rampconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, device_form
 
         (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
-        rampdown_th = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
-        rampup_th = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
+        rampdown_th = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
+        rampup_th = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
 
         for (ix,name) in enumerate(name_index)
             t1 = time_index[1]
@@ -73,8 +73,8 @@ function rampconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, device_form
 
         (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
-        rampdown_th = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
-        rampup_th = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
+        rampdown_th = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
+        rampup_th = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
 
         for (ix,name) in enumerate(name_index)
             t1 = time_index[1]

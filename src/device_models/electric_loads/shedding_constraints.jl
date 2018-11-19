@@ -1,49 +1,25 @@
 """
 This function adds the power limits of generators when there are no CommitmentVariables
 """
-function activepower(m::JuMP.AbstractModel, devices::Array{L,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {L <: PowerSystems.ElectricLoad, D <: AbstractControllableLoadForm, S <: PM.AbstractPowerFormulation}
+function activepower(ps_m::CanonicalModel, devices::Array{L,1}, device_formulation::Type{FullControllablePowerLoad}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {L <: PowerSystems.ElectricLoad, S <: PM.AbstractPowerFormulation}
 
-    p_cl = m[:p_cl]
-    time_index = m[:p_cl].axes[2]
-    name_index = m[:p_cl].axes[1]
+    ts_data = [(l.name, l.maxactivepower * values(l.scalingfactor)) for l in devices]
 
-    (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent"): true
-
-    pmax_cl = JuMP.JuMPArray(Array{ConstraintRef}(undef, length.(JuMP.axes(p_cl))), name_index, time_index)
-    for t in time_index, (ix, name) in enumerate(name_index)
-        if name == devices[ix].name
-            pmax_cl[name, t] = @constraint(m, p_cl[name, t] <= devices[ix].maxactivepower * values(devices[ix].scalingfactor)[t])
-        else
-            @error "Bus name in Array and variable do not match"
-        end
-
-    end
-
-
-    JuMP.register_object(m, :loadcontrol_activelimit, pmax_cl)
+    device_timeseries_ub(ps_m, ts_data , time_range, "load_active_ub", "Pel")
 
 end
 
 
-function reactivepower(m::JuMP.AbstractModel, devices::Array{L,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {L <: PowerSystems.ElectricLoad, D <: AbstractControllableLoadForm, S <: AbstractACPowerModel}
+function reactivepower(ps_m::CanonicalModel, devices::Array{L,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {L <: PowerSystems.ElectricLoad, D <: AbstractControllablePowerLoadForm, S <: AbstractACPowerModel}
 
-    q_cl = m[:q_cl]
-    p_cl = m[:p_cl]
-    time_index = m[:q_cl].axes[2]
-    name_index = m[:q_cl].axes[1]
+    #TODO: Filter for loads with PF = 1.0
 
-    (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
+    ps_m.constraints["load_reactive_ub"] = JuMP.Containers.DenseAxisArray{ConstraintRef}(undef, [l.name for l in devices], time_range)
 
-    qmax_cl = JuMP.JuMPArray(Array{ConstraintRef}(undef, length.(JuMP.axes(q_cl))), name_index, time_index)
+    for t in time_range, l in devices
+            #Estimate PF from the load data. TODO: create a power factor field in PowerSystems
+            ps_m.constraints["load_reactive_ub"][l.name, t] = @constraint(ps_m.JuMPmodel,  ps_m.variables["Qel"][l.name, t] == ps_m.variables["Pel"][l.name, t] * sin(atan((l.maxreactivepower/l.maxactivepower))))
 
-    for t in time_index, (ix, name) in enumerate(name_index)
-        if name == devices[ix].name
-            qmax_cl[name, t] = @constraint(m, q_cl[name, t] == p_cl[name, t]*sin(atan((devices[ix].maxactivepower/devices[ix].maxreactivepower))))
-        else
-            @error "Bus name in Array and variable do not match"
-        end
     end
-
-    JuMP.register_object(m, :loadcontrol_reactivelimit, qmax_cl)
 
 end
