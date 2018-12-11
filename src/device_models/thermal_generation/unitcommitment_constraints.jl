@@ -3,7 +3,7 @@
 """
 This function adds the Commitment Status constraint when there are CommitmentVariables
 """
-function commitmentconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; args...) where {T <: PowerSystems.ThermalGen, D <: StandardThermalCommitment, S <: AbstractDCPowerModel}
+function commitmentconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; args...) where {T <: PowerSystems.ThermalGen, D <: StandardThermalCommitment, S <: AbstractDCPowerModel}
 
     on_th = m[:on_th]
     start_th = m[:start_th]
@@ -46,7 +46,7 @@ function commitmentconstraints(m::JuMP.Model, devices::Array{T,1}, device_formul
 end
 
 
-function timeconstraints(m::JuMP.Model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; args...) where {T <: PowerSystems.ThermalGen, D <: StandardThermalCommitment, S <: AbstractDCPowerModel}
+function timeconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; args...) where {T <: PowerSystems.ThermalGen, D <: StandardThermalCommitment, S <: AbstractDCPowerModel}
 
     devices = [d for d in devices if !isa(d.tech.timelimits, Nothing)]
 

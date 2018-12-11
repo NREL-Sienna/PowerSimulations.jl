@@ -1,6 +1,6 @@
 export simulatemodel
 
-function modify_constraint(m::JuMP.Model, consname::Symbol, data::Array{Float64,2})
+function modify_constraint(m::JuMP.AbstractModel, consname::Symbol, data::Array{Float64,2})
 
     !(size(m[consmane]) == size(data)) ? @error("The data and the constraint are size inconsistent") : true
 

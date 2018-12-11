@@ -3,7 +3,7 @@
 """
 This function creates the minimal themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractThermalDispatchForm, S <: PM.AbstractPowerFormulation}
+function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractThermalDispatchForm, S <: PM.AbstractPowerFormulation}
 
     p_th = activepowervariables(m, sys.generators.thermal, sys.time_periods);
 
@@ -18,7 +18,7 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 end
 
 
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractThermalDispatchForm, S <: AbstractACPowerModel}
+function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractThermalDispatchForm, S <: AbstractACPowerModel}
 
     constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys; args...)
 
@@ -31,7 +31,7 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 end
 
 
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{ThermalRampLimitDispatch}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: PM.AbstractPowerFormulation}
+function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{ThermalRampLimitDispatch}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: PM.AbstractPowerFormulation}
 
     constructdevice!(m, netinjection, category, AbstractThermalDispatchForm, PM.AbstractPowerFormulation, sys; args...)
 
@@ -49,7 +49,7 @@ end
 """
 This function creates the minimal the minimal thermal commitment formulation
 """
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractThermalCommitmentForm, S <: AbstractDCPowerModel}
+function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractThermalCommitmentForm, S <: AbstractDCPowerModel}
 
     p_th = activepowervariables(m, sys.generators.thermal, sys.time_periods);
 
@@ -73,7 +73,7 @@ end
 """
 This function adds constraints to the minimal thermal commitment formulation
 """
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{StandardThermalCommitment}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractDCPowerModel}
+function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{StandardThermalCommitment}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractDCPowerModel}
 
     constructdevice!(m, netinjection, category, AbstractThermalCommitmentForm, AbstractDCPowerModel, sys; args...)
 
@@ -92,7 +92,7 @@ end
 """
 This function adds constraints to the minimal thermal commitment formulation
 """
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{StandardThermalCommitment}, system_formulation::Type{CopperPlatePowerModel}, sys::PowerSystems.PowerSystem; args...)
+function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{StandardThermalCommitment}, system_formulation::Type{CopperPlatePowerModel}, sys::PowerSystems.PowerSystem; args...)
 
     constructdevice!(m, netinjection, category, category_formulation, AbstractDCPowerModel, sys; args...)
 

@@ -1,7 +1,7 @@
 """
 This function adds the power limits of  hydro generators when there are no CommitmentVariables
 """
-function powerconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.HydroCurtailment
+function powerconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.HydroCurtailment
 
     phy = m[:phy]
     time_index = m[:phy].axes[2]

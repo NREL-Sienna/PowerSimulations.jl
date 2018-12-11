@@ -1,4 +1,4 @@
-function variablecost(m::JuMP.Model, devices::Array{PowerSystems.RenewableCurtailment,1}, device_formulation::Type{D}, system_formulation::Type{S}) where {D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
+function variablecost(m::JuMP.AbstractModel, devices::Array{PowerSystems.RenewableCurtailment,1}, device_formulation::Type{D}, system_formulation::Type{S}) where {D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
 
     p_re = m[:p_re]
     time_index = m[:p_re].axes[2]

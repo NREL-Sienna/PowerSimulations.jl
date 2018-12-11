@@ -1,4 +1,4 @@
-function dc_networkflow(m::JuMP.Model, netinjection::BalanceNamedTuple, PTDF::PTDFArray)
+function dc_networkflow(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, PTDF::PTDFArray)
 
     fbr = m[:fbr]
     name_index = m[:fbr].axes[1]

@@ -1,4 +1,4 @@
-function activepowervariables(m::JuMP.Model, devices::Array{R,1}, time_periods::Int64) where {A <: JumpExpressionMatrix, R <: PowerSystems.RenewableGen}
+function activepowervariables(m::JuMP.AbstractModel, devices::Array{R,1}, time_periods::Int64) where {A <: JumpExpressionMatrix, R <: PowerSystems.RenewableGen}
 
     on_set = [d.name for d in devices]
 
@@ -10,7 +10,7 @@ function activepowervariables(m::JuMP.Model, devices::Array{R,1}, time_periods::
 
 end
 
-function reactivepowervariables(m::JuMP.Model, devices::Array{R,1}, time_periods::Int64) where {A <: JumpExpressionMatrix, R <: PowerSystems.RenewableGen}
+function reactivepowervariables(m::JuMP.AbstractModel, devices::Array{R,1}, time_periods::Int64) where {A <: JumpExpressionMatrix, R <: PowerSystems.RenewableGen}
 
     on_set = [d.name for d in devices]
 

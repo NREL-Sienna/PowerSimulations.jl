@@ -1,4 +1,4 @@
-function thermalflowlimits(m::JuMP.Model, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PowerSystems.Branch, S <: PM.AbstractDCPForm}
+function thermalflowlimits(m::JuMP.AbstractModel, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PowerSystems.Branch, S <: PM.AbstractDCPForm}
 
     fbr = m[:fbr]
     name_index = m[:fbr].axes[1]
@@ -28,7 +28,7 @@ function thermalflowlimits(m::JuMP.Model, system_formulation::Type{S}, devices::
     return m
 end
 
-function thermalflowlimits(m::JuMP.Model, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PowerSystems.Branch, S <: PM.AbstractDCPLLForm}
+function thermalflowlimits(m::JuMP.AbstractModel, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PowerSystems.Branch, S <: PM.AbstractDCPLLForm}
 
     fbr_fr = m[:fbr_fr]
     fbr_to = m[:fbr_to]
