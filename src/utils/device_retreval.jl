@@ -36,11 +36,11 @@ end
 
 
 #TODO: Make additional methods to handle other device types
-function get_pg(m::JuMP.Model, gen::G, t::Int64) where G <: PowerSystems.ThermalGen
+function get_pg(m::JuMP.AbstractModel, gen::G, t::Int64) where G <: PowerSystems.ThermalGen
     return m.obj_dict[:p_th][gen.name,t]
 end
 
-function get_pg(m::JuMP.Model, gen::G, t::Int64) where G <: PowerSystems.RenewableCurtailment
+function get_pg(m::JuMP.AbstractModel, gen::G, t::Int64) where G <: PowerSystems.RenewableCurtailment
     return m.obj_dict[:p_re][gen.name,t]
 end
 
@@ -51,7 +51,7 @@ function get_all_vars(obj_dict)
     vars = [i for arr in var_arays for i in arr]
 end
 
-function map_moi_opt_variables(model::JuMP.Model)
+function map_moi_opt_variables(model::JuMP.AbstractModel)
     # maps moi variablerefs (keys) to optimizer variable refs (values)
     vmap = model.moi_backend.model.optimizer.variable_mapping
     moi_optimizer_vmap = Dict()
@@ -61,7 +61,7 @@ function map_moi_opt_variables(model::JuMP.Model)
     return moi_optimizer_vmap
 end
 
-function map_jump_vars(model::JuMP.Model)
+function map_jump_vars(model::JuMP.AbstractModel)
     # maps jump variablerefs (keys) to optimizer variable refs (values)
     vars = get_all_vars(model.obj_dict)
     moi_optimizer_vmap = map_moi_opt_variables(model)
@@ -71,7 +71,7 @@ function map_jump_vars(model::JuMP.Model)
 end
 
 
-function map_optimizer_vars(model::JuMP.Model)
+function map_optimizer_vars(model::JuMP.AbstractModel)
     # maps optimizer variablerefs (keys) to jump variable refs (values)
     vars = get_all_vars(model.obj_dict)
     moi_optimizer_vmap = map_moi_opt_variables(model)
@@ -87,7 +87,7 @@ function get_all_constraints(obj_dict)
     constraints = [i for arr in constraint_arrays for i in arr]
 end
 
-function map_moi_opt_constraints(model::JuMP.Model)
+function map_moi_opt_constraints(model::JuMP.AbstractModel)
     # maps moi constraintrefs (keys) to optimizer constraint refs (values)
     cmap = model.moi_backend.model.optimizer.constraint_mapping
     moi_optimizer_map = Dict()
@@ -100,7 +100,7 @@ function map_moi_opt_constraints(model::JuMP.Model)
     return moi_optimizer_map
 end
 
-function map_jump_constraints(model::JuMP.Model)
+function map_jump_constraints(model::JuMP.AbstractModel)
     # maps jump constraints (keys) to optimizer constraint refs (values)
     constraints = get_all_constraints(model.obj_dict)
     moi_optimizer_map = map_moi_opt_constraints(model)
@@ -108,7 +108,7 @@ function map_jump_constraints(model::JuMP.Model)
     return Dict(zip(constraints,moiconstraints))
 end
 
-function map_optimizer_constraints(model::JuMP.Model)
+function map_optimizer_constraints(model::JuMP.AbstractModel)
     # maps optimizer constraint refs (keys) to jump constraints (values)
     constraints = get_all_constraints(model.obj_dict)
     moi_optimizer_map = map_moi_opt_constraints(model)

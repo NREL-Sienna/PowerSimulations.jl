@@ -1,4 +1,4 @@
-function powerstoragevariables(m::JuMP.Model, devices_netinjection:: A, devices::Array{T,1}, time_periods::Int64) where {A <: JumpExpressionMatrix, T <: PowerSystems.Storage}
+function powerstoragevariables(m::JuMP.AbstractModel, devices_netinjection:: A, devices::Array{T,1}, time_periods::Int64) where {A <: JumpExpressionMatrix, T <: PowerSystems.Storage}
 
     on_set = [d.name for d in devices if d.available]
     t = 1:time_periods
@@ -11,7 +11,7 @@ function powerstoragevariables(m::JuMP.Model, devices_netinjection:: A, devices:
     return pstin, pstout, devices_netinjection
 end
 
-function energystoragevariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.Storage
+function energystoragevariables(m::JuMP.AbstractModel, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.Storage
 
     on_set = [d.name for d in devices if d.available]
     t = 1:time_periods

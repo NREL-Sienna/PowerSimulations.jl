@@ -1,7 +1,7 @@
 """
 This function adds the power limits of generators when there are no CommitmentVariables
 """
-function activepower(m::JuMP.Model, devices::Array{L,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {L <: PowerSystems.ElectricLoad, D <: AbstractControllableLoadForm, S <: PM.AbstractPowerFormulation}
+function activepower(m::JuMP.AbstractModel, devices::Array{L,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {L <: PowerSystems.ElectricLoad, D <: AbstractControllableLoadForm, S <: PM.AbstractPowerFormulation}
 
     p_cl = m[:p_cl]
     time_index = m[:p_cl].axes[2]
@@ -25,7 +25,7 @@ function activepower(m::JuMP.Model, devices::Array{L,1}, device_formulation::Typ
 end
 
 
-function reactivepower(m::JuMP.Model, devices::Array{L,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {L <: PowerSystems.ElectricLoad, D <: AbstractControllableLoadForm, S <: AbstractACPowerModel}
+function reactivepower(m::JuMP.AbstractModel, devices::Array{L,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {L <: PowerSystems.ElectricLoad, D <: AbstractControllableLoadForm, S <: AbstractACPowerModel}
 
     q_cl = m[:q_cl]
     p_cl = m[:p_cl]

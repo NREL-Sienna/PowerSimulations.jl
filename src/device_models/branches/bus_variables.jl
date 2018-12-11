@@ -1,4 +1,4 @@
-function anglevariables(m::JuMP.Model, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: Union{PM.AbstractDCPForm, PM.AbstractACPForm}}
+function anglevariables(m::JuMP.AbstractModel, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: Union{PM.AbstractDCPForm, PM.AbstractACPForm}}
 
     on_set = [d.name for d in sys.buses if d.available == true]
 
@@ -8,7 +8,7 @@ function anglevariables(m::JuMP.Model, system_formulation::Type{S}, sys::PowerSy
 
 end
 
-function voltagevariables(m::JuMP.Model, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: PM.AbstractACPForm}
+function voltagevariables(m::JuMP.AbstractModel, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: PM.AbstractACPForm}
 
     on_set = [d.name for d in sys.buses if d.available == true]
 
@@ -17,7 +17,7 @@ function voltagevariables(m::JuMP.Model, system_formulation::Type{S}, sys::Power
     vm = @variable(m, vm[on_set,time_range])
 end
 
-function voltagevariables(m::JuMP.Model, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: PM.AbstractACRForm}
+function voltagevariables(m::JuMP.AbstractModel, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: PM.AbstractACRForm}
 
     on_set = [d.name for d in sys.buses if d.available == true]
 

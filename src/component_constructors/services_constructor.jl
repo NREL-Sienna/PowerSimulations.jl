@@ -13,7 +13,7 @@ function get_devices(sys::PowerSystems.PowerSystem,category::Type{PowerSystems.P
 end
 
 
-function constructservice!(m::JuMP.Model, service::PowerSystems.StaticReserve, category_formulation::Type{PS.RampLimitedReserve},devices::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, sys::PowerSystems.PowerSystem; args...)
+function constructservice!(m::JuMP.AbstractModel, service::PowerSystems.StaticReserve, category_formulation::Type{PS.RampLimitedReserve},devices::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, sys::PowerSystems.PowerSystem; args...)
 
     dev_set = Array{NamedTuple{(:device,:formulation),Tuple{PowerSystems.PowerSystemDevice,DataType}}}([])
 

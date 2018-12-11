@@ -1,4 +1,4 @@
-function copperplatebalance(m::JuMP.Model, netinjection::BalanceNamedTuple, time_periods::Int64)
+function copperplatebalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, time_periods::Int64)
 
     devices_netinjection = remove_undef!(netinjection.var_active)
     timeseries_netinjection = sum(netinjection.timeseries_active, dims=1)
