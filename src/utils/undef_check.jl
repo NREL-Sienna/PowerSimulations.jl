@@ -5,3 +5,16 @@ function remove_undef!(ExpressionArray::T) where T <: JumpExpressionMatrix
         end
     end
 end
+
+
+function _add_to_expression!(expression::JumpExpressionMatrix, ix::Int64, jx::Int64, var::JuMP.VariableRef, sign::Int64)
+
+    isassigned(expression,  ix, jx) ? JuMP.add_to_expression!(expression[ix,jx], sign*var) : expression[ix,jx] = sign*var;
+
+end
+
+function _add_to_expression!(expression::JumpExpressionMatrix, ix::Int64, jx::Int64, var::JuMP.VariableRef)
+
+    isassigned(expression,  ix, jx) ? JuMP.add_to_expression!(expression[ix,jx], var) : expression[ix,jx] = var;
+
+end
