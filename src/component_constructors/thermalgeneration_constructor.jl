@@ -5,9 +5,7 @@ This function creates the minimal themal dispatch formulation depending on combi
 """
 function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractThermalDispatchForm, S <: PM.AbstractPowerFormulation}
 
-    p_th = activepowervariables(m, sys.generators.thermal, sys.time_periods);
-
-    varnetinjectiterate!(netinjection.var_active, p_th, sys.time_periods, sys.generators.thermal)
+    activepowervariables(m, sys.generators.thermal, sys.time_periods);
 
     activepower(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
 
@@ -22,9 +20,7 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 
     constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys; args...)
 
-    q_th = reactivepowervariables(m, sys.generators.thermal, sys.time_periods);
-
-    varnetinjectiterate!(netinjection.var_reactive, q_th, sys.time_periods, sys.generators.thermal)
+    reactivepowervariables(m, sys.generators.thermal, sys.time_periods);
 
     reactivepower(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
 
@@ -54,8 +50,6 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
     p_th = activepowervariables(m, sys.generators.thermal, sys.time_periods);
 
     commitmentvariables(m, sys.generators.thermal, sys.time_periods)
-
-    varnetinjectiterate!(netinjection.var_active, p_th, sys.time_periods, sys.generators.thermal)
 
     activepower(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
 
