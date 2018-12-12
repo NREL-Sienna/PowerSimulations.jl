@@ -12,7 +12,9 @@ function gencost(m::JuMP.Model, variable::JuMP.Containers.DenseAxisArray{JuMP.Va
 
 end
 
+
 function gencost(m::JuMP.Model, variable::JuMP.Containers.DenseAxisArray{JuMP.VariableRef}, cost_component::Float64)
+
 
     gen_cost = sum(variable)*cost_component
 
@@ -20,7 +22,7 @@ function gencost(m::JuMP.Model, variable::JuMP.Containers.DenseAxisArray{JuMP.Va
 
 end
 
-function pwlgencost(m::JuMP.Model, variable::VariableRef, cost_component::Array{Tuple{Float64, Float64}})
+function pwlgencost(m::JuMP.AbstractModel, variable::VariableRef, cost_component::Array{Tuple{Float64, Float64}})
 
     pwlvars = @variable(m, [i = 1:(length(cost_component)-1)], base_name = "pwl_{$(variable)}", start = 0.0, lower_bound = 0.0, upper_bound = (cost_component[i+1][1] - cost_component[i][1]))
      for (ix, pwlvar) in enumerate(pwlvars)
