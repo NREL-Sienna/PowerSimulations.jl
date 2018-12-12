@@ -10,7 +10,7 @@ function dc_networkflow(m::JuMP.Model, netinjection::BalanceNamedTuple, PTDF::PT
 
     remove_undef!(netinjection.var_active)
 
-    branchflow = JuMP.JuMPArray(Array{ConstraintRef}(undef, length(name_index), time_index[end]), name_index, time_index)
+    branchflow = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef, length(name_index), time_index[end]), name_index, time_index)
 
     #TODO: Make consistent with the use of AxisArrays. This syntax doesn't exploit it properly
     for t in time_index

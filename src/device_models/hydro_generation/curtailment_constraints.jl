@@ -9,8 +9,8 @@ function powerconstraints(m::JuMP.Model, devices::Array{T,1}, time_periods::Int6
 
     (length(phy.axes[2]) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
-    pmax_th = JuMP.JuMPArray(Array{ConstraintRef}(length.(JuMP.axes(phy))), name_index, time_index)
-    pmin_th = JuMP.JuMPArray(Array{ConstraintRef}(length.(JuMP.axes(phy))), name_index, time_index)
+    pmax_th = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(length.(JuMP.axes(phy))), name_index, time_index)
+    pmin_th = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(length.(JuMP.axes(phy))), name_index, time_index)
 
     for t in phy.axes[2], (ix, name) in enumerate(phy.axes[1])
         if name == devices[ix].name

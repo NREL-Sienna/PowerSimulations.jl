@@ -37,7 +37,7 @@ function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system
 
     add_flows(m, netinjection, system_formulation, sys)
 
-    pf_balance = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(bus_name_index), sys.time_periods), bus_name_index, time_index)
+    pf_balance = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length(bus_name_index), sys.time_periods), bus_name_index, time_index)
 
         for t in time_index, (ix,bus) in enumerate(bus_name_index)
 
