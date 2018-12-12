@@ -1,5 +1,5 @@
 
-function flowvariables(m::JuMP.Model, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PowerSystems.Branch, S <: PM.AbstractDCPForm}
+function flowvariables(m::JuMP.AbstractModel, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PowerSystems.Branch, S <: PM.AbstractDCPForm}
 
     on_set = [d.name for d in devices if d.available == true]
 
@@ -10,7 +10,7 @@ function flowvariables(m::JuMP.Model, system_formulation::Type{S}, devices::Arra
 end
 
 
-function flowvariables(m::JuMP.Model, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PowerSystems.Branch, S <: PM.AbstractDCPLLForm}
+function flowvariables(m::JuMP.AbstractModel, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PowerSystems.Branch, S <: PM.AbstractDCPLLForm}
 
     on_set = [d.name for d in devices if d.available == true]
 
@@ -21,7 +21,7 @@ function flowvariables(m::JuMP.Model, system_formulation::Type{S}, devices::Arra
 
 end
 
-function flowvariables(m::JuMP.Model, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PowerSystems.Branch, S <: AbstractACPowerModel}
+function flowvariables(m::JuMP.AbstractModel, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PowerSystems.Branch, S <: AbstractACPowerModel}
 
     on_set = [d.name for d in devices if d.available == true]
 

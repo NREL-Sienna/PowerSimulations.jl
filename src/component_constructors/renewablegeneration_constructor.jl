@@ -1,4 +1,4 @@
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.RenewableGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
+function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PowerSystems.RenewableGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
 
     dev_set = [a.second for a in args if a.first == :devices]
 
@@ -21,7 +21,7 @@ function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, catego
 end
 
 
-function constructdevice!(m::JuMP.Model, netinjection::BalanceNamedTuple, category::Type{PowerSystems.RenewableGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractRenewableDispatchForm, S <: AbstractACPowerModel}
+function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PowerSystems.RenewableGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractRenewableDispatchForm, S <: AbstractACPowerModel}
 
     dev_set = [d for d in sys.generators.renewable if (d.available == true && !isa(d, PowerSystems.RenewableFix))]
 

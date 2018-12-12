@@ -1,4 +1,4 @@
-function add_to_cost!(m::JuMP.Model, cost_expression::Union{JuMP.JuMP.AffExpr, JuMP.JuMP.GenericQuadExpr})
+function add_to_cost!(m::JuMP.AbstractModel, cost_expression::Union{JuMP.JuMP.AffExpr, JuMP.JuMP.GenericQuadExpr})
 
     if haskey(m.obj_dict, :objective_function)
 

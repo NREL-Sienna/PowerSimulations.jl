@@ -1,4 +1,4 @@
-function activepowervariables(m::JuMP.Model, devices_netinjection::A, devices::Array{T,1}, time_periods::Int64) where {A <: JumpExpressionMatrix, T <: PowerSystems.HydroGen}
+function activepowervariables(m::JuMP.AbstractModel, devices_netinjection::A, devices::Array{T,1}, time_periods::Int64) where {A <: JumpExpressionMatrix, T <: PowerSystems.HydroGen}
 
     on_set = [d.name for d in devices if d.available == true]
 

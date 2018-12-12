@@ -1,4 +1,4 @@
-function add_flows(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: PM.AbstractDCPForm}
+function add_flows(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: PM.AbstractDCPForm}
 
     fbr = m[:fbr]
     branch_name_index = m[:fbr].axes[1]
@@ -14,7 +14,7 @@ function add_flows(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formul
 
 end
 
-function add_flows(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: PM.AbstractDCPLLForm}
+function add_flows(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: PM.AbstractDCPLLForm}
 
     fbr_fr = m[:fbr_fr]
     fbr_to = m[:fbr_to]
@@ -30,7 +30,7 @@ function add_flows(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formul
 
 end
 
-function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: AbstractFlowForm}
+function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: AbstractFlowForm}
 
     time_index = 1:sys.time_periods
     bus_name_index = [b.name for b in sys.buses]
@@ -52,7 +52,7 @@ function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system
 end
 
 
-function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: AbstractDCPowerModel}
+function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: AbstractDCPowerModel}
 
     time_index = 1:sys.time_periods
     bus_name_index = [b.name for b in sys.buses]
@@ -69,7 +69,7 @@ function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system
 
 end
 
-function nodalflowbalance(m::JuMP.Model, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: AbstractACPowerModel}
+function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: AbstractACPowerModel}
 
     nodalflowbalance(m, netinjection, AbstractDCPowerModel, sys)
 

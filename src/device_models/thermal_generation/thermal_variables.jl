@@ -29,6 +29,7 @@ end
 """
 This function add the variables for power generation commitment to the model
 """
+
 function commitmentvariables(ps_m::canonical_model, devices::Array{T,1}, time_periods::Int64) where {T <: PowerSystems.ThermalGen}
 
     on_set = [d.name for d in devices if d.available == true]

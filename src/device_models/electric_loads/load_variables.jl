@@ -1,4 +1,4 @@
-function activepowervariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where {T <: PowerSystems.ElectricLoad}
+function activepowervariables(m::JuMP.AbstractModel, devices::Array{T,1}, time_periods::Int64) where {T <: PowerSystems.ElectricLoad}
 
     on_set = [d.name for d in devices]
 
@@ -9,7 +9,7 @@ function activepowervariables(m::JuMP.Model, devices::Array{T,1}, time_periods::
     return p_cl
 end
 
-function reactivepowervariables(m::JuMP.Model, devices::Array{T,1}, time_periods::Int64) where {T <: PowerSystems.ElectricLoad}
+function reactivepowervariables(m::JuMP.AbstractModel, devices::Array{T,1}, time_periods::Int64) where {T <: PowerSystems.ElectricLoad}
 
     on_set = [d.name for d in devices]
 
