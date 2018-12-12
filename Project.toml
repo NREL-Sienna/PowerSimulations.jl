@@ -23,3 +23,6 @@ TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 [extras]
 Memento = "f28f55f0-a522-5efc-85c2-fe41dfb9b2d9"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
