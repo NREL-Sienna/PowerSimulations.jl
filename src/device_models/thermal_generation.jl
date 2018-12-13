@@ -12,6 +12,8 @@ struct StandardThermalCommitment <: AbstractThermalCommitmentForm end
 
 struct ThermalDispatch <: AbstractThermalDispatchForm end
 
+struct ThermalDispatchNoMin <: AbstractThermalDispatchForm end
+
 struct ThermalRampLimitDispatch <: AbstractThermalDispatchForm end
 
 include("thermal_generation/output_constraints.jl")

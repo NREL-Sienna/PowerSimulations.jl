@@ -2,34 +2,19 @@
 """
 This function adds the power limits of generators when there are no CommitmentVariables
 """
-function activepower(m::JuMP.AbstractModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalDispatchForm, S <: PM.AbstractPowerFormulation}
+function activepower(ps_m::canonical_model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalDispatchForm, S <: PM.AbstractPowerFormulation}
 
-    p_th = m[:p_th]
-    time_index = m[:p_th].axes[2]
-    name_index = m[:p_th].axes[1]
+    activepower_range(ps_m, devices, time_range, "Thermal_active_range", "Pth")
 
-    (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
+end
 
-    pmax_th = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
-    pmin_th = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
+"""
+This function adds the power limits of generators when there are no CommitmentVariables
+"""
+function activepower(ps_m::canonical_model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {T <: PowerSystems.ThermalGen, D <: ThermalDispatchNoMin, S <: PM.AbstractPowerFormulation}
 
-    for t in time_index, (ix, name) in enumerate(name_index)
+    activepower_range(ps_m, devices, time_range, "Thermal_active_range", "Pth", true)
 
-        if name == devices[ix].name
-
-            pmin_th[name, t] = @constraint(m, p_th[name, t] >= devices[ix].tech.activepowerlimits.min)
-            pmax_th[name, t] = @constraint(m, p_th[name, t] <= devices[ix].tech.activepowerlimits.max)
-
-        else
-            @error "Bus name in Array and variable do not match"
-        end
-
-    end
-
-    JuMP.register_object(m, :pmax_th, pmax_th)
-    JuMP.register_object(m, :pmin_th, pmin_th)
-
-    return m
 end
 
 """
