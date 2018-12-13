@@ -4,23 +4,14 @@ This function adds the power limits of generators when there are no CommitmentVa
 """
 function activepower(ps_m::canonical_model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalDispatchForm, S <: PM.AbstractPowerFormulation}
 
-    activepower_range(ps_m, devices, time_range, "Thermal_active_range", "Pth")
-
-end
-
-"""
-This function adds the power limits of generators when there are no CommitmentVariables
-"""
-function activepower(ps_m::canonical_model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {T <: PowerSystems.ThermalGen, D <: ThermalDispatchNoMin, S <: PM.AbstractPowerFormulation}
-
-    activepower_range(ps_m, devices, time_range, "Thermal_active_range", "Pth", true)
+    activepower_range(ps_m, devices, time_range, "thermal_active_range", "Pth")
 
 end
 
 """
 This function adds the power limits of generators when there are CommitmentVariables
 """
-function activepower(m::JuMP.AbstractModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalCommitmentForm, S <: AbstractDCPowerModel}
+function activepower(ps_m::canonical_model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalCommitmentForm, S <: AbstractDCPowerModel}
 
     p_th = m[:p_th]
     on_th = m[:on_th]
@@ -54,34 +45,10 @@ end
 """
 This function adds the power limits of generators when there are no CommitmentVariables
 """
-function reactivepower(m::JuMP.AbstractModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalDispatchForm, S <: AbstractACPowerModel}
+function reactivepower(ps_m::canonical_model, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalDispatchForm, S <: AbstractACPowerModel}
 
-    q_th = m[:q_th]
-    time_index = m[:q_th].axes[2]
-    name_index = m[:q_th].axes[1]
+    reactivepower_range(ps_m, devices, time_range, "thermal_reactive_range", "Qth")
 
-    (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
-
-    qmax_th = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
-    qmin_th = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
-
-    for t in time_index, (ix, name) in enumerate(name_index)
-
-        if name == devices[ix].name
-
-            qmin_th[name, t] = @constraint(m, q_th[name, t] >= devices[ix].tech.reactivepowerlimits.min)
-            qmax_th[name, t] = @constraint(m, q_th[name, t] <= devices[ix].tech.reactivepowerlimits.max)
-
-        else
-            @error "Bus name in Array and variable do not match"
-        end
-
-    end
-
-    JuMP.register_object(m, :qmax_th, qmax_th)
-    JuMP.register_object(m, :qmin_th, qmin_th)
-
-    return m
 end
 
 
