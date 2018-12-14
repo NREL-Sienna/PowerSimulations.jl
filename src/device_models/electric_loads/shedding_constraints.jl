@@ -1,7 +1,7 @@
 """
 This function adds the power limits of generators when there are no CommitmentVariables
 """
-function activepower(ps_m::canonical_model, devices::Array{L,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {L <: PowerSystems.ElectricLoad, D <: FullControllablePowerLoad, S <: PM.AbstractPowerFormulation}
+function activepower(ps_m::canonical_model, devices::Array{L,1}, device_formulation::Type{FullControllablePowerLoad}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {L <: PowerSystems.ElectricLoad, S <: PM.AbstractPowerFormulation}
 
     ts_data = [(l.name, l.maxactivepower * values(l.scalingfactor)) for l in devices]
 
