@@ -1,4 +1,4 @@
-function variablecost(m::JuMP.AbstractModel, devices::Array{PowerSystems.InterruptibleLoad,1}, device_formulation::Type{D}, system_formulation::Type{S}) where {D <: AbstractControllableLoadForm, S <: PM.AbstractPowerFormulation}
+function variablecost(m::JuMP.AbstractModel, devices::Array{PowerSystems.InterruptibleLoad,1}, device_formulation::Type{D}, system_formulation::Type{S}) where {D <: FullControllablePowerLoad, S <: PM.AbstractPowerFormulation}
 
     p_cl = m[:p_cl]
     time_index = m[:p_cl].axes[2]
