@@ -17,4 +17,5 @@ end
 function precost(X::JuMP.VariableRef, device::Union{PowerSystems.RenewableCurtailment,PowerSystems.RenewableFullDispatch})
 
     return cost = sum(device.econ.curtailcost*(-X))
+
 end
