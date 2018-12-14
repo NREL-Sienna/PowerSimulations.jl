@@ -9,8 +9,8 @@ ps_model = PS.canonical_model(Model(),
 @test try PS.reactivepowervariables(ps_model, generators5, 1:24); true finally end
 @test try PS.commitmentvariables(ps_model, generators5, 1:24); true finally end
 
-@test try PS.activepowervariables(ps_model, renewable, 1:24); true finally end
-@test try PS.reactivepowervariables(ps_model, renewable , 1:24); true finally end
+@test try PS.activepowervariables(ps_model, renewables, 1:24); true finally end
+@test try PS.reactivepowervariables(ps_model, renewables , 1:24); true finally end
 
 @test try PS.activepowervariables(ps_model, generators_hg, 1:24); true finally end
 @test try PS.reactivepowervariables(ps_model, generators_hg , 1:24); true finally end

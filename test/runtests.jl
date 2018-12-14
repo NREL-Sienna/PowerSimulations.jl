@@ -54,12 +54,13 @@ generators_hg = [
     #include("storage_testing.jl")
 end
 
-#=
+
 @testset "Network Constructors" begin
-    include("powermodels_testing.jl")
-    include("network_testing.jl")
+    #include("powermodels_testing.jl")
+    #include("network_testing.jl")
 end
 
+#=
 @testset "Services Constructors" begin
     include("service_testing.jl")
 end

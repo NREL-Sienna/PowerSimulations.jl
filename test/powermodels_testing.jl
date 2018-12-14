@@ -1,6 +1,6 @@
 using InfrastructureModels
 using PowerModels
-using PowerSystems
+
 const PM = PowerModels
 
 # required for reducing logging during tests
@@ -12,7 +12,6 @@ setlevel!(getlogger(PowerModels), "error")
 
 
 # required for "with_optimizer" function
-using JuMP
 
 # needed for model building (MOI does not currently suppot adding solvers after model creation)
 using Ipopt
