@@ -8,7 +8,17 @@ const PS = PowerSimulations
 base_dir = string(dirname(dirname(pathof(PowerSystems))));
 include(joinpath(base_dir,"data/data_5bus_pu.jl"));
 
-renewable = [RenewableCurtailment("WindBusA", true, nodes5[5],
+renewables = [RenewableCurtailment("WindBusA", true, nodes5[5],
+            120.0,
+            EconRenewable(22.0, nothing),
+            TimeSeries.TimeArray(DayAhead,wind_ts_DA)
+            ),
+            RenewableCurtailment("WindBusB", true, nodes5[4],
+            120.0,
+            EconRenewable(22.0, nothing),
+            TimeSeries.TimeArray(DayAhead,wind_ts_DA)
+            ),
+            RenewableCurtailment("WindBusC", true, nodes5[3],
             120.0,
             EconRenewable(22.0, nothing),
             TimeSeries.TimeArray(DayAhead,wind_ts_DA)

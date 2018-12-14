@@ -18,3 +18,11 @@ true finally end
     PS.reactivepowervariables(ps_model, generators_hg, 1:24)
     PS.reactivepower(ps_model, generators_hg, PS.HydroCurtailment, PS.StandardAC, 1:24)
 true finally end
+
+@test  try
+    PS.activepowervariables(ps_model, renewables, 1:24)
+    PS.reactivepowervariables(ps_model, renewables, 1:24)
+    PS.activepower(ps_model, renewables, PS.RenewableFullDispatch, PS.DCAngleForm, 1:24)
+    PS.reactivepower(ps_model, renewables, PS.RenewableConstantPowerFactor, PS.StandardAC, 1:24)
+    #TODO: Missing a test for full dispatch since there is no data for this case yet in the example files
+true finally end
