@@ -2,9 +2,9 @@ abstract type AbstractRenewableFormulation end
 
 abstract type AbstractRenewableDispatchForm <: AbstractRenewableFormulation end
 
-struct RenewableCurtail <: AbstractRenewableDispatchForm end
+struct RenewableFullDispatch <: AbstractRenewableDispatchForm end
 
-struct RenewableCapacityCurve <: AbstractRenewableDispatchForm end
+struct RenewableConstantPowerFactor <: AbstractRenewableDispatchForm end
 
 include("renewable_generation/renewable_variables.jl")
 include("renewable_generation/output_constraints.jl")
