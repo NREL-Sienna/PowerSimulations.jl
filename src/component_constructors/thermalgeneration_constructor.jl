@@ -3,39 +3,37 @@
 """
 This function creates the minimal themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractThermalDispatchForm, S <: PM.AbstractPowerFormulation}
+function constructdevice!(ps_m::CanonicalModel, netinjection::BalanceNamedTuple, category::Type{PSY.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {D <: AbstractThermalDispatchForm, S <: PM.AbstractActivePowerFormulation}
 
-    activepowervariables(m, sys.generators.thermal, sys.time_periods);
+    activepowervariables(ps_m, sys.generators.thermal, sys.time_periods);
 
-    activepower(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
+    activepower(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
 
-    cost = variablecost(m, sys.generators.thermal, category_formulation, system_formulation)
+    cost = variablecost(ps_m, sys.generators.thermal, category_formulation, system_formulation)
 
-    add_to_cost!(m, cost)
-
-end
-
-
-function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractThermalDispatchForm, S <: AbstractACPowerModel}
-
-    constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys; args...)
-
-    reactivepowervariables(m, sys.generators.thermal, sys.time_periods);
-
-    reactivepower(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
+    add_to_cost!(ps_m, cost)
 
 end
 
 
-function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{ThermalRampLimitDispatch}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: PM.AbstractPowerFormulation}
+function constructdevice!(ps_m::CanonicalModel, netinjection::BalanceNamedTuple, category::Type{PSY.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {D <: AbstractThermalDispatchForm, S <: PM.AbstractPowerFormulation}
 
-    constructdevice!(m, netinjection, category, AbstractThermalDispatchForm, PM.AbstractPowerFormulation, sys; args...)
+    constructdevice!(ps_m, netinjection, category, category_formulation, PM.AbstractActivePowerFormulation, sys; kwargs...)
+
+    reactivepowervariables(ps_m, sys.generators.thermal, sys.time_periods);
+
+    reactivepower(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
+
+end
+
+
+function constructdevice!(ps_m::CanonicalModel, netinjection::BalanceNamedTuple, category::Type{PSY.ThermalGen}, category_formulation::Type{ThermalRampLimitDispatch}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: PM.AbstractPowerFormulation}
+
+    constructdevice!(ps_m, netinjection, category, AbstractThermalDispatchForm, PM.AbstractPowerFormulation, sys; kwargs...)
 
     #rampargs = pairs((;(k=>v for (k,v) in pairs(args) if k in [:initalpower])...))
 
-    rampconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; args...)
-
-    return
+    rampconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; kwargs...)
 
 end
 
@@ -45,21 +43,21 @@ end
 """
 This function creates the minimal the minimal thermal commitment formulation
 """
-function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {D <: AbstractThermalCommitmentForm, S <: AbstractDCPowerModel}
+function constructdevice!(ps_m::CanonicalModel, netinjection::BalanceNamedTuple, category::Type{PSY.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {D <: AbstractThermalCommitmentForm, S <: PM.AbstractActivePowerFormulation}
 
-    p_th = activepowervariables(m, sys.generators.thermal, sys.time_periods);
+    p_th = activepowervariables(ps_m, sys.generators.thermal, sys.time_periods);
 
-    commitmentvariables(m, sys.generators.thermal, sys.time_periods)
+    commitmentvariables(ps_m, sys.generators.thermal, sys.time_periods)
 
-    activepower(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
+    activepower(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
 
-    variable_cost = variablecost(m, sys.generators.thermal, AbstractThermalDispatchForm, system_formulation)
+    variable_cost = variablecost(ps_m, sys.generators.thermal, AbstractThermalDispatchForm, system_formulation)
 
-    commitment_cost = commitmentcost(m, sys.generators.thermal, category_formulation, system_formulation)
+    commitment_cost = commitmentcost(ps_m, sys.generators.thermal, category_formulation, system_formulation)
 
-    add_to_cost!(m, variable_cost)
+    add_to_cost!(ps_m, variable_cost)
 
-    add_to_cost!(m, commitment_cost)
+    add_to_cost!(ps_m, commitment_cost)
 
 end
 
@@ -67,28 +65,28 @@ end
 """
 This function adds constraints to the minimal thermal commitment formulation
 """
-function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{StandardThermalCommitment}, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractDCPowerModel}
+function constructdevice!(ps_m::CanonicalModel, netinjection::BalanceNamedTuple, category::Type{PSY.ThermalGen}, category_formulation::Type{StandardThermalCommitment}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
 
-    constructdevice!(m, netinjection, category, AbstractThermalCommitmentForm, AbstractDCPowerModel, sys; args...)
+    constructdevice!(ps_m, netinjection, category, AbstractThermalCommitmentForm, PM.AbstractActivePowerFormulation, sys; kwargs...)
 
     #commitargs = pairs((;(k=>v for (k,v) in pairs(args) if k in [:initalstatus,:initialonduration,:initialoffduration])...)) #this isn't strictly needed, could delete for cleanliness
 
-    commitmentconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; args...)
+    commitmentconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; kwargs...)
 
     #rampargs = pairs((;(k=>v for (k,v) in pairs(args) if k in [:initalpower])...)) #this isn't strictly needed, could delete for cleanliness
 
-    rampconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; args...)
+    rampconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; kwargs...)
 
-    timeconstraints(m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; args...)
+    timeconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; kwargs...)
 
 end
 
 """
 This function adds constraints to the minimal thermal commitment formulation
 """
-function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PowerSystems.ThermalGen}, category_formulation::Type{StandardThermalCommitment}, system_formulation::Type{CopperPlatePowerModel}, sys::PowerSystems.PowerSystem; args...)
+function constructdevice!(ps_m::CanonicalModel, netinjection::BalanceNamedTuple, category::Type{PSY.ThermalGen}, category_formulation::Type{StandardThermalCommitment}, system_formulation::Type{CopperPlatePowerModel}, sys::PSY.PowerSystem; kwargs...)
 
-    constructdevice!(m, netinjection, category, category_formulation, AbstractDCPowerModel, sys; args...)
+    constructdevice!(ps_m, netinjection, category, category_formulation, PM.AbstractActivePowerFormulation, sys; kwargs...)
 
 end
 

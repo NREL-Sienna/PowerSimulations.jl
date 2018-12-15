@@ -3,7 +3,7 @@
 """
 This function adds the Commitment Status constraint when there are CommitmentVariables
 """
-function commitmentconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; args...) where {T <: PowerSystems.ThermalGen, D <: StandardThermalCommitment, S <: AbstractDCPowerModel}
+function commitmentconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; kwargs...) where {T <: PSY.ThermalGen, D <: StandardThermalCommitment, S <: PM.AbstractActivePowerFormulation}
 
     on_th = m[:on_th]
     start_th = m[:start_th]
@@ -21,12 +21,12 @@ function commitmentconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, devic
 
     (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
-    commitment_th  = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
+    commitment_th  = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
 
     for (ix,name) in enumerate(name_index)
         if name == devices[ix].name
             t1 = time_index[1]
-            commitment_th[name,t1] = @constraint(m, on_th[name,t1] == initialstatus[name] + start_th[name,t1] - stop_th[name,t1])
+            commitment_th[name,t1] = JuMP.@constraint(m, on_th[name,t1] == initialstatus[name] + start_th[name,t1] - stop_th[name,t1])
         else
             @error "Bus name in Array and variable do not match"
         end
@@ -34,7 +34,7 @@ function commitmentconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, devic
 
     for t in time_index[2:end], (ix,name) in enumerate(name_index)
         if name == devices[ix].name
-            commitment_th[name,t] = @constraint(m, on_th[name,t] == on_th[name,t-1] + start_th[name,t] - stop_th[name,t])
+            commitment_th[name,t] = JuMP.@constraint(m, on_th[name,t] == on_th[name,t-1] + start_th[name,t] - stop_th[name,t])
         else
             @error "Bus name in Array and variable do not match"
         end
@@ -46,7 +46,7 @@ function commitmentconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, devic
 end
 
 
-function timeconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; args...) where {T <: PowerSystems.ThermalGen, D <: StandardThermalCommitment, S <: AbstractDCPowerModel}
+function timeconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; kwargs...) where {T <: PSY.ThermalGen, D <: StandardThermalCommitment, S <: PM.AbstractActivePowerFormulation}
 
     devices = [d for d in devices if !isa(d.tech.timelimits, Nothing)]
 
@@ -74,8 +74,8 @@ function timeconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, device_form
 
         (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
-        mindown_th = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
-        minup_th = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
+        mindown_th = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
+        minup_th = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
 
         for t in time_index, (ix,name) in enumerate(name_index)
             if name==devices[ix].name
@@ -90,8 +90,8 @@ function timeconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, device_form
                     tsd = max(0, devices[ix].tech.timelimits.down - initialoffduration[name])
                 end
 
-                minup_th[name,t] = @constraint(m,sum([start_th[name,i] for i in ((t - tst - 1) :t) if i > 0 ]) <= on_th[name,t])
-                mindown_th[name,t] = @constraint(m,sum([stop_th[name,i] for i in ((t - tsd - 1) :t) if i > 0]) <= (1 - on_th[name,t]))
+                minup_th[name,t] = JuMP.@constraint(m,sum([start_th[name,i] for i in ((t - tst - 1) :t) if i > 0 ]) <= on_th[name,t])
+                mindown_th[name,t] = JuMP.@constraint(m,sum([stop_th[name,i] for i in ((t - tsd - 1) :t) if i > 0]) <= (1 - on_th[name,t]))
 
             else
                 @error "Bus name in Array and variable do not match"

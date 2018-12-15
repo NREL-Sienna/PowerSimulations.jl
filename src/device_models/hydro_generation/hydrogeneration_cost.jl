@@ -1,4 +1,4 @@
-function variablecost(phy::JumpVariable, devices::Array{T}) where T <: PowerSystems.HydroGen
+function variablecost(phy::JumpVariable, devices::Array{T}) where T <: PSY.HydroGen
 
     cost = JuMP.AffExpr()
 
@@ -14,7 +14,7 @@ function variablecost(phy::JumpVariable, devices::Array{T}) where T <: PowerSyst
 
 end
 
-function precost(X::JuMP.VariableRef, device::Union{PowerSystems.RenewableCurtailment,PowerSystems.RenewableFullDispatch})
+function precost(X::JuMP.JuMP.VariableRef, device::Union{PSY.RenewableCurtailment,PSY.RenewableFullDispatch})
 
     return cost = sum(device.econ.curtailcost*(-X))
 

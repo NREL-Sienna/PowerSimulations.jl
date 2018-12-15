@@ -1,4 +1,4 @@
-function thermalflowlimits(m::JuMP.AbstractModel, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PowerSystems.Branch, S <: PM.AbstractDCPForm}
+function thermalflowlimits(m::JuMP.AbstractModel, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PSY.Branch, S <: PM.AbstractDCPForm}
 
     fbr = m[:fbr]
     name_index = m[:fbr].axes[1]
@@ -6,14 +6,14 @@ function thermalflowlimits(m::JuMP.AbstractModel, system_formulation::Type{S}, d
 
     device_index = Dict(value => key for (key, value) in Dict(collect(enumerate([d.name for d in devices]))))
 
-    Flow_max_tf = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
-    Flow_max_ft = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
+    Flow_max_tf = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
+    Flow_max_ft = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
 
     for t in time_index, (ix, name) in enumerate(name_index)
         if name in keys(device_index)
             if name == devices[device_index[name]].name
-                Flow_max_tf[name, t] = @constraint(m, fbr[name, t] <= devices[device_index[name]].rate)
-                Flow_max_ft[name, t] = @constraint(m, fbr[name, t] >= -1*devices[device_index[name]].rate)
+                Flow_max_tf[name, t] = JuMP.@constraint(m, fbr[name, t] <= devices[device_index[name]].rate)
+                Flow_max_ft[name, t] = JuMP.@constraint(m, fbr[name, t] >= -1*devices[device_index[name]].rate)
             else
                 @error "Branch name in Array and variable do not match"
             end
@@ -28,7 +28,7 @@ function thermalflowlimits(m::JuMP.AbstractModel, system_formulation::Type{S}, d
     return m
 end
 
-function thermalflowlimits(m::JuMP.AbstractModel, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PowerSystems.Branch, S <: PM.AbstractDCPLLForm}
+function thermalflowlimits(m::JuMP.AbstractModel, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PSY.Branch, S <: PM.AbstractDCPLLForm}
 
     fbr_fr = m[:fbr_fr]
     fbr_to = m[:fbr_to]
@@ -37,14 +37,14 @@ function thermalflowlimits(m::JuMP.AbstractModel, system_formulation::Type{S}, d
 
     device_index = Dict(value => key for (key, value) in Dict(collect(enumerate([d.name for d in devices]))))
 
-    Flow_max_tf = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
-    Flow_max_ft = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
+    Flow_max_tf = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
+    Flow_max_ft = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
 
     for t in time_index, (ix, name) in enumerate(name_index)
         if name in keys(device_index)
             if name == devices[device_index[name]].name
-                Flow_max_tf[name, t] = @constraint(m, fbr_fr[name, t] <= devices[device_index[name]].rate)
-                Flow_max_ft[name, t] = @constraint(m, fbr_to[name, t] >= -1*devices[device_index[name]].rate)
+                Flow_max_tf[name, t] = JuMP.@constraint(m, fbr_fr[name, t] <= devices[device_index[name]].rate)
+                Flow_max_ft[name, t] = JuMP.@constraint(m, fbr_to[name, t] >= -1*devices[device_index[name]].rate)
             else
                 @error "Branch name in Array and variable do not match"
             end

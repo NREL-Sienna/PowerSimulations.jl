@@ -1,4 +1,4 @@
-function commitmentcost(m::JuMP.AbstractModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}) where {T <: PowerSystems.ThermalGen, D <: AbstractThermalCommitmentForm, S <: PM.AbstractPowerFormulation}
+function commitmentcost(m::JuMP.AbstractModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}) where {T <: PSY.ThermalGen, D <: AbstractThermalCommitmentForm, S <: PM.AbstractPowerFormulation}
 
     on_th = m[:on_th]
     start_th = m[:start_th]

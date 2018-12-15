@@ -108,7 +108,7 @@ end
 
 ""
 function variable_active_net_injection(pm::PM.GenericPowerModel; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
-    PM.var(pm, nw, cnd)[:pni] = @variable(pm.model,
+    PM.var(pm, nw, cnd)[:pni] = JuMP.@variable(pm.model,
         [i in PM.ids(pm, nw, :bus)], base_name="$(nw)_$(cnd)_pni",
         start = 0.0
     )
@@ -116,7 +116,7 @@ end
 
 ""
 function variable_reactive_net_injection(pm::PM.GenericPowerModel; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
-    PM.var(pm, nw, cnd)[:qni] = @variable(pm.model,
+    PM.var(pm, nw, cnd)[:qni] = JuMP.@variable(pm.model,
         [i in PM.ids(pm, nw, :bus)], base_name="$(nw)_$(cnd)_qni",
         start = 0.0
     )
@@ -126,10 +126,10 @@ end
 ""
 function constraint_kcl_ni(pm::PM.GenericPowerModel, i::Int; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
     if !haskey(PM.con(pm, nw, cnd), :kcl_p)
-        PM.con(pm, nw, cnd)[:kcl_p] = Dict{Int,ConstraintRef}()
+        PM.con(pm, nw, cnd)[:kcl_p] = Dict{Int,JuMP.ConstraintRef}()
     end
     if !haskey(PM.con(pm, nw, cnd), :kcl_q)
-        PM.con(pm, nw, cnd)[:kcl_q] = Dict{Int,ConstraintRef}()
+        PM.con(pm, nw, cnd)[:kcl_q] = Dict{Int,JuMP.ConstraintRef}()
     end
 
     bus = PM.ref(pm, nw, :bus, i)
@@ -149,18 +149,18 @@ function constraint_kcl_ni(pm::PM.GenericPowerModel, n::Int, c::Int, i::Int, bus
     p_dc = PM.var(pm, n, c, :p_dc)
     q_dc = PM.var(pm, n, c, :q_dc)
 
-    PM.con(pm, n, c, :kcl_p)[i] = @constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni)
-    PM.con(pm, n, c, :kcl_q)[i] = @constraint(pm.model, sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) == qni)
+    PM.con(pm, n, c, :kcl_p)[i] = JuMP.@constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni)
+    PM.con(pm, n, c, :kcl_q)[i] = JuMP.@constraint(pm.model, sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) == qni)
 end
 
 
 ""
 function constraint_kcl_ni_expr(pm::PM.GenericPowerModel, i::Int; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
     if !haskey(PM.con(pm, nw, cnd), :kcl_p)
-        PM.con(pm, nw, cnd)[:kcl_p] = Dict{Int,ConstraintRef}()
+        PM.con(pm, nw, cnd)[:kcl_p] = Dict{Int,JuMP.ConstraintRef}()
     end
     if !haskey(PM.con(pm, nw, cnd), :kcl_q)
-        PM.con(pm, nw, cnd)[:kcl_q] = Dict{Int,ConstraintRef}()
+        PM.con(pm, nw, cnd)[:kcl_q] = Dict{Int,JuMP.ConstraintRef}()
     end
 
     bus = PM.ref(pm, nw, :bus, i)
@@ -181,8 +181,8 @@ function constraint_kcl_ni_expr(pm::PM.GenericPowerModel, n::Int, c::Int, i::Int
     p_dc = PM.var(pm, n, c, :p_dc)
     q_dc = PM.var(pm, n, c, :q_dc)
 
-    PM.con(pm, n, c, :kcl_p)[i] = @constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni_expr)
-    PM.con(pm, n, c, :kcl_q)[i] = @constraint(pm.model, sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) == qni_expr)
+    PM.con(pm, n, c, :kcl_p)[i] = JuMP.@constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni_expr)
+    PM.con(pm, n, c, :kcl_q)[i] = JuMP.@constraint(pm.model, sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) == qni_expr)
 end
 
 
@@ -196,7 +196,7 @@ function constraint_kcl_ni(pm::PM.GenericPowerModel{T}, n::Int, c::Int, i::Int, 
     pni = PM.var(pm, n, c, :pni, i)
     p_dc = PM.var(pm, n, c, :p_dc)
 
-    PM.con(pm, n, c, :kcl_p)[i] = @constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni)
+    PM.con(pm, n, c, :kcl_p)[i] = JuMP.@constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni)
 end
 
 ""
@@ -204,5 +204,5 @@ function constraint_kcl_ni_expr(pm::PM.GenericPowerModel{T}, n::Int, c::Int, i::
     p = PM.var(pm, n, c, :p)
     p_dc = PM.var(pm, n, c, :p_dc)
 
-    PM.con(pm, n, c, :kcl_p)[i] = @constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni_expr)
+    PM.con(pm, n, c, :kcl_p)[i] = JuMP.@constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni_expr)
 end

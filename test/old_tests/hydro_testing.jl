@@ -18,7 +18,7 @@ generators_hg = [
 m = Model()
 sys5b = PowerSystem(nodes5, append!(generators5, generators_hg), loads5_DA, branches5, nothing,  100.0)
 
-test_hy = [d for d in sys5b.generators.hydro if !isa(d, PowerSystems.HydroFix)] # Filter StaticLoads Out
+test_hy = [d for d in sys5b.generators.hydro if !isa(d, PSY.HydroFix)] # Filter StaticLoads Out
 phg, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,  test_hy, sys5.time_periods)
 
 true

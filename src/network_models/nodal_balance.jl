@@ -1,4 +1,4 @@
-function add_flows(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: PM.AbstractDCPForm}
+function add_flows(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem) where {S <: PM.AbstractDCPForm}
 
     fbr = m[:fbr]
     branch_name_index = m[:fbr].axes[1]
@@ -14,7 +14,7 @@ function add_flows(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, syste
 
 end
 
-function add_flows(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: PM.AbstractDCPLLForm}
+function add_flows(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem) where {S <: PM.AbstractDCPLLForm}
 
     fbr_fr = m[:fbr_fr]
     fbr_to = m[:fbr_to]
@@ -30,20 +30,20 @@ function add_flows(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, syste
 
 end
 
-function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: AbstractFlowForm}
+function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem) where {S <: StandardPTDFModel}
 
     time_index = 1:sys.time_periods
     bus_name_index = [b.name for b in sys.buses]
 
     add_flows(m, netinjection, system_formulation, sys)
 
-    pf_balance = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length(bus_name_index), sys.time_periods), bus_name_index, time_index)
+    pf_balance = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef,length(bus_name_index), sys.time_periods), bus_name_index, time_index)
 
         for t in time_index, (ix,bus) in enumerate(bus_name_index)
 
             isassigned(netinjection.var_active,ix, t) ? true : @error "Islanded Bus in the system"
 
-            pf_balance[bus,t] = @constraint(m, netinjection.var_active[ix, t] == netinjection.timeseries_active[ix, t])
+            pf_balance[bus,t] = JuMP.@constraint(m, netinjection.var_active[ix, t] == netinjection.timeseries_active[ix, t])
 
         end
 
@@ -52,7 +52,7 @@ function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple
 end
 
 
-function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: AbstractDCPowerModel}
+function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem) where {S <: PM.AbstractActivePowerFormulation}
 
     time_index = 1:sys.time_periods
     bus_name_index = [b.name for b in sys.buses]
@@ -69,9 +69,9 @@ function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple
 
 end
 
-function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem) where {S <: AbstractACPowerModel}
+function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem) where {S <: PM.AbstractPowerFormulation}
 
-    nodalflowbalance(m, netinjection, AbstractDCPowerModel, sys)
+    nodalflowbalance(m, netinjection, PM.AbstractActivePowerFormulation, sys)
 
     PM_dict = m.ext[:PM_object]
 

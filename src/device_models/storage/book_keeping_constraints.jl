@@ -1,4 +1,4 @@
-function energybookkeeping(m::JuMP.AbstractModel, devices::Array{T,1}, time_periods::Int64; ini_cond = 0.0) where T <: PowerSystems.GenericBattery
+function energybookkeeping(m::JuMP.AbstractModel, devices::Array{T,1}, time_periods::Int64; ini_cond = 0.0) where T <: PSY.GenericBattery
 
     pstin = m[:pstin]
     pstout = m[:pstout]
@@ -9,12 +9,12 @@ function energybookkeeping(m::JuMP.AbstractModel, devices::Array{T,1}, time_peri
     (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent in E_bt") : true
     (pstin.axes[1] !== time_index) ? @warn("Input/Output and Battery Energy variables indexes are inconsistent") : true
 
-    bookkeep_bt = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(length.(JuMP.axes(ebt))), name_index, time_index)
+    bookkeep_bt = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(length.(JuMP.axes(ebt))), name_index, time_index)
 
     # TODO: Add Initial SOC for storage for sequential simulation
     for t1 = time_index[1], (ix,name) in enumerate(name_index)
         if name == devices[ix].name
-            bookkeep_bt[name,t1] = @constraint(m,ebt[name,t1] == devices[ix].energy -  pstout[name,t1]/devices[ix].efficiency.out + pstin[name,t1]*devices[ix].efficiency.in)
+            bookkeep_bt[name,t1] = JuMP.@constraint(m,ebt[name,t1] == devices[ix].energy -  pstout[name,t1]/devices[ix].efficiency.out + pstin[name,t1]*devices[ix].efficiency.in)
         else
             @error "Bus name in Array and variable do not match"
         end
@@ -22,7 +22,7 @@ function energybookkeeping(m::JuMP.AbstractModel, devices::Array{T,1}, time_peri
 
     for t in time_index[2:end], (ix,name) in enumerate(name_index)
         if name == devices[ix].name
-            bookkeep_bt[name,t] = @constraint(m,ebt[name,t] == ebt[name,t-1] -  pstout[name,t]/devices[ix].efficiency.out + pstin[name,t]*devices[ix].efficiency.in)
+            bookkeep_bt[name,t] = JuMP.@constraint(m,ebt[name,t] == ebt[name,t-1] -  pstout[name,t]/devices[ix].efficiency.out + pstin[name,t]*devices[ix].efficiency.in)
         else
             @error "Bus name in Array and variable do not match"
         end
@@ -34,7 +34,7 @@ function energybookkeeping(m::JuMP.AbstractModel, devices::Array{T,1}, time_peri
 
 end
 
-function energyconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.GenericBattery
+function energyconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, time_periods::Int64) where T <: PSY.GenericBattery
 
     ebt = m[:ebt]
     name_index = m[:ebt].axes[1]
@@ -42,11 +42,11 @@ function energyconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, time_peri
 
     (length(ebt.axes[2]) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
-    energylimit_bt = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(length.(JuMP.axes(ebt))), name_index, time_index)
+    energylimit_bt = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(length.(JuMP.axes(ebt))), name_index, time_index)
 
     for t in time_index, (ix,name) in enumerate(name_index)
         if name == devices[ix].name
-            energylimit_bt[name,t] = @constraint(m,ebt[name,t] <= devices[ix].capacity.max)
+            energylimit_bt[name,t] = JuMP.@constraint(m,ebt[name,t] <= devices[ix].capacity.max)
         else
             @error "Bus name in Array and variable do not match"
         end

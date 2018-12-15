@@ -1,9 +1,17 @@
 using PowerSimulations
 using PowerSystems
+using PowerModels
 using JuMP
 using Test
+using InfrastructureModels
+using Ipopt
 
-const PS = PowerSimulations
+# required for reducing logging during tests
+using Memento
+
+const PM = PowerModels
+const PSY = PowerSystems
+const PSI = PowerSimulations
 
 base_dir = string(dirname(dirname(pathof(PowerSystems))));
 include(joinpath(base_dir,"data/data_5bus_pu.jl"));
@@ -46,8 +54,8 @@ generators_hg = [
 ];
 
 @testset "Device Constructors" begin
-    include("variables_testing.jl")
-    include("constraints_testing.jl")
+    #include("variables_testing.jl")
+    #include("constraints_testing.jl")
     #include("renewables_testing.jl")
     #include("load_testing.jl")
     #include("hydro_testing.jl")
@@ -56,7 +64,7 @@ end
 
 
 @testset "Network Constructors" begin
-    #include("powermodels_testing.jl")
+    include("powermodels_testing.jl")
     #include("network_testing.jl")
 end
 

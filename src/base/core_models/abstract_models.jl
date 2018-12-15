@@ -6,7 +6,7 @@ abstract type UnitCommitment <: AbstractOperationsModel end
 
 abstract type CustomModel <: AbstractOperationsModel end
 
-mutable struct PowerOperationModel{ M<:AbstractOperationsModel, T<:NetworkModel, S<:Union{Nothing,Array{NamedTuple{(:service, :formulation), Tuple{D,DataType}}}} where {D <: PowerSystems.Service}}
+mutable struct PowerOperationModel{ M<:AbstractOperationsModel, T<:PM.AbstractPowerFormulation, S<:Union{Nothing,Array{NamedTuple{(:service, :formulation), Tuple{D,DataType}}}} where {D <: PSY.Service}}
     psmodel::Type{M}
     generation::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}
     demand::Union{Nothing,Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}}
@@ -14,7 +14,7 @@ mutable struct PowerOperationModel{ M<:AbstractOperationsModel, T<:NetworkModel,
     branches::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}
     transmission::Type{T}
     services::S
-    system::PowerSystems.PowerSystem
+    system::PSY.PowerSystem
     model::CanonicalModel
     dynamics::Bool
     ptdf::Union{Nothing,PTDFArray}
@@ -26,8 +26,8 @@ mutable struct PowerSimulationsModel{T<:AbstractOperationsModel, R<:Dates.Period
     steps::Int64
     periods::Int64
     resolution::R
-    date_from::DateTime
-    date_to::DateTime
+    date_from::Dates.DateTime
+    date_to::Dates.DateTime
     lookahead_periods::Int64
     lookahead_resolution::R
     dynamic_analysis::Bool
@@ -35,10 +35,10 @@ mutable struct PowerSimulationsModel{T<:AbstractOperationsModel, R<:Dates.Period
 end
 
  mutable struct PowerResults
-    ThermalGeneration::Union{Nothing,DataFrame}
-    RenewableGEneration::Union{Nothing,DataFrame}
-    HydroGeneration::Union{Nothing,DataFrame}
-    Storage::Union{Nothing,DataFrame}
-    Load::Union{Nothing,DataFrame}
+    ThermalGeneration::Union{Nothing,DataFrames.DataFrame}
+    RenewableGEneration::Union{Nothing,DataFrames.DataFrame}
+    HydroGeneration::Union{Nothing,DataFrames.DataFrame}
+    Storage::Union{Nothing,DataFrames.DataFrame}
+    Load::Union{Nothing,DataFrames.DataFrame}
     SolverOutput::Union{Nothing,Dict}
 end

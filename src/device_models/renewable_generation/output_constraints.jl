@@ -1,7 +1,7 @@
 """
 This function adds the power limits of renewable energy generators that can be dispatched
 """
-function activepower(ps_m::CanonicalModel, devices::Array{R,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {R <: PowerSystems.RenewableGen, D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
+function activepower(ps_m::CanonicalModel, devices::Array{R,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen, D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
 
     ts_data = [(r.name, values(r.scalingfactor)*r.tech.installedcapacity) for r in devices]
 
@@ -12,7 +12,7 @@ end
 """
 This function adds the reactive power limits of renewable generators that can be dispatched
 """
-function reactivepower(ps_m::CanonicalModel, devices::Array{R,1}, device_formulation::Type{RenewableFullDispatch}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {R <: PowerSystems.RenewableGen,  S <: AbstractACPowerModel}
+function reactivepower(ps_m::CanonicalModel, devices::Array{R,1}, device_formulation::Type{RenewableFullDispatch}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen,  S <: PM.AbstractPowerFormulation}
 
     range_data = [(r.name, r.tech.reactivepowerlimits) for r in devices]
 
@@ -23,7 +23,7 @@ end
 """
 This function adds the reactive power limits of renewable generators that can be dispatched
 """
-function reactivepower(ps_m::CanonicalModel, devices::Array{R,1}, device_formulation::Type{RenewableConstantPowerFactor}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {R <: PowerSystems.RenewableGen,  S <: AbstractACPowerModel}
+function reactivepower(ps_m::CanonicalModel, devices::Array{R,1}, device_formulation::Type{RenewableConstantPowerFactor}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen,  S <: PM.AbstractPowerFormulation}
 
     ts_data = [(r.name, values(r.scalingfactor)*r.tech.installedcapacity*sin(acos(r.tech.powerfactor))) for r in devices]
 

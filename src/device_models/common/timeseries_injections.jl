@@ -1,7 +1,7 @@
 """
 This function generates an Array of floats where each entry represents the RHS of the nodal balance equations. The corresponding values are the net-load values for each node and each time-step
 """
-function active_timeseries_netinjection(sys::PowerSystems.PowerSystem)
+function active_timeseries_netinjection(sys::PSY.PowerSystem)
 
     tsnetinjection =  zeros(Float64, length(sys.buses), sys.time_periods)
 
@@ -10,7 +10,7 @@ function active_timeseries_netinjection(sys::PowerSystems.PowerSystem)
 
     for source in sys.generators
 
-         typeof(source) <: Array{<:ThermalGen} ? continue : (isa(source, Nothing) ? continue : true)
+         typeof(source) <: Array{<:PSY.ThermalGen} ? continue : (isa(source, Nothing) ? continue : true)
 
          for b in sys.buses
 
@@ -41,7 +41,7 @@ function active_timeseries_netinjection(sys::PowerSystems.PowerSystem)
     return  tsnetinjection
 end
 
-function reactive_timeseries_netinjection(sys::PowerSystems.PowerSystem)
+function reactive_timeseries_netinjection(sys::PSY.PowerSystem)
 
     tsnetinjection =  zeros(Float64, length(sys.buses), sys.time_periods)
 
@@ -50,7 +50,7 @@ function reactive_timeseries_netinjection(sys::PowerSystems.PowerSystem)
 
     for source in sys.generators
 
-         typeof(source) <: Array{<:ThermalGen} ? continue : (isa(source, Nothing) ? continue : true)
+         typeof(source) <: Array{<:PSY.ThermalGen} ? continue : (isa(source, Nothing) ? continue : true)
 
          for b in sys.buses
 

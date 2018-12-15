@@ -13,24 +13,24 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing, 100.0)
 
 #Generator Active and Reactive Power Variables
 @test try
-    Net = PS.StandardAC
+    Net = PM.StandardACPForm
     m = Model()
-    netinjection = PS.instantiate_network(Net, sys5)
-    PS.constructdevice!(m, netinjection, RenewableGen, PS.RenewableCurtail, Net, sys5)
+    netinjection = PSI.instantiate_network(Net, sys5)
+    PSI.constructdevice!(m, netinjection, RenewableGen, PSI.RenewableCurtail, Net, sys5)
 true finally end
 
 #Cooper Plate and Dispatch
 @test try
-    Net = PS.CopperPlatePowerModel
+    Net = PSI.CopperPlatePowerModel
     m = Model();
-    netinjection = PS.instantiate_network(Net, sys5);
-    PS.constructdevice!(m, netinjection, RenewableGen, PS.RenewableCurtail, Net, sys5);
+    netinjection = PSI.instantiate_network(Net, sys5);
+    PSI.constructdevice!(m, netinjection, RenewableGen, PSI.RenewableCurtail, Net, sys5);
 true finally end
 
 #PTDF Plate and Dispatch
 @test try
-    Net = PS.StandardPTDF
+    Net = PSI.StandardPTDFModel
     m = Model();
-    netinjection = PS.instantiate_network(Net, sys5);
-    PS.constructdevice!(m, netinjection, RenewableGen, PS.RenewableCurtail, Net, sys5);
+    netinjection = PSI.instantiate_network(Net, sys5);
+    PSI.constructdevice!(m, netinjection, RenewableGen, PSI.RenewableCurtail, Net, sys5);
 true finally end

@@ -1,20 +1,20 @@
-function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: CopperPlatePowerModel}
+function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: CopperPlatePowerModel}
 
     copperplatebalance(m, netinjection, sys.time_periods)
 
 end
 
-function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractFlowForm}
+function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: StandardPTDFModel}
 
     for category in branch_models
-        constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args...)
+        constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; kwargs...)
     end
 
     nodalflowbalance(m, netinjection, system_formulation, sys)
 
 end
 
-function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{StandardPTDF}, sys::PowerSystems.PowerSystem; args...)
+function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{StandardPTDFModel}, sys::PSY.PowerSystem; kwargs...)
     if :PTDF in keys(args)
         PTDF = args[:PTDF]
     else
@@ -23,7 +23,7 @@ function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTupl
 
     if !isa(PTDF,PTDFArray)
         @warn "no PTDF supplied"
-        PTDF,  A = PowerSystems.buildptdf(sys.branches, sys.buses)
+        PTDF,  A = PSY.buildptdf(sys.branches, sys.buses)
     end
 
     for category in branch_models
@@ -34,11 +34,11 @@ function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTupl
 
 end
 
-function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractDCPowerModel}
+function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
 
     #= TODO: Needs to be generalized later for other branch models not covered by PM.
     for category in branch_models
-        constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args...)
+        constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; kwargs...)
     end
     =#
 
@@ -46,17 +46,17 @@ function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTupl
 
     PM_F = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
 
-    PM_object = PS.build_nip_expr_model(m.ext[:PM_object], PM_F, jump_model=m);
+    PM_object = PSI.build_nip_expr_model(m.ext[:PM_object], PM_F, jump_model=m);
 
     m = PM_object.model
 
 end
 
-function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PowerSystems.PowerSystem; args...) where {S <: AbstractACPowerModel}
+function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     #= TODO: Needs to be generalized later for other branch models not covered by PM.
     for category in branch_models
-        constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args...)
+        constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; kwargs...)
     end
     =#
 
@@ -64,7 +64,7 @@ function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTupl
 
     PM_F = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
 
-    PM_object = PS.build_nip_expr_model(m.ext[:PM_object], PM_F, jump_model=m);
+    PM_object = PSI.build_nip_expr_model(m.ext[:PM_object], PM_F, jump_model=m);
 
     m.ext[:PM_object] = PM_object
 
