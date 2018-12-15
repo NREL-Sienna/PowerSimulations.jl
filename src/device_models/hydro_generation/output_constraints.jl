@@ -12,7 +12,7 @@ end
 """
 This function adds the power limits of renewable energy generators that can be dispatched
 """
-function activepower(ps_m::canonical_model, devices::Array{R,1}, device_formulation::Type{HydroRunOfRiver}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {R <: PowerSystems.RenewableGen, S <: PM.AbstractPowerFormulation}
+function activepower(ps_m::canonical_model, devices::Array{H,1}, device_formulation::Type{HydroRunOfRiver}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {H <: PowerSystems.HydroGen, S <: PM.AbstractPowerFormulation}
 
     ts_data = [(h.name, values(h.scalingfactor)*h.tech.installedcapacity) for h in devices]
 
@@ -23,7 +23,7 @@ end
 """
 This function adds the power limits of renewable energy generators that can be dispatched
 """
-function activepower(ps_m::canonical_model, devices::Array{R,1}, device_formulation::Type{HydroSeasonalFlow}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {R <: PowerSystems.RenewableGen, S <: PM.AbstractPowerFormulation}
+function activepower(ps_m::canonical_model, devices::Array{H,1}, device_formulation::Type{HydroSeasonalFlow}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {H <: PowerSystems.HydroGen, S <: PM.AbstractPowerFormulation}
 
     #TODO: Add To Power Systems a data type to support this
     ts_data_ub = [(h.name, values(h.scalingfactor)*h.tech.installedcapacity) for h in devices]
@@ -43,5 +43,28 @@ function reactivepower(ps_m::canonical_model, devices::Array{H,1}, device_formul
     range_data = [(g.name, g.tech.reactivepowerlimits) for g in devices]
 
     device_range(ps_m, range_data, time_range, "hydro_reactive_range", "Qhy")
+
+end
+
+"""
+This function adds the active power limits of generators when there are CommitmentVariables
+"""
+function activepower(ps_m::canonical_model, devices::Array{H,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {H <: PowerSystems.HydroGen, D <: AbstractHydroCommitmentForm, S <: PM.AbstractPowerFormulation}
+
+    range_data = [(g.name, g.tech.activepowerlimits) for g in devices]
+
+    device_semicontinuousrange(ps_m, range_data, time_range, "hydro_active_range", "Phy", "on_hy")
+
+end
+
+
+"""
+This function adds the reactive power limits of generators when there CommitmentVariables
+"""
+function reactivepower(ps_m::canonical_model, devices::Array{H,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {H <: PowerSystems.HydroGen, D <: AbstractHydroCommitmentForm, S <: AbstractACPowerModel}
+
+    range_data = [(g.name, g.tech.reactivepowerlimits) for g in devices]
+
+    device_semicontinuousrange(ps_m, range_data , time_range, "hydro_reactive_range", "Qhy", "on_hy")
 
 end
