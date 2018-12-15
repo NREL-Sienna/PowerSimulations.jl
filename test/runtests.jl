@@ -56,7 +56,7 @@ end
 
 
 @testset "Network Constructors" begin
-    include("powermodels_testing.jl")
+    #include("powermodels_testing.jl")
     #include("network_testing.jl")
 end
 

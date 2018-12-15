@@ -13,12 +13,29 @@ ps_model = PS.canonical_model(Model(),
 true finally end
 
 @test  try
+    PS.activepowervariables(ps_model, generators5, 1:24)
+    PS.commitmentvariables(ps_model, generators5, 1:24);
+    PS.activepower(ps_model, generators5, PS.StandardThermalCommitment, PS.DCAngleForm, 1:24)
+    PS.reactivepowervariables(ps_model, generators5, 1:24)
+    PS.reactivepower(ps_model, generators5, PS.StandardThermalCommitment, PS.StandardAC, 1:24)
+true finally end
+
+@test  try
     PS.activepowervariables(ps_model, generators_hg, 1:24)
     PS.activepower(ps_model, generators_hg, PS.HydroRunOfRiver, PS.DCAngleForm, 1:24)
     PS.activepower(ps_model, generators_hg, PS.HydroFullDispatch, PS.DCAngleForm, 1:24)
     PS.activepower(ps_model, generators_hg, PS.HydroRunOfRiver, PS.StandardAC, 1:24)
     PS.reactivepowervariables(ps_model, generators_hg, 1:24)
     PS.reactivepower(ps_model, generators_hg, PS.HydroRunOfRiver, PS.StandardAC, 1:24)
+true finally end
+
+@test  try
+    PS.activepowervariables(ps_model, generators_hg, 1:24)
+    PS.commitmentvariables(ps_model, generators_hg, 1:24);
+    PS.activepower(ps_model, generators_hg, PS.HydroCommitment, PS.DCAngleForm, 1:24)
+    PS.activepower(ps_model, generators_hg, PS.HydroCommitment, PS.StandardAC, 1:24)
+    PS.reactivepowervariables(ps_model, generators_hg, 1:24)
+    PS.reactivepower(ps_model, generators_hg, PS.HydroCommitment, PS.StandardAC, 1:24)
 true finally end
 
 @test  try
