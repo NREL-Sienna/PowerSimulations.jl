@@ -69,10 +69,10 @@ include("network_models/networks.jl")
 include("service_models/services.jl")
 
 
-#base and core
-include("core/CanonicalModel.jl")
-include("core/abstract_models.jl")
-#include("core/dynamic_model.jl")
+#base
+include("base/core_models/CanonicalModel.jl")
+include("base/core_models/abstract_models.jl")
+#include("base/core_models/dynamic_model.jl")
 include("base/instantiate_routines.jl")
 include("base/model_constructors.jl")
 #include("base/solve_routines.jl")
@@ -80,7 +80,6 @@ include("base/simulation_routines.jl")
 
 #utils
 include("utils/device_retreval.jl")
-
 
 #Device Modeling components
 include("device_models/common.jl")
@@ -91,8 +90,6 @@ include("device_models/branches.jl")
 include("device_models/storage.jl")
 include("device_models/hydro_generation.jl")
 include("service_models/reserves.jl")
-
-
 
 #Network related components
 include("network_models/copperplate_balance.jl")
