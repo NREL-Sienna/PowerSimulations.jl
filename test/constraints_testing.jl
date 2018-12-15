@@ -1,4 +1,4 @@
-ps_model = PS.canonical_model(Model(),
+ps_model = PS.CanonicalModel(Model(),
                               Dict{String, JuMP.Containers.DenseAxisArray{VariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               Dict{String, PS.JumpAffineExpressionArray}("var_active" => PS.JumpAffineExpressionArray(undef, 14, 24),

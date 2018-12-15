@@ -70,7 +70,7 @@ include("service_models/services.jl")
 
 
 #base and core
-include("core/canonical_model.jl")
+include("core/CanonicalModel.jl")
 include("core/abstract_models.jl")
 include("core/add_variable.jl")
 include("core/range_constraint.jl")

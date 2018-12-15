@@ -11,7 +11,7 @@ include(joinpath(base_dir,"data/data_5bus_pu.jl"))
 
 sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing, 100.0)
 
-ps_model = PS.canonical_model(Model(),
+ps_model = PS.CanonicalModel(Model(),
                               Dict{String, JuMP.Containers.DenseAxisArray{VariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               Dict{String, PS.JumpAffineExpressionArray}("var_active" => PS.JumpAffineExpressionArray(undef, 14, 24)),

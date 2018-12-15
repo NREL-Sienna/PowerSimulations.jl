@@ -1,4 +1,4 @@
-function device_timeseries_ub(ps_m::canonical_model, ts_data::Array{Tuple{String,Array{Float64,1}},1}, time_range::UnitRange{Int64}, cons_name::String, var_name::String)
+function device_timeseries_ub(ps_m::CanonicalModel, ts_data::Array{Tuple{String,Array{Float64,1}},1}, time_range::UnitRange{Int64}, cons_name::String, var_name::String)
 
     ps_m.constraints["$(cons_name)"] = JuMP.Containers.DenseAxisArray{ConstraintRef}(undef, [r[1] for r in ts_data], time_range)
 
@@ -10,7 +10,7 @@ function device_timeseries_ub(ps_m::canonical_model, ts_data::Array{Tuple{String
 
 end
 
-function device_timeseries_lb(ps_m::canonical_model, ts_data::Array{Tuple{String,Array{Float64,1}},1}, time_range::UnitRange{Int64}, cons_name::String, var_name::String)
+function device_timeseries_lb(ps_m::CanonicalModel, ts_data::Array{Tuple{String,Array{Float64,1}},1}, time_range::UnitRange{Int64}, cons_name::String, var_name::String)
 
     ps_m.constraints["$(cons_name)"] = JuMP.Containers.DenseAxisArray{ConstraintRef}(undef, [r[1] for r in ts_data], time_range)
 

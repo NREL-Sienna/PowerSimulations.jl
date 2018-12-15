@@ -1,7 +1,7 @@
 """
 This function adds the power limits of generators when there are no CommitmentVariables
 """
-function activepower(ps_m::canonical_model, devices::Array{L,1}, device_formulation::Type{FullControllablePowerLoad}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {L <: PowerSystems.ElectricLoad, S <: PM.AbstractPowerFormulation}
+function activepower(ps_m::CanonicalModel, devices::Array{L,1}, device_formulation::Type{FullControllablePowerLoad}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {L <: PowerSystems.ElectricLoad, S <: PM.AbstractPowerFormulation}
 
     ts_data = [(l.name, l.maxactivepower * values(l.scalingfactor)) for l in devices]
 
@@ -10,7 +10,7 @@ function activepower(ps_m::canonical_model, devices::Array{L,1}, device_formulat
 end
 
 
-function reactivepower(ps_m::canonical_model, devices::Array{L,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {L <: PowerSystems.ElectricLoad, D <: AbstractControllablePowerLoadForm, S <: AbstractACPowerModel}
+function reactivepower(ps_m::CanonicalModel, devices::Array{L,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {L <: PowerSystems.ElectricLoad, D <: AbstractControllablePowerLoadForm, S <: AbstractACPowerModel}
 
     #TODO: Filter for loads with PF = 1.0
 
