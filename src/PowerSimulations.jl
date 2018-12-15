@@ -70,7 +70,7 @@ include("service_models/services.jl")
 
 
 #base
-include("base/core_models/CanonicalModel.jl")
+include("base/core_models/canonical_model.jl")
 include("base/core_models/abstract_models.jl")
 #include("base/core_models/dynamic_model.jl")
 include("base/instantiate_routines.jl")
