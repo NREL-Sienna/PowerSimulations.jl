@@ -57,9 +57,9 @@ version = "1.4.0"
 
 [[DataFrames]]
 deps = ["CategoricalArrays", "CodecZlib", "Compat", "DataStreams", "Dates", "InteractiveUtils", "IteratorInterfaceExtensions", "LinearAlgebra", "Missings", "Printf", "Random", "Reexport", "SortingAlgorithms", "Statistics", "StatsBase", "TableTraits", "Tables", "Test", "TranscodingStreams", "Unicode", "WeakRefStrings"]
-git-tree-sha1 = "ad34fefb72b18a8dd5c17fab9089d11111b61935"
+git-tree-sha1 = "41ec35bcf49a860706924b9b3e322eed03164c83"
 uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-version = "0.14.1"
+version = "0.15.2"
 
 [[DataStreams]]
 deps = ["Dates", "Missings", "Test", "WeakRefStrings"]
@@ -168,7 +168,7 @@ version = "0.20.0"
 
 [[JuMP]]
 deps = ["Calculus", "DataStructures", "ForwardDiff", "LinearAlgebra", "MathOptInterface", "NaNMath", "Printf", "Random", "SparseArrays", "Statistics", "Test"]
-git-tree-sha1 = "1d73d2cfa07a7f7f60b3aec29fbe7217d1ddec3c"
+git-tree-sha1 = "a6c8c79b61d148dd4b214e1b7e8d4a09e7a8dd52"
 repo-rev = "master"
 repo-url = "https://github.com/JuliaOpt/JuMP.jl.git"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
@@ -199,9 +199,9 @@ uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[MathOptInterface]]
 deps = ["Compat", "Unicode"]
-git-tree-sha1 = "e645d549092a3a9405eef089836440dd68feaf6b"
+git-tree-sha1 = "bc8dffc05c4697addeb3c536b303be3f8b16b1ed"
 uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
-version = "0.6.3"
+version = "0.6.4"
 
 [[MathProgBase]]
 deps = ["Compat"]
@@ -259,11 +259,11 @@ deps = ["Dates", "LibGit2", "Markdown", "Printf", "REPL", "Random", "SHA", "UUID
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[PowerModels]]
-git-tree-sha1 = "c732dcd768d05f27d9ba3dae7086e97af6f50527"
+git-tree-sha1 = "c915addbaa42120f2857f11e519a6fdb4363f9b4"
 repo-rev = "moi"
 repo-url = "https://github.com/lanl-ansi/PowerModels.jl.git"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
-version = "0.8.4"
+version = "0.9.0"
 
     [PowerModels.deps]
     Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
