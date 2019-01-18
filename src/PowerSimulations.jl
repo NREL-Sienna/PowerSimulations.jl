@@ -25,28 +25,24 @@ export simulatemodel
 
 #################################################################################
 # Imports
-using JuMP
-using TimeSeries
-using PowerSystems
+import JuMP
+#using TimeSeries
+import PowerSystems
 import PowerModels
 import InfrastructureModels
-using GLPK
-using MathOptInterface
-#using Clp
-#using Cbc
-using Ipopt
-using DataFrames
-using LinearAlgebra
-using LinearAlgebra.BLAS
-using AxisArrays
-using Dates
+import MathOptInterface
+import DataFrames
+import LinearAlgebra
+import LinearAlgebra.BLAS
+import AxisArrays
+import Dates
 
 #################################################################################
 # Type Alias From other Packages
 const PM = PowerModels
 const IM = InfrastructureModels
-const NetworkModel = PM.AbstractPowerFormulation
-const PS = PowerSimulations
+const PSY = PowerSystems
+const PSI = PowerSimulations
 const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
 const PTDFArray = AxisArrays.AxisArray{Float64,2,Array{Float64,2},Tuple{AxisArrays.Axis{:branches,Array{String,1}},AxisArrays.Axis{:buses,Array{String,1}}}}
@@ -58,7 +54,7 @@ const JumpAffineExpressionArray = Array{JuMP.GenericAffExpr{Float64,JuMP.Variabl
 const BalanceNamedTuple = NamedTuple{(:var_active, :var_reactive, :timeseries_active, :timeseries_reactive),Tuple{JumpAffineExpressionArray, UJ, Array{Float64,2}, UF}} where {UJ <: Union{Nothing,JumpAffineExpressionArray}, UF <: Union{Nothing, Array{Float64,2}}}
 
 #Type Alias for Unions
-const fix_resource = Union{PowerSystems.RenewableFix, PowerSystems.HydroFix}
+const fix_resource = Union{PSY.RenewableFix, PSY.HydroFix}
 
 
 #################################################################################
