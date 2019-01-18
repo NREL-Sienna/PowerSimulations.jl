@@ -24,12 +24,12 @@ end
 
 function pwlgencost(m::JuMP.AbstractModel, variable::VariableRef, cost_component::Array{Tuple{Float64, Float64}})
 
-    pwlvars = @variable(m, [i = 1:(length(cost_component)-1)], base_name = "pwl_{$(variable)}", start = 0.0, lower_bound = 0.0, upper_bound = (cost_component[i+1][1] - cost_component[i][1]))
+    pwlvars = JuMP.@variable(m, [i = 1:(length(cost_component)-1)], base_name = "pwl_{$(variable)}", start = 0.0, lower_bound = 0.0, upper_bound = (cost_component[i+1][1] - cost_component[i][1]))
      for (ix, pwlvar) in enumerate(pwlvars)
-        c = @constraint(m, pwlvar <= cost_component[ix + 1][2])
-        c = @constraint(m, pwlvar >= 0)
+        c = JuMP.@constraint(m, pwlvar <= cost_component[ix + 1][2])
+        c = JuMP.@constraint(m, pwlvar >= 0)
     end
-    c = @constraint(m, variable == sum(pwlvars[ix] for (ix, pwlvar) in enumerate(pwlvars)))
+    c = JuMP.@constraint(m, variable == sum(pwlvars[ix] for (ix, pwlvar) in enumerate(pwlvars)))
 
     # TODO: Check for performance this syntax, the changes in GenericAffExpr might require refactoring
 

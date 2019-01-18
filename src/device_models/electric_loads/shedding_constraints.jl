@@ -18,7 +18,7 @@ function reactivepower(ps_m::CanonicalModel, devices::Array{L,1}, device_formula
 
     for t in time_range, l in devices
             #Estimate PF from the load data. TODO: create a power factor field in PowerSystems
-            ps_m.constraints["load_reactive_ub"][l.name, t] = @constraint(ps_m.JuMPmodel,  ps_m.variables["Qel"][l.name, t] == ps_m.variables["Pel"][l.name, t] * sin(atan((l.maxreactivepower/l.maxactivepower))))
+            ps_m.constraints["load_reactive_ub"][l.name, t] = JuMP.@constraint(ps_m.JuMPmodel,  ps_m.variables["Qel"][l.name, t] == ps_m.variables["Pel"][l.name, t] * sin(atan((l.maxreactivepower/l.maxactivepower))))
 
     end
 

@@ -4,7 +4,7 @@ function add_variable(ps_m::CanonicalModel, devices::Array{T,1}, time_range::Uni
 
    for t in time_range, d in devices
 
-       ps_m.variables["$(var_name)"][d.name,t] = @variable(ps_m.JuMPmodel, base_name="$(var_name)_{$(d.name),$(t)}", start = 0.0, binary=binary) # Power output of generators
+       ps_m.variables["$(var_name)"][d.name,t] = JuMP.@variable(ps_m.JuMPmodel, base_name="$(var_name)_{$(d.name),$(t)}", start = 0.0, binary=binary) # Power output of generators
 
    end
 
@@ -16,7 +16,7 @@ function add_variable(ps_m::CanonicalModel, devices::Array{T,1}, time_range::Uni
 
    for t in time_range, d in devices
 
-       ps_m.variables["$(var_name)"][d.name,t] = @variable(ps_m.JuMPmodel, base_name="$(var_name)_{$(d.name),$(t)}", start = 0.0, binary=binary) # Power output of generators
+       ps_m.variables["$(var_name)"][d.name,t] = JuMP.@variable(ps_m.JuMPmodel, base_name="$(var_name)_{$(d.name),$(t)}", start = 0.0, binary=binary) # Power output of generators
 
        _add_to_expression!(ps_m.expressions["$(expression)"], d.bus.number, t, ps_m.variables["$(var_name)"][d.name,t])
 
@@ -30,7 +30,7 @@ function add_variable(ps_m::CanonicalModel, devices::Array{T,1}, time_range::Uni
 
    for t in time_range, d in devices
 
-       ps_m.variables["$(var_name)"][d.name,t] = @variable(ps_m.JuMPmodel, base_name="$(var_name)_{$(d.name),$(t)}", start = 0.0, binary=binary) # Power output of generators
+       ps_m.variables["$(var_name)"][d.name,t] = JuMP.@variable(ps_m.JuMPmodel, base_name="$(var_name)_{$(d.name),$(t)}", start = 0.0, binary=binary) # Power output of generators
 
        _add_to_expression!(ps_m.expressions["$(expression)"], d.bus.number, t, ps_m.variables["$(var_name)"][d.name,t], sign)
 

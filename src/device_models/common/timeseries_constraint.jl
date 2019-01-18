@@ -4,7 +4,7 @@ function device_timeseries_ub(ps_m::CanonicalModel, ts_data::Array{Tuple{String,
 
     for t in time_range, r in ts_data
 
-        ps_m.constraints["$(cons_name)"][r[1], t] = @constraint(ps_m.JuMPmodel, ps_m.variables["$(var_name)"][r[1], t] <= r[2][t])
+        ps_m.constraints["$(cons_name)"][r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables["$(var_name)"][r[1], t] <= r[2][t])
 
     end
 
@@ -16,7 +16,7 @@ function device_timeseries_lb(ps_m::CanonicalModel, ts_data::Array{Tuple{String,
 
     for t in time_range, r in ts_data
 
-        ps_m.constraints["$(cons_name)"][r[1], t] = @constraint(ps_m.JuMPmodel, r[2][t] <= ps_m.variables["$(var_name)"][r[1], t])
+        ps_m.constraints["$(cons_name)"][r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, r[2][t] <= ps_m.variables["$(var_name)"][r[1], t])
 
     end
 

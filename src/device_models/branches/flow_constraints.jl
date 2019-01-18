@@ -12,8 +12,8 @@ function thermalflowlimits(m::JuMP.AbstractModel, system_formulation::Type{S}, d
     for t in time_index, (ix, name) in enumerate(name_index)
         if name in keys(device_index)
             if name == devices[device_index[name]].name
-                Flow_max_tf[name, t] = @constraint(m, fbr[name, t] <= devices[device_index[name]].rate)
-                Flow_max_ft[name, t] = @constraint(m, fbr[name, t] >= -1*devices[device_index[name]].rate)
+                Flow_max_tf[name, t] = JuMP.@constraint(m, fbr[name, t] <= devices[device_index[name]].rate)
+                Flow_max_ft[name, t] = JuMP.@constraint(m, fbr[name, t] >= -1*devices[device_index[name]].rate)
             else
                 @error "Branch name in Array and variable do not match"
             end
@@ -43,8 +43,8 @@ function thermalflowlimits(m::JuMP.AbstractModel, system_formulation::Type{S}, d
     for t in time_index, (ix, name) in enumerate(name_index)
         if name in keys(device_index)
             if name == devices[device_index[name]].name
-                Flow_max_tf[name, t] = @constraint(m, fbr_fr[name, t] <= devices[device_index[name]].rate)
-                Flow_max_ft[name, t] = @constraint(m, fbr_to[name, t] >= -1*devices[device_index[name]].rate)
+                Flow_max_tf[name, t] = JuMP.@constraint(m, fbr_fr[name, t] <= devices[device_index[name]].rate)
+                Flow_max_ft[name, t] = JuMP.@constraint(m, fbr_to[name, t] >= -1*devices[device_index[name]].rate)
             else
                 @error "Branch name in Array and variable do not match"
             end

@@ -5,7 +5,7 @@ function reservevariables(m::JuMP.AbstractModel, devices::Array{NamedTuple{(:dev
 
     t = 1:time_periods
 
-    p_rsv = @variable(m, p_rsv[on_set,t] >= 0)
+    p_rsv = JuMP.@variable(m, p_rsv[on_set,t] >= 0)
 
     return p_rsv
 
@@ -13,25 +13,25 @@ end
 
 # headroom constraints
 function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PSY.ThermalGen, D <: AbstractThermalDispatchForm}
-    return @constraint(m, m[:p_th][device.name,t] + m[:p_rsv][device.name,t]  <= device.tech.activepowerlimits.max)
+    return JuMP.@constraint(m, m[:p_th][device.name,t] + m[:p_rsv][device.name,t]  <= device.tech.activepowerlimits.max)
 end
 
 function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PSY.ThermalGen, D <: AbstractThermalCommitmentForm}
-    return @constraint(m, m[:p_th][device.name,t] + m[:p_rsv][device.name,t] <= device.tech.activepowerlimits.max * m[:on_th][device.name,t])
+    return JuMP.@constraint(m, m[:p_th][device.name,t] + m[:p_rsv][device.name,t] <= device.tech.activepowerlimits.max * m[:on_th][device.name,t])
 end
 
 function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PSY.RenewableGen, D <: AbstractRenewableDispatchForm}
-    return @constraint(m, m[:p_re][device.name,t] + m[:p_rsv][device.name,t] <= device.tech.installedcapacity * values(device.scalingfactor)[t])
+    return JuMP.@constraint(m, m[:p_re][device.name,t] + m[:p_rsv][device.name,t] <= device.tech.installedcapacity * values(device.scalingfactor)[t])
 end
 
 function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PSY.InterruptibleLoad, D <: FullControllablePowerLoad}
-    return @constraint(m, m[:p_cl][device.name,t] + m[:p_rsv][device.name,t] <= device.maxactivepower * values(device.scalingfactor)[t])
+    return JuMP.@constraint(m, m[:p_cl][device.name,t] + m[:p_rsv][device.name,t] <= device.maxactivepower * values(device.scalingfactor)[t])
 end
 
 # ramp constraints
 function make_pramp_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}, timeframe) where {G<:PSY.ThermalGen, D <: AbstractThermalFormulation}
     rmax = device.tech.ramplimits != nothing  ? device.tech.ramplimits.up : device.tech.activepowerlimits.max
-    return @constraint(m, m[:p_rsv][device.name,t] <= rmax/60 * timeframe)
+    return JuMP.@constraint(m, m[:p_rsv][device.name,t] <= rmax/60 * timeframe)
 end
 
 function make_pramp_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}, timeframe) where {G<:PSY.RenewableGen, D <: AbstractRenewableDispatchForm}
@@ -39,7 +39,7 @@ function make_pramp_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, fo
 end
 function make_pramp_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}, timeframe) where {G<:PSY.InterruptibleLoad, D <: FullControllablePowerLoad}
     #rmax =  device.maxactivepower * values(device.scalingfactor)[t] #nominally setting load ramp limit to full range within 1 min
-    #return @constraint(m, m[:p_rsv][device.name,t] <= rmax/60 * timeframe)
+    #return JuMP.@constraint(m, m[:p_rsv][device.name,t] <= rmax/60 * timeframe)
     return
 end
 
@@ -57,7 +57,7 @@ function reserves(m::JuMP.AbstractModel, devices::Array{NamedTuple{(:device, :fo
 
 
     for t in time_index
-        pmin_rsv[t] = @constraint(m, sum([p_rsv[name,t] for name in name_index]) >= service.requirement)
+        pmin_rsv[t] = JuMP.@constraint(m, sum([p_rsv[name,t] for name in name_index]) >= service.requirement)
 
         for (ix, name) in enumerate(name_index)
             if name == devices[ix].device.name

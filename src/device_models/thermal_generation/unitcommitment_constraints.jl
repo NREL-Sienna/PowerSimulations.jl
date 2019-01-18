@@ -26,7 +26,7 @@ function commitmentconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, devic
     for (ix,name) in enumerate(name_index)
         if name == devices[ix].name
             t1 = time_index[1]
-            commitment_th[name,t1] = @constraint(m, on_th[name,t1] == initialstatus[name] + start_th[name,t1] - stop_th[name,t1])
+            commitment_th[name,t1] = JuMP.@constraint(m, on_th[name,t1] == initialstatus[name] + start_th[name,t1] - stop_th[name,t1])
         else
             @error "Bus name in Array and variable do not match"
         end
@@ -34,7 +34,7 @@ function commitmentconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, devic
 
     for t in time_index[2:end], (ix,name) in enumerate(name_index)
         if name == devices[ix].name
-            commitment_th[name,t] = @constraint(m, on_th[name,t] == on_th[name,t-1] + start_th[name,t] - stop_th[name,t])
+            commitment_th[name,t] = JuMP.@constraint(m, on_th[name,t] == on_th[name,t-1] + start_th[name,t] - stop_th[name,t])
         else
             @error "Bus name in Array and variable do not match"
         end
@@ -90,8 +90,8 @@ function timeconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, device_form
                     tsd = max(0, devices[ix].tech.timelimits.down - initialoffduration[name])
                 end
 
-                minup_th[name,t] = @constraint(m,sum([start_th[name,i] for i in ((t - tst - 1) :t) if i > 0 ]) <= on_th[name,t])
-                mindown_th[name,t] = @constraint(m,sum([stop_th[name,i] for i in ((t - tsd - 1) :t) if i > 0]) <= (1 - on_th[name,t]))
+                minup_th[name,t] = JuMP.@constraint(m,sum([start_th[name,i] for i in ((t - tst - 1) :t) if i > 0 ]) <= on_th[name,t])
+                mindown_th[name,t] = JuMP.@constraint(m,sum([stop_th[name,i] for i in ((t - tsd - 1) :t) if i > 0]) <= (1 - on_th[name,t]))
 
             else
                 @error "Bus name in Array and variable do not match"

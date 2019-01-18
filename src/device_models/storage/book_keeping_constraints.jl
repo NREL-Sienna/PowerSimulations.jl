@@ -14,7 +14,7 @@ function energybookkeeping(m::JuMP.AbstractModel, devices::Array{T,1}, time_peri
     # TODO: Add Initial SOC for storage for sequential simulation
     for t1 = time_index[1], (ix,name) in enumerate(name_index)
         if name == devices[ix].name
-            bookkeep_bt[name,t1] = @constraint(m,ebt[name,t1] == devices[ix].energy -  pstout[name,t1]/devices[ix].efficiency.out + pstin[name,t1]*devices[ix].efficiency.in)
+            bookkeep_bt[name,t1] = JuMP.@constraint(m,ebt[name,t1] == devices[ix].energy -  pstout[name,t1]/devices[ix].efficiency.out + pstin[name,t1]*devices[ix].efficiency.in)
         else
             @error "Bus name in Array and variable do not match"
         end
@@ -22,7 +22,7 @@ function energybookkeeping(m::JuMP.AbstractModel, devices::Array{T,1}, time_peri
 
     for t in time_index[2:end], (ix,name) in enumerate(name_index)
         if name == devices[ix].name
-            bookkeep_bt[name,t] = @constraint(m,ebt[name,t] == ebt[name,t-1] -  pstout[name,t]/devices[ix].efficiency.out + pstin[name,t]*devices[ix].efficiency.in)
+            bookkeep_bt[name,t] = JuMP.@constraint(m,ebt[name,t] == ebt[name,t-1] -  pstout[name,t]/devices[ix].efficiency.out + pstin[name,t]*devices[ix].efficiency.in)
         else
             @error "Bus name in Array and variable do not match"
         end
@@ -46,7 +46,7 @@ function energyconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, time_peri
 
     for t in time_index, (ix,name) in enumerate(name_index)
         if name == devices[ix].name
-            energylimit_bt[name,t] = @constraint(m,ebt[name,t] <= devices[ix].capacity.max)
+            energylimit_bt[name,t] = JuMP.@constraint(m,ebt[name,t] <= devices[ix].capacity.max)
         else
             @error "Bus name in Array and variable do not match"
         end
