@@ -1,4 +1,4 @@
-function add_variable(ps_m::CanonicalModel, devices::Array{T,1}, time_range::UnitRange{Int64}, var_name::String, binary::Bool) where {T <: PowerSystems.PowerSystemDevice}
+function add_variable(ps_m::CanonicalModel, devices::Array{T,1}, time_range::UnitRange{Int64}, var_name::String, binary::Bool) where {T <: PSY.PowerSystemDevice}
 
     ps_m.variables["$(var_name)"] = JuMP.Containers.DenseAxisArray{VariableRef}(undef, [d.name for d in devices], time_range)
 
@@ -10,7 +10,7 @@ function add_variable(ps_m::CanonicalModel, devices::Array{T,1}, time_range::Uni
 
 end
 
-function add_variable(ps_m::CanonicalModel, devices::Array{T,1}, time_range::UnitRange{Int64}, var_name::String, binary::Bool, expression::String) where {T <: PowerSystems.PowerSystemDevice}
+function add_variable(ps_m::CanonicalModel, devices::Array{T,1}, time_range::UnitRange{Int64}, var_name::String, binary::Bool, expression::String) where {T <: PSY.PowerSystemDevice}
 
     ps_m.variables["$(var_name)"] = JuMP.Containers.DenseAxisArray{VariableRef}(undef, [d.name for d in devices], time_range)
 
@@ -24,7 +24,7 @@ function add_variable(ps_m::CanonicalModel, devices::Array{T,1}, time_range::Uni
 
 end
 
-function add_variable(ps_m::CanonicalModel, devices::Array{T,1}, time_range::UnitRange{Int64}, var_name::String, binary::Bool, expression::String, sign::Int64) where {T <: PowerSystems.PowerSystemDevice}
+function add_variable(ps_m::CanonicalModel, devices::Array{T,1}, time_range::UnitRange{Int64}, var_name::String, binary::Bool, expression::String, sign::Int64) where {T <: PSY.PowerSystemDevice}
 
     ps_m.variables["$(var_name)"] = JuMP.Containers.DenseAxisArray{VariableRef}(undef, [d.name for d in devices], time_range)
 

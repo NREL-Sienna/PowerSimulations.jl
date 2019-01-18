@@ -1,5 +1,5 @@
 
-function reservevariables(m::JuMP.AbstractModel, devices::Array{NamedTuple{(:device, :formulation), Tuple{R,DataType}}}, time_periods::Int64) where {R <: PowerSystems.PowerSystemDevice}
+function reservevariables(m::JuMP.AbstractModel, devices::Array{NamedTuple{(:device, :formulation), Tuple{R,DataType}}}, time_periods::Int64) where {R <: PSY.PowerSystemDevice}
 
     on_set = [d.device.name for d in devices]
 
@@ -12,39 +12,39 @@ function reservevariables(m::JuMP.AbstractModel, devices::Array{NamedTuple{(:dev
 end
 
 # headroom constraints
-function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PowerSystems.ThermalGen, D <: AbstractThermalDispatchForm}
+function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PSY.ThermalGen, D <: AbstractThermalDispatchForm}
     return @constraint(m, m[:p_th][device.name,t] + m[:p_rsv][device.name,t]  <= device.tech.activepowerlimits.max)
 end
 
-function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PowerSystems.ThermalGen, D <: AbstractThermalCommitmentForm}
+function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PSY.ThermalGen, D <: AbstractThermalCommitmentForm}
     return @constraint(m, m[:p_th][device.name,t] + m[:p_rsv][device.name,t] <= device.tech.activepowerlimits.max * m[:on_th][device.name,t])
 end
 
-function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PowerSystems.RenewableGen, D <: AbstractRenewableDispatchForm}
+function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PSY.RenewableGen, D <: AbstractRenewableDispatchForm}
     return @constraint(m, m[:p_re][device.name,t] + m[:p_rsv][device.name,t] <= device.tech.installedcapacity * values(device.scalingfactor)[t])
 end
 
-function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PowerSystems.InterruptibleLoad, D <: FullControllablePowerLoad}
+function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PSY.InterruptibleLoad, D <: FullControllablePowerLoad}
     return @constraint(m, m[:p_cl][device.name,t] + m[:p_rsv][device.name,t] <= device.maxactivepower * values(device.scalingfactor)[t])
 end
 
 # ramp constraints
-function make_pramp_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}, timeframe) where {G<:PowerSystems.ThermalGen, D <: AbstractThermalFormulation}
+function make_pramp_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}, timeframe) where {G<:PSY.ThermalGen, D <: AbstractThermalFormulation}
     rmax = device.tech.ramplimits != nothing  ? device.tech.ramplimits.up : device.tech.activepowerlimits.max
     return @constraint(m, m[:p_rsv][device.name,t] <= rmax/60 * timeframe)
 end
 
-function make_pramp_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}, timeframe) where {G<:PowerSystems.RenewableGen, D <: AbstractRenewableDispatchForm}
+function make_pramp_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}, timeframe) where {G<:PSY.RenewableGen, D <: AbstractRenewableDispatchForm}
     return
 end
-function make_pramp_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}, timeframe) where {G<:PowerSystems.InterruptibleLoad, D <: FullControllablePowerLoad}
+function make_pramp_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}, timeframe) where {G<:PSY.InterruptibleLoad, D <: FullControllablePowerLoad}
     #rmax =  device.maxactivepower * values(device.scalingfactor)[t] #nominally setting load ramp limit to full range within 1 min
     #return @constraint(m, m[:p_rsv][device.name,t] <= rmax/60 * timeframe)
     return
 end
 
 
-function reserves(m::JuMP.AbstractModel, devices::Array{NamedTuple{(:device, :formulation), Tuple{R,DataType}}}, service::PowerSystems.StaticReserve, time_periods::Int64) where {R <: PowerSystems.PowerSystemDevice}
+function reserves(m::JuMP.AbstractModel, devices::Array{NamedTuple{(:device, :formulation), Tuple{R,DataType}}}, service::PSY.StaticReserve, time_periods::Int64) where {R <: PSY.PowerSystemDevice}
 
     p_rsv = m[:p_rsv]
     time_index = m[:p_rsv].axes[2]

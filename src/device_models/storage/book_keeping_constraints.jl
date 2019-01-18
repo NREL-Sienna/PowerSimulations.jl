@@ -1,4 +1,4 @@
-function energybookkeeping(m::JuMP.AbstractModel, devices::Array{T,1}, time_periods::Int64; ini_cond = 0.0) where T <: PowerSystems.GenericBattery
+function energybookkeeping(m::JuMP.AbstractModel, devices::Array{T,1}, time_periods::Int64; ini_cond = 0.0) where T <: PSY.GenericBattery
 
     pstin = m[:pstin]
     pstout = m[:pstout]
@@ -34,7 +34,7 @@ function energybookkeeping(m::JuMP.AbstractModel, devices::Array{T,1}, time_peri
 
 end
 
-function energyconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, time_periods::Int64) where T <: PowerSystems.GenericBattery
+function energyconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, time_periods::Int64) where T <: PSY.GenericBattery
 
     ebt = m[:ebt]
     name_index = m[:ebt].axes[1]

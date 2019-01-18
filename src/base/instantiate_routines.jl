@@ -1,4 +1,4 @@
-function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; args...) where N <: AbstractDCPowerModel
+function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) where N <: AbstractDCPowerModel
 
     d_netinjection_p =  JumpAffineExpressionArray(undef, length(sys.buses), sys.time_periods)
 
@@ -10,7 +10,7 @@ function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; ar
 
 end
 
-function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; args...) where N <: AbstractACPowerModel
+function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) where N <: AbstractACPowerModel
 
     d_netinjection_p =  JumpAffineExpressionArray(undef, length(sys.buses), sys.time_periods)
 
@@ -26,23 +26,23 @@ function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; ar
 
 end
 
-function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; args...) where N <: CopperPlatePowerModel
+function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) where N <: CopperPlatePowerModel
 
     return instantiate_network(AbstractDCPowerModel, sys)
 
 end
 
-function instantiate_network(network::Type{N}, sys::PowerSystems.PowerSystem; args...) where N <: AbstractFlowForm
+function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) where N <: AbstractFlowForm
 
     return instantiate_network(AbstractDCPowerModel, sys)
 
 end
 
 #=
-ps_model = PS.canonical_model(Model(),
+ps_model = PSI.canonical_model(Model(),
                               Dict{String, JuMP.Containers.DenseAxisArray{VariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
-                              Dict{String, PS.JumpAffineExpressionArray}("var_active" => PS.JumpAffineExpressionArray(undef, 14, 24),
-                                                                         "var_reactive" => PS.JumpAffineExpressionArray(undef, 14, 24)),
+                              Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
+                                                                         "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
                               Dict());
 =#

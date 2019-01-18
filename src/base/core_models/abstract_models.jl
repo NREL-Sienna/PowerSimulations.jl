@@ -6,7 +6,7 @@ abstract type UnitCommitment <: AbstractOperationsModel end
 
 abstract type CustomModel <: AbstractOperationsModel end
 
-mutable struct PowerOperationModel{ M<:AbstractOperationsModel, T<:NetworkModel, S<:Union{Nothing,Array{NamedTuple{(:service, :formulation), Tuple{D,DataType}}}} where {D <: PowerSystems.Service}}
+mutable struct PowerOperationModel{ M<:AbstractOperationsModel, T<:NetworkModel, S<:Union{Nothing,Array{NamedTuple{(:service, :formulation), Tuple{D,DataType}}}} where {D <: PSY.Service}}
     psmodel::Type{M}
     generation::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}
     demand::Union{Nothing,Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}}
@@ -14,7 +14,7 @@ mutable struct PowerOperationModel{ M<:AbstractOperationsModel, T<:NetworkModel,
     branches::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}
     transmission::Type{T}
     services::S
-    system::PowerSystems.PowerSystem
+    system::PSY.PowerSystem
     model::CanonicalModel
     dynamics::Bool
     ptdf::Union{Nothing,PTDFArray}

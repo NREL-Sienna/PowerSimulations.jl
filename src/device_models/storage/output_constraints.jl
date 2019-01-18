@@ -1,4 +1,4 @@
-function activepower(ps_m::CanonicalModel, devices::Array{St,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {St <: PowerSystems.Storage, D <: AbstractStorageForm, S <: PM.AbstractPowerFormulation}
+function activepower(ps_m::CanonicalModel, devices::Array{St,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {St <: PSY.Storage, D <: AbstractStorageForm, S <: PM.AbstractPowerFormulation}
 
     range_data_in = [(s.name, s.inputactivepowerlimits) for s in devices]
 
@@ -13,7 +13,7 @@ end
 """
 This function adds the reactive  power limits of generators when there are CommitmentVariables
 """
-function reactivepower(ps_m::CanonicalModel, devices::Array{St,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {St <: PowerSystems.Storage, D <: AbstractStorageForm, S <: AbstractACPowerModel}
+function reactivepower(ps_m::CanonicalModel, devices::Array{St,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {St <: PSY.Storage, D <: AbstractStorageForm, S <: AbstractACPowerModel}
 
     range_data = [(s.name, s.reactivepowerlimits) for s in devices]
 

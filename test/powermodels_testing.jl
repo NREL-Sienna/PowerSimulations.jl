@@ -19,10 +19,10 @@ ipopt_optimizer = with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
 
 # is this the best way to find a file in a package?
 base_dir = dirname(dirname(pathof(PowerSystems)))
-case5_data = PowerSystems.parse_file(joinpath(base_dir,"data/matpower/case5.m"))
+case5_data = PSY.parse_file(joinpath(base_dir,"data/matpower/case5.m"))
 case5_data = InfrastructureModels.replicate(case5_data, 2)
 
-case5_dc_data = PowerSystems.parse_file(joinpath(base_dir,"data/matpower/case5_dc.m"))
+case5_dc_data = PSY.parse_file(joinpath(base_dir,"data/matpower/case5_dc.m"))
 case5_dc_data = InfrastructureModels.replicate(case5_dc_data, 2)
 
 
@@ -80,7 +80,7 @@ true finally end
     base_dir = dirname(dirname(pathof(PowerSystems)))
     include(joinpath(base_dir,"data/data_5bus_pu.jl"))
     PS_struct = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);
-    netinjection = PS.instantiate_network(PS.DCAngleForm, PS_struct);
+    netinjection = PSI.instantiate_network(PSI.DCAngleForm, PS_struct);
     PM_dict = PowerSimulations.pass_to_pm(PS_struct, netinjection)
     PM_object = PowerSimulations.build_nip_model(PM_dict, PM.DCPPowerModel, optimizer=ipopt_optimizer);
     JuMP.num_variables(PM_object.model) == 384

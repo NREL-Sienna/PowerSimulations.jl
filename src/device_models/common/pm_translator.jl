@@ -1,4 +1,4 @@
-function get_branch_to_pm(ix::Int64, branch::PowerSystems.Transformer2W)
+function get_branch_to_pm(ix::Int64, branch::PSY.Transformer2W)
     PM_branch = Dict{String,Any}(
         "br_r"        => branch.r,
         "rate_a"      => branch.rate,
@@ -22,7 +22,7 @@ function get_branch_to_pm(ix::Int64, branch::PowerSystems.Transformer2W)
     return PM_branch
 end
 
-function get_branch_to_pm(ix::Int64, branch::PowerSystems.TapTransformer)
+function get_branch_to_pm(ix::Int64, branch::PSY.TapTransformer)
     PM_branch = Dict{String,Any}(
         "br_r"        => branch.r,
         "rate_a"      => branch.rate,
@@ -46,7 +46,7 @@ function get_branch_to_pm(ix::Int64, branch::PowerSystems.TapTransformer)
     return PM_branch
 end
 
-function get_branch_to_pm(ix::Int64, branch::PowerSystems.Line)
+function get_branch_to_pm(ix::Int64, branch::PSY.Line)
     PM_branch = Dict{String,Any}(
         "br_r"        => branch.r,
         "rate_a"      => branch.rate.from_to,
@@ -71,7 +71,7 @@ function get_branch_to_pm(ix::Int64, branch::PowerSystems.Line)
 end
 
 
-function get_branches_to_pm(branches::Array{T}) where {T <: PowerSystems.Branch}
+function get_branches_to_pm(branches::Array{T}) where {T <: PSY.Branch}
         PM_branches = Dict{String,Any}()
 
         for (ix, branch) in enumerate(branches)
@@ -81,7 +81,7 @@ function get_branches_to_pm(branches::Array{T}) where {T <: PowerSystems.Branch}
     return PM_branches
 end
 
-function get_buses_to_pm(buses::Array{PowerSystems.Bus})
+function get_buses_to_pm(buses::Array{PSY.Bus})
     PM_buses = Dict{String,Any}()
     for bus in buses
         PM_bus = Dict{String,Any}(
@@ -105,7 +105,7 @@ function get_buses_to_pm(buses::Array{PowerSystems.Bus})
 end
 
 #=
-function expression_to_pm_active(PM_dict::Dict{String,Any}, netinjection::BalanceNamedTuple, sys::PowerSystems.PowerSystem)
+function expression_to_pm_active(PM_dict::Dict{String,Any}, netinjection::BalanceNamedTuple, sys::PSY.PowerSystem)
 
     for bus in sys.buses, time in 1:sys.time_periods
 
@@ -115,7 +115,7 @@ function expression_to_pm_active(PM_dict::Dict{String,Any}, netinjection::Balanc
 
 end
 
-function expression_to_pm_reactive(PM_dict::Dict{String,Any}, netinjection::BalanceNamedTuple, sys::PowerSystems.PowerSystem)
+function expression_to_pm_reactive(PM_dict::Dict{String,Any}, netinjection::BalanceNamedTuple, sys::PSY.PowerSystem)
 
     for bus in sys.buses, time in 1:sys.time_periods
 
@@ -126,7 +126,7 @@ function expression_to_pm_reactive(PM_dict::Dict{String,Any}, netinjection::Bala
 end
 =#
 
-function pass_to_pm(sys::PowerSystems.PowerSystem, netinjection::BalanceNamedTuple)
+function pass_to_pm(sys::PSY.PowerSystem, netinjection::BalanceNamedTuple)
 
     PM_translation = Dict{String,Any}(
     "bus" => get_buses_to_pm(sys.buses),

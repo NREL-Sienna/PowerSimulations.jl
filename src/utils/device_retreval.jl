@@ -1,8 +1,8 @@
 function all_devices(sys, filter::Array)
-    dev = Array{PowerSystems.PowerSystemDevice}([])
+    dev = Array{PSY.PowerSystemDevice}([])
 
     for source in sys.generators
-        if typeof(source) <: Array{<:PowerSystems.Generator}
+        if typeof(source) <: Array{<:PSY.Generator}
             for d in source
                 d.name in filter ? push!(dev,d) : continue
             end
@@ -17,10 +17,10 @@ function all_devices(sys, filter::Array)
 end
 
 function all_devices(sys)
-    dev = Array{PowerSystems.PowerSystemDevice}([])
+    dev = Array{PSY.PowerSystemDevice}([])
 
     for source in sys.generators
-        if typeof(source) <: Array{<:PowerSystems.Generator}
+        if typeof(source) <: Array{<:PSY.Generator}
             for d in source
                 push!(dev,d)
             end
@@ -36,11 +36,11 @@ end
 
 
 #TODO: Make additional methods to handle other device types
-function get_pg(m::JuMP.AbstractModel, gen::G, t::Int64) where G <: PowerSystems.ThermalGen
+function get_pg(m::JuMP.AbstractModel, gen::G, t::Int64) where G <: PSY.ThermalGen
     return m.obj_dict[:p_th][gen.name,t]
 end
 
-function get_pg(m::JuMP.AbstractModel, gen::G, t::Int64) where G <: PowerSystems.RenewableCurtailment
+function get_pg(m::JuMP.AbstractModel, gen::G, t::Int64) where G <: PSY.RenewableCurtailment
     return m.obj_dict[:p_re][gen.name,t]
 end
 
@@ -167,7 +167,7 @@ function create_result_dict(jump_array, k)
 end
 
 
-function get_model_result(pspom::PS.PowerOperationModel)
+function get_model_result(pspom::PSI.PowerOperationModel)
 
     d = Dict{Symbol, DataFrame}()
     for (k, v) in pspom.model.obj_dict

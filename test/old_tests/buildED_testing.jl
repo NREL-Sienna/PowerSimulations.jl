@@ -21,7 +21,7 @@ pre, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjec
 
 m = PowerSimulations.powerconstraints(m, pre, pre_set, sys5b.time_periods)
 
-test_cl = [d for d in sys5b.loads if !isa(d, PowerSystems.StaticLoad)] # Filter StaticLoads Out
+test_cl = [d for d in sys5b.loads if !isa(d, PSY.StaticLoad)] # Filter StaticLoads Out
 pcl, inyection_array = PowerSimulations.loadvariables(m, devices_netinjection,  test_cl, sys5b.time_periods);
 m = PowerSimulations.powerconstraints(m, pcl, test_cl, sys5b.time_periods)
 
