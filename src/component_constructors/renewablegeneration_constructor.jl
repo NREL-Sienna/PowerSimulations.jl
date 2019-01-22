@@ -21,7 +21,7 @@ function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple
 end
 
 
-function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PSY.RenewableGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {D <: AbstractRenewableDispatchForm, S <: AbstractACPowerModel}
+function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PSY.RenewableGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
 
     dev_set = [d for d in sys.generators.renewable if (d.available == true && !isa(d, PSY.RenewableFix))]
 

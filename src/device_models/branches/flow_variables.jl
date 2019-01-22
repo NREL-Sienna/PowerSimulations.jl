@@ -13,7 +13,7 @@ function flowvariables(ps_m::CanonicalModel, system_formulation::Type{S}, device
 
 end
 
-function flowvariables(ps_m::CanonicalModel, system_formulation::Type{S}, devices::Array{B,1}, time_range::UnitRange{Int64}) where {B <: PSY.Branch, S <: AbstractACPowerModel}
+function flowvariables(ps_m::CanonicalModel, system_formulation::Type{S}, devices::Array{B,1}, time_range::UnitRange{Int64}) where {B <: PSY.Branch, S <: PM.AbstractPowerFormulation}
 
     add_variable(ps_m, devices, time_range, "PFbr_to", false)
     add_variable(ps_m, devices, time_range, "PFbr_dr", false)

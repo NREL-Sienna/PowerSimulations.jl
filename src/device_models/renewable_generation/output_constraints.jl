@@ -12,7 +12,7 @@ end
 """
 This function adds the reactive power limits of renewable generators that can be dispatched
 """
-function reactivepower(ps_m::CanonicalModel, devices::Array{R,1}, device_formulation::Type{RenewableFullDispatch}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen,  S <: AbstractACPowerModel}
+function reactivepower(ps_m::CanonicalModel, devices::Array{R,1}, device_formulation::Type{RenewableFullDispatch}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen,  S <: PM.AbstractPowerFormulation}
 
     range_data = [(r.name, r.tech.reactivepowerlimits) for r in devices]
 
@@ -23,7 +23,7 @@ end
 """
 This function adds the reactive power limits of renewable generators that can be dispatched
 """
-function reactivepower(ps_m::CanonicalModel, devices::Array{R,1}, device_formulation::Type{RenewableConstantPowerFactor}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen,  S <: AbstractACPowerModel}
+function reactivepower(ps_m::CanonicalModel, devices::Array{R,1}, device_formulation::Type{RenewableConstantPowerFactor}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen,  S <: PM.AbstractPowerFormulation}
 
     ts_data = [(r.name, values(r.scalingfactor)*r.tech.installedcapacity*sin(acos(r.tech.powerfactor))) for r in devices]
 

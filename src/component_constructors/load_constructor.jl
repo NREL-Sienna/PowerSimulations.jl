@@ -17,7 +17,7 @@ function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple
 end
 
 
-function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{L}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {L <: PSY.ElectricLoad, D <: FullControllablePowerLoad, S <: AbstractACPowerModel}
+function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{L}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {L <: PSY.ElectricLoad, D <: FullControllablePowerLoad, S <: PM.AbstractPowerFormulation}
 
     dev_set = [d for d in sys.loads if (d.available == true && !isa(d,PSY.StaticLoad))]
 

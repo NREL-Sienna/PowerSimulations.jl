@@ -38,7 +38,7 @@ end
 """
 This function adds the power limits of generators when there are no CommitmentVariables
 """
-function reactivepower(ps_m::CanonicalModel, devices::Array{H,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {H <: PSY.HydroGen, D <: AbstractHydroDispatchForm, S <: AbstractACPowerModel}
+function reactivepower(ps_m::CanonicalModel, devices::Array{H,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {H <: PSY.HydroGen, D <: AbstractHydroDispatchForm, S <: PM.AbstractPowerFormulation}
 
     range_data = [(g.name, g.tech.reactivepowerlimits) for g in devices]
 
@@ -61,7 +61,7 @@ end
 """
 This function adds the reactive power limits of generators when there CommitmentVariables
 """
-function reactivepower(ps_m::CanonicalModel, devices::Array{H,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {H <: PSY.HydroGen, D <: AbstractHydroCommitmentForm, S <: AbstractACPowerModel}
+function reactivepower(ps_m::CanonicalModel, devices::Array{H,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {H <: PSY.HydroGen, D <: AbstractHydroCommitmentForm, S <: PM.AbstractPowerFormulation}
 
     range_data = [(g.name, g.tech.reactivepowerlimits) for g in devices]
 

@@ -69,7 +69,7 @@ function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple
 
 end
 
-function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem) where {S <: AbstractACPowerModel}
+function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem) where {S <: PM.AbstractPowerFormulation}
 
     nodalflowbalance(m, netinjection, PM.AbstractActivePowerFormulation, sys)
 

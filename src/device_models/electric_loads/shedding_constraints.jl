@@ -10,7 +10,7 @@ function activepower(ps_m::CanonicalModel, devices::Array{L,1}, device_formulati
 end
 
 
-function reactivepower(ps_m::CanonicalModel, devices::Array{L,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad, D <: AbstractControllablePowerLoadForm, S <: AbstractACPowerModel}
+function reactivepower(ps_m::CanonicalModel, devices::Array{L,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad, D <: AbstractControllablePowerLoadForm, S <: PM.AbstractPowerFormulation}
 
     #TODO: Filter for loads with PF = 1.0
 
