@@ -47,7 +47,7 @@ end
 # Methods for accessing jump, moi, and optimizer variables
 function get_all_vars(obj_dict)
     # get all variables in a jump model
-    var_arays = [v.data for (k,v) in obj_dict if isa(v,JuMP.Containers.DenseAxisArray{JuMP.VariableRef}) ];
+    var_arays = [v.data for (k,v) in obj_dict if isa(v,JuMP.Containers.DenseAxisArray{JuMP.JuMP.VariableRef}) ];
     vars = [i for arr in var_arays for i in arr]
 end
 
@@ -171,7 +171,7 @@ function get_model_result(pspom::PSI.PowerOperationModel)
 
     d = Dict{Symbol, DataFrames.DataFrame}()
     for (k, v) in pspom.model.obj_dict
-        if typeof(v) <: Containers.DenseAxisArray{VariableRef}
+        if typeof(v) <: Containers.DenseAxisArray{JuMP.VariableRef}
             d[k] = create_result_dict(v, k)
         end
     end

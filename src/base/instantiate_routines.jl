@@ -40,7 +40,7 @@ end
 
 #=
 ps_model = PSI.canonical_model(Model(),
-                              Dict{String, JuMP.Containers.DenseAxisArray{VariableRef}}(),
+                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
                                                                          "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
