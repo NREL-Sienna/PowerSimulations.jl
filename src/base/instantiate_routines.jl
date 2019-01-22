@@ -32,7 +32,7 @@ function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) 
 
 end
 
-function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) where N <: AbstractFlowForm
+function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) where N <: StandardPTDFModel
 
     return instantiate_network(PM.AbstractActivePowerFormulation, sys)
 

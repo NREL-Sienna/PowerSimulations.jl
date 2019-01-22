@@ -4,7 +4,7 @@ function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTupl
 
 end
 
-function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: AbstractFlowForm}
+function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: StandardPTDFModel}
 
     for category in branch_models
         constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; kwargs...)

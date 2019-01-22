@@ -30,7 +30,7 @@ function add_flows(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, syste
 
 end
 
-function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem) where {S <: AbstractFlowForm}
+function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem) where {S <: StandardPTDFModel}
 
     time_index = 1:sys.time_periods
     bus_name_index = [b.name for b in sys.buses]
