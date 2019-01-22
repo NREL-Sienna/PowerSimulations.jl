@@ -83,7 +83,7 @@ end
 # Methods for accessing jump, moi, and optimizer constraintrefs
 function get_all_constraints(obj_dict)
     # get all constraints in a jump model
-    constraint_arrays = [v.data for (k,v) in obj_dict if isa(v,JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}) ];
+    constraint_arrays = [v.data for (k,v) in obj_dict if isa(v,JuMP.Containers.DenseAxisArray{JuMP.JuMP.ConstraintRef}) ];
     constraints = [i for arr in constraint_arrays for i in arr]
 end
 

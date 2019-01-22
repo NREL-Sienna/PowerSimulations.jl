@@ -6,8 +6,8 @@ function thermalflowlimits(m::JuMP.AbstractModel, system_formulation::Type{S}, d
 
     device_index = Dict(value => key for (key, value) in Dict(collect(enumerate([d.name for d in devices]))))
 
-    Flow_max_tf = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
-    Flow_max_ft = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
+    Flow_max_tf = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
+    Flow_max_ft = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
 
     for t in time_index, (ix, name) in enumerate(name_index)
         if name in keys(device_index)
@@ -37,8 +37,8 @@ function thermalflowlimits(m::JuMP.AbstractModel, system_formulation::Type{S}, d
 
     device_index = Dict(value => key for (key, value) in Dict(collect(enumerate([d.name for d in devices]))))
 
-    Flow_max_tf = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
-    Flow_max_ft = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
+    Flow_max_tf = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
+    Flow_max_ft = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
 
     for t in time_index, (ix, name) in enumerate(name_index)
         if name in keys(device_index)

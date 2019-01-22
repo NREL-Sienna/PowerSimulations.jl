@@ -14,7 +14,7 @@ function reactivepower(ps_m::CanonicalModel, devices::Array{L,1}, device_formula
 
     #TODO: Filter for loads with PF = 1.0
 
-    ps_m.constraints["load_reactive_ub"] = JuMP.Containers.DenseAxisArray{ConstraintRef}(undef, [l.name for l in devices], time_range)
+    ps_m.constraints["load_reactive_ub"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [l.name for l in devices], time_range)
 
     for t in time_range, l in devices
             #Estimate PF from the load data. TODO: create a power factor field in PowerSystems

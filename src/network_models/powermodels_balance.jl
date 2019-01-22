@@ -126,10 +126,10 @@ end
 ""
 function constraint_kcl_ni(pm::PM.GenericPowerModel, i::Int; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
     if !haskey(PM.con(pm, nw, cnd), :kcl_p)
-        PM.con(pm, nw, cnd)[:kcl_p] = Dict{Int,ConstraintRef}()
+        PM.con(pm, nw, cnd)[:kcl_p] = Dict{Int,JuMP.ConstraintRef}()
     end
     if !haskey(PM.con(pm, nw, cnd), :kcl_q)
-        PM.con(pm, nw, cnd)[:kcl_q] = Dict{Int,ConstraintRef}()
+        PM.con(pm, nw, cnd)[:kcl_q] = Dict{Int,JuMP.ConstraintRef}()
     end
 
     bus = PM.ref(pm, nw, :bus, i)
@@ -157,10 +157,10 @@ end
 ""
 function constraint_kcl_ni_expr(pm::PM.GenericPowerModel, i::Int; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
     if !haskey(PM.con(pm, nw, cnd), :kcl_p)
-        PM.con(pm, nw, cnd)[:kcl_p] = Dict{Int,ConstraintRef}()
+        PM.con(pm, nw, cnd)[:kcl_p] = Dict{Int,JuMP.ConstraintRef}()
     end
     if !haskey(PM.con(pm, nw, cnd), :kcl_q)
-        PM.con(pm, nw, cnd)[:kcl_q] = Dict{Int,ConstraintRef}()
+        PM.con(pm, nw, cnd)[:kcl_q] = Dict{Int,JuMP.ConstraintRef}()
     end
 
     bus = PM.ref(pm, nw, :bus, i)
