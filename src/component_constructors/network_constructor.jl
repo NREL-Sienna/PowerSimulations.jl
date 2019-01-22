@@ -14,7 +14,7 @@ function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTupl
 
 end
 
-function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{StandardPTDF}, sys::PSY.PowerSystem; kwargs...)
+function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{StandardPTDFModel}, sys::PSY.PowerSystem; kwargs...)
     if :PTDF in keys(args)
         PTDF = args[:PTDF]
     else

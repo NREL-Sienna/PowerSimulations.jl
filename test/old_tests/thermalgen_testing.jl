@@ -43,7 +43,7 @@ true finally end
 
 #PTDF Plate and Dispatch
 @test try
-    Net = PSI.StandardPTDF
+    Net = PSI.StandardPTDFModel
     m = Model();
     netinjection = PSI.instantiate_network(Net, sys5);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
@@ -51,7 +51,7 @@ true finally end
 
 #PTDF and Ramping
 @test try
-    Net = PSI.StandardPTDF
+    Net = PSI.StandardPTDFModel
     m = Model();
     netinjection = PSI.instantiate_network(Net, sys5);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalRampLimitDispatch, Net, sys5);
@@ -67,7 +67,7 @@ true finally end
 
 #PTDF and Commitment
 @test try
-    Net = PSI.StandardPTDF
+    Net = PSI.StandardPTDFModel
     m = Model();
     netinjection = PSI.instantiate_network(Net, sys5);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.StandardThermalCommitment, Net, sys5);

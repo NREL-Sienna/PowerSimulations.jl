@@ -39,7 +39,7 @@ finally end
 # Flow Models
 @test try
     @info "testing PTDF 5-bus"
-    Net = PSI.StandardPTDF
+    Net = PSI.StandardPTDFModel
     m = Model(ipopt_optimizer);
     ptdf,  A = PSY.buildptdf(sys5.branches, sys5.buses)
     netinjection = PSI.instantiate_network(Net, sys5);
@@ -120,7 +120,7 @@ finally end
 # Flow Models
 @test_skip try
     @info "testing PTDF 14-bus"
-    Net = PSI.StandardPTDF
+    Net = PSI.StandardPTDFModel
     m = Model(ipopt_optimizer);
     ptdf,  A = PSY.buildptdf(sys14.branches, sys14.buses)
     netinjection = PSI.instantiate_network(Net, sys14);

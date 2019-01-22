@@ -6,7 +6,7 @@ function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple
 
 end
 
-function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{B}, category_formulation::Type{PiLine}, system_formulation::Type{StandardPTDF}, sys::PSY.PowerSystem; kwargs...) where {B <: PSY.Branch}
+function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{B}, category_formulation::Type{PiLine}, system_formulation::Type{StandardPTDFModel}, sys::PSY.PowerSystem; kwargs...) where {B <: PSY.Branch}
 
     PTDF = [a.second for a in args if a.first == :PTDF][1]
 

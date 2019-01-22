@@ -29,7 +29,7 @@ true finally end
 
 #PTDF Plate and Dispatch
 @test try
-    Net = PSI.StandardPTDF
+    Net = PSI.StandardPTDFModel
     m = Model();
     netinjection = PSI.instantiate_network(Net, sys5);
     PSI.constructdevice!(m, netinjection, ElectricLoad, PSI.InterruptibleLoad, Net, sys5);
