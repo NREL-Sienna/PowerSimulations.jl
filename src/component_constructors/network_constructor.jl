@@ -34,7 +34,7 @@ function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTupl
 
 end
 
-function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: AbstractDCPowerModel}
+function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
 
     #= TODO: Needs to be generalized later for other branch models not covered by PM.
     for category in branch_models
