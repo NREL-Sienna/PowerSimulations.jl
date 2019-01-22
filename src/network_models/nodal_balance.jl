@@ -52,7 +52,7 @@ function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple
 end
 
 
-function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem) where {S <: PM.AbstractActivePowerFormulation}
+function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem) where {S <: PM.AbstractActivePowerFormulationn}
 
     time_index = 1:sys.time_periods
     bus_name_index = [b.name for b in sys.buses]
@@ -71,7 +71,7 @@ end
 
 function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem) where {S <: PM.AbstractPowerFormulation}
 
-    nodalflowbalance(m, netinjection, PM.AbstractActivePowerFormulation, sys)
+    nodalflowbalance(m, netinjection, PM.AbstractActivePowerFormulationn, sys)
 
     PM_dict = m.ext[:PM_object]
 

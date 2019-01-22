@@ -51,7 +51,7 @@ end
 """
 This function adds the ramping limits of generators when there are CommitmentVariables
 """
-function rampconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; kwargs...) where {T <: PSY.ThermalGen, D <: AbstractThermalCommitmentForm, S <: PM.AbstractActivePowerFormulation}
+function rampconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; kwargs...) where {T <: PSY.ThermalGen, D <: AbstractThermalCommitmentForm, S <: PM.AbstractActivePowerFormulationn}
 
     devices = [d for d in devices if !isa(d.tech.ramplimits,Nothing)]
 

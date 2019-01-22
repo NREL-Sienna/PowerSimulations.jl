@@ -1,4 +1,4 @@
-function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) where N <: PM.AbstractActivePowerFormulation
+function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) where N <: PM.AbstractActivePowerFormulationn
 
     d_netinjection_p =  JumpAffineExpressionArray(undef, length(sys.buses), sys.time_periods)
 
@@ -28,13 +28,13 @@ end
 
 function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) where N <: CopperPlatePowerModel
 
-    return instantiate_network(PM.AbstractActivePowerFormulation, sys)
+    return instantiate_network(PM.AbstractActivePowerFormulationn, sys)
 
 end
 
 function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) where N <: StandardPTDFModel
 
-    return instantiate_network(PM.AbstractActivePowerFormulation, sys)
+    return instantiate_network(PM.AbstractActivePowerFormulationn, sys)
 
 end
 
