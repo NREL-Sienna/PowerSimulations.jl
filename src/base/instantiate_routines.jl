@@ -10,7 +10,7 @@ function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) 
 
 end
 
-function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) where N <: AbstractACPowerModel
+function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) where N <: PM.AbstractPowerFormulation
 
     d_netinjection_p =  JumpAffineExpressionArray(undef, length(sys.buses), sys.time_periods)
 
