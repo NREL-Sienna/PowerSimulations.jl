@@ -54,8 +54,8 @@ generators_hg = [
 ];
 
 @testset "Device Constructors" begin
-    #include("variables_testing.jl")
-    #include("constraints_testing.jl")
+    include("variables_testing.jl")
+    include("constraints_testing.jl")
     #include("renewables_testing.jl")
     #include("load_testing.jl")
     #include("hydro_testing.jl")
