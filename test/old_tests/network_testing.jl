@@ -52,7 +52,7 @@ finally end
 
 @test try
     @info "testing AngleDC-OPF 5-bus"
-    Net = PSI.DCAngleForm
+    Net = PM.DCPlosslessForm
     m = Model(ipopt_optimizer);
     netinjection = PSI.instantiate_network(Net, sys5);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
@@ -64,7 +64,7 @@ finally end
 
 @test try
     @info "testing ACP-OPF 5-bus"
-    Net = PSI.StandardAC
+    Net = PM.StandardACPForm
     m = Model(ipopt_optimizer);
     netinjection = PSI.instantiate_network(Net, sys5);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
@@ -133,7 +133,7 @@ finally end
 
 @test try
     @info "testing AngleDC-OPF 14-bus"
-    Net = PSI.DCAngleForm
+    Net = PM.DCPlosslessForm
     m = Model(ipopt_optimizer);
     netinjection = PSI.instantiate_network(Net, sys14);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
@@ -145,7 +145,7 @@ finally end
 
 @test try
     @info "testing ACP-OPF 14-bus"
-    Net = PSI.StandardAC
+    Net = PM.StandardACPForm
     m = Model(ipopt_optimizer);
     netinjection = PSI.instantiate_network(Net, sys14);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);

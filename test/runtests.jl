@@ -1,9 +1,12 @@
 using PowerSimulations
 using PowerSystems
+using PowerModels
 using JuMP
 using Test
 
-const PS = PowerSimulations
+const PM = PowerModels
+const PSY = PowerSystems
+const PSI = PowerSimulations
 
 base_dir = string(dirname(dirname(pathof(PowerSystems))));
 include(joinpath(base_dir,"data/data_5bus_pu.jl"));
@@ -46,7 +49,7 @@ generators_hg = [
 ];
 
 @testset "Device Constructors" begin
-    include("variables_testing.jl")
+    #include("variables_testing.jl")
     include("constraints_testing.jl")
     #include("renewables_testing.jl")
     #include("load_testing.jl")

@@ -21,13 +21,13 @@ ps_model = PSI.CanonicalModel(Model(),
     PSI.activepowervariables(ps_model, generators5, 1:24)
     PSI.activepowervariables(ps_model, loads5_DA, 1:24)
     PSI.commitmentvariables(ps_model, generators5, 1:24)
-    PSI.flowvariables(ps_model, PSI.DCAngleForm, branches5, 1:24)
+    PSI.flowvariables(ps_model, PM.DCPlosslessForm, branches5, 1:24)
 true finally end
 
 #=
 #Generator Active and Reactive Power Variables
 @test try
-    Net = PSI.StandardAC
+    Net = PM.StandardACPForm
     m = Model()
     netinjection = PSI.instantiate_network(Net, sys5)
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5)

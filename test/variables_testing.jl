@@ -21,4 +21,4 @@ ps_model = PSI.CanonicalModel(Model(),
 @test try PSI.activepowervariables(ps_model, loads5_DA, 1:24); true finally end
 @test try PSI.reactivepowervariables(ps_model, loads5_DA, 1:24); true finally end
 
-@test try PSI.flowvariables(ps_model, PSI.DCAngleForm, branches5, 1:24); true finally end
+@test try PSI.flowvariables(ps_model, PM.DCPlosslessForm, branches5, 1:24); true finally end
