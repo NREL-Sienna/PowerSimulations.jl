@@ -49,11 +49,11 @@ end
 function get_branch_to_pm(ix::Int64, branch::PSY.Line)
     PM_branch = Dict{String,Any}(
         "br_r"        => branch.r,
-        "rate_a"      => branch.rate.from_to,
+        "rate_a"      => branch.rate,
         "shift"       => 0.0,
-        "rate_b"      => branch.rate.from_to,
+        "rate_b"      => branch.rate,
         "br_x"        => branch.r,
-        "rate_c"      => branch.rate.from_to,
+        "rate_c"      => branch.rate,
         "g_to"        => 0.0,
         "g_fr"        => 0.0,
         "b_fr"        => branch.b.from,
@@ -133,6 +133,7 @@ function pass_to_pm(sys::PSY.PowerSystem, netinjection::BalanceNamedTuple)
     "branch" => get_branches_to_pm(sys.branches),
     "baseMVA" => sys.basepower,
     "per_unit" => true,
+    "storage"        => Dict{String,Any}(),  
     "dcline"         => Dict{String,Any}(),
     "gen"            => Dict{String,Any}(),
     "shunt"          => Dict{String,Any}(),

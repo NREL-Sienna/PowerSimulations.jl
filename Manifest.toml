@@ -118,12 +118,6 @@ version = "0.10.2"
 deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
-[[GLPK]]
-deps = ["BinaryProvider", "Compat", "Libdl", "LinQuadOptInterface"]
-git-tree-sha1 = "82f64bfd090a95b7670ed0d7c734220f32983386"
-uuid = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
-version = "0.9.1"
-
 [[InfrastructureModels]]
 deps = ["Compat", "JuMP", "LinearAlgebra", "Memento", "Random", "Test"]
 git-tree-sha1 = "950d83de160c8564145cbaa1300a9a8967867bef"
@@ -147,12 +141,6 @@ git-tree-sha1 = "9dc556002f23740de13946e8c2e41798e09a9249"
 uuid = "8197267c-284f-5f27-9208-e0e47529a953"
 version = "0.3.1"
 
-[[Ipopt]]
-deps = ["BinaryProvider", "Compat", "Libdl", "MathOptInterface", "MathProgBase"]
-git-tree-sha1 = "ec5067f1ed192e366fe7c7944beed6a276ce317a"
-uuid = "b6b21f68-93f8-5de0-b562-5493be1d77c9"
-version = "0.5.1"
-
 [[IterTools]]
 deps = ["SparseArrays", "Test"]
 git-tree-sha1 = "79246285c43602384e6f1943b3554042a3712056"
@@ -173,7 +161,7 @@ version = "0.20.0"
 
 [[JuMP]]
 deps = ["Calculus", "DataStructures", "ForwardDiff", "LinearAlgebra", "MathOptInterface", "NaNMath", "Random", "SparseArrays", "Statistics", "Test"]
-git-tree-sha1 = "ef9b300ea47c257613c5dfa7cac711acc2e24bbc"
+git-tree-sha1 = "ca4697ebced4ed9285b605a62a9ad119a141923d"
 repo-rev = "master"
 repo-url = "https://github.com/JuliaOpt/JuMP.jl.git"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"

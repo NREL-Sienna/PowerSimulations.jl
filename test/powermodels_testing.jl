@@ -72,6 +72,6 @@ true finally end
     PS_struct = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);
     netinjection = PSI.instantiate_network(PM.DCPlosslessForm, PS_struct);
     PM_dict = PowerSimulations.pass_to_pm(PS_struct, netinjection)
-    PM_object = PowerSimulations.build_nip_model(PM_dict, PM.DCPlosslessForm, optimizer=ipopt_optimizer);
+    PM_object = PowerSimulations.build_nip_model(PM_dict, DCAngleModel, optimizer=ipopt_optimizer);
     JuMP.num_variables(PM_object.model) == 384
 true finally end
