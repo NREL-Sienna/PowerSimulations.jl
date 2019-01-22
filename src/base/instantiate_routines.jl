@@ -26,13 +26,13 @@ function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) 
 
 end
 
-function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) where N <: CopperPlatePowerModel
+function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) where N <: PSI.CopperPlatePowerModel
 
     return instantiate_network(PM.AbstractActivePowerFormulation, sys)
 
 end
 
-function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) where N <: StandardPTDFModel
+function instantiate_network(network::Type{N}, sys::PSY.PowerSystem; kwargs...) where N <: PSI.StandardPTDFModel
 
     return instantiate_network(PM.AbstractActivePowerFormulation, sys)
 

@@ -3,6 +3,11 @@ using PowerSystems
 using PowerModels
 using JuMP
 using Test
+using InfrastructureModels
+using Ipopt
+
+# required for reducing logging during tests
+using Memento
 
 const PM = PowerModels
 const PSY = PowerSystems
@@ -50,7 +55,7 @@ generators_hg = [
 
 @testset "Device Constructors" begin
     #include("variables_testing.jl")
-    include("constraints_testing.jl")
+    #include("constraints_testing.jl")
     #include("renewables_testing.jl")
     #include("load_testing.jl")
     #include("hydro_testing.jl")
@@ -59,7 +64,7 @@ end
 
 
 @testset "Network Constructors" begin
-    #include("powermodels_testing.jl")
+    include("powermodels_testing.jl")
     #include("network_testing.jl")
 end
 

@@ -10,7 +10,7 @@ function active_timeseries_netinjection(sys::PSY.PowerSystem)
 
     for source in sys.generators
 
-         typeof(source) <: Array{<:ThermalGen} ? continue : (isa(source, Nothing) ? continue : true)
+         typeof(source) <: Array{<:PSY.ThermalGen} ? continue : (isa(source, Nothing) ? continue : true)
 
          for b in sys.buses
 
@@ -50,7 +50,7 @@ function reactive_timeseries_netinjection(sys::PSY.PowerSystem)
 
     for source in sys.generators
 
-         typeof(source) <: Array{<:ThermalGen} ? continue : (isa(source, Nothing) ? continue : true)
+         typeof(source) <: Array{<:PSY.ThermalGen} ? continue : (isa(source, Nothing) ? continue : true)
 
          for b in sys.buses
 
