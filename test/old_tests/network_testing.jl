@@ -18,7 +18,7 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);
     netinjection = PSI.instantiate_network(Net, sys5);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys5)
-    @objective(m, Min, m.obj_dict[:objective_function])
+    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 3400, atol = 1000)
 finally end
@@ -31,7 +31,7 @@ finally end
     netinjection = PSI.instantiate_network(Net, sys5);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys5)
-    @objective(m, Min, m.obj_dict[:objective_function])
+    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 3400, atol = 1000)
 finally end
@@ -45,7 +45,7 @@ finally end
     netinjection = PSI.instantiate_network(Net, sys5);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys5, PTDF = ptdf)
-    @objective(m, Min, m.obj_dict[:objective_function])
+    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 3400, atol = 1000)
 finally end
@@ -57,7 +57,7 @@ finally end
     netinjection = PSI.instantiate_network(Net, sys5);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys5)
-    @objective(m, Min, m.obj_dict[:objective_function])
+    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 3400, atol = 1000)
 finally end
@@ -69,7 +69,7 @@ finally end
     netinjection = PSI.instantiate_network(Net, sys5);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys5)
-    @objective(m, Min, m.obj_dict[:objective_function])
+    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 3400, atol = 1000)
 true finally end
@@ -81,7 +81,7 @@ true finally end
     netinjection = PSI.instantiate_network(Net, sys5);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys5)
-    @objective(m, Min, m.obj_dict[:objective_function])
+    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 3400, atol = 1000)
 true finally end
@@ -99,7 +99,7 @@ sys14 = PowerSystem(nodes14, generators14, loads14, branches14, nothing,  100.0)
     netinjection = PSI.instantiate_network(Net, sys14);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys14)
-    @objective(m, Min, m.obj_dict[:objective_function])
+    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 1200, atol = 1000)
 finally end
@@ -112,7 +112,7 @@ finally end
     netinjection = PSI.instantiate_network(Net, sys14);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys14)
-    @objective(m, Min, m.obj_dict[:objective_function])
+    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 1200, atol = 1000)
 finally end
@@ -126,7 +126,7 @@ finally end
     netinjection = PSI.instantiate_network(Net, sys14);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys14, PTDF = ptdf)
-    @objective(m, Min, m.obj_dict[:objective_function])
+    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 1200, atol = 1000)
 finally end
@@ -138,7 +138,7 @@ finally end
     netinjection = PSI.instantiate_network(Net, sys14);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys14)
-    @objective(m, Min, m.obj_dict[:objective_function])
+    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 1200, atol = 1000)
 finally end
@@ -150,7 +150,7 @@ finally end
     netinjection = PSI.instantiate_network(Net, sys14);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys14)
-    @objective(m, Min, m.obj_dict[:objective_function])
+    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 1200, atol = 1000)
 true finally end
@@ -162,7 +162,7 @@ true finally end
     netinjection = PSI.instantiate_network(Net, sys14);
     PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys14)
-    @objective(m, Min, m.obj_dict[:objective_function])
+    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 1200, atol = 1000)
 true finally end

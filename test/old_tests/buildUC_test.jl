@@ -33,4 +33,4 @@ tre = PowerSimulations.variablecost(m, p_re, pre_set)
 tth = PowerSimulations.variablecost(m, p_th, sys5b.generators.thermal);
 
 #objective
-@objective(m, Min, tl+tre+tth);
+JuMP.@objective(m, Min, tl+tre+tth);

@@ -29,7 +29,7 @@ function buildmodel!(op_model::PowerOperationModel, sys::PSY.PowerSystem; kwargs
 
     constructnetwork!(op_model.model, op_model.branches, netinjection, op_model.transmission, sys; args..., PTDF = op_model.ptdf)
 
-    @objective(op_model.model, Min, op_model.model.obj_dict[:objective_function])
+    JuMP.@objective(op_model.model, Min, op_model.model.obj_dict[:objective_function])
 
    return op_model
 
