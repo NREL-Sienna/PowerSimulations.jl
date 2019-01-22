@@ -1,4 +1,4 @@
-abstract type CopperPlatePowerModel <: PM.AbstractActivePowerFormulationn  end
+abstract type CopperPlatePowerModel <: PM.AbstractActivePowerFormulation  end
 
 abstract type StandardPTDFModel <: PM.DCPlosslessForm end
 
@@ -34,7 +34,7 @@ export
 ##### Top Level Abstract Types #####
 
 "active power only models"
-abstract type AbstractActivePowerFormulationn <: AbstractPowerFormulation end
+abstract type AbstractActivePowerFormulation <: AbstractPowerFormulation end
 
 "variants that target conic solvers"
 abstract type AbstractConicPowerFormulation <: AbstractPowerFormulation end
@@ -155,7 +155,7 @@ ACTPowerModel(data::Dict{String,Any}; kwargs...) = GenericPowerModel(data, Stand
 
 
 ""
-abstract type AbstractDCPForm <: AbstractActivePowerFormulationn end
+abstract type AbstractDCPForm <: AbstractActivePowerFormulation end
 
 "active power only formulations where p[(i,j)] = -p[(j,i)]"
 abstract type DCPlosslessForm <: AbstractDCPForm end
