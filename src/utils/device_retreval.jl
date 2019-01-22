@@ -47,7 +47,7 @@ end
 # Methods for accessing jump, moi, and optimizer variables
 function get_all_vars(obj_dict)
     # get all variables in a jump model
-    var_arays = [v.data for (k,v) in obj_dict if isa(v,JuMP.Containers.DenseAxisArray{JuMP.JuMP.VariableRef}) ];
+    var_arays = [v.data for (k,v) in obj_dict if isa(v,JuMP.Containers.DenseAxisArray{JuMP.VariableRef}) ];
     vars = [i for arr in var_arays for i in arr]
 end
 
@@ -83,7 +83,7 @@ end
 # Methods for accessing jump, moi, and optimizer constraintrefs
 function get_all_constraints(obj_dict)
     # get all constraints in a jump model
-    constraint_arrays = [v.data for (k,v) in obj_dict if isa(v,JuMP.Containers.DenseAxisArray{JuMP.JuMP.ConstraintRef}) ];
+    constraint_arrays = [v.data for (k,v) in obj_dict if isa(v,JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}) ];
     constraints = [i for arr in constraint_arrays for i in arr]
 end
 

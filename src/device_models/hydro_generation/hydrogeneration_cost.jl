@@ -14,7 +14,7 @@ function variablecost(phy::JumpVariable, devices::Array{T}) where T <: PSY.Hydro
 
 end
 
-function precost(X::JuMP.JuMP.VariableRef, device::Union{PSY.RenewableCurtailment,PSY.RenewableFullDispatch})
+function precost(X::JuMP.VariableRef, device::Union{PSY.RenewableCurtailment,PSY.RenewableFullDispatch})
 
     return cost = sum(device.econ.curtailcost*(-X))
 
