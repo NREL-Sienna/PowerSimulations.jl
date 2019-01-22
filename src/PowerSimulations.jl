@@ -12,11 +12,8 @@ export CustomModel
 export EconomicDispatch
 export UnitCommitment
 
-#Device formulation Export
-
-
 #Network Relevant Exports
-export AbstractDCPowerModel
+export StandardPTDFModel
 export CopperPlatePowerModel
 
 #Functions
