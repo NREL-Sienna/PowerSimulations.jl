@@ -1,4 +1,4 @@
-function gencost(m::JuMP.Model, variable::JuMP.Containers.DenseAxisArray{JuMP.JuMP.VariableRef}, cost_component::Function)
+function gencost(m::JuMP.Model, variable::JuMP.Containers.DenseAxisArray{JuMP.VariableRef}, cost_component::Function)
 
     store = Array{JuMP.AbstractJuMPScalar,1}(undef,length(variable.axes[1]))
 
@@ -13,7 +13,7 @@ function gencost(m::JuMP.Model, variable::JuMP.Containers.DenseAxisArray{JuMP.Ju
 end
 
 
-function gencost(m::JuMP.Model, variable::JuMP.Containers.DenseAxisArray{JuMP.JuMP.VariableRef}, cost_component::Float64)
+function gencost(m::JuMP.Model, variable::JuMP.Containers.DenseAxisArray{JuMP.VariableRef}, cost_component::Float64)
 
 
     gen_cost = sum(variable)*cost_component
@@ -47,7 +47,7 @@ function pwlgencost(m::JuMP.AbstractModel, variable::JuMP.VariableRef, cost_comp
     return gen_cost
 end
 
-function gencost(m::JuMP.Model, variable::JuMP.Containers.DenseAxisArray{JuMP.JuMP.VariableRef}, cost_component::Array{Tuple{Float64, Float64}})
+function gencost(m::JuMP.Model, variable::JuMP.Containers.DenseAxisArray{JuMP.VariableRef}, cost_component::Array{Tuple{Float64, Float64}})
 
     gen_cost = JuMP.AffExpr()
 
