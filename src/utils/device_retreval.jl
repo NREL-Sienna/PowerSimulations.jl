@@ -169,7 +169,7 @@ end
 
 function get_model_result(pspom::PSI.PowerOperationModel)
 
-    d = Dict{Symbol, Dataframes.DataFrame}()
+    d = Dict{Symbol, DataFrames.DataFrame}()
     for (k, v) in pspom.model.obj_dict
         if typeof(v) <: Containers.DenseAxisArray{VariableRef}
             d[k] = create_result_dict(v, k)
@@ -180,13 +180,13 @@ function get_model_result(pspom::PSI.PowerOperationModel)
 
 end
 
-function get_previous_value_df(res::Dataframes.DataFrame)
+function get_previous_value_df(res::DataFrames.DataFrame)
     res[:period] = 1:size(res, 1)
     var_res = melt(res[end,:], :period, variable_name = :Device)
     return var_res
 end
 
-function get_previous_value(res::Dataframes.DataFrame)
+function get_previous_value(res::DataFrames.DataFrame)
     var_res = get_previous_value_df(res)
     prev_val = Dict(zip(map(String,var_res[:Device]),var_res[:value]))
     return prev_val
@@ -210,7 +210,7 @@ function commitment_duration(res::Dict, initial,  transition::Symbol, minutes_pe
     off_devices.value = 0.0
     on_devices = on_devices[on_devices.value.==status,[:Device]]
 
-    initial = melt(Dataframes.DataFrame(initial), variable_name = :Device)
+    initial = melt(DataFrames.DataFrame(initial), variable_name = :Device)
     initial.value = initial.value .+ (last_period * minutes_per_step/60)
 
     # for devices that have changed status in the last step, calculate how long they have been at their current status
@@ -220,7 +220,7 @@ function commitment_duration(res::Dict, initial,  transition::Symbol, minutes_pe
     res_df = melt(res_df, :period, variable_name = :Device)
 
     res_df = join(res_df,on_devices, on = :Device)
-    res_df = by(res_df[res_df[:value] .== 1 ,[:Device,:period]], :Device, df -> Dataframes.DataFrames.tail(df[[:period]],1))
+    res_df = by(res_df[res_df[:value] .== 1 ,[:Device,:period]], :Device, df -> DataFrames.DataFrames.tail(df[[:period]],1))
 
     if size(res_df,1) > 0
         res_df.value  = ((last_period + 1) .- res_df.period) .* minutes_per_step/60
