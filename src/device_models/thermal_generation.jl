@@ -4,6 +4,8 @@ abstract type AbstractThermalFormulation <: AbstractDeviceFormulation end
 
 abstract type AbstractThermalDispatchForm <: AbstractThermalFormulation end
 
+struct ThermalUnitCommitment <: AbstractThermalFormulation end
+
 struct ThermalDispatch <: AbstractThermalDispatchForm end
 
 struct ThermalRampLimited <: AbstractThermalDispatchForm end
