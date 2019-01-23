@@ -1,20 +1,16 @@
 ### Thermal Generation Formulations
 
-abstract type AbstractThermalFormulation <: AbstractDeviceForm end
+abstract type AbstractThermalFormulation <: AbstractDeviceFormulation end
 
 abstract type AbstractThermalDispatchForm <: AbstractThermalFormulation end
 
-abstract type AbstractThermalCommitmentForm <: AbstractThermalFormulation end
-
-struct KenuvenThermalCommitment <: AbstractThermalCommitmentForm end
-
-struct StandardThermalCommitment <: AbstractThermalCommitmentForm end
+struct ThermalUnitCommitment <: AbstractThermalFormulation end
 
 struct ThermalDispatch <: AbstractThermalDispatchForm end
 
-struct ThermalDispatchNoMin <: AbstractThermalDispatchForm end
+struct ThermalRampLimited <: AbstractThermalDispatchForm end
 
-struct ThermalRampLimitDispatch <: AbstractThermalDispatchForm end
+struct ThermalDispatchNoMin <: AbstractThermalDispatchForm end
 
 include("thermal_generation/output_constraints.jl")
 include("thermal_generation/ramping_constraints.jl")

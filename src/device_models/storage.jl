@@ -1,4 +1,4 @@
-abstract type AbstractStorageForm <: AbstractDeviceForm end
+abstract type AbstractStorageForm <: AbstractDeviceFormulation end
 
 abstract type BookKeepingForm <: AbstractStorageForm end
 

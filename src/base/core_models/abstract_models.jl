@@ -1,4 +1,4 @@
-abstract type AbstractDeviceForm end
+abstract type AbstractDeviceFormulation end
 
 abstract type AbstractOperationsModel end
 
