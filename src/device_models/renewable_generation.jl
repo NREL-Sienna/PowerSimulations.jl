@@ -1,4 +1,4 @@
-abstract type AbstractRenewableFormulation end
+abstract type AbstractRenewableFormulation <: AbstractDeviceForm end
 
 abstract type AbstractRenewableDispatchForm <: AbstractRenewableFormulation end
 

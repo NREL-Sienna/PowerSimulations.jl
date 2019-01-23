@@ -1,21 +1,5 @@
-function variablecost(phy::JumpVariable, devices::Array{T}) where T <: PSY.HydroGen
+function cost_function(ps_m::CanonicalModel, devices::Array{PSY.HydroGen,1}, device_formulation::Type{D}, system_formulation::Type{S}) where {D <: PSI.HydroRunOfRiver, S <: PM.AbstractPowerFormulation}
 
-    cost = JuMP.AffExpr()
-
-    for (ix, name) in enumerate(pre.axes[1])
-        if name == devices[ix].name
-                JuMP.add_to_expression!(cost,precost(phy[name,:], devices[ix]))
-        else
-            @error "Bus name in Array and variable do not match"
-        end
-    end
-
-    return cost
-
-end
-
-function precost(X::JuMP.VariableRef, device::Union{PSY.RenewableCurtailment,PSY.RenewableFullDispatch})
-
-    return cost = sum(device.econ.curtailcost*(-X))
+    add_to_cost(ps_m, devices, "Phy", :curtailcost)
 
 end
