@@ -1,3 +1,5 @@
+abstract type AbstractDeviceForm end
+
 abstract type AbstractOperationsModel end
 
 abstract type EconomicDispatch <: AbstractOperationsModel end

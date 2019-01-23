@@ -9,9 +9,7 @@ function constructdevice!(ps_m::CanonicalModel, netinjection::BalanceNamedTuple,
 
     activepower(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods)
 
-    cost = variablecost(ps_m, sys.generators.thermal, category_formulation, system_formulation)
-
-    add_to_cost!(ps_m, cost)
+    cost_function(ps_m, sys.generators.thermal, category_formulation, system_formulation)
 
 end
 

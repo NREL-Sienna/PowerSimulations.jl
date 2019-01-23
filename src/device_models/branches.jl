@@ -1,4 +1,4 @@
-abstract type AbstractBranchForm end
+abstract type AbstractBranchForm <: AbstractDeviceForm end
 
 abstract type AbstractLineForm <: AbstractBranchForm end
 

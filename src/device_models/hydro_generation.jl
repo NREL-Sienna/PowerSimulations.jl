@@ -1,4 +1,4 @@
-abstract type AbstractHydroDispatchForm end
+abstract type AbstractHydroDispatchForm <: AbstractDeviceForm end
 
 abstract type HydroFullDispatch <: AbstractHydroDispatchForm end
 
