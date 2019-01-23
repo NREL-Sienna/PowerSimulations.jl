@@ -53,10 +53,10 @@ generators_hg = [
         100.0,TimeSeries.TimeArray(DayAhead,wind_ts_DA) )
 ];
 
-@testset "Device Constructors" begin
+@testset "Basic Functionalities" begin
     include("variables_testing.jl")
     include("constraints_testing.jl")
-    #include("renewables_testing.jl")
+    include("costfunction_testing.jl")
     #include("load_testing.jl")
     #include("hydro_testing.jl")
     #include("storage_testing.jl")
