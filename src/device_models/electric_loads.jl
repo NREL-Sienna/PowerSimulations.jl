@@ -1,4 +1,4 @@
-abstract type AbstractLoadForm <: AbstractDeviceForm end
+abstract type AbstractLoadForm <: AbstractDeviceFormulation end
 
 abstract type AbstractControllablePowerLoadForm <: AbstractLoadForm end
 
