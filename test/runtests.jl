@@ -5,6 +5,7 @@ using JuMP
 using Test
 using InfrastructureModels
 using Ipopt
+using GLPK
 
 # required for reducing logging during tests
 using Memento
@@ -12,6 +13,9 @@ using Memento
 const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
+
+ipopt_optimizer = with_optimizer(Ipopt.Optimizer)
+GLPK_optimizer = with_optimizer(GLPK.Optimizer)
 
 base_dir = string(dirname(dirname(pathof(PowerSystems))));
 include(joinpath(base_dir,"data/data_5bus_pu.jl"));
@@ -52,6 +56,8 @@ generators_hg = [
         TechHydro(0.600, 0.100, (min = 0.0, max = 60.0), 0.0, (min = 0.0, max = 60.0), (up = 10.0, down = 10.0), nothing),
         100.0,TimeSeries.TimeArray(DayAhead,wind_ts_DA) )
 ];
+
+sys5b = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0)
 
 @testset "Common Functionalities" begin
     include("variables_testing.jl")

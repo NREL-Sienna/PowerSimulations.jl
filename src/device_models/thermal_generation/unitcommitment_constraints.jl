@@ -3,50 +3,14 @@
 """
 This function adds the Commitment Status constraint when there are CommitmentVariables
 """
-function commitmentconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; kwargs...) where {T <: PSY.ThermalGen, D <: ThermalUnitCommitment , S <: PM.AbstractActivePowerFormulation}
+function commitmentconstraints(ps_m::CanonicalModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}, initial_conditions::Array{Tuple{String,Float64},1}) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerFormulation}
 
-    on_th = m[:on_th]
-    start_th = m[:start_th]
-    stop_th = m[:stop_th]
+    device_commitment(ps_m, initial_conditions, time_range, "commitment_th", ("start_th", "stop_th", "on_th"))
 
-    name_index = m[:on_th].axes[1]
-    time_index = m[:on_th].axes[2]
-
-    # set args default values
-    if :initialstatus in keys(args)
-        initialstatus = args[:initialstatus]
-    else
-        initialstatus = Dict(zip(name_index,[devices[ix].tech.activepower > 0.0 ? 1 : 0  for (ix,name) in enumerate(name_index) if name == devices[ix].name ]))
-    end
-
-    (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
-
-    commitment_th  = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
-
-    for (ix,name) in enumerate(name_index)
-        if name == devices[ix].name
-            t1 = time_index[1]
-            commitment_th[name,t1] = JuMP.@constraint(m, on_th[name,t1] == initialstatus[name] + start_th[name,t1] - stop_th[name,t1])
-        else
-            @error "Bus name in Array and variable do not match"
-        end
-    end
-
-    for t in time_index[2:end], (ix,name) in enumerate(name_index)
-        if name == devices[ix].name
-            commitment_th[name,t] = JuMP.@constraint(m, on_th[name,t] == on_th[name,t-1] + start_th[name,t] - stop_th[name,t])
-        else
-            @error "Bus name in Array and variable do not match"
-        end
-    end
-
-    JuMP.register_object(m, :commitment_th, commitment_th)
-
-    return m
 end
 
 
-function timeconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; kwargs...) where {T <: PSY.ThermalGen, D <: ThermalUnitCommitment , S <: PM.AbstractActivePowerFormulation}
+function timeconstraints(ps_m::CanonicalModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; kwargs...) where {T <: PSY.ThermalGen, D <: ThermalUnitCommitment , S <: PM.AbstractActivePowerFormulation}
 
     devices = [d for d in devices if !isa(d.tech.timelimits, Nothing)]
 
@@ -109,5 +73,3 @@ function timeconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, device_form
 
     return m
 end
-
-#TODO: Add the Knueven Model
