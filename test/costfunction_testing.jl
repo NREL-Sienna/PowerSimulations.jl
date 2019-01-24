@@ -12,7 +12,7 @@ ps_model = PSI.CanonicalModel(Model(),
     finally end
 
 @test try   PSI.commitmentvariables(ps_model, generators5, 1:24);
-            PSI.cost_function(ps_model, generators5, PSI.StandardThermalCommitment, PM.DCPlosslessForm);
+            PSI.cost_function(ps_model, generators5, PSI.ThermalUnitCommitment , PM.DCPlosslessForm);
             true
     finally end
 
