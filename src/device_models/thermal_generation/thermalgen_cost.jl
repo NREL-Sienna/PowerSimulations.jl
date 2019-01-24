@@ -4,7 +4,7 @@ function cost_function(ps_m::CanonicalModel, devices::Array{T,1}, device_formula
 
 end
 
-function cost_function(ps_m::CanonicalModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}) where {T <: PSY.ThermalGen, D <: AbstractThermalCommitmentForm, S <: PM.AbstractPowerFormulation}
+function cost_function(ps_m::CanonicalModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerFormulation}
 
     #Variable Cost component
     add_to_cost(ps_m, devices, "Pth", :variablecost)
