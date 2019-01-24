@@ -16,7 +16,7 @@ function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, for
     return JuMP.@constraint(m, m[:p_th][device.name,t] + m[:p_rsv][device.name,t]  <= device.tech.activepowerlimits.max)
 end
 
-function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PSY.ThermalGen, D <: AbstractThermalCommitmentForm}
+function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PSY.ThermalGen, D <: AbstractThermalFormulation}
     return JuMP.@constraint(m, m[:p_th][device.name,t] + m[:p_rsv][device.name,t] <= device.tech.activepowerlimits.max * m[:on_th][device.name,t])
 end
 
