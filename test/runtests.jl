@@ -53,6 +53,8 @@ generators_hg = [
         100.0,TimeSeries.TimeArray(DayAhead,wind_ts_DA) )
 ];
 
+sys5b = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0)
+
 @testset "Common Functionalities" begin
     include("variables_testing.jl")
     include("constraints_testing.jl")
