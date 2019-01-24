@@ -54,7 +54,7 @@ true finally end
     Net = PSI.StandardPTDFModel
     m = Model();
     netinjection = PSI.instantiate_network(Net, sys5);
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalRampLimitDispatch, Net, sys5);
+    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalRampLimited, Net, sys5);
 true finally end
 
 #Cooper Plate and Ramping
@@ -62,7 +62,7 @@ true finally end
     Net = PSI.CopperPlatePowerModel
     m = Model();
     netinjection = PSI.instantiate_network(Net, sys5);
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalRampLimitDispatch, Net, sys5);
+    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalRampLimited, Net, sys5);
 true finally end
 
 #PTDF and Commitment
