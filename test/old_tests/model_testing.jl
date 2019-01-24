@@ -88,7 +88,7 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing, 100.0);
 # UC with thermal gen, static load, copper plate
 @test try
     UC = PSI.PowerOperationModel(PSI.EconomicDispatch,
-                            [(device = ThermalGen, formulation =PSI.StandardThermalCommitment)],
+                            [(device = ThermalGen, formulation =PSI.ThermalUnitCommitment )],
                             nothing,
                             nothing,
                             [(device=Line, formulation=PSI.PiLine)],
@@ -105,7 +105,7 @@ true finally end
 # UC with thermal and curtailable renewable gen, static load, copper plate
 @test try
     UC = PSI.PowerOperationModel(PSI.EconomicDispatch,
-                            [(device = ThermalGen, formulation =PSI.StandardThermalCommitment),
+                            [(device = ThermalGen, formulation =PSI.ThermalUnitCommitment ),
                              (device = RenewableGen, formulation = PSI.RenewableCurtail)],
                             nothing,
                             nothing,
@@ -123,7 +123,7 @@ true finally end
 # UC with thermal and fixUC renewable gen, interruptable load, copper plate
 @test try
     UC = PSI.PowerOperationModel(PSI.EconomicDispatch,
-                            [(device = ThermalGen, formulation = PSI.StandardThermalCommitment),
+                            [(device = ThermalGen, formulation = PSI.ThermalUnitCommitment ),
                              (device = RenewableGen, formulation = PSI.RenewableCurtail)],
                             [(device = ElectricLoad, formulation = PSI.InterruptibleLoad)],
                             nothing,
@@ -141,7 +141,7 @@ true finally end
 # UC with thermal gen, copper plate, and reserve
 @test try
     UC = PSI.PowerOperationModel(PSI.EconomicDispatch,
-                            [(device = ThermalGen, formulation =PSI.StandardThermalCommitment)],
+                            [(device = ThermalGen, formulation =PSI.ThermalUnitCommitment )],
                             nothing,
                             nothing,
                             [(device=Line, formulation=PSI.PiLine)],

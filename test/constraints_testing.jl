@@ -16,9 +16,9 @@ true finally end
 @test  try
     PSI.activepowervariables(ps_model, generators5, 1:24)
     PSI.commitmentvariables(ps_model, generators5, 1:24);
-    PSI.activepower(ps_model, generators5, PSI.StandardThermalCommitment, PM.DCPlosslessForm, 1:24)
+    PSI.activepower(ps_model, generators5, PSI.ThermalUnitCommitment , PM.DCPlosslessForm, 1:24)
     PSI.reactivepowervariables(ps_model, generators5, 1:24)
-    PSI.reactivepower(ps_model, generators5, PSI.StandardThermalCommitment, PM.StandardACPForm, 1:24)
+    PSI.reactivepower(ps_model, generators5, PSI.ThermalUnitCommitment , PM.StandardACPForm, 1:24)
 true finally end
 
 @test  try

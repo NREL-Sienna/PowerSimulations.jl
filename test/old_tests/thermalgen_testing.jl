@@ -70,7 +70,7 @@ true finally end
     Net = PSI.StandardPTDFModel
     m = Model();
     netinjection = PSI.instantiate_network(Net, sys5);
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.StandardThermalCommitment, Net, sys5);
+    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalUnitCommitment , Net, sys5);
 true finally end
 
 #Copper Plate and Commitment
@@ -78,7 +78,7 @@ true finally end
     Net = PSI.CopperPlatePowerModel
     m = Model();
     netinjection = PSI.instantiate_network(Net, sys5);
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.StandardThermalCommitment, Net, sys5);
+    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalUnitCommitment , Net, sys5);
 true finally end
 
 
@@ -92,7 +92,7 @@ true finally end
     initialondurationdict = Dict(zip(name_index,ones(length(name_index))*100));
     initialoffdurationdict = Dict(zip(name_index,zeros(length(name_index))));
 
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.StandardThermalCommitment, Net, sys5,
+    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalUnitCommitment , Net, sys5,
         initialstatus = initialstatusdict,
         initialonduration=initialondurationdict,
         initialoffduration = initialoffdurationdict);
