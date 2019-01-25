@@ -5,6 +5,7 @@ using JuMP
 using Test
 using InfrastructureModels
 using Ipopt
+using GLPK
 
 # required for reducing logging during tests
 using Memento
@@ -12,6 +13,9 @@ using Memento
 const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
+
+ipopt_optimizer = with_optimizer(Ipopt.Optimizer)
+GLPK_optimizer = with_optimizer(GLPK.Optimizer)
 
 base_dir = string(dirname(dirname(pathof(PowerSystems))));
 include(joinpath(base_dir,"data/data_5bus_pu.jl"));

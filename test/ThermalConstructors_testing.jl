@@ -1,6 +1,6 @@
 
 @test try 
-ps_model = PSI.CanonicalModel(Model(),
+ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
                               Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
@@ -22,7 +22,7 @@ PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalUnitCommitment, PM.Sta
 true finally end
 
 @test try 
-    ps_model = PSI.CanonicalModel(Model(),
+    ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
                                   Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                   Dict{String, JuMP.Containers.DenseAxisArray}(),
                                   nothing,
@@ -33,7 +33,7 @@ true finally end
     true finally end
     
     @test try 
-    ps_model = PSI.CanonicalModel(Model(),
+    ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
                                   Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                   Dict{String, JuMP.Containers.DenseAxisArray}(),
                                   nothing,

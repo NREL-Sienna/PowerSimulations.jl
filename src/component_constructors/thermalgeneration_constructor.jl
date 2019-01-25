@@ -20,7 +20,17 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.ThermalGen}, 
 
     reactivepower(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
 
-    commitmentconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; kwargs...)
+    if :initial_conditions in keys(kwargs)
+
+        initial_conditions = kwargs[:initial_conditions]
+
+    else
+
+        initial_conditions = [(g.name, Float64(g.tech.activepower > 0.0)) for g in sys.generators.thermal]
+
+    end
+
+    commitmentconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, initial_conditions)
 
     #rampconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; kwargs...)
 
@@ -47,7 +57,17 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.ThermalGen}, 
     #Constraints
     activepower(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
 
-    commitmentconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; kwargs...)
+    if :initial_conditions in keys(kwargs)
+
+        initial_conditions = kwargs[:initial_conditions]
+
+    else
+
+        initial_conditions = [(g.name, Float64(g.tech.activepower > 0.0)) for g in sys.generators.thermal]
+
+    end
+
+    commitmentconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, initial_conditions)
 
     #rampconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; kwargs...)
 
