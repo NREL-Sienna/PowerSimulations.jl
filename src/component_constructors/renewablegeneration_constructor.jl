@@ -1,44 +1,58 @@
-function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PSY.RenewableGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
+function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.RenewableGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
 
-    dev_set = [a.second for a in args if a.first == :devices]
+    #Defining this outside in order to enable time slicing later
+    time_range = 1:sys.time_periods
+    
+    #Variables
+    activepowervariables(ps_m, sys.generators.renewable, time_range);
 
-    isempty(dev_set) ? devices = [d for d in sys.generators.renewable if (d.available == true && !isa(d, PSY.RenewableFix))] : devices = dev_set[1]
+    reactivepowervariables(ps_m, sys.generators.renewable, time_range);
 
-    p_re = activepowervariables(m, devices, sys.time_periods);
+    #Constraints
+    activepower(ps_m, sys.generators.renewable, category_formulation, system_formulation, time_range)
 
-    if !isempty(devices)
+    reactivepower(ps_m, sys.generators.renewable, category_formulation, system_formulation, time_range)
 
-        varnetinjectiterate!(netinjection.var_active, p_re, sys.time_periods, devices)
+    #Cost Function
+    cost_function(ps_m, sys.generators.renewable, category_formulation, system_formulation)
+    
 
-        activepower(m, devices, category_formulation, system_formulation, sys.time_periods)
+end
 
-        cost = variablecost(m, devices, category_formulation, system_formulation)
+function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.RenewableGen}, category_formulation::Type{RenewableConstantPowerFactor}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
-        add_to_cost!(m, cost)
+    #Defining this outside in order to enable time slicing later
+    time_range = 1:sys.time_periods
+    
+    #Variables
+    activepowervariables(ps_m, sys.generators.renewable, time_range);
 
-    end
+    reactivepowervariables(ps_m, sys.generators.renewable, time_range);
+
+    #Constraints
+    activepower(ps_m, sys.generators.renewable, category_formulation, system_formulation, time_range)
+
+    reactivepower(ps_m, sys.generators.renewable, category_formulation, system_formulation, time_range)
+
+    #Cost Function
+    cost_function(ps_m, sys.generators.renewable, category_formulation, system_formulation)
+    
 
 end
 
 
-function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{PSY.RenewableGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
+function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.RenewableGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {D <: AbstractRenewableDispatchForm, S <: PM.PM.AbstractActivePowerFormulation}
 
-    dev_set = [d for d in sys.generators.renewable if (d.available == true && !isa(d, PSY.RenewableFix))]
+    #Defining this outside in order to enable time slicing later
+    time_range = 1:sys.time_periods
+    
+    #Variables
+    activepowervariables(ps_m, sys.generators.renewable, time_range);
 
-    if !isempty(dev_set)
+    #Constraints
+    activepower(ps_m, sys.generators.renewable, category_formulation, system_formulation, time_range)
 
-        constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys; devices = dev_set)
-
-        dev_set_q = [d for d in dev_set if (d.tech.reactivepowerlimits != nothing)]
-
-        if !isempty(setdiff(dev_set,dev_set_q)) @warn "Some devices have no defined reactive injection capabilities and will not create q_re variables and constraints"  end
-
-        q_re = reactivepowervariables(m, dev_set_q, sys.time_periods);
-
-        varnetinjectiterate!(netinjection.var_reactive, q_re, sys.time_periods, dev_set_q)
-
-        m = reactivepower(m, dev_set_q, category_formulation, system_formulation, sys.time_periods)
-
-    end
+    #Cost Function
+    cost_function(ps_m, sys.generators.renewable, category_formulation, system_formulation)
 
 end
