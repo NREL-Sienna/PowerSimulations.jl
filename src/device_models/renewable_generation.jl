@@ -2,6 +2,8 @@ abstract type AbstractRenewableFormulation <: AbstractDeviceFormulation end
 
 abstract type AbstractRenewableDispatchForm <: AbstractRenewableFormulation end
 
+abstract type RenewableFixed <: AbstractRenewableFormulation end
+
 struct RenewableFullDispatch <: AbstractRenewableDispatchForm end
 
 struct RenewableConstantPowerFactor <: AbstractRenewableDispatchForm end
