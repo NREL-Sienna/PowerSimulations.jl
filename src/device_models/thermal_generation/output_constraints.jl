@@ -45,3 +45,25 @@ function reactivepower(ps_m::CanonicalModel, devices::Array{T,1}, device_formula
     device_semicontinuousrange(ps_m, range_data , time_range, "thermal_reactive_range", "Qth", "on_th")
 
 end
+
+"""
+This function adds the active power limits of generators when there are no CommitmentVariables
+"""
+function activepower(ps_m::CanonicalModel, devices::Array{T,1}, device_formulation::Type{ThermalDispatchNoMin}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerFormulation}
+
+    range_data = [(g.name, (min = 0.0, max=g.tech.activepowerlimits.max)) for g in devices]
+
+    device_range(ps_m, range_data, time_range, "thermal_active_range", "Pth")
+
+end
+
+"""
+This function adds the reactive  power limits of generators when there are CommitmentVariables
+"""
+function reactivepower(ps_m::CanonicalModel, devices::Array{T,1}, device_formulation::Type{ThermalDispatchNoMin}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerFormulation}
+
+    range_data = [(g.name, (min = 0.0, max=g.tech.reactivepowerlimits.max)) for g in devices]
+
+    device_range(ps_m, range_data , time_range, "thermal_reactive_range", "Qth")
+
+end

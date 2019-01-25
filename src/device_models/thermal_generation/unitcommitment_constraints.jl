@@ -73,5 +73,3 @@ function timeconstraints(ps_m::CanonicalModel, devices::Array{T,1}, device_formu
 
     return m
 end
-
-#TODO: Add the Knueven Model
