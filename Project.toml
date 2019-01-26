@@ -15,7 +15,7 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 PowerModels = "c36e90e8-916a-50a6-bd94-075b64ef4655"
-PowerSystems = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
+PowerSystems = "c512b964-a17e-11e8-344c-11d7c2eac237"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [extras]

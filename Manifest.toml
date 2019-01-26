@@ -122,8 +122,8 @@ uuid = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
 version = "0.0.13"
 [[InfrastructureModels]]
 deps = ["Compat", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento"]
-git-tree-sha1 = "867f1009abae511b2855eaf86f1f16bacd220571"
-repo-rev = "moi"
+git-tree-sha1 = "9de064a522ad7a5cb61168c7410dd864dfa57089"
+repo-rev = "moi-2"
 repo-url = "https://github.com/lanl-ansi/InfrastructureModels.jl.git"
 uuid = "e8e45514-c753-11e8-2a1b-cd93cb9d98d1"
 version = "0.0.13"
@@ -158,7 +158,7 @@ version = "0.20.0"
 
 [[JuMP]]
 deps = ["Calculus", "DataStructures", "ForwardDiff", "LinearAlgebra", "MathOptInterface", "NaNMath", "Random", "SparseArrays", "Statistics", "Test"]
-git-tree-sha1 = "ca4697ebced4ed9285b605a62a9ad119a141923d"
+git-tree-sha1 = "8ccec194897ed4e68b284b2f9d95582f8a5e45b5"
 repo-rev = "master"
 repo-url = "https://github.com/JuliaOpt/JuMP.jl.git"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
@@ -259,9 +259,11 @@ version = "0.9.3"
     Memento = "f28f55f0-a522-5efc-85c2-fe41dfb9b2d9"
 
 [[PowerSystems]]
-git-tree-sha1 = "c76b302a43a2ee8663a1e6b24e4cf9646365f515"
-uuid = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
-version = "0.2.0"
+git-tree-sha1 = "82bb738735748f6685c7bca8f60af546e0bfec63"
+repo-rev = "update_im"
+repo-url = "https://github.com/NREL/PowerSystems.jl.git"
+uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
+version = "0.2.1"
 
     [PowerSystems.deps]
     AxisArrays = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
@@ -269,12 +271,11 @@ version = "0.2.0"
     Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
     DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
     Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-    InfrastructureModels = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
+    InfrastructureModels = "e8e45514-c753-11e8-2a1b-cd93cb9d98d1"
     JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
     LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
     Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
     SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
-    Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
     TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [[Printf]]
