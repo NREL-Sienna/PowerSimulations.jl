@@ -4,5 +4,6 @@ mutable struct CanonicalModel
     constraints::Dict{String, JuMP.Containers.DenseAxisArray}
     cost_function::Union{Nothing,JuMP.AbstractJuMPScalar}
     expressions::Dict{String, JumpAffineExpressionArray}
-    pm_model::Dict
+    pm_model::Any
 end
+

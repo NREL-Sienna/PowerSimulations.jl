@@ -57,24 +57,24 @@ generators_hg = [
         100.0,TimeSeries.TimeArray(DayAhead,wind_ts_DA) )
 ];
 
-sys5b = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0)
+sys5b = PowerSystem(nodes5, vcat(generators5,renewables), loads5_DA, branches5, nothing,  100.0)
 
 @testset "Common Functionalities" begin
-    include("variables_testing.jl")
-    include("constraints_testing.jl")
-    include("costfunction_testing.jl")
+    include("variables.jl")
+    include("constraints.jl")
+    include("cost_functions.jl")
 end
 
 @testset "Device Constructors" begin
-    include("ThermalConstructors_testing.jl")
-    #include("RenewableConstructors_testing.jl")
-    #include("LoadsConstructors_testing.jl")
+    include("thermal_generation_constructors.jl")
+    include("renewable_generation_constructors.jl")
+    include("load_constructors.jl")
     #include("HydroConstructors_testing.jl")
 end
 
 @testset "Network Constructors" begin
-    include("powermodels_testing.jl")
-    #include("network_testing.jl")
+    include("PowerModels_interface.jl")
+    include("network_constructors.jl")
 end
 
 #=

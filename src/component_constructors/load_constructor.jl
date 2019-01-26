@@ -1,32 +1,74 @@
-function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{L}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {L <: PSY.ElectricLoad, D <: FullControllablePowerLoad, S <: PM.AbstractPowerFormulation}
+function constructdevice!(ps_m::CanonicalModel, category::Type{L}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {L <: PSY.ElectricLoad, D <: PSI.AbstractControllablePowerLoadForm, S <: PM.AbstractPowerFormulation}
 
-    dev_set = [a.second for a in args if a.first == :devices]
+        #Defining this outside in order to enable time slicing later
+        time_range = 1:sys.time_periods
 
-    isempty(dev_set) ? devices = [d for d in sys.loads if (d.available == true && !isa(d,PSY.StaticLoad))] : devices = dev_set[1]
+        fixed_resources = [fs for fs in sys.loads if isa(fs,PSY.PowerLoad)]
 
-    p_cl = activepowervariables(m, devices, sys.time_periods);
+        controllable_resources = [fs for fs in sys.loads if !isa(fs,PSY.PowerLoad)]
 
-    varnetinjectiterate!(netinjection.var_active, p_cl, sys.time_periods, devices)
+        if !isempty(controllable_resources)
 
-    activepower(m, devices, category_formulation, system_formulation, sys.time_periods)
+            #Variables
+            activepowervariables(ps_m, controllable_resources, time_range);
 
-    cost = variablecost(m, devices, category_formulation, system_formulation)
+            reactivepowervariables(ps_m, controllable_resources, time_range);
 
-    add_to_cost!(m, cost)
+            #Constraints
+            activepower(ps_m, controllable_resources, category_formulation, system_formulation, time_range)
+
+            reactivepower(ps_m, controllable_resources, category_formulation, system_formulation, time_range)
+
+            #Cost Function
+            cost_function(ps_m, controllable_resources, category_formulation, system_formulation)
+
+        else
+            @warn("The Data Doesn't Contain Controllable Loads, Consider Changing the Device Formulation to StaticPowerLoad")
+
+        end
+
+        #add to expression
+
+        !isempty(fixed_resources) ? nodal_expression(ps_m, fixed_resources, system_formulation, time_range) : true
 
 end
 
+function constructdevice!(ps_m::CanonicalModel, category::Type{L}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {L <: PSY.ElectricLoad, D <: PSI.AbstractControllablePowerLoadForm, S <: PM.AbstractActivePowerFormulation}
 
-function constructdevice!(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, category::Type{L}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {L <: PSY.ElectricLoad, D <: FullControllablePowerLoad, S <: PM.AbstractPowerFormulation}
+    #Defining this outside in order to enable time slicing later
+    time_range = 1:sys.time_periods
 
-    dev_set = [d for d in sys.loads if (d.available == true && !isa(d,PSY.StaticLoad))]
+    fixed_resources = [fs for fs in sys.loads if isa(fs,PSY.PowerLoad)]
 
-    constructdevice!(m, netinjection, category, category_formulation, PM.AbstractPowerFormulation, sys; devices = dev_set)
+    controllable_resources = [fs for fs in sys.loads if !isa(fs,PSY.PowerLoad)]
 
-    q_cl = reactivepowervariables(m, dev_set, sys.time_periods);
+    if !isempty(controllable_resources)
 
-    varnetinjectiterate!(netinjection.var_reactive, q_cl, sys.time_periods, dev_set)
+        #Variables
+        activepowervariables(ps_m, controllable_resources, time_range);
 
-    reactivepower(m, dev_set, category_formulation, system_formulation, sys.time_periods)
+        #Constraints
+        activepower(ps_m, controllable_resources, category_formulation, system_formulation, time_range)
+
+        #Cost Function
+        cost_function(ps_m, controllable_resources, category_formulation, system_formulation)
+
+    else
+        @warn("The Data Doesn't Contain Controllable Loads, Consider Changing the Device Formulation to StaticPowerLoad")
+
+    end
+
+    #add to expression
+
+    !isempty(fixed_resources) ? nodal_expression(ps_m, fixed_resources, system_formulation, time_range) : true
+
+end
+
+function constructdevice!(ps_m::CanonicalModel, category::Type{L}, category_formulation::Type{PSI.StaticPowerLoad}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerFormulation}
+
+    #Defining this outside in order to enable time slicing later
+    time_range = 1:sys.time_periods
+
+    nodal_expression(ps_m, sys.loads, system_formulation, time_range)
 
 end

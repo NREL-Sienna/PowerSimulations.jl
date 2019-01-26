@@ -1,29 +1,60 @@
-using PowerSystems
-using JuMP
-using Ipopt
-using PowerSimulations
-const PS = PowerSimulations
-
-ipopt_optimizer = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
-
-base_dir = dirname(dirname(pathof(PowerSystems)))
-include(joinpath(base_dir,"data/data_5bus_pu.jl"))
-sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);
-
+@test try
+    @info "testing copper plate network construction"
+    ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
+    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
+    Dict{String, JuMP.Containers.DenseAxisArray}(),
+    nothing,
+    Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
+                                               "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
+    Dict());
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.CopperPlatePowerModel, sys5b);
+    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.CopperPlatePowerModel, sys5b);
+    PSI.constructnetwork!(ps_model, PSI.CopperPlatePowerModel, sys5b);
+true finally end
 
 @test try
-    @info "testing copper plate"
-    Net = PSI.CopperPlatePowerModel
-    m = Model(ipopt_optimizer);
-    netinjection = PSI.instantiate_network(Net, sys5);
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
-    PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys5)
-    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
-    JuMP.optimize!(m)
-    isapprox(JuMP.objective_value(m), 3400, atol = 1000)
-finally end
+    @info "testing DC-PF network construction"
+    ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
+    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
+    Dict{String, JuMP.Containers.DenseAxisArray}(),
+    nothing,
+    Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
+                                               "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
+    Dict());
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.DCPlosslessForm, sys5b);
+    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.DCPlosslessForm, sys5b);
+    PSI.constructnetwork!(ps_model, PM.DCPlosslessForm, sys5b);
+true finally end
 
-# Flow Models
+@test try
+    @info "testing AC-PF network construction"
+    ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
+    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
+    Dict{String, JuMP.Containers.DenseAxisArray}(),
+    nothing,
+    Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
+                                               "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
+    Dict());
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b);
+    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
+    PSI.constructnetwork!(ps_model, PM.StandardACPForm, sys5b);
+true finally end
+
+@test try
+    @info "testing AC-PF network construction with QCWRForm"
+    ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
+    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
+    Dict{String, JuMP.Containers.DenseAxisArray}(),
+    nothing,
+    Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
+                                               "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
+    Dict());
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.QCWRForm, sys5b);
+    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.QCWRForm, sys5b);
+    PSI.constructnetwork!(ps_model, PM.QCWRForm, sys5b);
+true finally end
+
+#=
 @test try
     @info "testing net flow"
     Net = PSI.StandardNetFlow
@@ -36,7 +67,6 @@ finally end
     isapprox(JuMP.objective_value(m), 3400, atol = 1000)
 finally end
 
-# Flow Models
 @test try
     @info "testing PTDF 5-bus"
     Net = PSI.StandardPTDFModel
@@ -104,7 +134,7 @@ sys14 = PowerSystem(nodes14, generators14, loads14, branches14, nothing,  100.0)
     isapprox(JuMP.objective_value(m), 1200, atol = 1000)
 finally end
 
-# Flow Models
+
 @test try
     @info "testing net 14-bus"
     Net = PSI.StandardNetFlow
@@ -117,7 +147,7 @@ finally end
     isapprox(JuMP.objective_value(m), 1200, atol = 1000)
 finally end
 
-# Flow Models
+
 @test_skip try
     @info "testing PTDF 14-bus"
     Net = PSI.StandardPTDFModel
@@ -166,3 +196,4 @@ true finally end
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 1200, atol = 1000)
 true finally end
+=#

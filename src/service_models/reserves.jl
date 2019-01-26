@@ -24,7 +24,7 @@ function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, for
     return JuMP.@constraint(m, m[:p_re][device.name,t] + m[:p_rsv][device.name,t] <= device.tech.installedcapacity * values(device.scalingfactor)[t])
 end
 
-function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PSY.InterruptibleLoad, D <: FullControllablePowerLoad}
+function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PSY.InterruptibleLoad, D <: InterruptiblePowerLoad}
     return JuMP.@constraint(m, m[:p_cl][device.name,t] + m[:p_rsv][device.name,t] <= device.maxactivepower * values(device.scalingfactor)[t])
 end
 
@@ -37,7 +37,7 @@ end
 function make_pramp_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}, timeframe) where {G<:PSY.RenewableGen, D <: AbstractRenewableDispatchForm}
     return
 end
-function make_pramp_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}, timeframe) where {G<:PSY.InterruptibleLoad, D <: FullControllablePowerLoad}
+function make_pramp_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}, timeframe) where {G<:PSY.InterruptibleLoad, D <: InterruptiblePowerLoad}
     #rmax =  device.maxactivepower * values(device.scalingfactor)[t] #nominally setting load ramp limit to full range within 1 min
     #return JuMP.@constraint(m, m[:p_rsv][device.name,t] <= rmax/60 * timeframe)
     return
