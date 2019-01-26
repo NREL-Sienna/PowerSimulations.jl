@@ -105,9 +105,6 @@ git-tree-sha1 = "5623d1486bfaadd815f5c4ca501adda02b5337f1"
 uuid = "8f5d6c58-4d21-5cfd-889c-e3ad7ee6a615"
 version = "0.9.0"
 
-[[FileWatching]]
-uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
-
 [[ForwardDiff]]
 deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "InteractiveUtils", "LinearAlgebra", "NaNMath", "Random", "SparseArrays", "SpecialFunctions", "StaticArrays", "Test"]
 git-tree-sha1 = "e393bd3b9102659fb24fe88caedec41f2bc2e7de"
@@ -196,12 +193,6 @@ git-tree-sha1 = "6f3df4b5346485b299ae5d2b313ecb428bb46bb9"
 uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 version = "0.8.1"
 
-[[MathProgBase]]
-deps = ["Compat"]
-git-tree-sha1 = "3bf2e534e635df810e5f4b4f1a8b6de9004a0d53"
-uuid = "fdba3010-5040-5b88-9595-932c9decdf73"
-version = "0.7.7"
-
 [[Memento]]
 deps = ["Compat", "JSON", "Nullables", "Syslogs", "TimeZones"]
 git-tree-sha1 = "c4ade3575bcc2c180cfa14cf8b3b63eebca51629"
@@ -252,23 +243,20 @@ deps = ["Dates", "LibGit2", "Markdown", "Printf", "REPL", "Random", "SHA", "UUID
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[PowerModels]]
-git-tree-sha1 = "beab038dfc644b35470a668ec83dc7a367c618b4"
-repo-rev = "moi"
+git-tree-sha1 = "460ed76b5e933fe9211af2495739af0d783c9322"
+repo-rev = "moi-2"
 repo-url = "https://github.com/lanl-ansi/PowerModels.jl.git"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
-version = "0.9.0"
+version = "0.9.3"
 
     [PowerModels.deps]
     Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
-    InfrastructureModels = "e8e45514-c753-11e8-2a1b-cd93cb9d98d1"
+    InfrastructureModels = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
     JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
     JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
     LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
     MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
-    MathProgBase = "fdba3010-5040-5b88-9595-932c9decdf73"
     Memento = "f28f55f0-a522-5efc-85c2-fe41dfb9b2d9"
-    Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
-    SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [[PowerSystems]]
 git-tree-sha1 = "c76b302a43a2ee8663a1e6b24e4cf9646365f515"
@@ -328,12 +316,6 @@ deps = ["Test"]
 git-tree-sha1 = "f6fbf4ba64d295e146e49e021207993b6b48c7d1"
 uuid = "ae029012-a4dd-5104-9daa-d747884805df"
 version = "0.5.2"
-
-[[Revise]]
-deps = ["Distributed", "FileWatching", "InteractiveUtils", "LibGit2", "OrderedCollections", "Pkg", "REPL", "Random", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "341be2df64de382559e2cc307e02ed4192f8a8b7"
-uuid = "295af30f-e4ad-537b-8983-00126c2a3abe"
-version = "1.0.2"
 
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
@@ -410,9 +392,9 @@ version = "0.14.0"
 
 [[TimeZones]]
 deps = ["Compat", "EzXML", "Mocking", "Nullables"]
-git-tree-sha1 = "bd6bd042be107147824eb583aed41d027b69704b"
+git-tree-sha1 = "5437144a2bbb5b661783ad34b0d19d5696845b25"
 uuid = "f269a46b-ccf7-5d73-abea-4c690281aa53"
-version = "0.8.4"
+version = "0.8.5"
 
 [[TranscodingStreams]]
 deps = ["Pkg", "Random", "Test"]

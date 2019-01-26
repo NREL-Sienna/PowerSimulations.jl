@@ -21,17 +21,17 @@ case5_dc_data = InfrastructureModels.replicate(case5_dc_data, 2)
 #  Ideally this would also test the number of constraints generated
 
 @test try
-    pm = PowerSimulations.build_nip_model(case5_data, PM.DCPPowerModel, optimizer=ipopt_optimizer)
+    pm = PowerSimulations.build_nip_model(case5_data, PM.DCPPowerModel)
     JuMP.num_variables(pm.model) == 34
 true finally end
 
 @test try
-    pm = PowerSimulations.build_nip_model(case5_data, PM.ACPPowerModel, optimizer=ipopt_optimizer)
+    pm = PowerSimulations.build_nip_model(case5_data, PM.ACPPowerModel)
     JuMP.num_variables(pm.model) == 96
 true finally end
 
-@test try
-    pm = PowerSimulations.build_nip_model(case5_data, PM.SOCWRPowerModel, optimizer=ipopt_optimizer)
+@test_skip try
+    pm = PowerSimulations.build_nip_model(case5_data, PM.SOCWRPowerModel)
     JuMP.num_variables(pm.model) == 110
 true finally end
 
@@ -42,25 +42,25 @@ DCAngleModel = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data,
 StandardACModel = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, PM.StandardACPForm; kwargs...)
 
 @test try
-    pm = PowerSimulations.build_nip_model(case5_data, DCAngleModel, optimizer=ipopt_optimizer)
+    pm = PowerSimulations.build_nip_model(case5_data, DCAngleModel)
     JuMP.num_variables(pm.model) == 34
 true finally end
 
 # test PowerSimulations type extentions
 @test try
-    pm = PowerSimulations.build_nip_model(case5_data, StandardACModel, optimizer=ipopt_optimizer)
+    pm = PowerSimulations.build_nip_model(case5_data, StandardACModel)
     JuMP.num_variables(pm.model) == 96
 true finally end
 
 
 # test models with HVDC line
 @test try
-    pm = PowerSimulations.build_nip_model(case5_dc_data, PM.DCPPowerModel, optimizer=ipopt_optimizer)
+    pm = PowerSimulations.build_nip_model(case5_dc_data, PM.DCPPowerModel)
     JuMP.num_variables(pm.model) == 36
 true finally end
 
 @test try
-    pm = PowerSimulations.build_nip_model(case5_dc_data, DCAngleModel, optimizer=ipopt_optimizer)
+    pm = PowerSimulations.build_nip_model(case5_dc_data, DCAngleModel)
     JuMP.num_variables(pm.model) == 48
 true finally end
 
@@ -72,6 +72,6 @@ true finally end
     PS_struct = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);
     netinjection = PSI.instantiate_network(PM.DCPlosslessForm, PS_struct);
     PM_dict = PowerSimulations.pass_to_pm(PS_struct, netinjection)
-    PM_object = PowerSimulations.build_nip_model(PM_dict, DCAngleModel, optimizer=ipopt_optimizer);
+    PM_object = PowerSimulations.build_nip_model(PM_dict, DCAngleModel);
     JuMP.num_variables(PM_object.model) == 384
 true finally end
