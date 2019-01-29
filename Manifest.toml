@@ -91,9 +91,9 @@ version = "0.0.3"
 
 [[DiffRules]]
 deps = ["Random", "Test"]
-git-tree-sha1 = "c49ec69428ffea0c1d1bbdc63d1a70f5df5860ad"
+git-tree-sha1 = "09d69da75967ec48a8b1ad0897ec9144ee052bf9"
 uuid = "b552c78f-8df3-52c6-915a-8e097449b14b"
-version = "0.0.7"
+version = "0.0.8"
 
 [[Distributed]]
 deps = ["Random", "Serialization", "Sockets"]
@@ -117,10 +117,10 @@ uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[InfrastructureModels]]
 deps = ["Compat", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento"]
-git-tree-sha1 = "9de064a522ad7a5cb61168c7410dd864dfa57089"
+git-tree-sha1 = "59af02491dd377300a45a1e5591220ccc7e7c2f2"
 repo-rev = "moi-2"
 repo-url = "https://github.com/lanl-ansi/InfrastructureModels.jl.git"
-uuid = "e8e45514-c753-11e8-2a1b-cd93cb9d98d1"
+uuid = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
 version = "0.0.13"
 
 [[InteractiveUtils]]
@@ -153,7 +153,7 @@ version = "0.20.0"
 
 [[JuMP]]
 deps = ["Calculus", "DataStructures", "ForwardDiff", "LinearAlgebra", "MathOptInterface", "NaNMath", "Random", "SparseArrays", "Statistics", "Test"]
-git-tree-sha1 = "8ccec194897ed4e68b284b2f9d95582f8a5e45b5"
+git-tree-sha1 = "6cefd9cd698655212bdfb69b83ab7a7bde7323f9"
 repo-rev = "master"
 repo-url = "https://github.com/JuliaOpt/JuMP.jl.git"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
@@ -238,40 +238,20 @@ deps = ["Dates", "LibGit2", "Markdown", "Printf", "REPL", "Random", "SHA", "UUID
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[PowerModels]]
-git-tree-sha1 = "460ed76b5e933fe9211af2495739af0d783c9322"
+deps = ["Compat", "InfrastructureModels", "JSON", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento"]
+git-tree-sha1 = "62367b1497161b022048fc0bc6e08e2b49a5349b"
 repo-rev = "moi-2"
 repo-url = "https://github.com/lanl-ansi/PowerModels.jl.git"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 version = "0.9.3"
 
-    [PowerModels.deps]
-    Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
-    InfrastructureModels = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
-    JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
-    JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
-    LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-    MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
-    Memento = "f28f55f0-a522-5efc-85c2-fe41dfb9b2d9"
-
 [[PowerSystems]]
-git-tree-sha1 = "82bb738735748f6685c7bca8f60af546e0bfec63"
-repo-rev = "update_im"
+deps = ["AxisArrays", "CSV", "Compat", "DataFrames", "Dates", "JSON", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries"]
+git-tree-sha1 = "18a362df64f38b9034c7b0e9a1d14a50b366695e"
+repo-rev = "master"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
 version = "0.2.1"
-
-    [PowerSystems.deps]
-    AxisArrays = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
-    CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-    Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
-    DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-    Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-    InfrastructureModels = "e8e45514-c753-11e8-2a1b-cd93cb9d98d1"
-    JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
-    LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-    Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
-    SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
-    TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [[Printf]]
 deps = ["Unicode"]
