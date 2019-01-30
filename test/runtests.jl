@@ -61,7 +61,7 @@ sys5b = PowerSystem(nodes5, vcat(generators5,renewables), loads5_DA, branches5, 
 
 @testset "Common Functionalities" begin
     #include("variables_testing.jl")
-    #include("constraints_testing.jl")
+    include("constraints_testing.jl")
     #include("costfunction_testing.jl")
 end
 
@@ -73,7 +73,7 @@ end
 end
 
 @testset "Network Constructors" begin
-    include("powermodels_testing.jl")
+    #include("powermodels_testing.jl")
     #include("network_testing.jl")
 end
 
