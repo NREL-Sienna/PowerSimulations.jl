@@ -15,9 +15,9 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.RenewableGen}
 
     #add to expression
 
-    fixed_resources = [fs for fs in isa(fs,fix_resource)]
+    fixed_resources = [fs for fs in sys.generators.renewable if isa(fs,PSY.RenewableFix)]
 
-    !isempty(fixed_source) ? nodal_expression(ps_m, fixed_resources, system_formulation, time_range) : true
+    !isempty(fixed_resources) ? nodal_expression(ps_m, fixed_resources, system_formulation, time_range) : true
      
     #Cost Function
     cost_function(ps_m, sys.generators.renewable, category_formulation, system_formulation)
@@ -42,9 +42,9 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.RenewableGen}
 
     #add to expression
 
-    fixed_resources = [fs for fs in isa(fs,fix_resource)]
+    fixed_resources = [fs for fs in sys.generators.renewable if isa(fs,PSY.RenewableFix)]
 
-    !isempty(fixed_source) ? nodal_expression(ps_m, fixed_resources, system_formulation, time_range) : true
+    !isempty(fixed_resources) ? nodal_expression(ps_m, fixed_resources, system_formulation, time_range) : true
 
     #Cost Function
     cost_function(ps_m, sys.generators.renewable, category_formulation, system_formulation)
@@ -66,9 +66,9 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.RenewableGen}
 
     #add to expression
 
-    fixed_resources = [fs for fs in isa(fs,fix_resource)]
+    fixed_resources = [fs for fs in sys.generators.renewable if isa(fs,PSY.RenewableFix)]
 
-    !isempty(fixed_source) ? nodal_expression(ps_m, fixed_resources, system_formulation, time_range) : true
+    !isempty(fixed_resources) ? nodal_expression(ps_m, fixed_resources, system_formulation, time_range) : true
 
     #Cost Function
     cost_function(ps_m, sys.generators.renewable, category_formulation, system_formulation)
