@@ -9,7 +9,7 @@
     PSI.constructdevice!(ps_model, PSY.RenewableGen, PSI.RenewableFullDispatch, PM.DCPlosslessForm, sys5b);
     true finally end
     
-    @test try 
+    @test_skip try 
     ps_model = PSI.CanonicalModel(Model(),
                                   Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                   Dict{String, JuMP.Containers.DenseAxisArray}(),

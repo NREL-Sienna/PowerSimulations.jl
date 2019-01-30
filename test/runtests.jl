@@ -60,13 +60,13 @@ generators_hg = [
 sys5b = PowerSystem(nodes5, vcat(generators5,renewables), loads5_DA, branches5, nothing,  100.0)
 
 @testset "Common Functionalities" begin
-    #include("variables_testing.jl")
+    include("variables_testing.jl")
     include("constraints_testing.jl")
-    #include("costfunction_testing.jl")
+    include("costfunction_testing.jl")
 end
 
 @testset "Device Constructors" begin
-    #include("ThermalConstructors_testing.jl")
+    include("ThermalConstructors_testing.jl")
     include("RenewableGenerationConstructors_testing.jl")
     #include("LoadsConstructors_testing.jl")
     #include("HydroConstructors_testing.jl")
