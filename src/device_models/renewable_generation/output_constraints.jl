@@ -31,7 +31,7 @@ function reactivepower(ps_m::CanonicalModel, devices::Array{R,1}, device_formula
 
     for t in time_range, d in devices 
 
-        ps_m.constraints["renewable_reactive"][d.name, t] = JuMP.constraint(ps_m.JuMPmodel, ps_m.variables["Qre"][d.name, t] == ps_m.variables["Pre"][d.name, t]*sin(acos(d.tech.powerfactor)))
+        ps_m.constraints["renewable_reactive"][d.name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables["Qre"][d.name, t] == ps_m.variables["Pre"][d.name, t]*sin(acos(d.tech.powerfactor)))
 
     end
 
