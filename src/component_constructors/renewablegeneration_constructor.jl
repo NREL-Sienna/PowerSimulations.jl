@@ -7,7 +7,7 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.RenewableGen}
 
     controllable_resources = [fs for fs in sys.generators.renewable if !isa(fs,PSY.RenewableFix)]
     
-    if !isempty(fixed_resources) 
+    if !isempty(controllable_resources) 
 
         #Variables
         activepowervariables(ps_m, controllable_resources, time_range);
@@ -42,7 +42,7 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.RenewableGen}
 
     controllable_resources = [fs for fs in sys.generators.renewable if !isa(fs,PSY.RenewableFix)]
     
-    if !isempty(fixed_resources) 
+    if !isempty(controllable_resources) 
 
         #Variables
         activepowervariables(ps_m, controllable_resources, time_range)

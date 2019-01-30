@@ -21,6 +21,6 @@ end
 
 function _add_to_expression!(expression::JumpExpressionMatrix, ix::Int64, jx::Int64, value::Float64)
 
-    isassigned(expression,  ix, jx) ? expression[ix,jx] = value : expression[ix,jx] += value
+    isassigned(expression,  ix, jx) ? expression[ix,jx] += value : expression[ix,jx] = value
 
 end

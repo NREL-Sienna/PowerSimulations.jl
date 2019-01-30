@@ -4,7 +4,7 @@ function nodal_expression(ps_m::CanonicalModel, devices::Array{R,1}, system_form
 
         _add_to_expression!(ps_m.expressions["var_active"], d.bus.number, t, d.tech.installedcapacity * values(d.scalingfactor)[t]) 
 
-        _add_to_expression!(ps_m.expressions["var_reactive"], d.bus.number, t, d.tech.installedcapacity * values(d.scalingfactor)[t]*sin(acost(d.tech.powerfactor))) 
+        _add_to_expression!(ps_m.expressions["var_reactive"], d.bus.number, t, d.tech.installedcapacity * values(d.scalingfactor)[t]*sin(acos(d.tech.powerfactor))) 
 
     end
 
