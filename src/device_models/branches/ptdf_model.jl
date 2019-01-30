@@ -8,7 +8,7 @@ function dc_networkflow(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple, 
 
     ts_flow = gemm('N', 'N', PTDF.data, netinjection.timeseries_active)
 
-    remove_undef!(netinjection.var_active)
+    _remove_undef!(netinjection.var_active)
 
     branchflow = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef, length(name_index), time_index[end]), name_index, time_index)
 
