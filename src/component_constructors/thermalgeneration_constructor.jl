@@ -3,7 +3,7 @@
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {D <: AbstractThermalFormulation, S <: PM.AbstractPowerFormulation}
+function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerFormulation}
 
     #Defining this outside in order to enable time slicing later
     time_range = 1:sys.time_periods
@@ -44,7 +44,7 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.ThermalGen}, 
 end
 
 
-function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.ThermalGen}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {D <: AbstractThermalFormulation, S <: PM.AbstractActivePowerFormulation}
+function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractActivePowerFormulation}
 
     #Defining this outside in order to enable time slicing later
     time_range = 1:sys.time_periods
@@ -78,7 +78,7 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.ThermalGen}, 
 
 end
 
-function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.ThermalGen}, category_formulation::Type{PSI.ThermalDispatch}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: PM.AbstractPowerFormulation}
+function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_formulation::Type{PSI.ThermalDispatch}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {T<: PSY.ThermalGen, S <: PM.AbstractPowerFormulation}
 
     #Defining this outside in order to enable time slicing later
     time_range = 1:sys.time_periods
@@ -100,7 +100,7 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.ThermalGen}, 
 
 end
 
-function constructdevice!(ps_m::CanonicalModel, category::Type{PSY.ThermalGen}, category_formulation::Type{PSI.ThermalDispatch}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
+function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_formulation::Type{PSI.ThermalDispatch}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {T<: PSY.ThermalGen, S <: PM.AbstractActivePowerFormulation}
 
     #Defining this outside in order to enable time slicing later
     time_range = 1:sys.time_periods
