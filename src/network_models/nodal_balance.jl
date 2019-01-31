@@ -57,7 +57,7 @@ function nodalflowbalance(m::JuMP.AbstractModel, netinjection::BalanceNamedTuple
     time_index = 1:sys.time_periods
     bus_name_index = [b.name for b in sys.buses]
 
-    PM_dict = pass_to_pm(sys, netinjection)
+    PM_dict = pass_to_pm(sys)
 
         for t in time_index, bus in sys.buses
 

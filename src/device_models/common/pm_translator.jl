@@ -126,7 +126,7 @@ function expression_to_pm_reactive(PM_dict::Dict{String,Any}, netinjection::Bala
 end
 =#
 
-function pass_to_pm(sys::PSY.PowerSystem, netinjection::BalanceNamedTuple)
+function pass_to_pm(sys::PSY.PowerSystem)
 
     PM_translation = Dict{String,Any}(
     "bus" => get_buses_to_pm(sys.buses),
