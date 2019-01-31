@@ -14,4 +14,3 @@ abstract type SimpleHVDC <: AbstractDCLineForm end
 
 include("branches/flow_variables.jl")
 include("branches/flow_constraints.jl")
-include("branches/ptdf_model.jl")

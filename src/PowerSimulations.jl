@@ -86,12 +86,14 @@ include("service_models/reserves.jl")
 
 #Network related components
 include("network_models/nodal_balance.jl")
-include("network_models/powermodels_balance.jl")
+include("network_models/powermodels_interface.jl")
+include("network_models/ptdf_model.jl")
+include("network_models/copperplate_model.jl")
 
 
 #Device constructors
 include("component_constructors/thermalgeneration_constructor.jl")
-#include("component_constructors/branch_constructor.jl")
+include("component_constructors/branch_constructor.jl")
 include("component_constructors/renewablegeneration_constructor.jl")
 include("component_constructors/load_constructor.jl")
 include("component_constructors/storage_constructor.jl")
