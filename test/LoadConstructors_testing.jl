@@ -1,4 +1,4 @@
-@test_skip try 
+@test try 
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
                                   Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                   Dict{String, JuMP.Containers.DenseAxisArray}(),
@@ -9,7 +9,7 @@
     PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.InterruptiblePowerLoad, PM.DCPlosslessForm, sys5b);
     true finally end
     
-    @test_skip try 
+    @test try 
     ps_model = PSI.CanonicalModel(Model(),
                                   Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                   Dict{String, JuMP.Containers.DenseAxisArray}(),
