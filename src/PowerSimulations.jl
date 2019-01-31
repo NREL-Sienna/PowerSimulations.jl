@@ -94,6 +94,7 @@ include("component_constructors/thermalgeneration_constructor.jl")
 #include("component_constructors/branch_constructor.jl")
 include("component_constructors/renewablegeneration_constructor.jl")
 include("component_constructors/load_constructor.jl")
+include("component_constructors/storage_constructor.jl")
 #include("component_constructors/services_constructor.jl")
 
 #Network constructors
