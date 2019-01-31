@@ -21,7 +21,7 @@ true finally end
     PSI.reactivepower(ps_model, generators5, PSI.ThermalUnitCommitment , PM.StandardACPForm, 1:24)
 true finally end
 
-@test_skip  try
+@test  try
     PSI.activepowervariables(ps_model, generators_hg, 1:24)
     PSI.activepower(ps_model, generators_hg, PSI.HydroDispatchRunOfRiver, PM.DCPlosslessForm, 1:24)
     PSI.activepower(ps_model, generators_hg, PSI.HydroFullDispatch, PM.DCPlosslessForm, 1:24)

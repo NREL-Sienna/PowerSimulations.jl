@@ -68,7 +68,7 @@ end
 @testset "Device Constructors" begin
     include("ThermalConstructors_testing.jl")
     include("RenewableGenerationConstructors_testing.jl")
-    include("LoadsConstructors_testing.jl")
+    include("LoadConstructors_testing.jl")
     #include("HydroConstructors_testing.jl")
 end
 
