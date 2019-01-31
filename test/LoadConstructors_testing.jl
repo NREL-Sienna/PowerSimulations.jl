@@ -1,4 +1,4 @@
-@test try 
+@test_skip try 
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
                                   Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                   Dict{String, JuMP.Containers.DenseAxisArray}(),

@@ -64,7 +64,7 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{L}, category_form
      
 end
 
-function constructdevice!(ps_m::CanonicalModel, category::Type{R}, category_formulation::Type{PSI.StaticPowerLoad}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerFormulation}
+function constructdevice!(ps_m::CanonicalModel, category::Type{L}, category_formulation::Type{PSI.StaticPowerLoad}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerFormulation}
 
     #Defining this outside in order to enable time slicing later
     time_range = 1:sys.time_periods
