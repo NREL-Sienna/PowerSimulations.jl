@@ -24,13 +24,12 @@ true finally end
 @test  try
     PSI.activepowervariables(ps_model, generators_hg, 1:24)
     PSI.activepower(ps_model, generators_hg, PSI.HydroDispatchRunOfRiver, PM.DCPlosslessForm, 1:24)
-    PSI.activepower(ps_model, generators_hg, PSI.HydroFullDispatch, PM.DCPlosslessForm, 1:24)
     PSI.activepower(ps_model, generators_hg, PSI.HydroDispatchRunOfRiver, PM.StandardACPForm, 1:24)
     PSI.reactivepowervariables(ps_model, generators_hg, 1:24)
     PSI.reactivepower(ps_model, generators_hg, PSI.HydroDispatchRunOfRiver, PM.StandardACPForm, 1:24)
 true finally end
 
-@test_skip  try
+@test  try
     PSI.activepowervariables(ps_model, generators_hg, 1:24)
     PSI.commitmentvariables(ps_model, generators_hg, 1:24);
     PSI.activepower(ps_model, generators_hg, PSI.HydroCommitmentRunOfRiver, PM.DCPlosslessForm, 1:24)
