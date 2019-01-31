@@ -1,14 +1,14 @@
-abstract type AbstractHydroDispatchForm <: AbstractDeviceFormulation end
+abstract type AbstractHydroFormulation <: AbstractDeviceFormulation end
 
-abstract type HydroFullDispatch <: AbstractHydroDispatchForm end
+abstract type AbstractHydroDispatchForm <: AbstractHydroFormulation end
 
-abstract type HydroRunOfRiver <: AbstractHydroDispatchForm end
+abstract type HydroDispatchRunOfRiver <: AbstractHydroDispatchForm end
 
-abstract type HydroSeasonalFlow <: AbstractHydroDispatchForm end
+abstract type HydroDispatchSeasonalFlow <: AbstractHydroDispatchForm end
 
-abstract type AbstractHydroCommitmentForm end
+abstract type HydroCommitmentRunOfRiver <: AbstractHydroFormulation end
 
-abstract type HydroCommitment <: AbstractHydroCommitmentForm end
+abstract type HydroCommitmentSeasonalFlow <: AbstractHydroFormulation end
 
 include("hydro_generation/hydro_variables.jl")
 include("hydro_generation/output_constraints.jl")
