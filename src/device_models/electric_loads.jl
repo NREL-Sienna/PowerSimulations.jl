@@ -1,8 +1,8 @@
-abstract type AbstractLoadForm <: AbstractDeviceFormulation end
+abstract type AbstractLoadFormulation <: AbstractDeviceFormulation end
 
-abstract type AbstractControllablePowerLoadForm <: AbstractLoadForm end
+abstract type AbstractControllablePowerLoadForm <: AbstractLoadFormulation end
 
-struct FullControllablePowerLoad <: AbstractControllablePowerLoadForm end
+struct StaticPowerLoad <: AbstractLoadFormulation end
 
 struct InterruptiblePowerLoad <: AbstractControllablePowerLoadForm end
 

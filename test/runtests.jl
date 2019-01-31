@@ -68,12 +68,12 @@ end
 @testset "Device Constructors" begin
     include("ThermalConstructors_testing.jl")
     include("RenewableGenerationConstructors_testing.jl")
-    #include("LoadsConstructors_testing.jl")
+    include("LoadsConstructors_testing.jl")
     #include("HydroConstructors_testing.jl")
 end
 
 @testset "Network Constructors" begin
-    #include("powermodels_testing.jl")
+    include("powermodels_testing.jl")
     #include("network_testing.jl")
 end
 
