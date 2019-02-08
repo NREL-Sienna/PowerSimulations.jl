@@ -1,5 +1,5 @@
 @test try
-    @info "testing copper plate"
+    @info "testing copper plate network construction"
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
     Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
     Dict{String, JuMP.Containers.DenseAxisArray}(),
@@ -10,6 +10,48 @@
     PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.CopperPlatePowerModel, sys5b); 
     PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.CopperPlatePowerModel, sys5b);
     PSI.constructnetwork!(ps_model, PSI.CopperPlatePowerModel, sys5b);
+true finally end
+
+@test try
+    @info "testing DC-PF network construction"
+    ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
+    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
+    Dict{String, JuMP.Containers.DenseAxisArray}(),
+    nothing,
+    Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
+                                               "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
+    Dict());
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.DCPlosslessForm, sys5b); 
+    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.DCPlosslessForm, sys5b);
+    PSI.constructnetwork!(ps_model, PM.DCPlosslessForm, sys5b);
+true finally end
+
+@test try
+    @info "testing AC-PF network construction"
+    ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
+    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
+    Dict{String, JuMP.Containers.DenseAxisArray}(),
+    nothing,
+    Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
+                                               "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
+    Dict());
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b); 
+    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
+    PSI.constructnetwork!(ps_model, PM.StandardACPForm, sys5b);
+true finally end
+
+@test try
+    @info "testing AC-PF network construction with QCWRForm"
+    ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
+    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
+    Dict{String, JuMP.Containers.DenseAxisArray}(),
+    nothing,
+    Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
+                                               "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
+    Dict());
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.QCWRForm, sys5b); 
+    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.QCWRForm, sys5b);
+    PSI.constructnetwork!(ps_model, PM.QCWRForm, sys5b);
 true finally end
 
 #=
