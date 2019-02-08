@@ -31,24 +31,17 @@ function constructnetwork!(ps_m::CanonicalModel, branch_models::Array{NamedTuple
 
 end
 
-function constructnetwork!(ps_m::CanonicalModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: PM.AbstractPowerFormulation}
+function constructnetwork!(ps_m::CanonicalModel, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
-    #=
+    time_range = 1:sys.time_periods
 
- 
+    powermodels_network!(ps_m, system_formulation, sys, time_range)
+
+    #=    
     for category in branch_models
         constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; kwargs...)
     end
- 
-
-    nodalflowbalance(m, netinjection, system_formulation, sys)
-
-    PM_F = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
-
-    PM_object = PSI.build_nip_expr_model(m.ext[:PM_object], PM_F, jump_model=m);
-
-    m = PM_object.model
-
     =#
-    
+
+
 end

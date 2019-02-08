@@ -14,7 +14,7 @@ This function add the variables for power generation output to the model
 """
 function reactivepowervariables(ps_m::CanonicalModel, devices::Array{T,1}, time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen}
 
-    add_variable(ps_m, devices, time_range, "Qth", false, "var_active")
+    add_variable(ps_m, devices, time_range, "Qth", false, "var_reactive")
 
 end
 

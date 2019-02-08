@@ -19,8 +19,6 @@ function build_nip_model(data::Dict{String,Any}, model_constructor; multinetwork
     return PM.build_generic_model(data, model_constructor, post_nip; multinetwork=multinetwork, kwargs...)
 end
 
-
-
 ""
 function post_nip(pm::PM.GenericPowerModel)
     for (n, network) in PM.nws(pm)
@@ -205,4 +203,40 @@ function constraint_kcl_ni_expr(pm::PM.GenericPowerModel{T}, n::Int, c::Int, i::
     p_dc = PM.var(pm, n, c, :p_dc)
 
     PM.con(pm, n, c, :kcl_p)[i] = JuMP.@constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni_expr)
+end
+
+""
+function powermodels_network!(ps_m::CanonicalModel, system_formulation::Type{S}, sys::PSY.PowerSystem, time_range::UnitRange{Int64}) where {S <: PM.AbstractPowerFormulation}
+
+    pm_data = pass_to_pm(sys)
+
+    for t in time_range, bus in sys.buses
+
+        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions["var_active"][bus.number,t]
+        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = ps_m.expressions["var_reactive"][bus.number,t]
+
+    end
+
+    pm_f = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(pm_data, system_formulation; kwargs...)
+
+    ps_m.pm_model = PSI.build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
+
+end
+
+""
+function powermodels_network!(ps_m::CanonicalModel, system_formulation::Type{S}, sys::PSY.PowerSystem, time_range::UnitRange{Int64}) where {S <: PM.AbstractActivePowerFormulation}
+
+    pm_data = pass_to_pm(sys)
+
+    for t in time_range, bus in sys.buses
+
+        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions["var_active"][bus.number,t]
+        #pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
+
+    end
+
+    pm_f = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
+
+    ps_m.pm_model = PSI.build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
+
 end
