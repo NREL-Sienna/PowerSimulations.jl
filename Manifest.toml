@@ -59,9 +59,9 @@ version = "1.5.1"
 
 [[DataFrames]]
 deps = ["CategoricalArrays", "CodecZlib", "Compat", "DataStreams", "Dates", "InteractiveUtils", "IteratorInterfaceExtensions", "LinearAlgebra", "Missings", "Printf", "Random", "Reexport", "SortingAlgorithms", "Statistics", "StatsBase", "TableTraits", "Tables", "Test", "TranscodingStreams", "Unicode", "WeakRefStrings"]
-git-tree-sha1 = "af5c8a233b838076947ef0c8f882f732ad578112"
+git-tree-sha1 = "9cfed75401d25d281076eb5d82de148ac2933f9e"
 uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-version = "0.17.0"
+version = "0.17.1"
 
 [[DataStreams]]
 deps = ["Dates", "Missings", "Test", "WeakRefStrings"]
@@ -117,7 +117,7 @@ uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[InfrastructureModels]]
 deps = ["Compat", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento"]
-git-tree-sha1 = "5a1f5b0c78ee2f4c88f908c5445d1b51ab3528f5"
+git-tree-sha1 = "a68a801be71d47ac0304195d8c55e68b930a7aac"
 repo-rev = "moi-2"
 repo-url = "https://github.com/lanl-ansi/InfrastructureModels.jl.git"
 uuid = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
@@ -153,7 +153,7 @@ version = "0.20.0"
 
 [[JuMP]]
 deps = ["Calculus", "DataStructures", "ForwardDiff", "LinearAlgebra", "MathOptInterface", "NaNMath", "Random", "SparseArrays", "Statistics", "Test"]
-git-tree-sha1 = "9be409de2d2e6123a5b7b6048cf49335a35892c3"
+git-tree-sha1 = "613b12091a88b85b38328b7d5a34c50dab7ab972"
 repo-rev = "master"
 repo-url = "https://github.com/JuliaOpt/JuMP.jl.git"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
@@ -184,9 +184,9 @@ uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[MathOptInterface]]
 deps = ["Compat", "Unicode"]
-git-tree-sha1 = "6f3df4b5346485b299ae5d2b313ecb428bb46bb9"
+git-tree-sha1 = "e3c7fb842078f5cd9a21ecb911dc59a4282e3d01"
 uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
-version = "0.8.1"
+version = "0.8.2"
 
 [[Memento]]
 deps = ["Compat", "JSON", "Nullables", "Syslogs", "TimeZones"]
@@ -229,9 +229,9 @@ version = "1.0.2"
 
 [[Parsers]]
 deps = ["Dates", "Mmap", "Test", "WeakRefStrings"]
-git-tree-sha1 = "400aaa49532991f8e31d13f87c6eeaeee83663d4"
+git-tree-sha1 = "fa95f29a7dc171e896e6dd74e25dddbccee2e0a5"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
-version = "0.2.16"
+version = "0.2.18"
 
 [[Pkg]]
 deps = ["Dates", "LibGit2", "Markdown", "Printf", "REPL", "Random", "SHA", "UUIDs"]
@@ -239,7 +239,7 @@ uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[PowerModels]]
 deps = ["Compat", "InfrastructureModels", "JSON", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento"]
-git-tree-sha1 = "ea90a41608df4d97e11f50bffe8a93fbe1a6f4a2"
+git-tree-sha1 = "97da927a12f51a49b625bcda17ba1790c19452f9"
 repo-rev = "moi-2"
 repo-url = "https://github.com/lanl-ansi/PowerModels.jl.git"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
@@ -247,7 +247,7 @@ version = "0.9.3"
 
 [[PowerSystems]]
 deps = ["AxisArrays", "CSV", "Compat", "DataFrames", "Dates", "JSON", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries"]
-git-tree-sha1 = "1294cedb18516d1691fba8953fc4b9e1c334d89b"
+git-tree-sha1 = "f789ba4d0e1b063fa31d69b332b813ef127ee7d5"
 repo-rev = "master"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
@@ -351,10 +351,10 @@ uuid = "3783bdb8-4a98-5b6b-af9a-565f29a5fe9c"
 version = "0.4.1"
 
 [[Tables]]
-deps = ["IteratorInterfaceExtensions", "Requires", "TableTraits", "Test"]
-git-tree-sha1 = "89f8fde6394579580fb75088e45ad95551199c7c"
+deps = ["IteratorInterfaceExtensions", "LinearAlgebra", "Requires", "TableTraits", "Test"]
+git-tree-sha1 = "37be2ed169d5771c1ac8d516d3bcb0093c49966e"
 uuid = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
-version = "0.1.14"
+version = "0.1.15"
 
 [[Test]]
 deps = ["Distributed", "InteractiveUtils", "Logging", "Random"]
@@ -393,6 +393,6 @@ uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [[WeakRefStrings]]
 deps = ["Missings", "Random", "Test"]
-git-tree-sha1 = "1a9511b00152bbecaf3cd59d1fadd5d23e7bb1f9"
+git-tree-sha1 = "bccf012a0e8815410ad8b6846944a33903992fc3"
 uuid = "ea10d353-3f73-51f8-a26c-33c1cb351aa5"
-version = "0.5.4"
+version = "0.5.6"
