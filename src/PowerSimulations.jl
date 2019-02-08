@@ -85,6 +85,7 @@ include("device_models/hydro_generation.jl")
 include("service_models/reserves.jl")
 
 #Network related components
+include("network_models/copperplate_model.jl")
 include("network_models/nodal_balance.jl")
 include("network_models/powermodels_interface.jl")
 include("network_models/ptdf_model.jl")

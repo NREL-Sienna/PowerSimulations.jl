@@ -1,23 +1,16 @@
-function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: CopperPlatePowerModel}
+function constructnetwork!(ps_m::CanonicalModel, system_formulation::Type{CopperPlatePowerModel}, sys::PSY.PowerSystem; kwargs...)
 
-    devices_netinjection = _remove_undef!(netinjection.var_active)
-    timeseries_netinjection = sum(netinjection.timeseries_active, dims=1)
+    #Defining this outside in order to enable time slicing later
+    time_range = 1:sys.time_periods
+    bus_count = length(sys.buses)
 
-    cpn = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef,time_periods), 1:time_periods)
+    copper_plate(ps_m, "var_active", bus_count, time_range)
 
-    for t in 1:time_periods
-        # TODO: Check is sum() is the best way to do this in terms of speed.
-        cpn[t] = JuMP.@constraint(m, sum(netinjection.var_active[:,t]) == timeseries_netinjection[t])
-    end
-
-    JuMP.register_object(m, :CopperPlateBalance, cpn)
-
-    return m
 
 end
 
-
-function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{StandardPTDFModel}, sys::PSY.PowerSystem; kwargs...)
+function constructnetwork!(ps_m::CanonicalModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, system_formulation::Type{StandardPTDFModel}, sys::PSY.PowerSystem; kwargs...)
+#=
     if :PTDF in keys(args)
         PTDF = args[:PTDF]
     else
@@ -34,16 +27,19 @@ function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTupl
     end
 
     nodalflowbalance(m, netinjection, system_formulation, sys)
+=#
 
 end
 
-function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, netinjection::BalanceNamedTuple, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
+function constructnetwork!(ps_m::CanonicalModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
-    #= TODO: Needs to be generalized later for other branch models not covered by PM.
+    #=
+
+ 
     for category in branch_models
         constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; kwargs...)
     end
-    =#
+ 
 
     nodalflowbalance(m, netinjection, system_formulation, sys)
 
@@ -53,4 +49,6 @@ function constructnetwork!(m::JuMP.AbstractModel, branch_models::Array{NamedTupl
 
     m = PM_object.model
 
+    =#
+    
 end

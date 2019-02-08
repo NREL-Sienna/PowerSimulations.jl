@@ -74,7 +74,7 @@ end
 
 @testset "Network Constructors" begin
     include("powermodels_testing.jl")
-    #include("network_testing.jl")
+    include("NetworkConstructors_testing.jl")
 end
 
 #=
