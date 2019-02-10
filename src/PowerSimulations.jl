@@ -42,7 +42,6 @@ const PSY = PowerSystems
 const PSI = PowerSimulations
 const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
-const PTDFArray = AxisArrays.AxisArray{Float64,2,Array{Float64,2},Tuple{AxisArrays.Axis{:branches,Array{String,1}},AxisArrays.Axis{:buses,Array{String,1}}}}
 
 #Type Alias for JuMP containers
 const JumpVariable = JuMP.Containers.DenseAxisArray{JuMP.VariableRef,2,Tuple{Array{String,1},UnitRange{Int64}}}
@@ -89,8 +88,6 @@ include("network_models/copperplate_model.jl")
 include("network_models/nodal_balance.jl")
 include("network_models/powermodels_interface.jl")
 include("network_models/ptdf_model.jl")
-include("network_models/copperplate_model.jl")
-
 
 #Device constructors
 include("component_constructors/thermalgeneration_constructor.jl")
