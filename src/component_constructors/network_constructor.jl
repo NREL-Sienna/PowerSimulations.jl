@@ -9,25 +9,28 @@ function constructnetwork!(ps_m::CanonicalModel, system_formulation::Type{Copper
 
 end
 
-function constructnetwork!(ps_m::CanonicalModel, branch_models::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, system_formulation::Type{StandardPTDFModel}, sys::PSY.PowerSystem; kwargs...)
-#=
-    if :PTDF in keys(args)
-        PTDF = args[:PTDF]
+function constructnetwork!(ps_m::CanonicalModel, system_formulation::Type{StandardPTDFModel}, sys::PSY.PowerSystem; kwargs...)
+
+    if :PTDF in keys(kwargs)
+
+        #Defining this outside in order to enable time slicing later
+        time_range = 1:sys.time_periods
+
+        ac_branches = [br for br in sys.branches if !isa(br, PSY.DCLine)]
+
+        flowvariables(ps_m, system_formulation, ac_branches, time_range)
+
+        ptdf_networkflow(ps_m, ac_branches, sys.buses, "var_active", kwargs[:PTDF], time_range)
+
     else
-        PTDF = nothing
+        throw(ArgumentError("no PTDF matrix supplied"))
     end
 
-    if !isa(PTDF,PTDFArray)
-        @warn "no PTDF supplied"
-        PTDF,  A = PSY.buildptdf(sys.branches, sys.buses)
-    end
-
+    #=
     for category in branch_models
         constructdevice!(m, netinjection, category.device, category.formulation, system_formulation, sys; args..., PTDF=PTDF)
     end
-
-    nodalflowbalance(m, netinjection, system_formulation, sys)
-=#
+    =#
 
 end
 
