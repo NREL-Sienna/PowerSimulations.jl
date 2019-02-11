@@ -2,7 +2,8 @@ abstract type CopperPlatePowerModel <: PM.AbstractActivePowerFormulation  end
 
 abstract type StandardPTDFModel <: PM.DCPlosslessForm end
 
-#= 
+#= This code is from PowerModel's network definitions. Added here just for reference. 
+
 export
     # exact non-convex models
     ACPPowerModel, StandardACPForm,

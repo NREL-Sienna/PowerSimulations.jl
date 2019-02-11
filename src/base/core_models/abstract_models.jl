@@ -19,7 +19,7 @@ mutable struct PowerOperationModel{ M<:AbstractOperationsModel, T<:PM.AbstractPo
     system::PSY.PowerSystem
     model::CanonicalModel
     dynamics::Bool
-    ptdf::Union{Nothing,PTDFArray}
+    ptdf::Union{Nothing,AxisArrays.AxisArray}
 end
 
 mutable struct PowerSimulationsModel{T<:AbstractOperationsModel, R<:Dates.Period}
