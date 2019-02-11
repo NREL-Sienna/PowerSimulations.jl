@@ -15,7 +15,7 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);
     @info "testing copper plate"
     Net = PS.CopperPlatePowerModel
     m = Model(ipopt_optimizer);
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys5)
     @objective(m, Min, m.obj_dict[:objective_function])
@@ -28,7 +28,7 @@ finally end
     @info "testing net flow"
     Net = PS.StandardNetFlow
     m = Model(ipopt_optimizer);
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys5)
     @objective(m, Min, m.obj_dict[:objective_function])
@@ -42,7 +42,7 @@ finally end
     Net = PS.StandardPTDF
     m = Model(ipopt_optimizer);
     ptdf,  A = PowerSystems.buildptdf(sys5.branches, sys5.buses)
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys5, PTDF = ptdf)
     @objective(m, Min, m.obj_dict[:objective_function])
@@ -54,7 +54,7 @@ finally end
     @info "testing AngleDC-OPF 5-bus"
     Net = PS.DCAngleForm
     m = Model(ipopt_optimizer);
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys5)
     @objective(m, Min, m.obj_dict[:objective_function])
@@ -66,7 +66,7 @@ finally end
     @info "testing ACP-OPF 5-bus"
     Net = PS.StandardAC
     m = Model(ipopt_optimizer);
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys5)
     @objective(m, Min, m.obj_dict[:objective_function])
@@ -78,7 +78,7 @@ true finally end
     @info "testing ACP- QCWForm 5-bus"
     Net = PM.QCWRForm
     m = Model(ipopt_optimizer);
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys5)
     @objective(m, Min, m.obj_dict[:objective_function])
@@ -96,7 +96,7 @@ sys14 = PowerSystem(nodes14, generators14, loads14, branches14, nothing,  100.0)
     @info "testing copper plate 14-bus"
     Net = PS.CopperPlatePowerModel
     m = Model(ipopt_optimizer);
-    netinjection = PS.instantiate_network(Net, sys14);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys14);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys14);
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys14)
     @objective(m, Min, m.obj_dict[:objective_function])
@@ -109,7 +109,7 @@ finally end
     @info "testing net 14-bus"
     Net = PS.StandardNetFlow
     m = Model(ipopt_optimizer);
-    netinjection = PS.instantiate_network(Net, sys14);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys14);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys14);
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys14)
     @objective(m, Min, m.obj_dict[:objective_function])
@@ -123,7 +123,7 @@ finally end
     Net = PS.StandardPTDF
     m = Model(ipopt_optimizer);
     ptdf,  A = PowerSystems.buildptdf(sys14.branches, sys14.buses)
-    netinjection = PS.instantiate_network(Net, sys14);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys14);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys14);
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys14, PTDF = ptdf)
     @objective(m, Min, m.obj_dict[:objective_function])
@@ -135,7 +135,7 @@ finally end
     @info "testing AngleDC-OPF 14-bus"
     Net = PS.DCAngleForm
     m = Model(ipopt_optimizer);
-    netinjection = PS.instantiate_network(Net, sys14);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys14);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys14);
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys14)
     @objective(m, Min, m.obj_dict[:objective_function])
@@ -147,7 +147,7 @@ finally end
     @info "testing ACP-OPF 14-bus"
     Net = PS.StandardAC
     m = Model(ipopt_optimizer);
-    netinjection = PS.instantiate_network(Net, sys14);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys14);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys14);
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys14)
     @objective(m, Min, m.obj_dict[:objective_function])
@@ -159,7 +159,7 @@ true finally end
     @info "testing ACP-QCWForm 14-bus"
     Net = PM.QCWRForm
     m = Model(ipopt_optimizer);
-    netinjection = PS.instantiate_network(Net, sys14);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys14);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys14);
     PS.constructnetwork!(m, [(device=Line, formulation=PS.PiLine)], netinjection, Net, sys14)
     @objective(m, Min, m.obj_dict[:objective_function])

@@ -15,7 +15,7 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing, 100.0)
 @test try
     Net = PS.StandardAC
     m = Model()
-    netinjection = PS.instantiate_network(Net, sys5)
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5)
     PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5)
 true finally end
 
@@ -23,7 +23,7 @@ true finally end
 @test try
     Net = PS.CopperPlatePowerModel
     m = Model();
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
 true finally end
 
@@ -31,6 +31,6 @@ true finally end
 @test try
     Net = PS.StandardPTDF
     m = Model();
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
 true finally end

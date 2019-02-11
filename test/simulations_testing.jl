@@ -25,7 +25,7 @@ solver = Ipopt.Optimizer
         false,
         nothing)
 
-    PS.buildmodel!(sys5,ED)
+    PS.buildmodel!(ED, sys5)
 
     ED_sim = PS.buildsimulation!(sys5, ED)
 

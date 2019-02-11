@@ -12,7 +12,7 @@ simple_reserve = PowerSystems.StaticReserve("test_reserve",vcat(sys5.generators.
 @test try
     Net = PS.CopperPlatePowerModel
     m = Model();
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
     PS.constructdevice!(m, netinjection, RenewableGen, PS.RenewableCurtail, Net, sys5);
     PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);
@@ -26,7 +26,7 @@ true finally end
 @test try
     Net = PS.CopperPlatePowerModel
     m = Model();
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.StandardThermalCommitment, Net, sys5);
     PS.constructdevice!(m, netinjection, RenewableGen, PS.RenewableCurtail, Net, sys5);
     PS.constructdevice!(m, netinjection, ElectricLoad, PS.InterruptibleLoad, Net, sys5);

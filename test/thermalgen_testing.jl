@@ -15,7 +15,7 @@ sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing, 100.0)
 @test try
     Net = PS.StandardAC
     m = Model()
-    netinjection = PS.instantiate_network(Net, sys5)
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5)
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5)
 true finally end
 
@@ -23,7 +23,7 @@ true finally end
 @test try
     Net = PS.CopperPlatePowerModel
     m = Model();
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
 true finally end
 
@@ -31,7 +31,7 @@ true finally end
 @test try
     Net = PS.StandardPTDF
     m = Model();
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalDispatch, Net, sys5);
 true finally end
 
@@ -39,7 +39,7 @@ true finally end
 @test try
     Net = PS.StandardPTDF
     m = Model();
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalRampLimitDispatch, Net, sys5);
 true finally end
 
@@ -47,7 +47,7 @@ true finally end
 @test try
     Net = PS.CopperPlatePowerModel
     m = Model();
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.ThermalRampLimitDispatch, Net, sys5);
 true finally end
 
@@ -55,7 +55,7 @@ true finally end
 @test try
     Net = PS.StandardPTDF
     m = Model();
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.StandardThermalCommitment, Net, sys5);
 true finally end
 
@@ -63,7 +63,7 @@ true finally end
 @test try
     Net = PS.CopperPlatePowerModel
     m = Model();
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     PS.constructdevice!(m, netinjection, ThermalGen, PS.StandardThermalCommitment, Net, sys5);
 true finally end
 
@@ -72,7 +72,7 @@ true finally end
 @test try
     Net = PS.CopperPlatePowerModel
     m = Model();
-    netinjection = PS.instantiate_network(Net, sys5);
+    netinjection = PS.instantiate_network(Net, JuMP.variable_type(m), sys5);
     name_index = [gen.name for gen in sys5.generators.thermal];
     initialstatusdict = Dict(zip(name_index,ones(length(name_index))));
     initialondurationdict = Dict(zip(name_index,ones(length(name_index))*100));
