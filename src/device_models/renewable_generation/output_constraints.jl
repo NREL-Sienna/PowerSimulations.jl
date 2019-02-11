@@ -9,7 +9,7 @@ function activepower(m::JuMP.AbstractModel, devices::Array{R,1}, device_formulat
 
     (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
-    pmax_re = JuMP.JuMPArray(Array{ConstraintRef}(undef, length.(JuMP.axes(p_re))), name_index, time_index)
+    pmax_re = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef, length.(JuMP.axes(p_re))), name_index, time_index)
 
     for t in time_index, (ix, name) in enumerate(name_index)
 
@@ -37,8 +37,8 @@ function reactivepower(m::JuMP.AbstractModel, devices::Array{R,1}, device_formul
 
     (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
-    qmax_re = JuMP.JuMPArray(Array{ConstraintRef}(undef,length.(JuMP.axes(q_re))), name_index, time_index)
-    qmin_re = JuMP.JuMPArray(Array{ConstraintRef}(undef,length.(JuMP.axes(q_re))), name_index, time_index)
+    qmax_re = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length.(JuMP.axes(q_re))), name_index, time_index)
+    qmin_re = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length.(JuMP.axes(q_re))), name_index, time_index)
 
     for t in time_index, (ix, name) in enumerate(name_index)
 

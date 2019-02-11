@@ -4,7 +4,9 @@ function variablecost(m::JuMP.AbstractModel, devices::Array{T,1}, device_formula
     time_index = m[:p_th].axes[2]
     name_index = m[:p_th].axes[1]
 
-    var_cost = JuMP.AffExpr()
+    expr_type = JuMP.GenericAffExpr{Float64, JuMP.variable_type(m)}
+    var_cost = expr_type()
+    # var_cost = JuMP.AffExpr()
 
     for  (ix, name) in enumerate(name_index)
         if name == devices[ix].name
@@ -16,7 +18,8 @@ function variablecost(m::JuMP.AbstractModel, devices::Array{T,1}, device_formula
         # TODO: Add no load costs?
 
         # TODO: Move this to a new function
-        if isa(var_cost,JuMP.AffExpr) && isa(c,JuMP.AffExpr)
+        # if isa(var_cost,JuMP.AffExpr) && isa(c,JuMP.AffExpr)
+        if isa(var_cost, expr_type) && isa(c, expr_type)
             JuMP.add_to_expression!(var_cost,c)
         elseif isa(var_cost,JuMP.GenericQuadExpr) && isa(c,JuMP.GenericQuadExpr)
             JuMP.add_to_expression!(var_cost,c)

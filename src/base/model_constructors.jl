@@ -2,7 +2,7 @@ function buildmodel!(op_model::PowerOperationModel, sys::PowerSystems.PowerSyste
 
     #TODO: Add check model spec vs data functions before trying to build
 
-    netinjection = instantiate_network(op_model.transmission, sys)
+    netinjection = instantiate_network(op_model.transmission, JuMP.variable_type(op_model.model), sys)
 
     for category in op_model.generation
         constructdevice!(op_model.model, netinjection, category.device, category.formulation, op_model.transmission, sys; args...)
@@ -29,7 +29,8 @@ function buildmodel!(op_model::PowerOperationModel, sys::PowerSystems.PowerSyste
 
     constructnetwork!(op_model.model, op_model.branches, netinjection, op_model.transmission, sys; args..., PTDF = op_model.ptdf)
 
-    @objective(op_model.model, Min, op_model.model.obj_dict[:objective_function])
+    @objective(op_model.model, Min,
+               JuMP.object_dictionary(op_model.model)[:objective_function])
 
    return op_model
 

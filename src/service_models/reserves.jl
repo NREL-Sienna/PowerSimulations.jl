@@ -52,8 +52,8 @@ function reserves(m::JuMP.AbstractModel, devices::Array{NamedTuple{(:device, :fo
 
     (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
-    pmin_rsv = JuMP.JuMPArray(Array{ConstraintRef}(undef,length(time_index)), time_index) #minimum system reserve provision
-    pmax_rsv = JuMP.JuMPArray(Array{ConstraintRef}(undef, length.(JuMP.axes(p_rsv))), name_index, time_index) #maximum generator reserve provision
+    pmin_rsv = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef,length(time_index)), time_index) #minimum system reserve provision
+    pmax_rsv = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef, length.(JuMP.axes(p_rsv))), name_index, time_index) #maximum generator reserve provision
 
 
     for t in time_index
@@ -72,7 +72,7 @@ function reserves(m::JuMP.AbstractModel, devices::Array{NamedTuple{(:device, :fo
     rmp_devices = [d for d in devices if d.formulation<:PowerSimulations.ThermalDispatch]
     rmp_name_index = [d.device.name for d in rmp_devices]
 
-    pramp_rsv = JuMP.JuMPArray(Array{ConstraintRef}(undef, (length(rmp_name_index),length(time_index))), rmp_name_index, time_index) #maximum generator reserve provision
+    pramp_rsv = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(undef, (length(rmp_name_index),length(time_index))), rmp_name_index, time_index) #maximum generator reserve provision
 
     for t in time_index
         # TODO: check the units of ramplimits

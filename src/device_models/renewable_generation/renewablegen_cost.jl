@@ -4,7 +4,8 @@ function variablecost(m::JuMP.AbstractModel, devices::Array{PowerSystems.Renewab
     time_index = m[:p_re].axes[2]
     name_index = m[:p_re].axes[1]
 
-    var_cost = AffExpr()
+    aff_expr_type = JuMP.GenericAffExpr{Float64,JuMP.variable_type(m)}
+    var_cost = aff_expr_type()
 
     for  (ix, name) in enumerate(name_index)
         if !isa(devices[ix].econ.curtailpenalty,Nothing)
@@ -12,7 +13,7 @@ function variablecost(m::JuMP.AbstractModel, devices::Array{PowerSystems.Renewab
         else
             continue
         end
-            (isa(var_cost,JuMP.AffExpr) && isa(c,JuMP.AffExpr)) ? JuMP.add_to_expression!(var_cost,c) : (isa(var_cost,JuMP.GenericQuadExpr) && isa(c,JuMP.GenericQuadExpr) ? JuMP.add_to_expression!(var_cost,c) : var_cost += c)
+        (isa(var_cost,aff_expr_type) && isa(c,aff_expr_type)) ? JuMP.add_to_expression!(var_cost,c) : (isa(var_cost,JuMP.GenericQuadExpr) && isa(c,JuMP.GenericQuadExpr) ? JuMP.add_to_expression!(var_cost,c) : var_cost += c)
     end
 
     return var_cost

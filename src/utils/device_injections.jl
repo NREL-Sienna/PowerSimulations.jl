@@ -2,8 +2,12 @@ function varnetinjectiterate!(netinjection::A, variable::JumpVariable, time_peri
 
     for t in 1:time_periods, d in devices
 
-        isassigned(netinjection,  d.bus.number,t) ? JuMP.add_to_expression!(netinjection[d.bus.number,t], variable[d.name, t]) : netinjection[d.bus.number,t] = variable[d.name, t];
-
+        if isassigned(netinjection,  d.bus.number,t)
+            JuMP.add_to_expression!(netinjection[d.bus.number,t], variable[d.name, t])
+        else
+            netinjection[d.bus.number,t] = JuMP.GenericAffExpr(zero(Float64), variable[d.name, t] => one(Float64))
+        end
+        
     end
 
 end

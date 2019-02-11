@@ -9,10 +9,10 @@ function powerconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, time_perio
     (length(pstin.axes[2]) != time_periods) ? @error("Length of time dimension inconsistent") : true
     (length(pstout.axes[2]) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
-    pmax_in = JuMP.JuMPArray(Array{ConstraintRef}(length.(JuMP.axes(pstin))), name_index, time_index)
-    pmax_out= JuMP.JuMPArray(Array{ConstraintRef}(length.(JuMP.axes(pstout))), name_index, time_index)
-    pmin_in = JuMP.JuMPArray(Array{ConstraintRef}(length.(JuMP.axes(pstin))), name_index, time_index)
-    pmin_out= JuMP.JuMPArray(Array{ConstraintRef}(length.(JuMP.axes(pstout))), name_index, time_index)
+    pmax_in = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(length.(JuMP.axes(pstin))), name_index, time_index)
+    pmax_out= JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(length.(JuMP.axes(pstout))), name_index, time_index)
+    pmin_in = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(length.(JuMP.axes(pstin))), name_index, time_index)
+    pmin_out= JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(length.(JuMP.axes(pstout))), name_index, time_index)
 
     (pstin.axes[1] !== pstout.axes[1]) ? @warn("Input/Output variables indexes are inconsistent") : true
 
@@ -46,7 +46,7 @@ function energybookkeeping(m::JuMP.AbstractModel, devices::Array{T,1}, time_peri
     (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent in E_bt") : true
     (pstin.axes[1] !== time_index) ? @warn("Input/Output and Battery Energy variables indexes are inconsistent") : true
 
-    bookkeep_bt = JuMP.JuMPArray(Array{ConstraintRef}(length.(JuMP.axes(ebt))), name_index, time_index)
+    bookkeep_bt = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(length.(JuMP.axes(ebt))), name_index, time_index)
 
     # TODO: Add Initial SOC for storage for sequential simulation
     for t1 = time_index[1], (ix,name) in enumerate(name_index)
@@ -79,7 +79,7 @@ function energyconstraints(m::JuMP.AbstractModel, devices::Array{T,1}, time_peri
 
     (length(ebt.axes[2]) != time_periods) ? @error("Length of time dimension inconsistent") : true
 
-    energylimit_bt = JuMP.JuMPArray(Array{ConstraintRef}(length.(JuMP.axes(ebt))), name_index, time_index)
+    energylimit_bt = JuMP.Containers.DenseAxisArray(Array{ConstraintRef}(length.(JuMP.axes(ebt))), name_index, time_index)
 
     for t in time_index, (ix,name) in enumerate(name_index)
         if name == devices[ix].name

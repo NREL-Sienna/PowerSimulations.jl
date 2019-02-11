@@ -14,7 +14,7 @@ function variablecost(phy::JumpVariable, devices::Array{T}) where T <: PowerSyst
 
 end
 
-function precost(X::JuMP.VariableRef, device::Union{PowerSystems.RenewableCurtailment,PowerSystems.RenewableFullDispatch})
+function precost(X::JuMP.AbstractVariableRef, device::Union{PowerSystems.RenewableCurtailment,PowerSystems.RenewableFullDispatch})
 
     return cost = sum(device.econ.curtailcost*(-X))
 end
