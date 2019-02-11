@@ -1,4 +1,4 @@
-function device_duration(ps_m::CanonicalModel, duration_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64},Float64},1}, time_range::UnitRange{Int64}, cons_name::String, var_name::String)
+function device_duration(ps_m::CanonicalModel, duration_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}},Float64},1}, time_range::UnitRange{Int64}, cons_name::String, var_name::String)
     
     set_name = [r[1] for r in duration_data]
 

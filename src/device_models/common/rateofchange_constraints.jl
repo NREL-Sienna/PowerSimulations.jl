@@ -1,4 +1,4 @@
-function device_linear_rateofchange(ps_m::CanonicalModel, rate_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64},Float64},1}, time_range::UnitRange{Int64}, cons_name::String, var_name::String)
+function device_linear_rateofchange(ps_m::CanonicalModel, rate_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}},Float64},1}, time_range::UnitRange{Int64}, cons_name::String, var_name::String)
 
     set_name = [r[1] for r in rate_data]
 
@@ -21,7 +21,7 @@ function device_linear_rateofchange(ps_m::CanonicalModel, rate_data::Array{Tuple
 
 end
 
-function device_mixedinteger_rateofchange(ps_m::CanonicalModel, rate_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}},NamedTuple{(:min, :max),Tuple{Float64,Float64}},Float64},1}, time_range::UnitRange{Int64}, cons_name::String, var_names::(String,String,String))
+function device_mixedinteger_rateofchange(ps_m::CanonicalModel, rate_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}},NamedTuple{(:min, :max),Tuple{Float64,Float64}},Float64},1}, time_range::UnitRange{Int64}, cons_name::String, var_names::Tuple{String,String,String})
 
     set_name = [r[1] for r in rate_data]
 
