@@ -248,7 +248,7 @@ version = "0.9.3"
 [[PowerSystems]]
 deps = ["AxisArrays", "CSV", "Compat", "DataFrames", "Dates", "JSON", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries"]
 git-tree-sha1 = "f789ba4d0e1b063fa31d69b332b813ef127ee7d5"
-repo-rev = "master"
+repo-rev = "ptdf_review"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
 version = "0.2.1"

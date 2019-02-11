@@ -1,0 +1,64 @@
+
+function timeconstraints(ps_m::CanonicalModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_periods::Int64; kwargs...) where {T <: PSY.ThermalGen, D <: ThermalUnitCommitment , S <: PM.AbstractActivePowerFormulation}
+
+    devices = [d for d in devices if !isa(d.tech.timelimits, Nothing)]
+
+    if !isempty(devices)
+        # TODO: Change loop orders, loop over time first and then over the device names
+
+        on_th = m[:on_th]
+        start_th = m[:start_th]
+        stop_th = m[:stop_th]
+        time_index = m[:on_th].axes[2]
+        name_index = [d.name for d in devices]
+
+        # set args default values
+        if :initialonduration in keys(args)
+            initialonduration = args[:initialonduration]
+        else
+            initialonduration = Dict(zip(name_index,ones(Float64,length(devices))*9999))
+        end
+
+        if :initialoffduration in keys(args)
+            initialoffduration = args[:initialoffduration]
+        else
+            initialoffduration = Dict(zip(name_index,ones(Float64,length(devices))*9999))
+        end
+
+        (length(time_index) != time_periods) ? @error("Length of time dimension inconsistent") : true
+
+        mindown_th = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
+        minup_th = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef, length(name_index), time_periods), name_index, time_index)
+
+        for t in time_index, (ix,name) in enumerate(name_index)
+            if name==devices[ix].name
+                if t - devices[ix].tech.timelimits.up >= 1
+                    tst = devices[ix].tech.timelimits.up
+                else
+                    tst = max(0, devices[ix].tech.timelimits.up - initialonduration[name])
+                end
+                if t - devices[ix].tech.timelimits.down >= 1
+                    tsd = devices[ix].tech.timelimits.down
+                else
+                    tsd = max(0, devices[ix].tech.timelimits.down - initialoffduration[name])
+                end
+
+                minup_th[name,t] = JuMP.@constraint(m,sum([start_th[name,i] for i in ((t - tst - 1) :t) if i > 0 ]) <= on_th[name,t])
+                mindown_th[name,t] = JuMP.@constraint(m,sum([stop_th[name,i] for i in ((t - tsd - 1) :t) if i > 0]) <= (1 - on_th[name,t]))
+
+            else
+                @error "Bus name in Array and variable do not match"
+
+            end
+        end
+
+        JuMP.register_object(m, :minup_th, minup_th)
+        JuMP.register_object(m, :mindown_th, mindown_th)
+
+    else
+        @warn "There are no generators with Min-up -down limits data in the system"
+
+    end
+
+    return m
+end

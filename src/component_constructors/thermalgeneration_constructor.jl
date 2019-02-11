@@ -32,6 +32,8 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_form
 
     commitmentconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, initial_conditions)
 
+    #devices = [d for d in devices if !isa(d.tech.ramplimits,Nothing)]
+    # @warn "Data doesn't contain generators with ramping limits"
     #rampconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; kwargs...)
 
     #timeconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; kwargs...)
@@ -69,6 +71,7 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_form
 
     commitmentconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, initial_conditions)
 
+    #devices = [d for d in devices if !isa(d.tech.ramplimits,Nothing)]
     #rampconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; kwargs...)
 
     #timeconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; kwargs...)

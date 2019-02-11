@@ -1,6 +1,7 @@
 include("common/cost_functions.jl")
 include("common/add_variable.jl")
 include("common/range_constraint.jl")
+include("common/rateofchange_constraint.jl")
 include("common/commitment_constraint.jl")
 include("common/timeseries_constraint.jl")
 include("common/undef_check.jl")
