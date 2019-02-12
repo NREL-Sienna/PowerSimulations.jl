@@ -2,7 +2,7 @@ abstract type AbstractRenewableFormulation <: AbstractDeviceFormulation end
 
 abstract type AbstractRenewableDispatchForm <: AbstractRenewableFormulation end
 
-abstract type RenewableFixed <: AbstractRenewableFormulation end
+struct RenewableFixed <: AbstractRenewableFormulation end
 
 struct RenewableFullDispatch <: AbstractRenewableDispatchForm end
 

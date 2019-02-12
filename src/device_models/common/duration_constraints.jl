@@ -5,22 +5,24 @@ function device_duration(ps_m::CanonicalModel, duration_data::Array{Tuple{String
     ps_m.constraints["$(cons_name)_up"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_range)
     ps_m.constraints["$(cons_name)_down"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_range)
 
-        for t in time_range, d in duration_data
+        for t in time_range, (ix,d) in enumerate(duration_data)
 
-                if t - devices[ix].tech.timelimits.up >= 1
-                    tst = devices[ix].tech.timelimits.up
+                if t - d[2].up >= 1
+                    tst = d[2].up
                 else
-                    tst = max(0, devices[ix].tech.timelimits.up - initialonduration[name])
+                    tst = max(0, d[2].up - initial_duration[ix,1])
                 end
-                if t - devices[ix].tech.timelimits.down >= 1
-                    tsd = devices[ix].tech.timelimits.down
+                
+                if t - d[2].down >= 1
+                    tsd = d[2].down
                 else
-                    tsd = max(0, devices[ix].tech.timelimits.down - initialoffduration[name])
+                    tsd = max(0, d[2].down - initial_duration[ix,2])
                 end
 
-                ps_m.constraints["$(cons_name)_up"][d[1], t] = JuMP.@constraint(m,sum([start_th[name,i] for i in ((t - tst - 1) :t) if i > 0 ]) <= on_th[name,t])
-                ps_m.constraints["$(cons_name)_down"][d[1], t] = JuMP.@constraint(m,sum([stop_th[name,i] for i in ((t - tsd - 1) :t) if i > 0]) <= (1 - on_th[name,t]))
+                ps_m.constraints["$(cons_name)_up"][d[1], t] = JuMP.@constraint(m,sum([ps_m.variables["$(var_names[2])"][d[1],i] for i in ((t- tst - 1) :t) if i > 0 ]) <= ps_m.variables["$(var_names[2])"][d[1],t])
+                ps_m.constraints["$(cons_name)_down"][d[1], t] = JuMP.@constraint(m,sum([ps_m.variables["$(var_names[3])"][d[1],i] for i in ((t - tsd - 1) :t) if i > 0]) <= (1 - ps_m.variables["$(var_names[2])"][d[1],t]))
 
         end
 
 end
+
