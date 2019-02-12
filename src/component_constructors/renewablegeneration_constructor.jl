@@ -10,14 +10,14 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{R}, category_form
     if !isempty(controllable_resources)
 
         #Variables
-        activepowervariables(ps_m, controllable_resources, time_range);
+        activepower_variables(ps_m, controllable_resources, time_range);
 
-        reactivepowervariables(ps_m, controllable_resources, time_range);
+        reactivepower_variables(ps_m, controllable_resources, time_range);
 
         #Constraints
-        activepower(ps_m, controllable_resources, category_formulation, system_formulation, time_range)
+        activepower_constraints(ps_m, controllable_resources, category_formulation, system_formulation, time_range)
 
-        reactivepower(ps_m, controllable_resources, category_formulation, system_formulation, time_range)
+        reactivepower_constraints(ps_m, controllable_resources, category_formulation, system_formulation, time_range)
 
         #Cost Function
         cost_function(ps_m, controllable_resources, category_formulation, system_formulation)
@@ -45,10 +45,10 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{R}, category_form
     if !isempty(controllable_resources)
 
         #Variables
-        activepowervariables(ps_m, controllable_resources, time_range)
+        activepower_variables(ps_m, controllable_resources, time_range)
 
         #Constraints
-        activepower(ps_m, controllable_resources, category_formulation, system_formulation, time_range)
+        activepower_constraints(ps_m, controllable_resources, category_formulation, system_formulation, time_range)
 
         #Cost Function
         cost_function(ps_m, controllable_resources, category_formulation, system_formulation)

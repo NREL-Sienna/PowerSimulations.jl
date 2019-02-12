@@ -5,7 +5,8 @@
                                   nothing,
                                   Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
                                                                              "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
-                                  Dict());
+                                  Dict{String,Any}(),
+                                      Dict());
     PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.InterruptiblePowerLoad, PM.DCPlosslessForm, sys5b);
     true finally end
 
@@ -16,7 +17,8 @@
                                   nothing,
                                   Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
                                                                              "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
-                                  Dict());
+                                      Dict{String,Any}(),
+                                      Dict());
     PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.InterruptiblePowerLoad, PM.StandardACPForm, sys5b);
     true finally end
 
@@ -27,7 +29,8 @@
                                     nothing,
                                     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
                                                                                 "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
-                                    Dict());
+                                                                                Dict{String,Any}(),
+                                                                                Dict());
     PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad , PM.DCPlosslessForm, sys5b);
     true finally end
 
@@ -38,6 +41,7 @@
                                     nothing,
                                     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
                                                                                 "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
-                                    Dict());
+                                                                                Dict{String,Any}(),
+                                                                                Dict());
     PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
     true finally end

@@ -104,28 +104,6 @@ function get_buses_to_pm(buses::Array{PSY.Bus})
     return PM_buses
 end
 
-#=
-function expression_to_pm_active(PM_dict::Dict{String,Any}, netinjection::BalanceNamedTuple, sys::PSY.PowerSystem)
-
-    for bus in sys.buses, time in 1:sys.time_periods
-
-        PM_dict["nw"]["$(time)"]["bus"]["$(bus.number)"]["pni"] = netinjection.var_active[bus.number,time]
-
-    end
-
-end
-
-function expression_to_pm_reactive(PM_dict::Dict{String,Any}, netinjection::BalanceNamedTuple, sys::PSY.PowerSystem)
-
-    for bus in sys.buses, time in 1:sys.time_periods
-
-        PM_dict["nw"]["$(time)"]["bus"]["$(bus.number)"]["qni"] = netinjection.var_reactive[bus.number,time]
-
-    end
-
-end
-=#
-
 function pass_to_pm(sys::PSY.PowerSystem)
 
     PM_translation = Dict{String,Any}(
