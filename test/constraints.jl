@@ -23,12 +23,13 @@ true finally end
 
 @test  try
     @info "testing Full AC Model with Commitment Thermal"
-    PSI.activepowervariables(ps_model, generators5, 1:24)
-    PSI.commitmentvariables(ps_model, generators5, 1:24);
-    PSI.activepower(ps_model, generators5, PSI.ThermalUnitCommitment , PM.DCPlosslessForm, 1:24)
-    PSI.ramp(ps_model, generators5, PSI.ThermalUnitCommitment, PM.DCPlosslessForm, 1:24, zeros(4))
-    PSI.reactivepowervariables(ps_model, generators5, 1:24)
-    PSI.reactivepower(ps_model, generators5, PSI.ThermalUnitCommitment , PM.StandardACPForm, 1:24)
+    PSI.activepowervariables(ps_model, generators5_uc, 1:24)
+    PSI.commitmentvariables(ps_model, generators5_uc, 1:24);
+    PSI.activepower(ps_model, generators5_uc, PSI.ThermalUnitCommitment , PM.StandardACPForm, 1:24)
+    PSI.ramp(ps_model, generators5_uc, PSI.ThermalUnitCommitment, PM.StandardACPForm, 1:24, zeros(4))
+    PSI.timeconstraints(ps_model, generators5_uc, PSI.ThermalUnitCommitment, PM.StandardACPForm, 1:24, zeros(4,2))
+    PSI.reactivepowervariables(ps_model, generators5_uc, 1:24)
+    PSI.reactivepower(ps_model, generators5_uc, PSI.ThermalUnitCommitment , PM.StandardACPForm, 1:24)
 true finally end
 
 @test  try
@@ -38,6 +39,16 @@ true finally end
     PSI.activepower(ps_model, generators5_uc, PSI.ThermalUnitCommitment , PM.DCPlosslessForm, 1:24)
     PSI.ramp(ps_model, generators5_uc, PSI.ThermalUnitCommitment, PM.DCPlosslessForm, 1:24, zeros(4))
 true finally end
+
+@test  try
+    @info "testing Active Power Full Unit Commitment"
+    PSI.activepowervariables(ps_model, generators5_uc, 1:24)
+    PSI.commitmentvariables(ps_model, generators5_uc, 1:24);
+    PSI.activepower(ps_model, generators5_uc, PSI.ThermalUnitCommitment , PM.DCPlosslessForm, 1:24)
+    PSI.ramp(ps_model, generators5_uc, PSI.ThermalUnitCommitment, PM.DCPlosslessForm, 1:24, zeros(4))
+    PSI.timeconstraints(ps_model, generators5_uc, PSI.ThermalUnitCommitment, PM.StandardACPForm, 1:24, zeros(4,2))
+true finally end
+
 
 @test  try
     PSI.activepowervariables(ps_model, generators_hg, 1:24)

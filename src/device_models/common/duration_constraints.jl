@@ -1,4 +1,8 @@
-function device_duration(ps_m::CanonicalModel, duration_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}}},1}, initial_duration::Array{Float64,2}, time_range::UnitRange{Int64}, cons_name::String, var_names::Tuple{String,String,String})
+"""
+This formulation of the duration constraints, adds over the start times looking backwards. 
+
+"""
+function device_duration_retrospective(ps_m::CanonicalModel, duration_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}}},1}, initial_duration::Array{Float64,2}, time_range::UnitRange{Int64}, cons_name::String, var_names::Tuple{String,String,String})
 
     set_name = [r[1] for r in duration_data]
 
@@ -19,8 +23,8 @@ function device_duration(ps_m::CanonicalModel, duration_data::Array{Tuple{String
                     tsd = max(0, d[2].down - initial_duration[ix,2])
                 end
 
-                ps_m.constraints["$(cons_name)_up"][d[1], t] = JuMP.@constraint(m,sum([ps_m.variables["$(var_names[2])"][d[1],i] for i in ((t- tst - 1) :t) if i > 0 ]) <= ps_m.variables["$(var_names[2])"][d[1],t])
-                ps_m.constraints["$(cons_name)_down"][d[1], t] = JuMP.@constraint(m,sum([ps_m.variables["$(var_names[3])"][d[1],i] for i in ((t - tsd - 1) :t) if i > 0]) <= (1 - ps_m.variables["$(var_names[2])"][d[1],t]))
+                ps_m.constraints["$(cons_name)_up"][d[1], t] = JuMP.@constraint(ps_m.JuMPmodel, sum([ps_m.variables["$(var_names[2])"][d[1],i] for i in ((t - tst + 1) :t) if i > 0 ]) <= ps_m.variables["$(var_names[1])"][d[1],t])
+                ps_m.constraints["$(cons_name)_down"][d[1], t] = JuMP.@constraint(ps_m.JuMPmodel, sum([ps_m.variables["$(var_names[3])"][d[1],i] for i in ((t - tsd + 1) :t) if i > 0]) <= (1 - ps_m.variables["$(var_names[1])"][d[1],t]))
 
         end
 
