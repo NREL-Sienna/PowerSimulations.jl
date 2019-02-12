@@ -1,12 +1,12 @@
-function device_duration(ps_m::CanonicalModel, duration_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}},Float64},1}, time_range::UnitRange{Int64}, cons_name::String, var_name::String)
-    
+function device_duration(ps_m::CanonicalModel, duration_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}}},1}, initial_duration::Array{Float64,2}, time_range::UnitRange{Int64}, cons_name::String, var_names::Tuple{String,String,String})
+
     set_name = [r[1] for r in duration_data]
 
     ps_m.constraints["$(cons_name)_up"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_range)
     ps_m.constraints["$(cons_name)_down"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_range)
 
-        for t in time_index, (ix,name) in enumerate(name_index)
-            if name==devices[ix].name
+        for t in time_range, d in duration_data
+
                 if t - devices[ix].tech.timelimits.up >= 1
                     tst = devices[ix].tech.timelimits.up
                 else
@@ -18,13 +18,9 @@ function device_duration(ps_m::CanonicalModel, duration_data::Array{Tuple{String
                     tsd = max(0, devices[ix].tech.timelimits.down - initialoffduration[name])
                 end
 
-                minup_th[name,t] = JuMP.@constraint(m,sum([start_th[name,i] for i in ((t - tst - 1) :t) if i > 0 ]) <= on_th[name,t])
-                mindown_th[name,t] = JuMP.@constraint(m,sum([stop_th[name,i] for i in ((t - tsd - 1) :t) if i > 0]) <= (1 - on_th[name,t]))
+                ps_m.constraints["$(cons_name)_up"][d[1], t] = JuMP.@constraint(m,sum([start_th[name,i] for i in ((t - tst - 1) :t) if i > 0 ]) <= on_th[name,t])
+                ps_m.constraints["$(cons_name)_down"][d[1], t] = JuMP.@constraint(m,sum([stop_th[name,i] for i in ((t - tsd - 1) :t) if i > 0]) <= (1 - on_th[name,t]))
 
-            else
-                @error "Bus name in Array and variable do not match"
-
-            end
         end
 
 end
