@@ -94,6 +94,8 @@ sys5b = PowerSystem(nodes5, vcat(generators5,renewables), loads5_DA, branches5, 
     include("variables.jl")
     include("constraints.jl")
     include("cost_functions.jl")
+    include("PowerModels_interface.jl")
+    #include("add_to_expression.jl")
 end
 
 @testset "Device Constructors" begin
@@ -101,10 +103,10 @@ end
     include("renewable_generation_constructors.jl")
     include("load_constructors.jl")
     #include("HydroConstructors_testing.jl")
+    #include("StorageConstructors_testing.jl")
 end
 
 @testset "Network Constructors" begin
-    include("PowerModels_interface.jl")
     include("network_constructors.jl")
 end
 
