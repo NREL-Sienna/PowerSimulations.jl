@@ -7,6 +7,7 @@ ps_model = PSI.CanonicalModel(Model(),
                               Dict());
 
 @test  try
+    @info "testing Active Power Only Range Constraints Thermal"
     PSI.activepowervariables(ps_model, generators5, 1:24)
     PSI.activepower(ps_model, generators5, PSI.ThermalDispatch, PM.DCPlosslessForm, 1:24)
     PSI.reactivepowervariables(ps_model, generators5, 1:24)
@@ -14,11 +15,28 @@ ps_model = PSI.CanonicalModel(Model(),
 true finally end
 
 @test  try
+    @info "testing Active Power Rate of Change Constraints Thermal"
+    PSI.activepowervariables(ps_model, generators5_uc, 1:24)
+    PSI.activepower(ps_model, generators5_uc, PSI.ThermalDispatch, PM.DCPlosslessForm, 1:24)
+    PSI.ramp(ps_model, generators5_uc, PSI.ThermalDispatch, PM.DCPlosslessForm, 1:24, zeros(4))
+true finally end
+
+@test  try
+    @info "testing Full AC Model with Commitment Thermal"
     PSI.activepowervariables(ps_model, generators5, 1:24)
     PSI.commitmentvariables(ps_model, generators5, 1:24);
     PSI.activepower(ps_model, generators5, PSI.ThermalUnitCommitment , PM.DCPlosslessForm, 1:24)
+    PSI.ramp(ps_model, generators5, PSI.ThermalUnitCommitment, PM.DCPlosslessForm, 1:24, zeros(4))
     PSI.reactivepowervariables(ps_model, generators5, 1:24)
     PSI.reactivepower(ps_model, generators5, PSI.ThermalUnitCommitment , PM.StandardACPForm, 1:24)
+true finally end
+
+@test  try
+    @info "testing Active Power Rate of Change Constraints Thermal Commitment"
+    PSI.activepowervariables(ps_model, generators5_uc, 1:24)
+    PSI.commitmentvariables(ps_model, generators5_uc, 1:24);
+    PSI.activepower(ps_model, generators5_uc, PSI.ThermalUnitCommitment , PM.DCPlosslessForm, 1:24)
+    PSI.ramp(ps_model, generators5_uc, PSI.ThermalUnitCommitment, PM.DCPlosslessForm, 1:24, zeros(4))
 true finally end
 
 @test  try
