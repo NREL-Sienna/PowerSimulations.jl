@@ -44,10 +44,8 @@ const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
 
 #Type Alias for JuMP containers
-const JumpVariable = JuMP.Containers.DenseAxisArray{JuMP.VariableRef,2,Tuple{Array{String,1},UnitRange{Int64}}}
 const JumpExpressionMatrix = Matrix{<:JuMP.GenericAffExpr}
 const JumpAffineExpressionArray = Array{JuMP.GenericAffExpr{Float64,JuMP.VariableRef},2}
-const BalanceNamedTuple = NamedTuple{(:var_active, :var_reactive, :timeseries_active, :timeseries_reactive),Tuple{JumpAffineExpressionArray, UJ, Array{Float64,2}, UF}} where {UJ <: Union{Nothing,JumpAffineExpressionArray}, UF <: Union{Nothing, Array{Float64,2}}}
 
 #Type Alias for Unions
 const fix_resource = Union{PSY.RenewableFix, PSY.HydroFix}
