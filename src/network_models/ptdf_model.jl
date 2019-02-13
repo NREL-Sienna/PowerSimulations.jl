@@ -34,7 +34,7 @@ to = TimerOutput()
                               Dict());
 @timeit to "build_thermal"    PSI.constructdevice!(ps_m, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b); 
 @timeit to "build_load"    PSI.constructdevice!(ps_m, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
-@timeit to "add_flow"      PSI.flowvariables(ps_m, PM.DCPlosslessForm, branches5, 1:24)
+@timeit to "add_flow"      PSI.flow_variables(ps_m, PM.DCPlosslessForm, branches5, 1:24)
 @timeit to "PTDF cons" begin
     @timeit to "allocate_space" ps_m.constraints["Flow_con1"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [b.name for b in branches5], 1:24)
     @timeit to "make constraints" for t in 1:24
@@ -76,7 +76,7 @@ to = TimerOutput()
                               Dict());
 @timeit to "build_thermal"    PSI.constructdevice!(ps_m, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b); 
 @timeit to "build_load"    PSI.constructdevice!(ps_m, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
-@timeit to "add_flow"      PSI.flowvariables(ps_m, PM.DCPlosslessForm, branches5, 1:24)
+@timeit to "add_flow"      PSI.flow_variables(ps_m, PM.DCPlosslessForm, branches5, 1:24)
 @timeit to "PTDF cons" begin
     @timeit to "allocate_space" ps_m.constraints["Flow_con2"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [b.name for b in branches5], 1:24)
     @timeit to "make constraints" begin for t in 1:24

@@ -7,16 +7,16 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_form
     time_range = 1:sys.time_periods
 
     #Variables
-    activepowervariables(ps_m, sys.generators.thermal, time_range);
+    activepower_variables(ps_m, sys.generators.thermal, time_range);
 
-    reactivepowervariables(ps_m, sys.generators.thermal, time_range);
+    reactivepower_variables(ps_m, sys.generators.thermal, time_range);
 
-    commitmentvariables(ps_m, sys.generators.thermal, time_range)
+    commitment_variables(ps_m, sys.generators.thermal, time_range)
 
     #Constraints
-    activepower(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
 
-    reactivepower(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
+    reactivepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
 
     if :initial_conditions in keys(kwargs)
 
@@ -28,11 +28,13 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_form
 
     end
 
-    commitmentconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, initial_conditions)
+    commitment_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, initial_conditions)
 
-    #devices = [d for d in devices if !isa(d.tech.ramplimits,Nothing)]
-    # @warn "Data doesn't contain generators with ramping limits"
-    #rampconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; kwargs...)
+   
+   
+    ramp_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, initial_conditions)
+
+    time_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, initial_conditions)
 
     #devices = [d for d in devices if !isa(d.tech.timelimits, Nothing)]
     #=
@@ -49,7 +51,7 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_form
         end
     =#
     #timeconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; kwargs...)
-    #@warn "There are no generators with Min-up -down limits data in the system"
+ 
 
     #rating constraints 
 
@@ -66,12 +68,12 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_form
     time_range = 1:sys.time_periods
 
     #Variables
-    activepowervariables(ps_m, sys.generators.thermal, time_range);
+    activepower_variables(ps_m, sys.generators.thermal, time_range);
 
-    commitmentvariables(ps_m, sys.generators.thermal, time_range)
+    commitment_variables(ps_m, sys.generators.thermal, time_range)
 
     #Constraints
-    activepower(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
 
     if :initial_conditions in keys(kwargs)
 
@@ -83,7 +85,7 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_form
 
     end
 
-    commitmentconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, initial_conditions)
+    commitment_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, initial_conditions)
 
     #devices = [d for d in devices if !isa(d.tech.ramplimits,Nothing)]
     #rampconstraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, sys.time_periods; kwargs...)
@@ -101,14 +103,14 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_form
     time_range = 1:sys.time_periods
 
     #Variables
-    activepowervariables(ps_m, sys.generators.thermal, time_range);
+    activepower_variables(ps_m, sys.generators.thermal, time_range);
 
-    reactivepowervariables(ps_m, sys.generators.thermal, time_range);
+    reactivepower_variables(ps_m, sys.generators.thermal, time_range);
 
     #Constraints
-    activepower(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
 
-    reactivepower(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
+    reactivepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
 
     #rating constraints 
 
@@ -123,10 +125,10 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_form
     time_range = 1:sys.time_periods
 
     #Variables
-    activepowervariables(ps_m, sys.generators.thermal, time_range);
+    activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     #Constraints
-    activepower(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
 
     #Cost Function
     cost_function(ps_m, sys.generators.thermal, category_formulation, system_formulation)

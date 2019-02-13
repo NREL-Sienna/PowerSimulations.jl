@@ -18,7 +18,7 @@ function constructnetwork!(ps_m::CanonicalModel, system_formulation::Type{Standa
 
         ac_branches = [br for br in sys.branches if !isa(br, PSY.DCLine)]
 
-        flowvariables(ps_m, system_formulation, ac_branches, time_range)
+        flow_variables(ps_m, system_formulation, ac_branches, time_range)
 
         ptdf_networkflow(ps_m, ac_branches, sys.buses, "var_active", kwargs[:PTDF], time_range)
 

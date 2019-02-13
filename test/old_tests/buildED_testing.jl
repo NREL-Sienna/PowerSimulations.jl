@@ -13,11 +13,11 @@ m=JuMP.Model()
 devices_netinjection =  JumpAffineExpressionArray(length(sys5b.buses), sys5b.time_periods)
 
 #Thermal Generator Models
-p_th, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);
+p_th, inyection_array = PowerSimulations.activepower_variables(m, devices_netinjection,   sys5b.generators.thermal, sys5b.time_periods);
 m = PowerSimulations.powerconstraints(m, p_th, sys5b.generators.thermal, sys5b.time_periods)
 
 pre_set = [d for d in sys5b.generators.renewable if !isa(d, RenewableFix)]
-pre, inyection_array = PowerSimulations.activepowervariables(m, devices_netinjection,  pre_set, sys5b.time_periods)
+pre, inyection_array = PowerSimulations.activepower_variables(m, devices_netinjection,  pre_set, sys5b.time_periods)
 
 m = PowerSimulations.powerconstraints(m, pre, pre_set, sys5b.time_periods)
 
