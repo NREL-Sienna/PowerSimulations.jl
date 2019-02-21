@@ -10,28 +10,18 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_form
 
     else
 
-        initial_conditions = [(g.name, Float64(g.tech.activepower > 0.0)) for g in sys.generators.thermal]
+        initial_conditions = Dict{"String",Any}()
+
+        @warn("Initial Conditions not provided, this can lead to infeasible problems")
 
     end
-
-     #=
-            if :initialonduration in keys(args)
-            initialonduration = args[:initialonduration]
-        else
-            initialonduration = Dict(zip(name_index,ones(Float64,length(devices))*9999))
-        end
-
-        if :initialoffduration in keys(args)
-            initialoffduration = args[:initialoffduration]
-        else
-            initialoffduration = Dict(zip(name_index,ones(Float64,length(devices))*9999))
-        end
-    =#
 
     #Defining this outside in order to enable time slicing later
     time_range = 1:sys.time_periods
 
     #Variables
+
+    #TODO: Enable Initial Conditions
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     reactivepower_variables(ps_m, sys.generators.thermal, time_range);
@@ -43,13 +33,19 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_form
 
     reactivepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
 
+    "status_initial_conditions" in keys(initial_conditions) ? status_initial_conditions = initial_conditions["status_initial_conditions"] : @warn("No status initial conditions provided")
+
     commitment_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, status_initial_conditions)
-   
+
+    "ramp_initial_conditions" in keys(initial_conditions) ? ramp_initial_conditions = initial_conditions["ramp_initial_conditions"] : @warn("No ramp initial conditions provided")
+
     ramp_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, ramp_initial_conditions)
+
+    "time_initial_conditions" in keys(initial_conditions) ? time_initial_conditions = initial_conditions["time_initial_conditions"] : @warn("No duration initial conditions provided")
 
     time_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, time_initial_conditions)
 
-    #TODO: rate constraints 
+    #TODO: rate constraints
 
     #Cost Function
 
@@ -73,7 +69,7 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_form
 
     reactivepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
 
-    #TODO: rate constraints 
+    #TODO: rate constraints
 
     #Cost Function
     cost_function(ps_m, sys.generators.thermal, category_formulation, system_formulation)
