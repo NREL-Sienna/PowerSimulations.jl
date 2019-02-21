@@ -5,11 +5,15 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{St}, category_for
 
         initial_conditions = kwargs[:initial_conditions]
 
+        "energy_initial_conditions" in keys(initial_conditions) ? status_initial_conditions = initial_conditions["energy_initial_conditions"] : @warn("No energy initial conditions provided")
+
     else
 
         initial_conditions = Dict{"String",Any}()
 
         @warn("Initial Conditions not provided, this can lead to infeasible problems")
+
+        energy_initial_conditions =
 
     end
 

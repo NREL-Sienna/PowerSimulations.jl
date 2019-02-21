@@ -99,7 +99,7 @@ sys5b = PowerSystem(nodes5, vcat(generators5,renewables), loads5_DA, branches5, 
 end
 
 @testset "Device Constructors" begin
-    #include("thermal_generation_constructors.jl")
+    include("thermal_generation_constructors.jl")
     include("renewable_generation_constructors.jl")
     include("load_constructors.jl")
     #include("HydroConstructors_testing.jl")

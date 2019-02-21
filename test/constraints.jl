@@ -28,7 +28,7 @@ true finally end
     PSI.commitment_variables(ps_model, generators5_uc, 1:24);
     PSI.activepower_constraints(ps_model, generators5_uc, PSI.ThermalUnitCommitment , PM.StandardACPForm, 1:24)
     PSI.ramp_constraints(ps_model, generators5_uc, PSI.ThermalUnitCommitment, PM.StandardACPForm, 1:24, zeros(4))
-    PSI.timeconstraints(ps_model, generators5_uc, PSI.ThermalUnitCommitment, PM.StandardACPForm, 1:24, zeros(4,2))
+    PSI.time_constraints(ps_model, generators5_uc, PSI.ThermalUnitCommitment, PM.StandardACPForm, 1:24, zeros(4,2))
     PSI.reactivepower_variables(ps_model, generators5_uc, 1:24)
     PSI.reactivepower_constraints(ps_model, generators5_uc, PSI.ThermalUnitCommitment , PM.StandardACPForm, 1:24)
 true finally end
@@ -47,7 +47,7 @@ true finally end
     PSI.commitment_variables(ps_model, generators5_uc, 1:24);
     PSI.activepower_constraints(ps_model, generators5_uc, PSI.ThermalUnitCommitment , PM.DCPlosslessForm, 1:24)
     PSI.ramp_constraints(ps_model, generators5_uc, PSI.ThermalUnitCommitment, PM.DCPlosslessForm, 1:24, zeros(4))
-    PSI.timeconstraints(ps_model, generators5_uc, PSI.ThermalUnitCommitment, PM.StandardACPForm, 1:24, zeros(4,2))
+    PSI.time_constraints(ps_model, generators5_uc, PSI.ThermalUnitCommitment, PM.StandardACPForm, 1:24, zeros(4,2))
 true finally end
 
 

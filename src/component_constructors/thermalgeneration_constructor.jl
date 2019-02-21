@@ -8,11 +8,21 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_form
 
         initial_conditions = kwargs[:initial_conditions]
 
+        "status_initial_conditions" in keys(initial_conditions) ? status_initial_conditions = initial_conditions["status_initial_conditions"] : @warn("No status initial conditions provided")
+
+        "ramp_initial_conditions" in keys(initial_conditions) ? ramp_initial_conditions = initial_conditions["ramp_initial_conditions"] : @warn("No ramp initial conditions provided")
+
+        "time_initial_conditions" in keys(initial_conditions) ? time_initial_conditions = initial_conditions["time_initial_conditions"] : @warn("No duration initial conditions provided")
+
     else
 
-        initial_conditions = Dict{"String",Any}()
-
         @warn("Initial Conditions not provided, this can lead to infeasible problems")
+
+        status_initial_conditions = zeros(length(sys.generators.thermal))
+
+        ramp_initial_conditions = zeros(length(sys.generators.thermal))
+
+        time_initial_conditions = hcat(zeros(length(sys.generators.thermal)), 9999*ones(length(sys.generators.thermal)))
 
     end
 
@@ -21,7 +31,7 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_form
 
     #Variables
 
-    #TODO: Enable Initial Conditions
+    #TODO: Enable Initial Conditions for variables
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     reactivepower_variables(ps_m, sys.generators.thermal, time_range);
@@ -33,15 +43,9 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{T}, category_form
 
     reactivepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
 
-    "status_initial_conditions" in keys(initial_conditions) ? status_initial_conditions = initial_conditions["status_initial_conditions"] : @warn("No status initial conditions provided")
-
     commitment_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, status_initial_conditions)
 
-    "ramp_initial_conditions" in keys(initial_conditions) ? ramp_initial_conditions = initial_conditions["ramp_initial_conditions"] : @warn("No ramp initial conditions provided")
-
     ramp_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, ramp_initial_conditions)
-
-    "time_initial_conditions" in keys(initial_conditions) ? time_initial_conditions = initial_conditions["time_initial_conditions"] : @warn("No duration initial conditions provided")
 
     time_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, time_initial_conditions)
 
