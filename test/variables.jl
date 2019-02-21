@@ -4,6 +4,7 @@ ps_model = PSI.CanonicalModel(Model(),
                               nothing,
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
                                                                          "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
+                              Dict{String,Any}(),
                               Dict());
 
 @test try PSI.activepower_variables(ps_model, generators5, 1:24); true finally end

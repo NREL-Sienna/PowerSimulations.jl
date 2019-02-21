@@ -4,21 +4,22 @@ ps_model = PSI.CanonicalModel(Model(),
                               nothing,
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
                                                                          "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
+                              Dict{String,Any}(),
                               Dict());
 
-@test try   PSI.activepower_variables(ps_model, generators5, 1:24); 
-            PSI.cost_function(ps_model, generators5, PSI.ThermalDispatch, PM.DCPlosslessForm); 
-            true 
+@test try   PSI.activepower_variables(ps_model, generators5, 1:24);
+            PSI.cost_function(ps_model, generators5, PSI.ThermalDispatch, PM.DCPlosslessForm);
+            true
     finally end
 
-@test try   PSI.commitment_variables(ps_model, generators5, 1:24); 
-            PSI.cost_function(ps_model, generators5, PSI.ThermalUnitCommitment , PM.DCPlosslessForm); 
-            true 
+@test try   PSI.commitment_variables(ps_model, generators5, 1:24);
+            PSI.cost_function(ps_model, generators5, PSI.ThermalUnitCommitment , PM.DCPlosslessForm);
+            true
     finally end
 
-@test try   PSI.activepower_variables(ps_model, renewables, 1:24); 
-            PSI.cost_function(ps_model, renewables, PSI.RenewableFullDispatch, PM.DCPlosslessForm); 
-            true 
+@test try   PSI.activepower_variables(ps_model, renewables, 1:24);
+            PSI.cost_function(ps_model, renewables, PSI.RenewableFullDispatch, PM.DCPlosslessForm);
+            true
     finally end
 
 #=

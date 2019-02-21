@@ -6,8 +6,9 @@
     nothing,
     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
+    Dict{String,Any}(),
     Dict());
-    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.CopperPlatePowerModel, sys5b); 
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.CopperPlatePowerModel, sys5b);
     PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.CopperPlatePowerModel, sys5b);
     PSI.constructnetwork!(ps_model, PSI.CopperPlatePowerModel, sys5b);
 true finally end
@@ -21,8 +22,9 @@ true finally end
     nothing,
     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
+    Dict{String,Any}(),
     Dict());
-    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b); 
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b);
     PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFModel, sys5b);
     PSI.constructnetwork!(ps_model, PSI.StandardPTDFModel, sys5b; PTDF = PTDF)
 true finally end
@@ -36,8 +38,9 @@ true finally end
     nothing,
     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
+    Dict{String,Any}(),
     Dict());
-    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b); 
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b);
     PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFModel, sys5b);
     PSI.constructnetwork!(ps_model, PSI.StandardPTDFModel, sys5b)
 true finally end
@@ -50,8 +53,9 @@ true finally end
     nothing,
     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
+    Dict{String,Any}(),
     Dict());
-    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.DCPlosslessForm, sys5b); 
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.DCPlosslessForm, sys5b);
     PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.DCPlosslessForm, sys5b);
     PSI.constructnetwork!(ps_model, PM.DCPlosslessForm, sys5b);
 true finally end
@@ -64,8 +68,9 @@ true finally end
     nothing,
     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
+    Dict{String,Any}(),
     Dict());
-    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b); 
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b);
     PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
     PSI.constructnetwork!(ps_model, PM.StandardACPForm, sys5b);
 true finally end
@@ -78,8 +83,9 @@ true finally end
     nothing,
     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
+    Dict{String,Any}(),
     Dict());
-    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.QCWRForm, sys5b); 
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.QCWRForm, sys5b);
     PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.QCWRForm, sys5b);
     PSI.constructnetwork!(ps_model, PM.QCWRForm, sys5b);
 true finally end
