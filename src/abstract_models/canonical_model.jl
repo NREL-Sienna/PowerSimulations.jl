@@ -1,3 +1,5 @@
+abstract type AbstractDeviceFormulation end
+
 mutable struct CanonicalModel
     JuMPmodel::JuMP.AbstractModel
     variables::Dict{String, JuMP.Containers.DenseAxisArray}

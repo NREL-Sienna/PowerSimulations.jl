@@ -1,12 +1,4 @@
-abstract type AbstractDeviceFormulation end
-
 abstract type AbstractOperationsModel end
-
-abstract type EconomicDispatch <: AbstractOperationsModel end
-
-abstract type UnitCommitment <: AbstractOperationsModel end
-
-abstract type CustomModel <: AbstractOperationsModel end
 
 mutable struct PowerOperationModel{ M<:AbstractOperationsModel, T<:PM.AbstractPowerFormulation, S<:Union{Nothing,Array{NamedTuple{(:service, :formulation), Tuple{D,DataType}}}} where {D <: PSY.Service}}
     psmodel::Type{M}
