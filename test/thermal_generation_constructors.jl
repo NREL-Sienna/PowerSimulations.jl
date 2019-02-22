@@ -1,7 +1,6 @@
-
 @test try
     @info "testing UC With DC - PF"
-ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
+    ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
                               Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
@@ -9,12 +8,12 @@ ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
                                                                          "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                               Dict{String,Any}(),
                               Dict());
-PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalUnitCommitment, PM.DCPlosslessForm, sys5b_uc);
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalUnitCommitment, PM.DCPlosslessForm, sys5b_uc);
 true finally end
 
 @test try
     @info "testing UC With AC - PF"
-ps_model = PSI.CanonicalModel(Model(),
+    ps_model = PSI.CanonicalModel(Model(),
                               Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
@@ -78,7 +77,20 @@ true finally end
     true finally end
 
 @test try
-    @info "testing Dispatch No-Minimum With CopperPlate"
+    @info "testing Dispatch No-Minimum With DC - PF"
+    ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
+                                    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
+                                    Dict{String, JuMP.Containers.DenseAxisArray}(),
+                                    nothing,
+                                Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
+                                                                            "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
+                                Dict{String,Any}(),
+                                Dict());
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatchNoMin, PM.DCPlosslessForm, sys5b_uc);
+    true finally end
+
+@test try
+    @info "testing Ramp Limited Dispatch With AC - PF"
     ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
                                     Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                     Dict{String, JuMP.Containers.DenseAxisArray}(),
@@ -87,5 +99,18 @@ true finally end
                                                                             "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                                 Dict{String,Any}(),
                                 Dict());
-    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatchNoMin, PSI.CopperPlatePowerModel, sys5b_uc);
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalRampLimited, PM.StandardACPForm, sys5b_uc);
+    true finally end
+
+@test try
+    @info "testing Ramp Limited Dispatch With AC - PF"
+    ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
+                                    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
+                                    Dict{String, JuMP.Containers.DenseAxisArray}(),
+                                    nothing,
+                                Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
+                                                                            "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
+                                Dict{String,Any}(),
+                                Dict());
+    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalRampLimited, PM.DCPlosslessForm, sys5b_uc);
     true finally end
