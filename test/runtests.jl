@@ -89,6 +89,7 @@ generators_hg = [
 ];
 
 sys5b = PowerSystem(nodes5, vcat(generators5,renewables), loads5_DA, branches5, nothing,  100.0);
+sys5b_uc = PowerSystem(nodes5, vcat(generators5_uc,renewables), loads5_DA, branches5, nothing,  100.0);
 
 @testset "Common Functionalities" begin
     include("variables.jl")

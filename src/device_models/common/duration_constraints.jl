@@ -14,17 +14,17 @@ function device_duration_retrospective(ps_m::CanonicalModel, duration_data::Arra
                 if t - d[2].up >= 1
                     tst = d[2].up
                 else
-                    tst = max(0, d[2].up - initial_duration[ix,1])
+                    tst = max(1.0, d[2].up - initial_duration[ix,1])
                 end
 
                 if t - d[2].down >= 1
                     tsd = d[2].down
                 else
-                    tsd = max(0, d[2].down - initial_duration[ix,2])
+                    tsd = max(1.0, d[2].down - initial_duration[ix,2])
                 end
 
-                ps_m.constraints["$(cons_name)_up"][d[1], t] = JuMP.@constraint(ps_m.JuMPmodel, sum([ps_m.variables["$(var_names[2])"][d[1],i] for i in ((t - tst - 1) :t) if i > 0 ]) <= ps_m.variables["$(var_names[1])"][d[1],t])
-                ps_m.constraints["$(cons_name)_down"][d[1], t] = JuMP.@constraint(ps_m.JuMPmodel, sum([ps_m.variables["$(var_names[3])"][d[1],i] for i in ((t - tsd - 1) :t) if i > 0]) <= (1 - ps_m.variables["$(var_names[1])"][d[1],t]))
+                ps_m.constraints["$(cons_name)_up"][d[1], t] = JuMP.@constraint(ps_m.JuMPmodel, sum([ps_m.variables["$(var_names[2])"][d[1],i] for i in ((t - tst + 1) :t) if i > 0 ]) <= ps_m.variables["$(var_names[1])"][d[1],t])
+                ps_m.constraints["$(cons_name)_down"][d[1], t] = JuMP.@constraint(ps_m.JuMPmodel, sum([ps_m.variables["$(var_names[3])"][d[1],i] for i in ((t - tsd + 1) :t) if i > 0]) <= (1 - ps_m.variables["$(var_names[1])"][d[1],t]))
 
         end
 
