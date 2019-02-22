@@ -1,3 +1,5 @@
+abstract type AbstractDeviceFormulation end
+
 mutable struct CanonicalModel
     JuMPmodel::JuMP.AbstractModel
     variables::Dict{String, JuMP.Containers.DenseAxisArray}
@@ -5,6 +7,6 @@ mutable struct CanonicalModel
     cost_function::Union{Nothing,JuMP.AbstractJuMPScalar}
     expressions::Dict{String, JumpAffineExpressionArray}
     initial_conditions::Dict{String, Any}
-    pm_model::Any
+    pm_model::Union{Nothing,PM.GenericPowerModel}
 end
 

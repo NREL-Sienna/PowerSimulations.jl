@@ -16,3 +16,9 @@ function energystoragevariables(ps_m::CanonicalModel, devices::Array{T,1}, time_
     add_variable(ps_m, devices, time_range, false, "Est")
 
 end
+
+function storagestatevariables(ps_m::CanonicalModel, devices::Array{T,1}, time_range::UnitRange{Int64}) where T <: PSY.Storage
+
+    add_variable(ps_m, devices, time_range, true, "Sst")
+
+end

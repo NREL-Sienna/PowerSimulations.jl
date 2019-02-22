@@ -1,4 +1,4 @@
-function constructdevice!(ps_m::CanonicalModel, category::Type{St}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {St <: PSY.Storage, D <: PSI.AbstractStorageForm, S <: PM.AbstractPowerFormulation}
+function construct_device!(ps_m::CanonicalModel, category::Type{St}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {St <: PSY.Storage, D <: PSI.AbstractStorageForm, S <: PM.AbstractPowerFormulation}
 
     #wrangle initial_conditions
     if :initial_conditions in keys(kwargs)
@@ -13,7 +13,7 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{St}, category_for
 
         @warn("Initial Conditions not provided, this can lead to infeasible problems")
 
-        energy_initial_conditions =
+        energy_initial_conditions = zeros(length(sys.storage))
 
     end
 
@@ -30,12 +30,14 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{St}, category_for
     reactivepower_constraints(ps_m, sys.storage, category_formulation, system_formulation, time_range)
 
     # Energy Balanace limits
+    energy_balance_constraint(ps_m,sys.storage, category_formulation, system_formulation, time_range, energy_initial_conditions )
 
-    #TODO: Energy Balance Constraints
+    # Switch Constraints
+    #TODO : Charge/Discharge state switch constraint
 
 end
 
-function constructdevice!(ps_m::CanonicalModel, category::Type{St}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {St <: PSY.Storage, D <: PSI.AbstractStorageForm, S <: PM.AbstractActivePowerFormulation}
+function construct_device!(ps_m::CanonicalModel, category::Type{St}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {St <: PSY.Storage, D <: PSI.AbstractStorageForm, S <: PM.AbstractActivePowerFormulation}
 
     #wrangle initial_conditions
     if :initial_conditions in keys(kwargs)
@@ -48,6 +50,8 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{St}, category_for
 
         @warn("Initial Conditions not provided, this can lead to infeasible problems")
 
+        energy_initial_conditions = zeros(length(sys.storage))
+
     end
 
     #Variables
@@ -59,7 +63,8 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{St}, category_for
     activepower_constraints(ps_m, sys.storage, category_formulation, system_formulation, time_range)
 
     # Energy Balanace limits
+    energy_balance_constraint(ps_m,sys.storage, category_formulation, system_formulation, time_range, energy_initial_conditions )
 
-    #TODO: Energy Balance Constraints
-
+    # Switch Constraints
+    #TODO : Charge/Discharge state switch constraint
 end

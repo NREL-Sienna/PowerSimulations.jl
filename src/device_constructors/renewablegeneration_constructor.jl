@@ -1,4 +1,4 @@
-function constructdevice!(ps_m::CanonicalModel, category::Type{R}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {R <: PSY.RenewableGen, D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
+function construct_device!(ps_m::CanonicalModel, category::Type{R}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {R <: PSY.RenewableGen, D <: AbstractRenewableDispatchForm, S <: PM.AbstractPowerFormulation}
 
     #Defining this outside in order to enable time slicing later
     time_range = 1:sys.time_periods
@@ -33,7 +33,7 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{R}, category_form
 
 end
 
-function constructdevice!(ps_m::CanonicalModel, category::Type{R}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {R <: PSY.RenewableGen, D <: AbstractRenewableDispatchForm, S <: PM.AbstractActivePowerFormulation}
+function construct_device!(ps_m::CanonicalModel, category::Type{R}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {R <: PSY.RenewableGen, D <: AbstractRenewableDispatchForm, S <: PM.AbstractActivePowerFormulation}
 
     #Defining this outside in order to enable time slicing later
     time_range = 1:sys.time_periods
@@ -64,7 +64,7 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{R}, category_form
 
 end
 
-function constructdevice!(ps_m::CanonicalModel, category::Type{R}, category_formulation::Type{PSI.RenewableFixed}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerFormulation}
+function construct_device!(ps_m::CanonicalModel, category::Type{R}, category_formulation::Type{PSI.RenewableFixed}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerFormulation}
 
     #Defining this outside in order to enable time slicing later
     time_range = 1:sys.time_periods

@@ -49,9 +49,9 @@ function run_simulations(simulation::PowerSimulationsModel{S}, solver, ps_dict::
 
         # make model
         tmp_model = PSI.PowerOperationModel(simulation.model.psmodel,
-            simulation.model.generation, 
-            simulation.model.demand, 
-            simulation.model.storage, 
+            simulation.model.generation,
+            simulation.model.demand,
+            simulation.model.storage,
             simulation.model.branches,
             simulation.model.transmission,
             simulation.model.services,
@@ -63,8 +63,8 @@ function run_simulations(simulation::PowerSimulationsModel{S}, solver, ps_dict::
         println( "Building model for $step ...")
         buildmodel!(sys, tmp_model; PTDF = PTDF,
             initialpower = initialpowerdict,
-            initialstatus = initialstatusdict, 
-            initialonduration = initialondurationdict, 
+            initialstatus = initialstatusdict,
+            initialonduration = initialondurationdict,
             initialoffduration = initialoffdurationdict)
 
         # solve model

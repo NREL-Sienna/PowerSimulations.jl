@@ -1,4 +1,4 @@
-function constructdevice!(m::JuMP.AbstractModel, category::Type{B}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {B <: PSY.Branch, D <: AbstractBranchForm, S <: StandardPTDFModel}
+function construct_device!(m::JuMP.AbstractModel, category::Type{B}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {B <: PSY.Branch, D <: AbstractBranchForm, S <: StandardPTDFModel}
 
     flow_variables(m, system_formulation, sys.branches, sys.time_periods)
 
@@ -6,7 +6,7 @@ function constructdevice!(m::JuMP.AbstractModel, category::Type{B}, category_for
 
 end
 
-function constructdevice!(m::JuMP.AbstractModel, category::Type{B}, category_formulation::Type{PiLine}, system_formulation::Type{StandardPTDFModel}, sys::PSY.PowerSystem; kwargs...) where {B <: PSY.Branch}
+function construct_device!(m::JuMP.AbstractModel, category::Type{B}, category_formulation::Type{PiLine}, system_formulation::Type{StandardPTDFModel}, sys::PSY.PowerSystem; kwargs...) where {B <: PSY.Branch}
 
     PTDF = [a.second for a in args if a.first == :PTDF][1]
 

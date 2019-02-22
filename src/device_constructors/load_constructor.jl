@@ -1,4 +1,4 @@
-function constructdevice!(ps_m::CanonicalModel, category::Type{L}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {L <: PSY.ElectricLoad, D <: PSI.AbstractControllablePowerLoadForm, S <: PM.AbstractPowerFormulation}
+function construct_device!(ps_m::CanonicalModel, category::Type{L}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {L <: PSY.ElectricLoad, D <: PSI.AbstractControllablePowerLoadForm, S <: PM.AbstractPowerFormulation}
 
         #Defining this outside in order to enable time slicing later
         time_range = 1:sys.time_periods
@@ -33,7 +33,7 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{L}, category_form
 
 end
 
-function constructdevice!(ps_m::CanonicalModel, category::Type{L}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {L <: PSY.ElectricLoad, D <: PSI.AbstractControllablePowerLoadForm, S <: PM.AbstractActivePowerFormulation}
+function construct_device!(ps_m::CanonicalModel, category::Type{L}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {L <: PSY.ElectricLoad, D <: PSI.AbstractControllablePowerLoadForm, S <: PM.AbstractActivePowerFormulation}
 
     #Defining this outside in order to enable time slicing later
     time_range = 1:sys.time_periods
@@ -64,7 +64,7 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{L}, category_form
 
 end
 
-function constructdevice!(ps_m::CanonicalModel, category::Type{L}, category_formulation::Type{PSI.StaticPowerLoad}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerFormulation}
+function construct_device!(ps_m::CanonicalModel, category::Type{L}, category_formulation::Type{PSI.StaticPowerLoad}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerFormulation}
 
     #Defining this outside in order to enable time slicing later
     time_range = 1:sys.time_periods

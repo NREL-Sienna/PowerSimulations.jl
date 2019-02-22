@@ -91,9 +91,9 @@ version = "0.0.4"
 
 [[DiffRules]]
 deps = ["Random", "Test"]
-git-tree-sha1 = "26b96a1a506b06cb272ef60568d478adab039b96"
+git-tree-sha1 = "dc0869fb2f5b23466b32ea799bd82c76480167f7"
 uuid = "b552c78f-8df3-52c6-915a-8e097449b14b"
-version = "0.0.9"
+version = "0.0.10"
 
 [[Distributed]]
 deps = ["Random", "Serialization", "Sockets"]
@@ -107,9 +107,9 @@ version = "0.9.0"
 
 [[ForwardDiff]]
 deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "InteractiveUtils", "LinearAlgebra", "NaNMath", "Random", "SparseArrays", "SpecialFunctions", "StaticArrays", "Test"]
-git-tree-sha1 = "e393bd3b9102659fb24fe88caedec41f2bc2e7de"
+git-tree-sha1 = "4c4d727f1b7e0092134fabfab6396b8945c1ea5b"
 uuid = "f6369f11-7733-5829-9624-2563aa707210"
-version = "0.10.2"
+version = "0.10.3"
 
 [[Future]]
 deps = ["Random"]
@@ -153,11 +153,11 @@ version = "0.20.0"
 
 [[JuMP]]
 deps = ["Calculus", "DataStructures", "ForwardDiff", "LinearAlgebra", "MathOptInterface", "NaNMath", "Random", "SparseArrays", "Statistics", "Test"]
-git-tree-sha1 = "793af92427a7041d6eba23b1567d5db363806fea"
+git-tree-sha1 = "4a449d25c9595f5cb03194f798171bb4128d2b19"
 repo-rev = "master"
 repo-url = "https://github.com/JuliaOpt/JuMP.jl.git"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
-version = "0.18.5+"
+version = "0.19.0+"
 
 [[LibGit2]]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
@@ -247,7 +247,7 @@ version = "0.9.3"
 
 [[PowerSystems]]
 deps = ["AxisArrays", "CSV", "Compat", "DataFrames", "Dates", "JSON", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries"]
-git-tree-sha1 = "2c5bcd27060d30c76a7b20d222eda14638e48a8c"
+git-tree-sha1 = "763a500a00b5fb9a7a1c7e110b2ba825bd41d48b"
 repo-rev = "master"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
