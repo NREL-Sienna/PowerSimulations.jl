@@ -5,7 +5,7 @@ ps_model = PSI.CanonicalModel(Model(),
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
                                                                          "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
                               Dict{String,Any}(),
-                              Dict());
+                              nothing);
 
 @test try   PSI.activepower_variables(ps_model, generators5, 1:24);
             PSI.cost_function(ps_model, generators5, PSI.ThermalDispatch, PM.DCPlosslessForm);

@@ -31,7 +31,7 @@ to = TimerOutput()
                               nothing,
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                                          "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
-                              Dict());
+                              nothing);
 @timeit to "build_thermal"    PSI.construct_device!(ps_m, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b);
 @timeit to "build_load"    PSI.construct_device!(ps_m, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
 @timeit to "add_flow"      PSI.flow_variables(ps_m, PM.DCPlosslessForm, branches5, 1:24)
@@ -73,7 +73,7 @@ to = TimerOutput()
                               nothing,
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                                          "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
-                              Dict());
+                              nothing);
 @timeit to "build_thermal"    PSI.construct_device!(ps_m, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b);
 @timeit to "build_load"    PSI.construct_device!(ps_m, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
 @timeit to "add_flow"      PSI.flow_variables(ps_m, PM.DCPlosslessForm, branches5, 1:24)

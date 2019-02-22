@@ -7,7 +7,7 @@
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                                          "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                               Dict{String,Any}(),
-                              Dict());
+                              nothing);
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalUnitCommitment, PM.DCPlosslessForm, sys5b_uc);
 true finally end
 
@@ -20,7 +20,7 @@ true finally end
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                                          "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                               Dict{String,Any}(),
-                              Dict());
+                              nothing);
 PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalUnitCommitment, PM.StandardACPForm, sys5b_uc);
 true finally end
 
@@ -33,7 +33,7 @@ true finally end
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                                          "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                               Dict{String,Any}(),
-                              Dict());
+                              nothing);
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.DCPlosslessForm, sys5b_uc);
     true finally end
 
@@ -46,7 +46,7 @@ true finally end
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                                          "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                               Dict{String,Any}(),
-                              Dict());
+                              nothing);
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b_uc);
     true finally end
 
@@ -59,7 +59,7 @@ true finally end
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                                          "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                               Dict{String,Any}(),
-                              Dict());
+                              nothing);
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatchNoMin, PM.DCPlosslessForm, sys5b_uc);
     true finally end
 
@@ -72,7 +72,7 @@ true finally end
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                                          "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                               Dict{String,Any}(),
-                              Dict());
+                              nothing);
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatchNoMin, PM.StandardACPForm, sys5b_uc);
     true finally end
 
@@ -85,7 +85,7 @@ true finally end
                                 Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                                             "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                                 Dict{String,Any}(),
-                                Dict());
+                                nothing);
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatchNoMin, PM.DCPlosslessForm, sys5b_uc);
     true finally end
 
@@ -98,7 +98,7 @@ true finally end
                                 Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                                             "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                                 Dict{String,Any}(),
-                                Dict());
+                                nothing);
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalRampLimited, PM.StandardACPForm, sys5b_uc);
     true finally end
 
@@ -111,6 +111,6 @@ true finally end
                                 Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
                                                                             "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                                 Dict{String,Any}(),
-                                Dict());
+                                nothing);
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalRampLimited, PM.DCPlosslessForm, sys5b_uc);
     true finally end

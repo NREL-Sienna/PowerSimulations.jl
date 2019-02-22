@@ -61,7 +61,7 @@ include("service_models/services.jl")
 
 #Core Models
 include("abstract_models/canonical_model.jl")
-include("abstract_models/operation_models.jl")
+include("abstract_models/operation_model.jl")
 #include("abstract_models/simulation_model.jl")
 #include("abstract_models/results_model.jl")
 

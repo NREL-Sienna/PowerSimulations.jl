@@ -5,7 +5,7 @@ ps_model = PSI.CanonicalModel(Model(),
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
                                                                          "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
                               Dict{String,Any}(),
-                              Dict());
+                              nothing);
 
 @test  try
     @info "testing Active Power Only Range Constraints Thermal"

@@ -6,7 +6,7 @@
                                   Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
                                                                              "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
                                     Dict{String,Any}(),
-                                                                             Dict());
+                                                                             nothing);
     PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableFullDispatch, PM.DCPlosslessForm, sys5b);
     true finally end
 
@@ -17,7 +17,7 @@
     #                              nothing,
     #                              Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
     #                                                                         "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
-    #                              Dict());
+    #                              nothing);
     #PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableFullDispatch, PM.StandardACPForm, sys5b);
     #true finally end
 
@@ -29,7 +29,7 @@
                                     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
                                                                                 "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
                                     Dict{String,Any}(),
-                                                                                Dict());
+                                                                                nothing);
     PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableConstantPowerFactor, PM.DCPlosslessForm, sys5b);
     true finally end
 
@@ -41,7 +41,7 @@
                                     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
                                                                                 "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
                                         Dict{String,Any}(),
-                                                                                Dict());
+                                                                                nothing);
     PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableConstantPowerFactor, PM.StandardACPForm, sys5b);
     true finally end
 
@@ -53,7 +53,7 @@
                                     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
                                                                                 "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
                                     Dict{String,Any}(),
-                                                                                Dict());
+                                                                                nothing);
     PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableFixed, PM.DCPlosslessForm, sys5b);
     true finally end
 
@@ -65,6 +65,6 @@
                                     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
                                                                                 "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
                                         Dict{String,Any}(),
-                                                                                Dict());
+                                                                                nothing);
     PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableFixed, PM.StandardACPForm, sys5b);
     true finally end
