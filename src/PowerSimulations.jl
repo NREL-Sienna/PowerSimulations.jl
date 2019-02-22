@@ -98,7 +98,7 @@ include("network_constructor.jl")
 #include("component_constructors/services_constructor.jl")
 
 #Operational Models
-#include("operation_models/operation_models.jl")
+include("operation_models/operation_models.jl")
 
 #Utils
 #include("routines/solve_routines.jl")

@@ -1,6 +1,6 @@
 abstract type AbstractOperationsModel end
 
-mutable struct PowerOperationModel{ M<:AbstractOperationsModel, T<:PM.AbstractPowerFormulation, S<:Union{Nothing,Array{NamedTuple{(:service, :formulation), Tuple{D,DataType}}}} where {D <: PSY.Service}}
+mutable struct PowerOperationModel{M<:AbstractOperationsModel, T<:PM.AbstractPowerFormulation, S<:Union{Nothing,Array{NamedTuple{(:service, :formulation), Tuple{D,DataType}}}} where {D <: PSY.Service}}
     psmodel::Type{M}
     generation::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}
     demand::Union{Nothing,Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}}
