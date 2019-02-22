@@ -62,7 +62,8 @@ include("service_models/services.jl")
 #Core Models
 include("abstract_models/canonical_model.jl")
 include("abstract_models/operation_models.jl")
-#include("abstract_models/dynamic_model.jl")
+#include("abstract_models/simulation_model.jl")
+#include("abstract_models/results_model.jl")
 
 #Core Constructors
 #include("operations_constructor.jl")
@@ -95,7 +96,7 @@ include("network_constructor.jl")
 #include("service_models/reserves.jl")
 
 #Services constructors
-#include("component_constructors/services_constructor.jl")
+#include("services_constructor.jl")
 
 #Operational Models
 include("operation_models/operation_models.jl")
