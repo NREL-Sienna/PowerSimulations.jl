@@ -7,7 +7,7 @@
                                                                              "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
                                   Dict{String,Any}(),
                                       Dict());
-    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.InterruptiblePowerLoad, PM.DCPlosslessForm, sys5b);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.InterruptiblePowerLoad, PM.DCPlosslessForm, sys5b);
     true finally end
 
     @test try
@@ -19,7 +19,7 @@
                                                                              "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
                                       Dict{String,Any}(),
                                       Dict());
-    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.InterruptiblePowerLoad, PM.StandardACPForm, sys5b);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.InterruptiblePowerLoad, PM.StandardACPForm, sys5b);
     true finally end
 
 @test try
@@ -31,7 +31,7 @@
                                                                                 "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
                                                                                 Dict{String,Any}(),
                                                                                 Dict());
-    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad , PM.DCPlosslessForm, sys5b);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad , PM.DCPlosslessForm, sys5b);
     true finally end
 
     @test try
@@ -43,5 +43,5 @@
                                                                                 "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
                                                                                 Dict{String,Any}(),
                                                                                 Dict());
-    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
     true finally end

@@ -8,8 +8,8 @@
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
     Dict{String,Any}(),
     Dict());
-    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.CopperPlatePowerModel, sys5b);
-    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.CopperPlatePowerModel, sys5b);
+    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.CopperPlatePowerModel, sys5b);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.CopperPlatePowerModel, sys5b);
     PSI.constructnetwork!(ps_model, PSI.CopperPlatePowerModel, sys5b);
 true finally end
 
@@ -24,8 +24,8 @@ true finally end
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
     Dict{String,Any}(),
     Dict());
-    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b);
-    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFModel, sys5b);
+    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFModel, sys5b);
     PSI.constructnetwork!(ps_model, PSI.StandardPTDFModel, sys5b; PTDF = PTDF)
 true finally end
 
@@ -40,8 +40,8 @@ true finally end
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
     Dict{String,Any}(),
     Dict());
-    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b);
-    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFModel, sys5b);
+    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFModel, sys5b);
     PSI.constructnetwork!(ps_model, PSI.StandardPTDFModel, sys5b)
 true finally end
 
@@ -55,8 +55,8 @@ true finally end
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
     Dict{String,Any}(),
     Dict());
-    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.DCPlosslessForm, sys5b);
-    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.DCPlosslessForm, sys5b);
+    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.DCPlosslessForm, sys5b);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.DCPlosslessForm, sys5b);
     PSI.constructnetwork!(ps_model, PM.DCPlosslessForm, sys5b);
 true finally end
 
@@ -70,8 +70,8 @@ true finally end
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
     Dict{String,Any}(),
     Dict());
-    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b);
-    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
+    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
     PSI.constructnetwork!(ps_model, PM.StandardACPForm, sys5b);
 true finally end
 
@@ -85,8 +85,8 @@ true finally end
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
     Dict{String,Any}(),
     Dict());
-    PSI.constructdevice!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.QCWRForm, sys5b);
-    PSI.constructdevice!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.QCWRForm, sys5b);
+    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.QCWRForm, sys5b);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.QCWRForm, sys5b);
     PSI.constructnetwork!(ps_model, PM.QCWRForm, sys5b);
 true finally end
 
@@ -96,7 +96,7 @@ true finally end
     Net = PSI.StandardNetFlow
     m = Model(ipopt_optimizer);
     netinjection = PSI.instantiate_network(Net, sys5);
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
+    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys5)
     JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
@@ -109,7 +109,7 @@ finally end
     m = Model(ipopt_optimizer);
     ptdf,  A = PSY.buildptdf(sys5.branches, sys5.buses)
     netinjection = PSI.instantiate_network(Net, sys5);
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
+    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys5, PTDF = ptdf)
     JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
@@ -121,7 +121,7 @@ finally end
     Net = PM.DCPlosslessForm
     m = Model(ipopt_optimizer);
     netinjection = PSI.instantiate_network(Net, sys5);
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
+    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys5)
     JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
@@ -133,7 +133,7 @@ finally end
     Net = PM.StandardACPForm
     m = Model(ipopt_optimizer);
     netinjection = PSI.instantiate_network(Net, sys5);
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
+    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys5)
     JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
@@ -145,7 +145,7 @@ true finally end
     Net = PM.QCWRForm
     m = Model(ipopt_optimizer);
     netinjection = PSI.instantiate_network(Net, sys5);
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
+    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys5)
     JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
@@ -163,7 +163,7 @@ sys14 = PowerSystem(nodes14, generators14, loads14, branches14, nothing,  100.0)
     Net = PSI.CopperPlatePowerModel
     m = Model(ipopt_optimizer);
     netinjection = PSI.instantiate_network(Net, sys14);
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
+    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys14)
     JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
@@ -176,7 +176,7 @@ finally end
     Net = PSI.StandardNetFlow
     m = Model(ipopt_optimizer);
     netinjection = PSI.instantiate_network(Net, sys14);
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
+    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys14)
     JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
@@ -190,7 +190,7 @@ finally end
     m = Model(ipopt_optimizer);
     ptdf,  A = PSY.buildptdf(sys14.branches, sys14.buses)
     netinjection = PSI.instantiate_network(Net, sys14);
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
+    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys14, PTDF = ptdf)
     JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
@@ -202,7 +202,7 @@ finally end
     Net = PM.DCPlosslessForm
     m = Model(ipopt_optimizer);
     netinjection = PSI.instantiate_network(Net, sys14);
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
+    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys14)
     JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
@@ -214,7 +214,7 @@ finally end
     Net = PM.StandardACPForm
     m = Model(ipopt_optimizer);
     netinjection = PSI.instantiate_network(Net, sys14);
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
+    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys14)
     JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
@@ -226,7 +226,7 @@ true finally end
     Net = PM.QCWRForm
     m = Model(ipopt_optimizer);
     netinjection = PSI.instantiate_network(Net, sys14);
-    PSI.constructdevice!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
+    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
     PSI.constructnetwork!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys14)
     JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
