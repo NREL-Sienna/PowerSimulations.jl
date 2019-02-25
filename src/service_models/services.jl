@@ -1,6 +1,6 @@
-abstract type AbstractServiceForm end 
+abstract type AbstractServiceFormulation end
 
-abstract type AbstractReservesForm <: AbstractServiceForm end
+abstract type AbstractReservesForm <: AbstractServiceFormulation end
 
 abstract type AbstractRegulationReserveForm <: AbstractReservesForm end
 
