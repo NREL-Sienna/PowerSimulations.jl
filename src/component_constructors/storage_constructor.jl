@@ -17,6 +17,9 @@ function constructdevice!(ps_m::CanonicalModel, category::Type{St}, category_for
 
     end
 
+    #Defining this outside in order to enable time slicing later
+    time_range = 1:sys.time_periods
+    
     #Variables
     activepower_variables(ps_m, sys.storage, time_range);
 
