@@ -34,7 +34,7 @@ function device_semicontinuousrange(ps_m::CanonicalModel, scrange_data::Array{Tu
     end
 end
 
-function reserve_device_semicontinuousrange(ps_m::CanonicalModel, time_range::UnitRange{Int64}, scrange_data::Array{Tuple{String,NamedTuple{(:min, :max),Tuple{Float64,Float64}}},1}, cons_name::String, var_name::String, binvar_name::String) where {T <: PSY.Storage, D <: PSI.AbstractStorageForm, S <: PM.AbstractPowerFormulation}
+function reserve_device_semicontinuousrange(ps_m::CanonicalModel, scrange_data::Array{Tuple{String,NamedTuple{(:min, :max),Tuple{Float64,Float64}}},1}, time_range::UnitRange{Int64}, cons_name::String, var_name::String, binvar_name::String) 
     
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it. In the future this can be updated
     set_name = [r[1] for r in scrange_data]
