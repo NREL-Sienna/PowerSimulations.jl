@@ -28,9 +28,9 @@ import PowerSystems
 import PowerModels
 import InfrastructureModels
 import MathOptInterface
-import DataFrames
+#import DataFrames #Needed to display results
 import LinearAlgebra
-import LinearAlgebra.BLAS
+#import LinearAlgebra.BLAS #needed for the simulation stage
 import AxisArrays
 import Dates
 
@@ -48,7 +48,7 @@ const JumpExpressionMatrix = Matrix{<:JuMP.GenericAffExpr}
 const JumpAffineExpressionArray = Array{JuMP.GenericAffExpr{Float64,JuMP.VariableRef},2}
 
 #Type Alias for Unions
-const fix_resource = Union{PSY.RenewableFix, PSY.HydroFix}
+const FixResource = Union{PSY.RenewableFix, PSY.HydroFix}
 
 
 #################################################################################
@@ -57,7 +57,6 @@ const fix_resource = Union{PSY.RenewableFix, PSY.HydroFix}
 #Abstract Models
 include("network_models/networks.jl")
 include("service_models/services.jl")
-
 
 #Core Models
 include("abstract_models/canonical_model.jl")
