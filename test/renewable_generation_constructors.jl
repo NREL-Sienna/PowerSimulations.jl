@@ -3,8 +3,8 @@
                                   Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                   Dict{String, JuMP.Containers.DenseAxisArray}(),
                                   nothing,
-                                  Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
-                                                                             "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
+                                  Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
+                                                                             "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                                     Dict{String,Any}(),
                                                                              nothing);
     PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableFullDispatch, PM.DCPlosslessForm, sys5b);
@@ -15,8 +15,8 @@
     #                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
     #                              Dict{String, JuMP.Containers.DenseAxisArray}(),
     #                              nothing,
-    #                              Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
-    #                                                                         "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
+    #                              Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
+    #                                                                         "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
     #                              nothing);
     #PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableFullDispatch, PM.StandardACPForm, sys5b);
     #true finally end
@@ -26,8 +26,8 @@
                                     Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                     Dict{String, JuMP.Containers.DenseAxisArray}(),
                                     nothing,
-                                    Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
-                                                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
+                                    Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
+                                                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                                     Dict{String,Any}(),
                                                                                 nothing);
     PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableConstantPowerFactor, PM.DCPlosslessForm, sys5b);
@@ -38,8 +38,8 @@
                                     Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                     Dict{String, JuMP.Containers.DenseAxisArray}(),
                                     nothing,
-                                    Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
-                                                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
+                                    Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
+                                                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                                         Dict{String,Any}(),
                                                                                 nothing);
     PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableConstantPowerFactor, PM.StandardACPForm, sys5b);
@@ -50,8 +50,8 @@
                                     Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                     Dict{String, JuMP.Containers.DenseAxisArray}(),
                                     nothing,
-                                    Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
-                                                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
+                                    Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
+                                                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                                     Dict{String,Any}(),
                                                                                 nothing);
     PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableFixed, PM.DCPlosslessForm, sys5b);
@@ -62,8 +62,8 @@
                                     Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                     Dict{String, JuMP.Containers.DenseAxisArray}(),
                                     nothing,
-                                    Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 14, 24),
-                                                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 14, 24)),
+                                    Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
+                                                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                                         Dict{String,Any}(),
                                                                                 nothing);
     PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableFixed, PM.StandardACPForm, sys5b);
