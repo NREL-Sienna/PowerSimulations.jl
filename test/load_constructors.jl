@@ -31,7 +31,7 @@
                                                                                 "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                                                                                 Dict{String,Any}(),
                                                                                 nothing);
-    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad , PM.DCPlosslessForm, sys5b);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.DCPlosslessForm, sys5b);
     true finally end
 
     @test try

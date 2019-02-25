@@ -1,6 +1,6 @@
 abstract type AbstractOperationsModel end
 
-struct DeviceModel{D <: PSY.PowerSystemDevice,
+mutable struct DeviceModel{D <: PSY.PowerSystemDevice,
                    B <: PSI.AbstractDeviceFormulation}
     device::Type{D}
     formulation::Type{B}
@@ -12,6 +12,6 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
     transmission::Type{T}
     system::PSY.PowerSystem
     devices::Dict{String, DeviceModel}
-    services::Dict{String, <: AbstractServiceFormulation}
+    services::Dict{String, DataType}
     canonical_model::PSI.CanonicalModel
 end
