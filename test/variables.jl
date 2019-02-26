@@ -19,6 +19,8 @@ ps_model = PSI.CanonicalModel(Model(),
 
 @test try PSI.activepower_variables(ps_model, battery, 1:24); true finally end
 @test try PSI.reactivepower_variables(ps_model, battery , 1:24); true finally end
+@test try PSI.energystorage_variables(ps_model, battery , 1:24); true finally end
+@test try PSI.storagestate_variables(ps_model, battery , 1:24); true finally end
 
 @test try PSI.activepower_variables(ps_model, loads5_DA, 1:24); true finally end
 @test try PSI.reactivepower_variables(ps_model, loads5_DA, 1:24); true finally end
