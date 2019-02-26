@@ -11,14 +11,14 @@ function reactivepower_variables(ps_m::CanonicalModel, devices::Array{T,1}, time
 
 end
 
-function energystoragevariables(ps_m::CanonicalModel, devices::Array{T,1}, time_range::UnitRange{Int64}) where T <: PSY.Storage
+function energystorage_variables(ps_m::CanonicalModel, devices::Array{T,1}, time_range::UnitRange{Int64}) where T <: PSY.Storage
 
-    add_variable(ps_m, devices, time_range, false, "Est")
+    add_variable(ps_m, devices, time_range,"Est", false )
 
 end
 
-function storagestatevariables(ps_m::CanonicalModel, devices::Array{T,1}, time_range::UnitRange{Int64}) where T <: PSY.Storage
+function storagestate_variables(ps_m::CanonicalModel, devices::Array{T,1}, time_range::UnitRange{Int64}) where T <: PSY.Storage
 
-    add_variable(ps_m, devices, time_range, true, "Sst")
+    add_variable(ps_m, devices, time_range, "Sst", true)
 
 end

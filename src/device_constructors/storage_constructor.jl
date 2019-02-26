@@ -7,8 +7,6 @@ function construct_device!(ps_m::CanonicalModel, category::Type{St}, category_fo
 
     else
 
-        energy_initial_conditions = Dict{"String",Any}()
-
         @warn("Initial Conditions not provided, this can lead to infeasible problems")
 
         energy_initial_conditions = zeros(length(sys.storage))
@@ -23,7 +21,9 @@ function construct_device!(ps_m::CanonicalModel, category::Type{St}, category_fo
 
     reactivepower_variables(ps_m, sys.storage, time_range);
 
-    energystoragevariables(ps_m, sys.storage, time_range);
+    energystorage_variables(ps_m, sys.storage, time_range);
+
+    storagestate_variables(ps_m, sys.storage, time_range);
 
     #Constraints
     activepower_constraints(ps_m, sys.storage, category_formulation, system_formulation, time_range)
@@ -45,9 +45,6 @@ function construct_device!(ps_m::CanonicalModel, category::Type{St}, category_fo
         "energy_initial_conditions" in keys(ps_m.initial_conditions) ? energy_initial_conditions = ps_m.initial_conditions["energy_initial_conditions"] : @warn("No energy initial conditions provided")
 
     else
-
-        energy_initial_conditions = Dict{"String",Any}()
-
         @warn("Initial Conditions not provided, this can lead to infeasible problems")
 
         energy_initial_conditions = zeros(length(sys.storage))
@@ -60,7 +57,9 @@ function construct_device!(ps_m::CanonicalModel, category::Type{St}, category_fo
     #Variables
     activepower_variables(ps_m, sys.storage, time_range);
 
-    energystoragevariables(ps_m, sys.storage, time_range)
+    energystorage_variables(ps_m, sys.storage, time_range);
+
+    storagestate_variables(ps_m, sys.storage, time_range);
 
     #Constraints
     activepower_constraints(ps_m, sys.storage, category_formulation, system_formulation, time_range)
