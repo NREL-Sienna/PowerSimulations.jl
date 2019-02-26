@@ -87,7 +87,7 @@ include("device_constructors/thermalgeneration_constructor.jl")
 include("device_constructors/branch_constructor.jl")
 include("device_constructors/renewablegeneration_constructor.jl")
 include("device_constructors/load_constructor.jl")
-#include("device_constructors/storage_constructor.jl")
+include("device_constructors/storage_constructor.jl")
 
 #Network constructors
 include("network_constructor.jl")
