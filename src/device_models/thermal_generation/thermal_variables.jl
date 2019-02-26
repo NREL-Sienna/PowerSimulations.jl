@@ -28,3 +28,4 @@ function commitment_variables(ps_m::CanonicalModel, devices::Array{T,1}, time_ra
     add_variable(ps_m, devices, time_range, "stop_th", true)
 
 end
+

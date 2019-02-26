@@ -15,3 +15,4 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
     services::Dict{String, DataType}
     canonical_model::PSI.CanonicalModel
 end
+

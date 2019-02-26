@@ -9,4 +9,3 @@ mutable struct CanonicalModel
     initial_conditions::Dict{String, Any}
     pm_model::Union{Nothing,PM.GenericPowerModel}
 end
-
