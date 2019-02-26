@@ -1,14 +1,11 @@
-function canonical_model_test()
-    ps_model = PSI.CanonicalModel(Model(),
-                                Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
-                                Dict{String, JuMP.Containers.DenseAxisArray}(),
-                                nothing,
-                                Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
-                                                                            "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
-                                Dict{String,Any}(),
-                                nothing)
-    return ps_model
-end
+ps_model = PSI.CanonicalModel(Model(),
+                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
+                              Dict{String, JuMP.Containers.DenseAxisArray}(),
+                              nothing,
+                              Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
+                                                                         "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
+                              Dict{String,Any}(),
+                              nothing);
 
 ps_model = canonical_model_test(); PSI.activepower_variables(ps_model, generators5, 1:24); @test JuMP.num_variables(ps_model.JuMPmodel) == 120
 ps_model = canonical_model_test(); PSI.reactivepower_variables(ps_model, generators5, 1:24); @test JuMP.num_variables(ps_model.JuMPmodel) == 120

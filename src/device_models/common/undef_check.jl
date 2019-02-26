@@ -4,7 +4,7 @@ function _remove_undef!(ExpressionArray::T) where T <: JumpExpressionMatrix
 
         for i in 1:size(ExpressionArray)[1]
 
-            !isassigned(ExpressionArray,i,j) ? ExpressionArray[i,j] = JuMP.AffExpr(0.0) : continue
+            !isassigned(ExpressionArray,i,j) ? ExpressionArray[i,j] = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0.0) : continue
 
         end
 
@@ -13,20 +13,34 @@ function _remove_undef!(ExpressionArray::T) where T <: JumpExpressionMatrix
 end
 
 
-function _add_to_expression!(expression::JumpExpressionMatrix, ix::Int64, jx::Int64, var::JuMP.VariableRef, sign::Int64)
+function _add_to_expression!(expression::T,
+                             ix::Int64,
+                             jx::Int64,
+                             var::JV,
+                             sign::Int64) where {T <: JumpExpressionMatrix, JV <: JuMP.AbstractVariableRef}
 
     isassigned(expression,  ix, jx) ? JuMP.add_to_expression!(expression[ix,jx], sign*var) : expression[ix,jx] = sign*var
 
 end
 
-function _add_to_expression!(expression::JumpExpressionMatrix, ix::Int64, jx::Int64, var::JuMP.VariableRef)
+function _add_to_expression!(expression::T,
+                             ix::Int64,
+                             jx::Int64,
+                             var::JV) where {T <: JumpExpressionMatrix, JV <: JuMP.AbstractVariableRef}
 
-    isassigned(expression,  ix, jx) ? JuMP.add_to_expression!(expression[ix,jx], var) : expression[ix,jx] = var
+    if isassigned(expression,  ix, jx)
+        JuMP.add_to_expression!(expression[ix,jx], var)
+    else
+        expression[ix,jx] = 1.0*var
+    end
 
 end
 
-function _add_to_expression!(expression::JumpExpressionMatrix, ix::Int64, jx::Int64, value::Float64)
+function _add_to_expression!(expression::T,
+                             ix::Int64,
+                             jx::Int64,
+                             value::Float64) where T <: JumpExpressionMatrix
 
-    isassigned(expression,  ix, jx) ? expression[ix,jx] += value : expression[ix,jx] = value
+    isassigned(expression,  ix, jx) ? expression[ix,jx] += value : expression[ix,jx] = JuMP.AffExpr(value)
 
 end
