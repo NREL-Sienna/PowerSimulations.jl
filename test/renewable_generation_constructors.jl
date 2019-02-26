@@ -8,6 +8,10 @@
                                     Dict{String,Any}(),
                                                                              nothing);
     PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableFullDispatch, PM.DCPlosslessForm, sys5b);
+    JuMP.num_variables(ps_model.JuMPmodel) == 72
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 72
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
     true finally end
 
     #@test try
@@ -31,9 +35,13 @@
                                     Dict{String,Any}(),
                                                                                 nothing);
     PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableConstantPowerFactor, PM.DCPlosslessForm, sys5b);
+    JuMP.num_variables(ps_model.JuMPmodel) == 72
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 72
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
     true finally end
 
-    @test try
+@test try
     ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
                                     Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                     Dict{String, JuMP.Containers.DenseAxisArray}(),
@@ -43,6 +51,10 @@
                                         Dict{String,Any}(),
                                                                                 nothing);
     PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableConstantPowerFactor, PM.StandardACPForm, sys5b);
+    JuMP.num_variables(ps_model.JuMPmodel) == 144
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 72
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 72
     true finally end
 
 @test try
@@ -55,9 +67,13 @@
                                     Dict{String,Any}(),
                                                                                 nothing);
     PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableFixed, PM.DCPlosslessForm, sys5b);
+    JuMP.num_variables(ps_model.JuMPmodel) == 0
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
     true finally end
 
-    @test try
+@test try
     ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
                                     Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                     Dict{String, JuMP.Containers.DenseAxisArray}(),
@@ -67,4 +83,8 @@
                                         Dict{String,Any}(),
                                                                                 nothing);
     PSI.construct_device!(ps_model, PSY.RenewableGen, PSI.RenewableFixed, PM.StandardACPForm, sys5b);
+    JuMP.num_variables(ps_model.JuMPmodel) == 0
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
     true finally end
