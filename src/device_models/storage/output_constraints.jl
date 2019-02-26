@@ -2,11 +2,11 @@ function activepower_constraints(ps_m::CanonicalModel, devices::Array{St,1}, dev
 
     range_data_in = [(s.name, s.inputactivepowerlimits) for s in devices]
 
-    range_data_out = [(s.name, s.tech.outputactivepowerlimits) for s in devices]
+    range_data_out = [(s.name, s.outputactivepowerlimits) for s in devices]
 
-    device_range(ps_m, range_data_in, time_range, "storage_inputpower_range", "Psin")
+    device_semicontinuousrange(ps_m, range_data_in, time_range, "storage_inputpower_range", "Psin","Sst")
 
-    device_range(ps_m, range_data_in, time_range, "storage_outputpower_range", "Psout")
+    reserve_device_semicontinuousrange(ps_m, range_data_in, time_range, "storage_outputpower_range", "Psout","Sst")
 
 end
 

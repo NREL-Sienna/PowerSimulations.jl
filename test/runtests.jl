@@ -103,8 +103,8 @@ end
     include("thermal_generation_constructors.jl")
     include("renewable_generation_constructors.jl")
     include("load_constructors.jl")
+    include("storage_constructors_test.jl")
     #include("HydroConstructors_testing.jl")
-    #include("StorageConstructors_testing.jl")
 end
 
 @testset "Network Constructors" begin
