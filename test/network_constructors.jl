@@ -15,6 +15,9 @@
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 24
+
+    JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
+    JuMP.optimize!(ps_model.JuMPmodel)
 true finally end
 
 @test try
@@ -35,6 +38,9 @@ true finally end
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 432
+
+    JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
+    JuMP.optimize!(ps_model.JuMPmodel)
 true finally end
 
 
@@ -55,6 +61,9 @@ true finally end
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
+
+    JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
+    JuMP.optimize!(ps_model.JuMPmodel)
 true finally end
 
 @test try
@@ -74,6 +83,9 @@ true finally end
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 144
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 144
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 288
+
+    JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
+    JuMP.optimize!(ps_model.JuMPmodel)
 true finally end
 
 @test try
@@ -93,6 +105,9 @@ true finally end
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 144
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 144
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 264
+
+    JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
+    JuMP.optimize!(ps_model.JuMPmodel)
 true finally end
 
 @test try
@@ -112,6 +127,9 @@ true finally end
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 1272
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 1584
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 1128
+
+    JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
+    JuMP.optimize!(ps_model.JuMPmodel)
 true finally end
 
 #=
