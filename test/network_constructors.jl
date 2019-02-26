@@ -11,6 +11,13 @@
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.CopperPlatePowerModel, sys5b);
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.CopperPlatePowerModel, sys5b);
     PSI.constructnetwork!(ps_model, PSI.CopperPlatePowerModel, sys5b);
+    JuMP.num_variables(ps_model.JuMPmodel) == 120
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 24
+
+    JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
+    JuMP.optimize!(ps_model.JuMPmodel)
 true finally end
 
 @test try
@@ -27,6 +34,13 @@ true finally end
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b);
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFModel, sys5b);
     PSI.constructnetwork!(ps_model, PSI.StandardPTDFModel, sys5b; PTDF = PTDF)
+    JuMP.num_variables(ps_model.JuMPmodel) == 264
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 432
+
+    JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
+    JuMP.optimize!(ps_model.JuMPmodel)
 true finally end
 
 
@@ -43,6 +57,13 @@ true finally end
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b);
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFModel, sys5b);
     PSI.constructnetwork!(ps_model, PSI.StandardPTDFModel, sys5b)
+    JuMP.num_variables(ps_model.JuMPmodel) == 0
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
+
+    JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
+    JuMP.optimize!(ps_model.JuMPmodel)
 true finally end
 
 @test try
@@ -58,6 +79,13 @@ true finally end
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.DCPlosslessForm, sys5b);
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.DCPlosslessForm, sys5b);
     PSI.constructnetwork!(ps_model, PM.DCPlosslessForm, sys5b);
+    JuMP.num_variables(ps_model.JuMPmodel) == 384
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 144
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 144
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 288
+
+    JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
+    JuMP.optimize!(ps_model.JuMPmodel)
 true finally end
 
 @test try
@@ -73,6 +101,13 @@ true finally end
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b);
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
     PSI.constructnetwork!(ps_model, PM.StandardACPForm, sys5b);
+    JuMP.num_variables(ps_model.JuMPmodel) == 1056
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 144
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 144
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 264
+
+    JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
+    JuMP.optimize!(ps_model.JuMPmodel)
 true finally end
 
 @test try
@@ -88,6 +123,13 @@ true finally end
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.QCWRForm, sys5b);
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.QCWRForm, sys5b);
     PSI.constructnetwork!(ps_model, PM.QCWRForm, sys5b);
+    JuMP.num_variables(ps_model.JuMPmodel) == 2184
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 1272
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 1584
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 1128
+
+    JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
+    JuMP.optimize!(ps_model.JuMPmodel)
 true finally end
 
 #=

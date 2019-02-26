@@ -3,6 +3,8 @@ function ptdf_networkflow(ps_m::CanonicalModel, branches::Array{Br,1}, buses::Ar
     ps_m.constraints["network_flow"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [b.name for b in branches], time_range)
     ps_m.constraints["nodal_balance"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [bn.name for bn in buses], time_range)
 
+    _remove_undef!(ps_m.expressions["$(expression)"])
+
     for t in time_range
         for b in branches
             ps_m.constraints["network_flow"][b.name,t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables["Fbr"][b.name,t] == PTDF[b.name,:].data'*ps_m.expressions["$(expression)"][:,t])
