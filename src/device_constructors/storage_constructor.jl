@@ -1,4 +1,11 @@
-function construct_device!(ps_m::CanonicalModel, category::Type{St}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {St <: PSY.Storage, D <: PSI.AbstractStorageForm, S <: PM.AbstractPowerFormulation}
+function construct_device!(ps_m::CanonicalModel,
+                           category::Type{St},
+                           category_formulation::Type{D},
+                           system_formulation::Type{S},
+                           sys::PSY.PowerSystem;
+                           kwargs...) where {St <: PSY.Storage,
+                                             D <: PSI.AbstractStorageForm,
+                                             S <: PM.AbstractPowerFormulation}
 
     #wrangle initial_conditions
     if  !isempty(keys(ps_m.initial_conditions))
@@ -15,7 +22,7 @@ function construct_device!(ps_m::CanonicalModel, category::Type{St}, category_fo
 
     #Defining this outside in order to enable time slicing later
     time_range = 1:sys.time_periods
-    
+
     #Variables
     activepower_variables(ps_m, sys.storage, time_range);
 
@@ -37,7 +44,14 @@ function construct_device!(ps_m::CanonicalModel, category::Type{St}, category_fo
 
 end
 
-function construct_device!(ps_m::CanonicalModel, category::Type{St}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {St <: PSY.Storage, D <: PSI.AbstractStorageForm, S <: PM.AbstractActivePowerFormulation}
+function construct_device!(ps_m::CanonicalModel,
+                           category::Type{St},
+                           category_formulation::Type{D},
+                           system_formulation::Type{S},
+                           sys::PSY.PowerSystem;
+                           kwargs...) where {St <: PSY.Storage,
+                                             D <: PSI.AbstractStorageForm,
+                                             S <: PM.AbstractActivePowerFormulation}
 
     #wrangle initial_conditions
     if !isempty(keys(ps_m.initial_conditions))
@@ -65,5 +79,5 @@ function construct_device!(ps_m::CanonicalModel, category::Type{St}, category_fo
 
     # Energy Balanace limits
     energy_balance_constraint(ps_m,sys.storage, category_formulation, system_formulation, time_range, energy_initial_conditions)
-    
+
 end
