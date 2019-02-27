@@ -15,7 +15,7 @@ function ptdf_networkflow(ps_m::CanonicalModel,
             ps_m.constraints["network_flow"][b.name,t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables["Fbr"][b.name,t] == PTDF[b.name,:].data'*ps_m.expressions["$(expression)"][:,t])
             _add_to_expression!(ps_m.expressions["$(expression)"], b.connectionpoints.from.number, t, ps_m.variables["Fbr"][b.name,t], -1)
             ps_m.constraints["nodal_balance"][b.connectionpoints.from.name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.expressions["$(expression)"][b.connectionpoints.from.number,t] == 0)
-            _add_to_expression!(ps_m.expressions["$(expression)"], b.connectionpoints.to.number, t, ps_m.variables["Fbr"][b.name,t])
+            _add_to_expression!(ps_m.expressions["$(expression)"], b.connectionpoints.to.number, t, ps_m.variables["Fbr"][b.name,t], 1)
             ps_m.constraints["nodal_balance"][b.connectionpoints.to.name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.expressions["$(expression)"][b.connectionpoints.to.number,t] == 0)
         end
     end

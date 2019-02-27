@@ -1,12 +1,6 @@
-function _container_spec(m::JuMP.Model, ax1, ax2)
-    return JuMP.Containers.DenseAxisArray{JuMP.VariableRef}(undef, ax1, ax2)
+function _container_spec(m::M, ax1, ax2) where M <: JuMP.AbstractModel
+    return JuMP.Containers.DenseAxisArray{JuMP.variable_type(m)}(undef, ax1, ax2)
 end
-
-#=
-function _container_spec(m::StructJuMP.StructuredModel, ax1, ax2)
-    return JuMP.Containers.DenseAxisArray{StructJuMP.StructuredVariableRef}(undef, ax1, ax2)
-end
-=#
 
 function add_variable(ps_m::CanonicalModel,
                       devices::Array{T,1},
