@@ -1,7 +1,7 @@
 @test try
     @info "testing Abstract Storage With DC - PF"
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
-                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
+                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
@@ -14,7 +14,7 @@ true finally end
 @test try
     @info "testing Abstract Storage With AC - PF"
     ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
-                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
+                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
@@ -27,7 +27,7 @@ true finally end
 @test try
     @info "testing Basic Storage With DC - PF"
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
-                                  Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
+                                  Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
                                   Dict{String, JuMP.Containers.DenseAxisArray}(),
                                   nothing,
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
@@ -40,7 +40,7 @@ true finally end
 @test try
     @info "testing Basic Storage With AC - PF"
     ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
-                                  Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
+                                  Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
                                   Dict{String, JuMP.Containers.DenseAxisArray}(),
                                   nothing,
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),

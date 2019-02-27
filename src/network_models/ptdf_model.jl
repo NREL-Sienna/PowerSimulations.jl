@@ -28,7 +28,7 @@ The first implementation, above was tested this way with the respective results
 to = TimerOutput()
 
 @timeit to "canonical_model"   ps_m = PSI.CanonicalModel(Model(ipopt_optimizer),
-                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
+                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
@@ -70,7 +70,7 @@ to = TimerOutput()
  to = TimerOutput()
 
 @timeit to "canonical_model"   ps_m = PSI.CanonicalModel(Model(ipopt_optimizer),
-                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
+                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),

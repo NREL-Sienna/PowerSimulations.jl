@@ -20,6 +20,7 @@ function cost_function(ps_m::CanonicalModel,
     add_to_cost(ps_m, devices, "Pth", :variablecost)
 
     #Commitment Cost Components
+    @info "Commitment Cost"
     add_to_cost(ps_m, devices, "start_th", :startupcost)
     add_to_cost(ps_m, devices, "stop_th", :shutdncost)
     add_to_cost(ps_m, devices, "on_th", :fixedcost)
