@@ -12,7 +12,7 @@ function ptdf_networkflow(ps_m::CanonicalModel,
 
     for t in time_range
         for b in branches
-            #ps_m.constraints["network_flow"][b.name,t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables["Fbr"][b.name,t] == PTDF[b.name,:].data'*ps_m.expressions["$(expression)"][:,t])
+            ps_m.constraints["network_flow"][b.name,t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables["Fbr"][b.name,t] == PTDF[b.name,:].data'*ps_m.expressions["$(expression)"][:,t])
             _add_to_expression!(ps_m.expressions["$(expression)"], b.connectionpoints.from.number, t, ps_m.variables["Fbr"][b.name,t], -1)
             _add_to_expression!(ps_m.expressions["$(expression)"], b.connectionpoints.to.number, t, ps_m.variables["Fbr"][b.name,t])
             # TODO: Apply rate constraints

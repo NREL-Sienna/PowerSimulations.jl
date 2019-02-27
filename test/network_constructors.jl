@@ -26,7 +26,7 @@
     else
         error("The model was not solved correctly/infeasible.")
     end
-    
+
 true finally end
 
 @test try
@@ -46,7 +46,7 @@ true finally end
     JuMP.num_variables(ps_model.JuMPmodel) == 264
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
     JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
-    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 432
+    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 264
 
     JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
     JuMP.optimize!(ps_model.JuMPmodel)
