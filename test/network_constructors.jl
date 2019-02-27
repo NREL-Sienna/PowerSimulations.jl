@@ -18,6 +18,15 @@
 
     JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
     JuMP.optimize!(ps_model.JuMPmodel)
+
+    if termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
+        @info("The model has ans optimal solution.")
+    elseif termination_status(ps_model.JuMPmodel) == MOI.TIME_LIMIT && has_values(ps_model.JuMPmodel)
+        @info("The model has feasiable but non-optimal solutions.")
+    else
+        error("The model was not solved correctly/infeasible.")
+    end
+    
 true finally end
 
 @test try
@@ -41,6 +50,14 @@ true finally end
 
     JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
     JuMP.optimize!(ps_model.JuMPmodel)
+
+    if termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
+        @info("The model has ans optimal solution.")
+    elseif termination_status(ps_model.JuMPmodel) == MOI.TIME_LIMIT && has_values(ps_model.JuMPmodel)
+        @info("The model has feasiable but non-optimal solutions.")
+    else
+        error("The model was not solved correctly/infeasible.")
+    end
 true finally end
 
 
@@ -64,6 +81,14 @@ true finally end
 
     JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
     JuMP.optimize!(ps_model.JuMPmodel)
+
+    if termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
+        @info("The model has ans optimal solution.")
+    elseif termination_status(ps_model.JuMPmodel) == MOI.TIME_LIMIT && has_values(ps_model.JuMPmodel)
+        @info("The model has feasiable but non-optimal solutions.")
+    else
+        error("The model was not solved correctly/infeasible.")
+    end
 true finally end
 
 @test try
@@ -86,6 +111,14 @@ true finally end
 
     JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
     JuMP.optimize!(ps_model.JuMPmodel)
+
+    if termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
+        @info("The model has ans optimal solution.")
+    elseif termination_status(ps_model.JuMPmodel) == MOI.TIME_LIMIT && has_values(ps_model.JuMPmodel)
+        @info("The model has feasiable but non-optimal solutions.")
+    else
+        error("The model was not solved correctly/infeasible.")
+    end
 true finally end
 
 @test try
@@ -108,6 +141,14 @@ true finally end
 
     JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
     JuMP.optimize!(ps_model.JuMPmodel)
+
+    if termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
+        @info("The model has ans optimal solution.")
+    elseif termination_status(ps_model.JuMPmodel) == MOI.TIME_LIMIT && has_values(ps_model.JuMPmodel)
+        @info("The model has feasiable but non-optimal solutions.")
+    else
+        error("The model was not solved correctly/infeasible.")
+    end
 true finally end
 
 @test try
@@ -130,6 +171,14 @@ true finally end
 
     JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
     JuMP.optimize!(ps_model.JuMPmodel)
+
+    if termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
+        @info("The model has ans optimal solution.")
+    elseif termination_status(ps_model.JuMPmodel) == MOI.TIME_LIMIT && has_values(ps_model.JuMPmodel)
+        @info("The model has feasiable but non-optimal solutions.")
+    else
+        error("The model was not solved correctly/infeasible.")
+    end
 true finally end
 
 #=
