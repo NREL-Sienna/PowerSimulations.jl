@@ -1,4 +1,9 @@
-function ptdf_networkflow(ps_m::CanonicalModel, branches::Array{Br,1}, buses::Array{PSY.Bus,1}, expression::String, PTDF::AxisArrays.AxisArray, time_range::UnitRange{Int64}) where {Br <: PSY.Branch}
+function ptdf_networkflow(ps_m::CanonicalModel,
+                          branches::Array{Br,1},
+                          buses::Array{PSY.Bus,1},
+                          expression::String,
+                          PTDF::AxisArrays.AxisArray,
+                          time_range::UnitRange{Int64}) where {Br <: PSY.Branch}
 
     ps_m.constraints["network_flow"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [b.name for b in branches], time_range)
     ps_m.constraints["nodal_balance"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [bn.name for bn in buses], time_range)
@@ -28,7 +33,7 @@ The first implementation, above was tested this way with the respective results
 to = TimerOutput()
 
 @timeit to "canonical_model"   ps_m = PSI.CanonicalModel(Model(ipopt_optimizer),
-                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
+                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
@@ -70,7 +75,7 @@ to = TimerOutput()
  to = TimerOutput()
 
 @timeit to "canonical_model"   ps_m = PSI.CanonicalModel(Model(ipopt_optimizer),
-                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
+                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
                               Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),

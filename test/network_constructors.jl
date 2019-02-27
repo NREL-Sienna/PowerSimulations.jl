@@ -1,7 +1,7 @@
 @test try
     @info "testing copper plate network construction"
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
-    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
+    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
     Dict{String, JuMP.Containers.DenseAxisArray}(),
     nothing,
     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
@@ -24,7 +24,7 @@ true finally end
     @info "testing DC-PF with PTDF formulation"
     PTDF, A = PowerSystems.buildptdf(branches5, nodes5)
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
-    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
+    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
     Dict{String, JuMP.Containers.DenseAxisArray}(),
     nothing,
     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
@@ -47,7 +47,7 @@ true finally end
 @test_throws ArgumentError try
     @info "testing error PTDF formulation with no PTDF supplied"
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
-    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
+    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
     Dict{String, JuMP.Containers.DenseAxisArray}(),
     nothing,
     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
@@ -69,7 +69,7 @@ true finally end
 @test try
     @info "testing DC-PF network construction"
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
-    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
+    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
     Dict{String, JuMP.Containers.DenseAxisArray}(),
     nothing,
     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
@@ -91,7 +91,7 @@ true finally end
 @test try
     @info "testing AC-PF network construction"
     ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
-    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
+    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
     Dict{String, JuMP.Containers.DenseAxisArray}(),
     nothing,
     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
@@ -113,7 +113,7 @@ true finally end
 @test try
     @info "testing AC-PF network construction with QCWRForm"
     ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
-    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
+    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
     Dict{String, JuMP.Containers.DenseAxisArray}(),
     nothing,
     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),

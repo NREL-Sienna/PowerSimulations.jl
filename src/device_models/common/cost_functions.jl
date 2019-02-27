@@ -10,8 +10,6 @@ function ps_cost(ps_m::CanonicalModel,
 
     gen_cost = sum(store)
 
-    @info "$(typeof(gen_cost))"
-
     return gen_cost
 
 end

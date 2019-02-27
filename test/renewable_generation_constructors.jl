@@ -1,6 +1,6 @@
 @test try
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
-                                  Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
+                                  Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                   Dict{String, JuMP.Containers.DenseAxisArray}(),
                                   nothing,
                                   Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
@@ -16,7 +16,7 @@
 
     #@test try
     #ps_model = PSI.CanonicalModel(Model(),
-    #                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
+    #                              Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
     #                              Dict{String, JuMP.Containers.DenseAxisArray}(),
     #                              nothing,
     #                              Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
@@ -27,7 +27,7 @@
 
 @test try
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
-                                    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
+                                    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                     Dict{String, JuMP.Containers.DenseAxisArray}(),
                                     nothing,
                                     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
@@ -43,7 +43,7 @@
 
 @test try
     ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
-                                    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
+                                    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                     Dict{String, JuMP.Containers.DenseAxisArray}(),
                                     nothing,
                                     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
@@ -59,7 +59,7 @@
 
 @test try
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
-                                    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
+                                    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                     Dict{String, JuMP.Containers.DenseAxisArray}(),
                                     nothing,
                                     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
@@ -75,7 +75,7 @@
 
 @test try
     ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
-                                    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.AbstractVariableRef}}(),
+                                    Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                     Dict{String, JuMP.Containers.DenseAxisArray}(),
                                     nothing,
                                     Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),

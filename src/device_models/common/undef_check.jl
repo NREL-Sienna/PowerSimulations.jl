@@ -41,6 +41,6 @@ function _add_to_expression!(expression::T,
                              jx::Int64,
                              value::Float64) where T <: JumpExpressionMatrix
 
-    isassigned(expression,  ix, jx) ? expression[ix,jx] += value : expression[ix,jx] = value
+    isassigned(expression,  ix, jx) ? expression[ix,jx] += value : expression[ix,jx] = JuMP.AffExpr(value)
 
 end
