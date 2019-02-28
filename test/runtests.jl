@@ -111,13 +111,13 @@ end
 end
 
 #=
-
 @testset "Services Constructors" begin
     include("service_testing.jl")
 end
+=#
 
-@testset "Model Constructors" begin
-    include("model_testing.jl")
+@testset "Operation Model Constructors" begin
+    include("operation_model_constructor.jl")
     #include("model_solve_testing.jl")
     #include("buildED_CN_testing.jl")
     #include("buildED_NB_testing.jl")
