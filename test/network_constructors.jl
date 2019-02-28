@@ -1,5 +1,4 @@
-@test begin
-    @info "testing copper plate network construction"
+@testset "testing copper plate network construction" begin
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
     Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
     Dict{String, JuMP.Containers.DenseAxisArray}(),
@@ -11,18 +10,17 @@
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.CopperPlatePowerModel, sys5b);
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.CopperPlatePowerModel, sys5b);
     PSI.constructnetwork!(ps_model, PSI.CopperPlatePowerModel, sys5b);
-    JuMP.num_variables(ps_model.JuMPmodel) == 120
-    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
-    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
-    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 24
+    @test JuMP.num_variables(ps_model.JuMPmodel) == 120
+    @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
+    @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
+    @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 24
 
     JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
     JuMP.optimize!(ps_model.JuMPmodel)
-
-    termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
+    @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 end
 
-@test begin
+@test_set begin
     @info "testing DC-PF with PTDF formulation"
     PTDF, A = PowerSystems.buildptdf(branches5, nodes5)
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),

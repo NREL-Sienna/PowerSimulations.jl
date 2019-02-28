@@ -135,7 +135,7 @@ end
     include("simulations_testing.jl")
 end
 
-### Daniel Code
+=#
 
 LOG_LEVELS = Dict(
     "Debug" => Logging.Debug,

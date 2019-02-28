@@ -13,20 +13,14 @@ case5_dc_data = PM.replicate(case5_dc_data, 2)
 # TODO: currently JuMP.num_variables is the best we can do to introspect the JuMP model.
 #  Ideally this would also test the number of constraints generated
 
-@test try
+@testset "PowerModels Model Build" begin
     pm = PowerSimulations.build_nip_model(case5_data, PM.DCPPowerModel)
-    JuMP.num_variables(pm.model) == 34
-true finally end
-
-@test try
+    @test JuMP.num_variables(pm.model) == 34
     pm = PowerSimulations.build_nip_model(case5_data, PM.ACPPowerModel)
-    JuMP.num_variables(pm.model) == 96
-true finally end
-
-@test try
+    @test JuMP.num_variables(pm.model) == 96
     pm = PowerSimulations.build_nip_model(case5_data, PM.SOCWRPowerModel)
-    JuMP.num_variables(pm.model) == 110
-true finally end
+    @test JuMP.num_variables(pm.model) == 110
+end
 
 
 # test PowerSimulations type extentions
@@ -34,36 +28,25 @@ DCAngleModel = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data,
 
 StandardACModel = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, PM.StandardACPForm; kwargs...)
 
-@test try
+@testset "PowerModels Model Build Extensions" begin
     pm = PowerSimulations.build_nip_model(case5_data, DCAngleModel)
-    JuMP.num_variables(pm.model) == 34
-true finally end
-
-# test PowerSimulations type extentions
-@test try
+    @test JuMP.num_variables(pm.model) == 34
+    # test PowerSimulations type extentions
     pm = PowerSimulations.build_nip_model(case5_data, StandardACModel)
-    JuMP.num_variables(pm.model) == 96
-true finally end
-
-
-# test models with HVDC line
-@test try
+    @test JuMP.num_variables(pm.model) == 9
+    # test models with HVDC line
     pm = PowerSimulations.build_nip_model(case5_dc_data, PM.DCPPowerModel)
-    JuMP.num_variables(pm.model) == 36
-true finally end
-
-@test try
+    @test JuMP.num_variables(pm.model) == 36
     pm = PowerSimulations.build_nip_model(case5_dc_data, DCAngleModel)
-    JuMP.num_variables(pm.model) == 48
-true finally end
+    @test JuMP.num_variables(pm.model) == 48
+end
 
 
-
-@test try
+@testset "PM Integration into PS Model" begin
     base_dir = dirname(dirname(pathof(PowerSystems)))
     include(joinpath(base_dir,"data/data_5bus_pu.jl"))
     PS_struct = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);
     PM_dict = PowerSimulations.pass_to_pm(PS_struct)
     PM_object = PowerSimulations.build_nip_model(PM_dict, DCAngleModel);
-    JuMP.num_variables(PM_object.model) == 384
-true finally end
+    @test JuMP.num_variables(PM_object.model) == 384
+end
