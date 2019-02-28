@@ -2,7 +2,7 @@ abstract type CopperPlatePowerModel <: PM.AbstractActivePowerFormulation  end
 
 abstract type StandardPTDFModel <: PM.DCPlosslessForm end
 
-#= This code is from PowerModel's network definitions. Added here just for reference. 
+#= This code is from PowerModel's network definitions. Added here just for reference.
 
 export
     # exact non-convex models
@@ -517,7 +517,7 @@ SparseSDPWRMPowerModel(data::Dict{String,Any}; kwargs...) = GenericPowerModel(da
 # https://docs.julialang.org/en/v1/manual/style-guide/#Avoid-strange-type-Unions-1
 # and should be used with discretion.
 #
-# If you are about to add a union type, first double check if refactoring the 
+# If you are about to add a union type, first double check if refactoring the
 # type hierarchy can resolve the issue instead.
 #
 
