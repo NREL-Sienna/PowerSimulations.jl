@@ -13,7 +13,7 @@ const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
 
-abstract type TestOptModel <: AbstractOperationsModel end
+abstract type TestOptModel <: PSI.AbstractOperationsModel end
 
 ipopt_optimizer = with_optimizer(Ipopt.Optimizer, print_level = 0)
 GLPK_optimizer = with_optimizer(GLPK.Optimizer)

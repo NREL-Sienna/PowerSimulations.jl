@@ -1,7 +1,5 @@
 #Inputs to the OperationModel
 
-abstract type TestOptModel <: AbstractOperationsModel end
-
 devices = Dict{String, PSI.DeviceModel}("Generators" => PSI.DeviceModel(PSY.ThermalGen, PSI.ThermalUnitCommitment),
                 "Loads" => PSI.DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
 branches = Dict{String, PSI.DeviceModel}("Lines" => PSI.DeviceModel(PSY.Branch, PSI.SeriesLine))
