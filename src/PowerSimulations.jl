@@ -26,7 +26,6 @@ import JuMP
 #using TimeSeries
 import PowerSystems
 import PowerModels
-import InfrastructureModels
 import MathOptInterface
 #import DataFrames #Needed to display results
 import LinearAlgebra
@@ -37,7 +36,6 @@ import Dates
 #################################################################################
 # Type Alias From other Packages
 const PM = PowerModels
-const IM = InfrastructureModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
 const MOI = MathOptInterface

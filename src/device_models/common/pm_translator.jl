@@ -121,7 +121,7 @@ function pass_to_pm(sys::PSY.PowerSystem)
     # TODO: this function adds overhead in large number of time_steps
     # We can do better later.
 
-    PM_translation = IM.replicate(PM_translation,sys.time_periods)
+    PM_translation = PM.replicate(PM_translation,sys.time_periods)
 
     return PM_translation
 
