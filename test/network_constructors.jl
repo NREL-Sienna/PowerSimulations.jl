@@ -107,7 +107,7 @@ end
     JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
     JuMP.optimize!(ps_model.JuMPmodel)
 
-    termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
+    termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
 end
 
 @test begin
@@ -131,7 +131,7 @@ end
     JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
     JuMP.optimize!(ps_model.JuMPmodel)
 
-    termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
+    termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
 end
 #=
 @test try
