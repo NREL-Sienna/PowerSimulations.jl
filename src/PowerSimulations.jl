@@ -36,7 +36,6 @@ import Dates
 #################################################################################
 # Type Alias From other Packages
 const PM = PowerModels
-const IM = InfrastructureModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
 const MOI = MathOptInterface

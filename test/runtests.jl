@@ -3,7 +3,6 @@ using PowerSystems
 using PowerModels
 using JuMP
 using Test
-using InfrastructureModels
 using Ipopt
 using GLPK
 
