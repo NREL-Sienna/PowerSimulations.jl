@@ -22,12 +22,13 @@ function PowerOperationModel(op_model::Type{M},
                              devices::Dict{String, DeviceModel},
                              branches::Dict{String, DeviceModel},
                              services::Dict{String, DataType},
-                             system::PSY.PowerSystem; kwargs...) where {M <: AbstractOperationsModel,
-                                                                        T <: PM.AbstractPowerFormulation}
+                             system::PSY.PowerSystem,
+                             optimizer::JuMP.OptimizerFactory=empty_optimizer; kwargs...) where {M <: AbstractOperationsModel,
+                                                                                                   T <: PM.AbstractPowerFormulation}
 
     bus_count = length(system.buses)
 
-    ps_model = CanonicalModel(JuMP.Model(),
+    ps_model = CanonicalModel(JuMP.Model(optimizer),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
@@ -52,12 +53,13 @@ function PowerOperationModel(op_model::Type{M},
                              devices::Dict{String, DeviceModel},
                              branches::Dict{String, DeviceModel},
                              services::Dict{String, DataType},
-                             system::PSY.PowerSystem; kwargs...) where {M <: AbstractOperationsModel,
+                             system::PSY.PowerSystem,
+                             optimizer::JuMP.OptimizerFactory=empty_optimizer; kwargs...) where {M <: AbstractOperationsModel,
                                                                     T <: PM.AbstractActivePowerFormulation}
 
     bus_count = length(system.buses)
 
-    ps_model = CanonicalModel(JuMP.Model(),
+    ps_model = CanonicalModel(JuMP.Model(optimizer),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
@@ -80,11 +82,12 @@ function PowerOperationModel(op_model::Type{M},
                              devices::Dict{String, DeviceModel},
                              branches::Dict{String, DeviceModel},
                              services::Dict{String, DataType},
-                             system::PSY.PowerSystem; kwargs...) where {M <: AbstractOperationsModel}
+                             system::PSY.PowerSystem,
+                             optimizer::JuMP.OptimizerFactory=empty_optimizer; kwargs...) where {M <: AbstractOperationsModel}
 
     bus_count = length(system.buses)
 
-    ps_model = CanonicalModel(JuMP.Model(),
+    ps_model = CanonicalModel(JuMP.Model(optimizer),
         Dict{String, JuMP.Containers.DenseAxisArray}(),
         Dict{String, JuMP.Containers.DenseAxisArray}(),
         nothing,
@@ -107,17 +110,18 @@ function PowerOperationModel(op_model::Type{M},
                              devices::Dict{String, DeviceModel},
                              branches::Dict{String, DeviceModel},
                              services::Dict{String, DataType},
-                             system::PSY.PowerSystem; kwargs...) where {M <: AbstractOperationsModel}
+                             system::PSY.PowerSystem,
+                             optimizer::JuMP.OptimizerFactory=empty_optimizer; kwargs...) where {M <: AbstractOperationsModel}
 
     bus_count = length(system.buses)
 
-    ps_model = CanonicalModel(JuMP.Model(),
-        Dict{String, JuMP.Containers.DenseAxisArray}(),
-        Dict{String, JuMP.Containers.DenseAxisArray}(),
-        nothing,
-        Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, bus_count, system.time_periods)),
-        Dict{String,Any}(),
-        nothing);
+    ps_model = CanonicalModel(JuMP.Model(optimizer),
+                              Dict{String, JuMP.Containers.DenseAxisArray}(),
+                              Dict{String, JuMP.Containers.DenseAxisArray}(),
+                              nothing,
+                              Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, bus_count, system.time_periods)),
+                              Dict{String,Any}(),
+                              nothing);
 
      return PowerOperationModel(op_model,
                                 transmission,

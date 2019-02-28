@@ -98,6 +98,13 @@ sys5b_uc = PowerSystem(nodes5, vcat(generators5_uc,renewables), loads5_DA, branc
     #include("add_to_expression.jl")
 end
 
+@testset "Operation Model Constructors" begin
+    include("operation_model_constructor.jl")
+    #include("model_solve_testing.jl")
+    #include("buildED_CN_testing.jl")
+    #include("buildED_NB_testing.jl")
+end
+
 @testset "Device Constructors" begin
     include("thermal_generation_constructors.jl")
     include("renewable_generation_constructors.jl")
@@ -106,22 +113,20 @@ end
     #include("HydroConstructors_testing.jl")
 end
 
+
+#=
+
 @testset "Network Constructors" begin
     include("network_constructors.jl")
 end
 
-#=
+
 @testset "Services Constructors" begin
     include("service_testing.jl")
 end
-=#
 
-@testset "Operation Model Constructors" begin
-    include("operation_model_constructor.jl")
-    #include("model_solve_testing.jl")
-    #include("buildED_CN_testing.jl")
-    #include("buildED_NB_testing.jl")
-end
+
+
 
 @testset "Simulation routines" begin
     include("simulations_testing.jl")
