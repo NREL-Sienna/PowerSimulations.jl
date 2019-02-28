@@ -1,4 +1,4 @@
-@test try
+@test begin
     @info "testing copper plate network construction"
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
     Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
@@ -19,17 +19,10 @@
     JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
     JuMP.optimize!(ps_model.JuMPmodel)
 
-    if termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
-        @info("The model has ans optimal solution.")
-    elseif termination_status(ps_model.JuMPmodel) == MOI.TIME_LIMIT && has_values(ps_model.JuMPmodel)
-        @info("The model has feasiable but non-optimal solutions.")
-    else
-        error("The model was not solved correctly/infeasible.")
-    end
+    termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
+end
 
-true finally end
-
-@test try
+@test begin
     @info "testing DC-PF with PTDF formulation"
     PTDF, A = PowerSystems.buildptdf(branches5, nodes5)
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
@@ -51,17 +44,10 @@ true finally end
     JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
     JuMP.optimize!(ps_model.JuMPmodel)
 
-    if termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
-        @info("The model has ans optimal solution.")
-    elseif termination_status(ps_model.JuMPmodel) == MOI.TIME_LIMIT && has_values(ps_model.JuMPmodel)
-        @info("The model has feasiable but non-optimal solutions.")
-    else
-        error("The model was not solved correctly/infeasible.")
-    end
-true finally end
+    termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
+end
 
-
-@test_throws ArgumentError try
+@test_throws ArgumentError begin
     @info "testing error PTDF formulation with no PTDF supplied"
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
     Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
@@ -74,24 +60,9 @@ true finally end
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b);
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFModel, sys5b);
     PSI.constructnetwork!(ps_model, PSI.StandardPTDFModel, sys5b)
-    JuMP.num_variables(ps_model.JuMPmodel) == 0
-    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
-    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
-    JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
+end
 
-    JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
-    JuMP.optimize!(ps_model.JuMPmodel)
-
-    if termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
-        @info("The model has ans optimal solution.")
-    elseif termination_status(ps_model.JuMPmodel) == MOI.TIME_LIMIT && has_values(ps_model.JuMPmodel)
-        @info("The model has feasiable but non-optimal solutions.")
-    else
-        error("The model was not solved correctly/infeasible.")
-    end
-true finally end
-
-@test try
+@test begin
     @info "testing DC-PF network construction"
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
     Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
@@ -112,16 +83,10 @@ true finally end
     JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
     JuMP.optimize!(ps_model.JuMPmodel)
 
-    if termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
-        @info("The model has ans optimal solution.")
-    elseif termination_status(ps_model.JuMPmodel) == MOI.TIME_LIMIT && has_values(ps_model.JuMPmodel)
-        @info("The model has feasiable but non-optimal solutions.")
-    else
-        error("The model was not solved correctly/infeasible.")
-    end
-true finally end
+    termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
+end
 
-@test try
+@test begin
     @info "testing AC-PF network construction"
     ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
     Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
@@ -142,16 +107,10 @@ true finally end
     JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
     JuMP.optimize!(ps_model.JuMPmodel)
 
-    if termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
-        @info("The model has ans optimal solution.")
-    elseif termination_status(ps_model.JuMPmodel) == MOI.TIME_LIMIT && has_values(ps_model.JuMPmodel)
-        @info("The model has feasiable but non-optimal solutions.")
-    else
-        error("The model was not solved correctly/infeasible.")
-    end
-true finally end
+    termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
+end
 
-@test try
+@test begin
     @info "testing AC-PF network construction with QCWRForm"
     ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
     Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
@@ -172,15 +131,8 @@ true finally end
     JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
     JuMP.optimize!(ps_model.JuMPmodel)
 
-    if termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
-        @info("The model has ans optimal solution.")
-    elseif termination_status(ps_model.JuMPmodel) == MOI.TIME_LIMIT && has_values(ps_model.JuMPmodel)
-        @info("The model has feasiable but non-optimal solutions.")
-    else
-        error("The model was not solved correctly/infeasible.")
-    end
-true finally end
-
+    termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
+end
 #=
 @test try
     @info "testing net flow"
