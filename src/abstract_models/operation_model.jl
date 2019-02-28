@@ -23,8 +23,9 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 branches::Dict{String, DeviceModel},
                                 services::Dict{String, DataType},
                                 system::PSY.PowerSystem,
-                                optimizer::JuMP.OptimizerFactory=empty_optimizer; kwargs...) where {M <: AbstractOperationsModel,
-                                                                                                    T <: PM.AbstractPowerFormulation}
+                                optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
+                                kwargs...) where {M <: AbstractOperationsModel,
+                                                  T <: PM.AbstractPowerFormulation}
 
         bus_count = length(system.buses)
 
@@ -54,8 +55,9 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 branches::Dict{String, DeviceModel},
                                 services::Dict{String, DataType},
                                 system::PSY.PowerSystem,
-                                optimizer::JuMP.OptimizerFactory=empty_optimizer; kwargs...) where {M <: AbstractOperationsModel,
-                                                                                                    T <: PM.AbstractActivePowerFormulation}
+                                optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
+                                kwargs...) where {M <: AbstractOperationsModel,
+                                                  T <: PM.AbstractActivePowerFormulation}
 
         bus_count = length(system.buses)
 
@@ -83,7 +85,8 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 branches::Dict{String, DeviceModel},
                                 services::Dict{String, DataType},
                                 system::PSY.PowerSystem,
-                                optimizer::JuMP.OptimizerFactory=empty_optimizer; kwargs...) where {M <: AbstractOperationsModel}
+                                optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
+                                kwargs...) where {M <: AbstractOperationsModel}
 
         bus_count = length(system.buses)
 
@@ -111,7 +114,8 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 branches::Dict{String, DeviceModel},
                                 services::Dict{String, DataType},
                                 system::PSY.PowerSystem,
-                                optimizer::JuMP.OptimizerFactory=empty_optimizer; kwargs...) where {M <: AbstractOperationsModel}
+                                optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
+                                kwargs...) where {M <: AbstractOperationsModel}
 
         bus_count = length(system.buses)
 
@@ -135,3 +139,6 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
 
 
 end
+
+##### JuMP methods overloading
+JuMP.Model(optimizer::Nothing; kwargs...) = JuMP.Model(kwargs...)
