@@ -1,12 +1,6 @@
 # Suppress warnings during testing.
 setlevel!(getlogger(PowerModels), "error")
 
-
-# required for "with_optimizer" function
-
-# needed for model building (MOI does not currently suppot adding solvers after model creation)
-ipopt_optimizer = with_optimizer(Ipopt.Optimizer, tol=1e-6, print_level=0)
-
 # is this the best way to find a file in a package?
 base_dir = dirname(dirname(pathof(PowerSystems)))
 case5_data = PM.parse_file(joinpath(base_dir,"data/matpower/case5.m"))
