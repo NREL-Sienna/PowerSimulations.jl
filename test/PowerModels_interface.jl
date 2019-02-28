@@ -28,21 +28,20 @@ DCAngleModel = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data,
 
 StandardACModel = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, PM.StandardACPForm; kwargs...)
 
-@testset "PowerModels Model Build Extensions" begin
+@testset "PM with type extensions" begin
     pm = PowerSimulations.build_nip_model(case5_data, DCAngleModel)
-    @test JuMP.num_variables(pm.model) == 34
-    # test PowerSimulations type extentions
+    JuMP.num_variables(pm.model) == 34
     pm = PowerSimulations.build_nip_model(case5_data, StandardACModel)
-    @test JuMP.num_variables(pm.model) == 9
-    # test models with HVDC line
+    JuMP.num_variables(pm.model) == 96
     pm = PowerSimulations.build_nip_model(case5_dc_data, PM.DCPPowerModel)
-    @test JuMP.num_variables(pm.model) == 36
+    JuMP.num_variables(pm.model) == 36
     pm = PowerSimulations.build_nip_model(case5_dc_data, DCAngleModel)
-    @test JuMP.num_variables(pm.model) == 48
+    JuMP.num_variables(pm.model) == 48
 end
 
 
-@testset "PM Integration into PS Model" begin
+
+@testset "PM integration into PS" begin
     base_dir = dirname(dirname(pathof(PowerSystems)))
     include(joinpath(base_dir,"data/data_5bus_pu.jl"))
     PS_struct = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);

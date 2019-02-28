@@ -30,7 +30,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 120
 end
 
-@testset "testing Dispatch With DC begin - PF" begin
+@testset "testing Dispatch With DC - PF" begin
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
                                   Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                   Dict{String, JuMP.Containers.DenseAxisArray}(),
@@ -46,7 +46,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
     end
 
-@testset "testing Dispatch With AC begin - PF" begin
+@testset "testing Dispatch With AC - PF" begin
     ps_model = PSI.CanonicalModel(Model(ipopt_optimizer),
                                   Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                   Dict{String, JuMP.Containers.DenseAxisArray}(),
@@ -62,7 +62,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
     end
 
-@testset "testing Dispatch No-Mini beginmum With DC - PF" begin
+@testset "testing Dispatch No-Minimum With DC - PF" begin
     ps_model = PSI.CanonicalModel(Model(GLPK_optimizer),
                                     Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                                     Dict{String, JuMP.Containers.DenseAxisArray}(),
