@@ -16,7 +16,7 @@ simple_reserve = PSY.StaticReserve("test_reserve",vcat(sys5.generators.thermal,s
     PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
     PSI.construct_device!(m, netinjection, RenewableGen, PSI.RenewableCurtail, Net, sys5);
     PSI.construct_device!(m, netinjection, ElectricLoad, PSI.InterruptibleLoad, Net, sys5);
-    PSI.constructnetwork!(m, [(device=Branch, formulation=PSI.PiLine)], netinjection, Net, sys5)
+    PSI.construct_network!(m, [(device=Branch, formulation=PSI.PiLine)], netinjection, Net, sys5)
     PSI.constructservice!(m, simple_reserve, PSI.RampLimitedReserve, [(device = ThermalGen, formulation =PSI.ThermalDispatch),
                                                               (device = RenewableGen, formulation = PSI.RenewableCurtail)],
                                                               sys5)
@@ -30,7 +30,7 @@ true finally end
     PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalUnitCommitment , Net, sys5);
     PSI.construct_device!(m, netinjection, RenewableGen, PSI.RenewableCurtail, Net, sys5);
     PSI.construct_device!(m, netinjection, ElectricLoad, PSI.InterruptibleLoad, Net, sys5);
-    PSI.constructnetwork!(m, [(device=Branch, formulation=PSI.PiLine)], netinjection, Net, sys5)
+    PSI.construct_network!(m, [(device=Branch, formulation=PSI.PiLine)], netinjection, Net, sys5)
     PSI.constructservice!(m, simple_reserve, PSI.RampLimitedReserve, [(device = ThermalGen, formulation =PSI.ThermalUnitCommitment ),
                                                               (device = RenewableGen, formulation = PSI.RenewableCurtail)],
                                                               sys5)

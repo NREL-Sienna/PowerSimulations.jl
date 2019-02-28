@@ -1,22 +1,25 @@
-function constructnetwork!(ps_m::CanonicalModel, system_formulation::Type{CopperPlatePowerModel}, sys::PSY.PowerSystem; kwargs...)
+function construct_network!(ps_m::CanonicalModel,
+                            system_formulation::Type{CopperPlatePowerModel},
+                            sys::PSY.PowerSystem, t
+                            ime_range::UnitRange{Int64}; kwargs...)
 
-    #Defining this outside in order to enable time slicing later
-    time_range = 1:sys.time_periods
     bus_count = length(sys.buses)
 
     copper_plate(ps_m, "var_active", bus_count, time_range)
 
-
+    return nothing
 end
 
-function constructnetwork!(ps_m::CanonicalModel, system_formulation::Type{StandardPTDFModel}, sys::PSY.PowerSystem; kwargs...)
+function construct_network!(ps_m::CanonicalModel,
+                            system_formulation::Type{StandardPTDFModel},
+                            sys::PSY.PowerSystem,
+                            time_range::UnitRange{Int64}; kwargs...)
 
     if :PTDF in keys(kwargs)
 
-        #Defining this outside in order to enable time slicing later
-        time_range = 1:sys.time_periods
-
         ac_branches = [br for br in sys.branches if !isa(br, PSY.DCLine)]
+
+        # TODO: Get DC Lines and model DC Lines
 
         flow_variables(ps_m, system_formulation, ac_branches, time_range)
 
@@ -26,25 +29,17 @@ function constructnetwork!(ps_m::CanonicalModel, system_formulation::Type{Standa
         throw(ArgumentError("no PTDF matrix supplied"))
     end
 
-    #=
-    for category in branch_models
-        construct_device!(m, netinjection, category.device, category.formulation, system_formulation, sys; args..., PTDF=PTDF)
-    end
-    =#
+    return nothing
 
 end
 
-function constructnetwork!(ps_m::CanonicalModel, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: PM.AbstractPowerFormulation}
-
-    time_range = 1:sys.time_periods
+function construct_network!(ps_m::CanonicalModel,
+                            system_formulation::Type{S},
+                            sys::PSY.PowerSystem,
+                            time_range::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     powermodels_network!(ps_m, system_formulation, sys, time_range)
 
-    #=
-    for category in branch_models
-        construct_device!(m, netinjection, category.device, category.formulation, system_formulation, sys; kwargs...)
-    end
-    =#
-
+    return nothing
 
 end

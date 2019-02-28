@@ -48,8 +48,6 @@ const JumpAffineExpressionArray = Array{JuMP.GenericAffExpr{Float64,JuMP.Variabl
 #Type Alias for Unions
 const FixResource = Union{PSY.RenewableFix, PSY.HydroFix}
 
-const empty_optimizer = JuMP.with_optimizer(MOIU.MockOptimizer, JuMP._MOIModel{Float64}(), eval_objective_value=false);
-
 #################################################################################
 # Includes
 
@@ -59,6 +57,7 @@ include("service_models/services.jl")
 
 #Core Models
 include("abstract_models/canonical_model.jl")
+include("abstract_models/device_model.jl")
 include("abstract_models/operation_model.jl")
 #include("abstract_models/simulation_model.jl")
 #include("abstract_models/results_model.jl")

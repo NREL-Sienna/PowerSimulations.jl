@@ -1,11 +1,5 @@
 abstract type AbstractOperationsModel end
 
-mutable struct DeviceModel{D <: PSY.PowerSystemDevice,
-                           B <: PSI.AbstractDeviceFormulation}
-    device::Type{D}
-    formulation::Type{B}
-end
-
 mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                    T <: PM.AbstractPowerFormulation}
     op_model::Type{M}
@@ -23,8 +17,13 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 branches::Dict{String, DeviceModel},
                                 services::Dict{String, DataType},
                                 system::PSY.PowerSystem,
-                                optimizer::JuMP.OptimizerFactory=empty_optimizer; kwargs...) where {M <: AbstractOperationsModel,
-                                                                                                    T <: PM.AbstractPowerFormulation}
+                                optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
+                                kwargs...) where {M <: AbstractOperationsModel,
+                                                  T <: PM.AbstractPowerFormulation}
+
+        if isa(optimizer,Nothing)
+            @info("The optimization model has no optimizer attached")
+        end
 
         bus_count = length(system.buses)
 
@@ -54,8 +53,13 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 branches::Dict{String, DeviceModel},
                                 services::Dict{String, DataType},
                                 system::PSY.PowerSystem,
-                                optimizer::JuMP.OptimizerFactory=empty_optimizer; kwargs...) where {M <: AbstractOperationsModel,
-                                                                                                    T <: PM.AbstractActivePowerFormulation}
+                                optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
+                                kwargs...) where {M <: AbstractOperationsModel,
+                                                  T <: PM.AbstractActivePowerFormulation}
+
+        if isa(optimizer,Nothing)
+            @info("The optimization model has no optimizer attached")
+        end
 
         bus_count = length(system.buses)
 
@@ -83,9 +87,15 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 branches::Dict{String, DeviceModel},
                                 services::Dict{String, DataType},
                                 system::PSY.PowerSystem,
-                                optimizer::JuMP.OptimizerFactory=empty_optimizer; kwargs...) where {M <: AbstractOperationsModel}
+                                optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
+                                kwargs...) where {M <: AbstractOperationsModel}
+
+        if isa(optimizer,Nothing)
+            @info("The optimization model has no optimizer attached")
+        end
 
         bus_count = length(system.buses)
+
 
         ps_model = CanonicalModel(JuMP.Model(optimizer),
             Dict{String, JuMP.Containers.DenseAxisArray}(),
@@ -111,9 +121,15 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 branches::Dict{String, DeviceModel},
                                 services::Dict{String, DataType},
                                 system::PSY.PowerSystem,
-                                optimizer::JuMP.OptimizerFactory=empty_optimizer; kwargs...) where {M <: AbstractOperationsModel}
+                                optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
+                                kwargs...) where {M <: AbstractOperationsModel}
+
+        if isa(optimizer,Nothing)
+            @info("The optimization model has no optimizer attached")
+        end
 
         bus_count = length(system.buses)
+
 
         ps_model = CanonicalModel(JuMP.Model(optimizer),
                                 Dict{String, JuMP.Containers.DenseAxisArray}(),
@@ -135,3 +151,6 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
 
 
 end
+
+##### JuMP methods overloading
+JuMP.Model(optimizer::Nothing; kwargs...) = JuMP.Model(kwargs...)

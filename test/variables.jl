@@ -7,6 +7,8 @@ ps_model = PSI.CanonicalModel(Model(),
                               Dict{String,Any}(),
                               nothing);
 
+@testset "variables_creation" begin
+
 ps_model = canonical_model_test(); PSI.activepower_variables(ps_model, generators5, 1:24); @test JuMP.num_variables(ps_model.JuMPmodel) == 120
 ps_model = canonical_model_test(); PSI.reactivepower_variables(ps_model, generators5, 1:24); @test JuMP.num_variables(ps_model.JuMPmodel) == 120
 ps_model = canonical_model_test(); PSI.commitment_variables(ps_model, generators5, 1:24); @test JuMP.num_variables(ps_model.JuMPmodel) == 360
@@ -25,3 +27,5 @@ ps_model = canonical_model_test(); PSI.activepower_variables(ps_model, loads5_DA
 ps_model = canonical_model_test(); PSI.reactivepower_variables(ps_model, loads5_DA, 1:24); @test JuMP.num_variables(ps_model.JuMPmodel) == 72
 
 ps_model = canonical_model_test(); PSI.flow_variables(ps_model, PM.DCPlosslessForm, branches5, 1:24); @test JuMP.num_variables(ps_model.JuMPmodel) == 144
+
+end

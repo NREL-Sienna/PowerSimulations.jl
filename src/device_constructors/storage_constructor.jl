@@ -1,6 +1,6 @@
 function construct_device!(ps_m::CanonicalModel,
-                           category::Type{St},
-                           category_formulation::Type{D},
+                           device::Type{St},
+                           device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem;
                            kwargs...) where {St <: PSY.Storage,
@@ -33,20 +33,20 @@ function construct_device!(ps_m::CanonicalModel,
     storagestate_variables(ps_m, sys.storage, time_range);
 
     #Constraints
-    activepower_constraints(ps_m, sys.storage, category_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, sys.storage, device_formulation, system_formulation, time_range)
 
-    reactivepower_constraints(ps_m, sys.storage, category_formulation, system_formulation, time_range)
+    reactivepower_constraints(ps_m, sys.storage, device_formulation, system_formulation, time_range)
 
     # Energy Balanace limits
-    energy_balance_constraint(ps_m,sys.storage, category_formulation, system_formulation, time_range, energy_initial_conditions)
+    energy_balance_constraint(ps_m,sys.storage, device_formulation, system_formulation, time_range, energy_initial_conditions)
 
     #TODO: rate constraints
 
 end
 
 function construct_device!(ps_m::CanonicalModel,
-                           category::Type{St},
-                           category_formulation::Type{D},
+                           device::Type{St},
+                           device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem;
                            kwargs...) where {St <: PSY.Storage,
@@ -75,9 +75,9 @@ function construct_device!(ps_m::CanonicalModel,
     storagestate_variables(ps_m, sys.storage, time_range);
 
     #Constraints
-    activepower_constraints(ps_m, sys.storage, category_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, sys.storage, device_formulation, system_formulation, time_range)
 
     # Energy Balanace limits
-    energy_balance_constraint(ps_m,sys.storage, category_formulation, system_formulation, time_range, energy_initial_conditions)
+    energy_balance_constraint(ps_m,sys.storage, device_formulation, system_formulation, time_range, energy_initial_conditions)
 
 end

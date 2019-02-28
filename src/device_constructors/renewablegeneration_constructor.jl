@@ -1,6 +1,6 @@
 function construct_device!(ps_m::CanonicalModel,
-                           category::Type{R},
-                           category_formulation::Type{D},
+                           device::Type{R},
+                           device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem;
                            kwargs...) where {R <: PSY.RenewableGen,
@@ -22,12 +22,12 @@ function construct_device!(ps_m::CanonicalModel,
         reactivepower_variables(ps_m, controllable_resources, time_range);
 
         #Constraints
-        activepower_constraints(ps_m, controllable_resources, category_formulation, system_formulation, time_range)
+        activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
 
-        reactivepower_constraints(ps_m, controllable_resources, category_formulation, system_formulation, time_range)
+        reactivepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
 
         #Cost Function
-        cost_function(ps_m, controllable_resources, category_formulation, system_formulation)
+        cost_function(ps_m, controllable_resources, device_formulation, system_formulation)
 
     else
         @warn("The Data Doesn't Contain Controllable Renewable Resources, Consider Changing the Device Formulation to RenewableFixed")
@@ -41,8 +41,8 @@ function construct_device!(ps_m::CanonicalModel,
 end
 
 function construct_device!(ps_m::CanonicalModel,
-                           category::Type{R},
-                           category_formulation::Type{D},
+                           device::Type{R},
+                           device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem;
                            kwargs...) where {R <: PSY.RenewableGen,
@@ -62,10 +62,10 @@ function construct_device!(ps_m::CanonicalModel,
         activepower_variables(ps_m, controllable_resources, time_range)
 
         #Constraints
-        activepower_constraints(ps_m, controllable_resources, category_formulation, system_formulation, time_range)
+        activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
 
         #Cost Function
-        cost_function(ps_m, controllable_resources, category_formulation, system_formulation)
+        cost_function(ps_m, controllable_resources, device_formulation, system_formulation)
 
     else
         @warn("The Data Doesn't Contain Controllable Renewable Resources, Consider Changing the Device Formulation to RenewableFixed")
@@ -79,8 +79,8 @@ function construct_device!(ps_m::CanonicalModel,
 end
 
 function construct_device!(ps_m::CanonicalModel,
-                           category::Type{R},
-                           category_formulation::Type{PSI.RenewableFixed},
+                           device::Type{R},
+                           device_formulation::Type{PSI.RenewableFixed},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem;
                            kwargs...) where {R <: PSY.RenewableGen,

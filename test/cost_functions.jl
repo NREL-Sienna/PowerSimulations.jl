@@ -7,20 +7,14 @@ ps_model = PSI.CanonicalModel(Model(),
                               Dict{String,Any}(),
                               nothing);
 
-@test try   PSI.activepower_variables(ps_model, generators5, 1:24);
-            PSI.cost_function(ps_model, generators5, PSI.ThermalDispatch, PM.DCPlosslessForm);
-            true
-    finally end
-
-@test try   PSI.commitment_variables(ps_model, generators5, 1:24);
-            PSI.cost_function(ps_model, generators5, PSI.ThermalUnitCommitment , PM.DCPlosslessForm);
-            true
-    finally end
-
-@test try   PSI.activepower_variables(ps_model, renewables, 1:24);
-            PSI.cost_function(ps_model, renewables, PSI.RenewableFullDispatch, PM.DCPlosslessForm);
-            true
-    finally end
+@testset "Cost Function" begin
+    PSI.activepower_variables(ps_model, generators5, 1:24);
+    PSI.cost_function(ps_model, generators5, PSI.ThermalDispatch, PM.DCPlosslessForm);
+    PSI.commitment_variables(ps_model, generators5, 1:24);
+    PSI.cost_function(ps_model, generators5, PSI.ThermalUnitCommitment , PM.DCPlosslessForm);
+    PSI.activepower_variables(ps_model, renewables, 1:24);
+    PSI.cost_function(ps_model, renewables, PSI.RenewableFullDispatch, PM.DCPlosslessForm);
+ end
 
 #=
 

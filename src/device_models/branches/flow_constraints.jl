@@ -1,62 +1,13 @@
-function thermalflowlimits(m::JuMP.AbstractModel, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PSY.Branch, S <: PM.AbstractDCPForm}
+function line_flow_limit(ps_m::CanonicalModel,
+                         devices::Array{Br,1},
+                         device_formulation::Type{D},
+                         system_formulation::Type{S},
+                         time_range::UnitRange{Int64}) where {Br <: PSY.MonitoredLine,
+                                                               D <: AbstractBranchFormulation,
+                                                               S <: PM.AbstractPowerFormulation}
 
-    fbr = m[:fbr]
-    name_index = m[:fbr].axes[1]
-    time_index = m[:fbr].axes[2]
+    #rate_data = [(h.name, (min = -1*h.rate, max = h.rate) for h in devices]
 
-    device_index = Dict(value => key for (key, value) in Dict(collect(enumerate([d.name for d in devices]))))
+    device_range(ps_m, range_data, time_range, "dc_rate_const", "Fbr")
 
-    Flow_max_tf = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
-    Flow_max_ft = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
-
-    for t in time_index, (ix, name) in enumerate(name_index)
-        if name in keys(device_index)
-            if name == devices[device_index[name]].name
-                Flow_max_tf[name, t] = JuMP.@constraint(m, fbr[name, t] <= devices[device_index[name]].rate)
-                Flow_max_ft[name, t] = JuMP.@constraint(m, fbr[name, t] >= -1*devices[device_index[name]].rate)
-            else
-                @error "Branch name in Array and variable do not match"
-            end
-        else
-            @warn "No flow limit constraint populated for $(name)"
-        end
-    end
-
-    JuMP.register_object(m, :Flow_max_ToFrom, Flow_max_tf)
-    JuMP.register_object(m, :Flow_max_FromTo, Flow_max_ft)
-
-    return m
 end
-
-function thermalflowlimits(m::JuMP.AbstractModel, system_formulation::Type{S}, devices::Array{B,1}, time_periods::Int64) where {B <: PSY.Branch, S <: PM.AbstractDCPLLForm}
-
-    fbr_fr = m[:fbr_fr]
-    fbr_to = m[:fbr_to]
-    name_index = m[:fbr_fr].axes[1]
-    time_index = m[:fbr_to].axes[2]
-
-    device_index = Dict(value => key for (key, value) in Dict(collect(enumerate([d.name for d in devices]))))
-
-    Flow_max_tf = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
-    Flow_max_ft = JuMP.Containers.DenseAxisArray(Array{JuMP.ConstraintRef}(undef,length(name_index), time_periods), name_index, time_index)
-
-    for t in time_index, (ix, name) in enumerate(name_index)
-        if name in keys(device_index)
-            if name == devices[device_index[name]].name
-                Flow_max_tf[name, t] = JuMP.@constraint(m, fbr_fr[name, t] <= devices[device_index[name]].rate)
-                Flow_max_ft[name, t] = JuMP.@constraint(m, fbr_to[name, t] >= -1*devices[device_index[name]].rate)
-            else
-                @error "Branch name in Array and variable do not match"
-            end
-        else
-            @warn "No flow limit constraint populated for $(name)"
-        end
-    end
-
-    JuMP.register_object(m, :Flow_max_ToFrom, Flow_max_tf)
-    JuMP.register_object(m, :Flow_max_FromTo, Flow_max_ft)
-
-    return m
-end
-
-#TODO: Implement Limits in AC. Use Norm from JuMP Implemented norms.

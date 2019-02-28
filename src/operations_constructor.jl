@@ -2,8 +2,6 @@ function buildmodel!(op_model::PowerOperationModel, sys::PSY.PowerSystem; kwargs
 
     #TODO: Add check model spec vs data functions before trying to build
 
-    # Create Empty Canonical Model
-
     # Do Initial Conditions
 
     # Build Devices
@@ -17,21 +15,21 @@ function buildmodel!(op_model::PowerOperationModel, sys::PSY.PowerSystem; kwargs
 
 
 
-    for category in op_model.generation
-        construct_device!(op_model.model, netinjection, category.device,
-        category.formulation, op_model.transmission, sys; kwargs...)
+    for device in op_model.generation
+        construct_device!(op_model.model, netinjection, device.device,
+        device.formulation, op_model.transmission, sys; kwargs...)
     end
 
     if op_model.demand != nothing
-        for category in op_model.demand
-            construct_device!(op_model.model, netinjection, category.device,
-            category.formulation, op_model.transmission, sys; kwargs...)
+        for device in op_model.demand
+            construct_device!(op_model.model, netinjection, device.device,
+            device.formulation, op_model.transmission, sys; kwargs...)
         end
     end
 
-    #= for category in op_model.storage
-        op_model.model = construct_device!(category.device, network_model, op_model.model,
-        devices_netinjection, sys, category.constraints)
+    #= for device in op_model.storage
+        op_model.model = construct_device!(device.device, network_model, op_model.model,
+        devices_netinjection, sys, device.constraints)
     end =# if op_model.services != nothing
         service_providers = Array{NamedTuple{(:device,
         :formulation),Tuple{DataType,DataType}}}([]) [push!(service_providers,x) for x in
@@ -42,11 +40,10 @@ function buildmodel!(op_model::PowerOperationModel, sys::PSY.PowerSystem; kwargs
         end
     end
 
-    constructnetwork!(op_model.model, op_model.branches, netinjection,
+    construct_network!(op_model.model, op_model.branches, netinjection,
     op_model.transmission, sys; args..., PTDF = op_model.ptdf)
 
     JuMP.@objective(op_model.model, Min, op_model.model.obj_dict[:objective_function])
 
-   return op_model
 
 end
