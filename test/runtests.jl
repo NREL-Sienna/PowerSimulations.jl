@@ -14,7 +14,7 @@ const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
 
-ipopt_optimizer = with_optimizer(Ipopt.Optimizer)
+ipopt_optimizer = with_optimizer(Ipopt.Optimizer, print_level = 0)
 GLPK_optimizer = with_optimizer(GLPK.Optimizer)
 
 base_dir = string(dirname(dirname(pathof(PowerSystems))));
