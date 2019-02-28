@@ -1,7 +1,14 @@
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(ps_m::CanonicalModel, category::Type{T}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerFormulation}
+function construct_device!(ps_m::CanonicalModel,
+                           category::Type{T},
+                           category_formulation::Type{D},
+                           system_formulation::Type{S},
+                           sys::PSY.PowerSystem;
+                           kwargs...) where {T <: PSY.ThermalGen,
+                                             D <: AbstractThermalFormulation,
+                                             S <: PM.AbstractPowerFormulation}
 
     #wrangle initial_conditions
     if !isempty(keys(ps_m.initial_conditions))
@@ -59,7 +66,14 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(ps_m::CanonicalModel, category::Type{T}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractActivePowerFormulation}
+function construct_device!(ps_m::CanonicalModel,
+                           category::Type{T},
+                           category_formulation::Type{D},
+                           system_formulation::Type{S},
+                           sys::PSY.PowerSystem;
+                           kwargs...) where {T <: PSY.ThermalGen,
+                                             D <: AbstractThermalFormulation,
+                                             S <: PM.AbstractActivePowerFormulation}
 
     #wrangle initial_conditions
     if !isempty(keys(ps_m.initial_conditions))
@@ -112,7 +126,13 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(ps_m::CanonicalModel, category::Type{T}, category_formulation::Type{PSI.ThermalRampLimited}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerFormulation}
+function construct_device!(ps_m::CanonicalModel,
+                           category::Type{T},
+                           category_formulation::Type{PSI.ThermalRampLimited},
+                           system_formulation::Type{S},
+                           sys::PSY.PowerSystem;
+                           kwargs...) where {T <: PSY.ThermalGen,
+                                             S <: PM.AbstractPowerFormulation}
 
     #wrangle initial_conditions
     if !isempty(keys(ps_m.initial_conditions))
@@ -160,7 +180,13 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(ps_m::CanonicalModel, category::Type{T}, category_formulation::Type{ThermalRampLimited}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerFormulation}
+function construct_device!(ps_m::CanonicalModel,
+                           category::Type{T},
+                           category_formulation::Type{ThermalRampLimited},
+                           system_formulation::Type{S},
+                           sys::PSY.PowerSystem;
+                           kwargs...) where {T <: PSY.ThermalGen,
+                                             S <: PM.AbstractActivePowerFormulation}
 
     #wrangle initial_conditions
     if !isempty(keys(ps_m.initial_conditions))
@@ -198,7 +224,14 @@ end
 
 
 
-function construct_device!(ps_m::CanonicalModel, category::Type{T}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {T<: PSY.ThermalGen, D <: AbstractThermalDispatchForm, S <: PM.AbstractPowerFormulation}
+function construct_device!(ps_m::CanonicalModel,
+                           category::Type{T},
+                           category_formulation::Type{D},
+                           system_formulation::Type{S},
+                           sys::PSY.PowerSystem;
+                           kwargs...) where {T<: PSY.ThermalGen,
+                                             D <: AbstractThermalDispatchForm,
+                                             S <: PM.AbstractPowerFormulation}
 
     #Defining this outside in order to enable time slicing later
     time_range = 1:sys.time_periods
@@ -220,7 +253,14 @@ function construct_device!(ps_m::CanonicalModel, category::Type{T}, category_for
 
 end
 
-function construct_device!(ps_m::CanonicalModel, category::Type{T}, category_formulation::Type{D}, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {T<: PSY.ThermalGen, D <: AbstractThermalDispatchForm, S <: PM.AbstractActivePowerFormulation}
+function construct_device!(ps_m::CanonicalModel,
+                           category::Type{T},
+                           category_formulation::Type{D},
+                           system_formulation::Type{S},
+                           sys::PSY.PowerSystem;
+                           kwargs...) where {T<: PSY.ThermalGen,
+                                             D <: AbstractThermalDispatchForm,
+                                             S <: PM.AbstractActivePowerFormulation}
 
     #Defining this outside in order to enable time slicing later
     time_range = 1:sys.time_periods
