@@ -91,6 +91,7 @@ generators_hg = [
 
 sys5b = PowerSystem(nodes5, vcat(generators5,renewables), loads5_DA, branches5, nothing,  100.0);
 sys5b_uc = PowerSystem(nodes5, vcat(generators5_uc,renewables), loads5_DA, branches5, nothing,  100.0);
+sys5b_storage = PowerSystem(nodes5, vcat(generators5_uc,renewables), loads5_DA, branches5, battery,  100.0);
 
 @testset "Common Functionalities" begin
     include("variables.jl")
@@ -111,7 +112,7 @@ end
     include("thermal_generation_constructors.jl")
     include("renewable_generation_constructors.jl")
     include("load_constructors.jl")
-    include("storage_constructors_test.jl")
+    include("storage_constructors.jl")
     #include("HydroConstructors_testing.jl")
 end
 
