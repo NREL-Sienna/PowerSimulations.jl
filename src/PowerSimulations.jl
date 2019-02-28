@@ -26,7 +26,6 @@ import JuMP
 #using TimeSeries
 import PowerSystems
 import PowerModels
-import InfrastructureModels
 import MathOptInterface
 #import DataFrames #Needed to display results
 import LinearAlgebra
