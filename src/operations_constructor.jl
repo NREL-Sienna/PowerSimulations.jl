@@ -17,21 +17,21 @@ function buildmodel!(op_model::PowerOperationModel, sys::PSY.PowerSystem; kwargs
 
 
 
-    for category in op_model.generation
-        construct_device!(op_model.model, netinjection, category.device,
-        category.formulation, op_model.transmission, sys; kwargs...)
+    for device in op_model.generation
+        construct_device!(op_model.model, netinjection, device.device,
+        device.formulation, op_model.transmission, sys; kwargs...)
     end
 
     if op_model.demand != nothing
-        for category in op_model.demand
-            construct_device!(op_model.model, netinjection, category.device,
-            category.formulation, op_model.transmission, sys; kwargs...)
+        for device in op_model.demand
+            construct_device!(op_model.model, netinjection, device.device,
+            device.formulation, op_model.transmission, sys; kwargs...)
         end
     end
 
-    #= for category in op_model.storage
-        op_model.model = construct_device!(category.device, network_model, op_model.model,
-        devices_netinjection, sys, category.constraints)
+    #= for device in op_model.storage
+        op_model.model = construct_device!(device.device, network_model, op_model.model,
+        devices_netinjection, sys, device.constraints)
     end =# if op_model.services != nothing
         service_providers = Array{NamedTuple{(:device,
         :formulation),Tuple{DataType,DataType}}}([]) [push!(service_providers,x) for x in

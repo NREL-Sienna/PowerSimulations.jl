@@ -2,8 +2,8 @@
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(ps_m::CanonicalModel,
-                           category::Type{T},
-                           category_formulation::Type{D},
+                           device::Type{T},
+                           device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem;
                            kwargs...) where {T <: PSY.ThermalGen,
@@ -44,21 +44,21 @@ function construct_device!(ps_m::CanonicalModel,
     commitment_variables(ps_m, sys.generators.thermal, time_range)
 
     #Constraints
-    activepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    reactivepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
+    reactivepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    commitment_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, status_initial_conditions)
+    commitment_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, status_initial_conditions)
 
-    ramp_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, ramp_initial_conditions)
+    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, ramp_initial_conditions)
 
-    time_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, time_initial_conditions)
+    time_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, time_initial_conditions)
 
     #TODO: rate constraints
 
     #Cost Function
 
-    cost_function(ps_m, sys.generators.thermal, category_formulation, system_formulation)
+    cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
 end
 
@@ -67,8 +67,8 @@ end
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(ps_m::CanonicalModel,
-                           category::Type{T},
-                           category_formulation::Type{D},
+                           device::Type{T},
+                           device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem;
                            kwargs...) where {T <: PSY.ThermalGen,
@@ -107,19 +107,19 @@ function construct_device!(ps_m::CanonicalModel,
     commitment_variables(ps_m, sys.generators.thermal, time_range)
 
     #Constraints
-    activepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    commitment_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, status_initial_conditions)
+    commitment_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, status_initial_conditions)
 
-    ramp_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, ramp_initial_conditions)
+    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, ramp_initial_conditions)
 
-    time_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, time_initial_conditions)
+    time_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, time_initial_conditions)
 
     #TODO: rate constraints
 
     #Cost Function
 
-    cost_function(ps_m, sys.generators.thermal, category_formulation, system_formulation)
+    cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
 end
 
@@ -127,8 +127,8 @@ end
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(ps_m::CanonicalModel,
-                           category::Type{T},
-                           category_formulation::Type{PSI.ThermalRampLimited},
+                           device::Type{T},
+                           device_formulation::Type{PSI.ThermalRampLimited},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem;
                            kwargs...) where {T <: PSY.ThermalGen,
@@ -162,17 +162,17 @@ function construct_device!(ps_m::CanonicalModel,
     reactivepower_variables(ps_m, sys.generators.thermal, time_range);
 
     #Constraints
-    activepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    reactivepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
+    reactivepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    ramp_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, ramp_initial_conditions)
+    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, ramp_initial_conditions)
 
     #TODO: rate constraints
 
     #Cost Function
 
-    cost_function(ps_m, sys.generators.thermal, category_formulation, system_formulation)
+    cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
 end
 
@@ -181,8 +181,8 @@ end
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function construct_device!(ps_m::CanonicalModel,
-                           category::Type{T},
-                           category_formulation::Type{ThermalRampLimited},
+                           device::Type{T},
+                           device_formulation::Type{ThermalRampLimited},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem;
                            kwargs...) where {T <: PSY.ThermalGen,
@@ -210,23 +210,23 @@ function construct_device!(ps_m::CanonicalModel,
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     #Constraints
-    activepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    ramp_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range, ramp_initial_conditions)
+    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, ramp_initial_conditions)
 
     #TODO: rate constraints
 
     #Cost Function
 
-    cost_function(ps_m, sys.generators.thermal, category_formulation, system_formulation)
+    cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
 end
 
 
 
 function construct_device!(ps_m::CanonicalModel,
-                           category::Type{T},
-                           category_formulation::Type{D},
+                           device::Type{T},
+                           device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem;
                            kwargs...) where {T<: PSY.ThermalGen,
@@ -242,20 +242,20 @@ function construct_device!(ps_m::CanonicalModel,
     reactivepower_variables(ps_m, sys.generators.thermal, time_range);
 
     #Constraints
-    activepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    reactivepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
+    reactivepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
     #TODO: rate constraints
 
     #Cost Function
-    cost_function(ps_m, sys.generators.thermal, category_formulation, system_formulation)
+    cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
 end
 
 function construct_device!(ps_m::CanonicalModel,
-                           category::Type{T},
-                           category_formulation::Type{D},
+                           device::Type{T},
+                           device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem;
                            kwargs...) where {T<: PSY.ThermalGen,
@@ -269,9 +269,9 @@ function construct_device!(ps_m::CanonicalModel,
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     #Constraints
-    activepower_constraints(ps_m, sys.generators.thermal, category_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
     #Cost Function
-    cost_function(ps_m, sys.generators.thermal, category_formulation, system_formulation)
+    cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
 end

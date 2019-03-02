@@ -27,8 +27,8 @@ function construct_network!(ps_m::CanonicalModel, system_formulation::Type{Stand
     end
 
     #=
-    for category in branch_models
-        construct_device!(m, netinjection, category.device, category.formulation, system_formulation, sys; args..., PTDF=PTDF)
+    for device in branch_models
+        construct_device!(m, netinjection, device.device, device.formulation, system_formulation, sys; args..., PTDF=PTDF)
     end
     =#
 
@@ -41,8 +41,8 @@ function construct_network!(ps_m::CanonicalModel, system_formulation::Type{S}, s
     powermodels_network!(ps_m, system_formulation, sys, time_range)
 
     #=
-    for category in branch_models
-        construct_device!(m, netinjection, category.device, category.formulation, system_formulation, sys; kwargs...)
+    for device in branch_models
+        construct_device!(m, netinjection, device.device, device.formulation, system_formulation, sys; kwargs...)
     end
     =#
 
