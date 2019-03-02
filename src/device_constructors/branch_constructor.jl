@@ -5,8 +5,8 @@ function construct_device!(m::JuMP.AbstractModel,
                            sys::PSY.PowerSystem;
                            kwargs...) where {B <: PSY.Branch}
 
-    thermalflowlimits(m, system_formulation, sys.branches, sys.time_periods)
+        line_rate_constraints(m, system_formulation, sys.branches, sys.time_periods)
 
-    dc_networkflow(m, netinjection, PTDF)
+    #dc_networkflow(m, netinjection, PTDF)
 
 end

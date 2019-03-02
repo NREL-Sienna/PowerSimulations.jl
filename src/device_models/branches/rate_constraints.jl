@@ -1,7 +1,7 @@
-function rate_constraints(ps_m::CanonicalModel,
-                          devices::Array{Br,1},
-                          device_formulation::Type{D},
-                          system_formulation::Type{PSI.StandardPTDFModel},
+function line_rate_constraints(ps_m::CanonicalModel,
+                               devices::Array{Br,1},
+                               device_formulation::Type{D},
+                                system_formulation::Type{PSI.StandardPTDFModel},
                           time_range::UnitRange{Int64}) where {Br <: PSY.Branch, D <: AbstractBranchFormulation}
 
     rate_data = [(h.name, (min = -1*h.rate, max = h.rate) for h in devices]
