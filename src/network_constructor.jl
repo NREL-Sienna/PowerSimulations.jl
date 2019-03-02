@@ -1,4 +1,4 @@
-function constructnetwork!(ps_m::CanonicalModel, system_formulation::Type{CopperPlatePowerModel}, sys::PSY.PowerSystem; kwargs...)
+function construct_network!(ps_m::CanonicalModel, system_formulation::Type{CopperPlatePowerModel}, sys::PSY.PowerSystem; kwargs...)
 
     #Defining this outside in order to enable time slicing later
     time_range = 1:sys.time_periods
@@ -9,7 +9,7 @@ function constructnetwork!(ps_m::CanonicalModel, system_formulation::Type{Copper
 
 end
 
-function constructnetwork!(ps_m::CanonicalModel, system_formulation::Type{StandardPTDFModel}, sys::PSY.PowerSystem; kwargs...)
+function construct_network!(ps_m::CanonicalModel, system_formulation::Type{StandardPTDFModel}, sys::PSY.PowerSystem; kwargs...)
 
     if :PTDF in keys(kwargs)
 
@@ -34,7 +34,7 @@ function constructnetwork!(ps_m::CanonicalModel, system_formulation::Type{Standa
 
 end
 
-function constructnetwork!(ps_m::CanonicalModel, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: PM.AbstractPowerFormulation}
+function construct_network!(ps_m::CanonicalModel, system_formulation::Type{S}, sys::PSY.PowerSystem; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     time_range = 1:sys.time_periods
 

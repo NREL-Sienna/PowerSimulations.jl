@@ -4,9 +4,9 @@ function line_rate_constraints(ps_m::CanonicalModel,
                                 system_formulation::Type{PSI.StandardPTDFModel},
                           time_range::UnitRange{Int64}) where {Br <: PSY.Branch, D <: AbstractBranchFormulation}
 
-    rate_data = [(h.name, (min = -1*h.rate, max = h.rate) for h in devices]
+    range_data = [(h.name, (min = -1*h.rate, max = h.rate)) for h in devices]
 
-    device_range(ps_m, range_data, time_range, "rate_limit", "Fbr")
+    device_range(ps_m, range_data, time_range, "line_rate_limit", "Fbr")
 
 end
 
