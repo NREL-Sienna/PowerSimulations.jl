@@ -21,6 +21,10 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 kwargs...) where {M <: AbstractOperationsModel,
                                                   T <: PM.AbstractPowerFormulation}
 
+        if isa(optimizer,Nothing)
+            @info("The optimization model has no optimizer attached")
+        end
+
         bus_count = length(system.buses)
 
         ps_model = CanonicalModel(JuMP.Model(optimizer),
@@ -53,6 +57,10 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 kwargs...) where {M <: AbstractOperationsModel,
                                                   T <: PM.AbstractActivePowerFormulation}
 
+        if isa(optimizer,Nothing)
+            @info("The optimization model has no optimizer attached")
+        end
+
         bus_count = length(system.buses)
 
         ps_model = CanonicalModel(JuMP.Model(optimizer),
@@ -82,7 +90,12 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
                                 kwargs...) where {M <: AbstractOperationsModel}
 
+        if isa(optimizer,Nothing)
+            @info("The optimization model has no optimizer attached")
+        end
+
         bus_count = length(system.buses)
+
 
         ps_model = CanonicalModel(JuMP.Model(optimizer),
             Dict{String, JuMP.Containers.DenseAxisArray}(),
@@ -111,7 +124,12 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
                                 kwargs...) where {M <: AbstractOperationsModel}
 
+        if isa(optimizer,Nothing)
+            @info("The optimization model has no optimizer attached")
+        end
+
         bus_count = length(system.buses)
+
 
         ps_model = CanonicalModel(JuMP.Model(optimizer),
                                 Dict{String, JuMP.Containers.DenseAxisArray}(),

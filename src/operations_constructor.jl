@@ -2,8 +2,6 @@ function buildmodel!(op_model::PowerOperationModel, sys::PSY.PowerSystem; kwargs
 
     #TODO: Add check model spec vs data functions before trying to build
 
-    # Create Empty Canonical Model
-
     # Do Initial Conditions
 
     # Build Devices
@@ -47,6 +45,5 @@ function buildmodel!(op_model::PowerOperationModel, sys::PSY.PowerSystem; kwargs
 
     JuMP.@objective(op_model.model, Min, op_model.model.obj_dict[:objective_function])
 
-   return op_model
 
 end
