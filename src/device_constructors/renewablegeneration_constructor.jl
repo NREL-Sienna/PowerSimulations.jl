@@ -2,7 +2,8 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{R},
                            device_formulation::Type{D},
                            system_formulation::Type{S},
-                           sys::PSY.PowerSystem;
+                           sys::PSY.PowerSystem,
+time_range::UnitRange{Int64};
                            kwargs...) where {R <: PSY.RenewableGen,
                                              D <: AbstractRenewableDispatchForm,
                                              S <: PM.AbstractPowerFormulation}
@@ -44,7 +45,8 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{R},
                            device_formulation::Type{D},
                            system_formulation::Type{S},
-                           sys::PSY.PowerSystem;
+                           sys::PSY.PowerSystem,
+time_range::UnitRange{Int64};
                            kwargs...) where {R <: PSY.RenewableGen,
                                              D <: AbstractRenewableDispatchForm,
                                              S <: PM.AbstractActivePowerFormulation}
@@ -82,7 +84,8 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{R},
                            device_formulation::Type{PSI.RenewableFixed},
                            system_formulation::Type{S},
-                           sys::PSY.PowerSystem;
+                           sys::PSY.PowerSystem,
+time_range::UnitRange{Int64};
                            kwargs...) where {R <: PSY.RenewableGen,
                                              S <: PM.AbstractPowerFormulation}
 

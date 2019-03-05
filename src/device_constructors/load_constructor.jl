@@ -2,7 +2,8 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{L},
                            device_formulation::Type{D},
                            system_formulation::Type{S},
-                           sys::PSY.PowerSystem;
+                           sys::PSY.PowerSystem,
+time_range::UnitRange{Int64};
                            kwargs...) where {L <: PSY.ElectricLoad,
                                              D <: PSI.AbstractControllablePowerLoadForm,
                                              S <: PM.AbstractPowerFormulation}
@@ -44,7 +45,8 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{L},
                            device_formulation::Type{D},
                            system_formulation::Type{S},
-                           sys::PSY.PowerSystem;
+                           sys::PSY.PowerSystem,
+time_range::UnitRange{Int64};
                            kwargs...) where {L <: PSY.ElectricLoad,
                                              D <: PSI.AbstractControllablePowerLoadForm,
                                              S <: PM.AbstractActivePowerFormulation}
@@ -82,7 +84,8 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{L},
                            device_formulation::Type{PSI.StaticPowerLoad},
                            system_formulation::Type{S},
-                           sys::PSY.PowerSystem;
+                           sys::PSY.PowerSystem,
+time_range::UnitRange{Int64};
                            kwargs...) where {L <: PSY.ElectricLoad,
                                              S <: PM.AbstractPowerFormulation}
 

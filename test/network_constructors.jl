@@ -7,9 +7,9 @@
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
     Dict{String,Any}(),
     nothing);
-    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.CopperPlatePowerModel, sys5b);
-    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.CopperPlatePowerModel, sys5b);
-    PSI.construct_network!(ps_model, PSI.CopperPlatePowerModel, sys5b);
+    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.CopperPlatePowerModel, sys5b, time_range);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.CopperPlatePowerModel, sys5b, time_range);
+    PSI.construct_network!(ps_model, PSI.CopperPlatePowerModel, sys5b, time_range);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
@@ -30,10 +30,10 @@ end
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
     Dict{String,Any}(),
     nothing);
-    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b);
-    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFModel, sys5b);
-    PSI.construct_network!(ps_model, PSI.StandardPTDFModel, sys5b; PTDF = PTDF)
-    PSI.construct_device!(ps_model, PSY.Branch, PSI.SeriesLine, PSI.StandardPTDFModel, sys5b)
+    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b, time_range);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFModel, sys5b, time_range);
+    PSI.construct_network!(ps_model, PSI.StandardPTDFModel, sys5b, time_range; PTDF = PTDF)
+    PSI.construct_device!(ps_model, PSY.Branch, PSI.SeriesLine, PSI.StandardPTDFModel, sys5b, time_range)
     @test JuMP.num_variables(ps_model.JuMPmodel) == 264
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 264
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
@@ -55,9 +55,9 @@ end
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
     Dict{String,Any}(),
     nothing);
-    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b);
-    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFModel, sys5b);
-    @test_throws ArgumentError PSI.construct_network!(ps_model, PSI.StandardPTDFModel, sys5b)
+    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b, time_range);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFModel, sys5b, time_range);
+    @test_throws ArgumentError PSI.construct_network!(ps_model, PSI.StandardPTDFModel, sys5b, time_range)
 end
 
 @testset "testing DC-PF network construction" begin
@@ -69,9 +69,9 @@ end
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
     Dict{String,Any}(),
     nothing);
-    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.DCPlosslessForm, sys5b);
-    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.DCPlosslessForm, sys5b);
-    PSI.construct_network!(ps_model, PM.DCPlosslessForm, sys5b);
+    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.DCPlosslessForm, sys5b, time_range);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.DCPlosslessForm, sys5b, time_range);
+    PSI.construct_network!(ps_model, PM.DCPlosslessForm, sys5b, time_range);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 384
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 144
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 144
@@ -92,9 +92,9 @@ end
                                                "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
     Dict{String,Any}(),
     nothing);
-    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b);
-    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
-    PSI.construct_network!(ps_model, PM.StandardACPForm, sys5b);
+    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b, time_range);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b, time_range);
+    PSI.construct_network!(ps_model, PM.StandardACPForm, sys5b, time_range);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 1056
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 144
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 144

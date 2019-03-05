@@ -1,7 +1,7 @@
 function construct_network!(ps_m::CanonicalModel,
                             system_formulation::Type{CopperPlatePowerModel},
-                            sys::PSY.PowerSystem, t
-                            ime_range::UnitRange{Int64}; kwargs...)
+                            sys::PSY.PowerSystem,
+                            time_range::UnitRange{Int64}; kwargs...)
 
     bus_count = length(sys.buses)
 

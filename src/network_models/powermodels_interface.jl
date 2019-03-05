@@ -15,7 +15,9 @@
 # Model Definitions
 
 ""
-function build_nip_model(data::Dict{String,Any}, model_constructor; multinetwork=true, kwargs...)
+function build_nip_model(data::Dict{String,Any},
+                         model_constructor;
+                         multinetwork=true, kwargs...)
     return PM.build_generic_model(data, model_constructor, post_nip; multinetwork=multinetwork, kwargs...)
 end
 
@@ -52,6 +54,9 @@ function post_nip(pm::PM.GenericPowerModel)
             PM.constraint_dcline(pm, i, nw=n)
         end
     end
+
+    return nothing
+
 end
 
 
@@ -92,6 +97,9 @@ function post_nip_expr(pm::PM.GenericPowerModel)
             PM.constraint_dcline(pm, i, nw=n)
         end
     end
+
+    return nothing
+
 end
 
 
@@ -102,6 +110,9 @@ end
 function variable_net_injection(pm::PM.GenericPowerModel; kwargs...)
     variable_active_net_injection(pm; kwargs...)
     variable_reactive_net_injection(pm; kwargs...)
+
+    return nothing
+
 end
 
 ""
@@ -110,6 +121,9 @@ function variable_active_net_injection(pm::PM.GenericPowerModel; nw::Int=pm.cnw,
         [i in PM.ids(pm, nw, :bus)], base_name="$(nw)_$(cnd)_pni",
         start = 0.0
     )
+
+    return nothing
+
 end
 
 ""
@@ -118,6 +132,8 @@ function variable_reactive_net_injection(pm::PM.GenericPowerModel; nw::Int=pm.cn
         [i in PM.ids(pm, nw, :bus)], base_name="$(nw)_$(cnd)_qni",
         start = 0.0
     )
+
+    return nothing
 end
 
 
@@ -135,11 +151,16 @@ function constraint_kcl_ni(pm::PM.GenericPowerModel, i::Int; nw::Int=pm.cnw, cnd
     bus_arcs_dc = PM.ref(pm, nw, :bus_arcs_dc, i)
 
     constraint_kcl_ni(pm, nw, cnd, i, bus_arcs, bus_arcs_dc)
+
+    return nothing
+
 end
 
 
 ""
-function constraint_kcl_ni(pm::PM.GenericPowerModel, n::Int, c::Int, i::Int, bus_arcs, bus_arcs_dc)
+function constraint_kcl_ni(pm::PM.GenericPowerModel,
+                           n::Int, c::Int, i::Int,
+                           bus_arcs, bus_arcs_dc)
     p = PM.var(pm, n, c, :p)
     q = PM.var(pm, n, c, :q)
     pni = PM.var(pm, n, c, :pni, i)
@@ -149,11 +170,15 @@ function constraint_kcl_ni(pm::PM.GenericPowerModel, n::Int, c::Int, i::Int, bus
 
     PM.con(pm, n, c, :kcl_p)[i] = JuMP.@constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni)
     PM.con(pm, n, c, :kcl_q)[i] = JuMP.@constraint(pm.model, sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) == qni)
+
+    return nothing
+
 end
 
 
 ""
-function constraint_kcl_ni_expr(pm::PM.GenericPowerModel, i::Int; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
+function constraint_kcl_ni_expr(pm::PM.GenericPowerModel,
+                                i::Int; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
     if !haskey(PM.con(pm, nw, cnd), :kcl_p)
         PM.con(pm, nw, cnd)[:kcl_p] = Dict{Int,JuMP.ConstraintRef}()
     end
@@ -169,11 +194,16 @@ function constraint_kcl_ni_expr(pm::PM.GenericPowerModel, i::Int; nw::Int=pm.cnw
     qni_expr = PM.ref(pm, nw, :bus, i, "qni")
 
     constraint_kcl_ni_expr(pm, nw, cnd, i, bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
+
+    return nothing
+
 end
 
 
 ""
-function constraint_kcl_ni_expr(pm::PM.GenericPowerModel, n::Int, c::Int, i::Int, bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
+function constraint_kcl_ni_expr(pm::PM.GenericPowerModel,
+                                n::Int, c::Int, i::Int,
+                                bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
     p = PM.var(pm, n, c, :p)
     q = PM.var(pm, n, c, :q)
     p_dc = PM.var(pm, n, c, :p_dc)
@@ -181,62 +211,82 @@ function constraint_kcl_ni_expr(pm::PM.GenericPowerModel, n::Int, c::Int, i::Int
 
     PM.con(pm, n, c, :kcl_p)[i] = JuMP.@constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni_expr)
     PM.con(pm, n, c, :kcl_q)[i] = JuMP.@constraint(pm.model, sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) == qni_expr)
+
+    return nothing
+
 end
 
 
 "active power only models ignore reactive power variables"
 function variable_reactive_net_injection(pm::PM.GenericPowerModel{T}; kwargs...) where T <: PM.AbstractDCPForm
+    return nothing
 end
 
 "active power only models ignore reactive power flows"
-function constraint_kcl_ni(pm::PM.GenericPowerModel{T}, n::Int, c::Int, i::Int, bus_arcs, bus_arcs_dc) where T <: PM.AbstractDCPForm
+function constraint_kcl_ni(pm::PM.GenericPowerModel{T},
+                           n::Int, c::Int, i::Int,
+                           bus_arcs, bus_arcs_dc) where T <: PM.AbstractDCPForm
     p = PM.var(pm, n, c, :p)
     pni = PM.var(pm, n, c, :pni, i)
     p_dc = PM.var(pm, n, c, :p_dc)
 
     PM.con(pm, n, c, :kcl_p)[i] = JuMP.@constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni)
+
+    return nothing
+
 end
 
 ""
-function constraint_kcl_ni_expr(pm::PM.GenericPowerModel{T}, n::Int, c::Int, i::Int, bus_arcs, bus_arcs_dc, pni_expr, qni_expr) where T <: PM.AbstractDCPForm
+function constraint_kcl_ni_expr(pm::PM.GenericPowerModel{T},
+                                n::Int, c::Int, i::Int,
+                                bus_arcs, bus_arcs_dc, pni_expr, qni_expr) where T <: PM.AbstractDCPForm
     p = PM.var(pm, n, c, :p)
     p_dc = PM.var(pm, n, c, :p_dc)
 
     PM.con(pm, n, c, :kcl_p)[i] = JuMP.@constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni_expr)
+
+    return nothing
+
 end
 
 ""
-function powermodels_network!(ps_m::CanonicalModel, system_formulation::Type{S}, sys::PSY.PowerSystem, time_range::UnitRange{Int64}) where {S <: PM.AbstractPowerFormulation}
+function powermodels_network!(ps_m::CanonicalModel,
+                              system_formulation::Type{S},
+                              sys::PSY.PowerSystem,
+                              time_range::UnitRange{Int64}) where {S <: PM.AbstractPowerFormulation}
 
     pm_data = pass_to_pm(sys)
 
     for t in time_range, bus in sys.buses
-
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions["var_active"][bus.number,t]
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = ps_m.expressions["var_reactive"][bus.number,t]
-
     end
 
     pm_f = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(pm_data, system_formulation; kwargs...)
 
     ps_m.pm_model = PSI.build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
 
+    return nothing
+
 end
 
 ""
-function powermodels_network!(ps_m::CanonicalModel, system_formulation::Type{S}, sys::PSY.PowerSystem, time_range::UnitRange{Int64}) where {S <: PM.AbstractActivePowerFormulation}
+function powermodels_network!(ps_m::CanonicalModel,
+                              system_formulation::Type{S},
+                              sys::PSY.PowerSystem,
+                              time_range::UnitRange{Int64}) where {S <: PM.AbstractActivePowerFormulation}
 
     pm_data = pass_to_pm(sys)
 
     for t in time_range, bus in sys.buses
-
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions["var_active"][bus.number,t]
         #pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
-
     end
 
     pm_f = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
 
     ps_m.pm_model = PSI.build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
+
+    return nothing
 
 end
