@@ -11,7 +11,7 @@ function construct_network!(ps_m::CanonicalModel,
 end
 
 function construct_network!(ps_m::CanonicalModel,
-                            system_formulation::Type{StandardPTDFModel},
+                            system_formulation::Type{StandardPTDFForm},
                             sys::PSY.PowerSystem,
                             time_range::UnitRange{Int64}; kwargs...)
 

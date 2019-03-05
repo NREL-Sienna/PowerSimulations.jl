@@ -6,7 +6,7 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
     transmission::Type{T}
     devices::Dict{String, DeviceModel}
     branches::Dict{String, DeviceModel}
-    services::Dict{String, DataType}
+    services::Dict{String, ServiceModel}
     system::PSY.PowerSystem
     canonical_model::PSI.CanonicalModel
 
@@ -15,9 +15,9 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 transmission::Type{T},
                                 devices::Dict{String, DeviceModel},
                                 branches::Dict{String, DeviceModel},
-                                services::Dict{String, DataType},
-                                system::PSY.PowerSystem,
-                                optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
+                                services::Dict{String, ServiceModel},
+                                system::PSY.PowerSystem;
+                                optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing,
                                 kwargs...) where {M <: AbstractOperationsModel,
                                                   T <: PM.AbstractPowerFormulation}
 
@@ -26,7 +26,7 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                    branches,
                                    services,
                                    system,
-                                   optimizer,
+                                   optimizer;
                                    kwargs...)
 
         new{M, T}(op_model,

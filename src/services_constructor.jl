@@ -1,4 +1,19 @@
+function construct_service!(ps_m::CanonicalModel,
+                            service::Type{SD},
+                            service_formulation::Type{SV},
+                            system_formulation::Type{S},
+                            sys::PSY.PowerSystem,
+                            time_range::UnitRange{Int64};
+                            kwargs...) where {SD <: PSY.Service,
+                                              SV <: PSI.AbstractServiceFormulation,
+                                              S <:  PM.AbstractPowerFormulation}
 
+    return nothing
+
+end
+
+
+#=
 function get_devices(sys::PSY.PowerSystem,device::Type{PSY.ThermalGen})
     return sys.generators.thermal
 end
@@ -13,7 +28,7 @@ function get_devices(sys::PSY.PowerSystem,device::Type{PSY.PSY.ElectricLoad})
 end
 
 
-function constructservice!(m::JuMP.AbstractModel, service::PSY.StaticReserve, device_formulation::Type{PSI.RampLimitedReserve},devices::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, sys::PSY.PowerSystem; kwargs...)
+function construct_service!(m::JuMP.AbstractModel, service::PSY.StaticReserve, device_formulation::Type{PSI.RampLimitedReserve},devices::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, sys::PSY.PowerSystem; kwargs...)
 
     dev_set = Array{NamedTuple{(:device,:formulation),Tuple{PSY.PowerSystemDevice,DataType}}}([])
 
@@ -38,3 +53,4 @@ function constructservice!(m::JuMP.AbstractModel, service::PSY.StaticReserve, de
     return m
 
 end
+=#

@@ -32,9 +32,6 @@ function construct_device!(ps_m::CanonicalModel,
 
     end
 
-    #Defining this outside in order to enable time slicing later
-    time_range = 1:sys.time_periods
-
     #Variables
 
     #TODO: Enable Initial Conditions for variables
@@ -98,9 +95,6 @@ function construct_device!(ps_m::CanonicalModel,
 
     end
 
-    #Defining this outside in order to enable time slicing later
-    time_range = 1:sys.time_periods
-
     #Variables
 
     #TODO: Enable Initial Conditions for variables
@@ -154,9 +148,6 @@ function construct_device!(ps_m::CanonicalModel,
 
     end
 
-    #Defining this outside in order to enable time slicing later
-    time_range = 1:sys.time_periods
-
     #Variables
 
     #TODO: Enable Initial Conditions for variables
@@ -205,10 +196,7 @@ function construct_device!(ps_m::CanonicalModel,
 
     end
 
-    #Defining this outside in order to enable time slicing later
-    time_range = 1:sys.time_periods
-
-    #Variables
+   #Variables
 
     #TODO: Enable Initial Conditions for variables
     activepower_variables(ps_m, sys.generators.thermal, time_range);
@@ -238,9 +226,6 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: AbstractThermalDispatchForm,
                                              S <: PM.AbstractPowerFormulation}
 
-    #Defining this outside in order to enable time slicing later
-    time_range = 1:sys.time_periods
-
     #Variables
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
@@ -267,9 +252,6 @@ function construct_device!(ps_m::CanonicalModel,
                            kwargs...) where {T<: PSY.ThermalGen,
                                              D <: AbstractThermalDispatchForm,
                                              S <: PM.AbstractActivePowerFormulation}
-
-    #Defining this outside in order to enable time slicing later
-    time_range = 1:sys.time_periods
 
     #Variables
     activepower_variables(ps_m, sys.generators.thermal, time_range);

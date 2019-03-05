@@ -1,21 +1,23 @@
-abstract type AbstractDeviceFormulation end
+abstract type AbstractServiceFormulation end
 
-mutable struct DeviceModel{D <: PSY.PowerSystemDevice,
-                           B <: PSI.AbstractDeviceFormulation}
-    device::Type{D}
+mutable struct ServiceModel{D <: PSY.Service,
+                            B <: PSI.AbstractServiceFormulation}
+    service::Type{D}
     formulation::Type{B}
 end
 
-function construct_device!(ps_m::CanonicalModel,
-                           device_model::DeviceModel,
+
+
+function construct_service!(ps_m::CanonicalModel,
+                           service_model::ServiceModel,
                            system_formulation::Type{S},
                            system::PSY.PowerSystem,
                            time_range::UnitRange{Int64};
                            kwargs...) where {S <: PM.AbstractPowerFormulation}
 
-    construct_device!(ps_m,
-                      device_model.device,
-                      device_model.formulation,
+    construct_service!(ps_m,
+                      service_model.service,
+                      service_model.formulation,
                       system_formulation,
                       system,
                       time_range;
