@@ -1,12 +1,24 @@
-function _ps_model_init(system::PSY.PowerSystem, optimizer::Union{Nothing,JuMP.OptimizerFactory}, transmission::Type{S}, time_periods::Int64) where {S <: PM.AbstractPowerFormulation}
-
+function _pass_abstract_jump(optimizer::Union{Nothing,JuMP.OptimizerFactory}; kwargs...)
+    
     if isa(optimizer,Nothing)
         @info("The optimization model has no optimizer attached")
     end
 
+    if :JuMPmodel in keys(kwargs)
+
+        return kwargs[:JuMPmodel]
+
+    end
+
+    return JuMP.Model(optimizer)
+
+end
+
+function _ps_model_init(system::PSY.PowerSystem, optimizer::Union{Nothing,JuMP.OptimizerFactory}, transmission::Type{S}, time_periods::Int64; kwargs...) where {S <: PM.AbstractPowerFormulation}
+
     bus_count = length(system.buses)
 
-    ps_model = CanonicalModel(JuMP.Model(optimizer),
+    ps_model = CanonicalModel(_pass_abstract_jump(optimizer; kwargs...),
                             Dict{String, JuMP.Containers.DenseAxisArray}(),
                             Dict{String, JuMP.Containers.DenseAxisArray}(),
                             nothing,
@@ -19,21 +31,18 @@ function _ps_model_init(system::PSY.PowerSystem, optimizer::Union{Nothing,JuMP.O
 
 end
 
-function _ps_model_init(system::PSY.PowerSystem, optimizer::Union{Nothing,JuMP.OptimizerFactory}, transmission::Type{S}) where {S <: PM.AbstractActivePowerFormulation}
+function _ps_model_init(system::PSY.PowerSystem, optimizer::Union{Nothing,JuMP.OptimizerFactory}, transmission::Type{S}, time_periods::Int64; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
 
-    if isa(optimizer,Nothing)
-        @info("The optimization model has no optimizer attached")
-    end
 
     bus_count = length(system.buses)
 
-    ps_model = CanonicalModel(JuMP.Model(optimizer),
-                            Dict{String, JuMP.Containers.DenseAxisArray}(),
-                            Dict{String, JuMP.Containers.DenseAxisArray}(),
-                            nothing,
-                            Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, bus_count, time_periods)),
-                            Dict{String,Any}(),
-                            nothing);
+    ps_model = CanonicalModel(_pass_abstract_jump(optimizer; kwargs...),
+                              Dict{String, JuMP.Containers.DenseAxisArray}(),
+                              Dict{String, JuMP.Containers.DenseAxisArray}(),
+                              nothing,
+                              Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, bus_count, time_periods)),
+                              Dict{String,Any}(),
+                              nothing);
 
         return ps_model
 
