@@ -2,7 +2,8 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{B},
                            device_formulation::Type{Br},
                            system_formulation::Type{StandardPTDFModel},
-                           sys::PSY.PowerSystem;
+                           sys::PSY.PowerSystem, 
+time_range::UnitRange{Int64};
                            kwargs...) where {Br <: AbstractLineForm,
                                              B <: PSY.Branch}
 

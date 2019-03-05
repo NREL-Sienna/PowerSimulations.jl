@@ -2,7 +2,8 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{St},
                            device_formulation::Type{D},
                            system_formulation::Type{S},
-                           sys::PSY.PowerSystem;
+                           sys::PSY.PowerSystem, 
+time_range::UnitRange{Int64};
                            kwargs...) where {St <: PSY.Storage,
                                              D <: PSI.AbstractStorageForm,
                                              S <: PM.AbstractPowerFormulation}
@@ -48,7 +49,8 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{St},
                            device_formulation::Type{D},
                            system_formulation::Type{S},
-                           sys::PSY.PowerSystem;
+                           sys::PSY.PowerSystem, 
+time_range::UnitRange{Int64};
                            kwargs...) where {St <: PSY.Storage,
                                              D <: PSI.AbstractStorageForm,
                                              S <: PM.AbstractActivePowerFormulation}

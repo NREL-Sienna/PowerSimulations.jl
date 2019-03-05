@@ -55,15 +55,14 @@ const FixResource = Union{PSY.RenewableFix, PSY.HydroFix}
 include("network_models/networks.jl")
 include("service_models/services.jl")
 
-#Core Models
+#Core Models and constructors
 include("abstract_models/canonical_model.jl")
 include("abstract_models/device_model.jl")
+include("operations_constructor.jl")
 include("abstract_models/operation_model.jl")
 #include("abstract_models/simulation_model.jl")
 #include("abstract_models/results_model.jl")
 
-#Core Constructors
-#include("operations_constructor.jl")
 
 #Device Modeling components
 include("device_models/common.jl")
@@ -95,7 +94,7 @@ include("network_constructor.jl")
 #Services constructors
 #include("services_constructor.jl")
 
-#Operational Models
+#Operational Model Constructors
 include("operation_models/operation_models.jl")
 
 #Utils
@@ -103,5 +102,10 @@ include("operation_models/operation_models.jl")
 #include("routines/simulation_routines.jl")
 #include("routines/device_retreval.jl")
 
+#################################################################################
+##### JuMP methods overloading
+JuMP.Model(optimizer::Nothing; kwargs...) = JuMP.Model(kwargs...)
+
+#################################################################################
 
 end

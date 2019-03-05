@@ -93,6 +93,8 @@ sys5b = PowerSystem(nodes5, vcat(generators5,renewables), loads5_DA, branches5, 
 sys5b_uc = PowerSystem(nodes5, vcat(generators5_uc,renewables), loads5_DA, branches5, nothing,  100.0);
 sys5b_storage = PowerSystem(nodes5, vcat(generators5_uc,renewables), loads5_DA, branches5, battery,  100.0);
 
+time_range = 1:sys5b.time_periods
+
 @testset "Common Functionalities" begin
     include("variables.jl")
     include("constraints.jl")

@@ -5,7 +5,8 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{T},
                            device_formulation::Type{D},
                            system_formulation::Type{S},
-                           sys::PSY.PowerSystem;
+                           sys::PSY.PowerSystem, 
+                           time_range::UnitRange{Int64};
                            kwargs...) where {T <: PSY.ThermalGen,
                                              D <: AbstractThermalFormulation,
                                              S <: PM.AbstractPowerFormulation}
@@ -70,7 +71,8 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{T},
                            device_formulation::Type{D},
                            system_formulation::Type{S},
-                           sys::PSY.PowerSystem;
+                           sys::PSY.PowerSystem, 
+                           time_range::UnitRange{Int64};
                            kwargs...) where {T <: PSY.ThermalGen,
                                              D <: AbstractThermalFormulation,
                                              S <: PM.AbstractActivePowerFormulation}
@@ -130,7 +132,8 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{T},
                            device_formulation::Type{PSI.ThermalRampLimited},
                            system_formulation::Type{S},
-                           sys::PSY.PowerSystem;
+                           sys::PSY.PowerSystem, 
+                           time_range::UnitRange{Int64};
                            kwargs...) where {T <: PSY.ThermalGen,
                                              S <: PM.AbstractPowerFormulation}
 
@@ -184,7 +187,8 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{T},
                            device_formulation::Type{ThermalRampLimited},
                            system_formulation::Type{S},
-                           sys::PSY.PowerSystem;
+                           sys::PSY.PowerSystem, 
+                           time_range::UnitRange{Int64};
                            kwargs...) where {T <: PSY.ThermalGen,
                                              S <: PM.AbstractActivePowerFormulation}
 
@@ -228,7 +232,8 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{T},
                            device_formulation::Type{D},
                            system_formulation::Type{S},
-                           sys::PSY.PowerSystem;
+                           sys::PSY.PowerSystem, 
+                           time_range::UnitRange{Int64};
                            kwargs...) where {T<: PSY.ThermalGen,
                                              D <: AbstractThermalDispatchForm,
                                              S <: PM.AbstractPowerFormulation}
@@ -257,7 +262,8 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{T},
                            device_formulation::Type{D},
                            system_formulation::Type{S},
-                           sys::PSY.PowerSystem;
+                           sys::PSY.PowerSystem, 
+                           time_range::UnitRange{Int64};
                            kwargs...) where {T<: PSY.ThermalGen,
                                              D <: AbstractThermalDispatchForm,
                                              S <: PM.AbstractActivePowerFormulation}
