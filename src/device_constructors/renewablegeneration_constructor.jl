@@ -8,34 +8,40 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: AbstractRenewableDispatchForm,
                                              S <: PM.AbstractPowerFormulation}
 
-    fixed_resources = [fs for fs in sys.generators.renewable if isa(fs,PSY.RenewableFix)]
+    
+    # TODO: Remove the use of two loops to classify resource types 
 
-    controllable_resources = [fs for fs in sys.generators.renewable if !isa(fs,PSY.RenewableFix)]
+    if !isa(sys.generators.renewable, Nothing) 
 
-    if !isempty(controllable_resources)
+        fixed_resources = [fs for fs in sys.generators.renewable if isa(fs,PSY.RenewableFix)]
 
-        #Variables
-        activepower_variables(ps_m, controllable_resources, time_range);
+        controllable_resources = [fs for fs in sys.generators.renewable if !isa(fs,PSY.RenewableFix)]
 
-        reactivepower_variables(ps_m, controllable_resources, time_range);
+        if !isempty(controllable_resources)
 
-        #Constraints
-        activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
+            #Variables
+            activepower_variables(ps_m, controllable_resources, time_range);
 
-        reactivepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
+            reactivepower_variables(ps_m, controllable_resources, time_range);
 
-        #Cost Function
-        cost_function(ps_m, controllable_resources, device_formulation, system_formulation)
+            #Constraints
+            activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
 
-    else
-        @warn("The Data Doesn't Contain Controllable Renewable Resources, Consider Changing the Device Formulation to RenewableFixed")
+            reactivepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
 
-    end
+            #Cost Function
+            cost_function(ps_m, controllable_resources, device_formulation, system_formulation)
 
-    #add to expression
+        else
+            @warn("The Data Doesn't Contain Controllable Renewable Resources, Consider Changing the Device Formulation to RenewableFixed")
+        end
 
-    if !isempty(fixed_resources) 
-        nodal_expression(ps_m, fixed_resources, system_formulation, time_range) 
+        #add to expression
+
+        if !isempty(fixed_resources) 
+            nodal_expression(ps_m, fixed_resources, system_formulation, time_range) 
+        end
+
     end
 
     return nothing
@@ -52,32 +58,36 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: AbstractRenewableDispatchForm,
                                              S <: PM.AbstractActivePowerFormulation}
 
-    fixed_resources = [fs for fs in sys.generators.renewable if isa(fs,PSY.RenewableFix)]
+    if !isa(sys.generators.renewable, Nothing) 
 
-    controllable_resources = [fs for fs in sys.generators.renewable if !isa(fs,PSY.RenewableFix)]
+        fixed_resources = [fs for fs in sys.generators.renewable if isa(fs,PSY.RenewableFix)]
 
-    if !isempty(controllable_resources)
+        controllable_resources = [fs for fs in sys.generators.renewable if !isa(fs,PSY.RenewableFix)]
 
-        #Variables
-        activepower_variables(ps_m, controllable_resources, time_range)
+        if !isempty(controllable_resources)
 
-        #Constraints
-        activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
+            #Variables
+            activepower_variables(ps_m, controllable_resources, time_range)
 
-        #Cost Function
-        cost_function(ps_m, controllable_resources, device_formulation, system_formulation)
+            #Constraints
+            activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
 
-    else
-        @warn("The Data Doesn't Contain Controllable Renewable Resources, Consider Changing the Device Formulation to RenewableFixed")
+            #Cost Function
+            cost_function(ps_m, controllable_resources, device_formulation, system_formulation)
 
-    end
+        else
+            @warn("The Data Doesn't Contain Controllable Renewable Resources, Consider Changing the Device Formulation to RenewableFixed")
 
-    #add to expression
+        end
 
-    if !isempty(fixed_resources) 
-        nodal_expression(ps_m, fixed_resources, system_formulation, time_range) 
-    end
+        #add to expression
+
+        if !isempty(fixed_resources) 
+            nodal_expression(ps_m, fixed_resources, system_formulation, time_range) 
+        end
     
+    end
+
     return nothing
 
 end
@@ -91,8 +101,11 @@ function construct_device!(ps_m::CanonicalModel,
                            kwargs...) where {R <: PSY.RenewableGen,
                                              S <: PM.AbstractPowerFormulation}
 
-    nodal_expression(ps_m, sys.generators.renewable, system_formulation, time_range)
 
+    if !isa(sys.generators.renewable, Nothing) 
+        nodal_expression(ps_m, sys.generators.renewable, system_formulation, time_range)
+    end
+    
     return nothing
 
 end
