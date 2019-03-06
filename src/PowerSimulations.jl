@@ -49,49 +49,43 @@ const FixResource = Union{PSY.RenewableFix, PSY.HydroFix}
 # Includes
 
 #Abstract Models
-include("network_models/networks.jl")
-include("service_models/services.jl")
+include("network/network_models/networks.jl")
+include("services/service_models/services.jl")
 
 #Core Models and constructors
-include("abstract_models/canonical_model.jl")
-include("abstract_models/device_model.jl")
-include("abstract_models/service_model.jl")
-include("operations_constructor.jl")
-include("abstract_models/operation_model.jl")
-include("abstract_models/results_model.jl")
-#include("abstract_models/simulation_model.jl")
-
-
+include("core/core_structs/canonical_model.jl")
+include("core/core_structs/device_model.jl")
+include("core/core_structs/service_model.jl")
+include("core/operations_constructor.jl")
+include("core/core_structs/operation_model.jl")
+include("core/core_structs/results_model.jl")
+#include("core/core_structs/simulation_model.jl")
 
 #Device Modeling components
-include("device_models/common.jl")
-include("device_models/renewable_generation.jl")
-include("device_models/thermal_generation.jl")
-include("device_models/electric_loads.jl")
-include("device_models/branches.jl")
-include("device_models/storage.jl")
-include("device_models/hydro_generation.jl")
+include("devices/device_models/common.jl")
+include("devices/device_models/renewable_generation.jl")
+include("devices/device_models/thermal_generation.jl")
+include("devices/device_models/electric_loads.jl")
+include("devices/device_models/branches.jl")
+include("devices/device_models/storage.jl")
+include("devices/device_models/hydro_generation.jl")
 
 #Network models
-include("network_models/copperplate_model.jl")
-include("network_models/powermodels_interface.jl")
-include("network_models/ptdf_model.jl")
+include("network/network_models/copperplate_model.jl")
+include("network/network_models/powermodels_interface.jl")
+include("network/network_models/ptdf_model.jl")
 
 #Device constructors
-include("device_constructors/thermalgeneration_constructor.jl")
-include("device_constructors/branch_constructor.jl")
-include("device_constructors/renewablegeneration_constructor.jl")
-include("device_constructors/load_constructor.jl")
-include("device_constructors/storage_constructor.jl")
+include("devices/device_constructors/device_constructors.jl")
 
 #Network constructors
-include("network_constructor.jl")
+include("network/network_constructor.jl")
 
 #Services Models
 #include("service_models/reserves.jl")
 
 #Services constructors
-include("services_constructor.jl")
+include("services/services_constructor.jl")
 
 #Operational Model Constructors
 include("operation_models/operation_models.jl")
