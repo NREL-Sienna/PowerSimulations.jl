@@ -4,18 +4,18 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                    T <: PM.AbstractPowerFormulation}
     op_model::Type{M}
     transmission::Type{T}
-    devices::Dict{String, DeviceModel}
-    branches::Dict{String, DeviceModel}
-    services::Dict{String, ServiceModel}
+    devices::Dict{Symbol, DeviceModel}
+    branches::Dict{Symbol, DeviceModel}
+    services::Dict{Symbol, ServiceModel}
     system::PSY.PowerSystem
     canonical_model::PSI.CanonicalModel
 
 
     function PowerOperationModel(op_model::Type{M},
                                 transmission::Type{T},
-                                devices::Dict{String, DeviceModel},
-                                branches::Dict{String, DeviceModel},
-                                services::Dict{String, ServiceModel},
+                                devices::Dict{Symbol, DeviceModel},
+                                branches::Dict{Symbol, DeviceModel},
+                                services::Dict{Symbol, ServiceModel},
                                 system::PSY.PowerSystem;
                                 optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing,
                                 kwargs...) where {M <: AbstractOperationsModel,

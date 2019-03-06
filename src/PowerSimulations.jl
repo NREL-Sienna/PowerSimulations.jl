@@ -3,22 +3,19 @@ module PowerSimulations
 #################################################################################
 # Exports
 
-#Core Exports
-#export PowerSimulationsModel
-#export PowerResults
-
-#Base Modeling Exports
-#export CustomModel
-#export EconomicDispatch
-#export UnitCommitment
-
 #Network Relevant Exports
 export StandardPTDFForm
 export CopperPlatePowerModel
 
-#Functions
-export buildmodel!
-export simulatemodel
+#operation_models
+export UnitCommitment
+export EconomicDispatch
+export SCEconomicDispatch
+export OptimalPowerFlow
+
+#functions
+export solve_op_model!
+
 
 #################################################################################
 # Imports
@@ -27,7 +24,7 @@ import JuMP
 import PowerSystems
 import PowerModels
 import MathOptInterface
-#import DataFrames #Needed to display results
+import DataFrames
 import LinearAlgebra
 #import LinearAlgebra.BLAS #needed for the simulation stage
 import AxisArrays
@@ -61,8 +58,9 @@ include("abstract_models/device_model.jl")
 include("abstract_models/service_model.jl")
 include("operations_constructor.jl")
 include("abstract_models/operation_model.jl")
+include("abstract_models/results_model.jl")
 #include("abstract_models/simulation_model.jl")
-#include("abstract_models/results_model.jl")
+
 
 
 #Device Modeling components
@@ -99,7 +97,7 @@ include("services_constructor.jl")
 include("operation_models/operation_models.jl")
 
 #Utils
-#include("routines/solve_routines.jl")
+include("routines/solve_routines.jl")
 #include("routines/simulation_routines.jl")
 #include("routines/device_retreval.jl")
 

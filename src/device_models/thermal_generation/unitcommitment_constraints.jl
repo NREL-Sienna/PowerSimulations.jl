@@ -7,7 +7,9 @@ function commitment_constraints(ps_m::CanonicalModel, devices::Array{T,1}, devic
 
     named_initial_conditions = [(d.name, initial_conditions[ix]) for (ix, d) in enumerate(devices)]
 
-    device_commitment(ps_m, named_initial_conditions, time_range, "commitment_th", ("start_th", "stop_th", "on_th"))
+    device_commitment(ps_m, named_initial_conditions, time_range, :commitment_th, (:start_th, :stop_th, :on_th))
+
+    return nothing
 
 end
 

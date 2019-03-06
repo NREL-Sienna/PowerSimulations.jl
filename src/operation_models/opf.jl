@@ -2,18 +2,19 @@ struct OptimalPowerFlow <: AbstractOperationsModel end
 
 function OptimalPowerFlow(system::PSY.PowerSystem, transmission::Type{S}; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...) where {S <: PM.AbstractPowerFormulation}
 
-    devices = Dict{String, PSI.DeviceModel}("ThermalGenerators" => PSI.DeviceModel(PSY.ThermalGen, PSI.ThermalDispatch),
-                                            "RenewableGenerators" => PSI.DeviceModel(PSY.RenewableGen, PSI.RenewableConstantPowerFactor),
-                                            "Loads" => PSI.DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
+    devices = Dict{Symbol, PSI.DeviceModel}(:ThermalGenerators => PSI.DeviceModel(PSY.ThermalGen, PSI.ThermalDispatch),
+                                            :RenewableGenerators => PSI.DeviceModel(PSY.RenewableGen, PSI.RenewableConstantPowerFactor),
+                                            :Loads => PSI.DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
 
-    branches = Dict{String, PSI.DeviceModel}("Lines" => PSI.DeviceModel(PSY.Branch, PSI.SeriesLine))
-    services = Dict{String, PSI.ServiceModel}("Reserves" => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
+    branches = Dict{Symbol, PSI.DeviceModel}(:Lines => PSI.DeviceModel(PSY.Branch, PSI.SeriesLine))
+    services = Dict{Symbol, PSI.ServiceModel}(:Reserves => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
 
-    op_model = PowerOperationModel(OptimalPowerFlow ,
+    return PowerOperationModel(OptimalPowerFlow ,
                                    transmission,
                                     devices,
                                     branches,
                                     services,
                                     system,
                                     optimizer = optimizer; kwargs...)
+
 end

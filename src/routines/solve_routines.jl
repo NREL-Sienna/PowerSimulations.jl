@@ -1,64 +1,31 @@
-## All this code breaks with JumP 0.19.
+include("get_results.jl")
 
-function solve(model::PowerOperationModel{T, F}; Solver = nothing) where {T <: AbstractOperationsModel, F <: Array{<:Function}}
+function solve_op_model!(op_model::PSI.PowerOperationModel; kwargs...)
 
-    psmodel = model.model # JuMP model
-    model_type = JuMP.ProblemTraits(psmodel)
+    if op_model.canonical_model.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
 
-    #==
-    function ProblemTraits(m::Model; relaxation=false)
-    int = !relaxation & any(c-> !(c == :Cont || c == :Fixed), m.colCat)
-    qp = !isempty(m.obj.qvars1)
-    qc = !isempty(m.quadconstr)
-    nlp = m.nlpdata !== nothing
-    soc = !isempty(m.socconstr)
-    # will need to change this when we add support for arbitrary variable cones
-    sdp = !isempty(m.sdpconstr) || !isempty(m.varCones)
-    sos = !isempty(m.sosconstr)
-    ProblemTraits(int, !(qp|qc|nlp|soc|sdp|sos), qp, qc, nlp, soc, sdp, sos, soc|sdp)
-    end
-    =#
+        if !(:optimizer in keys(kwargs))
 
-    if Solver == nothing
-
-        if (model_type.qc|model_type.qp|model_type.nlp)
-
-            if model_type.int
-                @error "The model is a Mixed Integer Non-Linear Problem, please define an appropiate solver manually using the Solver= argument"
-            end
-
-            JuMP.setsolver(psmodel, Ipopt.IpoptSolver())
-            @warn "The model contains non-linear elements (QP, QC, NLP), by default the solver is Ipopt Solver"
-
-        elseif model_type.lin & model_type.int & !(model_type.qc|model_type.qp|model_type.nlp)
-
-            JuMP.setsolver(psmodel, Cbc.CbcSolver(logLevel = 1))
-            @warn "The model is Mixed Integer Linear, the default is Cbc Solver"
-
-        elseif model_type.lin & !(model_type.qc|model_type.qp|model_type.nlp)
-
-            JuMP.setsolver(psmodel, Clp.ClpSolver(SolveType = 5, LogLevel = 4))
-
-            @warn "The model is linear, by default the solver is Clp Solver"
+            @error("No Optimizer has been defined, can't solve the operational problem")
 
         else
 
-            @error "The PS Model is not a standard LP, MILP, QP, QC or NLP, please define an appropiate solver manually using the Solver argument"
+            JuMP.optimize!(op_model.canonical_model.JuMPmodel, kwargs[:optimizer])
 
         end
 
     else
-        JuMP.setsolver(psmodel, Solver)
-        @warn "A solver has been defined manually, this might break the results output function"
+
+        JuMP.optimize!(op_model.canonical_model.JuMPmodel)
 
     end
 
-    JuMP.build(psmodel)
-    status = solve(psmodel)
+    vars_result = get_model_result(op_model.canonical_model)
+    obj_value = Dict(:ED => JuMP.objective_value(op_model.canonical_model.JuMPmodel))
+    opt_log = optimizer_log(op_model.canonical_model)
 
-    if status != :Optimal
-        println(status)
-        @error "Problem has no solution."
-    end
+    return OpertationModelResults(vars_result, obj_value, opt_log)
 
 end
+
+

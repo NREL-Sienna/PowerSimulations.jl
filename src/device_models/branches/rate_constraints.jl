@@ -6,7 +6,9 @@ function line_rate_constraints(ps_m::CanonicalModel,
 
     range_data = [(h.name, (min = -1*h.rate, max = h.rate)) for h in devices]
 
-    device_range(ps_m, range_data, time_range, "line_rate_limit", "Fbr")
+    device_range(ps_m, range_data, time_range, :line_rate_limit, :Fbr)
+
+    return nothing
 
 end
 
@@ -18,7 +20,7 @@ PM.AbstractActivePowerFormulation}
 
     rate_data = [(h.name, h.rate) for h in devices]
 
-    norm_two_constraint(ps_m, range_data, time_range, "hydro_active_range", "Phy")
+    norm_two_constraint(ps_m, range_data, time_range, "hydro_active_range", :Phy)
 
 end
 =#

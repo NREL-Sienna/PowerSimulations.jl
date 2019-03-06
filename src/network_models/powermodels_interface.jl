@@ -258,8 +258,8 @@ function powermodels_network!(ps_m::CanonicalModel,
     pm_data = pass_to_pm(sys)
 
     for t in time_range, bus in sys.buses
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions["var_active"][bus.number,t]
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = ps_m.expressions["var_reactive"][bus.number,t]
+        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions[:var_active][bus.number,t]
+        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = ps_m.expressions[:var_reactive][bus.number,t]
     end
 
     pm_f = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(pm_data, system_formulation; kwargs...)
@@ -279,7 +279,7 @@ function powermodels_network!(ps_m::CanonicalModel,
     pm_data = pass_to_pm(sys)
 
     for t in time_range, bus in sys.buses
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions["var_active"][bus.number,t]
+        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions[:var_active][bus.number,t]
         #pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
     end
 

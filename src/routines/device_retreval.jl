@@ -1,3 +1,5 @@
+
+#=
 function all_devices(sys, filter::Array)
     dev = Array{PSY.PowerSystemDevice}([])
 
@@ -262,3 +264,5 @@ function collect_results(simulation_results)
     end
     return(sim_res)
 end
+
+=#

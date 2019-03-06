@@ -28,7 +28,7 @@ function construct_device!(ps_m::CanonicalModel,
 
     energystorage_variables(ps_m, sys.storage, time_range);
 
-    storagestate_variables(ps_m, sys.storage, time_range);
+    storagereservation_variables(ps_m, sys.storage, time_range);
 
     #Constraints
     activepower_constraints(ps_m, sys.storage, device_formulation, system_formulation, time_range)
@@ -71,7 +71,7 @@ function construct_device!(ps_m::CanonicalModel,
 
     energystorage_variables(ps_m, sys.storage, time_range);
 
-    storagestate_variables(ps_m, sys.storage, time_range);
+    storagereservation_variables(ps_m, sys.storage, time_range);
 
     #Constraints
     activepower_constraints(ps_m, sys.storage, device_formulation, system_formulation, time_range)

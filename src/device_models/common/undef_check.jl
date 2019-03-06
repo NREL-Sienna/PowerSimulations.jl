@@ -10,6 +10,8 @@ function _remove_undef!(ExpressionArray::T) where T <: JumpExpressionMatrix
 
     end
 
+    return nothing
+
 end
 
 
@@ -20,6 +22,8 @@ function _add_to_expression!(expression::T,
                              sign::Int64) where {T <: JumpExpressionMatrix, JV <: JuMP.AbstractVariableRef}
 
     isassigned(expression,  ix, jx) ? JuMP.add_to_expression!(expression[ix,jx], sign*var) : expression[ix,jx] = sign*var
+
+    return nothing
 
 end
 
@@ -34,6 +38,8 @@ function _add_to_expression!(expression::T,
         expression[ix,jx] = 1.0*var
     end
 
+    return nothing
+
 end
 
 function _add_to_expression!(expression::T,
@@ -42,5 +48,7 @@ function _add_to_expression!(expression::T,
                              value::Float64) where T <: JumpExpressionMatrix
 
     isassigned(expression,  ix, jx) ? expression[ix,jx] += value : expression[ix,jx] = JuMP.AffExpr(value)
+
+    return nothing
 
 end

@@ -5,7 +5,7 @@ function time_constraints(ps_m::CanonicalModel, devices::Array{T,1}, device_form
 
     if !isempty(duration_data)
 
-        device_duration_retrospective(ps_m, duration_data, initial_conditions, time_range, "time", ("on_th", "start_th", "stop_th"))
+        device_duration_retrospective(ps_m, duration_data, initial_conditions, time_range, :time, (:on_th, :start_th, :stop_th))
 
     else
 
@@ -13,5 +13,6 @@ function time_constraints(ps_m::CanonicalModel, devices::Array{T,1}, device_form
 
     end
 
+    return nothing
 
 end

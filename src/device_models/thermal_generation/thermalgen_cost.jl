@@ -5,7 +5,9 @@ function cost_function(ps_m::CanonicalModel,
                                                            D <: AbstractThermalDispatchForm,
                                                            S <: PM.AbstractPowerFormulation}
 
-    add_to_cost(ps_m, devices, "Pth", :variablecost)
+    add_to_cost(ps_m, devices, :Pth, :variablecost)
+
+    return nothing
 
 end
 
@@ -17,12 +19,14 @@ function cost_function(ps_m::CanonicalModel,
                                                            S <: PM.AbstractPowerFormulation}
 
     #Variable Cost component
-    add_to_cost(ps_m, devices, "Pth", :variablecost)
+    add_to_cost(ps_m, devices, :Pth, :variablecost)
 
     #Commitment Cost Components
      "Commitment Cost"
-    add_to_cost(ps_m, devices, "start_th", :startupcost)
-    add_to_cost(ps_m, devices, "stop_th", :shutdncost)
-    add_to_cost(ps_m, devices, "on_th", :fixedcost)
+    add_to_cost(ps_m, devices, :start_th, :startupcost)
+    add_to_cost(ps_m, devices, :stop_th, :shutdncost)
+    add_to_cost(ps_m, devices, :on_th, :fixedcost)
+
+    return nothing
 
 end

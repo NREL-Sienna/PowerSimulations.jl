@@ -4,9 +4,11 @@ function activepower_constraints(ps_m::CanonicalModel, devices::Array{St,1}, dev
 
     range_data_out = [(s.name, s.outputactivepowerlimits) for s in devices]
 
-    device_semicontinuousrange(ps_m, range_data_in, time_range, "storage_inputpower_range", "Psin","Sst")
+    device_semicontinuousrange(ps_m, range_data_in, time_range, :storage_inputpower_range, :Psin, :Est)
 
-    reserve_device_semicontinuousrange(ps_m, range_data_in, time_range, "storage_outputpower_range", "Psout","Sst")
+    reserve_device_semicontinuousrange(ps_m, range_data_in, time_range, :storage_outputpower_range, :Psout, :Sst)
+
+    return nothing
 
 end
 
@@ -17,6 +19,8 @@ function reactivepower_constraints(ps_m::CanonicalModel, devices::Array{St,1}, d
 
     range_data = [(s.name, s.reactivepowerlimits) for s in devices]
 
-    device_range(ps_m, range_data , time_range, "thermal_reactive_range", "Qst")
+    device_range(ps_m, range_data , time_range, :storage_reactive_range, :Qst)
+
+    return nothing
 
 end

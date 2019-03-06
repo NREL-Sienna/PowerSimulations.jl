@@ -1,9 +1,9 @@
 mutable struct CanonicalModel
     JuMPmodel::JuMP.AbstractModel
-    variables::Dict{String, JuMP.Containers.DenseAxisArray}
-    constraints::Dict{String, JuMP.Containers.DenseAxisArray}
+    variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
+    constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     cost_function::Union{Nothing,JuMP.AbstractJuMPScalar}
-    expressions::Dict{String, JumpAffineExpressionArray}
-    initial_conditions::Dict{String, Any}
+    expressions::Dict{Symbol, JumpAffineExpressionArray}
+    initial_conditions::Dict{Symbol, Any}
     pm_model::Union{Nothing,PM.GenericPowerModel}
 end

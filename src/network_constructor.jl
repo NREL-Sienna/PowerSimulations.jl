@@ -5,7 +5,7 @@ function construct_network!(ps_m::CanonicalModel,
 
     bus_count = length(sys.buses)
 
-    copper_plate(ps_m, "var_active", bus_count, time_range)
+    copper_plate(ps_m, :var_active, bus_count, time_range)
 
     return nothing
 end
@@ -23,7 +23,7 @@ function construct_network!(ps_m::CanonicalModel,
 
         flow_variables(ps_m, system_formulation, ac_branches, time_range)
 
-        ptdf_networkflow(ps_m, ac_branches, sys.buses, "var_active", kwargs[:PTDF], time_range)
+        ptdf_networkflow(ps_m, ac_branches, sys.buses, :var_active, kwargs[:PTDF], time_range)
 
     else
         throw(ArgumentError("no PTDF matrix supplied"))
