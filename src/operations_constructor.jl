@@ -58,26 +58,22 @@ function build_op_model!(transmission::Type{T},
     time_range = 1:system.time_periods
     ps_model = _ps_model_init(system, optimizer, transmission, system.time_periods; kwargs...)
     
-    
     # Build Injection devices 
-
     for mod in devices
         construct_device!(ps_model, mod[2], transmission, system, time_range; kwargs...)
     end
 
     # Build Network
-
     construct_network!(ps_model, transmission, system, time_range; kwargs...)
 
-    #=
+  
     # Build Branches    
 
-    for device in op_model.generation
-    construct_device!(op_model.model, netinjection, device.device,
-    device.formulation, op_model.transmission, sys; kwargs...)
+    for mod in branches
+        construct_device!(ps_model, mod[2], transmission, system, time_range; kwargs...)
     end    
 
-
+    #=
     #Build Services
     for ervice in op_model.services
     constructservice!(op_model.model, service.service, service.formulation, service_providers, sys; kwargs...)
