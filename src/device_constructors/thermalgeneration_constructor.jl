@@ -14,11 +14,23 @@ function construct_device!(ps_m::CanonicalModel,
     #wrangle initial_conditions
     if !isempty(keys(ps_m.initial_conditions))
 
-        "status_initial_conditions" in keys(ps_m.initial_conditions) ? status_initial_conditions = ps_m.initial_conditions["status_initial_conditions"] : @warn("No status initial conditions provided")
+        if "status_initial_conditions" in keys(ps_m.initial_conditions) 
+             status_initial_conditions = ps_m.initial_conditions["status_initial_conditions"] 
+        else
+            @warn("No status initial conditions provided")
+        end
 
-        "ramp_initial_conditions" in keys(ps_m.initial_conditions) ? ramp_initial_conditions = ps_m.initial_conditions["ramp_initial_conditions"] : @warn("No ramp initial conditions provided")
+        if "ramp_initial_conditions" in keys(ps_m.initial_conditions) 
+             ramp_initial_conditions = ps_m.initial_conditions["ramp_initial_conditions"] 
+        else 
+            @warn("No ramp initial conditions provided")
+        end
 
-        "time_initial_conditions" in keys(ps_m.initial_conditions) ? time_initial_conditions = ps_m.initial_conditions["time_initial_conditions"] : @warn("No duration initial conditions provided")
+        if "time_initial_conditions" in keys(ps_m.initial_conditions) 
+             time_initial_conditions = ps_m.initial_conditions["time_initial_conditions"] 
+        else 
+            @warn("No duration initial conditions provided")
+        end
 
     else
 
@@ -79,11 +91,23 @@ function construct_device!(ps_m::CanonicalModel,
     #wrangle initial_conditions
     if !isempty(keys(ps_m.initial_conditions))
 
-        "status_initial_conditions" in keys(ps_m.initial_conditions) ? status_initial_conditions = ps_m.initial_conditions["status_initial_conditions"] : @warn("No status initial conditions provided")
+        if "status_initial_conditions" in keys(ps_m.initial_conditions) 
+            status_initial_conditions = ps_m.initial_conditions["status_initial_conditions"] 
+       else
+           @warn("No status initial conditions provided")
+       end
 
-        "ramp_initial_conditions" in keys(ps_m.initial_conditions) ? ramp_initial_conditions = ps_m.initial_conditions["ramp_initial_conditions"] : @warn("No ramp initial conditions provided")
+       if "ramp_initial_conditions" in keys(ps_m.initial_conditions) 
+            ramp_initial_conditions = ps_m.initial_conditions["ramp_initial_conditions"] 
+       else 
+           @warn("No ramp initial conditions provided")
+       end
 
-        "time_initial_conditions" in keys(ps_m.initial_conditions) ? time_initial_conditions = ps_m.initial_conditions["time_initial_conditions"] : @warn("No duration initial conditions provided")
+       if "time_initial_conditions" in keys(ps_m.initial_conditions) 
+            time_initial_conditions = ps_m.initial_conditions["time_initial_conditions"] 
+       else 
+           @warn("No duration initial conditions provided")
+       end
 
     else
 
@@ -138,7 +162,11 @@ function construct_device!(ps_m::CanonicalModel,
     #wrangle initial_conditions
     if !isempty(keys(ps_m.initial_conditions))
 
-        "ramp_initial_conditions" in keys(ps_m.initial_conditions) ? ramp_initial_conditions = ps_m.initial_conditions["ramp_initial_conditions"] : @warn("No ramp initial conditions provided")
+        if "ramp_initial_conditions" in keys(ps_m.initial_conditions) 
+            ramp_initial_conditions = ps_m.initial_conditions["ramp_initial_conditions"] 
+       else 
+           @warn("No ramp initial conditions provided")
+       end
 
     else
 
@@ -192,8 +220,12 @@ function construct_device!(ps_m::CanonicalModel,
     #wrangle initial_conditions
     if !isempty(keys(ps_m.initial_conditions))
 
-        "ramp_initial_conditions" in keys(ps_m.initial_conditions) ? ramp_initial_conditions = ps_m.initial_conditions["ramp_initial_conditions"] : @warn("No ramp initial conditions provided")
-
+        if "ramp_initial_conditions" in keys(ps_m.initial_conditions) 
+            ramp_initial_conditions = ps_m.initial_conditions["ramp_initial_conditions"] 
+        else 
+           @warn("No ramp initial conditions provided")
+        end
+       
     else
 
         @warn("Initial Conditions not provided, this can lead to infeasible problems")

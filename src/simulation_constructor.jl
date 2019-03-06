@@ -1,5 +1,5 @@
 
-
+#=
 function build_sim_ts(ts_dict::Dict{String,Any}, steps, periods, resolution, date_from, lookahead_periods, lookahead_resolution ; kwargs...)
     # exmaple of time series assembly
     # TODO: once we refactor PowerSystems, we can improve this process
@@ -84,3 +84,4 @@ function buildsimulation!(sys::PSY.PowerSystem, op_model::PowerOperationModel; k
     buildsimulation!(sys, op_model, ts_dict; kwargs...)
 end
 
+=#

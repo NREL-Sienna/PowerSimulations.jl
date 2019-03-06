@@ -11,7 +11,11 @@ function construct_device!(ps_m::CanonicalModel,
     #wrangle initial_conditions
     if  !isempty(keys(ps_m.initial_conditions))
 
-        "energy_initial_conditions" in keys(ps_m.initial_conditions) ? energy_initial_conditions = ps_m.initial_conditions["energy_initial_conditions"] : @warn("No energy initial conditions provided")
+        if "energy_initial_conditions" in keys(ps_m.initial_conditions) 
+             energy_initial_conditions = ps_m.initial_conditions["energy_initial_conditions"] 
+        else
+             @warn("No energy initial conditions provided")
+        end
 
     else
 
@@ -57,7 +61,11 @@ function construct_device!(ps_m::CanonicalModel,
     #wrangle initial_conditions
     if !isempty(keys(ps_m.initial_conditions))
 
-        "energy_initial_conditions" in keys(ps_m.initial_conditions) ? energy_initial_conditions = ps_m.initial_conditions["energy_initial_conditions"] : @warn("No energy initial conditions provided")
+       if "energy_initial_conditions" in keys(ps_m.initial_conditions) 
+         energy_initial_conditions = ps_m.initial_conditions["energy_initial_conditions"] 
+       else 
+        @warn("No energy initial conditions provided")
+       end
 
     else
         @warn("Initial Conditions not provided, this can lead to infeasible problems")
