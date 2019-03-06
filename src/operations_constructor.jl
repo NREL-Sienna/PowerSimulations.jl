@@ -19,12 +19,12 @@ function _ps_model_init(system::PSY.PowerSystem, optimizer::Union{Nothing,JuMP.O
     bus_count = length(system.buses)
 
     ps_model = CanonicalModel(_pass_abstract_jump(optimizer; kwargs...),
-                            Dict{String, JuMP.Containers.DenseAxisArray}(),
-                            Dict{String, JuMP.Containers.DenseAxisArray}(),
+                            Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
+                            Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                             nothing,
-                            Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, bus_count, time_periods),
-                                                                        "var_reactive" => PSI.JumpAffineExpressionArray(undef, bus_count, time_periods)),
-                            Dict{String,Any}(),
+                            Dict{Symbol, PSI.JumpAffineExpressionArray}(:var_active => PSI.JumpAffineExpressionArray(undef, bus_count, time_periods),
+                                                                        :var_reactive => PSI.JumpAffineExpressionArray(undef, bus_count, time_periods)),
+                            Dict{Symbol,Any}(),
                             nothing);
     
     return ps_model
@@ -36,11 +36,11 @@ function _ps_model_init(system::PSY.PowerSystem, optimizer::Union{Nothing,JuMP.O
     bus_count = length(system.buses)
 
     ps_model = CanonicalModel(_pass_abstract_jump(optimizer; kwargs...),
-                              Dict{String, JuMP.Containers.DenseAxisArray}(),
-                              Dict{String, JuMP.Containers.DenseAxisArray}(),
+                              Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
+                              Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                               nothing,
-                              Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, bus_count, time_periods)),
-                              Dict{String,Any}(),
+                              Dict{Symbol, PSI.JumpAffineExpressionArray}(:var_active => PSI.JumpAffineExpressionArray(undef, bus_count, time_periods)),
+                              Dict{Symbol,Any}(),
                               nothing);
 
     return ps_model
@@ -48,9 +48,9 @@ function _ps_model_init(system::PSY.PowerSystem, optimizer::Union{Nothing,JuMP.O
 end
 
 function build_op_model!(transmission::Type{T},
-                         devices::Dict{String, DeviceModel},
-                         branches::Dict{String, DeviceModel},
-                         services::Dict{String, ServiceModel},
+                         devices::Dict{Symbol, DeviceModel},
+                         branches::Dict{Symbol, DeviceModel},
+                         services::Dict{Symbol, ServiceModel},
                          system::PSY.PowerSystem,
                          optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
                          kwargs...) where {T <: PM.AbstractPowerFormulation}

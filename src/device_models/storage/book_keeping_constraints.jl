@@ -6,7 +6,7 @@ function energy_balance_constraint(ps_m::CanonicalModel, devices::Array{T,1}, de
 
     if !isempty(p_eff_data)
 
-        energy_balance(ps_m,time_range,named_initial_conditions,p_eff_data, "energy_balance",("Psout","Psin","Est"))
+        energy_balance(ps_m,time_range,named_initial_conditions,p_eff_data, :energy_balance,(:Psout,:Psin,:Est))
 
     else
         @warn "Data doesn't contain Storage efficiency , consider adjusting your formulation"

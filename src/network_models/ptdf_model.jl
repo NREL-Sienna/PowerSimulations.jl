@@ -1,27 +1,27 @@
 function ptdf_networkflow(ps_m::CanonicalModel,
                           branches::Array{Br,1},
                           buses::Array{PSY.Bus,1},
-                          expression::String,
+                          expression::Symbol,
                           PTDF::AxisArrays.AxisArray,
                           time_range::UnitRange{Int64}) where {Br <: PSY.Branch}
 
-    ps_m.constraints["network_flow"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [b.name for b in branches], time_range)
-    ps_m.constraints["nodal_balance"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [bn.name for bn in buses], time_range)
+    ps_m.constraints[:network_flow] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [b.name for b in branches], time_range)
+    ps_m.constraints[:nodal_balance] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [bn.name for bn in buses], time_range)
 
-     _remove_undef!(ps_m.expressions["$(expression)"])
+     _remove_undef!(ps_m.expressions[expression])
 
     for t in time_range
         for b in branches
-            ps_m.constraints["network_flow"][b.name,t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables["Fbr"][b.name,t] == PTDF[b.name,:].data'*ps_m.expressions["$(expression)"][:,t])
+            ps_m.constraints[:network_flow][b.name,t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[:Fbr][b.name,t] == PTDF[b.name,:].data'*ps_m.expressions[expression][:,t])
         end
 
         for b in branches
-            _add_to_expression!(ps_m.expressions["$(expression)"], b.connectionpoints.from.number, t, ps_m.variables["Fbr"][b.name,t], -1)
-            _add_to_expression!(ps_m.expressions["$(expression)"], b.connectionpoints.to.number, t, ps_m.variables["Fbr"][b.name,t], 1)
+            _add_to_expression!(ps_m.expressions[expression], b.connectionpoints.from.number, t, ps_m.variables[:Fbr][b.name,t], -1)
+            _add_to_expression!(ps_m.expressions[expression], b.connectionpoints.to.number, t, ps_m.variables[:Fbr][b.name,t], 1)
         end
 
         for b in buses
-            ps_m.constraints["nodal_balance"][b.name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.expressions["$(expression)"][b.number,t] == 0)
+            ps_m.constraints[:nodal_balance][b.name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.expressions[expression][b.number,t] == 0)
         end
 
     end
@@ -44,8 +44,8 @@ to = TimerOutput()
                               Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
-                              Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
-                                                                         "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
+                              Dict{Symbol, PSI.JumpAffineExpressionArray}(:var_active => PSI.JumpAffineExpressionArray(undef, 5, 24),
+                                                                         :var_reactive => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                               nothing);
 @timeit to "build_thermal"    PSI.construct_device!(ps_m, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b);
 @timeit to "build_load"    PSI.construct_device!(ps_m, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
@@ -54,7 +54,7 @@ to = TimerOutput()
     @timeit to "allocate_space" ps_m.constraints["Flow_con1"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [b.name for b in branches5], 1:24)
     @timeit to "make constraints" for t in 1:24
                                     for b in branches5
-                                        ps_m.constraints["Flow_con1"][b.name,t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables["Fbr"][b.name,t] == PTDF[b.name,:].data'*ps_m.expressions["var_active"][:,t])
+                                        ps_m.constraints["Flow_con1"][b.name,t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[:Fbr][b.name,t] == PTDF[b.name,:].data'*ps_m.expressions[:var_active][:,t])
                                     end
                                 end
                             end
@@ -86,8 +86,8 @@ to = TimerOutput()
                               Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
-                              Dict{String, PSI.JumpAffineExpressionArray}("var_active" => PSI.JumpAffineExpressionArray(undef, 5, 24),
-                                                                         "var_reactive" => PSI.JumpAffineExpressionArray(undef, 5, 24)),
+                              Dict{Symbol, PSI.JumpAffineExpressionArray}(:var_active => PSI.JumpAffineExpressionArray(undef, 5, 24),
+                                                                         :var_reactive => PSI.JumpAffineExpressionArray(undef, 5, 24)),
                               nothing);
 @timeit to "build_thermal"    PSI.construct_device!(ps_m, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b);
 @timeit to "build_load"    PSI.construct_device!(ps_m, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
@@ -96,9 +96,9 @@ to = TimerOutput()
     @timeit to "allocate_space" ps_m.constraints["Flow_con2"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [b.name for b in branches5], 1:24)
     @timeit to "make constraints" begin for t in 1:24
             for b in branches5
-                expr = JuMP.AffExpr(0.0, ps_m.variables["Fbr"][b.name,t] => 1.0)
+                expr = JuMP.AffExpr(0.0, ps_m.variables[:Fbr][b.name,t] => 1.0)
                     for n in nodes5
-                        JuMP.add_to_expression!(expr, -1*PTDF[b.name,:].data[n.number]*ps_m.expressions["var_active"][n.number,t])
+                        JuMP.add_to_expression!(expr, -1*PTDF[b.name,:].data[n.number]*ps_m.expressions[:var_active][n.number,t])
                     end
                 ps_m.constraints["Flow_con2"][b.name,t] = JuMP.@constraint(ps_m.JuMPmodel, expr == 0.0)
         end

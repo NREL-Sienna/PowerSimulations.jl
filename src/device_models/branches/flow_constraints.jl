@@ -8,7 +8,7 @@ function line_flow_limit(ps_m::CanonicalModel,
 
     #rate_data = [(h.name, (min = -1*h.rate, max = h.rate) for h in devices]
 
-    device_range(ps_m, range_data, time_range, "dc_rate_const", "Fbr")
+    device_range(ps_m, range_data, time_range, :dc_rate_const, :Fbr)
 
     return nothing
 

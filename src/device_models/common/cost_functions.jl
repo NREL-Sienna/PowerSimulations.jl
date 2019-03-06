@@ -65,12 +65,12 @@ end
 
 function add_to_cost(ps_m::CanonicalModel,
                      devices::Array{C,1},
-                     var_name::String,
+                     var_name::Symbol,
                      cost_symbol::Symbol, sign::Int64 = 1) where {C <: PSY.PowerSystemDevice}
 
    for d in devices
 
-        cost_expression = ps_cost(ps_m, ps_m.variables["$(var_name)"][d.name,:], getfield(d.econ,cost_symbol), sign)
+        cost_expression = ps_cost(ps_m, ps_m.variables[var_name][d.name,:], getfield(d.econ,cost_symbol), sign)
 
         if !isa(ps_m.cost_function, Nothing)
 

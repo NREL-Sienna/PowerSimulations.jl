@@ -1,8 +1,5 @@
 mutable struct PowerResults
-    ThermalGeneration::Union{Nothing,DataFrames.DataFrame}
-    RenewableGEneration::Union{Nothing,DataFrames.DataFrame}
-    HydroGeneration::Union{Nothing,DataFrames.DataFrame}
-    Storage::Union{Nothing,DataFrames.DataFrame}
-    Load::Union{Nothing,DataFrames.DataFrame}
-    SolverOutput::Union{Nothing,Dict}
+    variables::Dict{String,DataFrames.DataFrame}
+    total_cost::Dict{String,Float64}
+    optimizer_output::Dict{String,Any}
 end

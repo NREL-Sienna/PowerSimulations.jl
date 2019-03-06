@@ -6,7 +6,7 @@ function activepower_constraints(ps_m::CanonicalModel, devices::Array{T,1}, devi
 
     range_data = [(g.name, g.tech.activepowerlimits) for g in devices]
 
-    device_range(ps_m, range_data, time_range, "thermal_active_range", "Pth")
+    device_range(ps_m, range_data, time_range, :thermal_active_range, :Pth)
 
     return nothing
 
@@ -19,7 +19,7 @@ function activepower_constraints(ps_m::CanonicalModel, devices::Array{T,1}, devi
 
     range_data = [(g.name, g.tech.activepowerlimits) for g in devices]
 
-    device_semicontinuousrange(ps_m, range_data, time_range, "thermal_active_range", "Pth", "on_th")
+    device_semicontinuousrange(ps_m, range_data, time_range, :thermal_active_range, :Pth, :on_th)
 
     return nothing
 
@@ -33,7 +33,7 @@ function reactivepower_constraints(ps_m::CanonicalModel, devices::Array{T,1}, de
 
     range_data = [(g.name, g.tech.reactivepowerlimits) for g in devices]
 
-    device_range(ps_m, range_data , time_range, "thermal_reactive_range", "Qth")
+    device_range(ps_m, range_data , time_range, :thermal_reactive_range, :Qth)
 
     return nothing
 
@@ -48,7 +48,7 @@ function reactivepower_constraints(ps_m::CanonicalModel, devices::Array{T,1}, de
 
     range_data = [(g.name, g.tech.reactivepowerlimits) for g in devices]
 
-    device_semicontinuousrange(ps_m, range_data , time_range, "thermal_reactive_range", "Qth", "on_th")
+    device_semicontinuousrange(ps_m, range_data , time_range, :thermal_reactive_range, :Qth, :on_th)
 
     return nothing
 
@@ -61,7 +61,7 @@ function activepower_constraints(ps_m::CanonicalModel, devices::Array{T,1}, devi
 
     range_data = [(g.name, (min = 0.0, max=g.tech.activepowerlimits.max)) for g in devices]
 
-    device_range(ps_m, range_data, time_range, "thermal_active_range", "Pth")
+    device_range(ps_m, range_data, time_range, :thermal_active_range, :Pth)
 
     return nothing
 
@@ -74,7 +74,7 @@ function reactivepower_constraints(ps_m::CanonicalModel, devices::Array{T,1}, de
 
     range_data = [(g.name, (min = 0.0, max=g.tech.reactivepowerlimits.max)) for g in devices]
 
-    device_range(ps_m, range_data , time_range, "thermal_reactive_range", "Qth")
+    device_range(ps_m, range_data , time_range, :thermal_reactive_range, :Qth)
 
     return nothing
 

@@ -2,9 +2,9 @@ function nodal_expression(ps_m::CanonicalModel, devices::Array{L,1}, system_form
 
     for t in time_range, d in devices
 
-        _add_to_expression!(ps_m.expressions["var_active"], d.bus.number, t, -1*d.maxactivepower * values(d.scalingfactor)[t])
+        _add_to_expression!(ps_m.expressions[:var_active], d.bus.number, t, -1*d.maxactivepower * values(d.scalingfactor)[t])
 
-        _add_to_expression!(ps_m.expressions["var_reactive"], d.bus.number, t, -1*d.maxreactivepower*values(d.scalingfactor)[t])
+        _add_to_expression!(ps_m.expressions[:var_reactive], d.bus.number, t, -1*d.maxreactivepower*values(d.scalingfactor)[t])
 
     end
 
@@ -15,7 +15,7 @@ function nodal_expression(ps_m::CanonicalModel, devices::Array{L,1}, system_form
 
     for t in time_range, d in devices
 
-        _add_to_expression!(ps_m.expressions["var_active"], d.bus.number, t, -1*d.maxactivepower * values(d.scalingfactor)[t])
+        _add_to_expression!(ps_m.expressions[:var_active], d.bus.number, t, -1*d.maxactivepower * values(d.scalingfactor)[t])
 
     end
 
