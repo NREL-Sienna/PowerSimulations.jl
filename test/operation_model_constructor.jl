@@ -21,7 +21,7 @@
 end
 
 
-@testset "Build Operation Models"
+@testset "Build Operation Models" begin
     ED = PSI.EconomicDispatch(sys5b, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer);
     SCED = PSI.SCEconomicDispatch(sys5b; optimizer = GLPK_optimizer);
     OPF = PSI.OptimalPowerFlow(sys5b, PM.StandardACPForm, optimizer = ipopt_optimizer)
