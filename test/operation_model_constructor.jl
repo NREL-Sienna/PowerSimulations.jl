@@ -19,3 +19,11 @@
     op_model = PSI.PowerOperationModel(TestOptModel, PSI.CopperPlatePowerModel, devices, branches, services, sys5b)
     @test "var_active" in keys(op_model.canonical_model.expressions)
 end
+
+
+@testset "Build Operation Models"
+    ED = PSI.EconomicDispatch(sys5b, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer);
+    SCED = PSI.SCEconomicDispatch(sys5b; optimizer = GLPK_optimizer);
+    OPF = PSI.OptimalPowerFlow(sys5b, PM.StandardACPForm, optimizer = ipopt_optimizer)
+    UC = PSI.UnitCommitment(sys5b, PM.DCPlosslessForm; optimizer = GLPK_optimizer)
+end
