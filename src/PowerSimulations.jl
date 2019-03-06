@@ -13,7 +13,7 @@ module PowerSimulations
 #export UnitCommitment
 
 #Network Relevant Exports
-export StandardPTDFModel
+export StandardPTDFForm
 export CopperPlatePowerModel
 
 #Functions

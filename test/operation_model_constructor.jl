@@ -13,7 +13,7 @@
     op_model = PSI.PowerOperationModel(TestOptModel, PM.DCPlosslessForm, devices, branches, services, sys5b)
     @test "var_active" in keys(op_model.canonical_model.expressions)
 
-    op_model = PSI.PowerOperationModel(TestOptModel, PSI.StandardPTDFModel, devices, branches, services, sys5b; PTDF = PTDF)
+    op_model = PSI.PowerOperationModel(TestOptModel, PSI.StandardPTDFForm, devices, branches, services, sys5b; PTDF = PTDF)
     @test "var_active" in keys(op_model.canonical_model.expressions)
 
     op_model = PSI.PowerOperationModel(TestOptModel, PSI.CopperPlatePowerModel, devices, branches, services, sys5b)

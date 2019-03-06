@@ -1,6 +1,6 @@
 abstract type CopperPlatePowerModel <: PM.AbstractActivePowerFormulation  end
 
-abstract type StandardPTDFModel <: PM.DCPlosslessForm end
+abstract type StandardPTDFForm <: PM.DCPlosslessForm end
 
 #= This code is from PowerModel's network definitions. Added here just for reference.
 

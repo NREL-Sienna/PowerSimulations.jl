@@ -1,7 +1,7 @@
 function line_rate_constraints(ps_m::CanonicalModel,
                                devices::Array{Br,1},
                                device_formulation::Type{D},
-                                system_formulation::Type{PSI.StandardPTDFModel},
+                                system_formulation::Type{PSI.StandardPTDFForm},
                           time_range::UnitRange{Int64}) where {Br <: PSY.Branch, D <: AbstractBranchFormulation}
 
     range_data = [(h.name, (min = -1*h.rate, max = h.rate)) for h in devices]
@@ -12,7 +12,7 @@ end
 
 #=
 function rate_constraints(ps_m::CanonicalModel, devices::Array{Br,1},
-device_formulation::Type{PSI.StandardPTDFModel}, system_formulation::Type{S},
+device_formulation::Type{PSI.StandardPTDFForm}, system_formulation::Type{S},
 time_range::UnitRange{Int64}) where {H <: PSY.HydroGen, D <: AbstractHydroDispatchForm, S <:
 PM.AbstractActivePowerFormulation}
 

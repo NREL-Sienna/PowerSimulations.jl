@@ -16,10 +16,10 @@ end
 @testset "testing DC-PF with PTDF formulation" begin
     PTDF, A = PowerSystems.buildptdf(branches5, nodes5)
     ps_model = PSI._ps_model_init(sys5b, GLPK_optimizer, PM.AbstractPowerFormulation, sys5b.time_periods)  
-    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b, time_range);
-    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFModel, sys5b, time_range);
-    PSI.construct_network!(ps_model, PSI.StandardPTDFModel, sys5b, time_range; PTDF = PTDF)
-    PSI.construct_device!(ps_model, PSY.Branch, PSI.SeriesLine, PSI.StandardPTDFModel, sys5b, time_range)
+    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFForm, sys5b, time_range);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFForm, sys5b, time_range);
+    PSI.construct_network!(ps_model, PSI.StandardPTDFForm, sys5b, time_range; PTDF = PTDF)
+    PSI.construct_device!(ps_model, PSY.Branch, PSI.SeriesLine, PSI.StandardPTDFForm, sys5b, time_range)
     @test JuMP.num_variables(ps_model.JuMPmodel) == 264
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 264
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
@@ -34,9 +34,9 @@ end
 
  @testset "PTDF ArgumentError" begin
     ps_model = PSI._ps_model_init(sys5b, GLPK_optimizer, PM.AbstractPowerFormulation, sys5b.time_periods)  
-    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFModel, sys5b, time_range);
-    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFModel, sys5b, time_range);
-    @test_throws ArgumentError PSI.construct_network!(ps_model, PSI.StandardPTDFModel, sys5b, time_range)
+    PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFForm, sys5b, time_range);
+    PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFForm, sys5b, time_range);
+    @test_throws ArgumentError PSI.construct_network!(ps_model, PSI.StandardPTDFForm, sys5b, time_range)
 end
 
 @testset "testing DC-PF network construction" begin
@@ -86,7 +86,7 @@ finally end
 
 @test try
     @info "testing PTDF 5-bus"
-    Net = PSI.StandardPTDFModel
+    Net = PSI.StandardPTDFForm
     m = Model(ipopt_optimizer);
     ptdf,  A = PSY.buildptdf(sys5.branches, sys5.buses)
     netinjection = PSI.instantiate_network(Net, sys5);
@@ -167,7 +167,7 @@ finally end
 
 @test_skip try
     @info "testing PTDF 14-bus"
-    Net = PSI.StandardPTDFModel
+    Net = PSI.StandardPTDFForm
     m = Model(ipopt_optimizer);
     ptdf,  A = PSY.buildptdf(sys14.branches, sys14.buses)
     netinjection = PSI.instantiate_network(Net, sys14);
