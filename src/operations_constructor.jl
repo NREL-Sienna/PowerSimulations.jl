@@ -82,7 +82,7 @@ function build_op_model!(transmission::Type{T},
     # Objective Function 
     =#
 
-    #JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
 
     return ps_model
     
