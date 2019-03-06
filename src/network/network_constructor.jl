@@ -7,7 +7,7 @@ function construct_network!(ps_m::CanonicalModel,
 
     copper_plate(ps_m, :var_active, bus_count, time_range)
 
-    return nothing
+    return
 end
 
 function construct_network!(ps_m::CanonicalModel, 
@@ -29,7 +29,7 @@ function construct_network!(ps_m::CanonicalModel,
         throw(ArgumentError("no PTDF matrix supplied"))
     end
 
-    return nothing
+    return
 
 end
 
@@ -40,6 +40,6 @@ function construct_network!(ps_m::CanonicalModel,
 
     powermodels_network!(ps_m, system_formulation, sys, time_range)
 
-    return nothing
+    return
 
 end

@@ -12,6 +12,6 @@ function norm_two_constraint(ps_m::CanonicalModel,
 
     end
 
-    return nothing
+    return
 
 end

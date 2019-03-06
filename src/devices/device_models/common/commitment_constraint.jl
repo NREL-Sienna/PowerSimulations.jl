@@ -18,6 +18,6 @@ function device_commitment(ps_m::CanonicalModel,
 
     end
 
-    return nothing
+    return
 
 end

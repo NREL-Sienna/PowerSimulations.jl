@@ -55,7 +55,7 @@ function post_nip(pm::PM.GenericPowerModel)
         end
     end
 
-    return nothing
+    return
 
 end
 
@@ -98,7 +98,7 @@ function post_nip_expr(pm::PM.GenericPowerModel)
         end
     end
 
-    return nothing
+    return
 
 end
 
@@ -111,7 +111,7 @@ function variable_net_injection(pm::PM.GenericPowerModel; kwargs...)
     variable_active_net_injection(pm; kwargs...)
     variable_reactive_net_injection(pm; kwargs...)
 
-    return nothing
+    return
 
 end
 
@@ -122,7 +122,7 @@ function variable_active_net_injection(pm::PM.GenericPowerModel; nw::Int=pm.cnw,
         start = 0.0
     )
 
-    return nothing
+    return
 
 end
 
@@ -133,7 +133,7 @@ function variable_reactive_net_injection(pm::PM.GenericPowerModel; nw::Int=pm.cn
         start = 0.0
     )
 
-    return nothing
+    return
 end
 
 
@@ -152,7 +152,7 @@ function constraint_kcl_ni(pm::PM.GenericPowerModel, i::Int; nw::Int=pm.cnw, cnd
 
     constraint_kcl_ni(pm, nw, cnd, i, bus_arcs, bus_arcs_dc)
 
-    return nothing
+    return
 
 end
 
@@ -171,7 +171,7 @@ function constraint_kcl_ni(pm::PM.GenericPowerModel,
     PM.con(pm, n, c, :kcl_p)[i] = JuMP.@constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni)
     PM.con(pm, n, c, :kcl_q)[i] = JuMP.@constraint(pm.model, sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) == qni)
 
-    return nothing
+    return
 
 end
 
@@ -195,7 +195,7 @@ function constraint_kcl_ni_expr(pm::PM.GenericPowerModel,
 
     constraint_kcl_ni_expr(pm, nw, cnd, i, bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
 
-    return nothing
+    return
 
 end
 
@@ -212,14 +212,14 @@ function constraint_kcl_ni_expr(pm::PM.GenericPowerModel,
     PM.con(pm, n, c, :kcl_p)[i] = JuMP.@constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni_expr)
     PM.con(pm, n, c, :kcl_q)[i] = JuMP.@constraint(pm.model, sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) == qni_expr)
 
-    return nothing
+    return
 
 end
 
 
 "active power only models ignore reactive power variables"
 function variable_reactive_net_injection(pm::PM.GenericPowerModel{T}; kwargs...) where T <: PM.AbstractDCPForm
-    return nothing
+    return
 end
 
 "active power only models ignore reactive power flows"
@@ -232,7 +232,7 @@ function constraint_kcl_ni(pm::PM.GenericPowerModel{T},
 
     PM.con(pm, n, c, :kcl_p)[i] = JuMP.@constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni)
 
-    return nothing
+    return
 
 end
 
@@ -245,7 +245,7 @@ function constraint_kcl_ni_expr(pm::PM.GenericPowerModel{T},
 
     PM.con(pm, n, c, :kcl_p)[i] = JuMP.@constraint(pm.model, sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni_expr)
 
-    return nothing
+    return
 
 end
 
@@ -266,7 +266,7 @@ function powermodels_network!(ps_m::CanonicalModel,
 
     ps_m.pm_model = PSI.build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
     
-    return nothing
+    return
 
 end
 
@@ -287,6 +287,6 @@ function powermodels_network!(ps_m::CanonicalModel,
 
     ps_m.pm_model = PSI.build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
 
-    return nothing
+    return
 
 end

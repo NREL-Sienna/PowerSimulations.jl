@@ -2,7 +2,7 @@ function cost_function(ps_m::CanonicalModel, devices::Array{PSY.InterruptibleLoa
 
     add_to_cost(ps_m, devices, :Pel, :sheddingcost)
 
-    return nothing
+    return
 
 end
 

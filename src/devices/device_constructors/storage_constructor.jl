@@ -44,7 +44,7 @@ function construct_device!(ps_m::CanonicalModel,
 
     #TODO: rate constraints
 
-    return nothing
+    return
 
 end
 
@@ -87,6 +87,6 @@ function construct_device!(ps_m::CanonicalModel,
     # Energy Balanace limits
     energy_balance_constraint(ps_m,sys.storage, device_formulation, system_formulation, time_range, energy_initial_conditions)
     
-    return nothing
+    return
 
 end

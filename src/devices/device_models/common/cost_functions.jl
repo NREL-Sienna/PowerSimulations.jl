@@ -96,6 +96,6 @@ function add_to_cost(ps_m::CanonicalModel,
 
     end
 
-    return nothing
+    return
 
 end

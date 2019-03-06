@@ -9,7 +9,7 @@ function commitment_constraints(ps_m::CanonicalModel, devices::Array{T,1}, devic
 
     device_commitment(ps_m, named_initial_conditions, time_range, :commitment_th, (:start_th, :stop_th, :on_th))
     
-    return nothing
+    return
 
 end
 

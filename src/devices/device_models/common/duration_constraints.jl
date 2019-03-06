@@ -36,7 +36,7 @@ function device_duration_retrospective(ps_m::CanonicalModel,
 
         end
 
-    return nothing
+    return
 
 end
 

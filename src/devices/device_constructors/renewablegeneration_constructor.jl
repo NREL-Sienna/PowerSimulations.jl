@@ -44,7 +44,7 @@ function construct_device!(ps_m::CanonicalModel,
 
     end
 
-    return nothing
+    return
 
 end
 
@@ -88,7 +88,7 @@ function construct_device!(ps_m::CanonicalModel,
     
     end
 
-    return nothing
+    return
 
 end
 
@@ -106,7 +106,7 @@ function construct_device!(ps_m::CanonicalModel,
         nodal_expression(ps_m, sys.generators.renewable, system_formulation, time_range)
     end
     
-    return nothing
+    return
 
 end
 

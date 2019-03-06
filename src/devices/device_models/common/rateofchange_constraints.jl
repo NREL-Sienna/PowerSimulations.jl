@@ -28,7 +28,7 @@ function device_linear_rateofchange(ps_m::CanonicalModel,
 
     end
 
-    return nothing
+    return
 
 end
 
@@ -61,7 +61,7 @@ function device_mixedinteger_rateofchange(ps_m::CanonicalModel,
 
     end
 
-    return nothing
+    return
 
 end
 

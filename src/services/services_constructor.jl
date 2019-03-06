@@ -8,7 +8,7 @@ function construct_service!(ps_m::CanonicalModel,
                                               SV <: PSI.AbstractServiceFormulation,
                                               S <:  PM.AbstractPowerFormulation}
 
-    return nothing
+    return
 
 end
 

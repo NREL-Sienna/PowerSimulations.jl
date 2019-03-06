@@ -9,7 +9,7 @@ function construct_device!(ps_m::CanonicalModel,
 
     line_rate_constraints(ps_m, sys.branches, device_formulation, system_formulation, time_range)
 
-    return nothing
+    return
 
 end
 
@@ -23,6 +23,6 @@ function construct_device!(ps_m::CanonicalModel,
                                               B <: PSY.Branch,
                                               S <: PM.AbstractPowerFormulation}
 
-    return nothing
+    return
 
 end

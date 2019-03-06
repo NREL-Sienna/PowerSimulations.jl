@@ -5,7 +5,7 @@ function activepower_constraints(ps_m::CanonicalModel, devices::Array{H,1}, devi
 
     device_range(ps_m, range_data, time_range, hydro_active_range, :Phy)
 
-    return nothing
+    return
 
 end
 
@@ -16,7 +16,7 @@ function activepower_constraints(ps_m::CanonicalModel, devices::Array{H,1}, devi
 
     device_timeseries_ub(ps_m, ts_data , time_range, hydro_active_ub, :Phy)
 
-    return nothing
+    return
 
 end
 
@@ -31,7 +31,7 @@ function activepower_constraints(ps_m::CanonicalModel, devices::Array{H,1}, devi
     device_timeseries_ub(ps_m, ts_data_ub , time_range, :hydro_active_ub, :Phy)
     device_timeseries_lb(ps_m, ts_data_lb , time_range, :hydro_active_lb, :Phy)
 
-    return nothing
+    return
 
 end
 
@@ -45,7 +45,7 @@ function reactivepower_constraints(ps_m::CanonicalModel, devices::Array{H,1}, de
 
     device_range(ps_m, range_data, time_range, :hydro_reactive_range, :Qhy)
 
-    return nothing
+    return
 
 end
 
@@ -56,7 +56,7 @@ function activepower_constraints(ps_m::CanonicalModel, devices::Array{H,1}, devi
 
     device_semicontinuousrange(ps_m, range_data, time_range, :hydro_active_range, :Phy, :on_hy)
 
-    return nothing
+    return
 
 end
 
@@ -67,6 +67,6 @@ function reactivepower_constraints(ps_m::CanonicalModel, devices::Array{H,1}, de
 
     device_semicontinuousrange(ps_m, range_data , time_range, :hydro_reactive_range, :Qhy, :on_hy)
 
-    return nothing
+    return
 
 end

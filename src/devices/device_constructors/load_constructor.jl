@@ -38,7 +38,7 @@ function construct_device!(ps_m::CanonicalModel,
             nodal_expression(ps_m, fixed_resources, system_formulation, time_range)
         end
 
-        return nothing
+        return
 
 end
 
@@ -77,7 +77,7 @@ function construct_device!(ps_m::CanonicalModel,
         nodal_expression(ps_m, fixed_resources, system_formulation, time_range)
     end
 
-    return nothing
+    return
 
 end
 
@@ -92,6 +92,6 @@ function construct_device!(ps_m::CanonicalModel,
 
     nodal_expression(ps_m, sys.loads, system_formulation, time_range)
 
-    return nothing
+    return
 
 end

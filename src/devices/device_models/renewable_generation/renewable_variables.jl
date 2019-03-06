@@ -2,7 +2,7 @@ function activepower_variables(ps_m::CanonicalModel, devices::Array{R,1}, time_r
 
     add_variable(ps_m, devices, time_range, :Pre, false, :var_active)
 
-    return nothing
+    return
 
 end
 
@@ -10,7 +10,7 @@ function reactivepower_variables(ps_m::CanonicalModel, devices::Array{R,1}, time
 
     add_variable(ps_m, devices, time_range, :Qre, false, :var_reactive)
 
-    return nothing
+    return
 
 end
 

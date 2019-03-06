@@ -2,6 +2,6 @@ function cost_function(ps_m::CanonicalModel, devices::Array{PSY.HydroGen,1}, dev
 
     add_to_cost(ps_m, devices, :Phy, :curtailcost)
 
-    return nothing
+    return
 
 end

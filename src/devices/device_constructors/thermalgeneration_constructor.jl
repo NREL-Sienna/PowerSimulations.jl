@@ -70,7 +70,7 @@ function construct_device!(ps_m::CanonicalModel,
 
     cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
-    return nothing
+    return
 
 end
 
@@ -143,7 +143,7 @@ function construct_device!(ps_m::CanonicalModel,
 
     cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
-    return nothing
+    return
 
 end
 
@@ -200,7 +200,7 @@ function construct_device!(ps_m::CanonicalModel,
 
     cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
-    return nothing
+    return
 
 end
 
@@ -250,7 +250,7 @@ function construct_device!(ps_m::CanonicalModel,
 
     cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
-    return nothing
+    return
 
 end
 
@@ -281,7 +281,7 @@ function construct_device!(ps_m::CanonicalModel,
     #Cost Function
     cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
-    return nothing
+    return
 
 end
 
@@ -304,6 +304,6 @@ function construct_device!(ps_m::CanonicalModel,
     #Cost Function
     cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
-    return nothing
+    return
 
 end

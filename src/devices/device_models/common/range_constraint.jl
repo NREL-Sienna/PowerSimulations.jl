@@ -12,7 +12,7 @@ function device_range(ps_m::CanonicalModel,
 
     end
 
-    return nothing
+    return
 
 end
 
@@ -46,7 +46,7 @@ function device_semicontinuousrange(ps_m::CanonicalModel,
 
     end
 
-    return nothing
+    return
 
 end
 
@@ -81,6 +81,6 @@ function reserve_device_semicontinuousrange(ps_m::CanonicalModel,
  
     end
 
-    return nothing
+    return
 
  end

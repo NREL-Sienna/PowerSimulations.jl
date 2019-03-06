@@ -8,7 +8,7 @@ function activepower_constraints(ps_m::CanonicalModel, devices::Array{T,1}, devi
 
     device_range(ps_m, range_data, time_range, :thermal_active_range, :Pth)
 
-    return nothing
+    return
 
 end
 
@@ -21,7 +21,7 @@ function activepower_constraints(ps_m::CanonicalModel, devices::Array{T,1}, devi
 
     device_semicontinuousrange(ps_m, range_data, time_range, :thermal_active_range, :Pth, :on_th)
 
-    return nothing
+    return
 
 end
 
@@ -35,7 +35,7 @@ function reactivepower_constraints(ps_m::CanonicalModel, devices::Array{T,1}, de
 
     device_range(ps_m, range_data , time_range, :thermal_reactive_range, :Qth)
 
-    return nothing
+    return
 
 end
 
@@ -50,7 +50,7 @@ function reactivepower_constraints(ps_m::CanonicalModel, devices::Array{T,1}, de
 
     device_semicontinuousrange(ps_m, range_data , time_range, :thermal_reactive_range, :Qth, :on_th)
 
-    return nothing
+    return
 
 end
 
@@ -63,7 +63,7 @@ function activepower_constraints(ps_m::CanonicalModel, devices::Array{T,1}, devi
 
     device_range(ps_m, range_data, time_range, :thermal_active_range, :Pth)
 
-    return nothing
+    return
 
 end
 
@@ -76,6 +76,6 @@ function reactivepower_constraints(ps_m::CanonicalModel, devices::Array{T,1}, de
 
     device_range(ps_m, range_data , time_range, :thermal_reactive_range, :Qth)
 
-    return nothing
+    return
 
 end

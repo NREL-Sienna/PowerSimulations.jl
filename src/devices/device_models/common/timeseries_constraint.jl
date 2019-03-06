@@ -12,7 +12,7 @@ function device_timeseries_ub(ps_m::CanonicalModel,
 
     end
 
-    return nothing
+    return
 
 end
 
@@ -30,6 +30,6 @@ function device_timeseries_lb(ps_m::CanonicalModel,
 
     end
 
-    return nothing
+    return
 
 end

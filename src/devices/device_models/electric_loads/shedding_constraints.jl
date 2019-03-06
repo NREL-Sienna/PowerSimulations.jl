@@ -5,7 +5,7 @@ function activepower_constraints(ps_m::CanonicalModel, devices::Array{L,1}, devi
 
     device_timeseries_ub(ps_m, ts_data , time_range, :load_active_ub, :Pel)
 
-    return nothing
+    return
 
 end
 
@@ -22,6 +22,6 @@ function reactivepower_constraints(ps_m::CanonicalModel, devices::Array{L,1}, de
 
     end
 
-    return nothing
+    return
 
 end

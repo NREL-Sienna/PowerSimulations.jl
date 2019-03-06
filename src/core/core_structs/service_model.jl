@@ -23,6 +23,6 @@ function construct_service!(ps_m::CanonicalModel,
                       time_range;
                       kwargs...)
     
-    return nothing
+    return
 
 end

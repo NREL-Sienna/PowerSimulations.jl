@@ -8,7 +8,7 @@ function activepower_constraints(ps_m::CanonicalModel, devices::Array{St,1}, dev
 
     reserve_device_semicontinuousrange(ps_m, range_data_in, time_range, :storage_outputpower_range, :Psout, :Sst)
 
-    return nothing
+    return
 
 end
 
@@ -21,6 +21,6 @@ function reactivepower_constraints(ps_m::CanonicalModel, devices::Array{St,1}, d
 
     device_range(ps_m, range_data , time_range, :storage_reactive_range, :Qst)
 
-    return nothing
+    return
 
 end

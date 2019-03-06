@@ -26,7 +26,7 @@ function ptdf_networkflow(ps_m::CanonicalModel,
 
     end
 
-    return nothing
+    return
 
 end
 

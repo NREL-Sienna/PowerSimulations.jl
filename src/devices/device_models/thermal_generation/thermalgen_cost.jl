@@ -7,7 +7,7 @@ function cost_function(ps_m::CanonicalModel,
 
     add_to_cost(ps_m, devices, :Pth, :variablecost)
 
-    return nothing
+    return
 
 end
 
@@ -27,6 +27,6 @@ function cost_function(ps_m::CanonicalModel,
     add_to_cost(ps_m, devices, :stop_th, :shutdncost)
     add_to_cost(ps_m, devices, :on_th, :fixedcost)
 
-    return nothing
+    return
 
 end

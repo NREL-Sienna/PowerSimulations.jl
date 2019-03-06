@@ -14,7 +14,7 @@ function _remove_undef!(ExpressionArray::T) where T <: JumpExpressionMatrix
 
     end
 
-    return nothing
+    return
 
 end
 
@@ -31,7 +31,7 @@ function _add_to_expression!(expression::T,
         expression[ix,jx] = sign*var
     end
 
-    return nothing
+    return
 
 end
 
@@ -46,7 +46,7 @@ function _add_to_expression!(expression::T,
         expression[ix,jx] = 1.0*var
     end
 
-    return nothing
+    return
 
 end
 
@@ -61,6 +61,6 @@ function _add_to_expression!(expression::T,
         expression[ix,jx] = JuMP.AffExpr(value)
     end
 
-    return nothing
+    return
 
 end

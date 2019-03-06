@@ -16,7 +16,7 @@ function add_variable(ps_m::CanonicalModel,
 
    end
 
-   return nothing
+   return
 
 end
 
@@ -37,7 +37,7 @@ function add_variable(ps_m::CanonicalModel,
 
    end
 
-   return nothing
+   return
 
 end
 
@@ -59,7 +59,7 @@ function add_variable(ps_m::CanonicalModel,
 
    end
 
-   return nothing
+   return
 
 end
 

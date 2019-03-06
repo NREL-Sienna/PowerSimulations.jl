@@ -13,6 +13,6 @@ function time_constraints(ps_m::CanonicalModel, devices::Array{T,1}, device_form
 
     end
 
-    return nothing
+    return
 
 end

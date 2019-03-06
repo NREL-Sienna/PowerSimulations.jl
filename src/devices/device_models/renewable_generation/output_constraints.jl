@@ -11,7 +11,7 @@ function activepower_constraints(ps_m::CanonicalModel,
 
     device_timeseries_ub(ps_m, ts_data , time_range, :renewable_active_ub, :Pre)
 
-    return nothing
+    return
 
 end
 
@@ -27,7 +27,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
 
     device_range(ps_m, range_data , time_range, :renewable_reactive_range, :Qre)
 
-    return nothing
+    return
 
 end
 
@@ -49,7 +49,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
 
     end
 
-    return nothing
+    return
 
 end
 
