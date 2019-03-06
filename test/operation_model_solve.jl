@@ -1,9 +1,3 @@
-using PowerSystems
-using JuMP
-using PowerSimulations
-using GLPK
-const PS = PowerSimulations
-
 # ED Testing
 base_dir = dirname(dirname(pathof(PowerSystems)))
 include(joinpath(base_dir,"data/data_5bus.jl"))

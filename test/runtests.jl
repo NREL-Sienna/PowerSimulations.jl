@@ -107,26 +107,15 @@ end
     #include("hydro_generation_constructors.jl")
 end
 
-@testset "Operation Model Constructors" begin
-    include("operation_model_constructor.jl")
-    #include("buildED_CN_testing.jl")
-    #include("buildED_NB_testing.jl")
-end
-
-@testset "Solve routines" begin
-    #include("simulations_testing.jl")
-end
-
 @testset "Network Constructors" begin
     include("network_constructors.jl")
 end
 
-#=
-
 @testset "Services Constructors" begin
-    include("service_testing.jl")
+    #include("service_testing.jl")
 end
 
-
-
-=#
+@testset "Operation Models" begin
+    include("operation_model_constructor.jl")
+    include("operation_model_solve.jl")
+end
