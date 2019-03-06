@@ -17,6 +17,9 @@ export EconomicDispatch
 export SCEconomicDispatch
 export OptimalPowerFlow
 
+#functions
+export solve_op_model!
+
 
 #################################################################################
 # Imports
