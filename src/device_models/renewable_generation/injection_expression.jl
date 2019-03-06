@@ -8,6 +8,7 @@ function nodal_expression(ps_m::CanonicalModel, devices::Array{R,1}, system_form
 
     end
 
+    return nothing
 
 end
 
@@ -19,5 +20,6 @@ function nodal_expression(ps_m::CanonicalModel, devices::Array{R,1}, system_form
 
     end
 
+    return nothing
 
 end

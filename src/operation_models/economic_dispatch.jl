@@ -10,13 +10,14 @@ function EconomicDispatch(system::PSY.PowerSystem, transmission::Type{S}; optimi
     branches = Dict{String, PSI.DeviceModel}("Lines" => PSI.DeviceModel(PSY.Branch, PSI.SeriesLine))                                             
     services = Dict{String, PSI.ServiceModel}("Reserves" => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
 
-    op_model = PowerOperationModel(EconomicDispatch,
+    return PowerOperationModel(EconomicDispatch,
                                    transmission, 
                                     devices, 
                                     branches, 
                                     services,                                
                                     system,
                                     optimizer = optimizer; kwargs...)
+
 end
 
 function SCEconomicDispatch(system::PSY.PowerSystem; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...)
@@ -37,11 +38,12 @@ function SCEconomicDispatch(system::PSY.PowerSystem; optimizer::Union{Nothing,Ju
     branches = Dict{String, PSI.DeviceModel}("Lines" => PSI.DeviceModel(PSY.Branch, PSI.SeriesLine))                                             
     services = Dict{String, PSI.ServiceModel}("Reserves" => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
 
-    op_model = PowerOperationModel(EconomicDispatch,
+    return PowerOperationModel(EconomicDispatch,
                                     StandardPTDFForm, 
                                     devices, 
                                     branches, 
                                     services,                                
                                     system,
                                     optimizer = optimizer; PTDF = PTDF, kwargs...)
+
 end

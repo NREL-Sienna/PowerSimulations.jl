@@ -7,6 +7,8 @@ function activepower_constraints(ps_m::CanonicalModel, devices::Array{L,1}, devi
 
     device_timeseries_ub(ps_m, ts_data , time_range, "load_active_ub", "Pel")
 
+    return nothing
+
 end
 
 
@@ -21,5 +23,7 @@ function reactivepower_constraints(ps_m::CanonicalModel, devices::Array{L,1}, de
             ps_m.constraints["load_reactive_ub"][l.name, t] = JuMP.@constraint(ps_m.JuMPmodel,  ps_m.variables["Qel"][l.name, t] == ps_m.variables["Pel"][l.name, t] * sin(atan((l.maxreactivepower/l.maxactivepower))))
 
     end
+
+    return nothing
 
 end

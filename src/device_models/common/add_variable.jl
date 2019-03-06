@@ -16,6 +16,8 @@ function add_variable(ps_m::CanonicalModel,
 
    end
 
+   return nothing
+
 end
 
 function add_variable(ps_m::CanonicalModel,
@@ -34,6 +36,8 @@ function add_variable(ps_m::CanonicalModel,
        _add_to_expression!(ps_m.expressions["$(expression)"], d.bus.number, t, ps_m.variables["$(var_name)"][d.name,t])
 
    end
+
+   return nothing
 
 end
 
@@ -54,6 +58,8 @@ function add_variable(ps_m::CanonicalModel,
        _add_to_expression!(ps_m.expressions["$(expression)"], d.bus.number, t, ps_m.variables["$(var_name)"][d.name,t], sign)
 
    end
+
+   return nothing
 
 end
 

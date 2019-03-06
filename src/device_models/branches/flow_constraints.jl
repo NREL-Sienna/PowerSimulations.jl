@@ -10,4 +10,6 @@ function line_flow_limit(ps_m::CanonicalModel,
 
     device_range(ps_m, range_data, time_range, "dc_rate_const", "Fbr")
 
+    return nothing
+
 end

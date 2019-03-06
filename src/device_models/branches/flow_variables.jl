@@ -32,4 +32,6 @@ function flow_variables(ps_m::CanonicalModel,
     add_variable(ps_m, devices, time_range, "QFbr_to", false)
     add_variable(ps_m, devices, time_range, "QFbr_fr", false)
 
+    return nothing
+
 end

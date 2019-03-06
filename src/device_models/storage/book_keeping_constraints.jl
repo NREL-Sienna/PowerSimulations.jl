@@ -12,4 +12,6 @@ function energy_balance_constraint(ps_m::CanonicalModel, devices::Array{T,1}, de
         @warn "Data doesn't contain Storage efficiency , consider adjusting your formulation"
     end
 
+    return nothing
+
 end

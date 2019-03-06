@@ -1,4 +1,5 @@
 
+#=
 function reservevariables(m::JuMP.AbstractModel, devices::Array{NamedTuple{(:device, :formulation), Tuple{R,DataType}}}, time_periods::Int64) where {R <: PSY.PowerSystemDevice}
 
     on_set = [d.device.name for d in devices]
@@ -93,3 +94,4 @@ function reserves(m::JuMP.AbstractModel, devices::Array{NamedTuple{(:device, :fo
     return m
 
 end
+=#

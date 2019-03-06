@@ -13,4 +13,7 @@ function energy_balance(ps_m::CanonicalModel, time_range::UnitRange{Int64}, init
         ps_m.constraints["$(cons_name)"][i[1], t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables["$(var_names[3])"][i[1], t] == ps_m.variables["$(var_names[3])"][i[1], t-1] + (ps_m.variables["$(var_names[1])"][i[1], t])/p_eff_data[ix][2]  - (ps_m.variables["$(var_names[2])"][i[1], t])*p_eff_data[ix][2]) 
 
     end
+
+    return nothing
+
 end

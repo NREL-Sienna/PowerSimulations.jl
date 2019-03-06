@@ -2,4 +2,6 @@ function cost_function(ps_m::CanonicalModel, devices::Array{PSY.RenewableCurtail
 
     add_to_cost(ps_m, devices, "Pre", :curtailpenalty, -1)
 
+    return nothing
+
 end

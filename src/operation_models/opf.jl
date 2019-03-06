@@ -9,11 +9,12 @@ function OptimalPowerFlow(system::PSY.PowerSystem, transmission::Type{S}; optimi
     branches = Dict{String, PSI.DeviceModel}("Lines" => PSI.DeviceModel(PSY.Branch, PSI.SeriesLine))                                             
     services = Dict{String, PSI.ServiceModel}("Reserves" => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
 
-    op_model = PowerOperationModel(OptimalPowerFlow ,
+    return PowerOperationModel(OptimalPowerFlow ,
                                    transmission, 
                                     devices, 
                                     branches, 
                                     services,                                
                                     system,
                                     optimizer = optimizer; kwargs...)
+                                
 end

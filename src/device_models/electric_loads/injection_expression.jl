@@ -19,5 +19,6 @@ function nodal_expression(ps_m::CanonicalModel, devices::Array{L,1}, system_form
 
     end
 
+    return nothing
 
 end

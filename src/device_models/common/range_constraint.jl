@@ -8,6 +8,8 @@ function device_range(ps_m::CanonicalModel, range_data::Array{Tuple{String,Named
 
     end
 
+    return nothing
+
 end
 
 function device_semicontinuousrange(ps_m::CanonicalModel, scrange_data::Array{Tuple{String,NamedTuple{(:min, :max),Tuple{Float64,Float64}}},1}, time_range::UnitRange{Int64}, cons_name::String, var_name::String, binvar_name::String)
@@ -32,6 +34,9 @@ function device_semicontinuousrange(ps_m::CanonicalModel, scrange_data::Array{Tu
             end
 
     end
+
+    return nothing
+
 end
 
 function reserve_device_semicontinuousrange(ps_m::CanonicalModel, scrange_data::Array{Tuple{String,NamedTuple{(:min, :max),Tuple{Float64,Float64}}},1}, time_range::UnitRange{Int64}, cons_name::String, var_name::String, binvar_name::String) 
@@ -56,4 +61,7 @@ function reserve_device_semicontinuousrange(ps_m::CanonicalModel, scrange_data::
             end
  
     end
+
+    return nothing
+
  end

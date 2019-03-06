@@ -14,4 +14,6 @@ function device_commitment(ps_m::CanonicalModel, initial_conditions::Array{Tuple
 
     end
 
+    return nothing
+
 end

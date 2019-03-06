@@ -9,7 +9,7 @@ function UnitCommitment(system::PSY.PowerSystem, transmission::Type{S}; optimize
     branches = Dict{String, PSI.DeviceModel}("Lines" => PSI.DeviceModel(PSY.Branch, PSI.SeriesLine))                                             
     services = Dict{String, PSI.ServiceModel}("Reserves" => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
 
-    op_model = PowerOperationModel(UnitCommitment,
+    return PowerOperationModel(UnitCommitment,
                                    transmission, 
                                     devices, 
                                     branches, 

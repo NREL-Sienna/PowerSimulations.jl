@@ -8,6 +8,8 @@ function line_rate_constraints(ps_m::CanonicalModel,
 
     device_range(ps_m, range_data, time_range, "line_rate_limit", "Fbr")
 
+    return nothing
+
 end
 
 #=

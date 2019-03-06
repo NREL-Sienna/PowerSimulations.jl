@@ -12,6 +12,8 @@ function device_timeseries_ub(ps_m::CanonicalModel,
 
     end
 
+    return nothing
+
 end
 
 function device_timeseries_lb(ps_m::CanonicalModel,
@@ -27,5 +29,7 @@ function device_timeseries_lb(ps_m::CanonicalModel,
         ps_m.constraints["$(cons_name)"][r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, r[2][t] <= ps_m.variables["$(var_name)"][r[1], t])
 
     end
+
+    return nothing
 
 end

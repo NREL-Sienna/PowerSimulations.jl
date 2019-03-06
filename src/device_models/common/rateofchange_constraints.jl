@@ -1,4 +1,9 @@
-function device_linear_rateofchange(ps_m::CanonicalModel, rate_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}}},1}, initial_conditions::Array{Float64,1}, time_range::UnitRange{Int64}, cons_name::String, var_name::String)
+function device_linear_rateofchange(ps_m::CanonicalModel, 
+                                    rate_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}}},1}, 
+                                    initial_conditions::Array{Float64,1}, 
+                                    time_range::UnitRange{Int64}, 
+                                    cons_name::String, 
+                                    var_name::String)
 
     set_name = [r[1] for r in rate_data]
 
@@ -19,9 +24,16 @@ function device_linear_rateofchange(ps_m::CanonicalModel, rate_data::Array{Tuple
 
     end
 
+    return nothing
+
 end
 
-function device_mixedinteger_rateofchange(ps_m::CanonicalModel, rate_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}},NamedTuple{(:min, :max),Tuple{Float64,Float64}}},1}, initial_conditions::Array{Float64,1}, time_range::UnitRange{Int64}, cons_name::String, var_names::Tuple{String,String,String})
+function device_mixedinteger_rateofchange(ps_m::CanonicalModel, 
+                                            rate_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}},NamedTuple{(:min, :max),Tuple{Float64,Float64}}},1}, 
+                                            initial_conditions::Array{Float64,1}, 
+                                            time_range::UnitRange{Int64}, 
+                                            cons_name::String, 
+                                            var_names::Tuple{String,String,String})
 
     set_name = [r[1] for r in rate_data]
 
@@ -41,6 +53,8 @@ function device_mixedinteger_rateofchange(ps_m::CanonicalModel, rate_data::Array
         ps_m.constraints["$(cons_name)_down"][r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables["$(var_names[1])"][r[1], t] - ps_m.variables["$(var_names[1])"][r[1], t-1] <= r[2].down + r[3].min*ps_m.variables["$(var_names[3])"][r[1], t])
 
     end
+
+    return nothing
 
 end
 

@@ -8,5 +8,7 @@ function copper_plate(ps_m::CanonicalModel, expression::String, bus_count::Int64
         ps_m.constraints["CopperPlateBalance"][t] = JuMP.@constraint(ps_m.JuMPmodel, sum(ps_m.expressions["$(expression)"][1:bus_count,t]) == 0)
     end
 
+    return nothing
+    
 end
 

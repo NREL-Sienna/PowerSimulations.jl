@@ -19,6 +19,8 @@ function ramp_constraints(ps_m::CanonicalModel, devices::Array{T,1}, device_form
 
     end
 
+    return nothing
+
 end
 
 function ramp_constraints(ps_m::CanonicalModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}, initial_conditions::Array{Float64,1}) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchForm, S <: PM.AbstractPowerFormulation}
@@ -36,6 +38,8 @@ function ramp_constraints(ps_m::CanonicalModel, devices::Array{T,1}, device_form
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
 
     end
+
+    return nothing
 
 end
 
@@ -57,6 +61,8 @@ function ramp_constraints(ps_m::CanonicalModel, devices::Array{T,1}, device_form
 
     end
 
+    return nothing
+
 end
 
 function ramp_constraints(ps_m::CanonicalModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}, initial_conditions::Array{Float64,1}) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchForm, S <: PM.AbstractActivePowerFormulation}
@@ -72,6 +78,8 @@ function ramp_constraints(ps_m::CanonicalModel, devices::Array{T,1}, device_form
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
 
     end
+
+    return nothing
 
 end
 
