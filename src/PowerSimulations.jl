@@ -19,6 +19,7 @@ export CopperPlatePowerModel
 #Functions
 export buildmodel!
 export simulatemodel
+export demandconstraints
 
 #################################################################################
 # Imports
@@ -97,6 +98,10 @@ include("network_constructor.jl")
 
 #Operational Models
 include("operation_models/operation_models.jl")
+
+#Demand response
+include("demand_response/demand_response.jl")
+include("demand_response/bev.jl")
 
 #Utils
 #include("routines/solve_routines.jl")
