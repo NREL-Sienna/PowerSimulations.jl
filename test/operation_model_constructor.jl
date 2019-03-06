@@ -5,6 +5,7 @@
                     "Loads" => PSI.DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
     branches = Dict{String, PSI.DeviceModel}("Lines" => PSI.DeviceModel(PSY.Branch, PSI.SeriesLine))
     services = Dict{String, DataType}("Reserves" => PSI.AbstractServiceFormulation)
+    PTDF, A = PowerSystems.buildptdf(branches5, nodes5)
 
     op_model = PSI.PowerOperationModel(TestOptModel, PM.StandardACPForm, devices, branches, services, sys5b)
     @test "var_active" in keys(op_model.canonical_model.expressions) && "var_reactive" in keys(op_model.canonical_model.expressions)
@@ -12,7 +13,7 @@
     op_model = PSI.PowerOperationModel(TestOptModel, PM.DCPlosslessForm, devices, branches, services, sys5b)
     @test "var_active" in keys(op_model.canonical_model.expressions)
 
-    op_model = PSI.PowerOperationModel(TestOptModel, PSI.StandardPTDFModel, devices, branches, services, sys5b)
+    op_model = PSI.PowerOperationModel(TestOptModel, PSI.StandardPTDFModel, devices, branches, services, sys5b; PTDF = PTDF)
     @test "var_active" in keys(op_model.canonical_model.expressions)
 
     op_model = PSI.PowerOperationModel(TestOptModel, PSI.CopperPlatePowerModel, devices, branches, services, sys5b)

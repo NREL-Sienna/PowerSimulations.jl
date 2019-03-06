@@ -67,7 +67,7 @@ function build_op_model!(transmission::Type{T},
 
     # Build Network
 
-    #construct_network!(op_model.model, op_model.branches, op_model.transmission, sys, time_range)
+    construct_network!(ps_model, transmission, system, time_range; kwargs...)
 
     #=
     # Build Branches    

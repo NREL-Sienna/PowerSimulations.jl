@@ -26,7 +26,7 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                    branches, 
                                    services, 
                                    system, 
-                                   optimizer, 
+                                   optimizer; 
                                    kwargs...)
 
         new{M, T}(op_model,
