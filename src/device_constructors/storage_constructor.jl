@@ -3,7 +3,7 @@ function construct_device!(ps_m::CanonicalModel,
                            device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem, 
-time_range::UnitRange{Int64};
+                           time_range::UnitRange{Int64};
                            kwargs...) where {St <: PSY.Storage,
                                              D <: PSI.AbstractStorageForm,
                                              S <: PM.AbstractPowerFormulation}
@@ -20,9 +20,6 @@ time_range::UnitRange{Int64};
         energy_initial_conditions = zeros(length(sys.storage))
 
     end
-
-    #Defining this outside in order to enable time slicing later
-    time_range = 1:sys.time_periods
 
     #Variables
     activepower_variables(ps_m, sys.storage, time_range);
@@ -43,6 +40,8 @@ time_range::UnitRange{Int64};
 
     #TODO: rate constraints
 
+    return nothing
+
 end
 
 function construct_device!(ps_m::CanonicalModel,
@@ -50,7 +49,7 @@ function construct_device!(ps_m::CanonicalModel,
                            device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem, 
-time_range::UnitRange{Int64};
+                           time_range::UnitRange{Int64};
                            kwargs...) where {St <: PSY.Storage,
                                              D <: PSI.AbstractStorageForm,
                                              S <: PM.AbstractActivePowerFormulation}
@@ -67,8 +66,6 @@ time_range::UnitRange{Int64};
 
     end
 
-    #Defining this outside in order to enable time slicing later
-    time_range = 1:sys.time_periods
     #Variables
     activepower_variables(ps_m, sys.storage, time_range);
 
@@ -81,5 +78,7 @@ time_range::UnitRange{Int64};
 
     # Energy Balanace limits
     energy_balance_constraint(ps_m,sys.storage, device_formulation, system_formulation, time_range, energy_initial_conditions)
+    
+    return nothing
 
 end

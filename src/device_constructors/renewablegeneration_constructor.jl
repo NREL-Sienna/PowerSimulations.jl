@@ -3,13 +3,10 @@ function construct_device!(ps_m::CanonicalModel,
                            device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem, 
-time_range::UnitRange{Int64};
+                           time_range::UnitRange{Int64};
                            kwargs...) where {R <: PSY.RenewableGen,
                                              D <: AbstractRenewableDispatchForm,
                                              S <: PM.AbstractPowerFormulation}
-
-    #Defining this outside in order to enable time slicing later
-    time_range = 1:sys.time_periods
 
     fixed_resources = [fs for fs in sys.generators.renewable if isa(fs,PSY.RenewableFix)]
 
@@ -37,7 +34,11 @@ time_range::UnitRange{Int64};
 
     #add to expression
 
-    !isempty(fixed_resources) ? nodal_expression(ps_m, fixed_resources, system_formulation, time_range) : true
+    if !isempty(fixed_resources) 
+        nodal_expression(ps_m, fixed_resources, system_formulation, time_range) 
+    end
+
+    return nothing
 
 end
 
@@ -46,13 +47,10 @@ function construct_device!(ps_m::CanonicalModel,
                            device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem, 
-time_range::UnitRange{Int64};
+                           time_range::UnitRange{Int64};
                            kwargs...) where {R <: PSY.RenewableGen,
                                              D <: AbstractRenewableDispatchForm,
                                              S <: PM.AbstractActivePowerFormulation}
-
-    #Defining this outside in order to enable time slicing later
-    time_range = 1:sys.time_periods
 
     fixed_resources = [fs for fs in sys.generators.renewable if isa(fs,PSY.RenewableFix)]
 
@@ -76,7 +74,11 @@ time_range::UnitRange{Int64};
 
     #add to expression
 
-    !isempty(fixed_resources) ? nodal_expression(ps_m, fixed_resources, system_formulation, time_range) : true
+    if !isempty(fixed_resources) 
+        nodal_expression(ps_m, fixed_resources, system_formulation, time_range) 
+    end
+    
+    return nothing
 
 end
 
@@ -85,14 +87,13 @@ function construct_device!(ps_m::CanonicalModel,
                            device_formulation::Type{PSI.RenewableFixed},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem, 
-time_range::UnitRange{Int64};
+                           time_range::UnitRange{Int64};
                            kwargs...) where {R <: PSY.RenewableGen,
                                              S <: PM.AbstractPowerFormulation}
 
-    #Defining this outside in order to enable time slicing later
-    time_range = 1:sys.time_periods
-
     nodal_expression(ps_m, sys.generators.renewable, system_formulation, time_range)
+
+    return nothing
 
 end
 

@@ -3,13 +3,10 @@ function construct_device!(ps_m::CanonicalModel,
                            device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem, 
-time_range::UnitRange{Int64};
+                           time_range::UnitRange{Int64};
                            kwargs...) where {L <: PSY.ElectricLoad,
                                              D <: PSI.AbstractControllablePowerLoadForm,
                                              S <: PM.AbstractPowerFormulation}
-
-        #Defining this outside in order to enable time slicing later
-        time_range = 1:sys.time_periods
 
         fixed_resources = [fs for fs in sys.loads if isa(fs,PSY.PowerLoad)]
 
@@ -37,7 +34,11 @@ time_range::UnitRange{Int64};
 
         #add to expression
 
-        !isempty(fixed_resources) ? nodal_expression(ps_m, fixed_resources, system_formulation, time_range) : true
+        if !isempty(fixed_resources)  
+            nodal_expression(ps_m, fixed_resources, system_formulation, time_range)
+        end
+
+        return nothing
 
 end
 
@@ -46,13 +47,10 @@ function construct_device!(ps_m::CanonicalModel,
                            device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem, 
-time_range::UnitRange{Int64};
+                           time_range::UnitRange{Int64};
                            kwargs...) where {L <: PSY.ElectricLoad,
                                              D <: PSI.AbstractControllablePowerLoadForm,
                                              S <: PM.AbstractActivePowerFormulation}
-
-    #Defining this outside in order to enable time slicing later
-    time_range = 1:sys.time_periods
 
     fixed_resources = [fs for fs in sys.loads if isa(fs,PSY.PowerLoad)]
 
@@ -71,12 +69,15 @@ time_range::UnitRange{Int64};
 
     else
         @warn("The Data Doesn't Contain Controllable Loads, Consider Changing the Device Formulation to StaticPowerLoad")
-
     end
 
     #add to expression
+    
+    if !isempty(fixed_resources)  
+        nodal_expression(ps_m, fixed_resources, system_formulation, time_range)
+    end
 
-    !isempty(fixed_resources) ? nodal_expression(ps_m, fixed_resources, system_formulation, time_range) : true
+    return nothing
 
 end
 
@@ -85,13 +86,12 @@ function construct_device!(ps_m::CanonicalModel,
                            device_formulation::Type{PSI.StaticPowerLoad},
                            system_formulation::Type{S},
                            sys::PSY.PowerSystem, 
-time_range::UnitRange{Int64};
+                           time_range::UnitRange{Int64};
                            kwargs...) where {L <: PSY.ElectricLoad,
                                              S <: PM.AbstractPowerFormulation}
 
-    #Defining this outside in order to enable time slicing later
-    time_range = 1:sys.time_periods
-
     nodal_expression(ps_m, sys.loads, system_formulation, time_range)
+
+    return nothing
 
 end

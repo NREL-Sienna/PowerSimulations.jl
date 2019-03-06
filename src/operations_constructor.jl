@@ -33,7 +33,6 @@ end
 
 function _ps_model_init(system::PSY.PowerSystem, optimizer::Union{Nothing,JuMP.OptimizerFactory}, transmission::Type{S}, time_periods::Int64; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
 
-
     bus_count = length(system.buses)
 
     ps_model = CanonicalModel(_pass_abstract_jump(optimizer; kwargs...),
@@ -44,7 +43,7 @@ function _ps_model_init(system::PSY.PowerSystem, optimizer::Union{Nothing,JuMP.O
                               Dict{String,Any}(),
                               nothing);
 
-        return ps_model
+    return ps_model
 
 end
 
@@ -57,14 +56,14 @@ function build_op_model!(transmission::Type{T},
                          kwargs...) where {T <: PM.AbstractPowerFormulation}
 
     time_range = 1:system.time_periods
-    ps_model = _ps_model_init(system, optimizer, transmission, system.time_periods)
+    ps_model = _ps_model_init(system, optimizer, transmission, system.time_periods; kwargs...)
     
     
     # Build Injection devices 
 
-    #for mod in devices
-        #construct_device!(op_model.model, netinjection, device.device, device.formulation, op_model.transmission, sys; kwargs...)
-    #end
+    for mod in devices
+        construct_device!(ps_model, mod[2], transmission, system, time_range; kwargs...)
+    end
 
     # Build Network
 
@@ -85,8 +84,10 @@ function build_op_model!(transmission::Type{T},
     end
 
     # Objective Function 
-
-    JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
     =#
 
+    #JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+
+    return ps_model
+    
 end
