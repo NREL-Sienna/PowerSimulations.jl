@@ -53,9 +53,9 @@ version = "0.2.0"
 
 [[Compat]]
 deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", "LibGit2", "Libdl", "LinearAlgebra", "Markdown", "Mmap", "Pkg", "Printf", "REPL", "Random", "Serialization", "SharedArrays", "Sockets", "SparseArrays", "Statistics", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "49269e311ffe11ac5b334681d212329002a9832a"
+git-tree-sha1 = "195a3ffcb8b0762684b6821de18f83a16455c6ea"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "1.5.1"
+version = "2.0.0"
 
 [[DataFrames]]
 deps = ["CategoricalArrays", "CodecZlib", "Compat", "DataStreams", "Dates", "InteractiveUtils", "IteratorInterfaceExtensions", "LinearAlgebra", "Missings", "Printf", "Random", "Reexport", "SortingAlgorithms", "Statistics", "StatsBase", "TableTraits", "Tables", "Test", "TranscodingStreams", "Unicode", "WeakRefStrings"]
@@ -184,9 +184,9 @@ uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[MathOptInterface]]
 deps = ["Compat", "Unicode"]
-git-tree-sha1 = "e3c7fb842078f5cd9a21ecb911dc59a4282e3d01"
+git-tree-sha1 = "ed9457bdd246a3302d791c5e8f0aad3c3de2e121"
 uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
-version = "0.8.2"
+version = "0.8.3"
 
 [[Memento]]
 deps = ["Dates", "Distributed", "JSON", "Sockets", "Syslogs", "Test", "TimeZones", "UUIDs"]
