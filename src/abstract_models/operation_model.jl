@@ -16,8 +16,8 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 devices::Dict{String, DeviceModel},
                                 branches::Dict{String, DeviceModel},
                                 services::Dict{String, ServiceModel},
-                                system::PSY.PowerSystem,
-                                optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
+                                system::PSY.PowerSystem;
+                                optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing,
                                 kwargs...) where {M <: AbstractOperationsModel,
                                                   T <: PM.AbstractPowerFormulation}
 
