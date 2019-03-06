@@ -50,7 +50,7 @@ end
 function build_op_model!(transmission::Type{T},
                          devices::Dict{String, DeviceModel},
                          branches::Dict{String, DeviceModel},
-                         services::Dict{String, DataType},
+                         services::Dict{String, ServiceModel},
                          system::PSY.PowerSystem,
                          optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
                          kwargs...) where {T <: PM.AbstractPowerFormulation}
@@ -66,22 +66,17 @@ function build_op_model!(transmission::Type{T},
     # Build Network
     construct_network!(ps_model, transmission, system, time_range; kwargs...)
 
-  
     # Build Branches    
-
     for mod in branches
         construct_device!(ps_model, mod[2], transmission, system, time_range; kwargs...)
     end    
 
-    #=
-    #Build Services
-    for ervice in op_model.services
-    constructservice!(op_model.model, service.service, service.formulation, service_providers, sys; kwargs...)
+    #Build Service
+    for mod in services
+        construct_service!(ps_model, mod[2], transmission, system, time_range; kwargs...)
     end
 
-    # Objective Function 
-    =#
-
+    # Objective Function
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
 
     return ps_model

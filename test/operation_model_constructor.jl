@@ -4,7 +4,7 @@
     devices = Dict{String, PSI.DeviceModel}("Generators" => PSI.DeviceModel(PSY.ThermalGen, PSI.ThermalUnitCommitment),
                     "Loads" => PSI.DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
     branches = Dict{String, PSI.DeviceModel}("Lines" => PSI.DeviceModel(PSY.Branch, PSI.SeriesLine))
-    services = Dict{String, DataType}("Reserves" => PSI.AbstractServiceFormulation)
+    services = Dict{String, PSI.ServiceModel}("Reserves" => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
     PTDF, A = PowerSystems.buildptdf(branches5, nodes5)
 
     op_model = PSI.PowerOperationModel(TestOptModel, PM.StandardACPForm, devices, branches, services, sys5b)
