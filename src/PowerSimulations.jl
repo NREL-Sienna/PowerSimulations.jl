@@ -7,18 +7,16 @@ module PowerSimulations
 #export PowerSimulationsModel
 #export PowerResults
 
-#Base Modeling Exports
-#export CustomModel
-#export EconomicDispatch
-#export UnitCommitment
-
 #Network Relevant Exports
 export StandardPTDFForm
 export CopperPlatePowerModel
 
-#Functions
-export buildmodel!
-export simulatemodel
+#operation_models
+export UnitCommitment
+export EconomicDispatch
+export SCEconomicDispatch
+export OptimalPowerFlow
+
 
 #################################################################################
 # Imports
@@ -27,7 +25,7 @@ import JuMP
 import PowerSystems
 import PowerModels
 import MathOptInterface
-#import DataFrames #Needed to display results
+import DataFrames #Needed to display results
 import LinearAlgebra
 #import LinearAlgebra.BLAS #needed for the simulation stage
 import AxisArrays
