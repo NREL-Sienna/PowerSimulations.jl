@@ -7,3 +7,5 @@ mutable struct CanonicalModel
     initial_conditions::Dict{Symbol, Any}
     pm_model::Union{Nothing,PM.GenericPowerModel}
 end
+
+_variable_type(cm::CanonicalModel) = JuMP.variable_type(cm.JuMPmodel)

@@ -1,4 +1,4 @@
-function nodal_expression(ps_m::CanonicalModel, devices::Array{L,1}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {L <: PSY.PowerLoad, S <: PM.AbstractPowerFormulation}
+function nodal_expression(ps_m::CanonicalModel, devices::Array{L,1}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerFormulation}
 
     for t in time_range, d in devices
 
@@ -11,7 +11,7 @@ function nodal_expression(ps_m::CanonicalModel, devices::Array{L,1}, system_form
 
 end
 
-function nodal_expression(ps_m::CanonicalModel, devices::Array{L,1}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {L <: PSY.PowerLoad, S <: PM.AbstractActivePowerFormulation}
+function nodal_expression(ps_m::CanonicalModel, devices::Array{L,1}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad, S <: PM.AbstractActivePowerFormulation}
 
     for t in time_range, d in devices
 
