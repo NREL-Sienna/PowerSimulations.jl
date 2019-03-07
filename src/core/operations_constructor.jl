@@ -18,12 +18,14 @@ function _ps_model_init(system::PSY.PowerSystem, optimizer::Union{Nothing,JuMP.O
 
     bus_count = length(system.buses)
 
-    ps_model = CanonicalModel(_pass_abstract_jump(optimizer; kwargs...),
+    jump_model = _pass_abstract_jump(optimizer; kwargs...)
+    V = JuMP.variable_type(jump_model)
+    ps_model = CanonicalModel(jump_model,
                             Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                             Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                             nothing,
-                            Dict{Symbol, PSI.JumpAffineExpressionArray}(:var_active => PSI.JumpAffineExpressionArray(undef, bus_count, time_periods),
-                                                                        :var_reactive => PSI.JumpAffineExpressionArray(undef, bus_count, time_periods)),
+                            Dict{Symbol, PSI.JumpAffineExpressionArray{V}}(:var_active => PSI.JumpAffineExpressionArray{V}(undef, bus_count, time_periods),
+                                                                        :var_reactive => PSI.JumpAffineExpressionArray{V}(undef, bus_count, time_periods)),
                             Dict{Symbol,Any}(),
                             nothing);
     
@@ -35,11 +37,13 @@ function _ps_model_init(system::PSY.PowerSystem, optimizer::Union{Nothing,JuMP.O
 
     bus_count = length(system.buses)
 
-    ps_model = CanonicalModel(_pass_abstract_jump(optimizer; kwargs...),
+    jump_model = _pass_abstract_jump(optimizer; kwargs...)
+    V = JuMP.variable_type(jump_model)
+    ps_model = CanonicalModel(jump_model,
                               Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                               Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                               nothing,
-                              Dict{Symbol, PSI.JumpAffineExpressionArray}(:var_active => PSI.JumpAffineExpressionArray(undef, bus_count, time_periods)),
+                              Dict{Symbol, PSI.JumpAffineExpressionArray{V}}(:var_active => PSI.JumpAffineExpressionArray{V}(undef, bus_count, time_periods)),
                               Dict{Symbol,Any}(),
                               nothing);
 

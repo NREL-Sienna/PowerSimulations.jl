@@ -5,7 +5,7 @@ function _remove_undef!(ExpressionArray::T) where T <: JumpExpressionMatrix
         for i in 1:size(ExpressionArray)[1]
 
             if !isassigned(ExpressionArray,i,j) 
-                 ExpressionArray[i,j] = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}(0.0) 
+                 ExpressionArray[i,j] = zero(eltype(ExpressionArray))
             else
                 continue
             end
@@ -57,8 +57,8 @@ function _add_to_expression!(expression::T,
 
     if isassigned(expression,  ix, jx)  
         expression[ix,jx] += value 
-    else 
-        expression[ix,jx] = JuMP.AffExpr(value)
+    else
+        expression[ix,jx] = zero(eltype(expression)) + value
     end
 
     return

@@ -40,7 +40,7 @@ const MOIU = MathOptInterface.Utilities
 
 #Type Alias for JuMP containers
 const JumpExpressionMatrix = Matrix{<:JuMP.GenericAffExpr}
-const JumpAffineExpressionArray = Array{JuMP.GenericAffExpr{Float64,JuMP.VariableRef},2}
+const JumpAffineExpressionArray = Array{JuMP.GenericAffExpr{Float64,V},2} where V <: JuMP.AbstractVariableRef
 
 #Type Alias for Unions
 const FixResource = Union{PSY.RenewableFix, PSY.HydroFix}
