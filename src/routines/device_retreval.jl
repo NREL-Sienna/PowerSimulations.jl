@@ -1,5 +1,11 @@
 
 #=
+
+##################
+This code still need to be rewritten for the new infrastructure in PowerSimulations
+##################
+
+
 function all_devices(sys, filter::Array)
     dev = Array{PSY.PowerSystemDevice}([])
 

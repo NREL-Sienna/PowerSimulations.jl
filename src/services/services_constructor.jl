@@ -14,6 +14,12 @@ end
 
 
 #=
+
+##################
+This code still need to be rewritten for the new infrastructure in PowerSimulations
+##################
+
+
 function get_devices(sys::PSY.PowerSystem,device::Type{PSY.ThermalGen})
     return sys.generators.thermal
 end
