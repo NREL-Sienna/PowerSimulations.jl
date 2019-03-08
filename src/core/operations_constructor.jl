@@ -85,4 +85,14 @@ function build_op_model!(transmission::Type{T},
 
     return ps_model
     
-end
+end            
+
+function build_op_model!(op_model; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...)
+    return build_op_model!(op_model.transmission, 
+                          op_model.devices,
+                          op_model.branches,
+                          op_model.services,
+                          op_model.system,
+                          optimizer;
+                          kwargs...)
+end  
