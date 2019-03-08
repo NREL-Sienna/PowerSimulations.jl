@@ -23,6 +23,9 @@ function construct_device!(ps_m::CanonicalModel,
                                               B <: PSY.Branch,
                                               S <: PM.AbstractPowerFormulation}
 
+
+    # This code is meant to do nothing and will have a constructor once the branch formulations are developed
+
     return
 
 end

@@ -1,5 +1,5 @@
 function device_linear_rateofchange(ps_m::CanonicalModel,
-                                    rate_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}}},1},
+                                    rate_data::Vector{UpDownRate},
                                     initial_conditions::Array{Float64,1},
                                     time_range::UnitRange{Int64},
                                     cons_name::Symbol,

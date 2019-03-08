@@ -39,11 +39,15 @@ const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
 
 #Type Alias for JuMP containers
-const JumpExpressionMatrix = Matrix{<:JuMP.GenericAffExpr}
-const JumpAffineExpressionArray = Array{JuMP.GenericAffExpr{Float64,V},2} where V <: JuMP.AbstractVariableRef
+const JuMPExpressionMatrix = Matrix{<:JuMP.GenericAffExpr}
+const JuMPAffineExpressionArray = Matrix{JuMP.GenericAffExpr{Float64,V}} where V <: JuMP.AbstractVariableRef
 
 #Type Alias for Unions
 const FixResource = Union{PSY.RenewableFix, PSY.HydroFix}
+
+#Type Alias for long type signatures
+const MinMaxRange = Tuple{String,NamedTuple{(:min, :max),Tuple{Float64,Float64}}}
+const UpDownRate = Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}}}
 
 #################################################################################
 # Includes
@@ -53,11 +57,13 @@ include("network/network_models/networks.jl")
 include("services/service_models/services.jl")
 
 #Core Models and constructors
-include("core/core_structs/canonical_model.jl")
 include("core/core_structs/device_model.jl")
+include("core/core_structs/canonical_model.jl")
 include("core/core_structs/service_model.jl")
-include("core/operations_constructor.jl")
 include("core/core_structs/operation_model.jl")
+include("core/device_constructor.jl")
+include("core/canonical_constructor.jl")
+include("core/operations_constructor.jl")
 include("core/core_structs/results_model.jl")
 #include("core/core_structs/simulation_model.jl")
 
