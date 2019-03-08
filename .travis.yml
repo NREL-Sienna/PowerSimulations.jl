@@ -3,6 +3,7 @@ language: julia
 os:
   - linux
   - osx
+  - windows
 julia:
   - 1.1
   - nightly
@@ -15,6 +16,7 @@ matrix:
   allow_failures:
   - julia: nightly
   - os: osx
+  - os: windows
 
 addons:
   apt_packages:
