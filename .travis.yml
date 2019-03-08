@@ -3,24 +3,25 @@ notifications:
   email: false
 
 codecov: true
+julia:
+  - 1.1
+  - nightly
+
 ## uncomment the following lines to allow failures on nightly julia
 ## (tests will run but not make your overall status red)
 matrix:
   include:
   - os:
-
     - linux
       language: julia
       julia:
         - 1.1
         - nightly
-
     - osx
       language: julia
       julia:
         - 1.1
         - nightly
-
     - windows
       language: sh
       before_install:
@@ -31,9 +32,9 @@ matrix:
   - os: osx
   - os: windows
 
-addons:
-  apt_packages:
-    - gfortran
+  addons:
+    apt_packages:
+      - gfortran
 
 ## uncomment and modify the following lines to manually install system packages
 #addons:
