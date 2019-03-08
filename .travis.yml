@@ -1,17 +1,11 @@
 ## Documentation: http://docs.travis-ci.org/user/languages/julia/
 language: julia
 codecov: true
-os:
-  - linux
-  - osx
-  - windows
-julia:
+ julia:
   - 1.1
   - nightly
 notifications:
   email: false
-
-
 
 ## uncomment the following lines to allow failures on nightly julia
 ## (tests will run but not make your overall status red)
@@ -20,6 +14,16 @@ matrix:
   - julia: nightly
   - os: osx
   - os: windows
+
+include:
+os:
+  - linux
+  - osx
+
+- os: windows
+  language: sh
+  before_install:
+    - choco install julia
 
 addons:
   apt_packages:
