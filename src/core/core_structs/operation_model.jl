@@ -21,13 +21,13 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 kwargs...) where {M <: AbstractOperationsModel,
                                                   T <: PM.AbstractPowerFormulation}
 
-        ps_model = build_op_model!(transmission, 
-                                   devices, 
-                                   branches, 
-                                   services, 
-                                   system, 
-                                   optimizer; 
-                                   kwargs...)
+        ps_model = build_canonical_model(transmission, 
+                                        devices, 
+                                        branches, 
+                                        services, 
+                                        system, 
+                                        optimizer; 
+                                        kwargs...)
 
         new{M, T}(op_model,
                   transmission,

@@ -53,11 +53,13 @@ include("network/network_models/networks.jl")
 include("services/service_models/services.jl")
 
 #Core Models and constructors
-include("core/core_structs/canonical_model.jl")
 include("core/core_structs/device_model.jl")
+include("core/core_structs/canonical_model.jl")
 include("core/core_structs/service_model.jl")
-include("core/operations_constructor.jl")
 include("core/core_structs/operation_model.jl")
+include("core/device_constructor.jl")
+include("core/canonical_constructor.jl")
+include("core/operations_constructor.jl")
 include("core/core_structs/results_model.jl")
 #include("core/core_structs/simulation_model.jl")
 
