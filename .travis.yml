@@ -2,29 +2,29 @@
 notifications:
   email: false
 
-language: julia
-
 codecov: true
-julia:
-  - 1.1
-  - nightly
-
 ## uncomment the following lines to allow failures on nightly julia
 ## (tests will run but not make your overall status red)
 matrix:
-  exclude:
-    - os: windows
-      language: julia
-  
   include:
   - os:
-    - linux
-    - osx
 
-  - os: windows
-    language: sh
-    before_install:
-      - choco install julia
+    - linux
+      language: julia
+      julia:
+        - 1.1
+        - nightly
+
+    - osx
+      language: julia
+      julia:
+        - 1.1
+        - nightly
+
+    - windows
+      language: sh
+      before_install:
+        - choco install julia
 
   allow_failures:
   - julia: nightly
