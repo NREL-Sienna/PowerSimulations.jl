@@ -34,3 +34,6 @@ build_script:
 test_script:
   - echo "%JL_TEST_SCRIPT%"
   - C:\julia\bin\julia --check-bounds=yes --color=yes --project -e "%JL_TEST_SCRIPT%"
+
+after_test:
+  - C:\julia\bin\julia -e "using Pkg; Pkg.add(\"Coverage\"); using Coverage; Codecov.submit(process_folder())"
