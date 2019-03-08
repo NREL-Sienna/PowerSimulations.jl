@@ -1,36 +1,28 @@
 ## Documentation: http://docs.travis-ci.org/user/languages/julia/
-notifications:
-  email: false
+language: julia
 
-codecov: true
 julia:
   - 1.1
   - nightly
 
+notifications:
+  email: false
+
 ## uncomment the following lines to allow failures on nightly julia
 ## (tests will run but not make your overall status red)
 matrix:
+  exclude:
+    - os: windows
+      julia: nightly
+      language: julia
+
   include:
-  - os:
-    - linux
-      language: julia
-      julia:
-        - 1.1
-        - nightly
-    - osx
-      language: julia
-      julia:
-        - 1.1
-        - nightly
-    - windows
+    - os: osx
+
+    - os: windows
       language: sh
       before_install:
         - choco install julia
-
-  allow_failures:
-  - julia: nightly
-  - os: osx
-  - os: windows
 
   addons:
     apt_packages:
@@ -45,9 +37,9 @@ matrix:
 #  - if [ $TRAVIS_OS_NAME = osx ]; then brew install gcc; fi
 
 ## uncomment the following lines to override the default test script
-script:
-  - julia --project --color=yes -e "import Pkg; Pkg.build(verbose = true); Pkg.instantiate()"
-  - julia --check-bounds=yes --depwarn=no --color=yes --project -e "import Pkg; Pkg.test(coverage=true);"
+      script:
+        - julia --project --color=yes -e "import Pkg; Pkg.build(); Pkg.instantiate()"
+        - julia --check-bounds=yes --depwarn=no --color=yes --project -e "import Pkg; Pkg.test(coverage=true);"
 
 after_success:
   # push coverage results to Codecov
