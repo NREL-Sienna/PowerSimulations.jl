@@ -1,5 +1,6 @@
 ## Documentation: http://docs.travis-ci.org/user/languages/julia/
 language: julia
+codecov: true
 os:
   - linux
   - osx
@@ -9,6 +10,8 @@ julia:
   - nightly
 notifications:
   email: false
+
+
 
 ## uncomment the following lines to allow failures on nightly julia
 ## (tests will run but not make your overall status red)
