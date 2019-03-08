@@ -88,7 +88,7 @@ function build_op_model!(transmission::Type{T},
 end            
 
 function build_op_model!(op_model; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...)
-       op_model.canonical_nodel = build_op_model!(op_model.transmission, 
+       op_model.canonical_model = build_op_model!(op_model.transmission, 
                                                     op_model.devices,
                                                     op_model.branches,
                                                     op_model.services,
