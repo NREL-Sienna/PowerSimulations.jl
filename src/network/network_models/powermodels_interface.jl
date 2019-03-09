@@ -257,6 +257,9 @@ function powermodels_network!(ps_m::CanonicalModel,
 
     pm_data = pass_to_pm(sys)
 
+    _remove_undef!(ps_m.expressions[:var_active])
+    _remove_undef!(ps_m.expressions[:var_reactive])
+
     for t in time_range, bus in sys.buses
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions[:var_active][bus.number,t]
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = ps_m.expressions[:var_reactive][bus.number,t]
@@ -277,6 +280,8 @@ function powermodels_network!(ps_m::CanonicalModel,
                               time_range::UnitRange{Int64}) where {S <: PM.AbstractActivePowerFormulation}
 
     pm_data = pass_to_pm(sys)
+
+    _remove_undef!(ps_m.expressions[:var_active])
 
     for t in time_range, bus in sys.buses
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions[:var_active][bus.number,t]
