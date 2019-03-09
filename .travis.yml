@@ -49,4 +49,4 @@ script:
 after_success:
   # push coverage results to Codecov
   - julia --project -e 'import Pkg; Pkg.add("Documenter"); include("docs/make.jl")'
-  - julia --project -e 'import Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+  - julia -e 'import Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
