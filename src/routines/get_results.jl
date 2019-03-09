@@ -34,7 +34,8 @@ function optimizer_log(ps_m::PSI.CanonicalModel; kwargs...)
 
     optimizer_log = Dict{Symbol,Any}()
 
-    optimizer_log[:solve_time] = MOI.get(ps_m.JuMPmodel, MOI.SolveTime())
+    # TODO: Not all solvers can access the SolveTime() property
+    #optimizer_log[:solve_time] = MOI.get(ps_m.JuMPmodel, MOI.SolveTime())
     optimizer_log[:termination_status] = JuMP.termination_status(ps_m.JuMPmodel) 
     optimizer_log[:primal_status] = JuMP.primal_status(ps_m.JuMPmodel) 
     optimizer_log[:dual_status] = JuMP.dual_status(ps_m.JuMPmodel)
