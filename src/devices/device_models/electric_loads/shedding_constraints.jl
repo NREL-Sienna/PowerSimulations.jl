@@ -1,5 +1,10 @@
 
-function activepower_constraints(ps_m::CanonicalModel, devices::Array{L,1}, device_formulation::Type{InterruptiblePowerLoad}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerFormulation}
+function activepower_constraints(ps_m::CanonicalModel,
+                                 devices::Array{L,1},
+                                 device_formulation::Type{InterruptiblePowerLoad},
+                                 system_formulation::Type{S},
+                                 time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
+                                                                      S <: PM.AbstractPowerFormulation}
 
     ts_data = [(l.name, l.maxactivepower * values(l.scalingfactor)) for l in devices]
 
@@ -10,7 +15,13 @@ function activepower_constraints(ps_m::CanonicalModel, devices::Array{L,1}, devi
 end
 
 
-function reactivepower_constraints(ps_m::CanonicalModel, devices::Array{L,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad, D <: AbstractControllablePowerLoadForm, S <: PM.AbstractPowerFormulation}
+function reactivepower_constraints(ps_m::CanonicalModel,
+                                   devices::Array{L,1},
+                                   device_formulation::Type{D},
+                                   system_formulation::Type{S},
+                                   time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
+                                                                        D <: AbstractControllablePowerLoadForm,
+                                                                        S <: PM.AbstractPowerFormulation}
 
     #TODO: Filter for loads with PF = 1.0
 
