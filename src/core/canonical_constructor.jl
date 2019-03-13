@@ -1,7 +1,8 @@
 
-function _canonical_model_init(system::PSY.PowerSystem, optimizer::Union{Nothing,JuMP.OptimizerFactory}, transmission::Type{S}, time_periods::Int64; kwargs...) where {S <: PM.AbstractPowerFormulation}
-
-    bus_count = length(system.buses)
+function _canonical_model_init(bus_count::Int64,
+                              optimizer::Union{Nothing,JuMP.OptimizerFactory},
+                              transmission::Type{S},
+                              time_periods::Int64; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     jump_model = _pass_abstract_jump(optimizer; kwargs...)
     V = JuMP.variable_type(jump_model)
@@ -13,14 +14,17 @@ function _canonical_model_init(system::PSY.PowerSystem, optimizer::Union{Nothing
                                                                         :var_reactive => PSI.JumpAffineExpressionArray{V}(undef, bus_count, time_periods)),
                             Dict{Symbol,Any}(),
                             nothing);
-    
+
     return ps_model
 
 end
 
-function _canonical_model_init(system::PSY.PowerSystem, optimizer::Union{Nothing,JuMP.OptimizerFactory}, transmission::Type{S}, time_periods::Int64; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
+function _canonical_model_init(bus_count::Int64,
+                               optimizer::Union{Nothing,JuMP.OptimizerFactory},
+                               transmission::Type{S},
+                               time_periods::Int64; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
 
-    bus_count = length(system.buses)
+
 
     jump_model = _pass_abstract_jump(optimizer; kwargs...)
     V = JuMP.variable_type(jump_model)
@@ -45,9 +49,11 @@ function  build_canonical_model(transmission::Type{T},
                                 kwargs...) where {T <: PM.AbstractPowerFormulation}
 
 time_range = 1:system.time_periods
-ps_model = _canonical_model_init(system, optimizer, transmission, system.time_periods; kwargs...)
+bus_count = length(system.buses)
 
-# Build Injection devices 
+ps_model = _canonical_model_init(bus_count, optimizer, transmission, system.time_periods; kwargs...)
+
+# Build Injection devices
 for mod in devices
 construct_device!(ps_model, mod[2], transmission, system, time_range; kwargs...)
 end
@@ -55,10 +61,10 @@ end
 # Build Network
 construct_network!(ps_model, transmission, system, time_range; kwargs...)
 
-# Build Branches    
+# Build Branches
 for mod in branches
 construct_device!(ps_model, mod[2], transmission, system, time_range; kwargs...)
-end    
+end
 
 #Build Service
 for mod in services
@@ -70,4 +76,4 @@ JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
 
 return ps_model
 
-end   
+end
