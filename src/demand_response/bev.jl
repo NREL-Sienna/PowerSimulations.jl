@@ -95,7 +95,7 @@ locateddemands = constraints.result()
 function demandconstraints(demand :: BevDemand{T,L}, prices :: TimeArray{Float64,1,T,Array{Float64,1}}) where L where T <: TimeType
 
     # FIXME: Add DC constraints.
-    
+
     eff = applyefficiencies(demand)
 
     onehour = Time(1) - Time(0)
@@ -109,8 +109,8 @@ function demandconstraints(demand :: BevDemand{T,L}, prices :: TimeArray{Float64
     hour = map(t -> t.instant / onehour, xt)
     location = map(v -> v[1][1][1], xv)
     duration = (xt[2:NT] - xt[1:NP]) / onehour
-    chargemin = duration .* map(v -> min(v[1][1][2], demand.rate.ac.min), xv[1:NP])
-    chargemax = duration .* map(v -> min(v[1][1][2], demand.rate.ac.max), xv[1:NP])
+    chargemin = duration .* map(v -> min(v[1][1][2].ac, demand.rate.ac.min), xv[1:NP])
+    chargemax = duration .* map(v -> min(v[1][1][2].ac, demand.rate.ac.max), xv[1:NP])
     consumption = duration .* map(v -> v[1][2], xv[1:NP])
     price = map(v -> v[2], xv[1:NP])
 
