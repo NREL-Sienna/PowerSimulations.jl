@@ -19,7 +19,7 @@ Apply efficiency factors to relate energy at the vehicle to energy at the charge
 """
 function applyefficiencies(demand :: BevDemand{T,L}) where L where T <: TimeType
     function f(x)
-        x > 0 ? x / demand.chargeefficiency : x * demand.dischargeefficiency
+        x > 0 ? x / demand.efficiency.in : x * demand.efficiency.out
     end
     f
 end
@@ -43,7 +43,7 @@ Represent demand constraints for a BEV as a JuMP model.
                                     has been solved
 """
 function demandconstraints(demand :: BevDemand{T,L}) where L where T <: TimeType
-    pricing = map(v -> 1., demand.consumptions)
+    pricing = map(v -> 1., demand.power)
     demandconstraints(demand, pricing)
 end
 
@@ -73,16 +73,16 @@ using Dates, GLPK, JuMP, PowerSystems, PowerSimulations, TimeSeries
 example = BevDemand(
     TimeArray(
         [Time(0)          , Time(8)         , Time(9)              , Time(17)       , Time(18)         , Time(23,59,59)   ], # [h]
-        [("Home #23", 1.4), ("Road #14", 0.), ("Workplace #3", 7.7), ("Road #9", 0.), ("Home #23", 1.4), ("Home #23", 1.4)]  # [kW]
+        [("Home #23", (ac=1.4, dc=0.)), ("Road #14", (ac=0., dc=0.)), ("Workplace #3", (ac=7.7, dc=0.)), ("Road #9", (ac=0., dc=0.)), ("Home #23", (ac=1.4, dc=0.)), ("Home #23", (ac=1.4, dc=0.))]  # [kW]
     ),
     TimeArray(
         [Time(0), Time(8), Time(9), Time(17), Time(18), Time(23,59,59)], # [h]
         [     0.,     10.,      0.,      11.,       0.,             0.]  # [kW]
     ),
-    0., 40., # [kWh]
+    (min=0., max=40.), # [kWh]
+    (ac=(min=0., max=20.), dc=(min=0., max=50.)), # [kW]
+    (in=0.90, out=0.), # [kWh/kWh]
     nothing,
-    6.6, 0., # [kW]
-    0.90, 0. # [kWh/kWh]
 )
 
 pricing = TimeArray([Time(0), Time(12)], [10., 3.])
@@ -94,11 +94,13 @@ locateddemands = constraints.result()
 """
 function demandconstraints(demand :: BevDemand{T,L}, prices :: TimeArray{Float64,1,T,Array{Float64,1}}) where L where T <: TimeType
 
+    # FIXME: Add DC constraints.
+    
     eff = applyefficiencies(demand)
 
     onehour = Time(1) - Time(0)
     eff = applyefficiencies(demand)
-    x = aligntimes(aligntimes(demand.locations, demand.consumptions), prices)
+    x = aligntimes(aligntimes(demand.locations, demand.power), prices)
     xt = timestamp(x)
     xv = values(x)
 
@@ -107,8 +109,8 @@ function demandconstraints(demand :: BevDemand{T,L}, prices :: TimeArray{Float64
     hour = map(t -> t.instant / onehour, xt)
     location = map(v -> v[1][1][1], xv)
     duration = (xt[2:NT] - xt[1:NP]) / onehour
-    chargemin = duration .* map(v -> min(v[1][1][2], - demand.dischargeratemax), xv[1:NP])
-    chargemax = duration .* map(v -> min(v[1][1][2],   demand.chargeratemax)   , xv[1:NP])
+    chargemin = duration .* map(v -> min(v[1][1][2], demand.rate.ac.min), xv[1:NP])
+    chargemax = duration .* map(v -> min(v[1][1][2], demand.rate.ac.max), xv[1:NP])
     consumption = duration .* map(v -> v[1][2], xv[1:NP])
     price = map(v -> v[2], xv[1:NP])
 
@@ -118,7 +120,7 @@ function demandconstraints(demand :: BevDemand{T,L}, prices :: TimeArray{Float64
     @constraint(model, chargeconstraint[   i=1:NP], charge[i] <= chargemax[i])
     @constraint(model, dischargeconstraint[i=1:NP], charge[i] >= chargemin[i])
 
-    @variable(model, demand.batterymin <= battery[1:NT] <= demand.batterymax)
+    @variable(model, demand.capacity.min <= battery[1:NT] <= demand.capacity.max)
     if demand.timeboundary == nothing
         @constraint(model, boundaryconstraint, battery[1] == battery[NT])
     else
