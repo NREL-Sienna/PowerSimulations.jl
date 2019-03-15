@@ -1,14 +1,17 @@
 # PowerSimulations
 
-[![Build Status](https://travis-ci.org/NREL/PowerSimulations.jl.svg?branch=master)](https://travis-ci.com/NREL/PowerSimulations.jl.svg?branch=master)
-[![Build status](https://ci.appveyor.com/api/projects/status/nem37qv34iarl5j9/branch/master?svg=true)](https://ci.appveyor.com/project/jd-lara/powersimulations-jl/branch/master)
 
-## PowerSimulations is currently Work in Progress. Many of the functionalities are not currently available. Please follow the instructions below if you want to test some of the code already developed.
+
+[![Build Status](https://travis-ci.org/NREL/PowerSimulations.jl.svg?branch=master)](https://travis-ci.org/NREL/PowerSimulations.jl)
+[![Build status](https://ci.appveyor.com/api/projects/status/nem37qv34iarl5j9/branch/master?svg=true)](https://ci.appveyor.com/project/jd-lara/powersimulations-jl/branch/master) 
+[![Join the chat at https://gitter.im/NREL/PowerSimulations.jl](https://badges.gitter.im/NREL/PowerSimulations.jl.svg)](https://gitter.im/NREL/PowerSimulations.jl?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+**PowerSimulations is currently work in progress. Many of the functionalities are not currently available. Please follow the instructions below if you want to test some of the code already developed.**
 
 ## The current implementation of the functionalities can be seen in the test codes.
 
 PowerSimulations.jl is a Julia package for power system simulations. The objectives of the PowerSimulations package are:
-- Provide a flexible modeling framework that can accomodate problems of different complexity and at different time-scales.
+- Provide a flexible modeling framework that can accommodate problems of different complexity and at different time-scales.
 
 - Streamline the construction of large scale optimization problems to avoid repetition of work when adding/modifying model details.
 
