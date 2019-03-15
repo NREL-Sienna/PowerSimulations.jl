@@ -1,9 +1,7 @@
 # PowerSimulations
 
-
-
 [![Build Status](https://travis-ci.org/NREL/PowerSimulations.jl.svg?branch=master)](https://travis-ci.org/NREL/PowerSimulations.jl)
-[![Build status](https://ci.appveyor.com/api/projects/status/nem37qv34iarl5j9/branch/master?svg=true)](https://ci.appveyor.com/project/jd-lara/powersimulations-jl/branch/master) 
+[![Build status](https://ci.appveyor.com/api/projects/status/nem37qv34iarl5j9/branch/master?svg=true)](https://ci.appveyor.com/project/jd-lara/powersimulations-jl/branch/master)
 [![Join the chat at https://gitter.im/NREL/PowerSimulations.jl](https://badges.gitter.im/NREL/PowerSimulations.jl.svg)](https://gitter.im/NREL/PowerSimulations.jl?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 **PowerSimulations is currently work in progress. Many of the functionalities are not currently available. Please follow the instructions below if you want to test some of the code already developed.**
