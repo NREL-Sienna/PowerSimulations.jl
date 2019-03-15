@@ -10,8 +10,8 @@ function _canonical_model_init(bus_count::Int64,
                             Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                             Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                             nothing,
-                            Dict{Symbol, PSI.JumpAffineExpressionArray{V}}(:var_active => PSI.JumpAffineExpressionArray{V}(undef, bus_count, time_periods),
-                                                                        :var_reactive => PSI.JumpAffineExpressionArray{V}(undef, bus_count, time_periods)),
+                            Dict{Symbol, PSI.JuMPAffineExpressionArray{V}}(:var_active => PSI.JuMPAffineExpressionArray{V}(undef, bus_count, time_periods),
+                                                                        :var_reactive => PSI.JuMPAffineExpressionArray{V}(undef, bus_count, time_periods)),
                             Dict{Symbol,Any}(),
                             nothing);
 
@@ -32,7 +32,7 @@ function _canonical_model_init(bus_count::Int64,
                               Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                               Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                               nothing,
-                              Dict{Symbol, PSI.JumpAffineExpressionArray{V}}(:var_active => PSI.JumpAffineExpressionArray{V}(undef, bus_count, time_periods)),
+                              Dict{Symbol, PSI.JuMPAffineExpressionArray{V}}(:var_active => PSI.JuMPAffineExpressionArray{V}(undef, bus_count, time_periods)),
                               Dict{Symbol,Any}(),
                               nothing);
 
@@ -55,7 +55,7 @@ ps_model = _canonical_model_init(bus_count, optimizer, transmission, system.time
 
 # Build Injection devices
 for mod in devices
-construct_device!(ps_model, mod[2], transmission, system, time_range; kwargs...)
+    construct_device!(ps_model, mod[2], transmission, system, time_range; kwargs...)
 end
 
 # Build Network
@@ -63,12 +63,12 @@ construct_network!(ps_model, transmission, system, time_range; kwargs...)
 
 # Build Branches
 for mod in branches
-construct_device!(ps_model, mod[2], transmission, system, time_range; kwargs...)
+    construct_device!(ps_model, mod[2], transmission, system, time_range; kwargs...)
 end
 
 #Build Service
 for mod in services
-construct_service!(ps_model, mod[2], transmission, system, time_range; kwargs...)
+    construct_service!(ps_model, mod[2], transmission, system, time_range; kwargs...)
 end
 
 # Objective Function

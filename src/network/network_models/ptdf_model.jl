@@ -44,8 +44,8 @@ to = TimerOutput()
                               Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
-                              Dict{Symbol, PSI.JumpAffineExpressionArray}(:var_active => PSI.JumpAffineExpressionArray(undef, 5, 24),
-                                                                         :var_reactive => PSI.JumpAffineExpressionArray(undef, 5, 24)),
+                              Dict{Symbol, PSI.JuMPAffineExpressionArray}(:var_active => PSI.JuMPAffineExpressionArray(undef, 5, 24),
+                                                                         :var_reactive => PSI.JuMPAffineExpressionArray(undef, 5, 24)),
                               nothing);
 @timeit to "build_thermal"    PSI.construct_device!(ps_m, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b);
 @timeit to "build_load"    PSI.construct_device!(ps_m, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
@@ -86,8 +86,8 @@ to = TimerOutput()
                               Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
-                              Dict{Symbol, PSI.JumpAffineExpressionArray}(:var_active => PSI.JumpAffineExpressionArray(undef, 5, 24),
-                                                                         :var_reactive => PSI.JumpAffineExpressionArray(undef, 5, 24)),
+                              Dict{Symbol, PSI.JuMPAffineExpressionArray}(:var_active => PSI.JuMPAffineExpressionArray(undef, 5, 24),
+                                                                         :var_reactive => PSI.JuMPAffineExpressionArray(undef, 5, 24)),
                               nothing);
 @timeit to "build_thermal"    PSI.construct_device!(ps_m, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b);
 @timeit to "build_load"    PSI.construct_device!(ps_m, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);

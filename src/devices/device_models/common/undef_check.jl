@@ -1,10 +1,10 @@
-function _remove_undef!(ExpressionArray::T) where T <: JumpExpressionMatrix
+function _remove_undef!(ExpressionArray::T) where T <: JuMPExpressionMatrix
 
     for j in 1:size(ExpressionArray)[2]
 
         for i in 1:size(ExpressionArray)[1]
 
-            if !isassigned(ExpressionArray,i,j) 
+            if !isassigned(ExpressionArray,i,j)
                  ExpressionArray[i,j] = zero(eltype(ExpressionArray))
             else
                 continue
@@ -23,11 +23,11 @@ function _add_to_expression!(expression::T,
                              ix::Int64,
                              jx::Int64,
                              var::JV,
-                             sign::Int64) where {T <: JumpExpressionMatrix, JV <: JuMP.AbstractVariableRef}
+                             sign::Int64) where {T <: JuMPExpressionMatrix, JV <: JuMP.AbstractVariableRef}
 
-    if isassigned(expression,  ix, jx) 
-        JuMP.add_to_expression!(expression[ix,jx], sign*var) 
-    else 
+    if isassigned(expression,  ix, jx)
+        JuMP.add_to_expression!(expression[ix,jx], sign*var)
+    else
         expression[ix,jx] = sign*var
     end
 
@@ -38,7 +38,7 @@ end
 function _add_to_expression!(expression::T,
                              ix::Int64,
                              jx::Int64,
-                             var::JV) where {T <: JumpExpressionMatrix, JV <: JuMP.AbstractVariableRef}
+                             var::JV) where {T <: JuMPExpressionMatrix, JV <: JuMP.AbstractVariableRef}
 
     if isassigned(expression,  ix, jx)
         JuMP.add_to_expression!(expression[ix,jx], var)
@@ -53,10 +53,10 @@ end
 function _add_to_expression!(expression::T,
                              ix::Int64,
                              jx::Int64,
-                             value::Float64) where T <: JumpExpressionMatrix
+                             value::Float64) where T <: JuMPExpressionMatrix
 
-    if isassigned(expression,  ix, jx)  
-        expression[ix,jx] += value 
+    if isassigned(expression,  ix, jx)
+        expression[ix,jx] += value
     else
         expression[ix,jx] = zero(eltype(expression)) + value
     end

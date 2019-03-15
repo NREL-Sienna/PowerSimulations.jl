@@ -2,11 +2,11 @@
 This formulation of the duration constraints, adds over the start times looking backwards.
 
 """
-function device_duration_retrospective(ps_m::CanonicalModel, 
-                                        duration_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}}},1}, 
-                                        initial_duration::Array{Float64,2}, 
-                                        time_range::UnitRange{Int64}, 
-                                        cons_name::Symbol, 
+function device_duration_retrospective(ps_m::CanonicalModel,
+                                        duration_data::Vector{UpDownRate},
+                                        initial_duration::Array{Float64,2},
+                                        time_range::UnitRange{Int64},
+                                        cons_name::Symbol,
                                         var_names::Tuple{Symbol,Symbol,Symbol})
 
     set_name = [r[1] for r in duration_data]

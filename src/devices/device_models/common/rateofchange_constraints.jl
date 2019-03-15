@@ -1,8 +1,8 @@
-function device_linear_rateofchange(ps_m::CanonicalModel, 
-                                    rate_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}}},1}, 
-                                    initial_conditions::Array{Float64,1}, 
-                                    time_range::UnitRange{Int64}, 
-                                    cons_name::Symbol, 
+function device_linear_rateofchange(ps_m::CanonicalModel,
+                                    rate_data::Vector{UpDownRate},
+                                    initial_conditions::Array{Float64,1},
+                                    time_range::UnitRange{Int64},
+                                    cons_name::Symbol,
                                     var_name::Symbol)
 
 
@@ -32,16 +32,16 @@ function device_linear_rateofchange(ps_m::CanonicalModel,
 
 end
 
-function device_mixedinteger_rateofchange(ps_m::CanonicalModel, 
-                                            rate_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}},NamedTuple{(:min, :max),Tuple{Float64,Float64}}},1}, 
-                                            initial_conditions::Array{Float64,1}, 
-                                            time_range::UnitRange{Int64}, 
-                                            cons_name::Symbol, 
+function device_mixedinteger_rateofchange(ps_m::CanonicalModel,
+                                            rate_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}},NamedTuple{(:min, :max),Tuple{Float64,Float64}}},1},
+                                            initial_conditions::Array{Float64,1},
+                                            time_range::UnitRange{Int64},
+                                            cons_name::Symbol,
                                             var_names::Tuple{Symbol,Symbol,Symbol})
 
     up_name = Symbol(cons_name,:_up)
     down_name = Symbol(cons_name,:_down)
-    
+
     set_name = [r[1] for r in rate_data]
 
     ps_m.constraints[up_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_range)
