@@ -98,7 +98,7 @@ sys5b_storage = PowerSystem(nodes5, vcat(generators5_uc,renewables), loads5_DA, 
 
 time_range = 1:sys5b.time_periods
 
-#=
+
 @testset "Common Functionalities" begin
     include("PowerModels_interface.jl")
 end
@@ -119,7 +119,6 @@ end
     #include("services_constructor.jl")
 end
 
-=#
 @testset "Operation Models" begin
     #include("operation_model_constructor.jl")
     include("operation_model_solve.jl")
