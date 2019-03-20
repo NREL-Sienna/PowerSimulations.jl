@@ -13,6 +13,7 @@ function _canonical_model_init(bus_count::Int64,
                             Dict{Symbol, PSI.JuMPAffineExpressionArray{V}}(:var_active => PSI.JuMPAffineExpressionArray{V}(undef, bus_count, time_periods),
                                                                         :var_reactive => PSI.JuMPAffineExpressionArray{V}(undef, bus_count, time_periods)),
                             Dict{Symbol,Any}(),
+                            Dict{Symbol,Any}(),
                             nothing);
 
     return ps_model
@@ -33,6 +34,7 @@ function _canonical_model_init(bus_count::Int64,
                               Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                               nothing,
                               Dict{Symbol, PSI.JuMPAffineExpressionArray{V}}(:var_active => PSI.JuMPAffineExpressionArray{V}(undef, bus_count, time_periods)),
+                              Dict{Symbol,Any}(),
                               Dict{Symbol,Any}(),
                               nothing);
 
