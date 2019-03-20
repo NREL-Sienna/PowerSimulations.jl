@@ -20,6 +20,7 @@ export solve_op_model!
 #################################################################################
 # Imports
 import JuMP
+import ParameterJuMP
 #using TimeSeries
 import PowerSystems
 import PowerModels
