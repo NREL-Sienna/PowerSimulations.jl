@@ -3,12 +3,12 @@ function add_parameters(ps_m::CanonicalModel,
                         param_name::Symbol,
                         axs...)
 
-    ps_m.parameters[param_name] = JuMP.Containers.DenseAxisArray{PJ.Parameter}(undef, axs...)
+    ps_m.parameters[param_name] = JuMP.Containers.DenseAxisArray{ParameterJuMP.Parameter}(undef, axs...)
 
     Cidx = CartesianIndices(length.(axs))
 
     for idx in Cidx
-        ps_m.parameters[param_name].data[idx] = PJ.Parameter(ps_m.JuMPmodel,data[idx])
+        ps_m.parameters[param_name].data[idx] = ParameterJuMP.Parameter(ps_m.JuMPmodel,data[idx])
     end
 
 end
