@@ -230,10 +230,8 @@ version = "1.0.2"
 [[ParameterJuMP]]
 deps = ["JuMP", "LinearAlgebra", "Profile", "Random", "Test"]
 git-tree-sha1 = "94b8882b6b2b33e2c28948f4216d8b308ad54100"
-repo-rev = "master"
-repo-url = "https://github.com/JuliaStochOpt/ParameterJuMP.jl.git"
 uuid = "774612a8-9878-5177-865a-ca53ae2495f9"
-version = "0.0.1+"
+version = "0.0.1"
 
 [[Parsers]]
 deps = ["Dates", "Mmap", "Test", "WeakRefStrings"]
