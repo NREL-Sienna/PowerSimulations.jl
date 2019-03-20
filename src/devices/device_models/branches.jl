@@ -50,7 +50,7 @@ function line_flow_limit(ps_m::CanonicalModel,
                          system_formulation::Type{S},
                          time_range::UnitRange{Int64}) where {Br <: PSY.MonitoredLine,
                                                                D <: AbstractBranchFormulation,
-                                                               S <: PM.AbstractPowerFormulation}
+                                                               S <: PM.AbstractActivePowerFormulation}
 
     #rate_data = [(h.name, (min = -1*h.rate, max = h.rate) for h in devices]
 

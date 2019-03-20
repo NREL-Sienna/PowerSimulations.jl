@@ -228,8 +228,10 @@ uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 version = "1.0.2"
 
 [[ParameterJuMP]]
-deps = ["JuMP", "LinearAlgebra", "Profile", "Random", "Test"]
-git-tree-sha1 = "94b8882b6b2b33e2c28948f4216d8b308ad54100"
+deps = ["JuMP", "MathOptInterface"]
+git-tree-sha1 = "44454e4820d39848118c8679cd25c5e10ca2b754"
+repo-rev = "master"
+repo-url = "https://github.com/JuliaStochOpt/ParameterJuMP.jl.git"
 uuid = "774612a8-9878-5177-865a-ca53ae2495f9"
 version = "0.0.1"
 
