@@ -27,7 +27,7 @@ function device_timeseries_lb(ps_m::CanonicalModel,
     for t in time_range, r in ts_data
 
         ps_m.constraints[cons_name][r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, r[2][t] <= ps_m.variables[var_name][r[1], t])
-
+                                              
     end
 
     return
@@ -46,7 +46,8 @@ function device_timeseries_param_ub(ps_m::CanonicalModel,
 
     for t in time_range, r in ts_data
 
-        ps_m.parameters[param_name][r[1], t] = ParameterJuMP.Parameter(ps_m.JuMPmodel, a, r[2][t])
+        ps_m.parameters[param_name][r[1], t] = ParameterJuMP.Parameter(ps_m.JuMPmodel, r[2][t]); 
+                                               JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_name][r[1], t] >= 0.0)
         ps_m.constraints[cons_name][r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_name][r[1], t] <= ps_m.parameters[param_name][r[1], t])
 
     end
@@ -67,7 +68,7 @@ ps_m.constraints[cons_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 
     for t in time_range, r in ts_data
 
-        ps_m.parameters[param_name][r[1], t] = ParameterJuMP.Parameter(ps_m.JuMPmodel, a, r[2][t])
+        ps_m.parameters[param_name][r[1], t] = ParameterJuMP.Parameter(ps_m.JuMPmodel, r[2][t])
         ps_m.constraints[cons_name][r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.parameters[param_name][r[1], t] <= ps_m.variables[var_name][r[1], t])
 
     end

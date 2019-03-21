@@ -38,7 +38,7 @@ function activepower_constraints(ps_m::CanonicalModel,
 
     ts_data = [(r.name, values(r.scalingfactor)*r.tech.installedcapacity) for r in devices]
 
-    device_timeseries_ub(ps_m, ts_data , time_range, :renewable_active_ub, :Pre)
+    device_timeseries_param_ub(ps_m, ts_data , time_range, :renewable_active_ub, Symbol("Pre_$(eltype(devices))"), :Pre)
 
     return
 
