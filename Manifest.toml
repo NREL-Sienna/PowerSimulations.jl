@@ -229,7 +229,7 @@ version = "1.0.2"
 
 [[ParameterJuMP]]
 deps = ["JuMP", "MathOptInterface"]
-git-tree-sha1 = "44454e4820d39848118c8679cd25c5e10ca2b754"
+git-tree-sha1 = "8bbe3355bed7ad9df9bc89fd28225c7eca1a209a"
 repo-rev = "master"
 repo-url = "https://github.com/JuliaStochOpt/ParameterJuMP.jl.git"
 uuid = "774612a8-9878-5177-865a-ca53ae2495f9"
@@ -255,7 +255,7 @@ version = "0.9.4"
 
 [[PowerSystems]]
 deps = ["AxisArrays", "CSV", "Compat", "DataFrames", "Dates", "JSON", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries"]
-git-tree-sha1 = "dc459e1b94a0bf2d7a6d365ab752984f168b18ba"
+git-tree-sha1 = "722ca158a7b7998886ea56f32cea27719154eea1"
 repo-rev = "master"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
