@@ -35,7 +35,7 @@ function construct_device!(ps_m::CanonicalModel,
         #add to expression
 
         if !isempty(fixed_resources)
-            nodal_expression(ps_m, fixed_resources, system_formulation, time_range)
+            nodal_expression_param(ps_m, fixed_resources, system_formulation, time_range)
         end
 
         return
@@ -74,7 +74,7 @@ function construct_device!(ps_m::CanonicalModel,
     #add to expression
 
     if !isempty(fixed_resources)
-        nodal_expression(ps_m, fixed_resources, system_formulation, time_range)
+        nodal_expression_param(ps_m, fixed_resources, system_formulation, time_range)
     end
 
     return
@@ -90,7 +90,7 @@ function construct_device!(ps_m::CanonicalModel,
                            kwargs...) where {L <: PSY.ElectricLoad,
                                              S <: PM.AbstractPowerFormulation}
 
-    nodal_expression(ps_m, sys.loads, system_formulation, time_range)
+    nodal_expression_param(ps_m, sys.loads, system_formulation, time_range)
 
     return
 

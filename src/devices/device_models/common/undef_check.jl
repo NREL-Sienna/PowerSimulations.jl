@@ -64,3 +64,18 @@ function _add_to_expression!(expression::T,
     return
 
 end
+
+function _add_to_expression!(expression::T,
+                            ix::Int64,
+                            jx::Int64,
+                            parameter::ParameterJuMP.Parameter) where T <: JuMPExpressionMatrix
+
+    if isassigned(expression,  ix, jx)
+        expression[ix,jx] += parameter;
+    else
+        expression[ix,jx] = zero(eltype(expression)) + parameter;
+    end
+
+    return
+
+end
