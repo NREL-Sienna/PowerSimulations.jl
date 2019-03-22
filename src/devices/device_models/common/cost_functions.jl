@@ -36,9 +36,8 @@ function pwlgencost(ps_m::CanonicalModel,
      for (ix, pwlvar) in enumerate(pwlvars)
         c = JuMP.@constraint(ps_m.JuMPmodel, pwlvar <= cost_component[ix + 1][2])
         c = JuMP.@constraint(ps_m.JuMPmodel, pwlvar >= 0)
-        gen_cost = JuMP.add_to_expression!(gen_cost, (
-            cost_component[ix + 1][1] * cost_component[ix + 1][2] - cost_component[ix][1] * cost_component[ix][2]
-        ) / ( cost_component[ix + 1][2] - cost_component[ix][2] ) * pwlvar)
+        temp_gen_cost = (cost_component[ix + 1][1] * cost_component[ix + 1][2] - cost_component[ix][1] * cost_component[ix][2]) / (cost_component[ix + 1][2] - cost_component[ix][2]) * pwlvar
+        gen_cost = gen_cost + temp_gen_cost
     end
 
     c = JuMP.@constraint(ps_m.JuMPmodel, variable == sum(pwlvars[ix] for (ix, pwlvar) in enumerate(pwlvars)))
@@ -56,7 +55,7 @@ function ps_cost(ps_m::CanonicalModel,
 
     for var in variable
         c = pwlgencost(ps_m, var, cost_component)
-        JuMP.add_to_expression!(gen_cost,c)
+        gen_cost += c
     end
 
     return sign*gen_cost

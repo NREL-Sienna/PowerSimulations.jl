@@ -26,7 +26,7 @@ function _add_to_expression!(expression::T,
                              sign::Int64) where {T <: JuMPExpressionMatrix, JV <: JuMP.AbstractVariableRef}
 
     if isassigned(expression,  ix, jx)
-        JuMP.add_to_expression!(expression[ix,jx], sign*var)
+        expression[ix,jx] =  expression[ix,jx] + sign*var
     else
         expression[ix,jx] = sign*var
     end
@@ -41,7 +41,7 @@ function _add_to_expression!(expression::T,
                              var::JV) where {T <: JuMPExpressionMatrix, JV <: JuMP.AbstractVariableRef}
 
     if isassigned(expression,  ix, jx)
-        JuMP.add_to_expression!(expression[ix,jx], var)
+        expression[ix,jx] =  expression[ix,jx] + var
     else
         expression[ix,jx] = 1.0*var
     end
