@@ -6,7 +6,7 @@
     @test isapprox(res_5.total_cost[:ED], 2400, atol = 1000)
     ED = PSI.EconomicDispatch(sys14, PSI.CopperPlatePowerModel; optimizer = ipopt_optimizer);
     res_14 = solve_op_model!(ED)
-    @test isapprox(res_14.total_cost[:ED], 1200, atol = 1000)
+    @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
 end
 
 @testset "Solving ED with PTDF Models" begin
@@ -17,7 +17,7 @@ end
     PTDF14,  = PSY.buildptdf(sys14.branches, sys14.buses)
     ED = PSI.EconomicDispatch(sys14, PSI.StandardPTDFForm; PTDF = PTDF14, optimizer = ipopt_optimizer);
     res_14 = solve_op_model!(ED)
-    @test_skip isapprox(res_14.total_cost[:ED], 1200, atol = 1000)
+    @test_skip isapprox(res_14.total_cost[:ED], 1300, atol = 100)
 end
 
 
@@ -28,7 +28,7 @@ end
     @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
     ED = PSI.EconomicDispatch(sys14,PM.DCPlosslessForm; optimizer = ipopt_optimizer);
     res_14 = solve_op_model!(ED)
-    @test isapprox(res_14.total_cost[:ED], 1200, atol = 1000)
+    @test isapprox(res_14.total_cost[:ED], 1300, atol = 100)
 end
 
 #=
