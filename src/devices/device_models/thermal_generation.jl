@@ -194,7 +194,6 @@ function ramp_constraints(ps_m::CanonicalModel, devices::Array{T,1}, device_form
     if !isempty(p_rate_data)
 
         device_mixedinteger_rateofchange(ps_m, p_rate_data, initial_conditions, time_range, :ramp_thermal, (:Pth, :start_th, :stop_th))
-        @info "Thermal Ramp Model doesn't include Reactive Power Ramp Constraints"
         #TODO: ramping for reactive power
 
     else
@@ -216,7 +215,6 @@ function ramp_constraints(ps_m::CanonicalModel, devices::Array{T,1}, device_form
 
         device_linear_rateofchange(ps_m, p_rate_data, initial_conditions, time_range, :ramp_thermal, :Pth)
         #TODO: ramping for reactive power
-        @info "Thermal Ramp Model doesn't include Reactive Power Ramp Constraints"
 
     else
 
