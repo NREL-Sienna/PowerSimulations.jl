@@ -45,6 +45,12 @@ git-tree-sha1 = "36bbf5374c661054d41410dc53ff752972583b9b"
 uuid = "944b1d66-785c-5afd-91f1-9de20f533193"
 version = "0.5.2"
 
+[[Codecs]]
+deps = ["Test"]
+git-tree-sha1 = "70885e5e038cba1c4c17a84ad6c40756e10a4fb5"
+uuid = "19ecbf4d-ef7c-5e4b-b54a-0a0ff23c5aed"
+version = "0.5.0"
+
 [[CommonSubexpressions]]
 deps = ["Test"]
 git-tree-sha1 = "efdaf19ab11c7889334ca247ff4c9f7c322817b0"
@@ -228,9 +234,9 @@ uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 version = "1.0.2"
 
 [[ParameterJuMP]]
-deps = ["JuMP", "MathOptInterface"]
-git-tree-sha1 = "8bbe3355bed7ad9df9bc89fd28225c7eca1a209a"
-repo-rev = "master"
+deps = ["JuMP", "MathOptInterface", "SparseArrays"]
+git-tree-sha1 = "19ec0b5c6ad77c985f3cd74c2fb7d8f15f480d45"
+repo-rev = "jg/basemethods"
 repo-url = "https://github.com/JuliaStochOpt/ParameterJuMP.jl.git"
 uuid = "774612a8-9878-5177-865a-ca53ae2495f9"
 version = "0.0.1"
@@ -254,8 +260,8 @@ uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 version = "0.9.4"
 
 [[PowerSystems]]
-deps = ["AxisArrays", "CSV", "Compat", "DataFrames", "Dates", "JSON", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries"]
-git-tree-sha1 = "722ca158a7b7998886ea56f32cea27719154eea1"
+deps = ["AxisArrays", "CSV", "Compat", "DataFrames", "Dates", "JSON", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "YAML"]
+git-tree-sha1 = "eb5705580637bdf98a8011ddbca5e8468796c28f"
 repo-rev = "master"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
@@ -382,9 +388,9 @@ version = "0.8.5"
 
 [[TranscodingStreams]]
 deps = ["Pkg", "Random", "Test"]
-git-tree-sha1 = "d4718bd4db6b7850af3c3833556c6aedbb8e9904"
+git-tree-sha1 = "f42956022d8084539f1d7219f632542b0ea686ce"
 uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
-version = "0.9.2"
+version = "0.9.3"
 
 [[URIParser]]
 deps = ["Test", "Unicode"]
@@ -404,3 +410,9 @@ deps = ["Missings", "Random", "Test"]
 git-tree-sha1 = "960639a12ffd223ee463e93392aeb260fa325566"
 uuid = "ea10d353-3f73-51f8-a26c-33c1cb351aa5"
 version = "0.5.8"
+
+[[YAML]]
+deps = ["Codecs", "Compat"]
+git-tree-sha1 = "3bde77cee95cce0c0b9b18813d85e18e8ed4f415"
+uuid = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
+version = "0.3.2"

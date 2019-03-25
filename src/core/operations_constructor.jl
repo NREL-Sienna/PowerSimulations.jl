@@ -11,10 +11,9 @@ function _pass_abstract_jump(optimizer::Union{Nothing,JuMP.OptimizerFactory}; kw
     end
 
     JuMPmodel = JuMP.Model(optimizer)
-    JuMP.set_optimize_hook(JuMPmodel, ParameterJuMP._param_optimizehook)
-    JuMPmodel.ext[:params] = ParameterJuMP.ParameterData()
-    
-    return JuMPmodel 
+    ParameterJuMP.enable_parameters(JuMPmodel)
+
+    return JuMPmodel
 
 end
 
