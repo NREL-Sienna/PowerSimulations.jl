@@ -3,7 +3,7 @@ mutable struct CanonicalModel
     variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     cost_function::Union{Nothing, JuMP.AbstractJuMPScalar}
-    expressions::Dict{Symbol, JuMPParamAffineExprArray}
+    expressions::Dict{Symbol, JuMPPGAEArray}
     parameters::Dict{Symbol, Any}
     initial_conditions::Dict{Symbol, Any}
     pm_model::Union{Nothing,PM.GenericPowerModel}

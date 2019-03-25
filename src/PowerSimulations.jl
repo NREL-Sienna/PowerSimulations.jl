@@ -39,10 +39,11 @@ const PSI = PowerSimulations
 const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
 
-#Type Alias for JuMP containers
+#Type Alias for JuMP and ParameterJuMP containers
+const PGAE{C,V} = ParameterJuMP.ParametrizedGenericAffExpr{C,V}
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
 const JuMPAffineExpressionArray = Matrix{JuMP.GenericAffExpr{Float64,V}} where V <: JuMP.AbstractVariableRef
-const JuMPParamAffineExprArray = Matrix{ParameterJuMP.ParametrizedAffExpr{Float64}}
+const JuMPPGAEArray = Matrix{PGAE{Float64,V}} where V <: JuMP.AbstractVariableRef
 
 #Type Alias for Unions
 const FixResource = Union{PSY.RenewableFix, PSY.HydroFix}
