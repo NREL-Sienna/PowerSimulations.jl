@@ -9,11 +9,11 @@ function _canonical_model_init(bus_count::Int64,
     ps_model = CanonicalModel(jump_model,
                             Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                             Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
-                            JuMP.AffExpr(0.0),
+                            zero(JuMP.GenericAffExpr{Float64, JuMP.variable_type(jump_model)}),
                             Dict{Symbol, JuMPPGAEArray{V}}(:var_active => JuMPPGAEArray{V}(undef, bus_count, time_periods),
                                                                         :var_reactive => JuMPPGAEArray{V}(undef, bus_count, time_periods)),
                             Dict{Symbol,Any}(),
-                            Dict{Symbol,Any}(),
+                            Dict{Symbol,Array{inital_condition}}(),
                             nothing);
 
     return ps_model
@@ -32,10 +32,10 @@ function _canonical_model_init(bus_count::Int64,
     ps_model = CanonicalModel(jump_model,
                               Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                               Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
-                              JuMP.AffExpr(0.0),
+                              zero(JuMP.GenericAffExpr{Float64, JuMP.variable_type(jump_model)}),
                               Dict{Symbol, JuMPPGAEArray{V}}(:var_active => JuMPPGAEArray{V}(undef, bus_count, time_periods)),
                               Dict{Symbol,Any}(),
-                              Dict{Symbol,Any}(),
+                              Dict{Symbol,Array{inital_condition}}(),
                               nothing);
 
     return ps_model
