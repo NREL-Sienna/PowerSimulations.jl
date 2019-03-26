@@ -13,7 +13,7 @@ function _canonical_model_init(bus_count::Int64,
                             Dict{Symbol, JuMPPGAEArray{V}}(:var_active => JuMPPGAEArray{V}(undef, bus_count, time_periods),
                                                                         :var_reactive => JuMPPGAEArray{V}(undef, bus_count, time_periods)),
                             Dict{Symbol,Any}(),
-                            Dict{Symbol,Array{inital_condition}}(),
+                            Dict{Symbol,Array{InitialCondition}}(),
                             nothing);
 
     return ps_model
@@ -35,7 +35,7 @@ function _canonical_model_init(bus_count::Int64,
                               zero(JuMP.GenericAffExpr{Float64, JuMP.variable_type(jump_model)}),
                               Dict{Symbol, JuMPPGAEArray{V}}(:var_active => JuMPPGAEArray{V}(undef, bus_count, time_periods)),
                               Dict{Symbol,Any}(),
-                              Dict{Symbol,Array{inital_condition}}(),
+                              Dict{Symbol,Array{InitialCondition}}(),
                               nothing);
 
     return ps_model

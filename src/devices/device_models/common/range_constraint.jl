@@ -1,5 +1,5 @@
 function device_range(ps_m::CanonicalModel,
-                        range_data::Vector{MinMaxRange},
+                        range_data::Vector{NamedMinMax},
                         time_range::UnitRange{Int64},
                         cons_name::Symbol,
                         var_name::Symbol)
@@ -17,7 +17,7 @@ function device_range(ps_m::CanonicalModel,
 end
 
 function device_semicontinuousrange(ps_m::CanonicalModel,
-                                    scrange_data::Vector{MinMaxRange},
+                                    scrange_data::Vector{NamedMinMax},
                                     time_range::UnitRange{Int64}, cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
@@ -51,7 +51,7 @@ function device_semicontinuousrange(ps_m::CanonicalModel,
 end
 
 function reserve_device_semicontinuousrange(ps_m::CanonicalModel,
-                                            scrange_data::Vector{MinMaxRange},
+                                            scrange_data::Vector{NamedMinMax},
                                             time_range::UnitRange{Int64},
                                             cons_name::Symbol,
                                             var_name::Symbol,

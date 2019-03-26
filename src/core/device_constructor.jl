@@ -17,11 +17,11 @@ function construct_device!(ps_m::CanonicalModel,
 
 end
 
-function initial_condition(ps_m::CanonicalModel, 
+function InitialCondition(ps_m::CanonicalModel, 
                            device::PSY.PowerSystemDevice, 
                            value::Float64)
     
-    return initial_contidion(device, 
-                             ParameterJuMP.Parameter(ps_m.JuMPmodel, value))
+    return InitialCondition(device, 
+                             PJ.Parameter(ps_m.JuMPmodel, value))
 
 end                         

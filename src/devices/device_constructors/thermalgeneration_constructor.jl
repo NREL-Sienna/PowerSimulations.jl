@@ -11,42 +11,13 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: AbstractThermalFormulation,
                                              S <: PM.AbstractPowerFormulation}
 
-    #wrangle initial_conditions
-    if !isempty(keys(ps_m.initial_conditions))
-
-        if "status_initial_conditions" in keys(ps_m.initial_conditions)
-             status_initial_conditions = ps_m.initial_conditions["status_initial_conditions"]
-        else
-            @warn("No status initial conditions provided")
-        end
-
-        if "ramp_initial_conditions" in keys(ps_m.initial_conditions)
-             ramp_initial_conditions = ps_m.initial_conditions["ramp_initial_conditions"]
-        else
-            @warn("No ramp initial conditions provided")
-        end
-
-        if "time_initial_conditions" in keys(ps_m.initial_conditions)
-             time_initial_conditions = ps_m.initial_conditions["time_initial_conditions"]
-        else
-            @warn("No duration initial conditions provided")
-        end
-
-    else
-
+    if isempty(keys(ps_m.initial_conditions))
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
-
-        status_initial_conditions = zeros(length(sys.generators.thermal))
-
-        ramp_initial_conditions = zeros(length(sys.generators.thermal))
-
-        time_initial_conditions = hcat(9999*ones(length(sys.generators.thermal)), zeros(length(sys.generators.thermal)))
-
     end
 
     #Variables
 
-    #TODO: Enable Initial Conditions for variables
+    #TODO: Enable warm start for variables
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     reactivepower_variables(ps_m, sys.generators.thermal, time_range);
@@ -58,11 +29,11 @@ function construct_device!(ps_m::CanonicalModel,
 
     reactivepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    commitment_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, status_initial_conditions)
+    commitment_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, ramp_initial_conditions)
+    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    time_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, time_initial_conditions)
+    time_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
     #TODO: rate constraints
 
@@ -88,42 +59,13 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: AbstractThermalFormulation,
                                              S <: PM.AbstractActivePowerFormulation}
 
-    #wrangle initial_conditions
-    if !isempty(keys(ps_m.initial_conditions))
-
-        if "status_initial_conditions" in keys(ps_m.initial_conditions)
-            status_initial_conditions = ps_m.initial_conditions["status_initial_conditions"]
-       else
-           @warn("No status initial conditions provided")
-       end
-
-       if "ramp_initial_conditions" in keys(ps_m.initial_conditions)
-            ramp_initial_conditions = ps_m.initial_conditions["ramp_initial_conditions"]
-       else
-           @warn("No ramp initial conditions provided")
-       end
-
-       if "time_initial_conditions" in keys(ps_m.initial_conditions)
-            time_initial_conditions = ps_m.initial_conditions["time_initial_conditions"]
-       else
-           @warn("No duration initial conditions provided")
-       end
-
-    else
-
-        @warn("Initial Conditions not provided, this can lead to infeasible problems")
-
-        status_initial_conditions = zeros(length(sys.generators.thermal))
-
-        ramp_initial_conditions = zeros(length(sys.generators.thermal))
-
-        time_initial_conditions = hcat(9999*ones(length(sys.generators.thermal)), zeros(length(sys.generators.thermal)))
-
+    if isempty(keys(ps_m.initial_conditions))
+        @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
     #Variables
 
-    #TODO: Enable Initial Conditions for variables
+    #TODO: Enable warm start for variables
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     commitment_variables(ps_m, sys.generators.thermal, time_range)
@@ -131,11 +73,11 @@ function construct_device!(ps_m::CanonicalModel,
     #Constraints
     activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    commitment_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, status_initial_conditions)
+    commitment_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, ramp_initial_conditions)
+    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    time_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, time_initial_conditions)
+    time_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
     #TODO: rate constraints
 
@@ -159,30 +101,13 @@ function construct_device!(ps_m::CanonicalModel,
                            kwargs...) where {T <: PSY.ThermalGen,
                                              S <: PM.AbstractPowerFormulation}
 
-    #wrangle initial_conditions
-    if !isempty(keys(ps_m.initial_conditions))
-
-        if "ramp_initial_conditions" in keys(ps_m.initial_conditions)
-            ramp_initial_conditions = ps_m.initial_conditions["ramp_initial_conditions"]
-       else
-           @warn("No ramp initial conditions provided")
-       end
-
-    else
-
+    if isempty(keys(ps_m.initial_conditions))
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
-
-        status_initial_conditions = zeros(length(sys.generators.thermal))
-
-        ramp_initial_conditions = zeros(length(sys.generators.thermal))
-
-        time_initial_conditions = hcat(9999*ones(length(sys.generators.thermal)), zeros(length(sys.generators.thermal)))
-
     end
 
     #Variables
 
-    #TODO: Enable Initial Conditions for variables
+    #TODO: Enable warm start for variables
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     reactivepower_variables(ps_m, sys.generators.thermal, time_range);
@@ -192,7 +117,7 @@ function construct_device!(ps_m::CanonicalModel,
 
     reactivepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, ramp_initial_conditions)
+    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
     #TODO: rate constraints
 
@@ -217,32 +142,19 @@ function construct_device!(ps_m::CanonicalModel,
                            kwargs...) where {T <: PSY.ThermalGen,
                                              S <: PM.AbstractActivePowerFormulation}
 
-    #wrangle initial_conditions
-    if !isempty(keys(ps_m.initial_conditions))
-
-        if "ramp_initial_conditions" in keys(ps_m.initial_conditions)
-            ramp_initial_conditions = ps_m.initial_conditions["ramp_initial_conditions"]
-        else
-           @warn("No ramp initial conditions provided")
-        end
-
-    else
-
-        @warn("Initial Conditions not provided, this can lead to infeasible problems")
-
-        ramp_initial_conditions = zeros(length(sys.generators.thermal))
-
+    if isempty(keys(ps_m.initial_conditions))
+        @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
    #Variables
 
-    #TODO: Enable Initial Conditions for variables
+    #TODO: Enable warm start for variables
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     #Constraints
     activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, ramp_initial_conditions)
+    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
     #TODO: rate constraints
 

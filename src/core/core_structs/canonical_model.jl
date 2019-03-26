@@ -5,7 +5,7 @@ mutable struct CanonicalModel
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{Symbol, JuMPPGAEArray}
     parameters::Dict{Symbol, JuMP.Containers.DenseAxisArray}
-    initial_conditions::Dict{Symbol, Array{inital_condition}}
+    initial_conditions::Dict{Symbol, Array{InitialCondition}}
     pm_model::Union{Nothing,PM.GenericPowerModel}
 end
 
