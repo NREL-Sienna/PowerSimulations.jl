@@ -1,5 +1,5 @@
-function _container_spec(m::M, ax1, ax2) where M <: JuMP.AbstractModel
-    return JuMP.Containers.DenseAxisArray{JuMP.variable_type(m)}(undef, ax1, ax2)
+function _container_spec(m::M, ax...) where M <: JuMP.AbstractModel
+    return JuMP.Containers.DenseAxisArray{JuMP.variable_type(m)}(undef, ax...)
 end
 
 function add_variable(ps_m::CanonicalModel,

@@ -1,0 +1,73 @@
+function output_init(ps_m::CanonicalModel,
+                    devices::Array{PSD,1}) where {PSD <: PSY.ThermalGen}
+
+    initial_conditions = Vector{InitialCondition}(undef, length(devices))
+
+    idx = eachindex(devices)
+    i, state = iterate(idx)
+    for g in devices
+        if !isnothing(g.tech.ramplimits)
+            initial_conditions[i] = PSI.InitialCondition(g, PJ.Parameter(ps_m.JuMPmodel, g.tech.activepower))
+            i, state = iterate(idx, state)
+            state === nothing && (i += 1; break)                                                                   
+        end 
+    end
+
+    deleteat!(initial_conditions, i:last(idx))
+
+    ps_m.initial_conditions[:thermal_output] = initial_conditions
+
+    return
+
+end
+
+function status_init(ps_m::CanonicalModel,
+                    devices::Array{PSD,1}) where {PSD <: PSY.ThermalGen}
+
+    initial_conditions = Vector{InitialCondition}(undef, length(devices))
+
+    idx = eachindex(devices)
+    i, state = iterate(idx)
+    for g in devices
+        if !isnothing(g.tech.ramplimits)
+            initial_conditions[i] = PSI.InitialCondition(g, PJ.Parameter(ps_m.JuMPmodel, 1.0*(g.tech.activepower > 0)))
+            i, state = iterate(idx, state)
+            state === nothing && (i += 1; break)                                                                   
+        end 
+    end
+
+    deleteat!(initial_conditions, i:last(idx))
+
+    ps_m.initial_conditions[:thermal_status] = initial_conditions
+                                
+    return
+
+end
+
+function duration_init(ps_m::CanonicalModel,
+                        devices::Array{PSD,1}) where {PSD <: PSY.ThermalGen}
+
+    ini_cond_on = Vector{InitialCondition}(undef, length(devices))
+    ini_cond_off = Vector{InitialCondition}(undef, length(devices))
+
+    idx = eachindex(devices)
+    i, state = iterate(idx)
+    for g in devices
+        if !isnothing(g.tech.ramplimits)
+            ini_cond_on[i] = PSI.InitialCondition(g, PJ.Parameter(ps_m.JuMPmodel, 999.0*(g.tech.activepower > 0)))
+            ini_cond_off[i] = PSI.InitialCondition(g, PJ.Parameter(ps_m.JuMPmodel, 999.0*(g.tech.activepower < 0)))
+            i, state = iterate(idx, state)
+            state === nothing && (i += 1; break)                                                                   
+        end 
+    end
+
+    deleteat!(ini_cond_on, i:last(idx))
+    deleteat!(ini_cond_off, i:last(idx))
+
+    ps_m.initial_conditions[:thermal_duration_on] = ini_cond_on
+    ps_m.initial_conditions[:thermal_duration_off] = ini_cond_off
+
+    return
+
+end
+

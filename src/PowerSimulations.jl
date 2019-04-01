@@ -20,6 +20,7 @@ export solve_op_model!
 #################################################################################
 # Imports
 import JuMP
+import ParameterJuMP
 #using TimeSeries
 import PowerSystems
 import PowerModels
@@ -37,17 +38,21 @@ const PSY = PowerSystems
 const PSI = PowerSimulations
 const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
+const PJ = ParameterJuMP
 
-#Type Alias for JuMP containers
-const JuMPExpressionMatrix = Matrix{<:JuMP.GenericAffExpr}
+#Type Alias for JuMP and PJ containers
+const PGAE{C,V} = PJ.ParametrizedGenericAffExpr{C,V}
+const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
 const JuMPAffineExpressionArray = Matrix{JuMP.GenericAffExpr{Float64,V}} where V <: JuMP.AbstractVariableRef
+const JuMPPGAEArray = Matrix{PGAE{Float64,V}} where V <: JuMP.AbstractVariableRef
 
 #Type Alias for Unions
 const FixResource = Union{PSY.RenewableFix, PSY.HydroFix}
 
 #Type Alias for long type signatures
-const MinMaxRange = Tuple{String,NamedTuple{(:min, :max),Tuple{Float64,Float64}}}
-const UpDownRate = Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}}}
+const MinMax = NamedTuple{(:min, :max),Tuple{Float64,Float64}}
+const NamedMinMax = Tuple{String, MinMax}
+const UpDown = NamedTuple{(:up, :down),Tuple{Float64,Float64}}
 
 #################################################################################
 # Includes

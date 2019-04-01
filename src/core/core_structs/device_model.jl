@@ -5,3 +5,8 @@ mutable struct DeviceModel{D <: PSY.PowerSystemDevice,
     device::Type{D}
     formulation::Type{B}
 end
+
+mutable struct InitialCondition
+    device::PSY.PowerSystemDevice
+    value::Union{PJ.Parameter, Float64}
+end
