@@ -76,6 +76,8 @@ function activepower_constraints(ps_m::CanonicalModel,
                              time_range, 
                              :load_active_ub, 
                              :Pel)
+    end
+    
     return
 
 end
