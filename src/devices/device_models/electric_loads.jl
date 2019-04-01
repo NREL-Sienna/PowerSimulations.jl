@@ -61,7 +61,7 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  device_formulation::Type{InterruptiblePowerLoad},
                                  system_formulation::Type{S},
                                  time_range::UnitRange{Int64}; 
-                                 parameters = true) where {L <: PSY.ElectricLoad,
+                                 parameters::Bool = true) where {L <: PSY.ElectricLoad,
                                                                       S <: PM.AbstractPowerFormulation}
     if parameters
         device_timeseries_param_ub(ps_m, 
@@ -77,7 +77,7 @@ function activepower_constraints(ps_m::CanonicalModel,
                              :load_active_ub, 
                              :Pel)
     end
-    
+
     return
 
 end
@@ -129,7 +129,7 @@ function nodal_expression(ps_m::CanonicalModel,
                           devices::Array{L,1}, 
                           system_formulation::Type{S}, 
                           time_range::UnitRange{Int64},
-                          paramters = true) where {L <: PSY.ElectricLoad, 
+                          parameters::Bool = true) where {L <: PSY.ElectricLoad, 
                                                                S <: PM.AbstractPowerFormulation}
 
         if parameters 
