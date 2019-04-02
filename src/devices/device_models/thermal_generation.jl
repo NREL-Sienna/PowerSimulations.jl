@@ -181,14 +181,15 @@ function commitment_constraints(ps_m::CanonicalModel,
                                 devices::Array{T,1}, 
                                 device_formulation::Type{D}, 
                                 system_formulation::Type{S}, 
-                                time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen, 
+                                time_range::UnitRange{Int64}, 
+                                parameters::Bool = true) where {T <: PSY.ThermalGen, 
                                                                      D <: AbstractThermalFormulation, 
                                                                      S <: PM.AbstractPowerFormulation}
 
     
     if !(:thermal_status in keys(ps_m.initial_conditions)) 
         @info("Initial status conditions not provided. This can lead to unwanted results")
-        status_init(ps_m, devices)
+        status_init(ps_m, devices, parameters)
     end
 
     device_commitment(ps_m, 
@@ -236,7 +237,8 @@ function ramp_constraints(ps_m::CanonicalModel,
                           devices::Array{T,1}, 
                           device_formulation::Type{D}, 
                           system_formulation::Type{S}, 
-                          time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen, 
+                          time_range::UnitRange{Int64},
+                          parameters::Bool = true) where {T <: PSY.ThermalGen, 
                                                                D <: AbstractThermalFormulation, 
                                                                S <: PM.AbstractPowerFormulation}
 
@@ -245,11 +247,11 @@ function ramp_constraints(ps_m::CanonicalModel,
     if !isempty(data[2])
         if !(:thermal_output in keys(ps_m.initial_conditions)) 
             @info("Initial conditions for rate of change not provided. This can lead to unwanted results")
-            output_init(ps_m, devices)
+            output_init(ps_m, devices, parameters)
         end
 
         @assert length(data[2]) == length(ps_m.initial_conditions[:thermal_output])
-
+        # Here goes the reactive power ramp limits
         device_mixedinteger_rateofchange(ps_m, 
                                         data, 
                                         ps_m.initial_conditions[:thermal_output], 
@@ -268,7 +270,8 @@ function ramp_constraints(ps_m::CanonicalModel,
                           devices::Array{T,1}, 
                           device_formulation::Type{D}, 
                           system_formulation::Type{S}, 
-                          time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen, 
+                          time_range::UnitRange{Int64},
+                          parameters::Bool = true) where {T <: PSY.ThermalGen, 
                                                                D <: AbstractThermalDispatchForm, 
                                                                S <: PM.AbstractPowerFormulation}
 
@@ -277,9 +280,9 @@ function ramp_constraints(ps_m::CanonicalModel,
     if !isempty(data[2]) 
         if !(:thermal_output in keys(ps_m.initial_conditions)) 
             @info("Initial conditions for rate of change not provided. This can lead to unwanted results")
-            output_init(ps_m, devices)
+            output_init(ps_m, devices, parameters)
         end
-
+        # Here goes the reactive power ramp limits
         device_linear_rateofchange(ps_m, 
                                    (data[1], data[2]), 
                                    ps_m.initial_conditions[:thermal_output], time_range, 
@@ -300,7 +303,8 @@ function ramp_constraints(ps_m::CanonicalModel,
                           devices::Array{T,1}, 
                           device_formulation::Type{D}, 
                           system_formulation::Type{S}, 
-                          time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen, 
+                          time_range::UnitRange{Int64},
+                          parameters::Bool = true) where {T <: PSY.ThermalGen, 
                                                                D <: AbstractThermalFormulation, 
                                                                S <: PM.AbstractActivePowerFormulation}
 
@@ -309,7 +313,7 @@ function ramp_constraints(ps_m::CanonicalModel,
     if !isempty(data[2])
         if !(:thermal_output in keys(ps_m.initial_conditions)) 
             @info("Initial conditions for rate of change not provided. This can lead to unwanted results")
-            output_init(ps_m, devices)
+            output_init(ps_m, devices, parameters)
         end
 
         @assert length(data[2]) == length(ps_m.initial_conditions[:thermal_output])
@@ -333,7 +337,8 @@ function ramp_constraints(ps_m::CanonicalModel,
                           devices::Array{T,1}, 
                           device_formulation::Type{D}, 
                           system_formulation::Type{S}, 
-                          time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen, 
+                          time_range::UnitRange{Int64},
+                          parameters::Bool = true) where {T <: PSY.ThermalGen, 
                                                                D <: AbstractThermalDispatchForm, 
                                                                S <: PM.AbstractActivePowerFormulation}
 
@@ -342,7 +347,7 @@ function ramp_constraints(ps_m::CanonicalModel,
     if !isempty(data[2]) 
         if !(:thermal_output in keys(ps_m.initial_conditions)) 
             @info("Initial conditions for rate of change not provided. This can lead to unwanted results")
-            output_init(ps_m, devices)
+            output_init(ps_m, devices, parameters)
         end
         device_linear_rateofchange(ps_m, 
                                     (data[1], data[2]), 
@@ -395,7 +400,7 @@ function time_constraints(ps_m::CanonicalModel,
     if !isempty(duration_data)
         if !(:thermal_duration_on in keys(ps_m.initial_conditions)) 
             @info("Initial conditions for time up/down not provided. This can lead to unwanted results")
-            duration_init(ps_m, devices)
+            duration_init(ps_m, devices, parameters)
         end
         device_duration_retrospective(ps_m, 
                                       duration_data, 

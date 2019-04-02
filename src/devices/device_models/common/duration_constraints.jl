@@ -4,8 +4,8 @@ This formulation of the duration constraints, adds over the start times looking 
 """
 function device_duration_retrospective(ps_m::CanonicalModel,
                                         duration_data::Tuple{Vector{String},Vector{UpDown}},
-                                        initial_duration_on::Vector{InitialCondition{Float64}},
-                                        initial_duration_off::Vector{InitialCondition{Float64}},
+                                        initial_duration_on::Vector{InitialCondition},
+                                        initial_duration_off::Vector{InitialCondition},
                                         time_range::UnitRange{Int64},
                                         cons_name::Symbol,
                                         var_names::Tuple{Symbol,Symbol,Symbol})
