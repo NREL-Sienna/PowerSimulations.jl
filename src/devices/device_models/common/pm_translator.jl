@@ -14,8 +14,8 @@ function get_branch_to_pm(ix::Int64, branch::PSY.Transformer2W)
         "t_bus"       => branch.connectionpoints.to.number,
         "b_to"        => branch.primaryshunt/2,
         "index"       => ix,
-        "angmin"      => -1.50,
-        "angmax"      =>  1.50,
+        "angmin"      => -π/2,
+        "angmax"      =>  π/2,
         "transformer" => true,
         "tap"         => 1.0,
     )
@@ -38,8 +38,8 @@ function get_branch_to_pm(ix::Int64, branch::PSY.TapTransformer)
         "t_bus"       => branch.connectionpoints.to.number,
         "b_to"        => branch.primaryshunt/2,
         "index"       => ix,
-        "angmin"      => -1.50,
-        "angmax"      =>  1.50,
+        "angmin"      => -π/2,
+        "angmax"      =>  π/2,
         "transformer" => true,
         "tap"         => branch.tap
     )
