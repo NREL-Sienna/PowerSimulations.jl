@@ -254,10 +254,7 @@ function ramp_constraints(ps_m::CanonicalModel,
                                         data, 
                                         ps_m.initial_conditions[:thermal_output], 
                                         time_range, 
-                                        :ramp_thermal, (:Pth, :start_th, :stop_th))
-        
-        #TODO: ramping for reactive power
-  
+                                        :ramp_thermal, (:Pth, :start_th, :stop_th))    
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
     end
@@ -286,10 +283,7 @@ function ramp_constraints(ps_m::CanonicalModel,
         device_linear_rateofchange(ps_m, 
                                    (data[1], data[2]), 
                                    ps_m.initial_conditions[:thermal_output], time_range, 
-                                   :ramp_thermal, :Pth)
-        
-        #TODO: ramping for reactive power
-
+                                   :ramp_thermal, :Pth)    
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
     end
@@ -391,7 +385,8 @@ function time_constraints(ps_m::CanonicalModel,
                           devices::Array{T,1}, 
                           device_formulation::Type{D}, 
                           system_formulation::Type{S}, 
-                          time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen, 
+                          time_range::UnitRange{Int64},
+                          parameters::Bool = false) where {T <: PSY.ThermalGen, 
                                                                D <: AbstractThermalFormulation, 
                                                                S <: PM.AbstractPowerFormulation}
 
