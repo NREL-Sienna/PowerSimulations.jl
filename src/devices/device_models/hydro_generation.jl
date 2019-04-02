@@ -83,7 +83,6 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  time_range::UnitRange{Int64}) where {H <: PSY.HydroGen,
                                                                       S <: PM.AbstractPowerFormulation}
 
-    #TODO: Add To Power Systems a data type to support this
     ts_data_ub = [(h.name, values(h.scalingfactor)*h.tech.installedcapacity) for h in devices]
     ts_data_lb = [(h.name, values(h.scalingfactor)*h.tech.installedcapacity) for h in devices]
 
