@@ -4,7 +4,7 @@ function _canonical_model_init(bus_count::Int64,
                               transmission::Type{S},
                               time_periods::Int64; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
-    
+
 
     jump_model = _pass_abstract_jump(optimizer; kwargs...)
     V = JuMP.variable_type(jump_model)

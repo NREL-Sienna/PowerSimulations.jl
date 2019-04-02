@@ -113,9 +113,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
     ps_m.constraints[:renewable_reactive] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, names, time_range)
 
     for t in time_range, d in devices
-
         ps_m.constraints[:renewable_reactive][d.name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[:Qre][d.name, t] == ps_m.variables[:Pre][d.name, t]*sin(acos(d.tech.powerfactor)))
-
     end
 
     return
