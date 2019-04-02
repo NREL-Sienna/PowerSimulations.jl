@@ -91,12 +91,9 @@ function reactivepower_constraints(ps_m::CanonicalModel,
                                                                         D <: AbstractControllablePowerLoadForm,
                                                                         S <: PM.AbstractPowerFormulation}
 
-    #TODO: Filter for loads with PF = 1.0
-
     ps_m.constraints[:load_reactive_ub] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [d.name for d in devices], time_range)
 
     for t in time_range, d in devices
-            #Estimate PF from the load data. TODO: create a power factor field in PowerSystems
             ps_m.constraints[:load_reactive_ub][d.name, t] = JuMP.@constraint(ps_m.JuMPmodel,
                                                              ps_m.variables[:Qel][d.name, t] == ps_m.variables[:Pel][d.name, t] * sin(atan((d.maxreactivepower/d.maxactivepower))))
     end
