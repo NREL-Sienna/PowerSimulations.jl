@@ -28,7 +28,7 @@ end
     @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
     ED = PSI.EconomicDispatch(sys14,PM.DCPlosslessForm; optimizer = ipopt_optimizer);
     res_14 = solve_op_model!(ED)
-    @test isapprox(res_14.total_cost[:ED], 1300, atol = 100)
+    @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
 end
 
 #=
