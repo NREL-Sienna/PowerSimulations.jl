@@ -14,7 +14,7 @@ function construct_device!(ps_m::CanonicalModel,
         if "energy_initial_conditions" in keys(ps_m.initial_conditions)
              energy_initial_conditions = ps_m.initial_conditions["energy_initial_conditions"]
         else
-             @warn("No energy initial conditions provided")
+             @warn("No storage energy initial conditions provided")
         end
 
     else
@@ -41,8 +41,6 @@ function construct_device!(ps_m::CanonicalModel,
 
     # Energy Balanace limits
     energy_balance_constraint(ps_m,sys.storage, device_formulation, system_formulation, time_range, energy_initial_conditions)
-
-    #TODO: rate constraints
 
     return
 
