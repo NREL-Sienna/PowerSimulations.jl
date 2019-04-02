@@ -39,10 +39,10 @@ function reactivepower_variables(ps_m::CanonicalModel,
 
 end
 
-function _get_time_series(device::Array{T}) where {T <: PSY.ElectricLoad}
+function _get_time_series(devices::Array{T}) where {T <: PSY.ElectricLoad}
 
-    names = Vector{String}(undef, length(device))
-    series = Vector{Vector{Float64}}(undef, length(device))
+    names = Vector{String}(undef, length(devices))
+    series = Vector{Vector{Float64}}(undef, length(devices))
 
     for (ix,d) in enumerate(devices)
         names[ix] = d.name
@@ -125,24 +125,7 @@ end
 
 # Injection Expression with parameters
 
-function nodal_expression(ps_m::CanonicalModel,
-                          devices::Array{L,1},
-                          system_formulation::Type{S},
-                          time_range::UnitRange{Int64},
-                          parameters::Bool = true) where {L <: PSY.ElectricLoad,
-                                                               S <: PM.AbstractPowerFormulation}
-
-        if parameters
-            nodal_expression_param(ps_m, fixed_resources, system_formulation, time_range)
-        else
-            nodal_expression_fixed(ps_m, fixed_resources, system_formulation, time_range)
-        end
-
-    return
-
-end
-
-function nodal_expression_param(ps_m::CanonicalModel,
+function _nodal_expression_param(ps_m::CanonicalModel,
                                 devices::Array{L,1},
                                 system_formulation::Type{S},
                                 time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
@@ -159,9 +142,11 @@ function nodal_expression_param(ps_m::CanonicalModel,
     add_parameters(ps_m, ts_data_active, time_range, Symbol("Pel_$(eltype(devices))"), :var_active)
     add_parameters(ps_m, ts_data_reactive, time_range, Symbol("Qel_$(eltype(devices))"), :var_reactive)
 
+    return
+
 end
 
-function nodal_expression_param(ps_m::CanonicalModel,
+function _nodal_expression_param(ps_m::CanonicalModel,
                                 devices::Array{L,1},
                                 system_formulation::Type{S},
                                 time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
@@ -177,7 +162,7 @@ end
 
 # Injection Expression with fixed values
 
-function nodal_expression_fixed(ps_m::CanonicalModel,
+function _nodal_expression_fixed(ps_m::CanonicalModel,
                                 devices::Array{L,1},
                                 system_formulation::Type{S},
                                 time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
@@ -188,11 +173,12 @@ function nodal_expression_fixed(ps_m::CanonicalModel,
         _add_to_expression!(ps_m.expressions[:var_reactive], d.bus.number, t, -1*d.maxreactivepower * values(d.scalingfactor)[t]);
     end
 
+    return
 
 end
 
 
-function nodal_expression_fixed(ps_m::CanonicalModel,
+function _nodal_expression_fixed(ps_m::CanonicalModel,
                                 devices::Array{L,1},
                                 system_formulation::Type{S},
                                 time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
@@ -203,5 +189,22 @@ function nodal_expression_fixed(ps_m::CanonicalModel,
     end
 
     return
+
+end
+
+function nodal_expression(ps_m::CanonicalModel,
+                            devices::Array{L,1},
+                            system_formulation::Type{S},
+                            time_range::UnitRange{Int64},
+                            parameters::Bool = true) where {L <: PSY.ElectricLoad,
+                                                            S <: PM.AbstractPowerFormulation}
+
+    if parameters
+        _nodal_expression_param(ps_m, devices, system_formulation, time_range)
+    else
+        _nodal_expression_fixed(ps_m, devices, system_formulation, time_range)
+    end
+
+return
 
 end
