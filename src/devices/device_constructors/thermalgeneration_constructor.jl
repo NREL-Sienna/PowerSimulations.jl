@@ -22,8 +22,6 @@ function construct_device!(ps_m::CanonicalModel,
     end
 
     #Variables
-
-    
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     reactivepower_variables(ps_m, sys.generators.thermal, time_range);
@@ -35,16 +33,13 @@ function construct_device!(ps_m::CanonicalModel,
 
     reactivepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    commitment_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    commitment_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
 
-    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
 
     time_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
 
-    
-
     #Cost Function
-
     cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
     return
@@ -76,8 +71,6 @@ function construct_device!(ps_m::CanonicalModel,
     end
 
     #Variables
-
-    
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     commitment_variables(ps_m, sys.generators.thermal, time_range)
@@ -85,16 +78,13 @@ function construct_device!(ps_m::CanonicalModel,
     #Constraints
     activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    commitment_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    commitment_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
 
-    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
 
     time_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
 
-    
-
     #Cost Function
-
     cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
     return
@@ -117,9 +107,13 @@ function construct_device!(ps_m::CanonicalModel,
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
-    #Variables
+    if :parameters in keys(kwargs)
+        parameters = kwargs[:parameters]
+    else
+        parameters = false
+    end
 
-    
+    #Variables
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     reactivepower_variables(ps_m, sys.generators.thermal, time_range);
@@ -129,12 +123,9 @@ function construct_device!(ps_m::CanonicalModel,
 
     reactivepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
-
-    
+    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
 
     #Cost Function
-
     cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
     return
@@ -158,16 +149,21 @@ function construct_device!(ps_m::CanonicalModel,
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
-   #Variables
+    if :parameters in keys(kwargs)
+        parameters = kwargs[:parameters]
+    else
+        parameters = false
+    end
+
+    #Variables
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     #Constraints
     activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
 
     #Cost Function
-
     cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
     return
@@ -195,8 +191,6 @@ function construct_device!(ps_m::CanonicalModel,
     activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
     reactivepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
-
-    
 
     #Cost Function
     cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
