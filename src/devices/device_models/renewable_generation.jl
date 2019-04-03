@@ -57,7 +57,7 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  device_formulation::Type{D},
                                  system_formulation::Type{S},
                                  time_range::UnitRange{Int64},
-                                 parameters::Bool = true) where {R <: PSY.RenewableGen,
+                                 parameters::Bool) where {R <: PSY.RenewableGen,
                                                                       D <: AbstractRenewableDispatchForm,
                                                                       S <: PM.AbstractPowerFormulation}
 
@@ -219,7 +219,7 @@ function nodal_expression(ps_m::CanonicalModel,
                           devices::Array{R,1},
                           system_formulation::Type{S},
                           time_range::UnitRange{Int64},
-                          parameters::Bool = true) where {R <: PSY.RenewableGen,
+                          parameters::Bool) where {R <: PSY.RenewableGen,
                                                           S <: PM.AbstractPowerFormulation}
 
     if parameters

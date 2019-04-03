@@ -182,7 +182,7 @@ function commitment_constraints(ps_m::CanonicalModel,
                                 device_formulation::Type{D}, 
                                 system_formulation::Type{S}, 
                                 time_range::UnitRange{Int64}, 
-                                parameters::Bool = true) where {T <: PSY.ThermalGen, 
+                                parameters::Bool) where {T <: PSY.ThermalGen, 
                                                                      D <: AbstractThermalFormulation, 
                                                                      S <: PM.AbstractPowerFormulation}
 
@@ -238,7 +238,7 @@ function ramp_constraints(ps_m::CanonicalModel,
                           device_formulation::Type{D}, 
                           system_formulation::Type{S}, 
                           time_range::UnitRange{Int64},
-                          parameters::Bool = true) where {T <: PSY.ThermalGen, 
+                          parameters::Bool) where {T <: PSY.ThermalGen, 
                                                                D <: AbstractThermalFormulation, 
                                                                S <: PM.AbstractPowerFormulation}
 
@@ -271,7 +271,7 @@ function ramp_constraints(ps_m::CanonicalModel,
                           device_formulation::Type{D}, 
                           system_formulation::Type{S}, 
                           time_range::UnitRange{Int64},
-                          parameters::Bool = true) where {T <: PSY.ThermalGen, 
+                          parameters::Bool) where {T <: PSY.ThermalGen, 
                                                                D <: AbstractThermalDispatchForm, 
                                                                S <: PM.AbstractPowerFormulation}
 
@@ -304,7 +304,7 @@ function ramp_constraints(ps_m::CanonicalModel,
                           device_formulation::Type{D}, 
                           system_formulation::Type{S}, 
                           time_range::UnitRange{Int64},
-                          parameters::Bool = true) where {T <: PSY.ThermalGen, 
+                          parameters::Bool) where {T <: PSY.ThermalGen, 
                                                                D <: AbstractThermalFormulation, 
                                                                S <: PM.AbstractActivePowerFormulation}
 
@@ -338,7 +338,7 @@ function ramp_constraints(ps_m::CanonicalModel,
                           device_formulation::Type{D}, 
                           system_formulation::Type{S}, 
                           time_range::UnitRange{Int64},
-                          parameters::Bool = true) where {T <: PSY.ThermalGen, 
+                          parameters::Bool) where {T <: PSY.ThermalGen, 
                                                                D <: AbstractThermalDispatchForm, 
                                                                S <: PM.AbstractActivePowerFormulation}
 
