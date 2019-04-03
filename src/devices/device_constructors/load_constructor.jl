@@ -101,7 +101,7 @@ function construct_device!(ps_m::CanonicalModel,
                            time_range::UnitRange{Int64};
                            kwargs...) where {L <: PSY.ElectricLoad,
                                              S <: PM.AbstractPowerFormulation}
-
+    
     if :parameters in keys(kwargs)
         parameters = kwargs[:parameters]
     else

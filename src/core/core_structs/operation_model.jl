@@ -20,7 +20,7 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing,
                                 kwargs...) where {M <: AbstractOperationsModel,
                                                   T <: PM.AbstractPowerFormulation}
-
+        
         ps_model = build_canonical_model(transmission,
                                         devices,
                                         branches,

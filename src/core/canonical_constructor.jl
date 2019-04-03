@@ -51,7 +51,7 @@ function  build_canonical_model(transmission::Type{T},
                                 system::PSY.PowerSystem,
                                 optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
                                 kwargs...) where {T <: PM.AbstractPowerFormulation}
-
+                            
 time_range = 1:system.time_periods
 bus_count = length(system.buses)
 
