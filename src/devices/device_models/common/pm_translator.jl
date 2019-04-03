@@ -1,3 +1,27 @@
+function get_branch_to_pm(ix::Int64, branch::PSY.PhaseShiftingTransformer)
+    PM_branch = Dict{String,Any}(
+        "br_r"        => branch.r,
+        "rate_a"      => branch.rate,
+        "shift"       => branch.α,
+        "rate_b"      => branch.rate,
+        "br_x"        => branch.x,
+        "rate_c"      => branch.rate,
+        "g_to"        => 0.0,
+        "g_fr"        => 0.0,
+        "b_fr"        => branch.primaryshunt/2,
+        "f_bus"       => branch.connectionpoints.from.number,
+        "br_status"   => Float64(branch.available),
+        "t_bus"       => branch.connectionpoints.to.number,
+        "b_to"        => branch.primaryshunt/2,
+        "index"       => ix,
+        "angmin"      => -π/2,
+        "angmax"      =>  π/2,
+        "transformer" => true,
+        "tap"         => branch.tap,
+    )
+    return PM_branch
+end
+
 function get_branch_to_pm(ix::Int64, branch::PSY.Transformer2W)
     PM_branch = Dict{String,Any}(
         "br_r"        => branch.r,
@@ -17,7 +41,7 @@ function get_branch_to_pm(ix::Int64, branch::PSY.Transformer2W)
         "angmin"      => -π/2,
         "angmax"      =>  π/2,
         "transformer" => true,
-        "tap"         => 1.0,
+        "tap"         => 0.0,
     )
     return PM_branch
 end
