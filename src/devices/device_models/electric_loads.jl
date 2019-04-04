@@ -169,12 +169,12 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
                                 time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
                                                                      S <: PM.AbstractPowerFormulation}
 
-    for t in time_range, (ix,d) in enumerate(devices)
-        _add_to_expression!(ps_m.expressions[:var_active].data, 
-                            ix, t, 
+    for t in time_range, d in devices
+        _add_to_expression!(ps_m.expressions[:var_active], 
+                            d.bus.number, t, 
                             -1*d.maxactivepower * values(d.scalingfactor)[t]);
-        _add_to_expression!(ps_m.expressions[:var_reactive].data, 
-                            ix, t, 
+        _add_to_expression!(ps_m.expressions[:var_reactive], 
+                            d.bus.number, t, 
                             -1*d.maxreactivepower * values(d.scalingfactor)[t]);
     end
 
@@ -189,9 +189,9 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
                                 time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
                                                                      S <: PM.AbstractActivePowerFormulation}
 
-    for t in time_range, (ix,d) in enumerate(devices)
-        _add_to_expression!(ps_m.expressions[:var_active].data, 
-                            ix, t, 
+    for t in time_range, d in devices
+        _add_to_expression!(ps_m.expressions[:var_active], 
+                            d.bus.number, t, 
                             -1*d.maxactivepower * values(d.scalingfactor)[t])
     end
 

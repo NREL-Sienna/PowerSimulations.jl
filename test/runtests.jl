@@ -20,7 +20,7 @@ GLPK_optimizer = with_optimizer(GLPK.Optimizer)
 
 base_dir = string(dirname(dirname(pathof(PowerSystems))));
 include(joinpath(base_dir,"data/data_5bus_pu.jl"));
-bus_names = [b.name for b in nodes5]
+bus_numbers = [b.number for b in nodes5]
 
 include(joinpath(base_dir,"data/data_14bus_pu.jl"))
 sys14 = PowerSystem(nodes14, generators14, loads14, branches14, nothing,  100.0);

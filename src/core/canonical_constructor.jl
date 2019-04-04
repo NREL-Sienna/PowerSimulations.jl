@@ -7,15 +7,28 @@ function _container_spec(V::DataType, ax...; kwargs...)
         parameters = true
     end
 
+    # While JuMP fixes the isassigned problems
+    if parameters
+            cont = JuMP.Containers.DenseAxisArray{PGAE{V}}(undef, ax...)
+            cont.data[:] = zero(eltype(cont)) 
+        return cont
+    else
+        cont = JuMP.Containers.DenseAxisArray{GAE{V}}(undef, ax...)
+        cont.data[:] = zero(eltype(cont)) 
+        return cont
+    end
+    
+
+    #=
     if parameters
         return JuMP.Containers.DenseAxisArray{PGAE{V}}(undef, ax...)
     else
         return JuMP.Containers.DenseAxisArray{GAE{V}}(undef, ax...)
     end
-
+    =#
 end
 
-function _canonical_model_init(bus_names::Vector{String},
+function _canonical_model_init(bus_numbers::Vector{Int64},
                               optimizer::Union{Nothing,JuMP.OptimizerFactory},
                               transmission::Type{S},
                               time_range::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractPowerFormulation}
@@ -33,8 +46,8 @@ function _canonical_model_init(bus_names::Vector{String},
                             Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                             Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                             zero(JuMP.GenericAffExpr{Float64, V}),
-                            Dict{Symbol, JuMP.Containers.DenseAxisArray}(:var_active => _container_spec(V, bus_names, time_range; kwargs...),
-                                                                         :var_reactive => _container_spec(V, bus_names, time_range; kwargs...)),
+                            Dict{Symbol, JuMP.Containers.DenseAxisArray}(:var_active => _container_spec(V, bus_numbers, time_range; kwargs...),
+                                                                         :var_reactive => _container_spec(V, bus_numbers, time_range; kwargs...)),
                             parameters ? Dict{Symbol,JuMP.Containers.DenseAxisArray}() : nothing,
                             Dict{Symbol,Array{InitialCondition}}(),
                             nothing);
@@ -43,7 +56,7 @@ function _canonical_model_init(bus_names::Vector{String},
 
 end
 
-function _canonical_model_init(bus_names::Vector{String},
+function _canonical_model_init(bus_numbers::Vector{Int64},
                                optimizer::Union{Nothing,JuMP.OptimizerFactory},
                                transmission::Type{S},
                                time_range::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
@@ -61,7 +74,7 @@ function _canonical_model_init(bus_names::Vector{String},
                               Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                               Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                               zero(JuMP.GenericAffExpr{Float64, V}),
-                              Dict{Symbol, JuMP.Containers.DenseAxisArray}(:var_active => _container_spec(V, bus_names, time_range; kwargs...)),
+                              Dict{Symbol, JuMP.Containers.DenseAxisArray}(:var_active => _container_spec(V, bus_numbers, time_range; kwargs...)),
                               parameters ? Dict{Symbol,JuMP.Containers.DenseAxisArray}() : nothing,
                               Dict{Symbol,Array{InitialCondition}}(),
                               nothing);
@@ -79,9 +92,9 @@ function  build_canonical_model(transmission::Type{T},
                                 kwargs...) where {T <: PM.AbstractPowerFormulation}
                             
 time_range = 1:system.time_periods
-bus_names = [b.name for b in system.buses]
+bus_numbers = [b.number for b in system.buses]
 
-ps_model = _canonical_model_init(bus_names, optimizer, transmission, time_range; kwargs...)
+ps_model = _canonical_model_init(bus_numbers, optimizer, transmission, time_range; kwargs...)
 
 # Build Injection devices
 for mod in devices

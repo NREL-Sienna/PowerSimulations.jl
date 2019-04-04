@@ -12,7 +12,7 @@ function ptdf_networkflow(ps_m::CanonicalModel,
 
     for t in time_range
         for b in branches
-            ps_m.constraints[:network_flow][b.name,t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[:Fbr][b.name,t] == PTDF[b.name,:].data'*ps_m.expressions[expression][:,t])
+            ps_m.constraints[:network_flow][b.name,t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[:Fbr][b.name,t] == PTDF[b.name,:].data'*ps_m.expressions[expression].data[:,t])
         end
 
         for b in branches
