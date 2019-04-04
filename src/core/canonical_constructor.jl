@@ -10,11 +10,11 @@ function _container_spec(V::DataType, ax...; kwargs...)
     # While JuMP fixes the isassigned problems
     if parameters
             cont = JuMP.Containers.DenseAxisArray{PGAE{V}}(undef, ax...)
-            cont.data[:] = zero(eltype(cont)) 
+            cont.data .= zero(eltype(cont)) 
         return cont
     else
         cont = JuMP.Containers.DenseAxisArray{GAE{V}}(undef, ax...)
-        cont.data[:] = zero(eltype(cont)) 
+        cont.data .= zero(eltype(cont)) 
         return cont
     end
     
