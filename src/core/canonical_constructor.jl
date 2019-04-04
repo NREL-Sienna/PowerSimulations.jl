@@ -20,7 +20,11 @@ function _canonical_model_init(bus_names::Vector{String},
                               transmission::Type{S},
                               time_range::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
-
+    if :parameters in keys(kwargs)
+        parameters = kwargs[:parameters]
+    else
+        parameters = true
+    end
 
     jump_model = _pass_abstract_jump(optimizer; kwargs...)
     V = JuMP.variable_type(jump_model)
@@ -29,9 +33,9 @@ function _canonical_model_init(bus_names::Vector{String},
                             Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                             Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                             zero(JuMP.GenericAffExpr{Float64, V}),
-                            Dict{Symbol, JuMP.Containers.DenseAxisArray}(:var_active => _container_spec(V, bus_names, time_range),
-                                                                         :var_reactive => _container_spec(V, bus_names, time_range)),
-                            Dict{Symbol,JuMP.Containers.DenseAxisArray}(),
+                            Dict{Symbol, JuMP.Containers.DenseAxisArray}(:var_active => _container_spec(V, bus_names, time_range; kwargs...),
+                                                                         :var_reactive => _container_spec(V, bus_names, time_range; kwargs...)),
+                            parameters ? Dict{Symbol,JuMP.Containers.DenseAxisArray}() : nothing,
                             Dict{Symbol,Array{InitialCondition}}(),
                             nothing);
 
@@ -44,7 +48,11 @@ function _canonical_model_init(bus_names::Vector{String},
                                transmission::Type{S},
                                time_range::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
 
-
+    if :parameters in keys(kwargs)
+        parameters = kwargs[:parameters]
+    else
+        parameters = true
+    end
 
     jump_model = _pass_abstract_jump(optimizer; kwargs...)
     V = JuMP.variable_type(jump_model)
@@ -53,8 +61,8 @@ function _canonical_model_init(bus_names::Vector{String},
                               Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                               Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                               zero(JuMP.GenericAffExpr{Float64, V}),
-                              Dict{Symbol, JuMP.Containers.DenseAxisArray}(:var_active => _container_spec(V, bus_names, time_range)),
-                              Dict{Symbol,JuMP.Containers.DenseAxisArray}(),
+                              Dict{Symbol, JuMP.Containers.DenseAxisArray}(:var_active => _container_spec(V, bus_names, time_range; kwargs...)),
+                              parameters ? Dict{Symbol,JuMP.Containers.DenseAxisArray}() : nothing,
                               Dict{Symbol,Array{InitialCondition}}(),
                               nothing);
 
