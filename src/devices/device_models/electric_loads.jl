@@ -149,9 +149,13 @@ function _nodal_expression_param(ps_m::CanonicalModel,
                                 time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
                                                                      S <: PM.AbstractActivePowerFormulation}
 
-    ts_data = [(d.name, d.bus.number, -1*d.maxactivepower * values(d.scalingfactor)) for d in devices]
+    ts_data_active = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(devices))
 
-    add_parameters(ps_m, ts_data, time_range, Symbol("Pel_$(eltype(devices))"), :var_active)
+    for (ix,d) in enumerate(devices)
+        ts_data_active[ix] = (d.name, d.bus.number, -1*d.maxactivepower * values(d.scalingfactor))
+    end
+
+    add_parameters(ps_m, ts_data_active, time_range, Symbol("Pel_$(eltype(devices))"), :var_active)
 
     return
 
@@ -165,9 +169,13 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
                                 time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
                                                                      S <: PM.AbstractPowerFormulation}
 
-    for t in time_range, d in devices
-        _add_to_expression!(ps_m.expressions[:var_active], d.bus.number, t, -1*d.maxactivepower * values(d.scalingfactor)[t]);
-        _add_to_expression!(ps_m.expressions[:var_reactive], d.bus.number, t, -1*d.maxreactivepower * values(d.scalingfactor)[t]);
+    for t in time_range, (ix,d) in enumerate(devices)
+        _add_to_expression!(ps_m.expressions[:var_active].data, 
+                            ix, t, 
+                            -1*d.maxactivepower * values(d.scalingfactor)[t]);
+        _add_to_expression!(ps_m.expressions[:var_reactive].data, 
+                            ix, t, 
+                            -1*d.maxreactivepower * values(d.scalingfactor)[t]);
     end
 
     return
@@ -181,8 +189,10 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
                                 time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
                                                                      S <: PM.AbstractActivePowerFormulation}
 
-    for t in time_range, d in devices
-        _add_to_expression!(ps_m.expressions[:var_active], d.bus.number, t, -1*d.maxactivepower * values(d.scalingfactor)[t])
+    for t in time_range, (ix,d) in enumerate(devices)
+        _add_to_expression!(ps_m.expressions[:var_active].data, 
+                            ix, t, 
+                            -1*d.maxactivepower * values(d.scalingfactor)[t])
     end
 
     return

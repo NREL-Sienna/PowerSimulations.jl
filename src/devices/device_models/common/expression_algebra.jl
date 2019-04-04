@@ -18,6 +18,9 @@ function _remove_undef!(ExpressionArray::T) where T <: JuMPExpressionMatrix
 
 end
 
+function _remove_undef!(DenseExpressionArray::JuMP.Containers.DenseAxisArray)
+    _remove_undef!(DenseExpressionArray.data)
+end
 
 function _add_to_expression!(expression::T,
                              ix::Int64,
