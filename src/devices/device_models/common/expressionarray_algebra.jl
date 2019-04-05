@@ -78,7 +78,7 @@ function _add_to_expression!(expression_array::T,
                             parameter::PJ.Parameter) where T 
 
     if isassigned(expression_array, ix, jx)
-        expression_array[ix,jx] = JuMP.add_to_expression!(expression_array[ix,jx], 1.0, parameter);
+        expression_array[ix,jx] = JuMP.add_to_expression!(expression_array[ix,jx], parameter);
     else
         expression_array[ix,jx] = zero(eltype(expression_array)) + parameter;
     end
