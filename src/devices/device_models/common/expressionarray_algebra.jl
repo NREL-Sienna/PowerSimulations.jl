@@ -33,7 +33,7 @@ function _add_to_expression!(expression_array::T,
                              sign::Int64) where {T, JV <: JuMP.AbstractVariableRef}
 
     if isassigned(expression_array,  ix, jx)
-        expression_array[ix,jx] =  JuMP.add_to_expression!(expression_array[ix,jx], sign, var)
+        JuMP.add_to_expression!(expression_array[ix,jx], sign, var)
     else
         expression_array[ix,jx] = sign*var
     end
@@ -48,9 +48,9 @@ function _add_to_expression!(expression_array::T,
                              var::JV) where {T, JV <: JuMP.AbstractVariableRef}
                                                      
     if isassigned(expression_array, ix, jx)
-        expression_array[ix,jx] =  JuMP.add_to_expression!(expression_array[ix,jx], 1.0, var)
+        JuMP.add_to_expression!(expression_array[ix,jx], 1.0, var)
     else
-        expression_array[ix,jx] = var
+        expression_array[ix,jx] = 1.0*var
     end
 
     return
@@ -63,7 +63,7 @@ function _add_to_expression!(expression_array::T,
                              value::Float64) where T
 
     if isassigned(expression_array, ix, jx)
-        expression_array[ix,jx].constant = expression_array[ix,jx].constant + value
+        expression_array[ix,jx].constant +=  value
     else
         expression_array[ix,jx] = zero(eltype(expression_array)) + value
     end
@@ -77,8 +77,9 @@ function _add_to_expression!(expression_array::T,
                             jx::Int64,
                             parameter::PJ.Parameter) where T 
 
+    
     if isassigned(expression_array, ix, jx)
-        expression_array[ix,jx] = JuMP.add_to_expression!(expression_array[ix,jx], parameter);
+        JuMP.add_to_expression!(expression_array[ix,jx], 1.0, parameter);
     else
         expression_array[ix,jx] = zero(eltype(expression_array)) + parameter;
     end
