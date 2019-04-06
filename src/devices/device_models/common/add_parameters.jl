@@ -25,7 +25,7 @@ function add_parameters(ps_m::CanonicalModel,
 
     for t in time_range, r in ts_data
         ps_m.parameters[param_name][r[1], t] = PJ.Parameter(ps_m.JuMPmodel, r[3][t]);
-        _add_to_expression!(ps_m.expressions[expression].data, r[2], t, ps_m.parameters[param_name][r[1], t])
+        _add_to_expression!(ps_m.expressions[expression], r[2], t, ps_m.parameters[param_name][r[1], t])
     end
 
     return
