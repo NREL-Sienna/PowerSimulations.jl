@@ -236,7 +236,7 @@ version = "1.0.2"
 [[ParameterJuMP]]
 deps = ["JuMP", "MathOptInterface", "SparseArrays"]
 git-tree-sha1 = "285a8ba6dbab785441c08789ddbf26c09e89f018"
-repo-rev = "jg/basemethods"
+repo-rev = "master"
 repo-url = "https://github.com/JuliaStochOpt/ParameterJuMP.jl.git"
 uuid = "774612a8-9878-5177-865a-ca53ae2495f9"
 version = "0.0.1"
