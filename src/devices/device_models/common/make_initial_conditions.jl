@@ -14,8 +14,8 @@ function output_init(ps_m::CanonicalModel,
                 initial_conditions[i] = PSI.InitialCondition(g, g.tech.activepower)
             end
             i, state = iterate(idx, state)
-            state === nothing && (i += 1; break)                                                                   
-        end 
+            state === nothing && (i += 1; break)
+        end
     end
 
     deleteat!(initial_conditions, i:last(idx))
@@ -41,15 +41,16 @@ function status_init(ps_m::CanonicalModel,
             else
                 initial_conditions[i] = PSI.InitialCondition(g, 1.0*(g.tech.activepower > 0))
             end
-            i, state = iterate(idx, state)
-            state === nothing && (i += 1; break)                                                                   
-        end 
+            y = iterate(idx, state)
+            y === nothing && (i += 1; break)
+            i, state = y
+        end
     end
 
     deleteat!(initial_conditions, i:last(idx))
 
     ps_m.initial_conditions[:thermal_status] = initial_conditions
-                                
+
     return
 
 end
@@ -73,8 +74,8 @@ function duration_init(ps_m::CanonicalModel,
                 ini_cond_off[i] = PSI.InitialCondition(g, 999.0*(g.tech.activepower < 0))
             end
             i, state = iterate(idx, state)
-            state === nothing && (i += 1; break)                                                                   
-        end 
+            state === nothing && (i += 1; break)
+        end
     end
 
     deleteat!(ini_cond_on, i:last(idx))
