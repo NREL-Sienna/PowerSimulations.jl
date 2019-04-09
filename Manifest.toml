@@ -159,7 +159,7 @@ version = "0.20.0"
 
 [[JuMP]]
 deps = ["Calculus", "DataStructures", "ForwardDiff", "LinearAlgebra", "MathOptInterface", "NaNMath", "Random", "SparseArrays", "Statistics", "Test"]
-git-tree-sha1 = "2b06dfdd07fc96d903da5a4a88d8095ee9670911"
+git-tree-sha1 = "2f28ce63710bff960494f6c6436f2df8e9da839b"
 repo-rev = "master"
 repo-url = "https://github.com/JuliaOpt/JuMP.jl.git"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
@@ -235,7 +235,7 @@ version = "1.0.2"
 
 [[ParameterJuMP]]
 deps = ["JuMP", "MathOptInterface", "SparseArrays"]
-git-tree-sha1 = "285a8ba6dbab785441c08789ddbf26c09e89f018"
+git-tree-sha1 = "dfb1e3c9e880a6a2c693b3f5f9a3d2a9c94a6aac"
 repo-rev = "master"
 repo-url = "https://github.com/JuliaStochOpt/ParameterJuMP.jl.git"
 uuid = "774612a8-9878-5177-865a-ca53ae2495f9"

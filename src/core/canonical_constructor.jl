@@ -4,6 +4,8 @@ function _container_spec(V::DataType, ax...; kwargs...)
     parameters = get(kwargs, :parameters, true)
 
     # While JuMP fixes the isassigned problems
+     # While JuMP fixes the isassigned problems
+    #=
     if parameters
             cont = JuMP.Containers.DenseAxisArray{PGAE{V}}(undef, ax...)
             _remove_undef!(cont.data)
@@ -13,15 +15,14 @@ function _container_spec(V::DataType, ax...; kwargs...)
             _remove_undef!(cont.data)
         return cont
     end
+    =#
 
-
-    #=
     if parameters
         return JuMP.Containers.DenseAxisArray{PGAE{V}}(undef, ax...)
     else
         return JuMP.Containers.DenseAxisArray{GAE{V}}(undef, ax...)
     end
-    =#
+
 end
 
 function _canonical_model_init(bus_numbers::Vector{Int64},

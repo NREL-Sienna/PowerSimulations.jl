@@ -3,7 +3,7 @@ function ps_cost(ps_m::CanonicalModel,
                  cost_component::Function,
                  sign::Int64) where {JV <: JuMP.AbstractVariableRef}
 
-    store = Array{JuMP.AbstractJuMPScalar,1}(undef,length(variable))
+    store = Vector{Any}(undef,length(variable))
 
     for (ix, element) in enumerate(variable)
         store[ix] = cost_component(element)
