@@ -7,6 +7,8 @@
     ED = PSI.EconomicDispatch(sys14, PSI.CopperPlatePowerModel; optimizer = ipopt_optimizer);
     res_14 = solve_op_model!(ED)
     @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
+    ED = PSI.EconomicDispatch(sys_rts, PSI.CopperPlatePowerModel; optimizer = ipopt_optimizer);
+    res_14 = solve_op_model!(ED)
 end
 
 @testset "Solving ED with PTDF Models" begin
@@ -18,6 +20,15 @@ end
     ED = PSI.EconomicDispatch(sys14, PSI.StandardPTDFForm; PTDF = PTDF14, optimizer = ipopt_optimizer);
     res_14 = solve_op_model!(ED)
     @test_skip isapprox(res_14.total_cost[:ED], 1300, atol = 100)
+
+    PTDF5,  = PowerSystems.buildptdf(branches5, nodes5)
+    ED = PSI.EconomicDispatch(sys5b_uc, PSI.StandardPTDFForm; PTDF = PTDF5, optimizer = GLPK_optimizer, parameters = false);
+    res_5 = solve_op_model!(ED)
+    @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
+    PTDF14,  = PSY.buildptdf(sys14.branches, sys14.buses)
+    ED = PSI.EconomicDispatch(sys14, PSI.StandardPTDFForm; PTDF = PTDF14, optimizer = ipopt_optimizer, parameters = false);
+    res_14 = solve_op_model!(ED)
+    @test_skip isapprox(res_14.total_cost[:ED], 1300, atol = 100)
 end
 
 
@@ -27,6 +38,13 @@ end
     res_5= solve_op_model!(ED)
     @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
     ED = PSI.EconomicDispatch(sys14,PM.DCPlosslessForm; optimizer = ipopt_optimizer);
+    res_14 = solve_op_model!(ED)
+    @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
+
+    ED = PSI.EconomicDispatch(sys5b_uc,PM.DCPlosslessForm; optimizer = GLPK_optimizer, parameters = false);
+    res_5= solve_op_model!(ED)
+    @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
+    ED = PSI.EconomicDispatch(sys14,PM.DCPlosslessForm; optimizer = ipopt_optimizer, parameters = false);
     res_14 = solve_op_model!(ED)
     @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
 end
@@ -47,7 +65,7 @@ end
      sys5 = PowerSystem(bus5,gen5,load5,branch5,stor5,100.0)
      ED5 = PSI.EconomicDispatch(sys5, PSI.PM.DCPlosslessForm; optimizer = ipopt_optimizer)
      res_5 = solve_op_model!(ED5)
- 
+
      pm5 = PowerModels.parse_file(file)
      PM5 = build_generic_model(pm5,DCPPowerModel,PowerModels.post_opf)
      res_PM5 = solve_generic_model(PM5,ipopt_optimizer)
