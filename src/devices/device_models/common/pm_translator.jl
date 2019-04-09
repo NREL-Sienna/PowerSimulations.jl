@@ -133,7 +133,7 @@ function get_branches_to_pm(branches::Array{T}) where {T <: PSY.Branch}
         PM_dc_branches = Dict{String,Any}()
 
         for (ix, branch) in enumerate(branches)
-            if isa(branch,PSY.DCline)
+            if isa(branch,PSY.DCLine)
                 PM_ac_branches["$(ix)"] = get_branch_to_pm(ix, branch)
             else
                 PM_ac_branches["$(ix)"] = get_branch_to_pm(ix, branch)
