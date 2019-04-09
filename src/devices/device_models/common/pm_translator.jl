@@ -134,13 +134,13 @@ function get_branches_to_pm(branches::Array{T}) where {T <: PSY.Branch}
 
         for (ix, branch) in enumerate(branches)
             if isa(branch,PSY.DCLine)
-                PM_ac_branches["$(ix)"] = get_branch_to_pm(ix, branch)
+                PM_dc_branches["$(ix)"] = get_branch_to_pm(ix, branch)
             else
                 PM_ac_branches["$(ix)"] = get_branch_to_pm(ix, branch)
             end
         end
 
-    return PM_ac_branches
+    return PM_ac_branches, PM_dc_branches
 end
 
 function get_buses_to_pm(buses::Array{PSY.Bus})
@@ -171,10 +171,10 @@ function pass_to_pm(sys::PSY.PowerSystem)
     ac_lines, dc_lines = get_branches_to_pm(sys.branches)
 
     PM_translation = Dict{String,Any}(
-    "bus" => get_buses_to_pm(sys.buses),
-    "branch" => ac_lines,
-    "baseMVA" => sys.basepower,
-    "per_unit" => true,
+    "bus"            => get_buses_to_pm(sys.buses),
+    "branch"         => ac_lines,
+    "baseMVA"        => sys.basepower,
+    "per_unit"       => true,
     "storage"        => Dict{String,Any}(),
     "dcline"         => dc_lines,
     "gen"            => Dict{String,Any}(),
