@@ -13,8 +13,9 @@ function output_init(ps_m::CanonicalModel,
             else
                 initial_conditions[i] = PSI.InitialCondition(g, g.tech.activepower)
             end
-            i, state = iterate(idx, state)
-            state === nothing && (i += 1; break)
+            y = iterate(idx, state)
+            y === nothing && (i += 1; break)
+            i, state = y
         end
     end
 
@@ -73,8 +74,9 @@ function duration_init(ps_m::CanonicalModel,
                 ini_cond_on[i] = PSI.InitialCondition(g, 999.0*(g.tech.activepower > 0))
                 ini_cond_off[i] = PSI.InitialCondition(g, 999.0*(g.tech.activepower < 0))
             end
-            i, state = iterate(idx, state)
-            state === nothing && (i += 1; break)
+            y = iterate(idx, state)
+            y === nothing && (i += 1; break)
+            i, state = y
         end
     end
 
