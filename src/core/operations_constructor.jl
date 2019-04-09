@@ -15,7 +15,7 @@ function _pass_abstract_jump(optimizer::Union{Nothing,JuMP.OptimizerFactory}; kw
         if !haskey(m.ext, :params)
             @info("Model doesn't have Parameters enabled. Parameters will be enabled")
         end
-        
+
         PJ.enable_parameters(kwargs[:JuMPmodel])
 
         return kwargs[:JuMPmodel]
@@ -23,7 +23,9 @@ function _pass_abstract_jump(optimizer::Union{Nothing,JuMP.OptimizerFactory}; kw
     end
 
     JuMPmodel = JuMP.Model(optimizer)
-    parameters ? PJ.enable_parameters(JuMPmodel) : return JuMPmodel
+    if parameters
+        PJ.enable_parameters(JuMPmodel)
+    end
 
     return JuMPmodel
 
