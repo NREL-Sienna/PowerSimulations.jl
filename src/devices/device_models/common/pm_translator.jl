@@ -94,7 +94,7 @@ function get_branch_to_pm(ix::Int64, branch::PSY.Line)
     return PM_branch
 end
 
-function get_branch_to_pm(ix::Int64, branch::PSY.DCLine)
+function get_branch_to_pm(ix::Int64, branch::PSY.HVDCLine)
     PM_branch = Dict{String,Any}(
         "loss1"         => branch.loss.l1,
         "mp_pmax"       => branch.reactivepowerlimits_from.max,
