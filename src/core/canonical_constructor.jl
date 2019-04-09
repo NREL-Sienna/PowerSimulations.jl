@@ -1,11 +1,7 @@
 
 function _container_spec(V::DataType, ax...; kwargs...)
 
-    if :parameters in keys(kwargs)
-        parameters = kwargs[:parameters]
-    else
-        parameters = true
-    end
+    parameters = get(kwargs, :parameters, true)
 
     # While JuMP fixes the isassigned problems
     if parameters
@@ -17,7 +13,7 @@ function _container_spec(V::DataType, ax...; kwargs...)
             _remove_undef!(cont.data)
         return cont
     end
-    
+
 
     #=
     if parameters
@@ -33,11 +29,7 @@ function _canonical_model_init(bus_numbers::Vector{Int64},
                               transmission::Type{S},
                               time_range::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
-    if :parameters in keys(kwargs)
-        parameters = kwargs[:parameters]
-    else
-        parameters = true
-    end
+    parameters = get(kwargs, :parameters, true)
 
     jump_model = _pass_abstract_jump(optimizer; kwargs...)
     V = JuMP.variable_type(jump_model)
@@ -61,11 +53,7 @@ function _canonical_model_init(bus_numbers::Vector{Int64},
                                transmission::Type{S},
                                time_range::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
 
-    if :parameters in keys(kwargs)
-        parameters = kwargs[:parameters]
-    else
-        parameters = true
-    end
+    parameters = get(kwargs, :parameters, true)
 
     jump_model = _pass_abstract_jump(optimizer; kwargs...)
     V = JuMP.variable_type(jump_model)
@@ -90,7 +78,7 @@ function  build_canonical_model(transmission::Type{T},
                                 system::PSY.PowerSystem,
                                 optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
                                 kwargs...) where {T <: PM.AbstractPowerFormulation}
-                            
+
 time_range = 1:system.time_periods
 bus_numbers = [b.number for b in system.buses]
 

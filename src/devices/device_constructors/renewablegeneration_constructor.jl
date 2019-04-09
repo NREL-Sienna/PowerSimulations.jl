@@ -10,11 +10,7 @@ function construct_device!(ps_m::CanonicalModel,
 
     if !isa(sys.generators.renewable, Nothing)
 
-        if :parameters in keys(kwargs)
-            parameters = kwargs[:parameters]
-        else
-            parameters = true
-        end
+        parameters = get(kwargs, :parameters, true)
 
         fixed_resources = [fs for fs in sys.generators.renewable if isa(fs,PSY.RenewableFix)]
 
@@ -65,11 +61,7 @@ function construct_device!(ps_m::CanonicalModel,
 
     if !isa(sys.generators.renewable, Nothing)
 
-        if :parameters in keys(kwargs)
-            parameters = kwargs[:parameters]
-        else
-            parameters = true
-        end
+        parameters = get(kwargs, :parameters, true)
 
         fixed_resources = [fs for fs in sys.generators.renewable if isa(fs,PSY.RenewableFix)]
 
@@ -115,11 +107,7 @@ function construct_device!(ps_m::CanonicalModel,
 
     if !isa(sys.generators.renewable, Nothing)
 
-        if :parameters in keys(kwargs)
-            parameters = kwargs[:parameters]
-        else
-            parameters = true
-        end
+        parameters = get(kwargs, :parameters, true)
 
         nodal_expression(ps_m, sys.generators.renewable, system_formulation, time_range, parameters)
     end

@@ -11,11 +11,7 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: AbstractThermalFormulation,
                                              S <: PM.AbstractPowerFormulation}
 
-    if :parameters in keys(kwargs)
-        parameters = kwargs[:parameters]
-    else
-        parameters = false
-    end
+    parameters = get(kwargs, :parameters, true)
 
     if isempty(keys(ps_m.initial_conditions))
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
@@ -60,12 +56,8 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: AbstractThermalFormulation,
                                              S <: PM.AbstractActivePowerFormulation}
 
-    if :parameters in keys(kwargs)
-        parameters = kwargs[:parameters]
-    else
-        parameters = false
-    end
-    
+    parameters = get(kwargs, :parameters, true)
+
     if isempty(keys(ps_m.initial_conditions))
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
@@ -107,11 +99,7 @@ function construct_device!(ps_m::CanonicalModel,
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
-    if :parameters in keys(kwargs)
-        parameters = kwargs[:parameters]
-    else
-        parameters = false
-    end
+    parameters = get(kwargs, :parameters, true)
 
     #Variables
     activepower_variables(ps_m, sys.generators.thermal, time_range);
@@ -149,11 +137,7 @@ function construct_device!(ps_m::CanonicalModel,
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
-    if :parameters in keys(kwargs)
-        parameters = kwargs[:parameters]
-    else
-        parameters = false
-    end
+    parameters = get(kwargs, :parameters, true)
 
     #Variables
     activepower_variables(ps_m, sys.generators.thermal, time_range);

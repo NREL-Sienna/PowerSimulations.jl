@@ -4,11 +4,7 @@ function _pass_abstract_jump(optimizer::Union{Nothing,JuMP.OptimizerFactory}; kw
         @info("The optimization model has no optimizer attached")
     end
 
-    if :parameters in keys(kwargs)
-        parameters = kwargs[:parameters]
-    else
-        parameters = true
-    end
+    parameters = get(kwargs, :parameters, true)
 
     if :JuMPmodel in keys(kwargs) && parameters
 

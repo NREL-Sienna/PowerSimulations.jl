@@ -8,15 +8,11 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: PSI.AbstractControllablePowerLoadForm,
                                              S <: PM.AbstractPowerFormulation}
 
-        if :parameters in keys(kwargs)
-            parameters = kwargs[:parameters]
-        else
-            parameters = true
-        end
+    parameters = get(kwargs, :parameters, true)
 
-        fixed_resources = [fs for fs in sys.loads if isa(fs,PSY.PowerLoad)]
+    fixed_resources = [fs for fs in sys.loads if isa(fs,PSY.PowerLoad)]
 
-        controllable_resources = [fs for fs in sys.loads if !isa(fs,PSY.PowerLoad)]
+    controllable_resources = [fs for fs in sys.loads if !isa(fs,PSY.PowerLoad)]
 
         if !isempty(controllable_resources)
 
@@ -58,12 +54,8 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: PSI.AbstractControllablePowerLoadForm,
                                              S <: PM.AbstractActivePowerFormulation}
 
-    if :parameters in keys(kwargs)
-        parameters = kwargs[:parameters]
-    else
-        parameters = true
-    end
-    
+    parameters = get(kwargs, :parameters, true)
+
     fixed_resources = [fs for fs in sys.loads if isa(fs,PSY.PowerLoad)]
 
     controllable_resources = [fs for fs in sys.loads if !isa(fs,PSY.PowerLoad)]
@@ -101,12 +93,8 @@ function construct_device!(ps_m::CanonicalModel,
                            time_range::UnitRange{Int64};
                            kwargs...) where {L <: PSY.ElectricLoad,
                                              S <: PM.AbstractPowerFormulation}
-    
-    if :parameters in keys(kwargs)
-        parameters = kwargs[:parameters]
-    else
-        parameters = true
-    end
+
+    parameters = get(kwargs, :parameters, true)
 
     nodal_expression(ps_m, sys.loads, system_formulation, time_range, parameters)
 
