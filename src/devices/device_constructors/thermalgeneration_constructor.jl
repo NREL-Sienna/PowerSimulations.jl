@@ -11,13 +11,13 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: AbstractThermalFormulation,
                                              S <: PM.AbstractPowerFormulation}
 
+    parameters = get(kwargs, :parameters, true)
+
     if isempty(keys(ps_m.initial_conditions))
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
     #Variables
-
-    #TODO: Enable warm start for variables
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     reactivepower_variables(ps_m, sys.generators.thermal, time_range);
@@ -29,16 +29,13 @@ function construct_device!(ps_m::CanonicalModel,
 
     reactivepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    commitment_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    commitment_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
 
-    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
 
-    time_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
-
-    #TODO: rate constraints
+    time_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
 
     #Cost Function
-
     cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
     return
@@ -59,13 +56,13 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: AbstractThermalFormulation,
                                              S <: PM.AbstractActivePowerFormulation}
 
+    parameters = get(kwargs, :parameters, true)
+
     if isempty(keys(ps_m.initial_conditions))
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
     #Variables
-
-    #TODO: Enable warm start for variables
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     commitment_variables(ps_m, sys.generators.thermal, time_range)
@@ -73,16 +70,13 @@ function construct_device!(ps_m::CanonicalModel,
     #Constraints
     activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    commitment_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    commitment_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
 
-    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
 
-    time_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
-
-    #TODO: rate constraints
+    time_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
 
     #Cost Function
-
     cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
     return
@@ -105,9 +99,9 @@ function construct_device!(ps_m::CanonicalModel,
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
-    #Variables
+    parameters = get(kwargs, :parameters, true)
 
-    #TODO: Enable warm start for variables
+    #Variables
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     reactivepower_variables(ps_m, sys.generators.thermal, time_range);
@@ -117,12 +111,9 @@ function construct_device!(ps_m::CanonicalModel,
 
     reactivepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
-
-    #TODO: rate constraints
+    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
 
     #Cost Function
-
     cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
     return
@@ -146,20 +137,17 @@ function construct_device!(ps_m::CanonicalModel,
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
-   #Variables
+    parameters = get(kwargs, :parameters, true)
 
-    #TODO: Enable warm start for variables
+    #Variables
     activepower_variables(ps_m, sys.generators.thermal, time_range);
 
     #Constraints
     activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
-    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
-
-    #TODO: rate constraints
+    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
 
     #Cost Function
-
     cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
 
     return
@@ -187,8 +175,6 @@ function construct_device!(ps_m::CanonicalModel,
     activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
 
     reactivepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
-
-    #TODO: rate constraints
 
     #Cost Function
     cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)

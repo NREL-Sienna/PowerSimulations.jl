@@ -6,7 +6,7 @@ mutable struct DeviceModel{D <: PSY.PowerSystemDevice,
     formulation::Type{B}
 end
 
-mutable struct InitialCondition
+mutable struct InitialCondition{T <: Union{PJ.Parameter, Float64}}
     device::PSY.PowerSystemDevice
-    value::Union{PJ.Parameter, Float64}
+    value::T
 end

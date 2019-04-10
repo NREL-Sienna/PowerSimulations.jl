@@ -8,10 +8,9 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: AbstractRenewableDispatchForm,
                                              S <: PM.AbstractPowerFormulation}
 
-
-    # TODO: Remove the use of two loops to classify resource types
-
     if !isa(sys.generators.renewable, Nothing)
+
+        parameters = get(kwargs, :parameters, true)
 
         fixed_resources = [fs for fs in sys.generators.renewable if isa(fs,PSY.RenewableFix)]
 
@@ -25,7 +24,7 @@ function construct_device!(ps_m::CanonicalModel,
             reactivepower_variables(ps_m, controllable_resources, time_range);
 
             #Constraints
-            activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
+            activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range, parameters)
 
             reactivepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
 
@@ -39,7 +38,7 @@ function construct_device!(ps_m::CanonicalModel,
         #add to expression
 
         if !isempty(fixed_resources)
-            nodal_expression(ps_m, fixed_resources, system_formulation, time_range)
+            nodal_expression(ps_m, fixed_resources, system_formulation, time_range, parameters)
         end
 
     end
@@ -58,7 +57,11 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: AbstractRenewableDispatchForm,
                                              S <: PM.AbstractActivePowerFormulation}
 
+
+
     if !isa(sys.generators.renewable, Nothing)
+
+        parameters = get(kwargs, :parameters, true)
 
         fixed_resources = [fs for fs in sys.generators.renewable if isa(fs,PSY.RenewableFix)]
 
@@ -70,7 +73,7 @@ function construct_device!(ps_m::CanonicalModel,
             activepower_variables(ps_m, controllable_resources, time_range)
 
             #Constraints
-            activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
+            activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range, parameters)
 
             #Cost Function
             cost_function(ps_m, controllable_resources, device_formulation, system_formulation)
@@ -83,7 +86,7 @@ function construct_device!(ps_m::CanonicalModel,
         #add to expression
 
         if !isempty(fixed_resources)
-            nodal_expression(ps_m, fixed_resources, system_formulation, time_range)
+            nodal_expression(ps_m, fixed_resources, system_formulation, time_range, parameters)
         end
 
     end
@@ -103,7 +106,10 @@ function construct_device!(ps_m::CanonicalModel,
 
 
     if !isa(sys.generators.renewable, Nothing)
-        nodal_expression(ps_m, sys.generators.renewable, system_formulation, time_range)
+
+        parameters = get(kwargs, :parameters, true)
+
+        nodal_expression(ps_m, sys.generators.renewable, system_formulation, time_range, parameters)
     end
 
     return

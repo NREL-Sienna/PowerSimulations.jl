@@ -18,11 +18,40 @@ abstract type TestOptModel <: PSI.AbstractOperationsModel end
 ipopt_optimizer = with_optimizer(Ipopt.Optimizer, print_level = 0)
 GLPK_optimizer = with_optimizer(GLPK.Optimizer)
 
+time_range = 1:24
+
 base_dir = string(dirname(dirname(pathof(PowerSystems))));
 include(joinpath(base_dir,"data/data_5bus_pu.jl"));
+bus_numbers = [b.number for b in nodes5]
 
 include(joinpath(base_dir,"data/data_14bus_pu.jl"))
 sys14 = PowerSystem(nodes14, generators14, loads14, branches14, nothing,  100.0);
+
+DATA_DIR = joinpath(base_dir, "data")
+RTS_GMLC_DIR = joinpath(DATA_DIR, "RTS_GMLC")
+cdm_dict = PSY.csv2ps_dict(RTS_GMLC_DIR, 100.0)
+
+for v in values(cdm_dict["load"])
+    v["scalingfactor"] = v["scalingfactor"][1:24]
+end
+
+for source in values(cdm_dict["gen"]["Renewable"]["PV"])
+    source["scalingfactor"] = source["scalingfactor"][1:24]
+end
+
+for source in values(cdm_dict["gen"]["Renewable"]["RTPV"])
+    source["scalingfactor"] = source["scalingfactor"][1:24]
+end
+
+for source in values(cdm_dict["gen"]["Renewable"]["WIND"])
+    source["scalingfactor"] = source["scalingfactor"][1:24]
+end
+
+for source in values(cdm_dict["gen"]["Hydro"])
+    source["scalingfactor"] = source["scalingfactor"][1:24]
+end
+
+sys_rts = PSY.PowerSystem(cdm_dict);
 
 generators5_uc = [  ThermalDispatch("Alta", true, nodes5[1],
                     TechThermal(0.40, (min=0.0, max=0.40), 0.010, (min = -0.30, max = 0.30), nothing, nothing),
@@ -95,9 +124,6 @@ generators_hg = [
 sys5b = PowerSystem(nodes5, vcat(generators5,renewables), loads5_DA, branches5, nothing,  100.0);
 sys5b_uc = PowerSystem(nodes5, generators5_uc, loads5_DA, branches5, nothing,  100.0);
 sys5b_storage = PowerSystem(nodes5, vcat(generators5_uc,renewables), loads5_DA, branches5, battery,  100.0);
-
-time_range = 1:sys5b.time_periods
-
 
 @testset "Common Functionalities" begin
     include("PowerModels_interface.jl")

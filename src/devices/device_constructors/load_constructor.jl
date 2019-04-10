@@ -8,9 +8,11 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: PSI.AbstractControllablePowerLoadForm,
                                              S <: PM.AbstractPowerFormulation}
 
-        fixed_resources = [fs for fs in sys.loads if isa(fs,PSY.PowerLoad)]
+    parameters = get(kwargs, :parameters, true)
 
-        controllable_resources = [fs for fs in sys.loads if !isa(fs,PSY.PowerLoad)]
+    fixed_resources = [fs for fs in sys.loads if isa(fs,PSY.PowerLoad)]
+
+    controllable_resources = [fs for fs in sys.loads if !isa(fs,PSY.PowerLoad)]
 
         if !isempty(controllable_resources)
 
@@ -20,7 +22,7 @@ function construct_device!(ps_m::CanonicalModel,
             reactivepower_variables(ps_m, controllable_resources, time_range);
 
             #Constraints
-            activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
+            activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range, parameters)
 
             reactivepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
 
@@ -35,7 +37,7 @@ function construct_device!(ps_m::CanonicalModel,
         #add to expression
 
         if !isempty(fixed_resources)
-            nodal_expression_param(ps_m, fixed_resources, system_formulation, time_range)
+            nodal_expression(ps_m, fixed_resources, system_formulation, time_range, parameters)
         end
 
         return
@@ -52,6 +54,8 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: PSI.AbstractControllablePowerLoadForm,
                                              S <: PM.AbstractActivePowerFormulation}
 
+    parameters = get(kwargs, :parameters, true)
+
     fixed_resources = [fs for fs in sys.loads if isa(fs,PSY.PowerLoad)]
 
     controllable_resources = [fs for fs in sys.loads if !isa(fs,PSY.PowerLoad)]
@@ -62,7 +66,7 @@ function construct_device!(ps_m::CanonicalModel,
         activepower_variables(ps_m, controllable_resources, time_range);
 
         #Constraints
-        activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
+        activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range, parameters)
 
         #Cost Function
         cost_function(ps_m, controllable_resources, device_formulation, system_formulation)
@@ -74,7 +78,7 @@ function construct_device!(ps_m::CanonicalModel,
     #add to expression
 
     if !isempty(fixed_resources)
-        nodal_expression_param(ps_m, fixed_resources, system_formulation, time_range)
+        nodal_expression(ps_m, fixed_resources, system_formulation, time_range, parameters)
     end
 
     return
@@ -90,7 +94,9 @@ function construct_device!(ps_m::CanonicalModel,
                            kwargs...) where {L <: PSY.ElectricLoad,
                                              S <: PM.AbstractPowerFormulation}
 
-    nodal_expression_param(ps_m, sys.loads, system_formulation, time_range)
+    parameters = get(kwargs, :parameters, true)
+
+    nodal_expression(ps_m, sys.loads, system_formulation, time_range, parameters)
 
     return
 

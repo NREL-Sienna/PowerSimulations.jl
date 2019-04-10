@@ -41,10 +41,10 @@ const MOIU = MathOptInterface.Utilities
 const PJ = ParameterJuMP
 
 #Type Alias for JuMP and PJ containers
-const PGAE{C,V} = PJ.ParametrizedGenericAffExpr{C,V}
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
-const JuMPAffineExpressionArray = Matrix{JuMP.GenericAffExpr{Float64,V}} where V <: JuMP.AbstractVariableRef
-const JuMPPGAEArray = Matrix{PGAE{Float64,V}} where V <: JuMP.AbstractVariableRef
+const PGAE{V} = PJ.ParametrizedGenericAffExpr{Float64,V} where V <: JuMP.AbstractVariableRef
+const GAE{V} = JuMP.GenericAffExpr{Float64,V} where V <: JuMP.AbstractVariableRef
+const JuMPAffineExpressionArray = Matrix{GAE{V}} where V <: JuMP.AbstractVariableRef
 
 #Type Alias for Unions
 const FixResource = Union{PSY.RenewableFix, PSY.HydroFix}
@@ -103,6 +103,7 @@ include("operation_models/operation_models.jl")
 
 #Utils
 include("routines/solve_routines.jl")
+include("routines/get_ini_cond.jl")
 #include("routines/simulation_routines.jl")
 #include("routines/device_retreval.jl")
 
