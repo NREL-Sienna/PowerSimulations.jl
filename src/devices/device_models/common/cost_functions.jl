@@ -32,11 +32,12 @@ function pwlgencost(ps_m::CanonicalModel,
                     cost_component::Array{Tuple{Float64, Float64}}) where {JV <: JuMP.AbstractVariableRef}
 
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}()
-    pwlvars = JuMP.@variable(ps_m.JuMPmodel, [i = 1:(length(cost_component)-1)], base_name = "{$(variable)}_pwl", start = 0.0, lower_bound = 0.0, upper_bound = (cost_component[i+1][1] - cost_component[i][1]))
-     for (ix, pwlvar) in enumerate(pwlvars)
+    pwlvars = JuMP.@variable(ps_m.JuMPmodel, [i = 1:(length(cost_component)-1)], base_name = "{$(variable)}_{pwl}", start = 0.0, lower_bound = 0.0, upper_bound = (cost_component[i+1][2] - cost_component[i][2]))
+
+    for (ix, pwlvar) in enumerate(pwlvars)
         c = JuMP.@constraint(ps_m.JuMPmodel, pwlvar <= cost_component[ix + 1][2])
         c = JuMP.@constraint(ps_m.JuMPmodel, pwlvar >= 0)
-        temp_gen_cost = (cost_component[ix + 1][1] * cost_component[ix + 1][2] - cost_component[ix][1] * cost_component[ix][2]) / (cost_component[ix + 1][2] - cost_component[ix][2]) * pwlvar
+        temp_gen_cost = (cost_component[ix + 1][1] - cost_component[ix][1]) / (cost_component[ix + 1][2] - cost_component[ix][2]) * pwlvar
         gen_cost = gen_cost + temp_gen_cost
     end
 

@@ -159,7 +159,7 @@ version = "0.20.0"
 
 [[JuMP]]
 deps = ["Calculus", "DataStructures", "ForwardDiff", "LinearAlgebra", "MathOptInterface", "NaNMath", "Random", "SparseArrays", "Statistics", "Test"]
-git-tree-sha1 = "2f28ce63710bff960494f6c6436f2df8e9da839b"
+git-tree-sha1 = "e78c130c8d58520e122bc82b2ff143c463a7a7cc"
 repo-rev = "master"
 repo-url = "https://github.com/JuliaOpt/JuMP.jl.git"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
@@ -261,7 +261,7 @@ version = "0.9.4"
 
 [[PowerSystems]]
 deps = ["AxisArrays", "CSV", "Compat", "DataFrames", "Dates", "JSON", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "YAML"]
-git-tree-sha1 = "fe7fbbb7aba8db413bf3517e8863005e5788cfe4"
+git-tree-sha1 = "3d6b7a2dc27b0b3111b3333c7216547e2db09dc2"
 repo-rev = "master"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
@@ -375,10 +375,10 @@ deps = ["Distributed", "InteractiveUtils", "Logging", "Random"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [[TimeSeries]]
-deps = ["Dates", "DelimitedFiles", "Random", "RecipesBase", "Statistics", "Test"]
-git-tree-sha1 = "5a7bcdfbdac440ad5395b97701a21f423b338fc5"
+deps = ["Dates", "DelimitedFiles", "Random", "RecipesBase", "Reexport", "Statistics", "Test"]
+git-tree-sha1 = "4bcd2713b71a46f1a0d708fd13eed367893c2403"
 uuid = "9e3dc215-6440-5c97-bce1-76c03772f85e"
-version = "0.14.0"
+version = "0.14.1"
 
 [[TimeZones]]
 deps = ["Dates", "EzXML", "Mocking", "Printf", "Serialization", "Test", "Unicode"]
