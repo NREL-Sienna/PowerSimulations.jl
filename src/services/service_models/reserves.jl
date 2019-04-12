@@ -5,7 +5,7 @@ These models still need to be rewritten for the new infrastructure in PowerSimul
 ##################
 
 
-function reservevariables(m::JuMP.AbstractModel, devices::Array{NamedTuple{(:device, :formulation), Tuple{R,DataType}}}, time_periods::Int64) where {R <: PSY.PowerSystemDevice}
+function reservevariables(m::JuMP.AbstractModel, devices::Array{NamedTuple{(:device, :formulation), Tuple{R,DataType}}}, time_periods::Int64) where {R <: PSY.Device}
 
     on_set = [d.device.name for d in devices]
 
@@ -50,7 +50,7 @@ function make_pramp_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, fo
 end
 
 
-function reserves(m::JuMP.AbstractModel, devices::Array{NamedTuple{(:device, :formulation), Tuple{R,DataType}}}, service::PSY.StaticReserve, time_periods::Int64) where {R <: PSY.PowerSystemDevice}
+function reserves(m::JuMP.AbstractModel, devices::Array{NamedTuple{(:device, :formulation), Tuple{R,DataType}}}, service::PSY.StaticReserve, time_periods::Int64) where {R <: PSY.Device}
 
     p_rsv = m[:p_rsv]
     time_index = m[:p_rsv].axes[2]

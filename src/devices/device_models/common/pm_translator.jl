@@ -166,7 +166,7 @@ function get_buses_to_pm(buses::Array{PSY.Bus})
     return PM_buses
 end
 
-function pass_to_pm(sys::PSY.PowerSystem)
+function pass_to_pm(sys::PSY.System)
 
     ac_lines, dc_lines = get_branches_to_pm(sys.branches)
 

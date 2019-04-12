@@ -1,6 +1,6 @@
 function construct_network!(ps_m::CanonicalModel,
                             system_formulation::Type{CopperPlatePowerModel},
-                            sys::PSY.PowerSystem,
+                            sys::PSY.System,
                             time_range::UnitRange{Int64}; kwargs...)
 
     bus_count = length(sys.buses)
@@ -12,7 +12,7 @@ end
 
 function construct_network!(ps_m::CanonicalModel,
                             system_formulation::Type{StandardPTDFForm},
-                            sys::PSY.PowerSystem,
+                            sys::PSY.System,
                             time_range::UnitRange{Int64}; kwargs...)
 
     if :PTDF in keys(kwargs)
@@ -35,7 +35,7 @@ end
 
 function construct_network!(ps_m::CanonicalModel,
                             system_formulation::Type{S},
-                            sys::PSY.PowerSystem,
+                            sys::PSY.System,
                             time_range::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     powermodels_network!(ps_m, system_formulation, sys, time_range)

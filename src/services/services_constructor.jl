@@ -2,7 +2,7 @@ function construct_service!(ps_m::CanonicalModel,
                             service::Type{SD},
                             service_formulation::Type{SV},
                             system_formulation::Type{S},
-                            sys::PSY.PowerSystem,
+                            sys::PSY.System,
                             time_range::UnitRange{Int64};
                             kwargs...) where {SD <: PSY.Service,
                                               SV <: PSI.AbstractServiceFormulation,
@@ -20,23 +20,23 @@ This code still need to be rewritten for the new infrastructure in PowerSimulati
 ##################
 
 
-function get_devices(sys::PSY.PowerSystem,device::Type{PSY.ThermalGen})
+function get_devices(sys::PSY.System,device::Type{PSY.ThermalGen})
     return sys.generators.thermal
 end
-function get_devices(sys::PSY.PowerSystem,device::Type{PSY.RenewableGen})
+function get_devices(sys::PSY.System,device::Type{PSY.RenewableGen})
     return sys.generators.renewable
 end
-function get_devices(sys::PSY.PowerSystem,device::Type{PSY.HydroGen})
+function get_devices(sys::PSY.System,device::Type{PSY.HydroGen})
     return sys.generators.hydro
 end
-function get_devices(sys::PSY.PowerSystem,device::Type{PSY.PSY.ElectricLoad})
+function get_devices(sys::PSY.System,device::Type{PSY.PSY.ElectricLoad})
     return sys.loads
 end
 
 
-function construct_service!(m::JuMP.AbstractModel, service::PSY.StaticReserve, device_formulation::Type{PSI.RampLimitedReserve},devices::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, sys::PSY.PowerSystem; kwargs...)
+function construct_service!(m::JuMP.AbstractModel, service::PSY.StaticReserve, device_formulation::Type{PSI.RampLimitedReserve},devices::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, sys::PSY.System; kwargs...)
 
-    dev_set = Array{NamedTuple{(:device,:formulation),Tuple{PSY.PowerSystemDevice,DataType}}}([])
+    dev_set = Array{NamedTuple{(:device,:formulation),Tuple{PSY.Device,DataType}}}([])
 
     for device in devices
         if device != nothing

@@ -7,7 +7,7 @@ This code still need to be rewritten for the new infrastructure in PowerSimulati
 
 
 function all_devices(sys, filter::Array)
-    dev = Array{PSY.PowerSystemDevice}([])
+    dev = Array{PSY.Device}([])
 
     for source in sys.generators
         if typeof(source) <: Array{<:PSY.Generator}
@@ -25,7 +25,7 @@ function all_devices(sys, filter::Array)
 end
 
 function all_devices(sys)
-    dev = Array{PSY.PowerSystemDevice}([])
+    dev = Array{PSY.Device}([])
 
     for source in sys.generators
         if typeof(source) <: Array{<:PSY.Generator}

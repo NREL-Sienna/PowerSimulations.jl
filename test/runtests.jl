@@ -25,7 +25,7 @@ include(joinpath(base_dir,"data/data_5bus_pu.jl"));
 bus_numbers = [b.number for b in nodes5]
 
 include(joinpath(base_dir,"data/data_14bus_pu.jl"))
-sys14 = PowerSystem(nodes14, generators14, loads14, branches14, nothing,  100.0);
+sys14 = PSY.System(nodes14, generators14, loads14, branches14, nothing,  100.0);
 
 DATA_DIR = joinpath(base_dir, "data")
 RTS_GMLC_DIR = joinpath(DATA_DIR, "RTS_GMLC")
@@ -51,7 +51,7 @@ for source in values(cdm_dict["gen"]["Hydro"])
     source["scalingfactor"] = source["scalingfactor"][1:24]
 end
 
-sys_rts = PSY.PowerSystem(cdm_dict);
+sys_rts = PSY.System(cdm_dict);
 
 generators5_uc = [  ThermalDispatch("Alta", true, nodes5[1],
                     TechThermal(0.40, (min=0.0, max=0.40), 0.010, (min = -0.30, max = 0.30), nothing, nothing),
@@ -121,9 +121,9 @@ generators_hg = [
         100.0,TimeSeries.TimeArray(DayAhead,wind_ts_DA) )
 ];
 
-sys5b = PowerSystem(nodes5, vcat(generators5,renewables), loads5_DA, branches5, nothing,  100.0);
-sys5b_uc = PowerSystem(nodes5, generators5_uc, loads5_DA, branches5, nothing,  100.0);
-sys5b_storage = PowerSystem(nodes5, vcat(generators5_uc,renewables), loads5_DA, branches5, battery,  100.0);
+sys5b = PSY.System(nodes5, vcat(generators5,renewables), loads5_DA, branches5, nothing,  100.0);
+sys5b_uc = PSY.System(nodes5, generators5_uc, loads5_DA, branches5, nothing,  100.0);
+sys5b_storage = PSY.System(nodes5, vcat(generators5_uc,renewables), loads5_DA, branches5, battery,  100.0);
 
 @testset "Common Functionalities" begin
     include("PowerModels_interface.jl")
