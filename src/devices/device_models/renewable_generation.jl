@@ -70,8 +70,7 @@ end
 function reactivepower_constraints(ps_m::CanonicalModel,
                                 devices::Array{R,1},
                                 device_formulation::Type{RenewableFullDispatch},
-                                system_formulation::Type{S},
-                                time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen,
+                                system_formulation::Type{S}) where {R <: PSY.RenewableGen,
                                                                     S <: PM.AbstractPowerFormulation}
 
     range_data = [(r.name, r.tech.reactivepowerlimits) for r in devices]

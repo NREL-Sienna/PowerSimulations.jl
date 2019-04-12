@@ -5,6 +5,7 @@ using JuMP
 using Test
 using Ipopt
 using GLPK
+using OSQP
 
 # required for reducing logging during tests
 using Memento
@@ -17,6 +18,7 @@ abstract type TestOptModel <: PSI.AbstractOperationsModel end
 
 ipopt_optimizer = with_optimizer(Ipopt.Optimizer, print_level = 0)
 GLPK_optimizer = with_optimizer(GLPK.Optimizer)
+OSQP_optimizer = with_optimizer(OSQP.Optimizer)
 
 time_range = 1:24
 

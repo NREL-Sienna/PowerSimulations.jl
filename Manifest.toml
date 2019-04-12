@@ -159,7 +159,7 @@ version = "0.20.0"
 
 [[JuMP]]
 deps = ["Calculus", "DataStructures", "ForwardDiff", "LinearAlgebra", "MathOptInterface", "NaNMath", "Random", "SparseArrays", "Statistics", "Test"]
-git-tree-sha1 = "e78c130c8d58520e122bc82b2ff143c463a7a7cc"
+git-tree-sha1 = "ca492864b93cfd6d748ef06a11aee419a4dafb42"
 repo-rev = "master"
 repo-url = "https://github.com/JuliaOpt/JuMP.jl.git"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
@@ -260,8 +260,8 @@ uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 version = "0.9.4"
 
 [[PowerSystems]]
-deps = ["AxisArrays", "CSV", "Compat", "DataFrames", "Dates", "JSON", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "YAML"]
-git-tree-sha1 = "3d6b7a2dc27b0b3111b3333c7216547e2db09dc2"
+deps = ["AxisArrays", "CSV", "Compat", "DataFrames", "Dates", "InteractiveUtils", "JSON", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "YAML"]
+git-tree-sha1 = "d6062379a3959876a376d006bb8d5f3b334ddeae"
 repo-rev = "master"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "c512b964-a17e-11e8-344c-11d7c2eac237"
