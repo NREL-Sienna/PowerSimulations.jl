@@ -1,49 +1,58 @@
-
-
 @testset "Solving ED Models" begin
+    #5 Bus Test
     ED = PSI.EconomicDispatch(sys5b_uc, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer);
     res_5 = solve_op_model!(ED)
     @test isapprox(res_5.total_cost[:ED], 2400, atol = 1000)
-    ED = PSI.EconomicDispatch(sys14, PSI.CopperPlatePowerModel; optimizer = ipopt_optimizer);
+    #14 Bus Test
+    ED = PSI.EconomicDispatch(sys14, PSI.CopperPlatePowerModel; optimizer = OSQP_optimizer);
     res_14 = solve_op_model!(ED)
     @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
-    ED = PSI.EconomicDispatch(sys_rts, PSI.CopperPlatePowerModel; optimizer = ipopt_optimizer);
+    #RTS Test
+    ED = PSI.EconomicDispatch(sys_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer);
     res_14 = solve_op_model!(ED)
 end
 
 @testset "Solving ED with PTDF Models" begin
+    # 5 - Bus Test
     PTDF5,  = PowerSystems.buildptdf(branches5, nodes5)
     ED = PSI.EconomicDispatch(sys5b_uc, PSI.StandardPTDFForm; PTDF = PTDF5, optimizer = GLPK_optimizer);
     res_5 = solve_op_model!(ED)
     @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
-    PTDF14,  = PSY.buildptdf(sys14.branches, sys14.buses)
-    ED = PSI.EconomicDispatch(sys14, PSI.StandardPTDFForm; PTDF = PTDF14, optimizer = ipopt_optimizer);
-    res_14 = solve_op_model!(ED)
-    @test_skip isapprox(res_14.total_cost[:ED], 1300, atol = 100)
 
     PTDF5,  = PowerSystems.buildptdf(branches5, nodes5)
     ED = PSI.EconomicDispatch(sys5b_uc, PSI.StandardPTDFForm; PTDF = PTDF5, optimizer = GLPK_optimizer, parameters = false);
     res_5 = solve_op_model!(ED)
     @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
+
+    # 14 Bus Test
     PTDF14,  = PSY.buildptdf(sys14.branches, sys14.buses)
-    ED = PSI.EconomicDispatch(sys14, PSI.StandardPTDFForm; PTDF = PTDF14, optimizer = ipopt_optimizer, parameters = false);
+    ED = PSI.EconomicDispatch(sys14, PSI.StandardPTDFForm; PTDF = PTDF14, optimizer = OSQP_optimizer);
     res_14 = solve_op_model!(ED)
-    @test_skip isapprox(res_14.total_cost[:ED], 1300, atol = 100)
+    @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
+
+    PTDF14,  = PSY.buildptdf(sys14.branches, sys14.buses)
+    ED = PSI.EconomicDispatch(sys14, PSI.StandardPTDFForm; PTDF = PTDF14, optimizer = OSQP_optimizer, parameters = false);
+    res_14 = solve_op_model!(ED)
+    @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
 end
 
 
 
 @testset "testing AngleDC-OPF 5-bus" begin
+    # 5 - Bus Test
     ED = PSI.EconomicDispatch(sys5b_uc,PM.DCPlosslessForm; optimizer = GLPK_optimizer);
     res_5= solve_op_model!(ED)
     @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
-    ED = PSI.EconomicDispatch(sys14,PM.DCPlosslessForm; optimizer = ipopt_optimizer);
-    res_14 = solve_op_model!(ED)
-    @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
 
     ED = PSI.EconomicDispatch(sys5b_uc,PM.DCPlosslessForm; optimizer = GLPK_optimizer, parameters = false);
     res_5= solve_op_model!(ED)
     @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
+
+    # 14 - Bus Test
+    ED = PSI.EconomicDispatch(sys14,PM.DCPlosslessForm; optimizer = ipopt_optimizer);
+    res_14 = solve_op_model!(ED)
+    @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
+
     ED = PSI.EconomicDispatch(sys14,PM.DCPlosslessForm; optimizer = ipopt_optimizer, parameters = false);
     res_14 = solve_op_model!(ED)
     @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
@@ -62,7 +71,7 @@ end
          l["scalingfactor"] = l["scalingfactor"][1]
      end
      bus5, gen5, stor5, branch5,load5,lz5,shunts5,service5 = ps_dict2ps_struct(ps5)
-     sys5 = PowerSystem(bus5,gen5,load5,branch5,stor5,100.0)
+     sys5 = PSY.System(bus5,gen5,load5,branch5,stor5,100.0)
      ED5 = PSI.EconomicDispatch(sys5, PSI.PM.DCPlosslessForm; optimizer = ipopt_optimizer)
      res_5 = solve_op_model!(ED5)
 
@@ -87,7 +96,7 @@ end
          l["scalingfactor"] = l["scalingfactor"][1]
      end
      bus14, gen14, stor14, branch14,load14,lz14,shunts14,service14 = ps_dict2ps_struct(ps14)
-     sys14 = PowerSystem(bus14,gen14,load14,branch14,stor14,100.0)
+     sys14 = PSY.System(bus14,gen14,load14,branch14,stor14,100.0)
      ED14 = PSI.EconomicDispatch(sys14, PSI.PM.DCPlosslessForm; optimizer = ipopt_optimizer)
      res_14 = solve_op_model!(ED14)
 

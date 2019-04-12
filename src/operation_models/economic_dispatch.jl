@@ -1,7 +1,7 @@
 struct EconomicDispatch <: AbstractOperationsModel end
 struct SCEconomicDispatch <: AbstractOperationsModel end
 
-function EconomicDispatch(system::PSY.PowerSystem, transmission::Type{S}; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...) where {S <: PM.AbstractPowerFormulation}
+function EconomicDispatch(system::PSY.System, transmission::Type{S}; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     devices = Dict{Symbol, PSI.DeviceModel}(:ThermalGenerators => PSI.DeviceModel(PSY.ThermalGen, PSI.ThermalDispatch),
                                             :RenewableGenerators => PSI.DeviceModel(PSY.RenewableGen, PSI.RenewableFullDispatch),
@@ -20,7 +20,7 @@ function EconomicDispatch(system::PSY.PowerSystem, transmission::Type{S}; optimi
 
 end
 
-function SCEconomicDispatch(system::PSY.PowerSystem; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...)
+function SCEconomicDispatch(system::PSY.System; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...)
 
     if :PTDF in keys(kwargs)
 

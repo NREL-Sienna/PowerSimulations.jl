@@ -53,7 +53,7 @@ function run_simulations(simulation::PowerSimulationsModel{S}, solver, ps_dict::
         ps_dict = PSY.assign_ts_data(ps_dict,step_ts);
 
         # build sys
-        sys = PSY.PowerSystem(ps_dict; kwargs...);
+        sys = PSY.System(ps_dict; kwargs...);
 
         # make model
         tmp_model = PSI.PowerOperationModel(simulation.model.psmodel,

@@ -44,7 +44,7 @@ end
 @testset "PM integration into PS" begin
     base_dir = dirname(dirname(pathof(PowerSystems)))
     include(joinpath(base_dir,"data/data_5bus_pu.jl"))
-    PS_struct = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);
+    PS_struct = PSY.System(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);
     PM_dict = PowerSimulations.pass_to_pm(PS_struct)
     PM_object = PowerSimulations.build_nip_model(PM_dict, DCAngleModel);
     @test JuMP.num_variables(PM_object.model) == 384

@@ -3,7 +3,7 @@ using PowerSystems
 using JuMP
 base_dir = dirname(dirname(pathof(PowerSystems)))
 include(joinpath(base_dir,"data/data_5bus_uc.jl"))
-sys5 = PowerSystem(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);
+sys5 = PSY.System(nodes5, generators5, loads5_DA, branches5, nothing,  100.0);
 using PowerSimulations
 const PS = PowerSimulations
 

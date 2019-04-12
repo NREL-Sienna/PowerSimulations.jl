@@ -1,7 +1,7 @@
 function construct_device!(ps_m::CanonicalModel,
                             device_model::DeviceModel,
                             system_formulation::Type{S},
-                            system::PSY.PowerSystem,
+                            system::PSY.System,
                             time_range::UnitRange{Int64};
                             kwargs...) where {S <: PM.AbstractPowerFormulation}
 
@@ -17,11 +17,11 @@ function construct_device!(ps_m::CanonicalModel,
 
 end
 
-function InitialCondition(ps_m::CanonicalModel, 
-                           device::PSY.PowerSystemDevice, 
+function InitialCondition(ps_m::CanonicalModel,
+                           device::PSY.Device,
                            value::Float64)
-    
-    return InitialCondition(device, 
+
+    return InitialCondition(device,
                              PJ.Parameter(ps_m.JuMPmodel, value))
 
-end                         
+end

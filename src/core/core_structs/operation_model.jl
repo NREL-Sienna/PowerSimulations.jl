@@ -7,7 +7,7 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
     devices::Dict{Symbol, DeviceModel}
     branches::Dict{Symbol, DeviceModel}
     services::Dict{Symbol, ServiceModel}
-    system::PSY.PowerSystem
+    system::PSY.System
     canonical_model::PSI.CanonicalModel
 
     function PowerOperationModel(op_model::Type{M},
@@ -15,7 +15,7 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                 devices::Dict{Symbol, DeviceModel},
                                 branches::Dict{Symbol, DeviceModel},
                                 services::Dict{Symbol, ServiceModel},
-                                system::PSY.PowerSystem;
+                                system::PSY.System;
                                 optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing,
                                 kwargs...) where {M <: AbstractOperationsModel,
                                                   T <: PM.AbstractPowerFormulation}

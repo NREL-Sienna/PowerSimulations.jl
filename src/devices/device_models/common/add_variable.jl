@@ -6,7 +6,7 @@ function add_variable(ps_m::CanonicalModel,
                       devices::Array{T,1},
                       time_range::UnitRange{Int64},
                       var_name::Symbol,
-                      binary::Bool) where {T <: PSY.PowerSystemDevice}
+                      binary::Bool) where {T <: PSY.Device}
 
     ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, [d.name for d in devices], time_range)
 
@@ -23,7 +23,7 @@ function add_variable(ps_m::CanonicalModel,
                       time_range::UnitRange{Int64},
                       var_name::Symbol,
                       binary::Bool,
-                      expression::Symbol) where {T <: PSY.PowerSystemDevice}
+                      expression::Symbol) where {T <: PSY.Device}
 
     ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, [d.name for d in devices], time_range)
 
@@ -42,7 +42,7 @@ function add_variable(ps_m::CanonicalModel,
                       var_name::Symbol,
                       binary::Bool,
                       expression::Symbol,
-                      sign::Int64) where {T <: PSY.PowerSystemDevice}
+                      sign::Int64) where {T <: PSY.Device}
 
     ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, [d.name for d in devices], time_range)
 
