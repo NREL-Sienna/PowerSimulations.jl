@@ -33,12 +33,6 @@ git-tree-sha1 = "94d16e77dfacc59f6d6c1361866906dbb65b6f6b"
 uuid = "324d7699-5711-5eae-9e2f-1d82baa6b597"
 version = "0.5.2"
 
-[[CodecZlib]]
-deps = ["BinaryProvider", "Libdl", "Test", "TranscodingStreams"]
-git-tree-sha1 = "36bbf5374c661054d41410dc53ff752972583b9b"
-uuid = "944b1d66-785c-5afd-91f1-9de20f533193"
-version = "0.5.2"
-
 [[Codecs]]
 deps = ["Test"]
 git-tree-sha1 = "70885e5e038cba1c4c17a84ad6c40756e10a4fb5"
@@ -58,10 +52,10 @@ uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
 version = "2.1.0"
 
 [[DataFrames]]
-deps = ["CategoricalArrays", "CodecZlib", "Compat", "DataStreams", "Dates", "InteractiveUtils", "IteratorInterfaceExtensions", "LinearAlgebra", "Missings", "Printf", "Random", "Reexport", "SortingAlgorithms", "Statistics", "StatsBase", "TableTraits", "Tables", "Test", "TranscodingStreams", "Unicode", "WeakRefStrings"]
-git-tree-sha1 = "9cfed75401d25d281076eb5d82de148ac2933f9e"
+deps = ["CategoricalArrays", "Compat", "IteratorInterfaceExtensions", "Missings", "PooledArrays", "Printf", "REPL", "Reexport", "SortingAlgorithms", "Statistics", "StatsBase", "TableTraits", "Tables", "Unicode"]
+git-tree-sha1 = "61528683a3ef43e203adb300958ef89a91492cab"
 uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-version = "0.17.1"
+version = "0.18.0"
 
 [[DataStreams]]
 deps = ["Dates", "Missings", "Test", "WeakRefStrings"]
@@ -233,6 +227,12 @@ version = "0.2.22"
 deps = ["Dates", "LibGit2", "Markdown", "Printf", "REPL", "Random", "SHA", "UUIDs"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
+[[PooledArrays]]
+deps = ["Test"]
+git-tree-sha1 = "6ea4cfb9136d3ff2b9d30d6696cd72166a3b837c"
+uuid = "2dfb63ee-cc39-5dd5-95bd-886bf059d720"
+version = "0.5.1"
+
 [[PowerModels]]
 deps = ["InfrastructureModels", "JSON", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento", "SparseArrays"]
 git-tree-sha1 = "1e355b9541bd3991ac648f353fcd8ecd5ae0639e"
@@ -359,12 +359,6 @@ deps = ["Dates", "EzXML", "Mocking", "Printf", "Serialization", "Test", "Unicode
 git-tree-sha1 = "fdf5d2136d16498cb67d648cedd33b83c599e0c5"
 uuid = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 version = "0.9.0"
-
-[[TranscodingStreams]]
-deps = ["Random", "Test"]
-git-tree-sha1 = "a25d8e5a28c3b1b06d3859f30757d43106791919"
-uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
-version = "0.9.4"
 
 [[URIParser]]
 deps = ["Test", "Unicode"]
