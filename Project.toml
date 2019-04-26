@@ -16,7 +16,7 @@ MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 ParameterJuMP = "774612a8-9878-5177-865a-ca53ae2495f9"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 PowerModels = "c36e90e8-916a-50a6-bd94-075b64ef4655"
-PowerSystems = "c512b964-a17e-11e8-344c-11d7c2eac237"
+PowerSystems = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [extras]
