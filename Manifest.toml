@@ -116,12 +116,12 @@ deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[InfrastructureModels]]
-deps = ["JuMP", "LinearAlgebra", "MathOptInterface", "Memento"]
-git-tree-sha1 = "cd57f5c43edbddc0eefb52b174e22172ce120969"
+deps = ["JuMP", "Memento"]
+git-tree-sha1 = "bc1f45d84e5ce25adc67808bc814743a460abb4a"
 repo-rev = "moi-2"
 repo-url = "https://github.com/lanl-ansi/InfrastructureModels.jl.git"
 uuid = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
-version = "0.1.0"
+version = "0.2.0"
 
 [[InteractiveUtils]]
 deps = ["Markdown"]
@@ -141,7 +141,7 @@ version = "0.20.0"
 
 [[JuMP]]
 deps = ["Calculus", "DataStructures", "ForwardDiff", "LinearAlgebra", "MathOptInterface", "NaNMath", "Random", "SparseArrays", "Statistics", "Test"]
-git-tree-sha1 = "de52b334f52d9e0a7d8ff7c31be59ecd41ed7a70"
+git-tree-sha1 = "3d0feb23c1d939fd5dcd1b16079475569207f035"
 repo-rev = "master"
 repo-url = "https://github.com/JuliaOpt/JuMP.jl.git"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
@@ -235,9 +235,7 @@ uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 
 [[PowerModels]]
 deps = ["InfrastructureModels", "JSON", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento", "SparseArrays"]
-git-tree-sha1 = "2b685ea555d2c4fc17f99c270c3c58d2085261eb"
-repo-rev = "moi-2"
-repo-url = "https://github.com/lanl-ansi/PowerModels.jl.git"
+path = "/Users/jdlara/.julia/dev/PowerModels"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 version = "0.10.0"
 
