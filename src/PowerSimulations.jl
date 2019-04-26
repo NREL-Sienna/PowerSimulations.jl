@@ -28,7 +28,6 @@ import MathOptInterface
 import DataFrames
 import LinearAlgebra
 #import LinearAlgebra.BLAS #needed for the simulation stage
-import AxisArrays
 import Dates
 
 #################################################################################
