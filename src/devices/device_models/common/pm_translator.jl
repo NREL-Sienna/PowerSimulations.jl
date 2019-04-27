@@ -127,12 +127,12 @@ function get_branch_to_pm(ix::Int64, branch::PSY.HVDCLine)
     return PM_branch
 end
 
-function get_branches_to_pm(branches::Array{T}) where {T <: PSY.Branch}
+function get_branches_to_pm(sys::PSY.ConcreteSystem)
 
         PM_ac_branches = Dict{String,Any}()
         PM_dc_branches = Dict{String,Any}()
 
-        for (ix, branch) in enumerate(branches)
+        for (ix, branch) in enumerate(PSY.get_components(PSY.Branch, sys))
             if isa(branch,PSY.DCLine)
                 PM_dc_branches["$(ix)"] = get_branch_to_pm(ix, branch)
             else
@@ -166,12 +166,12 @@ function get_buses_to_pm(buses::Array{PSY.Bus})
     return PM_buses
 end
 
-function pass_to_pm(sys::PSY.System)
+function pass_to_pm(sys::PSY.ConcreteSystem, time_periods::Int64)
 
-    ac_lines, dc_lines = get_branches_to_pm(sys.branches)
+    ac_lines, dc_lines = get_branches_to_pm(sys)
 
     PM_translation = Dict{String,Any}(
-    "bus"            => get_buses_to_pm(sys.buses),
+    "bus"            => get_buses_to_pm(sys.components[PSY.Bus]),
     "branch"         => ac_lines,
     "baseMVA"        => sys.basepower,
     "per_unit"       => true,
@@ -185,7 +185,7 @@ function pass_to_pm(sys::PSY.System)
     # TODO: this function adds overhead in large number of time_steps
     # We can do better later.
 
-    PM_translation = PM.replicate(PM_translation,sys.time_periods)
+    PM_translation = PM.replicate(PM_translation, time_periods)
 
     return PM_translation
 
