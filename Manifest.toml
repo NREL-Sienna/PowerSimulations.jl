@@ -243,8 +243,8 @@ version = "0.10.0"
 
 [[PowerSystems]]
 deps = ["CSV", "DataFrames", "Dates", "InteractiveUtils", "JSON", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "YAML"]
-git-tree-sha1 = "cdc505117073b87d63470cbb170f1c4faaed063d"
-repo-rev = "dev"
+git-tree-sha1 = "072ffeed6335a6c13e2d7a1973dc62f91ce11b55"
+repo-rev = "psi_compat"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
 version = "0.4.0"

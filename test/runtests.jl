@@ -1,32 +1,32 @@
 using PowerSimulations
 using PowerSystems
-#using PowerModels
-#using JuMP
+using PowerModels
+using JuMP
 using Test
-#using Ipopt
-#using GLPK
-#using OSQP
+using Ipopt
+using GLPK
+using OSQP
 
 # required for reducing logging during tests
 using Memento
 
-#const PM = PowerModels
+const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
 
 abstract type TestOptModel <: PSI.AbstractOperationsModel end
 
-#ipopt_optimizer = with_optimizer(Ipopt.Optimizer, print_level = 0)
-#GLPK_optimizer = with_optimizer(GLPK.Optimizer)
-#OSQP_optimizer = with_optimizer(OSQP.Optimizer)
+ipopt_optimizer = with_optimizer(Ipopt.Optimizer, print_level = 0)
+GLPK_optimizer = with_optimizer(GLPK.Optimizer)
+OSQP_optimizer = with_optimizer(OSQP.Optimizer)
 
 include("get_test_data.jl")
 
-#=
 @testset "Common Functionalities" begin
     include("PowerModels_interface.jl")
 end
 
+#=
 @testset "Device Constructors" begin
     include("thermal_generation_constructors.jl")
     include("renewable_generation_constructors.jl")
