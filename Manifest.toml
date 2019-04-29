@@ -107,7 +107,7 @@ uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 deps = ["JuMP", "Memento"]
 git-tree-sha1 = "ec3f1ba27dbfd29a93f3c520ee189ce32deec049"
 uuid = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
-version = "0.2.0"
+version = "0.3.0"
 
 [[InteractiveUtils]]
 deps = ["Markdown"]
