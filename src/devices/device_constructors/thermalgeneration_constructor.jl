@@ -64,7 +64,7 @@ function construct_device!(ps_m::CanonicalModel,
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
-    devices = PSY.get_components(device, sys)
+    devices = collect(PSY.get_components(device, sys))
 
     #Variables
     activepower_variables(ps_m, devices, time_range);
@@ -106,7 +106,7 @@ function construct_device!(ps_m::CanonicalModel,
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
-    devices = PSY.get_components(device, sys)
+    devices = collect(PSY.get_components(device, sys))
 
     #Variables
     activepower_variables(ps_m, devices, time_range);
@@ -146,7 +146,7 @@ function construct_device!(ps_m::CanonicalModel,
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
-    devices = PSY.get_components(device, sys)
+    devices = collect(PSY.get_components(device, sys))
 
     #Variables
     activepower_variables(ps_m, devices, time_range);
@@ -175,7 +175,7 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: AbstractThermalDispatchForm,
                                              S <: PM.AbstractPowerFormulation}
                                             
-    devices = PSY.get_components(device, sys)
+    devices = collect(PSY.get_components(device, sys))
     
     #Variables
     activepower_variables(ps_m, devices, time_range);
@@ -205,7 +205,7 @@ function construct_device!(ps_m::CanonicalModel,
                                              S <: PM.AbstractActivePowerFormulation}
 
     
-    devices = PSY.get_components(device, sys)
+    devices = collect(PSY.get_components(device, sys))
 
     #Variables
     activepower_variables(ps_m, devices, time_range);

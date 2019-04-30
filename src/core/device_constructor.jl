@@ -22,6 +22,6 @@ function InitialCondition(ps_m::CanonicalModel,
                            value::Float64)
 
     return InitialCondition(device,
-                             PJ.ParameterRef(ps_m.JuMPmodel, value))
+                             PJ.add_parameter(ps_m.JuMPmodel, value))
 
 end
