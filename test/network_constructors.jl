@@ -1,5 +1,5 @@
 @testset "testing copper plate network construction" begin
-    ps_model = PSI._canonical_model_init(bus_numbers, GLPK_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods)
+    ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods)
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.CopperPlatePowerModel, sys5b, time_range);
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.CopperPlatePowerModel, sys5b, time_range);
     PSI.construct_network!(ps_model, PSI.CopperPlatePowerModel, sys5b, time_range);
@@ -12,7 +12,7 @@
     JuMP.optimize!(ps_model.JuMPmodel)
     @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
-    ps_model = PSI._canonical_model_init(bus_numbers, GLPK_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods; parameters = false)
+    ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods; parameters = false)
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.CopperPlatePowerModel, sys5b, time_range; parameters = false);
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.CopperPlatePowerModel, sys5b, time_range; parameters = false);
     PSI.construct_network!(ps_model, PSI.CopperPlatePowerModel, sys5b, time_range; parameters = false);
@@ -28,7 +28,7 @@ end
 
 @testset "testing DC-PF with PTDF formulation" begin
     PTDF, A = PowerSystems.buildptdf(branches5, nodes5)
-    ps_model = PSI._canonical_model_init(bus_numbers, GLPK_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods)
+    ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods)
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFForm, sys5b, time_range);
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFForm, sys5b, time_range);
     PSI.construct_network!(ps_model, PSI.StandardPTDFForm, sys5b, time_range; PTDF = PTDF)
@@ -44,7 +44,7 @@ end
 
     @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
-    ps_model = PSI._canonical_model_init(bus_numbers, GLPK_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods; parameters = false)
+    ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods; parameters = false)
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFForm, sys5b, time_range; parameters = false)
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFForm, sys5b, time_range; parameters = false)
     PSI.construct_network!(ps_model, PSI.StandardPTDFForm, sys5b, time_range; PTDF = PTDF, parameters = false)
@@ -62,14 +62,14 @@ end
 end
 
  @testset "PTDF ArgumentError" begin
-    ps_model = PSI._canonical_model_init(bus_numbers, GLPK_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods)
+    ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods)
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PSI.StandardPTDFForm, sys5b, time_range);
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PSI.StandardPTDFForm, sys5b, time_range);
     @test_throws ArgumentError PSI.construct_network!(ps_model, PSI.StandardPTDFForm, sys5b, time_range)
 end
 
 @testset "testing DC-PF network construction" begin
-    ps_model = PSI._canonical_model_init(bus_numbers, GLPK_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods)
+    ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods)
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.DCPlosslessForm, sys5b, time_range);
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.DCPlosslessForm, sys5b, time_range);
     PSI.construct_network!(ps_model, PM.DCPlosslessForm, sys5b, time_range);
@@ -83,7 +83,7 @@ end
 
     @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
-    ps_model = PSI._canonical_model_init(bus_numbers, GLPK_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods; parameters = false)
+    ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods; parameters = false)
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.DCPlosslessForm, sys5b, time_range; parameters = false)
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.DCPlosslessForm, sys5b, time_range; parameters = false)
     PSI.construct_network!(ps_model, PM.DCPlosslessForm, sys5b, time_range; parameters = false)
@@ -99,7 +99,7 @@ end
 end
 
 @testset  "testing AC-PF network construction" begin
-    ps_model = PSI._canonical_model_init(bus_numbers, ipopt_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods)
+    ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods)
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b, time_range);
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b, time_range);
     PSI.construct_network!(ps_model, PM.StandardACPForm, sys5b, time_range);
@@ -113,7 +113,7 @@ end
 
     @test termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
 
-    ps_model = PSI._canonical_model_init(bus_numbers, ipopt_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods; parameters = false)
+    ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, PM.AbstractPowerFormulation, 1:sys5b.time_periods; parameters = false)
     PSI.construct_device!(ps_model, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b, time_range; parameters = false)
     PSI.construct_device!(ps_model, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b, time_range; parameters = false)
     PSI.construct_network!(ps_model, PM.StandardACPForm, sys5b, time_range);

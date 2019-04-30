@@ -5,7 +5,7 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{T},
                            device_formulation::Type{D},
                            system_formulation::Type{S},
-                           sys::PSY.System,
+                           sys::PSY.ConcreteSystem,
                            time_range::UnitRange{Int64};
                            kwargs...) where {T <: PSY.ThermalGen,
                                              D <: AbstractThermalFormulation,
@@ -17,26 +17,28 @@ function construct_device!(ps_m::CanonicalModel,
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
+    devices = collect(PSY.get_components(device, sys))
+
     #Variables
-    activepower_variables(ps_m, sys.generators.thermal, time_range);
+    activepower_variables(ps_m, devices, time_range);
 
-    reactivepower_variables(ps_m, sys.generators.thermal, time_range);
+    reactivepower_variables(ps_m, devices, time_range);
 
-    commitment_variables(ps_m, sys.generators.thermal, time_range)
+    commitment_variables(ps_m, devices, time_range)
 
     #Constraints
-    activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
 
-    reactivepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
 
-    commitment_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
+    commitment_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
 
-    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
+    ramp_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
 
-    time_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
+    time_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
 
     #Cost Function
-    cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 
@@ -50,7 +52,7 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{T},
                            device_formulation::Type{D},
                            system_formulation::Type{S},
-                           sys::PSY.System,
+                           sys::PSY.ConcreteSystem,
                            time_range::UnitRange{Int64};
                            kwargs...) where {T <: PSY.ThermalGen,
                                              D <: AbstractThermalFormulation,
@@ -62,22 +64,24 @@ function construct_device!(ps_m::CanonicalModel,
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
-    #Variables
-    activepower_variables(ps_m, sys.generators.thermal, time_range);
+    devices = PSY.get_components(device, sys)
 
-    commitment_variables(ps_m, sys.generators.thermal, time_range)
+    #Variables
+    activepower_variables(ps_m, devices, time_range);
+
+    commitment_variables(ps_m, devices, time_range)
 
     #Constraints
-    activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
 
-    commitment_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
+    commitment_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
 
-    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
+    ramp_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
 
-    time_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
+    time_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
 
     #Cost Function
-    cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 
@@ -90,31 +94,34 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{T},
                            device_formulation::Type{PSI.ThermalRampLimited},
                            system_formulation::Type{S},
-                           sys::PSY.System,
+                           sys::PSY.ConcreteSystem,
                            time_range::UnitRange{Int64};
                            kwargs...) where {T <: PSY.ThermalGen,
                                              S <: PM.AbstractPowerFormulation}
+
+
+    parameters = get(kwargs, :parameters, true)
 
     if isempty(keys(ps_m.initial_conditions))
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
-    parameters = get(kwargs, :parameters, true)
+    devices = PSY.get_components(device, sys)
 
     #Variables
-    activepower_variables(ps_m, sys.generators.thermal, time_range);
+    activepower_variables(ps_m, devices, time_range);
 
-    reactivepower_variables(ps_m, sys.generators.thermal, time_range);
+    reactivepower_variables(ps_m, devices, time_range);
 
     #Constraints
-    activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
 
-    reactivepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
 
-    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
+    ramp_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
 
     #Cost Function
-    cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 
@@ -128,27 +135,29 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{T},
                            device_formulation::Type{ThermalRampLimited},
                            system_formulation::Type{S},
-                           sys::PSY.System,
+                           sys::PSY.ConcreteSystem,
                            time_range::UnitRange{Int64};
                            kwargs...) where {T <: PSY.ThermalGen,
                                              S <: PM.AbstractActivePowerFormulation}
+
+    parameters = get(kwargs, :parameters, true)
 
     if isempty(keys(ps_m.initial_conditions))
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
 
-    parameters = get(kwargs, :parameters, true)
+    devices = PSY.get_components(device, sys)
 
     #Variables
-    activepower_variables(ps_m, sys.generators.thermal, time_range);
+    activepower_variables(ps_m, devices, time_range);
 
     #Constraints
-    activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
 
-    ramp_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range, parameters)
+    ramp_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
 
     #Cost Function
-    cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 
@@ -160,24 +169,26 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{T},
                            device_formulation::Type{D},
                            system_formulation::Type{S},
-                           sys::PSY.System,
+                           sys::PSY.ConcreteSystem,
                            time_range::UnitRange{Int64};
                            kwargs...) where {T<: PSY.ThermalGen,
                                              D <: AbstractThermalDispatchForm,
                                              S <: PM.AbstractPowerFormulation}
-
+                                            
+    devices = PSY.get_components(device, sys)
+    
     #Variables
-    activepower_variables(ps_m, sys.generators.thermal, time_range);
+    activepower_variables(ps_m, devices, time_range);
 
-    reactivepower_variables(ps_m, sys.generators.thermal, time_range);
+    reactivepower_variables(ps_m, devices, time_range);
 
     #Constraints
-    activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
 
-    reactivepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
 
     #Cost Function
-    cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 
@@ -187,20 +198,23 @@ function construct_device!(ps_m::CanonicalModel,
                            device::Type{T},
                            device_formulation::Type{D},
                            system_formulation::Type{S},
-                           sys::PSY.System,
+                           sys::PSY.ConcreteSystem,
                            time_range::UnitRange{Int64};
                            kwargs...) where {T<: PSY.ThermalGen,
                                              D <: AbstractThermalDispatchForm,
                                              S <: PM.AbstractActivePowerFormulation}
 
+    
+    devices = PSY.get_components(device, sys)
+
     #Variables
-    activepower_variables(ps_m, sys.generators.thermal, time_range);
+    activepower_variables(ps_m, devices, time_range);
 
     #Constraints
-    activepower_constraints(ps_m, sys.generators.thermal, device_formulation, system_formulation, time_range)
+    activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
 
     #Cost Function
-    cost_function(ps_m, sys.generators.thermal, device_formulation, system_formulation)
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 
