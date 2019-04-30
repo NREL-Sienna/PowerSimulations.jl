@@ -38,11 +38,7 @@ function status_init(ps_m::CanonicalModel,
     for g in devices
         if !isnothing(g.tech.ramplimits)
             if parameters
-<<<<<<< HEAD
                 initial_conditions[i] = PSI.InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(g.tech.activepower > 0)))
-=======
-                initial_conditions[i] = PSI.InitialCondition(g, PJ.ParameterRef(ps_m.JuMPmodel, 1.0*(g.tech.activepower > 0)))
->>>>>>> ParameterJuMP updates compatibility
             else
                 initial_conditions[i] = PSI.InitialCondition(g, 1.0*(g.tech.activepower > 0))
             end
@@ -72,13 +68,8 @@ function duration_init(ps_m::CanonicalModel,
     for g in devices
         if !isnothing(g.tech.ramplimits)
             if parameters
-<<<<<<< HEAD
                 ini_cond_on[i] = PSI.InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 999.0*(g.tech.activepower > 0)))
                 ini_cond_off[i] = PSI.InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 999.0*(g.tech.activepower < 0)))
-=======
-                ini_cond_on[i] = PSI.InitialCondition(g, PJ.ParameterRef(ps_m.JuMPmodel, 999.0*(g.tech.activepower > 0)))
-                ini_cond_off[i] = PSI.InitialCondition(g, PJ.ParameterRef(ps_m.JuMPmodel, 999.0*(g.tech.activepower < 0)))
->>>>>>> ParameterJuMP updates compatibility
             else
                 ini_cond_on[i] = PSI.InitialCondition(g, 999.0*(g.tech.activepower > 0))
                 ini_cond_off[i] = PSI.InitialCondition(g, 999.0*(g.tech.activepower < 0))
