@@ -1,3 +1,4 @@
+#=
 function ps_cost(ps_m::CanonicalModel,
                  variable::JuMP.Containers.DenseAxisArray{JV},
                  cost_component::Function,
@@ -14,7 +15,18 @@ function ps_cost(ps_m::CanonicalModel,
     return sign*gen_cost
 
 end
+=#
 
+function ps_cost(ps_m::CanonicalModel,
+                 variable::JuMP.Containers.DenseAxisArray{JV},
+                 cost_component::Tuple{Float64,Float64},
+                 sign::Int64) where {JV <: JuMP.AbstractVariableRef}
+
+    gen_cost = sum(variable.^2)*cost_component[1] + sum(variable)*cost_component[1]
+
+    return sign*gen_cost
+
+end
 
 function ps_cost(ps_m::CanonicalModel,
                  variable::JuMP.Containers.DenseAxisArray{JV},
@@ -85,7 +97,7 @@ function add_to_cost(ps_m::CanonicalModel,
                      var_name::Symbol,
                      cost_symbol::Symbol, sign::Int64 = 1) where {C <: PSY.Device}
 
-   for d in devices
+    for d in devices
         cost_expression = ps_cost(ps_m, ps_m.variables[var_name][d.name,:], getfield(d.econ,cost_symbol), sign)
         ps_m.cost_function += cost_expression
     end
