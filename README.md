@@ -36,14 +36,18 @@ For example, an annual production cost modeling simulation can be created by for
 
 ## Installation
 
-This package is not yet registered. **Until it is, things may change. It is perfectly
+This package is not yet registered and relies on unreleased branches from other packages. In order to install `PowerSimulations.jl` you need to have installed the proper version of those packages.
+
+**Until it is, things may change. It is perfectly
 usable but should not be considered stable**.
 
 You can install it by typing
 
 ```julia
-julia> using Pkg
-julia> Pkg.develop("https://github.com/NREL/PowerSimulations.jl")
+pkg> add JuMP
+pkg> add InfrastructureModels#moi-2
+pkg> add PowerModels#moi-2
+pkg> dev https://github.com/NREL/PowerSimulations.jl 
 ```
 ## Usage
 
