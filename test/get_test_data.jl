@@ -4,6 +4,7 @@ base_dir = string(dirname(dirname(pathof(PowerSystems))));
 include(joinpath(base_dir,"data/data_5bus_pu.jl"));
 include(joinpath(base_dir,"data/data_14bus_pu.jl"))
 bus_numbers5 = [b.number for b in nodes5]
+bus_numbers14 = [b.number for b in nodes14];
 
 #=
 DATA_DIR = joinpath(base_dir, "data")
