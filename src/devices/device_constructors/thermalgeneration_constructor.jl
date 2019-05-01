@@ -13,6 +13,10 @@ function construct_device!(ps_m::CanonicalModel,
 
     parameters = get(kwargs, :parameters, true)
 
+    look_ahead = get(kwargs, :parameters, true)
+
+    time_range = look_ahead ? time_range : 1:1 
+
     if isempty(keys(ps_m.initial_conditions))
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
@@ -60,6 +64,10 @@ function construct_device!(ps_m::CanonicalModel,
 
     parameters = get(kwargs, :parameters, true)
 
+    look_ahead = get(kwargs, :parameters, true)
+
+    time_range = look_ahead ? time_range : 1:1 
+
     if isempty(keys(ps_m.initial_conditions))
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
@@ -102,6 +110,10 @@ function construct_device!(ps_m::CanonicalModel,
 
     parameters = get(kwargs, :parameters, true)
 
+    look_ahead = get(kwargs, :parameters, true)
+
+    time_range = look_ahead ? time_range : 1:1 
+
     if isempty(keys(ps_m.initial_conditions))
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
@@ -142,6 +154,10 @@ function construct_device!(ps_m::CanonicalModel,
 
     parameters = get(kwargs, :parameters, true)
 
+    look_ahead = get(kwargs, :parameters, true)
+
+    time_range = look_ahead ? time_range : 1:1 
+
     if isempty(keys(ps_m.initial_conditions))
         @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
     end
@@ -176,6 +192,10 @@ function construct_device!(ps_m::CanonicalModel,
                                              S <: PM.AbstractPowerFormulation}
                                             
     devices = collect(PSY.get_components(device, sys))
+
+    look_ahead = get(kwargs, :parameters, true)
+
+    time_range = look_ahead ? time_range : 1:1 
     
     #Variables
     activepower_variables(ps_m, devices, time_range);
@@ -206,6 +226,10 @@ function construct_device!(ps_m::CanonicalModel,
 
     
     devices = collect(PSY.get_components(device, sys))
+
+    look_ahead = get(kwargs, :parameters, true)
+
+    time_range = look_ahead ? time_range : 1:1 
 
     #Variables
     activepower_variables(ps_m, devices, time_range);
