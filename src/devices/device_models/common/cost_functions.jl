@@ -18,11 +18,11 @@ end
 =#
 
 function ps_cost(ps_m::CanonicalModel,
-                 variable::JuMP.Containers.DenseAxisArray{JV},
-                 cost_component::Tuple{Float64,Float64},
-                 sign::Int64) where {JV <: JuMP.AbstractVariableRef}
+    variable::JuMP.Containers.DenseAxisArray{JV},
+    cost_component::Float64,
+    sign::Int64) where {JV <: JuMP.AbstractVariableRef}
 
-    gen_cost = sum(variable.^2)*cost_component[1] + sum(variable)*cost_component[1]
+    gen_cost = sum(variable)*cost_component
 
     return sign*gen_cost
 
@@ -30,12 +30,14 @@ end
 
 function ps_cost(ps_m::CanonicalModel,
                  variable::JuMP.Containers.DenseAxisArray{JV},
-                 cost_component::Float64,
+                 cost_component::Tuple{Float64,Float64},
                  sign::Int64) where {JV <: JuMP.AbstractVariableRef}
 
-    gen_cost = sum(variable)*cost_component
-
-    return sign*gen_cost
+    if cost_component[1] >= eps()                 
+        gen_cost = sign*(sum(variable.^2)*cost_component[1] + sum(variable)*cost_component[2])
+    else           
+        return ps_cost(ps_m, variable, cost_component[2], 1)
+    end
 
 end
 
