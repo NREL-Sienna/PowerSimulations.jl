@@ -55,7 +55,7 @@ Once installed, the `PowerSimulations` package can by going to the folder `.juli
 
 ```julia
 julia> ]
-(v0.7) pkg> activate .
+(v1.1) pkg> activate .
 (PowerSimulations) pkg> instantiate
 ```
 
