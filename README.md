@@ -45,6 +45,7 @@ You can install it by typing
 
 ```julia
 pkg> add JuMP
+pkg> add ParameterJuMP#dfb1e3c9e880a6a2c693b3f5f9a3d2a9c94a6aac
 pkg> add InfrastructureModels#moi-2
 pkg> add PowerModels#moi-2
 pkg> dev https://github.com/NREL/PowerSimulations.jl 
