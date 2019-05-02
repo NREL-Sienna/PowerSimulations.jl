@@ -45,7 +45,7 @@ usable but should not be considered stable**.
 You can install it by typing
 
 ```julia
-pkg> add JuMP
+pkg> add JuMP#3d0feb23c1d939fd5dcd1b16079475569207f035
 pkg> add ParameterJuMP#dfb1e3c9e880a6a2c693b3f5f9a3d2a9c94a6aac
 pkg> add InfrastructureModels#moi-2
 pkg> add PowerModels#moi-2
