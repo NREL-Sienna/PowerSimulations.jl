@@ -18,7 +18,7 @@ struct ThermalDispatchNoMin <: AbstractThermalDispatchForm end
 This function add the variables for power generation output to the model
 """
 function activepower_variables(ps_m::CanonicalModel,
-                               devices::Array{T,1},
+                               devices::Vector{T},
                                time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen}
 
     add_variable(ps_m, devices, time_range, :Pth, false, :var_active)
@@ -31,7 +31,7 @@ end
 This function add the variables for power generation output to the model
 """
 function reactivepower_variables(ps_m::CanonicalModel,
-                                 devices::Array{T,1},
+                                 devices::Vector{T},
                                  time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen}
 
     add_variable(ps_m, devices, time_range, :Qth, false, :var_reactive)
@@ -44,7 +44,7 @@ end
 This function add the variables for power generation commitment to the model
 """
 function commitment_variables(ps_m::CanonicalModel,
-                              devices::Array{T,1},
+                              devices::Vector{T},
                               time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen}
 
     add_variable(ps_m, devices, time_range, :on_th, true)
@@ -59,7 +59,7 @@ end
 This function adds the active power limits of generators when there are no CommitmentVariables
 """
 function activepower_constraints(ps_m::CanonicalModel,
-                                 devices::Array{T,1},
+                                 devices::Vector{T},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S},
                                  time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen,
@@ -78,7 +78,7 @@ end
 This function adds the active power limits of generators when there are CommitmentVariables
 """
 function activepower_constraints(ps_m::CanonicalModel,
-                                 devices::Array{T,1},
+                                 devices::Vector{T},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S},
                                  time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen,
@@ -98,7 +98,7 @@ end
 This function adds the reactive  power limits of generators when there are CommitmentVariables
 """
 function reactivepower_constraints(ps_m::CanonicalModel,
-                                   devices::Array{T,1},
+                                   devices::Vector{T},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S},
                                    time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen,
@@ -119,7 +119,7 @@ end
 This function adds the reactive power limits of generators when there CommitmentVariables
 """
 function reactivepower_constraints(ps_m::CanonicalModel,
-                                   devices::Array{T,1},
+                                   devices::Vector{T},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S},
                                    time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen,
@@ -138,7 +138,7 @@ end
 This function adds the active power limits of generators when there are no CommitmentVariables
 """
 function activepower_constraints(ps_m::CanonicalModel,
-                                 devices::Array{T,1},
+                                 devices::Vector{T},
                                  device_formulation::Type{PSI.ThermalDispatchNoMin},
                                  system_formulation::Type{S},
                                  time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen,
@@ -157,7 +157,7 @@ end
 This function adds the reactive  power limits of generators when there are CommitmentVariables
 """
 function reactivepower_constraints(ps_m::CanonicalModel,
-                                   devices::Array{T,1},
+                                   devices::Vector{T},
                                    device_formulation::Type{PSI.ThermalDispatchNoMin},
                                    system_formulation::Type{S},
                                    time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen,
@@ -178,7 +178,7 @@ end
 This function adds the Commitment Status constraint when there are CommitmentVariables
 """
 function commitment_constraints(ps_m::CanonicalModel,
-                                devices::Array{T,1},
+                                devices::Vector{T},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S},
                                 time_range::UnitRange{Int64},
@@ -204,7 +204,7 @@ end
 
 # ramping constraints
 
-function _get_data_for_rocc(devices::Array{T,1}) where {T <: PSY.ThermalGen}
+function _get_data_for_rocc(devices::Vector{T}) where {T <: PSY.ThermalGen}
 
     set_name = Vector{String}(undef, length(devices))
     ramp_params = Vector{UpDown}(undef, length(devices))
@@ -235,7 +235,7 @@ end
 This function adds the ramping limits of generators when there are CommitmentVariables
 """
 function ramp_constraints(ps_m::CanonicalModel,
-                          devices::Array{T,1},
+                          devices::Vector{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S},
                           time_range::UnitRange{Int64},
@@ -247,7 +247,7 @@ function ramp_constraints(ps_m::CanonicalModel,
 
     if !isempty(data[2])
         if !(:thermal_output in keys(ps_m.initial_conditions))
-            @info("Initial conditions for rate of change not provided. This can lead to unwanted results")
+            @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
             output_init(ps_m, devices, parameters)
         end
 
@@ -268,7 +268,7 @@ end
 
 
 function ramp_constraints(ps_m::CanonicalModel,
-                          devices::Array{T,1},
+                          devices::Vector{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S},
                           time_range::UnitRange{Int64},
@@ -280,7 +280,7 @@ function ramp_constraints(ps_m::CanonicalModel,
 
     if !isempty(data[2])
         if !(:thermal_output in keys(ps_m.initial_conditions))
-            @info("Initial conditions for rate of change not provided. This can lead to unwanted results")
+            @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
             output_init(ps_m, devices, parameters)
         end
         # Here goes the reactive power ramp limits
@@ -301,7 +301,7 @@ end
 This function adds the ramping limits of generators when there are CommitmentVariables
 """
 function ramp_constraints(ps_m::CanonicalModel,
-                          devices::Array{T,1},
+                          devices::Vector{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S},
                           time_range::UnitRange{Int64},
@@ -313,7 +313,7 @@ function ramp_constraints(ps_m::CanonicalModel,
 
     if !isempty(data[2])
         if !(:thermal_output in keys(ps_m.initial_conditions))
-            @info("Initial conditions for rate of change not provided. This can lead to unwanted results")
+            @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
             output_init(ps_m, devices, parameters)
         end
 
@@ -335,7 +335,7 @@ end
 
 
 function ramp_constraints(ps_m::CanonicalModel,
-                          devices::Array{T,1},
+                          devices::Vector{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S},
                           time_range::UnitRange{Int64},
@@ -347,7 +347,7 @@ function ramp_constraints(ps_m::CanonicalModel,
 
     if !isempty(data[2])
         if !(:thermal_output in keys(ps_m.initial_conditions))
-            @info("Initial conditions for rate of change not provided. This can lead to unwanted results")
+            @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
             output_init(ps_m, devices, parameters)
         end
         device_linear_rateofchange(ps_m,
@@ -365,17 +365,25 @@ end
 
 # time constraints
 
-function _get_data_for_tdc(devices::Array{T,1}) where {T <: PSY.ThermalGen}
+function _get_data_for_tdc(devices::Vector{T}, 
+                           ini_cond_on::Vector{InitialCondition},  
+                           ini_cond_off::Vector{InitialCondition}) where {T <: PSY.ThermalGen}
 
     set_name = Vector{String}(undef, length(devices))
     time_params = Vector{UpDown}(undef, length(devices))
+    initial_conditions_on = Vector{InitialCondition}(undef, length(devices))
+    initial_conditions_off = Vector{InitialCondition}(undef, length(devices))
 
     idx = eachindex(devices)
     i, state = iterate(idx)
     for g in devices
         if !isnothing(g.tech.ramplimits)
             set_name[i] = g.name
-            time_params[i] = g.tech.timelimits
+            time_params[i] = g.tech.timelimits            
+            (ix_n, initial_conditions_on[i]) = [(ix,ini) for (ix,ini) in enumerate(ini_cond_on) if ini.device == g][1]
+            deleteat!(ini_cond_on, ix_n)
+            (ix_f, initial_conditions_off[i]) = [(ix,ini) for (ix,ini) in enumerate(ini_cond_off) if ini.device == g][1]
+            deleteat!(ini_cond_off, ix_f)
             y = iterate(idx, state)
             y === nothing && (i += 1; break)
             i, state = y
@@ -384,32 +392,52 @@ function _get_data_for_tdc(devices::Array{T,1}) where {T <: PSY.ThermalGen}
 
     deleteat!(set_name, i:last(idx))
     deleteat!(time_params, i:last(idx))
+    deleteat!(initial_conditions_on, i:last(idx))
+    deleteat!(initial_conditions_off, i:last(idx))
 
-    return set_name, time_params
+    return set_name, time_params, initial_conditions_on, initial_conditions_off
 end
 
 function time_constraints(ps_m::CanonicalModel,
-                          devices::Array{T,1},
+                          devices::Vector{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S},
                           time_range::UnitRange{Int64},
-                          parameters::Bool = false) where {T <: PSY.ThermalGen,
+                          parameters::Bool) where {T <: PSY.ThermalGen,
                                                                D <: AbstractThermalFormulation,
                                                                S <: PM.AbstractPowerFormulation}
 
-    duration_data = _get_data_for_tdc(devices)
 
-    if !isempty(duration_data)
-        if !(:thermal_duration_on in keys(ps_m.initial_conditions))
-            @info("Initial conditions for time up/down not provided. This can lead to unwanted results")
-            duration_init(ps_m, devices, parameters)
+    if !(:thermal_duration_on in keys(ps_m.initial_conditions))
+        @info("Initial Conditions for Time Up/Down constraints not provided. This can lead to unwanted results")
+        duration_init(ps_m, devices, parameters)   
+    end
+    
+    # Get the data from the Array of Generators                  
+    key_on = parameters ? :duration_indicator_status_on :   :thermal_duration_on
+    key_off = parameters ? :duration_indicator_status_off : :thermal_duration_off                                       
+    duration_data = _get_data_for_tdc(devices,
+                                      ps_m.initial_conditions[key_on],
+                                      ps_m.initial_conditions[key_off])                                                                 
+
+    if !isempty(duration_data[2])
+       if parameters          
+            device_duration_indicator(ps_m, 
+                                      duration_data[1],
+                                      duration_data[2],
+                                      duration_data[3],
+                                      duration_data[4],
+                                      time_range, :duration_thermal, 
+                                      (:on_th, :start_th, :stop_th))
+        else
+            device_duration_retrospective(ps_m,
+                                        duration_data[1],
+                                        duration_data[2],
+                                        duration_data[3],
+                                        duration_data[4],
+                                        time_range, :duration_thermal, 
+                                        (:on_th, :start_th, :stop_th))
         end
-        device_duration_retrospective(ps_m,
-                                      duration_data,
-                                      ps_m.initial_conditions[:thermal_duration_on],
-                                      ps_m.initial_conditions[:thermal_duration_off],
-                                      time_range,
-                                      :duration, (:on_th, :start_th, :stop_th))
     else
         @warn "Data doesn't contain generators with time-up/down limits, consider adjusting your formulation"
     end
@@ -422,7 +450,7 @@ end
 # thermal generation cost
 
 function cost_function(ps_m::CanonicalModel,
-                       devices::Array{T,1},
+                       devices::Vector{T},
                        device_formulation::Type{D},
                        system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                            D <: AbstractThermalDispatchForm,
@@ -436,7 +464,7 @@ end
 
 
 function cost_function(ps_m::CanonicalModel,
-                       devices::Array{T,1},
+                       devices::Vector{T},
                        device_formulation::Type{D},
                        system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                            D <: AbstractThermalFormulation,

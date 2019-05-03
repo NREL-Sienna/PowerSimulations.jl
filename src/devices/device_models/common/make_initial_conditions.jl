@@ -68,8 +68,8 @@ function duration_init(ps_m::CanonicalModel,
     for g in devices
         if !isnothing(g.tech.ramplimits)
             if parameters
-                ini_cond_on[i] = PSI.InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 999.0*(g.tech.activepower > 0)))
-                ini_cond_off[i] = PSI.InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 999.0*(g.tech.activepower < 0)))
+                ini_cond_on[i] = PSI.InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(g.tech.activepower > 0)))
+                ini_cond_off[i] = PSI.InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(g.tech.activepower < 0)))
             else
                 ini_cond_on[i] = PSI.InitialCondition(g, 999.0*(g.tech.activepower > 0))
                 ini_cond_off[i] = PSI.InitialCondition(g, 999.0*(g.tech.activepower < 0))
@@ -83,10 +83,15 @@ function duration_init(ps_m::CanonicalModel,
     deleteat!(ini_cond_on, i:last(idx))
     deleteat!(ini_cond_off, i:last(idx))
 
-    ps_m.initial_conditions[:thermal_duration_on] = ini_cond_on
-    ps_m.initial_conditions[:thermal_duration_off] = ini_cond_off
+    if parameters
+        ps_m.initial_conditions[:duration_indicator_status_on] = ini_cond_on
+        ps_m.initial_conditions[:duration_indicator_status_off] = ini_cond_off
+    else    
+        ps_m.initial_conditions[:thermal_duration_on] = ini_cond_on
+        ps_m.initial_conditions[:thermal_duration_off] = ini_cond_off
+    end
 
-    return
+    return ini_cond_on, ini_cond_off
 
 end
 
