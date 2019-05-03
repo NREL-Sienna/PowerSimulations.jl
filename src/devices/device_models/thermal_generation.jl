@@ -410,8 +410,10 @@ function time_constraints(ps_m::CanonicalModel,
 
     if !(:thermal_duration_on in keys(ps_m.initial_conditions))
         @info("Initial Conditions for Time Up/Down constraints not provided. This can lead to unwanted results")
-        duration_init(ps_m, devices, parameters)   
+        time_limits = duration_init(ps_m, devices, parameters)   
     end
+    
+    if !time_limits
     
     # Get the data from the Array of Generators                  
     key_on = parameters ? :duration_indicator_status_on :   :thermal_duration_on
@@ -419,8 +421,7 @@ function time_constraints(ps_m::CanonicalModel,
     duration_data = _get_data_for_tdc(devices,
                                       ps_m.initial_conditions[key_on],
                                       ps_m.initial_conditions[key_off])                                                                 
-
-    if !isempty(duration_data[2])
+   
        if parameters          
             device_duration_indicator(ps_m, 
                                       duration_data[1],
