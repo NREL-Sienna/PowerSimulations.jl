@@ -91,7 +91,7 @@ function duration_init(ps_m::CanonicalModel,
         ps_m.initial_conditions[:thermal_duration_off] = ini_cond_off
     end
 
-    return ini_cond_on, ini_cond_off
+    return isempty(ini_cond_on)
 
 end
 
