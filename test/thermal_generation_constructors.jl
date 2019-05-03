@@ -1,3 +1,5 @@
+################################### Unit Commitment tests #########################################
+
 @testset "UC With DC - PF" begin
     variable_names = [:on_th, :start_th, :stop_th]
     uc_constraint_names = [:ramp_thermal_up, :ramp_thermal_down, :duration_thermal_up, :duration_thermal_down]
@@ -146,6 +148,9 @@ end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == GenericQuadExpr{Float64,VariableRef}
 end
 
+
+################################### Basic Dispatch tests #########################################
+
 @testset "Dispatch With DC - PF" begin
     #5-Bus testing    
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
@@ -237,6 +242,8 @@ end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == GenericQuadExpr{Float64,VariableRef} 
 end
+
+################################### No Minimum Dispatch tests #########################################
 
 @testset "Dispatch No-Minimum With DC - PF" begin
     #5 Bus testing
@@ -355,6 +362,8 @@ end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == GenericQuadExpr{Float64,VariableRef} 
 end
+
+################################### Ramp Limited Testing #########################################
 
 @testset "Ramp Limited Dispatch With AC - PF" begin
     ramp_constraint_names = [:ramp_thermal_up, :ramp_thermal_down]
