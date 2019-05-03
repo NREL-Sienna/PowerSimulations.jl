@@ -13,10 +13,6 @@ function construct_device!(ps_m::CanonicalModel,
 
     parameters = get(kwargs, :parameters, true)
 
-    if isempty(keys(ps_m.initial_conditions))
-        @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
-    end
-
     devices = collect(PSY.get_components(device, sys))
 
     #Variables
@@ -59,11 +55,7 @@ function construct_device!(ps_m::CanonicalModel,
                                              S <: PM.AbstractActivePowerFormulation}
 
     parameters = get(kwargs, :parameters, true)
-
-    if isempty(keys(ps_m.initial_conditions))
-        @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
-    end
-
+ 
     devices = collect(PSY.get_components(device, sys))
 
     #Variables
@@ -102,10 +94,6 @@ function construct_device!(ps_m::CanonicalModel,
 
     parameters = get(kwargs, :parameters, true)
 
-    if isempty(keys(ps_m.initial_conditions))
-        @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
-    end
-
     devices = collect(PSY.get_components(device, sys))
 
     #Variables
@@ -142,10 +130,6 @@ function construct_device!(ps_m::CanonicalModel,
 
     parameters = get(kwargs, :parameters, true)
 
-    if isempty(keys(ps_m.initial_conditions))
-        @warn("Initial Conditions not provided, this can lead to infeasible problem formulations")
-    end
-
     devices = collect(PSY.get_components(device, sys))
 
     #Variables
@@ -174,6 +158,7 @@ function construct_device!(ps_m::CanonicalModel,
                            kwargs...) where {T<: PSY.ThermalGen,
                                              D <: AbstractThermalDispatchForm,
                                              S <: PM.AbstractPowerFormulation}
+
                                             
     devices = collect(PSY.get_components(device, sys))
   
@@ -203,8 +188,7 @@ function construct_device!(ps_m::CanonicalModel,
                            kwargs...) where {T<: PSY.ThermalGen,
                                              D <: AbstractThermalDispatchForm,
                                              S <: PM.AbstractActivePowerFormulation}
-
-    
+                                           
     devices = collect(PSY.get_components(device, sys))
 
     #Variables
