@@ -23,7 +23,7 @@ OSQP_optimizer = with_optimizer(OSQP.Optimizer)
 include("get_test_data.jl")
 
 @testset "Common Functionalities" begin
-    #include("PowerModels_interface.jl")
+    include("PowerModels_interface.jl")
 end
 
 @testset "Device Constructors" begin
