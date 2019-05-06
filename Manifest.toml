@@ -53,7 +53,7 @@ version = "2.1.0"
 
 [[DataFrames]]
 deps = ["CategoricalArrays", "Compat", "IteratorInterfaceExtensions", "Missings", "PooledArrays", "Printf", "REPL", "Reexport", "SortingAlgorithms", "Statistics", "StatsBase", "TableTraits", "Tables", "Unicode"]
-git-tree-sha1 = "4b83473baad52fbfe3b33b720e4fa722cdd62ce8"
+git-tree-sha1 = "3891a62fd843662af9f78f25bdd415530b9b9c1e"
 uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 version = "0.18.1"
 
