@@ -16,9 +16,9 @@ const PSI = PowerSimulations
 
 abstract type TestOptModel <: PSI.AbstractOperationsModel end
 
-ipopt_optimizer = with_optimizer(Ipopt.Optimizer, print_level = 0)
-GLPK_optimizer = with_optimizer(GLPK.Optimizer)
-OSQP_optimizer = with_optimizer(OSQP.Optimizer)
+ipopt_optimizer = JuMP.with_optimizer(Ipopt.Optimizer, print_level = 0)
+GLPK_optimizer = JuMP.with_optimizer(GLPK.Optimizer)
+OSQP_optimizer = JuMP.with_optimizer(OSQP.Optimizer)
 
 include("get_test_data.jl")
 
