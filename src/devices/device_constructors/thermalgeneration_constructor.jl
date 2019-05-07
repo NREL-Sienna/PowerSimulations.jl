@@ -1,21 +1,23 @@
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(ps_m::CanonicalModel,
-                           device::Type{T},
-                           device_formulation::Type{D},
-                           system_formulation::Type{S},
-                           sys::PSY.ConcreteSystem,
-                           time_range::UnitRange{Int64};
-                           kwargs...) where {T <: PSY.ThermalGen,
-                                             D <: AbstractThermalFormulation,
-                                             S <: PM.AbstractPowerFormulation}
-
-    isconcretetype(device) ? true : true    
-
-    parameters = get(kwargs, :parameters, true)
+function _internal_device_constructor!(ps_m::CanonicalModel,
+                                        device::Type{T},
+                                        device_formulation::Type{D},
+                                        system_formulation::Type{S},
+                                        sys::PSY.ConcreteSystem,
+                                        time_range::UnitRange{Int64};
+                                        kwargs...) where {T <: PSY.ThermalGen,
+                                                            D <: AbstractThermalFormulation,
+                                                            S <: PM.AbstractPowerFormulation}
 
     devices = collect(PSY.get_components(device, sys))
+    
+    if validate_available_devices(devices, device)
+        return
+    end
+
+    parameters = get(kwargs, :parameters, true)
 
     #Variables
     activepower_variables(ps_m, devices, time_range);
@@ -46,19 +48,23 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(ps_m::CanonicalModel,
-                           device::Type{T},
-                           device_formulation::Type{D},
-                           system_formulation::Type{S},
-                           sys::PSY.ConcreteSystem,
-                           time_range::UnitRange{Int64};
-                           kwargs...) where {T <: PSY.ThermalGen,
-                                             D <: AbstractThermalFormulation,
-                                             S <: PM.AbstractActivePowerFormulation}
+function _internal_device_constructor!(ps_m::CanonicalModel,
+                                        device::Type{T},
+                                        device_formulation::Type{D},
+                                        system_formulation::Type{S},
+                                        sys::PSY.ConcreteSystem,
+                                        time_range::UnitRange{Int64};
+                                        kwargs...) where {T <: PSY.ThermalGen,
+                                                            D <: AbstractThermalFormulation,
+                                                            S <: PM.AbstractActivePowerFormulation}
 
-    parameters = get(kwargs, :parameters, true)
- 
     devices = collect(PSY.get_components(device, sys))
+    
+    if validate_available_devices(devices, device)
+        return
+    end
+    
+    parameters = get(kwargs, :parameters, true)
 
     #Variables
     activepower_variables(ps_m, devices, time_range);
@@ -84,19 +90,22 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(ps_m::CanonicalModel,
-                           device::Type{T},
-                           device_formulation::Type{PSI.ThermalRampLimited},
-                           system_formulation::Type{S},
-                           sys::PSY.ConcreteSystem,
-                           time_range::UnitRange{Int64};
-                           kwargs...) where {T <: PSY.ThermalGen,
-                                             S <: PM.AbstractPowerFormulation}
-
-
-    parameters = get(kwargs, :parameters, true)
+function _internal_device_constructor!(ps_m::CanonicalModel,
+                                        device::Type{T},
+                                        device_formulation::Type{PSI.ThermalRampLimited},
+                                        system_formulation::Type{S},
+                                        sys::PSY.ConcreteSystem,
+                                        time_range::UnitRange{Int64};
+                                        kwargs...) where {T <: PSY.ThermalGen,
+                                                            S <: PM.AbstractPowerFormulation}
 
     devices = collect(PSY.get_components(device, sys))
+
+    if validate_available_devices(devices, device)
+        return
+    end                                         
+
+    parameters = get(kwargs, :parameters, true)
 
     #Variables
     activepower_variables(ps_m, devices, time_range);
@@ -121,18 +130,22 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(ps_m::CanonicalModel,
-                           device::Type{T},
-                           device_formulation::Type{ThermalRampLimited},
-                           system_formulation::Type{S},
-                           sys::PSY.ConcreteSystem,
-                           time_range::UnitRange{Int64};
-                           kwargs...) where {T <: PSY.ThermalGen,
-                                             S <: PM.AbstractActivePowerFormulation}
-
-    parameters = get(kwargs, :parameters, true)
+function _internal_device_constructor!(ps_m::CanonicalModel,
+                                        device::Type{T},
+                                        device_formulation::Type{ThermalRampLimited},
+                                        system_formulation::Type{S},
+                                        sys::PSY.ConcreteSystem,
+                                        time_range::UnitRange{Int64};
+                                        kwargs...) where {T <: PSY.ThermalGen,
+                                                            S <: PM.AbstractActivePowerFormulation}
 
     devices = collect(PSY.get_components(device, sys))
+    
+    if validate_available_devices(devices, device)
+        return
+    end
+    
+    parameters = get(kwargs, :parameters, true)
 
     #Variables
     activepower_variables(ps_m, devices, time_range);
@@ -151,19 +164,22 @@ end
 
 
 
-function construct_device!(ps_m::CanonicalModel,
-                           device::Type{T},
-                           device_formulation::Type{D},
-                           system_formulation::Type{S},
-                           sys::PSY.ConcreteSystem,
-                           time_range::UnitRange{Int64};
-                           kwargs...) where {T<: PSY.ThermalGen,
-                                             D <: AbstractThermalDispatchForm,
-                                             S <: PM.AbstractPowerFormulation}
+function _internal_device_constructor!(ps_m::CanonicalModel,
+                                        device::Type{T},
+                                        device_formulation::Type{D},
+                                        system_formulation::Type{S},
+                                        sys::PSY.ConcreteSystem,
+                                        time_range::UnitRange{Int64};
+                                        kwargs...) where {T<: PSY.ThermalGen,
+                                                            D <: AbstractThermalDispatchForm,
+                                                            S <: PM.AbstractPowerFormulation}
 
-                                            
     devices = collect(PSY.get_components(device, sys))
-  
+    
+    if validate_available_devices(devices, device)
+        return
+    end
+
     #Variables
     activepower_variables(ps_m, devices, time_range);
 
@@ -181,17 +197,21 @@ function construct_device!(ps_m::CanonicalModel,
 
 end
 
-function construct_device!(ps_m::CanonicalModel,
-                           device::Type{T},
-                           device_formulation::Type{D},
-                           system_formulation::Type{S},
-                           sys::PSY.ConcreteSystem,
-                           time_range::UnitRange{Int64};
-                           kwargs...) where {T<: PSY.ThermalGen,
-                                             D <: AbstractThermalDispatchForm,
-                                             S <: PM.AbstractActivePowerFormulation}
-                                           
+function _internal_device_constructor!(ps_m::CanonicalModel,
+                                        device::Type{T},
+                                        device_formulation::Type{D},
+                                        system_formulation::Type{S},
+                                        sys::PSY.ConcreteSystem,
+                                        time_range::UnitRange{Int64};
+                                        kwargs...) where {T<: PSY.ThermalGen,
+                                                            D <: AbstractThermalDispatchForm,
+                                                            S <: PM.AbstractActivePowerFormulation}
+                                                        
     devices = collect(PSY.get_components(device, sys))
+    
+    if validate_available_devices(devices, device)
+        return
+    end
 
     #Variables
     activepower_variables(ps_m, devices, time_range);
