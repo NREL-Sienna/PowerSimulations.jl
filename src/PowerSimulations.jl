@@ -7,6 +7,9 @@ module PowerSimulations
 export StandardPTDFForm
 export CopperPlatePowerModel
 
+#Device Models
+export DeviceModel
+
 #operation_models
 export UnitCommitment
 export EconomicDispatch
@@ -14,6 +17,7 @@ export SCEconomicDispatch
 export OptimalPowerFlow
 
 #functions
+export construct_device!
 export solve_op_model!
 
 
