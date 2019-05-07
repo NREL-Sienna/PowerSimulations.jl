@@ -11,6 +11,8 @@ function construct_device!(ps_m::CanonicalModel,
                                              D <: AbstractThermalFormulation,
                                              S <: PM.AbstractPowerFormulation}
 
+    isconcretetype(device) ? true : true    
+
     parameters = get(kwargs, :parameters, true)
 
     devices = collect(PSY.get_components(device, sys))
