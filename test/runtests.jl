@@ -23,6 +23,7 @@ OSQP_optimizer = JuMP.with_optimizer(OSQP.Optimizer)
 include("get_test_data.jl")
 
 @testset "Common Functionalities" begin
+    include("base_structs.jl")
     include("PowerModels_interface.jl")
 end
 
