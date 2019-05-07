@@ -9,33 +9,25 @@ function construct_device!(ps_m::CanonicalModel,
                                              S <: PM.AbstractPowerFormulation}
 
     devices = collect(PSY.get_components(device, sys))
-
-    isconcretetype(device) ? true : true
-
-    if !isempty(devices)
-
-        parameters = get(kwargs, :parameters, true)
-
-        if !isempty(devices)
-
-            #Variables
-            activepower_variables(ps_m, devices, time_range);
-
-            reactivepower_variables(ps_m, devices, time_range);
-
-            #Constraints
-            activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
-
-            reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
-
-            #Cost Function
-            cost_function(ps_m, devices, device_formulation, system_formulation)
-
-        else
-            @warn("The Data Doesn't Contain Controllable Renewable Resources, Consider Changing the Device Formulation to RenewableFixed")
-        end
-
+    
+    if validate_available_devices(devices, device)
+        return
     end
+
+    parameters = get(kwargs, :parameters, true)
+
+    #Variables
+    activepower_variables(ps_m, devices, time_range);
+
+    reactivepower_variables(ps_m, devices, time_range);
+
+    #Constraints
+    activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
+
+    reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
+
+    #Cost Function
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 
@@ -52,32 +44,21 @@ function construct_device!(ps_m::CanonicalModel,
                                              S <: PM.AbstractActivePowerFormulation}
 
     devices = collect(PSY.get_components(device, sys))
-
-    if !isempty(devices)
-
-        parameters = get(kwargs, :parameters, true)
-
-        fixed_resources = [fs for fs in sys.generators.renewable if isa(fs,PSY.RenewableFix)]
-
-        controllable_resources = [fs for fs in sys.generators.renewable if !isa(fs,PSY.RenewableFix)]
-
-        if !isempty(controllable_resources)
-
-            #Variables
-            activepower_variables(ps_m, controllable_resources, time_range)
-
-            #Constraints
-            activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range, parameters)
-
-            #Cost Function
-            cost_function(ps_m, controllable_resources, device_formulation, system_formulation)
-
-        else
-            @warn("The Data Doesn't Contain Controllable Renewable Resources, Consider Changing the Device Formulation to RenewableFixed")
-
-        end
-
+    
+    if validate_available_devices(devices, device)
+        return
     end
+
+    parameters = get(kwargs, :parameters, true)                                             
+
+    #Variables
+    activepower_variables(ps_m, devices, time_range)
+
+    #Constraints
+    activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
+
+    #Cost Function
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 
@@ -93,13 +74,14 @@ function construct_device!(ps_m::CanonicalModel,
                                              S <: PM.AbstractPowerFormulation}
 
     devices = collect(PSY.get_components(device, sys))
-
-    if !isempty(devices)
-
-        parameters = get(kwargs, :parameters, true)
-
-        nodal_expression(ps_m, sys.generators.renewable, system_formulation, time_range, parameters)
+    
+    if validate_available_devices(devices, device)
+        return
     end
+
+    parameters = get(kwargs, :parameters, true)
+
+    nodal_expression(ps_m, devices, system_formulation, time_range, parameters)
 
     return
 
@@ -113,6 +95,14 @@ function construct_device!(ps_m::CanonicalModel,
                             time_range::UnitRange{Int64};
                             kwargs...) where {D <: PSI.AbstractRenewableFormulation,
                                               S <: PM.AbstractPowerFormulation}
+
+    devices = collect(PSY.get_components(device, sys))
+    
+    if validate_available_devices(devices, device)
+        return
+    end
+
+    parameters = get(kwargs, :parameters, true)
 
     if device_formulation != RenewableFixed
         @warn("The Formulation $(D) onky applied to Controllable Renewable Resources, \n Consider Changing the Device Formulation to RenewableFixed")                                              

@@ -1,3 +1,4 @@
+include("common/constructor_validations.jl")
 include("thermalgeneration_constructor.jl")
 include("branch_constructor.jl")
 include("renewablegeneration_constructor.jl")
