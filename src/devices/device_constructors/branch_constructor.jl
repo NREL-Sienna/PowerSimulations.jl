@@ -1,4 +1,4 @@
-function construct_device!(ps_m::CanonicalModel,
+function _internal_device_constructor!(ps_m::CanonicalModel,
                            device::Type{B},
                            device_formulation::Type{Br},
                            system_formulation::Type{StandardPTDFForm},
@@ -13,7 +13,7 @@ function construct_device!(ps_m::CanonicalModel,
 
 end
 
-function construct_device!(ps_m::CanonicalModel,
+function _internal_device_constructor!(ps_m::CanonicalModel,
                             device::Type{B},
                             device_formulation::Type{Br},
                             system_formulation::Type{S},
