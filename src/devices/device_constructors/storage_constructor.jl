@@ -1,4 +1,4 @@
-function construct_device!(ps_m::CanonicalModel,
+function _internal_device_constructor!(ps_m::CanonicalModel,
                            device::Type{St},
                            device_formulation::Type{D},
                            system_formulation::Type{S},
@@ -46,7 +46,7 @@ function construct_device!(ps_m::CanonicalModel,
 
 end
 
-function construct_device!(ps_m::CanonicalModel,
+function _internal_device_constructor!(ps_m::CanonicalModel,
                            device::Type{St},
                            device_formulation::Type{D},
                            system_formulation::Type{S},
