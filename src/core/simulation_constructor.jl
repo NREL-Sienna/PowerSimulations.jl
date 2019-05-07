@@ -24,7 +24,7 @@ function build_sim_ts(ts_dict::Dict{String,Any}, steps, periods, resolution, dat
 end
 
 
-function buildsimulation!(sys::PSY.System, op_model::PowerOperationModel, ts_dict::Dict{String,Any}; kwargs...)
+function buildsimulation!(sys::PSY.ConcreteSystem, op_model::PowerOperationModel, ts_dict::Dict{String,Any}; kwargs...)
 
     name = :name in keys(args) ? args[:name] : "my_simulation"
 
@@ -59,7 +59,7 @@ function buildsimulation!(sys::PSY.System, op_model::PowerOperationModel, ts_dic
 
 end
 
-function buildsimulation!(sys::PSY.System, op_model::PowerOperationModel; kwargs...)
+function buildsimulation!(sys::PSY.ConcreteSystem, op_model::PowerOperationModel; kwargs...)
 
     ts_dict = Dict{String,Any}()
 

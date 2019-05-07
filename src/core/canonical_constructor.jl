@@ -76,7 +76,7 @@ function  build_canonical_model(transmission::Type{T},
                                 devices::Dict{Symbol, DeviceModel},
                                 branches::Dict{Symbol, DeviceModel},
                                 services::Dict{Symbol, ServiceModel},
-                                system::PSY.System,
+                                system::PSY.ConcreteSystem,
                                 optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
                                 kwargs...) where {T <: PM.AbstractPowerFormulation}
 

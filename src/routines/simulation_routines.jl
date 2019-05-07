@@ -77,7 +77,7 @@ function run_simulations(simulation::PowerSimulationsModel{S}, solver, ps_dict::
 
         # solve model
         println("Solving model for $step ...")
-        optimize!(tmp_model.model,with_optimizer(solver))
+        optimize!(tmp_model.model,JuMP.with_optimizer(solver))
 
         status = :termination_status in fieldnames(typeof(tmp_model.model.moi_backend.model.optimizer)) ? tmp_model.model.moi_backend.model.optimizer.termination_status : nothing
 

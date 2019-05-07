@@ -252,7 +252,7 @@ end
 ""
 function powermodels_network!(ps_m::CanonicalModel,
                               system_formulation::Type{S},
-                              sys::PSY.System,
+                              sys::PSY.ConcreteSystem,
                               time_range::UnitRange{Int64}) where {S <: PM.AbstractPowerFormulation}
 
     pm_data = pass_to_pm(sys)
@@ -276,7 +276,7 @@ end
 ""
 function powermodels_network!(ps_m::CanonicalModel,
                               system_formulation::Type{S},
-                              sys::PSY.System,
+                              sys::PSY.ConcreteSystem,
                               time_range::UnitRange{Int64}) where {S <: PM.AbstractActivePowerFormulation}
 
     pm_data = pass_to_pm(sys)
