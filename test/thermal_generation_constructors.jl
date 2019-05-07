@@ -1,7 +1,7 @@
 ################################### Unit Commitment tests #########################################
 
 @testset "UC With DC - PF" begin
-    variable_names = [:on_th, :start_th, :stop_th]
+    variable_names = [:ONth_ThermalDispatch, :STARTth_ThermalDispatch, :STOPth_ThermalDispatch]
     uc_constraint_names = [:ramp_thermal_up, :ramp_thermal_down, :duration_thermal_up, :duration_thermal_down]
     model = DeviceModel(PSY.ThermalDispatch, PSI.ThermalUnitCommitment)
     #5-Bus testing
@@ -80,7 +80,7 @@
 end
 
 @testset "UC With AC - PF" begin
-    variable_names = [:on_th, :start_th, :stop_th]
+    variable_names = [:ONth_ThermalDispatch, :STARTth_ThermalDispatch, :STOPth_ThermalDispatch]
     uc_constraint_names = [:ramp_thermal_up, :ramp_thermal_down, :duration_thermal_up, :duration_thermal_down]
     model = DeviceModel(PSY.ThermalDispatch, PSI.ThermalUnitCommitment)
     #5-Bus testing    
