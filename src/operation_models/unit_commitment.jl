@@ -1,6 +1,6 @@
 struct UnitCommitment <: AbstractOperationsModel end
 
-function UnitCommitment(system::PSY.System, transmission::Type{S}; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...) where {S <: PM.AbstractPowerFormulation}
+function UnitCommitment(system::PSY.ConcreteSystem, transmission::Type{S}; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     devices = Dict{Symbol, PSI.DeviceModel}(:ThermalGenerators => PSI.DeviceModel(PSY.ThermalGen, PSI.ThermalUnitCommitment),
                                             :RenewableGenerators => PSI.DeviceModel(PSY.RenewableGen, PSI.RenewableFullDispatch),
