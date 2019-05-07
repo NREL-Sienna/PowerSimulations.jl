@@ -1,12 +1,12 @@
-function construct_device!(ps_m::CanonicalModel,
-                           device::Type{R},
-                           device_formulation::Type{D},
-                           system_formulation::Type{S},
-                           sys::PSY.ConcreteSystem,
-                           time_range::UnitRange{Int64};
-                           kwargs...) where {R <: PSY.RenewableGen,
-                                             D <: AbstractRenewableDispatchForm,
-                                             S <: PM.AbstractPowerFormulation}
+function _internal_device_constructor!(ps_m::CanonicalModel,
+                                        device::Type{R},
+                                        device_formulation::Type{D},
+                                        system_formulation::Type{S},
+                                        sys::PSY.ConcreteSystem,
+                                        time_range::UnitRange{Int64};
+                                        kwargs...) where {R <: PSY.RenewableGen,
+                                                          D <: AbstractRenewableDispatchForm,
+                                                          S <: PM.AbstractPowerFormulation}
 
     devices = collect(PSY.get_components(device, sys))
     
@@ -33,15 +33,15 @@ function construct_device!(ps_m::CanonicalModel,
 
 end
 
-function construct_device!(ps_m::CanonicalModel,
-                           device::Type{R},
-                           device_formulation::Type{D},
-                           system_formulation::Type{S},
-                           sys::PSY.ConcreteSystem,
-                           time_range::UnitRange{Int64};
-                           kwargs...) where {R <: PSY.RenewableGen,
-                                             D <: AbstractRenewableDispatchForm,
-                                             S <: PM.AbstractActivePowerFormulation}
+function _internal_device_constructor!(ps_m::CanonicalModel,
+                                        device::Type{R},
+                                        device_formulation::Type{D},
+                                        system_formulation::Type{S},
+                                        sys::PSY.ConcreteSystem,
+                                        time_range::UnitRange{Int64};
+                                        kwargs...) where {R <: PSY.RenewableGen,
+                                                          D <: AbstractRenewableDispatchForm,
+                                                          S <: PM.AbstractActivePowerFormulation}
 
     devices = collect(PSY.get_components(device, sys))
     
@@ -64,14 +64,14 @@ function construct_device!(ps_m::CanonicalModel,
 
 end
 
-function construct_device!(ps_m::CanonicalModel,
-                           device::Type{R},
-                           device_formulation::Type{PSI.RenewableFixed},
-                           system_formulation::Type{S},
-                           sys::PSY.ConcreteSystem,
-                           time_range::UnitRange{Int64};
-                           kwargs...) where {R <: PSY.RenewableGen,
-                                             S <: PM.AbstractPowerFormulation}
+function _internal_device_constructor!(ps_m::CanonicalModel,
+                                        device::Type{R},
+                                        device_formulation::Type{PSI.RenewableFixed},
+                                        system_formulation::Type{S},
+                                        sys::PSY.ConcreteSystem,
+                                        time_range::UnitRange{Int64};
+                                        kwargs...) where {R <: PSY.RenewableGen,
+                                                          S <: PM.AbstractPowerFormulation}
 
     devices = collect(PSY.get_components(device, sys))
     
@@ -87,14 +87,14 @@ function construct_device!(ps_m::CanonicalModel,
 
 end
 
-function construct_device!(ps_m::CanonicalModel,
-                            device::Type{PSY.RenewableFix},
-                            device_formulation::Type{D},
-                            system_formulation::Type{S},
-                            sys::PSY.ConcreteSystem,
-                            time_range::UnitRange{Int64};
-                            kwargs...) where {D <: PSI.AbstractRenewableFormulation,
-                                              S <: PM.AbstractPowerFormulation}
+function _internal_device_constructor!(ps_m::CanonicalModel,
+                                        device::Type{PSY.RenewableFix},
+                                        device_formulation::Type{D},
+                                        system_formulation::Type{S},
+                                        sys::PSY.ConcreteSystem,
+                                        time_range::UnitRange{Int64};
+                                        kwargs...) where {D <: PSI.AbstractRenewableFormulation,
+                                                          S <: PM.AbstractPowerFormulation}
 
     devices = collect(PSY.get_components(device, sys))
     
@@ -108,11 +108,11 @@ function construct_device!(ps_m::CanonicalModel,
         @warn("The Formulation $(D) onky applied to Controllable Renewable Resources, \n Consider Changing the Device Formulation to RenewableFixed")                                              
     end
 
-    construct_device!(ps_m, 
-                        device,
-                        device_formulation,
-                        PSI.RenewableFixed,
-                        sys,
-                        time_range; kwargs...)
+    _internal_device_constructor!(ps_m, 
+                                    device,
+                                    device_formulation,
+                                    PSI.RenewableFixed,
+                                    sys,
+                                    time_range; kwargs...)
 
 end                      
