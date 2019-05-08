@@ -1,6 +1,5 @@
 ################################### Unit Commitment tests #########################################
-
-@testset "UC With DC - PF" begin
+@testset "Thermal UC With DC - PF" begin
     variable_names = [:ONth_ThermalDispatch, :STARTth_ThermalDispatch, :STOPth_ThermalDispatch]
     uc_constraint_names = [:ramp_ThermalDispatch_up, :ramp_ThermalDispatch_down, :duration_ThermalDispatch_up, :duration_ThermalDispatch_down]
     model = DeviceModel(PSY.ThermalDispatch, PSI.ThermalUnitCommitment)
@@ -79,7 +78,7 @@
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}
 end
 
-@testset "UC With AC - PF" begin
+@testset "Thermal UC With AC - PF" begin
     variable_names = [:ONth_ThermalDispatch, :STARTth_ThermalDispatch, :STOPth_ThermalDispatch]
     uc_constraint_names = [:ramp_ThermalDispatch_up, :ramp_ThermalDispatch_down, :duration_ThermalDispatchl_up, :duration_ThermalDispatch_down]
     model = DeviceModel(PSY.ThermalDispatch, PSI.ThermalUnitCommitment)
@@ -153,7 +152,7 @@ end
 
 ################################### Basic Dispatch tests #########################################
 
-@testset "Dispatch With DC - PF" begin
+@testset "Thermal Dispatch With DC - PF" begin
     model = DeviceModel(PSY.ThermalDispatch, PSI.ThermalDispatch)
     #5-Bus testing    
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
@@ -200,7 +199,7 @@ end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}   
 end
 
-@testset "Dispatch With AC - PF" begin
+@testset "Thermal Dispatch With AC - PF" begin
     model = DeviceModel(PSY.ThermalDispatch, PSI.ThermalDispatch)
     #5 Bus testing
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
@@ -249,7 +248,7 @@ end
 
 ################################### No Minimum Dispatch tests #########################################
 
-@testset "Dispatch No-Minimum With DC - PF" begin
+@testset "Thermal Dispatch No-Minimum With DC - PF" begin
     model = DeviceModel(PSY.ThermalDispatch, PSI.ThermalDispatchNoMin)
     #5 Bus testing
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
@@ -310,7 +309,7 @@ end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef} 
 end
 
-@testset "Dispatch No-Minimum With AC - PF" begin
+@testset "Thermal Dispatch No-Minimum With AC - PF" begin
     model = DeviceModel(PSY.ThermalDispatch, PSI.ThermalDispatchNoMin)
     #5 Bus testing
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
@@ -371,7 +370,7 @@ end
 
 ################################### Ramp Limited Testing #########################################
 
-@testset "Ramp Limited Dispatch With AC - PF" begin
+@testset "Thermal Ramp Limited Dispatch With AC - PF" begin
     ramp_constraint_names = [:ramp_ThermalDispatch_up, :ramp_ThermalDispatch_down]
     model = DeviceModel(PSY.ThermalDispatch, PSI.ThermalRampLimited)
     #5 Bus Testing
@@ -425,7 +424,7 @@ end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}
 end
 
-@testset "Ramp Limited Dispatch With DC - PF" begin
+@testset "Thermal Ramp Limited Dispatch With DC - PF" begin
     ramp_constraint_names = [:ramp_ThermalDispatch_up, :ramp_ThermalDispatch_down]
     model = DeviceModel(PSY.ThermalDispatch, PSI.ThermalRampLimited)
     #5 Bus Testing

@@ -20,11 +20,11 @@ ipopt_optimizer = JuMP.with_optimizer(Ipopt.Optimizer, print_level = 0)
 GLPK_optimizer = JuMP.with_optimizer(GLPK.Optimizer)
 OSQP_optimizer = JuMP.with_optimizer(OSQP.Optimizer)
 
-include("get_test_data.jl")
+include("test_utils/get_test_data.jl")
 
 @testset "Common Functionalities" begin
     include("base_structs.jl")
-    #include("PowerModels_interface.jl")
+    include("PowerModels_interface.jl")
 end
 
 @testset "Device Constructors" begin
