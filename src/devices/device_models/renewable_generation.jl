@@ -230,8 +230,8 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 
     for (ix,f) in enumerate(forecasts)
         device = f.component
-        ts_data_active[ix] = (d.name, d.bus.number, f.data*device.tech.installedcapacity)
-        ts_data_reactive[ix] = (d.name, d.bus.number, f.data*device.tech.installedcapacity*sin(acos(d.tech.powerfactor)))
+        ts_data_active[ix] = (device.name, device.bus.number, f.data*device.tech.installedcapacity)
+        ts_data_reactive[ix] = (device.name, device.bus.number, f.data*device.tech.installedcapacity*sin(acos(d.tech.powerfactor)))
     end
 
     add_parameters(ps_m,
@@ -259,7 +259,7 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 
     for (ix,f) in enumerate(forecasts)
         device= f.component
-        ts_data_active[ix] = (d.name, d.bus.number, f.data*device.tech.installedcapacity)
+        ts_data_active[ix] = (device.name, device.bus.number, f.data*device.tech.installedcapacity)
     end
 
     add_parameters(ps_m,
