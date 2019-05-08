@@ -2,7 +2,7 @@
 
 @testset "UC With DC - PF" begin
     variable_names = [:ONth_ThermalDispatch, :STARTth_ThermalDispatch, :STOPth_ThermalDispatch]
-    uc_constraint_names = [:ramp_thermal_up, :ramp_thermal_down, :duration_thermal_up, :duration_thermal_down]
+    uc_constraint_names = [:ramp_ThermalDispatch_up, :ramp_ThermalDispatch_down, :duration_ThermalDispatch_up, :duration_ThermalDispatch_down]
     model = DeviceModel(PSY.ThermalDispatch, PSI.ThermalUnitCommitment)
     #5-Bus testing
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range; parameters = false)
@@ -81,7 +81,7 @@ end
 
 @testset "UC With AC - PF" begin
     variable_names = [:ONth_ThermalDispatch, :STARTth_ThermalDispatch, :STOPth_ThermalDispatch]
-    uc_constraint_names = [:ramp_thermal_up, :ramp_thermal_down, :duration_thermal_up, :duration_thermal_down]
+    uc_constraint_names = [:ramp_ThermalDispatch_up, :ramp_ThermalDispatch_down, :duration_ThermalDispatchl_up, :duration_ThermalDispatch_down]
     model = DeviceModel(PSY.ThermalDispatch, PSI.ThermalUnitCommitment)
     #5-Bus testing    
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range; parameters = false)
@@ -259,7 +259,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
-    for con in ps_model.constraints[:thermal_active_range]
+    for con in ps_model.constraints[:active_range_ThermalDispatch]
         @test JuMP.constraint_object(con).set.lower == 0.0
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
@@ -274,7 +274,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
-    for con in ps_model.constraints[:thermal_active_range]
+    for con in ps_model.constraints[:active_range_ThermalDispatch]
         @test JuMP.constraint_object(con).set.lower == 0.0
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
@@ -288,7 +288,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
-    for con in ps_model.constraints[:thermal_active_range]
+    for con in ps_model.constraints[:active_range_ThermalDispatch]
         @test JuMP.constraint_object(con).set.lower == 0.0
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
@@ -303,7 +303,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
-    for con in ps_model.constraints[:thermal_active_range]
+    for con in ps_model.constraints[:active_range_ThermalDispatch]
         @test JuMP.constraint_object(con).set.lower == 0.0
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
@@ -320,7 +320,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
-    for con in ps_model.constraints[:thermal_active_range]
+    for con in ps_model.constraints[:active_range_ThermalDispatch]
         @test JuMP.constraint_object(con).set.lower == 0.0
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
@@ -334,7 +334,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
-    for con in ps_model.constraints[:thermal_active_range]
+    for con in ps_model.constraints[:active_range_ThermalDispatch]
         @test JuMP.constraint_object(con).set.lower == 0.0
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
@@ -348,7 +348,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
-    for con in ps_model.constraints[:thermal_active_range]
+    for con in ps_model.constraints[:active_range_ThermalDispatch]
         @test JuMP.constraint_object(con).set.lower == 0.0
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
@@ -362,7 +362,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
-    for con in ps_model.constraints[:thermal_active_range]
+    for con in ps_model.constraints[:active_range_ThermalDispatch]
         @test JuMP.constraint_object(con).set.lower == 0.0
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
@@ -372,7 +372,7 @@ end
 ################################### Ramp Limited Testing #########################################
 
 @testset "Ramp Limited Dispatch With AC - PF" begin
-    ramp_constraint_names = [:ramp_thermal_up, :ramp_thermal_down]
+    ramp_constraint_names = [:ramp_ThermalDispatch_up, :ramp_ThermalDispatch_down]
     model = DeviceModel(PSY.ThermalDispatch, PSI.ThermalRampLimited)
     #5 Bus Testing
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
@@ -426,7 +426,7 @@ end
 end
 
 @testset "Ramp Limited Dispatch With DC - PF" begin
-    ramp_constraint_names = [:ramp_thermal_up, :ramp_thermal_down]
+    ramp_constraint_names = [:ramp_ThermalDispatch_up, :ramp_ThermalDispatch_down]
     model = DeviceModel(PSY.ThermalDispatch, PSI.ThermalRampLimited)
     #5 Bus Testing
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
