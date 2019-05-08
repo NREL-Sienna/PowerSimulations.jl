@@ -22,5 +22,3 @@ RTS_GMLC_DIR = joinpath(DATA_DIR, "RTS_GMLC")
 cdm_dict = PSY.csv2ps_dict(RTS_GMLC_DIR, 100.0);
 sys_rts = PSY.System(cdm_dict);
 c_rts = PSY.ConcreteSystem(sys_rts);
-
-
