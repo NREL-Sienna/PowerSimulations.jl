@@ -8,21 +8,29 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                                           D <: AbstractRenewableDispatchForm,
                                                           S <: PM.AbstractPowerFormulation}
 
-    devices = collect(PSY.get_components(device, sys))
     
+    forecast = get(kwargs, :forecast, true)
+    
+    devices = collect(PSY.get_components(device, sys))
+       
     if validate_available_devices(devices, device)
         return
     end
 
     parameters = get(kwargs, :parameters, true)
-
+    
     #Variables
     activepower_variables(ps_m, devices, time_range);
 
     reactivepower_variables(ps_m, devices, time_range);
 
     #Constraints
-    activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
+    if forecast 
+        forecasts = [forecast for forecast in  sys.forecasts[:DA] if isa(forecast,PSY.Deterministic{device})]
+        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, time_range, parameters)
+    else
+        activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
+    end
 
     reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
 
@@ -43,8 +51,10 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                                           D <: AbstractRenewableDispatchForm,
                                                           S <: PM.AbstractActivePowerFormulation}
 
+    forecast = get(kwargs, :forecast, true)
+
     devices = collect(PSY.get_components(device, sys))
-    
+   
     if validate_available_devices(devices, device)
         return
     end
@@ -55,7 +65,12 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     activepower_variables(ps_m, devices, time_range)
 
     #Constraints
-    activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
+    if forecast 
+        forecasts = [forecast for forecast in  sys.forecasts[:DA] if isa(forecast,PSY.Deterministic{device})]
+        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, time_range, parameters)
+    else
+        activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
+    end
 
     #Cost Function
     cost_function(ps_m, devices, device_formulation, system_formulation)
@@ -73,6 +88,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         kwargs...) where {R <: PSY.RenewableGen,
                                                           S <: PM.AbstractPowerFormulation}
 
+    forecast = get(kwargs, :forecast, true)
+
     devices = collect(PSY.get_components(device, sys))
     
     if validate_available_devices(devices, device)
@@ -81,7 +98,12 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     parameters = get(kwargs, :parameters, true)
 
-    nodal_expression(ps_m, devices, system_formulation, time_range, parameters)
+    if forecast 
+        forecasts = [forecast for forecast in  sys.forecasts[:DA] if isa(forecast,PSY.Deterministic{device})]
+        nodal_expression(ps_m, forecasts, system_formulation, time_range, parameters)
+    else
+        nodal_expression(ps_m, devices, system_formulation, time_range, parameters)
+    end   
 
     return
 
@@ -96,23 +118,16 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         kwargs...) where {D <: PSI.AbstractRenewableFormulation,
                                                           S <: PM.AbstractPowerFormulation}
 
-    devices = collect(PSY.get_components(device, sys))
-    
-    if validate_available_devices(devices, device)
-        return
-    end
-
-    parameters = get(kwargs, :parameters, true)
-
     if device_formulation != RenewableFixed
-        @warn("The Formulation $(D) onky applied to Controllable Renewable Resources, \n Consider Changing the Device Formulation to RenewableFixed")                                              
+        @warn("The Formulation $(D) only applies to Controllable Renewable Resources, \n Consider Changing the Device Formulation to RenewableFixed")                                              
     end
 
     _internal_device_constructor!(ps_m, 
-                                    device,
-                                    device_formulation,
-                                    PSI.RenewableFixed,
-                                    sys,
-                                    time_range; kwargs...)
+                                  device,
+                                  device_formulation,
+                                  RenewableFixed,
+                                  sys,
+                                  time_range; 
+                                  kwargs...)
 
 end                      
