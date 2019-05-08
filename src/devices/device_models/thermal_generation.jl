@@ -24,7 +24,7 @@ function activepower_variables(ps_m::CanonicalModel,
     add_variable(ps_m,
                  devices,
                  time_range,
-                 Symbol("Pth_$(eltype(devices))"),
+                 Symbol("Pth_$(T)"),
                  false,
                  :var_active)
 
@@ -42,7 +42,7 @@ function reactivepower_variables(ps_m::CanonicalModel,
     add_variable(ps_m,
                  devices,
                  time_range,
-                 Symbol("Qth_$(eltype(devices))"),
+                 Symbol("Qth_$(T)"),
                  false,
                  :var_reactive)
 
@@ -60,17 +60,17 @@ function commitment_variables(ps_m::CanonicalModel,
     add_variable(ps_m,
                 devices,
                 time_range,
-                Symbol("ONth_$(eltype(devices))"),
+                Symbol("ONth_$(T)"),
                 true)
     add_variable(ps_m,
                 devices,
                 time_range,
-                Symbol("STARTth_$(eltype(devices))"),
+                Symbol("STARTth_$(T)"),
                 true)
     add_variable(ps_m,
                 devices,
                 time_range,
-                Symbol("STOPth_$(eltype(devices))"),
+                Symbol("STOPth_$(T)"),
                 true)
 
     return
@@ -87,14 +87,13 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen,
                                                                       D <: AbstractThermalDispatchForm,
                                                                       S <: PM.AbstractPowerFormulation}
-
     range_data = [(g.name, g.tech.activepowerlimits) for g in devices]
 
     device_range(ps_m,
                  range_data,
                  time_range,
-                 :thermal_active_range,
-                 Symbol("Pth_$(eltype(devices))")
+                 Symbol("thermal_active_range_$(T)"),
+                 Symbol("Pth_$(T)")
                  )
 
     return
@@ -117,9 +116,9 @@ function activepower_constraints(ps_m::CanonicalModel,
     device_semicontinuousrange(ps_m,
                                range_data,
                                time_range,
-                               :thermal_active_range,
-                               Symbol("Pth_$(eltype(devices))"),
-                               Symbol("ONth_$(eltype(devices))"))
+                               Symbol("thermal_active_range_$(T)"),
+                               Symbol("Pth_$(T)"),
+                               Symbol("ONth_$(T)"))
 
     return
 
@@ -142,8 +141,8 @@ function reactivepower_constraints(ps_m::CanonicalModel,
     device_range(ps_m,
                  range_data ,
                  time_range,
-                 :thermal_reactive_range,
-                 Symbol("Qth_$(eltype(devices))"))
+                 Symbol("thermal_reactive_range_$(T)"),
+                 Symbol("Qth_$(T)"))
 
     return
 
@@ -167,9 +166,9 @@ function reactivepower_constraints(ps_m::CanonicalModel,
     device_semicontinuousrange(ps_m,
                                range_data,
                                time_range,
-                               :thermal_reactive_range,
-                               Symbol("Qth_$(eltype(devices))"),
-                               Symbol("ONth_$(eltype(devices))"))
+                               Symbol("thermal_reactive_range_$(T)"),
+                               Symbol("Qth_$(T)"),
+                               Symbol("ONth_$(T)"))
 
     return
 
@@ -190,8 +189,8 @@ function activepower_constraints(ps_m::CanonicalModel,
     device_range(ps_m,
                  range_data,
                  time_range,
-                 :thermal_active_range,
-                 Symbol("Pth_$(eltype(devices))"))
+                 Symbol("thermal_active_range_$(T)"),
+                 Symbol("Pth_$(T)"))
 
     return
 
@@ -213,8 +212,8 @@ function reactivepower_constraints(ps_m::CanonicalModel,
     device_range(ps_m,
                  range_data,
                  time_range,
-                 :thermal_reactive_range,
-                 Symbol("Qth_$(eltype(devices))"))
+                 Symbol("thermal_reactive_range_$(T)"),
+                 Symbol("Qth_$(T)"))
 
     return
 
@@ -244,10 +243,10 @@ function commitment_constraints(ps_m::CanonicalModel,
     device_commitment(ps_m,
                       ps_m.initial_conditions[:thermal_status],
                       time_range,
-                      :commitment_th,
-                      (Symbol("STARTth_$(eltype(devices))"),
-                       Symbol("STOPth_$(eltype(devices))"),
-                       Symbol("ONth_$(eltype(devices))"))
+                      Symbol("commitment_$(T)"),
+                      (Symbol("STARTth_$(T)"),
+                       Symbol("STOPth_$(T)"),
+                       Symbol("ONth_$(T)"))
                       )
 
     return
@@ -310,10 +309,10 @@ function ramp_constraints(ps_m::CanonicalModel,
                                         data,
                                         ps_m.initial_conditions[:thermal_output],
                                         time_range,
-                                        :ramp_thermal,
-                                        (Symbol("Pth_$(eltype(devices))"),
-                                         Symbol("STARTth_$(eltype(devices))"),
-                                         Symbol("STOPth_$(eltype(devices))"))
+                                        Symbol("ramp_$(T)"),
+                                        (Symbol("Pth_$(T)"),
+                                         Symbol("STARTth_$(T)"),
+                                         Symbol("STOPth_$(T)"))
                                         )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
@@ -344,8 +343,8 @@ function ramp_constraints(ps_m::CanonicalModel,
         device_linear_rateofchange(ps_m,
                                    (data[1], data[2]),
                                    ps_m.initial_conditions[:thermal_output], time_range,
-                                   :ramp_thermal,
-                                   Symbol("Pth_$(eltype(devices))"))
+                                   Symbol("ramp_$(T)"),
+                                   Symbol("Pth_$(T)"))
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
     end
@@ -490,16 +489,24 @@ function time_constraints(ps_m::CanonicalModel,
                                       duration_data[2],
                                       duration_data[3],
                                       duration_data[4],
-                                      time_range, :duration_thermal,
-                                      (:on_th, :start_th, :stop_th))
+                                      time_range,
+                                      Symbol("duration_$(T)"),
+                                      (Symbol("ONth_$(T)"),
+                                       Symbol("STARTth_$(T)"),
+                                       Symbol("STOPth_$(T)"))
+                                      )
         else
             device_duration_retrospective(ps_m,
                                         duration_data[1],
                                         duration_data[2],
                                         duration_data[3],
                                         duration_data[4],
-                                        time_range, :duration_thermal,
-                                        (:on_th, :start_th, :stop_th))
+                                        time_range,
+                                        Symbol("duration_$(T)"),
+                                        (Symbol("ONth_$(T)"),
+                                        Symbol("STARTth_$(T)"),
+                                        Symbol("STOPth_$(T)"))
+                                        )
         end
         @warn("Currently Min-up/down time limits only work if time resoultion they are defined at matches the simulation's time resoultion")
         device_duration_retrospective(ps_m,
@@ -528,7 +535,7 @@ function cost_function(ps_m::CanonicalModel,
 
     add_to_cost(ps_m,
                 devices,
-                Symbol("Pth_$(eltype(devices))"),
+                Symbol("Pth_$(T)"),
                 :variablecost)
 
     return
@@ -546,13 +553,13 @@ function cost_function(ps_m::CanonicalModel,
     #Variable Cost component
     add_to_cost(ps_m,
                 devices,
-                Symbol("Pth_$(eltype(devices))"),
+                Symbol("Pth_$(T)"),
                 :variablecost)
 
     #Commitment Cost Components
-    add_to_cost(ps_m, devices, Symbol("STARTth_$(eltype(devices))"), :startupcost)
-    add_to_cost(ps_m, devices, Symbol("STOPth_$(eltype(devices))"), :shutdncost)
-    add_to_cost(ps_m, devices, Symbol("ONth_$(eltype(devices))"), :fixedcost)
+    add_to_cost(ps_m, devices, Symbol("STARTth_$(T)"), :startupcost)
+    add_to_cost(ps_m, devices, Symbol("STOPth_$(T)"), :shutdncost)
+    add_to_cost(ps_m, devices, Symbol("ONth_$(T)"), :fixedcost)
 
     return
 
