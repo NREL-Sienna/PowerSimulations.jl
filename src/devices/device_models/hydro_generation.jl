@@ -14,7 +14,7 @@ abstract type HydroCommitmentSeasonalFlow <: AbstractHydroFormulation end
 
 function activepower_variables(ps_m::CanonicalModel, devices::Array{H,1}, time_range::UnitRange{Int64}) where {H <: PSY.HydroGen}
 
-    add_variable(ps_m, devices, time_range, :Phy, false, :var_active)
+    add_variable(ps_m, devices, time_range, :Phy, false, :nodal_balance_active)
 
     return
 
@@ -23,7 +23,7 @@ end
 
 function reactivepower_variables(ps_m::CanonicalModel, devices::Array{H,1}, time_range::UnitRange{Int64}) where {H <: PSY.HydroGen}
 
-    add_variable(ps_m, devices, time_range, :Qhy, false, :var_reactive)
+    add_variable(ps_m, devices, time_range, :Qhy, false, :nodal_balance_reactive)
 
     return
 
@@ -153,9 +153,9 @@ end
 #
 #     for t in time_range, d in devices
 #
-#         _add_to_expression!(ps_m.expressions[:var_active], d.bus.number, t, d.tech.installedcapacity * values(d.scalingfactor)[t])
+#         _add_to_expression!(ps_m.expressions[:nodal_balance_active], d.bus.number, t, d.tech.installedcapacity * values(d.scalingfactor)[t])
 #
-#         _add_to_expression!(ps_m.expressions[:var_reactive], d.bus.number, t, d.tech.installedcapacity * values(d.scalingfactor)[t]*sin(acos(d.tech.powerfactor)))
+#         _add_to_expression!(ps_m.expressions[:nodal_balance_reactive], d.bus.number, t, d.tech.installedcapacity * values(d.scalingfactor)[t]*sin(acos(d.tech.powerfactor)))
 #
 #     end
 #
@@ -167,7 +167,7 @@ end
 #
 #     for t in time_range, d in devices
 #
-#         _add_to_expression!(ps_m.expressions[:var_active], d.bus.number, t, d.tech.installedcapacity * values(d.scalingfactor)[t])
+#         _add_to_expression!(ps_m.expressions[:nodal_balance_active], d.bus.number, t, d.tech.installedcapacity * values(d.scalingfactor)[t])
 #
 #     end
 #

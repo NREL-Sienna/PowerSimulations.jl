@@ -26,7 +26,7 @@ function activepower_variables(ps_m::CanonicalModel,
                  time_range, 
                  Symbol("Pth_$(T)"), 
                  false, 
-                 :var_active)
+                 :nodal_balance_active)
 
     return
 
@@ -44,7 +44,7 @@ function reactivepower_variables(ps_m::CanonicalModel,
                  time_range, 
                  Symbol("Qth_$(T)"), 
                  false, 
-                 :var_reactive)
+                 :nodal_balance_reactive)
 
     return
 
