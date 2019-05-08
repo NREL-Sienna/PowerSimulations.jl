@@ -11,19 +11,19 @@
     PTDF, A = PowerSystems.buildptdf(branches5, nodes5)
 
     op_model = PSI.PowerOperationModel(TestOptModel, PM.StandardACPForm, devices, branches, services, sys5b)
-    @test :var_active in keys(op_model.canonical_model.expressions) && :var_reactive in keys(op_model.canonical_model.expressions)
+    @test :nodal_balance_active in keys(op_model.canonical_model.expressions) && :nodal_balance_reactive in keys(op_model.canonical_model.expressions)
     @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
 
     op_model = PSI.PowerOperationModel(TestOptModel, PM.DCPlosslessForm, devices, branches, services, sys5b)
-    @test :var_active in keys(op_model.canonical_model.expressions)
+    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
     @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
 
     op_model = PSI.PowerOperationModel(TestOptModel, PSI.StandardPTDFForm, devices, branches, services, sys5b; PTDF = PTDF)
-    @test :var_active in keys(op_model.canonical_model.expressions)
+    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
     @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
 
     op_model = PSI.PowerOperationModel(TestOptModel, PSI.CopperPlatePowerModel, devices, branches, services, sys5b)
-    @test :var_active in keys(op_model.canonical_model.expressions)
+    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
     @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
     =#
 
@@ -34,19 +34,19 @@
     PTDF, A = PowerSystems.buildptdf(branches5, nodes5)
 
     op_model = PSI.PowerOperationModel(TestOptModel, PM.StandardACPForm, devices, branches, services, sys5b)
-    @test :var_active in keys(op_model.canonical_model.expressions) && :var_reactive in keys(op_model.canonical_model.expressions)
+    @test :nodal_balance_active in keys(op_model.canonical_model.expressions) && :nodal_balance_reactive in keys(op_model.canonical_model.expressions)
     @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
 
     op_model = PSI.PowerOperationModel(TestOptModel, PM.DCPlosslessForm, devices, branches, services, sys5b)
-    @test :var_active in keys(op_model.canonical_model.expressions)
+    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
     @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
 
     op_model = PSI.PowerOperationModel(TestOptModel, PSI.StandardPTDFForm, devices, branches, services, sys5b; PTDF = PTDF)
-    @test :var_active in keys(op_model.canonical_model.expressions)
+    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
     @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
 
     op_model = PSI.PowerOperationModel(TestOptModel, PSI.CopperPlatePowerModel, devices, branches, services, sys5b)
-    @test :var_active in keys(op_model.canonical_model.expressions)
+    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
     @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
 end
 
@@ -58,19 +58,19 @@ end
     PTDF, A = PowerSystems.buildptdf(branches5, nodes5)
 
     op_model = PSI.PowerOperationModel(TestOptModel, PM.StandardACPForm, devices, branches, services, sys5b; parameters = false)
-    @test :var_active in keys(op_model.canonical_model.expressions) && :var_reactive in keys(op_model.canonical_model.expressions)
+    @test :nodal_balance_active in keys(op_model.canonical_model.expressions) && :nodal_balance_reactive in keys(op_model.canonical_model.expressions)
     @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
 
     op_model = PSI.PowerOperationModel(TestOptModel, PM.DCPlosslessForm, devices, branches, services, sys5b; parameters = false)
-    @test :var_active in keys(op_model.canonical_model.expressions)
+    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
     @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
 
     op_model = PSI.PowerOperationModel(TestOptModel, PSI.StandardPTDFForm, devices, branches, services, sys5b; PTDF = PTDF, parameters = false)
-    @test :var_active in keys(op_model.canonical_model.expressions)
+    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
     @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
 
     op_model = PSI.PowerOperationModel(TestOptModel, PSI.CopperPlatePowerModel, devices, branches, services, sys5b; parameters = false)
-    @test :var_active in keys(op_model.canonical_model.expressions)
+    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
     @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
 
     devices = Dict{Symbol, PSI.DeviceModel}(:Generators => PSI.DeviceModel(PSY.ThermalGen, PSI.ThermalDispatch),
@@ -80,19 +80,19 @@ end
     PTDF, A = PowerSystems.buildptdf(branches5, nodes5)
 
     op_model = PSI.PowerOperationModel(TestOptModel, PM.StandardACPForm, devices, branches, services, sys5b; parameters = false)
-    @test :var_active in keys(op_model.canonical_model.expressions) && :var_reactive in keys(op_model.canonical_model.expressions)
+    @test :nodal_balance_active in keys(op_model.canonical_model.expressions) && :nodal_balance_reactive in keys(op_model.canonical_model.expressions)
     @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
 
     op_model = PSI.PowerOperationModel(TestOptModel, PM.DCPlosslessForm, devices, branches, services, sys5b; parameters = false)
-    @test :var_active in keys(op_model.canonical_model.expressions)
+    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
     @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
 
     op_model = PSI.PowerOperationModel(TestOptModel, PSI.StandardPTDFForm, devices, branches, services, sys5b; PTDF = PTDF, parameters = false)
-    @test :var_active in keys(op_model.canonical_model.expressions)
+    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
     @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
 
     op_model = PSI.PowerOperationModel(TestOptModel, PSI.CopperPlatePowerModel, devices, branches, services, sys5b; parameters = false)
-    @test :var_active in keys(op_model.canonical_model.expressions)
+    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
     @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
 
 end

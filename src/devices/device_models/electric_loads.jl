@@ -17,7 +17,7 @@ function activepower_variables(ps_m::CanonicalModel,
                  time_range,
                  :Pel,
                  false,
-                 :var_active, -1)
+                 :nodal_balance_active, -1)
 
     return
 
@@ -33,7 +33,7 @@ function reactivepower_variables(ps_m::CanonicalModel,
                  time_range,
                  :Qel,
                  false,
-                 :var_reactive, -1)
+                 :nodal_balance_reactive, -1)
 
     return
 
@@ -136,8 +136,8 @@ function _nodal_expression_param(ps_m::CanonicalModel,
         ts_data_reactive[ix] = (d.name, d.bus.number, -1*d.maxreactivepower * values(d.scalingfactor))
     end
 
-    add_parameters(ps_m, ts_data_active, time_range, Symbol("Pel_$(eltype(devices))"), :var_active)
-    add_parameters(ps_m, ts_data_reactive, time_range, Symbol("Qel_$(eltype(devices))"), :var_reactive)
+    add_parameters(ps_m, ts_data_active, time_range, Symbol("Pel_$(eltype(devices))"), :nodal_balance_active)
+    add_parameters(ps_m, ts_data_reactive, time_range, Symbol("Qel_$(eltype(devices))"), :nodal_balance_reactive)
 
     return
 
@@ -155,7 +155,7 @@ function _nodal_expression_param(ps_m::CanonicalModel,
         ts_data_active[ix] = (d.name, d.bus.number, -1*d.maxactivepower * values(d.scalingfactor))
     end
 
-    add_parameters(ps_m, ts_data_active, time_range, Symbol("Pel_$(eltype(devices))"), :var_active)
+    add_parameters(ps_m, ts_data_active, time_range, Symbol("Pel_$(eltype(devices))"), :nodal_balance_active)
 
     return
 
@@ -170,10 +170,10 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
                                                                      S <: PM.AbstractPowerFormulation}
 
     for t in time_range, d in devices
-        _add_to_expression!(ps_m.expressions[:var_active], 
+        _add_to_expression!(ps_m.expressions[:nodal_balance_active], 
                             d.bus.number, t, 
                             -1*d.maxactivepower * values(d.scalingfactor)[t]);
-        _add_to_expression!(ps_m.expressions[:var_reactive], 
+        _add_to_expression!(ps_m.expressions[:nodal_balance_reactive], 
                             d.bus.number, t, 
                             -1*d.maxreactivepower * values(d.scalingfactor)[t]);
     end
@@ -190,7 +190,7 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
                                                                      S <: PM.AbstractActivePowerFormulation}
 
     for t in time_range, d in devices
-        _add_to_expression!(ps_m.expressions[:var_active], 
+        _add_to_expression!(ps_m.expressions[:nodal_balance_active], 
                             d.bus.number, t, 
                             -1*d.maxactivepower * values(d.scalingfactor)[t])
     end
