@@ -19,7 +19,7 @@ function activepower_variables(ps_m::CanonicalModel,
                  time_range,
                  Symbol("Pre_$(R)"),
                  false,
-                 :var_active)
+                 :nodal_balance_active)
 
     return
 
@@ -34,7 +34,7 @@ function reactivepower_variables(ps_m::CanonicalModel,
                  time_range,
                  Symbol("Qre_$(R)"),
                  false,
-                 :var_reactive)
+                 :nodal_balance_reactive)
 
     return
 
@@ -46,9 +46,8 @@ function reactivepower_constraints(ps_m::CanonicalModel,
                                     devices::Vector{R},
                                     device_formulation::Type{RenewableFullDispatch},
                                     system_formulation::Type{S},
-                                    time_range::UnitRange{Int64},
-                                    parameters::Bool) where {R <: PSY.RenewableGen,
-                                                            S <: PM.AbstractPowerFormulation}
+                                    time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen,
+                                                                         S <: PM.AbstractPowerFormulation}
 
 
     range_data = [(r.name, r.tech.reactivepowerlimits) for r in devices]
@@ -67,9 +66,8 @@ function reactivepower_constraints(ps_m::CanonicalModel,
                                     devices::Vector{R},
                                     device_formulation::Type{RenewableConstantPowerFactor},
                                     system_formulation::Type{S},
-                                    time_range::UnitRange{Int64},
-                                    parameters::Bool) where {R <: PSY.RenewableGen,
-                                                             S <: PM.AbstractPowerFormulation}
+                                    time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen,
+                                                                         S <: PM.AbstractPowerFormulation}
 
     names = [r.name for r in devices]
     p_variable_name = Symbol("Pre_$(R)")
@@ -184,12 +182,12 @@ function _nodal_expression_param(ps_m::CanonicalModel,
                     ts_data_active,
                     time_range,
                     Symbol("Pre_$(R)"),
-                    :var_active)
+                    :nodal_balance_active)
     add_parameters(ps_m,
                     ts_data_reactive,
                     time_range,
                     Symbol("Qre_$(R)"),
-                    :var_reactive)
+                    :nodal_balance_reactive)
 
     return
 
@@ -211,7 +209,7 @@ function _nodal_expression_param(ps_m::CanonicalModel,
                     ts_data_active,
                     time_range,
                     Symbol("Pre_$(R)"),
-                    :var_active)
+                    :nodal_balance_active)
     
     return
 
@@ -230,20 +228,20 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 
     for (ix,f) in enumerate(forecasts)
         device = f.component
-        ts_data_active[ix] = (device.name, device.bus.number, f.data*device.tech.installedcapacity)
-        ts_data_reactive[ix] = (device.name, device.bus.number, f.data*device.tech.installedcapacity*sin(acos(d.tech.powerfactor)))
+        ts_data_active[ix] = (device.name, device.bus.number, values(f.data)*device.tech.installedcapacity)
+        ts_data_reactive[ix] = (device.name, device.bus.number, values(f.data)*device.tech.installedcapacity*sin(acos(device.tech.powerfactor)))
     end
 
     add_parameters(ps_m,
                     ts_data_active,
                     time_range,
                     Symbol("Pre_$(R)"),
-                    :var_active)
+                    :nodal_balance_active)
     add_parameters(ps_m,
                     ts_data_reactive,
                     time_range,
                     Symbol("Qre_$(R)"),
-                    :var_reactive)
+                    :nodal_balance_reactive)
 
     return
 
@@ -259,14 +257,14 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 
     for (ix,f) in enumerate(forecasts)
         device= f.component
-        ts_data_active[ix] = (device.name, device.bus.number, f.data*device.tech.installedcapacity)
+        ts_data_active[ix] = (device.name, device.bus.number, values(f.data)*device.tech.installedcapacity)
     end
 
     add_parameters(ps_m,
                     ts_data_active,
                     time_range,
                     Symbol("Pre_$(R)"),
-                    :var_active)
+                    :nodal_balance_active)
     
     return
 
@@ -282,11 +280,11 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
                                                                      S <: PM.AbstractPowerFormulation}
 
     for t in time_range, d in devices
-        _add_to_expression!(ps_m.expressions[:var_active],
+        _add_to_expression!(ps_m.expressions[:nodal_balance_active],
                             d.bus.number,
                             t,
                             d.tech.installedcapacity)
-        _add_to_expression!(ps_m.expressions[:var_reactive],
+        _add_to_expression!(ps_m.expressions[:nodal_balance_reactive],
                             d.bus.number,
                             t,
                             d.tech.installedcapacity * sin(acos(d.tech.powerfactor)))
@@ -304,7 +302,7 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
                                                                          S <: PM.AbstractActivePowerFormulation}
 
     for t in time_range, d in devices
-        _add_to_expression!(ps_m.expressions[:var_active],
+        _add_to_expression!(ps_m.expressions[:nodal_balance_active],
                             d.bus.number,
                             t,
                             d.tech.installedcapacity)
@@ -323,11 +321,11 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
                                                                      S <: PM.AbstractPowerFormulation}
 
     for t in time_range, f in forecasts
-        _add_to_expression!(ps_m.expressions[:var_active],
+        _add_to_expression!(ps_m.expressions[:nodal_balance_active],
                             f.component.bus.number,
                             t,
-                            f.tech.installedcapacity * values(f.data)[t])
-        _add_to_expression!(ps_m.expressions[:var_reactive],
+                            f.component.tech.installedcapacity * values(f.data)[t])
+        _add_to_expression!(ps_m.expressions[:nodal_balance_reactive],
                             f.component.bus.number,
                             t,
                             f.component.tech.installedcapacity * values(f.data)[t] * sin(acos(f.component.tech.powerfactor)))
@@ -345,10 +343,10 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
                                                                      S <: PM.AbstractActivePowerFormulation}
 
     for t in time_range, f in forecasts
-        _add_to_expression!(ps_m.expressions[:var_active],
+        _add_to_expression!(ps_m.expressions[:nodal_balance_active],
                             f.component.bus.number,
                             t,
-                            f.tech.installedcapacity * values(f.data)[t])
+                            f.component.tech.installedcapacity * values(f.data)[t])
     end
 
     return
