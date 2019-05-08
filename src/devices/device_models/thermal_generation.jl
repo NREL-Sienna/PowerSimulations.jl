@@ -92,7 +92,7 @@ function activepower_constraints(ps_m::CanonicalModel,
     device_range(ps_m, 
                  range_data, 
                  time_range, 
-                 Symbol("thermal_active_range_$(T)"), 
+                 Symbol("active_range_$(T)"), 
                  Symbol("Pth_$(T)")
                  )
 
@@ -116,7 +116,7 @@ function activepower_constraints(ps_m::CanonicalModel,
     device_semicontinuousrange(ps_m, 
                                range_data, 
                                time_range, 
-                               Symbol("thermal_active_range_$(T)"), 
+                               Symbol("active_range_$(T)"), 
                                Symbol("Pth_$(T)"), 
                                Symbol("ONth_$(T)"))
 
@@ -141,7 +141,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
     device_range(ps_m, 
                  range_data , 
                  time_range, 
-                 Symbol("thermal_reactive_range_$(T)"), 
+                 Symbol("reactive_range_$(T)"), 
                  Symbol("Qth_$(T)"))
 
     return
@@ -166,7 +166,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
     device_semicontinuousrange(ps_m, 
                                range_data, 
                                time_range, 
-                               Symbol("thermal_reactive_range_$(T)"), 
+                               Symbol("reactive_range_$(T)"), 
                                Symbol("Qth_$(T)"), 
                                Symbol("ONth_$(T)"))
 
@@ -189,7 +189,7 @@ function activepower_constraints(ps_m::CanonicalModel,
     device_range(ps_m, 
                  range_data, 
                  time_range, 
-                 Symbol("thermal_active_range_$(T)"), 
+                 Symbol("active_range_$(T)"), 
                  Symbol("Pth_$(T)"))
 
     return
@@ -212,7 +212,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
     device_range(ps_m, 
                  range_data, 
                  time_range, 
-                 Symbol("thermal_reactive_range_$(T)"),  
+                 Symbol("reactive_range_$(T)"),  
                  Symbol("Qth_$(T)"))
 
     return
