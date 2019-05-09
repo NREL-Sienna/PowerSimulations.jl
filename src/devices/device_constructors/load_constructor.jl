@@ -4,43 +4,39 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            system_formulation::Type{S},
                            sys::PSY.ConcreteSystem,
                            time_range::UnitRange{Int64};
-                           kwargs...) where {L <: PSY.ElectricLoad,
-                                             D <: PSI.AbstractControllablePowerLoadForm,
+                           kwargs...) where {L <: PSY.ControllableLoad,
+                                             D <: AbstractControllablePowerLoadForm,
                                              S <: PM.AbstractPowerFormulation}
+
+    forecast = get(kwargs, :forecast, true)
+
+    devices = collect(PSY.get_components(device, sys))
+    
+    if validate_available_devices(devices, device)
+        return
+    end
 
     parameters = get(kwargs, :parameters, true)
 
-    fixed_resources = [fs for fs in sys.loads if isa(fs,PSY.PowerLoad)]
+    #Variables
+    activepower_variables(ps_m, devices, time_range);
 
-    controllable_resources = [fs for fs in sys.loads if !isa(fs,PSY.PowerLoad)]
+    reactivepower_variables(ps_m, devices, time_range);
 
-        if !isempty(controllable_resources)
+    #Constraints
+    if forecast 
+        forecasts = [forecast for forecast in  sys.forecasts[:DA] if isa(forecast,PSY.Deterministic{device})]
+        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, time_range, parameters)
+    else
+        activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
+    end
 
-            #Variables
-            activepower_variables(ps_m, controllable_resources, time_range);
+    reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
 
-            reactivepower_variables(ps_m, controllable_resources, time_range);
+    #Cost Function
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
-            #Constraints
-            activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range, parameters)
-
-            reactivepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
-
-            #Cost Function
-            cost_function(ps_m, controllable_resources, device_formulation, system_formulation)
-
-        else
-            @warn("The Data Doesn't Contain Controllable Loads, Consider Changing the Device Formulation to StaticPowerLoad")
-
-        end
-
-        #add to expression
-
-        if !isempty(fixed_resources)
-            nodal_expression(ps_m, fixed_resources, system_formulation, time_range, parameters)
-        end
-
-        return
+    return
 
 end
 
@@ -50,54 +46,88 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            system_formulation::Type{S},
                            sys::PSY.ConcreteSystem,
                            time_range::UnitRange{Int64};
-                           kwargs...) where {L <: PSY.ElectricLoad,
-                                             D <: PSI.AbstractControllablePowerLoadForm,
+                           kwargs...) where {L <: PSY.ControllableLoad,
+                                             D <: AbstractControllablePowerLoadForm,
                                              S <: PM.AbstractActivePowerFormulation}
 
-    parameters = get(kwargs, :parameters, true)
+    forecast = get(kwargs, :forecast, true)
 
-    fixed_resources = [fs for fs in sys.loads if isa(fs,PSY.PowerLoad)]
+    devices = collect(PSY.get_components(device, sys))
+   
+    if validate_available_devices(devices, device)
+        return
+    end
 
-    controllable_resources = [fs for fs in sys.loads if !isa(fs,PSY.PowerLoad)]
+    parameters = get(kwargs, :parameters, true)                                             
 
-    if !isempty(controllable_resources)
+    #Variables
+    activepower_variables(ps_m, devices, time_range)
 
-        #Variables
-        activepower_variables(ps_m, controllable_resources, time_range);
-
-        #Constraints
-        activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range, parameters)
-
-        #Cost Function
-        cost_function(ps_m, controllable_resources, device_formulation, system_formulation)
-
+    #Constraints
+    if forecast 
+        forecasts = [forecast for forecast in  sys.forecasts[:DA] if isa(forecast,PSY.Deterministic{device})]
+        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, time_range, parameters)
     else
-        @warn("The Data Doesn't Contain Controllable Loads, Consider Changing the Device Formulation to StaticPowerLoad")
+        activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
     end
 
-    #add to expression
-
-    if !isempty(fixed_resources)
-        nodal_expression(ps_m, fixed_resources, system_formulation, time_range, parameters)
-    end
+    #Cost Function
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 
 end
 
 function _internal_device_constructor!(ps_m::CanonicalModel,
-                           device::Type{L},
-                           device_formulation::Type{PSI.StaticPowerLoad},
-                           system_formulation::Type{S},
-                           sys::PSY.ConcreteSystem,
-                           time_range::UnitRange{Int64};
-                           kwargs...) where {L <: PSY.ElectricLoad,
-                                             S <: PM.AbstractPowerFormulation}
+                                        device::Type{L},
+                                        device_formulation::Type{StaticPowerLoad},
+                                        system_formulation::Type{S},
+                                        sys::PSY.ConcreteSystem,
+                                        time_range::UnitRange{Int64};
+                                        kwargs...) where {L <: PSY.ElectricLoad,
+                                                          S <: PM.AbstractPowerFormulation}
+
+    forecast = get(kwargs, :forecast, true)
+
+    devices = collect(PSY.get_components(device, sys))
+    
+    if validate_available_devices(devices, device)
+        return
+    end
 
     parameters = get(kwargs, :parameters, true)
 
-    nodal_expression(ps_m, sys.loads, system_formulation, time_range, parameters)
+    if forecast 
+        forecasts = [forecast for forecast in  sys.forecasts[:DA] if isa(forecast,PSY.Deterministic{device})]
+        nodal_expression(ps_m, forecasts, system_formulation, time_range, parameters)
+    else
+        nodal_expression(ps_m, devices, system_formulation, time_range, parameters)
+    end   
 
     return
 
 end
+
+function _internal_device_constructor!(ps_m::CanonicalModel,
+                                        device::Type{L},
+                                        device_formulation::Type{D},
+                                        system_formulation::Type{S},
+                                        sys::PSY.ConcreteSystem,
+                                        time_range::UnitRange{Int64};
+                                        kwargs...) where {L <: PSY.StaticLoad,
+                                                          D <: AbstractControllablePowerLoadForm,
+                                                          S <: PM.AbstractPowerFormulation}
+
+    if device_formulation != StaticPowerLoad
+        @warn("The Formulation $(D) only applies to Controllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad")                                              
+    end
+
+    _internal_device_constructor!(ps_m, 
+                                  device,
+                                  StaticPowerLoad,
+                                  system_formulation,
+                                  sys,
+                                  time_range; 
+                                  kwargs...)
+
+end    
