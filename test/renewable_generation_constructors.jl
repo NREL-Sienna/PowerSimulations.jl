@@ -54,10 +54,10 @@ end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 end
 
-#@testset "Renewable Testing" begin
-#ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
-#construct_device!(ps_model, PSY.RenewableCurtailment, PSI.RenewableFullDispatch, PM.StandardACPForm, c_sys5_re, time_range);
-#end
+@testset "Renewable ACPPower Full Dispatch (Broken, Missing data)" begin
+    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
+    #construct_device!(ps_model, PSY.RenewableCurtailment, PSI.RenewableFullDispatch, PM.StandardACPForm, c_sys5_re, time_range);
+end
 
 @testset "Renewable DCPLossLess ConstantPowerFactor" begin
     model = DeviceModel(PSY.RenewableCurtailment, PSI.RenewableConstantPowerFactor)
