@@ -3,7 +3,7 @@ function construct_network!(ps_m::CanonicalModel,
                             sys::PSY.ConcreteSystem,
                             time_range::UnitRange{Int64}; kwargs...)
 
-    bus_count = length(sys.buses)
+    bus_count = length(PSY.get_components(PSY.Bus, sys))
 
     copper_plate(ps_m, :nodal_balance_active, bus_count, time_range)
 
@@ -17,9 +17,7 @@ function construct_network!(ps_m::CanonicalModel,
 
     if :PTDF in keys(kwargs)
 
-        ac_branches = [br for br in sys.branches if !isa(br, PSY.DCLine)]
-
-        # TODO: Get DC Lines and model DC Lines
+        ac_branches = PSY.get_components(PSY.ACBranch, sys)
 
         flow_variables(ps_m, system_formulation, ac_branches, time_range)
 
