@@ -18,6 +18,7 @@ export OptimalPowerFlow
 
 #functions
 export construct_device!
+export construct_network!
 export solve_op_model!
 
 
