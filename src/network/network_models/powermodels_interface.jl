@@ -267,7 +267,7 @@ function powermodels_network!(ps_m::CanonicalModel,
 
     pm_f = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(pm_data, system_formulation; kwargs...)
 
-    ps_m.pm_model = PSI.build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
+    ps_m.pm_model = build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
 
     return
 
@@ -290,7 +290,7 @@ function powermodels_network!(ps_m::CanonicalModel,
 
     pm_f = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
 
-    ps_m.pm_model = PSI.build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
+    ps_m.pm_model = build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
 
     return
 

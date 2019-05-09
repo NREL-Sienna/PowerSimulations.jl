@@ -81,7 +81,7 @@ end
 
 function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device::Type{R},
-                                        device_formulation::Type{PSI.RenewableFixed},
+                                        device_formulation::Type{RenewableFixed},
                                         system_formulation::Type{S},
                                         sys::PSY.ConcreteSystem,
                                         time_range::UnitRange{Int64};
@@ -115,7 +115,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         system_formulation::Type{S},
                                         sys::PSY.ConcreteSystem,
                                         time_range::UnitRange{Int64};
-                                        kwargs...) where {D <: PSI.AbstractRenewableFormulation,
+                                        kwargs...) where {D <: AbstractRenewableDispatchForm,
                                                           S <: PM.AbstractPowerFormulation}
 
     if device_formulation != RenewableFixed
@@ -124,7 +124,6 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     _internal_device_constructor!(ps_m, 
                                   device,
-                                  device_formulation,
                                   RenewableFixed,
                                   sys,
                                   time_range; 

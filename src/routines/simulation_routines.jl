@@ -56,7 +56,7 @@ function run_simulations(simulation::PowerSimulationsModel{S}, solver, ps_dict::
         sys = PSY.System(ps_dict; kwargs...);
 
         # make model
-        tmp_model = PSI.PowerOperationModel(simulation.model.psmodel,
+        tmp_model = PowerOperationModel(simulation.model.psmodel,
             simulation.model.generation,
             simulation.model.demand,
             simulation.model.storage,
@@ -92,15 +92,15 @@ function run_simulations(simulation::PowerSimulationsModel{S}, solver, ps_dict::
         # TODO: Subset model results when a lookahead is provided
 
         # extract results
-        res = PSI.get_model_result(tmp_model)
+        res = get_model_result(tmp_model)
 
         simulation_results[step] = copy(res)
 
         # update initial...
-        initialpowerdict = :p_th in keys(res) ? PSI.get_previous_value(res[:p_th]) : nothing
-        initialstatusdict = :on_th in keys(res) ? PSI.get_previous_value(res[:on_th]) : nothing
-        initialondurationdict = :start_th in keys(res) ? PSI.commitment_duration(res,initialondurationdict,:start_th) : nothing
-        initialoffdurationdict = :stop_th in keys(res) ? PSI.commitment_duration(res,initialoffdurationdict,:stop_th) : nothing
+        initialpowerdict = :p_th in keys(res) ? get_previous_value(res[:p_th]) : nothing
+        initialstatusdict = :on_th in keys(res) ? get_previous_value(res[:on_th]) : nothing
+        initialondurationdict = :start_th in keys(res) ? commitment_duration(res,initialondurationdict,:start_th) : nothing
+        initialoffdurationdict = :stop_th in keys(res) ? commitment_duration(res,initialoffdurationdict,:stop_th) : nothing
 
     end
 

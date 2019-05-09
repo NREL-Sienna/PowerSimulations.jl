@@ -179,7 +179,7 @@ This function adds the active power limits of generators when there are no Commi
 """
 function activepower_constraints(ps_m::CanonicalModel,
                                  devices::Vector{T},
-                                 device_formulation::Type{PSI.ThermalDispatchNoMin},
+                                 device_formulation::Type{ThermalDispatchNoMin},
                                  system_formulation::Type{S},
                                  time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen,
                                                                       S <: PM.AbstractPowerFormulation}
@@ -202,7 +202,7 @@ This function adds the reactive  power limits of generators when there are Commi
 """
 function reactivepower_constraints(ps_m::CanonicalModel,
                                    devices::Vector{T},
-                                   device_formulation::Type{PSI.ThermalDispatchNoMin},
+                                   device_formulation::Type{ThermalDispatchNoMin},
                                    system_formulation::Type{S},
                                    time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen,
                                                                         S <: PM.AbstractPowerFormulation}

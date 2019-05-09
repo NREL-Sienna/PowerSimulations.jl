@@ -8,7 +8,7 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
     branches::Dict{Symbol, DeviceModel}
     services::Dict{Symbol, ServiceModel}
     system::PSY.ConcreteSystem
-    canonical_model::PSI.CanonicalModel
+    canonical_model::CanonicalModel
 
     function PowerOperationModel(op_model::Type{M},
                                 transmission::Type{T},
