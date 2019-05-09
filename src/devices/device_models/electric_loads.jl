@@ -341,8 +341,8 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
                                                                      S <: PM.AbstractPowerFormulation}
 
     for f in forecasts
-        time_series_vector_active = values(f.data)*f.component.maxactivepower
-        time_series_vector_reactive = values(f.data)*f.component.maxreactivepower
+        time_series_vector_active = -1*values(f.data)*f.component.maxactivepower
+        time_series_vector_reactive = -1*values(f.data)*f.component.maxreactivepower
         device = f.component
         for t in time_range           
             _add_to_expression!(ps_m.expressions[:nodal_balance_active],
@@ -368,7 +368,7 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
                                                                      S <: PM.AbstractActivePowerFormulation}
 
     for f in forecasts
-        time_series_vector_active = values(f.data)*f.component.maxactivepower
+        time_series_vector_active = -1*values(f.data)*f.component.maxactivepower
         device = f.component
         for t in time_range           
             _add_to_expression!(ps_m.expressions[:nodal_balance_active],
