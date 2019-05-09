@@ -92,7 +92,7 @@ This function creates the model for a full themal dispatch formulation depending
 """
 function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device::Type{T},
-                                        device_formulation::Type{PSI.ThermalRampLimited},
+                                        device_formulation::Type{ThermalRampLimited},
                                         system_formulation::Type{S},
                                         sys::PSY.ConcreteSystem,
                                         time_range::UnitRange{Int64};

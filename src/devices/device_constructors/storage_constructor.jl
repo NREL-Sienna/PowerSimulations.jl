@@ -5,7 +5,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            sys::PSY.ConcreteSystem,
                            time_range::UnitRange{Int64};
                            kwargs...) where {St <: PSY.Storage,
-                                             D <: PSI.AbstractStorageForm,
+                                             D <: AbstractStorageForm,
                                              S <: PM.AbstractPowerFormulation}
 
     #wrangle initial_conditions
@@ -53,7 +53,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            sys::PSY.ConcreteSystem,
                            time_range::UnitRange{Int64};
                            kwargs...) where {St <: PSY.Storage,
-                                             D <: PSI.AbstractStorageForm,
+                                             D <: AbstractStorageForm,
                                              S <: PM.AbstractActivePowerFormulation}
 
     #wrangle initial_conditions

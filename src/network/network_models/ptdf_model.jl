@@ -40,16 +40,16 @@ The first implementation, above was tested this way with the respective results
 
 to = TimerOutput()
 
-@timeit to "canonical_model"   ps_m = PSI.CanonicalModel(Model(ipopt_optimizer),
+@timeit to "canonical_model"   ps_m = CanonicalModel(Model(ipopt_optimizer),
                               Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
-                              Dict{Symbol, PSI.JuMPAffineExpressionArray}(:nodal_balance_active => PSI.JuMPAffineExpressionArray(undef, 5, 24),
-                                                                         :nodal_balance_reactive => PSI.JuMPAffineExpressionArray(undef, 5, 24)),
+                              Dict{Symbol, JuMPAffineExpressionArray}(:nodal_balance_active => JuMPAffineExpressionArray(undef, 5, 24),
+                                                                         :nodal_balance_reactive => JuMPAffineExpressionArray(undef, 5, 24)),
                               nothing);
-@timeit to "build_thermal"    PSI.construct_device!(ps_m, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b);
-@timeit to "build_load"    PSI.construct_device!(ps_m, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
-@timeit to "add_flow"      PSI.flow_variables(ps_m, PM.DCPlosslessForm, branches5, 1:24)
+@timeit to "build_thermal"    construct_device!(ps_m, PSY.ThermalGen, ThermalDispatch, PM.StandardACPForm, sys5b);
+@timeit to "build_load"    construct_device!(ps_m, PSY.PowerLoad, StaticPowerLoad, PM.StandardACPForm, sys5b);
+@timeit to "add_flow"      flow_variables(ps_m, PM.DCPlosslessForm, branches5, 1:24)
 @timeit to "PTDF cons" begin
     @timeit to "allocate_space" ps_m.constraints["Flow_con1"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [b.name for b in branches5], 1:24)
     @timeit to "make constraints" for t in 1:24
@@ -82,16 +82,16 @@ to = TimerOutput()
 
  to = TimerOutput()
 
-@timeit to "canonical_model"   ps_m = PSI.CanonicalModel(Model(ipopt_optimizer),
+@timeit to "canonical_model"   ps_m = CanonicalModel(Model(ipopt_optimizer),
                               Dict{String, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}}(),
                               Dict{String, JuMP.Containers.DenseAxisArray}(),
                               nothing,
-                              Dict{Symbol, PSI.JuMPAffineExpressionArray}(:nodal_balance_active => PSI.JuMPAffineExpressionArray(undef, 5, 24),
-                                                                         :nodal_balance_reactive => PSI.JuMPAffineExpressionArray(undef, 5, 24)),
+                              Dict{Symbol, JuMPAffineExpressionArray}(:nodal_balance_active => JuMPAffineExpressionArray(undef, 5, 24),
+                                                                         :nodal_balance_reactive => JuMPAffineExpressionArray(undef, 5, 24)),
                               nothing);
-@timeit to "build_thermal"    PSI.construct_device!(ps_m, PSY.ThermalGen, PSI.ThermalDispatch, PM.StandardACPForm, sys5b);
-@timeit to "build_load"    PSI.construct_device!(ps_m, PSY.PowerLoad, PSI.StaticPowerLoad, PM.StandardACPForm, sys5b);
-@timeit to "add_flow"      PSI.flow_variables(ps_m, PM.DCPlosslessForm, branches5, 1:24)
+@timeit to "build_thermal"    construct_device!(ps_m, PSY.ThermalGen, ThermalDispatch, PM.StandardACPForm, sys5b);
+@timeit to "build_load"    construct_device!(ps_m, PSY.PowerLoad, StaticPowerLoad, PM.StandardACPForm, sys5b);
+@timeit to "add_flow"      flow_variables(ps_m, PM.DCPlosslessForm, branches5, 1:24)
 @timeit to "PTDF cons" begin
     @timeit to "allocate_space" ps_m.constraints["Flow_con2"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [b.name for b in branches5], 1:24)
     @timeit to "make constraints" begin for t in 1:24

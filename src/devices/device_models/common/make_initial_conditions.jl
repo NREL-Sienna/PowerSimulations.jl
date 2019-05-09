@@ -9,9 +9,9 @@ function output_init(ps_m::CanonicalModel,
     for g in devices
         if !isnothing(g.tech.ramplimits)
             if parameters
-                initial_conditions[i] = PSI.InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, g.tech.activepower))
+                initial_conditions[i] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, g.tech.activepower))
             else
-                initial_conditions[i] = PSI.InitialCondition(g, g.tech.activepower)
+                initial_conditions[i] = InitialCondition(g, g.tech.activepower)
             end
             y = iterate(idx, state)
             y === nothing && (i += 1; break)
@@ -38,9 +38,9 @@ function status_init(ps_m::CanonicalModel,
     for g in devices
         if !isnothing(g.tech.ramplimits)
             if parameters
-                initial_conditions[i] = PSI.InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(g.tech.activepower > 0)))
+                initial_conditions[i] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(g.tech.activepower > 0)))
             else
-                initial_conditions[i] = PSI.InitialCondition(g, 1.0*(g.tech.activepower > 0))
+                initial_conditions[i] = InitialCondition(g, 1.0*(g.tech.activepower > 0))
             end
             y = iterate(idx, state)
             y === nothing && (i += 1; break)
@@ -68,11 +68,11 @@ function duration_init(ps_m::CanonicalModel,
     for g in devices
         if !isnothing(g.tech.ramplimits)
             if parameters
-                ini_cond_on[i] = PSI.InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(g.tech.activepower > 0)))
-                ini_cond_off[i] = PSI.InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(g.tech.activepower < 0)))
+                ini_cond_on[i] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(g.tech.activepower > 0)))
+                ini_cond_off[i] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(g.tech.activepower < 0)))
             else
-                ini_cond_on[i] = PSI.InitialCondition(g, 999.0*(g.tech.activepower > 0))
-                ini_cond_off[i] = PSI.InitialCondition(g, 999.0*(g.tech.activepower < 0))
+                ini_cond_on[i] = InitialCondition(g, 999.0*(g.tech.activepower > 0))
+                ini_cond_off[i] = InitialCondition(g, 999.0*(g.tech.activepower < 0))
             end
             y = iterate(idx, state)
             y === nothing && (i += 1; break)

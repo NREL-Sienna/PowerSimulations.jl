@@ -5,7 +5,7 @@ function construct_service!(ps_m::CanonicalModel,
                             sys::PSY.ConcreteSystem,
                             time_range::UnitRange{Int64};
                             kwargs...) where {SD <: PSY.Service,
-                                              SV <: PSI.AbstractServiceFormulation,
+                                              SV <: AbstractServiceFormulation,
                                               S <:  PM.AbstractPowerFormulation}
 
     return
@@ -34,7 +34,7 @@ function get_devices(sys::PSY.ConcreteSystem,device::Type{PSY.PSY.ElectricLoad})
 end
 
 
-function construct_service!(m::JuMP.AbstractModel, service::PSY.StaticReserve, device_formulation::Type{PSI.RampLimitedReserve},devices::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, sys::PSY.ConcreteSystem; kwargs...)
+function construct_service!(m::JuMP.AbstractModel, service::PSY.StaticReserve, device_formulation::Type{RampLimitedReserve},devices::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, sys::PSY.ConcreteSystem; kwargs...)
 
     dev_set = Array{NamedTuple{(:device,:formulation),Tuple{PSY.Device,DataType}}}([])
 
@@ -52,7 +52,7 @@ function construct_service!(m::JuMP.AbstractModel, service::PSY.StaticReserve, d
     if !isempty(dev_set)
 
         p_rsv =  reservevariables(m, dev_set, sys.time_periods)
-        m =  PSI.reserves(m, dev_set, service, sys.time_periods)
+        m =  reserves(m, dev_set, service, sys.time_periods)
 
     end
 

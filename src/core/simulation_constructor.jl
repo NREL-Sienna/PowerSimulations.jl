@@ -41,7 +41,7 @@ function buildsimulation!(sys::PSY.ConcreteSystem, op_model::PowerOperationModel
     steps = :steps in keys(args) ? args[:steps] : Int64(floor((length(sys.loads[1].scalingfactor)-1)/periods))
 
     if steps != (length(sys.loads[1].scalingfactor)-1)/periods
-        @warn "Time series length and simulation definiton inconsistent, simulation may be truncated, simulating $steps stePSI."
+        @warn "Time series length and simulation definiton inconsistent, simulation may be truncated, simulating $steps ste"
     end
 
     lookahead_periods = :lookahead_periods in keys(args) ? args[:lookahead_periods] : 0

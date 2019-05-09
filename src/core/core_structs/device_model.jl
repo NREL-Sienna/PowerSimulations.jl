@@ -9,13 +9,13 @@ function _validate_device_formulation(device_model::Type{D}) where {D <: Union{A
 end
 
 mutable struct DeviceModel{D <: PSY.Device,
-                           B <: PSI.AbstractDeviceFormulation}
+                           B <: AbstractDeviceFormulation}
     device::Type{D}
     formulation::Type{B}
 
     function DeviceModel(device::Type{D},
                          formulation::Type{B}) where {D <: PSY.Device,
-                                                      B <: PSI.AbstractDeviceFormulation}
+                                                      B <: AbstractDeviceFormulation}
                         
                         _validate_device_formulation(D)
                         _validate_device_formulation(B)
