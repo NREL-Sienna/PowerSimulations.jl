@@ -1,16 +1,15 @@
-#=
-@testset "Renewable data misspecification" begin
-    model = DeviceModel(PSY.PowerLoad, PSI.DispatchablePowerLoad)
+@testset "Load data misspecification" begin
+    model = DeviceModel(PSY.InterruptibleLoad, PSI.DispatchablePowerLoad)
+    warn_message = "The data doesn't devices of type InterruptibleLoad, consider changing the device models"
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
-    construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5, time_range);
-    @test JuMP.num_variables(ps_model.JuMPmodel) == 0
-    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
-    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
-    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
+    @test_logs (:warn, warn_message) construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5, time_range);
+    model = DeviceModel(PSY.PowerLoad, PSI.DispatchablePowerLoad)
+    warn_message = "The Formulation PowerSimulations.DispatchablePowerLoad only applies to Controllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad"
+    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
+    @test_logs (:warn, warn_message) construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5, time_range);
 end
-=#
 
-@testset "Dispatchable DCPLossLess" begin
+@testset "Load Dispatchable DCPLossLess" begin
     model = DeviceModel(PSY.PowerLoad, PSI.DispatchablePowerLoad)
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5, time_range);
@@ -28,7 +27,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
 end
 
-@testset "Dispatchable ACP" begin
+@testset "Load Dispatchable ACP" begin
     model = DeviceModel(PSY.PowerLoad, PSI.DispatchablePowerLoad)
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys5, time_range);
@@ -46,7 +45,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
 end
 
-@testset "Static Load DCPLossLess" begin
+@testset "Load Static DCPLossLess" begin
     model = DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad)
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5, time_range);
@@ -64,7 +63,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
 end
 
-@testset "Static Load ACP" begin
+@testset "Load Static ACP" begin
     model = DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad)
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys5, time_range);
