@@ -16,7 +16,7 @@ function result_dataframe(variable::JuMP.Containers.DenseAxisArray)
 
 end
 
-function get_model_result(ps_m::PSI.CanonicalModel; kwargs...)
+function get_model_result(ps_m::CanonicalModel; kwargs...)
 
     results_df = Dict{Symbol, DataFrames.DataFrame}()
 
@@ -30,7 +30,7 @@ function get_model_result(ps_m::PSI.CanonicalModel; kwargs...)
 
 end
 
-function optimizer_log(ps_m::PSI.CanonicalModel; kwargs...)
+function optimizer_log(ps_m::CanonicalModel; kwargs...)
 
     optimizer_log = Dict{Symbol,Any}()
 
