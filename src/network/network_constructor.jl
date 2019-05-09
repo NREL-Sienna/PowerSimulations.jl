@@ -17,7 +17,7 @@ function construct_network!(ps_m::CanonicalModel,
 
     if :PTDF in keys(kwargs)
 
-        ac_branches = PSY.get_components(PSY.ACBranch, sys)
+        ac_branches = collect(PSY.get_components(PSY.ACBranch, sys))
 
         flow_variables(ps_m, system_formulation, ac_branches, time_range)
 

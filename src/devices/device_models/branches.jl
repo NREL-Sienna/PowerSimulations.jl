@@ -1,64 +1,33 @@
+#Generic Branch Models
 abstract type AbstractBranchFormulation <: AbstractDeviceFormulation end
+
+struct ACSeriesBranch <: AbstractBranchFormulation end
+
+struct DCSeriesBranch <: AbstractBranchFormulation end
+
+#Abstract Line Models
 
 abstract type AbstractLineForm <: AbstractBranchFormulation end
 
+struct PiLine <: AbstractLineForm end
+
 abstract type AbstractDCLineForm <: AbstractBranchFormulation end
+
+struct HVDC <: AbstractDCLineForm end
+
+struct VoltageSourceDC <: AbstractDCLineForm end
+
+#Abstract Transformer Models
 
 abstract type AbstractTransformerForm <: AbstractBranchFormulation end
 
-abstract type PiLine <: AbstractLineForm end
+struct Static2W <: AbstractTransformerForm end
 
-abstract type SeriesLine <: AbstractLineForm end
+struct TapControl <: AbstractTransformerForm end
 
-abstract type SimpleHVDC <: AbstractDCLineForm end
+struct PhaseContol <: AbstractTransformerForm end
 
-function line_flow_limit(ps_m::CanonicalModel,
-                         devices::Array{Br,1},
-                         device_formulation::Type{D},
-                         system_formulation::Type{S},
-                         time_range::UnitRange{Int64}) where {Br <: PSY.MonitoredLine,
-                                                               D <: AbstractBranchFormulation,
-                                                               S <: PM.AbstractPowerFormulation}
-
-    #rate_data = [(h.name, (min = -1*h.rate, max = h.rate) for h in devices]
-
-    device_range(ps_m, range_data, time_range, :dc_rate_const, :Fbr)
-
-    return
-
-end
-
-
-function line_rate_constraints(ps_m::CanonicalModel,
-                               devices::Array{Br,1},
-                               device_formulation::Type{D},
-                                system_formulation::Type{StandardPTDFForm},
-                          time_range::UnitRange{Int64}) where {Br <: PSY.Branch, D <: AbstractBranchFormulation}
-
-    range_data = [(h.name, (min = -1*h.rate, max = h.rate)) for h in devices]
-
-    device_range(ps_m, range_data, time_range, :line_rate_limit, :Fbr)
-
-    return
-
-end
-
-
-function line_flow_limit(ps_m::CanonicalModel,
-                         devices::Array{Br,1},
-                         device_formulation::Type{D},
-                         system_formulation::Type{S},
-                         time_range::UnitRange{Int64}) where {Br <: PSY.MonitoredLine,
-                                                               D <: AbstractBranchFormulation,
-                                                               S <: PM.AbstractActivePowerFormulation}
-
-    #rate_data = [(h.name, (min = -1*h.rate, max = h.rate) for h in devices]
-
-    device_range(ps_m, range_data, time_range, :dc_rate_const, :Fbr)
-
-    return
-
-end
+#################################### Branch Variables ##################################################
 
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
@@ -66,7 +35,11 @@ function flow_variables(ps_m::CanonicalModel,
                         time_range::UnitRange{Int64}) where {B <: PSY.Branch,
                                                             S <: PM.DCPlosslessForm}
 
-    add_variable(ps_m, devices, time_range, :Fbr, false)
+    add_variable(ps_m, 
+                 devices, 
+                 time_range, 
+                 Symbol("Fbr_$(B)"), 
+                 false)
 
 end
 
@@ -98,3 +71,58 @@ function flow_variables(ps_m::CanonicalModel,
 
 end
 
+#################################### Flow Limits Variables ##################################################
+
+function line_rate_constraints(ps_m::CanonicalModel,
+                               devices::Array{Br,1},
+                               device_formulation::Type{D},
+                               system_formulation::Type{StandardPTDFForm},
+                               time_range::UnitRange{Int64}) where {Br <: PSY.Branch, D <: AbstractBranchFormulation}
+
+    range_data = [(h.name, (min = -1*h.rate, max = h.rate)) for h in devices]
+
+    device_range(ps_m, range_data, time_range, :line_rate_limit, :Fbr)
+
+    return
+
+end
+
+####################################Flow Limits using Values ###############################################
+
+####################################Flow Limits using Device ###############################################
+
+function line_flow_limit(ps_m::CanonicalModel,
+                         devices::Array{Br,1},
+                         device_formulation::Type{D},
+                         system_formulation::Type{S},
+                         time_range::UnitRange{Int64}) where {Br <: PSY.MonitoredLine,
+                                                               D <: AbstractBranchFormulation,
+                                                               S <: PM.AbstractPowerFormulation}
+
+    #rate_data = [(h.name, (min = -1*h.rate, max = h.rate) for h in devices]
+
+    device_range(ps_m, range_data, time_range, :dc_rate_const, :Fbr)
+
+    return
+
+end
+
+function line_flow_limit(ps_m::CanonicalModel,
+                         devices::Array{Br,1},
+                         device_formulation::Type{D},
+                         system_formulation::Type{S},
+                         time_range::UnitRange{Int64}) where {Br <: PSY.MonitoredLine,
+                                                               D <: AbstractBranchFormulation,
+                                                               S <: PM.AbstractActivePowerFormulation}
+
+    #rate_data = [(h.name, (min = -1*h.rate, max = h.rate) for h in devices]
+
+    device_range(ps_m, range_data, time_range, :dc_rate_const, :Fbr)
+
+    return
+
+end
+
+####################################Flow Limits using TimeSeries ###############################################
+
+####################################Flow Limits using Parameters ###############################################
