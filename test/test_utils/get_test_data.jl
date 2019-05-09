@@ -13,7 +13,7 @@ sys14 = PSY.System(nodes14, thermal_generators14, loads14, branches14, nothing, 
 c_sys5 = PSY.ConcreteSystem(sys5)
 c_sys14 = PSY.ConcreteSystem(sys14)
 PTDF5 = PSY.PTDF(branches5, nodes5);
-PTDF5 = PSY.PTDF(branches14, nodes14);
+PTDF14 = PSY.PTDF(branches14, nodes14);
 
 
 #System with Renewable Energy

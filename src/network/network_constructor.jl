@@ -17,13 +17,10 @@ function construct_network!(ps_m::CanonicalModel,
                             time_range::UnitRange{Int64}; kwargs...)
 
     if :PTDF in keys(kwargs)
-
+        buses = collect(PSY.get_components(PSY.Bus, sys))
         ac_branches = collect(PSY.get_components(PSY.ACBranch, sys))
-
         flow_variables(ps_m, system_formulation, ac_branches, time_range)
-
-        ptdf_networkflow(ps_m, ac_branches, sys.buses, :nodal_balance_active, kwargs[:PTDF], time_range)
-
+        ptdf_networkflow(ps_m, ac_branches, buses, :nodal_balance_active, kwargs[:PTDF], time_range)
     else
         throw(ArgumentError("no PTDF matrix supplied"))
     end
