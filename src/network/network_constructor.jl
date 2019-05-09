@@ -3,8 +3,9 @@ function construct_network!(ps_m::CanonicalModel,
                             sys::PSY.ConcreteSystem,
                             time_range::UnitRange{Int64}; kwargs...)
 
-    bus_count = length(PSY.get_components(PSY.Bus, sys))
-
+    buses = PSY.get_components(PSY.Bus, sys)                             
+    bus_count = length(sum(length, buses.it))
+    
     copper_plate(ps_m, :nodal_balance_active, bus_count, time_range)
 
     return

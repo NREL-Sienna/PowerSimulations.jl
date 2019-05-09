@@ -99,7 +99,6 @@ end
     @test_throws ArgumentError construct_network!(ps_model, PSI.StandardPTDFForm, c_sys5, time_range)
 end
 
-#=
 @testset "Network DC-PF network" begin
     ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, PM.AbstractPowerFormulation, time_range)
     construct_device!(ps_model, thermal_model, PM.DCPlosslessForm, c_sys5, time_range);

@@ -133,7 +133,7 @@ function get_branches_to_pm(sys::PSY.ConcreteSystem)
         PM_dc_branches = Dict{String,Any}()
 
         for (ix, branch) in enumerate(PSY.get_components(PSY.Branch, sys))
-            if isa(branch,PSY.DCLine)
+            if isa(branch,PSY.DCBranch)
                 PM_dc_branches["$(ix)"] = get_branch_to_pm(ix, branch)
             else
                 PM_ac_branches["$(ix)"] = get_branch_to_pm(ix, branch)
