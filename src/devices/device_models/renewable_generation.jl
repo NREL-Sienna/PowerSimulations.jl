@@ -55,7 +55,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
     device_range(ps_m,
                 range_data,
                 time_range,
-                Symbol("renewable_reactive_range_$(R)"),
+                Symbol("reactive_range_$(R)"),
                 Symbol("Qre_$(R)"))
     
     return
@@ -72,7 +72,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
     names = [r.name for r in devices]
     p_variable_name = Symbol("Pre_$(R)")
     q_variable_name = Symbol("Qre_$(R)")
-    constraint_name = Symbol("renewable_reactive_range_$(R)")
+    constraint_name = Symbol("reactive_range_$(R)")
     ps_m.constraints[constraint_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, names, time_range)
 
     for t in time_range, d in devices
@@ -114,7 +114,7 @@ function activepower_constraints(ps_m::CanonicalModel,
         device_timeseries_param_ub(ps_m,
                             _get_time_series(devices, time_range),
                             time_range,
-                            Symbol("renewable_active_ub_$(R)"),
+                            Symbol("active_ub_$(R)"),
                             Symbol("Param_$(R)"),
                             Symbol("Pre_$(R)"))
     
@@ -123,7 +123,7 @@ function activepower_constraints(ps_m::CanonicalModel,
         device_range(ps_m, 
                     range_data, 
                     time_range, 
-                    Symbol("renewable_active_range_$(R)"),
+                    Symbol("active_range_$(R)"),
                     Symbol("Pre_$(R)")
                     )
     end
@@ -149,7 +149,7 @@ function _get_time_series(forecasts::Vector{R}) where {R <: PSY.Deterministic{<:
 end
 
 function activepower_constraints(ps_m::CanonicalModel,
-                                 devices::Vector{R},
+                                 forecasts::Vector{R},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S},
                                  time_range::UnitRange{Int64},
@@ -157,18 +157,18 @@ function activepower_constraints(ps_m::CanonicalModel,
                                                           D <: AbstractRenewableDispatchForm,
                                                           S <: PM.AbstractPowerFormulation}
     
-    forecast_device_type = typeof(devices[1].component)
+    forecast_device_type = typeof(forecasts[1].component)
 
     if parameters
         device_timeseries_param_ub(ps_m,
-                                   _get_time_series(devices),
+                                   _get_time_series(forecasts),
                                    time_range,
                                    Symbol("renewable_active_ub_$(forecast_device_type)"),
-                                   Symbol("Param_$(forecast_device_type)"),
+                                   Symbol("Param_P_$(forecast_device_type)"),
                                    Symbol("Pre_$(forecast_device_type)"))
     else
         device_timeseries_ub(ps_m,
-                            _get_time_series(devices),
+                            _get_time_series(forecasts),
                             time_range,
                             Symbol("renewable_active_ub_$(forecast_device_type)"),
                             Symbol("Pre_$(forecast_device_type)"))
@@ -197,15 +197,15 @@ function _nodal_expression_param(ps_m::CanonicalModel,
         ts_data_reactive[ix] = (d.name, d.bus.number, time_series_vector * sin(acos(d.tech.powerfactor)))
     end
 
-    add_parameters(ps_m,
+    include_parameters(ps_m,
                     ts_data_active,
                     time_range,
-                    Symbol("Pre_$(R)"),
+                    Symbol("Param_P_$(R)"),
                     :nodal_balance_active)
-    add_parameters(ps_m,
+    include_parameters(ps_m,
                     ts_data_reactive,
                     time_range,
-                    Symbol("Qre_$(R)"),
+                    Symbol("Param_Q_$(R)"),
                     :nodal_balance_reactive)
 
     return
@@ -225,7 +225,7 @@ function _nodal_expression_param(ps_m::CanonicalModel,
         ts_data_active[ix] = (d.name, d.bus.number, time_series_vector)
     end
 
-    add_parameters(ps_m,
+    include_parameters(ps_m,
                     ts_data_active,
                     time_range,
                     Symbol("Pre_$(R)"),
@@ -243,6 +243,8 @@ function _nodal_expression_param(ps_m::CanonicalModel,
                                     time_range::UnitRange{Int64}) where {R <: PSY.Deterministic{<:PSY.RenewableGen},
                                                                          S <: PM.AbstractPowerFormulation}
 
+    forecast_device_type = typeof(forecasts[1].component)
+
     ts_data_active = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(forecasts))
     ts_data_reactive = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(forecasts))
 
@@ -253,15 +255,15 @@ function _nodal_expression_param(ps_m::CanonicalModel,
         ts_data_reactive[ix] = (device.name, device.bus.number, time_series_vector * sin(acos(device.tech.powerfactor)))
     end
 
-    add_parameters(ps_m,
+    include_parameters(ps_m,
                     ts_data_active,
                     time_range,
-                    Symbol("Pre_$(R)"),
+                    Symbol("Param_P_$(forecast_device_type)"),
                     :nodal_balance_active)
-    add_parameters(ps_m,
+    include_parameters(ps_m,
                     ts_data_reactive,
                     time_range,
-                    Symbol("Qre_$(R)"),
+                    Symbol("Param_Q_$(forecast_device_type)"),
                     :nodal_balance_reactive)
 
     return
@@ -274,6 +276,7 @@ function _nodal_expression_param(ps_m::CanonicalModel,
                                 time_range::UnitRange{Int64}) where {R <: PSY.Deterministic{<:PSY.RenewableGen},
                                                                      S <: PM.AbstractActivePowerFormulation}
 
+    forecast_device_type = typeof(forecasts[1].component)
     ts_data_active = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(forecasts))
 
     for (ix,f) in enumerate(forecasts)
@@ -282,10 +285,10 @@ function _nodal_expression_param(ps_m::CanonicalModel,
         ts_data_active[ix] = (device.name, device.bus.number, time_series_vector)
     end
 
-    add_parameters(ps_m,
+    include_parameters(ps_m,
                     ts_data_active,
                     time_range,
-                    Symbol("Pre_$(R)"),
+                    Symbol("Param_P_$(forecast_device_type)"),
                     :nodal_balance_active)
     
     return
@@ -345,7 +348,6 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
         time_series_vector = values(f.data)*f.component.tech.installedcapacity
         device = f.component
         for t in time_range
-            
             _add_to_expression!(ps_m.expressions[:nodal_balance_active],
                                 device.bus.number,
                                 t,
