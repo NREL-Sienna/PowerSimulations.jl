@@ -17,9 +17,9 @@ version = "0.5.4"
 
 [[CSV]]
 deps = ["CategoricalArrays", "DataFrames", "Dates", "Mmap", "Parsers", "PooledArrays", "Profile", "Tables", "Unicode", "WeakRefStrings"]
-git-tree-sha1 = "42657742cc25fb5f79e0c906cf29fb8702afdd6e"
+git-tree-sha1 = "f64241c9688ae3eb003bce26ffd9ed863cfb824c"
 uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-version = "0.5.1"
+version = "0.5.2"
 
 [[Calculus]]
 deps = ["Compat"]
@@ -171,10 +171,10 @@ uuid = "f28f55f0-a522-5efc-85c2-fe41dfb9b2d9"
 version = "0.12.1"
 
 [[Missings]]
-deps = ["Dates", "InteractiveUtils", "SparseArrays", "Test"]
-git-tree-sha1 = "d1d2585677f2bd93a97cfeb8faa7a0de0f982042"
+deps = ["SparseArrays", "Test"]
+git-tree-sha1 = "f0719736664b4358aa9ec173077d4285775f8007"
 uuid = "e1d29d7a-bbdc-5cf2-9ac0-f12de2c33e28"
-version = "0.4.0"
+version = "0.4.1"
 
 [[Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
@@ -237,8 +237,8 @@ version = "0.10.0"
 
 [[PowerSystems]]
 deps = ["CSV", "DataFrames", "Dates", "InteractiveUtils", "JSON", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "YAML"]
-git-tree-sha1 = "072ffeed6335a6c13e2d7a1973dc62f91ce11b55"
-repo-rev = "psi_compat"
+git-tree-sha1 = "c140f36f874adba83e40210dc5df1556af10a04b"
+repo-rev = "dev"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
 version = "0.4.0"
