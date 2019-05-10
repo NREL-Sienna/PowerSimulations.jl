@@ -1,35 +1,43 @@
-@testset "testing Abstract Storage With DC - PF" begin
-    ps_model = PSI._canonical_model_init(bus_numbers, nothing, PM.AbstractPowerFormulation, time_range)
-    PSI.construct_device!(ps_model, PSY.Storage, PSI.AbstractStorageForm, PM.DCPlosslessForm, sys5b_storage, time_range);
+@testset "Storage Basic Storage With DC - PF" begin
+    model = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
+    network = PM.DCPlosslessForm
+    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, network, time_range)
+    construct_device!(ps_model, model, network, c_sys5_bat, time_range);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 96
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 48
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 48
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 24
 end
 
-@testset "testing Abstract Storage With AC - PF" begin
-    ps_model = PSI._canonical_model_init(bus_numbers, nothing, PM.AbstractPowerFormulation, time_range)
-    PSI.construct_device!(ps_model, PSY.Storage, PSI.AbstractStorageForm, PM.StandardACPForm, sys5b_storage, time_range);
+@testset "Storage Basic Storage With AC - PF" begin
+    model = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
+    network = PM.StandardACPForm
+    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
+    construct_device!(ps_model, model, network, c_sys5_bat, time_range);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 48
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 48
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 24
 end
 
-@testset "testing Basic Storage With DC - PF" begin
-    ps_model = PSI._canonical_model_init(bus_numbers, nothing, PM.AbstractPowerFormulation, time_range)
-    PSI.construct_device!(ps_model, PSY.Storage, PSI.BookKeepingModel, PM.DCPlosslessForm, sys5b_storage, time_range);
+@testset "Storage with Reservation DC - PF" begin
+    model = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
+    network = PM.DCPlosslessForm
+    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, network, time_range)
+    construct_device!(ps_model, model, network, c_sys5_bat, time_range);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 96
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 48
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 48
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 24
-    end
+end
 
-@testset "testing Basic Storage With AC - PF" begin
-    ps_model = PSI._canonical_model_init(bus_numbers, nothing, PM.AbstractPowerFormulation, time_range)
-    PSI.construct_device!(ps_model, PSY.Storage, PSI.BookKeepingModel, PM.StandardACPForm, sys5b_storage, time_range);
+@testset "Storage with Reservation With AC - PF" begin
+    model = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
+    network = PM.StandardACPForm
+    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, network, time_range)
+    construct_device!(ps_model, model, network, c_sys5_bat, time_range);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 48
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 48
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 24
- end
+end

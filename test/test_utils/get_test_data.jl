@@ -20,6 +20,10 @@ PTDF14 = PSY.PTDF(branches14, nodes14);
 sys5_re = PSY.System(nodes5, vcat(thermal_generators5, renewable_generators5), loads5, branches5, nothing,  100.0, forecasts5, nothing, nothing);
 c_sys5_re = PSY.ConcreteSystem(sys5_re)
 
+#System with Storage Device
+sys5_bat = PSY.System(nodes5, thermal_generators5, loads5, branches5, battery5,  100.0, forecasts5, nothing, nothing);
+c_sys5_bat = PSY.ConcreteSystem(sys5_bat)
+
 # RTS Data 
 RTS_GMLC_DIR = joinpath(DATA_DIR, "RTS_GMLC")
 cdm_dict = PSY.csv2ps_dict(RTS_GMLC_DIR, 100.0);
