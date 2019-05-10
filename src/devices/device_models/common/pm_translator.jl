@@ -41,7 +41,7 @@ function get_branch_to_pm(ix::Int64, branch::PSY.Transformer2W)
         "angmin"      => -π/2,
         "angmax"      =>  π/2,
         "transformer" => true,
-        "tap"         => 0.0,
+        "tap"         => 1.0,
     )
     return PM_branch
 end
