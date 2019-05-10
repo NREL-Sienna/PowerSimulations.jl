@@ -1,13 +1,20 @@
 function _internal_device_constructor!(ps_m::CanonicalModel,
-                           device::Type{St},
-                           device_formulation::Type{D},
-                           system_formulation::Type{S},
-                           sys::PSY.ConcreteSystem,
-                           time_range::UnitRange{Int64};
-                           kwargs...) where {St <: PSY.Storage,
-                                             D <: AbstractStorageForm,
-                                             S <: PM.AbstractPowerFormulation}
+                                        device::Type{St},
+                                        device_formulation::Type{D},
+                                        system_formulation::Type{S},
+                                        sys::PSY.ConcreteSystem,
+                                        time_range::UnitRange{Int64};
+                                        kwargs...) where {St <: PSY.Storage,
+                                                            D <: AbstractStorageForm,
+                                                            S <: PM.AbstractPowerFormulation}
 
+
+    devices = collect(PSY.get_components(device, sys))
+    
+    if validate_available_devices(devices, device)
+        return
+    end
+                                                                
     #wrangle initial_conditions
     if  !isempty(keys(ps_m.initial_conditions))
 
@@ -47,14 +54,14 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 end
 
 function _internal_device_constructor!(ps_m::CanonicalModel,
-                           device::Type{St},
-                           device_formulation::Type{D},
-                           system_formulation::Type{S},
-                           sys::PSY.ConcreteSystem,
-                           time_range::UnitRange{Int64};
-                           kwargs...) where {St <: PSY.Storage,
-                                             D <: AbstractStorageForm,
-                                             S <: PM.AbstractActivePowerFormulation}
+                                        device::Type{St},
+                                        device_formulation::Type{D},
+                                        system_formulation::Type{S},
+                                        sys::PSY.ConcreteSystem,
+                                        time_range::UnitRange{Int64};
+                                        kwargs...) where {St <: PSY.Storage,
+                                                            D <: AbstractStorageForm,
+                                                            S <: PM.AbstractActivePowerFormulation}
 
     #wrangle initial_conditions
     if !isempty(keys(ps_m.initial_conditions))
