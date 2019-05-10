@@ -7,9 +7,12 @@ function device_range(ps_m::CanonicalModel,
     ps_m.constraints[cons_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [r[1] for r in range_data], time_range)
 
     for t in time_range, r in range_data
-
-            ps_m.constraints[cons_name][r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, r[2].min <= ps_m.variables[var_name][r[1], t] <= r[2].max)
-
+            if abs(r[2].min - r[2].max) >= eps()
+                ps_m.constraints[cons_name][r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, r[2].min <= ps_m.variables[var_name][r[1], t] <= r[2].max)            
+            else
+                @warn("The min - max values in range constraint with eps() distance to each other. Range Constraint will be modified for Equality Constraint")
+                ps_m.constraints[cons_name][r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_name][r[1], t] == r[2].max)
+            end
     end
 
     return
