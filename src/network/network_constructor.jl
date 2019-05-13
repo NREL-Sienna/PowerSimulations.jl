@@ -1,6 +1,6 @@
 function construct_network!(ps_m::CanonicalModel,
                             system_formulation::Type{CopperPlatePowerModel},
-                            sys::PSY.ConcreteSystem,
+                            sys::PSY.System,
                             time_range::UnitRange{Int64}; kwargs...)
 
     buses = PSY.get_components(PSY.Bus, sys)                             
@@ -13,7 +13,7 @@ end
 
 function construct_network!(ps_m::CanonicalModel,
                             system_formulation::Type{StandardPTDFForm},
-                            sys::PSY.ConcreteSystem,
+                            sys::PSY.System,
                             time_range::UnitRange{Int64}; kwargs...)
 
     if :PTDF in keys(kwargs)
@@ -31,7 +31,7 @@ end
 
 function construct_network!(ps_m::CanonicalModel,
                             system_formulation::Type{S},
-                            sys::PSY.ConcreteSystem,
+                            sys::PSY.System,
                             time_range::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     powermodels_network!(ps_m, system_formulation, sys, time_range)

@@ -1,7 +1,7 @@
 function construct_device!(ps_m::CanonicalModel,
                             device_model::DeviceModel,
                             system_formulation::Type{S},
-                            system::PSY.ConcreteSystem,
+                            system::PSY.System,
                             time_range::UnitRange{Int64};
                             kwargs...) where {S <: PM.AbstractPowerFormulation}
 
