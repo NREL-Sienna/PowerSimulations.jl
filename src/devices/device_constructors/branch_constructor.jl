@@ -2,7 +2,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            device::Type{B},
                            device_formulation::Type{Br},
                            system_formulation::Type{StandardPTDFForm},
-                           sys::PSY.ConcreteSystem,
+                           sys::PSY.System,
                            time_range::UnitRange{Int64};
                            kwargs...) where {Br <: AbstractLineForm,
                                              B <: PSY.Branch}
@@ -17,7 +17,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                             device::Type{B},
                             device_formulation::Type{Br},
                             system_formulation::Type{S},
-                            sys::PSY.ConcreteSystem,
+                            sys::PSY.System,
                             time_range::UnitRange{Int64};
                             kwargs...) where {Br <: AbstractLineForm,
                                               B <: PSY.Branch,

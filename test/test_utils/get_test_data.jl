@@ -8,24 +8,24 @@ bus_numbers5 = [b.number for b in nodes5]
 bus_numbers14 = [b.number for b in nodes14];
 
 #Base Systems
-sys5 = PSY.System(nodes5, thermal_generators5, loads5, branches5, nothing,  100.0, forecasts5, nothing, nothing);
-sys14 = PSY.System(nodes14, thermal_generators14, loads14, branches14, nothing,  100.0, forecasts14, nothing, nothing);
-c_sys5 = PSY.ConcreteSystem(sys5)
-c_sys14 = PSY.ConcreteSystem(sys14)
+sys5 = PSY._System(nodes5, thermal_generators5, loads5, branches5, nothing,  100.0, forecasts5, nothing, nothing);
+sys14 = PSY._System(nodes14, thermal_generators14, loads14, branches14, nothing,  100.0, forecasts14, nothing, nothing);
+c_sys5 = PSY.System(sys5)
+c_sys14 = PSY.System(sys14)
 PTDF5 = PSY.PTDF(branches5, nodes5);
 PTDF14 = PSY.PTDF(branches14, nodes14);
 
 
 #System with Renewable Energy
-sys5_re = PSY.System(nodes5, vcat(thermal_generators5, renewable_generators5), loads5, branches5, nothing,  100.0, forecasts5, nothing, nothing);
-c_sys5_re = PSY.ConcreteSystem(sys5_re)
+sys5_re = PSY._System(nodes5, vcat(thermal_generators5, renewable_generators5), loads5, branches5, nothing,  100.0, forecasts5, nothing, nothing);
+c_sys5_re = PSY.System(sys5_re)
 
 #System with Storage Device
-sys5_bat = PSY.System(nodes5, thermal_generators5, loads5, branches5, battery5,  100.0, forecasts5, nothing, nothing);
-c_sys5_bat = PSY.ConcreteSystem(sys5_bat)
+sys5_bat = PSY._System(nodes5, thermal_generators5, loads5, branches5, battery5,  100.0, forecasts5, nothing, nothing);
+c_sys5_bat = PSY.System(sys5_bat)
 
 # RTS Data 
 RTS_GMLC_DIR = joinpath(DATA_DIR, "RTS_GMLC")
 cdm_dict = PSY.csv2ps_dict(RTS_GMLC_DIR, 100.0);
-sys_rts = PSY.System(cdm_dict);
-c_rts = PSY.ConcreteSystem(sys_rts);
+sys_rts = PSY._System(cdm_dict);
+c_rts = PSY.System(sys_rts);

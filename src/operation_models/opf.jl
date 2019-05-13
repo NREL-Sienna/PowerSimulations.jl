@@ -1,6 +1,6 @@
 struct OptimalPowerFlow <: AbstractOperationsModel end
 
-function OptimalPowerFlow(system::PSY.ConcreteSystem, transmission::Type{S}; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...) where {S <: PM.AbstractPowerFormulation}
+function OptimalPowerFlow(system::PSY.System, transmission::Type{S}; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     devices = Dict{Symbol, DeviceModel}(:ThermalGenerators => DeviceModel(PSY.ThermalGen, ThermalDispatch),
                                             :RenewableGenerators => DeviceModel(PSY.RenewableGen, RenewableConstantPowerFactor),

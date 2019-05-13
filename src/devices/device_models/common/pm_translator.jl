@@ -127,7 +127,7 @@ function get_branch_to_pm(ix::Int64, branch::PSY.HVDCLine)
     return PM_branch
 end
 
-function get_branches_to_pm(sys::PSY.ConcreteSystem)
+function get_branches_to_pm(sys::PSY.System)
 
         PM_ac_branches = Dict{String,Any}()
         PM_dc_branches = Dict{String,Any}()
@@ -166,7 +166,7 @@ function get_buses_to_pm(buses::Array{PSY.Bus})
     return PM_buses
 end
 
-function pass_to_pm(sys::PSY.ConcreteSystem, time_periods::Int64)
+function pass_to_pm(sys::PSY.System, time_periods::Int64)
 
     ac_lines, dc_lines = get_branches_to_pm(sys)
 
