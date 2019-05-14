@@ -5,8 +5,6 @@
 [![codecov](https://codecov.io/gh/NREL/PowerSimulations.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/NREL/PowerSimulations.jl)
 [![Join the chat at https://gitter.im/NREL/PowerSimulations.jl](https://badges.gitter.im/NREL/PowerSimulations.jl.svg)](https://gitter.im/NREL/PowerSimulations.jl)
 
-**PowerSimulations is currently work in progress. Many of the functionalities are not currently available. Please follow the instructions below if you want to test some of the code already developed.**
-
 ## The current implementation of the functionalities can be seen in the test codes.
 
 `PowerSimulations.jl` is a Julia package for power system modeling and simulation. The objectives of the package are:
@@ -38,48 +36,18 @@ For example, an annual production cost modeling simulation can be created by for
 
 ## Installation
 
-This package is not yet registered and relies on unreleased branches from other packages. In order to install `PowerSimulations.jl` you need to have installed the proper version of those packages. 
-
-**Until it is, things may change. It is perfectly
-usable but should not be considered stable**.
-
-You can install it by typing
-
 ```julia
-pkg> add JuMP#3d0feb23c1d939fd5dcd1b16079475569207f035
-pkg> add ParameterJuMP#dfb1e3c9e880a6a2c693b3f5f9a3d2a9c94a6aac
-pkg> add InfrastructureModels#moi-2
-pkg> add PowerModels#moi-2
-pkg> dev https://github.com/NREL/PowerSimulations.jl 
-
-It is possible that installing these packages from your default environment can cause dependency clashes. We recommend running `PowerSimulations.jl` as project using the command `$ julia --project`. 
-
+julia> ]
+(v1.1) pkg> add PowerSimulations
+(v1.1) pkg> add PowerSystems
 ```
 ## Usage
 
-Once installed, the `PowerSimulations` package can by going to the folder `.julia/dev/PowerSimulations` used by typing
+`PowerSimulations.jl` uses [PowerSystems.jl](https://github.com/NREL/PowerSystems.jl) to handle the data used in the simulations.  
 
 ```julia
-julia> ]
-(v1.1) pkg> activate .
-(PowerSimulations) pkg> instantiate
-```
-## Usage from IJulia
-
-In order to run `PowerSimulations.jl` from IJulia add these lines in the first two cells of your notebook (syntax of the folders might change depending on your set-up and operating system)
-
-```Julia
-; cd /.julia/dev/PowerSimulations` 
-```
-
-```Julia
-] activate .; instantiate; build; st`
-```
-
-The last command will print the status of the package dependencies for `PowerSimulations.jl`. If everything runs succesfully you can use PowerSimulations in your notebook 
-
-```Julia
 using PowerSimulations
+using PowerSystems
 ```
 
 ## Development
