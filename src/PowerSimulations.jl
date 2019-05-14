@@ -15,6 +15,7 @@ export OptimalPowerFlow
 
 #functions
 export solve_op_model!
+export demand_constraints
 
 
 #################################################################################
@@ -100,6 +101,10 @@ include("services/services_constructor.jl")
 
 #Operational Model Constructors
 include("operation_models/operation_models.jl")
+
+#Demand Response
+include("demand_response/demand_response.jl")
+include("demand_response/bev.jl")
 
 #Utils
 include("routines/solve_routines.jl")
