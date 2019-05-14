@@ -23,7 +23,7 @@ JuMP = ">= v0.19.1"
 MathOptInterface = ">= v0.8.4"
 ParameterJuMP = ">= v0.1.0"
 PowerModels = ">= v0.10.0"
-PowerSystems = ">= v0.3.2"
+PowerSystems = ">= v0.4.0"
 TimeSeries = ">= v0.14.1"
 
 [extras]
