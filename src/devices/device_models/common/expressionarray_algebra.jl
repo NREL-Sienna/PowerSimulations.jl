@@ -75,7 +75,7 @@ end
 function _add_to_expression!(expression_array::T,
                             ix::Int64,
                             jx::Int64,
-                            parameter::PJ.Parameter) where T 
+                            parameter::PJ.ParameterRef) where T 
 
     
     if isassigned(expression_array, ix, jx)

@@ -6,7 +6,7 @@ mutable struct DeviceModel{D <: PSY.Device,
     formulation::Type{B}
 end
 
-mutable struct InitialCondition{T <: Union{PJ.Parameter, Float64}}
+mutable struct InitialCondition{T <: Union{PJ.ParameterRef, Float64}}
     device::PSY.Device
     value::T
 end
