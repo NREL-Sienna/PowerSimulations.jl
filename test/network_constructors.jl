@@ -3,7 +3,7 @@ load_model = DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad)
 line_model = DeviceModel(PSY.Line, PSI.ACSeriesBranch)
 transformer_model = DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch)
 
-@testset "Network copper plate" begin
+@testset "Network Copper Plate" begin
     #5- Bus - Testing
     network = PSI.CopperPlatePowerModel
     ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, network, time_range)
@@ -299,8 +299,7 @@ end
                 PM.StandardACTForm
                 ]           
 
-    for network in networks
-        @show network         
+    for network in networks  
         ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, network, time_range)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_range);
         construct_device!(ps_model, load_model, network, c_sys5, time_range);
@@ -341,7 +340,6 @@ end
     networks = [PM.StandardDCPLLForm, PM.AbstractLPACCForm]           
 
     for network in networks  
-        @show network       
         ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, network, time_range)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_range);
         construct_device!(ps_model, load_model, network, c_sys5, time_range);
@@ -387,8 +385,7 @@ end
                  #PM.SOCBFConicForm, - Requires SCS 
                  ]          
 
-    for network in networks
-        @show network         
+    for network in networks  
         ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, network, time_range)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_range);
         construct_device!(ps_model, load_model, network, c_sys5, time_range);
@@ -425,7 +422,18 @@ end
 
 end
 
-#= Pending tests
-# sdp relaxations - Require SCS
-networks = [PM.SDPWRMForm,PM.SparseSDPWRMForm]
-=#
+@testset  "Network Unsupported Power Model Formulations" begin
+    incompat_list = [PM.SDPWRMForm, 
+                    PM.SparseSDPWRMForm,
+                    PM.SOCWRConicForm,
+                    PM.SOCBFForm,
+                    PM.SOCBFConicForm]     
+
+    for network in incompat_list  
+        ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, network, time_range)
+        construct_device!(ps_model, thermal_model, network, c_sys5, time_range);
+        construct_device!(ps_model, load_model, network, c_sys5, time_range);
+        @test_throws ArgumentError construct_network!(ps_model, network, c_sys5, time_range);
+    end
+
+end
