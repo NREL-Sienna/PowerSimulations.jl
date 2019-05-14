@@ -2,6 +2,7 @@
 
 [![Build Status](https://img.shields.io/travis/com/NREL/PowerSimulations.jl/master.svg)](https://travis-ci.com/NREL/PowerSimulations.jl)
 [![Build status](https://img.shields.io/appveyor/ci/kdheepak/powersimulations-jl/master.svg)](https://ci.appveyor.com/project/kdheepak/powersimulations-jl)
+[![codecov](https://codecov.io/gh/NREL/PowerSimulations.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/NREL/PowerSimulations.jl)
 [![Join the chat at https://gitter.im/NREL/PowerSimulations.jl](https://badges.gitter.im/NREL/PowerSimulations.jl.svg)](https://gitter.im/NREL/PowerSimulations.jl)
 
 **PowerSimulations is currently work in progress. Many of the functionalities are not currently available. Please follow the instructions below if you want to test some of the code already developed.**
