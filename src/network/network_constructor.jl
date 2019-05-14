@@ -34,6 +34,16 @@ function construct_network!(ps_m::CanonicalModel,
                             sys::PSY.System,
                             time_range::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
+    incompat_list = [PM.SDPWRMForm,
+                     PM.SparseSDPWRMForm,
+                     PM.SOCWRConicForm,
+                     PM.SOCBFForm,
+                     PM.SOCBFConicForm]
+
+    if system_formulation in incompat_list
+       throw(ArgumentError("$(sys) formulation is not currently supported in PowerSimulations"))
+    end                         
+
     powermodels_network!(ps_m, system_formulation, sys, time_range)
 
     return
