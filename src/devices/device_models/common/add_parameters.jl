@@ -22,7 +22,7 @@ function include_parameters(ps_m::CanonicalModel,
                         expression::Symbol)
 
     ps_m.parameters[param_name] = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, [r[1] for r in ts_data], time_range)
-    
+
     for t in time_range, r in ts_data
         ps_m.parameters[param_name][r[1], t] = PJ.add_parameter(ps_m.JuMPmodel, r[3][t]);
         _add_to_expression!(ps_m.expressions[expression], r[2], t, ps_m.parameters[param_name][r[1], t])
