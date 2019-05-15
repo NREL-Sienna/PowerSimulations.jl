@@ -82,7 +82,6 @@ function active_power_constraints(ps_m::CanonicalModel,
                                   device_formulation::Type{BookKeeping}, 
                                   system_formulation::Type{S}, 
                                   time_range::UnitRange{Int64}) where {St <: PSY.Storage, 
-                                                                       D <: AbstractStorageForm, 
                                                                        S <: PM.AbstractPowerFormulation}
 
     range_data_in = [(s.name, s.inputactivepowerlimits) for s in devices]
@@ -109,7 +108,6 @@ function active_power_constraints(ps_m::CanonicalModel,
                                   device_formulation::Type{BookKeepingwReservation}, 
                                   system_formulation::Type{S}, 
                                   time_range::UnitRange{Int64}) where {St <: PSY.Storage, 
-                                                                       D <: AbstractStorageForm, 
                                                                        S <: PM.AbstractPowerFormulation}
 
     range_data_in = [(s.name, s.inputactivepowerlimits) for s in devices]
@@ -137,7 +135,7 @@ end
 """
 This function adds the reactive  power limits of generators when there are CommitmentVariables
 """
-function reactivepower_constraints(ps_m::CanonicalModel, 
+function reactive_power_constraints(ps_m::CanonicalModel, 
                                    devices::Vector{St}, 
                                    device_formulation::Type{D}, 
                                    system_formulation::Type{S}, 
@@ -158,18 +156,37 @@ function reactivepower_constraints(ps_m::CanonicalModel,
 end
 
 
-# book keeping constraints
+###################################################### Energy Capacity constraints#################################
+
+function energy_capacity_constraints(ps_m::CanonicalModel, 
+                                    devices::Vector{St}, 
+                                    device_formulation::Type{D}, 
+                                    system_formulation::Type{S}, 
+                                    time_range::UnitRange{Int64}) where {St <: PSY.Storage, 
+                                                                        D <: AbstractStorageForm, 
+                                                                        S <: PM.AbstractPowerFormulation}
+
+    range_data = [(s.name, s.capacity) for s in devices]
+
+    device_range(ps_m, 
+                 range_data, 
+                 time_range, 
+                 Symbol("energy_capacity_$(St)"), 
+                 Symbol("Est_$(St)"))
+    return
+
+end
+
+###################################################### book keeping constraints #################################
 
 function make_efficiency_data(devices::Vector{St}) where {St <: PSY.Storage} 
 
     names = Vector{String}(undef, length(devices))
-    in_out = Vector{Any}(undef, length(devices))
+    in_out = Vector{InOut}(undef, length(devices))
 
     for (ix,d) in enumerate(devices) 
-
-    names[ix] = d.name
-    in_out[ix] = d.efficiency
-    
+        names[ix] = d.name
+        in_out[ix] = d.efficiency
     end
 
     return names, in_out
@@ -187,15 +204,18 @@ function energy_balance_constraint(ps_m::CanonicalModel,
                                                             D <: AbstractStorageForm, 
                                                             S <: PM.AbstractPowerFormulation}
 
-    efficiency_data = make_efficiency_data(devices)
+    key = Symbol("energy_$(St)")                                                              
 
-    initial_conditions = get(ps_m.initial_conditions, Symbol("energy_$(St)"), nothing)    
-    
-    isnothing(initial_conditions) ? storage_energy_init(ps_m, devices, parameters) : true
+    if !(key in keys(ps_m.initial_conditions))
+        @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
+        storage_energy_init(ps_m, devices, parameters)
+    end
+
+    efficiency_data = make_efficiency_data(devices)
 
     energy_balance(ps_m,
                    time_range,
-                   initial_conditions,
+                   ps_m.initial_conditions[key],
                    efficiency_data, 
                    Symbol("energy_balance_$(St)"),
                    (Symbol("Psout_$(St)"), Symbol("Psin_$(St)"), Symbol("Est_$(St)")))
