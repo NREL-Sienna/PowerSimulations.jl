@@ -234,14 +234,14 @@ function commitment_constraints(ps_m::CanonicalModel,
                                                                      D <: AbstractThermalFormulation,
                                                                      S <: PM.AbstractPowerFormulation}
 
-
-    if !(:thermal_status in keys(ps_m.initial_conditions))
+    key = Symbol("status_$(T)") 
+    if !(key in keys(ps_m.initial_conditions))
         @info("Initial status conditions not provided. This can lead to unwanted results")
         status_init(ps_m, devices, parameters)
     end
 
     device_commitment(ps_m,
-                      ps_m.initial_conditions[:thermal_status],
+                      ps_m.initial_conditions[key],
                       time_range, 
                       Symbol("commitment_$(T)"), 
                       (Symbol("STARTth_$(T)"), 
@@ -298,16 +298,17 @@ function ramp_constraints(ps_m::CanonicalModel,
     data = _get_data_for_rocc(devices)
 
     if !isempty(data[2])
-        if !(:thermal_output in keys(ps_m.initial_conditions))
+        key = Symbol("output_$(T)") 
+        if !(key in keys(ps_m.initial_conditions))
             @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
             output_init(ps_m, devices, parameters)
         end
 
-        @assert length(data[2]) == length(ps_m.initial_conditions[Symbol("thermal_output_$(T)")])
+        @assert length(data[2]) == length(ps_m.initial_conditions[key])
         # Here goes the reactive power ramp limits
         device_mixedinteger_rateofchange(ps_m,
                                         data,
-                                        ps_m.initial_conditions[Symbol("thermal_output_$(T)")],
+                                        ps_m.initial_conditions[key],
                                         time_range,
                                         Symbol("ramp_$(T)"),  
                                         (Symbol("Pth_$(T)"),
@@ -335,14 +336,15 @@ function ramp_constraints(ps_m::CanonicalModel,
     data = _get_data_for_rocc(devices)
 
     if !isempty(data[2])
-        if !(:thermal_output in keys(ps_m.initial_conditions))
+        key = Symbol("output_$(T)") 
+        if !(key in keys(ps_m.initial_conditions))
             @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
             output_init(ps_m, devices, parameters)
         end
         # Here goes the reactive power ramp limits
         device_linear_rateofchange(ps_m,
                                    (data[1], data[2]),
-                                   ps_m.initial_conditions[Symbol("thermal_output_$(T)")], time_range,
+                                   ps_m.initial_conditions[key], time_range,
                                    Symbol("ramp_$(T)"), 
                                    Symbol("Pth_$(T)"))
     else
@@ -365,20 +367,21 @@ function ramp_constraints(ps_m::CanonicalModel,
                           parameters::Bool) where {T <: PSY.ThermalGen,
                                                                D <: AbstractThermalFormulation,
                                                                S <: PM.AbstractActivePowerFormulation}
-
+                                                            
     data = _get_data_for_rocc(devices)
 
     if !isempty(data[2])
-        if !(:thermal_output in keys(ps_m.initial_conditions))
+        key = Symbol("output_$(T)") 
+        if !(key in keys(ps_m.initial_conditions))
             @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
             output_init(ps_m, devices, parameters)
         end
 
-        @assert length(data[2]) == length(ps_m.initial_conditions[Symbol("thermal_output_$(T)")])
+        @assert length(data[2]) == length(ps_m.initial_conditions[key])
 
         device_mixedinteger_rateofchange(ps_m,
                                         data,
-                                        ps_m.initial_conditions[Symbol("thermal_output_$(T)")],
+                                        ps_m.initial_conditions[key],
                                         time_range,
                                         Symbol("ramp_$(T)"), 
                                         (Symbol("Pth_$(T)"), 
@@ -407,13 +410,14 @@ function ramp_constraints(ps_m::CanonicalModel,
     data = _get_data_for_rocc(devices)
 
     if !isempty(data[2])
-        if !(:thermal_output in keys(ps_m.initial_conditions))
+        key = Symbol("output_$(T)") 
+        if !(key in keys(ps_m.initial_conditions))
             @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
             output_init(ps_m, devices, parameters)
         end
         device_linear_rateofchange(ps_m,
                                     (data[1], data[2]),
-                                    ps_m.initial_conditions[Symbol("thermal_output_$(T)")], time_range,
+                                    ps_m.initial_conditions[key], time_range,
                                     Symbol("ramp_$(T)"), 
                                     Symbol("Pth_$(T)"))
     else
@@ -469,18 +473,18 @@ function time_constraints(ps_m::CanonicalModel,
                                                                D <: AbstractThermalFormulation,
                                                                S <: PM.AbstractPowerFormulation}
 
+     # Get the data from the Array of Generators                  
+     key_on = parameters ? Symbol("duration_indicator_on_$(T)") :   Symbol("duration_on_$(T)")
+     key_off = parameters ? Symbol("duration_indicator_off_$(T)") : Symbol("duration_on_$(T)")                                        
 
-    if !(:thermal_duration_on in keys(ps_m.initial_conditions))
+    if !(key_on in keys(ps_m.initial_conditions))
         @info("Initial Conditions for Time Up/Down constraints not provided. This can lead to unwanted results")
         time_limits = duration_init(ps_m, devices, parameters)   
     end
     
     if !time_limits
     
-    # Get the data from the Array of Generators                  
-    key_on = parameters ? Symbol("duration_indicator_on_$(T)") :   Symbol("duration_on_$(T)")
-    key_off = parameters ? Symbol("duration_indicator_off_$(T)") : Symbol("duration_on_$(T)")                                       
-    duration_data = _get_data_for_tdc(devices,
+     duration_data = _get_data_for_tdc(devices,
                                       ps_m.initial_conditions[key_on],
                                       ps_m.initial_conditions[key_off])                                                                 
    
