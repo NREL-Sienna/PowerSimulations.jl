@@ -234,8 +234,8 @@ function commitment_constraints(ps_m::CanonicalModel,
                                                                      D <: AbstractThermalFormulation,
                                                                      S <: PM.AbstractPowerFormulation}
 
-
-    if !(:thermal_status in keys(ps_m.initial_conditions))
+    key = Symbol("status_$(T)")
+    if !(key in keys(ps_m.initial_conditions))
         @info("Initial status conditions not provided. This can lead to unwanted results")
         status_init(ps_m, devices, parameters)
     end
@@ -298,7 +298,8 @@ function ramp_constraints(ps_m::CanonicalModel,
     data = _get_data_for_rocc(devices)
 
     if !isempty(data[2])
-        if !(:thermal_output in keys(ps_m.initial_conditions))
+        key = Symbol("output_$(T)")
+        if !(key in keys(ps_m.initial_conditions))
             @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
             output_init(ps_m, devices, parameters)
         end
@@ -335,7 +336,8 @@ function ramp_constraints(ps_m::CanonicalModel,
     data = _get_data_for_rocc(devices)
 
     if !isempty(data[2])
-        if !(:thermal_output in keys(ps_m.initial_conditions))
+        key = Symbol("output_$(T)")
+        if !(key in keys(ps_m.initial_conditions))
             @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
             output_init(ps_m, devices, parameters)
         end
@@ -369,7 +371,8 @@ function ramp_constraints(ps_m::CanonicalModel,
     data = _get_data_for_rocc(devices)
 
     if !isempty(data[2])
-        if !(:thermal_output in keys(ps_m.initial_conditions))
+        key = Symbol("output_$(T)")
+        if !(key in keys(ps_m.initial_conditions))
             @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
             output_init(ps_m, devices, parameters)
         end
@@ -407,7 +410,8 @@ function ramp_constraints(ps_m::CanonicalModel,
     data = _get_data_for_rocc(devices)
 
     if !isempty(data[2])
-        if !(:thermal_output in keys(ps_m.initial_conditions))
+        key = Symbol("output_$(T)")
+        if !(key in keys(ps_m.initial_conditions))
             @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
             output_init(ps_m, devices, parameters)
         end
@@ -469,8 +473,11 @@ function time_constraints(ps_m::CanonicalModel,
                                                                D <: AbstractThermalFormulation,
                                                                S <: PM.AbstractPowerFormulation}
 
+     # Get the data from the Array of Generators
+     key_on = parameters ? Symbol("duration_indicator_on_$(T)") :   Symbol("duration_on_$(T)")
+     key_off = parameters ? Symbol("duration_indicator_off_$(T)") : Symbol("duration_on_$(T)")
 
-    if !(:thermal_duration_on in keys(ps_m.initial_conditions))
+    if !(key_on in keys(ps_m.initial_conditions))
         @info("Initial Conditions for Time Up/Down constraints not provided. This can lead to unwanted results")
         duration_init(ps_m, devices, parameters)
     end
