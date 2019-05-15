@@ -79,29 +79,55 @@ end
 
 function active_power_constraints(ps_m::CanonicalModel, 
                                   devices::Vector{St}, 
-                                  device_formulation::Type{D}, 
+                                  device_formulation::Type{BookKeeping}, 
                                   system_formulation::Type{S}, 
                                   time_range::UnitRange{Int64}) where {St <: PSY.Storage, 
                                                                        D <: AbstractStorageForm, 
                                                                        S <: PM.AbstractPowerFormulation}
 
     range_data_in = [(s.name, s.inputactivepowerlimits) for s in devices]
-
     range_data_out = [(s.name, s.outputactivepowerlimits) for s in devices]
 
-    device_semicontinuousrange(ps_m, 
-                               range_data_in, 
-                               time_range, 
-                               Symbol("inputpower_range_$(St)"), 
-                               Symbol("Psin_$(St)"), 
-                               Symbol("Est_$(St)"))
+    device_range(ps_m, 
+                 range_data_in, 
+                 time_range, 
+                 Symbol("inputpower_range_$(St)"), 
+                 Symbol("Psin_$(St)"))
+    
+    device_range(ps_m, 
+                range_data_out, 
+                time_range, 
+                Symbol("outputpower_range_$(St)"), 
+                Symbol("Psout_$(St)"))                               
+
+    return
+
+end
+
+function active_power_constraints(ps_m::CanonicalModel, 
+                                  devices::Vector{St}, 
+                                  device_formulation::Type{BookKeepingwReservation}, 
+                                  system_formulation::Type{S}, 
+                                  time_range::UnitRange{Int64}) where {St <: PSY.Storage, 
+                                                                       D <: AbstractStorageForm, 
+                                                                       S <: PM.AbstractPowerFormulation}
+
+    range_data_in = [(s.name, s.inputactivepowerlimits) for s in devices]
+    range_data_out = [(s.name, s.outputactivepowerlimits) for s in devices]
 
     reserve_device_semicontinuousrange(ps_m, 
                                        range_data_in, 
                                        time_range, 
+                                       Symbol("inputpower_range_$(St)"), 
+                                       Symbol("Psin_$(St)"), 
+                                       Symbol("Rst_$(St)"))
+
+    reserve_device_semicontinuousrange(ps_m, 
+                                       range_data_out, 
+                                       time_range, 
                                        Symbol("outputpower_range_$(St)"), 
                                        Symbol("Psout_$(St)"), 
-                                       Symbol("Rst_$(St)"))
+                                       Symbol("Rst_$(St)"))                                       
 
     return
 
@@ -134,31 +160,45 @@ end
 
 # book keeping constraints
 
+function make_efficiency_data(devices::Vector{St}) where {St <: PSY.Storage} 
+
+    names = Vector{String}(undef, length(devices))
+    in_out = Vector{Any}(undef, length(devices))
+
+    for (ix,d) in enumerate(devices) 
+
+    names[ix] = d.name
+    in_out[ix] = d.efficiency
+    
+    end
+
+    return names, in_out
+
+end
+
+
+
 function energy_balance_constraint(ps_m::CanonicalModel, 
                                    devices::Vector{St}, 
                                    device_formulation::Type{D}, 
                                    system_formulation::Type{S}, 
-                                   time_range::UnitRange{Int64}, 
-                                   initial_conditions::Array{Float64,1}) where {St <: PSY.Storage, 
-                                                                                D <: AbstractStorageForm, 
-                                                                                S <: PM.AbstractPowerFormulation}
+                                   time_range::UnitRange{Int64},
+                                   parameters::Bool) where {St <: PSY.Storage, 
+                                                            D <: AbstractStorageForm, 
+                                                            S <: PM.AbstractPowerFormulation}
 
-    named_initial_conditions = [(d.name, initial_conditions[ix]) for (ix, d) in enumerate(devices)]
+    efficiency_data = make_efficiency_data(devices)
 
-    p_eff_data = [(d.name,d.energy) for d in devices if !isa(d.energy, Nothing)]
+    initial_conditions = get(ps_m.initial_conditions, Symbol("energy_$(St)"), nothing)    
+    
+    isnothing(initial_conditions) ? storage_energy_init(ps_m, devices, parameters) : true
 
-    if !isempty(p_eff_data)
-
-        energy_balance(ps_m,
-                       time_range,
-                       named_initial_conditions,
-                       p_eff_data, 
-                       Symbol("energy_balance_$(St)"),
-                       (Symbol("Psout_$(St)"), Symbol("Psin_$(St)"), Symbol("Est_$(St)")))
-
-    else
-        @warn "Data doesn't contain Storage efficiency , consider adjusting your formulation"
-    end
+    energy_balance(ps_m,
+                   time_range,
+                   initial_conditions,
+                   efficiency_data, 
+                   Symbol("energy_balance_$(St)"),
+                   (Symbol("Psout_$(St)"), Symbol("Psin_$(St)"), Symbol("Est_$(St)")))
 
     return
 
