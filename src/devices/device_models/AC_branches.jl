@@ -15,15 +15,15 @@ abstract type AbstractTransformerForm <: AbstractBranchFormulation end
 
 struct Static2W <: AbstractTransformerForm end
 
+# Not implemented yet
 struct TapControl <: AbstractTransformerForm end
-
-struct PhaseContol <: AbstractTransformerForm end
+struct PhaseControl <: AbstractTransformerForm end
 
 #################################### Branch Variables ##################################################
 
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
-                        devices::Vector{B},
+                        devices::PSY.FlattenedVectorsIterator{B},
                         time_range::UnitRange{Int64}) where {B <: PSY.ACBranch,
                                                              S <: PM.DCPlosslessForm}
 
@@ -38,7 +38,7 @@ end
 
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
-                        devices::Vector{B},
+                        devices::PSY.FlattenedVectorsIterator{B},
                         time_range::UnitRange{Int64}) where {B <: PSY.ACBranch,
                                                              S <: PM.AbstractDCPLLForm}
 
@@ -57,7 +57,7 @@ end
 
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
-                        devices::Vector{B},
+                        devices::PSY.FlattenedVectorsIterator{B},
                         time_range::UnitRange{Int64}) where {B <: PSY.ACBranch,
                                                              S <: PM.AbstractPowerFormulation}
 
@@ -89,7 +89,7 @@ end
 #################################### Flow Limits Variables ##################################################
 
 function branch_rate_constraint(ps_m::CanonicalModel,
-                                devices::Vector{B},
+                                devices::PSY.FlattenedVectorsIterator{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{StandardPTDFForm},
                                 time_range::UnitRange{Int64}) where {B <: PSY.Branch, 
@@ -110,7 +110,7 @@ end
 ####################################Flow Limits using Device ###############################################
 
 function line_flow_limit(ps_m::CanonicalModel,
-                         devices::Vector{B},
+                         devices::PSY.FlattenedVectorsIterator{B},
                          device_formulation::Type{D},
                          system_formulation::Type{S},
                          time_range::UnitRange{Int64}) where {B <: PSY.MonitoredLine,
@@ -122,7 +122,7 @@ function line_flow_limit(ps_m::CanonicalModel,
 end
 
 function line_flow_limit(ps_m::CanonicalModel,
-                         devices::Vector{B},
+                         devices::PSY.FlattenedVectorsIterator{B},
                          device_formulation::Type{D},
                          system_formulation::Type{S},
                          time_range::UnitRange{Int64}) where {B <: PSY.MonitoredLine,

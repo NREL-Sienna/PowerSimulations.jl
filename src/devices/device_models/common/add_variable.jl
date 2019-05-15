@@ -3,10 +3,11 @@ function _container_spec(m::M, ax...) where M <: JuMP.AbstractModel
 end
 
 function add_variable(ps_m::CanonicalModel,
-                      devices::Array{T,1},
+                      devices::D,
                       time_range::UnitRange{Int64},
                       var_name::Symbol,
-                      binary::Bool) where {T <: PSY.Device}
+                      binary::Bool) where {D <: Union{Vector{<:PSY.Device}, 
+                                                      PSY.FlattenedVectorsIterator{<:PSY.Device}}}
 
     ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, [d.name for d in devices], time_range)
 
@@ -19,11 +20,12 @@ function add_variable(ps_m::CanonicalModel,
 end
 
 function add_variable(ps_m::CanonicalModel,
-                      devices::Array{T,1},
+                      devices::D,
                       time_range::UnitRange{Int64},
                       var_name::Symbol,
                       binary::Bool,
-                      expression::Symbol) where {T <: PSY.Device}
+                      expression::Symbol) where {D <: Union{Vector{<:PSY.Device}, 
+                                                            PSY.FlattenedVectorsIterator{<:PSY.Device}}}
 
     ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, [d.name for d in devices], time_range)
 
@@ -37,12 +39,13 @@ function add_variable(ps_m::CanonicalModel,
 end
 
 function add_variable(ps_m::CanonicalModel,
-                      devices::Array{T,1},
+                      devices::D,
                       time_range::UnitRange{Int64},
                       var_name::Symbol,
                       binary::Bool,
                       expression::Symbol,
-                      sign::Int64) where {T <: PSY.Device}
+                      sign::Int64) where {D <: Union{Vector{<:PSY.Device}, 
+                                          PSY.FlattenedVectorsIterator{<:PSY.Device}}}
 
     ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, [d.name for d in devices], time_range)
 

@@ -10,7 +10,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     forecast = get(kwargs, :forecast, true)
 
-    devices = collect(PSY.get_components(device, sys))
+    devices = PSY.get_components(device, sys)
     
     if validate_available_devices(devices, device)
         return
@@ -25,7 +25,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     #Constraints
     if forecast 
-        forecasts = [forecast for forecast in  sys.forecasts[:DA] if isa(forecast,PSY.Deterministic{device})]
+        first_step = collect(PSY.get_forecast_issue_times(sys))[1]
+        forecasts = Vector{PSY.Deterministic{L}}(PSY.get_forecasts(sys, first_step, devices))
         activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, time_range, parameters)
     else
         activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
@@ -52,7 +53,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     forecast = get(kwargs, :forecast, true)
 
-    devices = collect(PSY.get_components(device, sys))
+    devices = PSY.get_components(device, sys)
    
     if validate_available_devices(devices, device)
         return
@@ -65,7 +66,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     #Constraints
     if forecast 
-        forecasts = [forecast for forecast in  sys.forecasts[:DA] if isa(forecast,PSY.Deterministic{device})]
+        first_step = collect(PSY.get_forecast_issue_times(sys))[1]
+        forecasts = Vector{PSY.Deterministic{L}}(PSY.get_forecasts(sys, first_step, devices))
         activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, time_range, parameters)
     else
         activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
@@ -89,7 +91,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     forecast = get(kwargs, :forecast, true)
 
-    devices = collect(PSY.get_components(device, sys))
+    devices = PSY.get_components(device, sys)
     
     if validate_available_devices(devices, device)
         return
@@ -98,7 +100,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     parameters = get(kwargs, :parameters, true)
 
     if forecast 
-        forecasts = [forecast for forecast in  sys.forecasts[:DA] if isa(forecast,PSY.Deterministic{device})]
+        first_step = collect(PSY.get_forecast_issue_times(sys))[1]
+        forecasts = Vector{PSY.Deterministic{L}}(PSY.get_forecasts(sys, first_step, devices))
         nodal_expression(ps_m, forecasts, system_formulation, time_range, parameters)
     else
         nodal_expression(ps_m, devices, system_formulation, time_range, parameters)

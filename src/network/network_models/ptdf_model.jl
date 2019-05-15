@@ -1,6 +1,6 @@
 function ptdf_networkflow(ps_m::CanonicalModel,
-                          branches::Vector{B},
-                          buses::Vector{PSY.Bus},
+                          branches::PSY.FlattenedVectorsIterator{B},
+                          buses::PSY.FlattenedVectorsIterator{PSY.Bus},
                           expression::Symbol,
                           PTDF::PSY.PTDF,
                           time_range::UnitRange{Int64}) where {B <: PSY.Branch}
