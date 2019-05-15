@@ -303,11 +303,11 @@ function ramp_constraints(ps_m::CanonicalModel,
             output_init(ps_m, devices, parameters)
         end
 
-        @assert length(data[2]) == length(ps_m.initial_conditions[:thermal_output])
+        @assert length(data[2]) == length(ps_m.initial_conditions[Symbol("thermal_output_$(T)")])
         # Here goes the reactive power ramp limits
         device_mixedinteger_rateofchange(ps_m,
                                         data,
-                                        ps_m.initial_conditions[:thermal_output],
+                                        ps_m.initial_conditions[Symbol("thermal_output_$(T)")],
                                         time_range,
                                         Symbol("ramp_$(T)"),  
                                         (Symbol("Pth_$(T)"),
@@ -342,7 +342,7 @@ function ramp_constraints(ps_m::CanonicalModel,
         # Here goes the reactive power ramp limits
         device_linear_rateofchange(ps_m,
                                    (data[1], data[2]),
-                                   ps_m.initial_conditions[:thermal_output], time_range,
+                                   ps_m.initial_conditions[Symbol("thermal_output_$(T)")], time_range,
                                    Symbol("ramp_$(T)"), 
                                    Symbol("Pth_$(T)"))
     else
@@ -374,11 +374,11 @@ function ramp_constraints(ps_m::CanonicalModel,
             output_init(ps_m, devices, parameters)
         end
 
-        @assert length(data[2]) == length(ps_m.initial_conditions[:thermal_output])
+        @assert length(data[2]) == length(ps_m.initial_conditions[Symbol("thermal_output_$(T)")])
 
         device_mixedinteger_rateofchange(ps_m,
                                         data,
-                                        ps_m.initial_conditions[:thermal_output],
+                                        ps_m.initial_conditions[Symbol("thermal_output_$(T)")],
                                         time_range,
                                         Symbol("ramp_$(T)"), 
                                         (Symbol("Pth_$(T)"), 
@@ -413,7 +413,7 @@ function ramp_constraints(ps_m::CanonicalModel,
         end
         device_linear_rateofchange(ps_m,
                                     (data[1], data[2]),
-                                    ps_m.initial_conditions[:thermal_output], time_range,
+                                    ps_m.initial_conditions[Symbol("thermal_output_$(T)")], time_range,
                                     Symbol("ramp_$(T)"), 
                                     Symbol("Pth_$(T)"))
     else
@@ -478,8 +478,8 @@ function time_constraints(ps_m::CanonicalModel,
     if !time_limits
     
     # Get the data from the Array of Generators                  
-    key_on = parameters ? :duration_indicator_status_on :   :thermal_duration_on
-    key_off = parameters ? :duration_indicator_status_off : :thermal_duration_off                                       
+    key_on = parameters ? Symbol("duration_indicator_on_$(T)") :   Symbol("duration_on_$(T)")
+    key_off = parameters ? Symbol("duration_indicator_off_$(T)") : Symbol("duration_on_$(T)")                                       
     duration_data = _get_data_for_tdc(devices,
                                       ps_m.initial_conditions[key_on],
                                       ps_m.initial_conditions[key_off])                                                                 
