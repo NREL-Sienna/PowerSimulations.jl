@@ -32,7 +32,7 @@ model = DeviceModel(PSY.GenericBattery, PSI.BookKeepingwReservation)
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 48
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 24
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 24
-    @test (VariableRef, MathOptInterface.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel)
+    @test (VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel)
 end
 
 @testset "Storage with Reservation With AC - PF" begin
@@ -45,5 +45,5 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 48
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 48
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 24
-    @test (VariableRef, MathOptInterface.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel)
+    @test (VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel)
 end
