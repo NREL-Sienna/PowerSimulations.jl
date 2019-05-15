@@ -8,9 +8,11 @@
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5, time_range; parameters = false);
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 480
+    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 504
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 120
-    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 96
+    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 120
+    @test  (VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel)
     for variable in variable_names
         for v in ps_model.variables[variable]
             @test is_binary(v)
@@ -26,9 +28,11 @@
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5, time_range; parameters = true);
     @test (:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 480
+    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 504
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 120
-    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 96
+    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 120
+    @test  (VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel)
     for variable in variable_names
         for v in ps_model.variables[variable]
             @test is_binary(v)
@@ -45,9 +49,11 @@
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys14, time_range; parameters = false);
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 480
+    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 120
-    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
+    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 120
+    @test  (VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel)
     for variable in variable_names
         for v in ps_model.variables[variable]
             @test is_binary(v)
@@ -63,9 +69,11 @@
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys14, time_range; parameters = true);
     @test (:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 480
+    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 120
-    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
+    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 120
+    @test  (VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel)
     for variable in variable_names
         for v in ps_model.variables[variable]
             @test is_binary(v)
@@ -87,9 +95,11 @@ end
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys5, time_range; parameters = false);
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 600
+    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 624
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 240
-    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 96
+    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 120
+    @test  (VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel)
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
     for variable in variable_names
         for v in ps_model.variables[variable]
@@ -102,9 +112,11 @@ end
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys5, time_range; parameters = true);
     @test (:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 600
+    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 624
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 240
-    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 96
+    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 120
+    @test  (VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel)
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
     for variable in variable_names
         for v in ps_model.variables[variable]
@@ -117,9 +129,11 @@ end
     ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_range; parameters = false)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys14, time_range; parameters = false);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 600
+    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 240
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 240
-    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
+    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 120
+    @test  (VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel)
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
     for variable in variable_names
         for v in ps_model.variables[variable]
@@ -134,9 +148,11 @@ end
     ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_range; parameters = true)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys14, time_range; parameters = true);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 600
+    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 240
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 240
-    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
+    @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 120
+    @test  (VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel)
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
     for variable in variable_names
         for v in ps_model.variables[variable]
@@ -163,6 +179,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range; parameters = false)
@@ -174,6 +191,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     #14-Bus testing
@@ -185,6 +203,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}
 
     ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_range; parameters = false)
@@ -196,6 +215,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}   
 end
 
@@ -210,6 +230,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range; parameters = false)
@@ -221,6 +242,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     #14 Bus testing
@@ -232,6 +254,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}  
 
     ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_range; parameters = false)
@@ -243,6 +266,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef} 
 end
 
@@ -262,6 +286,7 @@ end
         @test JuMP.constraint_object(con).set.lower == 0.0
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
 
@@ -277,6 +302,7 @@ end
         @test JuMP.constraint_object(con).set.lower == 0.0
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     #14 Bus testing
@@ -291,6 +317,7 @@ end
         @test JuMP.constraint_object(con).set.lower == 0.0
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef} 
 
 
@@ -306,6 +333,7 @@ end
         @test JuMP.constraint_object(con).set.lower == 0.0
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef} 
 end
 
@@ -323,6 +351,7 @@ end
         @test JuMP.constraint_object(con).set.lower == 0.0
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range; parameters = false)
@@ -337,6 +366,7 @@ end
         @test JuMP.constraint_object(con).set.lower == 0.0
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     #14 Bus Testing
@@ -351,6 +381,7 @@ end
         @test JuMP.constraint_object(con).set.lower == 0.0
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef} 
 
     ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_range; parameters = false)
@@ -365,6 +396,7 @@ end
         @test JuMP.constraint_object(con).set.lower == 0.0
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef} 
 end
 
@@ -382,6 +414,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range; parameters = false)
@@ -393,6 +426,7 @@ end
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 0
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     #14 Bus Testing
@@ -407,6 +441,7 @@ end
         @test isnothing(get(ps_model.constraints, con, nothing))
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}
 
     ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_range; parameters = false)
@@ -421,6 +456,7 @@ end
         @test isnothing(get(ps_model.constraints, con, nothing))
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}
 end
 
@@ -439,6 +475,7 @@ end
         @test !isnothing(get(ps_model.constraints, con, nothing))
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range; parameters = false)
@@ -453,6 +490,7 @@ end
         @test !isnothing(get(ps_model.constraints, con, nothing))
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     #14 Bus Testing
@@ -467,6 +505,7 @@ end
         @test isnothing(get(ps_model.constraints, con, nothing))
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}
 
     ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_range; parameters = false)
@@ -481,5 +520,6 @@ end
         @test isnothing(get(ps_model.constraints, con, nothing))
     end
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}
 end

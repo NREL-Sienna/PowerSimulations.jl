@@ -4,7 +4,7 @@ function construct_network!(ps_m::CanonicalModel,
                             time_range::UnitRange{Int64}; kwargs...)
 
     buses = PSY.get_components(PSY.Bus, sys)                             
-    bus_count = length(sum(length, buses.it))
+    bus_count = length(buses)
     
     copper_plate(ps_m, :nodal_balance_active, bus_count, time_range)
 
@@ -17,8 +17,8 @@ function construct_network!(ps_m::CanonicalModel,
                             time_range::UnitRange{Int64}; kwargs...)
 
     if :PTDF in keys(kwargs)
-        buses = collect(PSY.get_components(PSY.Bus, sys))
-        ac_branches = collect(PSY.get_components(PSY.ACBranch, sys))
+        buses = PSY.get_components(PSY.Bus, sys)
+        ac_branches = PSY.get_components(PSY.ACBranch, sys)
         flow_variables(ps_m, system_formulation, ac_branches, time_range)
         ptdf_networkflow(ps_m, ac_branches, buses, :nodal_balance_active, kwargs[:PTDF], time_range)
     else

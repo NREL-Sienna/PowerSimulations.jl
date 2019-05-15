@@ -7,7 +7,7 @@ struct BookKeepingwReservation <: AbstractStorageForm end
 #################################################Storage Variables#################################
 
 function active_power_variables(ps_m::CanonicalModel, 
-                                devices::Vector{St}, 
+                                devices::PSY.FlattenedVectorsIterator{St}, 
                                 time_range::UnitRange{Int64}) where {St <: PSY.Storage}
 
     add_variable(ps_m, 
@@ -30,7 +30,7 @@ end
 
 
 function reactive_power_variables(ps_m::CanonicalModel, 
-                                  devices::Vector{St}, 
+                                  devices::PSY.FlattenedVectorsIterator{St}, 
                                   time_range::UnitRange{Int64}) where {St <: PSY.Storage}
 
     add_variable(ps_m, 
@@ -46,7 +46,7 @@ end
 
 
 function energy_storage_variables(ps_m::CanonicalModel, 
-                                  devices::Vector{St}, 
+                                  devices::PSY.FlattenedVectorsIterator{St}, 
                                   time_range::UnitRange{Int64}) where St <: PSY.Storage
 
     add_variable(ps_m, 
@@ -61,7 +61,7 @@ end
 
 
 function storage_reservation_variables(ps_m::CanonicalModel, 
-                                       devices::Vector{St}, 
+                                       devices::PSY.FlattenedVectorsIterator{St}, 
                                        time_range::UnitRange{Int64}) where St <: PSY.Storage
 
     add_variable(ps_m, 
@@ -78,7 +78,7 @@ end
 ###################################################### output power constraints#################################
 
 function active_power_constraints(ps_m::CanonicalModel, 
-                                  devices::Vector{St}, 
+                                  devices::PSY.FlattenedVectorsIterator{St}, 
                                   device_formulation::Type{BookKeeping}, 
                                   system_formulation::Type{S}, 
                                   time_range::UnitRange{Int64}) where {St <: PSY.Storage, 
@@ -104,7 +104,7 @@ function active_power_constraints(ps_m::CanonicalModel,
 end
 
 function active_power_constraints(ps_m::CanonicalModel, 
-                                  devices::Vector{St}, 
+                                  devices::PSY.FlattenedVectorsIterator{St}, 
                                   device_formulation::Type{BookKeepingwReservation}, 
                                   system_formulation::Type{S}, 
                                   time_range::UnitRange{Int64}) where {St <: PSY.Storage, 
@@ -136,7 +136,7 @@ end
 This function adds the reactive  power limits of generators when there are CommitmentVariables
 """
 function reactive_power_constraints(ps_m::CanonicalModel, 
-                                   devices::Vector{St}, 
+                                   devices::PSY.FlattenedVectorsIterator{St}, 
                                    device_formulation::Type{D}, 
                                    system_formulation::Type{S}, 
                                    time_range::UnitRange{Int64}) where {St <: PSY.Storage, 
@@ -159,7 +159,7 @@ end
 ###################################################### Energy Capacity constraints#################################
 
 function energy_capacity_constraints(ps_m::CanonicalModel, 
-                                    devices::Vector{St}, 
+                                    devices::PSY.FlattenedVectorsIterator{St}, 
                                     device_formulation::Type{D}, 
                                     system_formulation::Type{S}, 
                                     time_range::UnitRange{Int64}) where {St <: PSY.Storage, 
@@ -179,7 +179,7 @@ end
 
 ###################################################### book keeping constraints #################################
 
-function make_efficiency_data(devices::Vector{St}) where {St <: PSY.Storage} 
+function make_efficiency_data(devices::PSY.FlattenedVectorsIterator{St}) where {St <: PSY.Storage} 
 
     names = Vector{String}(undef, length(devices))
     in_out = Vector{InOut}(undef, length(devices))
@@ -196,7 +196,7 @@ end
 
 
 function energy_balance_constraint(ps_m::CanonicalModel, 
-                                   devices::Vector{St}, 
+                                   devices::PSY.FlattenedVectorsIterator{St}, 
                                    device_formulation::Type{D}, 
                                    system_formulation::Type{S}, 
                                    time_range::UnitRange{Int64},

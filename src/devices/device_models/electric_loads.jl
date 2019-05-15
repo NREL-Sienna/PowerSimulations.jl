@@ -11,7 +11,7 @@ struct DispatchablePowerLoad <: AbstractControllablePowerLoadForm end
 ########################### dispatchable load variables ############################################
 
 function activepower_variables(ps_m::CanonicalModel,
-                               devices::Vector{L},
+                               devices::PSY.FlattenedVectorsIterator{L},
                                time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad}
 
     add_variable(ps_m,
@@ -27,7 +27,7 @@ end
 
 
 function reactivepower_variables(ps_m::CanonicalModel,
-                                 devices::Vector{L},
+                                 devices::PSY.FlattenedVectorsIterator{L},
                                  time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad}
 
     add_variable(ps_m,
@@ -42,7 +42,7 @@ function reactivepower_variables(ps_m::CanonicalModel,
 end
 
 function commitment_variables(ps_m::CanonicalModel,
-                              devices::Vector{L},
+                              devices::PSY.FlattenedVectorsIterator{L},
                               time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad}
 
     add_variable(ps_m, 
@@ -60,7 +60,7 @@ end
 Reactive Power Constraints on Loads Assume Constant PowerFactor
 """
 function reactivepower_constraints(ps_m::CanonicalModel,
-                                   devices::Vector{L},
+                                   devices::PSY.FlattenedVectorsIterator{L},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S},
                                    time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
@@ -81,7 +81,8 @@ end
 
 
 ######################## output constraints without Time Series ###################################
-function _get_time_series(devices::Array{T}, time_range::UnitRange{Int64}) where {T <: PSY.ElectricLoad}
+function _get_time_series(devices::PSY.FlattenedVectorsIterator{T}, 
+                          time_range::UnitRange{Int64}) where {T <: PSY.ElectricLoad}
 
     names = Vector{String}(undef, length(devices))
     series = Vector{Vector{Float64}}(undef, length(devices))
@@ -96,7 +97,7 @@ function _get_time_series(devices::Array{T}, time_range::UnitRange{Int64}) where
 end
 
 function activepower_constraints(ps_m::CanonicalModel,
-                                 devices::Vector{L},
+                                 devices::PSY.FlattenedVectorsIterator{L},
                                  device_formulation::Type{DispatchablePowerLoad},
                                  system_formulation::Type{S},
                                  time_range::UnitRange{Int64},
@@ -140,7 +141,7 @@ function _get_time_series(forecasts::Vector{L}) where {L <: PSY.Deterministic{<:
 end
 
 function activepower_constraints(ps_m::CanonicalModel,
-                                 devices::Vector{L},
+                                 devices::PSY.FlattenedVectorsIterator{L},
                                  device_formulation::Type{DispatchablePowerLoad},
                                  system_formulation::Type{S},
                                  time_range::UnitRange{Int64},
@@ -175,7 +176,7 @@ end
 ########################################### Devices ####################################################
 
 function _nodal_expression_param(ps_m::CanonicalModel,
-                                devices::Vector{L},
+                                devices::PSY.FlattenedVectorsIterator{L},
                                 system_formulation::Type{S},
                                 time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
                                                                      S <: PM.AbstractPowerFormulation}
@@ -206,7 +207,7 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 end
 
 function _nodal_expression_param(ps_m::CanonicalModel,
-                                devices::Vector{L},
+                                devices::PSY.FlattenedVectorsIterator{L},
                                 system_formulation::Type{S},
                                 time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
                                                                      S <: PM.AbstractActivePowerFormulation}
@@ -294,7 +295,7 @@ end
 ########################################### Devices ####################################################
 
 function _nodal_expression_fixed(ps_m::CanonicalModel,
-                                devices::Vector{L},
+                                devices::PSY.FlattenedVectorsIterator{L},
                                 system_formulation::Type{S},
                                 time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
                                                                      S <: PM.AbstractPowerFormulation}
@@ -316,7 +317,7 @@ end
 
 
 function _nodal_expression_fixed(ps_m::CanonicalModel,
-                                devices::Vector{L},
+                                devices::PSY.FlattenedVectorsIterator{L},
                                 system_formulation::Type{S},
                                 time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
                                                                      S <: PM.AbstractActivePowerFormulation}
@@ -382,31 +383,10 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
 
 end
 
-
-##################################################################################################
-
-function nodal_expression(ps_m::CanonicalModel,
-                            devices::Vector{L},
-                            system_formulation::Type{S},
-                            time_range::UnitRange{Int64},
-                            parameters::Bool) where {L <: Union{PSY.ElectricLoad, PSY.Deterministic{<:PSY.ElectricLoad}},
-                                                     S <: PM.AbstractPowerFormulation}
-                                                                                                               
-    if parameters
-        _nodal_expression_param(ps_m, devices, system_formulation, time_range)
-    else
-        _nodal_expression_fixed(ps_m, devices, system_formulation, time_range)
-    end
-
-return
-
-end
-
-
 ##################################### Controllable Load Cost ######################################
 
 function cost_function(ps_m::CanonicalModel,
-                       devices::Vector{PSY.InterruptibleLoad},
+                       devices::PSY.FlattenedVectorsIterator{PSY.InterruptibleLoad},
                        device_formulation::Type{DispatchablePowerLoad},
                        system_formulation::Type{S}) where {S <: PM.AbstractPowerFormulation}
 

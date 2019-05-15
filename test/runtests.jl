@@ -41,7 +41,7 @@ end
 end
 
 @testset "Services Constructors" begin
-    #include("services_constructor.jl")
+    include("services_constructor.jl")
 end
 
 @testset "Operation Models" begin

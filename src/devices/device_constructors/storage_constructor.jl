@@ -9,7 +9,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                                             S <: PM.AbstractPowerFormulation}
 
 
-    devices = collect(PSY.get_components(device, sys))
+    devices = PSY.get_components(device, sys)
     
     if validate_available_devices(devices, device)
         return
@@ -48,7 +48,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                                             D <: AbstractStorageForm,
                                                             S <: PM.AbstractActivePowerFormulation}
 
-    devices = collect(PSY.get_components(device, sys))
+    devices = PSY.get_components(device, sys)
     
     if validate_available_devices(devices, device)
         return
@@ -84,7 +84,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                                           S <: PM.AbstractPowerFormulation}
 
 
-    devices = collect(PSY.get_components(device, sys))
+    devices = PSY.get_components(device, sys)
     
     if validate_available_devices(devices, device)
         return
@@ -124,7 +124,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         kwargs...) where {St <: PSY.Storage,
                                                           S <: PM.AbstractActivePowerFormulation}
 
-    devices = collect(PSY.get_components(device, sys))
+    devices = PSY.get_components(device, sys)
     
     if validate_available_devices(devices, device)
         return
