@@ -21,7 +21,7 @@ function output_init(ps_m::CanonicalModel,
 
     deleteat!(initial_conditions, i:last(idx))
 
-    ps_m.initial_conditions[:thermal_output] = initial_conditions
+    ps_m.initial_conditions[Symbol("output_$(PSD)")] = initial_conditions
 
     return
 
@@ -50,7 +50,7 @@ function status_init(ps_m::CanonicalModel,
 
     deleteat!(initial_conditions, i:last(idx))
 
-    ps_m.initial_conditions[:thermal_status] = initial_conditions
+    ps_m.initial_conditions[Symbol("status_$(PSD)")] = initial_conditions
 
     return
 
@@ -84,14 +84,36 @@ function duration_init(ps_m::CanonicalModel,
     deleteat!(ini_cond_off, i:last(idx))
 
     if parameters
-        ps_m.initial_conditions[:duration_indicator_status_on] = ini_cond_on
-        ps_m.initial_conditions[:duration_indicator_status_off] = ini_cond_off
+        ps_m.initial_conditions[Symbol("duration_indicator_on_$(PSD)")] = ini_cond_on
+        ps_m.initial_conditions[Symbol("duration_indicator_off_$(PSD)")] = ini_cond_off
     else    
-        ps_m.initial_conditions[:thermal_duration_on] = ini_cond_on
-        ps_m.initial_conditions[:thermal_duration_off] = ini_cond_off
+        ps_m.initial_conditions[Symbol("duration_on_$(PSD)")] = ini_cond_on
+        ps_m.initial_conditions[Symbol("duration_off_$(PSD)")] = ini_cond_off
     end
 
     return isempty(ini_cond_on)
+
+end
+
+function storage_energy_init(ps_m::CanonicalModel,
+                             devices::Array{PSD,1},
+                             parameters::Bool) where {PSD <: PSY.Storage}
+
+    energy_initial_conditions  = Vector{InitialCondition}(undef, length(devices))
+
+    for (i,g) in enumerate(devices)
+            if parameters
+                energy_initial_conditions[i] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 0.0))
+            else
+                energy_initial_conditions[i] = InitialCondition(g, 0.0)
+            end
+    end
+
+ 
+    ps_m.initial_conditions[Symbol("energy_$(PSD)")] = energy_initial_conditions
+ 
+
+    return
 
 end
 

@@ -21,7 +21,8 @@ end
 
 function device_semicontinuousrange(ps_m::CanonicalModel,
                                     scrange_data::Vector{NamedMinMax},
-                                    time_range::UnitRange{Int64}, cons_name::Symbol,
+                                    time_range::UnitRange{Int64}, 
+                                    cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
 
@@ -63,7 +64,9 @@ function reserve_device_semicontinuousrange(ps_m::CanonicalModel,
     ub_name = Symbol(cons_name,:_ub)
     lb_name = Symbol(cons_name,:_lb)
 
-    #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it. In the future this can be updated
+    # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it. 
+    # In the future this can be updated
+    
     set_name = [r[1] for r in scrange_data]
     ps_m.constraints[ub_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_range)
     ps_m.constraints[lb_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_range)
