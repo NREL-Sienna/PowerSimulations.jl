@@ -7,17 +7,23 @@ function energy_balance(ps_m::CanonicalModel,
 
     name_index = efficiency_data[1]
 
-    ps_m.constraints[cons_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(name_index, time_range)
+    ps_m.constraints[cons_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, name_index, time_range)
 
-    for (ix,i) in enumerate(initial_conditions)
+    for (ix,name) in enumerate(name_index)
+        eff_in = efficiency_data[2][ix].in
+        eff_out = efficiency_data[2][ix].out
 
-        ps_m.constraints[cons_name][i[1], 1] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_names[3]][i[1], 1] == i[2] + (ps_m.variables[var_names[1]][i[1], 1])/p_eff_data[ix][2] - (ps_m.variables[var_names[2]][i[1], 1])*p_eff_data[ix][2])
+        ps_m.constraints[cons_name][name, 1] = JuMP.@constraint(ps_m.JuMPmodel, 
+                                                ps_m.variables[var_names[3]][name, 1] == initial_conditions[ix].value + ps_m.variables[var_names[1]][name, 1]*eff_in - (ps_m.variables[var_names[2]][name, 1])/eff_out)
 
     end
 
-    for t in time_range[2:end], (ix,i) in enumerate(initial_conditions)
+    for t in time_range[2:end], (ix,name) in enumerate(name_index)
+        eff_in = efficiency_data[2][ix].in
+        eff_out = efficiency_data[2][ix].out
 
-        ps_m.constraints[cons_name][i[1], t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_names[3]][i[1], t] == ps_m.variables[var_names[3]][i[1], t-1] + (ps_m.variables[var_names[1]][i[1], t])/p_eff_data[ix][2]  - (ps_m.variables[var_names[2]][i[1], t])*p_eff_data[ix][2])
+        ps_m.constraints[cons_name][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
+                                                ps_m.variables[var_names[3]][name, t] == ps_m.variables[var_names[3]][name, t-1] + ps_m.variables[var_names[1]][name, t]*eff_in  - (ps_m.variables[var_names[2]][name, t])/eff_out)
 
     end
 
