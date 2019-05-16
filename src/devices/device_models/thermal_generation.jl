@@ -236,7 +236,7 @@ function commitment_constraints(ps_m::CanonicalModel,
 
     key = Symbol("status_$(T)")
     if !(key in keys(ps_m.initial_conditions))
-        @info("Initial status conditions not provided. This can lead to unwanted results")
+        @warn("Initial status conditions not provided. This can lead to unwanted results")
         status_init(ps_m, devices, parameters)
     end
 
@@ -300,7 +300,7 @@ function ramp_constraints(ps_m::CanonicalModel,
     if !isempty(data[2])
         key = Symbol("output_$(T)")
         if !(key in keys(ps_m.initial_conditions))
-            @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
+            @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
             output_init(ps_m, devices, parameters)
         end
 
@@ -338,7 +338,7 @@ function ramp_constraints(ps_m::CanonicalModel,
     if !isempty(data[2])
         key = Symbol("output_$(T)")
         if !(key in keys(ps_m.initial_conditions))
-            @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
+            @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
             output_init(ps_m, devices, parameters)
         end
 
@@ -376,7 +376,7 @@ function ramp_constraints(ps_m::CanonicalModel,
     if !isempty(data[2])
         key = Symbol("output_$(T)")
         if !(key in keys(ps_m.initial_conditions))
-            @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
+            @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
             output_init(ps_m, devices, parameters)
         end
 
@@ -415,7 +415,7 @@ function ramp_constraints(ps_m::CanonicalModel,
     if !isempty(data[2])
         key = Symbol("output_$(T)")
         if !(key in keys(ps_m.initial_conditions))
-            @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
+            @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
             output_init(ps_m, devices, parameters)
         end
 

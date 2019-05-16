@@ -1,6 +1,6 @@
 mutable struct PowerSimulationsModel{T<:AbstractOperationsModel, R<:Dates.Period}
     name::String
-    model::PowerOperationModel{T}
+    model::OperationModel{T}
     steps::Int64
     periods::Int64
     resolution::R

@@ -1,7 +1,7 @@
 struct EconomicDispatch <: AbstractOperationsModel end
 struct SCEconomicDispatch <: AbstractOperationsModel end
 
-function EconomicDispatch(system::PSY.System, transmission::Type{S}; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...) where {S <: PM.AbstractPowerFormulation}
+function EconomicDispatch(sys::PSY.System, transmission::Type{S}; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     devices = Dict{Symbol, DeviceModel}(:ThermalGenerators => DeviceModel(PSY.ThermalGen, ThermalDispatch),
                                             :RenewableGenerators => DeviceModel(PSY.RenewableGen, RenewableFullDispatch),
@@ -10,7 +10,7 @@ function EconomicDispatch(system::PSY.System, transmission::Type{S}; optimizer::
     branches = Dict{Symbol, DeviceModel}(:Lines => DeviceModel(PSY.Branch, SeriesLine))
     services = Dict{Symbol, ServiceModel}(:Reserves => ServiceModel(PSY.Reserve, AbstractReservesForm))
 
-    return PowerOperationModel(EconomicDispatch,
+    return OperationModel(EconomicDispatch,
                                    transmission,
                                     devices,
                                     branches,
@@ -20,7 +20,7 @@ function EconomicDispatch(system::PSY.System, transmission::Type{S}; optimizer::
 
 end
 
-function SCEconomicDispatch(system::PSY.System; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...)
+function SCEconomicDispatch(sys::PSY.System; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...)
 
     if :PTDF in keys(kwargs)
 
@@ -38,7 +38,7 @@ function SCEconomicDispatch(system::PSY.System; optimizer::Union{Nothing,JuMP.Op
     branches = Dict{Symbol, DeviceModel}(:Lines => DeviceModel(PSY.Branch, SeriesLine))
     services = Dict{Symbol, ServiceModel}(:Reserves => ServiceModel(PSY.Reserve, AbstractReservesForm))
 
-    return PowerOperationModel(EconomicDispatch,
+    return OperationModel(EconomicDispatch,
                                     StandardPTDFForm,
                                     devices,
                                     branches,

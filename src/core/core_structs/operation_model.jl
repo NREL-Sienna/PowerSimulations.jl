@@ -1,21 +1,21 @@
 abstract type AbstractOperationsModel end
 
-mutable struct PowerOperationModel{M <: AbstractOperationsModel,
-                                   T <: PM.AbstractPowerFormulation}
+mutable struct OperationModel{M <: AbstractOperationsModel,
+                              T <: PM.AbstractPowerFormulation}
     op_model::Type{M}
     transmission::Type{T}
     devices::Dict{Symbol, DeviceModel}
     branches::Dict{Symbol, DeviceModel}
     services::Dict{Symbol, ServiceModel}
-    system::PSY.System
+    sys::PSY.System
     canonical_model::CanonicalModel
 
-    function PowerOperationModel(op_model::Type{M},
+    function OperationModel(op_model::Type{M},
                                 transmission::Type{T},
                                 devices::Dict{Symbol, DeviceModel},
                                 branches::Dict{Symbol, DeviceModel},
                                 services::Dict{Symbol, ServiceModel},
-                                system::PSY.System;
+                                sys::PSY.System;
                                 optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing,
                                 kwargs...) where {M <: AbstractOperationsModel,
                                                   T <: PM.AbstractPowerFormulation}
@@ -24,7 +24,7 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                                         devices,
                                         branches,
                                         services,
-                                        system,
+                                        sys,
                                         optimizer;
                                         kwargs...)
 
@@ -33,7 +33,7 @@ mutable struct PowerOperationModel{M <: AbstractOperationsModel,
                   devices,
                   branches,
                   services,
-                  system,
+                  sys,
                   ps_model)
 
     end
