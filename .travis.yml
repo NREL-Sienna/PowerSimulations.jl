@@ -42,7 +42,7 @@ addons:
 #  - if [ $TRAVIS_OS_NAME = osx ]; then brew install gcc; fi
 
 ## uncomment the following lines to override the default test script
-script:
+script: travis_wait 30
   - julia --project --color=yes -e "import Pkg; Pkg.build(); Pkg.instantiate()"
   - julia --check-bounds=yes --depwarn=no --inline=no --color=yes --project -e "import Pkg; Pkg.test(coverage=true);"
 
