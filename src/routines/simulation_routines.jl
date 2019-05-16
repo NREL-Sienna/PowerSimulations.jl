@@ -56,7 +56,7 @@ function run_simulations(simulation::PowerSimulationsModel{S}, solver, ps_dict::
         sys = PSY.System(ps_dict; kwargs...);
 
         # make model
-        tmp_model = PowerOperationModel(simulation.model.psmodel,
+        tmp_model = OperationModel(simulation.model.psmodel,
             simulation.model.generation,
             simulation.model.demand,
             simulation.model.storage,

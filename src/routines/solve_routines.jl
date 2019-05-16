@@ -1,6 +1,6 @@
 include("get_results.jl")
 
-function solve_op_model!(op_model::PowerOperationModel; kwargs...)
+function solve_op_model!(op_model::OperationModel; kwargs...)
 
     if op_model.canonical_model.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
 

@@ -207,7 +207,7 @@ function energy_balance_constraint(ps_m::CanonicalModel,
     key = Symbol("energy_$(St)")                                                              
 
     if !(key in keys(ps_m.initial_conditions))
-        @info("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
+        @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
         storage_energy_init(ps_m, devices, parameters)
     end
 

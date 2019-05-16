@@ -175,7 +175,7 @@ function create_result_dict(jump_array, k)
 end
 
 
-function get_model_result(pspom::PowerOperationModel)
+function get_model_result(pspom::OperationModel)
 
     d = Dict{Symbol, DataFrames.DataFrame}()
     for (k, v) in pspom.model.obj_dict

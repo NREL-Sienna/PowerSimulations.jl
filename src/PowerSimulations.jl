@@ -11,6 +11,7 @@ export CopperPlatePowerModel
 export DeviceModel
 
 #operation_models
+export OperationModel
 export UnitCommitment
 export EconomicDispatch
 export SCEconomicDispatch
