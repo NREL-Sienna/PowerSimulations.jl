@@ -92,7 +92,7 @@ optimize!(constraints.model, with_optimizer(GLPK.Optimizer))
 locateddemands = constraints.result()
 ```
 """
-function demandconstraints2(demand :: BevDemand{T,L}, prices :: TimeArray{Float64,1,T,Array{Float64,1}}) where L where T <: TimeType
+function demandconstraints(demand :: BevDemand{T,L}, prices :: TimeArray{Float64,1,T,Array{Float64,1}}) where L where T <: TimeType
 
     # FIXME: Add DC constraints.
 
