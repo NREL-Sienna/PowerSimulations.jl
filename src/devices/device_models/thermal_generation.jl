@@ -279,8 +279,6 @@ function _get_data_for_rocc(devices::PSY.FlattenedVectorsIterator{T},
         if !isnothing(g.tech.ramplimits)
             max = g.tech.activepowerlimits.max
             min = g.tech.activepowerlimits.min
-            @show g.tech.ramplimits.up*g.tech.rating
-            @show  (max - min)/minutes_per_period
             if g.tech.ramplimits.up*g.tech.rating >= -1*(min - max)/minutes_per_period		
                 @info "Generator $(g.name) has a nonbinding ramp up limit. Constraint Skipped"
                 non_binding_up = true		
@@ -289,7 +287,6 @@ function _get_data_for_rocc(devices::PSY.FlattenedVectorsIterator{T},
                 @info "Generator $(g.name) has a nonbinding ramp down limit. Constraint Skipped"		
                 non_binding_down = true
             end 
-            @show (non_binding_up & non_binding_down)
             (non_binding_up & non_binding_down) ? continue : idx += 1
             set_name[idx] = g.name
             ramp_params[idx] = (up = g.tech.ramplimits.up*minutes_per_period, down = g.tech.ramplimits.down*minutes_per_period)

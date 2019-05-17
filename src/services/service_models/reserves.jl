@@ -27,7 +27,7 @@ function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, for
 end
 
 function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PSY.RenewableGen, D <: AbstractRenewableDispatchForm}
-    return JuMP.@constraint(m, m[:p_re][device.name,t] + m[:p_rsv][device.name,t] <= device.tech.installedcapacity * values(device.scalingfactor)[t])
+    return JuMP.@constraint(m, m[:p_re][device.name,t] + m[:p_rsv][device.name,t] <= device.tech.rating * values(device.scalingfactor)[t])
 end
 
 function make_pmax_rsv_constraint(m::JuMP.AbstractModel,t::Int64, device::G, formulation::Type{D}) where {G<:PSY.InterruptibleLoad, D <: InterruptiblePowerLoad}

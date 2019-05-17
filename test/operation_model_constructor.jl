@@ -243,9 +243,9 @@ end
 
 
 @testset "Build Operation Models" begin
-    SCED = PSI.SCEconomicDispatch(c_sys5; optimizer = GLPK_optimizer);
-    OPF = PSI.OptimalPowerFlow(c_sys5, PM.StandardACPForm, optimizer = ipopt_optimizer)
-    UC = PSI.UnitCommitment(c_sys5, PM.DCPlosslessForm; optimizer = GLPK_optimizer)
+    #SCED = PSI.SCEconomicDispatch(c_sys5; optimizer = GLPK_optimizer);
+    #OPF = PSI.OptimalPowerFlow(c_sys5, PM.StandardACPForm, optimizer = ipopt_optimizer)
+    #UC = PSI.UnitCommitment(c_sys5, PM.DCPlosslessForm; optimizer = GLPK_optimizer)
 
     #ED_rts_p = PSI.EconomicDispatch(c_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer);
     #ED_rts = PSI.EconomicDispatch(c_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer, parameters = false);

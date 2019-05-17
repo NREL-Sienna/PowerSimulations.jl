@@ -76,6 +76,7 @@ function  build_canonical_model(transmission::Type{T},
                                 branches::Dict{Symbol, DeviceModel},
                                 services::Dict{Symbol, ServiceModel},
                                 sys::PSY.System,
+                                resolution::Dates.Period,
                                 optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing;
                                 kwargs...) where {T <: PM.AbstractPowerFormulation}
 
@@ -96,7 +97,7 @@ ps_model = _canonical_model_init(bus_numbers, optimizer, transmission, time_rang
 
 # Build Injection devices
 for mod in devices
-    construct_device!(ps_model, mod[2], transmission, sys, time_range; kwargs...)
+    construct_device!(ps_model, mod[2], transmission, sys, time_range, resolution; kwargs...)
 end
 
 # Build Network
@@ -104,12 +105,12 @@ construct_network!(ps_model, transmission, sys, time_range; kwargs...)
 
 # Build Branches
 for mod in branches
-    construct_device!(ps_model, mod[2], transmission, sys, time_range; kwargs...)
+    construct_device!(ps_model, mod[2], transmission, sys, time_range, resolution; kwargs...)
 end
 
 #Build Service
 for mod in services
-    #construct_service!(ps_model, mod[2], transmission, sys, time_range; kwargs...)
+    #construct_service!(ps_model, mod[2], transmission, sys, time_range, resolution; kwargs...)
 end
 
 # Objective Function

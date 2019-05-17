@@ -2,7 +2,7 @@
     model = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
     network = PM.DCPlosslessForm
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, network, time_range)
-    construct_device!(ps_model, model, network, c_sys5_bat, time_range);
+    construct_device!(ps_model, model, network, c_sys5_bat, time_range, Dates.Hour(1));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 72
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
@@ -14,7 +14,7 @@ end
     model = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
     network = PM.StandardACPForm
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_range)
-    construct_device!(ps_model, model, network, c_sys5_bat, time_range);
+    construct_device!(ps_model, model, network, c_sys5_bat, time_range, Dates.Hour(1));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 96
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
@@ -26,7 +26,7 @@ end
 model = DeviceModel(PSY.GenericBattery, PSI.BookKeepingwReservation)
     network = PM.DCPlosslessForm
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, network, time_range)
-    construct_device!(ps_model, model, network, c_sys5_bat, time_range);
+    construct_device!(ps_model, model, network, c_sys5_bat, time_range, Dates.Hour(1));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 96
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 48
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 48
@@ -39,7 +39,7 @@ end
     model = DeviceModel(PSY.GenericBattery, PSI.BookKeepingwReservation)
     network = PM.StandardACPForm
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, network, time_range)
-    construct_device!(ps_model, model, network, c_sys5_bat, time_range);
+    construct_device!(ps_model, model, network, c_sys5_bat, time_range, Dates.Hour(1));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 48
     @test JuMP.num_constraints(ps_model.JuMPmodel,GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 48

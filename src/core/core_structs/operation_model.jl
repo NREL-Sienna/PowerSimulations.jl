@@ -8,6 +8,7 @@ mutable struct OperationModel{M <: AbstractOperationsModel,
     branches::Dict{Symbol, DeviceModel}
     services::Dict{Symbol, ServiceModel}
     sys::PSY.System
+    resolution::Dates.Period
     canonical_model::CanonicalModel
 
     function OperationModel(op_model::Type{M},
@@ -20,11 +21,15 @@ mutable struct OperationModel{M <: AbstractOperationsModel,
                                 kwargs...) where {M <: AbstractOperationsModel,
                                                   T <: PM.AbstractPowerFormulation}
 
+
+        resolution = collect(keys(sys.forecasts))[1][1]
+
         ps_model = build_canonical_model(transmission,
                                         devices,
                                         branches,
                                         services,
                                         sys,
+                                        resolution,
                                         optimizer;
                                         kwargs...)
 
@@ -34,6 +39,7 @@ mutable struct OperationModel{M <: AbstractOperationsModel,
                   branches,
                   services,
                   sys,
+                  resolution,
                   ps_model)
 
     end
