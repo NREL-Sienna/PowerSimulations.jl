@@ -1,5 +1,5 @@
 function energy_balance(ps_m::CanonicalModel,
-                        time_range::UnitRange{Int64},
+                        lookahead::UnitRange{Int64},
                         resolution::Dates.Period,
                         initial_conditions::Vector{InitialCondition},
                         efficiency_data::Tuple{Vector{String},Vector{InOut}},
@@ -8,7 +8,7 @@ function energy_balance(ps_m::CanonicalModel,
 
     fraction_of_hour = Dates.value(Dates.Minute(resolution))/60
     name_index = efficiency_data[1]
-    ps_m.constraints[cons_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, name_index, time_range)
+    ps_m.constraints[cons_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, name_index, lookahead)
 
     for (ix,name) in enumerate(name_index)
         eff_in = efficiency_data[2][ix].in
@@ -19,7 +19,7 @@ function energy_balance(ps_m::CanonicalModel,
 
     end
 
-    for t in time_range[2:end], (ix,name) in enumerate(name_index)
+    for t in lookahead[2:end], (ix,name) in enumerate(name_index)
         eff_in = efficiency_data[2][ix].in
         eff_out = efficiency_data[2][ix].out
 

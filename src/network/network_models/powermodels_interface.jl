@@ -253,15 +253,15 @@ end
 function powermodels_network!(ps_m::CanonicalModel,
                               system_formulation::Type{S},
                               sys::PSY.System,
-                              time_range::UnitRange{Int64}) where {S <: PM.AbstractPowerFormulation}
+                              lookahead::UnitRange{Int64}) where {S <: PM.AbstractPowerFormulation}
 
-    pm_data = pass_to_pm(sys, time_range[end])
+    pm_data = pass_to_pm(sys, lookahead[end])
     buses = PSY.get_components(PSY.Bus, sys)
 
     _remove_undef!(ps_m.expressions[:nodal_balance_active])
     _remove_undef!(ps_m.expressions[:nodal_balance_reactive])
 
-    for t in time_range, bus in buses
+    for t in lookahead, bus in buses
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions[:nodal_balance_active][bus.number,t]
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = ps_m.expressions[:nodal_balance_reactive][bus.number,t]
     end
@@ -278,14 +278,14 @@ end
 function powermodels_network!(ps_m::CanonicalModel,
                               system_formulation::Type{S},
                               sys::PSY.System,
-                              time_range::UnitRange{Int64}) where {S <: PM.AbstractActivePowerFormulation}
+                              lookahead::UnitRange{Int64}) where {S <: PM.AbstractActivePowerFormulation}
 
-    pm_data = pass_to_pm(sys, time_range[end])
+    pm_data = pass_to_pm(sys, lookahead[end])
     buses = PSY.get_components(PSY.Bus, sys)
 
     _remove_undef!(ps_m.expressions[:nodal_balance_active])
 
-    for t in time_range, bus in buses
+    for t in lookahead, bus in buses
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions[:nodal_balance_active][bus.number,t]
         #pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
     end

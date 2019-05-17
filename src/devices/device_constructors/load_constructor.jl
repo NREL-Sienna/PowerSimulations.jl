@@ -3,7 +3,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.System,
-                           time_range::UnitRange{Int64},
+                           lookahead::UnitRange{Int64},
                            resolution::Dates.Period;
                            kwargs...) where {L <: PSY.ControllableLoad,
                                              D <: AbstractControllablePowerLoadForm,
@@ -20,20 +20,20 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     parameters = get(kwargs, :parameters, true)
 
     #Variables
-    activepower_variables(ps_m, devices, time_range);
+    activepower_variables(ps_m, devices, lookahead);
 
-    reactivepower_variables(ps_m, devices, time_range);
+    reactivepower_variables(ps_m, devices, lookahead);
 
     #Constraints
     if forecast 
         first_step = collect(PSY.get_forecast_issue_times(sys))[1]
         forecasts = Vector{PSY.Deterministic{L}}(PSY.get_forecasts(sys, first_step, devices))
-        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, time_range, parameters)
+        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, lookahead, parameters)
     else
-        activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
+        activepower_constraints(ps_m, devices, device_formulation, system_formulation, lookahead, parameters)
     end
 
-    reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
+    reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, lookahead)
 
     #Cost Function
     cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
@@ -47,7 +47,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.System,
-                           time_range::UnitRange{Int64},
+                           lookahead::UnitRange{Int64},
                            resolution::Dates.Period;
                            kwargs...) where {L <: PSY.ControllableLoad,
                                              D <: AbstractControllablePowerLoadForm,
@@ -64,15 +64,15 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     parameters = get(kwargs, :parameters, true)                                             
 
     #Variables
-    activepower_variables(ps_m, devices, time_range)
+    activepower_variables(ps_m, devices, lookahead)
 
     #Constraints
     if forecast 
         first_step = collect(PSY.get_forecast_issue_times(sys))[1]
         forecasts = Vector{PSY.Deterministic{L}}(PSY.get_forecasts(sys, first_step, devices))
-        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, time_range, parameters)
+        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, lookahead, parameters)
     else
-        activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
+        activepower_constraints(ps_m, devices, device_formulation, system_formulation, lookahead, parameters)
     end
 
     #Cost Function
@@ -87,7 +87,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{StaticPowerLoad},
                                         system_formulation::Type{S},
                                         sys::PSY.System,
-                                        time_range::UnitRange{Int64},
+                                        lookahead::UnitRange{Int64},
                                         resolution::Dates.Period;
                                         kwargs...) where {L <: PSY.ElectricLoad,
                                                           S <: PM.AbstractPowerFormulation}
@@ -105,9 +105,9 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     if forecast 
         first_step = collect(PSY.get_forecast_issue_times(sys))[1]
         forecasts = Vector{PSY.Deterministic{L}}(PSY.get_forecasts(sys, first_step, devices))
-        nodal_expression(ps_m, forecasts, system_formulation, time_range, parameters)
+        nodal_expression(ps_m, forecasts, system_formulation, lookahead, parameters)
     else
-        nodal_expression(ps_m, devices, system_formulation, time_range, parameters)
+        nodal_expression(ps_m, devices, system_formulation, lookahead, parameters)
     end   
 
     return
@@ -119,7 +119,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
                                         sys::PSY.System,
-                                        time_range::UnitRange{Int64},
+                                        lookahead::UnitRange{Int64},
                                         resolution::Dates.Period;
                                         kwargs...) where {L <: PSY.StaticLoad,
                                                           D <: AbstractControllablePowerLoadForm,
@@ -134,7 +134,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                   StaticPowerLoad,
                                   system_formulation,
                                   sys,
-                                  time_range,
+                                  lookahead,
                                   resolution; 
                                   kwargs...)
 

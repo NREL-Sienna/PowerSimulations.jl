@@ -3,16 +3,16 @@ function ptdf_networkflow(ps_m::CanonicalModel,
                           buses::PSY.FlattenedVectorsIterator{PSY.Bus},
                           expression::Symbol,
                           PTDF::PSY.PTDF,
-                          time_range::UnitRange{Int64}) where {B <: PSY.Branch}
+                          lookahead::UnitRange{Int64}) where {B <: PSY.Branch}
 
                                                         
-    ps_m.constraints[:network_flow] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef,  PTDF.axes[1], time_range)
-    ps_m.constraints[:nodal_balance] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, PTDF.axes[2], time_range)
+    ps_m.constraints[:network_flow] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef,  PTDF.axes[1], lookahead)
+    ps_m.constraints[:nodal_balance] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, PTDF.axes[2], lookahead)
     key = Symbol("Fbr_$(B)")
 
     _remove_undef!(ps_m.expressions[expression])
 
-    for t in time_range
+    for t in lookahead
         for b in branches
             ps_m.constraints[:network_flow][b.name,t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[key][b.name,t] == PTDF[b.name,:]'*ps_m.expressions[expression].data[:,t])
         end

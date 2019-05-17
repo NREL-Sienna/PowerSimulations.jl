@@ -3,7 +3,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
                                         sys::PSY.System,
-                                        time_range::UnitRange{Int64},
+                                        lookahead::UnitRange{Int64},
                                         resolution::Dates.Period;
                                         kwargs...) where {St <: PSY.Storage,
                                                             D <: AbstractStorageForm,
@@ -19,21 +19,21 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     parameters = get(kwargs, :parameters, true)
 
     #Variables
-    active_power_variables(ps_m, devices, time_range);
+    active_power_variables(ps_m, devices, lookahead);
 
-    reactive_power_variables(ps_m, devices, time_range);
+    reactive_power_variables(ps_m, devices, lookahead);
 
-    energy_storage_variables(ps_m, devices, time_range);
+    energy_storage_variables(ps_m, devices, lookahead);
 
     #Constraints
-    active_power_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
+    active_power_constraints(ps_m, devices, device_formulation, system_formulation, lookahead)
 
-    reactive_power_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
+    reactive_power_constraints(ps_m, devices, device_formulation, system_formulation, lookahead)
 
-    energy_capacity_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
+    energy_capacity_constraints(ps_m, devices, device_formulation, system_formulation, lookahead)
 
     # Energy Balanace limits
-    energy_balance_constraint(ps_m, devices, device_formulation, system_formulation, time_range, resolution, parameters)
+    energy_balance_constraint(ps_m, devices, device_formulation, system_formulation, lookahead, resolution, parameters)
 
     return
 
@@ -44,7 +44,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
                                         sys::PSY.System,
-                                        time_range::UnitRange{Int64},
+                                        lookahead::UnitRange{Int64},
                                         resolution::Dates.Period;
                                         kwargs...) where {St <: PSY.Storage,
                                                             D <: AbstractStorageForm,
@@ -60,17 +60,17 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
 
     #Variables
-    active_power_variables(ps_m, devices, time_range);
+    active_power_variables(ps_m, devices, lookahead);
 
-    energy_storage_variables(ps_m, devices, time_range);
+    energy_storage_variables(ps_m, devices, lookahead);
 
     #Constraints
-    active_power_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
+    active_power_constraints(ps_m, devices, device_formulation, system_formulation, lookahead)
 
-    energy_capacity_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
+    energy_capacity_constraints(ps_m, devices, device_formulation, system_formulation, lookahead)
 
     # Energy Balanace limits
-    energy_balance_constraint(ps_m, devices, device_formulation, system_formulation, time_range, resolution, parameters)
+    energy_balance_constraint(ps_m, devices, device_formulation, system_formulation, lookahead, resolution, parameters)
 
     return
 
@@ -81,7 +81,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{BookKeepingwReservation},
                                         system_formulation::Type{S},
                                         sys::PSY.System,
-                                        time_range::UnitRange{Int64},
+                                        lookahead::UnitRange{Int64},
                                         resolution::Dates.Period;
                                         kwargs...) where {St <: PSY.Storage,
                                                           S <: PM.AbstractPowerFormulation}
@@ -96,23 +96,23 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     parameters = get(kwargs, :parameters, true)
 
     #Variables
-    active_power_variables(ps_m, devices, time_range);
+    active_power_variables(ps_m, devices, lookahead);
 
-    reactive_power_variables(ps_m, devices, time_range);
+    reactive_power_variables(ps_m, devices, lookahead);
 
-    energy_storage_variables(ps_m, devices, time_range);
+    energy_storage_variables(ps_m, devices, lookahead);
 
-    storage_reservation_variables(ps_m, devices, time_range);
+    storage_reservation_variables(ps_m, devices, lookahead);
 
     #Constraints
-    active_power_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
+    active_power_constraints(ps_m, devices, device_formulation, system_formulation, lookahead)
 
-    reactive_power_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
+    reactive_power_constraints(ps_m, devices, device_formulation, system_formulation, lookahead)
 
-    energy_capacity_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
+    energy_capacity_constraints(ps_m, devices, device_formulation, system_formulation, lookahead)
 
     # Energy Balanace limits
-    energy_balance_constraint(ps_m, devices, device_formulation, system_formulation, time_range, resolution, parameters)
+    energy_balance_constraint(ps_m, devices, device_formulation, system_formulation, lookahead, resolution, parameters)
 
     return
 
@@ -123,7 +123,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{BookKeepingwReservation},
                                         system_formulation::Type{S},
                                         sys::PSY.System,
-                                        time_range::UnitRange{Int64},
+                                        lookahead::UnitRange{Int64},
                                         resolution::Dates.Period;
                                         kwargs...) where {St <: PSY.Storage,
                                                           S <: PM.AbstractActivePowerFormulation}
@@ -138,19 +138,19 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
 
     #Variables
-    active_power_variables(ps_m, devices, time_range);
+    active_power_variables(ps_m, devices, lookahead);
 
-    energy_storage_variables(ps_m, devices, time_range);
+    energy_storage_variables(ps_m, devices, lookahead);
 
-    storage_reservation_variables(ps_m, devices, time_range);
+    storage_reservation_variables(ps_m, devices, lookahead);
 
     #Constraints
-    active_power_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
+    active_power_constraints(ps_m, devices, device_formulation, system_formulation, lookahead)
 
-    energy_capacity_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
+    energy_capacity_constraints(ps_m, devices, device_formulation, system_formulation, lookahead)
 
     # Energy Balanace limits
-    energy_balance_constraint(ps_m, devices, device_formulation, system_formulation, time_range, resolution, parameters)
+    energy_balance_constraint(ps_m, devices, device_formulation, system_formulation, lookahead, resolution, parameters)
 
     return
 
