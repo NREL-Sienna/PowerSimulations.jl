@@ -4,7 +4,7 @@
     line_model = DeviceModel(PSY.Line, PSI.ACSeriesBranch)
     devices = Dict{Symbol, DeviceModel}(:Generators => thermal_model, :Loads =>  load_model)
     branches = Dict{Symbol, DeviceModel}(:Lines => line_model)
-    services = Dict{Symbol, PSI.ServiceModel}(:Reserves => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
+    services = Dict{Symbol, PSI.ServiceModel}()
 
     model_ref = ModelReference(CopperPlatePowerModel, devices, branches, services);
 
@@ -97,7 +97,7 @@ end
             thermal_model = DeviceModel(PSY.ThermalDispatch, thermal)
             devices = Dict{Symbol, DeviceModel}(:Generators => thermal_model, :Loads =>  load_model)
             branches = Dict{Symbol, DeviceModel}(:Lines => line_model)
-            services = Dict{Symbol, PSI.ServiceModel}(:Reserves => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
+            services = Dict{Symbol, PSI.ServiceModel}()
             model_ref = ModelReference(net, devices, branches, services);
             op_model = OperationModel(TestOptModel, 
                                       model_ref,
@@ -143,7 +143,7 @@ end
             thermal_model = DeviceModel(PSY.ThermalDispatch, thermal)
             devices = Dict{Symbol, DeviceModel}(:Generators => thermal_model, :Loads =>  load_model)
             branches = Dict{Symbol, DeviceModel}(:Lines => line_model)
-            services = Dict{Symbol, PSI.ServiceModel}(:Reserves => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
+            services = Dict{Symbol, PSI.ServiceModel}()
             model_ref = ModelReference(net, devices, branches, services);
             op_model = OperationModel(TestOptModel, 
                                         model_ref, 
@@ -202,7 +202,7 @@ end
                                     :HVDC => hvdc_model,
                                     :tap_trafo => tap_transformer_model,
                                     :trafo => transformer_model)
-    services = Dict{Symbol, PSI.ServiceModel}(:Reserves => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
+    services = Dict{Symbol, PSI.ServiceModel}()
     net = PSI.CopperPlatePowerModel                    
 
     
@@ -211,7 +211,7 @@ end
             thermal_model = DeviceModel(PSY.ThermalDispatch, thermal)
             devices = Dict{Symbol, DeviceModel}(:Generators => thermal_model, :Loads =>  load_model)
             branches = Dict{Symbol, DeviceModel}(:Lines => line_model, :Transformer)
-            services = Dict{Symbol, PSI.ServiceModel}(:Reserves => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
+            services = Dict{Symbol, PSI.ServiceModel}()
             op_model = OperationModel(TestOptModel, net, 
                                         devices, 
                                         branches, 
