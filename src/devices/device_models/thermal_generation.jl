@@ -404,6 +404,7 @@ function time_constraints(ps_m::CanonicalModel,
             @info("Initial conditions for time up/down not provided. This can lead to unwanted results")
             duration_init(ps_m, devices, parameters)
         end
+        @warn("Currently Min-up/down time limits only work if time resoultion they are defined at matches the simulation's time resoultion")
         device_duration_retrospective(ps_m,
                                       duration_data,
                                       ps_m.initial_conditions[:thermal_duration_on],
