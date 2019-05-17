@@ -109,7 +109,7 @@ end
 
 #Build Service
 for mod in services
-    construct_service!(ps_model, mod[2], transmission, sys, time_range; kwargs...)
+    #construct_service!(ps_model, mod[2], transmission, sys, time_range; kwargs...)
 end
 
 # Objective Function
