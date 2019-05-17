@@ -37,6 +37,10 @@ import LinearAlgebra
 #import LinearAlgebra.BLAS #needed for the simulation stage
 import Dates
 
+# so that users do not need to import JuMP to use a solver with PowerModels
+import JuMP: with_optimizer
+export with_optimizer
+
 #################################################################################
 # Type Alias From other Packages
 const PM = PowerModels
