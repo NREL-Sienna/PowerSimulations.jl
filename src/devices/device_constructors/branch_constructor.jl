@@ -3,7 +3,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            device_formulation::Type{Br},
                            system_formulation::Type{StandardPTDFForm},
                            sys::PSY.System,
-                           time_range::UnitRange{Int64};
+                           time_range::UnitRange{Int64},
+                           resolution::Dates.Period;
                            kwargs...) where {Br <: AbstractBranchFormulation,
                                              B <: PSY.Branch}
 
@@ -16,7 +17,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            device_formulation::Type{Br},
                            system_formulation::Type{CopperPlatePowerModel},
                            sys::PSY.System,
-                           time_range::UnitRange{Int64};
+                           time_range::UnitRange{Int64},
+                           resolution::Dates.Period;
                            kwargs...) where {Br <: AbstractBranchFormulation,
                                              B <: PSY.Branch}
 
@@ -29,7 +31,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                             device_formulation::Type{Br},
                             system_formulation::Type{S},
                             sys::PSY.System,
-                            time_range::UnitRange{Int64};
+                            time_range::UnitRange{Int64},
+                            resolution::Dates.Period;
                             kwargs...) where {Br <: AbstractBranchFormulation,
                                               B <: PSY.Branch,
                                               S <: PM.AbstractPowerFormulation}

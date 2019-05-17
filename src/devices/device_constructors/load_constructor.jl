@@ -3,7 +3,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.System,
-                           time_range::UnitRange{Int64};
+                           time_range::UnitRange{Int64},
+                           resolution::Dates.Period;
                            kwargs...) where {L <: PSY.ControllableLoad,
                                              D <: AbstractControllablePowerLoadForm,
                                              S <: PM.AbstractPowerFormulation}
@@ -35,7 +36,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation)
+    cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
 
     return
 
@@ -46,7 +47,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.System,
-                           time_range::UnitRange{Int64};
+                           time_range::UnitRange{Int64},
+                           resolution::Dates.Period;
                            kwargs...) where {L <: PSY.ControllableLoad,
                                              D <: AbstractControllablePowerLoadForm,
                                              S <: PM.AbstractActivePowerFormulation}
@@ -74,7 +76,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     end
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation)
+    cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
 
     return
 
@@ -85,7 +87,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{StaticPowerLoad},
                                         system_formulation::Type{S},
                                         sys::PSY.System,
-                                        time_range::UnitRange{Int64};
+                                        time_range::UnitRange{Int64},
+                                        resolution::Dates.Period;
                                         kwargs...) where {L <: PSY.ElectricLoad,
                                                           S <: PM.AbstractPowerFormulation}
 
@@ -116,7 +119,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
                                         sys::PSY.System,
-                                        time_range::UnitRange{Int64};
+                                        time_range::UnitRange{Int64},
+                                        resolution::Dates.Period;
                                         kwargs...) where {L <: PSY.StaticLoad,
                                                           D <: AbstractControllablePowerLoadForm,
                                                           S <: PM.AbstractPowerFormulation}
