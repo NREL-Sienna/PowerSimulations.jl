@@ -1,24 +1,22 @@
 function output_init(ps_m::CanonicalModel,
                     devices::PSY.FlattenedVectorsIterator{PSD},
+                    set_name::Vector{String},
                     parameters::Bool) where {PSD <: PSY.ThermalGen}
 
     lenght_devices = length(devices)
+    if lenght_devices != length(set_name)                    
+        devices = [d for d in devices if d.name in set_name]
+        lenght_devices = length(devices)
+    end
+    
     initial_conditions = Vector{InitialCondition}(undef, lenght_devices)
 
-    idx = 0
-    for g in devices
-        if !isnothing(g.tech.ramplimits)
-            idx += 1
+    for (ix, g) in enumerate(devices)
             if parameters
-                initial_conditions[idx] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, g.tech.activepower))
+                initial_conditions[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, g.tech.activepower))
             else
-                initial_conditions[idx] = InitialCondition(g, g.tech.activepower)
+                initial_conditions[ix] = InitialCondition(g, g.tech.activepower)
             end                      
-        end
-    end
-
-    if idx < lenght_devices  
-        deleteat!(initial_conditions, idx+1:lenght_devices) 
     end
 
     ps_m.initial_conditions[Symbol("output_$(PSD)")] = initial_conditions

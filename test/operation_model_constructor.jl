@@ -194,10 +194,29 @@ end
                c_sys5_re,
                c_sys5_bat];                    
 
+    renewable_curtailment_model = DeviceModel(PSY.RenewableCurtailment, PSI.RenewableConstantPowerFactor)
+    thermal_model = DeviceModel(PSY.ThermalDispatch, PSI.ThermalDispatch)
+    hvdc_model = DeviceModel(PSY.HVDCLine, PSI.DCSeriesBranch)
+    #hydro = DeviceModel(PSY.HydroCurtailment, PSI.HydroCurtailment)
+    transformer_model = DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch)
+    tap_transformer_model = DeviceModel(PSY.TapTransformer, PSI.ACSeriesBranch)
+    renewable_fix = DeviceModel(PSY.RenewableFix, PSI.RenewableFixed)
     load_model = DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad)
     line_model = DeviceModel(PSY.Line, PSI.ACSeriesBranch)
-    transformer_model = DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch)
-                    
+    bat = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
+    
+    devices = Dict{Symbol, DeviceModel}(:Generators => thermal_model, 
+                                    :Loads =>  load_model,
+                                    :rc => renewable_curtailment_model,
+                                    :ren_fix => renewable_fix)
+    branches = Dict{Symbol, DeviceModel}(:Lines => line_model,
+                                    :HVDC => hvdc_model,
+                                    :tap_trafo => tap_transformer_model,
+                                    :trafo => transformer_model)
+    services = Dict{Symbol, PSI.ServiceModel}(:Reserves => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
+    net = PSI.CopperPlatePowerModel                    
+
+    
     for net in networks, thermal in thermal_gens, system in systems
         @testset "Operation Model $(net) - $(thermal) - $(system)" begin
             thermal_model = DeviceModel(PSY.ThermalDispatch, thermal)
@@ -220,103 +239,13 @@ end
 
 end
 
-
-@testset "Operation Model Constructor with Params" begin
-    #These tests with Unit Commitment must not add Parameters to the Canonical Model.
-    # Once a formulation with Parameters is available the tests need to be updated
-    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalDispatch, PSI.ThermalUnitCommitment),
-                                            :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
-    branches = Dict{Symbol, DeviceModel}(:Lines => DeviceModel(PSY.Branch, PSI.SeriesLine))
-    services = Dict{Symbol, PSI.ServiceModel}(:Reserves => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
-
-    op_model = PSI.OperationModel(TestOptModel, PM.StandardACPForm, devices, branches, services, c_sys5)
-    @test :nodal_balance_active in keys(op_model.canonical_model.expressions) && :nodal_balance_reactive in keys(op_model.canonical_model.expressions)
-    @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
-
-    op_model = PSI.OperationModel(TestOptModel, PM.DCPlosslessForm, devices, branches, services, c_sys5)
-    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-    @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
-
-    op_model = PSI.OperationModel(TestOptModel, PSI.StandardPTDFForm, devices, branches, services, c_sys5; PTDF = PTDF)
-    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-    @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
-
-    op_model = PSI.OperationModel(TestOptModel, PSI.CopperPlatePowerModel, devices, branches, services, c_sys5)
-    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-    @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
-
-    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalDispatch, PSI.ThermalDispatch),
-    :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
-    branches = Dict{Symbol, DeviceModel}(:Lines => DeviceModel(PSY.Line, PSI.ACSeriesBranch))
-    services = Dict{Symbol, PSI.ServiceModel}()
-
-    op_model = PSI.OperationModel(TestOptModel, PM.StandardACPForm, devices, branches, services, c_sys5)
-    @test :nodal_balance_active in keys(op_model.canonical_model.expressions) && :nodal_balance_reactive in keys(op_model.canonical_model.expressions)
-    @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
-
-    op_model = PSI.OperationModel(TestOptModel, PM.DCPlosslessForm, devices, branches, services, c_sys5)
-    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-    @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
-
-    op_model = PSI.OperationModel(TestOptModel, PSI.StandardPTDFForm, devices, branches, services, c_sys5; PTDF = PTDF5)
-    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-    @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
-
-    op_model = PSI.OperationModel(TestOptModel, PSI.CopperPlatePowerModel, devices, branches, services, c_sys5)
-    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-    @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
-end
-
-@testset "Operation Model Constructor without Params" begin
-    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalDispatch, PSI.ThermalUnitCommitment),
-    :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
-    branches = Dict{Symbol, DeviceModel}(:Lines => DeviceModel(PSY.Branch, PSI.SeriesLine))
-    services = Dict{Symbol, PSI.ServiceModel}(:Reserves => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
-
-    op_model = PSI.OperationModel(TestOptModel, PM.StandardACPForm, devices, branches, services, c_sys5; parameters = false)
-    @test :nodal_balance_active in keys(op_model.canonical_model.expressions) && :nodal_balance_reactive in keys(op_model.canonical_model.expressions)
-    @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
-
-    op_model = PSI.OperationModel(TestOptModel, PM.DCPlosslessForm, devices, branches, services, c_sys5; parameters = false)
-    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-    @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
-
-    op_model = PSI.OperationModel(TestOptModel, PSI.StandardPTDFForm, devices, branches, services, c_sys5; PTDF = PTDF5, parameters = false)
-    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-    @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
-
-    op_model = PSI.OperationModel(TestOptModel, PSI.CopperPlatePowerModel, devices, branches, services, c_sys5; parameters = false)
-    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-    @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
-
-    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalDispatch, PSI.ThermalDispatch),
-                                            :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
-    branches = Dict{Symbol, DeviceModel}(:Lines => DeviceModel(PSY.Branch, PSI.SeriesLine))
-    services = Dict{Symbol, PSI.ServiceModel}(:Reserves => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
-
-    op_model = PSI.OperationModel(TestOptModel, PM.StandardACPForm, devices, branches, services, c_sys5; parameters = false)
-    @test :nodal_balance_active in keys(op_model.canonical_model.expressions) && :nodal_balance_reactive in keys(op_model.canonical_model.expressions)
-    @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
-
-    op_model = PSI.OperationModel(TestOptModel, PM.DCPlosslessForm, devices, branches, services, c_sys5; parameters = false)
-    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-    @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
-
-    op_model = PSI.OperationModel(TestOptModel, PSI.StandardPTDFForm, devices, branches, services, c_sys5; PTDF = PTDF5, parameters = false)
-    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-    @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
-
-    op_model = PSI.OperationModel(TestOptModel, PSI.CopperPlatePowerModel, devices, branches, services, c_sys5; parameters = false)
-    @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-    @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
-
-end
+=#
 
 
 @testset "Build Operation Models" begin
-    #SCED = PSI.SCEconomicDispatch(c_sys5; optimizer = GLPK_optimizer);
-    #OPF = PSI.OptimalPowerFlow(c_sys5, PM.StandardACPForm, optimizer = ipopt_optimizer)
-    #UC = PSI.UnitCommitment(c_sys5, PM.DCPlosslessForm; optimizer = GLPK_optimizer)
+    SCED = PSI.SCEconomicDispatch(c_sys5; optimizer = GLPK_optimizer);
+    OPF = PSI.OptimalPowerFlow(c_sys5, PM.StandardACPForm, optimizer = ipopt_optimizer)
+    UC = PSI.UnitCommitment(c_sys5, PM.DCPlosslessForm; optimizer = GLPK_optimizer)
 
     #ED_rts_p = PSI.EconomicDispatch(c_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer);
     #ED_rts = PSI.EconomicDispatch(c_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer, parameters = false);
@@ -324,4 +253,3 @@ end
     #OPF_rts = PSI.OptimalPowerFlow(sys_rts, PSI.CopperPlatePowerModel, optimizer = ipopt_optimizer)
     #UC_rts = PSI.UnitCommitment(sys_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer, parameters = false)
 end
-=#

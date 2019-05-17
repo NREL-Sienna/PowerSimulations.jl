@@ -256,7 +256,14 @@ end
 
 # ramping constraints
 
-function _get_data_for_rocc(devices::PSY.FlattenedVectorsIterator{T}) where {T <: PSY.ThermalGen}
+function _get_data_for_rocc(devices::PSY.FlattenedVectorsIterator{T},
+                            resolution::Dates.Period) where {T <: PSY.ThermalGen}
+
+    if resolution > Dates.Minute(1)
+        minutes_per_period = Dates.value(Dates.Minute(resolution))
+    else
+        minutes_per_period = Dates.value(Dates.Second(resolution))/60
+    end
 
     lenght_devices = length(devices)
     set_name = Vector{String}(undef, lenght_devices)
@@ -266,9 +273,19 @@ function _get_data_for_rocc(devices::PSY.FlattenedVectorsIterator{T}) where {T <
     idx = 0
     for g in devices
         if !isnothing(g.tech.ramplimits)
+            max = g.tech.activepowerlimits.max
+            min = g.tech.activepowerlimits.min
+            if g.tech.ramplimits.up*g.tech.rating >= (max - min)/minutes_per_period
+                @info "Generator $(g.name) has a nonbinding ramp up limit. Constraint Skipped"
+                continue
+            end
+            if g.tech.ramplimits.down*g.tech.rating >= (max - min)/minutes_per_period
+                @info "Generator $(g.name) has a nonbinding ramp down limit. Constraint Skipped"
+                continue
+            end
             idx += 1
             set_name[idx] = g.name
-            ramp_params[idx] = g.tech.ramplimits
+            ramp_params[idx] = (up = g.tech.ramplimits.up*minutes_per_period, down = g.tech.ramplimits.down*minutes_per_period)
             minmax_params[idx] = g.tech.activepowerlimits
         end
     end
@@ -291,17 +308,18 @@ function ramp_constraints(ps_m::CanonicalModel,
                           device_formulation::Type{D},
                           system_formulation::Type{S},
                           time_range::UnitRange{Int64},
+                          resolution::Dates.Period,
                           parameters::Bool) where {T <: PSY.ThermalGen,
                                                                D <: AbstractThermalFormulation,
                                                                S <: PM.AbstractPowerFormulation}
 
-    data = _get_data_for_rocc(devices)
+    data = _get_data_for_rocc(devices, resolution)
 
     if !isempty(data[2])
         key = Symbol("output_$(T)")
         if !(key in keys(ps_m.initial_conditions))
             @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-            output_init(ps_m, devices, parameters)
+            output_init(ps_m, devices, data[1], parameters)
         end
 
         @assert length(data[2]) == length(ps_m.initial_conditions[:thermal_output])
@@ -329,17 +347,18 @@ function ramp_constraints(ps_m::CanonicalModel,
                           device_formulation::Type{D},
                           system_formulation::Type{S},
                           time_range::UnitRange{Int64},
+                          resolution::Dates.Period,
                           parameters::Bool) where {T <: PSY.ThermalGen,
                                                                D <: AbstractThermalDispatchForm,
                                                                S <: PM.AbstractPowerFormulation}
 
-    data = _get_data_for_rocc(devices)
+    data = _get_data_for_rocc(devices, resolution)
 
     if !isempty(data[2])
         key = Symbol("output_$(T)")
         if !(key in keys(ps_m.initial_conditions))
             @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-            output_init(ps_m, devices, parameters)
+            output_init(ps_m, devices, data[1], parameters)
         end
 
         @assert length(data[2]) == length(ps_m.initial_conditions[key])
@@ -474,6 +493,7 @@ function time_constraints(ps_m::CanonicalModel,
                           device_formulation::Type{D},
                           system_formulation::Type{S},
                           time_range::UnitRange{Int64},
+                          resolution::Dates.Period,
                           parameters::Bool) where {T <: PSY.ThermalGen,
                                                                D <: AbstractThermalFormulation,
                                                                S <: PM.AbstractPowerFormulation}
@@ -541,7 +561,8 @@ end
 function cost_function(ps_m::CanonicalModel,
                        devices::PSY.FlattenedVectorsIterator{T},
                        device_formulation::Type{D},
-                       system_formulation::Type{S}) where {T <: PSY.ThermalGen,
+                       system_formulation::Type{S},
+                       resolution::Dates.Period) where {T <: PSY.ThermalGen,
                                                            D <: AbstractThermalDispatchForm,
                                                            S <: PM.AbstractPowerFormulation}
 
@@ -558,7 +579,8 @@ end
 function cost_function(ps_m::CanonicalModel,
                        devices::PSY.FlattenedVectorsIterator{T},
                        device_formulation::Type{D},
-                       system_formulation::Type{S}) where {T <: PSY.ThermalGen,
+                       system_formulation::Type{S},
+                       resolution::Dates.Period) where {T <: PSY.ThermalGen,
                                                            D <: AbstractThermalFormulation,
                                                            S <: PM.AbstractPowerFormulation}
 
@@ -569,9 +591,9 @@ function cost_function(ps_m::CanonicalModel,
                 :variablecost)
 
     #Commitment Cost Components
-    add_to_cost(ps_m, devices, Symbol("STARTth_$(T)"), :startupcost)
-    add_to_cost(ps_m, devices, Symbol("STOPth_$(T)"), :shutdncost)
-    add_to_cost(ps_m, devices, Symbol("ONth_$(T)"), :fixedcost)
+    add_to_cost(ps_m, devices, resolution, Symbol("STARTth_$(T)"), :startupcost)
+    add_to_cost(ps_m, devices, resolution, Symbol("STOPth_$(T)"), :shutdncost)
+    add_to_cost(ps_m, devices, resolution, Symbol("ONth_$(T)"), :fixedcost)
 
     return
 

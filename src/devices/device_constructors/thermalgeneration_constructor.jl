@@ -6,7 +6,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
                                         sys::PSY.System,
-                                        time_range::UnitRange{Int64};
+                                        time_range::UnitRange{Int64},
+                                        resolution::Dates.Period;
                                         kwargs...) where {T <: PSY.ThermalGen,
                                                             D <: AbstractThermalFormulation,
                                                             S <: PM.AbstractPowerFormulation}
@@ -33,12 +34,12 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     commitment_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
 
-    ramp_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
+    ramp_constraints(ps_m, devices, device_formulation, system_formulation, time_range, resolution, parameters)
 
-    time_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
+    time_constraints(ps_m, devices, device_formulation, system_formulation, time_range, resolution, parameters)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation)
+    cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
 
     return
 
@@ -53,7 +54,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
                                         sys::PSY.System,
-                                        time_range::UnitRange{Int64};
+                                        time_range::UnitRange{Int64},
+                                        resolution::Dates.Period;
                                         kwargs...) where {T <: PSY.ThermalGen,
                                                             D <: AbstractThermalFormulation,
                                                             S <: PM.AbstractActivePowerFormulation}
@@ -76,12 +78,12 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     commitment_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
 
-    ramp_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
+    ramp_constraints(ps_m, devices, device_formulation, system_formulation, time_range, resolution, parameters)
 
-    time_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
+    time_constraints(ps_m, devices, device_formulation, system_formulation, time_range, resolution, parameters)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation)
+    cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
 
     return
 
@@ -95,7 +97,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{ThermalRampLimited},
                                         system_formulation::Type{S},
                                         sys::PSY.System,
-                                        time_range::UnitRange{Int64};
+                                        time_range::UnitRange{Int64},
+                                        resolution::Dates.Period;
                                         kwargs...) where {T <: PSY.ThermalGen,
                                                             S <: PM.AbstractPowerFormulation}
 
@@ -117,10 +120,10 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
 
-    ramp_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
+    ramp_constraints(ps_m, devices, device_formulation, system_formulation, time_range, resolution, parameters)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation)
+    cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
 
     return
 
@@ -135,7 +138,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{ThermalRampLimited},
                                         system_formulation::Type{S},
                                         sys::PSY.System,
-                                        time_range::UnitRange{Int64};
+                                        time_range::UnitRange{Int64},
+                                        resolution::Dates.Period;
                                         kwargs...) where {T <: PSY.ThermalGen,
                                                             S <: PM.AbstractActivePowerFormulation}
 
@@ -153,10 +157,10 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     #Constraints
     activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
 
-    ramp_constraints(ps_m, devices, device_formulation, system_formulation, time_range, parameters)
+    ramp_constraints(ps_m, devices, device_formulation, system_formulation, time_range, resolution, parameters)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation)
+    cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
 
     return
 
@@ -169,7 +173,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
                                         sys::PSY.System,
-                                        time_range::UnitRange{Int64};
+                                        time_range::UnitRange{Int64},
+                                        resolution::Dates.Period;
                                         kwargs...) where {T<: PSY.ThermalGen,
                                                             D <: AbstractThermalDispatchForm,
                                                             S <: PM.AbstractPowerFormulation}
@@ -191,7 +196,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation)
+    cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
 
     return
 
@@ -202,7 +207,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
                                         sys::PSY.System,
-                                        time_range::UnitRange{Int64};
+                                        time_range::UnitRange{Int64},
+                                        resolution::Dates.Period;
                                         kwargs...) where {T<: PSY.ThermalGen,
                                                             D <: AbstractThermalDispatchForm,
                                                             S <: PM.AbstractActivePowerFormulation}
@@ -220,7 +226,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_range)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation)
+    cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
 
     return
 

@@ -20,23 +20,25 @@ end
 function ps_cost(ps_m::CanonicalModel,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::Float64,
+                dt::Float64,
                 sign::Int64) where {JV <: JuMP.AbstractVariableRef}
 
     gen_cost = sum(variable)*cost_component
 
-    return sign*gen_cost
+    return sign*gen_cost*dt
 
 end
 
 function ps_cost(ps_m::CanonicalModel,
                  variable::JuMP.Containers.DenseAxisArray{JV},
                  cost_component::Tuple{Float64,Float64},
+                 dt::Float64,
                  sign::Int64) where {JV <: JuMP.AbstractVariableRef}
 
     if cost_component[1] >= eps()                 
-        gen_cost = sign*(sum(variable.^2)*cost_component[1] + sum(variable)*cost_component[2])
+        gen_cost = dt*sign*(sum(variable.^2)*cost_component[1] + sum(variable)*cost_component[2])
     else           
-        return ps_cost(ps_m, variable, cost_component[2], 1)
+        return ps_cost(ps_m, variable, cost_component[2], dt, 1)
     end
 
 end
@@ -81,6 +83,7 @@ end
 function ps_cost(ps_m::CanonicalModel,
                  variable::JuMP.Containers.DenseAxisArray{JV},
                  cost_component::Array{Tuple{Float64, Float64}},
+                 dt::Float64,
                  sign::Int64) where {JV <: JuMP.AbstractVariableRef}
 
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}()
@@ -90,18 +93,21 @@ function ps_cost(ps_m::CanonicalModel,
         gen_cost += c
     end
 
-    return sign*gen_cost
+    return sign*gen_cost*dt
 
 end
 
 function add_to_cost(ps_m::CanonicalModel,
                      devices::D,
+                     resolution::Dates.Period,
                      var_name::Symbol,
                      cost_symbol::Symbol, sign::Int64 = 1) where {D <: Union{Vector{<:PSY.Device}, 
                                                                   PSY.FlattenedVectorsIterator{<:PSY.Device}}}
+    
+    dt = Dates.value(Dates.Minute(resolution))/60
 
     for d in devices
-        cost_expression = ps_cost(ps_m, ps_m.variables[var_name][d.name,:], getfield(d.econ,cost_symbol), sign)
+        cost_expression = ps_cost(ps_m, ps_m.variables[var_name][d.name,:], getfield(d.econ,cost_symbol), dt, sign)
         ps_m.cost_function += cost_expression
     end
 
