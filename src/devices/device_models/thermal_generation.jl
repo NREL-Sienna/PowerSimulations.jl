@@ -373,7 +373,7 @@ function _get_data_for_tdc(devices::Array{T,1}) where {T <: PSY.ThermalGen}
     idx = eachindex(devices)
     i, state = iterate(idx)
     for g in devices
-        if !isnothing(g.tech.ramplimits)
+        if !isnothing(g.tech.timelimits)
             set_name[i] = g.name
             time_params[i] = g.tech.timelimits
             y = iterate(idx, state)
