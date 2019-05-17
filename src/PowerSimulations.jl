@@ -12,6 +12,7 @@ export DeviceModel
 
 #operation_models
 export OperationModel
+export ModelReference
 export UnitCommitment
 export EconomicDispatch
 export SCEconomicDispatch
@@ -109,6 +110,7 @@ include("services/services_constructor.jl")
 include("operation_models/operation_models.jl")
 
 #Utils
+include("routines/printing.jl")
 include("routines/solve_routines.jl")
 include("routines/get_ini_cond.jl")
 #include("routines/simulation_routines.jl")
