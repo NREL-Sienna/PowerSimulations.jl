@@ -6,10 +6,9 @@
     branches = Dict{Symbol, DeviceModel}(:Lines => line_model)
     services = Dict{Symbol, PSI.ServiceModel}(:Reserves => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
 
-    op_model = OperationModel(TestOptModel, CopperPlatePowerModel, 
-                                            devices, 
-                                            branches, 
-                                            services, 
+    model_ref = ModelReference(CopperPlatePowerModel, devices, branches, services);
+
+    op_model = OperationModel(TestOptModel, model_ref, 
                                             c_sys5; 
                                             optimizer = GLPK_optimizer)
     j_model = op_model.canonical_model.JuMPmodel
@@ -22,10 +21,7 @@
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
     @test JuMP.objective_function_type(j_model) == JuMP.GenericAffExpr{Float64,VariableRef}
 
-    op_model = OperationModel(TestOptModel, CopperPlatePowerModel, 
-                                            devices, 
-                                            branches, 
-                                            services, 
+    op_model = OperationModel(TestOptModel, model_ref, 
                                             c_sys14; 
                                             optimizer = OSQP_optimizer)
     j_model = op_model.canonical_model.JuMPmodel
@@ -38,10 +34,7 @@
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
     @test JuMP.objective_function_type(j_model) == JuMP.GenericQuadExpr{Float64,VariableRef}
 
-    op_model = OperationModel(TestOptModel, CopperPlatePowerModel, 
-                                            devices, 
-                                            branches, 
-                                            services, 
+    op_model = OperationModel(TestOptModel, model_ref, 
                                             c_sys5_re; 
                                             forecast = false,
                                             optimizer = GLPK_optimizer)
@@ -55,10 +48,7 @@
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
     @test JuMP.objective_function_type(j_model) == JuMP.GenericAffExpr{Float64,VariableRef}
 
-    op_model = OperationModel(TestOptModel, CopperPlatePowerModel, 
-                                            devices, 
-                                            branches, 
-                                            services, 
+    op_model = OperationModel(TestOptModel, model_ref, 
                                             c_sys5_re; 
                                             forecast = false,
                                             parameters = false,
@@ -73,6 +63,7 @@
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
     @test JuMP.objective_function_type(j_model) == JuMP.GenericAffExpr{Float64,VariableRef}
 end
+
 
 @testset "Operation Model Constructors with Parameters" begin
     networks = [PSI.CopperPlatePowerModel,
@@ -107,11 +98,10 @@ end
             devices = Dict{Symbol, DeviceModel}(:Generators => thermal_model, :Loads =>  load_model)
             branches = Dict{Symbol, DeviceModel}(:Lines => line_model)
             services = Dict{Symbol, PSI.ServiceModel}(:Reserves => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
-            op_model = OperationModel(TestOptModel, net, 
-                                        devices, 
-                                        branches, 
-                                        services, 
-                                        system; PTDF = PTDF5);     
+            model_ref = ModelReference(net, devices, branches, services);
+            op_model = OperationModel(TestOptModel, 
+                                      model_ref,
+                                      system; PTDF = PTDF5);     
         @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
         @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))                                                                   
         end
@@ -154,10 +144,9 @@ end
             devices = Dict{Symbol, DeviceModel}(:Generators => thermal_model, :Loads =>  load_model)
             branches = Dict{Symbol, DeviceModel}(:Lines => line_model)
             services = Dict{Symbol, PSI.ServiceModel}(:Reserves => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
-            op_model = OperationModel(TestOptModel, net, 
-                                        devices, 
-                                        branches, 
-                                        services, 
+            model_ref = ModelReference(net, devices, branches, services);
+            op_model = OperationModel(TestOptModel, 
+                                        model_ref, 
                                         system;
                                         parameters = false,
                                         PTDF = PTDF5)     
@@ -239,7 +228,7 @@ end
 
 end
 
-=#
+
 
 
 @testset "Build Operation Models" begin
@@ -253,3 +242,5 @@ end
     #OPF_rts = PSI.OptimalPowerFlow(sys_rts, PSI.CopperPlatePowerModel, optimizer = ipopt_optimizer)
     #UC_rts = PSI.UnitCommitment(sys_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer, parameters = false)
 end
+
+=#
