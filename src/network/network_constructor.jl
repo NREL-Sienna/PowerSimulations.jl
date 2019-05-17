@@ -1,12 +1,12 @@
 function construct_network!(ps_m::CanonicalModel,
                             system_formulation::Type{CopperPlatePowerModel},
                             sys::PSY.System,
-                            time_range::UnitRange{Int64}; kwargs...)
+                            lookahead::UnitRange{Int64}; kwargs...)
 
     buses = PSY.get_components(PSY.Bus, sys)                             
     bus_count = length(buses)
     
-    copper_plate(ps_m, :nodal_balance_active, bus_count, time_range)
+    copper_plate(ps_m, :nodal_balance_active, bus_count, lookahead)
 
     return
 end
@@ -14,13 +14,13 @@ end
 function construct_network!(ps_m::CanonicalModel,
                             system_formulation::Type{StandardPTDFForm},
                             sys::PSY.System,
-                            time_range::UnitRange{Int64}; kwargs...)
+                            lookahead::UnitRange{Int64}; kwargs...)
 
     if :PTDF in keys(kwargs)
         buses = PSY.get_components(PSY.Bus, sys)
         ac_branches = PSY.get_components(PSY.ACBranch, sys)
-        flow_variables(ps_m, system_formulation, ac_branches, time_range)
-        ptdf_networkflow(ps_m, ac_branches, buses, :nodal_balance_active, kwargs[:PTDF], time_range)
+        flow_variables(ps_m, system_formulation, ac_branches, lookahead)
+        ptdf_networkflow(ps_m, ac_branches, buses, :nodal_balance_active, kwargs[:PTDF], lookahead)
     else
         throw(ArgumentError("no PTDF matrix supplied"))
     end
@@ -32,7 +32,7 @@ end
 function construct_network!(ps_m::CanonicalModel,
                             system_formulation::Type{S},
                             sys::PSY.System,
-                            time_range::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractPowerFormulation}
+                            lookahead::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     incompat_list = [PM.SDPWRMForm,
                      PM.SparseSDPWRMForm,
@@ -44,7 +44,7 @@ function construct_network!(ps_m::CanonicalModel,
        throw(ArgumentError("$(sys) formulation is not currently supported in PowerSimulations"))
     end                         
 
-    powermodels_network!(ps_m, system_formulation, sys, time_range)
+    powermodels_network!(ps_m, system_formulation, sys, lookahead)
 
     return
 

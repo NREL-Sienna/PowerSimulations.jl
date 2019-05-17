@@ -1,4 +1,4 @@
-time_range = 1:24
+lookahead = 1:24
 
 base_dir = string(dirname(dirname(pathof(PowerSystems))));
 DATA_DIR = joinpath(base_dir, "data")

@@ -12,11 +12,11 @@ struct DispatchablePowerLoad <: AbstractControllablePowerLoadForm end
 
 function activepower_variables(ps_m::CanonicalModel,
                                devices::PSY.FlattenedVectorsIterator{L},
-                               time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad}
+                               lookahead::UnitRange{Int64}) where {L <: PSY.ElectricLoad}
 
     add_variable(ps_m,
                  devices,
-                 time_range,
+                 lookahead,
                  Symbol("Pel_$(L)"),
                  false,
                  :nodal_balance_active, -1)
@@ -28,11 +28,11 @@ end
 
 function reactivepower_variables(ps_m::CanonicalModel,
                                  devices::PSY.FlattenedVectorsIterator{L},
-                                 time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad}
+                                 lookahead::UnitRange{Int64}) where {L <: PSY.ElectricLoad}
 
     add_variable(ps_m,
                  devices,
-                 time_range,
+                 lookahead,
                  Symbol("Qel_$(L)"),
                  false,
                  :nodal_balance_reactive, -1)
@@ -43,11 +43,11 @@ end
 
 function commitment_variables(ps_m::CanonicalModel,
                               devices::PSY.FlattenedVectorsIterator{L},
-                              time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad}
+                              lookahead::UnitRange{Int64}) where {L <: PSY.ElectricLoad}
 
     add_variable(ps_m, 
                  devices, 
-                 time_range, 
+                 lookahead, 
                  Symbol("ONel_$(L)"), 
                  true)
 
@@ -63,13 +63,13 @@ function reactivepower_constraints(ps_m::CanonicalModel,
                                    devices::PSY.FlattenedVectorsIterator{L},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S},
-                                   time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
+                                   lookahead::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
                                                                         D <: AbstractControllablePowerLoadForm,
                                                                         S <: PM.AbstractPowerFormulation}
 
-    ps_m.constraints[:load_reactive_ub] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [d.name for d in devices], time_range)
+    ps_m.constraints[:load_reactive_ub] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [d.name for d in devices], lookahead)
 
-    for t in time_range, d in devices
+    for t in lookahead, d in devices
             ps_m.constraints[:load_reactive_ub][d.name, t] = JuMP.@constraint(ps_m.JuMPmodel,
                                                              ps_m.variables[Symbol("Qel_$(L)")][d.name, t] == 
                                                              ps_m.variables[Symbol("Pel_$(L)")][d.name, t] * sin(atan((d.maxreactivepower/d.maxactivepower))))
@@ -82,14 +82,14 @@ end
 
 ######################## output constraints without Time Series ###################################
 function _get_time_series(devices::PSY.FlattenedVectorsIterator{T}, 
-                          time_range::UnitRange{Int64}) where {T <: PSY.ElectricLoad}
+                          lookahead::UnitRange{Int64}) where {T <: PSY.ElectricLoad}
 
     names = Vector{String}(undef, length(devices))
     series = Vector{Vector{Float64}}(undef, length(devices))
 
     for (ix,d) in enumerate(devices)
         names[ix] = d.name
-        series[ix] = fill(d.maxactivepower, (time_range[end]))
+        series[ix] = fill(d.maxactivepower, (lookahead[end]))
     end
 
     return names, series
@@ -100,13 +100,13 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  devices::PSY.FlattenedVectorsIterator{L},
                                  device_formulation::Type{DispatchablePowerLoad},
                                  system_formulation::Type{S},
-                                 time_range::UnitRange{Int64},
+                                 lookahead::UnitRange{Int64},
                                  parameters::Bool) where {L <: PSY.ElectricLoad,
                                                           S <: PM.AbstractPowerFormulation}
     if parameters
         device_timeseries_param_ub(ps_m,
-                                   _get_time_series(devices, time_range),
-                                   time_range,
+                                   _get_time_series(devices, lookahead),
+                                   lookahead,
                                    Symbol("active_ub_$(L)"),
                                    Symbol("Param_$(L))"),
                                    Symbol("Pel_$(L)"))
@@ -114,7 +114,7 @@ function activepower_constraints(ps_m::CanonicalModel,
         range_data = [(g.name, (min = 0.0, max = g.maxactivepower)) for g in devices] 
         device_range(ps_m, 
                     range_data, 
-                    time_range, 
+                    lookahead, 
                     Symbol("active_range_$(L)"),
                     Symbol("Pel_$(L)")
                     )
@@ -144,7 +144,7 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  devices::PSY.FlattenedVectorsIterator{L},
                                  device_formulation::Type{DispatchablePowerLoad},
                                  system_formulation::Type{S},
-                                 time_range::UnitRange{Int64},
+                                 lookahead::UnitRange{Int64},
                                  parameters::Bool) where {L <: PSY.Deterministic{<:PSY.ElectricLoad},
                                                           D <: AbstractControllablePowerLoadForm,
                                                           S <: PM.AbstractPowerFormulation}
@@ -154,14 +154,14 @@ function activepower_constraints(ps_m::CanonicalModel,
     if parameters
         device_timeseries_param_ub(ps_m,
                                    _get_time_series(devices),
-                                   time_range,
+                                   lookahead,
                                    Symbol("load_active_ub_$(forecast_device_type)"),
                                    Symbol("Param_$(forecast_device_type)"),
                                    Symbol("Pel_$(forecast_device_type)"))
     else
         device_timeseries_ub(ps_m,
                             _get_time_series(devices),
-                            time_range,
+                            lookahead,
                             Symbol("load_active_ub_$(forecast_device_type)"),
                             Symbol("Pel_$(forecast_device_type)"))
     end
@@ -178,27 +178,27 @@ end
 function _nodal_expression_param(ps_m::CanonicalModel,
                                 devices::PSY.FlattenedVectorsIterator{L},
                                 system_formulation::Type{S},
-                                time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
+                                lookahead::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
                                                                      S <: PM.AbstractPowerFormulation}
 
     ts_data_active = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(devices))
     ts_data_reactive = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(devices))
 
     for (ix,d) in enumerate(devices)
-        time_series_vector_active = fill(-1*d.maxactivepower, (time_range[end]))
-        time_series_vector_reactive = fill(-1*d.maxreactivepower, (time_range[end]))
+        time_series_vector_active = fill(-1*d.maxactivepower, (lookahead[end]))
+        time_series_vector_reactive = fill(-1*d.maxreactivepower, (lookahead[end]))
         ts_data_active[ix] = (d.name, d.bus.number, time_series_vector_active)
         ts_data_reactive[ix] = (d.name, d.bus.number, time_series_vector_reactive)
     end
 
     include_parameters(ps_m, 
                   ts_data_active, 
-                  time_range, 
+                  lookahead, 
                   Symbol("Pel_$(eltype(devices))"), 
                   :nodal_balance_active)
     include_parameters(ps_m, 
                    ts_data_reactive, 
-                   time_range, 
+                   lookahead, 
                    Symbol("Qel_$(eltype(devices))"), 
                    :nodal_balance_reactive)
 
@@ -209,19 +209,19 @@ end
 function _nodal_expression_param(ps_m::CanonicalModel,
                                 devices::PSY.FlattenedVectorsIterator{L},
                                 system_formulation::Type{S},
-                                time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
+                                lookahead::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
                                                                      S <: PM.AbstractActivePowerFormulation}
     
     ts_data_active = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(devices))
 
     for (ix,d) in enumerate(devices)
-        time_series_vector = fill(-1*d.maxactivepower, (time_range[end]))
+        time_series_vector = fill(-1*d.maxactivepower, (lookahead[end]))
         ts_data_active[ix] = (d.name, d.bus.number, time_series_vector)
     end
 
     include_parameters(ps_m, 
                   ts_data_active, 
-                  time_range, 
+                  lookahead, 
                   Symbol("Pel_$(eltype(devices))"), 
                   :nodal_balance_active)
     
@@ -233,7 +233,7 @@ end
 function _nodal_expression_param(ps_m::CanonicalModel,
                                 forecasts::Vector{L},
                                 system_formulation::Type{S},
-                                time_range::UnitRange{Int64}) where {L <: PSY.Deterministic{<:PSY.ElectricLoad},
+                                lookahead::UnitRange{Int64}) where {L <: PSY.Deterministic{<:PSY.ElectricLoad},
                                                                      S <: PM.AbstractPowerFormulation}
 
     forecast_device_type = typeof(forecasts[1].component)
@@ -251,12 +251,12 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 
     include_parameters(ps_m,
                     ts_data_active,
-                    time_range,
+                    lookahead,
                     Symbol("Param_P_$(forecast_device_type)"),
                     :nodal_balance_active)
     include_parameters(ps_m,
                     ts_data_reactive,
-                    time_range,
+                    lookahead,
                     Symbol("Param_Q_$(forecast_device_type)"),
                     :nodal_balance_reactive)
 
@@ -267,7 +267,7 @@ end
 function _nodal_expression_param(ps_m::CanonicalModel,
                                 forecasts::Vector{L},
                                 system_formulation::Type{S},
-                                time_range::UnitRange{Int64}) where {L <: PSY.Deterministic{<:PSY.ElectricLoad},
+                                lookahead::UnitRange{Int64}) where {L <: PSY.Deterministic{<:PSY.ElectricLoad},
                                                                      S <: PM.AbstractActivePowerFormulation}
 
     forecast_device_type = typeof(forecasts[1].component)
@@ -282,7 +282,7 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 
     include_parameters(ps_m,
                     ts_data_active,
-                    time_range,
+                    lookahead,
                     Symbol("Param_P_$(forecast_device_type)"),
                     :nodal_balance_active)
 
@@ -297,10 +297,10 @@ end
 function _nodal_expression_fixed(ps_m::CanonicalModel,
                                 devices::PSY.FlattenedVectorsIterator{L},
                                 system_formulation::Type{S},
-                                time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
+                                lookahead::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
                                                                      S <: PM.AbstractPowerFormulation}
 
-    for t in time_range, d in devices
+    for t in lookahead, d in devices
         _add_to_expression!(ps_m.expressions[:nodal_balance_active], 
                             d.bus.number, 
                             t, 
@@ -319,10 +319,10 @@ end
 function _nodal_expression_fixed(ps_m::CanonicalModel,
                                 devices::PSY.FlattenedVectorsIterator{L},
                                 system_formulation::Type{S},
-                                time_range::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
+                                lookahead::UnitRange{Int64}) where {L <: PSY.ElectricLoad,
                                                                      S <: PM.AbstractActivePowerFormulation}
 
-    for t in time_range, d in devices
+    for t in lookahead, d in devices
         _add_to_expression!(ps_m.expressions[:nodal_balance_active], 
                             d.bus.number, 
                             t, 
@@ -338,14 +338,14 @@ end
 function _nodal_expression_fixed(ps_m::CanonicalModel,
                                 forecasts::Vector{L},
                                 system_formulation::Type{S},
-                                time_range::UnitRange{Int64}) where {L <: PSY.Deterministic{<:PSY.ElectricLoad},
+                                lookahead::UnitRange{Int64}) where {L <: PSY.Deterministic{<:PSY.ElectricLoad},
                                                                      S <: PM.AbstractPowerFormulation}
 
     for f in forecasts
         time_series_vector_active = -1*values(f.data)*f.component.maxactivepower
         time_series_vector_reactive = -1*values(f.data)*f.component.maxreactivepower
         device = f.component
-        for t in time_range           
+        for t in lookahead           
             _add_to_expression!(ps_m.expressions[:nodal_balance_active],
                                 device.bus.number,
                                 t,
@@ -365,13 +365,13 @@ end
 function _nodal_expression_fixed(ps_m::CanonicalModel,
                                 forecasts::Vector{L},
                                 system_formulation::Type{S},
-                                time_range::UnitRange{Int64}) where {L <: PSY.Deterministic{<:PSY.ElectricLoad},
+                                lookahead::UnitRange{Int64}) where {L <: PSY.Deterministic{<:PSY.ElectricLoad},
                                                                      S <: PM.AbstractActivePowerFormulation}
 
     for f in forecasts
         time_series_vector_active = -1*values(f.data)*f.component.maxactivepower
         device = f.component
-        for t in time_range           
+        for t in lookahead           
             _add_to_expression!(ps_m.expressions[:nodal_balance_active],
                                 device.bus.number,
                                 t,

@@ -7,17 +7,17 @@ function device_duration_retrospective(ps_m::CanonicalModel,
                                         duration_data::Vector{UpDown},
                                         initial_duration_on::Vector{InitialCondition},
                                         initial_duration_off::Vector{InitialCondition},
-                                        time_range::UnitRange{Int64},
+                                        lookahead::UnitRange{Int64},
                                         cons_name::Symbol,
                                         var_names::Tuple{Symbol,Symbol,Symbol})
 
     name_up = Symbol(cons_name,:_up)
     name_down = Symbol(cons_name,:_down)
 
-    ps_m.constraints[name_up] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_names, time_range)
-    ps_m.constraints[name_down] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_names, time_range)
+    ps_m.constraints[name_up] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_names, lookahead)
+    ps_m.constraints[name_down] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_names, lookahead)
 
-        for t in time_range, (ix,name) in enumerate(set_names)
+        for t in lookahead, (ix,name) in enumerate(set_names)
 
                 if t - duration_data[ix].up >= 1
                     tst = duration_data[ix].up
@@ -50,7 +50,7 @@ function device_duration_indicator(ps_m::CanonicalModel,
                                     duration_data::Vector{UpDown},
                                     duration_indicator_status_on::Vector{InitialCondition},
                                     duration_indicator_status_off::Vector{InitialCondition},
-                                    time_range::UnitRange{Int64},
+                                    lookahead::UnitRange{Int64},
                                     cons_name::Symbol,
                                     var_names::Tuple{Symbol,Symbol,Symbol})
 
@@ -58,8 +58,8 @@ function device_duration_indicator(ps_m::CanonicalModel,
     name_up = Symbol(cons_name,:_up)
     name_down = Symbol(cons_name,:_down)
 
-    ps_m.constraints[name_up] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_names, time_range)
-    ps_m.constraints[name_down] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_names, time_range)
+    ps_m.constraints[name_up] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_names, lookahead)
+    ps_m.constraints[name_down] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_names, lookahead)
 
     for (ix,name) in enumerate(set_names)
         ps_m.constraints[name_up][name, 1] = JuMP.@constraint(ps_m.JuMPmodel, 
@@ -68,7 +68,7 @@ function device_duration_indicator(ps_m::CanonicalModel,
                                             duration_indicator_status_off[ix].value <= (1- ps_m.variables[var_names[1]][name,1]))
     end
 
-    for t in time_range[2:end], (ix,name) in enumerate(set_names)
+    for t in lookahead[2:end], (ix,name) in enumerate(set_names)
         if t <= duration_data[ix].up
             ps_m.constraints[name_up][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
                                                             sum([ps_m.variables[var_names[2]][name,i] for i in 1:(t-1)]) + duration_indicator_status_on[ix].value <= ps_m.variables[var_names[1]][name,t])

@@ -28,7 +28,7 @@ end
 function _canonical_model_init(bus_numbers::Vector{Int64},
                               optimizer::Union{Nothing,JuMP.OptimizerFactory},
                               transmission::Type{S},
-                              time_range::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractPowerFormulation}
+                              lookahead::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     parameters = get(kwargs, :parameters, true)
 
@@ -39,8 +39,8 @@ function _canonical_model_init(bus_numbers::Vector{Int64},
                             Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                             Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                             zero(JuMP.GenericAffExpr{Float64, V}),
-                            Dict{Symbol, JuMP.Containers.DenseAxisArray}(:nodal_balance_active => _container_spec(V, bus_numbers, time_range; kwargs...),
-                                                                         :nodal_balance_reactive => _container_spec(V, bus_numbers, time_range; kwargs...)),
+                            Dict{Symbol, JuMP.Containers.DenseAxisArray}(:nodal_balance_active => _container_spec(V, bus_numbers, lookahead; kwargs...),
+                                                                         :nodal_balance_reactive => _container_spec(V, bus_numbers, lookahead; kwargs...)),
                             parameters ? Dict{Symbol,JuMP.Containers.DenseAxisArray}() : nothing,
                             Dict{Symbol,Array{InitialCondition}}(),
                             nothing);
@@ -52,7 +52,7 @@ end
 function _canonical_model_init(bus_numbers::Vector{Int64},
                                optimizer::Union{Nothing,JuMP.OptimizerFactory},
                                transmission::Type{S},
-                               time_range::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
+                               lookahead::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
 
     parameters = get(kwargs, :parameters, true)
     jump_model = _pass_abstract_jump(optimizer; kwargs...)
@@ -62,7 +62,7 @@ function _canonical_model_init(bus_numbers::Vector{Int64},
                               Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                               Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                               zero(JuMP.GenericAffExpr{Float64, V}),
-                              Dict{Symbol, JuMP.Containers.DenseAxisArray}(:nodal_balance_active => _container_spec(V, bus_numbers, time_range; kwargs...)),
+                              Dict{Symbol, JuMP.Containers.DenseAxisArray}(:nodal_balance_active => _container_spec(V, bus_numbers, lookahead; kwargs...)),
                               parameters ? Dict{Symbol,JuMP.Containers.DenseAxisArray}() : nothing,
                               Dict{Symbol,Array{InitialCondition}}(),
                               nothing);
@@ -86,31 +86,31 @@ function  build_canonical_model(transmission::Type{T},
     if forecast
         first_key = collect(keys(sys.forecasts))[1]
         horizon = length(sys.forecasts[first_key][1])
-        time_range = 1:horizon
+        lookahead = 1:horizon
     else
-        time_range = 1:1
+        lookahead = 1:1
     end
     
     bus_numbers = [b.number for b in PSY.get_components(PSY.Bus, sys)]
 
-ps_model = _canonical_model_init(bus_numbers, optimizer, transmission, time_range; kwargs...)
+ps_model = _canonical_model_init(bus_numbers, optimizer, transmission, lookahead; kwargs...)
 
 # Build Injection devices
 for mod in devices
-    construct_device!(ps_model, mod[2], transmission, sys, time_range, resolution; kwargs...)
+    construct_device!(ps_model, mod[2], transmission, sys, lookahead, resolution; kwargs...)
 end
 
 # Build Network
-construct_network!(ps_model, transmission, sys, time_range; kwargs...)
+construct_network!(ps_model, transmission, sys, lookahead; kwargs...)
 
 # Build Branches
 for mod in branches
-    construct_device!(ps_model, mod[2], transmission, sys, time_range, resolution; kwargs...)
+    construct_device!(ps_model, mod[2], transmission, sys, lookahead, resolution; kwargs...)
 end
 
 #Build Service
 for mod in services
-    #construct_service!(ps_model, mod[2], transmission, sys, time_range, resolution; kwargs...)
+    #construct_service!(ps_model, mod[2], transmission, sys, lookahead, resolution; kwargs...)
 end
 
 # Objective Function

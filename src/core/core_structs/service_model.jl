@@ -12,7 +12,7 @@ function construct_service!(ps_m::CanonicalModel,
                            service_model::ServiceModel,
                            system_formulation::Type{S},
                            sys::PSY.System,
-                           time_range::UnitRange{Int64};
+                           lookahead::UnitRange{Int64};
                            kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     construct_service!(ps_m,
@@ -20,7 +20,7 @@ function construct_service!(ps_m::CanonicalModel,
                       service_model.formulation,
                       system_formulation,
                       sys,
-                      time_range;
+                      lookahead;
                       kwargs...)
 
     return

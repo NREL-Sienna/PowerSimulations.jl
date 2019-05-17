@@ -57,7 +57,7 @@ function set_devices_ref!(op_model::OperationModel, devices::Dict{Symbol, Device
     return
 end
 
-function set_devices_ref!(op_model::OperationModel, branches::Dict{Symbol, DeviceModel}) 
+function set_branches_ref!(op_model::OperationModel, branches::Dict{Symbol, DeviceModel}) 
     op_model.model_ref.branches = branches
     return
 end

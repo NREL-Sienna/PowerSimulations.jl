@@ -19,11 +19,11 @@ This function add the variables for power generation output to the model
 """
 function activepower_variables(ps_m::CanonicalModel,
                                devices::PSY.FlattenedVectorsIterator{T},
-                               time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen}
+                               lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen}
 
     add_variable(ps_m, 
                  devices, 
-                 time_range, 
+                 lookahead, 
                  Symbol("Pth_$(T)"), 
                  false, 
                  :nodal_balance_active)
@@ -37,11 +37,11 @@ This function add the variables for power generation output to the model
 """
 function reactivepower_variables(ps_m::CanonicalModel,
                                  devices::PSY.FlattenedVectorsIterator{T},
-                                 time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen}
+                                 lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen}
 
     add_variable(ps_m, 
                  devices, 
-                 time_range, 
+                 lookahead, 
                  Symbol("Qth_$(T)"), 
                  false, 
                  :nodal_balance_reactive)
@@ -55,21 +55,21 @@ This function add the variables for power generation commitment to the model
 """
 function commitment_variables(ps_m::CanonicalModel,
                               devices::PSY.FlattenedVectorsIterator{T},
-                              time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen}
+                              lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen}
 
     add_variable(ps_m, 
                 devices, 
-                time_range, 
+                lookahead, 
                 Symbol("ONth_$(T)"), 
                 true)
     add_variable(ps_m, 
                 devices, 
-                time_range, 
+                lookahead, 
                 Symbol("STARTth_$(T)"), 
                 true)
     add_variable(ps_m, 
                 devices, 
-                time_range, 
+                lookahead, 
                 Symbol("STOPth_$(T)"), 
                 true)
 
@@ -84,14 +84,14 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  devices::PSY.FlattenedVectorsIterator{T},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S},
-                                 time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen,
+                                 lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen,
                                                                       D <: AbstractThermalDispatchForm,
                                                                       S <: PM.AbstractPowerFormulation}
     range_data = [(g.name, g.tech.activepowerlimits) for g in devices]
 
     device_range(ps_m, 
                  range_data, 
-                 time_range, 
+                 lookahead, 
                  Symbol("active_range_$(T)"), 
                  Symbol("Pth_$(T)")
                  )
@@ -107,7 +107,7 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  devices::PSY.FlattenedVectorsIterator{T},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S},
-                                 time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen,
+                                 lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen,
                                                                       D <: AbstractThermalFormulation,
                                                                       S <: PM.AbstractPowerFormulation}
 
@@ -115,7 +115,7 @@ function activepower_constraints(ps_m::CanonicalModel,
 
     device_semicontinuousrange(ps_m, 
                                range_data, 
-                               time_range, 
+                               lookahead, 
                                Symbol("active_range_$(T)"), 
                                Symbol("Pth_$(T)"), 
                                Symbol("ONth_$(T)"))
@@ -132,7 +132,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
                                    devices::PSY.FlattenedVectorsIterator{T},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S},
-                                   time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen,
+                                   lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen,
                                                                         D <: AbstractThermalDispatchForm,
                                                                         S <: PM.AbstractPowerFormulation}
 
@@ -140,7 +140,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
 
     device_range(ps_m, 
                  range_data , 
-                 time_range, 
+                 lookahead, 
                  Symbol("reactive_range_$(T)"), 
                  Symbol("Qth_$(T)"))
 
@@ -157,7 +157,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
                                    devices::PSY.FlattenedVectorsIterator{T},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S},
-                                   time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen,
+                                   lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen,
                                                                         D <: AbstractThermalFormulation,
                                                                         S <: PM.AbstractPowerFormulation}
 
@@ -165,7 +165,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
 
     device_semicontinuousrange(ps_m, 
                                range_data, 
-                               time_range, 
+                               lookahead, 
                                Symbol("reactive_range_$(T)"), 
                                Symbol("Qth_$(T)"), 
                                Symbol("ONth_$(T)"))
@@ -181,14 +181,14 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  devices::PSY.FlattenedVectorsIterator{T},
                                  device_formulation::Type{ThermalDispatchNoMin},
                                  system_formulation::Type{S},
-                                 time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen,
+                                 lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen,
                                                                       S <: PM.AbstractPowerFormulation}
 
     range_data = [(g.name, (min = 0.0, max=g.tech.activepowerlimits.max)) for g in devices]
 
     device_range(ps_m, 
                  range_data, 
-                 time_range, 
+                 lookahead, 
                  Symbol("active_range_$(T)"), 
                  Symbol("Pth_$(T)"))
 
@@ -204,14 +204,14 @@ function reactivepower_constraints(ps_m::CanonicalModel,
                                    devices::PSY.FlattenedVectorsIterator{T},
                                    device_formulation::Type{ThermalDispatchNoMin},
                                    system_formulation::Type{S},
-                                   time_range::UnitRange{Int64}) where {T <: PSY.ThermalGen,
+                                   lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen,
                                                                         S <: PM.AbstractPowerFormulation}
 
     range_data = [(g.name, (min = 0.0, max=g.tech.reactivepowerlimits.max)) for g in devices]
 
     device_range(ps_m, 
                  range_data, 
-                 time_range, 
+                 lookahead, 
                  Symbol("reactive_range_$(T)"),  
                  Symbol("Qth_$(T)"))
 
@@ -229,7 +229,7 @@ function commitment_constraints(ps_m::CanonicalModel,
                                 devices::PSY.FlattenedVectorsIterator{T},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S},
-                                time_range::UnitRange{Int64},
+                                lookahead::UnitRange{Int64},
                                 parameters::Bool) where {T <: PSY.ThermalGen,
                                                                      D <: AbstractThermalFormulation,
                                                                      S <: PM.AbstractPowerFormulation}
@@ -242,7 +242,7 @@ function commitment_constraints(ps_m::CanonicalModel,
 
     device_commitment(ps_m,
                       ps_m.initial_conditions[key],
-                      time_range, 
+                      lookahead, 
                       Symbol("commitment_$(T)"), 
                       (Symbol("STARTth_$(T)"), 
                        Symbol("STOPth_$(T)"), 
@@ -311,7 +311,7 @@ function ramp_constraints(ps_m::CanonicalModel,
                           devices::PSY.FlattenedVectorsIterator{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S},
-                          time_range::UnitRange{Int64},
+                          lookahead::UnitRange{Int64},
                           resolution::Dates.Period,
                           parameters::Bool) where {T <: PSY.ThermalGen,
                                                                D <: AbstractThermalFormulation,
@@ -331,7 +331,7 @@ function ramp_constraints(ps_m::CanonicalModel,
         device_mixedinteger_rateofchange(ps_m,
                                         rate_data,
                                         ps_m.initial_conditions[key],
-                                        time_range,
+                                        lookahead,
                                         Symbol("ramp_$(T)"),  
                                         (Symbol("Pth_$(T)"),
                                          Symbol("STARTth_$(T)"), 
@@ -350,7 +350,7 @@ function ramp_constraints(ps_m::CanonicalModel,
                           devices::PSY.FlattenedVectorsIterator{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S},
-                          time_range::UnitRange{Int64},
+                          lookahead::UnitRange{Int64},
                           resolution::Dates.Period,
                           parameters::Bool) where {T <: PSY.ThermalGen,
                                                                D <: AbstractThermalDispatchForm,
@@ -370,7 +370,7 @@ function ramp_constraints(ps_m::CanonicalModel,
         # Here goes the reactive power ramp limits
         device_linear_rateofchange(ps_m,
                                    (rate_data[1], rate_data[2]),
-                                   ps_m.initial_conditions[key], time_range,
+                                   ps_m.initial_conditions[key], lookahead,
                                    Symbol("ramp_$(T)"), 
                                    Symbol("Pth_$(T)"))
     else
@@ -389,7 +389,7 @@ function ramp_constraints(ps_m::CanonicalModel,
                           devices::PSY.FlattenedVectorsIterator{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S},
-                          time_range::UnitRange{Int64},
+                          lookahead::UnitRange{Int64},
                           resolution::Dates.Period,
                           parameters::Bool) where {T <: PSY.ThermalGen,
                                                                D <: AbstractThermalFormulation,
@@ -409,7 +409,7 @@ function ramp_constraints(ps_m::CanonicalModel,
         device_mixedinteger_rateofchange(ps_m,
                                         rate_data,
                                         ps_m.initial_conditions[key],
-                                        time_range,
+                                        lookahead,
                                         Symbol("ramp_$(T)"), 
                                         (Symbol("Pth_$(T)"), 
                                         Symbol("STARTth_$(T)"), 
@@ -429,7 +429,7 @@ function ramp_constraints(ps_m::CanonicalModel,
                           devices::PSY.FlattenedVectorsIterator{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S},
-                          time_range::UnitRange{Int64},
+                          lookahead::UnitRange{Int64},
                           resolution::Dates.Period,
                           parameters::Bool) where {T <: PSY.ThermalGen,
                                                                D <: AbstractThermalDispatchForm,
@@ -449,7 +449,7 @@ function ramp_constraints(ps_m::CanonicalModel,
         device_linear_rateofchange(ps_m,
                                     (rate_data[1], rate_data[2]),
                                     ps_m.initial_conditions[key], 
-                                    time_range,
+                                    lookahead,
                                     Symbol("ramp_$(T)"), 
                                     Symbol("Pth_$(T)"))
     else
@@ -508,7 +508,7 @@ function time_constraints(ps_m::CanonicalModel,
                           devices::PSY.FlattenedVectorsIterator{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S},
-                          time_range::UnitRange{Int64},
+                          lookahead::UnitRange{Int64},
                           resolution::Dates.Period,
                           parameters::Bool) where {T <: PSY.ThermalGen,
                                                                D <: AbstractThermalFormulation,
@@ -534,7 +534,7 @@ function time_constraints(ps_m::CanonicalModel,
                                       duration_data[2],
                                       ps_m.initial_conditions[key_on],
                                       ps_m.initial_conditions[key_off],
-                                      time_range, 
+                                      lookahead, 
                                       Symbol("duration_$(T)"), 
                                       (Symbol("ONth_$(T)"),
                                        Symbol("STARTth_$(T)"), 
@@ -546,7 +546,7 @@ function time_constraints(ps_m::CanonicalModel,
                                         duration_data[2],
                                         ps_m.initial_conditions[key_on],
                                         ps_m.initial_conditions[key_off],
-                                        time_range, 
+                                        lookahead, 
                                         Symbol("duration_$(T)"),
                                         (Symbol("ONth_$(T)"),
                                         Symbol("STARTth_$(T)"), 
