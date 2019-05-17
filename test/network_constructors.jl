@@ -256,7 +256,8 @@ end
 
 @testset  "Network Solve AC-PF PowerModels linear approximation models" begin
     networks = [PM.DCPlosslessForm, PM.NFAForm]
-    for network in networks         
+    for network in networks        
+        @info "Testing $(network)" 
         ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, network, time_range)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_range, Dates.Minute(5));
         construct_device!(ps_model, load_model, network, c_sys5, time_range, Dates.Minute(5));
@@ -299,7 +300,8 @@ end
                 PM.StandardACTForm
                 ]           
 
-    for network in networks          
+    for network in networks   
+        @info "Testing $(network)"     
         ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, network, time_range)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_range, Dates.Minute(5));
         construct_device!(ps_model, load_model, network, c_sys5, time_range, Dates.Minute(5));
@@ -340,6 +342,7 @@ end
     networks = [PM.StandardDCPLLForm, PM.AbstractLPACCForm]           
 
     for network in networks  
+        @info "Testing $(network)"
         ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, network, time_range)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_range, Dates.Minute(5));
         construct_device!(ps_model, load_model, network, c_sys5, time_range, Dates.Minute(5));
@@ -382,7 +385,8 @@ end
                  PM.QCWRTriForm,
                  ]          
 
-    for network in networks  
+    for network in networks 
+        @info "Testing $(network)" 
         ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, network, time_range)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_range, Dates.Minute(5));
         construct_device!(ps_model, load_model, network, c_sys5, time_range, Dates.Minute(5));
