@@ -62,7 +62,7 @@ function set_devices_ref!(op_model::OperationModel, branches::Dict{Symbol, Devic
     return
 end
 
-function set_devices_ref!(op_model::OperationModel, services::Dict{Symbol, DeviceModel}) 
+function set_services_ref!(op_model::OperationModel, services::Dict{Symbol, DeviceModel}) 
     op_model.model_ref.services = services
     return
 end
