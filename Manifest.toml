@@ -222,8 +222,8 @@ version = "0.10.0"
 
 [[PowerSystems]]
 deps = ["CSV", "DataFrames", "Dates", "InteractiveUtils", "JSON", "JSON2", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "UUIDs", "YAML"]
-git-tree-sha1 = "1ba58c2fcedeb51dd07d2028bb75cbe55b992e2b"
-repo-rev = "dev"
+git-tree-sha1 = "4196587285f576dbfbc503ff651a3f4db271a410"
+repo-rev = "add-rating-field"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
 version = "0.4.0"
