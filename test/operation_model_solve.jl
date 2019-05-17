@@ -1,37 +1,33 @@
 @testset "Solving ED Models" begin
     #5 Bus Test
-    ED = PSI.EconomicDispatch(sys5, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer);
+    ED = EconomicDispatch(sys5, CopperPlatePowerModel; optimizer = GLPK_optimizer);
     res_5 = solve_op_model!(ED)
     @test isapprox(res_5.total_cost[:ED], 2400, atol = 1000)
     #14 Bus Test
-    ED = PSI.EconomicDispatch(sys14, PSI.CopperPlatePowerModel; optimizer = OSQP_optimizer);
+    ED = EconomicDispatch(sys14, CopperPlatePowerModel; optimizer = OSQP_optimizer);
     res_14 = solve_op_model!(ED)
     @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
     #RTS Test
-    ED = PSI.EconomicDispatch(sys_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer);
-    res_14 = solve_op_model!(ED)
+    #ED = EconomicDispatch(sys_rts, CopperPlatePowerModel; optimizer = GLPK_optimizer);
+    #res_rts = solve_op_model!(ED)
 end
 
 @testset "Solving ED with PTDF Models" begin
     # 5 - Bus Test
-    PTDF5,  = PowerSystems.buildptdf(branches5, nodes5)
-    ED = PSI.EconomicDispatch(sys5, PSI.StandardPTDFForm; PTDF = PTDF5, optimizer = GLPK_optimizer);
+    ED = EconomicDispatch(sys5, StandardPTDFForm; PTDF = PTDF5, optimizer = GLPK_optimizer);
     res_5 = solve_op_model!(ED)
     @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
 
-    PTDF5,  = PowerSystems.buildptdf(branches5, nodes5)
-    ED = PSI.EconomicDispatch(sys5, PSI.StandardPTDFForm; PTDF = PTDF5, optimizer = GLPK_optimizer, parameters = false);
+    ED = EconomicDispatch(sys5, StandardPTDFForm; PTDF = PTDF5, optimizer = GLPK_optimizer, parameters = false);
     res_5 = solve_op_model!(ED)
     @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
 
     # 14 Bus Test
-    PTDF14,  = PSY.buildptdf(sys14.branches, sys14.buses)
-    ED = PSI.EconomicDispatch(sys14, PSI.StandardPTDFForm; PTDF = PTDF14, optimizer = OSQP_optimizer);
+    ED = EconomicDispatch(sys14, StandardPTDFForm; PTDF = PTDF14, optimizer = OSQP_optimizer);
     res_14 = solve_op_model!(ED)
     @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
 
-    PTDF14,  = PSY.buildptdf(sys14.branches, sys14.buses)
-    ED = PSI.EconomicDispatch(sys14, PSI.StandardPTDFForm; PTDF = PTDF14, optimizer = OSQP_optimizer, parameters = false);
+    ED = EconomicDispatch(sys14, StandardPTDFForm; PTDF = PTDF14, optimizer = OSQP_optimizer, parameters = false);
     res_14 = solve_op_model!(ED)
     @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
 end
@@ -40,20 +36,20 @@ end
 
 @testset "testing AngleDC-OPF 5-bus" begin
     # 5 - Bus Test
-    ED = PSI.EconomicDispatch(sys5,PM.DCPlosslessForm; optimizer = GLPK_optimizer);
+    ED = EconomicDispatch(sys5,PM.DCPlosslessForm; optimizer = GLPK_optimizer);
     res_5= solve_op_model!(ED)
     @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
 
-    ED = PSI.EconomicDispatch(sys5,PM.DCPlosslessForm; optimizer = GLPK_optimizer, parameters = false);
+    ED = EconomicDispatch(sys5,PM.DCPlosslessForm; optimizer = GLPK_optimizer, parameters = false);
     res_5= solve_op_model!(ED)
     @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
 
     # 14 - Bus Test
-    ED = PSI.EconomicDispatch(sys14,PM.DCPlosslessForm; optimizer = ipopt_optimizer);
+    ED = EconomicDispatch(sys14,PM.DCPlosslessForm; optimizer = ipopt_optimizer);
     res_14 = solve_op_model!(ED)
     @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
 
-    ED = PSI.EconomicDispatch(sys14,PM.DCPlosslessForm; optimizer = ipopt_optimizer, parameters = false);
+    ED = EconomicDispatch(sys14,PM.DCPlosslessForm; optimizer = ipopt_optimizer, parameters = false);
     res_14 = solve_op_model!(ED)
     @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
 end
@@ -72,7 +68,7 @@ end
      end
      bus5, gen5, stor5, branch5,load5,lz5,shunts5,service5 = ps_dict2ps_struct(ps5)
      sys5 = PSY.System(bus5,gen5,load5,branch5,stor5,100.0)
-     ED5 = PSI.EconomicDispatch(sys5, PSI.PM.DCPlosslessForm; optimizer = ipopt_optimizer)
+     ED5 = EconomicDispatch(sys5, PM.DCPlosslessForm; optimizer = ipopt_optimizer)
      res_5 = solve_op_model!(ED5)
 
      pm5 = PowerModels.parse_file(file)
@@ -97,7 +93,7 @@ end
      end
      bus14, gen14, stor14, branch14,load14,lz14,shunts14,service14 = ps_dict2ps_struct(ps14)
      sys14 = PSY.System(bus14,gen14,load14,branch14,stor14,100.0)
-     ED14 = PSI.EconomicDispatch(sys14, PSI.PM.DCPlosslessForm; optimizer = ipopt_optimizer)
+     ED14 = EconomicDispatch(sys14, PM.DCPlosslessForm; optimizer = ipopt_optimizer)
      res_14 = solve_op_model!(ED14)
 
       pm14 = PowerModels.parse_file(file)
@@ -112,9 +108,9 @@ end
     @info "testing ACP-OPF 5-bus"
     Net = PM.StandardACPForm
     m = Model(ipopt_optimizer);
-    netinjection = PSI.instantiate_network(Net, sys5);
-    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
-    PSI.construct_network!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys5)
+    netinjection = instantiate_network(Net, sys5);
+    construct_device!(m, netinjection, ThermalGen, ThermalDispatch, Net, sys5);
+    construct_network!(m, [(device=Line, formulation=PiLine)], netinjection, Net, sys5)
     JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 3400, atol = 1000)
@@ -124,9 +120,9 @@ true finally end
     @info "testing ACP- QCWForm 5-bus"
     Net = PM.QCWRForm
     m = Model(ipopt_optimizer);
-    netinjection = PSI.instantiate_network(Net, sys5);
-    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
-    PSI.construct_network!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys5)
+    netinjection = instantiate_network(Net, sys5);
+    construct_device!(m, netinjection, ThermalGen, ThermalDispatch, Net, sys5);
+    construct_network!(m, [(device=Line, formulation=PiLine)], netinjection, Net, sys5)
     JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 3400, atol = 1000)
@@ -136,9 +132,9 @@ true finally end
     @info "testing AngleDC-OPF 14-bus"
     Net = PM.DCPlosslessForm
     m = Model(ipopt_optimizer);
-    netinjection = PSI.instantiate_network(Net, sys14);
-    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
-    PSI.construct_network!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys14)
+    netinjection = instantiate_network(Net, sys14);
+    construct_device!(m, netinjection, ThermalGen, ThermalDispatch, Net, sys14);
+    construct_network!(m, [(device=Line, formulation=PiLine)], netinjection, Net, sys14)
     JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 1200, atol = 1000)
@@ -148,9 +144,9 @@ finally end
     @info "testing ACP-OPF 14-bus"
     Net = PM.StandardACPForm
     m = Model(ipopt_optimizer);
-    netinjection = PSI.instantiate_network(Net, sys14);
-    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
-    PSI.construct_network!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys14)
+    netinjection = instantiate_network(Net, sys14);
+    construct_device!(m, netinjection, ThermalGen, ThermalDispatch, Net, sys14);
+    construct_network!(m, [(device=Line, formulation=PiLine)], netinjection, Net, sys14)
     JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 1200, atol = 1000)
@@ -160,9 +156,9 @@ true finally end
     @info "testing ACP-QCWForm 14-bus"
     Net = PM.QCWRForm
     m = Model(ipopt_optimizer);
-    netinjection = PSI.instantiate_network(Net, sys14);
-    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys14);
-    PSI.construct_network!(m, [(device=Line, formulation=PSI.PiLine)], netinjection, Net, sys14)
+    netinjection = instantiate_network(Net, sys14);
+    construct_device!(m, netinjection, ThermalGen, ThermalDispatch, Net, sys14);
+    construct_network!(m, [(device=Line, formulation=PiLine)], netinjection, Net, sys14)
     JuMP.@objective(m, Min, m.obj_dict[:objective_function])
     JuMP.optimize!(m)
     isapprox(JuMP.objective_value(m), 1200, atol = 1000)
