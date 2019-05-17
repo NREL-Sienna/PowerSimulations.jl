@@ -66,15 +66,15 @@ end
                 PM.QCWRTriForm] 
 
     for  net in networks, p in parameters_value 
-        @info("Testing $(net)")
+        @info("Testing $(net) solve")
         @testset "ED model $(net) and parameters = $(p)" begin
-        model_ref = ModelReference(net, devices, branches5, services);
-        ED = OperationModel(TestOptModel, model_ref, c_sys5; optimizer = ipopt_optimizer, parameters = p)
+        model_ref5 = ModelReference(net, devices, branches5, services);
+        ED = OperationModel(TestOptModel, model_ref5, c_sys5; optimizer = ipopt_optimizer, parameters = p)
         res_5 = solve_op_model!(ED)
         @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
         #14 Bus Test
-        model_ref = ModelReference(net, devices, branches14, services);
-        ED = OperationModel(TestOptModel, model_ref, c_sys14; optimizer = ipopt_optimizer, parameters = p);
+        model_ref14 = ModelReference(net, devices, branches14, services);
+        ED = OperationModel(TestOptModel, model_ref14, c_sys14; optimizer = ipopt_optimizer, parameters = p);
         res_14 = solve_op_model!(ED)
         @test isapprox(res_14.total_cost[:ED], 1100, atol = 100)
         end
