@@ -1,59 +1,88 @@
-@testset "Solving ED Models" begin
-    #5 Bus Test
-    ED = EconomicDispatch(sys5, CopperPlatePowerModel; optimizer = GLPK_optimizer);
-    res_5 = solve_op_model!(ED)
-    @test isapprox(res_5.total_cost[:ED], 2400, atol = 1000)
-    #14 Bus Test
-    ED = EconomicDispatch(sys14, CopperPlatePowerModel; optimizer = OSQP_optimizer);
-    res_14 = solve_op_model!(ED)
-    @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
+@testset "Solving ED with CopperPlate" begin
+    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalDispatch, PSI.ThermalDispatch), 
+                                        :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
+    branches = Dict{Symbol, DeviceModel}()
+    services = Dict{Symbol, PSI.ServiceModel}()
+    model_ref = ModelReference(CopperPlatePowerModel, devices, branches, services);
+
+    parameters_value = [true, false]
+
+    for p in parameters_value 
+        @testset "ED model parameters = $(p)" begin
+        ED = OperationModel(TestOptModel, model_ref, c_sys5; optimizer = GLPK_optimizer, parameters = p)
+        res_5 = solve_op_model!(ED)
+        @test isapprox(res_5.total_cost[:ED], 2400, atol = 1000)
+        #14 Bus Test
+        ED = OperationModel(TestOptModel, model_ref, c_sys14; optimizer = OSQP_optimizer, parameters = p);
+        res_14 = solve_op_model!(ED)
+        @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
+        end
+    end
     #RTS Test
     #ED = EconomicDispatch(sys_rts, CopperPlatePowerModel; optimizer = GLPK_optimizer);
     #res_rts = solve_op_model!(ED)
 end
 
 @testset "Solving ED with PTDF Models" begin
-    # 5 - Bus Test
-    ED = EconomicDispatch(sys5, StandardPTDFForm; PTDF = PTDF5, optimizer = GLPK_optimizer);
-    res_5 = solve_op_model!(ED)
-    @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
+    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalDispatch, PSI.ThermalDispatch), 
+                                        :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
+    branches = Dict{Symbol, DeviceModel}()
+    services = Dict{Symbol, PSI.ServiceModel}()
+    model_ref = ModelReference(StandardPTDFForm, devices, branches, services);
+    parameters_value = [true, false]
 
-    ED = EconomicDispatch(sys5, StandardPTDFForm; PTDF = PTDF5, optimizer = GLPK_optimizer, parameters = false);
-    res_5 = solve_op_model!(ED)
-    @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
-
-    # 14 Bus Test
-    ED = EconomicDispatch(sys14, StandardPTDFForm; PTDF = PTDF14, optimizer = OSQP_optimizer);
-    res_14 = solve_op_model!(ED)
-    @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
-
-    ED = EconomicDispatch(sys14, StandardPTDFForm; PTDF = PTDF14, optimizer = OSQP_optimizer, parameters = false);
-    res_14 = solve_op_model!(ED)
-    @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
+    for p in parameters_value 
+        @testset "ED model parameters = $(p)" begin
+        ED = OperationModel(TestOptModel, model_ref, c_sys5; PTDF = PTDF5, optimizer = GLPK_optimizer, parameters = p)
+        res_5 = solve_op_model!(ED)
+        @test isapprox(res_5.total_cost[:ED], 2400, atol = 1000)
+        #14 Bus Test
+        ED = OperationModel(TestOptModel, model_ref, c_sys14; PTDF = PTDF14, optimizer = OSQP_optimizer, parameters = p);
+        res_14 = solve_op_model!(ED)
+        @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
+        end
+    end
 end
 
 
+@testset "Solving ED With PowerModels Networks" begin
+    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalDispatch, PSI.ThermalDispatch), 
+                                        :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
+    branches5 = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.ACSeriesBranch))
+    branches14 = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.ACSeriesBranch), 
+                                           :T => DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch), 
+                                           :TT => DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch))
+    services = Dict{Symbol, PSI.ServiceModel}()
+    parameters_value = [true, false]
+    networks = [PM.DCPlosslessForm, 
+                PM.NFAForm,
+                PM.StandardACPForm, 
+                #PM.StandardACRForm, 
+                PM.StandardACTForm,
+                PM.StandardDCPLLForm, 
+                PM.AbstractLPACCForm,
+                PM.SOCWRForm, 
+                PM.QCWRForm,
+                PM.QCWRTriForm] 
 
-@testset "testing AngleDC-OPF 5-bus" begin
-    # 5 - Bus Test
-    ED = EconomicDispatch(sys5,PM.DCPlosslessForm; optimizer = GLPK_optimizer);
-    res_5= solve_op_model!(ED)
-    @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
+    for  net in networks, p in parameters_value 
+        @info("Testing $(net)")
+        @testset "ED model $(net) and parameters = $(p)" begin
+        model_ref = ModelReference(net, devices, branches5, services);
+        ED = OperationModel(TestOptModel, model_ref, c_sys5; optimizer = ipopt_optimizer, parameters = p)
+        res_5 = solve_op_model!(ED)
+        @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
+        #14 Bus Test
+        model_ref = ModelReference(net, devices, branches14, services);
+        ED = OperationModel(TestOptModel, model_ref, c_sys14; optimizer = ipopt_optimizer, parameters = p);
+        res_14 = solve_op_model!(ED)
+        @test isapprox(res_14.total_cost[:ED], 1100, atol = 100)
+        end
+    end
 
-    ED = EconomicDispatch(sys5,PM.DCPlosslessForm; optimizer = GLPK_optimizer, parameters = false);
-    res_5= solve_op_model!(ED)
-    @test isapprox(res_5.total_cost[:ED], 3400, atol = 1000)
-
-    # 14 - Bus Test
-    ED = EconomicDispatch(sys14,PM.DCPlosslessForm; optimizer = ipopt_optimizer);
-    res_14 = solve_op_model!(ED)
-    @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
-
-    ED = EconomicDispatch(sys14,PM.DCPlosslessForm; optimizer = ipopt_optimizer, parameters = false);
-    res_14 = solve_op_model!(ED)
-    @test isapprox(res_14.total_cost[:ED], 1000, atol = 100)
 end
 
+#=
 @testset "Test the equivelance of 5bus PM and PSI models" begin
      file = joinpath(dirname(dirname(pathof(PowerModels))),"test/data/matpower/case5.m")
      #ps5 = PowerSystems.parsestandardfiles(file) # this fails because PSY changes to mixed_units
@@ -102,65 +131,4 @@ end
 
       @test isapprox(res_14.total_cost[:ED], res_PM14["objective"], atol = 1)
  end
-
-#=
-@test try
-    @info "testing ACP-OPF 5-bus"
-    Net = PM.StandardACPForm
-    m = Model(ipopt_optimizer);
-    netinjection = instantiate_network(Net, sys5);
-    construct_device!(m, netinjection, ThermalGen, ThermalDispatch, Net, sys5);
-    construct_network!(m, [(device=Line, formulation=PiLine)], netinjection, Net, sys5)
-    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
-    JuMP.optimize!(m)
-    isapprox(JuMP.objective_value(m), 3400, atol = 1000)
-true finally end
-
-@test try
-    @info "testing ACP- QCWForm 5-bus"
-    Net = PM.QCWRForm
-    m = Model(ipopt_optimizer);
-    netinjection = instantiate_network(Net, sys5);
-    construct_device!(m, netinjection, ThermalGen, ThermalDispatch, Net, sys5);
-    construct_network!(m, [(device=Line, formulation=PiLine)], netinjection, Net, sys5)
-    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
-    JuMP.optimize!(m)
-    isapprox(JuMP.objective_value(m), 3400, atol = 1000)
-true finally end
-
-@test try
-    @info "testing AngleDC-OPF 14-bus"
-    Net = PM.DCPlosslessForm
-    m = Model(ipopt_optimizer);
-    netinjection = instantiate_network(Net, sys14);
-    construct_device!(m, netinjection, ThermalGen, ThermalDispatch, Net, sys14);
-    construct_network!(m, [(device=Line, formulation=PiLine)], netinjection, Net, sys14)
-    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
-    JuMP.optimize!(m)
-    isapprox(JuMP.objective_value(m), 1200, atol = 1000)
-finally end
-
-@test try
-    @info "testing ACP-OPF 14-bus"
-    Net = PM.StandardACPForm
-    m = Model(ipopt_optimizer);
-    netinjection = instantiate_network(Net, sys14);
-    construct_device!(m, netinjection, ThermalGen, ThermalDispatch, Net, sys14);
-    construct_network!(m, [(device=Line, formulation=PiLine)], netinjection, Net, sys14)
-    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
-    JuMP.optimize!(m)
-    isapprox(JuMP.objective_value(m), 1200, atol = 1000)
-true finally end
-
-@test try
-    @info "testing ACP-QCWForm 14-bus"
-    Net = PM.QCWRForm
-    m = Model(ipopt_optimizer);
-    netinjection = instantiate_network(Net, sys14);
-    construct_device!(m, netinjection, ThermalGen, ThermalDispatch, Net, sys14);
-    construct_network!(m, [(device=Line, formulation=PiLine)], netinjection, Net, sys14)
-    JuMP.@objective(m, Min, m.obj_dict[:objective_function])
-    JuMP.optimize!(m)
-    isapprox(JuMP.objective_value(m), 1200, atol = 1000)
-true finally end
-=#
+ =#
