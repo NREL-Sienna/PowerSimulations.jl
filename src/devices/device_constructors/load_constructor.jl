@@ -134,7 +134,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                   StaticPowerLoad,
                                   system_formulation,
                                   sys,
-                                  time_range; 
+                                  time_range,
+                                  resolution; 
                                   kwargs...)
 
 end    

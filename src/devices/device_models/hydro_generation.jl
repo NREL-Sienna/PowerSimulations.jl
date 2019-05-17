@@ -67,7 +67,7 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  time_range::UnitRange{Int64}) where {H <: PSY.HydroGen,
                                                                       S <: PM.AbstractPowerFormulation}
 
-    ts_data = [(h.name, values(h.scalingfactor)*h.tech.installedcapacity) for h in devices]
+    ts_data = [(h.name, values(h.scalingfactor)*h.tech.rating) for h in devices]
 
     device_timeseries_ub(ps_m, ts_data , time_range, hydro_active_ub, :Phy)
 
@@ -83,8 +83,8 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  time_range::UnitRange{Int64}) where {H <: PSY.HydroGen,
                                                                       S <: PM.AbstractPowerFormulation}
 
-    ts_data_ub = [(h.name, values(h.scalingfactor)*h.tech.installedcapacity) for h in devices]
-    ts_data_lb = [(h.name, values(h.scalingfactor)*h.tech.installedcapacity) for h in devices]
+    ts_data_ub = [(h.name, values(h.scalingfactor)*h.tech.rating) for h in devices]
+    ts_data_lb = [(h.name, values(h.scalingfactor)*h.tech.rating) for h in devices]
 
     device_timeseries_ub(ps_m, ts_data_ub , time_range, :hydro_active_ub, :Phy)
     device_timeseries_lb(ps_m, ts_data_lb , time_range, :hydro_active_lb, :Phy)
@@ -153,9 +153,9 @@ end
 #
 #     for t in time_range, d in devices
 #
-#         _add_to_expression!(ps_m.expressions[:nodal_balance_active], d.bus.number, t, d.tech.installedcapacity * values(d.scalingfactor)[t])
+#         _add_to_expression!(ps_m.expressions[:nodal_balance_active], d.bus.number, t, d.tech.rating * values(d.scalingfactor)[t])
 #
-#         _add_to_expression!(ps_m.expressions[:nodal_balance_reactive], d.bus.number, t, d.tech.installedcapacity * values(d.scalingfactor)[t]*sin(acos(d.tech.powerfactor)))
+#         _add_to_expression!(ps_m.expressions[:nodal_balance_reactive], d.bus.number, t, d.tech.rating * values(d.scalingfactor)[t]*sin(acos(d.tech.powerfactor)))
 #
 #     end
 #
@@ -167,7 +167,7 @@ end
 #
 #     for t in time_range, d in devices
 #
-#         _add_to_expression!(ps_m.expressions[:nodal_balance_active], d.bus.number, t, d.tech.installedcapacity * values(d.scalingfactor)[t])
+#         _add_to_expression!(ps_m.expressions[:nodal_balance_active], d.bus.number, t, d.tech.rating * values(d.scalingfactor)[t])
 #
 #     end
 #

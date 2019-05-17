@@ -133,7 +133,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                   device,
                                   RenewableFixed,
                                   sys,
-                                  time_range; 
+                                  time_range,
+                                  resolution; 
                                   kwargs...)
 
 end                      
