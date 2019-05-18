@@ -373,7 +373,7 @@ function _get_data_for_tdc(devices::Array{T,1}) where {T <: PSY.ThermalGen}
     idx = eachindex(devices)
     i, state = iterate(idx)
     for g in devices
-        if !isnothing(g.tech.ramplimits)
+        if !isnothing(g.tech.timelimits)
             set_name[i] = g.name
             time_params[i] = g.tech.timelimits
             y = iterate(idx, state)
@@ -404,6 +404,7 @@ function time_constraints(ps_m::CanonicalModel,
             @info("Initial conditions for time up/down not provided. This can lead to unwanted results")
             duration_init(ps_m, devices, parameters)
         end
+        @warn("Currently Min-up/down time limits only work if time resoultion they are defined at matches the simulation's time resoultion")
         device_duration_retrospective(ps_m,
                                       duration_data,
                                       ps_m.initial_conditions[:thermal_duration_on],
