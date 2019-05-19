@@ -23,6 +23,8 @@ function _container_spec(V::DataType, ax...; kwargs...)
         return JuMP.Containers.DenseAxisArray{GAE{V}}(undef, ax...)
     end
 
+    return
+
 end
 
 function _canonical_model_init(bus_numbers::Vector{Int64},
@@ -93,29 +95,29 @@ function  build_canonical_model(transmission::Type{T},
 
     bus_numbers = [b.number for b in PSY.get_components(PSY.Bus, sys)]
 
-ps_model = _canonical_model_init(bus_numbers, optimizer, transmission, time_steps; kwargs...)
+    ps_model = _canonical_model_init(bus_numbers, optimizer, transmission, time_steps; kwargs...)
 
-# Build Injection devices
-for mod in devices
-    construct_device!(ps_model, mod[2], transmission, sys, time_steps, resolution; kwargs...)
-end
+    # Build Injection devices
+    for mod in devices
+        construct_device!(ps_model, mod[2], transmission, sys, time_steps, resolution; kwargs...)
+    end
 
-# Build Network
-construct_network!(ps_model, transmission, sys, time_steps; kwargs...)
+    # Build Network
+    construct_network!(ps_model, transmission, sys, time_steps; kwargs...)
 
-# Build Branches
-for mod in branches
-    construct_device!(ps_model, mod[2], transmission, sys, time_steps, resolution; kwargs...)
-end
+    # Build Branches
+    for mod in branches
+        construct_device!(ps_model, mod[2], transmission, sys, time_steps, resolution; kwargs...)
+    end
 
-#Build Service
-for mod in services
-    #construct_service!(ps_model, mod[2], transmission, sys, time_steps, resolution; kwargs...)
-end
+    #Build Service
+    for mod in services
+        #construct_service!(ps_model, mod[2], transmission, sys, time_steps, resolution; kwargs...)
+    end
 
-# Objective Function
-JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
+    # Objective Function
+    JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
 
-return ps_model
+    return ps_model
 
 end

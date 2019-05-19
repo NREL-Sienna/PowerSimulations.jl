@@ -33,6 +33,8 @@ function flow_variables(ps_m::CanonicalModel,
                  Symbol("Fbr_$(B)"),
                  false)
 
+    return
+
 end
 
 
@@ -52,6 +54,8 @@ function flow_variables(ps_m::CanonicalModel,
                  time_steps,
                  Symbol("Fbr_fr_$(B)"),
                  false)
+
+    return
 
 end
 
