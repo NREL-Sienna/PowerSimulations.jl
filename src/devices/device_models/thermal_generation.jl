@@ -19,7 +19,7 @@ This function add the variables for power generation output to the model
 """
 function activepower_variables(ps_m::CanonicalModel,
                                devices::PSY.FlattenedVectorsIterator{T},
-                               lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen}
+                               time_steps::UnitRange{Int64}) where {T <: PSY.ThermalGen}
 
     add_variable(ps_m,
                  devices,
@@ -37,7 +37,7 @@ This function add the variables for power generation output to the model
 """
 function reactivepower_variables(ps_m::CanonicalModel,
                                  devices::PSY.FlattenedVectorsIterator{T},
-                                 lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen}
+                                 time_steps::UnitRange{Int64}) where {T <: PSY.ThermalGen}
 
     add_variable(ps_m,
                  devices,
@@ -55,7 +55,7 @@ This function add the variables for power generation commitment to the model
 """
 function commitment_variables(ps_m::CanonicalModel,
                               devices::PSY.FlattenedVectorsIterator{T},
-                              lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen}
+                              time_steps::UnitRange{Int64}) where {T <: PSY.ThermalGen}
 
     add_variable(ps_m,
                 devices,
@@ -84,7 +84,7 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  devices::PSY.FlattenedVectorsIterator{T},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S},
-                                 lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen,
+                                 time_steps::UnitRange{Int64}) where {T <: PSY.ThermalGen,
                                                                       D <: AbstractThermalDispatchForm,
                                                                       S <: PM.AbstractPowerFormulation}
     range_data = [(g.name, g.tech.activepowerlimits) for g in devices]
@@ -107,7 +107,7 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  devices::PSY.FlattenedVectorsIterator{T},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S},
-                                 lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen,
+                                 time_steps::UnitRange{Int64}) where {T <: PSY.ThermalGen,
                                                                       D <: AbstractThermalFormulation,
                                                                       S <: PM.AbstractPowerFormulation}
 
@@ -132,7 +132,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
                                    devices::PSY.FlattenedVectorsIterator{T},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S},
-                                   lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen,
+                                   time_steps::UnitRange{Int64}) where {T <: PSY.ThermalGen,
                                                                         D <: AbstractThermalDispatchForm,
                                                                         S <: PM.AbstractPowerFormulation}
 
@@ -157,7 +157,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
                                    devices::PSY.FlattenedVectorsIterator{T},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S},
-                                   lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen,
+                                   time_steps::UnitRange{Int64}) where {T <: PSY.ThermalGen,
                                                                         D <: AbstractThermalFormulation,
                                                                         S <: PM.AbstractPowerFormulation}
 
@@ -181,7 +181,7 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  devices::PSY.FlattenedVectorsIterator{T},
                                  device_formulation::Type{ThermalDispatchNoMin},
                                  system_formulation::Type{S},
-                                 lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen,
+                                 time_steps::UnitRange{Int64}) where {T <: PSY.ThermalGen,
                                                                       S <: PM.AbstractPowerFormulation}
 
     range_data = [(g.name, (min = 0.0, max=g.tech.activepowerlimits.max)) for g in devices]
@@ -204,7 +204,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
                                    devices::PSY.FlattenedVectorsIterator{T},
                                    device_formulation::Type{ThermalDispatchNoMin},
                                    system_formulation::Type{S},
-                                   lookahead::UnitRange{Int64}) where {T <: PSY.ThermalGen,
+                                   time_steps::UnitRange{Int64}) where {T <: PSY.ThermalGen,
                                                                         S <: PM.AbstractPowerFormulation}
 
     range_data = [(g.name, (min = 0.0, max=g.tech.reactivepowerlimits.max)) for g in devices]
@@ -229,7 +229,7 @@ function commitment_constraints(ps_m::CanonicalModel,
                                 devices::PSY.FlattenedVectorsIterator{T},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S},
-                                lookahead::UnitRange{Int64},
+                                time_steps::UnitRange{Int64},
                                 parameters::Bool) where {T <: PSY.ThermalGen,
                                                                      D <: AbstractThermalFormulation,
                                                                      S <: PM.AbstractPowerFormulation}
@@ -307,7 +307,7 @@ function ramp_constraints(ps_m::CanonicalModel,
                           devices::PSY.FlattenedVectorsIterator{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S},
-                          lookahead::UnitRange{Int64},
+                          time_steps::UnitRange{Int64},
                           resolution::Dates.Period,
                           parameters::Bool) where {T <: PSY.ThermalGen,
                                                                D <: AbstractThermalFormulation,
@@ -346,7 +346,7 @@ function ramp_constraints(ps_m::CanonicalModel,
                           devices::PSY.FlattenedVectorsIterator{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S},
-                          lookahead::UnitRange{Int64},
+                          time_steps::UnitRange{Int64},
                           resolution::Dates.Period,
                           parameters::Bool) where {T <: PSY.ThermalGen,
                                                                D <: AbstractThermalDispatchForm,
@@ -492,7 +492,7 @@ function time_constraints(ps_m::CanonicalModel,
                           devices::PSY.FlattenedVectorsIterator{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S},
-                          lookahead::UnitRange{Int64},
+                          time_steps::UnitRange{Int64},
                           resolution::Dates.Period,
                           parameters::Bool) where {T <: PSY.ThermalGen,
                                                                D <: AbstractThermalFormulation,

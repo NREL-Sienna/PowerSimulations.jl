@@ -1,6 +1,6 @@
 
 #=
-function build_sim_ts(ts_dict::Dict{String,Any}, steps, periods, resolution, date_from, lookahead_periods, lookahead_resolution ; kwargs...)
+function build_sim_ts(ts_dict::Dict{String,Any}, steps, periods, resolution, date_from, time_steps_periods, time_steps_resolution ; kwargs...)
     # exmaple of time series assembly
     # TODO: once we refactor PowerSystems, we can improve this process
 
@@ -11,8 +11,8 @@ function build_sim_ts(ts_dict::Dict{String,Any}, steps, periods, resolution, dat
     end
 
     for step in 1:steps
-        step_stamp = date_from + ((resolution * periods) + (lookahead_periods * lookahead_resolution)) * (step-1)
-        step_end = step_stamp + (resolution * periods) + (lookahead_periods * lookahead_resolution)
+        step_stamp = date_from + ((resolution * periods) + (time_steps_periods * time_steps_resolution)) * (step-1)
+        step_end = step_stamp + (resolution * periods) + (time_steps_periods * time_steps_resolution)
         steps_dict[step_stamp] = deepcopy(ts_dict)
         steps_dict[step_stamp]["load"] = _subset_ts(steps_dict[step_stamp]["load"],step_stamp,step_end)
         for cat in keys(steps_dict[step_stamp]["gen"])
@@ -44,18 +44,18 @@ function buildsimulation!(sys::PSY.System, op_model::OperationModel, ts_dict::Di
         @warn "Time series length and simulation definiton inconsistent, simulation may be truncated, simulating $steps ste"
     end
 
-    lookahead_periods = :lookahead_periods in keys(args) ? args[:lookahead_periods] : 0
+    time_steps_periods = :time_steps_periods in keys(args) ? args[:time_steps_periods] : 0
 
-    lookahead_resolution = :lookahead_resolution in keys(args) ? args[:lookahead_resolution] : resolution
+    time_steps_resolution = :time_steps_resolution in keys(args) ? args[:time_steps_resolution] : resolution
 
-    @info "Simulation defined for $steps steps with $periods * $resolution periods per step (plus $lookahead_periods * $lookahead_resolution lookahead periods), from $date_from to $date_to"
+    @info "Simulation defined for $steps steps with $periods * $resolution periods per step (plus $time_steps_periods * $time_steps_resolution time_steps periods), from $date_from to $date_to"
 
     dynamic_analysis = false;
 
-    timeseries = build_sim_ts(ts_dict, steps, periods, resolution, date_from, lookahead_periods, lookahead_resolution ; kwargs...)
+    timeseries = build_sim_ts(ts_dict, steps, periods, resolution, date_from, time_steps_periods, time_steps_resolution ; kwargs...)
 
     PowerSimulationsModel(name,model, steps, periods, resolution, date_from, date_to,
-            lookahead_periods, lookahead_resolution, dynamic_analysis, timeseries)
+            time_steps_periods, time_steps_resolution, dynamic_analysis, timeseries)
 
 end
 

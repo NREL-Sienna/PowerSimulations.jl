@@ -1,5 +1,5 @@
 function energy_balance(ps_m::CanonicalModel,
-                        lookahead::UnitRange{Int64},
+                        time_steps::UnitRange{Int64},
                         resolution::Dates.Period,
                         initial_conditions::Vector{InitialCondition},
                         efficiency_data::Tuple{Vector{String},Vector{InOut}},
@@ -8,22 +8,22 @@ function energy_balance(ps_m::CanonicalModel,
 
     fraction_of_hour = Dates.value(Dates.Minute(resolution))/60
     name_index = efficiency_data[1]
-    ps_m.constraints[cons_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, name_index, lookahead)
+    ps_m.constraints[cons_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, name_index, time_steps)
 
     for (ix,name) in enumerate(name_index)
         eff_in = efficiency_data[2][ix].in
         eff_out = efficiency_data[2][ix].out
 
-        ps_m.constraints[cons_name][name, 1] = JuMP.@constraint(ps_m.JuMPmodel, 
+        ps_m.constraints[cons_name][name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
                                                 ps_m.variables[var_names[3]][name, 1] == initial_conditions[ix].value + ps_m.variables[var_names[1]][name, 1]*eff_in*fraction_of_hour - (ps_m.variables[var_names[2]][name, 1])*fraction_of_hour/eff_out)
 
     end
 
-    for t in lookahead[2:end], (ix,name) in enumerate(name_index)
+    for t in time_steps[2:end], (ix,name) in enumerate(name_index)
         eff_in = efficiency_data[2][ix].in
         eff_out = efficiency_data[2][ix].out
 
-        ps_m.constraints[cons_name][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
+        ps_m.constraints[cons_name][name, t] = JuMP.@constraint(ps_m.JuMPmodel,
                                                 ps_m.variables[var_names[3]][name, t] == ps_m.variables[var_names[3]][name, t-1] + ps_m.variables[var_names[1]][name, t]*eff_in - (ps_m.variables[var_names[2]][name, t])*fraction_of_hour/eff_out)
 
     end

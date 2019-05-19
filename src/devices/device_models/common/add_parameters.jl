@@ -17,7 +17,7 @@ end
 
 function include_parameters(ps_m::CanonicalModel,
                         ts_data::Vector{Tuple{String,Int64, Vector{Float64}}},
-                        lookahead::UnitRange{Int64},
+                        time_steps::UnitRange{Int64},
                         param_name::Symbol,
                         expression::Symbol)
 
