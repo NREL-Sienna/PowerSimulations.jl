@@ -8,8 +8,8 @@
 
     model_ref = ModelReference(CopperPlatePowerModel, devices, branches, services);
 
-    op_model = OperationModel(TestOptModel, model_ref, 
-                                            c_sys5; 
+    op_model = OperationModel(TestOptModel, model_ref,
+                                            c_sys5;
                                             optimizer = GLPK_optimizer)
     j_model = op_model.canonical_model.JuMPmodel
     @test (:params in keys(j_model.ext))
@@ -21,8 +21,8 @@
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
     @test JuMP.objective_function_type(j_model) == JuMP.GenericAffExpr{Float64,VariableRef}
 
-    op_model = OperationModel(TestOptModel, model_ref, 
-                                            c_sys14; 
+    op_model = OperationModel(TestOptModel, model_ref,
+                                            c_sys14;
                                             optimizer = OSQP_optimizer)
     j_model = op_model.canonical_model.JuMPmodel
     @test (:params in keys(j_model.ext))
@@ -34,8 +34,8 @@
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
     @test JuMP.objective_function_type(j_model) == JuMP.GenericQuadExpr{Float64,VariableRef}
 
-    op_model = OperationModel(TestOptModel, model_ref, 
-                                            c_sys5_re; 
+    op_model = OperationModel(TestOptModel, model_ref,
+                                            c_sys5_re;
                                             forecast = false,
                                             optimizer = GLPK_optimizer)
     j_model = op_model.canonical_model.JuMPmodel
@@ -48,8 +48,8 @@
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
     @test JuMP.objective_function_type(j_model) == JuMP.GenericAffExpr{Float64,VariableRef}
 
-    op_model = OperationModel(TestOptModel, model_ref, 
-                                            c_sys5_re; 
+    op_model = OperationModel(TestOptModel, model_ref,
+                                            c_sys5_re;
                                             forecast = false,
                                             parameters = false,
                                             optimizer = GLPK_optimizer)
@@ -68,30 +68,30 @@ end
 @testset "Operation Model Constructors with Parameters" begin
     networks = [PSI.CopperPlatePowerModel,
                 PSI.StandardPTDFForm,
-                PM.DCPlosslessForm, 
+                PM.DCPlosslessForm,
                 PM.NFAForm,
-                PM.StandardACPForm, 
-                PM.StandardACRForm, 
+                PM.StandardACPForm,
+                PM.StandardACRForm,
                 PM.StandardACTForm,
-                PM.StandardDCPLLForm, 
+                PM.StandardDCPLLForm,
                 PM.AbstractLPACCForm,
-                PM.SOCWRForm, 
+                PM.SOCWRForm,
                 PM.QCWRForm,
                 PM.QCWRTriForm];
 
     thermal_gens = [PSI.ThermalUnitCommitment,
                     PSI.ThermalDispatch,
                     PSI.ThermalRampLimited,
-                    PSI.ThermalDispatchNoMin]; 
-                    
-        systems = [c_sys5, 
+                    PSI.ThermalDispatchNoMin];
+
+        systems = [c_sys5,
                    c_sys5_re,
-                   c_sys5_bat];                     
+                   c_sys5_bat];
 
     load_model = DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad)
     line_model = DeviceModel(PSY.Line, PSI.ACSeriesBranch)
     transformer_model = DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch)
-                    
+
     for net in networks, thermal in thermal_gens, system in systems
         @testset "Operation Model $(net) - $(thermal) - $(system)" begin
             thermal_model = DeviceModel(PSY.ThermalDispatch, thermal)
@@ -99,45 +99,45 @@ end
             branches = Dict{Symbol, DeviceModel}(:Lines => line_model)
             services = Dict{Symbol, PSI.ServiceModel}()
             model_ref = ModelReference(net, devices, branches, services);
-            op_model = OperationModel(TestOptModel, 
+            op_model = OperationModel(TestOptModel,
                                       model_ref,
-                                      system; PTDF = PTDF5);     
+                                      system; PTDF = PTDF5);
         @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-        @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))                                                                   
+        @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
         end
-    
-    
+
+
     end
 
 end
-
+#=
 @testset "Operation Model Constructors without Parameters" begin
     networks = [PSI.CopperPlatePowerModel,
                 PSI.StandardPTDFForm,
-                PM.DCPlosslessForm, 
+                PM.DCPlosslessForm,
                 PM.NFAForm,
-                PM.StandardACPForm, 
-                PM.StandardACRForm, 
+                PM.StandardACPForm,
+                PM.StandardACRForm,
                 PM.StandardACTForm,
-                PM.StandardDCPLLForm, 
+                PM.StandardDCPLLForm,
                 PM.AbstractLPACCForm,
-                PM.SOCWRForm, 
+                PM.SOCWRForm,
                 PM.QCWRForm,
                 PM.QCWRTriForm]
 
     thermal_gens = [PSI.ThermalUnitCommitment,
                     PSI.ThermalDispatch,
                     PSI.ThermalRampLimited,
-                    PSI.ThermalDispatchNoMin]            
-    
-    systems = [c_sys5, 
+                    PSI.ThermalDispatchNoMin]
+
+    systems = [c_sys5,
                c_sys5_re,
-               c_sys5_bat];                    
+               c_sys5_bat];
 
     load_model = DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad)
     line_model = DeviceModel(PSY.Line, PSI.ACSeriesBranch)
     transformer_model = DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch)
-                    
+
     for net in networks, thermal in thermal_gens, system in systems
         @testset "Operation Model $(net) - $(thermal) - $(system)" begin
             thermal_model = DeviceModel(PSY.ThermalDispatch, thermal)
@@ -145,43 +145,42 @@ end
             branches = Dict{Symbol, DeviceModel}(:Lines => line_model)
             services = Dict{Symbol, PSI.ServiceModel}()
             model_ref = ModelReference(net, devices, branches, services);
-            op_model = OperationModel(TestOptModel, 
-                                        model_ref, 
+            op_model = OperationModel(TestOptModel,
+                                        model_ref,
                                         system;
                                         parameters = false,
-                                        PTDF = PTDF5)     
+                                        PTDF = PTDF5)
         @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-        @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))                                                                   
+        @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
         end
-    
-    
+
+
     end
 
 end
 
-#=
 @testset "RTS test set" begin
     networks = [PSI.CopperPlatePowerModel,
                 PSI.StandardPTDFForm,
-                PM.DCPlosslessForm, 
+                PM.DCPlosslessForm,
                 PM.NFAForm,
-                PM.StandardACPForm, 
-                PM.StandardACRForm, 
+                PM.StandardACPForm,
+                PM.StandardACRForm,
                 PM.StandardACTForm,
-                PM.StandardDCPLLForm, 
+                PM.StandardDCPLLForm,
                 PM.AbstractLPACCForm,
-                PM.SOCWRForm, 
+                PM.SOCWRForm,
                 PM.QCWRForm,
                 PM.QCWRTriForm]
 
     thermal_gens = [PSI.ThermalUnitCommitment,
                     PSI.ThermalDispatch,
                     PSI.ThermalRampLimited,
-                    PSI.ThermalDispatchNoMin]            
-    
-    systems = [c_sys5, 
+                    PSI.ThermalDispatchNoMin]
+
+    systems = [c_sys5,
                c_sys5_re,
-               c_sys5_bat];                    
+               c_sys5_bat];
 
     renewable_curtailment_model = DeviceModel(PSY.RenewableCurtailment, PSI.RenewableConstantPowerFactor)
     thermal_model = DeviceModel(PSY.ThermalDispatch, PSI.ThermalDispatch)
@@ -193,8 +192,8 @@ end
     load_model = DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad)
     line_model = DeviceModel(PSY.Line, PSI.ACSeriesBranch)
     bat = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
-    
-    devices = Dict{Symbol, DeviceModel}(:Generators => thermal_model, 
+
+    devices = Dict{Symbol, DeviceModel}(:Generators => thermal_model,
                                     :Loads =>  load_model,
                                     :rc => renewable_curtailment_model,
                                     :ren_fix => renewable_fix)
@@ -203,33 +202,30 @@ end
                                     :tap_trafo => tap_transformer_model,
                                     :trafo => transformer_model)
     services = Dict{Symbol, PSI.ServiceModel}()
-    net = PSI.CopperPlatePowerModel                    
+    net = PSI.CopperPlatePowerModel
 
-    
+
     for net in networks, thermal in thermal_gens, system in systems
         @testset "Operation Model $(net) - $(thermal) - $(system)" begin
             thermal_model = DeviceModel(PSY.ThermalDispatch, thermal)
             devices = Dict{Symbol, DeviceModel}(:Generators => thermal_model, :Loads =>  load_model)
             branches = Dict{Symbol, DeviceModel}(:Lines => line_model, :Transformer)
             services = Dict{Symbol, PSI.ServiceModel}()
-            op_model = OperationModel(TestOptModel, net, 
-                                        devices, 
-                                        branches, 
-                                        services, 
+            op_model = OperationModel(TestOptModel, net,
+                                        devices,
+                                        branches,
+                                        services,
                                         system;
                                         parameters = false,
-                                        PTDF = PTDF5)     
+                                        PTDF = PTDF5)
         @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-        @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))                                                                   
+        @test !(:params in keys(op_model.canonical_model.JuMPmodel.ext))
         end
-    
-    
+
+
     end
 
 end
-
-
-
 
 @testset "Build Operation Models" begin
     #SCED = PSI.SCEconomicDispatch(c_sys5; optimizer = GLPK_optimizer);
