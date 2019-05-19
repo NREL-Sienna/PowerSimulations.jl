@@ -48,7 +48,7 @@ function get_pg(m::JuMP.AbstractModel, gen::G, t::Int64) where G <: PSY.ThermalG
     return m.obj_dict[:p_th][gen.name,t]
 end
 
-function get_pg(m::JuMP.AbstractModel, gen::G, t::Int64) where G <: PSY.RenewableCurtailment
+function get_pg(m::JuMP.AbstractModel, gen::G, t::Int64) where G <: PSY.RenewableDispatch
     return m.obj_dict[:p_re][gen.name,t]
 end
 
