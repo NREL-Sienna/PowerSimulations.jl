@@ -21,7 +21,7 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
     end
 
     vars_result = get_model_result(op_model.canonical_model)
-    obj_value = Dict(:ED => JuMP.objective_value(op_model.canonical_model.JuMPmodel))
+    obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_model.canonical_model.JuMPmodel))
     opt_log = optimizer_log(op_model.canonical_model)
 
     return OpertationModelResults(vars_result, obj_value, opt_log)

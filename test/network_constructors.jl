@@ -124,7 +124,6 @@ end
 
     @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
-
     #PTDF input Error testing
     ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, network, lookahead)
     construct_device!(ps_model, thermal_model, network, c_sys5, lookahead, Dates.Minute(5));
