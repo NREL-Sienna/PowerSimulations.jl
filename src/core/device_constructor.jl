@@ -2,7 +2,7 @@ function construct_device!(ps_m::CanonicalModel,
                             device_model::DeviceModel,
                             system_formulation::Type{S},
                             sys::PSY.System,
-                            lookahead::UnitRange{Int64},
+                            time_steps::UnitRange{Int64},
                             resolution::Dates.Period;
                             kwargs...) where {S <: PM.AbstractPowerFormulation}
 
@@ -11,7 +11,7 @@ function construct_device!(ps_m::CanonicalModel,
                                   device_model.formulation,
                                   system_formulation,
                                   sys,
-                                  lookahead,
+                                  time_steps,
                                   resolution;
                                   kwargs...)
 

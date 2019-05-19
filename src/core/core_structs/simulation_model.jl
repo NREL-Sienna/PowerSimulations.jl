@@ -6,8 +6,8 @@ mutable struct PowerSimulationsModel{T<:AbstractOperationsModel, R<:Dates.Period
     resolution::R
     date_from::Dates.DateTime
     date_to::Dates.DateTime
-    lookahead_periods::Int64
-    lookahead_resolution::R
+    time_steps_periods::Int64
+    time_steps_resolution::R
     dynamic_analysis::Bool
     timeseries::Dict{Any,Any}
 end

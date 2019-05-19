@@ -3,7 +3,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.System,
-                           lookahead::UnitRange{Int64},
+                           time_steps::UnitRange{Int64},
                            resolution::Dates.Period;
                            kwargs...) where {L <: PSY.ControllableLoad,
                                              D <: AbstractControllablePowerLoadForm,
@@ -12,7 +12,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     forecast = get(kwargs, :forecast, true)
 
     devices = PSY.get_components(device, sys)
-    
+
     if validate_available_devices(devices, device)
         return
     end
@@ -20,20 +20,20 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     parameters = get(kwargs, :parameters, true)
 
     #Variables
-    activepower_variables(ps_m, devices, lookahead);
+    activepower_variables(ps_m, devices, time_steps);
 
-    reactivepower_variables(ps_m, devices, lookahead);
+    reactivepower_variables(ps_m, devices, time_steps);
 
     #Constraints
-    if forecast 
+    if forecast
         first_step = collect(PSY.get_forecast_issue_times(sys))[1]
         forecasts = Vector{PSY.Deterministic{L}}(PSY.get_forecasts(sys, first_step, devices))
-        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, lookahead, parameters)
+        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, time_steps, parameters)
     else
-        activepower_constraints(ps_m, devices, device_formulation, system_formulation, lookahead, parameters)
+        activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_steps, parameters)
     end
 
-    reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, lookahead)
+    reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, time_steps)
 
     #Cost Function
     cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
@@ -47,7 +47,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            device_formulation::Type{D},
                            system_formulation::Type{S},
                            sys::PSY.System,
-                           lookahead::UnitRange{Int64},
+                           time_steps::UnitRange{Int64},
                            resolution::Dates.Period;
                            kwargs...) where {L <: PSY.ControllableLoad,
                                              D <: AbstractControllablePowerLoadForm,
@@ -56,23 +56,23 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     forecast = get(kwargs, :forecast, true)
 
     devices = PSY.get_components(device, sys)
-   
+
     if validate_available_devices(devices, device)
         return
     end
 
-    parameters = get(kwargs, :parameters, true)                                             
+    parameters = get(kwargs, :parameters, true)
 
     #Variables
-    activepower_variables(ps_m, devices, lookahead)
+    activepower_variables(ps_m, devices, time_steps)
 
     #Constraints
-    if forecast 
+    if forecast
         first_step = collect(PSY.get_forecast_issue_times(sys))[1]
         forecasts = Vector{PSY.Deterministic{L}}(PSY.get_forecasts(sys, first_step, devices))
-        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, lookahead, parameters)
+        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, time_steps, parameters)
     else
-        activepower_constraints(ps_m, devices, device_formulation, system_formulation, lookahead, parameters)
+        activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_steps, parameters)
     end
 
     #Cost Function
@@ -87,7 +87,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{StaticPowerLoad},
                                         system_formulation::Type{S},
                                         sys::PSY.System,
-                                        lookahead::UnitRange{Int64},
+                                        time_steps::UnitRange{Int64},
                                         resolution::Dates.Period;
                                         kwargs...) where {L <: PSY.ElectricLoad,
                                                           S <: PM.AbstractPowerFormulation}
@@ -95,20 +95,20 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     forecast = get(kwargs, :forecast, true)
 
     devices = PSY.get_components(device, sys)
-    
+
     if validate_available_devices(devices, device)
         return
     end
 
     parameters = get(kwargs, :parameters, true)
 
-    if forecast 
+    if forecast
         first_step = collect(PSY.get_forecast_issue_times(sys))[1]
         forecasts = Vector{PSY.Deterministic{L}}(PSY.get_forecasts(sys, first_step, devices))
-        nodal_expression(ps_m, forecasts, system_formulation, lookahead, parameters)
+        nodal_expression(ps_m, forecasts, system_formulation, time_steps, parameters)
     else
-        nodal_expression(ps_m, devices, system_formulation, lookahead, parameters)
-    end   
+        nodal_expression(ps_m, devices, system_formulation, time_steps, parameters)
+    end
 
     return
 
@@ -119,23 +119,23 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
                                         sys::PSY.System,
-                                        lookahead::UnitRange{Int64},
+                                        time_steps::UnitRange{Int64},
                                         resolution::Dates.Period;
                                         kwargs...) where {L <: PSY.StaticLoad,
                                                           D <: AbstractControllablePowerLoadForm,
                                                           S <: PM.AbstractPowerFormulation}
 
     if device_formulation != StaticPowerLoad
-        @warn("The Formulation $(D) only applies to Controllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad")                                              
+        @warn("The Formulation $(D) only applies to Controllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad")
     end
 
-    _internal_device_constructor!(ps_m, 
+    _internal_device_constructor!(ps_m,
                                   device,
                                   StaticPowerLoad,
                                   system_formulation,
                                   sys,
-                                  lookahead,
-                                  resolution; 
+                                  time_steps,
+                                  resolution;
                                   kwargs...)
 
-end    
+end

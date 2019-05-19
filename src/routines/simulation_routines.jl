@@ -89,7 +89,7 @@ function run_simulations(simulation::PowerSimulationsModel{S}, solver, ps_dict::
             @warn "Problem solve unsuccessful, solver returned with status: $status"
         end
 
-        # TODO: Subset model results when a lookahead is provided
+        # TODO: Subset model results when a time_steps is provided
 
         # extract results
         res = get_model_result(tmp_model)

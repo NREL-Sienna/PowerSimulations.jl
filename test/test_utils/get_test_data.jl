@@ -1,4 +1,4 @@
-lookahead = 1:24
+time_steps = 1:24
 
 base_dir = string(dirname(dirname(pathof(PowerSystems))));
 DATA_DIR = joinpath(base_dir, "data")
@@ -24,7 +24,7 @@ c_sys5_re = PSY.System(sys5_re)
 sys5_bat = PSY._System(nodes5, thermal_generators5, loads5, branches5, battery5,  100.0, forecasts5, nothing, nothing);
 c_sys5_bat = PSY.System(sys5_bat)
 
-# RTS Data 
+# RTS Data
 RTS_GMLC_DIR = joinpath(DATA_DIR, "RTS_GMLC")
 cdm_dict = PSY.csv2ps_dict(RTS_GMLC_DIR, 100.0);
 sys_rts = PSY._System(cdm_dict);

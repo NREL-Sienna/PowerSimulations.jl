@@ -10,18 +10,18 @@ struct VoltageSourceDC <: AbstractDCLineForm end
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
                         devices::Array{B,1},
-                        lookahead::UnitRange{Int64}) where {B <: PSY.DCBranch,
+                        time_steps::UnitRange{Int64}) where {B <: PSY.DCBranch,
                                                              S <: PM.AbstractPowerFormulation}
 
-    add_variable(ps_m, 
-                 devices, 
-                 lookahead, 
-                 Symbol("Fbr_to_$(B)"), 
+    add_variable(ps_m,
+                 devices,
+                 time_steps,
+                 Symbol("Fbr_to_$(B)"),
                  false)
-    add_variable(ps_m, 
-                 devices, 
-                 lookahead, 
-                 Symbol("Fbr_fr_$(B)"),  
+    add_variable(ps_m,
+                 devices,
+                 time_steps,
+                 Symbol("Fbr_fr_$(B)"),
                  false)
 
 end
