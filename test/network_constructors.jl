@@ -305,34 +305,13 @@ end
         construct_device!(ps_model, thermal_model, network, c_sys5, lookahead, Dates.Minute(5));
         construct_device!(ps_model, load_model, network, c_sys5, lookahead, Dates.Minute(5));
         construct_network!(ps_model, network, c_sys5, lookahead);
-        JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
-        JuMP.optimize!(ps_model.JuMPmodel)
-        @test termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
-
-        ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, network, lookahead; parameters = false)
-        construct_device!(ps_model, thermal_model, network, c_sys5, lookahead, Dates.Minute(5); parameters = false)
-        construct_device!(ps_model, load_model, network, c_sys5, lookahead, Dates.Minute(5); parameters = false)
-        construct_network!(ps_model, network, c_sys5, lookahead);
-        JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
-        JuMP.optimize!(ps_model.JuMPmodel)
-        @test termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
-
+        @test !isnothing(ps_model.pm_model)
         #14 Bus Testing
         ps_model = PSI._canonical_model_init(bus_numbers14, ipopt_optimizer, network, lookahead)
         construct_device!(ps_model, thermal_model, network, c_sys14, lookahead, Dates.Hour(1));
         construct_device!(ps_model, load_model, network, c_sys14, lookahead, Dates.Hour(1));
         construct_network!(ps_model, network, c_sys14, lookahead);
-        JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
-        JuMP.optimize!(ps_model.JuMPmodel)
-        @test termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
-
-        ps_model = PSI._canonical_model_init(bus_numbers14, ipopt_optimizer, network, lookahead; parameters = false)
-        construct_device!(ps_model, thermal_model, network, c_sys14, lookahead, Dates.Hour(1); parameters = false)
-        construct_device!(ps_model, load_model, network, c_sys14, lookahead, Dates.Hour(1); parameters = false)
-        construct_network!(ps_model, network, c_sys14, lookahead);
-        JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
-        JuMP.optimize!(ps_model.JuMPmodel)
-        @test termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        @test !isnothing(ps_model.pm_model)
     end
 
 end
@@ -349,27 +328,10 @@ end
         JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
         JuMP.optimize!(ps_model.JuMPmodel)
         @test termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
-
-        ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, network, lookahead; parameters = false)
-        construct_device!(ps_model, thermal_model, network, c_sys5, lookahead, Dates.Minute(5); parameters = false)
-        construct_device!(ps_model, load_model, network, c_sys5, lookahead, Dates.Minute(5); parameters = false)
-        construct_network!(ps_model, network, c_sys5, lookahead);
-        JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
-        JuMP.optimize!(ps_model.JuMPmodel)
-        @test termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
-
         #14 Bus Testing
         ps_model = PSI._canonical_model_init(bus_numbers14, ipopt_optimizer, network, lookahead)
         construct_device!(ps_model, thermal_model, network, c_sys14, lookahead, Dates.Hour(1));
         construct_device!(ps_model, load_model, network, c_sys14, lookahead, Dates.Hour(1));
-        construct_network!(ps_model, network, c_sys14, lookahead);
-        JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
-        JuMP.optimize!(ps_model.JuMPmodel)
-        @test termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
-
-        ps_model = PSI._canonical_model_init(bus_numbers14, ipopt_optimizer, network, lookahead; parameters = false)
-        construct_device!(ps_model, thermal_model, network, c_sys14, lookahead, Dates.Hour(1); parameters = false)
-        construct_device!(ps_model, load_model, network, c_sys14, lookahead, Dates.Hour(1); parameters = false)
         construct_network!(ps_model, network, c_sys14, lookahead);
         JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
         JuMP.optimize!(ps_model.JuMPmodel)
@@ -390,34 +352,13 @@ end
         construct_device!(ps_model, thermal_model, network, c_sys5, lookahead, Dates.Minute(5));
         construct_device!(ps_model, load_model, network, c_sys5, lookahead, Dates.Minute(5));
         construct_network!(ps_model, network, c_sys5, lookahead);
-        JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
-        JuMP.optimize!(ps_model.JuMPmodel)
-        @test termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
-
-        ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, network, lookahead; parameters = false)
-        construct_device!(ps_model, thermal_model, network, c_sys5, lookahead, Dates.Minute(5); parameters = false)
-        construct_device!(ps_model, load_model, network, c_sys5, lookahead, Dates.Minute(5); parameters = false)
-        construct_network!(ps_model, network, c_sys5, lookahead);
-        JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
-        JuMP.optimize!(ps_model.JuMPmodel)
-        @test termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
-
+        @test !isnothing(ps_model.pm_model)
         #14 Bus Testing
         ps_model = PSI._canonical_model_init(bus_numbers14, ipopt_optimizer, network, lookahead)
         construct_device!(ps_model, thermal_model, network, c_sys14, lookahead, Dates.Hour(1));
         construct_device!(ps_model, load_model, network, c_sys14, lookahead, Dates.Hour(1));
         construct_network!(ps_model, network, c_sys14, lookahead);
-        JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
-        JuMP.optimize!(ps_model.JuMPmodel)
-        @test termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
-
-        ps_model = PSI._canonical_model_init(bus_numbers14, ipopt_optimizer, network, lookahead; parameters = false)
-        construct_device!(ps_model, thermal_model, network, c_sys14, lookahead, Dates.Hour(1); parameters = false)
-        construct_device!(ps_model, load_model, network, c_sys14, lookahead, Dates.Hour(1); parameters = false)
-        construct_network!(ps_model, network, c_sys14, lookahead);
-        JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
-        JuMP.optimize!(ps_model.JuMPmodel)
-        @test termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        @test !isnothing(ps_model.pm_model)
     end
 
 end
