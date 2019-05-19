@@ -294,7 +294,7 @@ end
 end
 
 @testset  "Network AC-PF PowerModels non-convex models" begin
-    networks = [PM.StandardACPForm, 
+    networks = [#PM.StandardACPForm, Already tested
                 PM.StandardACRForm, 
                 PM.StandardACTForm
                 ]           
