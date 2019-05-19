@@ -389,7 +389,7 @@ end
 ##################################### renewable generation cost ######################################
 
 function cost_function(ps_m::CanonicalModel,
-                       devices::PSY.FlattenedVectorsIterator{PSY.RenewableCurtailment},
+                       devices::PSY.FlattenedVectorsIterator{PSY.RenewableDispatch},
                        device_formulation::Type{D},
                        system_formulation::Type{S},
                        resolution::Dates.Period) where {D <: AbstractRenewableDispatchForm,
@@ -398,7 +398,7 @@ function cost_function(ps_m::CanonicalModel,
     add_to_cost(ps_m,
                 devices,
                 resolution,
-                Symbol("Pre_RenewableCurtailment"),
+                Symbol("Pre_RenewableDispatch"),
                 :curtailpenalty,
                 -1)
 

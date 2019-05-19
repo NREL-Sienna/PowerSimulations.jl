@@ -1,7 +1,7 @@
 @testset "Renewable data misspecification" begin
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
-    warn_message = "The data doesn't devices of type RenewableCurtailment, consider changing the device models"
-    model = DeviceModel(PSY.RenewableCurtailment, PSI.RenewableFullDispatch)
+    warn_message = "The data doesn't devices of type RenewableDispatch, consider changing the device models"
+    model = DeviceModel(PSY.RenewableDispatch, PSI.RenewableFullDispatch)
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps,)
     @test_logs (:warn, warn_message) construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5, time_steps, Dates.Minute(5); parameters = true);
     ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps)
@@ -9,7 +9,7 @@
 end
 
 @testset "Renewable DCPLossLess FullDispatch" begin
-    model = DeviceModel(PSY.RenewableCurtailment, PSI.RenewableFullDispatch)
+    model = DeviceModel(PSY.RenewableDispatch, PSI.RenewableFullDispatch)
     #5 Bus testing
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5_re, time_steps, Dates.Minute(5));
@@ -56,11 +56,11 @@ end
 
 @testset "Renewable ACPPower Full Dispatch (Broken, Missing data)" begin
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps)
-    #construct_device!(ps_model, PSY.RenewableCurtailment, PSI.RenewableFullDispatch, PM.StandardACPForm, c_sys5_re, time_steps, Dates.Minute(5));
+    #construct_device!(ps_model, PSY.RenewableDispatch, PSI.RenewableFullDispatch, PM.StandardACPForm, c_sys5_re, time_steps, Dates.Minute(5));
 end
 
 @testset "Renewable DCPLossLess ConstantPowerFactor" begin
-    model = DeviceModel(PSY.RenewableCurtailment, PSI.RenewableConstantPowerFactor)
+    model = DeviceModel(PSY.RenewableDispatch, PSI.RenewableConstantPowerFactor)
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5_re, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 72
@@ -105,7 +105,7 @@ end
 end
 
 @testset "Renewable ACP ConstantPowerFactor" begin
-    model = DeviceModel(PSY.RenewableCurtailment, PSI.RenewableConstantPowerFactor)
+    model = DeviceModel(PSY.RenewableDispatch, PSI.RenewableConstantPowerFactor)
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys5_re, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 144
@@ -150,7 +150,7 @@ end
 end
 
 @testset "Renewable DCPLossLess FixedOutput" begin
-    model = DeviceModel(PSY.RenewableCurtailment, PSI.RenewableFixed)
+    model = DeviceModel(PSY.RenewableDispatch, PSI.RenewableFixed)
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5_re, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 0
@@ -183,7 +183,7 @@ end
 end
 
 @testset "Renewable ACP FixedOutput" begin
-    model = DeviceModel(PSY.RenewableCurtailment, PSI.RenewableFixed)
+    model = DeviceModel(PSY.RenewableDispatch, PSI.RenewableFixed)
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys5_re, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 0
