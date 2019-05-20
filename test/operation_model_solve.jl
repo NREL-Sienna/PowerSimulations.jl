@@ -1,5 +1,5 @@
 @testset "Solving ED with CopperPlate" begin
-    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.StandardThermal, PSI.ThermalDispatch),
+    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch),
                                         :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
     branches = Dict{Symbol, DeviceModel}()
     services = Dict{Symbol, PSI.ServiceModel}()
@@ -27,7 +27,7 @@
 end
 
 @testset "Solving ED with PTDF Models" begin
-    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.StandardThermal, PSI.ThermalDispatch),
+    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch),
                                         :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
     branches = Dict{Symbol, DeviceModel}()
     services = Dict{Symbol, PSI.ServiceModel}()
@@ -52,7 +52,7 @@ end
 
 
 @testset "Solving ED With PowerModels Networks" begin
-    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.StandardThermal, PSI.ThermalDispatch),
+    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch),
                                         :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
     branches5 = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.ACSeriesBranch))
     branches14 = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.ACSeriesBranch),
@@ -91,7 +91,7 @@ end
 end
 
 @testset "Solving UC Linear Networks" begin
-    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.StandardThermal, PSI.ThermalUnitCommitment),
+    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalUnitCommitment),
                                         :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
     branches5 = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.ACSeriesBranch))
     branches14 = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.ACSeriesBranch),

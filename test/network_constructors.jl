@@ -1,4 +1,4 @@
-thermal_model = DeviceModel(PSY.StandardThermal, PSI.ThermalDispatch)
+thermal_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch)
 load_model = DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad)
 line_model = DeviceModel(PSY.Line, PSI.ACSeriesBranch)
 transformer_model = DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch)
