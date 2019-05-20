@@ -1,5 +1,5 @@
 @testset "Operation Model kwargs with CopperPlatePowerModel base" begin
-    thermal_model = DeviceModel(PSY.StandardThermal, PSI.ThermalDispatch)
+    thermal_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch)
     load_model = DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad)
     line_model = DeviceModel(PSY.Line, PSI.ACSeriesBranch)
     devices = Dict{Symbol, DeviceModel}(:Generators => thermal_model, :Loads =>  load_model)
@@ -94,7 +94,7 @@ end
 
     for net in networks, thermal in thermal_gens, system in systems
         @testset "Operation Model $(net) - $(thermal) - $(system)" begin
-            thermal_model = DeviceModel(PSY.StandardThermal, thermal)
+            thermal_model = DeviceModel(PSY.ThermalStandard, thermal)
             devices = Dict{Symbol, DeviceModel}(:Generators => thermal_model, :Loads =>  load_model)
             branches = Dict{Symbol, DeviceModel}(:Lines => line_model)
             services = Dict{Symbol, PSI.ServiceModel}()
@@ -140,7 +140,7 @@ end
 
     for net in networks, thermal in thermal_gens, system in systems
         @testset "Operation Model $(net) - $(thermal) - $(system)" begin
-            thermal_model = DeviceModel(PSY.StandardThermal, thermal)
+            thermal_model = DeviceModel(PSY.ThermalStandard, thermal)
             devices = Dict{Symbol, DeviceModel}(:Generators => thermal_model, :Loads =>  load_model)
             branches = Dict{Symbol, DeviceModel}(:Lines => line_model)
             services = Dict{Symbol, PSI.ServiceModel}()
@@ -183,9 +183,9 @@ end
                c_sys5_bat];
 
     renewable_curtailment_model = DeviceModel(PSY.RenewableDispatch, PSI.RenewableConstantPowerFactor)
-    thermal_model = DeviceModel(PSY.StandardThermal, PSI.ThermalDispatch)
+    thermal_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch)
     hvdc_model = DeviceModel(PSY.HVDCLine, PSI.DCSeriesBranch)
-    #hydro = DeviceModel(PSY.HydroCurtailment, PSI.HydroCurtailment)
+    #hydro = DeviceModel(PSY.HydroDispatch, PSI.HydroDispatch)
     transformer_model = DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch)
     tap_transformer_model = DeviceModel(PSY.TapTransformer, PSI.ACSeriesBranch)
     renewable_fix = DeviceModel(PSY.RenewableFix, PSI.RenewableFixed)
@@ -207,7 +207,7 @@ end
 
     for net in networks, thermal in thermal_gens, system in systems
         @testset "Operation Model $(net) - $(thermal) - $(system)" begin
-            thermal_model = DeviceModel(PSY.StandardThermal, thermal)
+            thermal_model = DeviceModel(PSY.ThermalStandard, thermal)
             devices = Dict{Symbol, DeviceModel}(:Generators => thermal_model, :Loads =>  load_model)
             branches = Dict{Symbol, DeviceModel}(:Lines => line_model, :Transformer)
             services = Dict{Symbol, PSI.ServiceModel}()
