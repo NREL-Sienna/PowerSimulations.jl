@@ -17,9 +17,9 @@ version = "0.5.4"
 
 [[CSV]]
 deps = ["CategoricalArrays", "DataFrames", "Dates", "Mmap", "Parsers", "PooledArrays", "Profile", "Tables", "Unicode", "WeakRefStrings"]
-git-tree-sha1 = "f64241c9688ae3eb003bce26ffd9ed863cfb824c"
+git-tree-sha1 = "557a6b534b1ffc40abf7ddf1c4dec3b37ef05959"
 uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-version = "0.5.2"
+version = "0.5.4"
 
 [[Calculus]]
 deps = ["Compat"]
@@ -216,9 +216,9 @@ version = "0.5.1"
 
 [[PowerModels]]
 deps = ["InfrastructureModels", "JSON", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento", "SparseArrays"]
-git-tree-sha1 = "07ab528b4c9316a17cdd8d207f260c11efa6688d"
+git-tree-sha1 = "9c07197b4a3abaf532c584ada66d7b3eab2249c3"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
-version = "0.10.0"
+version = "0.10.1"
 
 [[PowerSystems]]
 deps = ["AxisArrays", "CSV", "DataFrames", "Dates", "InteractiveUtils", "JSON", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "YAML"]
