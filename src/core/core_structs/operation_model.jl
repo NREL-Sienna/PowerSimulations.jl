@@ -21,7 +21,7 @@ mutable struct OperationModel{M <: AbstractOperationsModel}
                                 kwargs...) where {M <: AbstractOperationsModel,
                                                   T <: PM.AbstractPowerFormulation}
 
-        resolution = collect(keys(sys.forecasts))[1][1]
+        resolution = sys.forecasts.resolution
 
         ps_model = build_canonical_model(model_ref.transmission,
                                          model_ref.devices,

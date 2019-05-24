@@ -26,8 +26,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     #Constraints
     if forecast
-        first_step = collect(PSY.get_forecast_issue_times(sys))[1]
-        forecasts = Vector{PSY.Deterministic{L}}(PSY.get_forecasts(sys, first_step, devices))
+        first_step = PSY.get_forecasts_initial_time(sys)
+        forecasts = collect(PSY.get_forecasts(PSY.Deterministic{L}, sys, PSY.get_forecasts_initial_time(sys)))
         activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, time_steps, parameters)
     else
         activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_steps, parameters)
@@ -68,7 +68,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     #Constraints
     if forecast
-        first_step = collect(PSY.get_forecast_issue_times(sys))[1]
+        first_step = PSY.get_forecasts_initial_time(sys)
         forecasts = Vector{PSY.Deterministic{L}}(PSY.get_forecasts(sys, first_step, devices))
         activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, time_steps, parameters)
     else
@@ -103,8 +103,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     parameters = get(kwargs, :parameters, true)
 
     if forecast
-        first_step = collect(PSY.get_forecast_issue_times(sys))[1]
-        forecasts = Vector{PSY.Deterministic{L}}(PSY.get_forecasts(sys, first_step, devices))
+        first_step = PSY.get_forecasts_initial_time(sys)
+        forecasts = collect(PSY.get_forecasts(PSY.Deterministic{L}, sys, PSY.get_forecasts_initial_time(sys)))
         nodal_expression(ps_m, forecasts, system_formulation, time_steps, parameters)
     else
         nodal_expression(ps_m, devices, system_formulation, time_steps, parameters)
