@@ -86,8 +86,8 @@ function  build_canonical_model(transmission::Type{T},
     forecast = get(kwargs, :forecast, true)
 
     if forecast
-        first_key = collect(keys(sys.forecasts))[1]
-        horizon = length(sys.forecasts[first_key][1])
+        first_key = PSY.get_forecasts_initial_time(sys)
+        horizon = PSY.get_forecasts_horizon(sys)
         time_steps = 1:horizon
     else
         time_steps = 1:1
