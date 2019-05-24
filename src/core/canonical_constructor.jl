@@ -1,5 +1,5 @@
 
-function _container_spec(V::DataType, ax...; kwargs...)
+function _make_container_array(V::DataType, ax...; kwargs...)
 
     parameters = get(kwargs, :parameters, true)
 
@@ -27,13 +27,30 @@ function _container_spec(V::DataType, ax...; kwargs...)
 
 end
 
+function _make_expressions_dict(transmission::Type{S},
+                                V::DataType,
+                                bus_numbers::Vector{Int64},
+                                time_steps::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractPowerFormulation}
+
+    return Dict{Symbol, JuMP.Containers.DenseAxisArray}(:nodal_balance_active =>  _make_container_array(V, bus_numbers, time_steps; kwargs...),
+                                                        :nodal_balance_reactive => _make_container_array(V, bus_numbers, time_steps; kwargs...))
+end
+
+function _make_expressions_dict(transmission::Type{S},
+                                V::DataType,
+                                bus_numbers::Vector{Int64},
+                                time_steps::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
+
+    return Dict{Symbol, JuMP.Containers.DenseAxisArray}(:nodal_balance_active => _make_container_array(V, bus_numbers, time_steps; kwargs...))
+end
+
+
 function _canonical_model_init(bus_numbers::Vector{Int64},
                               optimizer::Union{Nothing,JuMP.OptimizerFactory},
                               transmission::Type{S},
                               time_steps::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     parameters = get(kwargs, :parameters, true)
-
     jump_model = _pass_abstract_jump(optimizer; kwargs...)
     V = JuMP.variable_type(jump_model)
 
@@ -41,8 +58,7 @@ function _canonical_model_init(bus_numbers::Vector{Int64},
                             Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                             Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                             zero(JuMP.GenericAffExpr{Float64, V}),
-                            Dict{Symbol, JuMP.Containers.DenseAxisArray}(:nodal_balance_active => _container_spec(V, bus_numbers, time_steps; kwargs...),
-                                                                         :nodal_balance_reactive => _container_spec(V, bus_numbers, time_steps; kwargs...)),
+                            _make_expressions_dict(transmission, V, bus_numbers, time_steps; kwargs...),
                             parameters ? Dict{Symbol,JuMP.Containers.DenseAxisArray}() : nothing,
                             Dict{Symbol,Array{InitialCondition}}(),
                             nothing);
@@ -54,7 +70,7 @@ end
 function _canonical_model_init(bus_numbers::Vector{Int64},
                                optimizer::Union{Nothing,JuMP.OptimizerFactory},
                                transmission::Type{S},
-                               time_steps::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
+                               time_steps::UnitRange{Int64}; kwargs...) where {S <: Union{StandardPTDFForm, CopperPlatePowerModel}}
 
     parameters = get(kwargs, :parameters, true)
     jump_model = _pass_abstract_jump(optimizer; kwargs...)
@@ -64,7 +80,7 @@ function _canonical_model_init(bus_numbers::Vector{Int64},
                               Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                               Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                               zero(JuMP.GenericAffExpr{Float64, V}),
-                              Dict{Symbol, JuMP.Containers.DenseAxisArray}(:nodal_balance_active => _container_spec(V, bus_numbers, time_steps; kwargs...)),
+                              _make_expressions_dict(transmission, V, bus_numbers, time_steps; kwargs...),
                               parameters ? Dict{Symbol,JuMP.Containers.DenseAxisArray}() : nothing,
                               Dict{Symbol,Array{InitialCondition}}(),
                               nothing);
@@ -102,13 +118,13 @@ function  build_canonical_model(transmission::Type{T},
         construct_device!(ps_model, mod[2], transmission, sys, time_steps, resolution; kwargs...)
     end
 
-    # Build Network
-    construct_network!(ps_model, transmission, sys, time_steps; kwargs...)
-
     # Build Branches
     for mod in branches
         construct_device!(ps_model, mod[2], transmission, sys, time_steps, resolution; kwargs...)
     end
+
+    # Build Network
+    construct_network!(ps_model, transmission, sys, time_steps; kwargs...)
 
     #Build Service
     for mod in services
