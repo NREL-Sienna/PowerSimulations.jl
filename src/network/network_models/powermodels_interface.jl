@@ -27,8 +27,8 @@ function post_nip(pm::PM.GenericPowerModel)
         @assert !PM.ismulticonductor(pm, nw=n)
         PM.variable_voltage(pm, nw=n)
         variable_net_injection(pm, nw=n)
-        PM.variable_branch_flow(pm, nw=n)#, bounded=false)
-        PM.variable_dcline_flow(pm, nw=n)
+        #PM.variable_branch_flow(pm, nw=n)#, bounded=false)
+        #PM.variable_dcline_flow(pm, nw=n)
 
         PM.constraint_voltage(pm, nw=n)
 
@@ -70,8 +70,8 @@ function post_nip_expr(pm::PM.GenericPowerModel)
     for (n, network) in PM.nws(pm)
         @assert !PM.ismulticonductor(pm, nw=n)
         PM.variable_voltage(pm, nw=n)
-        PM.variable_branch_flow(pm, nw=n)#, bounded=false)
-        PM.variable_dcline_flow(pm, nw=n)
+        #PM.variable_branch_flow(pm, nw=n)#, bounded=false)
+        #PM.variable_dcline_flow(pm, nw=n)
 
         PM.constraint_voltage(pm, nw=n)
 

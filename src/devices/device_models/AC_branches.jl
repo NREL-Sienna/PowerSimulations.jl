@@ -25,7 +25,7 @@ function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
                         devices::PSY.FlattenedVectorsIterator{B},
                         time_steps::UnitRange{Int64}) where {B <: PSY.ACBranch,
-                                                             S <: PM.DCPlosslessForm}
+                                                             S <: StandardPTDFForm}
 
     add_variable(ps_m,
                  devices,
@@ -42,18 +42,37 @@ function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
                         devices::PSY.FlattenedVectorsIterator{B},
                         time_steps::UnitRange{Int64}) where {B <: PSY.ACBranch,
-                                                             S <: PM.AbstractDCPLLForm}
+                                                             S <: PM.AbstractActivePowerFormulation}
 
-    add_variable(ps_m,
-                 devices,
-                 time_steps,
-                 Symbol("Fbr_to_$(B)"),
-                 false)
-    add_variable(ps_m,
-                 devices,
-                 time_steps,
-                 Symbol("Fbr_fr_$(B)"),
-                 false)
+    pm_object = ps_m.pm_model
+    var_name_from = Symbol("Fbr_fr_$(B)")
+    var_name_to = Symbol("Fbr_to_$(B)") 
+    ps_m.variables[var_name_to] = _container_spec(ps_m.JuMPmodel, 
+                                                  (d.name for d in devices), 
+                                                  time_steps)    
+
+    ps_m.variables[var_name_from] = _container_spec(ps_m.JuMPmodel, 
+                                                    (d.name for d in devices), 
+                                                    time_steps)    
+
+    pm_index = PM.ref(pm_object, 1, :arcs)
+
+    for t in time_steps 
+        pm_array = _container_spec(ps_m.JuMPmodel, pm_index)
+        for (ix,d) in enumerate(devices)
+            ix, d.connectionpoints
+            bus_from = d.connectionpoints.from.number
+            bus_to = d.connectionpoints.to.number
+            pm_array[(ix, bus_from, bus_to)] = ps_m.variables[var_name_from][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                           base_name="$(var_name_from)($(bus_from),$(bus_to))_{$(d.name),$(t)}",
+                                                           start = 0.0)
+                                                           
+            pm_array[(ix, bus_to, bus_from)] = ps_m.variables[var_name_to][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                            base_name="$(var_name_to)($(bus_to),$(bus_from))_{$(d.name),$(t)}",
+                                                            start = 0.0)
+        end
+            PM.var(pm_object, t, 1)[:p] = pm_array
+    end                                                        
 
     return
 
