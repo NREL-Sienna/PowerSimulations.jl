@@ -143,13 +143,19 @@ function get_branches_to_pm(sys::PSY.System)
     return PM_ac_branches, PM_dc_branches
 end
 
-function get_buses_to_pm(buses::Array{PSY.Bus})
+function get_buses_to_pm(buses::PSY.FlattenedVectorsIterator{PSY.Bus})
     PM_buses = Dict{String,Any}()
     for bus in buses
         PM_bus = Dict{String,Any}(
         "zone"     => 1,
         "bus_i"    => bus.number,
-        "bus_type" => 2,
+        if bus.bustype == "PV"
+            "bus_type" => 1
+        elseif bus.bustype == "PQ"
+            "bus_type" => 2
+        elseif bus.bustype == "SF"
+            "bus_type" => 3
+        end,
         "vmax"     => bus.voltagelimits.max,
         "area"     => 1,
         "vmin"     => bus.voltagelimits.min,
@@ -162,7 +168,6 @@ function get_buses_to_pm(buses::Array{PSY.Bus})
         )
         PM_buses["$(bus.number)"] = PM_bus
     end
-    PM_buses["$(buses[1].number)"]["bus_type"] = 3
     return PM_buses
 end
 
