@@ -347,6 +347,10 @@ function powermodels_network!(ps_m::CanonicalModel,
         end
     end
 
+    psi_ref!(pm_object)
+
+    post_nip_expr!(pm_object)
+
     return
 
 end
