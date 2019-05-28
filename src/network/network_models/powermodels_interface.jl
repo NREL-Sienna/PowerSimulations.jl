@@ -96,11 +96,11 @@ end
 function build_nip_model(data::Dict{String,Any},
                          model_constructor;
                          multinetwork=true, kwargs...)
-    return PM.build_generic_model(data, model_constructor, post_nip; multinetwork=multinetwork, kwargs...)
+    return PM.build_generic_model(data, model_constructor, post_nip!; multinetwork=multinetwork, kwargs...)
 end
 
 ""
-function post_nip(pm::PM.GenericPowerModel)
+function post_nip!(pm::PM.GenericPowerModel)
     for (n, network) in PM.nws(pm)
         @assert !PM.ismulticonductor(pm, nw=n)
         PM.variable_voltage(pm, nw=n)
@@ -140,17 +140,14 @@ end
 
 ""
 function build_nip_expr_model(data::Dict{String,Any}, model_constructor; multinetwork=true, kwargs...)
-    return PM.build_generic_model(data, model_constructor, post_nip_expr; multinetwork=multinetwork, kwargs...)
+    return PM.build_generic_model(data, model_constructor, post_nip_expr!; multinetwork=multinetwork, kwargs...)
 end
 
 ""
-function post_nip_expr(pm::PM.GenericPowerModel)
+function post_nip_expr!(pm::PM.GenericPowerModel)
     for (n, network) in PM.nws(pm)
         @assert !PM.ismulticonductor(pm, nw=n)
         PM.variable_voltage(pm, nw=n)
-        PM.variable_branch_flow(pm, nw=n)#, bounded=false)
-        PM.variable_dcline_flow(pm, nw=n)
-
         PM.constraint_voltage(pm, nw=n)
 
         for i in PM.ids(pm, :ref_buses, nw=n)
@@ -333,20 +330,22 @@ function powermodels_network!(ps_m::CanonicalModel,
                               sys::PSY.System,
                               time_steps::UnitRange{Int64}) where {S <: PM.AbstractPowerFormulation}
 
-    pm_data = pass_to_pm(sys, time_steps[end])
-    buses = PSY.get_components(PSY.Bus, sys)
 
+    buses = PSY.get_components(PSY.Bus,sys)
+    pm_object = ps_m.pm_model
+    var = ps_m.pm_model.var
+    ref = ps_m.pm_model.ref
     _remove_undef!(ps_m.expressions[:nodal_balance_active])
     _remove_undef!(ps_m.expressions[:nodal_balance_reactive])
 
-    for t in time_steps, bus in buses
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions[:nodal_balance_active][bus.number,t]
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = ps_m.expressions[:nodal_balance_reactive][bus.number,t]
+    for t in time_steps
+        var[:nw][t][:cnd][1][:p] = JuMP.Containers.DenseAxisArray(var[:nw][t][:cnd][1][:p],ref[:nw][t][:arcs])
+        var[:nw][t][:cnd][1][:q] = JuMP.Containers.DenseAxisArray(var[:nw][t][:cnd][1][:q],ref[:nw][t][:arcs])
+        for bus in buses
+            pm_object.data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions[:nodal_balance_active][bus.number,t]
+            pm_object.data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = ps_m.expressions[:nodal_balance_reactive][bus.number,t]
+        end
     end
-
-    pm_f = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(pm_data, system_formulation; kwargs...)
-
-    ps_m.pm_model = build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
 
     return
 
@@ -358,19 +357,26 @@ function powermodels_network!(ps_m::CanonicalModel,
                               sys::PSY.System,
                               time_steps::UnitRange{Int64}) where {S <: PM.AbstractActivePowerFormulation}
 
-    pm_data = pass_to_pm(sys, time_steps[end])
-    buses = PSY.get_components(PSY.Bus, sys)
 
+    buses = PSY.get_components(PSY.Bus,sys)
+    pm_object = ps_m.pm_model
+    var = ps_m.pm_model.var
+    ref = ps_m.pm_model.ref
     _remove_undef!(ps_m.expressions[:nodal_balance_active])
 
-    for t in time_steps, bus in buses
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions[:nodal_balance_active][bus.number,t]
-        #pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
+    for t in time_steps
+        if !(S <: PM.DCPlosslessForm)
+            var[:nw][t][:cnd][1][:p] = JuMP.Containers.DenseAxisArray(var[:nw][t][:cnd][1][:p],ref[:nw][t][:arcs])
+        end
+        for bus in buses
+            pm_object.data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions[:nodal_balance_active][bus.number,t]
+            #pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
+        end
     end
 
-    pm_f = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
+    psi_ref!(pm_object)
 
-    ps_m.pm_model = build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
+    post_nip_expr!(pm_object)
 
     return
 

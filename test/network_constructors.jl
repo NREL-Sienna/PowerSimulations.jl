@@ -2,11 +2,14 @@ thermal_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch)
 load_model = DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad)
 line_model = DeviceModel(PSY.Line, PSI.ACSeriesBranch)
 transformer_model = DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch)
+ttransformer_model = DeviceModel(PSY.TapTransformer, PSI.ACSeriesBranch)
+buses5 = PSY.get_components(PSY.Bus, c_sys5)
+buses14 = PSY.get_components(PSY.Bus, c_sys14)
 
 @testset "Network Copper Plate" begin
     #5- Bus - Testing
     network = PSI.CopperPlatePowerModel
-    ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, network, time_steps)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, GLPK_optimizer, network, time_steps)
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys5, time_steps);
@@ -19,7 +22,7 @@ transformer_model = DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch)
     JuMP.optimize!(ps_model.JuMPmodel)
     @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
-    ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, network, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, GLPK_optimizer, network, time_steps; parameters = false)
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false);
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false);
     construct_network!(ps_model, network, c_sys5, time_steps; parameters = false);
@@ -33,7 +36,7 @@ transformer_model = DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch)
     @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
     #14- Bus - Testing
-    ps_model = PSI._canonical_model_init(bus_numbers14, GLPK_optimizer, network, time_steps)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, GLPK_optimizer, network, time_steps)
     construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1));
     construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1));
     construct_network!(ps_model, network, c_sys14, time_steps);
@@ -46,7 +49,7 @@ transformer_model = DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch)
     JuMP.optimize!(ps_model.JuMPmodel)
     @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
-    ps_model = PSI._canonical_model_init(bus_numbers14, GLPK_optimizer, network, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, GLPK_optimizer, network, time_steps; parameters = false)
     construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false);
     construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false);
     construct_network!(ps_model, network, c_sys14, time_steps; parameters = false);
@@ -63,7 +66,7 @@ end
 @testset "Network DC-PF with PTDF formulation" begin
     #5-Bus testing
     network = PSI.StandardPTDFForm
-    ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, network, time_steps)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, GLPK_optimizer, network, time_steps)
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys5, time_steps; PTDF = PTDF5)
@@ -78,7 +81,7 @@ end
 
     @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
-    ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, network, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, GLPK_optimizer, network, time_steps; parameters = false)
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false)
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false)
     construct_network!(ps_model, network, c_sys5, time_steps; PTDF = PTDF5, parameters = false)
@@ -94,7 +97,7 @@ end
     @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
     #14 Bus Testing
-    ps_model = PSI._canonical_model_init(bus_numbers14, GLPK_optimizer, network, time_steps)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, GLPK_optimizer, network, time_steps)
     construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1));
     construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1));
     construct_network!(ps_model, network, c_sys14, time_steps; PTDF = PTDF14)
@@ -109,7 +112,7 @@ end
 
     @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
-    ps_model = PSI._canonical_model_init(bus_numbers14, GLPK_optimizer, network, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, GLPK_optimizer, network, time_steps; parameters = false)
     construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false)
     construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false)
     construct_network!(ps_model, network, c_sys14, time_steps; PTDF = PTDF14, parameters = false)
@@ -125,7 +128,7 @@ end
     @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
     #PTDF input Error testing
-    ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, network, time_steps)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, GLPK_optimizer, network, time_steps)
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
     @test_throws ArgumentError construct_network!(ps_model, network, c_sys5, time_steps)
@@ -135,7 +138,7 @@ end
 @testset "Network DC-PF network with PowerModels DCPlosslessForm" begin
     #5 Bus Testing
     network = PM.DCPlosslessForm
-    ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, network, time_steps)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, GLPK_optimizer, network, time_steps)
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys5, time_steps);
@@ -149,7 +152,7 @@ end
 
     @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
-    ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, network, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, GLPK_optimizer, network, time_steps; parameters = false)
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false)
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false)
     construct_network!(ps_model, network, c_sys5, time_steps; parameters = false)
@@ -164,7 +167,7 @@ end
     @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
     #14 Bus Testing
-    ps_model = PSI._canonical_model_init(bus_numbers14, GLPK_optimizer, network, time_steps)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, GLPK_optimizer, network, time_steps)
     construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1));
     construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1));
     construct_network!(ps_model, network, c_sys14, time_steps);
@@ -178,7 +181,7 @@ end
 
     @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
-    ps_model = PSI._canonical_model_init(bus_numbers14, GLPK_optimizer, network, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, GLPK_optimizer, network, time_steps; parameters = false)
     construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false)
     construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false)
     construct_network!(ps_model, network, c_sys14, time_steps; parameters = false)
@@ -195,7 +198,7 @@ end
 
 @testset  "Network Solve AC-PF PowerModels StandardACPForm" begin
     network = PM.StandardACPForm
-    ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, network, time_steps)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, ipopt_optimizer, network, time_steps)
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys5, time_steps);
@@ -209,7 +212,7 @@ end
 
     @test termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
 
-    ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, network, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, ipopt_optimizer, network, time_steps; parameters = false)
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false)
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false)
     construct_network!(ps_model, network, c_sys5, time_steps);
@@ -224,7 +227,7 @@ end
     @test termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
 
     #14 Bus Testing
-    ps_model = PSI._canonical_model_init(bus_numbers14, ipopt_optimizer, network, time_steps)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, ipopt_optimizer, network, time_steps)
     construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1));
     construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1));
     construct_network!(ps_model, network, c_sys14, time_steps);
@@ -238,7 +241,7 @@ end
 
     @test termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
 
-    ps_model = PSI._canonical_model_init(bus_numbers14, ipopt_optimizer, network, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, ipopt_optimizer, network, time_steps; parameters = false)
     construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false)
     construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false)
     construct_network!(ps_model, network, c_sys14, time_steps);
@@ -257,7 +260,7 @@ end
     networks = [PM.DCPlosslessForm, PM.NFAForm]
     for network in networks
         @info "Testing $(network)"
-        ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, network, time_steps)
+        ps_model = PSI._canonical_model_init(buses5, 100.0, GLPK_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_network!(ps_model, network, c_sys5, time_steps);
@@ -265,7 +268,7 @@ end
         JuMP.optimize!(ps_model.JuMPmodel)
         @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
-        ps_model = PSI._canonical_model_init(bus_numbers5, GLPK_optimizer, network, time_steps; parameters = false)
+        ps_model = PSI._canonical_model_init(buses5, 100.0, GLPK_optimizer, network, time_steps; parameters = false)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false)
         construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false)
         construct_network!(ps_model, network, c_sys5, time_steps; parameters = false)
@@ -274,7 +277,7 @@ end
         @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
         #14 Bus Testing
-        ps_model = PSI._canonical_model_init(bus_numbers14, GLPK_optimizer, network, time_steps)
+        ps_model = PSI._canonical_model_init(buses14, 100.0, GLPK_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1));
         construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1));
         construct_network!(ps_model, network, c_sys14, time_steps);
@@ -282,7 +285,7 @@ end
         JuMP.optimize!(ps_model.JuMPmodel)
         @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
 
-        ps_model = PSI._canonical_model_init(bus_numbers14, GLPK_optimizer, network, time_steps; parameters = false)
+        ps_model = PSI._canonical_model_init(buses14, 100.0, GLPK_optimizer, network, time_steps; parameters = false)
         construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false)
         construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false)
         construct_network!(ps_model, network, c_sys14, time_steps; parameters = false)
@@ -301,13 +304,13 @@ end
 
     for network in networks
         @info "Testing $(network)"
-        ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, network, time_steps)
+        ps_model = PSI._canonical_model_init(buses5, 100.0, ipopt_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_network!(ps_model, network, c_sys5, time_steps);
         @test !isnothing(ps_model.pm_model)
         #14 Bus Testing
-        ps_model = PSI._canonical_model_init(bus_numbers14, ipopt_optimizer, network, time_steps)
+        ps_model = PSI._canonical_model_init(buses14, 100.0, ipopt_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1));
         construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1));
         construct_network!(ps_model, network, c_sys14, time_steps);
@@ -321,7 +324,7 @@ end
 
     for network in networks
         @info "Testing $(network)"
-        ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, network, time_steps)
+        ps_model = PSI._canonical_model_init(buses5, 100.0, ipopt_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_network!(ps_model, network, c_sys5, time_steps);
@@ -329,7 +332,7 @@ end
         JuMP.optimize!(ps_model.JuMPmodel)
         @test termination_status(ps_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
         #14 Bus Testing
-        ps_model = PSI._canonical_model_init(bus_numbers14, ipopt_optimizer, network, time_steps)
+        ps_model = PSI._canonical_model_init(buses14, 100.0, ipopt_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1));
         construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1));
         construct_network!(ps_model, network, c_sys14, time_steps);
@@ -348,13 +351,13 @@ end
 
     for network in networks
         @info "Testing $(network)"
-        ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, network, time_steps)
+        ps_model = PSI._canonical_model_init(buses5, 100.0, ipopt_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_network!(ps_model, network, c_sys5, time_steps);
         @test !isnothing(ps_model.pm_model)
         #14 Bus Testing
-        ps_model = PSI._canonical_model_init(bus_numbers14, ipopt_optimizer, network, time_steps)
+        ps_model = PSI._canonical_model_init(buses14, 100.0, ipopt_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1));
         construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1));
         construct_network!(ps_model, network, c_sys14, time_steps);
@@ -371,7 +374,7 @@ end
                     PM.SOCBFConicForm]
 
     for network in incompat_list
-        ps_model = PSI._canonical_model_init(bus_numbers5, ipopt_optimizer, network, time_steps)
+        ps_model = PSI._canonical_model_init(buses5, 100.0, ipopt_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
         @test_throws ArgumentError construct_network!(ps_model, network, c_sys5, time_steps);
