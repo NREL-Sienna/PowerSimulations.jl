@@ -12,6 +12,7 @@ buses14 = PSY.get_components(PSY.Bus, c_sys14)
     ps_model = PSI._canonical_model_init(buses5, 100.0, GLPK_optimizer, network, time_steps)
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, line_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys5, time_steps);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
@@ -25,6 +26,7 @@ buses14 = PSY.get_components(PSY.Bus, c_sys14)
     ps_model = PSI._canonical_model_init(buses5, 100.0, GLPK_optimizer, network, time_steps; parameters = false)
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false);
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false);
+    construct_device!(ps_model, line_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys5, time_steps; parameters = false);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
@@ -39,6 +41,9 @@ buses14 = PSY.get_components(PSY.Bus, c_sys14)
     ps_model = PSI._canonical_model_init(buses14, 100.0, GLPK_optimizer, network, time_steps)
     construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1));
     construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1));
+    construct_device!(ps_model, line_model, network, c_sys14, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, transformer_model, network, c_sys14, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, ttransformer_model, network, c_sys14, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys14, time_steps);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
@@ -52,6 +57,9 @@ buses14 = PSY.get_components(PSY.Bus, c_sys14)
     ps_model = PSI._canonical_model_init(buses14, 100.0, GLPK_optimizer, network, time_steps; parameters = false)
     construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false);
     construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false);
+    construct_device!(ps_model, line_model, network, c_sys14, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, transformer_model, network, c_sys14, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, ttransformer_model, network, c_sys14, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys14, time_steps; parameters = false);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
@@ -70,6 +78,7 @@ end
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys5, time_steps; PTDF = PTDF5)
+    construct_device!(ps_model, line_model, network, c_sys5, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 264
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
@@ -84,6 +93,7 @@ end
     ps_model = PSI._canonical_model_init(buses5, 100.0, GLPK_optimizer, network, time_steps; parameters = false)
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false)
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false)
+    construct_device!(ps_model, line_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys5, time_steps; PTDF = PTDF5, parameters = false)
     @test JuMP.num_variables(ps_model.JuMPmodel) == 264
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 120
@@ -100,6 +110,9 @@ end
     ps_model = PSI._canonical_model_init(buses14, 100.0, GLPK_optimizer, network, time_steps)
     construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1));
     construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1));
+    construct_device!(ps_model, line_model, network, c_sys14, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, transformer_model, network, c_sys14, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, ttransformer_model, network, c_sys14, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys14, time_steps; PTDF = PTDF14)
     @test JuMP.num_variables(ps_model.JuMPmodel) == 600
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 120
@@ -115,6 +128,9 @@ end
     ps_model = PSI._canonical_model_init(buses14, 100.0, GLPK_optimizer, network, time_steps; parameters = false)
     construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false)
     construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false)
+    construct_device!(ps_model, line_model, network, c_sys14, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, transformer_model, network, c_sys14, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, ttransformer_model, network, c_sys14, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys14, time_steps; PTDF = PTDF14, parameters = false)
     @test JuMP.num_variables(ps_model.JuMPmodel) == 600
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 120
@@ -141,6 +157,7 @@ end
     ps_model = PSI._canonical_model_init(buses5, 100.0, GLPK_optimizer, network, time_steps)
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, line_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys5, time_steps);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 384
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 144
@@ -155,6 +172,7 @@ end
     ps_model = PSI._canonical_model_init(buses5, 100.0, GLPK_optimizer, network, time_steps; parameters = false)
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false)
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false)
+    construct_device!(ps_model, line_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys5, time_steps; parameters = false)
     @test JuMP.num_variables(ps_model.JuMPmodel) == 384
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 144
@@ -170,6 +188,9 @@ end
     ps_model = PSI._canonical_model_init(buses14, 100.0, GLPK_optimizer, network, time_steps)
     construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1));
     construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1));
+    construct_device!(ps_model, line_model, network, c_sys14, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, transformer_model, network, c_sys14, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, ttransformer_model, network, c_sys14, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys14, time_steps);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 936
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 480
@@ -184,6 +205,9 @@ end
     ps_model = PSI._canonical_model_init(buses14, 100.0, GLPK_optimizer, network, time_steps; parameters = false)
     construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false)
     construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false)
+    construct_device!(ps_model, line_model, network, c_sys14, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, transformer_model, network, c_sys14, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, ttransformer_model, network, c_sys14, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys14, time_steps; parameters = false)
     @test JuMP.num_variables(ps_model.JuMPmodel) == 936
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 480
@@ -201,6 +225,7 @@ end
     ps_model = PSI._canonical_model_init(buses5, 100.0, ipopt_optimizer, network, time_steps)
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, line_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys5, time_steps);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 1056
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 144
@@ -215,6 +240,7 @@ end
     ps_model = PSI._canonical_model_init(buses5, 100.0, ipopt_optimizer, network, time_steps; parameters = false)
     construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false)
     construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false)
+    construct_device!(ps_model, line_model, network, c_sys5, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys5, time_steps);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 1056
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 144
@@ -230,6 +256,9 @@ end
     ps_model = PSI._canonical_model_init(buses14, 100.0, ipopt_optimizer, network, time_steps)
     construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1));
     construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1));
+    construct_device!(ps_model, line_model, network, c_sys14, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, transformer_model, network, c_sys14, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, ttransformer_model, network, c_sys14, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys14, time_steps);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 2832
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 480
@@ -244,6 +273,9 @@ end
     ps_model = PSI._canonical_model_init(buses14, 100.0, ipopt_optimizer, network, time_steps; parameters = false)
     construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false)
     construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false)
+    construct_device!(ps_model, line_model, network, c_sys14, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, transformer_model, network, c_sys14, time_steps, Dates.Minute(5));
+    construct_device!(ps_model, ttransformer_model, network, c_sys14, time_steps, Dates.Minute(5));
     construct_network!(ps_model, network, c_sys14, time_steps);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 2832
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 480
@@ -263,6 +295,7 @@ end
         ps_model = PSI._canonical_model_init(buses5, 100.0, GLPK_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
+        construct_device!(ps_model, line_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_network!(ps_model, network, c_sys5, time_steps);
         JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
         JuMP.optimize!(ps_model.JuMPmodel)
@@ -271,6 +304,7 @@ end
         ps_model = PSI._canonical_model_init(buses5, 100.0, GLPK_optimizer, network, time_steps; parameters = false)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false)
         construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5); parameters = false)
+        construct_device!(ps_model, line_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_network!(ps_model, network, c_sys5, time_steps; parameters = false)
         JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
         JuMP.optimize!(ps_model.JuMPmodel)
@@ -280,6 +314,9 @@ end
         ps_model = PSI._canonical_model_init(buses14, 100.0, GLPK_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1));
         construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1));
+        construct_device!(ps_model, line_model, network, c_sys14, time_steps, Dates.Minute(5));
+        construct_device!(ps_model, transformer_model, network, c_sys14, time_steps, Dates.Minute(5));
+        construct_device!(ps_model, ttransformer_model, network, c_sys14, time_steps, Dates.Minute(5));
         construct_network!(ps_model, network, c_sys14, time_steps);
         JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
         JuMP.optimize!(ps_model.JuMPmodel)
@@ -288,6 +325,9 @@ end
         ps_model = PSI._canonical_model_init(buses14, 100.0, GLPK_optimizer, network, time_steps; parameters = false)
         construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false)
         construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1); parameters = false)
+        construct_device!(ps_model, line_model, network, c_sys14, time_steps, Dates.Minute(5));
+        construct_device!(ps_model, transformer_model, network, c_sys14, time_steps, Dates.Minute(5));
+        construct_device!(ps_model, ttransformer_model, network, c_sys14, time_steps, Dates.Minute(5));
         construct_network!(ps_model, network, c_sys14, time_steps; parameters = false)
         JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
         JuMP.optimize!(ps_model.JuMPmodel)
@@ -307,12 +347,16 @@ end
         ps_model = PSI._canonical_model_init(buses5, 100.0, ipopt_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
+        construct_device!(ps_model, line_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_network!(ps_model, network, c_sys5, time_steps);
         @test !isnothing(ps_model.pm_model)
         #14 Bus Testing
         ps_model = PSI._canonical_model_init(buses14, 100.0, ipopt_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1));
         construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1));
+        construct_device!(ps_model, line_model, network, c_sys14, time_steps, Dates.Minute(5));
+        construct_device!(ps_model, transformer_model, network, c_sys14, time_steps, Dates.Minute(5));
+        construct_device!(ps_model, ttransformer_model, network, c_sys14, time_steps, Dates.Minute(5));
         construct_network!(ps_model, network, c_sys14, time_steps);
         @test !isnothing(ps_model.pm_model)
     end
@@ -327,6 +371,7 @@ end
         ps_model = PSI._canonical_model_init(buses5, 100.0, ipopt_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
+        construct_device!(ps_model, line_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_network!(ps_model, network, c_sys5, time_steps);
         JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
         JuMP.optimize!(ps_model.JuMPmodel)
@@ -335,6 +380,9 @@ end
         ps_model = PSI._canonical_model_init(buses14, 100.0, ipopt_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1));
         construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1));
+        construct_device!(ps_model, line_model, network, c_sys14, time_steps, Dates.Minute(5));
+        construct_device!(ps_model, transformer_model, network, c_sys14, time_steps, Dates.Minute(5));
+        construct_device!(ps_model, ttransformer_model, network, c_sys14, time_steps, Dates.Minute(5));
         construct_network!(ps_model, network, c_sys14, time_steps);
         JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
         JuMP.optimize!(ps_model.JuMPmodel)
@@ -354,12 +402,16 @@ end
         ps_model = PSI._canonical_model_init(buses5, 100.0, ipopt_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_device!(ps_model, load_model, network, c_sys5, time_steps, Dates.Minute(5));
+        construct_device!(ps_model, line_model, network, c_sys5, time_steps, Dates.Minute(5));
         construct_network!(ps_model, network, c_sys5, time_steps);
         @test !isnothing(ps_model.pm_model)
         #14 Bus Testing
         ps_model = PSI._canonical_model_init(buses14, 100.0, ipopt_optimizer, network, time_steps)
         construct_device!(ps_model, thermal_model, network, c_sys14, time_steps, Dates.Hour(1));
         construct_device!(ps_model, load_model, network, c_sys14, time_steps, Dates.Hour(1));
+        construct_device!(ps_model, line_model, network, c_sys14, time_steps, Dates.Minute(5));
+        construct_device!(ps_model, transformer_model, network, c_sys14, time_steps, Dates.Minute(5));
+        construct_device!(ps_model, ttransformer_model, network, c_sys14, time_steps, Dates.Minute(5));
         construct_network!(ps_model, network, c_sys14, time_steps);
         @test !isnothing(ps_model.pm_model)
     end
