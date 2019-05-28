@@ -53,7 +53,7 @@ function _powermodels_object_init(transmission::Type{S},
                                  base_power::Float64,
                                  time_steps::UnitRange{Int64},
                                  jump_model::JuMP.Model,
-                                 V::DataType) where {S <: PM.AbstractPowerFormulation}
+                                 V::DataType; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     is_activepower_only = (S <: PM.AbstractActivePowerFormulation)
     is_lossless_model = (S <: PM.DCPlosslessForm)
