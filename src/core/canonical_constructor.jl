@@ -72,7 +72,8 @@ function _powermodels_object_init(transmission::Type{S},
 
     PM_data_dict = PM.replicate(PM_data_dict,time_steps[end]);
 
-    ext = Dict{Symbol,Any}(:arc_ix => 0) # counter for PowerModels Archs
+    ext = Dict{Symbol,Any}(:arc_ix => 0,    # counter for AC Branch PowerModels Archs
+                           :dc_arc_ix => 0) # counter for DC Branch PowerModels Archs
     setting = Dict{String,Any}()
     ref = PM.build_generic_ref(PM_data_dict)
 
