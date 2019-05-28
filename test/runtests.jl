@@ -30,15 +30,15 @@ include("test_utils/get_test_data.jl")
 end
 
 @testset "Device Constructors" begin
-    include("thermal_generation_constructors.jl")
-    include("renewable_generation_constructors.jl")
-    include("load_constructors.jl")
-    include("storage_constructors.jl")
+    #include("thermal_generation_constructors.jl")
+    #include("renewable_generation_constructors.jl")
+    #include("load_constructors.jl")
+    #include("storage_constructors.jl")
     #include("hydro_generation_constructors.jl")
 end
 
 @testset "Network Constructors" begin
-    #include("network_constructors.jl")
+    include("network_constructors.jl")
 end
 
 @testset "Services Constructors" begin
