@@ -56,6 +56,7 @@ function _powermodels_object_init(transmission::Type{S},
                                  V::DataType) where {S <: PM.AbstractPowerFormulation}
 
     is_activepower_only = (S <: PM.AbstractActivePowerFormulation)
+    is_lossless_model = (S <: PM.DCPlosslessForm)
 
     PM_data_dict = Dict{String,Any}(
         "bus"            => get_buses_to_pm(buses),
@@ -71,7 +72,7 @@ function _powermodels_object_init(transmission::Type{S},
 
     PM_data_dict = PM.replicate(PM_data_dict,time_steps[end]);
 
-    ext = Dict{Symbol,Any}()
+    ext = Dict{Symbol,Any}(:arc_ix => 0) # counter for PowerModels Archs
     setting = Dict{String,Any}()
     ref = PM.build_generic_ref(PM_data_dict)
 
@@ -93,10 +94,10 @@ function _powermodels_object_init(transmission::Type{S},
 
         for cnd_id in nw[:conductor_ids]
             nw_var[:cnd][cnd_id] = Dict{Symbol,Any}()
-            nw_var[:cnd][cnd_id][:p] = Vector{V}()
+            nw_var[:cnd][cnd_id][:p] = is_lossless_model ? Dict{Tuple{Int64,Int64,Int64},Any}() : Vector{V}()
             nw_var[:cnd][cnd_id][:p_dc] = Vector{V}()
-            is_activepower_only ? nw_var[:cnd][cnd_id][:q] = Vector{V}() : true
-            is_activepower_only ? nw_var[:cnd][cnd_id][:q_dc] = Vector{V}() : true
+            is_activepower_only ? true : nw_var[:cnd][cnd_id][:q] = Vector{V}()
+            is_activepower_only ? true : nw_var[:cnd][cnd_id][:q_dc] = Vector{V}()
             nw_con[:cnd][cnd_id] = Dict{Symbol,Any}()
         end
     end

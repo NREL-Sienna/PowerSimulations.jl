@@ -38,76 +38,226 @@ function flow_variables(ps_m::CanonicalModel,
 end
 
 
-function flow_variables(ps_m::CanonicalModel,
-                        system_formulation::Type{S},
-                        devices::PSY.FlattenedVectorsIterator{B},
-                        time_steps::UnitRange{Int64}) where {B <: PSY.ACBranch,
-                                                             S <: PM.AbstractActivePowerFormulation}
 
-    pm_object = ps_m.pm_model
-    var_name_from = Symbol("Fbr_fr_$(B)")
-    var_name_to = Symbol("Fbr_to_$(B)") 
-    ps_m.variables[var_name_to] = _container_spec(ps_m.JuMPmodel, 
-                                                  (d.name for d in devices), 
-                                                  time_steps)    
-
-    ps_m.variables[var_name_from] = _container_spec(ps_m.JuMPmodel, 
-                                                    (d.name for d in devices), 
-                                                    time_steps)    
-
-    pm_index = PM.ref(pm_object, 1, :arcs)
-
-    for t in time_steps 
-        pm_array = _container_spec(ps_m.JuMPmodel, pm_index)
-        for (ix,d) in enumerate(devices)
-            ix, d.connectionpoints
-            bus_from = d.connectionpoints.from.number
-            bus_to = d.connectionpoints.to.number
-            pm_array[(ix, bus_from, bus_to)] = ps_m.variables[var_name_from][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                           base_name="$(var_name_from)($(bus_from),$(bus_to))_{$(d.name),$(t)}",
-                                                           start = 0.0)
-                                                           
-            pm_array[(ix, bus_to, bus_from)] = ps_m.variables[var_name_to][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                            base_name="$(var_name_to)($(bus_to),$(bus_from))_{$(d.name),$(t)}",
-                                                            start = 0.0)
-        end
-            PM.var(pm_object, t, 1)[:p] = pm_array
-    end                                                        
-
-    return
-
-end
 
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
                         devices::PSY.FlattenedVectorsIterator{B},
                         time_steps::UnitRange{Int64}) where {B <: PSY.ACBranch,
                                                              S <: PM.AbstractPowerFormulation}
+    #Get PowerModels dicts
+    pm_object = ps_m.pm_model
+    ref = pm_object.ref
+    var = pm_object.var
+    arc_ix = pm_object.ext[:arc_ix]
 
-    add_variable(ps_m,
-                 devices,
-                 time_steps,
-                 Symbol("Fbr_to_P_$(B)"),
-                 false)
-    add_variable(ps_m,
-                 devices,
-                 time_steps,
-                 Symbol("Fbr_fr_P_$(B)"),
-                 false)
+    var_name_from_p = Symbol("Pbr_fr_$(B)")
+    var_name_to_p = Symbol("Pbr_to_$(B)")
+    var_name_from_q = Symbol("Qbr_fr_$(B)")
+    var_name_to_q = Symbol("Qbr_to_$(B)")
 
-    add_variable(ps_m,
-                 devices,
-                 time_steps,
-                 Symbol("Fbr_to_Q_$(B)"),
-                 false)
-    add_variable(ps_m,
-                 devices,
-                 time_steps,
-                 Symbol("Fbr_fr_Q_$(B)"),
-                 false)
+    ps_m.variables[var_name_to_p] = PSI._container_spec(ps_m.JuMPmodel,
+                                                       (d.name for d in devices),
+                                                       time_steps)
+
+    ps_m.variables[var_name_from_p] = PSI._container_spec(ps_m.JuMPmodel,
+                                                          (d.name for d in devices),
+                                                          time_steps)
+
+
+    ps_m.variables[var_name_to_q] = PSI._container_spec(ps_m.JuMPmodel,
+                                                       (d.name for d in devices),
+                                                       time_steps)
+
+    ps_m.variables[var_name_from_q] = PSI._container_spec(ps_m.JuMPmodel,
+                                                          (d.name for d in devices),
+                                                          time_steps)
+
+
+    for (ix, d) in enumerate(devices)
+        arc_ix = arc_ix + 1
+        bus_fr = d.connectionpoints.from.number
+        bus_to = d.connectionpoints.to.number
+        arcs_fr = (arc_ix, bus_fr, bus_to)
+        arcs_to = (arc_ix, bus_to, bus_fr)
+
+        for t in time_steps
+            ref[:nw][t][:branch][arc_ix] = PSI.get_branch_to_pm(arc_ix, d)
+            push!(ref[:nw][t][:arcs_from], arcs_fr)
+            push!(ref[:nw][t][:arcs_to], arcs_to)
+            #careful here the order of the push has to match the order of the variable creation
+            push!(ref[:nw][t][:arcs], arcs_fr, arcs_to)
+
+            #Active Power Variables
+            ps_m.variables[var_name_from_p][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                                            base_name="$(bus_fr),$(bus_to)_{$(d.name),$(t)}",
+                                                                            upper_bound = d.rate,
+                                                                            lower_bound = -d.rate,
+                                                                            start = 0.0)
+
+            push!(var[:nw][t][:cnd][1][:p], ps_m.variables[var_name_from_p][d.name,t])
+
+            ps_m.variables[var_name_to_p][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                                        base_name="$(bus_to),$(bus_fr)_{$(d.name),$(t)}",
+                                                                        upper_bound = d.rate,
+                                                                        lower_bound = -d.rate,
+                                                                        start = 0.0)
+
+            push!(var[:nw][t][:cnd][1][:p], ps_m.variables[var_name_to_p][d.name,t])
+
+            #reactive Power Variables
+            ps_m.variables[var_name_from_q][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                                        base_name="$(bus_fr),$(bus_to)_{$(d.name),$(t)}",
+                                                                        upper_bound = d.rate,
+                                                                        lower_bound = -d.rate,
+                                                                        start = 0.0)
+
+            push!(var[:nw][t][:cnd][1][:q], ps_m.variables[var_name_from_q][d.name,t])
+
+            ps_m.variables[var_name_to_q][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                                        base_name="$(bus_to),$(bus_fr)_{$(d.name),$(t)}",
+                                                                        upper_bound = d.rate,
+                                                                        lower_bound = -d.rate,
+                                                                        start = 0.0)
+
+            push!(var[:nw][t][:cnd][1][:q], ps_m.variables[var_name_to_q][d.name,t])
+
+        end
+
+
+    end
+
+    pm_object.ext[:arc_ix] = arc_ix
+
     return
 
 end
+
+function flow_variables(ps_m::CanonicalModel,
+                        system_formulation::Type{S},
+                        devices::PSY.FlattenedVectorsIterator{B},
+                        time_steps::UnitRange{Int64}) where {B <: PSY.ACBranch,
+                                                             S <: PM.AbstractActivePowerFormulation}
+
+    #Get PowerModels dicts
+    pm_object = ps_m.pm_model
+    ref = pm_object.ref
+    var = pm_object.var
+    arc_ix = pm_object.ext[:arc_ix]
+
+    var_name_from_p = Symbol("Pbr_fr_$(B)")
+    var_name_to_p = Symbol("Pbr_to_$(B)")
+
+    ps_m.variables[var_name_to_p] = PSI._container_spec(ps_m.JuMPmodel,
+                                                       (d.name for d in devices),
+                                                       time_steps)
+
+    ps_m.variables[var_name_from_p] = PSI._container_spec(ps_m.JuMPmodel,
+                                                          (d.name for d in devices),
+                                                          time_steps)
+
+    for (ix, d) in enumerate(devices)
+        arc_ix = arc_ix + 1
+        bus_fr = d.connectionpoints.from.number
+        bus_to = d.connectionpoints.to.number
+        arcs_fr = (arc_ix, bus_fr, bus_to)
+        arcs_to = (arc_ix, bus_to, bus_fr)
+
+        for t in time_steps
+            ref[:nw][t][:branch][arc_ix] = PSI.get_branch_to_pm(arc_ix, d)
+            push!(ref[:nw][t][:arcs_from], arcs_fr)
+            push!(ref[:nw][t][:arcs_to], arcs_to)
+            #careful here the order of the push has to match the order of the variable creation
+            push!(ref[:nw][t][:arcs], arcs_fr, arcs_to)
+
+            #Active Power Variables
+            ps_m.variables[var_name_from_p][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                                            base_name="$(bus_fr),$(bus_to)_{$(d.name),$(t)}",
+                                                                            upper_bound = d.rate,
+                                                                            lower_bound = -d.rate,
+                                                                            start = 0.0)
+
+            push!(var[:nw][t][:cnd][1][:p], ps_m.variables[var_name_from_p][d.name,t])
+
+            ps_m.variables[var_name_to_p][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                                        base_name="$(bus_to),$(bus_fr)_{$(d.name),$(t)}",
+                                                                        upper_bound = d.rate,
+                                                                        lower_bound = -d.rate,
+                                                                        start = 0.0)
+
+            push!(var[:nw][t][:cnd][1][:p], ps_m.variables[var_name_to_p][d.name,t])
+
+        end
+
+
+    end
+
+    pm_object.ext[:arc_ix] = arc_ix
+
+    return
+
+
+    return
+
+end
+
+
+function flow_variables(ps_m::CanonicalModel,
+                        system_formulation::Type{S},
+                        devices::PSY.FlattenedVectorsIterator{B},
+                        time_steps::UnitRange{Int64}) where {B <: PSY.ACBranch,
+                                                            S <: PM.DCPlosslessForm}
+
+    #Get PowerModels dicts
+    pm_object = ps_m.pm_model
+    ref = pm_object.ref
+    var = pm_object.var
+    arc_ix = pm_object.ext[:arc_ix]
+
+    var_name = Symbol("Fbr_$(B)")
+
+    ps_m.variables[var_name] = PSI._container_spec(ps_m.JuMPmodel,
+                                                   (d.name for d in devices),
+                                                    time_steps)
+
+    for (ix, d) in enumerate(devices)
+        arc_ix = arc_ix + 1
+        bus_fr = d.connectionpoints.from.number
+        bus_to = d.connectionpoints.to.number
+        arcs_fr = (arc_ix, bus_fr, bus_to)
+        arcs_to = (arc_ix, bus_to, bus_fr)
+
+        for t in time_steps
+            ref[:nw][t][:branch][arc_ix] = PSI.get_branch_to_pm(arc_ix, d)
+            push!(ref[:nw][t][:arcs_from], arcs_fr)
+            push!(ref[:nw][t][:arcs_to], arcs_to)
+            #careful here the order of the push has to match the order of the variable creation
+            push!(ref[:nw][t][:arcs], arcs_fr, arcs_to)
+
+            #Active Power Variables
+            ps_m.variables[var_name][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                                base_name="$(bus_fr),$(bus_to)_{$(d.name),$(t)}",
+                                                                upper_bound = d.rate,
+                                                                lower_bound = -d.rate,
+                                                                 start = 0.0)
+
+            var[:nw][t][:cnd][1][:p][arcs_fr] = ps_m.variables[var_name][d.name,t]
+            var[:nw][t][:cnd][1][:p][arcs_to] = -1*ps_m.variables[var_name][d.name,t]
+
+        end
+
+    end
+
+    pm_object.ext[:arc_ix] = arc_ix
+
+    return
+
+
+    return
+
+end
+
+
 
 #################################### Flow Limits Variables ##################################################
 
