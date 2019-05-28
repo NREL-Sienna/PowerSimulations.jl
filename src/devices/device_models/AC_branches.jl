@@ -37,9 +37,6 @@ function flow_variables(ps_m::CanonicalModel,
 
 end
 
-
-
-
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
                         devices::PSY.FlattenedVectorsIterator{B},
