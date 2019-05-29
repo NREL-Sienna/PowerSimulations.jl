@@ -4,7 +4,7 @@
     uc_constraint_names = [:ramp_ThermalStandard_up, :ramp_ThermalStandard_down, :duration_ThermalStandard_up, :duration_ThermalStandard_down]
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalUnitCommitment)
     #5-Bus testing
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5, time_steps, Dates.Minute(5); parameters = false);
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 480
@@ -24,7 +24,7 @@
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps; parameters = true)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = true)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5, time_steps, Dates.Minute(5); parameters = true);
     @test (:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 480
@@ -45,7 +45,7 @@
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     #14-Bus testing
-    ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys14, time_steps, Dates.Minute(5); parameters = false);
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 480
@@ -65,7 +65,7 @@
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}
 
-    ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps; parameters = true)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = true)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys14, time_steps, Dates.Minute(5); parameters = true);
     @test (:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 480
@@ -91,7 +91,7 @@ end
     uc_constraint_names = [:ramp_ThermalStandard_up, :ramp_ThermalStandard_down, :duration_ThermalStandardl_up, :duration_ThermalStandard_down]
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalUnitCommitment)
     #5-Bus testing
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys5, time_steps, Dates.Minute(5); parameters = false);
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 600
@@ -108,7 +108,7 @@ end
     end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps; parameters = true)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = true)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys5, time_steps, Dates.Minute(5); parameters = true);
     @test (:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 600
@@ -126,7 +126,7 @@ end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     #14-Bus testing
-    ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys14, time_steps, Dates.Minute(5); parameters = false);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 600
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 0
@@ -145,7 +145,7 @@ end
     end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}
 
-    ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps; parameters = true)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = true)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys14, time_steps, Dates.Minute(5); parameters = true);
     @test JuMP.num_variables(ps_model.JuMPmodel) == 600
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 0
@@ -171,7 +171,7 @@ end
 @testset "Thermal Dispatch With DC - PF" begin
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch)
     #5-Bus testing
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 120
@@ -182,7 +182,7 @@ end
     @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5, time_steps, Dates.Minute(5); parameters = false)
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
@@ -195,7 +195,7 @@ end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     #14-Bus testing
-    ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys14, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 120
@@ -206,7 +206,7 @@ end
     @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}
 
-    ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys14, time_steps, Dates.Minute(5); parameters = false)
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
@@ -222,7 +222,7 @@ end
 @testset "Thermal Dispatch With AC - PF" begin
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch)
     #5 Bus testing
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys5, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 240
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 240
@@ -233,7 +233,7 @@ end
     @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys5, time_steps, Dates.Minute(5); parameters = false)
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 240
@@ -246,7 +246,7 @@ end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     #14 Bus testing
-    ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys14, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 240
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 240
@@ -257,7 +257,7 @@ end
     @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}
 
-    ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys14, time_steps, Dates.Minute(5); parameters = false)
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 240
@@ -275,7 +275,7 @@ end
 @testset "Thermal Dispatch No-Minimum With DC - PF" begin
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatchNoMin)
     #5 Bus testing
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 120
@@ -290,7 +290,7 @@ end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
 
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5, time_steps, Dates.Minute(5); parameters = false)
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
@@ -306,7 +306,7 @@ end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     #14 Bus testing
-    ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys14, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 120
@@ -321,7 +321,7 @@ end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}
 
 
-    ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys14, time_steps, Dates.Minute(5); parameters = false)
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
@@ -340,7 +340,7 @@ end
 @testset "Thermal Dispatch No-Minimum With AC - PF" begin
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatchNoMin)
     #5 Bus testing
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys5, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 240
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 240
@@ -354,7 +354,7 @@ end
     @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys5, time_steps, Dates.Minute(5); parameters = false);
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 240
@@ -370,7 +370,7 @@ end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     #14 Bus Testing
-    ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys14, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 240
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 240
@@ -384,7 +384,7 @@ end
     @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}
 
-    ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys14, time_steps, Dates.Minute(5); parameters = false);
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 240
@@ -406,7 +406,7 @@ end
     ramp_constraint_names = [:ramp_ThermalStandard_up, :ramp_ThermalStandard_down]
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalRampLimited)
     #5 Bus Testing with 5 - Min simulation time
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys5, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 240
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 240
@@ -418,7 +418,7 @@ end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     #5 Bus Testing with 1 Hour Simulation Time
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys5, time_steps, Dates.Hour(1));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 240
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 240
@@ -430,7 +430,7 @@ end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     #5 Bus Testing with 2 Hour Simulation Time
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys5, time_steps, Dates.Hour(2));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 240
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 240
@@ -441,7 +441,7 @@ end
     @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys5, time_steps, Dates.Minute(5); parameters = false)
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 240
@@ -454,7 +454,7 @@ end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     #14 Bus Testing
-    ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys14, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 240
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 240
@@ -468,7 +468,7 @@ end
     @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}
 
-    ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
     construct_device!(ps_model, model, PM.StandardACPForm, c_sys14, time_steps, Dates.Minute(5); parameters = false)
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 240
@@ -488,7 +488,7 @@ end
     ramp_constraint_names = [:ramp_ThermalStandard_up, :ramp_ThermalStandard_down]
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalRampLimited)
     #5 Bus Testing
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 120
@@ -502,7 +502,7 @@ end
     @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses5, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5, time_steps, Dates.Minute(5); parameters = false)
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
@@ -518,7 +518,7 @@ end
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericAffExpr{Float64,VariableRef}
 
     #14 Bus Testing
-    ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, nothing, PM.AbstractPowerFormulation, time_steps)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys14, time_steps, Dates.Minute(5));
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
     @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 120
@@ -532,7 +532,7 @@ end
     @test  !((VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel))
     @test JuMP.objective_function_type(ps_model.JuMPmodel) == JuMP.GenericQuadExpr{Float64,VariableRef}
 
-    ps_model = PSI._canonical_model_init(bus_numbers14, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
+    ps_model = PSI._canonical_model_init(buses14, 100.0, nothing, PM.AbstractPowerFormulation, time_steps; parameters = false)
     construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys14, time_steps, Dates.Minute(5); parameters = false)
     @test !(:params in keys(ps_model.JuMPmodel.ext))
     @test JuMP.num_variables(ps_model.JuMPmodel) == 120
