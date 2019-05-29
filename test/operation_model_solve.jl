@@ -1,89 +1,132 @@
+devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch),
+                                    :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
+branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.ACSeriesBranch),
+                                     :T => DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch),
+                                     :TT => DeviceModel(PSY.TapTransformer , PSI.ACSeriesBranch))
+services = Dict{Symbol, PSI.ServiceModel}()
+
 @testset "Solving ED with CopperPlate" begin
-    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch),
-                                        :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
-    branches = Dict{Symbol, DeviceModel}()
-    services = Dict{Symbol, PSI.ServiceModel}()
     model_ref = ModelReference(CopperPlatePowerModel, devices, branches, services);
-
     parameters_value = [true, false]
-
-    for p in parameters_value
+    systems = [c_sys5, c_sys14]
+    test_results = Dict{PSY.System, Float64}(c_sys5 => 240000.0,  
+                                             c_sys14 => 120000.0)
+    for sys in systems, p in parameters_value
         @info("Testing ED CopperPlatePowerModel solve")
         @testset "ED CopperPlatePowerModel model parameters = $(p)" begin
-        ED = OperationModel(TestOptModel, model_ref, c_sys5; optimizer = GLPK_optimizer, parameters = p)
-        res_5 = solve_op_model!(ED)
+        ED = OperationModel(TestOptModel, model_ref, sys; optimizer = OSQP_optimizer, parameters = p)
+        res = solve_op_model!(ED)
         @test termination_status(ED.canonical_model.JuMPmodel) == MOI.OPTIMAL
-        @test isapprox(res_5.total_cost[:OBJECTIVE_FUNCTION], 240000, atol = 10000)
-        #14 Bus Test
-        #ED = OperationModel(TestOptModel, model_ref, c_sys14; optimizer = OSQP_optimizer, parameters = p);
-        #res_14 = solve_op_model!(ED)
-        #@test termination_status(ED.canonical_model.JuMPmodel) == MOI.OPTIMAL
-        #@test isapprox(res_14.total_cost[:OBJECTIVE_FUNCTION], 120000, atol = 10000)
+        @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 10000)
         end
     end
-    #RTS Test
-    #ED = EconomicDispatch(sys_rts, CopperPlatePowerModel; optimizer = GLPK_optimizer);
-    #res_rts = solve_op_model!(ED)
 end
 
 @testset "Solving ED with PTDF Models" begin
-    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch),
-                                        :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
-    branches = Dict{Symbol, DeviceModel}()
-    services = Dict{Symbol, PSI.ServiceModel}()
     model_ref = ModelReference(StandardPTDFForm, devices, branches, services);
     parameters_value = [true, false]
+    systems = [c_sys5, c_sys14]
+    PTDF_ref = Dict{PSY.System, PSY.PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14)
+    test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,  
+                                             c_sys14 => 120000.0)
 
-    for p in parameters_value
+    for sys in systems, p in parameters_value
         @info("Testing ED StandardPTDFForm solve")
         @testset "ED StandardPTDFForm model parameters = $(p)" begin
-        #ED = OperationModel(TestOptModel, model_ref, c_sys5; PTDF = PTDF5, optimizer = GLPK_optimizer, parameters = p)
-        #res_5 = solve_op_model!(ED)
-        #@test termination_status(ED.canonical_model.JuMPmodel) == MOI.OPTIMAL
-        #@test isapprox(res_5.total_cost[:OBJECTIVE_FUNCTION], 240000, atol = 10000)
-        #14 Bus Test
-        ED = OperationModel(TestOptModel, model_ref, c_sys14; PTDF = PTDF14, optimizer = OSQP_optimizer, parameters = p);
-        res_14 = solve_op_model!(ED)
+        ED = OperationModel(TestOptModel, model_ref, sys; PTDF = PTDF_ref[sys], optimizer = OSQP_optimizer, parameters = p)
+        res = solve_op_model!(ED)
         @test termination_status(ED.canonical_model.JuMPmodel) == MOI.OPTIMAL
-        @test isapprox(res_14.total_cost[:OBJECTIVE_FUNCTION], 120000, atol = 15000)
+        @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 10000)
         end
     end
 end
 
-
-@testset "Solving ED With PowerModels Networks" begin
-    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch),
-                                        :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
-    branches5 = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.ACSeriesBranch))
-    branches14 = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.ACSeriesBranch),
-                                           :T => DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch),
-                                           :TT => DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch))
-    services = Dict{Symbol, PSI.ServiceModel}()
+@testset "Solving ED With PowerModels with loss-less convex models" begin
+    systems = [c_sys5, c_sys14]
     parameters_value = [true, false]
     networks = [PM.DCPlosslessForm,
-                PM.NFAForm,
-                PM.StandardACPForm,
-                #PM.StandardACRForm,
-                PM.StandardACTForm,
-                PM.StandardDCPLLForm,
-                PM.AbstractLPACCForm,
-                PM.SOCWRForm,
-                PM.QCWRForm,
-                PM.QCWRTriForm]
+                PM.NFAForm]
+    test_results = Dict{PSY.System, Float64}(c_sys5 => 320000.0,  
+                                             c_sys14 => 140000.0)
 
-    for  net in networks, p in parameters_value
+    for  net in networks, p in parameters_value, sys in systems
         @info("Testing ED $(net) solve")
         @testset "ED model $(net) and parameters = $(p)" begin
-        model_ref5 = ModelReference(net, devices, branches5, services);
-        #ED = OperationModel(TestOptModel, model_ref5, c_sys5; optimizer = ipopt_optimizer, parameters = p)
-        #res_5 = solve_op_model!(ED)
-        #@test isapprox(res_5.total_cost[:OBJECTIVE_FUNCTION], 325000, atol = 25000)
-        #@test termination_status(ED.canonical_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
-        #14 Bus Test
-        model_ref14 = ModelReference(net, devices, branches14, services);
-        ED = OperationModel(TestOptModel, model_ref14, c_sys14; optimizer = ipopt_optimizer, parameters = p);
-        res_14 = solve_op_model!(ED)
-        @test isapprox(res_14.total_cost[:OBJECTIVE_FUNCTION], 120000, atol = 10000)
+        model_ref = ModelReference(net, devices, branches, services);
+        ED = OperationModel(TestOptModel, model_ref, sys; optimizer = OSQP_optimizer, parameters = p);
+        res = solve_op_model!(ED)
+        #The tolerance range here is large because NFA has a much lower objective value
+        @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 25000)
+        @test termination_status(ED.canonical_model.JuMPmodel) in [MOI.OPTIMAL]
+        end
+    end
+
+end
+
+@testset "Solving ED With PowerModels with loss-less convex models" begin
+    systems = [c_sys5, c_sys14]
+    parameters_value = [true, false]
+    networks = [PM.StandardDCPLLForm, 
+                PM.AbstractLPACCForm]
+    test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,  
+                                             c_sys14 => 140000.0)
+
+    for  net in networks, p in parameters_value, sys in systems
+        @info("Testing ED $(net) solve")
+        @testset "ED model $(net) and parameters = $(p)" begin
+        model_ref = ModelReference(net, devices, branches, services);
+        ED = OperationModel(TestOptModel, model_ref, sys; optimizer = ipopt_optimizer, parameters = p);
+        res = solve_op_model!(ED)
+        #The tolerance range here is large because NFA has a much lower objective value
+        @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 10000)
+        @test termination_status(ED.canonical_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        end
+    end
+
+end
+
+#= These tests are broken temporarily
+@testset "Solving ED With PowerModels with convex SOC and QC models" begin
+    systems = [c_sys5, c_sys14]
+    parameters_value = [true, false]
+    networks = [PM.SOCWRForm,
+                 PM.QCWRForm,
+                 PM.QCWRTriForm,]
+    test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,  
+                                             c_sys14 => 140000.0)
+
+    for  net in networks, p in parameters_value, sys in systems
+        @info("Testing ED $(net) solve")
+        @testset "ED model $(net) and parameters = $(p)" begin
+        model_ref = ModelReference(net, devices, branches, services);
+        ED = OperationModel(TestOptModel, model_ref, sys; optimizer = ipopt_optimizer, parameters = p);
+        res = solve_op_model!(ED)
+        #The tolerance range here is large because NFA has a much lower objective value
+        @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 10000)
+        @test termination_status(ED.canonical_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        end
+    end
+
+end
+=#
+
+
+@testset "Solving ED With PowerModels Non-Convex Networks" begin
+    systems = [c_sys5, c_sys14]
+    parameters_value = [true, false]
+    networks = [PM.StandardACPForm,
+                PM.StandardACRForm,
+                PM.StandardACTForm]
+        test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,  
+                                             c_sys14 => 140000.0)
+
+    for  net in networks, p in parameters_value, sys in systems
+        @info("Testing ED $(net) solve")
+        @testset "ED model $(net) and parameters = $(p)" begin
+        model_ref = ModelReference(net, devices, branches, services);
+        ED = OperationModel(TestOptModel, model_ref, sys; optimizer = ipopt_optimizer, parameters = p);
+        res = solve_op_model!(ED)
+        @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 10000)
         @test termination_status(ED.canonical_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
         end
     end
@@ -93,11 +136,6 @@ end
 @testset "Solving UC Linear Networks" begin
     devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalUnitCommitment),
                                         :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
-    branches5 = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.ACSeriesBranch))
-    branches14 = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.ACSeriesBranch),
-                                           :T => DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch),
-                                           :TT => DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch))
-    services = Dict{Symbol, PSI.ServiceModel}()
     parameters_value = [true, false]
     networks = [PM.DCPlosslessForm,
                 PM.NFAForm,

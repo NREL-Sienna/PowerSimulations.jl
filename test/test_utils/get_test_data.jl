@@ -4,8 +4,6 @@ base_dir = string(dirname(dirname(pathof(PowerSystems))));
 DATA_DIR = joinpath(base_dir, "data")
 include(joinpath(base_dir,"data/data_5bus_pu.jl"));
 include(joinpath(base_dir,"data/data_14bus_pu.jl"))
-bus_numbers5 = [b.number for b in nodes5]
-bus_numbers14 = [b.number for b in nodes14];
 
 #Base Systems
 sys5 = PSY._System(nodes5, thermal_generators5, loads5, branches5, nothing,  100.0, forecasts5, nothing, nothing);
@@ -14,7 +12,8 @@ c_sys5 = PSY.System(sys5)
 c_sys14 = PSY.System(sys14)
 PTDF5 = PSY.PTDF(branches5, nodes5);
 PTDF14 = PSY.PTDF(branches14, nodes14);
-
+buses5 = PSY.get_components(PSY.Bus, c_sys5)
+buses14 = PSY.get_components(PSY.Bus, c_sys14)
 
 #System with Renewable Energy
 sys5_re = PSY._System(nodes5, vcat(thermal_generators5, renewable_generators5), loads5, branches5, nothing,  100.0, forecasts5, nothing, nothing);
