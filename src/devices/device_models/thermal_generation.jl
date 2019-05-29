@@ -21,13 +21,28 @@ function activepower_variables(ps_m::CanonicalModel,
                                devices::PSY.FlattenedVectorsIterator{T},
                                time_steps::UnitRange{Int64}) where {T <: PSY.ThermalGen}
 
+    var_name = Symbol("Pth_$(T)")
+    ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, (d.name for d in devices), time_steps)
+
+   for t in time_steps, d in devices
+       ps_m.variables[var_name][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
+                                             base_name="{$(var_name)}_{$(d.name),$(t)}",
+                                             upper_bound = d.tech.activepowerlimits.max,
+                                             lower_bound = d.tech.activepowerlimits.min,
+                                             start = d.tech.activepower)
+       _add_to_expression!(ps_m.expressions[:nodal_balance_active],
+                           d.bus.number,
+                           t,
+                           ps_m.variables[var_name][d.name,t])
+   end
+    #=                               
     add_variable(ps_m,
                  devices,
                  time_steps,
                  Symbol("Pth_$(T)"),
                  false,
                  :nodal_balance_active)
-
+    =#
     return
 
 end
