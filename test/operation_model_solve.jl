@@ -10,9 +10,9 @@ services = Dict{Symbol, PSI.ServiceModel}()
     parameters_value = [true, false]
     systems = [c_sys5, c_sys14]
     test_results = Dict{PSY.System, Float64}(c_sys5 => 240000.0,  
-                                             c_sys14 => 120000.0)
+                                             c_sys14 => 142000.0)
     for sys in systems, p in parameters_value
-        @info("Testing ED CopperPlatePowerModel solve")
+        @info("Testing solve ED with CopperPlatePowerModel network")
         @testset "ED CopperPlatePowerModel model parameters = $(p)" begin
         ED = OperationModel(TestOptModel, model_ref, sys; optimizer = OSQP_optimizer, parameters = p)
         res = solve_op_model!(ED)
@@ -28,10 +28,10 @@ end
     systems = [c_sys5, c_sys14]
     PTDF_ref = Dict{PSY.System, PSY.PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14)
     test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,  
-                                             c_sys14 => 140000.0)
+                                             c_sys14 => 142000.0)
 
     for sys in systems, p in parameters_value
-        @info("Testing ED StandardPTDFForm solve")
+        @info("Testing solve ED with StandardPTDFForm network")
         @testset "ED StandardPTDFForm model parameters = $(p)" begin
         ED = OperationModel(TestOptModel, model_ref, sys; PTDF = PTDF_ref[sys], optimizer = OSQP_optimizer, parameters = p)
         res = solve_op_model!(ED)
@@ -47,10 +47,10 @@ end
     networks = [PM.DCPlosslessForm,
                 PM.NFAForm]
     test_results = Dict{PSY.System, Float64}(c_sys5 => 320000.0,  
-                                             c_sys14 => 140000.0)
+                                             c_sys14 => 142000.0)
 
     for  net in networks, p in parameters_value, sys in systems
-        @info("Testing ED $(net) solve")
+        @info("Testing solve ED with $(net) network")
         @testset "ED model $(net) and parameters = $(p)" begin
         model_ref = ModelReference(net, devices, branches, services);
         ED = OperationModel(TestOptModel, model_ref, sys; optimizer = ipopt_optimizer, parameters = p);
@@ -63,16 +63,16 @@ end
 
 end
 
-@testset "Solving ED With PowerModels with loss-less convex models" begin
+@testset "Solving ED With PowerModels with linear convex models" begin
     systems = [c_sys5, c_sys14]
     parameters_value = [true, false]
     networks = [PM.StandardDCPLLForm, 
                 PM.AbstractLPACCForm]
     test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,  
-                                             c_sys14 => 140000.0)
+                                             c_sys14 => 142000.0)
 
     for  net in networks, p in parameters_value, sys in systems
-        @info("Testing ED $(net) solve")
+        @info("Testing solve ED with $(net) network")
         @testset "ED model $(net) and parameters = $(p)" begin
         model_ref = ModelReference(net, devices, branches, services);
         ED = OperationModel(TestOptModel, model_ref, sys; optimizer = ipopt_optimizer, parameters = p);
@@ -92,10 +92,10 @@ end
                  PM.QCWRForm,
                  PM.QCWRTriForm,]
     test_results = Dict{PSY.System, Float64}(c_sys5 => 320000.0,  
-                                             c_sys14 => 140000.0)
+                                             c_sys14 => 142000.0)
 
     for  net in networks, p in parameters_value, sys in systems
-        @info("Testing ED $(net) solve")
+        @info("Testing solve ED with $(net) network")
         @testset "ED model $(net) and parameters = $(p)" begin
         model_ref = ModelReference(net, devices, branches, services);
         ED = OperationModel(TestOptModel, model_ref, sys; optimizer = ipopt_optimizer, parameters = p);
@@ -115,10 +115,10 @@ end
                 PM.StandardACRForm,
                 PM.StandardACTForm]
         test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,  
-                                             c_sys14 => 140000.0)
+                                             c_sys14 => 142000.0)
 
     for  net in networks, p in parameters_value, sys in systems
-        @info("Testing ED $(net) solve")
+        @info("Testing solve ED with $(net) network")
         @testset "ED model $(net) and parameters = $(p)" begin
         model_ref = ModelReference(net, devices, branches, services);
         ED = OperationModel(TestOptModel, model_ref, sys; optimizer = ipopt_optimizer, parameters = p);
@@ -141,7 +141,7 @@ end
                 CopperPlatePowerModel]
 
     for  net in networks, p in parameters_value, sys in systems
-        @info("Testing UC $(net) solve")
+        @info("Testing solve UC with $(net) network")
         @testset "UC model $(net) and parameters = $(p)" begin
         model_ref= ModelReference(net, devices, branches, services);
         UC = OperationModel(TestOptModel, model_ref, sys; PTDF = PTDF5, optimizer = GLPK_optimizer, parameters = p)
