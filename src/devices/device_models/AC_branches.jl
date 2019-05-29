@@ -26,12 +26,28 @@ function flow_variables(ps_m::CanonicalModel,
                         devices::PSY.FlattenedVectorsIterator{B},
                         time_steps::UnitRange{Int64}) where {B <: PSY.ACBranch,
                                                              S <: StandardPTDFForm}
+                                                         
+    #Get PowerModels dicts
+    var_name = Symbol("Fbr_$(B)")
 
-    add_variable(ps_m,
-                 devices,
-                 time_steps,
-                 Symbol("Fbr_$(B)"),
-                 false)
+    ps_m.variables[var_name] = PSI._container_spec(ps_m.JuMPmodel,
+                                                   (d.name for d in devices),
+                                                    time_steps)
+
+    for (ix, d) in enumerate(devices)
+        bus_fr = d.connectionpoints.from.number
+        bus_to = d.connectionpoints.to.number
+        for t in time_steps
+            
+            #Active Power Variables
+            ps_m.variables[var_name][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                                base_name="$(bus_fr),$(bus_to)_{$(d.name),$(t)}",
+                                                                upper_bound = d.rate,
+                                                                lower_bound = -d.rate,
+                                                                 start = 0.0)
+        end
+
+    end
 
     return
 
