@@ -112,7 +112,7 @@ end
     systems = [c_sys5, c_sys14]
     parameters_value = [true, false]
     networks = [PM.StandardACPForm,
-                #PM.StandardACRForm,
+                PM.StandardACRForm,
                 PM.StandardACTForm]
         test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,  
                                              c_sys14 => 142000.0)
