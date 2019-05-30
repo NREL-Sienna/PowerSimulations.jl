@@ -9,7 +9,7 @@ function add_variable(ps_m::CanonicalModel,
                       binary::Bool) where {D <: Union{Vector{<:PSY.Device},
                                                       PSY.FlattenedVectorsIterator{<:PSY.Device}}}
 
-    ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, [d.name for d in devices], time_steps)
+    ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, (d.name for d in devices), time_steps)
 
    for t in time_steps, d in devices
        ps_m.variables[var_name][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
@@ -30,7 +30,7 @@ function add_variable(ps_m::CanonicalModel,
                       expression::Symbol) where {D <: Union{Vector{<:PSY.Device},
                                                             PSY.FlattenedVectorsIterator{<:PSY.Device}}}
 
-    ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, [d.name for d in devices], time_steps)
+    ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, (d.name for d in devices), time_steps)
 
    for t in time_steps, d in devices
        ps_m.variables[var_name][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
@@ -55,10 +55,13 @@ function add_variable(ps_m::CanonicalModel,
                       sign::Int64) where {D <: Union{Vector{<:PSY.Device},
                                           PSY.FlattenedVectorsIterator{<:PSY.Device}}}
 
-    ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, [d.name for d in devices], time_steps)
+    ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, (d.name for d in devices), time_steps)
 
    for t in time_steps, d in devices
-       ps_m.variables[var_name][d.name,t] = JuMP.@variable(ps_m.JuMPmodel, base_name="{$(var_name)}_{$(d.name),$(t)}", start = 0.0, binary=binary)
+       ps_m.variables[var_name][d.name,t] = JuMP.@variable(ps_m.JuMPmodel, 
+                                                           base_name="{$(var_name)}_{$(d.name),$(t)}", 
+                                                           start = 0.0, 
+                                                           binary=binary)
        _add_to_expression!(ps_m.expressions[expression], d.bus.number, t, ps_m.variables[var_name][d.name,t], sign)
    end
 
