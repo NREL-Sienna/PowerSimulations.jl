@@ -51,7 +51,7 @@ function psi_ref!(nw_refs::Dict)
             push!(bus_gens[gen["gen_bus"]], i)
         end
         ref[:bus_gens] = bus_gens
-        
+
         bus_storage = Dict((i, Int64[]) for (i,bus) in ref[:bus])
         for (i,strg) in ref[:storage]
             push!(bus_storage[strg["storage_bus"]], i)
@@ -337,14 +337,14 @@ function powermodels_network!(ps_m::CanonicalModel,
 
     buses = PSY.get_components(PSY.Bus,sys)
     pm_object = ps_m.pm_model
-    var = ps_m.pm_model.var
-    ref = ps_m.pm_model.ref
     _remove_undef!(ps_m.expressions[:nodal_balance_active])
     _remove_undef!(ps_m.expressions[:nodal_balance_reactive])
 
     for t in time_steps
-        var[:nw][t][:cnd][1][:p] = JuMP.Containers.DenseAxisArray(var[:nw][t][:cnd][1][:p],ref[:nw][t][:arcs])
-        var[:nw][t][:cnd][1][:q] = JuMP.Containers.DenseAxisArray(var[:nw][t][:cnd][1][:q],ref[:nw][t][:arcs])
+        var = PM.var(pm_object, t, 1)
+        arcs = PM.ref(pm_object, t, :arcs)
+        var[:p] = JuMP.Containers.DenseAxisArray(var[:p], arcs)
+        var[:q] = JuMP.Containers.DenseAxisArray(var[:q], arcs)
         for bus in buses
             pm_object.data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions[:nodal_balance_active][bus.number,t]
             pm_object.data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = ps_m.expressions[:nodal_balance_reactive][bus.number,t]
@@ -368,13 +368,13 @@ function powermodels_network!(ps_m::CanonicalModel,
 
     buses = PSY.get_components(PSY.Bus,sys)
     pm_object = ps_m.pm_model
-    var = ps_m.pm_model.var
-    ref = ps_m.pm_model.ref
     _remove_undef!(ps_m.expressions[:nodal_balance_active])
 
     for t in time_steps
         if !(S <: PM.DCPlosslessForm)
-            var[:nw][t][:cnd][1][:p] = JuMP.Containers.DenseAxisArray(var[:nw][t][:cnd][1][:p],ref[:nw][t][:arcs])
+            var = PM.var(pm_object, t, 1)
+            arcs = PM.ref(pm_object, t, :arcs)
+            var[:p] = JuMP.Containers.DenseAxisArray(var[:p],arcs)
         end
         for bus in buses
             pm_object.data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions[:nodal_balance_active][bus.number,t]
