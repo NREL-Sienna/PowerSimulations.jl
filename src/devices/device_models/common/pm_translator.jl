@@ -174,9 +174,9 @@ end
 function pass_to_pm(sys::PSY.System, time_periods::Int64)
 
     ac_lines, dc_lines = get_branches_to_pm(sys)
-
+    buses = PSY.get_components(PSY.Bus, sys)
     PM_translation = Dict{String,Any}(
-    "bus"            => get_buses_to_pm(sys.components[PSY.Bus]),
+    "bus"            => get_buses_to_pm(buses),
     "branch"         => ac_lines,
     "baseMVA"        => sys.basepower,
     "per_unit"       => true,

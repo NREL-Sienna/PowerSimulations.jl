@@ -1,16 +1,8 @@
 #################################################################################
-# Questions
-#
-# - why do exported functions (e.g. ids, var, con, ref) need pacakge qualification?
-# - why do non-qualified exported functions (e.g. ids, var) still throw warnings?
-#
-#
 # Comments
 #
 # - Ideally the net_injection variables would be bounded.  This can be done using an adhoc data model extention
 #
-
-
 #################################################################################
 # Model Definitions
 
@@ -27,8 +19,8 @@ function post_nip(pm::PM.GenericPowerModel)
         @assert !PM.ismulticonductor(pm, nw=n)
         PM.variable_voltage(pm, nw=n)
         variable_net_injection(pm, nw=n)
-        #PM.variable_branch_flow(pm, nw=n)#, bounded=false)
-        #PM.variable_dcline_flow(pm, nw=n)
+        PM.variable_branch_flow(pm, nw=n)#, bounded=false)
+        PM.variable_dcline_flow(pm, nw=n)
 
         PM.constraint_voltage(pm, nw=n)
 
