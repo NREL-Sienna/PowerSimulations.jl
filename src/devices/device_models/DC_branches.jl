@@ -13,15 +13,4 @@ function flow_variables(ps_m::CanonicalModel,
                         time_steps::UnitRange{Int64}) where {B <: PSY.DCBranch,
                                                              S <: PM.AbstractPowerFormulation}
 
-    add_variable(ps_m,
-                 devices,
-                 time_steps,
-                 Symbol("Fbr_to_$(B)"),
-                 false)
-    add_variable(ps_m,
-                 devices,
-                 time_steps,
-                 Symbol("Fbr_fr_$(B)"),
-                 false)
-
 end
