@@ -32,7 +32,7 @@ end
 @testset "Device Constructors" begin
     include("thermal_generation_constructors.jl")
     include("renewable_generation_constructors.jl")
-    #include("load_constructors.jl")
+    include("load_constructors.jl")
     #include("storage_constructors.jl")
     #include("hydro_generation_constructors.jl")
 end
