@@ -82,11 +82,11 @@ end
 
 function add_to_cost(ps_m::CanonicalModel,
                      devices::D,
-                     resolution::Dates.Period,
                      var_name::Symbol,
                      cost_symbol::Symbol, sign::Int64 = 1) where {D <: Union{Vector{<:PSY.Device}, 
                                                                   PSY.FlattenedVectorsIterator{<:PSY.Device}}}
-    
+                                                                  
+    resolution = model_resolution(ps_m)
     dt = Dates.value(Dates.Minute(resolution))/60
 
     for d in devices
