@@ -5,12 +5,10 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device::Type{T},
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
-                                        sys::PSY.System,
-                                        time_steps::UnitRange{Int64},
-                                        resolution::Dates.Period;
+                                        sys::PSY.System;
                                         kwargs...) where {T <: PSY.ThermalGen,
-                                                            D <: AbstractThermalFormulation,
-                                                            S <: PM.AbstractPowerFormulation}
+                                                          D <: AbstractThermalFormulation,
+                                                          S <: PM.AbstractPowerFormulation}
 
     devices = PSY.get_components(device, sys)
 
@@ -21,25 +19,25 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     parameters = get(kwargs, :parameters, true)
 
     #Variables
-    activepower_variables(ps_m, devices, time_steps);
+    activepower_variables!(ps_m, devices)
 
-    reactivepower_variables(ps_m, devices, time_steps);
+    reactivepower_variables!(ps_m, devices)
 
-    commitment_variables(ps_m, devices, time_steps)
+    commitment_variables!(ps_m, devices)
 
     #Constraints
-    activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_steps)
+    activepower_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, time_steps)
+    reactivepower_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    commitment_constraints(ps_m, devices, device_formulation, system_formulation, time_steps, parameters)
+    commitment_constraints!(ps_m, devices, device_formulation, system_formulation, parameters)
 
-    ramp_constraints(ps_m, devices, device_formulation, system_formulation, time_steps, resolution, parameters)
+    ramp_constraints!(ps_m, devices, device_formulation, system_formulation, parameters)
 
-    time_constraints(ps_m, devices, device_formulation, system_formulation, time_steps, resolution, parameters)
+    time_constraints!(ps_m, devices, device_formulation, system_formulation, parameters)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 
@@ -53,12 +51,10 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device::Type{T},
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
-                                        sys::PSY.System,
-                                        time_steps::UnitRange{Int64},
-                                        resolution::Dates.Period;
+                                        sys::PSY.System;
                                         kwargs...) where {T <: PSY.ThermalGen,
-                                                            D <: AbstractThermalFormulation,
-                                                            S <: PM.AbstractActivePowerFormulation}
+                                                          D <: AbstractThermalFormulation,
+                                                          S <: PM.AbstractActivePowerFormulation}
 
     devices = PSY.get_components(device, sys)
 
@@ -69,21 +65,21 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     parameters = get(kwargs, :parameters, true)
 
     #Variables
-    activepower_variables(ps_m, devices, time_steps);
+    activepower_variables!(ps_m, devices)
 
-    commitment_variables(ps_m, devices, time_steps)
+    commitment_variables!(ps_m, devices)
 
     #Constraints
-    activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_steps)
+    activepower_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    commitment_constraints(ps_m, devices, device_formulation, system_formulation, time_steps, parameters)
+    commitment_constraints!(ps_m, devices, device_formulation, system_formulation, parameters)
 
-    ramp_constraints(ps_m, devices, device_formulation, system_formulation, time_steps, resolution, parameters)
+    ramp_constraints!(ps_m, devices, device_formulation, system_formulation, parameters)
 
-    time_constraints(ps_m, devices, device_formulation, system_formulation, time_steps, resolution, parameters)
+    time_constraints!(ps_m, devices, device_formulation, system_formulation, parameters)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 
@@ -96,11 +92,9 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device::Type{T},
                                         device_formulation::Type{ThermalRampLimited},
                                         system_formulation::Type{S},
-                                        sys::PSY.System,
-                                        time_steps::UnitRange{Int64},
-                                        resolution::Dates.Period;
+                                        sys::PSY.System;
                                         kwargs...) where {T <: PSY.ThermalGen,
-                                                            S <: PM.AbstractPowerFormulation}
+                                                          S <: PM.AbstractPowerFormulation}
 
     devices = PSY.get_components(device, sys)
 
@@ -111,19 +105,19 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     parameters = get(kwargs, :parameters, true)
 
     #Variables
-    activepower_variables(ps_m, devices, time_steps);
+    activepower_variables!(ps_m, devices)
 
-    reactivepower_variables(ps_m, devices, time_steps);
+    reactivepower_variables!(ps_m, devices)
 
     #Constraints
-    activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_steps)
+    activepower_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, time_steps)
+    reactivepower_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    ramp_constraints(ps_m, devices, device_formulation, system_formulation, time_steps, resolution, parameters)
+    ramp_constraints!(ps_m, devices, device_formulation, system_formulation, parameters)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 
@@ -137,11 +131,9 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device::Type{T},
                                         device_formulation::Type{ThermalRampLimited},
                                         system_formulation::Type{S},
-                                        sys::PSY.System,
-                                        time_steps::UnitRange{Int64},
-                                        resolution::Dates.Period;
+                                        sys::PSY.System;
                                         kwargs...) where {T <: PSY.ThermalGen,
-                                                            S <: PM.AbstractActivePowerFormulation}
+                                                          S <: PM.AbstractActivePowerFormulation}
 
     devices = PSY.get_components(device, sys)
 
@@ -152,15 +144,15 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     parameters = get(kwargs, :parameters, true)
 
     #Variables
-    activepower_variables(ps_m, devices, time_steps);
+    activepower_variables!(ps_m, devices)
 
     #Constraints
-    activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_steps)
+    activepower_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    ramp_constraints(ps_m, devices, device_formulation, system_formulation, time_steps, resolution, parameters)
+    ramp_constraints!(ps_m, devices, device_formulation, system_formulation, parameters)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 
@@ -169,15 +161,13 @@ end
 
 
 function _internal_device_constructor!(ps_m::CanonicalModel,
-                                        device::Type{T},
-                                        device_formulation::Type{D},
-                                        system_formulation::Type{S},
-                                        sys::PSY.System,
-                                        time_steps::UnitRange{Int64},
-                                        resolution::Dates.Period;
-                                        kwargs...) where {T<: PSY.ThermalGen,
-                                                            D <: AbstractThermalDispatchForm,
-                                                            S <: PM.AbstractPowerFormulation}
+                                       device::Type{T},
+                                       device_formulation::Type{D},
+                                       system_formulation::Type{S},
+                                       sys::PSY.System;
+                                       kwargs...) where {T<: PSY.ThermalGen,
+                                                         D <: AbstractThermalDispatchForm,
+                                                         S <: PM.AbstractPowerFormulation}
 
     devices = PSY.get_components(device, sys)
 
@@ -186,17 +176,17 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     end
 
     #Variables
-    activepower_variables(ps_m, devices, time_steps);
+    activepower_variables!(ps_m, devices)
 
-    reactivepower_variables(ps_m, devices, time_steps);
+    reactivepower_variables!(ps_m, devices)
 
     #Constraints
-    activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_steps)
+    activepower_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, time_steps)
+    reactivepower_constraints!(ps_m, devices, device_formulation, system_formulation)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 
@@ -206,12 +196,10 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device::Type{T},
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
-                                        sys::PSY.System,
-                                        time_steps::UnitRange{Int64},
-                                        resolution::Dates.Period;
+                                        sys::PSY.System;
                                         kwargs...) where {T<: PSY.ThermalGen,
-                                                            D <: AbstractThermalDispatchForm,
-                                                            S <: PM.AbstractActivePowerFormulation}
+                                                          D <: AbstractThermalDispatchForm,
+                                                          S <: PM.AbstractActivePowerFormulation}
 
     devices = PSY.get_components(device, sys)
 
@@ -220,13 +208,13 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     end
 
     #Variables
-    activepower_variables(ps_m, devices, time_steps);
+    activepower_variables!(ps_m, devices)
 
     #Constraints
-    activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_steps)
+    activepower_constraints!(ps_m, devices, device_formulation, system_formulation)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 

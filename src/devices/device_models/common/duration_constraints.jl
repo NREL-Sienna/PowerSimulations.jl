@@ -45,11 +45,11 @@ end
 This formulation of the duration constraints, uses an Indicator parameter value to show if the constraint was satisfied in the past.
 
 """
-function device_duration_indicator(ps_m::CanonicalModel,
+function device_duration_ind(ps_m::CanonicalModel,
                                     set_names::Vector{String},
                                     duration_data::Vector{UpDown},
-                                    duration_indicator_status_on::Vector{InitialCondition},
-                                    duration_indicator_status_off::Vector{InitialCondition},
+                                    duration_ind_status_on::Vector{InitialCondition},
+                                    duration_ind_status_off::Vector{InitialCondition},
                                     time_steps::UnitRange{Int64},
                                     cons_name::Symbol,
                                     var_names::Tuple{Symbol,Symbol,Symbol})
@@ -63,22 +63,22 @@ function device_duration_indicator(ps_m::CanonicalModel,
 
     for (ix,name) in enumerate(set_names)
         ps_m.constraints[name_up][name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
-                                            duration_indicator_status_on[ix].value <= ps_m.variables[var_names[1]][name,1])
+                                            duration_ind_status_on[ix].value <= ps_m.variables[var_names[1]][name,1])
         ps_m.constraints[name_down][name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
-                                            duration_indicator_status_off[ix].value <= (1- ps_m.variables[var_names[1]][name,1]))
+                                            duration_ind_status_off[ix].value <= (1- ps_m.variables[var_names[1]][name,1]))
     end
 
     for t in time_steps[2:end], (ix,name) in enumerate(set_names)
         if t <= duration_data[ix].up
             ps_m.constraints[name_up][name, t] = JuMP.@constraint(ps_m.JuMPmodel,
-                                                            sum([ps_m.variables[var_names[2]][name,i] for i in 1:(t-1)]) + duration_indicator_status_on[ix].value <= ps_m.variables[var_names[1]][name,t])
+                                                            sum([ps_m.variables[var_names[2]][name,i] for i in 1:(t-1)]) + duration_ind_status_on[ix].value <= ps_m.variables[var_names[1]][name,t])
          else
             ps_m.constraints[name_up][name, t] = JuMP.@constraint(ps_m.JuMPmodel, sum([ps_m.variables[var_names[2]][name,i] for i in (t-duration_data[ix].up):t]) <= ps_m.variables[var_names[1]][name,t])
         end
 
         if t <= duration_data[ix].down
             ps_m.constraints[name_down][name, t] = JuMP.@constraint(ps_m.JuMPmodel,
-                                                            sum([ps_m.variables[var_names[3]][name,i] for i in 1:(t-1)]) + duration_indicator_status_off[ix].value <= (1 - ps_m.variables[var_names[1]][name,t]))
+                                                            sum([ps_m.variables[var_names[3]][name,i] for i in 1:(t-1)]) + duration_ind_status_off[ix].value <= (1 - ps_m.variables[var_names[1]][name,t]))
         else
             ps_m.constraints[name_down][name, t] = JuMP.@constraint(ps_m.JuMPmodel, sum([ps_m.variables[var_names[3]][name,i] for i in (t-duration_data[ix].down):t]) <= (1 - ps_m.variables[var_names[1]][name,t]))
         end
