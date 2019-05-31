@@ -1,8 +1,8 @@
 devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch),
                                     :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
-branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.ACSeriesBranch),
-                                     :T => DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch),
-                                     :TT => DeviceModel(PSY.TapTransformer , PSI.ACSeriesBranch))
+branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine),
+                                     :T => DeviceModel(PSY.Transformer2W, PSI.StaticTransformer),
+                                     :TT => DeviceModel(PSY.TapTransformer , PSI.StaticTransformer))
 services = Dict{Symbol, PSI.ServiceModel}()
 @testset "Operation Model kwargs with CopperPlatePowerModel base" begin
     model_ref = ModelReference(CopperPlatePowerModel, devices, branches, services);
