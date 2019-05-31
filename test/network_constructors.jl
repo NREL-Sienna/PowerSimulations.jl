@@ -1,8 +1,8 @@
 thermal_model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch)
 load_model = DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad)
-line_model = DeviceModel(PSY.Line, PSI.ACSeriesBranch)
-transformer_model = DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch)
-ttransformer_model = DeviceModel(PSY.TapTransformer, PSI.ACSeriesBranch)
+line_model = DeviceModel(PSY.Line, PSI.StaticLine)
+transformer_model = DeviceModel(PSY.Transformer2W, PSI.StaticTransformer)
+ttransformer_model = DeviceModel(PSY.TapTransformer, PSI.StaticTransformer)
 
 @testset "Network Copper Plate" begin
     network = CopperPlatePowerModel
