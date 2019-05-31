@@ -8,19 +8,15 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            kwargs...) where {Br <: AbstractBranchFormulation,
                                              B <: PSY.Branch}
 
-    return
+    devices = PSY.get_components(device, sys)
+    #=
+    branch_rate_constraint(ps_m, 
+                          devices, 
+                          device_formulation, 
+                          system_formulation,
+                          time_steps) 
+    =#
 
-end
-
-function _internal_device_constructor!(ps_m::CanonicalModel,
-                           device::Type{B},
-                           device_formulation::Type{Br},
-                           system_formulation::Type{CopperPlatePowerModel},
-                           sys::PSY.System,
-                           time_steps::UnitRange{Int64},
-                           resolution::Dates.Period;
-                           kwargs...) where {Br <: AbstractBranchFormulation,
-                                             B <: PSY.Branch}
 
     return
 

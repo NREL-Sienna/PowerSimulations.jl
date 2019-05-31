@@ -1,25 +1,44 @@
 #Generic Branch Models
 abstract type AbstractBranchFormulation <: AbstractDeviceFormulation end
 
-struct ACSeriesBranch <: AbstractBranchFormulation end
-
 #Abstract Line Models
 
 abstract type AbstractLineForm <: AbstractBranchFormulation end
 
-struct PiLine <: AbstractLineForm end
+struct StaticLine <: AbstractLineForm end
 
 #Abstract Transformer Models
 
 abstract type AbstractTransformerForm <: AbstractBranchFormulation end
 
-struct Static2W <: AbstractTransformerForm end
+struct StaticTransformer <: AbstractTransformerForm end
 
 # Not implemented yet
 struct TapControl <: AbstractTransformerForm end
 struct PhaseControl <: AbstractTransformerForm end
 
 #################################### Branch Variables ##################################################
+# Because of the way we integrate with PowerModels, most of the time PowerSimulations will create variables
+# for the branch flows either in AC or DC. 
+function flow_variables(ps_m::CanonicalModel,
+                        system_formulation::Type{S},
+                        devices::PSY.FlattenedVectorsIterator{B},
+                        time_steps::UnitRange{Int64}) where {B <: PSY.ACBranch,
+                                                             S <: PM.AbstractPowerFormulation}
+                                                   
+    return
+
+end
+
+function flow_variables(ps_m::CanonicalModel,
+                        system_formulation::Type{S},
+                        devices::PSY.FlattenedVectorsIterator{B},
+                        time_steps::UnitRange{Int64}) where {B <: PSY.DCBranch,
+                                                             S <: PM.AbstractPowerFormulation}
+                                                   
+    return
+
+end
 
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
@@ -48,31 +67,22 @@ function flow_variables(ps_m::CanonicalModel,
 
 end
 
-
-function flow_variables(ps_m::CanonicalModel,
-                        system_formulation::Type{S},
-                        devices::PSY.FlattenedVectorsIterator{B},
-                        time_steps::UnitRange{Int64}) where {B <: PSY.ACBranch,
-                                                             S <: PM.AbstractPowerFormulation}
-                                                   
-
-    return
-
-end
-
-
 #################################### Flow Limits Variables ##################################################
 
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenedVectorsIterator{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{StandardPTDFForm},
-                                time_steps::UnitRange{Int64}) where {B <: PSY.Branch,
-                                                                     D <: PM.DCPlosslessForm}
+                                time_steps::UnitRange{Int64}) where {B <: PSY.ACBranch,
+                                                                     D <: AbstractBranchFormulation}
 
     range_data = [(h.name, (min = -1*h.rate, max = h.rate)) for h in devices]
 
-    device_range(ps_m, range_data, time_steps, Symbol("rate_limit_$(B)"), Symbol("Fbr_$(B)"))
+    device_range(ps_m, 
+                range_data, 
+                time_steps, 
+                Symbol("rate_limit_$(B)"), 
+                Symbol("Fbr_$(B)"))
 
     return
 
