@@ -11,9 +11,10 @@ struct RenewableConstantPowerFactor <: AbstractRenewableDispatchForm end
 ########################### renewable generation variables ############################################
 
 function activepower_variables(ps_m::CanonicalModel,
-                               devices::PSY.FlattenedVectorsIterator{R},
-                               time_steps::UnitRange{Int64}) where {R <: PSY.RenewableGen}
+                               devices::PSY.FlattenedVectorsIterator{R}) where {R <: PSY.RenewableGen}
 
+    time_steps = model_time_steps(ps_m)  
+                                   
     add_variable(ps_m,
                  devices,
                  time_steps,
@@ -26,8 +27,9 @@ function activepower_variables(ps_m::CanonicalModel,
 end
 
 function reactivepower_variables(ps_m::CanonicalModel,
-                                 devices::PSY.FlattenedVectorsIterator{R},
-                                 time_steps::UnitRange{Int64}) where {R <: PSY.RenewableGen}
+                                 devices::PSY.FlattenedVectorsIterator{R}) where {R <: PSY.RenewableGen}
+
+    time_steps = model_time_steps(ps_m)                                   
 
     add_variable(ps_m,
                  devices,
@@ -45,11 +47,10 @@ end
 function reactivepower_constraints(ps_m::CanonicalModel,
                                     devices::PSY.FlattenedVectorsIterator{R},
                                     device_formulation::Type{RenewableFullDispatch},
-                                    system_formulation::Type{S},
-                                    time_steps::UnitRange{Int64}) where {R <: PSY.RenewableGen,
+                                    system_formulation::Type{S}) where {R <: PSY.RenewableGen,
                                                                          S <: PM.AbstractPowerFormulation}
 
-
+    time_steps = model_time_steps(ps_m)                                                                           
     range_data = [(r.name, r.tech.reactivepowerlimits) for r in devices]
 
     device_range(ps_m,
@@ -65,11 +66,11 @@ end
 function reactivepower_constraints(ps_m::CanonicalModel,
                                     devices::PSY.FlattenedVectorsIterator{R},
                                     device_formulation::Type{RenewableConstantPowerFactor},
-                                    system_formulation::Type{S},
-                                    time_steps::UnitRange{Int64}) where {R <: PSY.RenewableGen,
+                                    system_formulation::Type{S}) where {R <: PSY.RenewableGen,
                                                                          S <: PM.AbstractPowerFormulation}
 
     names = [r.name for r in devices]
+    time_steps = model_time_steps(ps_m)  
     p_variable_name = Symbol("Pre_$(R)")
     q_variable_name = Symbol("Qre_$(R)")
     constraint_name = Symbol("reactive_range_$(R)")
@@ -87,8 +88,8 @@ end
 
 
 ######################## output constraints without Time Series ###################################
-function _get_time_series(devices::PSY.FlattenedVectorsIterator{R},
-                         time_steps::UnitRange{Int64}) where {R <: PSY.RenewableGen}
+function _get_time_series(devices::PSY.FlattenedVectorsIterator{R}, 
+                          time_steps::UnitRange{Int64}) where {R <: PSY.RenewableGen}
 
     names = Vector{String}(undef, length(devices))
     series = Vector{Vector{Float64}}(undef, length(devices))
@@ -106,10 +107,11 @@ function activepower_constraints(ps_m::CanonicalModel,
                                 devices::PSY.FlattenedVectorsIterator{R},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S},
-                                time_steps::UnitRange{Int64},
                                 parameters::Bool) where {R <: PSY.RenewableGen,
                                                          D <: AbstractRenewableDispatchForm,
                                                          S <: PM.AbstractPowerFormulation}
+
+    time_steps = model_time_steps(ps_m)  
 
     if parameters
         device_timeseries_param_ub(ps_m,
@@ -125,8 +127,7 @@ function activepower_constraints(ps_m::CanonicalModel,
                     range_data,
                     time_steps,
                     Symbol("active_range_$(R)"),
-                    Symbol("Pre_$(R)")
-                    )
+                    Symbol("Pre_$(R)"))
     end
 
     return
@@ -153,11 +154,11 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  forecasts::Vector{R},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S},
-                                 time_steps::UnitRange{Int64},
                                  parameters::Bool) where {R <: PSY.Deterministic{<:PSY.RenewableGen},
                                                           D <: AbstractRenewableDispatchForm,
                                                           S <: PM.AbstractPowerFormulation}
 
+    time_steps = model_time_steps(ps_m)  
     forecast_device_type = typeof(forecasts[1].component)
 
     if parameters
@@ -185,10 +186,10 @@ end
 
 function _nodal_expression_param(ps_m::CanonicalModel,
                                     devices::PSY.FlattenedVectorsIterator{R},
-                                    system_formulation::Type{S},
-                                    time_steps::UnitRange{Int64}) where {R <: PSY.RenewableGen,
-                                                                         S <: PM.AbstractPowerFormulation}
+                                    system_formulation::Type{S}) where {R <: PSY.RenewableGen,
+                                                                        S <: PM.AbstractPowerFormulation}
 
+    time_steps = model_time_steps(ps_m)                                                                        
     ts_data_active = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(devices))
     ts_data_reactive = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(devices))
 
@@ -215,10 +216,10 @@ end
 
 function _nodal_expression_param(ps_m::CanonicalModel,
                                 devices::PSY.FlattenedVectorsIterator{R},
-                                system_formulation::Type{S},
-                                time_steps::UnitRange{Int64}) where {R <: PSY.RenewableGen,
-                                                                     S <: PM.AbstractActivePowerFormulation}
+                                system_formulation::Type{S}) where {R <: PSY.RenewableGen,
+                                                                    S <: PM.AbstractActivePowerFormulation}
 
+    time_steps = model_time_steps(ps_m)
     ts_data_active = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(devices))
 
     for (ix,d) in enumerate(devices)
@@ -237,15 +238,13 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 end
 
 ############################################## Time Series ###################################
-
 function _nodal_expression_param(ps_m::CanonicalModel,
-                                    forecasts::Vector{R},
-                                    system_formulation::Type{S},
-                                    time_steps::UnitRange{Int64}) where {R <: PSY.Deterministic{<:PSY.RenewableGen},
-                                                                         S <: PM.AbstractPowerFormulation}
+                                 forecasts::Vector{R},
+                                 system_formulation::Type{S}) where {R <: PSY.Deterministic{<:PSY.RenewableGen},
+                                                                     S <: PM.AbstractPowerFormulation}
 
+    time_steps = model_time_steps(ps_m)                                                                     
     forecast_device_type = typeof(forecasts[1].component)
-
     ts_data_active = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(forecasts))
     ts_data_reactive = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(forecasts))
 
@@ -273,10 +272,10 @@ end
 
 function _nodal_expression_param(ps_m::CanonicalModel,
                                 forecasts::Vector{R},
-                                system_formulation::Type{S},
-                                time_steps::UnitRange{Int64}) where {R <: PSY.Deterministic{<:PSY.RenewableGen},
+                                system_formulation::Type{S}) where {R <: PSY.Deterministic{<:PSY.RenewableGen},
                                                                      S <: PM.AbstractActivePowerFormulation}
-
+    
+    time_steps = model_time_steps(ps_m)                                                                     
     forecast_device_type = typeof(forecasts[1].component)
     ts_data_active = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(forecasts))
 
@@ -297,13 +296,13 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 end
 
 ############################ injection expression with fixed values ####################################
-
 ########################################### Devices ####################################################
 function _nodal_expression_fixed(ps_m::CanonicalModel,
                                 devices::PSY.FlattenedVectorsIterator{R},
-                                system_formulation::Type{S},
-                                time_steps::UnitRange{Int64}) where {R <: PSY.RenewableGen,
+                                system_formulation::Type{S}) where {R <: PSY.RenewableGen,
                                                                      S <: PM.AbstractPowerFormulation}
+
+    time_steps = model_time_steps(ps_m)                                                                     
 
     for t in time_steps, d in devices
         _add_to_expression!(ps_m.expressions[:nodal_balance_active],
@@ -323,9 +322,10 @@ end
 
 function _nodal_expression_fixed(ps_m::CanonicalModel,
                                     devices::PSY.FlattenedVectorsIterator{R},
-                                    system_formulation::Type{S},
-                                    time_steps::UnitRange{Int64}) where {R <: PSY.RenewableGen,
+                                    system_formulation::Type{S}) where {R <: PSY.RenewableGen,
                                                                          S <: PM.AbstractActivePowerFormulation}
+
+    time_steps = model_time_steps(ps_m)                                                                     
 
     for t in time_steps, d in devices
         _add_to_expression!(ps_m.expressions[:nodal_balance_active],
@@ -342,9 +342,11 @@ end
 ############################################## Time Series ###################################
 function _nodal_expression_fixed(ps_m::CanonicalModel,
                                 forecasts::Vector{R},
-                                system_formulation::Type{S},
-                                time_steps::UnitRange{Int64}) where {R <: PSY.Deterministic{<:PSY.RenewableGen},
+                                system_formulation::Type{S}) where {R <: PSY.Deterministic{<:PSY.RenewableGen},
                                                                      S <: PM.AbstractPowerFormulation}
+
+    time_steps = model_time_steps(ps_m)
+
     for f in forecasts
         time_series_vector = values(f.data)*f.component.tech.rating
         device = f.component
@@ -367,9 +369,10 @@ end
 
 function _nodal_expression_fixed(ps_m::CanonicalModel,
                                 forecasts::Vector{R},
-                                system_formulation::Type{S},
-                                time_steps::UnitRange{Int64}) where {R <: PSY.Deterministic{<:PSY.RenewableGen},
+                                system_formulation::Type{S}) where {R <: PSY.Deterministic{<:PSY.RenewableGen},
                                                                      S <: PM.AbstractActivePowerFormulation}
+
+    time_steps = model_time_steps(ps_m)
 
     for f in forecasts
         time_series_vector = values(f.data)*f.component.tech.rating
@@ -387,17 +390,14 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
 end
 
 ##################################### renewable generation cost ######################################
-
 function cost_function(ps_m::CanonicalModel,
                        devices::PSY.FlattenedVectorsIterator{PSY.RenewableDispatch},
                        device_formulation::Type{D},
-                       system_formulation::Type{S},
-                       resolution::Dates.Period) where {D <: AbstractRenewableDispatchForm,
+                       system_formulation::Type{S}) where {D <: AbstractRenewableDispatchForm,
                                                            S <: PM.AbstractPowerFormulation}
 
     add_to_cost(ps_m,
                 devices,
-                resolution,
                 Symbol("Pre_RenewableDispatch"),
                 :curtailpenalty,
                 -1)

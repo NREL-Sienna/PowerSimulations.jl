@@ -593,11 +593,8 @@ function cost_function(ps_m::CanonicalModel,
                                                            D <: AbstractThermalFormulation,
                                                            S <: PM.AbstractPowerFormulation}
 
-   #Variable Cost component
-    add_to_cost(ps_m,
-                devices,
-                Symbol("Pth_$(T)"),
-                :variablecost)
+    #Variable Cost component
+    add_to_cost(ps_m, devices, Symbol("Pth_$(T)"), :variablecost)
 
     #Commitment Cost Components
     add_to_cost(ps_m, devices, Symbol("STARTth_$(T)"), :startupcost)

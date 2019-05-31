@@ -2,9 +2,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device::Type{R},
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
-                                        sys::PSY.System,
-                                        time_steps::UnitRange{Int64},
-                                        resolution::Dates.Period;
+                                        sys::PSY.System;
                                         kwargs...) where {R <: PSY.RenewableGen,
                                                           D <: AbstractRenewableDispatchForm,
                                                           S <: PM.AbstractPowerFormulation}
@@ -21,23 +19,23 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     parameters = get(kwargs, :parameters, true)
 
     #Variables
-    activepower_variables(ps_m, devices, time_steps);
+    activepower_variables(ps_m, devices);
 
-    reactivepower_variables(ps_m, devices, time_steps);
+    reactivepower_variables(ps_m, devices);
 
     #Constraints
     if forecast
         first_step = PSY.get_forecasts_initial_time(sys)
         forecasts = collect(PSY.get_forecasts(PSY.Deterministic{R}, sys, PSY.get_forecasts_initial_time(sys)))
-        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, time_steps, parameters)
+        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, parameters)
     else
-        activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_steps, parameters)
+        activepower_constraints(ps_m, devices, device_formulation, system_formulation, parameters)
     end
 
-    reactivepower_constraints(ps_m, devices, device_formulation, system_formulation, time_steps)
+    reactivepower_constraints(ps_m, devices, device_formulation, system_formulation)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 
@@ -47,9 +45,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device::Type{R},
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
-                                        sys::PSY.System,
-                                        time_steps::UnitRange{Int64},
-                                        resolution::Dates.Period;
+                                        sys::PSY.System;
                                         kwargs...) where {R <: PSY.RenewableGen,
                                                           D <: AbstractRenewableDispatchForm,
                                                           S <: PM.AbstractActivePowerFormulation}
@@ -65,19 +61,19 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     parameters = get(kwargs, :parameters, true)
 
     #Variables
-    activepower_variables(ps_m, devices, time_steps)
+    activepower_variables(ps_m, devices)
 
     #Constraints
     if forecast
         first_step = PSY.get_forecasts_initial_time(sys)
         forecasts = collect(PSY.get_forecasts(PSY.Deterministic{R}, sys, PSY.get_forecasts_initial_time(sys)))
-        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, time_steps, parameters)
+        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, parameters)
     else
-        activepower_constraints(ps_m, devices, device_formulation, system_formulation, time_steps, parameters)
+        activepower_constraints(ps_m, devices, device_formulation, system_formulation,  parameters)
     end
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation, resolution)
+    cost_function(ps_m, devices, device_formulation, system_formulation)
 
     return
 
@@ -87,9 +83,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device::Type{R},
                                         device_formulation::Type{RenewableFixed},
                                         system_formulation::Type{S},
-                                        sys::PSY.System,
-                                        time_steps::UnitRange{Int64},
-                                        resolution::Dates.Period;
+                                        sys::PSY.System;
                                         kwargs...) where {R <: PSY.RenewableGen,
                                                           S <: PM.AbstractPowerFormulation}
 
@@ -106,9 +100,9 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     if forecast
         first_step = PSY.get_forecasts_initial_time(sys)
         forecasts = collect(PSY.get_forecasts(PSY.Deterministic{R}, sys, PSY.get_forecasts_initial_time(sys)))
-        nodal_expression(ps_m, forecasts, system_formulation, time_steps, parameters)
+        nodal_expression(ps_m, forecasts, system_formulation, parameters)
     else
-        nodal_expression(ps_m, devices, system_formulation, time_steps, parameters)
+        nodal_expression(ps_m, devices, system_formulation, parameters)
     end
 
     return
@@ -119,9 +113,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device::Type{PSY.RenewableFix},
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
-                                        sys::PSY.System,
-                                        time_steps::UnitRange{Int64},
-                                        resolution::Dates.Period;
+                                        sys::PSY.System;
                                         kwargs...) where {D <: AbstractRenewableDispatchForm,
                                                           S <: PM.AbstractPowerFormulation}
 
@@ -133,8 +125,6 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                   device,
                                   RenewableFixed,
                                   sys,
-                                  time_steps,
-                                  resolution;
                                   kwargs...)
 
 end
