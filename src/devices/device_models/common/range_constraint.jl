@@ -4,7 +4,7 @@ function device_range(ps_m::CanonicalModel,
                         cons_name::Symbol,
                         var_name::Symbol)
 
-    ps_m.constraints[cons_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [r[1] for r in range_data], time_steps)
+    ps_m.constraints[cons_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, (r[1] for r in range_data), time_steps)
 
     for t in time_steps, r in range_data
             if abs(r[2].min - r[2].max) >= eps()
@@ -19,6 +19,8 @@ function device_range(ps_m::CanonicalModel,
 
 end
 
+
+
 function device_semicontinuousrange(ps_m::CanonicalModel,
                                     scrange_data::Vector{NamedMinMax},
                                     time_steps::UnitRange{Int64},
@@ -30,7 +32,7 @@ function device_semicontinuousrange(ps_m::CanonicalModel,
     lb_name = Symbol(cons_name,:_lb)
 
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it. In the future this can be updated
-    set_name = [r[1] for r in scrange_data]
+    set_name = (r[1] for r in scrange_data)
     ps_m.constraints[ub_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_steps)
     ps_m.constraints[lb_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_steps)
 
@@ -67,7 +69,7 @@ function reserve_device_semicontinuousrange(ps_m::CanonicalModel,
     # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     # In the future this can be updated
 
-    set_name = [r[1] for r in scrange_data]
+    set_name = (r[1] for r in scrange_data)
     ps_m.constraints[ub_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_steps)
     ps_m.constraints[lb_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_steps)
 
