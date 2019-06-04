@@ -15,8 +15,6 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
         return
     end
 
-    parameters = get(kwargs, :parameters, true)
-
     #Variables
     activepower_variables(ps_m, devices)
 
@@ -25,10 +23,10 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     #Constraints
     if forecast
         first_step = PSY.get_forecasts_initial_time(sys)
-        forecasts = collect(PSY.get_forecasts(PSY.Deterministic{L}, sys, PSY.get_forecasts_initial_time(sys)))
-        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, parameters)
+        forecasts = PSY.get_forecasts(PSY.Deterministic{L}, sys, first_step)
+        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation)
     else
-        activepower_constraints(ps_m, devices, device_formulation, system_formulation, parameters)
+        activepower_constraints(ps_m, devices, device_formulation, system_formulation)
     end
 
     reactivepower_constraints(ps_m, devices, device_formulation, system_formulation)
@@ -57,18 +55,16 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
         return
     end
 
-    parameters = get(kwargs, :parameters, true)
-
     #Variables
     activepower_variables(ps_m, devices)
 
     #Constraints
     if forecast
         first_step = PSY.get_forecasts_initial_time(sys)
-        forecasts = Vector{PSY.Deterministic{L}}(PSY.get_forecasts(sys, first_step, devices))
-        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation, parameters)
+        forecasts = PSY.get_forecasts(PSY.Deterministic{L}, sys, first_step)
+        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation)
     else
-        activepower_constraints(ps_m, devices, device_formulation, system_formulation, parameters)
+        activepower_constraints(ps_m, devices, device_formulation, system_formulation)
     end
 
     #Cost Function
@@ -94,14 +90,12 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
         return
     end
 
-    parameters = get(kwargs, :parameters, true)
-
     if forecast
         first_step = PSY.get_forecasts_initial_time(sys)
-        forecasts = collect(PSY.get_forecasts(PSY.Deterministic{L}, sys, PSY.get_forecasts_initial_time(sys)))
-        nodal_expression(ps_m, forecasts, system_formulation, parameters)
+        forecasts = PSY.get_forecasts(PSY.Deterministic{L}, sys, first_step)
+        nodal_expression(ps_m, forecasts, system_formulation)
     else
-        nodal_expression(ps_m, devices, system_formulation, parameters)
+        nodal_expression(ps_m, devices, system_formulation)
     end
 
     return

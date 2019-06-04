@@ -2,12 +2,12 @@ function ptdf_networkflow(ps_m::CanonicalModel,
                           branches::PSY.FlattenedVectorsIterator{B},
                           buses::PSY.FlattenedVectorsIterator{PSY.Bus},
                           expression::Symbol,
-                          PTDF::PSY.PTDF,
-                          time_steps::UnitRange{Int64}) where {B <: PSY.Branch}
+                          PTDF::PSY.PTDF) where {B <: PSY.Branch}
 
 
-    ps_m.constraints[:network_flow] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef,  PTDF.axes[1], time_steps)
-    ps_m.constraints[:nodal_balance] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, PTDF.axes[2], time_steps)
+    time_steps = model_time_steps(ps_m)                          
+    ps_m.constraints[:network_flow] = JuMPConstraintArray(undef,  PTDF.axes[1], time_steps)
+    ps_m.constraints[:nodal_balance] = JuMPConstraintArray(undef, PTDF.axes[2], time_steps)
     key = Symbol("Fbr_$(B)")
 
     _remove_undef!(ps_m.expressions[expression])
@@ -53,7 +53,7 @@ to = TimerOutput()
 @timeit to "build_load"    construct_device!(ps_m, PSY.PowerLoad, StaticPowerLoad, PM.StandardACPForm, sys5b);
 @timeit to "add_flow"      flow_variables(ps_m, PM.DCPlosslessForm, branches5, 1:24)
 @timeit to "PTDF cons" begin
-    @timeit to "allocate_space" ps_m.constraints["Flow_con1"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [b.name for b in branches5], 1:24)
+    @timeit to "allocate_space" ps_m.constraints["Flow_con1"] = JuMPConstraintArray(undef, [b.name for b in branches5], 1:24)
     @timeit to "make constraints" for t in 1:24
                                     for b in branches5
                                         ps_m.constraints["Flow_con1"][b.name,t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[key][b.name,t] == PTDF[b.name,:].data'*ps_m.expressions[:nodal_balance_active][:,t])
@@ -95,7 +95,7 @@ to = TimerOutput()
 @timeit to "build_load"    construct_device!(ps_m, PSY.PowerLoad, StaticPowerLoad, PM.StandardACPForm, sys5b);
 @timeit to "add_flow"      flow_variables(ps_m, PM.DCPlosslessForm, branches5, 1:24)
 @timeit to "PTDF cons" begin
-    @timeit to "allocate_space" ps_m.constraints["Flow_con2"] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, [b.name for b in branches5], 1:24)
+    @timeit to "allocate_space" ps_m.constraints["Flow_con2"] = JuMPConstraintArray(undef, [b.name for b in branches5], 1:24)
     @timeit to "make constraints" begin for t in 1:24
             for b in branches5
                 expr = JuMP.AffExpr(0.0, ps_m.variables[key][b.name,t] => 1.0)

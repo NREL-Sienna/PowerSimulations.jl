@@ -86,16 +86,12 @@ end
                    c_sys5_re,
                    c_sys5_bat];
 
-    load_model = DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad)
-    line_model = DeviceModel(PSY.Line, PSI.ACSeriesBranch)
-    transformer_model = DeviceModel(PSY.Transformer2W, PSI.ACSeriesBranch)
-
     for net in networks, thermal in thermal_gens, system in systems
         @testset "Operation Model $(net) - $(thermal) - $(system)" begin
             thermal_model = DeviceModel(PSY.ThermalStandard, thermal)
-            devices = Dict{Symbol, DeviceModel}(:Generators => thermal_model, :Loads =>  load_model)
-            branches = Dict{Symbol, DeviceModel}(:Lines => line_model)
-            services = Dict{Symbol, PSI.ServiceModel}()
+            devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, thermal), 
+                                                :Loads =>       DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
+            branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine))
             model_ref = ModelReference(net, devices, branches, services);
             op_model = OperationModel(TestOptModel,
                                       model_ref,

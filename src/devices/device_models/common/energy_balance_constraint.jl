@@ -1,14 +1,14 @@
 function energy_balance(ps_m::CanonicalModel,
-                        time_steps::UnitRange{Int64},
-                        resolution::Dates.Period,
                         initial_conditions::Vector{InitialCondition},
                         efficiency_data::Tuple{Vector{String},Vector{InOut}},
                         cons_name::Symbol,
                         var_names::Tuple{Symbol,Symbol,Symbol})
 
+    time_steps = model_time_steps(ps_m)  
+    resolution = model_resolution(ps_m)
     fraction_of_hour = Dates.value(Dates.Minute(resolution))/60
     name_index = efficiency_data[1]
-    ps_m.constraints[cons_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, name_index, time_steps)
+    ps_m.constraints[cons_name] = JuMPConstraintArray(undef, name_index, time_steps)
 
     for (ix,name) in enumerate(name_index)
         eff_in = efficiency_data[2][ix].in

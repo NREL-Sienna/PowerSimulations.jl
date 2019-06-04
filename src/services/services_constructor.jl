@@ -2,8 +2,7 @@ function construct_service!(ps_m::CanonicalModel,
                             service::Type{SD},
                             service_formulation::Type{SV},
                             system_formulation::Type{S},
-                            sys::PSY.System,
-                            time_steps::UnitRange{Int64};
+                            sys::PSY.System;
                             kwargs...) where {SD <: PSY.Service,
                                               SV <: AbstractServiceFormulation,
                                               S <:  PM.AbstractPowerFormulation}

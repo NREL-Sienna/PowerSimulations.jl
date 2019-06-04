@@ -22,8 +22,7 @@ struct PhaseControl <: AbstractTransformerForm end
 # for the branch flows either in AC or DC. 
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
-                        devices::PSY.FlattenedVectorsIterator{B},
-                        time_steps::UnitRange{Int64}) where {B <: PSY.ACBranch,
+                        devices::PSY.FlattenedVectorsIterator{B}) where {B <: PSY.ACBranch,
                                                              S <: PM.AbstractPowerFormulation}
                                                    
     return
@@ -32,20 +31,10 @@ end
 
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
-                        devices::PSY.FlattenedVectorsIterator{B},
-                        time_steps::UnitRange{Int64}) where {B <: PSY.DCBranch,
-                                                             S <: PM.AbstractPowerFormulation}
-                                                   
-    return
-
-end
-
-function flow_variables(ps_m::CanonicalModel,
-                        system_formulation::Type{S},
-                        devices::PSY.FlattenedVectorsIterator{B},
-                        time_steps::UnitRange{Int64}) where {B <: PSY.ACBranch,
+                        devices::PSY.FlattenedVectorsIterator{B}) where {B <: PSY.ACBranch,
                                                              S <: StandardPTDFForm}
 
+    time_steps = model_time_steps(ps_m)                                                             
     var_name = Symbol("Fbr_$(B)")
     ps_m.variables[var_name] = PSI._container_spec(ps_m.JuMPmodel,
                                                     (d.name for d in devices),
@@ -72,56 +61,16 @@ end
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenedVectorsIterator{B},
                                 device_formulation::Type{D},
-                                system_formulation::Type{StandardPTDFForm},
-                                time_steps::UnitRange{Int64}) where {B <: PSY.ACBranch,
-                                                                     D <: AbstractBranchFormulation}
+                                system_formulation::Type{StandardPTDFForm}) where {B <: PSY.ACBranch,
+                                                                                   D <: AbstractBranchFormulation}
 
     range_data = [(h.name, (min = -1*h.rate, max = h.rate)) for h in devices]
 
     device_range(ps_m, 
                 range_data, 
-                time_steps, 
                 Symbol("rate_limit_$(B)"), 
                 Symbol("Fbr_$(B)"))
 
     return
 
 end
-
-#=
-
-####################################Flow Limits using Values ###############################################
-
-####################################Flow Limits using Device ###############################################
-
-function line_flow_limit(ps_m::CanonicalModel,
-                         devices::PSY.FlattenedVectorsIterator{B},
-                         device_formulation::Type{D},
-                         system_formulation::Type{S},
-                         time_steps::UnitRange{Int64}) where {B <: PSY.MonitoredLine,
-                                                              D <: AbstractBranchFormulation,
-                                                              S <: PM.AbstractPowerFormulation}
-
-    return
-
-end
-
-function line_flow_limit(ps_m::CanonicalModel,
-                         devices::PSY.FlattenedVectorsIterator{B},
-                         device_formulation::Type{D},
-                         system_formulation::Type{S},
-                         time_steps::UnitRange{Int64}) where {B <: PSY.MonitoredLine,
-                                                              D <: AbstractBranchFormulation,
-                                                              S <: PM.AbstractActivePowerFormulation}
-
-
-
-    return
-
-end
-
-####################################Flow Limits using TimeSeries ###############################################
-
-####################################Flow Limits using Parameters ###############################################
-
-=#

@@ -1,10 +1,10 @@
 function norm_two_constraint(ps_m::CanonicalModel,
                             rating_data::Tuple{Vector{String}, Vector{Float64}},
-                            time_steps::UnitRange{Int64},
                             cons_name::Symbol,
                             var_names::Tuple{Symbol, Symbol})
 
-    ps_m.constraints[cons_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, rating_data[1], time_steps)
+    time_steps = model_time_steps(ps_m)                                
+    ps_m.constraints[cons_name] = JuMPConstraintArray(undef, rating_data[1], time_steps)
 
     for t in time_steps, (ix,r) in enumerate(rating_data[1])
 

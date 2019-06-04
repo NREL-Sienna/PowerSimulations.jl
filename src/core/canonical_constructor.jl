@@ -1,4 +1,3 @@
-
 const DSDA = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
 function _make_container_array(V::DataType, ax...; kwargs...)
@@ -118,6 +117,7 @@ function  build_canonical_model(transmission::Type{T},
         time_steps = 1:horizon
         resolution = PSY.get_forecasts_resolution(sys)
     else
+        resolution = Dates.Hour(1)
         time_steps = 1:1
     end
 

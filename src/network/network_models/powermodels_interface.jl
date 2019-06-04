@@ -244,9 +244,9 @@ end
 ""
 function powermodels_network!(ps_m::CanonicalModel,
                               system_formulation::Type{S},
-                              sys::PSY.System,
-                              time_steps::UnitRange{Int64}) where {S <: PM.AbstractPowerFormulation}
+                              sys::PSY.System) where {S <: PM.AbstractPowerFormulation}
 
+    time_steps = model_time_steps(ps_m)                              
     pm_data = pass_to_pm(sys, time_steps[end])
     buses = PSY.get_components(PSY.Bus, sys)
 
@@ -269,9 +269,9 @@ end
 ""
 function powermodels_network!(ps_m::CanonicalModel,
                               system_formulation::Type{S},
-                              sys::PSY.System,
-                              time_steps::UnitRange{Int64}) where {S <: PM.AbstractActivePowerFormulation}
+                              sys::PSY.System) where {S <: PM.AbstractActivePowerFormulation}
 
+    time_steps = model_time_steps(ps_m)                              
     pm_data = pass_to_pm(sys, time_steps[end])
     buses = PSY.get_components(PSY.Bus, sys)
 

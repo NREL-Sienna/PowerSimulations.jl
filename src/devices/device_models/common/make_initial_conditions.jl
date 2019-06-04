@@ -1,7 +1,7 @@
 function status_init(ps_m::CanonicalModel,
-                    devices::PSY.FlattenedVectorsIterator{PSD},
-                    parameters::Bool) where {PSD <: PSY.ThermalGen}
+                    devices::PSY.FlattenedVectorsIterator{PSD}) where {PSD <: PSY.ThermalGen}
 
+    parameters = model_with_parameters(ps_m)
     lenght_devices = length(devices)
     initial_conditions = Vector{InitialCondition}(undef, lenght_devices)
 
@@ -21,10 +21,11 @@ end
 
 function output_init(ps_m::CanonicalModel,
                     devices::PSY.FlattenedVectorsIterator{PSD},
-                    set_name::Vector{String},
-                    parameters::Bool) where {PSD <: PSY.ThermalGen}
+                    set_name::Vector{String}) where {PSD <: PSY.ThermalGen}
 
+    parameters = model_with_parameters(ps_m)
     lenght_devices = length(devices)
+
     if lenght_devices != length(set_name)                    
         devices = [d for d in devices if d.name in set_name]
         lenght_devices = length(devices)
@@ -49,11 +50,11 @@ end
 
 function duration_init(ps_m::CanonicalModel,
                         devices::PSY.FlattenedVectorsIterator{PSD},
-                        set_name::Vector{String},
-                        parameters::Bool) where {PSD <: PSY.ThermalGen}
+                        set_name::Vector{String}) where {PSD <: PSY.ThermalGen}
 
-    
+    parameters = model_with_parameters(ps_m)
     lenght_devices = length(devices)
+
     if lenght_devices != length(set_name)                    
         devices = [d for d in devices if d.name in set_name]
         lenght_devices = length(devices)
@@ -85,9 +86,9 @@ function duration_init(ps_m::CanonicalModel,
 end
 
 function storage_energy_init(ps_m::CanonicalModel,
-                             devices::PSY.FlattenedVectorsIterator{PSD},
-                             parameters::Bool) where {PSD <: PSY.Storage}
+                             devices::PSY.FlattenedVectorsIterator{PSD}) where {PSD <: PSY.Storage}
 
+    parameters = model_with_parameters(ps_m)
     energy_initial_conditions  = Vector{InitialCondition}(undef, length(devices))
 
     for (i,g) in enumerate(devices)

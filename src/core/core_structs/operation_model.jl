@@ -11,7 +11,6 @@ mutable struct OperationModel{M <: AbstractOperationsModel}
     op_model::Type{M}
     model_ref::ModelReference
     sys::PSY.System
-    resolution::Dates.Period
     canonical_model::CanonicalModel
 
     function OperationModel(op_model::Type{M},
@@ -21,21 +20,17 @@ mutable struct OperationModel{M <: AbstractOperationsModel}
                                 kwargs...) where {M <: AbstractOperationsModel,
                                                   T <: PM.AbstractPowerFormulation}
 
-        resolution = sys.forecasts.resolution
-
         ps_model = build_canonical_model(model_ref.transmission,
                                          model_ref.devices,
                                          model_ref.branches,
                                          model_ref.services,
                                         sys,
-                                        resolution,
                                         optimizer;
                                         kwargs...)
 
         new{M}(op_model,
                model_ref,
                sys,
-               resolution,
                ps_model)
 
     end

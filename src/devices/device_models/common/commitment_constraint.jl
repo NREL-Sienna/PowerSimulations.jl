@@ -1,10 +1,10 @@
 function device_commitment(ps_m::CanonicalModel,
                         initial_conditions::Vector{InitialCondition},
-                        time_steps::UnitRange{Int64},
                         cons_name::Symbol,
                         var_names::Tuple{Symbol,Symbol,Symbol})
 
-    ps_m.constraints[cons_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, ps_m.variables[var_names[1]].axes[1], time_steps)
+    time_steps = model_time_steps(ps_m)  
+    ps_m.constraints[cons_name] = JuMPConstraintArray(undef, ps_m.variables[var_names[1]].axes[1], time_steps)
 
     for i in initial_conditions
 
