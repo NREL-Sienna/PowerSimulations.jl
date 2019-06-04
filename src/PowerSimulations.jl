@@ -55,9 +55,7 @@ const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
 const PGAE{V} = PJ.ParametrizedGenericAffExpr{Float64,V} where V <: JuMP.AbstractVariableRef
 const GAE{V} = JuMP.GenericAffExpr{Float64,V} where V <: JuMP.AbstractVariableRef
 const JuMPAffineExpressionArray = Matrix{GAE{V}} where V <: JuMP.AbstractVariableRef
-
-#Type Alias for Unions
-const FixResource = Union{PSY.RenewableFix, PSY.HydroFix}
+const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 
 #Type Alias for long type signatures
 const MinMax = NamedTuple{(:min, :max),Tuple{Float64,Float64}}

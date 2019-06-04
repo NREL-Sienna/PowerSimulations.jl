@@ -7,19 +7,16 @@ struct BookKeepingwReservation <: AbstractStorageForm end
 #################################################Storage Variables#################################
 
 function active_power_variables(ps_m::CanonicalModel,
-                                devices::PSY.FlattenedVectorsIterator{St},
-                                time_steps::UnitRange{Int64}) where {St <: PSY.Storage}
+                                devices::PSY.FlattenedVectorsIterator{St}) where {St <: PSY.Storage}
 
     add_variable(ps_m,
                  devices,
-                 time_steps,
                  Symbol("Psin_$(St)"),
                  false,
                  :nodal_balance_active,
                  -1)
     add_variable(ps_m,
                  devices,
-                 time_steps,
                  Symbol("Psout_$(St)"),
                  false,
                  :nodal_balance_active)
@@ -30,12 +27,9 @@ end
 
 
 function reactive_power_variables(ps_m::CanonicalModel,
-                                  devices::PSY.FlattenedVectorsIterator{St},
-                                  time_steps::UnitRange{Int64}) where {St <: PSY.Storage}
-
+                                  devices::PSY.FlattenedVectorsIterator{St}) where {St <: PSY.Storage}                                 
     add_variable(ps_m,
                  devices,
-                 time_steps,
                  Symbol("Qst_$(St)"),
                  false,
                  :nodal_balance_reactive)
@@ -46,12 +40,10 @@ end
 
 
 function energy_storage_variables(ps_m::CanonicalModel,
-                                  devices::PSY.FlattenedVectorsIterator{St},
-                                  time_steps::UnitRange{Int64}) where St <: PSY.Storage
+                                  devices::PSY.FlattenedVectorsIterator{St}) where St <: PSY.Storage
 
     add_variable(ps_m,
                  devices,
-                 time_steps,
                  Symbol("Est_$(St)"),
                  false)
 
@@ -61,12 +53,10 @@ end
 
 
 function storage_reservation_variables(ps_m::CanonicalModel,
-                                       devices::PSY.FlattenedVectorsIterator{St},
-                                       time_steps::UnitRange{Int64}) where St <: PSY.Storage
+                                       devices::PSY.FlattenedVectorsIterator{St}) where St <: PSY.Storage
 
     add_variable(ps_m,
                  devices,
-                 time_steps,
                  Symbol("Rst_$(St)"),
                  true)
 
@@ -80,22 +70,19 @@ end
 function active_power_constraints(ps_m::CanonicalModel,
                                   devices::PSY.FlattenedVectorsIterator{St},
                                   device_formulation::Type{BookKeeping},
-                                  system_formulation::Type{S},
-                                  time_steps::UnitRange{Int64}) where {St <: PSY.Storage,
-                                                                       S <: PM.AbstractPowerFormulation}
+                                  system_formulation::Type{S}) where {St <: PSY.Storage,
+                                                                      S <: PM.AbstractPowerFormulation}
 
     range_data_in = [(s.name, s.inputactivepowerlimits) for s in devices]
     range_data_out = [(s.name, s.outputactivepowerlimits) for s in devices]
 
     device_range(ps_m,
                  range_data_in,
-                 time_steps,
                  Symbol("inputpower_range_$(St)"),
                  Symbol("Psin_$(St)"))
 
     device_range(ps_m,
                 range_data_out,
-                time_steps,
                 Symbol("outputpower_range_$(St)"),
                 Symbol("Psout_$(St)"))
 
@@ -106,23 +93,20 @@ end
 function active_power_constraints(ps_m::CanonicalModel,
                                   devices::PSY.FlattenedVectorsIterator{St},
                                   device_formulation::Type{BookKeepingwReservation},
-                                  system_formulation::Type{S},
-                                  time_steps::UnitRange{Int64}) where {St <: PSY.Storage,
-                                                                       S <: PM.AbstractPowerFormulation}
-
+                                  system_formulation::Type{S}) where {St <: PSY.Storage,
+                                                                      S <: PM.AbstractPowerFormulation}
+                                                                 
     range_data_in = [(s.name, s.inputactivepowerlimits) for s in devices]
     range_data_out = [(s.name, s.outputactivepowerlimits) for s in devices]
 
     reserve_device_semicontinuousrange(ps_m,
                                        range_data_in,
-                                       time_steps,
                                        Symbol("inputpower_range_$(St)"),
                                        Symbol("Psin_$(St)"),
                                        Symbol("Rst_$(St)"))
 
     reserve_device_semicontinuousrange(ps_m,
                                        range_data_out,
-                                       time_steps,
                                        Symbol("outputpower_range_$(St)"),
                                        Symbol("Psout_$(St)"),
                                        Symbol("Rst_$(St)"))
@@ -138,16 +122,14 @@ This function adds the reactive  power limits of generators when there are Commi
 function reactive_power_constraints(ps_m::CanonicalModel,
                                    devices::PSY.FlattenedVectorsIterator{St},
                                    device_formulation::Type{D},
-                                   system_formulation::Type{S},
-                                   time_steps::UnitRange{Int64}) where {St <: PSY.Storage,
-                                                                        D <: AbstractStorageForm,
-                                                                        S <: PM.AbstractPowerFormulation}
+                                   system_formulation::Type{S}) where {St <: PSY.Storage,
+                                                                       D <: AbstractStorageForm,
+                                                                       S <: PM.AbstractPowerFormulation}
 
     range_data = [(s.name, s.reactivepowerlimits) for s in devices]
 
     device_range(ps_m,
                  range_data,
-                 time_steps,
                  Symbol("reactive_range_$(St)"),
                  Symbol("Qst_$(St)"))
 
@@ -161,16 +143,14 @@ end
 function energy_capacity_constraints(ps_m::CanonicalModel,
                                     devices::PSY.FlattenedVectorsIterator{St},
                                     device_formulation::Type{D},
-                                    system_formulation::Type{S},
-                                    time_steps::UnitRange{Int64}) where {St <: PSY.Storage,
+                                    system_formulation::Type{S}) where {St <: PSY.Storage,
                                                                         D <: AbstractStorageForm,
                                                                         S <: PM.AbstractPowerFormulation}
-
+                                                                      
     range_data = [(s.name, s.capacity) for s in devices]
 
     device_range(ps_m,
                  range_data,
-                 time_steps,
                  Symbol("energy_capacity_$(St)"),
                  Symbol("Est_$(St)"))
     return
@@ -198,25 +178,20 @@ end
 function energy_balance_constraint(ps_m::CanonicalModel,
                                    devices::PSY.FlattenedVectorsIterator{St},
                                    device_formulation::Type{D},
-                                   system_formulation::Type{S},
-                                   time_steps::UnitRange{Int64},
-                                   resolution::Dates.Period,
-                                   parameters::Bool) where {St <: PSY.Storage,
+                                   system_formulation::Type{S}) where {St <: PSY.Storage,
                                                             D <: AbstractStorageForm,
-                                                            S <: PM.AbstractPowerFormulation}
+                                                            S <: PM.AbstractPowerFormulation}                                                     
 
     key = Symbol("energy_$(St)")
 
     if !(key in keys(ps_m.initial_conditions))
         @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-        storage_energy_init(ps_m, devices, parameters)
+        storage_energy_init(ps_m, devices)
     end
 
     efficiency_data = make_efficiency_data(devices)
 
     energy_balance(ps_m,
-                   time_steps,
-                   resolution,
                    ps_m.initial_conditions[key],
                    efficiency_data,
                    Symbol("energy_balance_$(St)"),

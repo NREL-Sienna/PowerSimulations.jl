@@ -1,8 +1,8 @@
 ################################### Unit Commitment tests #########################################
 @testset "Thermal UC With DC - PF" begin
-    variable_names = [:ONth_ThermalStandard, 
-                      :STARTth_ThermalStandard, 
-                      :STOPth_ThermalStandard]
+    variable_names = [:ON_ThermalStandard, 
+                      :START_ThermalStandard, 
+                      :STOP_ThermalStandard]
     uc_constraint_names = [:ramp_ThermalStandard_up, 
                            :ramp_ThermalStandard_down, 
                            :duration_ThermalStandard_up, 
@@ -92,7 +92,7 @@
 end
 
 @testset "Thermal UC With AC - PF" begin
-    variable_names = [:ONth_ThermalStandard, :STARTth_ThermalStandard, :STOPth_ThermalStandard]
+    variable_names = [:ON_ThermalStandard, :START_ThermalStandard, :STOP_ThermalStandard]
     uc_constraint_names = [:ramp_ThermalStandard_up, :ramp_ThermalStandard_down, :duration_ThermalStandardl_up, :duration_ThermalStandard_down]
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalUnitCommitment)
     #5-Bus testing

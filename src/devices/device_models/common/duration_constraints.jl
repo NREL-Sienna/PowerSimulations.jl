@@ -7,17 +7,15 @@ function device_duration_retrospective(ps_m::CanonicalModel,
                                         duration_data::Vector{UpDown},
                                         initial_duration_on::Vector{InitialCondition},
                                         initial_duration_off::Vector{InitialCondition},
-                                        time_steps::UnitRange{Int64},
                                         cons_name::Symbol,
                                         var_names::Tuple{Symbol,Symbol,Symbol})
 
-    set_name = duration_data[1]
-
+    time_steps = model_time_steps(ps_m)
     name_up = Symbol(cons_name,:_up)
     name_down = Symbol(cons_name,:_down)
 
-    ps_m.constraints[name_up] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_names, time_steps)
-    ps_m.constraints[name_down] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_names, time_steps)
+    ps_m.constraints[name_up] = JuMPConstraintArray(undef, set_names, time_steps)
+    ps_m.constraints[name_down] = JuMPConstraintArray(undef, set_names, time_steps)
 
         for t in time_range, (ix,name) in enumerate(set_name)
 
@@ -48,20 +46,20 @@ This formulation of the duration constraints, uses an Indicator parameter value 
 
 """
 function device_duration_ind(ps_m::CanonicalModel,
-                                    set_names::Vector{String},
-                                    duration_data::Vector{UpDown},
-                                    duration_ind_status_on::Vector{InitialCondition},
-                                    duration_ind_status_off::Vector{InitialCondition},
-                                    time_steps::UnitRange{Int64},
-                                    cons_name::Symbol,
-                                    var_names::Tuple{Symbol,Symbol,Symbol})
+                             set_names::Vector{String},
+                             duration_data::Vector{UpDown},
+                             duration_ind_status_on::Vector{InitialCondition},
+                             duration_ind_status_off::Vector{InitialCondition},
+                             cons_name::Symbol,
+                             var_names::Tuple{Symbol,Symbol,Symbol})
 
 
+    time_steps = model_time_steps(ps_m)
     name_up = Symbol(cons_name,:_up)
     name_down = Symbol(cons_name,:_down)
 
-    ps_m.constraints[name_up] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_names, time_steps)
-    ps_m.constraints[name_down] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_names, time_steps)
+    ps_m.constraints[name_up] = JuMPConstraintArray(undef, set_names, time_steps)
+    ps_m.constraints[name_down] = JuMPConstraintArray(undef, set_names, time_steps)
 
     for (ix,name) in enumerate(set_names)
         ps_m.constraints[name_up][name, 1] = JuMP.@constraint(ps_m.JuMPmodel,

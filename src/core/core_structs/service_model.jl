@@ -11,16 +11,14 @@ end
 function construct_service!(ps_m::CanonicalModel,
                            service_model::ServiceModel,
                            system_formulation::Type{S},
-                           sys::PSY.System,
-                           time_steps::UnitRange{Int64};
+                           sys::PSY.System;
                            kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     construct_service!(ps_m,
                       service_model.service,
                       service_model.formulation,
                       system_formulation,
-                      sys,
-                      time_steps;
+                      sys;
                       kwargs...)
 
     return

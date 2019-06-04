@@ -1,18 +1,17 @@
 function device_linear_rateofchange(ps_m::CanonicalModel,
                                     rate_data::Tuple{Vector{String}, Vector{UpDown}},
                                     initial_conditions::Vector{InitialCondition},
-                                    time_steps::UnitRange{Int64},
                                     cons_name::Symbol,
                                     var_name::Symbol)
 
-
+    time_steps = model_time_steps(ps_m)
     up_name = Symbol(cons_name,:_up)
     down_name = Symbol(cons_name,:_down)
 
     set_name = rate_data[1]
 
-    ps_m.constraints[up_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_steps)
-    ps_m.constraints[down_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_steps)
+    ps_m.constraints[up_name] = JuMPConstraintArray(undef, set_name, time_steps)
+    ps_m.constraints[down_name] = JuMPConstraintArray(undef, set_name, time_steps)
 
     for (ix, name) in enumerate(rate_data[1])
         ps_m.constraints[up_name][name, 1] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_name][name, 1] - initial_conditions[ix].value <= rate_data[2][ix].up)
@@ -29,21 +28,19 @@ function device_linear_rateofchange(ps_m::CanonicalModel,
 end
 
 function device_mixedinteger_rateofchange(ps_m::CanonicalModel,
-                                            rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}},
-                                            initial_conditions::Vector{InitialCondition},
-                                            time_steps::UnitRange{Int64},
-                                            cons_name::Symbol,
-                                            var_names::Tuple{Symbol,Symbol,Symbol})
+                                          rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}},
+                                          initial_conditions::Vector{InitialCondition},
+                                          cons_name::Symbol,
+                                          var_names::Tuple{Symbol,Symbol,Symbol})
 
-
-
+    time_steps = model_time_steps(ps_m)
     up_name = Symbol(cons_name,:_up)
     down_name = Symbol(cons_name,:_down)
 
     set_name = rate_data[1]
 
-    ps_m.constraints[up_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_steps)
-    ps_m.constraints[down_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_steps)
+    ps_m.constraints[up_name] = JuMPConstraintArray(undef, set_name, time_steps)
+    ps_m.constraints[down_name] = JuMPConstraintArray(undef, set_name, time_steps)
 
     for (ix, name) in enumerate(rate_data[1])
         ps_m.constraints[up_name][name, 1] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_names[1]][name, 1] - initial_conditions[ix].value <= rate_data[2][ix].up + rate_data[3][ix].max*ps_m.variables[var_names[2]][name, 1])
@@ -74,8 +71,8 @@ function device_linear_rateofchange(ps_m::CanonicalModel,
 
     set_name = [name for r in rate_data]
 
-    ps_m.constraints[up_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_steps)
-    ps_m.constraints[down_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_steps)
+    ps_m.constraints[up_name] = JuMPConstraintArray(undef, set_name, time_steps)
+    ps_m.constraints[down_name] = JuMPConstraintArray(undef, set_name, time_steps)
 
     for (ix,r) in enumerate(rate_data)
         ps_m.constraints[up_name][name, 1] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_name][name, 1] - initial_conditions[ix] <= rate_data[2][ix].up)
@@ -103,8 +100,8 @@ function device_mixedinteger_rateofchange(ps_m::CanonicalModel,
 
     set_name = [name for r in rate_data]
 
-    ps_m.constraints[up_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_steps)
-    ps_m.constraints[down_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_steps)
+    ps_m.constraints[up_name] = JuMPConstraintArray(undef, set_name, time_steps)
+    ps_m.constraints[down_name] = JuMPConstraintArray(undef, set_name, time_steps)
 
     for (ix,r) in enumerate(rate_data)
         ps_m.constraints[up_name][name, 1] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_names[1]][name, 1] - initial_conditions[ix] <= rate_data[2][ix].up + rate_data[3][ix].max*ps_m.variables[var_names[2]][name, 1])

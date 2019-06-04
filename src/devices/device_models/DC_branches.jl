@@ -9,8 +9,7 @@ struct VoltageSourceDC <: AbstractDCLineForm end
 
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
-                        devices::PSY.FlattenedVectorsIterator{B},
-                        time_steps::UnitRange{Int64}) where {B <: PSY.DCBranch,
+                        devices::PSY.FlattenedVectorsIterator{B}) where {B <: PSY.DCBranch,
                                                              S <: StandardPTDFForm}
     
     return
@@ -20,15 +19,13 @@ end
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenedVectorsIterator{B},
                                 device_formulation::Type{D},
-                                system_formulation::Type{StandardPTDFForm},
-                                time_steps::UnitRange{Int64}) where {B <: PSY.DCBranch,
+                                system_formulation::Type{StandardPTDFForm}) where {B <: PSY.DCBranch,
                                                                      D <: AbstractBranchFormulation}
 
     range_data = [(h.name, (min = -1*h.rate, max = h.rate)) for h in devices]
 
     device_range(ps_m, 
                 range_data, 
-                time_steps, 
                 Symbol("rate_limit_$(B)"), 
                 Symbol("br_$(B)"))
 

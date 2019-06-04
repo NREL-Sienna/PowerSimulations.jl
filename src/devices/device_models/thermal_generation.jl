@@ -21,7 +21,7 @@ function activepower_variables!(ps_m::CanonicalModel,
                                 devices::PSY.FlattenedVectorsIterator{T}) where {T <: PSY.ThermalGen}
 
     time_steps = model_time_steps(ps_m)
-    var_name = Symbol("Pth_$(T)")
+    var_name = Symbol("P_$(T)")
     ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel,
                                               (d.name for d in devices),
                                               time_steps)
@@ -49,7 +49,7 @@ function reactivepower_variables!(ps_m::CanonicalModel,
                                  devices::PSY.FlattenedVectorsIterator{T}) where {T <: PSY.ThermalGen}
 
     time_steps = model_time_steps(ps_m)
-    var_name = Symbol("Qth_$(T)")
+    var_name = Symbol("Q_$(T)")
     ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel,
                                               (d.name for d in devices),
                                               time_steps)
@@ -77,10 +77,10 @@ function commitment_variables!(ps_m::CanonicalModel,
                               devices::PSY.FlattenedVectorsIterator{T}) where {T <: PSY.ThermalGen}
 
     time_steps = model_time_steps(ps_m)
-    var_names = [Symbol("ONth_$(T)"), Symbol("STARTth_$(T)"), Symbol("STOPth_$(T)")]
+    var_names = [Symbol("ON_$(T)"), Symbol("START_$(T)"), Symbol("STOP_$(T)")]
 
     for v in var_names
-        add_variable(ps_m, devices, time_steps, v, true)
+        add_variable(ps_m, devices, v, true)
     end
 
     return
@@ -97,14 +97,12 @@ function activepower_constraints!(ps_m::CanonicalModel,
                                                                      D <: AbstractThermalDispatchForm,
                                                                      S <: PM.AbstractPowerFormulation}
 
-    time_steps = model_time_steps(ps_m)
     range_data = [(g.name, g.tech.activepowerlimits) for g in devices]
 
     device_range(ps_m,
                 range_data,
-                time_steps,
                 Symbol("active_range_$(T)"),
-                Symbol("Pth_$(T)")
+                Symbol("P_$(T)")
                 )
 
     return
@@ -120,15 +118,14 @@ function activepower_constraints!(ps_m::CanonicalModel,
                                  system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                                       D <: AbstractThermalFormulation,
                                                                       S <: PM.AbstractPowerFormulation}
-    time_steps = model_time_steps(ps_m)
+
     range_data = [(g.name, g.tech.activepowerlimits) for g in devices]
 
     device_semicontinuousrange(ps_m,
                                range_data,
-                               time_range,
-                               Symbol("thermal_active_range_$(T)"),
-                               Symbol("Pth_$(T)"),
-                               Symbol("ONth_$(T)"))
+                               Symbol("active_range_$(T)"),
+                               Symbol("P_$(T)"),
+                               Symbol("ON_$(T)"))
 
     return
 
@@ -143,14 +140,12 @@ function reactivepower_constraints!(ps_m::CanonicalModel,
                                    system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                                         D <: AbstractThermalDispatchForm,
                                                                         S <: PM.AbstractPowerFormulation}
-    time_steps = model_time_steps(ps_m)
     range_data = [(g.name, g.tech.reactivepowerlimits) for g in devices]
 
     device_range(ps_m,
                  range_data ,
-                 time_range,
-                 Symbol("thermal_reactive_range_$(T)"),
-                 Symbol("Qth_$(T)"))
+                 Symbol("reactive_range_$(T)"),
+                 Symbol("Q_$(T)"))
 
     return
 
@@ -166,15 +161,13 @@ function reactivepower_constraints!(ps_m::CanonicalModel,
                                                                         D <: AbstractThermalFormulation,
                                                                         S <: PM.AbstractPowerFormulation}
 
-    time_steps = model_time_steps(ps_m)
     range_data = [(g.name, g.tech.reactivepowerlimits) for g in devices]
 
     device_semicontinuousrange(ps_m,
                                range_data,
-                               time_range,
-                               Symbol("thermal_reactive_range_$(T)"),
-                               Symbol("Qth_$(T)"),
-                               Symbol("ONth_$(T)"))
+                               Symbol("reactive_range_$(T)"),
+                               Symbol("Q_$(T)"),
+                               Symbol("ON_$(T)"))
 
     return
 
@@ -213,14 +206,12 @@ function reactivepower_constraints!(ps_m::CanonicalModel,
                                    system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                                         S <: PM.AbstractPowerFormulation}
 
-    time_steps = model_time_steps(ps_m)
     range_data = [(g.name, (min = 0.0, max=g.tech.reactivepowerlimits.max)) for g in devices]
 
     device_range(ps_m,
                  range_data,
-                 time_range,
-                 Symbol("thermal_reactive_range_$(T)"),
-                 Symbol("Qth_$(T)"))
+                 Symbol("reactive_range_$(T)"),
+                 Symbol("Q_$(T)"))
 
     return
 
@@ -233,26 +224,23 @@ This function adds the Commitment Status constraint when there are CommitmentVar
 function commitment_constraints!(ps_m::CanonicalModel,
                                  devices::PSY.FlattenedVectorsIterator{T},
                                  device_formulation::Type{D},
-                                 system_formulation::Type{S},
-                                 parameters::Bool) where {T <: PSY.ThermalGen,
+                                 system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                                      D <: AbstractThermalFormulation,
                                                                      S <: PM.AbstractPowerFormulation}
 
-    time_steps = model_time_steps(ps_m)
     key = Symbol("status_$(T)")
 
     if !(key in keys(ps_m.initial_conditions))
         @warn("Initial status conditions not provided. This can lead to unwanted results")
-        status_init(ps_m, devices, parameters)
+        status_init(ps_m, devices)
     end
 
     device_commitment(ps_m,
-                      ps_m.initial_conditions[:thermal_status],
-                      time_range,
-                      Symbol("commitment_$(T)"),
-                      (Symbol("STARTth_$(T)"),
-                       Symbol("STOPth_$(T)"),
-                       Symbol("ONth_$(T)"))
+                      ps_m.initial_conditions[key],
+                        Symbol("commitment_$(T)"),
+                      (Symbol("START_$(T)"),
+                       Symbol("STOP_$(T)"),
+                       Symbol("ON_$(T)"))
                       )
 
     return
@@ -315,8 +303,7 @@ This function adds the ramping limits of generators when there are CommitmentVar
 function ramp_constraints!(ps_m::CanonicalModel,
                            devices::PSY.FlattenedVectorsIterator{T},
                            device_formulation::Type{D},
-                           system_formulation::Type{S},
-                           parameters::Bool) where {T <: PSY.ThermalGen,
+                           system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                     D <: AbstractThermalFormulation,
                                                     S <: PM.AbstractPowerFormulation}
 
@@ -328,18 +315,17 @@ function ramp_constraints!(ps_m::CanonicalModel,
         key = Symbol("output_$(T)")
         if !(key in keys(ps_m.initial_conditions))
             @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-            output_init(ps_m, devices, data[1], parameters)
+            output_init(ps_m, devices, rate_data[1])
         end
         @assert length(rate_data[2]) == length(ps_m.initial_conditions[key])
         # Here goes the reactive power ramp limits
         device_mixedinteger_rateofchange(ps_m,
-                                        data,
-                                        ps_m.initial_conditions[:thermal_output],
-                                        time_range,
+                                        rate_data,
+                                        ps_m.initial_conditions[key],
                                         Symbol("ramp_$(T)"),
-                                        (Symbol("Pth_$(T)"),
-                                         Symbol("STARTth_$(T)"),
-                                         Symbol("STOPth_$(T)"))
+                                        (Symbol("P_$(T)"),
+                                         Symbol("START_$(T)"),
+                                         Symbol("STOP_$(T)"))
                                         )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
@@ -352,10 +338,10 @@ end
 function ramp_constraints!(ps_m::CanonicalModel,
                           devices::PSY.FlattenedVectorsIterator{T},
                           device_formulation::Type{D},
-                          system_formulation::Type{S},
-                          parameters::Bool) where {T <: PSY.ThermalGen,
+                          system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                    D <: AbstractThermalDispatchForm,
                                                    S <: PM.AbstractPowerFormulation}
+
     time_steps = model_time_steps(ps_m)
     resolution = model_resolution(ps_m)
     rate_data = _get_data_for_rocc(devices, resolution)
@@ -364,17 +350,17 @@ function ramp_constraints!(ps_m::CanonicalModel,
         key = Symbol("output_$(T)")
         if !(key in keys(ps_m.initial_conditions))
             @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-            output_init(ps_m, devices, data[1], parameters)
+            output_init(ps_m, devices, rate_data[1])
         end
 
         @assert length(data[2]) == length(ps_m.initial_conditions[key])
 
         # Here goes the reactive power ramp limits
         device_linear_rateofchange(ps_m,
-                                   (data[1], data[2]),
-                                   ps_m.initial_conditions[:thermal_output], time_range,
+                                   (rate_data[1], rate_data[2]),
+                                   ps_m.initial_conditions[key],
                                    Symbol("ramp_$(T)"),
-                                   Symbol("Pth_$(T)"))
+                                   Symbol("P_$(T)"))
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
     end
@@ -390,12 +376,10 @@ This function adds the ramping limits of generators when there are CommitmentVar
 function ramp_constraints!(ps_m::CanonicalModel,
                           devices::PSY.FlattenedVectorsIterator{T},
                           device_formulation::Type{D},
-                          system_formulation::Type{S},
-                          parameters::Bool) where {T <: PSY.ThermalGen,
+                          system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                    D <: AbstractThermalFormulation,
                                                    S <: PM.AbstractActivePowerFormulation}
 
-    time_steps = model_time_steps(ps_m)
     resolution = model_resolution(ps_m)
     rate_data = _get_data_for_rocc(devices, resolution)
 
@@ -403,19 +387,18 @@ function ramp_constraints!(ps_m::CanonicalModel,
         key = Symbol("output_$(T)")
         if !(key in keys(ps_m.initial_conditions))
             @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-            output_init(ps_m, devices, parameters)
+            output_init(ps_m, devices, rate_data[1])
         end
 
         @assert length(data[2]) == length(ps_m.initial_conditions[:thermal_output])
 
         device_mixedinteger_rateofchange(ps_m,
-                                        data,
-                                        ps_m.initial_conditions[:thermal_output],
-                                        time_range,
-                                        :ramp_thermal,
-                                        (Symbol("Pth_$(eltype(devices))"),
-                                        Symbol("STARTth_$(eltype(devices))"),
-                                        Symbol("STOPth_$(eltype(devices))"))
+                                        rate_data,
+                                        ps_m.initial_conditions[key],
+                                        Symbol("ramp_$(T)"),
+                                        (Symbol("P_$(T)"),
+                                        Symbol("START_$(T)"),
+                                        Symbol("STOP_$(T)"))
                                         )
 
     else
@@ -430,12 +413,10 @@ end
 function ramp_constraints!(ps_m::CanonicalModel,
                            devices::PSY.FlattenedVectorsIterator{T},
                            device_formulation::Type{D},
-                           system_formulation::Type{S},
-                           parameters::Bool) where {T <: PSY.ThermalGen,
+                           system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                     D <: AbstractThermalDispatchForm,
                                                     S <: PM.AbstractActivePowerFormulation}
 
-    time_steps = model_time_steps(ps_m)
     resolution = model_resolution(ps_m)
     rate_data = _get_data_for_rocc(devices, resolution)
 
@@ -443,16 +424,16 @@ function ramp_constraints!(ps_m::CanonicalModel,
         key = Symbol("output_$(T)")
         if !(key in keys(ps_m.initial_conditions))
             @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-            output_init(ps_m, devices, parameters)
+            output_init(ps_m, devices, rate_data[1])
         end
 
         @assert length(data[2]) == length(ps_m.initial_conditions[key])
 
         device_linear_rateofchange(ps_m,
-                                    (data[1], data[2]),
-                                    ps_m.initial_conditions[:thermal_output], time_range,
-                                    :ramp_thermal,
-                                    Symbol("Pth_$(eltype(devices))"))
+                                    (rate_data[1], rate_data[2]),
+                                    ps_m.initial_conditions[key],
+                                                       Symbol("ramp_$(T)"),
+                                    Symbol("P_$(T)"))
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
     end
@@ -506,12 +487,11 @@ end
 function time_constraints!(ps_m::CanonicalModel,
                           devices::PSY.FlattenedVectorsIterator{T},
                           device_formulation::Type{D},
-                          system_formulation::Type{S},
-                          parameters::Bool) where {T <: PSY.ThermalGen,
+                          system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                    D <: AbstractThermalFormulation,
                                                    S <: PM.AbstractPowerFormulation}
 
-    time_steps = model_time_steps(ps_m)
+    parameters = model_with_parameters(ps_m)
     resolution = model_resolution(ps_m)
     duration_data = _get_data_for_tdc(devices, resolution)
 
@@ -521,7 +501,7 @@ function time_constraints!(ps_m::CanonicalModel,
         key_off = parameters ? Symbol("duration_ind_off_$(T)") : Symbol("duration_off_$(T)")
         if !(key_on in keys(ps_m.initial_conditions))
             @warn("Initial Conditions for Time Up/Down constraints not provided. This can lead to unwanted results")
-            time_limits = duration_init(ps_m, devices, duration_data[1], parameters)
+            time_limits = duration_init(ps_m, devices, duration_data[1])
         end
 
     # Get the data from the Array of Generators
@@ -536,25 +516,23 @@ function time_constraints!(ps_m::CanonicalModel,
             device_duration_ind(ps_m,
                                       duration_data[1],
                                       duration_data[2],
-                                      duration_data[3],
-                                      duration_data[4],
-                                      time_range,
-                                      Symbol("duration_$(T)"),
-                                      (Symbol("ONth_$(T)"),
-                                       Symbol("STARTth_$(T)"),
-                                       Symbol("STOPth_$(T)"))
+                                      ps_m.initial_conditions[key_on],
+                                      ps_m.initial_conditions[key_off],
+                                    Symbol("duration_$(T)"),
+                                      (Symbol("ON_$(T)"),
+                                       Symbol("START_$(T)"),
+                                       Symbol("STOP_$(T)"))
                                       )
         else
             device_duration_retrospective(ps_m,
                                         duration_data[1],
                                         duration_data[2],
-                                        duration_data[3],
-                                        duration_data[4],
-                                        time_range,
+                                        ps_m.initial_conditions[key_on],
+                                        ps_m.initial_conditions[key_off],
                                         Symbol("duration_$(T)"),
-                                        (Symbol("ONth_$(T)"),
-                                        Symbol("STARTth_$(T)"),
-                                        Symbol("STOPth_$(T)"))
+                                        (Symbol("ON_$(T)"),
+                                        Symbol("START_$(T)"),
+                                        Symbol("STOP_$(T)"))
                                         )
         end
         @warn("Currently Min-up/down time limits only work if time resoultion they are defined at matches the simulation's time resoultion")
@@ -584,7 +562,7 @@ function cost_function(ps_m::CanonicalModel,
 
     add_to_cost(ps_m,
                 devices,
-                Symbol("Pth_$(T)"),
+                Symbol("P_$(T)"),
                 :variablecost)
 
     return
@@ -600,15 +578,12 @@ function cost_function(ps_m::CanonicalModel,
                                                            S <: PM.AbstractPowerFormulation}
 
     #Variable Cost component
-    add_to_cost(ps_m,
-                devices,
-                Symbol("Pth_$(T)"),
-                :variablecost)
+    add_to_cost(ps_m, devices, Symbol("P_$(T)"), :variablecost)
 
     #Commitment Cost Components
-    add_to_cost(ps_m, devices, Symbol("STARTth_$(T)"), :startupcost)
-    add_to_cost(ps_m, devices, Symbol("STOPth_$(T)"), :shutdncost)
-    add_to_cost(ps_m, devices, Symbol("ONth_$(T)"), :fixedcost)
+    add_to_cost(ps_m, devices, Symbol("START_$(T)"), :startupcost)
+    add_to_cost(ps_m, devices, Symbol("STOP_$(T)"), :shutdncost)
+    add_to_cost(ps_m, devices, Symbol("ON_$(T)"), :fixedcost)
 
     return
 

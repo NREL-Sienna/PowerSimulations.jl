@@ -1,10 +1,10 @@
 function device_range(ps_m::CanonicalModel,
                         range_data::Vector{NamedMinMax},
-                        time_steps::UnitRange{Int64},
                         cons_name::Symbol,
                         var_name::Symbol)
 
-    ps_m.constraints[cons_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, (r[1] for r in range_data), time_steps)
+    time_steps = model_time_steps(ps_m)                        
+    ps_m.constraints[cons_name] = JuMPConstraintArray(undef, (r[1] for r in range_data), time_steps)
 
     for t in time_steps, r in range_data
             if abs(r[2].min - r[2].max) >= eps()
@@ -23,18 +23,18 @@ end
 
 function device_semicontinuousrange(ps_m::CanonicalModel,
                                     scrange_data::Vector{NamedMinMax},
-                                    time_steps::UnitRange{Int64},
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
 
+    time_steps = model_time_steps(ps_m)                                
     ub_name = Symbol(cons_name,:_ub)
     lb_name = Symbol(cons_name,:_lb)
 
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it. In the future this can be updated
     set_name = (r[1] for r in scrange_data)
-    ps_m.constraints[ub_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_steps)
-    ps_m.constraints[lb_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_steps)
+    ps_m.constraints[ub_name] = JuMPConstraintArray(undef, set_name, time_steps)
+    ps_m.constraints[lb_name] = JuMPConstraintArray(undef, set_name, time_steps)
 
     for t in time_steps, r in scrange_data
 
@@ -58,11 +58,11 @@ end
 
 function reserve_device_semicontinuousrange(ps_m::CanonicalModel,
                                             scrange_data::Vector{NamedMinMax},
-                                            time_steps::UnitRange{Int64},
                                             cons_name::Symbol,
                                             var_name::Symbol,
                                             binvar_name::Symbol)
 
+    time_steps = model_time_steps(ps_m)                                           
     ub_name = Symbol(cons_name,:_ub)
     lb_name = Symbol(cons_name,:_lb)
 
@@ -70,8 +70,8 @@ function reserve_device_semicontinuousrange(ps_m::CanonicalModel,
     # In the future this can be updated
 
     set_name = (r[1] for r in scrange_data)
-    ps_m.constraints[ub_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_steps)
-    ps_m.constraints[lb_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_steps)
+    ps_m.constraints[ub_name] = JuMPConstraintArray(undef, set_name, time_steps)
+    ps_m.constraints[lb_name] = JuMPConstraintArray(undef, set_name, time_steps)
 
     for t in time_steps, r in scrange_data
 

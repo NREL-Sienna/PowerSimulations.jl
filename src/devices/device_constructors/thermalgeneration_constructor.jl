@@ -1,5 +1,5 @@
 """
-This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
+This function creates the model for a full themal dis`pa`tch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device::Type{T},
@@ -16,8 +16,6 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
         return
     end
 
-    parameters = get(kwargs, :parameters, true)
-
     #Variables
     activepower_variables!(ps_m, devices)
 
@@ -30,11 +28,11 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     reactivepower_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    commitment_constraints!(ps_m, devices, device_formulation, system_formulation, parameters)
+    commitment_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    ramp_constraints!(ps_m, devices, device_formulation, system_formulation, parameters)
+    ramp_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    time_constraints!(ps_m, devices, device_formulation, system_formulation, parameters)
+    time_constraints!(ps_m, devices, device_formulation, system_formulation)
 
     #Cost Function
     cost_function(ps_m, devices, device_formulation, system_formulation)
@@ -62,8 +60,6 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
         return
     end
 
-    parameters = get(kwargs, :parameters, true)
-
     #Variables
     activepower_variables!(ps_m, devices)
 
@@ -72,11 +68,11 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     #Constraints
     activepower_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    commitment_constraints!(ps_m, devices, device_formulation, system_formulation, parameters)
+    commitment_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    ramp_constraints!(ps_m, devices, device_formulation, system_formulation, parameters)
+    ramp_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    time_constraints!(ps_m, devices, device_formulation, system_formulation, parameters)
+    time_constraints!(ps_m, devices, device_formulation, system_formulation)
 
     #Cost Function
     cost_function(ps_m, devices, device_formulation, system_formulation)
@@ -102,8 +98,6 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
         return
     end
 
-    parameters = get(kwargs, :parameters, true)
-
     #Variables
     activepower_variables!(ps_m, devices)
 
@@ -114,7 +108,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     reactivepower_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    ramp_constraints!(ps_m, devices, device_formulation, system_formulation, parameters)
+    ramp_constraints!(ps_m, devices, device_formulation, system_formulation)
 
     #Cost Function
     cost_function(ps_m, devices, device_formulation, system_formulation)
@@ -141,15 +135,13 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
         return
     end
 
-    parameters = get(kwargs, :parameters, true)
-
     #Variables
     activepower_variables!(ps_m, devices)
 
     #Constraints
     activepower_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    ramp_constraints!(ps_m, devices, device_formulation, system_formulation, parameters)
+    ramp_constraints!(ps_m, devices, device_formulation, system_formulation)
 
     #Cost Function
     cost_function(ps_m, devices, device_formulation, system_formulation)
