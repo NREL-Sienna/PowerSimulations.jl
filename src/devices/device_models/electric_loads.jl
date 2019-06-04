@@ -16,7 +16,7 @@ function activepower_variables(ps_m::CanonicalModel,
                  devices,
                  Symbol("P_$(L)"),
                  false,
-                 :nodal_balance_active, -1)
+                 :nodal_balance_active, -1.0)
 
     return
 
@@ -29,7 +29,7 @@ function reactivepower_variables(ps_m::CanonicalModel,
                  devices,
                  Symbol("Q_$(L)"),
                  false,
-                 :nodal_balance_reactive, -1)
+                 :nodal_balance_reactive, -1.0)
 
     return
 

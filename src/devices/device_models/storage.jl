@@ -14,7 +14,7 @@ function active_power_variables(ps_m::CanonicalModel,
                  Symbol("Psin_$(St)"),
                  false,
                  :nodal_balance_active,
-                 -1)
+                 -1.0)
     add_variable(ps_m,
                  devices,
                  Symbol("Psout_$(St)"),
