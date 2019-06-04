@@ -40,7 +40,7 @@ function flow_variables(ps_m::CanonicalModel,
                                                     (d.name for d in devices),
                                                      time_steps)
 
-    for (ix, d) in enumerate(devices)
+    for d in devices
         bus_fr = d.connectionpoints.from.number
         bus_to = d.connectionpoints.to.number
         for t in time_steps
