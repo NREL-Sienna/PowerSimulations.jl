@@ -38,6 +38,6 @@ PTDF14_dc = PSY.PTDF(b_ac_14, nodes14);
 
 # RTS Data
 RTS_GMLC_DIR = joinpath(DATA_DIR, "RTS_GMLC")
-cdm_dict = PSY.csv2ps_dict(RTS_GMLC_DIR, 100.0);
-sys_rts = PSY._System(cdm_dict);
-c_rts = PSY.System(sys_rts);
+#cdm_dict = PSY.csv2ps_dict(RTS_GMLC_DIR, 100.0);
+#sys_rts = PSY._System(cdm_dict);
+#c_rts = PSY.System(sys_rts);
