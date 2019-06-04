@@ -21,7 +21,7 @@ function ps_cost(ps_m::CanonicalModel,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::Float64,
                 dt::Float64,
-                sign::Int64) where {JV <: JuMP.AbstractVariableRef}
+                sign::Float64) where {JV <: JuMP.AbstractVariableRef}
 
     gen_cost = sum(variable)*cost_component
 
@@ -33,12 +33,12 @@ function ps_cost(ps_m::CanonicalModel,
                  variable::JuMP.Containers.DenseAxisArray{JV},
                  cost_component::Tuple{Float64,Float64},
                  dt::Float64,
-                 sign::Int64) where {JV <: JuMP.AbstractVariableRef}
+                 sign::Float64) where {JV <: JuMP.AbstractVariableRef}
 
     if cost_component[1] >= eps()                 
         gen_cost = dt*sign*(sum(variable.^2)*cost_component[1] + sum(variable)*cost_component[2])
     else           
-        return ps_cost(ps_m, variable, cost_component[2], dt, 1)
+        return ps_cost(ps_m, variable, cost_component[2], dt, 1.0)
     end
 
 end
@@ -67,7 +67,7 @@ function ps_cost(ps_m::CanonicalModel,
                  variable::JuMP.Containers.DenseAxisArray{JV},
                  cost_component::Array{Tuple{Float64, Float64}},
                  dt::Float64,
-                 sign::Int64) where {JV <: JuMP.AbstractVariableRef}
+                 sign::Float64) where {JV <: JuMP.AbstractVariableRef}
 
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}()
 
@@ -83,7 +83,8 @@ end
 function add_to_cost(ps_m::CanonicalModel,
                      devices::D,
                      var_name::Symbol,
-                     cost_symbol::Symbol, sign::Int64 = 1) where {D <: Union{Vector{<:PSY.Device}, 
+                     cost_symbol::Symbol, 
+                     sign::Float64 = -1.0) where {D <: Union{Vector{<:PSY.Device}, 
                                                                   PSY.FlattenedVectorsIterator{<:PSY.Device}}}
                                                                   
     resolution = model_resolution(ps_m)

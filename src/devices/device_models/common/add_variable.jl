@@ -51,7 +51,7 @@ function add_variable(ps_m::CanonicalModel,
                       var_name::Symbol,
                       binary::Bool,
                       expression::Symbol,
-                      sign::Int64) where {D <: Union{Vector{<:PSY.Device},
+                      sign::Float64) where {D <: Union{Vector{<:PSY.Device},
                                           PSY.FlattenedVectorsIterator{<:PSY.Device}}}
 
     time_steps = model_time_steps(ps_m)                                              
