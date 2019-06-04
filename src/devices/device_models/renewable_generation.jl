@@ -377,7 +377,7 @@ function cost_function(ps_m::CanonicalModel,
                 devices,
                 Symbol("P_RenewableDispatch"),
                 :curtailpenalty,
-                -1)
+                -1.0)
 
     return
 

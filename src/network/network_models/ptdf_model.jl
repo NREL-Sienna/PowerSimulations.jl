@@ -18,8 +18,8 @@ function ptdf_networkflow(ps_m::CanonicalModel,
         end
 
         for b in branches
-            _add_to_expression!(ps_m.expressions[expression], b.connectionpoints.from.number, t, ps_m.variables[key][b.name,t], -1)
-            _add_to_expression!(ps_m.expressions[expression], b.connectionpoints.to.number, t, ps_m.variables[key][b.name,t], 1)
+            _add_to_expression!(ps_m.expressions[expression], b.connectionpoints.from.number, t, ps_m.variables[key][b.name,t], -1.0)
+            _add_to_expression!(ps_m.expressions[expression], b.connectionpoints.to.number, t, ps_m.variables[key][b.name,t], 1.0)
         end
 
         for b in buses
