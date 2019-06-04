@@ -20,6 +20,9 @@ PTDF14 = PSY.PTDF(branches14, nodes14);
 sys5_re = PSY._System(nodes5, vcat(thermal_generators5, renewable_generators5), loads5, branches5, nothing,  100.0, forecasts5, nothing, nothing);
 c_sys5_re = PSY.System(sys5_re)
 
+sys5_re_only = PSY._System(nodes5, renewable_generators5, loads5, branches5, nothing,  100.0, forecasts5, nothing, nothing);
+c_sys5_re_only = PSY.System(sys5_re_only)
+
 #System with Storage Device
 sys5_bat = PSY._System(nodes5, thermal_generators5, loads5, branches5, battery5,  100.0, forecasts5, nothing, nothing);
 c_sys5_bat = PSY.System(sys5_bat)

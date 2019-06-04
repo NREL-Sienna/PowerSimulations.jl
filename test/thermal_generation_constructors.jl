@@ -1,3 +1,11 @@
+@testset "Renewable data misspecification" begin
+    # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
+    warn_message = "The data doesn't devices of type ThermalStandard, consider changing the device models"
+    model = DeviceModel(ThermalStandard, PSI.ThermalUnitCommitment)
+    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps, Dates.Minute(5))
+    @test_logs (:warn, warn_message) construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5_re_only; parameters = true);
+end
+
 ################################### Unit Commitment tests #########################################
 @testset "Thermal UC With DC - PF" begin
     variable_names = [:ON_ThermalStandard, 
