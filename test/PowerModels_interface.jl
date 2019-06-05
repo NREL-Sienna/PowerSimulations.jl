@@ -34,7 +34,7 @@ StandardACModel = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(da
     pm = PowerSimulations.build_nip_model(case5_dc_data, DCAngleModel)
     JuMP.num_variables(pm.model) == 48
 end
-
+#=
 @testset "PM integration into PS" begin
     PM_dict5 = PowerSimulations.pass_to_pm(c_sys5, 24)
     PM_object5 = PowerSimulations.build_nip_model(PM_dict5, DCAngleModel);
@@ -44,3 +44,4 @@ end
     PM_object_rts = PowerSimulations.build_nip_model(PM_dict_rts, DCAngleModel);
     @test JuMP.num_variables(PM_object_rts.model) == 6432
 end
+=#
