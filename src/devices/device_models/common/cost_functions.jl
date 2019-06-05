@@ -101,7 +101,7 @@ function add_to_cost(ps_m::CanonicalModel,
                      devices::D,
                      var_name::Symbol,
                      cost_symbol::Symbol, 
-                     sign::Float64 = -1.0) where {D <: Union{Vector{<:PSY.Device}, 
+                     sign::Float64 = 1.0) where {D <: Union{Vector{<:PSY.Device}, 
                                                                   PSY.FlattenedVectorsIterator{<:PSY.Device}}}
                                                                   
     resolution = model_resolution(ps_m)
