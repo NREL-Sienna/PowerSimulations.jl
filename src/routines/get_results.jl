@@ -1,4 +1,4 @@
-function result_dataframe(variable::JuMP.Containers.DenseAxisArray; rounding = 2)
+function result_dataframe(variable::JuMP.Containers.DenseAxisArray)
 
     result = Array{Float64,length(variable.axes)}(undef, length(variable.axes[2]), length(variable.axes[1]))
     # TODO: Remove this line once PowerSystems moves to Symbols
@@ -6,7 +6,7 @@ function result_dataframe(variable::JuMP.Containers.DenseAxisArray; rounding = 2
 
     for t in variable.axes[2], (ix,name) in enumerate(variable.axes[1])
 
-        result[t,ix] = round(JuMP.value(variable[name,t]), digits=rounding)
+        result[t,ix] = JuMP.value(variable[name,t])
 
         names[ix] = Symbol(name)
 
