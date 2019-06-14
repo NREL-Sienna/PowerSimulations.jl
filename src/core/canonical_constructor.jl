@@ -19,11 +19,11 @@ function _make_expressions_dict(transmission::Type{S},
                                 bus_numbers::Vector{Int64},
                                 time_steps::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
-    return DSDA(:nodal_balance_active =>  _make_container_array(V, 
-                                                                bus_numbers, 
+    return DSDA(:nodal_balance_active =>  _make_container_array(V,
+                                                                bus_numbers,
                                                                 time_steps; kwargs...),
-                :nodal_balance_reactive => _make_container_array(V, 
-                                                                 bus_numbers, 
+                :nodal_balance_reactive => _make_container_array(V,
+                                                                 bus_numbers,
                                                                  time_steps; kwargs...))
 
 end
@@ -33,17 +33,17 @@ function _make_expressions_dict(transmission::Type{S},
                                 bus_numbers::Vector{Int64},
                                 time_steps::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
 
-    return DSDA(:nodal_balance_active =>  _make_container_array(V, 
-                                                                bus_numbers, 
+    return DSDA(:nodal_balance_active =>  _make_container_array(V,
+                                                                bus_numbers,
                                                                 time_steps; kwargs...))
 end
 
 
 function _canonical_model_init(bus_numbers::Vector{Int64},
                               optimizer::Union{Nothing,JuMP.OptimizerFactory},
-                              transmission::Type{S},                              
+                              transmission::Type{S},
                               time_steps::UnitRange{Int64},
-                              resolution::Dates.Period; kwargs...) where 
+                              resolution::Dates.Period; kwargs...) where
                                     {S <: PM.AbstractPowerFormulation}
 
     parameters = get(kwargs, :parameters, true)
@@ -59,9 +59,9 @@ function _canonical_model_init(bus_numbers::Vector{Int64},
                               DSDA(),
                               DSDA(),
                               zero(JuMP.GenericAffExpr{Float64, V}),
-                              _make_expressions_dict(transmission, 
-                                                     V, 
-                                                     bus_numbers, 
+                              _make_expressions_dict(transmission,
+                                                     V,
+                                                     bus_numbers,
                                                      time_steps; kwargs...),
                               parameters ? DSDA() : nothing,
                               Dict{Symbol,Array{InitialCondition}}(),
@@ -73,9 +73,9 @@ end
 
 function _canonical_model_init(bus_numbers::Vector{Int64},
                                optimizer::Union{Nothing,JuMP.OptimizerFactory},
-                               transmission::Type{S},                               
+                               transmission::Type{S},
                                time_steps::UnitRange{Int64},
-                               resolution::Dates.Period; kwargs...) where 
+                               resolution::Dates.Period; kwargs...) where
                                        {S <: Union{StandardPTDFForm, CopperPlatePowerModel}}
 
     parameters = get(kwargs, :parameters, true)
@@ -85,13 +85,13 @@ function _canonical_model_init(bus_numbers::Vector{Int64},
     ps_model = CanonicalModel(jump_model,
                               parameters,
                               time_steps,
-                              resolution,      
+                              resolution,
                               DSDA(),
                               DSDA(),
                               zero(JuMP.GenericAffExpr{Float64, V}),
-                              _make_expressions_dict(transmission, 
-                                                     V, 
-                                                     bus_numbers, 
+                              _make_expressions_dict(transmission,
+                                                     V,
+                                                     bus_numbers,
                                                      time_steps; kwargs...),
                               parameters ? DSDA() : nothing,
                               Dict{Symbol,Array{InitialCondition}}(),
@@ -123,22 +123,25 @@ function  build_canonical_model(transmission::Type{T},
 
     bus_numbers = [b.number for b in PSY.get_components(PSY.Bus, sys)]
 
-    ps_model = _canonical_model_init(bus_numbers, 
-                                     optimizer, 
-                                     transmission,                                      
+    ps_model = _canonical_model_init(bus_numbers,
+                                     optimizer,
+                                     transmission,
                                      time_steps,
                                      resolution; kwargs...)
 
     # Build Injection devices
     for mod in devices
+        @info "Building $(mod)"
         construct_device!(ps_model, mod[2], transmission, sys; kwargs...)
     end
 
     # Build Network
+    @info "Building Network"
     construct_network!(ps_model, transmission, sys; kwargs...)
 
     # Build Branches
     for mod in branches
+        @info "Building $(mod)"
         construct_device!(ps_model, mod[2], transmission, sys; kwargs...)
     end
 
@@ -148,6 +151,7 @@ function  build_canonical_model(transmission::Type{T},
     end
 
     # Objective Function
+    @info "Building Objective"
     JuMP.@objective(ps_model.JuMPmodel, Min, ps_model.cost_function)
 
     return ps_model
