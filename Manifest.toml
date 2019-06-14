@@ -215,15 +215,15 @@ version = "0.5.2"
 
 [[PowerModels]]
 deps = ["InfrastructureModels", "JSON", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento", "SparseArrays"]
-git-tree-sha1 = "74d51121ad6fdf2fd1dc06403e2855dac1b8e192"
+git-tree-sha1 = "0fcfcd19dbad6710d0f18bd4ae49a98a398c7b6c"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
-version = "0.11.2"
+version = "0.12.0"
 
 [[PowerSystems]]
 deps = ["CSV", "DataFrames", "Dates", "InteractiveUtils", "JSON", "JSON2", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "UUIDs", "YAML"]
-git-tree-sha1 = "a27678479ed5417ae25387da61a98d39b7b59cd7"
-repo-rev = "dev"
-repo-url = "https://github.com/NREL/PowerSystems.jl.git"
+git-tree-sha1 = "3cfe1608e68e59edc4fe07fb5952fa1a8986d355"
+repo-rev = "rewrite-cdm-parsing"
+repo-url = "https://github.com/daniel-thom/PowerSystems.jl"
 uuid = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
 version = "0.4.0"
 
@@ -244,10 +244,9 @@ deps = ["Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[RecipesBase]]
-deps = ["Random", "Test"]
-git-tree-sha1 = "0b3cb370ee4dc00f47f1193101600949f3dcf884"
+git-tree-sha1 = "7bdce29bc9b2f5660a6e5e64d64d91ec941f6aa2"
 uuid = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
-version = "0.6.0"
+version = "0.7.0"
 
 [[Reexport]]
 deps = ["Pkg"]
