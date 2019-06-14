@@ -17,8 +17,8 @@ function device_duration_retrospective(ps_m::CanonicalModel,
     ps_m.constraints[name_up] = JuMPConstraintArray(undef, set_names, time_steps)
     ps_m.constraints[name_down] = JuMPConstraintArray(undef, set_names, time_steps)
 
-        for t in time_range, (ix,name) in enumerate(set_name)
 
+        for t in time_steps, (ix,name) in enumerate(set_names)
                 if t - duration_data[ix].up >= 1
                     tst = duration_data[ix].up
                 else

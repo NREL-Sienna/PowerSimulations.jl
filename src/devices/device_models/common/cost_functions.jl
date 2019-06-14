@@ -35,9 +35,9 @@ function ps_cost(ps_m::CanonicalModel,
                  dt::Float64,
                  sign::Float64) where {JV <: JuMP.AbstractVariableRef}
 
-    if cost_component[1] >= eps()                 
+    if cost_component[1] >= eps()
         gen_cost = dt*sign*(sum(variable.^2)*cost_component[1] + sum(variable)*cost_component[2])
-    else           
+    else
         return ps_cost(ps_m, variable, cost_component[2], dt, 1.0)
     end
 
@@ -46,7 +46,7 @@ end
 function pwlparamcheck(cost_::Array{Tuple{Float64, Float64}})
     flag = true;
     for i in 1:(length(cost_)-1)
-        if i == 1 
+        if i == 1
             (cost_[i][1]/cost_[i][2]) <= ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) ? nothing : flag = false;
         else
             ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) <= ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) ? nothing : flag = false;
@@ -66,7 +66,7 @@ function pwlgencost(ps_m::CanonicalModel,
     pwlvars = JuMP.@variable(ps_m.JuMPmodel, [i = 0:(length(cost_component)-1)], base_name = "{$(variable)}_{pwl}", start = 0.0, lower_bound = 0.0, upper_bound = upperbound(i))
 
     for (ix, pwlvar) in enumerate(pwlvars)
-        if ix == 1 
+        if ix == 1
             temp_gen_cost = cost_component[ix][1] * (pwlvar / cost_component[ix][2] ) ;
         else
             temp_gen_cost = (cost_component[ix][1] - cost_component[ix-1][1]) * (pwlvar/(cost_component[ix][2] - cost_component[ix-1][2]) );
@@ -100,10 +100,10 @@ end
 function add_to_cost(ps_m::CanonicalModel,
                      devices::D,
                      var_name::Symbol,
-                     cost_symbol::Symbol, 
-                     sign::Float64 = 1.0) where {D <: Union{Vector{<:PSY.Device}, 
+                     cost_symbol::Symbol,
+                     sign::Float64 = 1.0) where {D <: Union{Vector{<:PSY.Device},
                                                                   PSY.FlattenedVectorsIterator{<:PSY.Device}}}
-                                                                  
+
     resolution = model_resolution(ps_m)
     dt = Dates.value(Dates.Minute(resolution))/60
 

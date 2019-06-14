@@ -104,7 +104,6 @@ function activepower_constraints!(ps_m::CanonicalModel,
                 Symbol("active_range_$(T)"),
                 Symbol("P_$(T)")
                 )
-
     return
 
 end
@@ -182,7 +181,6 @@ function activepower_constraints!(ps_m::CanonicalModel,
                                   device_formulation::Type{ThermalDispatchNoMin},
                                   system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                                      S <: PM.AbstractPowerFormulation}
-
     range_data = [(g.name, (min = 0.0, max=g.tech.activepowerlimits.max)) for g in devices]
 
     device_range(ps_m,
@@ -306,7 +304,6 @@ function ramp_constraints!(ps_m::CanonicalModel,
                            system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                     D <: AbstractThermalFormulation,
                                                     S <: PM.AbstractPowerFormulation}
-
     time_steps = model_time_steps(ps_m)
     resolution = model_resolution(ps_m)
     rate_data = _get_data_for_rocc(devices, resolution)
@@ -341,7 +338,6 @@ function ramp_constraints!(ps_m::CanonicalModel,
                           system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                    D <: AbstractThermalDispatchForm,
                                                    S <: PM.AbstractPowerFormulation}
-
     time_steps = model_time_steps(ps_m)
     resolution = model_resolution(ps_m)
     rate_data = _get_data_for_rocc(devices, resolution)

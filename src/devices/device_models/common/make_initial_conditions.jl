@@ -47,26 +47,6 @@ function output_init(ps_m::CanonicalModel,
 
 end
 
-function status_init(ps_m::CanonicalModel,
-                    devices::PSY.FlattenedVectorsIterator{PSD},
-                    parameters::Bool) where {PSD <: PSY.ThermalGen}
-
-    lenght_devices = length(devices)
-    initial_conditions = Vector{InitialCondition}(undef, lenght_devices)
-
-    for (ix,g) in enumerate(devices)
-        if parameters
-            initial_conditions[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(g.tech.activepower > 0)))
-        else
-            initial_conditions[ix] = InitialCondition(g, 1.0*(g.tech.activepower > 0))
-        end
-    end
-
-    ps_m.initial_conditions[Symbol("status_$(PSD)")] = initial_conditions
-
-    return
-
-end
 
 function duration_init(ps_m::CanonicalModel,
                         devices::PSY.FlattenedVectorsIterator{PSD},
@@ -83,23 +63,14 @@ function duration_init(ps_m::CanonicalModel,
     ini_cond_on = Vector{InitialCondition}(undef, lenght_devices)
     ini_cond_off = Vector{InitialCondition}(undef, lenght_devices)
 
-    idx = 0
-    for g in devices
-        if !isnothing(g.tech.timelimits)
-            idx += 1
-            if parameters
-                ini_cond_on[idx] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(g.tech.activepower > 0)))
-                ini_cond_off[idx] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(g.tech.activepower < 0)))
-            else
-                ini_cond_on[idx] = InitialCondition(g, 999.0*(g.tech.activepower > 0))
-                ini_cond_off[idx] = InitialCondition(g, 999.0*(g.tech.activepower < 0))
-            end
+    for (ix,g) in enumerate(devices)
+        if parameters
+            ini_cond_on[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(g.tech.activepower > 0)))
+            ini_cond_off[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(g.tech.activepower < 0)))
+        else
+            ini_cond_on[ix] = InitialCondition(g, 999.0*(g.tech.activepower > 0))
+            ini_cond_off[ix] = InitialCondition(g, 999.0*(g.tech.activepower < 0))
         end
-    end
-
-    if idx < lenght_devices
-        deleteat!(ini_cond_on, idx+1:lenght_devices)
-        deleteat!(ini_cond_off, idx+1:lenght_devices)
     end
 
     if parameters
