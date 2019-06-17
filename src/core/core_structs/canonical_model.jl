@@ -1,4 +1,4 @@
-mutable struct CanonicalModel 
+mutable struct CanonicalModel
     JuMPmodel::JuMP.AbstractModel
     parametrized::Bool
     time_steps::UnitRange{Int64}
