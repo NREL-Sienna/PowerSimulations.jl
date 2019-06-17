@@ -19,12 +19,12 @@ struct PhaseControl <: AbstractTransformerForm end
 
 #################################### Branch Variables ##################################################
 # Because of the way we integrate with PowerModels, most of the time PowerSimulations will create variables
-# for the branch flows either in AC or DC. 
+# for the branch flows either in AC or DC.
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
                         devices::PSY.FlattenedVectorsIterator{B}) where {B <: PSY.ACBranch,
                                                              S <: PM.AbstractPowerFormulation}
-                                                   
+
     return
 
 end
@@ -34,7 +34,7 @@ function flow_variables(ps_m::CanonicalModel,
                         devices::PSY.FlattenedVectorsIterator{B}) where {B <: PSY.ACBranch,
                                                              S <: StandardPTDFForm}
 
-    time_steps = model_time_steps(ps_m)                                                             
+    time_steps = model_time_steps(ps_m)
     var_name = Symbol("Fbr_$(B)")
     ps_m.variables[var_name] = PSI._container_spec(ps_m.JuMPmodel,
                                                     (d.name for d in devices),
@@ -48,10 +48,10 @@ function flow_variables(ps_m::CanonicalModel,
                                                                 base_name="$(bus_fr),$(bus_to)_{$(d.name),$(t)}",
                                                                 upper_bound = d.rate,
                                                                 lower_bound = -d.rate,
-                                                                start = 0.0)
+                                                                )
         end
     end
-    
+
     return
 
 end
@@ -66,9 +66,9 @@ function branch_rate_constraint(ps_m::CanonicalModel,
 
     range_data = [(h.name, (min = -1*h.rate, max = h.rate)) for h in devices]
 
-    device_range(ps_m, 
-                range_data, 
-                Symbol("rate_limit_$(B)"), 
+    device_range(ps_m,
+                range_data,
+                Symbol("rate_limit_$(B)"),
                 Symbol("Fbr_$(B)"))
 
     return
