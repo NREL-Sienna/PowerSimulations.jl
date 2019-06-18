@@ -149,13 +149,7 @@ function get_buses_to_pm(buses::PSY.FlattenedVectorsIterator{PSY.Bus})
         PM_bus = Dict{String,Any}(
         "zone"     => 1,
         "bus_i"    => bus.number,
-        if bus.bustype == "PV"
-            "bus_type" => 1
-        elseif bus.bustype == "PQ"
-            "bus_type" => 2
-        elseif bus.bustype == "SF"
-            "bus_type" => 3
-        end,
+        "bus_type" => bus.bustype,
         "vmax"     => bus.voltagelimits.max,
         "area"     => 1,
         "vmin"     => bus.voltagelimits.min,

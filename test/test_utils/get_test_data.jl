@@ -21,6 +21,7 @@ add_forecasts!(c_sys5_re, ren_forecast_DA)
 add_forecasts!(c_sys5_re, load_forecast_DA)
 
 c_sys5_re_only = PSY.System(nodes5, renewable_generators5, loads5, branches5, nothing, 100.0, nothing, nothing, nothing);
+add_forecasts!(c_sys5_re_only, load_forecast_DA)
 add_forecasts!(c_sys5_re_only, ren_forecast_DA)
 
 #System with Storage Device
@@ -30,6 +31,7 @@ add_forecasts!(c_sys5_bat, load_forecast_DA)
 #Systems with HVDC data in the branches
 c_sys5_dc = PSY.System(nodes5, thermal_generators5, loads5, branches5_dc, nothing, 100.0, nothing, nothing, nothing);
 c_sys14_dc = PSY.System(nodes14, thermal_generators14, loads14, branches14_dc, nothing, 100.0, nothing, nothing, nothing);
+add_forecasts!(c_sys5_dc, load_forecast_DA)
 add_forecasts!(c_sys5_dc, ren_forecast_DA)
 add_forecasts!(c_sys14_dc, forecast_DA14)
 b_ac_5 = collect(get_components(PSY.ACBranch, c_sys5_dc))

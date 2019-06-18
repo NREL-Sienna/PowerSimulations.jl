@@ -26,7 +26,7 @@ include("test_utils/get_test_data.jl")
 
 @testset "Common Functionalities" begin
     include("base_structs.jl")
-    #include("PowerModels_interface.jl")
+    include("PowerModels_interface.jl")
 end
 
 @testset "Device Constructors" begin
@@ -38,7 +38,7 @@ end
 end
 
 @testset "Network Constructors" begin
-    #include("network_constructors.jl")
+    include("network_constructors.jl")
 end
 
 @testset "Services Constructors" begin
@@ -46,6 +46,6 @@ end
 end
 
 @testset "Operation Models" begin
-    #include("operation_model_constructor.jl")
-    #include("operation_model_solve.jl")
+    include("operation_model_constructor.jl")
+    include("operation_model_solve.jl")
 end

@@ -29,9 +29,10 @@ function activepower_variables!(ps_m::CanonicalModel,
     for t in time_steps, d in devices
         ps_m.variables[var_name][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
                                                 base_name="{$(var_name)}_{$(d.name),$(t)}",
-                                                upper_bound = d.tech.activepowerlimits.max,
-                                                lower_bound = 0.0,
-                                                start = d.tech.activepower)
+                                                #upper_bound = d.tech.activepowerlimits.max,
+                                                #lower_bound = 0.0,
+                                                #start = d.tech.activepower
+                                                )
         _add_to_expression!(ps_m.expressions[:nodal_balance_active],
                             d.bus.number,
                             t,

@@ -9,11 +9,11 @@ dc_line = DeviceModel(PSY.HVDCLine, PSI.HVDCDispatch)
     network = CopperPlatePowerModel
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [120, 120, 0, 0, 24],  
-                                                   c_sys14 => [120, 120, 0, 0, 24], 
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [120, 120, 0, 0, 24],
+                                                   c_sys14 => [120, 120, 0, 0, 24],
                                                    c_sys14_dc => [120, 120, 0, 0, 24])
-    
-    for (ix,sys) in enumerate(systems), p in parameters 
+
+    for (ix,sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
         bus_numbers = [b.number for b in buses]
         ps_model = PSI._canonical_model_init(bus_numbers, OSQP_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
@@ -41,11 +41,11 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
     PTDF_ref = Dict{PSY.System, PSY.PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc);
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [264, 120, 0, 0, 264],  
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [264, 120, 0, 0, 264],
                                                     c_sys14 => [600, 120, 0, 0, 816],
                                                     c_sys14_dc => [552, 120, 0, 0, 768])
-    
-    for (ix,sys) in enumerate(systems), p in parameters 
+
+    for (ix,sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
         bus_numbers = [b.number for b in buses]
         ps_model = PSI._canonical_model_init(bus_numbers, OSQP_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
@@ -79,11 +79,11 @@ end
     network = PM.DCPlosslessForm
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [384, 120, 144, 144, 288],  
-                                                    c_sys14 => [936, 120, 480, 480, 840],
-                                                    c_sys14_dc => [984, 120, 432, 432, 840])
-    
-    for (ix,sys) in enumerate(systems), p in parameters 
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [384, 120, 144, 144, 264],
+                                                    c_sys14 => [936, 120, 480, 480, 816],
+                                                    c_sys14_dc => [984, 120, 432, 432, 816])
+
+    for (ix,sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
         bus_numbers = [b.number for b in buses]
         ps_model = PSI._canonical_model_init(bus_numbers, OSQP_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
@@ -100,18 +100,18 @@ end
         @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == test_results[sys][4]
         @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == test_results[sys][5]
     end
-   
+
 end
 
 @testset  "Network Solve AC-PF PowerModels StandardACPForm" begin
     network = PM.StandardACPForm
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [1056, 240, 144, 144, 264],  
-                                                    c_sys14 => [2832, 240, 480, 480, 696],
-                                                    c_sys14_dc => [2832, 240, 432, 432, 744])
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [1056, 240, 144, 144, 240],
+                                                    c_sys14 => [2832, 240, 480, 480, 672],
+                                                    c_sys14_dc => [2832, 240, 432, 432, 720])
 
-    for (ix,sys) in enumerate(systems), p in parameters 
+    for (ix,sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
         bus_numbers = [b.number for b in buses]
         ps_model = PSI._canonical_model_init(bus_numbers, ipopt_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
