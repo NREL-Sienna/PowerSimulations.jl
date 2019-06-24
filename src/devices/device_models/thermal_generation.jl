@@ -18,7 +18,7 @@ struct ThermalDispatchNoMin <: AbstractThermalDispatchForm end
 This function add the variables for power generation output to the model
 """
 function activepower_variables!(ps_m::CanonicalModel,
-                                devices::PSY.FlattenedVectorsIterator{T}) where {T <: PSY.ThermalGen}
+                                devices::PSY.FlattenIteratorWrapper{T}) where {T <: PSY.ThermalGen}
 
     time_steps = model_time_steps(ps_m)
     var_name = Symbol("P_$(T)")
@@ -47,7 +47,7 @@ end
 This function add the variables for power generation output to the model
 """
 function reactivepower_variables!(ps_m::CanonicalModel,
-                                 devices::PSY.FlattenedVectorsIterator{T}) where {T <: PSY.ThermalGen}
+                                 devices::PSY.FlattenIteratorWrapper{T}) where {T <: PSY.ThermalGen}
 
     time_steps = model_time_steps(ps_m)
     var_name = Symbol("Q_$(T)")
@@ -75,7 +75,7 @@ end
 This function add the variables for power generation commitment to the model
 """
 function commitment_variables!(ps_m::CanonicalModel,
-                              devices::PSY.FlattenedVectorsIterator{T}) where {T <: PSY.ThermalGen}
+                              devices::PSY.FlattenIteratorWrapper{T}) where {T <: PSY.ThermalGen}
 
     time_steps = model_time_steps(ps_m)
     var_names = [Symbol("ON_$(T)"), Symbol("START_$(T)"), Symbol("STOP_$(T)")]
@@ -92,7 +92,7 @@ end
 This function adds the active power limits of generators when there are no CommitmentVariables
 """
 function activepower_constraints!(ps_m::CanonicalModel,
-                                 devices::PSY.FlattenedVectorsIterator{T},
+                                 devices::PSY.FlattenIteratorWrapper{T},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                                      D <: AbstractThermalDispatchForm,
@@ -113,7 +113,7 @@ end
 This function adds the active power limits of generators when there are CommitmentVariables
 """
 function activepower_constraints!(ps_m::CanonicalModel,
-                                 devices::PSY.FlattenedVectorsIterator{T},
+                                 devices::PSY.FlattenIteratorWrapper{T},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                                       D <: AbstractThermalFormulation,
@@ -135,7 +135,7 @@ end
 This function adds the reactive  power limits of generators when there are CommitmentVariables
 """
 function reactivepower_constraints!(ps_m::CanonicalModel,
-                                   devices::PSY.FlattenedVectorsIterator{T},
+                                   devices::PSY.FlattenIteratorWrapper{T},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                                         D <: AbstractThermalDispatchForm,
@@ -155,7 +155,7 @@ end
 This function adds the reactive power limits of generators when there CommitmentVariables
 """
 function reactivepower_constraints!(ps_m::CanonicalModel,
-                                   devices::PSY.FlattenedVectorsIterator{T},
+                                   devices::PSY.FlattenIteratorWrapper{T},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                                         D <: AbstractThermalFormulation,
@@ -178,7 +178,7 @@ This function adds the active power limits of generators when there are
     no CommitmentVariables
 """
 function activepower_constraints!(ps_m::CanonicalModel,
-                                  devices::PSY.FlattenedVectorsIterator{T},
+                                  devices::PSY.FlattenIteratorWrapper{T},
                                   device_formulation::Type{ThermalDispatchNoMin},
                                   system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                                      S <: PM.AbstractPowerFormulation}
@@ -198,7 +198,7 @@ This function adds the reactive  power limits of generators when there are
     CommitmentVariables
 """
 function reactivepower_constraints!(ps_m::CanonicalModel,
-                                   devices::PSY.FlattenedVectorsIterator{T},
+                                   devices::PSY.FlattenIteratorWrapper{T},
                                    device_formulation::Type{ThermalDispatchNoMin},
                                    system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                                         S <: PM.AbstractPowerFormulation}
@@ -219,7 +219,7 @@ end
 This function adds the Commitment Status constraint when there are CommitmentVariables
 """
 function commitment_constraints!(ps_m::CanonicalModel,
-                                 devices::PSY.FlattenedVectorsIterator{T},
+                                 devices::PSY.FlattenIteratorWrapper{T},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                                      D <: AbstractThermalFormulation,
@@ -249,7 +249,7 @@ end
 """
 This function gets the data for the generators
 """
-function _get_data_for_rocc(devices::PSY.FlattenedVectorsIterator{T},
+function _get_data_for_rocc(devices::PSY.FlattenIteratorWrapper{T},
                             resolution::Dates.Period) where {T <: PSY.ThermalGen}
 
     if resolution > Dates.Minute(1)
@@ -300,7 +300,7 @@ end
 This function adds the ramping limits of generators when there are CommitmentVariables
 """
 function ramp_constraints!(ps_m::CanonicalModel,
-                           devices::PSY.FlattenedVectorsIterator{T},
+                           devices::PSY.FlattenIteratorWrapper{T},
                            device_formulation::Type{D},
                            system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                     D <: AbstractThermalFormulation,
@@ -334,7 +334,7 @@ function ramp_constraints!(ps_m::CanonicalModel,
 end
 
 function ramp_constraints!(ps_m::CanonicalModel,
-                          devices::PSY.FlattenedVectorsIterator{T},
+                          devices::PSY.FlattenIteratorWrapper{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                    D <: AbstractThermalDispatchForm,
@@ -371,7 +371,7 @@ end
 This function adds the ramping limits of generators when there are CommitmentVariables
 """
 function ramp_constraints!(ps_m::CanonicalModel,
-                          devices::PSY.FlattenedVectorsIterator{T},
+                          devices::PSY.FlattenIteratorWrapper{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                    D <: AbstractThermalFormulation,
@@ -408,7 +408,7 @@ end
 
 
 function ramp_constraints!(ps_m::CanonicalModel,
-                           devices::PSY.FlattenedVectorsIterator{T},
+                           devices::PSY.FlattenIteratorWrapper{T},
                            device_formulation::Type{D},
                            system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                     D <: AbstractThermalDispatchForm,
@@ -445,7 +445,7 @@ end
 If the fraction of hours that a generator has a duration constraint is less than
 the fraction of hours that a single time_step represents then it is not binding.
 """
-function _get_data_for_tdc(devices::PSY.FlattenedVectorsIterator{T},
+function _get_data_for_tdc(devices::PSY.FlattenIteratorWrapper{T},
                            resolution::Dates.Period) where {T <: PSY.ThermalGen}
 
     steps_per_hour = 60/Dates.value(Dates.Minute(resolution))
@@ -485,7 +485,7 @@ function _get_data_for_tdc(devices::PSY.FlattenedVectorsIterator{T},
 end
 
 function time_constraints!(ps_m::CanonicalModel,
-                          devices::PSY.FlattenedVectorsIterator{T},
+                          devices::PSY.FlattenIteratorWrapper{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                    D <: AbstractThermalFormulation,
@@ -542,7 +542,7 @@ end
 ########################### Cost Function Calls#############################################
 
 function cost_function(ps_m::CanonicalModel,
-                       devices::PSY.FlattenedVectorsIterator{T},
+                       devices::PSY.FlattenIteratorWrapper{T},
                        device_formulation::Type{D},
                        system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                            D <: AbstractThermalDispatchForm,
@@ -559,7 +559,7 @@ end
 
 
 function cost_function(ps_m::CanonicalModel,
-                       devices::PSY.FlattenedVectorsIterator{T},
+                       devices::PSY.FlattenIteratorWrapper{T},
                        device_formulation::Type{D},
                        system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                            D <: AbstractThermalFormulation,

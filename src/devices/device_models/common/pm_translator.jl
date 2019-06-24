@@ -143,7 +143,7 @@ function get_branches_to_pm(sys::PSY.System)
     return PM_ac_branches, PM_dc_branches
 end
 
-function get_buses_to_pm(buses::PSY.FlattenedVectorsIterator{PSY.Bus})
+function get_buses_to_pm(buses::PSY.FlattenIteratorWrapper{PSY.Bus})
     PM_buses = Dict{String,Any}()
     for bus in buses
         PM_bus = Dict{String,Any}(

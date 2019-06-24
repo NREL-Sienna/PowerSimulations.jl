@@ -22,7 +22,7 @@ struct PhaseControl <: AbstractTransformerForm end
 # for the branch flows either in AC or DC.
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
-                        devices::PSY.FlattenedVectorsIterator{B}) where {B <: PSY.ACBranch,
+                        devices::PSY.FlattenIteratorWrapper{B}) where {B <: PSY.ACBranch,
                                                              S <: PM.AbstractPowerFormulation}
 
     return
@@ -31,7 +31,7 @@ end
 
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
-                        devices::PSY.FlattenedVectorsIterator{B}) where {B <: PSY.ACBranch,
+                        devices::PSY.FlattenIteratorWrapper{B}) where {B <: PSY.ACBranch,
                                                              S <: StandardPTDFForm}
 
     time_steps = model_time_steps(ps_m)
@@ -59,7 +59,7 @@ end
 #################################### Flow Limits Variables ##################################################
 
 function branch_rate_constraint(ps_m::CanonicalModel,
-                                devices::PSY.FlattenedVectorsIterator{B},
+                                devices::PSY.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{StandardPTDFForm}) where {B <: PSY.ACBranch,
                                                                                    D <: AbstractBranchFormulation}

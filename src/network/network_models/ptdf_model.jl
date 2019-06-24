@@ -1,11 +1,11 @@
 function ptdf_networkflow(ps_m::CanonicalModel,
-                          branches::PSY.FlattenedVectorsIterator{B},
-                          buses::PSY.FlattenedVectorsIterator{PSY.Bus},
+                          branches::PSY.FlattenIteratorWrapper{B},
+                          buses::PSY.FlattenIteratorWrapper{PSY.Bus},
                           expression::Symbol,
                           PTDF::PSY.PTDF) where {B <: PSY.Branch}
 
 
-    time_steps = model_time_steps(ps_m)                          
+    time_steps = model_time_steps(ps_m)
     ps_m.constraints[:network_flow] = JuMPConstraintArray(undef,  PTDF.axes[1], time_steps)
     ps_m.constraints[:nodal_balance] = JuMPConstraintArray(undef, PTDF.axes[2], time_steps)
     key = Symbol("Fbr_$(B)")
