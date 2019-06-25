@@ -29,7 +29,7 @@ c_sys5_bat = PSY.System(nodes5, thermal_generators5, loads5, branches5, battery5
 add_forecasts!(c_sys5_bat, load_forecast_DA)
 
 #Systems with HVDC data in the branches
-c_sys5_dc = PSY.System(nodes5, thermal_generators5, loads5, branches5_dc, nothing, 100.0, nothing, nothing, nothing);
+c_sys5_dc = PSY.System(nodes5, vcat(thermal_generators5, renewable_generators5), loads5, branches5_dc, nothing, 100.0, nothing, nothing, nothing);
 c_sys14_dc = PSY.System(nodes14, thermal_generators14, loads14, branches14_dc, nothing, 100.0, nothing, nothing, nothing);
 add_forecasts!(c_sys5_dc, load_forecast_DA)
 add_forecasts!(c_sys5_dc, ren_forecast_DA)
