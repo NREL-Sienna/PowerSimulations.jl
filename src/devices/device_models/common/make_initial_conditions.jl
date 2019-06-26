@@ -1,7 +1,7 @@
 function status_init(ps_m::CanonicalModel,
                     devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD <: PSY.ThermalGen}
 
-    parameters = model_with_parameters(ps_m)
+    parameters = model_has_parameters(ps_m)
     lenght_devices = length(devices)
     initial_conditions = Vector{InitialCondition}(undef, lenght_devices)
 
@@ -23,7 +23,7 @@ function output_init(ps_m::CanonicalModel,
                     devices::PSY.FlattenIteratorWrapper{PSD},
                     set_name::Vector{String}) where {PSD <: PSY.ThermalGen}
 
-    parameters = model_with_parameters(ps_m)
+    parameters = model_has_parameters(ps_m)
     lenght_devices = length(devices)
 
     if lenght_devices != length(set_name)
@@ -52,7 +52,7 @@ function duration_init(ps_m::CanonicalModel,
                         devices::PSY.FlattenIteratorWrapper{PSD},
                         set_name::Vector{String}) where {PSD <: PSY.ThermalGen}
 
-    parameters = model_with_parameters(ps_m)
+    parameters = model_has_parameters(ps_m)
     lenght_devices = length(devices)
 
     if lenght_devices != length(set_name)
@@ -88,7 +88,7 @@ end
 function storage_energy_init(ps_m::CanonicalModel,
                              devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD <: PSY.Storage}
 
-    parameters = model_with_parameters(ps_m)
+    parameters = model_has_parameters(ps_m)
     energy_initial_conditions  = Vector{InitialCondition}(undef, length(devices))
 
     for (i,g) in enumerate(devices)

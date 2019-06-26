@@ -96,7 +96,7 @@ function activepower_constraints(ps_m::CanonicalModel,
 
     time_steps = model_time_steps(ps_m)
 
-    if model_with_parameters(ps_m)
+    if model_has_parameters(ps_m)
         device_timeseries_param_ub(ps_m,
                                    _get_time_series(devices, time_steps),
                                    Symbol("active_ub_$(L)"),
@@ -138,7 +138,7 @@ function activepower_constraints(ps_m::CanonicalModel,
                                                           D <: AbstractControllablePowerLoadForm,
                                                           S <: PM.AbstractPowerFormulation}
 
-    if model_with_parameters(ps_m)
+    if model_has_parameters(ps_m)
         device_timeseries_param_ub(ps_m,
                                    _get_time_series(devices),
                                    Symbol("load_active_ub_$(L)"),

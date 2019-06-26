@@ -491,7 +491,7 @@ function time_constraints!(ps_m::CanonicalModel,
                                                    D <: AbstractThermalFormulation,
                                                    S <: PM.AbstractPowerFormulation}
 
-    parameters = model_with_parameters(ps_m)
+    parameters = model_has_parameters(ps_m)
     resolution = model_resolution(ps_m)
     duration_data = _get_data_for_tdc(devices, resolution)
 

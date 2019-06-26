@@ -16,4 +16,4 @@ _variable_type(cm::CanonicalModel) = JuMP.variable_type(cm.JuMPmodel)
 
 model_time_steps(ps_m::CanonicalModel) = ps_m.time_steps
 model_resolution(ps_m::CanonicalModel) = ps_m.resolution
-model_with_parameters(ps_m::CanonicalModel) = ps_m.parametrized
+model_has_parameters(ps_m::CanonicalModel) = ps_m.parametrized

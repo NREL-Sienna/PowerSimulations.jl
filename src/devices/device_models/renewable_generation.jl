@@ -102,7 +102,7 @@ function activepower_constraints(ps_m::CanonicalModel,
                                                          D <: AbstractRenewableDispatchForm,
                                                          S <: PM.AbstractPowerFormulation}
 
-    parameters = model_with_parameters(ps_m)
+    parameters = model_has_parameters(ps_m)
 
     if parameters
         time_steps = model_time_steps(ps_m)
@@ -147,7 +147,7 @@ function activepower_constraints(ps_m::CanonicalModel,
                                                                      D <: AbstractRenewableDispatchForm,
                                                                      S <: PM.AbstractPowerFormulation}
 
-    parameters = model_with_parameters(ps_m)
+    parameters = model_has_parameters(ps_m)
 
     if parameters
         device_timeseries_param_ub(ps_m,
