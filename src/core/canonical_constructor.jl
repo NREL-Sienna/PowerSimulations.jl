@@ -121,7 +121,7 @@ function  build_canonical_model(transmission::Type{T},
         time_steps = 1:1
     end
 
-    bus_numbers = [b.number for b in PSY.get_components(PSY.Bus, sys)]
+    bus_numbers = sort([b.number for b in PSY.get_components(PSY.Bus, sys)])
 
     ps_model = _canonical_model_init(bus_numbers,
                                      optimizer,
