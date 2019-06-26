@@ -1,6 +1,7 @@
 mutable struct CanonicalModel
     JuMPmodel::JuMP.AbstractModel
     parametrized::Bool
+    sequential_runs::Bool
     time_steps::UnitRange{Int64}
     resolution::Dates.Period
     variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
