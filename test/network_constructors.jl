@@ -15,7 +15,7 @@ dc_line = DeviceModel(PSY.HVDCLine, PSI.HVDCDispatch)
 
     for (ix,sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
-        bus_numbers = [b.number for b in buses]
+        bus_numbers = sort([b.number for b in buses])
         ps_model = PSI._canonical_model_init(bus_numbers, OSQP_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
         construct_device!(ps_model, thermal_model, network, sys; parameters = p);
         construct_device!(ps_model, load_model, network, sys; parameters = p);
@@ -47,7 +47,7 @@ end
 
     for (ix,sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
-        bus_numbers = [b.number for b in buses]
+        bus_numbers = sort([b.number for b in buses])
         ps_model = PSI._canonical_model_init(bus_numbers, OSQP_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
         construct_device!(ps_model, thermal_model, network, sys; parameters = p);
         construct_device!(ps_model, load_model, network, sys; parameters = p);
@@ -85,7 +85,7 @@ end
 
     for (ix,sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
-        bus_numbers = [b.number for b in buses]
+        bus_numbers = sort([b.number for b in buses])
         ps_model = PSI._canonical_model_init(bus_numbers, OSQP_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
         construct_device!(ps_model, thermal_model, network, sys; parameters = p);
         construct_device!(ps_model, load_model, network, sys; parameters = p);
@@ -113,7 +113,7 @@ end
 
     for (ix,sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
-        bus_numbers = [b.number for b in buses]
+        bus_numbers = sort([b.number for b in buses])
         ps_model = PSI._canonical_model_init(bus_numbers, ipopt_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
         construct_device!(ps_model, thermal_model, network, sys; parameters = p);
         construct_device!(ps_model, load_model, network, sys; parameters = p);
@@ -141,7 +141,7 @@ end
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
         buses = get_components(PSY.Bus, sys)
-        bus_numbers = [b.number for b in buses]
+        bus_numbers = sort([b.number for b in buses])
         ps_model = PSI._canonical_model_init(bus_numbers, GLPK_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
         construct_device!(ps_model, thermal_model, network, sys; parameters = p)
         construct_device!(ps_model, load_model, network, sys; parameters = p)
@@ -165,7 +165,7 @@ end
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
         buses = get_components(PSY.Bus, sys)
-        bus_numbers = [b.number for b in buses]
+        bus_numbers = sort([b.number for b in buses])
         ps_model = PSI._canonical_model_init(bus_numbers, ipopt_optimizer, network, time_steps, Dates.Hour(1))
         construct_device!(ps_model, thermal_model, network, sys);
         construct_device!(ps_model, load_model, network, sys);
@@ -183,7 +183,7 @@ end
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
         buses = get_components(PSY.Bus, sys)
-        bus_numbers = [b.number for b in buses]
+        bus_numbers = sort([b.number for b in buses])
         ps_model = PSI._canonical_model_init(bus_numbers, ipopt_optimizer, network, time_steps, Dates.Hour(1))
         construct_device!(ps_model, thermal_model, network, sys);
         construct_device!(ps_model, load_model, network, sys);
@@ -204,7 +204,7 @@ end
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
         buses = get_components(PSY.Bus, sys)
-        bus_numbers = [b.number for b in buses]
+        bus_numbers = sort([b.number for b in buses])
         ps_model = PSI._canonical_model_init(bus_numbers, ipopt_optimizer, network, time_steps, Dates.Hour(1))
         construct_device!(ps_model, thermal_model, network, sys);
         construct_device!(ps_model, load_model, network, sys);
