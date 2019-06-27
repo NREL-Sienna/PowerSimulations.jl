@@ -3,7 +3,7 @@ function include_parameters(ps_m::CanonicalModel,
                         param_name::Symbol,
                         axs...)
 
-    ps_m.parameters[param_name] = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...)
+    ps_m.parameters[param_name] = JuMPParamArray(undef, axs...)
 
     Cidx = CartesianIndices(length.(axs))
 
@@ -22,10 +22,10 @@ function include_parameters(ps_m::CanonicalModel,
 
 
     time_steps = model_time_steps(ps_m)
-    ps_m.parameters[param_name] = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, (r[1] for r in ts_data), time_steps)
+    ps_m.parameters[param_name] = JuMPParamArray(undef, (r[1] for r in ts_data), time_steps)
 
     time_steps = model_time_steps(ps_m)
-    ps_m.parameters[param_name] = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, (r[1] for r in ts_data), time_steps)
+    ps_m.parameters[param_name] = JuMPParamArray(undef, (r[1] for r in ts_data), time_steps)
 
     for t in time_steps, r in ts_data
         ps_m.parameters[param_name][r[1], t] = PJ.add_parameter(ps_m.JuMPmodel, r[3][t]);

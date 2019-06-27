@@ -56,6 +56,7 @@ const PGAE{V} = PJ.ParametrizedGenericAffExpr{Float64,V} where V <: JuMP.Abstrac
 const GAE{V} = JuMP.GenericAffExpr{Float64,V} where V <: JuMP.AbstractVariableRef
 const JuMPAffineExpressionArray = Matrix{GAE{V}} where V <: JuMP.AbstractVariableRef
 const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
+const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 
 #Type Alias for long type signatures
 const MinMax = NamedTuple{(:min, :max),Tuple{Float64,Float64}}
