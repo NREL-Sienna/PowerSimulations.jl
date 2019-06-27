@@ -44,7 +44,17 @@ function reactivepower_constraints(ps_m::CanonicalModel,
                                     system_formulation::Type{S}) where {R <: PSY.RenewableGen,
                                                                          S <: PM.AbstractPowerFormulation}
 
-    range_data = [(r.name, r.tech.reactivepowerlimits) for r in devices]
+    range_data = Vector{NamedMinMax}(undef, length(devices))
+
+    for (ix,d) in devices
+        if isnothing(d.tech.reactivepowerlimits)
+            limits = (min = 0.0, max = 0.0)
+            range_data[ix] = (d.name, limits)
+            @warn("Reactive Power Limits of $(d.name) are nothing. Q_$(d.name) is set to 0.0")
+        else
+            range_data[ix] = (d.name, d.tech.reactivepowerlimits)
+        end
+    end
 
     device_range(ps_m,
                 range_data,
@@ -61,7 +71,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
                                     system_formulation::Type{S}) where {R <: PSY.RenewableGen,
                                                                          S <: PM.AbstractPowerFormulation}
 
-    names = [r.name for r in devices]
+    names = (r.name for r in devices)
     time_steps = model_time_steps(ps_m)
     p_variable_name = Symbol("P_$(R)")
     q_variable_name = Symbol("Q_$(R)")

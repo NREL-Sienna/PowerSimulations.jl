@@ -55,8 +55,9 @@ end
 end
 
 @testset "Renewable ACPPower Full Dispatch (Broken, Missing data)" begin
+    model = DeviceModel(PSY.RenewableDispatch, PSI.RenewableFullDispatch,)
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps, Dates.Minute(5))
-    #construct_device!(ps_model, PSY.RenewableDispatch, PSI.RenewableFullDispatch, PM.StandardACPForm, c_sys5_re);
+    construct_device!(ps_model, model, PM.StandardACPForm, c_sys5_re);
 end
 
 @testset "Renewable DCPLossLess ConstantPowerFactor" begin
