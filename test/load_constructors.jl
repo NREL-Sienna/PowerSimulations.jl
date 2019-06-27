@@ -4,7 +4,7 @@
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps, Dates.Hour(1))
     @test_logs (:warn, warn_message) construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5);
     model = DeviceModel(PSY.PowerLoad, PSI.DispatchablePowerLoad)
-    warn_message = "The Formulation PowerSimulations.DispatchablePowerLoad only applies to Controllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad"
+    warn_message = "The Formulation DispatchablePowerLoad only applies to Controllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad"
     ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps, Dates.Hour(1))
     @test_logs (:warn, warn_message) construct_device!(ps_model, model, PM.DCPlosslessForm, c_sys5);
 end
