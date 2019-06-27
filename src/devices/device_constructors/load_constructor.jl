@@ -76,6 +76,84 @@ end
 
 function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device::Type{L},
+                                        device_formulation::Type{InterruptiblePowerLoad},
+                                        system_formulation::Type{S},
+                                        sys::PSY.System;
+                                        kwargs...) where {L <: PSY.ControllableLoad,
+                                                          S <: PM.AbstractPowerFormulation}
+
+    forecast = get(kwargs, :forecast, true)
+
+    devices = PSY.get_components(device, sys)
+
+    if validate_available_devices(devices, device)
+        return
+    end
+
+    #Variables
+    activepower_variables(ps_m, devices)
+
+    reactivepower_variables(ps_m, devices)
+
+    commitment_variables(ps_m, devices)
+
+    #Constraints
+    if forecast
+        first_step = PSY.get_forecasts_initial_time(sys)
+        forecasts = PSY.get_forecasts(PSY.Deterministic{L}, sys, first_step)
+        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation)
+    else
+        activepower_constraints(ps_m, devices, device_formulation, system_formulation)
+    end
+
+    reactivepower_constraints(ps_m, devices, device_formulation, system_formulation)
+
+    #Cost Function
+    cost_function(ps_m, devices, device_formulation, system_formulation)
+
+    return
+
+end
+
+function _internal_device_constructor!(ps_m::CanonicalModel,
+                                        device::Type{L},
+                                        device_formulation::Type{InterruptiblePowerLoad},
+                                        system_formulation::Type{S},
+                                        sys::PSY.System;
+                                        kwargs...) where {L <: PSY.ControllableLoad,
+                                                          S <: PM.AbstractActivePowerFormulation}
+
+    forecast = get(kwargs, :forecast, true)
+
+    devices = PSY.get_components(device, sys)
+
+    if validate_available_devices(devices, device)
+        return
+    end
+
+    #Variables
+    activepower_variables(ps_m, devices)
+
+    commitment_variables(ps_m, devices)
+
+    #Constraints
+    if forecast
+        first_step = PSY.get_forecasts_initial_time(sys)
+        forecasts = PSY.get_forecasts(PSY.Deterministic{L}, sys, first_step)
+        activepower_constraints(ps_m, forecasts, device_formulation, system_formulation)
+    else
+        activepower_constraints(ps_m, devices, device_formulation, system_formulation)
+    end
+
+    #Cost Function
+    cost_function(ps_m, devices, device_formulation, system_formulation)
+
+    return
+
+end
+
+function _internal_device_constructor!(ps_m::CanonicalModel,
+                                        device::Type{L},
                                         device_formulation::Type{StaticPowerLoad},
                                         system_formulation::Type{S},
                                         sys::PSY.System;
