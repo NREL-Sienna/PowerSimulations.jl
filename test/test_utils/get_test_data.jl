@@ -4,8 +4,8 @@ base_dir = string(dirname(dirname(pathof(PowerSystems))));
 DATA_DIR = joinpath(base_dir, "data")
 include(joinpath(base_dir,"data/data_5bus_pu.jl"));
 include(joinpath(base_dir,"data/data_14bus_pu.jl"))
-bus_numbers5 = [b.number for b in nodes5]
-bus_numbers14 = [b.number for b in nodes14];
+bus_numbers5 = sort([b.number for b in nodes5])
+bus_numbers14 = sort([b.number for b in nodes14]);
 
 #Base Systems
 c_sys5 = PSY.System(nodes5, thermal_generators5, loads5, branches5, nothing, 100.0, nothing, nothing, nothing);
@@ -27,6 +27,11 @@ add_forecasts!(c_sys5_re_only, ren_forecast_DA)
 #System with Storage Device
 c_sys5_bat = PSY.System(nodes5, thermal_generators5, loads5, branches5, battery5, 100.0, nothing, nothing, nothing);
 add_forecasts!(c_sys5_bat, load_forecast_DA)
+
+#System with Interruptible Load
+c_sys5_il = PSY.System(nodes5, thermal_generators5, vcat(loads5,interruptible), branches5, nothing, 100.0, nothing, nothing, nothing);
+add_forecasts!(c_sys5_il, load_forecast_DA)
+add_forecasts!(c_sys5_il, Iload_forecast)
 
 #Systems with HVDC data in the branches
 c_sys5_dc = PSY.System(nodes5, vcat(thermal_generators5, renewable_generators5), loads5, branches5_dc, nothing, 100.0, nothing, nothing, nothing);
