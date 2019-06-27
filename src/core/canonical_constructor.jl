@@ -133,17 +133,17 @@ function  build_canonical_model(transmission::Type{T},
 
     # Build Injection devices
     for mod in devices
-        @info "Building $(mod)"
+        @info "Building $(mod[2].device) with $(mod[2].formulation) formulation"
         construct_device!(ps_model, mod[2], transmission, sys; kwargs...)
     end
 
     # Build Network
-    @info "Building Network"
+    @info "Building $(transmission) network formulation"
     construct_network!(ps_model, transmission, sys; kwargs...)
 
     # Build Branches
     for mod in branches
-        @info "Building $(mod)"
+        @info "Building $(mod[2].device) with $(mod[2].formulation) formulation"
         construct_device!(ps_model, mod[2], transmission, sys; kwargs...)
     end
 
