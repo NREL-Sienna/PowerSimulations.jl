@@ -29,9 +29,9 @@ function activepower_variables!(ps_m::CanonicalModel,
     for t in time_steps, d in devices
         ps_m.variables[var_name][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
                                                 base_name="{$(var_name)}_{$(d.name),$(t)}",
-                                                #upper_bound = d.tech.activepowerlimits.max,
-                                                #lower_bound = 0.0,
-                                                #start = d.tech.activepower
+                                                upper_bound = d.tech.activepowerlimits.max,
+                                                lower_bound = 0.0,
+                                                start = d.tech.activepower
                                                 )
         _add_to_expression!(ps_m.expressions[:nodal_balance_active],
                             d.bus.number,
@@ -509,14 +509,14 @@ function time_constraints!(ps_m::CanonicalModel,
 
        if parameters
             device_duration_ind(ps_m,
-                                      duration_data[1],
-                                      duration_data[2],
-                                      ps_m.initial_conditions[key_on],
-                                      ps_m.initial_conditions[key_off],
-                                    Symbol("duration_$(T)"),
-                                      (Symbol("ON_$(T)"),
-                                       Symbol("START_$(T)"),
-                                       Symbol("STOP_$(T)"))
+                                duration_data[1],
+                                duration_data[2],
+                                ps_m.initial_conditions[key_on],
+                                ps_m.initial_conditions[key_off],
+                                Symbol("duration_$(T)"),
+                                (Symbol("ON_$(T)"),
+                                Symbol("START_$(T)"),
+                                Symbol("STOP_$(T)"))
                                       )
         else
             device_duration_retrospective(ps_m,
