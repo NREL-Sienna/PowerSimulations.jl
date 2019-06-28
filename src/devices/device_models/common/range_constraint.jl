@@ -3,15 +3,19 @@ function device_range(ps_m::CanonicalModel,
                         cons_name::Symbol,
                         var_name::Symbol)
 
-    time_steps = model_time_steps(ps_m)                        
+    time_steps = model_time_steps(ps_m)
     ps_m.constraints[cons_name] = JuMPConstraintArray(undef, (r[1] for r in range_data), time_steps)
 
-    for t in time_steps, r in range_data
-            if abs(r[2].min - r[2].max) >= eps()
-                ps_m.constraints[cons_name][r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, r[2].min <= ps_m.variables[var_name][r[1], t] <= r[2].max)
+    for r in range_data
+          if abs(r[2].min - r[2].max) <= eps()
+            @warn("The min - max values in range constraint with eps() distance to each other. Range Constraint will be modified for Equality Constraint")
+                for t in time_steps
+                    ps_m.constraints[cons_name][r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_name][r[1], t] == r[2].max)
+                end
             else
-                @warn("The min - max values in range constraint with eps() distance to each other. Range Constraint will be modified for Equality Constraint")
-                ps_m.constraints[cons_name][r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_name][r[1], t] == r[2].max)
+                for t in time_steps
+                    ps_m.constraints[cons_name][r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, r[2].min <= ps_m.variables[var_name][r[1], t] <= r[2].max)
+                end
             end
     end
 
@@ -27,7 +31,7 @@ function device_semicontinuousrange(ps_m::CanonicalModel,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
 
-    time_steps = model_time_steps(ps_m)                                
+    time_steps = model_time_steps(ps_m)
     ub_name = Symbol(cons_name,:_ub)
     lb_name = Symbol(cons_name,:_lb)
 
@@ -62,7 +66,7 @@ function reserve_device_semicontinuousrange(ps_m::CanonicalModel,
                                             var_name::Symbol,
                                             binvar_name::Symbol)
 
-    time_steps = model_time_steps(ps_m)                                           
+    time_steps = model_time_steps(ps_m)
     ub_name = Symbol(cons_name,:_ub)
     lb_name = Symbol(cons_name,:_lb)
 
