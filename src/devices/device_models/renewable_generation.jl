@@ -46,7 +46,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
 
     range_data = Vector{NamedMinMax}(undef, length(devices))
 
-    for (ix,d) in devices
+    for (ix,d) in enumerate(devices)
         if isnothing(d.tech.reactivepowerlimits)
             limits = (min = 0.0, max = 0.0)
             range_data[ix] = (d.name, limits)
