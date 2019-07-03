@@ -14,16 +14,16 @@ function ptdf_networkflow(ps_m::CanonicalModel,
 
     for t in time_steps
         for b in branches
-            ps_m.constraints[:network_flow][b.name,t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[key][b.name,t] == PTDF[b.name,:]'*ps_m.expressions[expression].data[:,t])
+            ps_m.constraints[:network_flow][PSY.get_name(b),t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[key][PSY.get_name(b),t] == PTDF[PSY.get_name(b),:]'*ps_m.expressions[expression].data[:,t])
         end
 
         for b in branches
-            _add_to_expression!(ps_m.expressions[expression], b.connectionpoints.from.number, t, ps_m.variables[key][b.name,t], -1.0)
-            _add_to_expression!(ps_m.expressions[expression], b.connectionpoints.to.number, t, ps_m.variables[key][b.name,t], 1.0)
+            _add_to_expression!(ps_m.expressions[expression], (PSY.get_connectionpoints(b)).from |> PSY.get_number, t, ps_m.variables[key][PSY.get_name(b),t], -1.0)
+            _add_to_expression!(ps_m.expressions[expression], (PSY.get_connectionpoints(b)).to |> PSY.get_number, t, ps_m.variables[key][PSY.get_name(b),t], 1.0)
         end
 
         for b in buses
-            ps_m.constraints[:nodal_balance][b.number, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.expressions[expression][b.number,t] == 0)
+            ps_m.constraints[:nodal_balance][PSY.get_number(b), t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.expressions[expression][PSY.get_number(b),t] == 0)
         end
 
     end

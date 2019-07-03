@@ -23,24 +23,24 @@ function flow_variables(ps_m::CanonicalModel,
     time_steps = model_time_steps(ps_m)
     var_name = Symbol("Fp_$(B)")
     ps_m.variables[var_name] = PSI._container_spec(ps_m.JuMPmodel,
-                                                  (d.name for d in devices),
+                                                  (PSY.get_name(d) for d in devices),
                                                    time_steps)
 
     for d in devices
-        bus_fr = d.connectionpoints.from.number
-        bus_to = d.connectionpoints.to.number
+        bus_fr = PSY.get_connectionpoints(d).from |> PSY.get_number
+        bus_to = PSY.get_connectionpoints(d).to |> PSY.get_number
         for t in time_steps
-            ps_m.variables[var_name][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                                base_name="$(bus_fr),$(bus_to)_{$(d.name),$(t)}")
+            ps_m.variables[var_name][PSY.get_name(d),t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                                base_name="$(bus_fr),$(bus_to)_{$(PSY.get_name(d)),$(t)}")
             _add_to_expression!(ps_m.expressions[:nodal_balance_active],
-                                d.connectionpoints.from.number,
+                                PSY.get_connectionpoints(d).from |> PSY.get_number,
                                 t,
-                                ps_m.variables[var_name][d.name,t],
+                                ps_m.variables[var_name][PSY.get_name(d),t],
                                 -1.0)
             _add_to_expression!(ps_m.expressions[:nodal_balance_active],
-                                d.connectionpoints.to.number,
+                                PSY.get_connectionpoints(d).to |> PSY.get_number,
                                 t,
-                                ps_m.variables[var_name][d.name,t],
+                                ps_m.variables[var_name][PSY.get_name(d),t],
                                 1.0)
         end
     end
@@ -57,12 +57,12 @@ function branch_rate_constraint(ps_m::CanonicalModel,
     var_name = Symbol("Fp_$(B)")
     con_name = Symbol("rate_limit_$(B)")
     time_steps = model_time_steps(ps_m)
-    ps_m.constraints[con_name] = JuMPConstraintArray(undef, (d.name for d in devices), time_steps)
+    ps_m.constraints[con_name] = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
 
     for t in time_steps, d in devices
-        min_rate = max(d.activepowerlimits_from.min, d.activepowerlimits_to.min)
-        max_rate = min(d.activepowerlimits_from.max, d.activepowerlimits_to.max)
-        ps_m.constraints[con_name][d.name, t] = JuMP.@constraint(ps_m.JuMPmodel, min_rate <= ps_m.variables[var_name][d.name, t] <= max_rate)
+        min_rate = max(PSY.get_activepowerlimits_from(d).min, PSY.get_activepowerlimits_to(d).min)
+        max_rate = min(PSY.get_activepowerlimits_from(d).max, PSY.get_activepowerlimits_to(d).max)
+        ps_m.constraints[con_name][PSY.get_name(d), t] = JuMP.@constraint(ps_m.JuMPmodel, min_rate <= ps_m.variables[var_name][PSY.get_name(d), t] <= max_rate)
     end
 
     return
@@ -78,18 +78,18 @@ function branch_rate_constraint(ps_m::CanonicalModel,
     var_name = Symbol("Fp_$(B)")
     con_name = Symbol("rate_limit_$(B)")
     time_steps = model_time_steps(ps_m)
-    ps_m.constraints[con_name] = JuMPConstraintArray(undef, (d.name for d in devices), time_steps)
+    ps_m.constraints[con_name] = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
 
     for t in time_steps, d in devices
-        min_rate = max(d.activepowerlimits_from.min, d.activepowerlimits_to.min)
-        max_rate = min(d.activepowerlimits_from.max, d.activepowerlimits_to.max)
-        ps_m.constraints[con_name][d.name, t] = JuMP.@constraint(ps_m.JuMPmodel, min_rate <= ps_m.variables[var_name][d.name, t] <= max_rate)
+        min_rate = max(PSY.get_activepowerlimits_from(d).min, PSY.get_activepowerlimits_to(d).min)
+        max_rate = min(PSY.get_activepowerlimits_from(d).max, PSY.get_activepowerlimits_to(d).max)
+        ps_m.constraints[con_name][PSY.get_name(d), t] = JuMP.@constraint(ps_m.JuMPmodel, min_rate <= ps_m.variables[var_name][PSY.get_name(d), t] <= max_rate)
         _add_to_expression!(ps_m.expressions[:nodal_balance_active],
-                            d.connectionpoints.to.number,
+                            PSY.get_connectionpoints(d).to |> PSY.get_number,
                             t,
-                            ps_m.variables[var_name][d.name,t],
-                            -d.loss.l1,
-                            -d.loss.l0)
+                            ps_m.variables[var_name][PSY.get_name(d),t],
+                            -PSY.get_loss(d).l1,
+                            -PSY.get_loss(d).l0)
     end
 
     return
