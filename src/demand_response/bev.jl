@@ -92,11 +92,18 @@ optimize!(constraints.model, with_optimizer(GLPK.Optimizer))
 locateddemands = constraints.result()
 ```
 """
-#!!!!Function COMMENTED to allow use of second script for easy edits.!!!!
+#Iteration initalizer
+Iter = 1
 
 function demandconstraints(demand :: BevDemand{T,L}, prices :: TimeArray{Float64,1,T,Array{Float64,1}}) where L where T <: TimeType
 
     # FIXME: Add DC constraints.
+
+    #Print function iteration number
+
+    #println(Iter)
+    global Iter += 1
+
 
     eff = applyefficiencies(demand)
 
@@ -108,6 +115,7 @@ function demandconstraints(demand :: BevDemand{T,L}, prices :: TimeArray{Float64
 
     NT = length(x)
     NP = NT - 1
+
     hour = map(t -> t.instant / onehour, xt)
     location = map(v -> v[1][1][1], xv)
     duration = (xt[2:NT] - xt[1:NP]) / onehour
@@ -118,9 +126,31 @@ function demandconstraints(demand :: BevDemand{T,L}, prices :: TimeArray{Float64
 
     model = Model()
 
+    #Chargemax modification for day/night charging
+    """
+    if Iter > 700
+        for i in 1:NP
+            chargemax[i] = 0.0
+        end
+    end
+    """
+
+    #Chargemin chargemax print
+    """
+    for i in 1:NP
+        println("")
+        print(string(i))
+        print(": chargemin: ", chargemin[i])
+        print(", chargemax: ", chargemax[i])
+    end
+    """
+
     chargevars = @variable(model, charge[1:NP])
     @constraint(model, chargeconstraint[   i=1:NP], charge[i] <= chargemax[i])
     @constraint(model, dischargeconstraint[i=1:NP], charge[i] >= chargemin[i])
+
+    #Day vs Night charging constraint
+    #@constraint(model, daycharging[i=1:NP], charge[i] == 0)
 
     @variable(model, demand.capacity.min <= battery[1:NT] <= demand.capacity.max)
     if demand.timeboundary == nothing
@@ -134,6 +164,7 @@ function demandconstraints(demand :: BevDemand{T,L}, prices :: TimeArray{Float64
 
     @objective(model, Min, sum(price[i] * charge[i] for i = 1:NP))
 
+    #Contains optimization charging results with charging rate from charger during each time interval
     function result() :: LocatedDemand{T,L}
         TimeArray(
             xt,
@@ -149,10 +180,27 @@ function demandconstraints(demand :: BevDemand{T,L}, prices :: TimeArray{Float64
         )
     end
 
+    #Contains optimization charging results with charge used by car during each time interval
+    function result2() :: LocatedDemand{T,L}
+        TimeArray(
+            xt,
+            collect(
+                zip(
+                    location,
+                    vcat(
+                        JuMP.value.(chargevars),
+                        NaN
+                    )
+                )
+            )
+        )
+    end
+
     (
         locations=TimeArray(xt, location),
         model=model,
-        result=result
+        result=result,
+        result2=result2
     )
 
 end
