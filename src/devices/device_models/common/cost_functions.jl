@@ -108,7 +108,11 @@ function add_to_cost(ps_m::CanonicalModel,
     dt = Dates.value(Dates.Minute(resolution))/60
 
     for d in devices
-        cost_expression = ps_cost(ps_m, ps_m.variables[var_name][d.name,:], getfield(d.econ,cost_symbol), dt, sign)
+        cost_expression = ps_cost(ps_m, 
+                                  ps_m.variables[var_name][PSY.get_name(d),:],
+                                  getfield(PSY.get_econ(d),cost_symbol),
+                                  dt,
+                                  sign)
         ps_m.cost_function += cost_expression
     end
 

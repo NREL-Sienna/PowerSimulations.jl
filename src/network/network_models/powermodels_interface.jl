@@ -278,7 +278,7 @@ function powermodels_network!(ps_m::CanonicalModel,
     _remove_undef!(ps_m.expressions[:nodal_balance_active])
 
     for t in time_steps, bus in buses
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions[:nodal_balance_active][bus.number,t]
+        pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["pni"] = ps_m.expressions[:nodal_balance_active][PSY.get_number(bus),t]
         #pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
     end
 

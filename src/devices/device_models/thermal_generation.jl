@@ -23,20 +23,20 @@ function activepower_variables!(ps_m::CanonicalModel,
     time_steps = model_time_steps(ps_m)
     var_name = Symbol("P_$(T)")
     ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel,
-                                              (d.name for d in devices),
+                                              (PSY.get_name(d) for d in devices),
                                               time_steps)
 
     for t in time_steps, d in devices
-        ps_m.variables[var_name][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                base_name="{$(var_name)}_{$(d.name),$(t)}",
-                                                upper_bound = d.tech.activepowerlimits.max,
+        ps_m.variables[var_name][PSY.get_name(d),t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                base_name="{$(var_name)}_{$(PSY.get_name(d)),$(t)}",
+                                                upper_bound = (PSY.get_tech(d) |> PSY.get_activepowerlimits).max,
                                                 lower_bound = 0.0,
-                                                start = d.tech.activepower
+                                                start = PSY.get_tech(d) |> PSY.get_activepower
                                                 )
         _add_to_expression!(ps_m.expressions[:nodal_balance_active],
-                            d.bus.number,
+                            PSY.get_bus(d) |> PSY.get_number,
                             t,
-                            ps_m.variables[var_name][d.name,t])
+                            ps_m.variables[var_name][PSY.get_name(d),t])
     end
 
     return
@@ -52,19 +52,19 @@ function reactivepower_variables!(ps_m::CanonicalModel,
     time_steps = model_time_steps(ps_m)
     var_name = Symbol("Q_$(T)")
     ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel,
-                                              (d.name for d in devices),
+                                              (PSY.get_name(d) for d in devices),
                                               time_steps)
 
      for t in time_steps, d in devices
-        ps_m.variables[var_name][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
-                                            base_name="{$(var_name)}_{$(d.name),$(t)}",
-                                            upper_bound = d.tech.reactivepowerlimits.max,
-                                            lower_bound = d.tech.reactivepowerlimits.min,
-                                            start = d.tech.reactivepower)
+        ps_m.variables[var_name][PSY.get_name(d),t] = JuMP.@variable(ps_m.JuMPmodel,
+                                            base_name="{$(var_name)}_{$(PSY.get_name(d)),$(t)}",
+                                            upper_bound = (PSY.get_tech(d) |> PSY.get_reactivepowerlimits).max,
+                                            lower_bound = (PSY.get_tech(d) |> PSY.get_reactivepowerlimits).min,
+                                            start = PSY.get_tech(d) |> PSY.get_reactivepower)
         _add_to_expression!(ps_m.expressions[:nodal_balance_reactive],
-                            d.bus.number,
+                            PSY.get_bus(d) |> PSY.get_number,
                             t,
-                            ps_m.variables[var_name][d.name,t])
+                            ps_m.variables[var_name][PSY.get_name(d),t])
     end
 
     return
@@ -98,7 +98,7 @@ function activepower_constraints!(ps_m::CanonicalModel,
                                                                      D <: AbstractThermalDispatchForm,
                                                                      S <: PM.AbstractPowerFormulation}
 
-    range_data = [(g.name, g.tech.activepowerlimits) for g in devices]
+    range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_activepowerlimits) for g in devices]
 
     device_range(ps_m,
                 range_data,
@@ -119,7 +119,7 @@ function activepower_constraints!(ps_m::CanonicalModel,
                                                                       D <: AbstractThermalFormulation,
                                                                       S <: PM.AbstractPowerFormulation}
 
-    range_data = [(g.name, g.tech.activepowerlimits) for g in devices]
+    range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_activepowerlimits) for g in devices]
 
     device_semicontinuousrange(ps_m,
                                range_data,
@@ -140,7 +140,7 @@ function reactivepower_constraints!(ps_m::CanonicalModel,
                                    system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                                         D <: AbstractThermalDispatchForm,
                                                                         S <: PM.AbstractPowerFormulation}
-    range_data = [(g.name, g.tech.reactivepowerlimits) for g in devices]
+    range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_reactivepowerlimits) for g in devices]
 
     device_range(ps_m,
                  range_data ,
@@ -161,7 +161,7 @@ function reactivepower_constraints!(ps_m::CanonicalModel,
                                                                         D <: AbstractThermalFormulation,
                                                                         S <: PM.AbstractPowerFormulation}
 
-    range_data = [(g.name, g.tech.reactivepowerlimits) for g in devices]
+    range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_reactivepowerlimits) for g in devices]
 
     device_semicontinuousrange(ps_m,
                                range_data,
@@ -182,7 +182,7 @@ function activepower_constraints!(ps_m::CanonicalModel,
                                   device_formulation::Type{ThermalDispatchNoMin},
                                   system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                                      S <: PM.AbstractPowerFormulation}
-    range_data = [(g.name, (min = 0.0, max=g.tech.activepowerlimits.max)) for g in devices]
+    range_data = [(PSY.get_name(g), (min = 0.0, max=(PSY.get_tech(g) |> PSY.get_activepowerlimits).max)) for g in devices]
 
     device_range(ps_m,
                  range_data,
@@ -203,7 +203,7 @@ function reactivepower_constraints!(ps_m::CanonicalModel,
                                    system_formulation::Type{S}) where {T <: PSY.ThermalGen,
                                                                         S <: PM.AbstractPowerFormulation}
 
-    range_data = [(g.name, (min = 0.0, max=g.tech.reactivepowerlimits.max)) for g in devices]
+    range_data = [(PSY.get_name(g), (min = 0.0, max=(PSY.get_tech(g) |> PSY.get_reactivepowerlimits).max)) for g in devices]
 
     device_range(ps_m,
                  range_data,
@@ -267,22 +267,22 @@ function _get_data_for_rocc(devices::PSY.FlattenIteratorWrapper{T},
     for g in devices
         non_binding_up = false
         non_binding_down = false
-        if !isnothing(g.tech.ramplimits)
-            max = g.tech.activepowerlimits.max
-            min = g.tech.activepowerlimits.min
-            if g.tech.ramplimits.up*g.tech.rating >= -1*(min - max)/minutes_per_period
-                @info "Generator $(g.name) has a nonbinding ramp up limit. Constraint Skipped"
+        if !isnothing(PSY.get_tech(g) |> PSY.get_ramplimits)
+            max = (PSY.get_tech(g) |> PSY.get_activepowerlimits).max
+            min = (PSY.get_tech(g) |> PSY.get_activepowerlimits).min
+            if (PSY.get_tech(g) |> PSY.get_ramplimits).up * (PSY.get_tech(g) |> PSY.get_rating) >= -1*(min - max)/minutes_per_period
+                @info "Generator $(PSY.get_name) has a nonbinding ramp up limit. Constraint Skipped"
                 non_binding_up = true
             end
-            if g.tech.ramplimits.down*g.tech.rating >= (max - min)/minutes_per_period
-                @info "Generator $(g.name) has a nonbinding ramp down limit. Constraint Skipped"
+            if (PSY.get_tech(g) |> PSY.get_ramplimits).down * (PSY.get_tech(g) |> PSY.get_rating) >= (max - min)/minutes_per_period
+                @info "Generator $(PSY.get_name) has a nonbinding ramp down limit. Constraint Skipped"
                 non_binding_down = true
             end
             (non_binding_up & non_binding_down) ? continue : idx += 1
-            set_name[idx] = g.name
-            ramp_params[idx] = (up = g.tech.ramplimits.up*minutes_per_period,
-                                down = g.tech.ramplimits.down*minutes_per_period)
-            minmax_params[idx] = g.tech.activepowerlimits
+            set_name[idx] = PSY.get_name(g)
+            ramp_params[idx] = (up = (PSY.get_tech(g) |> PSY.get_ramplimits).up*minutes_per_period,
+                                down = (PSY.get_tech(g) |> PSY.get_ramplimits).down*minutes_per_period)
+            minmax_params[idx] = PSY.get_tech(g) |> PSY.get_activepowerlimits
         end
     end
 
@@ -458,19 +458,19 @@ function _get_data_for_tdc(devices::PSY.FlattenIteratorWrapper{T},
     for g in devices
         non_binding_up = false
         non_binding_down = false
-        if !isnothing(g.tech.timelimits)
-            if g.tech.timelimits.up <= fraction_of_hour
-                @info "Generator $(g.name) has a nonbinding time limit. Constraint Skipped"
+        if !isnothing(PSY.get_tech(g) |> PSY.get_timelimits)
+            if (PSY.get_tech(g) |> PSY.get_timelimits).up <= fraction_of_hour
+                @info "Generator $(PSY.get_name) has a nonbinding time limit. Constraint Skipped"
                 non_binding_up = true
             end
-            if g.tech.timelimits.down <= fraction_of_hour
-                @info "Generator $(g.name) has a nonbinding time limit. Constraint Skipped"
+            if (PSY.get_tech(g) |> PSY.get_timelimits).down <= fraction_of_hour
+                @info "Generator $(PSY.get_name) has a nonbinding time limit. Constraint Skipped"
                 non_binding_down = true
             end
             (non_binding_up & non_binding_down) ? continue : idx += 1
-            set_name[idx] = g.name
-            up_val = round(g.tech.timelimits.up*steps_per_hour, RoundUp)
-            down_val = round(g.tech.timelimits.down*steps_per_hour, RoundUp)
+            set_name[idx] = PSY.get_name(g)
+            up_val = round((PSY.get_tech(g) |> PSY.get_timelimits).up*steps_per_hour, RoundUp)
+            down_val = round((PSY.get_tech(g) |> PSY.get_timelimits).down*steps_per_hour, RoundUp)
             time_params[idx] = time_params[idx] = (up = up_val, down = down_val)
         end
     end

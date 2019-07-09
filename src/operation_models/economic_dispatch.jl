@@ -28,7 +28,7 @@ function SCEconomicDispatch(sys::PSY.System; optimizer::Union{Nothing,JuMP.Optim
 
     else
         @info "PTDF matrix not provided. It will be constructed using PowerSystems.PTDF"
-        PTDF, A = PowerSystems.buildptdf(system.branches, system.buses);
+        PTDF, A = PowerSystems.buildptdf(get_components(PSY.Branch, system), get_components(PSY.Bus, system));
     end
 
     devices = Dict{Symbol, DeviceModel}(:ThermalGenerators => DeviceModel(PSY.ThermalGen, ThermalDispatch),

@@ -73,8 +73,8 @@ function active_power_constraints(ps_m::CanonicalModel,
                                   system_formulation::Type{S}) where {St <: PSY.Storage,
                                                                       S <: PM.AbstractPowerFormulation}
 
-    range_data_in = [(s.name, s.inputactivepowerlimits) for s in devices]
-    range_data_out = [(s.name, s.outputactivepowerlimits) for s in devices]
+    range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
+    range_data_out = [(PSY.get_name(s), PSY.get_outputactivepowerlimits(s)) for s in devices]
 
     device_range(ps_m,
                  range_data_in,
@@ -96,8 +96,8 @@ function active_power_constraints(ps_m::CanonicalModel,
                                   system_formulation::Type{S}) where {St <: PSY.Storage,
                                                                       S <: PM.AbstractPowerFormulation}
 
-    range_data_in = [(s.name, s.inputactivepowerlimits) for s in devices]
-    range_data_out = [(s.name, s.outputactivepowerlimits) for s in devices]
+    range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
+    range_data_out = [(PSY.get_name(s), PSY.get_outputactivepowerlimits(s)) for s in devices]
 
     reserve_device_semicontinuousrange(ps_m,
                                        range_data_in,
@@ -126,7 +126,7 @@ function reactive_power_constraints(ps_m::CanonicalModel,
                                                                        D <: AbstractStorageForm,
                                                                        S <: PM.AbstractPowerFormulation}
 
-    range_data = [(s.name, s.reactivepowerlimits) for s in devices]
+    range_data = [(PSY.get_name(s), PSY.get_reactivepowerlimits(s)) for s in devices]
 
     device_range(ps_m,
                  range_data,
@@ -147,7 +147,7 @@ function energy_capacity_constraints(ps_m::CanonicalModel,
                                                                         D <: AbstractStorageForm,
                                                                         S <: PM.AbstractPowerFormulation}
 
-    range_data = [(s.name, s.capacity) for s in devices]
+    range_data = [(PSY.get_name(s), PSY.get_capacity(s)) for s in devices]
 
     device_range(ps_m,
                  range_data,
@@ -165,8 +165,8 @@ function make_efficiency_data(devices::PSY.FlattenIteratorWrapper{St}) where {St
     in_out = Vector{InOut}(undef, length(devices))
 
     for (ix,d) in enumerate(devices)
-        names[ix] = d.name
-        in_out[ix] = d.efficiency
+        names[ix] = PSY.get_name(d)
+        in_out[ix] = PSY.get_efficiency(d)
     end
 
     return names, in_out

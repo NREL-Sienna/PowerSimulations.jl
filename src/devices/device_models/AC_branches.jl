@@ -37,17 +37,18 @@ function flow_variables(ps_m::CanonicalModel,
     time_steps = model_time_steps(ps_m)
     var_name = Symbol("Fbr_$(B)")
     ps_m.variables[var_name] = PSI._container_spec(ps_m.JuMPmodel,
-                                                    (d.name for d in devices),
+                                                    (PSY.get_name(d) for d in devices),
                                                      time_steps)
 
     for d in devices
-        bus_fr = d.connectionpoints.from.number
-        bus_to = d.connectionpoints.to.number
+        cp = PSY.get_connectionpoints(d)
+        bus_fr = cp.from.number
+        bus_to = cp.to.number
         for t in time_steps
-            ps_m.variables[var_name][d.name,t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                                base_name="$(bus_fr),$(bus_to)_{$(d.name),$(t)}",
-                                                                upper_bound = d.rate,
-                                                                lower_bound = -d.rate,
+            ps_m.variables[var_name][PSY.get_name(d),t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                                base_name="$(bus_fr),$(bus_to)_{$(PSY.get_name(d)),$(t)}",
+                                                                upper_bound = PSY.get_rate(d),
+                                                                lower_bound = -PSY.get_rate(d),
                                                                 )
         end
     end
@@ -64,7 +65,7 @@ function branch_rate_constraint(ps_m::CanonicalModel,
                                 system_formulation::Type{StandardPTDFForm}) where {B <: PSY.ACBranch,
                                                                                    D <: AbstractBranchFormulation}
 
-    range_data = [(h.name, (min = -1*h.rate, max = h.rate)) for h in devices]
+    range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
 
     device_range(ps_m,
                 range_data,

@@ -51,7 +51,7 @@ function activepower_constraints(ps_m::CanonicalModel,
                                                                        D <: AbstractHydroDispatchForm,
                                                                        S <: PM.AbstractPowerFormulation}
 
-    range_data = [(h.name, h.tech.activepowerlimits) for h in devices]
+    range_data = [(PSY.get_name(h), PSY.get_tech(h) |> PSY.get_activepowerlimits) for h in devices]
 
     device_range(ps_m, range_data, time_steps, hydro_active_range, :Phy)
 
@@ -67,7 +67,7 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen,
                                                                       S <: PM.AbstractPowerFormulation}
 
-    ts_data = [(h.name, values(h.scalingfactor)*h.tech.rating) for h in devices]
+    ts_data = [(PSY.get_name(h), values(PSY.get_scalingfactor(h))*(PSY.get_tech(h) |> PSY.get_rating)) for h in devices]
 
     device_timeseries_ub(ps_m, ts_data , time_steps, hydro_active_ub, :Phy)
 
@@ -83,8 +83,8 @@ function activepower_constraints(ps_m::CanonicalModel,
                                  time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen,
                                                                       S <: PM.AbstractPowerFormulation}
 
-    ts_data_ub = [(h.name, values(h.scalingfactor)*h.tech.rating) for h in devices]
-    ts_data_lb = [(h.name, values(h.scalingfactor)*h.tech.rating) for h in devices]
+    ts_data_ub = [(PSY.get_name(h), values(PSY.get_scalingfactor(h))*(PSY.get_tech(h) |> PSY.get_rating)) for h in devices]
+    ts_data_lb = [(PSY.get_name(h), values(PSY.get_scalingfactor(h))*(PSY.get_tech(h) |> PSY.get_rating)) for h in devices]
 
     device_timeseries_ub(ps_m, ts_data_ub , time_steps, :hydro_active_ub, :Phy)
     device_timeseries_lb(ps_m, ts_data_lb , time_steps, :hydro_active_lb, :Phy)
@@ -105,7 +105,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
                                                                         D <: AbstractHydroDispatchForm,
                                                                         S <: PM.AbstractPowerFormulation}
 
-    range_data = [(g.name, g.tech.reactivepowerlimits) for g in devices]
+    range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_reactivepowerlimits) for g in devices]
 
     device_range(ps_m, range_data, time_steps, :hydro_reactive_range, :Qhy)
 
@@ -122,7 +122,7 @@ function activepower_constraints(ps_m::CanonicalModel,
                                                                       D <: AbstractHydroFormulation,
                                                                       S <: PM.AbstractPowerFormulation}
 
-    range_data = [(g.name, g.tech.activepowerlimits) for g in devices]
+    range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_activepowerlimits) for g in devices]
 
     device_semicontinuousrange(ps_m, range_data, time_steps, :hydro_active_range, :Phy, :on_hy)
 
@@ -139,7 +139,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
                                                                         D <: AbstractHydroFormulation,
                                                                         S <: PM.AbstractPowerFormulation}
 
-    range_data = [(g.name, g.tech.reactivepowerlimits) for g in devices]
+    range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_reactivepowerlimits) for g in devices]
 
     device_semicontinuousrange(ps_m, range_data , time_steps, :hydro_reactive_range, :Qhy, :on_hy)
 
