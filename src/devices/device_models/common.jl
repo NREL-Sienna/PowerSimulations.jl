@@ -1,3 +1,4 @@
+include("common/model_utils.jl")
 include("common/cost_functions.jl")
 include("common/add_variable.jl")
 include("common/add_parameters.jl")
