@@ -244,8 +244,8 @@ function _nodal_expression_param(ps_m::CanonicalModel,
         device = PSY.get_component(f)
         time_series_vector = values(PSY.get_data(f))*(PSY.get_tech(device) |> PSY.get_rating)
         ts_data_active[ix] = (PSY.get_name(device), PSY.get_bus(device) |> PSY.get_number, time_series_vector)
-        ts_data_reactive[ix] = (PSY.get_name(device), 
-                                PSY.get_bus(device) |> PSY.get_number, 
+        ts_data_reactive[ix] = (PSY.get_name(device),
+                                PSY.get_bus(device) |> PSY.get_number,
                                 time_series_vector * sin(acos(PSY.get_tech(device) |> PSY.get_powerfactor)))
     end
 
@@ -272,8 +272,8 @@ function _nodal_expression_param(ps_m::CanonicalModel,
     for (ix,f) in enumerate(forecasts)
         device = PSY.get_component(f)
         time_series_vector = values(PSY.get_data(f)) * (PSY.get_tech(device) |> PSY.get_rating)
-        ts_data_active[ix] = (PSY.get_name(device), 
-                              PSY.get_bus(device) |> PSY.get_number, 
+        ts_data_active[ix] = (PSY.get_name(device),
+                              PSY.get_bus(device) |> PSY.get_number,
                               time_series_vector)
     end
 
@@ -390,7 +390,7 @@ function cost_function(ps_m::CanonicalModel,
     add_to_cost(ps_m,
                 devices,
                 Symbol("P_RenewableDispatch"),
-                :curtailpenalty,
+                :fixed,
                 -1.0)
 
     return

@@ -30,8 +30,18 @@ function ps_cost(ps_m::CanonicalModel,
 end
 
 function ps_cost(ps_m::CanonicalModel,
+                variable::JuMP.Containers.DenseAxisArray{JV},
+                cost_component::PSY.VariableCost{Float64},
+                dt::Float64,
+                sign::Float64) where {JV <: JuMP.AbstractVariableRef}
+
+    return  ps_cost(ps_m, variable, PSY.get_cost(cost_component), dt, sign)
+
+end
+
+function ps_cost(ps_m::CanonicalModel,
                  variable::JuMP.Containers.DenseAxisArray{JV},
-                 cost_component::Tuple{Float64,Float64},
+                 cost_component::PSY.VariableCost{NTuple{2,Float64}},
                  dt::Float64,
                  sign::Float64) where {JV <: JuMP.AbstractVariableRef}
 
@@ -43,7 +53,7 @@ function ps_cost(ps_m::CanonicalModel,
 
 end
 
-function pwlparamcheck(cost_::Array{Tuple{Float64, Float64}})
+function _pwlparamcheck(cost_)
     flag = true;
     for i in 1:(length(cost_)-1)
         if i == 1
@@ -55,13 +65,12 @@ function pwlparamcheck(cost_::Array{Tuple{Float64, Float64}})
     return flag
 end
 
-function pwlgencost(ps_m::CanonicalModel,
+function _pwlgencost(ps_m::CanonicalModel,
                     variable::JV,
-                    cost_component::Array{Tuple{Float64, Float64}}) where {JV <: JuMP.AbstractVariableRef}
+                    cost_component::PSY.VariableCost{Array{Tuple{Float64, Float64}}}) where {JV <: JuMP.AbstractVariableRef}
 
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}()
-    pwlparamcheck(cost_component) ? @warn("Data provide is not suitable for linear implementation of PWL cost, this will result in a INVALID SOLUTION") : nothing ;
-    # TODO: implement a fallback to either Linear Cost function or SOS2 based PWL Cost function
+    _pwlparamcheck(cost_component) ? @warn("Data provide is not suitable for linear implementation of PWL cost, this will result in a INVALID SOLUTION") : nothing ;
     upperbound(i) = (i == 0 & (length(cost_component) > i) ? cost_component[i+1][2] : (cost_component[i+1][2] - cost_component[i][2]));
     pwlvars = JuMP.@variable(ps_m.JuMPmodel, [i = 0:(length(cost_component)-1)], base_name = "{$(variable)}_{pwl}", start = 0.0, lower_bound = 0.0, upper_bound = upperbound(i))
 
@@ -82,14 +91,14 @@ end
 
 function ps_cost(ps_m::CanonicalModel,
                  variable::JuMP.Containers.DenseAxisArray{JV},
-                 cost_component::Array{Tuple{Float64, Float64}},
+                 cost_component::PSY.VariableCost{Array{Tuple{Float64, Float64}}},
                  dt::Float64,
                  sign::Float64) where {JV <: JuMP.AbstractVariableRef}
 
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}()
 
     for var in variable
-        c = pwlgencost(ps_m, var, cost_component)
+        c = _pwlgencost(ps_m, var, cost_component)
         gen_cost += c
     end
 
@@ -101,16 +110,15 @@ function add_to_cost(ps_m::CanonicalModel,
                      devices::D,
                      var_name::Symbol,
                      cost_symbol::Symbol,
-                     sign::Float64 = 1.0) where {D <: Union{Vector{<:PSY.Device},
-                                                                  PSY.FlattenIteratorWrapper{<:PSY.Device}}}
+                     sign::Float64 = 1.0) where {D <: PSY.FlattenIteratorWrapper{<:PSY.Device}}
 
     resolution = model_resolution(ps_m)
     dt = Dates.value(Dates.Minute(resolution))/60
 
     for d in devices
-        cost_expression = ps_cost(ps_m, 
+        cost_expression = ps_cost(ps_m,
                                   ps_m.variables[var_name][PSY.get_name(d),:],
-                                  getfield(PSY.get_econ(d),cost_symbol),
+                                  getfield(PSY.get_op_cost(d),cost_symbol),
                                   dt,
                                   sign)
         ps_m.cost_function += cost_expression

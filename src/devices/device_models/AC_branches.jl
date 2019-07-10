@@ -41,7 +41,7 @@ function flow_variables(ps_m::CanonicalModel,
                                                      time_steps)
 
     for d in devices
-        cp = PSY.get_connectionpoints(d)
+        cp = PSY.get_arch(d)
         bus_fr = cp.from.number
         bus_to = cp.to.number
         for t in time_steps

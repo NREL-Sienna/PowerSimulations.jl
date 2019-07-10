@@ -82,10 +82,10 @@ const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 
 #Type Alias for long type signatures
-const MinMax = NamedTuple{(:min, :max),Tuple{Float64,Float64}}
+const MinMax = NamedTuple{(:min, :max),NTuple{2,Float64}}
 const NamedMinMax = Tuple{String, MinMax}
-const UpDown = NamedTuple{(:up, :down),Tuple{Float64,Float64}}
-const InOut = NamedTuple{(:in, :out),Tuple{Float64,Float64}}
+const UpDown = NamedTuple{(:up, :down),NTuple{2,Float64}}
+const InOut = NamedTuple{(:in, :out),NTuple{2,Float64}}
 
 #################################################################################
 # Includes

@@ -89,7 +89,7 @@ function device_linear_rateofchange(ps_m::CanonicalModel,
 end
 
 function device_mixedinteger_rateofchange(ps_m::CanonicalModel,
-                                            rate_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}},NamedTuple{(:min, :max),Tuple{Float64,Float64}}},1},
+                                            rate_data::Array{Tuple{String,NamedTuple{(:up, :down),NTuple{2,Float64}},NamedTuple{(:min, :max),NTuple{2,Float64}}},1},
                                             initial_conditions::Vector{Float64},
                                             time_steps::UnitRange{Int64},
                                             cons_name::Symbol,
