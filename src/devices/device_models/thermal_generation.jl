@@ -551,7 +551,7 @@ function cost_function(ps_m::CanonicalModel,
     add_to_cost(ps_m,
                 devices,
                 Symbol("P_$(T)"),
-                :variablecost)
+                :variable)
 
     return
 
@@ -566,12 +566,12 @@ function cost_function(ps_m::CanonicalModel,
                                                            S <: PM.AbstractPowerFormulation}
 
     #Variable Cost component
-    add_to_cost(ps_m, devices, Symbol("P_$(T)"), :variablecost)
+    add_to_cost(ps_m, devices, Symbol("P_$(T)"), :variable)
 
     #Commitment Cost Components
-    add_to_cost(ps_m, devices, Symbol("START_$(T)"), :startupcost)
-    add_to_cost(ps_m, devices, Symbol("STOP_$(T)"), :shutdncost)
-    add_to_cost(ps_m, devices, Symbol("ON_$(T)"), :fixedcost)
+    add_to_cost(ps_m, devices, Symbol("START_$(T)"), :startup)
+    add_to_cost(ps_m, devices, Symbol("STOP_$(T)"), :shutdn)
+    add_to_cost(ps_m, devices, Symbol("ON_$(T)"), :fixed)
 
     return
 

@@ -427,7 +427,7 @@ function cost_function(ps_m::CanonicalModel,
     add_to_cost(ps_m,
                 devices,
                 Symbol("P_$(L)"),
-                :variablecost)
+                :variable)
 
     return
 
@@ -442,7 +442,7 @@ function cost_function(ps_m::CanonicalModel,
     add_to_cost(ps_m,
                 devices,
                 Symbol("ON_$(L)"),
-                :curtailpenalty)
+                :fixed)
 
     return
 
