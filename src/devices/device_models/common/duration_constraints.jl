@@ -20,11 +20,7 @@ function device_duration_retrospective(ps_m::CanonicalModel,
     _add_cons_container!(ps_m, name_down, set_names, time_steps)
     constraint_up = con(ps_m, name_up)
     constraint_down = con(ps_m, name_down)
-    #ps_m.constraints[name_up] = JuMPConstraintArray(undef, set_names, time_steps)
-    #ps_m.constraints[name_down] = JuMPConstraintArray(undef, set_names, time_steps)
     
-
-
         for t in time_steps, (ix,name) in enumerate(set_names)
                 if t - duration_data[ix].up >= 1
                     tst = duration_data[ix].up
@@ -38,7 +34,6 @@ function device_duration_retrospective(ps_m::CanonicalModel,
                     tsd = max(1.0, duration_data[ix].down - initial_duration_off[ix].value)
                 end
 
-                #ps_m.constraints[name_up][name, t] = JuMP.@constraint(ps_m.JuMPmodel, sum([ps_m.variables[var_names[2]][name,i] for i in ((t - round(tst) + 1) :t) if i > 0 ]) <= ps_m.variables[var_names[1]][name,t])
                 constraint_up[name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
                                           sum([var2[name,i] for i in ((t - round(tst) + 1) :t) if i > 0 ]) <= var1[name,t])
                 constraint_down[name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
@@ -74,8 +69,6 @@ function device_duration_ind(ps_m::CanonicalModel,
     _add_cons_container!(ps_m, name_down, set_names, time_steps)
     constraint_up = con(ps_m, name_up)
     constraint_down = con(ps_m, name_down)
-    #ps_m.constraints[name_up] = JuMPConstraintArray(undef, set_names, time_steps)
-    #ps_m.constraints[name_down] = JuMPConstraintArray(undef, set_names, time_steps)
 
     for (ix,name) in enumerate(set_names)
         constraint_up[name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
