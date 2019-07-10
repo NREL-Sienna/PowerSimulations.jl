@@ -1,5 +1,11 @@
 # This file is machine-generated - editing it directly is not advised
 
+[[Arrow]]
+deps = ["CategoricalArrays", "Compat"]
+git-tree-sha1 = "d3c36842140057276f6f8348afa08f0f7dae2d1e"
+uuid = "69666777-d1a9-59fb-9406-91d4454c9d45"
+version = "0.2.3"
+
 [[Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
@@ -97,6 +103,18 @@ deps = ["BinaryProvider", "Libdl", "Pkg", "Printf", "Test"]
 git-tree-sha1 = "ad00b79cca4bb3eabb4209217859c553af4401f5"
 uuid = "8f5d6c58-4d21-5cfd-889c-e3ad7ee6a615"
 version = "0.9.1"
+
+[[Feather]]
+deps = ["Arrow", "CategoricalArrays", "DataFrames", "Dates", "FlatBuffers", "Mmap", "Tables"]
+git-tree-sha1 = "8975fa52bb5c82c739a21ade002fafd1d502a0a0"
+uuid = "becb17da-46f6-5d3c-ad1b-1c5fe96bc73c"
+version = "0.5.2"
+
+[[FlatBuffers]]
+deps = ["Parameters", "Pkg", "Test"]
+git-tree-sha1 = "dd5c2460639eef7962178216fd150c60fa42a1c4"
+uuid = "53afe959-3a16-52fa-a8da-cf864710bae9"
+version = "0.5.3"
 
 [[ForwardDiff]]
 deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "InteractiveUtils", "LinearAlgebra", "NaNMath", "Random", "SparseArrays", "SpecialFunctions", "StaticArrays", "Test"]
@@ -202,6 +220,12 @@ deps = ["JuMP", "MathOptInterface", "SparseArrays"]
 git-tree-sha1 = "6bb57b5884b98e2c49e9ba193d702b2dc0bb44ab"
 uuid = "774612a8-9878-5177-865a-ca53ae2495f9"
 version = "0.1.1"
+
+[[Parameters]]
+deps = ["Markdown", "OrderedCollections", "REPL", "Test"]
+git-tree-sha1 = "70bdbfb2bceabb15345c0b54be4544813b3444e4"
+uuid = "d96e819e-fc66-5662-9728-84c9c7592b0a"
+version = "0.10.3"
 
 [[Parsers]]
 deps = ["Dates", "Test"]

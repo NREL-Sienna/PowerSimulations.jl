@@ -99,11 +99,12 @@ include("core/core_structs/device_model.jl")
 include("core/core_structs/canonical_model.jl")
 include("core/core_structs/service_model.jl")
 include("core/core_structs/operation_model.jl")
+include("core/core_structs/simulation_model.jl")
 include("core/device_constructor.jl")
 include("core/canonical_constructor.jl")
 include("core/operations_constructor.jl")
 include("core/core_structs/results_model.jl")
-#include("core/core_structs/simulation_model.jl")
+include("core/simulation_constructor.jl")
 
 #Device Modeling components
 include("devices/device_models/common.jl")
