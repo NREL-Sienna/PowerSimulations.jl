@@ -19,7 +19,7 @@ function device_commitment(ps_m::CanonicalModel,
 
     for t in time_steps[2:end], i in initial_conditions
         name = PSY.get_name(i.device)
-        constraint[name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
+        constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel,
                         var3[name, t] == var3[name, t-1] + var1[name, t] - var2[name, t])
     end
 
