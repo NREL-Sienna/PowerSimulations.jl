@@ -8,7 +8,7 @@ function device_linear_rateofchange(ps_m::CanonicalModel,
     up_name = Symbol(cons_name,:_up)
     down_name = Symbol(cons_name,:_down)
     
-    var1 = var(ps_m, var_name)
+    variable = var(ps_m, var_name)
 
     set_name = rate_data[1]
     _add_cons_container!(ps_m, up_name, set_name, time_steps)
@@ -17,14 +17,15 @@ function device_linear_rateofchange(ps_m::CanonicalModel,
     con_down = con(ps_m, down_name)
 
     for (ix, name) in enumerate(rate_data[1])
-        con_up[name, 1] = JuMP.@constraint(ps_m.JuMPmodel, var1[name, 1] - initial_conditions[ix].value <= rate_data[2][ix].up)
-        con_down[name, 1] = JuMP.@constraint(ps_m.JuMPmodel, initial_conditions[ix].value - var1[name, 1] 
+        con_up[name, 1] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, 1] - initial_conditions[ix].value 
+                                                                <= rate_data[2][ix].up)
+        con_down[name, 1] = JuMP.@constraint(ps_m.JuMPmodel, initial_conditions[ix].value - variable[name, 1] 
                                                                 <= rate_data[2][ix].down)
     end
 
     for t in time_steps[2:end], (ix, name) in enumerate(rate_data[1])
-        con_up[name, t] = JuMP.@constraint(ps_m.JuMPmodel, var1[name, t-1] - var1[name, t] <= rate_data[2][ix].up)
-        con_down[name, t] = JuMP.@constraint(ps_m.JuMPmodel, var1[name, t] - var1[name, t-1] <= rate_data[2][ix].down)
+        con_up[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t-1] - variable[name, t] <= rate_data[2][ix].up)
+        con_down[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t] - variable[name, t-1] <= rate_data[2][ix].down)
     end
 
     return
