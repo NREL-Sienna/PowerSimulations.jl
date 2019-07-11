@@ -48,13 +48,14 @@ function device_timeseries_param_ub(ps_m::CanonicalModel,
     variable = var(ps_m, var_name)
     _add_cons_container!(ps_m, cons_name, ts_data[1], time_steps)
     constraint = con(ps_m, cons_name)
-    ps_m.parameters[param_name] = JuMPParamArray(undef, ts_data[1], time_steps)
+    _add_param_container!(ps_m, param_name, ts_data[1], time_steps)
+    param = par(ps_m, param_name)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
 
-        ps_m.parameters[param_name][name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[2][ix][t]);
+        param[name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[2][ix][t]);
                                                JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_name][name, t] >= 0.0)
-        constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t] <= ps_m.parameters[param_name][name, t])
+        constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t] <= param[name, t])
 
     end
 
@@ -72,12 +73,13 @@ function device_timeseries_param_lb(ps_m::CanonicalModel,
     variable = var(ps_m, var_name)
     _add_cons_container!(ps_m, cons_name, ts_data[1], time_steps)
     constraint = con(ps_m, cons_name)
-    ps_m.parameters[param_name] = JuMPParamArray(undef, ts_data[1], time_steps)
+    _add_param_container!(ps_m, param_name, ts_data[1], time_steps)
+    param = par(ps_m, param_name)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
 
-        ps_m.parameters[param_name][name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[2][ix][t])
-        constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.parameters[param_name][name, t] <= variable[name, t])
+        param[name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[2][ix][t])
+        constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel, param[name, t] <= variable[name, t])
 
     end
 
@@ -131,17 +133,18 @@ function device_timeseries_ub_bigM(ps_m::CanonicalModel,
     _add_cons_container!(ps_m, key_ub, ts_data[1], time_steps)
     _add_cons_container!(ps_m, key_status, ts_data[1], time_steps)
     _add_cons_container!(ps_m, key_lb, ts_data[1], time_steps)
-    
     con_key_ub = con(ps_m, key_ub)
     con_key_status = con(ps_m, key_status)
     con_key_lb = con(ps_m, key_lb)
-
-    ps_m.parameters[param_name] = JuMPParamArray(undef, ts_data[1], time_steps)
+    
+    _add_param_container!(ps_m, param_name, ts_data[1], time_steps)
+    param = par(ps_m, param_name)
+    
+    #ps_m.parameters[param_name] = JuMPParamArray(undef, ts_data[1], time_steps)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
-        ps_m.parameters[param_name][name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[2][ix][t]);
-        con_key_ub[name, t] = JuMP.@constraint(ps_m.JuMPmodel, var1[name, t] - ps_m.parameters[param_name][name, t] 
-                                                      <= (1 - varb[name, t])*M_value)
+        param[name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[2][ix][t]);
+        con_key_ub[name, t] = JuMP.@constraint(ps_m.JuMPmodel, var1[name, t] - param[name, t] <= (1 - varb[name, t])*M_value)
         con_key_status[name, t] =  JuMP.@constraint(ps_m.JuMPmodel, var1[name, t] <= (varb[name, t])*M_value)
         con_key_lb[name, t] =  JuMP.@constraint(ps_m.JuMPmodel, var1[name, t] >= 0.0)
     end
