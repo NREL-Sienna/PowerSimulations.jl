@@ -121,7 +121,14 @@ function add_to_cost(ps_m::CanonicalModel,
                                   getfield(PSY.get_op_cost(d),cost_symbol),
                                   dt,
                                   sign)
-        ps_m.cost_function += cost_expression
+        T_ce = typeof(cost_expression)
+        T_cf = typeof(ps_m.cost_function)
+        if T_ce == T_cf
+            JuMP.add_to_expression!(ps_m.cost_function, cost_expression)
+        else
+            #Promotes cost function to Quadratic when necessary
+            JuMP.add_to_expression!(T_ce(ps_m.cost_function), cost_expression)
+        end
     end
 
     return
