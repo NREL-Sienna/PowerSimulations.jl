@@ -71,7 +71,7 @@ end
     networks = [PM.StandardDCPLLForm,
                 PM.AbstractLPACCForm]
     test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,
-                                         , c_sys14 => 142000.0,
+                                             c_sys14 => 142000.0,
                                              c_sys14_dc => 142000.0)
 
     for  net in networks, p in parameters_value, sys in systems
@@ -94,7 +94,7 @@ end
     parameters_value = [true, false]
     networks = [PM.SOCWRForm,
                  PM.QCWRForm,
-                 PM.QCWRTriForm, ]
+                 PM.QCWRTriForm,]
     test_results = Dict{PSY.System, Float64}(c_sys5 => 320000.0,
                                              c_sys14 => 142000.0)
 
