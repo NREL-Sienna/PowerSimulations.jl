@@ -59,7 +59,7 @@ function _pwlparamcheck(cost_)
         if i == 1
             (cost_[i][1]/cost_[i][2]) <= ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) ? nothing : flag = false;
         else
-            ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) <= ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) ? nothing : flag = false;
+            ((cost_[i][1] - cost_[i-1][1])/(cost_[i][2] - cost_[i-1][2])) <= ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) ? nothing : flag = false;
         end
     end
     return flag
@@ -83,7 +83,7 @@ function _pwlgencost(ps_m::CanonicalModel,
         gen_cost = gen_cost + temp_gen_cost
     end
 
-    c = JuMP.@constraint(ps_m.JuMPmodel, variable == sum([pwlvars[ix-1] for (ix, pwlvar) in enumerate(pwlvars)]) )
+    c = JuMP.@constraint(ps_m.JuMPmodel, variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars) if ix > 1]) )
 
     return gen_cost
 
