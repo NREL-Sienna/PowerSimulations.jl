@@ -27,8 +27,8 @@ function activepower_variables!(ps_m::CanonicalModel,
                                               time_steps)
 
     for t in time_steps, d in devices
-        ps_m.variables[var_name][PSY.get_name(d),t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                base_name="{$(var_name)}_{$(PSY.get_name(d)),$(t)}",
+        ps_m.variables[var_name][PSY.get_name(d), t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                base_name="{$(var_name)}_{$(PSY.get_name(d)), $(t)}",
                                                 upper_bound = (PSY.get_tech(d) |> PSY.get_activepowerlimits).max,
                                                 lower_bound = 0.0,
                                                 start = PSY.get_tech(d) |> PSY.get_activepower
@@ -36,7 +36,7 @@ function activepower_variables!(ps_m::CanonicalModel,
         _add_to_expression!(ps_m.expressions[:nodal_balance_active],
                             PSY.get_bus(d) |> PSY.get_number,
                             t,
-                            ps_m.variables[var_name][PSY.get_name(d),t])
+                            ps_m.variables[var_name][PSY.get_name(d), t])
     end
 
     return
@@ -56,15 +56,15 @@ function reactivepower_variables!(ps_m::CanonicalModel,
                                               time_steps)
 
      for t in time_steps, d in devices
-        ps_m.variables[var_name][PSY.get_name(d),t] = JuMP.@variable(ps_m.JuMPmodel,
-                                            base_name="{$(var_name)}_{$(PSY.get_name(d)),$(t)}",
+        ps_m.variables[var_name][PSY.get_name(d), t] = JuMP.@variable(ps_m.JuMPmodel,
+                                            base_name="{$(var_name)}_{$(PSY.get_name(d)), $(t)}",
                                             upper_bound = (PSY.get_tech(d) |> PSY.get_reactivepowerlimits).max,
                                             lower_bound = (PSY.get_tech(d) |> PSY.get_reactivepowerlimits).min,
                                             start = PSY.get_tech(d) |> PSY.get_reactivepower)
         _add_to_expression!(ps_m.expressions[:nodal_balance_reactive],
                             PSY.get_bus(d) |> PSY.get_number,
                             t,
-                            ps_m.variables[var_name][PSY.get_name(d),t])
+                            ps_m.variables[var_name][PSY.get_name(d), t])
     end
 
     return
@@ -100,11 +100,20 @@ function activepower_constraints!(ps_m::CanonicalModel,
 
     range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_activepowerlimits) for g in devices]
 
-    device_range(ps_m,
-                range_data,
-                Symbol("active_range_$(T)"),
-                Symbol("P_$(T)")
-                )
+    if model_runs_sequentially(ps_m)
+        device_semicontinuousrange_param(ps_m,
+                                         range_data,
+                                         Symbol("active_range_$(T)"),
+                                         Symbol("P_$(T)"),
+                                         Symbol("ON_$(T)"))
+    else
+        device_range(ps_m,
+                    range_data,
+                    Symbol("active_range_$(T)"),
+                    Symbol("P_$(T)")
+                    )
+    end
+
     return
 
 end
@@ -120,12 +129,42 @@ function activepower_constraints!(ps_m::CanonicalModel,
                                                                       S <: PM.AbstractPowerFormulation}
 
     range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_activepowerlimits) for g in devices]
-
     device_semicontinuousrange(ps_m,
                                range_data,
                                Symbol("active_range_$(T)"),
                                Symbol("P_$(T)"),
                                Symbol("ON_$(T)"))
+
+    return
+
+end
+
+
+"""
+This function adds the active power limits of generators when there are
+    no CommitmentVariables
+"""
+function activepower_constraints!(ps_m::CanonicalModel,
+                                  devices::PSY.FlattenIteratorWrapper{T},
+                                  device_formulation::Type{ThermalDispatchNoMin},
+                                  system_formulation::Type{S}) where {T <: PSY.ThermalGen,
+                                                                     S <: PM.AbstractPowerFormulation}
+
+    range_data = [(PSY.get_name(g), (min = 0.0, max=(PSY.get_tech(g) |> PSY.get_activepowerlimits).max)) for g in devices]
+
+    if model_runs_sequentially(ps_m)
+        device_semicontinuousrange_param(ps_m,
+                                         range_data,
+                                         Symbol("active_range_$(T)"),
+                                         Symbol("P_$(T)"),
+                                         Symbol("ON_$(T)"))
+    else
+        device_range(ps_m,
+                    range_data,
+                    Symbol("active_range_$(T)"),
+                    Symbol("P_$(T)")
+                    )
+    end
 
     return
 
@@ -168,47 +207,6 @@ function reactivepower_constraints!(ps_m::CanonicalModel,
                                Symbol("reactive_range_$(T)"),
                                Symbol("Q_$(T)"),
                                Symbol("ON_$(T)"))
-
-    return
-
-end
-
-"""
-This function adds the active power limits of generators when there are
-    no CommitmentVariables
-"""
-function activepower_constraints!(ps_m::CanonicalModel,
-                                  devices::PSY.FlattenIteratorWrapper{T},
-                                  device_formulation::Type{ThermalDispatchNoMin},
-                                  system_formulation::Type{S}) where {T <: PSY.ThermalGen,
-                                                                     S <: PM.AbstractPowerFormulation}
-    range_data = [(PSY.get_name(g), (min = 0.0, max=(PSY.get_tech(g) |> PSY.get_activepowerlimits).max)) for g in devices]
-
-    device_range(ps_m,
-                 range_data,
-                 Symbol("active_range_$(T)"),
-                 Symbol("P_$(T)"))
-
-    return
-
-end
-
-"""
-This function adds the reactive  power limits of generators when there are
-    CommitmentVariables
-"""
-function reactivepower_constraints!(ps_m::CanonicalModel,
-                                   devices::PSY.FlattenIteratorWrapper{T},
-                                   device_formulation::Type{ThermalDispatchNoMin},
-                                   system_formulation::Type{S}) where {T <: PSY.ThermalGen,
-                                                                        S <: PM.AbstractPowerFormulation}
-
-    range_data = [(PSY.get_name(g), (min = 0.0, max=(PSY.get_tech(g) |> PSY.get_reactivepowerlimits).max)) for g in devices]
-
-    device_range(ps_m,
-                 range_data,
-                 Symbol("reactive_range_$(T)"),
-                 Symbol("Q_$(T)"))
 
     return
 

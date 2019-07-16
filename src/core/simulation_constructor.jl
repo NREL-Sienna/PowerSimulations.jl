@@ -12,17 +12,17 @@ function _get_dates(stages, periods, executioncount)
 
 end
 
-function build_simulation!(stages::Dict{Int64, (ModelReference, PSY.System)},
-                           executioncount::Dict{Int64,Int64})
+#=
+function build_simulation!(stages::Dict{Int64, Any}, executioncount::Dict{Int64, Int64}; kwargs...)
 
-    mod_stages = Dict{Int64,OperationModel}()
+    mod_stages = Dict{Int64, OperationModel}()
 
-    for (k,v) in stages
-        mod_stages[k] = OperationModel(v[1], v[2]; sequential_runs = true, kwargs...)
+    for (k, v) in stages
+        mod_stages[k] = OperationModel(v[1], v[2]; sequential_runs = true; kwargs...)
     end
 
 end
-
+=#
 
 
 function PowerSimulationsModel(simulation_folder::String,
@@ -33,9 +33,9 @@ function PowerSimulationsModel(simulation_folder::String,
                                 feedback_ref;
                                 kwargs...)
 
-    _prepare_workspace(base_name,simulation_folder)
+    _prepare_workspace(base_name, simulation_folder)
 
-    op_stages = build_simulation!(stages, executioncount; kwargs...)
+    #op_stages = build_simulation!(stages, executioncount; kwargs...)
 
     date_from, date_to = _get_dates(stages, periods, executioncount)
 
