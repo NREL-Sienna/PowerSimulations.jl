@@ -265,21 +265,24 @@ function _get_data_for_rocc(devices::PSY.FlattenIteratorWrapper{T},
     for g in devices
         non_binding_up = false
         non_binding_down = false
-        if !isnothing(PSY.get_tech(g) |> PSY.get_ramplimits)
+        ramplimits = PSY.get_tech(g) |> PSY.get_ramplimits
+        name = PSY.get_name(g)
+        rating = PSY.get_tech(g) |> PSY.get_rating
+        if !isnothing(ramplimits)
             max = (PSY.get_tech(g) |> PSY.get_activepowerlimits).max
             min = (PSY.get_tech(g) |> PSY.get_activepowerlimits).min
-            if (PSY.get_tech(g) |> PSY.get_ramplimits).up * (PSY.get_tech(g) |> PSY.get_rating) >= -1*(min - max)/minutes_per_period
-                @info "Generator $(PSY.get_name) has a nonbinding ramp up limit. Constraint Skipped"
+            if (ramplimits).up * rating >= -1*(min - max)/minutes_per_period
+                @info "Generator $(name) has a nonbinding ramp up limit. Constraint Skipped"
                 non_binding_up = true
             end
-            if (PSY.get_tech(g) |> PSY.get_ramplimits).down * (PSY.get_tech(g) |> PSY.get_rating) >= (max - min)/minutes_per_period
-                @info "Generator $(PSY.get_name) has a nonbinding ramp down limit. Constraint Skipped"
+            if (ramplimits).down * rating >= (max - min)/minutes_per_period
+                @info "Generator $(name) has a nonbinding ramp down limit. Constraint Skipped"
                 non_binding_down = true
             end
             (non_binding_up & non_binding_down) ? continue : idx += 1
-            set_name[idx] = PSY.get_name(g)
-            ramp_params[idx] = (up = (PSY.get_tech(g) |> PSY.get_ramplimits).up*minutes_per_period,
-                                down = (PSY.get_tech(g) |> PSY.get_ramplimits).down*minutes_per_period)
+            set_name[idx] = name
+            ramp_params[idx] = (up = ramplimits.up * minutes_per_period,
+                                down = ramplimits.down * minutes_per_period)
             minmax_params[idx] = PSY.get_tech(g) |> PSY.get_activepowerlimits
         end
     end
@@ -456,19 +459,22 @@ function _get_data_for_tdc(devices::PSY.FlattenIteratorWrapper{T},
     for g in devices
         non_binding_up = false
         non_binding_down = false
-        if !isnothing(PSY.get_tech(g) |> PSY.get_timelimits)
-            if (PSY.get_tech(g) |> PSY.get_timelimits).up <= fraction_of_hour
-                @info "Generator $(PSY.get_name) has a nonbinding time limit. Constraint Skipped"
+        timelimits = PSY.get_tech(g) |> PSY.get_timelimits
+        name = PSY.get_name(g)
+
+        if !isnothing(timelimits)
+            if timelimits.up <= fraction_of_hour
+                @info "Generator $(name) has a nonbinding time limit. Constraint Skipped"
                 non_binding_up = true
             end
-            if (PSY.get_tech(g) |> PSY.get_timelimits).down <= fraction_of_hour
-                @info "Generator $(PSY.get_name) has a nonbinding time limit. Constraint Skipped"
+            if timelimits.down <= fraction_of_hour
+                @info "Generator $(name) has a nonbinding time limit. Constraint Skipped"
                 non_binding_down = true
             end
             (non_binding_up & non_binding_down) ? continue : idx += 1
-            set_name[idx] = PSY.get_name(g)
-            up_val = round((PSY.get_tech(g) |> PSY.get_timelimits).up*steps_per_hour, RoundUp)
-            down_val = round((PSY.get_tech(g) |> PSY.get_timelimits).down*steps_per_hour, RoundUp)
+            set_name[idx] = name
+            up_val = round(timelimits.up * steps_per_hour, RoundUp)
+            down_val = round(timelimits.down * steps_per_hour, RoundUp)
             time_params[idx] = time_params[idx] = (up = up_val, down = down_val)
         end
     end

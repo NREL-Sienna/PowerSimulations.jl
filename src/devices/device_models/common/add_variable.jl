@@ -12,9 +12,11 @@ function add_variable(ps_m::CanonicalModel,
    ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, (PSY.get_name(d) for d in devices), time_steps)
 
    for t in time_steps, d in devices
-      ps_m.variables[var_name][PSY.get_name(d), t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                           base_name="$(var_name)_{$(PSY.get_name(d)), $(t)}",
-                                                           binary=binary)
+      name = PSY.get_name(d)
+      
+      ps_m.variables[var_name][name, t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                        base_name="$(var_name)_{$(name), $(t)}",
+                                                        binary=binary)
    end
 
    return
@@ -32,14 +34,16 @@ function add_variable(ps_m::CanonicalModel,
    ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, (PSY.get_name(d) for d in devices), time_steps)
 
    for t in time_steps, d in devices
-      ps_m.variables[var_name][PSY.get_name(d), t] = JuMP.@variable(ps_m.JuMPmodel,
-                                             base_name="{$(var_name)}_{$(PSY.get_name(d)), $(t)}",
+      name = PSY.get_name(d)
+
+      ps_m.variables[var_name][name, t] = JuMP.@variable(ps_m.JuMPmodel,
+                                             base_name="{$(var_name)}_{$(name), $(t)}",
                                              binary=binary)
 
       _add_to_expression!(ps_m.expressions[expression],
                           PSY.get_number(PSY.get_bus(d)),
                           t,
-                          ps_m.variables[var_name][PSY.get_name(d), t])
+                          ps_m.variables[var_name][name, t])
    end
 
    return
@@ -58,14 +62,16 @@ function add_variable(ps_m::CanonicalModel,
     ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, (PSY.get_name(d) for d in devices), time_steps)
 
    for t in time_steps, d in devices
-       ps_m.variables[var_name][PSY.get_name(d), t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                           base_name="{$(var_name)}_{$(PSY.get_name(d)), $(t)}",
-                                                           binary=binary)
+       name = PSY.get_name(d)
+
+       ps_m.variables[var_name][name, t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                        base_name = "{$(var_name)}_{$(name), $(t)}",
+                                                        binary = binary)
 
        _add_to_expression!(ps_m.expressions[expression],
                            PSY.get_number(PSY.get_bus(d)),
                            t,
-                           ps_m.variables[var_name][PSY.get_name(d), t], sign)
+                           ps_m.variables[var_name][name, t], sign)
    end
 
    return
