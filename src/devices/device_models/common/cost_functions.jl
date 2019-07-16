@@ -123,8 +123,8 @@ function add_to_cost(ps_m::CanonicalModel,
                                   sign)
         T_ce = typeof(cost_expression)
         T_cf = typeof(ps_m.cost_function)
-        if T_ce <: JuMP.GenericQuadExpr && T_cf <: JuMP.GenericAffExpr
-            JuMP.add_to_expression!(T_ce(ps_m.cost_function), cost_expression)
+        if  T_cf <: JuMP.GenericAffExpr && T_ce <: JuMP.GenericQuadExpr
+            ps_m.cost_function += cost_expression
         else
             JuMP.add_to_expression!(ps_m.cost_function, cost_expression)
         end
