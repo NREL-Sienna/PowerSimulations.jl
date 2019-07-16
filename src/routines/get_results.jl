@@ -1,12 +1,12 @@
 function result_dataframe(variable::JuMP.Containers.DenseAxisArray)
 
-    result = Array{Float64,length(variable.axes)}(undef, length(variable.axes[2]), length(variable.axes[1]))
+    result = Array{Float64, length(variable.axes)}(undef, length(variable.axes[2]), length(variable.axes[1]))
     # TODO: Remove this line once PowerSystems moves to Symbols
-    names = Array{Symbol,1}(undef,length(variable.axes[1]))
+    names = Array{Symbol, 1}(undef, length(variable.axes[1]))
 
-    for t in variable.axes[2], (ix,name) in enumerate(variable.axes[1])
+    for t in variable.axes[2], (ix, name) in enumerate(variable.axes[1])
 
-        result[t,ix] = JuMP.value(variable[name,t])
+        result[t, ix] = JuMP.value(variable[name, t])
 
         names[ix] = Symbol(name)
 
@@ -20,7 +20,7 @@ function get_model_result(ps_m::CanonicalModel; kwargs...)
 
     results_df = Dict{Symbol, DataFrames.DataFrame}()
 
-    for (k,v) in ps_m.variables
+    for (k, v) in ps_m.variables
 
         results_df[k] = result_dataframe(v)
 
@@ -32,7 +32,7 @@ end
 
 function optimizer_log(ps_m::CanonicalModel; kwargs...)
 
-    optimizer_log = Dict{Symbol,Any}()
+    optimizer_log = Dict{Symbol, Any}()
 
     # TODO: Not all solvers can access the SolveTime() property
     #optimizer_log[:solve_time] = MOI.get(ps_m.JuMPmodel, MOI.SolveTime())

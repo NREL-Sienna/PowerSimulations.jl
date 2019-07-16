@@ -19,30 +19,30 @@ This code still need to be rewritten for the new infrastructure in PowerSimulati
 ##################
 
 
-function get_devices(sys::PSY.System,device::Type{PSY.ThermalGen})
+function get_devices(sys::PSY.System, device::Type{PSY.ThermalGen})
     return sys.generators.thermal
 end
-function get_devices(sys::PSY.System,device::Type{PSY.RenewableGen})
+function get_devices(sys::PSY.System, device::Type{PSY.RenewableGen})
     return sys.generators.renewable
 end
-function get_devices(sys::PSY.System,device::Type{PSY.HydroGen})
+function get_devices(sys::PSY.System, device::Type{PSY.HydroGen})
     return sys.generators.hydro
 end
-function get_devices(sys::PSY.System,device::Type{PSY.PSY.ElectricLoad})
+function get_devices(sys::PSY.System, device::Type{PSY.PSY.ElectricLoad})
     return sys.loads
 end
 
 
-function construct_service!(m::JuMP.AbstractModel, service::PSY.StaticReserve, device_formulation::Type{RampLimitedReserve},devices::Array{NamedTuple{(:device, :formulation), Tuple{DataType,DataType}}}, sys::PSY.System; kwargs...)
+function construct_service!(m::JuMP.AbstractModel, service::PSY.StaticReserve, device_formulation::Type{RampLimitedReserve}, devices::Array{NamedTuple{(:device, :formulation), Tuple{DataType, DataType}}}, sys::PSY.System; kwargs...)
 
-    dev_set = Array{NamedTuple{(:device,:formulation),Tuple{PSY.Device,DataType}}}([])
+    dev_set = Array{NamedTuple{(:device, :formulation), Tuple{PSY.Device, DataType}}}([])
 
     for device in devices
         if device != nothing
-            D = get_devices(sys,device.device)
+            D = get_devices(sys, device.device)
             for d in D
                 if d in service.contributingdevices
-                    push!(dev_set,(device=d,formulation=device.formulation))
+                    push!(dev_set, (device=d, formulation=device.formulation))
                 end
             end
         end

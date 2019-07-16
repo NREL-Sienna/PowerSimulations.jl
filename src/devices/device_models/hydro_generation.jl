@@ -12,7 +12,7 @@ abstract type HydroCommitmentSeasonalFlow <: AbstractHydroFormulation end
 
 # hydro variables
 
-function activepower_variables(ps_m::CanonicalModel, devices::Array{H,1}, time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen}
+function activepower_variables(ps_m::CanonicalModel, devices::Array{H, 1}, time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen}
 
     add_variable(ps_m, devices, time_steps, :Phy, false, :nodal_balance_active)
 
@@ -21,7 +21,7 @@ function activepower_variables(ps_m::CanonicalModel, devices::Array{H,1}, time_s
 end
 
 
-function reactivepower_variables(ps_m::CanonicalModel, devices::Array{H,1}, time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen}
+function reactivepower_variables(ps_m::CanonicalModel, devices::Array{H, 1}, time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen}
 
     add_variable(ps_m, devices, time_steps, :Qhy, false, :nodal_balance_reactive)
 
@@ -30,7 +30,7 @@ function reactivepower_variables(ps_m::CanonicalModel, devices::Array{H,1}, time
 end
 
 
-function commitment_variables(ps_m::CanonicalModel, devices::Array{H,1}, time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen}
+function commitment_variables(ps_m::CanonicalModel, devices::Array{H, 1}, time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen}
 
     add_variable(ps_m, devices, time_steps, :on_hy, true)
     add_variable(ps_m, devices, time_steps, :start_hy, true)
@@ -44,7 +44,7 @@ end
 # output constraints
 
 function activepower_constraints(ps_m::CanonicalModel,
-                                  devices::Array{H,1},
+                                  devices::Array{H, 1},
                                   device_formulation::Type{D},
                                   system_formulation::Type{S},
                                   time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen,
@@ -61,7 +61,7 @@ end
 
 
 function activepower_constraints(ps_m::CanonicalModel,
-                                 devices::Array{H,1},
+                                 devices::Array{H, 1},
                                  device_formulation::Type{HydroDispatchRunOfRiver},
                                  system_formulation::Type{S},
                                  time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen,
@@ -77,7 +77,7 @@ end
 
 
 function activepower_constraints(ps_m::CanonicalModel,
-                                 devices::Array{H,1},
+                                 devices::Array{H, 1},
                                  device_formulation::Type{HydroDispatchSeasonalFlow},
                                  system_formulation::Type{S},
                                  time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen,
@@ -98,7 +98,7 @@ end
 
 
 function reactivepower_constraints(ps_m::CanonicalModel,
-                                   devices::Array{H,1},
+                                   devices::Array{H, 1},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S},
                                    time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen,
@@ -115,7 +115,7 @@ end
 
 
 function activepower_constraints(ps_m::CanonicalModel,
-                                 devices::Array{H,1},
+                                 devices::Array{H, 1},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S},
                                  time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen,
@@ -132,7 +132,7 @@ end
 
 
 function reactivepower_constraints(ps_m::CanonicalModel,
-                                   devices::Array{H,1},
+                                   devices::Array{H, 1},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S},
                                    time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen,
@@ -149,7 +149,7 @@ end
 
 # # Injection expression
 
-# function nodal_expression(ps_m::CanonicalModel, devices::Array{R,1}, system_formulation::Type{S}, time_steps::UnitRange{Int64}) where {H <: PSY.Hydrogen, S <: PM.AbstractPowerFormulation}
+# function nodal_expression(ps_m::CanonicalModel, devices::Array{R, 1}, system_formulation::Type{S}, time_steps::UnitRange{Int64}) where {H <: PSY.Hydrogen, S <: PM.AbstractPowerFormulation}
 #
 #     for t in time_steps, d in devices
 #
@@ -163,7 +163,7 @@ end
 #
 # end
 #
-# function nodal_expression(ps_m::CanonicalModel, devices::Array{R,1}, system_formulation::Type{S}, time_steps::UnitRange{Int64}) where {H <: PSY.Hydrogen, S <: PM.AbstractActivePowerFormulation}
+# function nodal_expression(ps_m::CanonicalModel, devices::Array{R, 1}, system_formulation::Type{S}, time_steps::UnitRange{Int64}) where {H <: PSY.Hydrogen, S <: PM.AbstractActivePowerFormulation}
 #
 #     for t in time_steps, d in devices
 #
@@ -178,7 +178,7 @@ end
 
 # # hydro generation cost
 
-# function cost_function(ps_m::CanonicalModel, devices::Array{PSY.HydroGen,1}, device_formulation::Type{D}, system_formulation::Type{S}) where {D <: HydroDispatchRunOfRiver, S <: PM.AbstractPowerFormulation}
+# function cost_function(ps_m::CanonicalModel, devices::Array{PSY.HydroGen, 1}, device_formulation::Type{D}, system_formulation::Type{S}) where {D <: HydroDispatchRunOfRiver, S <: PM.AbstractPowerFormulation}
 #
 #     add_to_cost(ps_m, devices, :Phy, :curtailcost)
 #

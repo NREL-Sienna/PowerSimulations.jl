@@ -46,7 +46,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
 
     range_data = Vector{NamedMinMax}(undef, length(devices))
 
-    for (ix,d) in enumerate(devices)
+    for (ix, d) in enumerate(devices)
         if isnothing(PSY.get_tech(d) |> PSY.get_reactivepowerlimits)
             limits = (min = 0.0, max = 0.0)
             range_data[ix] = (PSY.get_name(d), limits)
@@ -96,7 +96,7 @@ function _get_time_series(devices::PSY.FlattenIteratorWrapper{R},
     names = Vector{String}(undef, length(devices))
     series = Vector{Vector{Float64}}(undef, length(devices))
 
-    for (ix,d) in enumerate(devices)
+    for (ix, d) in enumerate(devices)
         names[ix] = PSY.get_name(d)
         series[ix] = fill(PSY.get_tech(d) |> PSY.get_rating, (time_steps[end]))
     end
@@ -141,7 +141,7 @@ function _get_time_series(forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministi
     names = Vector{String}(undef, length(forecasts))
     series = Vector{Vector{Float64}}(undef, length(forecasts))
 
-    for (ix,f) in enumerate(forecasts)
+    for (ix, f) in enumerate(forecasts)
         names[ix] = PSY.get_component(f) |> PSY.get_name
         series[ix] = values(PSY.get_data(f)) * (PSY.get_component(f) |> PSY.get_tech |> PSY.get_rating)
     end
@@ -162,13 +162,13 @@ function activepower_constraints(ps_m::CanonicalModel,
     if parameters
         device_timeseries_param_ub(ps_m,
                                    _get_time_series(forecasts),
-                                   Symbol("renewable_active_ub_$(R)"),
+                                   Symbol("active_ub_$(R)"),
                                    Symbol("Param_P_$(R)"),
                                    Symbol("P_$(R)"))
     else
         device_timeseries_ub(ps_m,
                             _get_time_series(forecasts),
-                            Symbol("renewable_active_ub_$(R)"),
+                            Symbol("active_ub_$(R)"),
                             Symbol("P_$(R)"))
     end
 
@@ -186,10 +186,10 @@ function _nodal_expression_param(ps_m::CanonicalModel,
                                                                     S <: PM.AbstractPowerFormulation}
 
     time_steps = model_time_steps(ps_m)
-    ts_data_active = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(devices))
-    ts_data_reactive = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(devices))
+    ts_data_active = Vector{Tuple{String, Int64, Vector{Float64}}}(undef, length(devices))
+    ts_data_reactive = Vector{Tuple{String, Int64, Vector{Float64}}}(undef, length(devices))
 
-    for (ix,d) in enumerate(devices)
+    for (ix, d) in enumerate(devices)
         time_series_vector = fill(PSY.get_tech(d) |> PSY.get_rating, (time_steps[end]))
         ts_data_active[ix] = (PSY.get_name(d), PSY.get_bus(d) |> PSY.get_number, time_series_vector)
         ts_data_reactive[ix] = (PSY.get_name(d), PSY.get_bus(d) |> PSY.get_number, time_series_vector * sin(acos(PSY.get_tech(d) |> PSY.get_powerfactor)))
@@ -214,9 +214,9 @@ function _nodal_expression_param(ps_m::CanonicalModel,
                                                                     S <: PM.AbstractActivePowerFormulation}
 
     time_steps = model_time_steps(ps_m)
-    ts_data_active = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(devices))
+    ts_data_active = Vector{Tuple{String, Int64, Vector{Float64}}}(undef, length(devices))
 
-    for (ix,d) in enumerate(devices)
+    for (ix, d) in enumerate(devices)
         time_series_vector = fill(PSY.get_tech(d) |> PSY.get_rating, (time_steps[end]))
         ts_data_active[ix] = (PSY.get_name(d), PSY.get_bus(d) |> PSY.get_number, time_series_vector)
     end
@@ -237,10 +237,10 @@ function _nodal_expression_param(ps_m::CanonicalModel,
                                                                      S <: PM.AbstractPowerFormulation}
 
     time_steps = model_time_steps(ps_m)
-    ts_data_active = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(forecasts))
-    ts_data_reactive = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(forecasts))
+    ts_data_active = Vector{Tuple{String, Int64, Vector{Float64}}}(undef, length(forecasts))
+    ts_data_reactive = Vector{Tuple{String, Int64, Vector{Float64}}}(undef, length(forecasts))
 
-    for (ix,f) in enumerate(forecasts)
+    for (ix, f) in enumerate(forecasts)
         device = PSY.get_component(f)
         time_series_vector = values(PSY.get_data(f))*(PSY.get_tech(device) |> PSY.get_rating)
         ts_data_active[ix] = (PSY.get_name(device), PSY.get_bus(device) |> PSY.get_number, time_series_vector)
@@ -267,9 +267,9 @@ function _nodal_expression_param(ps_m::CanonicalModel,
                                 system_formulation::Type{S}) where {R <: PSY.RenewableGen,
                                                                     S <: PM.AbstractActivePowerFormulation}
 
-    ts_data_active = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(forecasts))
+    ts_data_active = Vector{Tuple{String, Int64, Vector{Float64}}}(undef, length(forecasts))
 
-    for (ix,f) in enumerate(forecasts)
+    for (ix, f) in enumerate(forecasts)
         device = PSY.get_component(f)
         time_series_vector = values(PSY.get_data(f)) * (PSY.get_tech(device) |> PSY.get_rating)
         ts_data_active[ix] = (PSY.get_name(device),

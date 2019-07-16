@@ -75,17 +75,17 @@ const PJ = ParameterJuMP
 
 #Type Alias for JuMP and PJ containers
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
-const PGAE{V} = PJ.ParametrizedGenericAffExpr{Float64,V} where V <: JuMP.AbstractVariableRef
-const GAE{V} = JuMP.GenericAffExpr{Float64,V} where V <: JuMP.AbstractVariableRef
+const PGAE{V} = PJ.ParametrizedGenericAffExpr{Float64, V} where V <: JuMP.AbstractVariableRef
+const GAE{V} = JuMP.GenericAffExpr{Float64, V} where V <: JuMP.AbstractVariableRef
 const JuMPAffineExpressionArray = Matrix{GAE{V}} where V <: JuMP.AbstractVariableRef
 const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 
 #Type Alias for long type signatures
-const MinMax = NamedTuple{(:min, :max),NTuple{2,Float64}}
+const MinMax = NamedTuple{(:min, :max), NTuple{2, Float64}}
 const NamedMinMax = Tuple{String, MinMax}
-const UpDown = NamedTuple{(:up, :down),NTuple{2,Float64}}
-const InOut = NamedTuple{(:in, :out),NTuple{2,Float64}}
+const UpDown = NamedTuple{(:up, :down), NTuple{2, Float64}}
+const InOut = NamedTuple{(:in, :out), NTuple{2, Float64}}
 
 #################################################################################
 # Includes
@@ -104,7 +104,7 @@ include("core/device_constructor.jl")
 include("core/canonical_constructor.jl")
 include("core/operations_constructor.jl")
 include("core/core_structs/results_model.jl")
-include("core/simulation_constructor.jl")
+#include("core/simulation_constructor.jl")
 
 #Device Modeling components
 include("devices/device_models/common.jl")
