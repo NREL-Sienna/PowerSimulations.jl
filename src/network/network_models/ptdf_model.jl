@@ -6,7 +6,7 @@ function ptdf_networkflow(ps_m::CanonicalModel,
 
 
     time_steps = model_time_steps(ps_m)
-    ps_m.constraints[:network_flow] = JuMPConstraintArray(undef,  PTDF.axes[1], time_steps)
+    ps_m.constraints[:network_flow] = JuMPConstraintArray(undef, PTDF.axes[1], time_steps)
     ps_m.constraints[:nodal_balance] = JuMPConstraintArray(undef, PTDF.axes[2], time_steps)
     key = Symbol("Fbr_$(B)")
 
@@ -14,16 +14,16 @@ function ptdf_networkflow(ps_m::CanonicalModel,
 
     for t in time_steps
         for b in branches
-            ps_m.constraints[:network_flow][PSY.get_name(b),t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[key][PSY.get_name(b),t] == PTDF[PSY.get_name(b),:]'*ps_m.expressions[expression].data[:,t])
+            ps_m.constraints[:network_flow][PSY.get_name(b), t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[key][PSY.get_name(b), t] == PTDF[PSY.get_name(b), :]'*ps_m.expressions[expression].data[:, t])
         end
 
         for b in branches
-            _add_to_expression!(ps_m.expressions[expression], (PSY.get_arch(b)).from |> PSY.get_number, t, ps_m.variables[key][PSY.get_name(b),t], -1.0)
-            _add_to_expression!(ps_m.expressions[expression], (PSY.get_arch(b)).to |> PSY.get_number, t, ps_m.variables[key][PSY.get_name(b),t], 1.0)
+            _add_to_expression!(ps_m.expressions[expression], (PSY.get_arch(b)).from |> PSY.get_number, t, ps_m.variables[key][PSY.get_name(b), t], -1.0)
+            _add_to_expression!(ps_m.expressions[expression], (PSY.get_arch(b)).to |> PSY.get_number, t, ps_m.variables[key][PSY.get_name(b), t], 1.0)
         end
 
         for b in buses
-            ps_m.constraints[:nodal_balance][PSY.get_number(b), t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.expressions[expression][PSY.get_number(b),t] == 0)
+            ps_m.constraints[:nodal_balance][PSY.get_number(b), t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.expressions[expression][PSY.get_number(b), t] == 0)
         end
 
     end
@@ -56,7 +56,7 @@ to = TimerOutput()
     @timeit to "allocate_space" ps_m.constraints["Flow_con1"] = JuMPConstraintArray(undef, [b.name for b in branches5], 1:24)
     @timeit to "make constraints" for t in 1:24
                                     for b in branches5
-                                        ps_m.constraints["Flow_con1"][b.name,t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[key][b.name,t] == PTDF[b.name,:].data'*ps_m.expressions[:nodal_balance_active][:,t])
+                                        ps_m.constraints["Flow_con1"][b.name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[key][b.name, t] == PTDF[b.name, :].data'*ps_m.expressions[:nodal_balance_active][:, t])
                                     end
                                 end
                             end
@@ -98,11 +98,11 @@ to = TimerOutput()
     @timeit to "allocate_space" ps_m.constraints["Flow_con2"] = JuMPConstraintArray(undef, [b.name for b in branches5], 1:24)
     @timeit to "make constraints" begin for t in 1:24
             for b in branches5
-                expr = JuMP.AffExpr(0.0, ps_m.variables[key][b.name,t] => 1.0)
+                expr = JuMP.AffExpr(0.0, ps_m.variables[key][b.name, t] => 1.0)
                     for n in nodes5
-                        JuMP.add_to_expression!(expr, -1*PTDF[b.name,:].data[n.number]*ps_m.expressions[:nodal_balance_active][n.number,t])
+                        JuMP.add_to_expression!(expr, -1*PTDF[b.name, :].data[n.number]*ps_m.expressions[:nodal_balance_active][n.number, t])
                     end
-                ps_m.constraints["Flow_con2"][b.name,t] = JuMP.@constraint(ps_m.JuMPmodel, expr == 0.0)
+                ps_m.constraints["Flow_con2"][b.name, t] = JuMP.@constraint(ps_m.JuMPmodel, expr == 0.0)
         end
     end
     end

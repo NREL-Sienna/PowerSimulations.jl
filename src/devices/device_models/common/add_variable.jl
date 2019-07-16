@@ -13,9 +13,11 @@ function add_variable(ps_m::CanonicalModel,
     variable = var(ps_m, var_name)
 
     for t in time_steps, d in devices
-      variable[PSY.get_name(d),t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                           base_name="$(var_name)_{$(PSY.get_name(d)),$(t)}",
-                                                           binary=binary)
+      name = PSY.get_name(d)
+    
+      variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
+                                       base_name="$(var_name)_{$(name),$(t)}",
+                                       binary=binary)
     end
 
     return
@@ -35,14 +37,16 @@ function add_variable(ps_m::CanonicalModel,
     expr = exp(ps_m, expression)
 
     for t in time_steps, d in devices
-      variable[PSY.get_name(d),t] = JuMP.@variable(ps_m.JuMPmodel,
-                                             base_name="{$(var_name)}_{$(PSY.get_name(d)),$(t)}",
+      name = PSY.get_name(d)
+    
+      variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
+                                             base_name="{$(var_name)}_{$(name), $(t)}",
                                              binary=binary)
 
       _add_to_expression!(expr,
                           PSY.get_number(PSY.get_bus(d)),
                           t,
-                          variable[PSY.get_name(d),t])
+                          variable[name, t])
     end
 
     return
@@ -63,14 +67,16 @@ function add_variable(ps_m::CanonicalModel,
     expr = exp(ps_m, expression)
 
     for t in time_steps, d in devices
-       variable[PSY.get_name(d),t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                           base_name="{$(var_name)}_{$(PSY.get_name(d)),$(t)}",
-                                                           binary=binary)
+       name = PSY.get_name(d)
+    
+       variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
+                                        base_name="{$(var_name)}_{$(name), $(t)}",
+                                        binary=binary)
 
        _add_to_expression!(expr,
                            PSY.get_number(PSY.get_bus(d)),
                            t,
-                           variable[PSY.get_name(d),t], sign)
+                           variable[name, t], sign)
     end
 
     return

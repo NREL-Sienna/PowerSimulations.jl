@@ -63,6 +63,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     if forecast
         first_step = PSY.get_forecasts_initial_time(sys)
         forecasts = PSY.get_forecasts(PSY.Deterministic{R}, sys, first_step)
+        isempty(forecasts) && error("System has no forecasts")
         activepower_constraints(ps_m, forecasts, device_formulation, system_formulation)
     else
         activepower_constraints(ps_m, devices, device_formulation, system_formulation)

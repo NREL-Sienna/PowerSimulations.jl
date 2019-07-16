@@ -54,38 +54,7 @@ function _canonical_model_init(bus_numbers::Vector{Int64},
 
     ps_model = CanonicalModel(jump_model,
                               parameters,
-                              false,
-                              time_steps,
-                              resolution,
-                              DSDA(),
-                              DSDA(),
-                              zero(JuMP.GenericAffExpr{Float64, V}),
-                              _make_expressions_dict(transmission,
-                                                     V,
-                                                     bus_numbers,
-                                                     time_steps; kwargs...),
-                              parameters ? DSDA() : nothing,
-                              Dict{Symbol,Array{InitialCondition}}(),
-                              nothing);
-
-    return ps_model
-
-end
-
-function _canonical_model_init(bus_numbers::Vector{Int64},
-                               optimizer::Union{Nothing,JuMP.OptimizerFactory},
-                               transmission::Type{S},
-                               time_steps::UnitRange{Int64},
-                               resolution::Dates.Period; kwargs...) where
-                                       {S <: Union{StandardPTDFForm, CopperPlatePowerModel}}
-
-    parameters = get(kwargs, :parameters, true)
-    jump_model = _pass_abstract_jump(optimizer; kwargs...)
-    V = JuMP.variable_type(jump_model)
-
-    ps_model = CanonicalModel(jump_model,
-                              parameters,
-                              false,
+                              get(kwargs, :sequential_runs, false),
                               time_steps,
                               resolution,
                               DSDA(),

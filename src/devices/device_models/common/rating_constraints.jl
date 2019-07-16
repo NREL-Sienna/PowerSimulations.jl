@@ -9,7 +9,7 @@ function norm_two_constraint(ps_m::CanonicalModel,
     _add_cons_container!(ps_m, cons_name, rating_data[1], time_steps)
     constraint = con(ps_m, cons_name)
 
-    for t in time_steps, (ix,r) in enumerate(rating_data[1])
+    for t in time_steps, (ix, r) in enumerate(rating_data[1])
         
         constraint[r, t] = JuMP.@constraint(ps_m.JuMPmodel, var1[r[1], t] + var2[r[1], t] <= rating_data[ix][2]^2)
 

@@ -4,7 +4,7 @@ function ps_cost(ps_m::CanonicalModel,
                  cost_component::Function,
                  sign::Int64) where {JV <: JuMP.AbstractVariableRef}
 
-    store = Vector{Any}(undef,length(variable))
+    store = Vector{Any}(undef, length(variable))
 
     for (ix, element) in enumerate(variable)
         store[ix] = cost_component(element)
@@ -41,7 +41,7 @@ end
 
 function ps_cost(ps_m::CanonicalModel,
                  variable::JuMP.Containers.DenseAxisArray{JV},
-                 cost_component::PSY.VariableCost{NTuple{2,Float64}},
+                 cost_component::PSY.VariableCost{NTuple{2, Float64}},
                  dt::Float64,
                  sign::Float64) where {JV <: JuMP.AbstractVariableRef}
 
@@ -59,7 +59,7 @@ function _pwlparamcheck(cost_)
         if i == 1
             (cost_[i][1]/cost_[i][2]) <= ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) ? nothing : flag = false;
         else
-            ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) <= ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) ? nothing : flag = false;
+            ((cost_[i][1] - cost_[i-1][1])/(cost_[i][2] - cost_[i-1][2])) <= ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) ? nothing : flag = false;
         end
     end
     return flag
@@ -83,7 +83,7 @@ function _pwlgencost(ps_m::CanonicalModel,
         gen_cost = gen_cost + temp_gen_cost
     end
 
-    c = JuMP.@constraint(ps_m.JuMPmodel, variable == sum([pwlvars[ix-1] for (ix, pwlvar) in enumerate(pwlvars)]) )
+    c = JuMP.@constraint(ps_m.JuMPmodel, variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars) if ix > 1]) )
 
     return gen_cost
 
@@ -118,11 +118,17 @@ function add_to_cost(ps_m::CanonicalModel,
 
     for d in devices
         cost_expression = ps_cost(ps_m,
-                                  variable[PSY.get_name(d),:],
-                                  getfield(PSY.get_op_cost(d),cost_symbol),
+                                  variable[PSY.get_name(d), :],
+                                  getfield(PSY.get_op_cost(d), cost_symbol),
                                   dt,
                                   sign)
-        ps_m.cost_function += cost_expression
+        T_ce = typeof(cost_expression)
+        T_cf = typeof(ps_m.cost_function)
+        if  T_cf <: JuMP.GenericAffExpr && T_ce <: JuMP.GenericQuadExpr
+            ps_m.cost_function += cost_expression
+        else
+            JuMP.add_to_expression!(ps_m.cost_function, cost_expression)
+        end
     end
 
     return

@@ -12,12 +12,12 @@ services = Dict{Symbol, PSI.ServiceModel}()
     j_model = op_model.canonical_model.JuMPmodel
     @test (:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 120
-    @test JuMP.num_constraints(j_model,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 120
-    @test JuMP.num_constraints(j_model,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
-    @test JuMP.num_constraints(j_model,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
-    @test JuMP.num_constraints(j_model,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 24
+    @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 120
+    @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == 0
+    @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.GreaterThan{Float64}) == 0
+    @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == 24
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
-    @test JuMP.objective_function_type(j_model) == JuMP.GenericAffExpr{Float64,VariableRef}
+    @test JuMP.objective_function_type(j_model) == JuMP.GenericAffExpr{Float64, VariableRef}
 
     op_model = OperationModel(TestOptModel, model_ref,
                                             c_sys14;
@@ -25,12 +25,12 @@ services = Dict{Symbol, PSI.ServiceModel}()
     j_model = op_model.canonical_model.JuMPmodel
     @test (:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 120
-    @test JuMP.num_constraints(j_model,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 120
-    @test JuMP.num_constraints(j_model,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
-    @test JuMP.num_constraints(j_model,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
-    @test JuMP.num_constraints(j_model,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 24
+    @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 120
+    @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == 0
+    @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.GreaterThan{Float64}) == 0
+    @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == 24
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
-    @test JuMP.objective_function_type(j_model) == JuMP.GenericQuadExpr{Float64,VariableRef}
+    @test JuMP.objective_function_type(j_model) == JuMP.GenericQuadExpr{Float64, VariableRef}
 
     op_model = OperationModel(TestOptModel, model_ref,
                                             c_sys5_re;
@@ -39,12 +39,12 @@ services = Dict{Symbol, PSI.ServiceModel}()
     j_model = op_model.canonical_model.JuMPmodel
     @test (:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 5
-    @test JuMP.num_constraints(j_model,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 5
-    @test JuMP.num_constraints(j_model,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
-    @test JuMP.num_constraints(j_model,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
-    @test JuMP.num_constraints(j_model,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 1
+    @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 5
+    @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == 0
+    @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.GreaterThan{Float64}) == 0
+    @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == 1
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
-    @test JuMP.objective_function_type(j_model) == JuMP.GenericAffExpr{Float64,VariableRef}
+    @test JuMP.objective_function_type(j_model) == JuMP.GenericAffExpr{Float64, VariableRef}
 
     op_model = OperationModel(TestOptModel, model_ref,
                                             c_sys5_re;
@@ -54,12 +54,12 @@ services = Dict{Symbol, PSI.ServiceModel}()
     j_model = op_model.canonical_model.JuMPmodel
     @test !(:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 5
-    @test JuMP.num_constraints(j_model,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == 5
-    @test JuMP.num_constraints(j_model,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == 0
-    @test JuMP.num_constraints(j_model,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == 0
-    @test JuMP.num_constraints(j_model,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == 1
+    @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 5
+    @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == 0
+    @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.GreaterThan{Float64}) == 0
+    @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == 1
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
-    @test JuMP.objective_function_type(j_model) == JuMP.GenericAffExpr{Float64,VariableRef}
+    @test JuMP.objective_function_type(j_model) == JuMP.GenericAffExpr{Float64, VariableRef}
 end
 
 
@@ -89,7 +89,7 @@ end
     for net in networks, thermal in thermal_gens, system in systems
         @testset "Operation Model $(net) - $(thermal) - $(system)" begin
             thermal_model = DeviceModel(PSY.ThermalStandard, thermal)
-            devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, thermal), 
+            devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, thermal),
                                                 :Loads =>       DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
             branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine))
             model_ref = ModelReference(net, devices, branches, services);
