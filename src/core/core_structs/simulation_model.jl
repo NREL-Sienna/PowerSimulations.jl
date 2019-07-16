@@ -1,11 +1,11 @@
 mutable struct PowerSimulationsModel
-    base_name::String
+    basename::String
     periods::Int64
     stages::Dict{Int64, OperationModel}
     executioncount::Dict{Int64, Int64}
     feedback_ref::Any
-    date_from::Dates.DateTime
-    date_to::Dates.DateTime
+    datefrom::Dates.DateTime
+    dateto::Dates.DateTime
     simulation_folder::String
 end
 
