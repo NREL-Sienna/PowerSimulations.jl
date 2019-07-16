@@ -9,7 +9,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
     model_ref = ModelReference(CopperPlatePowerModel, devices, branches, services);
     parameters_value = [true, false]
     systems = [c_sys5, c_sys14]
-    test_results = Dict{PSY.System, Float64}(c_sys5 => 240000.0,  
+    test_results = Dict{PSY.System, Float64}(c_sys5 => 240000.0,
                                              c_sys14 => 142000.0)
     for sys in systems, p in parameters_value
         @info("Testing solve ED with CopperPlatePowerModel network")
@@ -27,7 +27,7 @@ end
     parameters_value = [true, false]
     systems = [c_sys5, c_sys14, c_sys14_dc]
     PTDF_ref = Dict{PSY.System, PSY.PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc)
-    test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,  
+    test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,
                                              c_sys14 => 142000.0,
                                              c_sys14_dc => 142000.0)
 
@@ -47,7 +47,7 @@ end
     parameters_value = [true, false]
     networks = [PM.DCPlosslessForm,
                 PM.NFAForm]
-    test_results = Dict{PSY.System, Float64}(c_sys5 => 330000.0,  
+    test_results = Dict{PSY.System, Float64}(c_sys5 => 330000.0,
                                              c_sys14 => 142000.0,
                                              c_sys14_dc => 142000.0)
 
@@ -68,9 +68,9 @@ end
 @testset "Solving ED With PowerModels with linear convex models" begin
     systems = [c_sys5, c_sys14]
     parameters_value = [true, false]
-    networks = [PM.StandardDCPLLForm, 
+    networks = [PM.StandardDCPLLForm,
                 PM.AbstractLPACCForm]
-    test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,  
+    test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,
                                              c_sys14 => 142000.0,
                                              c_sys14_dc => 142000.0)
 
@@ -95,7 +95,7 @@ end
     networks = [PM.SOCWRForm,
                  PM.QCWRForm,
                  PM.QCWRTriForm,]
-    test_results = Dict{PSY.System, Float64}(c_sys5 => 320000.0,  
+    test_results = Dict{PSY.System, Float64}(c_sys5 => 320000.0,
                                              c_sys14 => 142000.0)
 
     for  net in networks, p in parameters_value, sys in systems
@@ -119,7 +119,7 @@ end
     networks = [PM.StandardACPForm,
                 #PM.StandardACRForm,
                 PM.StandardACTForm]
-    test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,  
+    test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,
                                              c_sys14 => 142000.0,
                                              c_sys14_dc => 142000.0)
 
@@ -145,7 +145,7 @@ end
                 PM.NFAForm,
                 StandardPTDFForm,
                 CopperPlatePowerModel]
-    PTDF_ref = Dict{PSY.System, PSY.PTDF}(c_sys5 => PTDF5, c_sys5_dc => PTDF5_dc)            
+    PTDF_ref = Dict{PSY.System, PSY.PTDF}(c_sys5 => PTDF5, c_sys5_dc => PTDF5_dc)
 
     for  net in networks, p in parameters_value, sys in systems
         @info("Testing solve UC with $(net) network")

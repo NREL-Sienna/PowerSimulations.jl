@@ -1,5 +1,5 @@
 function get_branch_to_pm(ix::Int64, branch::PSY.PhaseShiftingTransformer)
-    PM_branch = Dict{String,Any}(
+    PM_branch = Dict{String, Any}(
         "br_r"        => PSY.get_r(branch),
         "rate_a"      => PSY.get_rate(branch),
         "shift"       => PSY.get_α(branch),
@@ -23,7 +23,7 @@ function get_branch_to_pm(ix::Int64, branch::PSY.PhaseShiftingTransformer)
 end
 
 function get_branch_to_pm(ix::Int64, branch::PSY.Transformer2W)
-    PM_branch = Dict{String,Any}(
+    PM_branch = Dict{String, Any}(
         "br_r"        => PSY.get_r(branch),
         "rate_a"      => PSY.get_rate(branch),
         "shift"       => 0.0,
@@ -47,7 +47,7 @@ function get_branch_to_pm(ix::Int64, branch::PSY.Transformer2W)
 end
 
 function get_branch_to_pm(ix::Int64, branch::PSY.TapTransformer)
-    PM_branch = Dict{String,Any}(
+    PM_branch = Dict{String, Any}(
         "br_r"        => PSY.get_r(branch),
         "rate_a"      => PSY.get_rate(branch),
         "shift"       => 0.0,
@@ -71,7 +71,7 @@ function get_branch_to_pm(ix::Int64, branch::PSY.TapTransformer)
 end
 
 function get_branch_to_pm(ix::Int64, branch::PSY.Line)
-    PM_branch = Dict{String,Any}(
+    PM_branch = Dict{String, Any}(
         "br_r"        => PSY.get_r(branch),
         "rate_a"      => PSY.get_rate(branch),
         "shift"       => 0.0,
@@ -95,7 +95,7 @@ function get_branch_to_pm(ix::Int64, branch::PSY.Line)
 end
 
 function get_branch_to_pm(ix::Int64, branch::PSY.HVDCLine)
-    PM_branch = Dict{String,Any}(
+    PM_branch = Dict{String, Any}(
         "loss1"         => PSY.get_loss(branch).l1,
         "mp_pmax"       => PSY.get_reactivepowerlimits_from(branch).max,
         "model"         => 2,
@@ -129,11 +129,11 @@ end
 
 function get_branches_to_pm(sys::PSY.System)
 
-        PM_ac_branches = Dict{String,Any}()
-        PM_dc_branches = Dict{String,Any}()
+        PM_ac_branches = Dict{String, Any}()
+        PM_dc_branches = Dict{String, Any}()
 
         for (ix, branch) in enumerate(PSY.get_components(PSY.Branch, sys))
-            if isa(branch,PSY.DCBranch)
+            if isa(branch, PSY.DCBranch)
                 PM_dc_branches["$(ix)"] = get_branch_to_pm(ix, branch)
             else
                 PM_ac_branches["$(ix)"] = get_branch_to_pm(ix, branch)
@@ -144,9 +144,9 @@ function get_branches_to_pm(sys::PSY.System)
 end
 
 function get_buses_to_pm(buses::PSY.FlattenIteratorWrapper{PSY.Bus})
-    PM_buses = Dict{String,Any}()
+    PM_buses = Dict{String, Any}()
     for bus in buses
-        PM_bus = Dict{String,Any}(
+        PM_bus = Dict{String, Any}(
         "zone"     => 1,
         "bus_i"    => PSY.get_number(bus),
         "bus_type" => PSY.get_bustype(bus),
@@ -169,16 +169,16 @@ function pass_to_pm(sys::PSY.System, time_periods::Int64)
 
     ac_lines, dc_lines = get_branches_to_pm(sys)
     buses = PSY.get_components(PSY.Bus, sys)
-    PM_translation = Dict{String,Any}(
+    PM_translation = Dict{String, Any}(
     "bus"            => get_buses_to_pm(buses),
     "branch"         => ac_lines,
     "baseMVA"        => sys.basepower,
     "per_unit"       => true,
-    "storage"        => Dict{String,Any}(),
+    "storage"        => Dict{String, Any}(),
     "dcline"         => dc_lines,
-    "gen"            => Dict{String,Any}(),
-    "shunt"          => Dict{String,Any}(),
-    "load"           => Dict{String,Any}(),
+    "gen"            => Dict{String, Any}(),
+    "shunt"          => Dict{String, Any}(),
+    "load"           => Dict{String, Any}(),
     )
 
     # TODO: this function adds overhead in large number of time_steps

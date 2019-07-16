@@ -12,13 +12,13 @@ function all_devices(sys, filter::Array)
     for source in sys.generators
         if typeof(source) <: Array{<:PSY.Generator}
             for d in source
-                d.name in filter ? push!(dev,d) : continue
+                d.name in filter ? push!(dev, d) : continue
             end
         end
     end
 
     for d in sys.loads
-        d.name in filter ? push!(dev,d) : continue
+        d.name in filter ? push!(dev, d) : continue
     end
 
     return dev
@@ -30,13 +30,13 @@ function all_devices(sys)
     for source in sys.generators
         if typeof(source) <: Array{<:PSY.Generator}
             for d in source
-                push!(dev,d)
+                push!(dev, d)
             end
         end
     end
 
     for d in sys.loads
-        push!(dev,d)
+        push!(dev, d)
     end
 
     return dev
@@ -45,17 +45,17 @@ end
 
 #TODO: Make additional methods to handle other device types
 function get_pg(m::JuMP.AbstractModel, gen::G, t::Int64) where G <: PSY.ThermalGen
-    return m.obj_dict[:p_th][gen.name,t]
+    return m.obj_dict[:p_th][gen.name, t]
 end
 
 function get_pg(m::JuMP.AbstractModel, gen::G, t::Int64) where G <: PSY.RenewableDispatch
-    return m.obj_dict[:p_re][gen.name,t]
+    return m.obj_dict[:p_re][gen.name, t]
 end
 
 # Methods for accessing jump, moi, and optimizer variables
 function get_all_vars(obj_dict)
     # get all variables in a jump model
-    var_arays = [v.data for (k,v) in obj_dict if isa(v,JuMP.Containers.DenseAxisArray{JuMP.VariableRef}) ];
+    var_arays = [v.data for (k, v) in obj_dict if isa(v, JuMP.Containers.DenseAxisArray{JuMP.VariableRef}) ];
     vars = [i for arr in var_arays for i in arr]
 end
 
@@ -75,7 +75,7 @@ function map_jump_vars(model::JuMP.AbstractModel)
     moi_optimizer_vmap = map_moi_opt_variables(model)
     moivariables = [moi_optimizer_vmap[v.index] for v in vars]
     moivars = [moi_optimizer_vmap[v.index] for v in vars]
-    return Dict(zip(vars,moivars))
+    return Dict(zip(vars, moivars))
 end
 
 
@@ -85,13 +85,13 @@ function map_optimizer_vars(model::JuMP.AbstractModel)
     moi_optimizer_vmap = map_moi_opt_variables(model)
     moivariables = [moi_optimizer_vmap[v.index] for v in vars]
     moivars = [moi_optimizer_vmap[v.index] for v in vars]
-    return Dict(zip(moivars,vars))
+    return Dict(zip(moivars, vars))
 end
 
 # Methods for accessing jump, moi, and optimizer constraintrefs
 function get_all_constraints(obj_dict)
     # get all constraints in a jump model
-    constraint_arrays = [v.data for (k,v) in obj_dict if isa(v,JuMPConstraintArray) ];
+    constraint_arrays = [v.data for (k, v) in obj_dict if isa(v, JuMPConstraintArray) ];
     constraints = [i for arr in constraint_arrays for i in arr]
 end
 
@@ -100,7 +100,7 @@ function map_moi_opt_constraints(model::JuMP.AbstractModel)
     cmap = model.moi_backend.model.optimizer.constraint_mapping
     moi_optimizer_map = Dict()
     for f in fieldnames(typeof(cmap))
-        ctype = getfield(cmap,f)
+        ctype = getfield(cmap, f)
         for c in ctype
             moi_optimizer_map[model.moi_backend.model.optimizer_to_model_map.conmap[c[1]]]=c[2]
         end
@@ -113,7 +113,7 @@ function map_jump_constraints(model::JuMP.AbstractModel)
     constraints = get_all_constraints(model.obj_dict)
     moi_optimizer_map = map_moi_opt_constraints(model)
     moiconstraints = [moi_optimizer_map[c.index] for c in constraints]
-    return Dict(zip(constraints,moiconstraints))
+    return Dict(zip(constraints, moiconstraints))
 end
 
 function map_optimizer_constraints(model::JuMP.AbstractModel)
@@ -121,7 +121,7 @@ function map_optimizer_constraints(model::JuMP.AbstractModel)
     constraints = get_all_constraints(model.obj_dict)
     moi_optimizer_map = map_moi_opt_constraints(model)
     moiconstraints = [moi_optimizer_map[c.index] for c in constraints]
-    return Dict(zip(moiconstraints,constraints))
+    return Dict(zip(moiconstraints, constraints))
 end
 
 
@@ -190,22 +190,22 @@ end
 
 function get_previous_value_df(res::DataFrames.DataFrame)
     res[:period] = 1:size(res, 1)
-    var_res = melt(res[end,:], :period, variable_name = :Device)
+    var_res = melt(res[end, :], :period, variable_name = :Device)
     return var_res
 end
 
 function get_previous_value(res::DataFrames.DataFrame)
     var_res = get_previous_value_df(res)
-    prev_val = Dict(zip(map(String,var_res[:Device]),var_res[:value]))
+    prev_val = Dict(zip(map(String, var_res[:Device]), var_res[:value]))
     return prev_val
 end
 
-function commitment_duration(res::Dict, initial,  transition::Symbol, minutes_per_step = 60)
+function commitment_duration(res::Dict, initial, transition::Symbol, minutes_per_step = 60)
     # res is the results df from the previous solution
     # initial is the dict that defines the initial status (e.g. initialonduration)
     # transition is the variable of commitment transition {:start_th or :stop_th}
 
-    last_period = size(res[:on_th],1)
+    last_period = size(res[:on_th], 1)
 
     on_devices = get_previous_value_df(res[:on_th])
     if transition == :start_th
@@ -214,9 +214,9 @@ function commitment_duration(res::Dict, initial,  transition::Symbol, minutes_pe
         status = 0
     end
     off_devices = copy(on_devices)
-    off_devices = off_devices[off_devices.value.!=status,[:Device]]
+    off_devices = off_devices[off_devices.value.!=status, [:Device]]
     off_devices.value = 0.0
-    on_devices = on_devices[on_devices.value.==status,[:Device]]
+    on_devices = on_devices[on_devices.value.==status, [:Device]]
 
     initial = melt(DataFrames.DataFrame(initial), variable_name = :Device)
     initial.value = initial.value .+ (last_period * minutes_per_step/60)
@@ -227,22 +227,22 @@ function commitment_duration(res::Dict, initial,  transition::Symbol, minutes_pe
 
     res_df = melt(res_df, :period, variable_name = :Device)
 
-    res_df = join(res_df,on_devices, on = :Device)
-    res_df = by(res_df[res_df[:value] .== 1 ,[:Device,:period]], :Device, df -> DataFrames.DataFrames.tail(df[[:period]],1))
+    res_df = join(res_df, on_devices, on = :Device)
+    res_df = by(res_df[res_df[:value] .== 1 , [:Device, :period]], :Device, df -> DataFrames.DataFrames.tail(df[[:period]], 1))
 
-    if size(res_df,1) > 0
+    if size(res_df, 1) > 0
         res_df.value  = ((last_period + 1) .- res_df.period) .* minutes_per_step/60
-        res_df = join(on_devices,res_df[[:Device,:value]], on = :Device, kind = :outer)
-        res_df[findall(ismissing,res_df.value),:] = join(initial, res_df[findall(ismissing,res_df.value),[:Device]], on=:Device)
+        res_df = join(on_devices, res_df[[:Device, :value]], on = :Device, kind = :outer)
+        res_df[findall(ismissing, res_df.value), :] = join(initial, res_df[findall(ismissing, res_df.value), [:Device]], on=:Device)
     else
         # for everything else, add the current step periods to initial status
         res_df = copy(on_devices)
-        res_df = join(initial,res_df,on=:Device)
+        res_df = join(initial, res_df, on=:Device)
     end
-    res_df = vcat(res_df,off_devices)
+    res_df = vcat(res_df, off_devices)
 
 
-    return Dict(zip(map(String,res_df.Device),res_df.value))
+    return Dict(zip(map(String, res_df.Device), res_df.value))
 end
 
 
@@ -250,22 +250,22 @@ function collect_results(simulation_results)
     dfs = []
     vars = []
 
-    for (d,step) in simulation_results
-        for (v,df) in step
+    for (d, step) in simulation_results
+        for (v, df) in step
             df.Date = d
-            df.period = 1:size(df,1)
+            df.period = 1:size(df, 1)
             df.DateTime = [(DateTime(df.Date[ix])+Hour(df.period[ix]-1)) for ix in df.period]
-            push!(dfs,df)
-            push!(vars,v)
+            push!(dfs, df)
+            push!(vars, v)
         end
     end
 
     sim_res = Dict()
     for var in unique(vars)
-        ids = findall(vars -> vars == var,vars)
+        ids = findall(vars -> vars == var, vars)
         sim_res[var] = copy(dfs[ids[1]])
         for id in ids[2:end]
-            sim_res[var] = vcat(sim_res[var],dfs[id])
+            sim_res[var] = vcat(sim_res[var], dfs[id])
         end
     end
     return(sim_res)

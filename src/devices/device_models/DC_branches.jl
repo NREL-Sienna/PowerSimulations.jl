@@ -30,17 +30,17 @@ function flow_variables(ps_m::CanonicalModel,
         bus_fr = PSY.get_arch(d).from |> PSY.get_number
         bus_to = PSY.get_arch(d).to |> PSY.get_number
         for t in time_steps
-            ps_m.variables[var_name][PSY.get_name(d),t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                                base_name="$(bus_fr),$(bus_to)_{$(PSY.get_name(d)),$(t)}")
+            ps_m.variables[var_name][PSY.get_name(d), t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                                base_name="$(bus_fr), $(bus_to)_{$(PSY.get_name(d)), $(t)}")
             _add_to_expression!(ps_m.expressions[:nodal_balance_active],
                                 PSY.get_arch(d).from |> PSY.get_number,
                                 t,
-                                ps_m.variables[var_name][PSY.get_name(d),t],
+                                ps_m.variables[var_name][PSY.get_name(d), t],
                                 -1.0)
             _add_to_expression!(ps_m.expressions[:nodal_balance_active],
                                 PSY.get_arch(d).to |> PSY.get_number,
                                 t,
-                                ps_m.variables[var_name][PSY.get_name(d),t],
+                                ps_m.variables[var_name][PSY.get_name(d), t],
                                 1.0)
         end
     end
@@ -87,7 +87,7 @@ function branch_rate_constraint(ps_m::CanonicalModel,
         _add_to_expression!(ps_m.expressions[:nodal_balance_active],
                             PSY.get_arch(d).to |> PSY.get_number,
                             t,
-                            ps_m.variables[var_name][PSY.get_name(d),t],
+                            ps_m.variables[var_name][PSY.get_name(d), t],
                             -PSY.get_loss(d).l1,
                             -PSY.get_loss(d).l0)
     end

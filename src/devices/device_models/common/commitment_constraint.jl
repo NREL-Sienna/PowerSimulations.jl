@@ -1,13 +1,13 @@
 function device_commitment(ps_m::CanonicalModel,
                         initial_conditions::Vector{InitialCondition},
                         cons_name::Symbol,
-                        var_names::Tuple{Symbol,Symbol,Symbol})
+                        var_names::Tuple{Symbol, Symbol, Symbol})
 
     time_steps = model_time_steps(ps_m)
     var1 = var(ps_m, var_names[1])
     var2 = var(ps_m, var_names[2])
     var3 = var(ps_m, var_names[3])
-    var1_names = axes(var1,1)
+    var1_names = axes(var1, 1)
     _add_cons_container!(ps_m, cons_name, var1_names, time_steps)
     constraint = con(ps_m, cons_name)
 

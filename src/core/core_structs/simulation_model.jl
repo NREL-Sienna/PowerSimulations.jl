@@ -1,13 +1,11 @@
-mutable struct PowerSimulationsModel{T<:AbstractOperationsModel, R<:Dates.Period}
-    name::String
-    model::OperationModel{T}
-    steps::Int64
+mutable struct PowerSimulationsModel
+    basename::String
     periods::Int64
-    resolution::R
-    date_from::Dates.DateTime
-    date_to::Dates.DateTime
-    time_steps_periods::Int64
-    time_steps_resolution::R
-    dynamic_analysis::Bool
-    timeseries::Dict{Any,Any}
+    stages::Dict{Int64, OperationModel}
+    executioncount::Dict{Int64, Int64}
+    feedback_ref::Any
+    datefrom::Dates.DateTime
+    dateto::Dates.DateTime
+    simulation_folder::String
 end
+
