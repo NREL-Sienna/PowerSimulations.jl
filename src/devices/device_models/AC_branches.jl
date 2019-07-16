@@ -47,11 +47,10 @@ function flow_variables(ps_m::CanonicalModel,
         name = PSY.get_name(d)
         rate = PSY.get_rate(d)
         for t in time_steps
-            ps_m.variables[var_name][name,t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                                base_name="$(bus_fr),$(bus_to)_{$(name),$(t)}",
-                                                                upper_bound = rate,
-                                                                lower_bound = -rate,
-                                                                )
+            ps_m.variables[var_name][name, t] = JuMP.@variable(ps_m.JuMPmodel,
+                                                            base_name="$(bus_fr), $(bus_to)_{$(name), $(t)}",
+                                                            upper_bound = rate,
+                                                            lower_bound = -rate)
         end
     end
 

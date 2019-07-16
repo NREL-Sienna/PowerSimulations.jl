@@ -4,7 +4,7 @@ function ps_cost(ps_m::CanonicalModel,
                  cost_component::Function,
                  sign::Int64) where {JV <: JuMP.AbstractVariableRef}
 
-    store = Vector{Any}(undef,length(variable))
+    store = Vector{Any}(undef, length(variable))
 
     for (ix, element) in enumerate(variable)
         store[ix] = cost_component(element)
@@ -41,7 +41,7 @@ end
 
 function ps_cost(ps_m::CanonicalModel,
                  variable::JuMP.Containers.DenseAxisArray{JV},
-                 cost_component::PSY.VariableCost{NTuple{2,Float64}},
+                 cost_component::PSY.VariableCost{NTuple{2, Float64}},
                  dt::Float64,
                  sign::Float64) where {JV <: JuMP.AbstractVariableRef}
 
@@ -117,11 +117,17 @@ function add_to_cost(ps_m::CanonicalModel,
 
     for d in devices
         cost_expression = ps_cost(ps_m,
-                                  ps_m.variables[var_name][PSY.get_name(d),:],
-                                  getfield(PSY.get_op_cost(d),cost_symbol),
+                                  ps_m.variables[var_name][PSY.get_name(d), :],
+                                  getfield(PSY.get_op_cost(d), cost_symbol),
                                   dt,
                                   sign)
-        ps_m.cost_function += cost_expression
+        T_ce = typeof(cost_expression)
+        T_cf = typeof(ps_m.cost_function)
+        if  T_cf <: JuMP.GenericAffExpr && T_ce <: JuMP.GenericQuadExpr
+            ps_m.cost_function += cost_expression
+        else
+            JuMP.add_to_expression!(ps_m.cost_function, cost_expression)
+        end
     end
 
     return

@@ -1,6 +1,6 @@
-function _pass_abstract_jump(optimizer::Union{Nothing,JuMP.OptimizerFactory}; kwargs...)
+function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory}; kwargs...)
 
-    if isa(optimizer,Nothing)
+    if isa(optimizer, Nothing)
         @info("The optimization model has no optimizer attached")
     end
 
@@ -27,8 +27,8 @@ function _pass_abstract_jump(optimizer::Union{Nothing,JuMP.OptimizerFactory}; kw
 
 end
 
-function build_op_model!(op_model::OperationModel; 
-                         optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing,
+function build_op_model!(op_model::OperationModel;
+                         optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
                          kwargs...)
 
     op_model.canonical_model = build_canonical_model(op_model.transmission,

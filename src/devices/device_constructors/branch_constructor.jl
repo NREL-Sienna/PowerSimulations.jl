@@ -8,11 +8,11 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     devices = PSY.get_components(device, sys)
     #=
-    branch_rate_constraint(ps_m, 
-                          devices, 
-                          device_formulation, 
+    branch_rate_constraint(ps_m,
+                          devices,
+                          device_formulation,
                           system_formulation,
-                          time_steps) 
+                          time_steps)
     =#
 
 
