@@ -1,23 +1,24 @@
 function _prepare_workspace(base_name::String, folder::String)
 
-    isdir(folder) && error("Specified folder is not valid")
+    !isdir(folder) && error("Specified folder is not valid")
 
     cd(folder)
-    simulation_path = joinpath(folder, "$(Dates.today())-base_name")
-    mkdir(joinpath(simulation_path, "raw_output"))
+    simulation_path = joinpath(folder, "$(Dates.today())-$(base_name)")
+    mkpath(joinpath(simulation_path, "raw_output"))
 
     return
 
 end
 
-function _validate_steps(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64}}, steps::Int64) where {T <: PM.AbstractPowerFormulation}
+function _validate_steps(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64}},
+                         steps::Int64) where {T <: PM.AbstractPowerFormulation}
 
     for (k,v) in stages
 
         forecast_count = length(PSY.get_forecast_initial_times(v[2]))
 
         if steps*v[3] > forecast_count #checks that there are enough time series to run
-            error("The number of available time series is not enough to perform the *
+            error("The number of available time series is not enough to perform the
                    desired amount of simulation steps.")
         end
 
