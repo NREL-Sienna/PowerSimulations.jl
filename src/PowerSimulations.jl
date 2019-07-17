@@ -104,7 +104,7 @@ include("core/device_constructor.jl")
 include("core/canonical_constructor.jl")
 include("core/operations_constructor.jl")
 include("core/core_structs/results_model.jl")
-#include("core/simulation_constructor.jl")
+include("core/simulation_constructor.jl")
 
 #Device Modeling components
 include("devices/device_models/common.jl")

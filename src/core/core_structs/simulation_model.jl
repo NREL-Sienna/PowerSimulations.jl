@@ -1,11 +1,18 @@
+mutable struct Stage
+    key::Int64
+    model::OperationModel
+    execution_count::Int64
+end
+
+
 mutable struct PowerSimulationsModel
     basename::String
-    periods::Int64
-    stages::Dict{Int64, OperationModel}
-    executioncount::Dict{Int64, Int64}
+    steps::Int64
+    stages::Vector{Stage}
     feedback_ref::Any
-    datefrom::Dates.DateTime
-    dateto::Dates.DateTime
+    valid_timeseries::Bool
+    from::Dates.DateTime #Inital Time of the first forecast
+    to::Dates.DateTime #Inital Time of the last forecast
     simulation_folder::String
 end
 

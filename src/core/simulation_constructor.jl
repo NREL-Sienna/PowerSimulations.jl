@@ -4,11 +4,23 @@ function _prepare_workspace(base_name::String, folder::String)
 
 end
 
-function _get_dates(stages, periods, executioncount)
+function _get_dates(stages::Dict{Int64, Tuple{M, PSY.System, Int64}}) where {M<:ModelReference}
+    k = keys(stages)
+    k_size = length(k)
+    range = Vector{Dates.DateTime}(undef, 2)
+    @assert k_size == maximum(k)
 
-    date_from, date_to = (0.0, 0.0)
+    for i in 1:k_size
+        initial_times = PSY.get_forecast_initial_times(stages[i][2])
+        i == 1 && (range[1] = initial_times[1])
+        interval = PSY.get_forecasts_interval(stages[i][2])
+        for (ix,element) in enumerate(initial_times[1:end-1])
+            @assert element + interval == initial_times[ix+1]
+        end
+        i == k_size && (range[end] = initial_times[end])
+    end
 
-    return date_from, date_to
+    return range, true
 
 end
 
@@ -22,29 +34,29 @@ function build_simulation!(stages::Dict{Int64, Any}, executioncount::Dict{Int64,
     end
 
 end
-=#
+
 
 
 function PowerSimulationsModel(simulation_folder::String,
-                                base_name::String,
-                                periods::Int64,
-                                stages::Dict{Int64, (ModelReference, PSY.System)},
+                                basename::String,
+                                steps::Int64,
+                                stages::Dict{Int64, Tuple{ModelReference, PSY.System, Int64}}),
                                 executioncount::Dict{Int64, Int64},
                                 feedback_ref;
                                 kwargs...)
 
-    _prepare_workspace(base_name, simulation_folder)
+    _prepare_workspace(basename, simulation_folder)
 
     #op_stages = build_simulation!(stages, executioncount; kwargs...)
 
-    date_from, date_to = _get_dates(stages, periods, executioncount)
+    date_from, date_to = _get_dates(stages, steps, executioncount)
 
-    new(base_name,
-        periods,
-        op_stages,
-        executioncount,
+    new(basename,
+        steps,
+        stages,
         feedback_ref,
         date_from,
         date_to)
 
 end
+=#
