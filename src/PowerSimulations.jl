@@ -146,8 +146,7 @@ include("routines/printing.jl")
 include("routines/solve_routines.jl")
 include("routines/get_ini_cond.jl")
 include("routines/optimization_debugging.jl")
-#include("routines/simulation_routines.jl")
-#include("routines/device_retreval.jl")
+include("routines/simulation_routines.jl")
 
 #################################################################################
 ##### JuMP methods overloading
