@@ -6,7 +6,11 @@ function _prepare_workspace!(ref::SimulationRef, base_name::String, folder::Stri
     simulation_path = joinpath(folder, "$(Dates.today())-$(base_name)")
     raw_ouput = joinpath(simulation_path, "raw_output")
     mkpath(raw_ouput)
+    models_json_ouput = joinpath(simulation_path, "models_json")
+    mkpath(models_json_ouput)
+
     ref.raw = raw_ouput
+    ref.models = models_json_ouput
 
     return
 
@@ -52,7 +56,8 @@ function _get_dates(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int
 
 end
 
-function _build_stages(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}}; kwargs...) where {T<:PM.AbstractPowerFormulation}
+function _build_stages(sim_ref::SimulationRef,
+                       stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}}; kwargs...) where {T<:PM.AbstractPowerFormulation}
 
     mod_stages = Vector{Stage}(undef, length(stages))
 
@@ -79,6 +84,6 @@ function build_simulation!(sim_ref::SimulationRef,
     dates, validation = _get_dates(stages)
     _prepare_workspace!(sim_ref, base_name, simulation_folder)
 
-    return dates, validation, _build_stages(stages)
+    return dates, validation, _build_stages(sim_ref, stages)
 
 end

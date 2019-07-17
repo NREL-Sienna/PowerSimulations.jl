@@ -1,5 +1,6 @@
 mutable struct SimulationRef
     raw::String
+    models::String
 end
 
 mutable struct Stage
@@ -9,8 +10,8 @@ mutable struct Stage
     solver::String
 
     function Stage(key::Int64,
-                    model::OperationModel,
-                    execution_count::Int64)
+                   model::OperationModel,
+                   execution_count::Int64)
 
     new(key,
         model,
@@ -45,7 +46,7 @@ mutable struct Simulation
                         kwargs...) where {T<:PM.AbstractPowerFormulation}
 
 
-    sim_ref = SimulationRef("init")
+    sim_ref = SimulationRef("init", "init")
 
     dates, validation, stages_vector = build_simulation!(sim_ref,
                                                         base_name,
