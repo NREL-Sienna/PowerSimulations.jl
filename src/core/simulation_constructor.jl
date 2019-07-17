@@ -12,7 +12,7 @@ function _prepare_workspace!(ref::SimulationRef, base_name::String, folder::Stri
 
 end
 
-function _validate_steps(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64}},
+function _validate_steps(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}},
                          steps::Int64) where {T <: PM.AbstractPowerFormulation}
 
     for (k,v) in stages
@@ -30,7 +30,7 @@ function _validate_steps(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System
 
 end
 
-function _get_dates(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64}}) where {T <: PM.AbstractPowerFormulation}
+function _get_dates(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}}) where {T <: PM.AbstractPowerFormulation}
     k = keys(stages)
     k_size = length(k)
     range = Vector{Dates.DateTime}(undef, 2)
@@ -52,12 +52,13 @@ function _get_dates(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int
 
 end
 
-function _build_stages(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64}}; kwargs...) where {T<:PM.AbstractPowerFormulation}
+function _build_stages(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}}; kwargs...) where {T<:PM.AbstractPowerFormulation}
 
     mod_stages = Vector{Stage}(undef, length(stages))
 
     for (k, v) in stages
-        op_mod = OperationModel(DefaultOpModel, v[1], v[2]; optimizer = v[4],sequential_runs = true, paramters = true, kwargs...)
+        @info("Building Stage $(k)")
+        op_mod = OperationModel(DefaultOpModel, v[1], v[2]; optimizer = v[4],sequential_runs = true, parameters = true, kwargs...)
         mod_stages[k] = Stage(k, op_mod, v[3])
     end
 
@@ -68,7 +69,7 @@ end
 function build_simulation!(sim_ref::SimulationRef,
                           base_name::String,
                           steps::Int64,
-                          stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64}},
+                          stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}},
                           feedback_ref,
                           simulation_folder::String;
                           kwargs...) where {T<:PM.AbstractPowerFormulation}

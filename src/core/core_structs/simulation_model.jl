@@ -6,7 +6,26 @@ mutable struct Stage
     key::Int64
     model::OperationModel
     execution_count::Int64
-    solver::JuMP.OptimizerFactory
+    solver::String
+
+    function Stage(key::Int64,
+                    model::OperationModel,
+                    execution_count::Int64)
+
+    new(key,
+        model,
+        execution_count,
+        JuMP.solver_name(model.canonical_model.JuMPmodel)
+    )
+
+    end
+
+end
+
+function set_stage_optimizer!(stage::Stage, optimizer_factory::JuMP.OptimizerFactory)
+    JuMP.set_optimizer(stage.model.canonical_mode.JuMPmodel,
+                       optimizer_factory)
+    stage.solver = JuMP.solver_name(stage.model.canonical_mode.JuMPmodel)
 end
 
 mutable struct Simulation
