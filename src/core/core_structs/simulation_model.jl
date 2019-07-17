@@ -6,6 +6,7 @@ mutable struct Stage
     key::Int64
     model::OperationModel
     execution_count::Int64
+    solver::JuMP.OptimizerFactory
 end
 
 mutable struct Simulation
@@ -19,7 +20,7 @@ mutable struct Simulation
 
     function Simulation(base_name::String,
                         steps::Int64,
-                        stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64}},
+                        stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}},
                         feedback_ref,
                         simulation_folder::String;
                         kwargs...) where {T<:PM.AbstractPowerFormulation}

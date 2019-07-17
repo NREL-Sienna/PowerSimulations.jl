@@ -7,6 +7,7 @@ module PowerSimulations
 export Simulation
 export OperationModel
 export ModelReference
+export InitialCondition
 
 #Network Relevant Exports
 export StandardPTDFForm
@@ -47,8 +48,8 @@ export ThermalDispatchNoMin
 #export OptimalPowerFlow
 
 #functions
-#export construct_device!
-#export construct_network!
+export construct_device!
+export construct_network!
 export solve_op_model!
 
 

@@ -57,7 +57,7 @@ function _build_stages(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, 
     mod_stages = Vector{Stage}(undef, length(stages))
 
     for (k, v) in stages
-        op_mod = OperationModel(DefaultOpModel, v[1], v[2]; sequential_runs = true, kwargs...)
+        op_mod = OperationModel(DefaultOpModel, v[1], v[2]; optimizer = v[4],sequential_runs = true, paramters = true, kwargs...)
         mod_stages[k] = Stage(k, op_mod, v[3])
     end
 
