@@ -1,10 +1,33 @@
 function _prepare_workspace(base_name::String, folder::String)
 
+    isdir(folder) && error("Specified folder is not valid")
 
+    cd(folder)
+    simulation_path = joinpath(folder, "$(Dates.today())-base_name")
+    mkdir(joinpath(simulation_path, "raw_output"))
+
+    return
 
 end
 
-function _get_dates(stages::Dict{Int64, Tuple{M, PSY.System, Int64}}) where {M<:ModelReference}
+function _validate_steps(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64}}, steps::Int64) where {T <: PM.AbstractPowerFormulation}
+
+    for (k,v) in stages
+
+        forecast_count = length(PSY.get_forecast_initial_times(v[2]))
+
+        if steps*v[3] > forecast_count #checks that there are enough time series to run
+            error("The number of available time series is not enough to perform the *
+                   desired amount of simulation steps.")
+        end
+
+    end
+
+    return
+
+end
+
+function _get_dates(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64}}) where {T <: PM.AbstractPowerFormulation}
     k = keys(stages)
     k_size = length(k)
     range = Vector{Dates.DateTime}(undef, 2)
@@ -34,29 +57,31 @@ function build_simulation!(stages::Dict{Int64, Any}, executioncount::Dict{Int64,
     end
 
 end
-
+=#
 
 
 function PowerSimulationsModel(simulation_folder::String,
-                                basename::String,
-                                steps::Int64,
-                                stages::Dict{Int64, Tuple{ModelReference, PSY.System, Int64}}),
-                                executioncount::Dict{Int64, Int64},
-                                feedback_ref;
-                                kwargs...)
+                               basename::String,
+                               steps::Int64,
+                               stages::Dict{Int64, stage_spec},
+                               feedback_ref;
+                               kwargs...) where {M<:ModelReference}
+
+
+    _validate_steps(stages, steps)
 
     _prepare_workspace(basename, simulation_folder)
 
-    #op_stages = build_simulation!(stages, executioncount; kwargs...)
 
-    date_from, date_to = _get_dates(stages, steps, executioncount)
+
+    dates, validation = _get_dates(stages)
 
     new(basename,
         steps,
         stages,
         feedback_ref,
-        date_from,
-        date_to)
+        validation,
+        dates[1],
+        dates[2])
 
 end
-=#
