@@ -29,3 +29,5 @@ mutable struct InitialCondition{T <: Union{PJ.ParameterRef, Float64}}
     device::PSY.Device
     value::T
 end
+
+get_value(ic::InitialCondition) = ic.value
