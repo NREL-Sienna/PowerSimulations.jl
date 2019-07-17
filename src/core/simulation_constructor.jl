@@ -63,7 +63,7 @@ end
 function PowerSimulationsModel(simulation_folder::String,
                                basename::String,
                                steps::Int64,
-                               stages::Dict{Int64, stage_spec},
+                               stages::Dict{Int64, Any},
                                feedback_ref;
                                kwargs...) where {M<:ModelReference}
 

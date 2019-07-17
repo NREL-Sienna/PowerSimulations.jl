@@ -1,8 +1,8 @@
 abstract type AbstractHydroFormulation <: AbstractDeviceFormulation end
 
-struct HydroFixed <: AbstractHydroFormulation end
+abstract type AbstractHydroDispatchForm <: AbstractHydroFormulation end
 
-struct AbstractHydroDispatchForm <: AbstractHydroFormulation end
+struct HydroFixed <: AbstractHydroFormulation end
 
 struct HydroDispatchRunOfRiver <: AbstractHydroDispatchForm end
 
@@ -12,27 +12,46 @@ struct HydroCommitmentRunOfRiver <: AbstractHydroFormulation end
 
 struct HydroCommitmentSeasonalFlow <: AbstractHydroFormulation end
 
+#=
 # hydro variables
 
-function activepower_variables(ps_m::CanonicalModel, devices::Array{H, 1}, time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen}
+function activepower_variables(ps_m::CanonicalModel,
+                               devices::Vector{H}) where {H <: PSY.HydroGen}
 
-    add_variable(ps_m, devices, time_steps, :Phy, false, :nodal_balance_active)
+    time_steps = model_time_steps(ps_m)
+    var_name = Symbol("P_$(H)")
+
+    add_variable(ps_m,
+                 devices,
+                 time_steps,
+                 var_name,
+                 false,
+                 :nodal_balance_active)
 
     return
 
 end
 
 
-function reactivepower_variables(ps_m::CanonicalModel, devices::Array{H, 1}, time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen}
+function reactivepower_variables(ps_m::CanonicalModel,
+                                 devices::Vector{H}) where {H <: PSY.HydroGen}
 
-    add_variable(ps_m, devices, time_steps, :Qhy, false, :nodal_balance_reactive)
+    time_steps = model_time_steps(ps_m)
+    var_name = Symbol("Q_$(H)")
+
+    add_variable(ps_m,
+                 devices,
+                 time_steps,
+                 var_name,
+                 false,
+                 :nodal_balance_active)
 
     return
 
 end
 
 
-function commitment_variables(ps_m::CanonicalModel, devices::Array{H, 1}, time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen}
+function commitment_variables(ps_m::CanonicalModel, devices::Vector{H}, time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen}
 
     add_variable(ps_m, devices, time_steps, :on_hy, true)
     add_variable(ps_m, devices, time_steps, :start_hy, true)
@@ -46,7 +65,7 @@ end
 # output constraints
 
 function activepower_constraints(ps_m::CanonicalModel,
-                                  devices::Array{H, 1},
+                                  devices::Vector{H},
                                   device_formulation::Type{D},
                                   system_formulation::Type{S},
                                   time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen,
@@ -63,7 +82,7 @@ end
 
 
 function activepower_constraints(ps_m::CanonicalModel,
-                                 devices::Array{H, 1},
+                                 devices::Vector{H},
                                  device_formulation::Type{HydroDispatchRunOfRiver},
                                  system_formulation::Type{S},
                                  time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen,
@@ -79,7 +98,7 @@ end
 
 
 function activepower_constraints(ps_m::CanonicalModel,
-                                 devices::Array{H, 1},
+                                 devices::Vector{H},
                                  device_formulation::Type{HydroDispatchSeasonalFlow},
                                  system_formulation::Type{S},
                                  time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen,
@@ -100,7 +119,7 @@ end
 
 
 function reactivepower_constraints(ps_m::CanonicalModel,
-                                   devices::Array{H, 1},
+                                   devices::Vector{H},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S},
                                    time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen,
@@ -117,7 +136,7 @@ end
 
 
 function activepower_constraints(ps_m::CanonicalModel,
-                                 devices::Array{H, 1},
+                                 devices::Vector{H},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S},
                                  time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen,
@@ -134,7 +153,7 @@ end
 
 
 function reactivepower_constraints(ps_m::CanonicalModel,
-                                   devices::Array{H, 1},
+                                   devices::Vector{H},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S},
                                    time_steps::UnitRange{Int64}) where {H <: PSY.HydroGen,
@@ -187,4 +206,4 @@ end
 #     return
 #
 # end
-
+=#
