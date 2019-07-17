@@ -1,10 +1,12 @@
-function _prepare_workspace(base_name::String, folder::String)
+function _prepare_workspace!(ref::SimulationRef, base_name::String, folder::String)
 
     !isdir(folder) && error("Specified folder is not valid")
 
     cd(folder)
     simulation_path = joinpath(folder, "$(Dates.today())-$(base_name)")
-    mkpath(joinpath(simulation_path, "raw_output"))
+    raw_ouput = joinpath(simulation_path, "raw_output")
+    mkpath(raw_ouput)
+    ref.raw = raw_ouput
 
     return
 
@@ -39,50 +41,43 @@ function _get_dates(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int
         i == 1 && (range[1] = initial_times[1])
         interval = PSY.get_forecasts_interval(stages[i][2])
         for (ix,element) in enumerate(initial_times[1:end-1])
-            @assert element + interval == initial_times[ix+1]
+            if !(element + interval == initial_times[ix+1])
+                error("The sequence of forecasts is invalid")
+            end
         end
-        i == k_size && (range[end] = initial_times[end])
+        (i == k_size && (range[end] = initial_times[end]))
     end
 
-    return range, true
+    return Tuple(range), true
 
 end
 
-#=
-function build_simulation!(stages::Dict{Int64, Any}, executioncount::Dict{Int64, Int64}; kwargs...)
+function _build_stages(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64}}; kwargs...) where {T<:PM.AbstractPowerFormulation}
 
-    mod_stages = Dict{Int64, OperationModel}()
+    mod_stages = Vector{Stage}(undef, length(stages))
 
     for (k, v) in stages
-        mod_stages[k] = OperationModel(v[1], v[2]; sequential_runs = true; kwargs...)
+        op_mod = OperationModel(DefaultOpModel, v[1], v[2]; sequential_runs = true, kwargs...)
+        mod_stages[k] = Stage(k, op_mod, v[3])
     end
 
+    return mod_stages
+
 end
-=#
 
-
-function PowerSimulationsModel(simulation_folder::String,
-                               basename::String,
-                               steps::Int64,
-                               stages::Dict{Int64, Any},
-                               feedback_ref;
-                               kwargs...) where {M<:ModelReference}
+function build_simulation!(sim_ref::SimulationRef,
+                          base_name::String,
+                          steps::Int64,
+                          stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64}},
+                          feedback_ref,
+                          simulation_folder::String;
+                          kwargs...) where {T<:PM.AbstractPowerFormulation}
 
 
     _validate_steps(stages, steps)
-
-    _prepare_workspace(basename, simulation_folder)
-
-
-
     dates, validation = _get_dates(stages)
+    _prepare_workspace!(sim_ref, base_name, simulation_folder)
 
-    new(basename,
-        steps,
-        stages,
-        feedback_ref,
-        validation,
-        dates[1],
-        dates[2])
+    return dates, validation, _build_stages(stages)
 
 end
