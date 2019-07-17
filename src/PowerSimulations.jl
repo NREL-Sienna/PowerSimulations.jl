@@ -57,6 +57,7 @@ export solve_op_model!
 # Imports
 import JuMP
 import ParameterJuMP
+import MathOptFormat
 import TimeSeries
 import PowerSystems
 import PowerModels
@@ -78,6 +79,7 @@ const PSI = PowerSimulations
 const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
 const PJ = ParameterJuMP
+const MOPF = MathOptFormat.MOF.Model()
 
 #Type Alias for JuMP and PJ containers
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
@@ -148,6 +150,7 @@ include("routines/solve_routines.jl")
 include("routines/get_ini_cond.jl")
 include("routines/optimization_debugging.jl")
 include("routines/simulation_routines.jl")
+include("routines/write_model.jl")
 
 #################################################################################
 ##### JuMP methods overloading
