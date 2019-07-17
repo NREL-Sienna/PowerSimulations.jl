@@ -21,11 +21,13 @@ export HVDCDispatch
 export StaticPowerLoad
 export InterruptiblePowerLoad
 export DispatchablePowerLoad
-######## Thermal Formulations ########
+######## Renewable Formulations ########
 export RenewableFixed
 export RenewableFullDispatch
 export RenewableConstantPowerFactor
-######## Storage Formulations ########
+######## Hydro Formulations ########
+export HydroFixed
+######## Renewable Formulations ########
 export BookKeeping
 export BookKeepingwReservation
 ######## Thermal Formulations ########
