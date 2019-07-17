@@ -1,14 +1,16 @@
 abstract type AbstractHydroFormulation <: AbstractDeviceFormulation end
 
-abstract type AbstractHydroDispatchForm <: AbstractHydroFormulation end
+struct HydroFixed <: AbstractHydroFormulation end
 
-abstract type HydroDispatchRunOfRiver <: AbstractHydroDispatchForm end
+struct AbstractHydroDispatchForm <: AbstractHydroFormulation end
 
-abstract type HydroDispatchSeasonalFlow <: AbstractHydroDispatchForm end
+struct HydroDispatchRunOfRiver <: AbstractHydroDispatchForm end
 
-abstract type HydroCommitmentRunOfRiver <: AbstractHydroFormulation end
+struct HydroDispatchSeasonalFlow <: AbstractHydroDispatchForm end
 
-abstract type HydroCommitmentSeasonalFlow <: AbstractHydroFormulation end
+struct HydroCommitmentRunOfRiver <: AbstractHydroFormulation end
+
+struct HydroCommitmentSeasonalFlow <: AbstractHydroFormulation end
 
 # hydro variables
 
