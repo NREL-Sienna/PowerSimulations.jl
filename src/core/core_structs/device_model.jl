@@ -30,4 +30,12 @@ mutable struct InitialCondition{T <: Union{PJ.ParameterRef, Float64}}
     value::T
 end
 
-get_value(ic::InitialCondition) = ic.value
+function value(p::InitialCondition{Float64})
+    return p.value
+end
+
+function value(p::InitialCondition{PJ.ParameterRef})
+    return PJ.value(p.value)
+end
+
+get_condition(ic::InitialCondition) = ic.value
