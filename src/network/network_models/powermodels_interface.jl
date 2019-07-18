@@ -247,7 +247,7 @@ function powermodels_network!(ps_m::CanonicalModel,
                               sys::PSY.System) where {S <: PM.AbstractPowerFormulation}
 
     time_steps = model_time_steps(ps_m)
-    pm_data = pass_to_pm(sys, time_steps[end])
+    pm_data, PM_map = pass_to_pm(sys, time_steps[end])
     buses = PSY.get_components(PSY.Bus, sys)
 
     _remove_undef!(ps_m.expressions[:nodal_balance_active])
@@ -261,6 +261,7 @@ function powermodels_network!(ps_m::CanonicalModel,
     pm_f = (data::Dict{String, Any}; kwargs...) -> PM.GenericPowerModel(pm_data, system_formulation; kwargs...)
 
     ps_m.pm_model = build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
+    ps_m.pm_model.ext[:PMmap] = PM_map
 
     return
 
@@ -272,7 +273,7 @@ function powermodels_network!(ps_m::CanonicalModel,
                               sys::PSY.System) where {S <: PM.AbstractActivePowerFormulation}
 
     time_steps = model_time_steps(ps_m)
-    pm_data = pass_to_pm(sys, time_steps[end])
+    pm_data, PM_map = pass_to_pm(sys, time_steps[end])
     buses = PSY.get_components(PSY.Bus, sys)
 
     _remove_undef!(ps_m.expressions[:nodal_balance_active])
@@ -285,7 +286,45 @@ function powermodels_network!(ps_m::CanonicalModel,
     pm_f = (data::Dict{String, Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
 
     ps_m.pm_model = build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
+    ps_m.pm_model.ext[:PMmap] = PM_map
 
     return
 
+end
+
+#### PM accessor functions ########
+
+function retrieve_pm_vars!(ps_m::CanonicalModel, sys::PSY.System)
+
+    time_steps = model_time_steps(ps_m)
+    bus_dict = ps_m.pm_model.ext[:PMmap].bus
+    ACbranch_dict = ps_m.pm_model.ext[:PMmap].arcs
+    DCbranch_dict = ps_m.pm_model.ext[:PMmap].arcs_dc
+
+    bus_var_dict = Dict(:va => :theta,
+                        :vm => :V)
+
+    ACbranch_var_dict = Dict(:p => :Fbr_ACBranch,
+                            :q => :Qbr_ACBranch)
+
+    DCbranch_var_dict = Dict(:p_dc => :Fbr_DCBranch,
+                            :q_dc => :Qbr_DCBranch)
+    
+    for (pm_v, ps_v) in bus_var_dict
+        ps_m.variables[ps_v] = PSI._container_spec(ps_m.JuMPmodel,
+                                                    (PSY.get_name(b) for b in values(bus_dict)),
+                                                    time_steps)
+        for t in time_steps, (pm_bus, bus) in bus_dict
+            ps_m.variables[ps_v][PSY.get_name(bus), t] = ps_m.pm_model.var[:nw][1][:cnd][1][pm_v][pm_bus]
+        end
+    end
+
+    for (pm_v, ps_v) in ACbranch_var_dict
+        ps_m.variables[ps_v] = PSI._container_spec(ps_m.JuMPmodel,
+                                                    (PSY.get_name(b) for b in values(ACbranch_dict)),
+                                                    time_steps)
+        for t in time_steps, (pm_arc, branch) in ACbranch_dict
+            ps_m.variables[ps_v][PSY.get_name(branch), t] = ps_m.pm_model.var[:nw][1][:cnd][1][pm_v][pm_arc]
+        end
+    end
 end
