@@ -1,4 +1,5 @@
 function write_op_model(op_model::OperationModel, path::String)
-    mopf_model= MOI.copy_to(MOPFM, JuMP.backend(op_model.canonical_model.JuMPmodel))
-    MOI.write_to_file(mopf_model, joinpath(path,"$(op_model).json"))
+    MOF_model = MOPFM
+    MOI.copy_to(MOF_model, JuMP.backend(op_model.canonical_model.JuMPmodel))
+    MOI.write_to_file(MOF_model, path)
 end

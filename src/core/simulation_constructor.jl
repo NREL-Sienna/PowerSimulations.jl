@@ -63,7 +63,14 @@ function _build_stages(sim_ref::SimulationRef,
 
     for (k, v) in stages
         @info("Building Stage $(k)")
-        op_mod = OperationModel(DefaultOpModel, v[1], v[2]; optimizer = v[4],sequential_runs = true, parameters = true, kwargs...)
+        op_mod = OperationModel(DefaultOpModel, v[1], v[2];
+                                optimizer = v[4],
+                                sequential_runs = true,
+                                parameters = true; kwargs...)
+        stage_path = joinpath(sim_ref.models,"stage_$(k)_data")
+        mkpath(stage_path)
+        write_op_model(op_mod, joinpath(stage_path, "optimization_model.json"))
+        PSY.to_json(v[2], joinpath(stage_path ,"sys_data.json"))
         mod_stages[k] = Stage(k, op_mod, v[3])
     end
 

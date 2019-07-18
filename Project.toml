@@ -20,12 +20,12 @@ TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 [compat]
 DataFrames = ">= v0.18.1"
 JuMP = ">= v0.19.1"
+MathOptFormat = ">= 0.1.0"
 MathOptInterface = ">= v0.8.4"
 ParameterJuMP = ">= v0.1.0"
 PowerModels = ">= v0.10.0"
 PowerSystems = ">= v0.4.0"
 TimeSeries = ">= v0.14.1"
-MathOptFormat = ">= 0.1.0"
 
 [extras]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
