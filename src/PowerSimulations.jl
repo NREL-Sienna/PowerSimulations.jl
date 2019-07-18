@@ -79,7 +79,7 @@ const PSI = PowerSimulations
 const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
 const PJ = ParameterJuMP
-const MOPF = MathOptFormat.MOF.Model()
+const MOPFM = MathOptFormat.MOF.Model()
 
 #Type Alias for JuMP and PJ containers
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
