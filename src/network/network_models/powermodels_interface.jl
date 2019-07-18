@@ -38,8 +38,8 @@ function post_nip(pm::PM.GenericPowerModel)
 
             PM.constraint_voltage_angle_difference(pm, i, nw=n)
 
-            PM.constraint_thermal_limit_from(pm, i, nw=n)
-            PM.constraint_thermal_limit_to(pm, i, nw=n)
+            #PM.constraint_thermal_limit_from(pm, i, nw=n)
+            #PM.constraint_thermal_limit_to(pm, i, nw=n)
         end
 
         for i in PM.ids(pm, :dcline)
@@ -81,8 +81,8 @@ function post_nip_expr(pm::PM.GenericPowerModel)
 
             PM.constraint_voltage_angle_difference(pm, i, nw=n)
 
-            PM.constraint_thermal_limit_from(pm, i, nw=n)
-            PM.constraint_thermal_limit_to(pm, i, nw=n)
+            #PM.constraint_thermal_limit_from(pm, i, nw=n)
+            #PM.constraint_thermal_limit_to(pm, i, nw=n)
         end
 
         for i in PM.ids(pm, :dcline)
