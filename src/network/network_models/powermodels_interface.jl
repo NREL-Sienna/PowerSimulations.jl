@@ -327,4 +327,13 @@ function retrieve_pm_vars!(ps_m::CanonicalModel, sys::PSY.System)
             ps_m.variables[ps_v][PSY.get_name(branch), t] = ps_m.pm_model.var[:nw][1][:cnd][1][pm_v][pm_arc]
         end
     end
+
+    for (pm_v, ps_v) in DCbranch_var_dict
+        ps_m.variables[ps_v] = PSI._container_spec(ps_m.JuMPmodel,
+                                                    (PSY.get_name(b) for b in values(DCbranch_dict)),
+                                                    time_steps)
+        for t in time_steps, (pm_arc, branch) in DCbranch_dict
+            ps_m.variables[ps_v][PSY.get_name(branch), t] = ps_m.pm_model.var[:nw][1][:cnd][1][pm_v][pm_arc]
+        end
+    end
 end

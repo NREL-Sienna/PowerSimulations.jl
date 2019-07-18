@@ -28,7 +28,7 @@ include("test_utils/get_test_data.jl")
     include("base_structs.jl")
     include("PowerModels_interface.jl")
 end
-
+#=
 @testset "Device Constructors" begin
     include("thermal_generation_constructors.jl")
     include("renewable_generation_constructors.jl")
@@ -36,11 +36,11 @@ end
     include("storage_constructors.jl")
     #include("hydro_generation_constructors.jl")
 end
-
+=#
 @testset "Network Constructors" begin
     include("network_constructors.jl")
 end
-
+#=
 @testset "Services Constructors" begin
     #include("services_constructor.jl")
 end
@@ -49,3 +49,4 @@ end
     include("operation_model_constructor.jl")
     include("operation_model_solve.jl")
 end
+=#
