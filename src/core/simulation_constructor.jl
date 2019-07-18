@@ -66,7 +66,7 @@ function _build_stages(sim_ref::SimulationRef,
         op_mod = OperationModel(DefaultOpModel, v[1], v[2];
                                 optimizer = v[4],
                                 sequential_runs = true,
-                                parameters = true; kwargs...)
+                                parameters = true, kwargs...)
         stage_path = joinpath(sim_ref.models,"stage_$(k)_data")
         mkpath(stage_path)
         write_op_model(op_mod, joinpath(stage_path, "optimization_model.json"))
@@ -91,6 +91,6 @@ function build_simulation!(sim_ref::SimulationRef,
     dates, validation = _get_dates(stages)
     _prepare_workspace!(sim_ref, base_name, simulation_folder)
 
-    return dates, validation, _build_stages(sim_ref, stages)
+    return dates, validation, _build_stages(sim_ref, stages; kwargs...)
 
 end
