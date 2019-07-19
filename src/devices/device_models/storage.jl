@@ -164,7 +164,7 @@ function make_efficiency_data(devices::PSY.FlattenIteratorWrapper{St}) where {St
     names = Vector{String}(undef, length(devices))
     in_out = Vector{InOut}(undef, length(devices))
 
-    for (ix,d) in enumerate(devices)
+    for (ix, d) in enumerate(devices)
         names[ix] = PSY.get_name(d)
         in_out[ix] = PSY.get_efficiency(d)
     end

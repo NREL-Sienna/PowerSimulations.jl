@@ -13,7 +13,7 @@ dc_line = DeviceModel(PSY.HVDCLine, PSI.HVDCDispatch)
                                                    c_sys14 => [120, 120, 0, 0, 24],
                                                    c_sys14_dc => [120, 120, 0, 0, 24])
 
-    for (ix,sys) in enumerate(systems), p in parameters
+    for (ix, sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
         bus_numbers = sort([b.number for b in buses])
         ps_model = PSI._canonical_model_init(bus_numbers, OSQP_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
@@ -25,10 +25,10 @@ dc_line = DeviceModel(PSY.HVDCLine, PSI.HVDCDispatch)
         construct_device!(ps_model, dc_line, network, sys);
         construct_network!(ps_model, network, sys; parameters = p);
         @test JuMP.num_variables(ps_model.JuMPmodel) == test_results[sys][1]
-        @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == test_results[sys][2]
-        @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == test_results[sys][3]
-        @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == test_results[sys][4]
-        @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == test_results[sys][5]
+        @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == test_results[sys][2]
+        @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == test_results[sys][3]
+        @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.GreaterThan{Float64}) == test_results[sys][4]
+        @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == test_results[sys][5]
 
         JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
         JuMP.optimize!(ps_model.JuMPmodel)
@@ -45,7 +45,7 @@ end
                                                     c_sys14 => [600, 120, 0, 0, 816],
                                                     c_sys14_dc => [552, 120, 0, 0, 768])
 
-    for (ix,sys) in enumerate(systems), p in parameters
+    for (ix, sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
         bus_numbers = sort([b.number for b in buses])
         ps_model = PSI._canonical_model_init(bus_numbers, OSQP_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
@@ -57,10 +57,10 @@ end
         construct_device!(ps_model, dc_line, network, sys);
         construct_network!(ps_model, network, sys; PTDF = PTDF_ref[sys], parameters = p);
         @test JuMP.num_variables(ps_model.JuMPmodel) == test_results[sys][1]
-        @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == test_results[sys][2]
-        @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == test_results[sys][3]
-        @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == test_results[sys][4]
-        @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == test_results[sys][5]
+        @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == test_results[sys][2]
+        @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == test_results[sys][3]
+        @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.GreaterThan{Float64}) == test_results[sys][4]
+        @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == test_results[sys][5]
 
         JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
         JuMP.optimize!(ps_model.JuMPmodel)
@@ -83,7 +83,7 @@ end
                                                     c_sys14 => [936, 120, 480, 480, 816],
                                                     c_sys14_dc => [984, 120, 432, 432, 816])
 
-    for (ix,sys) in enumerate(systems), p in parameters
+    for (ix, sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
         bus_numbers = sort([b.number for b in buses])
         ps_model = PSI._canonical_model_init(bus_numbers, OSQP_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
@@ -95,10 +95,10 @@ end
         construct_device!(ps_model, dc_line, network, sys);
         construct_network!(ps_model, network, sys; parameters = p);
         @test JuMP.num_variables(ps_model.JuMPmodel) == test_results[sys][1]
-        @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == test_results[sys][2]
-        @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == test_results[sys][3]
-        @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == test_results[sys][4]
-        @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == test_results[sys][5]
+        @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == test_results[sys][2]
+        @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == test_results[sys][3]
+        @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.GreaterThan{Float64}) == test_results[sys][4]
+        @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == test_results[sys][5]
     end
 
 end
@@ -111,7 +111,7 @@ end
                                                     c_sys14 => [2832, 240, 480, 480, 672],
                                                     c_sys14_dc => [2832, 240, 432, 432, 720])
 
-    for (ix,sys) in enumerate(systems), p in parameters
+    for (ix, sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
         bus_numbers = sort([b.number for b in buses])
         ps_model = PSI._canonical_model_init(bus_numbers, ipopt_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
@@ -123,10 +123,10 @@ end
         construct_device!(ps_model, dc_line, network, sys);
         construct_network!(ps_model, network, sys; parameters = p);
         @test JuMP.num_variables(ps_model.JuMPmodel) == test_results[sys][1]
-        @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.Interval{Float64}) == test_results[sys][2]
-        @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.LessThan{Float64}) == test_results[sys][3]
-        @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.GreaterThan{Float64}) == test_results[sys][4]
-        @test JuMP.num_constraints(ps_model.JuMPmodel,JuMP.GenericAffExpr{Float64,VariableRef},MOI.EqualTo{Float64}) == test_results[sys][5]
+        @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == test_results[sys][2]
+        @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == test_results[sys][3]
+        @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.GreaterThan{Float64}) == test_results[sys][4]
+        @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == test_results[sys][5]
 
         JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
         JuMP.optimize!(ps_model.JuMPmodel)
