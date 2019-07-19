@@ -79,6 +79,18 @@ function branch_rate_constraint(ps_m::CanonicalModel,
 end
 
 function branch_rate_constraint(ps_m::CanonicalModel,
+                                devices::PSY.FlattenIteratorWrapper{B},
+                                device_formulation::Type{D},
+                                system_formulation::Type{StandardPTDFForm}) where {B <: PSY.ACBranch,
+                                                                    D <: AbstractBranchFormulation}
+
+    # This is intended to to nothing since flow constraints are populated in ptdf_networkflow()
+
+    return
+
+end
+
+function branch_rate_constraint(ps_m::CanonicalModel,
     devices::PSY.FlattenIteratorWrapper{B},
     device_formulation::Type{D},
     system_formulation::Type{S}) where {B <: PSY.ACBranch,

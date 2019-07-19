@@ -56,6 +56,11 @@ end
         construct_device!(ps_model, ttransformer_model, network, sys);
         construct_device!(ps_model, dc_line, network, sys);
         construct_network!(ps_model, network, sys; PTDF = PTDF_ref[sys], parameters = p);
+        PSI.branch_rate_constraint(ps_model, PSY.get_components(line_model.device,sys), line_model.formulation, network)
+        PSI.branch_rate_constraint(ps_model, PSY.get_components(transformer_model.device,sys), transformer_model.formulation, network)
+        PSI.branch_rate_constraint(ps_model, PSY.get_components(ttransformer_model.device,sys), ttransformer_model.formulation, network)
+        PSI.branch_rate_constraint(ps_model, PSY.get_components(dc_line.device,sys), dc_line.formulation, network)
+
         @test JuMP.num_variables(ps_model.JuMPmodel) == test_results[sys][1]
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == test_results[sys][2]
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == test_results[sys][3]
@@ -94,6 +99,11 @@ end
         construct_device!(ps_model, ttransformer_model, network, sys);
         construct_device!(ps_model, dc_line, network, sys);
         construct_network!(ps_model, network, sys; parameters = p);
+        PSI.branch_rate_constraint(ps_model, PSY.get_components(line_model.device,sys), line_model.formulation, network)
+        PSI.branch_rate_constraint(ps_model, PSY.get_components(transformer_model.device,sys), transformer_model.formulation, network)
+        PSI.branch_rate_constraint(ps_model, PSY.get_components(ttransformer_model.device,sys), ttransformer_model.formulation, network)
+        PSI.branch_rate_constraint(ps_model, PSY.get_components(dc_line.device,sys), dc_line.formulation, network)
+
         @test JuMP.num_variables(ps_model.JuMPmodel) == test_results[sys][1]
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == test_results[sys][2]
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == test_results[sys][3]

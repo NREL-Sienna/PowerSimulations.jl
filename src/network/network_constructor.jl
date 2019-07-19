@@ -43,7 +43,6 @@ function construct_network!(ps_m::CanonicalModel,
 
     powermodels_network!(ps_m, system_formulation, sys)
     add_pm_var_refs!(ps_m, sys, system_formulation)
-    # TODO: add calls to branch_rate_constraint
 
     return
 

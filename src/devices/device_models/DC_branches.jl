@@ -70,6 +70,17 @@ function branch_rate_constraint(ps_m::CanonicalModel,
 
 end
 
+function branch_rate_constraint(ps_m::CanonicalModel,
+                                devices::PSY.FlattenIteratorWrapper{B},
+                                device_formulation::Type{HVDCLossless},
+                                system_formulation::Type{StandardPTDFForm}) where {B <: PSY.DCBranch}
+    
+    # This is intended to to nothing since flow constraints are populated in ptdf_networkflow()
+
+    return
+
+end
+
 
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
@@ -93,6 +104,17 @@ function branch_rate_constraint(ps_m::CanonicalModel,
                             -PSY.get_loss(d).l1,
                             -PSY.get_loss(d).l0)
     end
+
+    return
+
+end
+
+function branch_rate_constraint(ps_m::CanonicalModel,
+                                devices::PSY.FlattenIteratorWrapper{B},
+                                device_formulation::Type{HVDCDispatch},
+                                system_formulation::Type{StandardPTDFForm}) where {B <: PSY.DCBranch}
+
+    # This is intended to to nothing since flow constraints are populated in ptdf_networkflow()
 
     return
 
