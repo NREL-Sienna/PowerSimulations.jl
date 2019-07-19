@@ -112,8 +112,8 @@ end
 function device_duration_look_ahead(ps_m::CanonicalModel,
                              set_names::Vector{String},
                              duration_data::Vector{UpDown},
-                             duration_ind_status_on::Vector{InitialCondition},
-                             duration_ind_status_off::Vector{InitialCondition},
+                             initial_duration_on::Vector{InitialCondition},
+                             initial_duration_off::Vector{InitialCondition},
                              cons_name::Symbol,
                              var_names::Tuple{Symbol,Symbol,Symbol},
                              M_value::Float64 = 1e6)
@@ -127,9 +127,9 @@ function device_duration_look_ahead(ps_m::CanonicalModel,
 
     for (ix,name) in enumerate(set_names)
         ps_m.constraints[name_up][name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
-                                            duration_ind_status_on[ix].value <= ps_m.variables[var_names[1]][name,1]*M_value)
+                                            initial_duration_on[ix].value <= ps_m.variables[var_names[1]][name,1]*M_value)
         ps_m.constraints[name_down][name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
-                                            duration_ind_status_off[ix].value <= (1- ps_m.variables[var_names[1]][name,1])*M_value)
+                                            initial_duration_off[ix].value <= (1- ps_m.variables[var_names[1]][name,1])*M_value)
     end
 
     for t in time_steps[2:end], (ix,name) in enumerate(set_names)
@@ -140,7 +140,7 @@ function device_duration_look_ahead(ps_m::CanonicalModel,
                 JuMP.add_to_expression!(lhs_on,1,ps_m.variables[var_names[1]][name,i])
             end
         end
-        JuMP.add_to_expression!(lhs_on,duration_ind_status_on[ix].value) : nothing;
+        JuMP.add_to_expression!(lhs_on,initial_duration_on[ix].value) : nothing;
 
         ps_m.constraints[name_up][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
             lhs_on <= ps_m.variables[var_names[3]][name,t])*duration_data[ix].up
@@ -152,7 +152,7 @@ function device_duration_look_ahead(ps_m::CanonicalModel,
                 JuMP.add_to_expression!(lhs_off,(1-ps_m.variables[var_names[1]][name,i]));
             end
         end
-        JuMP.add_to_expression!(lhs_off,duration_ind_status_on[ix].value) : nothing;
+        JuMP.add_to_expression!(lhs_off,initial_duration_on[ix].value) : nothing;
 
         ps_m.constraints[name_down][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
             lhs_off <= ps_m.variables[var_names[2]][name,t]*duration_data[ix].down)
@@ -163,8 +163,8 @@ end
 function device_duration_param_look_ahead(ps_m::CanonicalModel,
                              set_names::Vector{String},
                              duration_data::Vector{UpDown},
-                             duration_ind_status_on::Vector{InitialCondition},
-                             duration_ind_status_off::Vector{InitialCondition},
+                             initial_duration_on::Vector{InitialCondition},
+                             initial_duration_off::Vector{InitialCondition},
                              cons_name::Symbol,
                              var_names::Tuple{Symbol,Symbol,Symbol},
                              M_value::Float64 = 1e6)
@@ -178,9 +178,9 @@ function device_duration_param_look_ahead(ps_m::CanonicalModel,
 
     for (ix,name) in enumerate(set_names)
         ps_m.constraints[name_up][name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
-                                            duration_ind_status_on[ix].value <= ps_m.variables[var_names[1]][name,1]*M_value)
+                                            initial_duration_on[ix].value <= ps_m.variables[var_names[1]][name,1]*M_value)
         ps_m.constraints[name_down][name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
-                                            duration_ind_status_off[ix].value <= (1- ps_m.variables[var_names[1]][name,1])*M_value)
+                                            initial_duration_off[ix].value <= (1- ps_m.variables[var_names[1]][name,1])*M_value)
     end
 
     for t in time_steps[2:end], (ix,name) in enumerate(set_names)
@@ -196,7 +196,7 @@ function device_duration_param_look_ahead(ps_m::CanonicalModel,
             end
         end
         if t <= duration_data[ix].up
-            JuMP.add_to_expression!(lhs_on,duration_ind_status_on[ix].value) : nothing
+            JuMP.add_to_expression!(lhs_on,initial_duration_on[ix].value) : nothing
             ps_m.constraints[name_up][name, t] = JuMP.@constraint(ps_m.JuMPmodel,
                 lhs_on <= ps_m.variables[var_names[3]][name,t]*duration_data[ix].up)
          else
@@ -217,7 +217,7 @@ function device_duration_param_look_ahead(ps_m::CanonicalModel,
             end
         end
         if t <= duration_data[ix].down
-            JuMP.add_to_expression!(lhs_off,duration_ind_status_on[ix].value) : nothing;
+            JuMP.add_to_expression!(lhs_off,initial_duration_on[ix].value) : nothing;
             ps_m.constraints[name_down][name, t] = JuMP.@constraint(ps_m.JuMPmodel,
                 lhs_off <= ps_m.variables[var_names[2]][name,t]*duration_data[ix].down)
         else
