@@ -33,9 +33,11 @@ function device_duration_retrospective(ps_m::CanonicalModel,
             # Minimum Up-time Constraint
             lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0);
             for i in ((t - round(tst) + 1) :t)
-                in(time_steps,i) ? JuMP.add_to_expression!(lhs_on,1,ps_m.variables[var_names[2]][name,i]) : nothing ;
+                if in(time_steps,i) 
+                    JuMP.add_to_expression!(lhs_on,1,ps_m.variables[var_names[2]][name,i])
+                end
             end
-            (t - round(tst) + 1) < 0 ? JuMP.add_to_expression!(lhs_on,1) : nothing
+            if (t - round(tst) + 1) < 0 ; JuMP.add_to_expression!(lhs_on,1) ; end
             
             ps_m.constraints[name_up][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
                 lhs_on <= ps_m.variables[var_names[1]][name,t])
@@ -43,9 +45,11 @@ function device_duration_retrospective(ps_m::CanonicalModel,
             # Minimum Down-time Constraint
             lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0);
             for i in ((t - round(tsd) + 1) :t)
-                in(time_steps,i) ? JuMP.add_to_expression!(lhs_off,1,ps_m.variables[var_names[3]][name,i]) : nothing ;
+                if in(time_steps,i)  
+                    JuMP.add_to_expression!(lhs_off,1,ps_m.variables[var_names[3]][name,i]) ; 
+                end
             end
-            (t - round(tsd) + 1) < 0 ? JuMP.add_to_expression!(lhs_off,1) : nothing;
+            if (t - round(tsd) + 1) < 0 ; JuMP.add_to_expression!(lhs_off,1) ; end;
 
             ps_m.constraints[name_down][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
                 lhs_off <= (1 - ps_m.variables[var_names[1]][name,t]))
@@ -132,7 +136,9 @@ function device_duration_look_ahead(ps_m::CanonicalModel,
         # Minimum Up-time Constraint
         lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0);
         for i in t-duration_data[ix].up:t
-            in(time_steps,i) ? JuMP.add_to_expression!(lhs_on,1,ps_m.variables[var_names[1]][name,i]) : nothing ;
+            if in(time_steps,i)  
+                JuMP.add_to_expression!(lhs_on,1,ps_m.variables[var_names[1]][name,i])
+            end
         end
         JuMP.add_to_expression!(lhs_on,duration_ind_status_on[ix].value) : nothing;
 
@@ -142,7 +148,9 @@ function device_duration_look_ahead(ps_m::CanonicalModel,
         # Minimum Down-time Constraint
         lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0);
         for i in t-duration_data[ix].up:t
-            in(time_steps,i) ? JuMP.add_to_expression!(lhs_off,(1-ps_m.variables[var_names[1]][name,i])) : nothing ;
+            if in(time_steps,i) 
+                JuMP.add_to_expression!(lhs_off,(1-ps_m.variables[var_names[1]][name,i]));
+            end
         end
         JuMP.add_to_expression!(lhs_off,duration_ind_status_on[ix].value) : nothing;
 
@@ -180,7 +188,9 @@ function device_duration_param_look_ahead(ps_m::CanonicalModel,
         lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0);
         for i in t-duration_data[ix].up:t
             if t <= duration_data[ix].up
-                in(time_steps,i) ? JuMP.add_to_expression!(lhs_on,1,ps_m.variables[var_names[1]][name,i]) : nothing ;
+                if in(time_steps,i)
+                    JuMP.add_to_expression!(lhs_on,1,ps_m.variables[var_names[1]][name,i]);
+                end
             else
                 JuMP.add_to_expression!(lhs_on,1,ps_m.variables[var_names[2]][name,i]) : nothing ;
             end
@@ -199,7 +209,9 @@ function device_duration_param_look_ahead(ps_m::CanonicalModel,
         lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0);
         for i in t-duration_data[ix].up:t
             if t <= duration_data[ix].up
-                in(time_steps,i) ? JuMP.add_to_expression!(lhs_off,(1-ps_m.variables[var_names[1]][name,i])) : nothing ;
+                if in(time_steps,i)
+                    JuMP.add_to_expression!(lhs_off,(1-ps_m.variables[var_names[1]][name,i])) ;
+                end
             else
                 JuMP.add_to_expression!(lhs_off,1,ps_m.variables[var_names[3]][name,i]) : nothing ;
             end
