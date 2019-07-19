@@ -1,3 +1,28 @@
+@doc raw"""
+    device_range(ps_m::CanonicalModel,
+                        range_data::Vector{NamedMinMax},
+                        cons_name::Symbol,
+                        var_name::Symbol)
+
+Constructs min/max range constraint from device variable.
+
+#Constraints
+If min and max within an epsilon width:
+
+`` variable[r[1], t] == r[2].max ``
+
+Otherwise:
+
+`` r[2].min <= variable[r[1], t] <= r[2].max ``
+
+where r in range_data.
+
+# Arguments
+* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* range_data::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
+* cons_name::Symbol : name of the constraint
+* var_name::Symbol : the name of the continuous variable
+"""
 function device_range(ps_m::CanonicalModel,
                         range_data::Vector{NamedMinMax},
                         cons_name::Symbol,
@@ -15,7 +40,7 @@ function device_range(ps_m::CanonicalModel,
                 for t in time_steps
                     constraint[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, variable[r[1], t] == r[2].max)
                 end
-            else
+          else
                 for t in time_steps
                     constraint[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, r[2].min <= variable[r[1], t] <= r[2].max)
                 end
@@ -26,6 +51,37 @@ function device_range(ps_m::CanonicalModel,
 
 end
 
+@doc raw"""
+    device_semicontinuousrange(ps_m::CanonicalModel,
+                                    scrange_data::Vector{NamedMinMax},
+                                    cons_name::Symbol,
+                                    var_name::Symbol,
+                                    binvar_name::Symbol)
+
+Constructs min/max range constraint from device variable and on/off decision variable.
+
+# Constraints
+If device min = 0:
+
+`` varcts[r[1], t] <= r[2].max*varbin[r[1], t]) ``
+
+`` varcts[r[1], t] >= 0.0 ``
+
+Otherwise:
+
+`` varcts[r[1], t] <= r[2].max*varbin[r[1], t] ``
+
+`` varcts[r[1], t] >= r[2].min*varbin[r[1], t] ``
+
+where r in range_data.
+
+# Arguments
+* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* scrange_data::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
+* cons_name::Symbol : name of the constraint
+* var_name::Symbol : the name of the continuous variable
+* binvar_name::Symbol : the name of the binary variable
+"""
 function device_semicontinuousrange(ps_m::CanonicalModel,
                                     scrange_data::Vector{NamedMinMax},
                                     cons_name::Symbol,
@@ -68,6 +124,37 @@ function device_semicontinuousrange(ps_m::CanonicalModel,
 
 end
 
+@doc raw"""
+    device_semicontinuousrange_param(ps_m::CanonicalModel,
+                                    scrange_data::Vector{NamedMinMax},
+                                    cons_name::Symbol,
+                                    var_name::Symbol,
+                                    param_name::Symbol)
+
+Constructs min/max range constraint from device variable with parameter setting.
+
+# Constraints
+If device min = 0:
+
+`` variable[r[1], t] <= r[2].max*param[r[1], t] ``
+
+`` varcts[r[1], t] >= 0.0 ``
+
+Otherwise:
+
+`` variable[r[1], t] <= r[2].max*param[r[1], t] ``
+
+`` variable[r[1], t] >= r[2].min*param[r[1], t] ``
+
+where r in range_data.
+
+# Arguments
+* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* scrange_data::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
+* cons_name::Symbol : name of the constraint
+* var_name::Symbol : the name of the continuous variable
+* param_name::Symbol : the name of the parameter
+"""
 function device_semicontinuousrange_param(ps_m::CanonicalModel,
                                           scrange_data::Vector{NamedMinMax},
                                           cons_name::Symbol,
@@ -114,6 +201,37 @@ function device_semicontinuousrange_param(ps_m::CanonicalModel,
 
 end
 
+@doc raw"""
+    reserve_device_semicontinuousrange(ps_m::CanonicalModel,
+                                    scrange_data::Vector{NamedMinMax},
+                                    cons_name::Symbol,
+                                    var_name::Symbol,
+                                    binvar_name::Symbol)
+
+Constructs min/max range constraint from device variable and on/off decision variable.
+
+#Equations
+If device min = 0:
+
+`` varcts[r[1], t] <= r[2].max*(1-varbin[r[1], t]) ``
+
+`` varcts[r[1], t] >= 0.0 ``
+
+Otherwise:
+
+`` varcts[r[1], t] <= r[2].max*(1-varbin[r[1], t]) ``
+
+`` varcts[r[1], t] >= r[2].min*(1-varbin[r[1], t]) ``
+
+where r in range_data.
+
+# Arguments
+* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* scrange_data::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
+* cons_name::Symbol : name of the constraint
+* var_name::Symbol : the name of the continuous variable
+* binvar_name::Symbol : the name of the binary variable
+"""
 function reserve_device_semicontinuousrange(ps_m::CanonicalModel,
                                             scrange_data::Vector{NamedMinMax},
                                             cons_name::Symbol,

@@ -1,3 +1,32 @@
+@doc raw"""
+    device_linear_rateofchange(ps_m::CanonicalModel,
+                                    rate_data::Tuple{Vector{String}, Vector{UpDown}},
+                                    initial_conditions::Vector{InitialCondition},
+                                    cons_name::Symbol,
+                                    var_name::Symbol)
+
+Constructs allowed rate-of-change constraints from variables, initial condtions, and rate data.
+
+# Constraints
+If t = 1:
+
+`` variable[name, 1] - initial_conditions[ix].value <= rate_data[2][ix].up ``
+
+`` initial_conditions[ix].value - variable[name, 1] <= rate_data[2][ix].down ``
+
+If t > 1:
+
+`` variable[name, t-1] - variable[name, t] <= rate_data[2][ix].up ``
+
+`` variable[name, t] - variable[name, t-1] <= rate_data[2][ix].down ``
+
+# Arguments
+* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* rate_data::Tuple{Vector{String}, Vector{UpDown}} : gives name (1) and max ramp up/down rates (2)
+* initial_conditions::Vector{InitialCondition} : for time zero 'variable' 
+* cons_name::Symbol : name of the constraint
+* var_name::Tuple{Symbol, Symbol, Symbol} : the name of the variable
+"""
 function device_linear_rateofchange(ps_m::CanonicalModel,
                                     rate_data::Tuple{Vector{String}, Vector{UpDown}},
                                     initial_conditions::Vector{InitialCondition},
@@ -32,6 +61,40 @@ function device_linear_rateofchange(ps_m::CanonicalModel,
 
 end
 
+@doc raw"""
+    device_mixedinteger_rateofchange(ps_m::CanonicalModel,
+                                          rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}},
+                                          initial_conditions::Vector{InitialCondition},
+                                          cons_name::Symbol,
+                                          var_names::Tuple{Symbol, Symbol, Symbol})
+
+Constructs allowed rate-of-change constraints from variables, initial condtions, start/stop status, and rate data
+
+# Equations
+If t = 1:
+
+`` variable[name, 1] - initial_conditions[ix].value <= rate_data[2][ix].up + rate_data[3][ix].max*varstart[name, 1] ``
+
+`` initial_conditions[ix].value - variable[name, 1] <= rate_data[2][ix].down + rate_data[3][ix].min*varstart[name, 1] ``
+
+If t > 1:
+
+`` variable[name, t-1] - variable[name, t] <= rate_data[2][ix].up + rate_data[3][ix].max*varstart[name, t] ``
+
+`` variable[name, t] - variable[name, t-1] <= rate_data[2][ix].down + rate_data[3][ix].min*varstop[name, t] ``
+
+# Arguments
+* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}} : (1) gives name
+                                                                     (2) gives min/max ramp rates
+                                                                     (3) gives min/max for 'variable'
+* initial_conditions::Vector{InitialCondition} : for time zero 'variable' 
+* cons_name::Symbol : name of the constraint
+* var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
+- : var_names[1] : 'variable'
+- : var_names[2] : 'varstart'
+- : var_names[3] : 'varstop'
+"""
 function device_mixedinteger_rateofchange(ps_m::CanonicalModel,
                                           rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}},
                                           initial_conditions::Vector{InitialCondition},
@@ -42,9 +105,9 @@ function device_mixedinteger_rateofchange(ps_m::CanonicalModel,
     up_name = Symbol(cons_name, :_up)
     down_name = Symbol(cons_name, :_down)
     
-    var1 = var(ps_m, var_names[1])
-    var2 = var(ps_m, var_names[2])
-    var3 = var(ps_m, var_names[3])
+    variable = var(ps_m, var_names[1])
+    varstart = var(ps_m, var_names[2])
+    varstop = var(ps_m, var_names[3])
 
     set_name = rate_data[1]
     _add_cons_container!(ps_m, up_name, set_name, time_steps)
@@ -53,17 +116,17 @@ function device_mixedinteger_rateofchange(ps_m::CanonicalModel,
     con_down = con(ps_m, down_name)
 
     for (ix, name) in enumerate(rate_data[1])
-        con_up[name, 1] = JuMP.@constraint(ps_m.JuMPmodel, var1[name, 1] - initial_conditions[ix].value 
-                                                            <= rate_data[2][ix].up + rate_data[3][ix].max*var2[name, 1])
-        con_down[name, 1] = JuMP.@constraint(ps_m.JuMPmodel, initial_conditions[ix].value - var1[name, 1] 
-                                                            <= rate_data[2][ix].down + rate_data[3][ix].min*var3[name, 1])
+        con_up[name, 1] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, 1] - initial_conditions[ix].value 
+                                                            <= rate_data[2][ix].up + rate_data[3][ix].max*varstart[name, 1])
+        con_down[name, 1] = JuMP.@constraint(ps_m.JuMPmodel, initial_conditions[ix].value - variable[name, 1] 
+                                                            <= rate_data[2][ix].down + rate_data[3][ix].min*varstart[name, 1])
     end
 
     for t in time_steps[2:end], (ix, name) in enumerate(rate_data[1])
-        con_up[name, t] = JuMP.@constraint(ps_m.JuMPmodel, var1[name, t-1] - var1[name, t] 
-                                                            <= rate_data[2][ix].up + rate_data[3][ix].max*var2[name, t])
-        con_down[name, t] = JuMP.@constraint(ps_m.JuMPmodel, var1[name, t] - var1[name, t-1]
-                                                            <= rate_data[2][ix].down + rate_data[3][ix].min*var3[name, t])
+        con_up[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t-1] - variable[name, t] 
+                                                            <= rate_data[2][ix].up + rate_data[3][ix].max*varstart[name, t])
+        con_down[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t] - variable[name, t-1]
+                                                            <= rate_data[2][ix].down + rate_data[3][ix].min*varstop[name, t])
     end
 
     return

@@ -1,3 +1,21 @@
+@doc raw"""
+    device_timeseries_ub(ps_m::CanonicalModel,
+                     ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
+                     cons_name::Symbol,
+                     var_name::Symbol)
+
+Constructs upper bound (and 0 as lower bound) for given variable and time series data.
+
+# Constraint
+
+`` 0.0 <= variable[name, t] <= ts_data[2][ix][t] ``
+
+# Arguments
+* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}} : timeseries data name (1) and values (2)
+* cons_name::Symbol : name of the constraint
+* var_name::Symbol : the name of the variable
+"""
 function device_timeseries_ub(ps_m::CanonicalModel,
                               ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
                               cons_name::Symbol,
@@ -18,6 +36,26 @@ function device_timeseries_ub(ps_m::CanonicalModel,
 
 end
 
+@doc raw"""
+    device_timeseries_lb(ps_m::CanonicalModel,
+                     ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
+                     cons_name::Symbol,
+                     var_name::Symbol)
+
+Constructs lower bound for given variable and time series data.
+
+# Constraint
+
+`` 0.0 <= ts_data[2][ix][t] <= variable[name, t] ``
+
+where (ix, name) in enumerate(ts_data[1]).
+
+# Arguments
+* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}} : timeseries data name (1) and values (2)
+* cons_name::Symbol : name of the constraint
+* var_name::Symbol : the name of the variable
+"""
 function device_timeseries_lb(ps_m::CanonicalModel,
                               ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
                               cons_name::Symbol,
@@ -38,6 +76,27 @@ function device_timeseries_lb(ps_m::CanonicalModel,
 
 end
 
+#NOTE: there is a floating, unnamed lower bound constraint in this function. This may need to be changed.
+@doc raw"""
+    device_timeseries_param_ub(ps_m::CanonicalModel,
+                                    ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
+                                    cons_name::Symbol,
+                                    param_name::Symbol,
+                                    var_name::Symbol)
+
+Constructs upper bound for given variable and time series data parameter as upper bound.
+
+# Constraint
+
+`` variable[name, t] <= param[name, t] ``
+
+# Arguments
+* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}} : timeseries data name (1) and values (2)
+* cons_name::Symbol : name of the constraint
+* param_name::Symbol : name of the parameter
+* var_name::Symbol : the name of the variable
+"""
 function device_timeseries_param_ub(ps_m::CanonicalModel,
                                     ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
@@ -63,6 +122,26 @@ function device_timeseries_param_ub(ps_m::CanonicalModel,
 
 end
 
+@doc raw"""
+    device_timeseries_param_lb(ps_m::CanonicalModel,
+                                    ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
+                                    cons_name::Symbol,
+                                    param_name::Symbol,
+                                    var_name::Symbol)
+
+Constructs upper bound for given variable and time series data parameter as upper bound.
+
+# Constraint
+
+`` param[name, t] <= variable[name, t] ``
+
+# Arguments
+* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}} : timeseries data name (1) and values (2)
+* cons_name::Symbol : name of the constraint
+* param_name::Symbol : name of the parameter
+* var_name::Symbol : the name of the variable
+"""
 function device_timeseries_param_lb(ps_m::CanonicalModel,
                                     ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
@@ -87,6 +166,30 @@ function device_timeseries_param_lb(ps_m::CanonicalModel,
 
 end
 
+@doc raw"""
+    device_timeseries_ub_bin(ps_m::CanonicalModel,
+                                    ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
+                                    cons_name::Symbol,
+                                    var_name::Symbol,
+                                    binvar_name::Symbol)
+
+Constructs upper bound (with lower bound 0) for variable and time series or confines to 0 depending on binary variable.
+
+# Constraints
+
+`` pvarcts[name, t] <= varbin[name, t]*ts_data[2][ix][t] ``
+
+`` varcts[name, t] >= 0.0 ``
+
+where (ix, name) in enumerate(ts_data[1]).
+
+# Arguments
+* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}} : timeseries data name (1) and values (2)
+* cons_name::Symbol : name of the constraint
+* var_name::Symbol :  name of the variable
+* binvar_name::Symbol : name of binary variable
+"""
 function device_timeseries_ub_bin(ps_m::CanonicalModel,
                                     ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
@@ -106,7 +209,7 @@ function device_timeseries_ub_bin(ps_m::CanonicalModel,
     con_lb = con(ps_m, key_lb)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
-        con_ub[name, t] =  JuMP.@constraint(ps_m.JuMPmodel, varcts[name, t] <= (varbin[name, t])*ts_data[2][ix][t])
+        con_ub[name, t] =  JuMP.@constraint(ps_m.JuMPmodel, varcts[name, t] <= varbin[name, t]*ts_data[2][ix][t])
         con_lb[name, t] =  JuMP.@constraint(ps_m.JuMPmodel, varcts[name, t] >= 0.0)
     end
 
@@ -114,6 +217,34 @@ function device_timeseries_ub_bin(ps_m::CanonicalModel,
 
 end
 
+@doc raw"""
+    device_timeseries_ub_bigM(ps_m::CanonicalModel,
+                                    ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
+                                    cons_name::Symbol,
+                                    var_name::Symbol,
+                                    param_name::Symbol,
+                                    binvar_name::Symbol,
+                                    M_value::Float64 = 1e6)
+
+Constructs upper bound (with lower bound 0) for variable and time series or confines to 0 depending on binary variable.
+Uses BigM constraint type to allow for parameter.
+
+# Constraints
+
+`` varcts[name, t] - param[name, t] <= (1 - varbin[name, t])*M_value ``
+
+`` varcts[name, t] <= varbin[name, t]*M_value ``
+
+`` varcts[name, t] >= 0.0 ``
+
+# Arguments
+* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}} : timeseries data name (1) and values (2)
+* cons_name::Symbol : name of the constraint
+* var_name::Symbol :  name of the variable
+* binvar_name::Symbol : name of binary variable
+* M_value::Float64 : bigM
+"""
 function device_timeseries_ub_bigM(ps_m::CanonicalModel,
                                     ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
@@ -140,12 +271,10 @@ function device_timeseries_ub_bigM(ps_m::CanonicalModel,
     _add_param_container!(ps_m, param_name, ts_data[1], time_steps)
     param = par(ps_m, param_name)
     
-    #ps_m.parameters[param_name] = JuMPParamArray(undef, ts_data[1], time_steps)
-
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
         param[name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[2][ix][t]);
         con_ub[name, t] = JuMP.@constraint(ps_m.JuMPmodel, varcts[name, t] - param[name, t] <= (1 - varbin[name, t])*M_value)
-        con_status[name, t] =  JuMP.@constraint(ps_m.JuMPmodel, varcts[name, t] <= (varbin[name, t])*M_value)
+        con_status[name, t] =  JuMP.@constraint(ps_m.JuMPmodel, varcts[name, t] <= varbin[name, t]*M_value)
         con_lb[name, t] =  JuMP.@constraint(ps_m.JuMPmodel, varcts[name, t] >= 0.0)
     end
 
