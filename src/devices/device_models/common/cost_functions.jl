@@ -55,24 +55,26 @@ end
 
 function _pwlparamcheck(cost_)
     flag = true;
+     
     for i in 1:(length(cost_)-1)
-        if i == 1
+        if i == 1 
             (cost_[i][1]/cost_[i][2]) <= ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) ? nothing : flag = false;
         else
-            ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) <= ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) ? nothing : flag = false;
+            ((cost_[i][1] - cost_[i-1][1])/(cost_[i][2] - cost_[i-1][2])) <= ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) ? nothing : flag = false;
         end
     end
     return flag
 end
 
 function _pwlgencost(ps_m::CanonicalModel,
-                    variable::JV,
-                    cost_component::PSY.VariableCost{Array{Tuple{Float64, Float64}}}) where {JV <: JuMP.AbstractVariableRef}
+        variable::JV,
+        cost_component::Vector{Tuple{Float64, Float64}}) where {JV <: JuMP.AbstractVariableRef}
 
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}()
     _pwlparamcheck(cost_component) ? @warn("Data provide is not suitable for linear implementation of PWL cost, this will result in a INVALID SOLUTION") : nothing ;
-    upperbound(i) = (i == 0 & (length(cost_component) > i) ? cost_component[i+1][2] : (cost_component[i+1][2] - cost_component[i][2]));
-    pwlvars = JuMP.@variable(ps_m.JuMPmodel, [i = 0:(length(cost_component)-1)], base_name = "{$(variable)}_{pwl}", start = 0.0, lower_bound = 0.0, upper_bound = upperbound(i))
+    # TODO: implement a fallback to either Linear Cost function or SOS2 based PWL Cost function
+    upperbound(i) = (i == 1 ? cost_component[i][2] : (cost_component[i][2] - cost_component[i-1][2]));
+    pwlvars = JuMP.@variable(ps_m.JuMPmodel, [i = 1:length(cost_component)], base_name = "{$(variable)}_{pwl}", start = 0.0, lower_bound = 0.0, upper_bound = upperbound(i))
 
     for (ix, pwlvar) in enumerate(pwlvars)
         if ix == 1
@@ -83,23 +85,24 @@ function _pwlgencost(ps_m::CanonicalModel,
         gen_cost = gen_cost + temp_gen_cost
     end
 
-    c = JuMP.@constraint(ps_m.JuMPmodel, variable == sum([pwlvars[ix-1] for (ix, pwlvar) in enumerate(pwlvars)]) )
-
+    c = JuMP.@constraint(ps_m.JuMPmodel, variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars) ]) )
+    JuMP.set_name(c,"{$(variable)}_{pwl}")
     return gen_cost
 
 end
 
 function ps_cost(ps_m::CanonicalModel,
                  variable::JuMP.Containers.DenseAxisArray{JV},
-                 cost_component::PSY.VariableCost{Array{Tuple{Float64, Float64}}},
+                 cost_component::PSY.VariableCost{Vector{Tuple{Float64, Float64}}},
                  dt::Float64,
                  sign::Float64) where {JV <: JuMP.AbstractVariableRef}
 
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}()
-
+    cost_array = cost_component.cost
     for var in variable
-        c = _pwlgencost(ps_m, var, cost_component)
-        gen_cost += c
+        in(true,iszero.(last.(cost_array))) ? continue : nothing ;
+        c = _pwlgencost(ps_m, var, cost_array)        
+        JuMP.add_to_expression!(gen_cost,c)
     end
 
     return sign*gen_cost*dt
