@@ -19,30 +19,36 @@ function device_duration_retrospective(ps_m::CanonicalModel,
 
 
         for t in time_steps, (ix,name) in enumerate(set_names)
-                if t - duration_data[ix].up >= 1
-                    tst = duration_data[ix].up
-                else
-                    tst = max(1.0, duration_data[ix].up - initial_duration_on[ix].value)
-                end
+            if t - duration_data[ix].up >= 1
+                tst = duration_data[ix].up
+            else
+                tst = max(1.0, duration_data[ix].up - initial_duration_on[ix].value)
+            end
 
-                if t - duration_data[ix].down >= 1
-                    tsd = duration_data[ix].down
-                else
-                    tsd = max(1.0, duration_data[ix].down - initial_duration_off[ix].value)
-                end
-                ind_on = (t - round(tst) + 1) < 0 ? 1 : 0;
-                ind_off = (t - round(tsd) + 1) < 0 ? 1 : 0;
-                 # Minimum Up-time Constraint
-                ps_m.constraints[name_up][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
-                    sum([ ps_m.variables[var_names[2]][name,i] for i in ((t - round(tst) + 1) :t) if in(time_steps,i)])
-                    + ind_on
-                    <= ps_m.variables[var_names[1]][name,t])
-                
-                    # Minimum Down-time Constraint
-                ps_m.constraints[name_down][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
-                    sum([ps_m.variables[var_names[3]][name,i]  for i in ((t - round(tsd) + 1) :t) if  in(time_steps,i)]) 
-                    + ind_off
-                    <= (1 - ps_m.variables[var_names[1]][name,t]))
+            if t - duration_data[ix].down >= 1
+                tsd = duration_data[ix].down
+            else
+                tsd = max(1.0, duration_data[ix].down - initial_duration_off[ix].value)
+            end
+            # Minimum Up-time Constraint
+            lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0);
+            for i in ((t - round(tst) + 1) :t)
+                in(time_steps,i) ? JuMP.add_to_expression!(lhs_on,1,ps_m.variables[var_names[2]][name,i]) : nothing ;
+            end
+            (t - round(tst) + 1) < 0 ? JuMP.add_to_expression!(lhs_on,1) : nothing
+            
+            ps_m.constraints[name_up][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
+                lhs_on <= ps_m.variables[var_names[1]][name,t])
+            
+            # Minimum Down-time Constraint
+            lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0);
+            for i in ((t - round(tsd) + 1) :t)
+                in(time_steps,i) ? JuMP.add_to_expression!(lhs_off,1,ps_m.variables[var_names[3]][name,i]) : nothing ;
+            end
+            (t - round(tsd) + 1) < 0 ? JuMP.add_to_expression!(lhs_off,1) : nothing;
+
+            ps_m.constraints[name_down][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
+                lhs_off <= (1 - ps_m.variables[var_names[1]][name,t]))
 
         end
 
@@ -124,16 +130,24 @@ function device_duration_look_ahead(ps_m::CanonicalModel,
 
     for t in time_steps[2:end], (ix,name) in enumerate(set_names)
         # Minimum Up-time Constraint
+        lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0);
+        for i in t-duration_data[ix].up:t
+            in(time_steps,i) ? JuMP.add_to_expression!(lhs_on,1,ps_m.variables[var_names[1]][name,i]) : nothing ;
+        end
+        JuMP.add_to_expression!(lhs_on,duration_ind_status_on[ix].value) : nothing;
+
         ps_m.constraints[name_up][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
-            sum([ps_m.variables[var_names[1]][name,i] for i in t-duration_data[ix].up:t if in(time_steps,i)])
-            + duration_ind_status_on[ix].value
-            <= ps_m.variables[var_names[3]][name,t])*duration_data[ix].up
+            lhs_on <= ps_m.variables[var_names[3]][name,t])*duration_data[ix].up
 
         # Minimum Down-time Constraint
+        lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0);
+        for i in t-duration_data[ix].up:t
+            in(time_steps,i) ? JuMP.add_to_expression!(lhs_off,(1-ps_m.variables[var_names[1]][name,i])) : nothing ;
+        end
+        JuMP.add_to_expression!(lhs_off,duration_ind_status_on[ix].value) : nothing;
+
         ps_m.constraints[name_down][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
-            sum([(1-ps_m.variables[var_names[1]][name,i]) for i in (t-duration_data[ix].down):t if in(time_steps,i) ]) 
-            + duration_ind_status_off[ix].value 
-            <= ps_m.variables[var_names[2]][name,t]*duration_data[ix].down)
+            lhs_off <= ps_m.variables[var_names[2]][name,t]*duration_data[ix].down)
 
     end
 end
@@ -163,28 +177,40 @@ function device_duration_param_look_ahead(ps_m::CanonicalModel,
 
     for t in time_steps[2:end], (ix,name) in enumerate(set_names)
         # Minimum Up-time Constraint
+        lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0);
+        for i in t-duration_data[ix].up:t
+            if t <= duration_data[ix].up
+                in(time_steps,i) ? JuMP.add_to_expression!(lhs_on,1,ps_m.variables[var_names[1]][name,i]) : nothing ;
+            else
+                JuMP.add_to_expression!(lhs_on,1,ps_m.variables[var_names[2]][name,i]) : nothing ;
+            end
+        end
         if t <= duration_data[ix].up
+            JuMP.add_to_expression!(lhs_on,duration_ind_status_on[ix].value) : nothing
             ps_m.constraints[name_up][name, t] = JuMP.@constraint(ps_m.JuMPmodel,
-                sum([ps_m.variables[var_names[1]][name,i] for i in t-duration_data[ix].up:t if in(time_steps,i)]) 
-                + duration_ind_status_on[ix].value 
-                <= ps_m.variables[var_names[3]][name,t]*duration_data[ix].up)
+                lhs_on <= ps_m.variables[var_names[3]][name,t]*duration_data[ix].up)
          else
             ps_m.constraints[name_up][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
-                sum([ ps_m.variables[var_names[2]][name,i] for i in (t-duration_data[ix].up:t) ]) 
-                <= ps_m.variables[var_names[1]][name,t])
+                lhs_on <= ps_m.variables[var_names[1]][name,t])
             
         end
         
         # Minimum Down-time Constraint
+        lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0);
+        for i in t-duration_data[ix].up:t
+            if t <= duration_data[ix].up
+                in(time_steps,i) ? JuMP.add_to_expression!(lhs_off,(1-ps_m.variables[var_names[1]][name,i])) : nothing ;
+            else
+                JuMP.add_to_expression!(lhs_off,1,ps_m.variables[var_names[3]][name,i]) : nothing ;
+            end
+        end
         if t <= duration_data[ix].down
+            JuMP.add_to_expression!(lhs_off,duration_ind_status_on[ix].value) : nothing;
             ps_m.constraints[name_down][name, t] = JuMP.@constraint(ps_m.JuMPmodel,
-                sum([(1-ps_m.variables[var_names[1]][name,i]) for i in (t-duration_data[ix].down):t if in(time_steps,i) ]) 
-                + duration_ind_status_off[ix].value 
-                <= ps_m.variables[var_names[2]][name,t]*duration_data[ix].down)
+                lhs_off <= ps_m.variables[var_names[2]][name,t]*duration_data[ix].down)
         else
             ps_m.constraints[name_down][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
-                sum([ps_m.variables[var_names[3]][name,i] for i in ((t-duration_data[ix].down) :t) if  in(time_steps,i)]) 
-                <= (1 - ps_m.variables[var_names[1]][name,t]))
+                lhs_off <= (1 - ps_m.variables[var_names[1]][name,t]))
         end
 
     end
