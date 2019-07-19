@@ -8,7 +8,7 @@ function include_parameters(ps_m::CanonicalModel,
     Cidx = CartesianIndices(length.(axs))
 
     for idx in Cidx
-        ps_m.parameters[param_name].data[idx] = PJ.add_parameter(ps_m.JuMPmodel,data[idx])
+        ps_m.parameters[param_name].data[idx] = PJ.add_parameter(ps_m.JuMPmodel, data[idx])
     end
 
     return
@@ -16,7 +16,7 @@ function include_parameters(ps_m::CanonicalModel,
 end
 
 function include_parameters(ps_m::CanonicalModel,
-                        ts_data::Vector{Tuple{String,Int64, Vector{Float64}}},
+                        ts_data::Vector{Tuple{String, Int64, Vector{Float64}}},
                         param_name::Symbol,
                         expression::Symbol)
 

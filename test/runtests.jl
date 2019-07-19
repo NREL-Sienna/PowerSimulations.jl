@@ -25,27 +25,31 @@ OSQP_optimizer = JuMP.with_optimizer(OSQP.Optimizer, verbose = false)
 include("test_utils/get_test_data.jl")
 
 @testset "Common Functionalities" begin
-    include("base_structs.jl")
-    include("PowerModels_interface.jl")
+    include("test_base_structs.jl")
+    include("test_PowerModels_interface.jl")
 end
 
 @testset "Device Constructors" begin
-    include("thermal_generation_constructors.jl")
-    include("renewable_generation_constructors.jl")
-    include("load_constructors.jl")
-    include("storage_constructors.jl")
-    #include("hydro_generation_constructors.jl")
+    include("test_thermal_generation_constructors.jl")
+    include("test_renewable_generation_constructors.jl")
+    include("test_load_constructors.jl")
+    include("test_storage_constructors.jl")
+    #include("test_hydro_generation_constructors.jl")
 end
 
 @testset "Network Constructors" begin
-    include("network_constructors.jl")
+    include("test_network_constructors.jl")
 end
 
 @testset "Services Constructors" begin
-    #include("services_constructor.jl")
+    #include("test_services_constructor.jl")
 end
 
 @testset "Operation Models" begin
-    include("operation_model_constructor.jl")
-    include("operation_model_solve.jl")
+    include("test_operation_model_constructor.jl")
+    include("test_operation_model_solve.jl")
+end
+
+@testset "Simulation Models" begin
+    include("test_simulation_models.jl")
 end

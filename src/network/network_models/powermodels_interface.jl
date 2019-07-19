@@ -7,7 +7,7 @@
 # Model Definitions
 
 ""
-function build_nip_model(data::Dict{String,Any},
+function build_nip_model(data::Dict{String, Any},
                          model_constructor;
                          multinetwork=true, kwargs...)
     return PM.build_model(data, model_constructor, post_nip; multinetwork=multinetwork, kwargs...)
@@ -19,7 +19,7 @@ function post_nip(pm::PM.GenericPowerModel)
         @assert !PM.ismulticonductor(pm, nw=n)
         PM.variable_voltage(pm, nw=n)
         variable_net_injection(pm, nw=n)
-        PM.variable_branch_flow(pm, nw=n)#, bounded=false)
+        PM.variable_branch_flow(pm, nw=n, bounded=false)
         PM.variable_dcline_flow(pm, nw=n)
 
         PM.constraint_model_voltage(pm, nw=n)
@@ -38,8 +38,8 @@ function post_nip(pm::PM.GenericPowerModel)
 
             PM.constraint_voltage_angle_difference(pm, i, nw=n)
 
-            PM.constraint_thermal_limit_from(pm, i, nw=n)
-            PM.constraint_thermal_limit_to(pm, i, nw=n)
+            #PM.constraint_thermal_limit_from(pm, i, nw=n)
+            #PM.constraint_thermal_limit_to(pm, i, nw=n)
         end
 
         for i in PM.ids(pm, :dcline)
@@ -53,7 +53,7 @@ end
 
 
 ""
-function build_nip_expr_model(data::Dict{String,Any}, model_constructor; multinetwork=true, kwargs...)
+function build_nip_expr_model(data::Dict{String, Any}, model_constructor; multinetwork=true, kwargs...)
     return PM.build_model(data, model_constructor, post_nip_expr; multinetwork=multinetwork, kwargs...)
 end
 
@@ -62,7 +62,7 @@ function post_nip_expr(pm::PM.GenericPowerModel)
     for (n, network) in PM.nws(pm)
         @assert !PM.ismulticonductor(pm, nw=n)
         PM.variable_voltage(pm, nw=n)
-        PM.variable_branch_flow(pm, nw=n)#, bounded=false)
+        PM.variable_branch_flow(pm, nw=n, bounded = false)
         PM.variable_dcline_flow(pm, nw=n)
 
         PM.constraint_model_voltage(pm, nw=n)
@@ -81,8 +81,8 @@ function post_nip_expr(pm::PM.GenericPowerModel)
 
             PM.constraint_voltage_angle_difference(pm, i, nw=n)
 
-            PM.constraint_thermal_limit_from(pm, i, nw=n)
-            PM.constraint_thermal_limit_to(pm, i, nw=n)
+            #PM.constraint_thermal_limit_from(pm, i, nw=n)
+            #PM.constraint_thermal_limit_to(pm, i, nw=n)
         end
 
         for i in PM.ids(pm, :dcline)
@@ -132,10 +132,10 @@ end
 ""
 function constraint_power_balance_ni(pm::PM.GenericPowerModel, i::Int; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
     if !haskey(PM.con(pm, nw, cnd), :power_balance_p)
-        PM.con(pm, nw, cnd)[:power_balance_p] = Dict{Int,JuMP.ConstraintRef}()
+        PM.con(pm, nw, cnd)[:power_balance_p] = Dict{Int, JuMP.ConstraintRef}()
     end
     if !haskey(PM.con(pm, nw, cnd), :power_balance_q)
-        PM.con(pm, nw, cnd)[:power_balance_q] = Dict{Int,JuMP.ConstraintRef}()
+        PM.con(pm, nw, cnd)[:power_balance_q] = Dict{Int, JuMP.ConstraintRef}()
     end
 
     bus = PM.ref(pm, nw, :bus, i)
@@ -172,10 +172,10 @@ end
 function constraint_power_balance_ni_expr(pm::PM.GenericPowerModel,
                                 i::Int; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
     if !haskey(PM.con(pm, nw, cnd), :power_balance_p)
-        PM.con(pm, nw, cnd)[:power_balance_p] = Dict{Int,JuMP.ConstraintRef}()
+        PM.con(pm, nw, cnd)[:power_balance_p] = Dict{Int, JuMP.ConstraintRef}()
     end
     if !haskey(PM.con(pm, nw, cnd), :power_balance_q)
-        PM.con(pm, nw, cnd)[:power_balance_q] = Dict{Int,JuMP.ConstraintRef}()
+        PM.con(pm, nw, cnd)[:power_balance_q] = Dict{Int, JuMP.ConstraintRef}()
     end
 
     bus = PM.ref(pm, nw, :bus, i)
@@ -254,11 +254,11 @@ function powermodels_network!(ps_m::CanonicalModel,
     _remove_undef!(ps_m.expressions[:nodal_balance_reactive])
 
     for t in time_steps, bus in buses
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions[:nodal_balance_active][bus.number,t]
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = ps_m.expressions[:nodal_balance_reactive][bus.number,t]
+        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = ps_m.expressions[:nodal_balance_active][bus.number, t]
+        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = ps_m.expressions[:nodal_balance_reactive][bus.number, t]
     end
 
-    pm_f = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(pm_data, system_formulation; kwargs...)
+    pm_f = (data::Dict{String, Any}; kwargs...) -> PM.GenericPowerModel(pm_data, system_formulation; kwargs...)
 
     ps_m.pm_model = build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
 
@@ -278,11 +278,11 @@ function powermodels_network!(ps_m::CanonicalModel,
     _remove_undef!(ps_m.expressions[:nodal_balance_active])
 
     for t in time_steps, bus in buses
-        pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["pni"] = ps_m.expressions[:nodal_balance_active][PSY.get_number(bus),t]
+        pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["pni"] = ps_m.expressions[:nodal_balance_active][PSY.get_number(bus), t]
         #pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
     end
 
-    pm_f = (data::Dict{String,Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
+    pm_f = (data::Dict{String, Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
 
     ps_m.pm_model = build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
 

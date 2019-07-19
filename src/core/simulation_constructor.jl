@@ -1,87 +1,96 @@
+function _prepare_workspace!(ref::SimulationRef, base_name::String, folder::String)
 
-#=
-function build_sim_ts(ts_dict::Dict{String,Any}, steps, periods, resolution, date_from, time_steps_periods, time_steps_resolution ; kwargs...)
-    # exmaple of time series assembly
-    # TODO: once we refactor PowerSystems, we can improve this process
+    !isdir(folder) && error("Specified folder is not valid")
 
-    steps_dict = Dict()
+    cd(folder)
+    simulation_path = joinpath(folder, "$(Dates.today())-$(base_name)")
+    raw_ouput = joinpath(simulation_path, "raw_output")
+    mkpath(raw_ouput)
+    models_json_ouput = joinpath(simulation_path, "models_json")
+    mkpath(models_json_ouput)
 
-    function _subset_ts(ts_dict,start,finish)
-        return ts_dict[(ts_dict.DateTime .>= start) .& (ts_dict.DateTime .< finish),:]
-    end
+    ref.raw = raw_ouput
+    ref.models = models_json_ouput
 
-    for step in 1:steps
-        step_stamp = date_from + ((resolution * periods) + (time_steps_periods * time_steps_resolution)) * (step-1)
-        step_end = step_stamp + (resolution * periods) + (time_steps_periods * time_steps_resolution)
-        steps_dict[step_stamp] = deepcopy(ts_dict)
-        steps_dict[step_stamp]["load"] = _subset_ts(steps_dict[step_stamp]["load"],step_stamp,step_end)
-        for cat in keys(steps_dict[step_stamp]["gen"])
-            steps_dict[step_stamp]["gen"][cat] = _subset_ts(steps_dict[step_stamp]["gen"][cat],step_stamp,step_end)
+    return
+
+end
+
+function _validate_steps(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}},
+                         steps::Int64) where {T <: PM.AbstractPowerFormulation}
+
+    for (k,v) in stages
+
+        forecast_count = length(PSY.get_forecast_initial_times(v[2]))
+
+        if steps*v[3] > forecast_count #checks that there are enough time series to run
+            error("The number of available time series is not enough to perform the
+                   desired amount of simulation steps.")
         end
+
     end
 
-    return steps_dict
-end
-
-
-function buildsimulation!(sys::PSY.System, op_model::OperationModel, ts_dict::Dict{String,Any}; kwargs...)
-
-    name = :name in keys(args) ? args[:name] : "my_simulation"
-
-    model = op_model
-
-    resolution = :resolution in keys(args) ? args[:resolution] : PSY.getresolution(sys.loads[1].scalingfactor)
-
-    date_from = :date_from in keys(args) ? args[:date_from] : minimum(timestamp(sys.loads[1].scalingfactor))
-
-    date_to = :date_to in keys(args) ? args[:date_to] : maximum(timestamp(sys.loads[1].scalingfactor))
-
-    periods = :periods in keys(args) ? args[:periods] : (resolution < Hour(1) ? 1 : 24)
-
-    steps = :steps in keys(args) ? args[:steps] : Int64(floor((length(sys.loads[1].scalingfactor)-1)/periods))
-
-    if steps != (length(sys.loads[1].scalingfactor)-1)/periods
-        @warn "Time series length and simulation definiton inconsistent, simulation may be truncated, simulating $steps ste"
-    end
-
-    time_steps_periods = :time_steps_periods in keys(args) ? args[:time_steps_periods] : 0
-
-    time_steps_resolution = :time_steps_resolution in keys(args) ? args[:time_steps_resolution] : resolution
-
-    @info "Simulation defined for $steps steps with $periods * $resolution periods per step (plus $time_steps_periods * $time_steps_resolution time_steps periods), from $date_from to $date_to"
-
-    dynamic_analysis = false;
-
-    timeseries = build_sim_ts(ts_dict, steps, periods, resolution, date_from, time_steps_periods, time_steps_resolution ; kwargs...)
-
-    PowerSimulationsModel(name,model, steps, periods, resolution, date_from, date_to,
-            time_steps_periods, time_steps_resolution, dynamic_analysis, timeseries)
+    return
 
 end
 
-function buildsimulation!(sys::PSY.System, op_model::OperationModel; kwargs...)
+function _get_dates(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}}) where {T <: PM.AbstractPowerFormulation}
+    k = keys(stages)
+    k_size = length(k)
+    range = Vector{Dates.DateTime}(undef, 2)
+    @assert k_size == maximum(k)
 
-    ts_dict = Dict{String,Any}()
-
-    ts_dict["load"] = DataFrame(Dict([(l.name,values(l.scalingfactor)) for l in sys.loads]))
-    ts_dict["load"][:DateTime] = TimeSeries.timestamp(sys.loads[1].scalingfactor)
-
-    ts_dict["gen"] = Dict()
-
-    if !isa(sys.generators.renewable,Nothing)
-        # TODO: do a better job of classifying generators in the timeseries dict and reflect that here. For now, i'm just using PV as a placeholder
-        ts_dict["gen"]["PV"] = DataFrame(Dict([(g.name,values(g.scalingfactor)) for g in sys.generators.renewable]))
-        ts_dict["gen"]["PV"][:DateTime] = timestamp(sys.generators.renewable[1].scalingfactor)
-        ts_dict["gen"]["WIND"] = DataFrame(Dict([(g.name,values(g.scalingfactor)) for g in sys.generators.renewable]))
-        ts_dict["gen"]["WIND"][:DateTime] = timestamp(sys.generators.renewable[1].scalingfactor)
+    for i in 1:k_size
+        initial_times = PSY.get_forecast_initial_times(stages[i][2])
+        i == 1 && (range[1] = initial_times[1])
+        interval = PSY.get_forecasts_interval(stages[i][2])
+        for (ix,element) in enumerate(initial_times[1:end-1])
+            if !(element + interval == initial_times[ix+1])
+                error("The sequence of forecasts is invalid")
+            end
+        end
+        (i == k_size && (range[end] = initial_times[end]))
     end
 
-    if !isa(sys.generators.hydro,Nothing)
-        ts_dict["gen"]["Hydro"] = DataFrame(Dict([(g.name,values(g.scalingfactor)) for g in sys.generators.hydro]))
-        ts_dict["gen"]["Hydro"][:DateTime] = timestamp(sys.generators.hydro[1].scalingfactor)
-    end
+    return Tuple(range), true
 
-    buildsimulation!(sys, op_model, ts_dict; kwargs...)
 end
 
-=#
+function _build_stages(sim_ref::SimulationRef,
+                       stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}}; kwargs...) where {T<:PM.AbstractPowerFormulation}
+
+    mod_stages = Vector{Stage}(undef, length(stages))
+
+    for (k, v) in stages
+        @info("Building Stage $(k)")
+        op_mod = OperationModel(DefaultOpModel, v[1], v[2];
+                                optimizer = v[4],
+                                sequential_runs = true,
+                                parameters = true, kwargs...)
+        stage_path = joinpath(sim_ref.models,"stage_$(k)_model")
+        mkpath(stage_path)
+        write_op_model(op_mod, joinpath(stage_path, "optimization_model.json"))
+        PSY.to_json(v[2], joinpath(stage_path ,"sys_data.json"))
+        mod_stages[k] = Stage(k, op_mod, v[3])
+    end
+
+    return mod_stages
+
+end
+
+function build_simulation!(sim_ref::SimulationRef,
+                          base_name::String,
+                          steps::Int64,
+                          stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}},
+                          feedback_ref,
+                          simulation_folder::String;
+                          kwargs...) where {T<:PM.AbstractPowerFormulation}
+
+
+    _validate_steps(stages, steps)
+    dates, validation = _get_dates(stages)
+    _prepare_workspace!(sim_ref, base_name, simulation_folder)
+
+    return dates, validation, _build_stages(sim_ref, stages; kwargs...)
+
+end

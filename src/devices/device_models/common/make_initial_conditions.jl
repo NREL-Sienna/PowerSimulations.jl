@@ -5,7 +5,7 @@ function status_init(ps_m::CanonicalModel,
     lenght_devices = length(devices)
     initial_conditions = Vector{InitialCondition}(undef, lenght_devices)
 
-    for (ix,g) in enumerate(devices)
+    for (ix, g) in enumerate(devices)
         if parameters
             initial_conditions[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(PSY.get_tech(g) |> PSY.get_activepower > 0)))
         else
@@ -63,7 +63,7 @@ function duration_init(ps_m::CanonicalModel,
     ini_cond_on = Vector{InitialCondition}(undef, lenght_devices)
     ini_cond_off = Vector{InitialCondition}(undef, lenght_devices)
 
-    for (ix,g) in enumerate(devices)
+    for (ix, g) in enumerate(devices)
         if parameters
             ini_cond_on[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(PSY.get_tech(g) |> PSY.get_activepower > 0)))
             ini_cond_off[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(PSY.get_tech(g) |> PSY.get_activepower < 0)))
@@ -91,7 +91,7 @@ function storage_energy_init(ps_m::CanonicalModel,
     parameters = model_has_parameters(ps_m)
     energy_initial_conditions  = Vector{InitialCondition}(undef, length(devices))
 
-    for (i,g) in enumerate(devices)
+    for (i, g) in enumerate(devices)
             if parameters
                 energy_initial_conditions[i] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 0.0))
             else
