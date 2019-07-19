@@ -97,7 +97,6 @@ function get_branch_to_pm(ix::Int64, branch::PSY.Line)
         "angmax"      => PSY.get_anglelimits(branch).max,
         "transformer" => false,
         "tap"         => 1.0,
-        "name"        => PSY.get_name(branch),
     )
     return PM_branch
 end
@@ -184,7 +183,7 @@ function get_buses_to_pm(buses::PSY.FlattenIteratorWrapper{PSY.Bus})
         "name"     => PSY.get_name(bus),
         )
         PM_buses["$(number)"] = PM_bus
-        if PSY.get_bustype != PSY.BusType(0) # is there a better way to do this?
+        if PSY.get_bustype(bus) != PSY.ISOLATED::PSY.BusType
             PMmap_buses[number] = bus
         end
     end

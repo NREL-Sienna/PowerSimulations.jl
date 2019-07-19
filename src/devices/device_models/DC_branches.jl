@@ -52,7 +52,8 @@ end
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
                                 device_formulation::Type{HVDCLossless},
-                                system_formulation::Type{StandardPTDFForm}) where {B <: PSY.DCBranch}
+                                system_formulation::Type{S}) where {B <: PSY.DCBranch,
+                                                                    S <: PM.AbstractPowerFormulation}
 
     var_name = Symbol("Fp_$(B)")
     con_name = Symbol("rate_limit_$(B)")
@@ -73,7 +74,8 @@ end
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
                                 device_formulation::Type{HVDCDispatch},
-                                system_formulation::Type{StandardPTDFForm}) where {B <: PSY.DCBranch}
+                                system_formulation::Type{S}) where {B <: PSY.DCBranch,
+                                                                    S <: PM.AbstractPowerFormulation}
 
     var_name = Symbol("Fp_$(B)")
     con_name = Symbol("rate_limit_$(B)")
