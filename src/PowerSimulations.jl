@@ -3,6 +3,12 @@ module PowerSimulations
 #################################################################################
 # Exports
 
+# Base Models
+export Simulation
+export OperationModel
+export ModelReference
+export InitialCondition
+
 #Network Relevant Exports
 export StandardPTDFForm
 export CopperPlatePowerModel
@@ -21,11 +27,13 @@ export HVDCDispatch
 export StaticPowerLoad
 export InterruptiblePowerLoad
 export DispatchablePowerLoad
-######## Thermal Formulations ########
+######## Renewable Formulations ########
 export RenewableFixed
 export RenewableFullDispatch
 export RenewableConstantPowerFactor
-######## Storage Formulations ########
+######## Hydro Formulations ########
+export HydroFixed
+######## Renewable Formulations ########
 export BookKeeping
 export BookKeepingwReservation
 ######## Thermal Formulations ########
@@ -35,11 +43,9 @@ export ThermalRampLimited
 export ThermalDispatchNoMin
 
 #operation_models
-export OperationModel
-export ModelReference
-export UnitCommitment
-export EconomicDispatch
-export OptimalPowerFlow
+#export UnitCommitment
+#export EconomicDispatch
+#export OptimalPowerFlow
 
 #functions
 export construct_device!
@@ -51,7 +57,8 @@ export solve_op_model!
 # Imports
 import JuMP
 import ParameterJuMP
-#using TimeSeries
+import MathOptFormat
+import TimeSeries
 import PowerSystems
 import PowerModels
 import MathOptInterface
@@ -72,6 +79,7 @@ const PSI = PowerSimulations
 const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
 const PJ = ParameterJuMP
+const MOPFM = MathOptFormat.MOF.Model()
 
 #Type Alias for JuMP and PJ containers
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
@@ -104,7 +112,7 @@ include("core/device_constructor.jl")
 include("core/canonical_constructor.jl")
 include("core/operations_constructor.jl")
 include("core/core_structs/results_model.jl")
-#include("core/simulation_constructor.jl")
+include("core/simulation_constructor.jl")
 
 #Device Modeling components
 include("devices/device_models/common.jl")
@@ -139,10 +147,10 @@ include("operation_models/operation_models.jl")
 #Utils
 include("routines/printing.jl")
 include("routines/solve_routines.jl")
-include("routines/get_ini_cond.jl")
+include("routines/simulation_feedback.jl")
 include("routines/optimization_debugging.jl")
-#include("routines/simulation_routines.jl")
-#include("routines/device_retreval.jl")
+include("routines/simulation_routines.jl")
+include("routines/write_model.jl")
 
 #################################################################################
 ##### JuMP methods overloading

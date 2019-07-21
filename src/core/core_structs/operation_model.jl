@@ -1,5 +1,7 @@
 abstract type AbstractOperationsModel end
 
+struct DefaultOpModel <: AbstractOperationsModel end
+
 mutable struct ModelReference{T <: PM.AbstractPowerFormulation}
     transmission::Type{T}
     devices::Dict{Symbol, DeviceModel}

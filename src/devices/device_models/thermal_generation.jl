@@ -232,10 +232,10 @@ function commitment_constraints!(ps_m::CanonicalModel,
 
     device_commitment(ps_m,
                       ps_m.initial_conditions[key],
-                        Symbol("commitment_$(T)"),
-                      (Symbol("START_$(T)"),
-                       Symbol("STOP_$(T)"),
-                       Symbol("ON_$(T)"))
+                      Symbol("commitment_$(T)"),
+                     (Symbol("START_$(T)"),
+                      Symbol("STOP_$(T)"),
+                      Symbol("ON_$(T)"))
                       )
 
     return
