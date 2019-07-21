@@ -7,12 +7,13 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                              B <: PSY.Branch}
 
     devices = PSY.get_components(device, sys)
-    #=
-    branch_rate_constraint(ps_m,
-                          devices,
-                          device_formulation,
-                          system_formulation)
-    =#
+
+    if length(devices) > 0
+        branch_rate_constraint(ps_m,
+                            devices,
+                            device_formulation,
+                            system_formulation)
+    end
 
     return
 

@@ -24,7 +24,6 @@ function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
                         devices::PSY.FlattenIteratorWrapper{B}) where {B <: PSY.ACBranch,
                                                              S <: PM.AbstractPowerFormulation}
-
     return
 
 end
@@ -48,9 +47,7 @@ function flow_variables(ps_m::CanonicalModel,
         rate = PSY.get_rate(d)
         for t in time_steps
             ps_m.variables[var_name][name, t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                            base_name="$(bus_fr), $(bus_to)_{$(name), $(t)}",
-                                                            upper_bound = rate,
-                                                            lower_bound = -rate)
+                                                            base_name="$(bus_fr), $(bus_to)_{$(name), $(t)}")
         end
     end
 
@@ -65,7 +62,7 @@ function branch_rate_constraint(ps_m::CanonicalModel,
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B <: PSY.ACBranch,
                                                                     D <: AbstractBranchFormulation,
-                                                                    S <: PM.AbstractDCPForm}
+                                                                    S <: PM.AbstractActivePowerFormulation}
 
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
 
@@ -78,17 +75,6 @@ function branch_rate_constraint(ps_m::CanonicalModel,
 
 end
 
-function branch_rate_constraint(ps_m::CanonicalModel,
-                                devices::PSY.FlattenIteratorWrapper{B},
-                                device_formulation::Type{D},
-                                system_formulation::Type{StandardPTDFForm}) where {B <: PSY.ACBranch,
-                                                                    D <: AbstractBranchFormulation}
-
-    # This is intended to to nothing since flow constraints are populated in ptdf_networkflow()
-
-    return
-
-end
 
 function branch_rate_constraint(ps_m::CanonicalModel,
     devices::PSY.FlattenIteratorWrapper{B},
@@ -99,10 +85,12 @@ function branch_rate_constraint(ps_m::CanonicalModel,
 
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
 
-    device_range(ps_m,
-                range_data,
-                Symbol("rate_limit_$(B)"),
-                Symbol("Fbr_$(B)") + Symbol("Qbr_$(B)"))
+    @show "not populating AC flow constraints"
+    #=
+    norm_two_constraint(ps_m,
+                        range_data,
+                        Symbol("rate_limit_$(B)"),
+                        Symbol("Fbr_$(B)") + Symbol("Qbr_$(B)"))=#
 
     return
 

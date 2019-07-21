@@ -317,7 +317,7 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerFormu
     return pm_var_map
 end
 
-function add_pm_var_refs!(ps_m::CanonicalModel, sys::PSY.System, system_formulation::Type{S}) where {S <: PM.AbstractPowerFormulation}
+function add_pm_var_refs!(ps_m::CanonicalModel, system_formulation::Type{S}, sys::PSY.System) where {S <: PM.AbstractPowerFormulation}
 
     time_steps = model_time_steps(ps_m)
     bus_dict = ps_m.pm_model.ext[:PMmap].bus
