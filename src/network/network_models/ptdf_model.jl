@@ -4,7 +4,6 @@ function ptdf_networkflow(ps_m::CanonicalModel,
                           expression::Symbol,
                           PTDF::PSY.PTDF) where {B <: PSY.Branch}
 
-
     time_steps = model_time_steps(ps_m)
     ps_m.constraints[:network_flow] = JuMPConstraintArray(undef, PTDF.axes[1], time_steps)
     ps_m.constraints[:nodal_balance] = JuMPConstraintArray(undef, PTDF.axes[2], time_steps)
@@ -12,25 +11,25 @@ function ptdf_networkflow(ps_m::CanonicalModel,
 
     _remove_undef!(ps_m.expressions[expression])
 
+    var_dict = Dict{Type,Symbol}()
     for btype in Set(branch_types)
-        key = Symbol("Fbr_$(btype)")
+        var_dict[btype] = Symbol("Fbr_$(btype)")
         typed_branches = PSY.FlattenIteratorWrapper(btype, Vector([[b for b in branches if typeof(b) == btype]]))
-        @show collect(typed_branches)
         flow_variables(ps_m, StandardPTDFForm, typed_branches)
-        for t in time_steps
-            for b in typed_branches
-                ps_m.constraints[:network_flow][PSY.get_name(b), t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[key][PSY.get_name(b), t] == PTDF[PSY.get_name(b), :]'*ps_m.expressions[expression].data[:, t])
-            end
+    end
 
-            for b in typed_branches
-                _add_to_expression!(ps_m.expressions[expression], (PSY.get_arch(b)).from |> PSY.get_number, t, ps_m.variables[key][PSY.get_name(b), t], -1.0)
-                _add_to_expression!(ps_m.expressions[expression], (PSY.get_arch(b)).to |> PSY.get_number, t, ps_m.variables[key][PSY.get_name(b), t], 1.0)
-            end
+    for t in time_steps
+        for b in branches
+            ps_m.constraints[:network_flow][PSY.get_name(b), t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_dict[typeof(b)]][PSY.get_name(b), t] == PTDF[PSY.get_name(b), :]'*ps_m.expressions[expression].data[:, t])
+        end
 
-            for b in buses
-                ps_m.constraints[:nodal_balance][PSY.get_number(b), t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.expressions[expression][PSY.get_number(b), t] == 0)
-            end
+        for b in branches
+            _add_to_expression!(ps_m.expressions[expression], (PSY.get_arch(b)).from |> PSY.get_number, t, ps_m.variables[var_dict[typeof(b)]][PSY.get_name(b), t], -1.0)
+            _add_to_expression!(ps_m.expressions[expression], (PSY.get_arch(b)).to |> PSY.get_number, t, ps_m.variables[var_dict[typeof(b)]][PSY.get_name(b), t], 1.0)
+        end
 
+        for b in buses
+            ps_m.constraints[:nodal_balance][PSY.get_number(b), t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.expressions[expression][PSY.get_number(b), t] == 0)
         end
     end
 

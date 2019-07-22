@@ -34,7 +34,7 @@ function flow_variables(ps_m::CanonicalModel,
                                                              S <: StandardPTDFForm}
 
     time_steps = model_time_steps(ps_m)
-    var_name = Symbol("Fbr_$(B)")
+    @show var_name = Symbol("Fbr_$(B)")
     ps_m.variables[var_name] = PSI._container_spec(ps_m.JuMPmodel,
                                                     (PSY.get_name(d) for d in devices),
                                                      time_steps)
