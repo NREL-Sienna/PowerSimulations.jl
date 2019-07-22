@@ -41,9 +41,9 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
     PTDF_ref = Dict{PSY.System, PSY.PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc);
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [264, 120, 0, 0, 264],
-                                                    c_sys14 => [600, 120, 0, 0, 816],
-                                                    c_sys14_dc => [552, 120, 0, 0, 768])
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [264, 264, 0, 0, 264],
+                                                    c_sys14 => [600, 600, 0, 0, 816],
+                                                    c_sys14_dc => [552, 552, 0, 0, 768])
 
     for (ix, sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
