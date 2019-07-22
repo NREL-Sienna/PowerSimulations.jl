@@ -10,15 +10,21 @@ Constructs allowed rate-of-change constraints from variables, initial condtions,
 # Constraints
 If t = 1:
 
-`` variable[name, 1] - initial_conditions[ix].value <= rate_data[2][ix].up ``
+``` variable[name, 1] - initial_conditions[ix].value <= rate_data[2][ix].up ```
 
-`` initial_conditions[ix].value - variable[name, 1] <= rate_data[2][ix].down ``
+``` initial_conditions[ix].value - variable[name, 1] <= rate_data[2][ix].down ```
 
 If t > 1:
 
-`` variable[name, t-1] - variable[name, t] <= rate_data[2][ix].up ``
+``` variable[name, t] - variable[name, t-1] <= rate_data[2][ix].up ```
 
-`` variable[name, t] - variable[name, t-1] <= rate_data[2][ix].down ``
+``` variable[name, t-1] - variable[name, t] <= rate_data[2][ix].down ```
+
+# LaTeX
+
+`` r^{down} \leq x_1 - x_{init} \leq r^{up}, \text{ for } t = 1 ``
+
+`` r^{down} \leq x_t - x_{t-1} \leq r^{up}, \forall t \geq 2 ``
 
 # Arguments
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations
@@ -53,8 +59,8 @@ function device_linear_rateofchange(ps_m::CanonicalModel,
     end
 
     for t in time_steps[2:end], (ix, name) in enumerate(rate_data[1])
-        con_up[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t-1] - variable[name, t] <= rate_data[2][ix].up)
-        con_down[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t] - variable[name, t-1] <= rate_data[2][ix].down)
+        con_up[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t] - variable[name, t-1] <= rate_data[2][ix].up)
+        con_down[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t-1] - variable[name, t] <= rate_data[2][ix].down)
     end
 
     return
@@ -73,15 +79,21 @@ Constructs allowed rate-of-change constraints from variables, initial condtions,
 # Equations
 If t = 1:
 
-`` variable[name, 1] - initial_conditions[ix].value <= rate_data[2][ix].up + rate_data[3][ix].max*varstart[name, 1] ``
+``` variable[name, 1] - initial_conditions[ix].value <= rate_data[2][ix].up + rate_data[3][ix].max*varstart[name, 1] ```
 
-`` initial_conditions[ix].value - variable[name, 1] <= rate_data[2][ix].down + rate_data[3][ix].min*varstart[name, 1] ``
+``` initial_conditions[ix].value - variable[name, 1] <= rate_data[2][ix].down + rate_data[3][ix].min*varstart[name, 1] ```
 
 If t > 1:
 
-`` variable[name, t-1] - variable[name, t] <= rate_data[2][ix].up + rate_data[3][ix].max*varstart[name, t] ``
+``` variable[name, t] - variable[name, t-1] <= rate_data[2][ix].up + rate_data[3][ix].max*varstart[name, t] ```
 
-`` variable[name, t] - variable[name, t-1] <= rate_data[2][ix].down + rate_data[3][ix].min*varstop[name, t] ``
+``` variable[name, t-1] - variable[name, t] <= rate_data[2][ix].down + rate_data[3][ix].min*varstop[name, t] ```
+
+# LaTeX
+
+`` r^{down} + r^{min} x^{stop}_1 \leq x_1 - x_{init} \leq r^{up} + r^{max} x^{start}_1, \text{ for } t = 1 ``
+
+`` r^{down} + r^{min} x^{stop}_t \leq x_t - x_{t-1} \leq r^{up} + r^{max} x^{start}_t, \forall t \geq 2 ``
 
 # Arguments
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations
@@ -123,9 +135,9 @@ function device_mixedinteger_rateofchange(ps_m::CanonicalModel,
     end
 
     for t in time_steps[2:end], (ix, name) in enumerate(rate_data[1])
-        con_up[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t-1] - variable[name, t] 
+        con_up[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t] - variable[name, t-1] 
                                                             <= rate_data[2][ix].up + rate_data[3][ix].max*varstart[name, t])
-        con_down[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t] - variable[name, t-1]
+        con_down[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t-1] - variable[name, t]
                                                             <= rate_data[2][ix].down + rate_data[3][ix].min*varstop[name, t])
     end
 

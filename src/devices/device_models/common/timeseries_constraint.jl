@@ -8,7 +8,11 @@ Constructs upper bound (and 0 as lower bound) for given variable and time series
 
 # Constraint
 
-`` 0.0 <= variable[name, t] <= ts_data[2][ix][t] ``
+``` 0.0 <= variable[name, t] <= ts_data[2][ix][t] ```
+
+# LaTeX
+
+`` 0 \leq x_t \leq r^{max}_t, \forall t ``
 
 # Arguments
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations
@@ -46,7 +50,11 @@ Constructs lower bound for given variable and time series data.
 
 # Constraint
 
-`` 0.0 <= ts_data[2][ix][t] <= variable[name, t] ``
+``` ts_data[2][ix][t] <= variable[name, t] ```
+
+# LaTeX
+
+`` r^{min}_t \leq x_t, \forall t `` 
 
 where (ix, name) in enumerate(ts_data[1]).
 
@@ -88,7 +96,11 @@ Constructs upper bound for given variable and time series data parameter as uppe
 
 # Constraint
 
-`` variable[name, t] <= param[name, t] ``
+``` variable[name, t] <= param[name, t] ```
+
+# LaTeX
+
+`` x^{var}_t \leq x^{param}_t, \forall t ``
 
 # Arguments
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations
@@ -113,7 +125,7 @@ function device_timeseries_param_ub(ps_m::CanonicalModel,
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
 
         param[name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[2][ix][t]);
-                                               JuMP.@constraint(ps_m.JuMPmodel, variable[name, t] >= 0.0)
+                JuMP.@constraint(ps_m.JuMPmodel, variable[name, t] >= 0.0)
         constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t] <= param[name, t])
 
     end
@@ -133,7 +145,11 @@ Constructs upper bound for given variable and time series data parameter as uppe
 
 # Constraint
 
-`` param[name, t] <= variable[name, t] ``
+``` param[name, t] <= variable[name, t] ```
+
+# LaTeX
+
+`` x^{param}_t \leq x^{var}_t, \forall t ``
 
 # Arguments
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations
@@ -177,11 +193,15 @@ Constructs upper bound (with lower bound 0) for variable and time series or conf
 
 # Constraints
 
-`` pvarcts[name, t] <= varbin[name, t]*ts_data[2][ix][t] ``
+``` varcts[name, t] <= varbin[name, t]*ts_data[2][ix][t] ```
 
-`` varcts[name, t] >= 0.0 ``
+``` varcts[name, t] >= 0.0 ```
 
 where (ix, name) in enumerate(ts_data[1]).
+
+# LaTeX
+
+`` 0 \leq x^{cts}_t \leq r^{max}_t x^{bin}_t, \forall t ``
 
 # Arguments
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations
@@ -231,11 +251,17 @@ Uses BigM constraint type to allow for parameter.
 
 # Constraints
 
-`` varcts[name, t] - param[name, t] <= (1 - varbin[name, t])*M_value ``
+``` varcts[name, t] - param[name, t] <= (1 - varbin[name, t])*M_value ```
 
-`` varcts[name, t] <= varbin[name, t]*M_value ``
+``` varcts[name, t] <= varbin[name, t]*M_value ```
 
-`` varcts[name, t] >= 0.0 ``
+``` varcts[name, t] >= 0.0 ```
+
+# LaTeX
+
+`` x^{cts}_t - x^{param}_t \leq M(1 - x^{bin}_t ), forall t ``
+
+`` 0 \leq x^{cts}_t \leq M x^{bin}_t, \forall t ``
 
 # Arguments
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations

@@ -6,16 +6,22 @@
 
 Constructs min/max range constraint from device variable.
 
-#Constraints
+# Constraints
 If min and max within an epsilon width:
 
-`` variable[r[1], t] == r[2].max ``
+``` variable[r[1], t] == r[2].max ```
 
 Otherwise:
 
-`` r[2].min <= variable[r[1], t] <= r[2].max ``
+``` r[2].min <= variable[r[1], t] <= r[2].max ```
 
 where r in range_data.
+
+# LaTeX
+
+`` x = r^{max}, \text{ for } |r^{max} - r^{min}| < \varepsilon ``
+
+`` r^{min} \leq x \leq r^{max}, \text{ otherwise } ``
 
 # Arguments
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations
@@ -63,17 +69,23 @@ Constructs min/max range constraint from device variable and on/off decision var
 # Constraints
 If device min = 0:
 
-`` varcts[r[1], t] <= r[2].max*varbin[r[1], t]) ``
+``` varcts[r[1], t] <= r[2].max*varbin[r[1], t]) ```
 
-`` varcts[r[1], t] >= 0.0 ``
+``` varcts[r[1], t] >= 0.0 ```
 
 Otherwise:
 
-`` varcts[r[1], t] <= r[2].max*varbin[r[1], t] ``
+``` varcts[r[1], t] <= r[2].max*varbin[r[1], t] ```
 
-`` varcts[r[1], t] >= r[2].min*varbin[r[1], t] ``
+``` varcts[r[1], t] >= r[2].min*varbin[r[1], t] ```
 
 where r in range_data.
+
+# LaTeX
+
+`` 0 \leq x^{cts} \leq r^{max} x^{bin}, \text{ for } r^{min} = 0 ``
+
+`` r^{min} x^{bin} \leq x^{cts} \leq r^{max} x^{bin}, \text{ otherwise } ``
 
 # Arguments
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations
@@ -136,17 +148,23 @@ Constructs min/max range constraint from device variable with parameter setting.
 # Constraints
 If device min = 0:
 
-`` variable[r[1], t] <= r[2].max*param[r[1], t] ``
+``` variable[r[1], t] <= r[2].max*param[r[1], t] ```
 
-`` varcts[r[1], t] >= 0.0 ``
+``` varcts[r[1], t] >= 0.0 ```
 
 Otherwise:
 
-`` variable[r[1], t] <= r[2].max*param[r[1], t] ``
+``` variable[r[1], t] <= r[2].max*param[r[1], t] ```
 
-`` variable[r[1], t] >= r[2].min*param[r[1], t] ``
+``` variable[r[1], t] >= r[2].min*param[r[1], t] ```
 
 where r in range_data.
+
+# LaTeX
+
+`` 0.0 \leq x^{var} \leq r^{max} x^{param}, \text{ for } r^{min} = 0 ``
+
+`` r^{min} x^{param} \leq x^{var} \leq r^{min} x^{param}, \text{ otherwise } ``
 
 # Arguments
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations
@@ -210,20 +228,26 @@ end
 
 Constructs min/max range constraint from device variable and on/off decision variable.
 
-#Equations
+# Constraints
 If device min = 0:
 
-`` varcts[r[1], t] <= r[2].max*(1-varbin[r[1], t]) ``
+``` varcts[r[1], t] <= r[2].max*(1-varbin[r[1], t]) ```
 
-`` varcts[r[1], t] >= 0.0 ``
+``` varcts[r[1], t] >= 0.0 ```
 
 Otherwise:
 
-`` varcts[r[1], t] <= r[2].max*(1-varbin[r[1], t]) ``
+``` varcts[r[1], t] <= r[2].max*(1-varbin[r[1], t]) ```
 
-`` varcts[r[1], t] >= r[2].min*(1-varbin[r[1], t]) ``
+``` varcts[r[1], t] >= r[2].min*(1-varbin[r[1], t]) ```
 
 where r in range_data.
+
+# LaTeX
+
+`` 0 \leq x^{cts} \leq r^{max} (1 - x^{bin} ), \text{ for } r^{min} = 0 ``
+
+`` r^{min} (1 - x^{bin} ) \leq x^{cts} \leq r^{max} (1 - x^{bin} ), \text{ otherwise } ``
 
 # Arguments
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations

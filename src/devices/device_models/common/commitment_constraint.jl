@@ -10,13 +10,20 @@ Constructs multi-timestep constraint from initial conditions and binary variable
 # Constraints
 If t = 1:
 
-`` varon[name, 1] == ic.value + varstart[name, 1] - varstop[name, 1] ``
+``` varon[name, 1] == ic.value + varstart[name, 1] - varstop[name, 1] ```
 
 where ic in initial_condtions.
 
 If t > 1:
 
-`` varon[name, t] == varon[name, t-1] + varstart[name, t] - varstop[name, t] ``
+``` varon[name, t] == varon[name, t-1] + varstart[name, t] - varstop[name, t] ```
+
+# LaTeX
+
+`` x^{on}_1 = x^{on}_{init} + x^{start}_1 - x^{stop}_1, \text{ for } t = 1 ``
+
+`` x^{on}_t = x^{on}_{t-1} + x^{start}_t - x^{stop}_t, \forall t \geq 2 ``
+
 
 # Arguments
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations
