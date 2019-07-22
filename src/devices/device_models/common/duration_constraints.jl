@@ -116,8 +116,7 @@ function device_duration_look_ahead(ps_m::CanonicalModel,
                              initial_duration_on::Vector{InitialCondition},
                              initial_duration_off::Vector{InitialCondition},
                              cons_name::Symbol,
-                             var_names::Tuple{Symbol,Symbol,Symbol},
-                             M_value::Float64 = 1e6)
+                             var_names::Tuple{Symbol,Symbol,Symbol})
 
     time_steps = model_time_steps(ps_m)
     name_up = Symbol(cons_name,:_up)
@@ -126,12 +125,6 @@ function device_duration_look_ahead(ps_m::CanonicalModel,
     ps_m.constraints[name_up] = JuMPConstraintArray(undef, set_names, time_steps)
     ps_m.constraints[name_down] = JuMPConstraintArray(undef, set_names, time_steps)
 
-    for (ix,name) in enumerate(set_names)
-        ps_m.constraints[name_up][name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
-                                            initial_duration_on[ix].value <= ps_m.variables[var_names[1]][name,1]*M_value)
-        ps_m.constraints[name_down][name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
-                                            initial_duration_off[ix].value <= (1- ps_m.variables[var_names[1]][name,1])*M_value)
-    end
 
     for t in time_steps[2:end], (ix,name) in enumerate(set_names)
         # Minimum Up-time Constraint
@@ -161,14 +154,13 @@ function device_duration_look_ahead(ps_m::CanonicalModel,
     end
 end
 
-function device_duration_param_look_ahead(ps_m::CanonicalModel,
+function device_duration_param(ps_m::CanonicalModel,
                              set_names::Vector{String},
                              duration_data::Vector{UpDown},
                              initial_duration_on::Vector{InitialCondition},
                              initial_duration_off::Vector{InitialCondition},
                              cons_name::Symbol,
-                             var_names::Tuple{Symbol,Symbol,Symbol},
-                             M_value::Float64 = 1e6)
+                             var_names::Tuple{Symbol,Symbol,Symbol})
 
     time_steps = model_time_steps(ps_m)
     name_up = Symbol(cons_name,:_up)
@@ -176,13 +168,6 @@ function device_duration_param_look_ahead(ps_m::CanonicalModel,
 
     ps_m.constraints[name_up] = JuMPConstraintArray(undef, set_names, time_steps)
     ps_m.constraints[name_down] = JuMPConstraintArray(undef, set_names, time_steps)
-
-    for (ix,name) in enumerate(set_names)
-        ps_m.constraints[name_up][name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
-                                            initial_duration_on[ix].value <= ps_m.variables[var_names[1]][name,1]*M_value)
-        ps_m.constraints[name_down][name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
-                                            initial_duration_off[ix].value <= (1- ps_m.variables[var_names[1]][name,1])*M_value)
-    end
 
     for t in time_steps[2:end], (ix,name) in enumerate(set_names)
         # Minimum Up-time Constraint

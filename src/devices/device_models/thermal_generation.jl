@@ -501,8 +501,8 @@ function time_constraints!(ps_m::CanonicalModel,
 
     if !(isempty(duration_data[1]))
 
-        key_on = parameters ? Symbol("duration_ind_on_$(T)") : Symbol("duration_on_$(T)")
-        key_off = parameters ? Symbol("duration_ind_off_$(T)") : Symbol("duration_off_$(T)")
+        key_on =  Symbol("duration_on_$(T)")
+        key_off =  Symbol("duration_off_$(T)")
         if !(key_on in keys(ps_m.initial_conditions))
             @warn("Initial Conditions for Time Up/Down constraints not provided. This can lead to unwanted results")
             time_limits = duration_init(ps_m, devices, duration_data[1])
@@ -512,7 +512,7 @@ function time_constraints!(ps_m::CanonicalModel,
         @assert length(duration_data[2]) == length(ps_m.initial_conditions[key_off])
 
        if parameters
-            device_duration_ind(ps_m,
+            device_duration_param(ps_m,
                                 duration_data[1],
                                 duration_data[2],
                                 ps_m.initial_conditions[key_on],
