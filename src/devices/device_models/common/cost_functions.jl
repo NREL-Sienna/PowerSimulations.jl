@@ -78,13 +78,12 @@ function _pwlgencost(ps_m::CanonicalModel,
 
     for (ix, pwlvar) in enumerate(pwlvars)
         if ix == 1
-            temp_gen_cost = cost_component[ix][1] * (pwlvar / cost_component[ix][2] ) ;
+            JuMP.add_to_expression!(gen_cost,cost_component[ix][1] * (pwlvar / cost_component[ix][2])) ;
         else
-            temp_gen_cost = (cost_component[ix][1] - cost_component[ix-1][1]) * (pwlvar/(cost_component[ix][2] - cost_component[ix-1][2]) );
+            JuMP.add_to_expression!(gen_cost,(cost_component[ix][1] - cost_component[ix-1][1]) * 
+                                            (pwlvar/(cost_component[ix][2] - cost_component[ix-1][2])));
         end
-        gen_cost = gen_cost + temp_gen_cost
     end
-
 
     c = JuMP.@constraint(ps_m.JuMPmodel, variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars) ]) )
 #     JuMP.set_name(c,"{$(variable)}_{pwl}")
