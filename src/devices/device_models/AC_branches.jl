@@ -85,12 +85,10 @@ function branch_rate_constraint(ps_m::CanonicalModel,
 
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
 
-    @show "not populating AC flow constraints"
-    #=
     norm_two_constraint(ps_m,
                         range_data,
                         Symbol("rate_limit_$(B)"),
-                        Symbol("Fbr_$(B)") + Symbol("Qbr_$(B)"))=#
+                        (Symbol("Fbr_$(B)"), Symbol("Qbr_$(B)")))
 
     return
 
