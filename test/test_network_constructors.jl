@@ -79,9 +79,9 @@ end
     network = PM.DCPlosslessForm
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [384, 120, 144, 144, 264],
-                                                    c_sys14 => [936, 120, 480, 480, 816],
-                                                    c_sys14_dc => [984, 120, 432, 432, 816])
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [384, 264, 144, 144, 264],
+                                                    c_sys14 => [936, 600, 480, 480, 816],
+                                                    c_sys14_dc => [984, 600, 432, 432, 816])
 
     for (ix, sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
@@ -100,6 +100,10 @@ end
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == test_results[sys][3]
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.GreaterThan{Float64}) == test_results[sys][4]
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == test_results[sys][5]
+        
+        JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
+        JuMP.optimize!(ps_model.JuMPmodel)
+        @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
     end
 
 end
@@ -108,9 +112,9 @@ end
     network = PM.StandardACPForm
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [1056, 240, 144, 144, 240],
-                                                    c_sys14 => [2832, 240, 480, 480, 672],
-                                                    c_sys14_dc => [2832, 240, 432, 432, 720])
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [1056, 240, 288, 144, 240],
+                                                    c_sys14 => [2832, 240, 960, 480, 672],
+                                                    c_sys14_dc => [2832, 288, 864, 432, 720])
 
     for (ix, sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
