@@ -15,7 +15,7 @@ export OptimalPowerFlow
 
 #functions
 export solve_op_model!
-export demand_constraints
+export demandconstraints
 
 
 #################################################################################
