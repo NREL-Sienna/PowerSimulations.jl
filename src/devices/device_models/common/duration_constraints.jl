@@ -134,7 +134,7 @@ function device_duration_look_ahead(ps_m::CanonicalModel,
                 JuMP.add_to_expression!(lhs_on,1,ps_m.variables[var_names[1]][name,i])
             end
         end
-        JuMP.add_to_expression!(lhs_on,initial_duration_on[ix].value) : nothing;
+        JuMP.add_to_expression!(lhs_on,initial_duration_on[ix].value) ;
 
         ps_m.constraints[name_up][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
             lhs_on <= ps_m.variables[var_names[3]][name,t])*duration_data[ix].up
@@ -146,7 +146,7 @@ function device_duration_look_ahead(ps_m::CanonicalModel,
                 JuMP.add_to_expression!(lhs_off,(1-ps_m.variables[var_names[1]][name,i]));
             end
         end
-        JuMP.add_to_expression!(lhs_off,initial_duration_on[ix].value) : nothing;
+        JuMP.add_to_expression!(lhs_off,initial_duration_on[ix].value) ;
 
         ps_m.constraints[name_down][name, t] = JuMP.@constraint(ps_m.JuMPmodel, 
             lhs_off <= ps_m.variables[var_names[2]][name,t]*duration_data[ix].down)
@@ -178,11 +178,11 @@ function device_duration_param(ps_m::CanonicalModel,
                     JuMP.add_to_expression!(lhs_on,1,ps_m.variables[var_names[1]][name,i]);
                 end
             else
-                JuMP.add_to_expression!(lhs_on,1,ps_m.variables[var_names[2]][name,i]) : nothing ;
+                JuMP.add_to_expression!(lhs_on,1,ps_m.variables[var_names[2]][name,i]);
             end
         end
         if t <= duration_data[ix].up
-            JuMP.add_to_expression!(lhs_on,initial_duration_on[ix].value) : nothing
+            JuMP.add_to_expression!(lhs_on,initial_duration_on[ix].value);
             ps_m.constraints[name_up][name, t] = JuMP.@constraint(ps_m.JuMPmodel,
                 lhs_on <= ps_m.variables[var_names[3]][name,t]*duration_data[ix].up)
          else
@@ -199,11 +199,11 @@ function device_duration_param(ps_m::CanonicalModel,
                     JuMP.add_to_expression!(lhs_off,(1-ps_m.variables[var_names[1]][name,i])) ;
                 end
             else
-                JuMP.add_to_expression!(lhs_off,1,ps_m.variables[var_names[3]][name,i]) : nothing ;
+                JuMP.add_to_expression!(lhs_off,1,ps_m.variables[var_names[3]][name,i]);
             end
         end
         if t <= duration_data[ix].down
-            JuMP.add_to_expression!(lhs_off,initial_duration_on[ix].value) : nothing;
+            JuMP.add_to_expression!(lhs_off,initial_duration_on[ix].value);
             ps_m.constraints[name_down][name, t] = JuMP.@constraint(ps_m.JuMPmodel,
                 lhs_off <= ps_m.variables[var_names[2]][name,t]*duration_data[ix].down)
         else
