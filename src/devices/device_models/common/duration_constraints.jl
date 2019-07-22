@@ -23,7 +23,7 @@ function device_duration_retrospective(ps_m::CanonicalModel,
             # Minimum Up-time Constraint
             lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0);
             for i in (t-duration_data[ix].up + 1):t 
-                if in(i,time_steps) 
+                if i in time_steps
                     JuMP.add_to_expression!(lhs_on,ps_m.variables[var_names[2]][name,i])
                 end
             end
@@ -37,7 +37,7 @@ function device_duration_retrospective(ps_m::CanonicalModel,
             # Minimum Down-time Constraint
             lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0);
             for i in (t-duration_data[ix].down + 1):t
-                if in(i,time_steps)  
+                if i in time_steps 
                     JuMP.add_to_expression!(lhs_off,ps_m.variables[var_names[3]][name,i]) ; 
                 end
             end
@@ -123,7 +123,7 @@ function device_duration_look_ahead(ps_m::CanonicalModel,
         # Minimum Up-time Constraint
         lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0);
         for i in t-duration_data[ix].up:t
-            if in(i,time_steps)  
+            if i in time_steps 
                 JuMP.add_to_expression!(lhs_on,ps_m.variables[var_names[1]][name,i])
             end
         end
@@ -137,7 +137,7 @@ function device_duration_look_ahead(ps_m::CanonicalModel,
         # Minimum Down-time Constraint
         lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0);
         for i in t-duration_data[ix].down:t
-            if in(i,time_steps) 
+            if i in time_steps
                 JuMP.add_to_expression!(lhs_off,(1-ps_m.variables[var_names[1]][name,i]));
             end
         end
