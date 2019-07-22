@@ -44,7 +44,6 @@ function flow_variables(ps_m::CanonicalModel,
         bus_fr = cp.from.number
         bus_to = cp.to.number
         name = PSY.get_name(d)
-        rate = PSY.get_rate(d)
         for t in time_steps
             ps_m.variables[var_name][name, t] = JuMP.@variable(ps_m.JuMPmodel,
                                                             base_name="$(bus_fr), $(bus_to)_{$(name), $(t)}")
@@ -70,6 +69,7 @@ function branch_rate_constraint(ps_m::CanonicalModel,
                 range_data,
                 Symbol("rate_limit_$(B)"),
                 Symbol("Fbr_$(B)"))
+                
 
     return
 

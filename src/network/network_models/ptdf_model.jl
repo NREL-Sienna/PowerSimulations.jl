@@ -15,6 +15,7 @@ function ptdf_networkflow(ps_m::CanonicalModel,
     for btype in Set(branch_types)
         key = Symbol("Fbr_$(btype)")
         typed_branches = PSY.FlattenIteratorWrapper(btype, Vector([[b for b in branches if typeof(b) == btype]]))
+        @show collect(typed_branches)
         flow_variables(ps_m, StandardPTDFForm, typed_branches)
         for t in time_steps
             for b in typed_branches
