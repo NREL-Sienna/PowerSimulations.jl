@@ -73,13 +73,8 @@ function duration_init(ps_m::CanonicalModel,
         end
     end
 
-    if parameters
-        ps_m.initial_conditions[Symbol("duration_ind_on_$(PSD)")] = ini_cond_on
-        ps_m.initial_conditions[Symbol("duration_ind_off_$(PSD)")] = ini_cond_off
-    else
-        ps_m.initial_conditions[Symbol("duration_on_$(PSD)")] = ini_cond_on
-        ps_m.initial_conditions[Symbol("duration_off_$(PSD)")] = ini_cond_off
-    end
+    ps_m.initial_conditions[Symbol("duration_on_$(PSD)")] = ini_cond_on
+    ps_m.initial_conditions[Symbol("duration_off_$(PSD)")] = ini_cond_off
 
     return isempty(ini_cond_on)
 

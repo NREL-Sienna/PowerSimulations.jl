@@ -29,3 +29,21 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
 end
 
 
+function run_stage(stage::Stage)
+
+    for run in stage.execution_count
+
+        if stage.model.canonical_model.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
+            error("No Optimizer has been defined, can't solve the operational problem")
+        end
+
+        JuMP.optimize!(stage.model.canonical_model.JuMPmodel)
+
+        vars_result = get_model_result(stage.model.canonical_model.JuMPmodel)
+        obj_value = JuMP.objective_value(stage.model.canonical_model.JuMPmodel)
+        opt_log = optimizer_log(stage.model.canonical_model.JuMPmodel)
+    end
+
+    return
+
+end

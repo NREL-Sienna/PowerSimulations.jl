@@ -19,7 +19,7 @@ function post_nip(pm::PM.GenericPowerModel)
         @assert !PM.ismulticonductor(pm, nw=n)
         PM.variable_voltage(pm, nw=n)
         variable_net_injection(pm, nw=n)
-        PM.variable_branch_flow(pm, nw=n)#, bounded=false)
+        PM.variable_branch_flow(pm, nw=n, bounded=false)
         PM.variable_dcline_flow(pm, nw=n)
 
         PM.constraint_model_voltage(pm, nw=n)
@@ -38,8 +38,8 @@ function post_nip(pm::PM.GenericPowerModel)
 
             PM.constraint_voltage_angle_difference(pm, i, nw=n)
 
-            PM.constraint_thermal_limit_from(pm, i, nw=n)
-            PM.constraint_thermal_limit_to(pm, i, nw=n)
+            #PM.constraint_thermal_limit_from(pm, i, nw=n)
+            #PM.constraint_thermal_limit_to(pm, i, nw=n)
         end
 
         for i in PM.ids(pm, :dcline)
@@ -62,7 +62,7 @@ function post_nip_expr(pm::PM.GenericPowerModel)
     for (n, network) in PM.nws(pm)
         @assert !PM.ismulticonductor(pm, nw=n)
         PM.variable_voltage(pm, nw=n)
-        PM.variable_branch_flow(pm, nw=n)#, bounded=false)
+        PM.variable_branch_flow(pm, nw=n, bounded = false)
         PM.variable_dcline_flow(pm, nw=n)
 
         PM.constraint_model_voltage(pm, nw=n)
@@ -81,8 +81,8 @@ function post_nip_expr(pm::PM.GenericPowerModel)
 
             PM.constraint_voltage_angle_difference(pm, i, nw=n)
 
-            PM.constraint_thermal_limit_from(pm, i, nw=n)
-            PM.constraint_thermal_limit_to(pm, i, nw=n)
+            #PM.constraint_thermal_limit_from(pm, i, nw=n)
+            #PM.constraint_thermal_limit_to(pm, i, nw=n)
         end
 
         for i in PM.ids(pm, :dcline)
