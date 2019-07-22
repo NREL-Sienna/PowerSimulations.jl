@@ -1,3 +1,10 @@
+
+struct PMmap
+    bus::Dict{Int64,PSY.Bus}
+    arcs::Dict{Tuple{Int64, Int64, Int64}, b} where b <: PSY.ACBranch
+    arcs_dc::Dict{Tuple{Int64, Int64, Int64}, d} where d <: PSY.DCBranch
+end
+
 function get_branch_to_pm(ix::Int64, branch::PSY.PhaseShiftingTransformer)
     PM_branch = Dict{String, Any}(
         "br_r"        => PSY.get_r(branch),
@@ -131,24 +138,38 @@ function get_branches_to_pm(sys::PSY.System)
 
         PM_ac_branches = Dict{String, Any}()
         PM_dc_branches = Dict{String, Any}()
+        PMmap_ac = Dict{Tuple{Int64, Int64, Int64}, t where t<:PSY.ACBranch}()
+        PMmap_dc = Dict{Tuple{Int64, Int64, Int64}, t where t<:PSY.DCBranch}()
 
         for (ix, branch) in enumerate(PSY.get_components(PSY.Branch, sys))
             if isa(branch, PSY.DCBranch)
                 PM_dc_branches["$(ix)"] = get_branch_to_pm(ix, branch)
+                if PM_dc_branches["$(ix)"]["br_status"] == true
+                    f = PM_dc_branches["$(ix)"]["f_bus"]
+                    t = PM_dc_branches["$(ix)"]["t_bus"]
+                    PMmap_dc[(ix,f,t)] = branch
+                end
             else
                 PM_ac_branches["$(ix)"] = get_branch_to_pm(ix, branch)
+                if PM_ac_branches["$(ix)"]["br_status"] == true
+                    f = PM_ac_branches["$(ix)"]["f_bus"]
+                    t = PM_ac_branches["$(ix)"]["t_bus"]
+                    PMmap_ac[(ix,f,t)] = branch
+                end
             end
         end
 
-    return PM_ac_branches, PM_dc_branches
+    return PM_ac_branches, PM_dc_branches, PMmap_ac, PMmap_dc
 end
 
 function get_buses_to_pm(buses::PSY.FlattenIteratorWrapper{PSY.Bus})
     PM_buses = Dict{String, Any}()
+    PMmap_buses = Dict{Int64, PSY.Bus}()
     for bus in buses
+        number = PSY.get_number(bus)
         PM_bus = Dict{String, Any}(
         "zone"     => 1,
-        "bus_i"    => PSY.get_number(bus),
+        "bus_i"    => number,
         "bus_type" => PSY.get_bustype(bus),
         "vmax"     => PSY.get_voltagelimits(bus).max,
         "area"     => 1,
@@ -159,18 +180,23 @@ function get_buses_to_pm(buses::PSY.FlattenIteratorWrapper{PSY.Bus})
         "base_kv"  => PSY.get_basevoltage(bus),
         "pni"      => 0.0,
         "qni"      => 0.0,
+        "name"     => PSY.get_name(bus),
         )
-        PM_buses["$(PSY.get_number(bus))"] = PM_bus
+        PM_buses["$(number)"] = PM_bus
+        if PSY.get_bustype(bus) != PSY.ISOLATED::PSY.BusType
+            PMmap_buses[number] = bus
+        end
     end
-    return PM_buses
+    return PM_buses, PMmap_buses
 end
 
 function pass_to_pm(sys::PSY.System, time_periods::Int64)
 
-    ac_lines, dc_lines = get_branches_to_pm(sys)
+    ac_lines, dc_lines, PMmap_ac, PMmap_dc = get_branches_to_pm(sys)
     buses = PSY.get_components(PSY.Bus, sys)
+    pm_buses, PMmap_buses = get_buses_to_pm(buses)
     PM_translation = Dict{String, Any}(
-    "bus"            => get_buses_to_pm(buses),
+    "bus"            => pm_buses,
     "branch"         => ac_lines,
     "baseMVA"        => sys.basepower,
     "per_unit"       => true,
@@ -186,6 +212,8 @@ function pass_to_pm(sys::PSY.System, time_periods::Int64)
 
     PM_translation = PM.replicate(PM_translation, time_periods)
 
-    return PM_translation
+    PM_map = PMmap(PMmap_buses, PMmap_ac, PMmap_dc)
+
+    return PM_translation, PM_map
 
 end
