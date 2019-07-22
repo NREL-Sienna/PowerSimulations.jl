@@ -114,10 +114,6 @@ function  build_canonical_model(transmission::Type{T},
     for mod in branches
         @info "Building $(mod[2].device) with $(mod[2].formulation) formulation"
         construct_device!(ps_model, mod[2], transmission, sys; kwargs...)
-        branch_rate_constraint(ps_model, 
-                                PSY.get_components(mod[1], sys),
-                                mod[2],
-                                transmission)
     end
 
     #Build Service
