@@ -65,8 +65,8 @@ function duration_init(ps_m::CanonicalModel,
 
     for (ix, g) in enumerate(devices)
         if parameters
-            ini_cond_on[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(PSY.get_tech(g) |> PSY.get_activepower > 0)))
-            ini_cond_off[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(PSY.get_tech(g) |> PSY.get_activepower < 0)))
+            ini_cond_on[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 999.0*(PSY.get_tech(g) |> PSY.get_activepower > 0)))
+            ini_cond_off[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 999.0*(PSY.get_tech(g) |> PSY.get_activepower < 0)))
         else
             ini_cond_on[ix] = InitialCondition(g, 999.0*(PSY.get_tech(g) |> PSY.get_activepower > 0))
             ini_cond_off[ix] = InitialCondition(g, 999.0*(PSY.get_tech(g) |> PSY.get_activepower < 0))
