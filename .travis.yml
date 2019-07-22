@@ -42,3 +42,21 @@ addons:
 #    - gfortran
 #before_script: # homebrew for mac
 #  - if [ $TRAVIS_OS_NAME = osx ]; then brew install gcc; fi
+
+## uncomment the following lines to override the default test script
+script:
+  - julia --project --color=yes -e "import Pkg; Pkg.build(); Pkg.instantiate()"
+  - julia --check-bounds=yes --depwarn=no --inline=no --color=yes --project -e "import Pkg; Pkg.test(coverage=true);"
+
+after_success:
+  - julia -e 'using Pkg; cd(Pkg.dir("PowerSimulations")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+
+jobs:
+  include:
+    - stage: "Documentation"
+      julia: 1.0
+      os: linux
+      script:
+        - julia --project -e 'using Pkg; Pkg.build(); Pkg.add("Documenter"); Pkg.instantiate()'
+        - julia --project -e 'ENV["DOCUMENTER_DEBUG"] = "true"; include("docs/make.jl")'
+      after_success: skip
