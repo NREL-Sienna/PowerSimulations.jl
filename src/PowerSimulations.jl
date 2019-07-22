@@ -51,6 +51,8 @@ export ThermalDispatchNoMin
 export construct_device!
 export construct_network!
 export solve_op_model!
+export write_model_result
+
 
 
 #################################################################################
@@ -66,6 +68,7 @@ import DataFrames
 import LinearAlgebra
 #import LinearAlgebra.BLAS #needed for the simulation stage
 import Dates
+import Feather
 
 # so that users do not need to import JuMP to use a solver with PowerModels
 import JuMP: with_optimizer
