@@ -1,22 +1,3 @@
-#=
-function ps_cost(ps_m::CanonicalModel,
-                 variable::JuMP.Containers.DenseAxisArray{JV},
-                 cost_component::Function,
-                 sign::Int64) where {JV <: JuMP.AbstractVariableRef}
-
-    store = Vector{Any}(undef, length(variable))
-
-    for (ix, element) in enumerate(variable)
-        store[ix] = cost_component(element)
-    end
-
-    gen_cost = sum(store)
-
-    return sign*gen_cost
-
-end
-=#
-
 function ps_cost(ps_m::CanonicalModel,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::Float64,
