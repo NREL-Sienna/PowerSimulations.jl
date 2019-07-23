@@ -34,7 +34,7 @@ function flow_variables(ps_m::CanonicalModel,
                                                              S <: StandardPTDFForm}
 
     time_steps = model_time_steps(ps_m)
-    @show var_name = Symbol("Fbr_$(B)")
+    var_name = Symbol("Fbr_$(B)")
     ps_m.variables[var_name] = PSI._container_spec(ps_m.JuMPmodel,
                                                     (PSY.get_name(d) for d in devices),
                                                      time_steps)
@@ -69,7 +69,7 @@ function branch_rate_constraint(ps_m::CanonicalModel,
                 range_data,
                 Symbol("rate_limit_$(B)"),
                 Symbol("Fbr_$(B)"))
-                
+
 
     return
 
