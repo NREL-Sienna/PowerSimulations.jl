@@ -36,7 +36,7 @@ function norm_two_constraint(ps_m::CanonicalModel,
 
     for r in rating_data
         for t in time_steps
-          constraint[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, var1[r[1], t] + var2[r[1], t] <= r[2].max^2)
+          constraint[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, var1[r[1], t]^2 + var2[r[1], t]^2 <= r[2].max^2)
         end
     end
 
