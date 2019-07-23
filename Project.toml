@@ -19,6 +19,7 @@ TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [compat]
 DataFrames = ">= v0.18.1"
+Feather = ">= v0.5.3"
 JuMP = ">= v0.19.1"
 MathOptFormat = ">= 0.1.0"
 MathOptInterface = ">= v0.8.4"

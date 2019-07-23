@@ -19,11 +19,11 @@ dc_line = DeviceModel(PSY.HVDCLine, PSI.HVDCDispatch)
         ps_model = PSI._canonical_model_init(bus_numbers, OSQP_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
         construct_device!(ps_model, thermal_model, network, sys; parameters = p);
         construct_device!(ps_model, load_model, network, sys; parameters = p);
+        construct_network!(ps_model, network, sys; parameters = p);
         construct_device!(ps_model, line_model, network, sys);
         construct_device!(ps_model, transformer_model, network, sys);
         construct_device!(ps_model, ttransformer_model, network, sys);
         construct_device!(ps_model, dc_line, network, sys);
-        construct_network!(ps_model, network, sys; parameters = p);
         @test JuMP.num_variables(ps_model.JuMPmodel) == test_results[sys][1]
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == test_results[sys][2]
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == test_results[sys][3]
@@ -41,9 +41,9 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
     PTDF_ref = Dict{PSY.System, PSY.PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc);
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [264, 120, 0, 0, 264],
-                                                    c_sys14 => [600, 120, 0, 0, 816],
-                                                    c_sys14_dc => [552, 120, 0, 0, 768])
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [264, 264, 0, 0, 264],
+                                                    c_sys14 => [600, 600, 0, 0, 816],
+                                                    c_sys14_dc => [552, 552, 0, 0, 768])
 
     for (ix, sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
@@ -51,11 +51,11 @@ end
         ps_model = PSI._canonical_model_init(bus_numbers, OSQP_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
         construct_device!(ps_model, thermal_model, network, sys; parameters = p);
         construct_device!(ps_model, load_model, network, sys; parameters = p);
+        construct_network!(ps_model, network, sys; PTDF = PTDF_ref[sys], parameters = p);
         construct_device!(ps_model, line_model, network, sys);
         construct_device!(ps_model, transformer_model, network, sys);
         construct_device!(ps_model, ttransformer_model, network, sys);
         construct_device!(ps_model, dc_line, network, sys);
-        construct_network!(ps_model, network, sys; PTDF = PTDF_ref[sys], parameters = p);
         @test JuMP.num_variables(ps_model.JuMPmodel) == test_results[sys][1]
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == test_results[sys][2]
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == test_results[sys][3]
@@ -79,9 +79,9 @@ end
     network = PM.DCPlosslessForm
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [384, 120, 144, 144, 264],
-                                                    c_sys14 => [936, 120, 480, 480, 816],
-                                                    c_sys14_dc => [984, 120, 432, 432, 816])
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [384, 264, 144, 144, 264],
+                                                    c_sys14 => [936, 600, 480, 480, 816],
+                                                    c_sys14_dc => [984, 600, 432, 432, 816])
 
     for (ix, sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
@@ -89,16 +89,21 @@ end
         ps_model = PSI._canonical_model_init(bus_numbers, OSQP_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
         construct_device!(ps_model, thermal_model, network, sys; parameters = p);
         construct_device!(ps_model, load_model, network, sys; parameters = p);
+        construct_network!(ps_model, network, sys; parameters = p);
         construct_device!(ps_model, line_model, network, sys);
         construct_device!(ps_model, transformer_model, network, sys);
         construct_device!(ps_model, ttransformer_model, network, sys);
         construct_device!(ps_model, dc_line, network, sys);
-        construct_network!(ps_model, network, sys; parameters = p);
+
         @test JuMP.num_variables(ps_model.JuMPmodel) == test_results[sys][1]
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == test_results[sys][2]
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == test_results[sys][3]
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.GreaterThan{Float64}) == test_results[sys][4]
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == test_results[sys][5]
+        
+        JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
+        JuMP.optimize!(ps_model.JuMPmodel)
+        @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
     end
 
 end
@@ -107,9 +112,9 @@ end
     network = PM.StandardACPForm
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [1056, 240, 144, 144, 240],
-                                                    c_sys14 => [2832, 240, 480, 480, 672],
-                                                    c_sys14_dc => [2832, 240, 432, 432, 720])
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [1056, 240, 288, 144, 240],
+                                                    c_sys14 => [2832, 240, 960, 480, 672],
+                                                    c_sys14_dc => [2832, 288, 864, 432, 720])
 
     for (ix, sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
@@ -117,11 +122,11 @@ end
         ps_model = PSI._canonical_model_init(bus_numbers, ipopt_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
         construct_device!(ps_model, thermal_model, network, sys; parameters = p);
         construct_device!(ps_model, load_model, network, sys; parameters = p);
+        construct_network!(ps_model, network, sys; parameters = p);
         construct_device!(ps_model, line_model, network, sys);
         construct_device!(ps_model, transformer_model, network, sys);
         construct_device!(ps_model, ttransformer_model, network, sys);
         construct_device!(ps_model, dc_line, network, sys);
-        construct_network!(ps_model, network, sys; parameters = p);
         @test JuMP.num_variables(ps_model.JuMPmodel) == test_results[sys][1]
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == test_results[sys][2]
         @test JuMP.num_constraints(ps_model.JuMPmodel, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == test_results[sys][3]
@@ -145,9 +150,9 @@ end
         ps_model = PSI._canonical_model_init(bus_numbers, GLPK_optimizer, network, time_steps, Dates.Hour(1); parameters = p)
         construct_device!(ps_model, thermal_model, network, sys; parameters = p)
         construct_device!(ps_model, load_model, network, sys; parameters = p)
+        construct_network!(ps_model, network, sys; parameters = p)
         construct_device!(ps_model, line_model, network, sys);
         construct_device!(ps_model, dc_line, network, sys);
-        construct_network!(ps_model, network, sys; parameters = p)
         JuMP.@objective(ps_model.JuMPmodel, Min, AffExpr(0))
         JuMP.optimize!(ps_model.JuMPmodel)
         @test termination_status(ps_model.JuMPmodel) == MOI.OPTIMAL
@@ -169,8 +174,8 @@ end
         ps_model = PSI._canonical_model_init(bus_numbers, ipopt_optimizer, network, time_steps, Dates.Hour(1))
         construct_device!(ps_model, thermal_model, network, sys);
         construct_device!(ps_model, load_model, network, sys);
-        construct_device!(ps_model, line_model, network, sys);
         construct_network!(ps_model, network, sys);
+        construct_device!(ps_model, line_model, network, sys);
         @test !isnothing(ps_model.pm_model)
     end
 
@@ -187,8 +192,8 @@ end
         ps_model = PSI._canonical_model_init(bus_numbers, ipopt_optimizer, network, time_steps, Dates.Hour(1))
         construct_device!(ps_model, thermal_model, network, sys);
         construct_device!(ps_model, load_model, network, sys);
-        construct_device!(ps_model, line_model, network, sys);
         construct_network!(ps_model, network, sys);
+        construct_device!(ps_model, line_model, network, sys);
         @test !isnothing(ps_model.pm_model)
     end
 
@@ -208,8 +213,8 @@ end
         ps_model = PSI._canonical_model_init(bus_numbers, ipopt_optimizer, network, time_steps, Dates.Hour(1))
         construct_device!(ps_model, thermal_model, network, sys);
         construct_device!(ps_model, load_model, network, sys);
-        construct_device!(ps_model, line_model, network, sys);
         construct_network!(ps_model, network, sys);
+        construct_device!(ps_model, line_model, network, sys);
         @test !isnothing(ps_model.pm_model)
     end
 
