@@ -1,5 +1,5 @@
 @doc raw"""
-function norm_two_constraint(ps_m::CanonicalModel,
+    norm_two_constraint(ps_m::CanonicalModel,
                             rating_data::Vector{NamedMinMax},
                             cons_name::Symbol,
                             var_names::Tuple{Symbol, Symbol})
@@ -10,7 +10,7 @@ Constructs constraint from rating data and related variable tuple.
 
 ``` var1[r[1], t] + var2[r[1], t] <= r[2].max^2 ```
 
-where r in rating_data and t in time_steps.
+where r in rating data and t in time steps.
 
 # LaTeX
 
