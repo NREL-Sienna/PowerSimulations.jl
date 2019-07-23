@@ -58,7 +58,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
 
     device_range(ps_m,
                 range_data,
-                Symbol("reactive_range_$(R)"),
+                Symbol("reactiverange_$(R)"),
                 Symbol("Q_$(R)"))
 
     return
@@ -75,7 +75,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
     time_steps = model_time_steps(ps_m)
     p_variable_name = Symbol("P_$(R)")
     q_variable_name = Symbol("Q_$(R)")
-    constraint_name = Symbol("reactive_range_$(R)")
+    constraint_name = Symbol("reactiverange_$(R)")
     ps_m.constraints[constraint_name] = JuMPConstraintArray(undef, names, time_steps)
 
     for t in time_steps, d in devices
@@ -126,7 +126,7 @@ function activepower_constraints(ps_m::CanonicalModel,
         range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_tech(d) |> PSY.get_rating)) for d in devices]
         device_range(ps_m,
                     range_data,
-                    Symbol("active_range_$(R)"),
+                    Symbol("activerange_$(R)"),
                     Symbol("P_$(R)"))
     end
 

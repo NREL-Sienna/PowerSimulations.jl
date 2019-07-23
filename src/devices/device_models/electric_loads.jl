@@ -106,7 +106,7 @@ function activepower_constraints(ps_m::CanonicalModel,
         range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_maxactivepower(d))) for d in devices]
         device_range(ps_m,
                     range_data,
-                    Symbol("active_range_$(L)"),
+                    Symbol("activerange_$(L)"),
                     Symbol("P_$(L)")
                     )
     end
@@ -336,7 +336,7 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
                             t,
                             -1*PSY.get_maxactivepower(d));
         _add_to_expression!(ps_m.expressions[:nodal_balance_reactive],
-                            PSY.get_bus.number(d),
+                            PSY.get_bus(d) |> PSY.get_number,
                             t,
                             -1*PSY.get_maxreactivepower(d));
     end

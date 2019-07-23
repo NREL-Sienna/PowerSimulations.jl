@@ -12,3 +12,22 @@ function _add_param_container!(ps_m::CanonicalModel, param_name::Symbol, axs...)
     ps_m.parameters[param_name] = JuMPParamArray(undef, axs...)
     return
 end
+
+function _middle_rename(original::Symbol, split_char::String, addition::String)
+
+    parts = split(String(original),split_char)
+
+    return Symbol(parts[1],"_",addition,"_",parts[2])
+
+end
+
+function _remove_underscore(original::Symbol)
+
+    if !occursin("_", String(original))
+        return original
+    end
+
+    parts = split(String(original),"_")
+
+    return parts[1]
+end

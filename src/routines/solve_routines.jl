@@ -2,7 +2,7 @@ include("get_results.jl")
 
 function solve_op_model!(op_model::OperationModel; kwargs...)
 
-    optimizer_log = Dict{Symbol, Any}()
+    optimizer_log_dict = Dict{Symbol, Any}()
 
     if op_model.canonical_model.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
 
@@ -11,9 +11,9 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
             @error("No Optimizer has been defined, can't solve the operational problem")
 
         else
-            _, optimizer_log[:timed_solve_time],
-               optimizer_log[:solve_bytes_alloc],
-               optimizer_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical_model.JuMPmodel, kwargs[:optimizer])
+            _, optimizer_log_dict[:timed_solve_time],
+            optimizer_log_dict[:solve_bytes_alloc],
+            optimizer_log_dict[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical_model.JuMPmodel, kwargs[:optimizer])
 
         end
 
@@ -24,9 +24,9 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
     end
 
     vars_result = get_model_result(op_model.canonical_model)
-    optimizer_log(optimizer_log, op_model.canonical_model)
+    optimizer_log!(optimizer_log_dict, op_model.canonical_model)
 
-    return OpertationModelResults(vars_result, optimizer_log)
+    return OpertationModelResults(vars_result, optimizer_log_dict)
 
 end
 
@@ -38,14 +38,14 @@ function run_stage(stage::Stage, results_path::String)
             error("No Optimizer has been defined, can't solve the operational problem")
         end
 
-        optimizer_log = Dict{Symbol, Any}()
+        optimizer_log_dict = Dict{Symbol, Any}()
 
-        _, optimizer_log[:timed_solve_time],
-        optimizer_log[:solve_bytes_alloc],
-        optimizer_log[:sec_in_gc] = @timed JuMP.optimize!(stage.model.canonical_model.JuMPmodel)
+        _, optimizer_log_dict[:timed_solve_time],
+        optimizer_log_dict[:solve_bytes_alloc],
+        optimizer_log_dict[:sec_in_gc] = @timed JuMP.optimize!(stage.model.canonical_model.JuMPmodel)
 
         write_model_result(stage.model.canonical_model, results_path)
-        write_optimizer_log(optimizer_log, stage.model.canonical_model, results_path)
+        write_optimizer_log(optimizer_log_dict, stage.model.canonical_model, results_path)
 
     end
 

@@ -27,8 +27,9 @@ function activepower_variables!(ps_m::CanonicalModel,
                                               time_steps)
 
     for t in time_steps, d in devices
+        device_name = PSY.get_name(d)
         ps_m.variables[var_name][PSY.get_name(d), t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                base_name="{$(var_name)}_{$(PSY.get_name(d)), $(t)}",
+                                                base_name="P_{$(device_name), $(t)}",
                                                 upper_bound = (PSY.get_tech(d) |> PSY.get_activepowerlimits).max,
                                                 lower_bound = 0.0,
                                                 start = PSY.get_tech(d) |> PSY.get_activepower
@@ -56,8 +57,9 @@ function reactivepower_variables!(ps_m::CanonicalModel,
                                               time_steps)
 
      for t in time_steps, d in devices
+        device_name = PSY.get_name(d)
         ps_m.variables[var_name][PSY.get_name(d), t] = JuMP.@variable(ps_m.JuMPmodel,
-                                            base_name="{$(var_name)}_{$(PSY.get_name(d)), $(t)}",
+                                            base_name="Q_{$(device_name), $(t)}",
                                             upper_bound = (PSY.get_tech(d) |> PSY.get_reactivepowerlimits).max,
                                             lower_bound = (PSY.get_tech(d) |> PSY.get_reactivepowerlimits).min,
                                             start = PSY.get_tech(d) |> PSY.get_reactivepower)
@@ -103,13 +105,13 @@ function activepower_constraints!(ps_m::CanonicalModel,
     if model_runs_sequentially(ps_m)
         device_semicontinuousrange_param(ps_m,
                                          range_data,
-                                         Symbol("active_range_$(T)"),
+                                         Symbol("activerange_$(T)"),
                                          Symbol("P_$(T)"),
                                          Symbol("ON_$(T)"))
     else
         device_range(ps_m,
                     range_data,
-                    Symbol("active_range_$(T)"),
+                    Symbol("activerange_$(T)"),
                     Symbol("P_$(T)")
                     )
     end
@@ -131,7 +133,7 @@ function activepower_constraints!(ps_m::CanonicalModel,
     range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_activepowerlimits) for g in devices]
     device_semicontinuousrange(ps_m,
                                range_data,
-                               Symbol("active_range_$(T)"),
+                               Symbol("activerange_$(T)"),
                                Symbol("P_$(T)"),
                                Symbol("ON_$(T)"))
 
@@ -155,13 +157,13 @@ function activepower_constraints!(ps_m::CanonicalModel,
     if model_runs_sequentially(ps_m)
         device_semicontinuousrange_param(ps_m,
                                          range_data,
-                                         Symbol("active_range_$(T)"),
+                                         Symbol("activerange_$(T)"),
                                          Symbol("P_$(T)"),
                                          Symbol("ON_$(T)"))
     else
         device_range(ps_m,
                     range_data,
-                    Symbol("active_range_$(T)"),
+                    Symbol("activerange_$(T)"),
                     Symbol("P_$(T)")
                     )
     end
@@ -183,7 +185,7 @@ function reactivepower_constraints!(ps_m::CanonicalModel,
 
     device_range(ps_m,
                  range_data ,
-                 Symbol("reactive_range_$(T)"),
+                 Symbol("reactiverange_$(T)"),
                  Symbol("Q_$(T)"))
 
     return
@@ -204,7 +206,7 @@ function reactivepower_constraints!(ps_m::CanonicalModel,
 
     device_semicontinuousrange(ps_m,
                                range_data,
-                               Symbol("reactive_range_$(T)"),
+                               Symbol("reactiverange_$(T)"),
                                Symbol("Q_$(T)"),
                                Symbol("ON_$(T)"))
 
@@ -430,7 +432,7 @@ function ramp_constraints!(ps_m::CanonicalModel,
         device_linear_rateofchange(ps_m,
                                     (rate_data[1], rate_data[2]),
                                     ps_m.initial_conditions[key],
-                                                       Symbol("ramp_$(T)"),
+                                    Symbol("ramp_$(T)"),
                                     Symbol("P_$(T)"))
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"

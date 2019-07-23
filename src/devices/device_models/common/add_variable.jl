@@ -7,16 +7,17 @@ function add_variable(ps_m::CanonicalModel,
                       var_name::Symbol,
                       binary::Bool) where {D <: Union{Vector{<:PSY.Device},
                                                       PSY.FlattenIteratorWrapper{<:PSY.Device}}}
-    
+
     time_steps = model_time_steps(ps_m)
     _add_var_container!(ps_m, var_name, (PSY.get_name(d) for d in devices), time_steps)
     variable = var(ps_m, var_name)
+    jvar_name = _remove_underscore(var_name)
 
     for t in time_steps, d in devices
       name = PSY.get_name(d)
-    
+
       variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
-                                       base_name="$(var_name)_{$(name),$(t)}",
+                                       base_name="$(jvar_name)_{$(name),$(t)}",
                                        binary=binary)
     end
 
@@ -34,13 +35,14 @@ function add_variable(ps_m::CanonicalModel,
     time_steps = model_time_steps(ps_m)
     _add_var_container!(ps_m, var_name, (PSY.get_name(d) for d in devices), time_steps)
     variable = var(ps_m, var_name)
+    jvar_name = _remove_underscore(var_name)
     expr = exp(ps_m, expression)
 
     for t in time_steps, d in devices
       name = PSY.get_name(d)
-    
+
       variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
-                                             base_name="{$(var_name)}_{$(name), $(t)}",
+                                             base_name="{$(jvar_name)}_{$(name), $(t)}",
                                              binary=binary)
 
       _add_to_expression!(expr,
@@ -65,12 +67,13 @@ function add_variable(ps_m::CanonicalModel,
     _add_var_container!(ps_m, var_name, (PSY.get_name(d) for d in devices), time_steps)
     variable = var(ps_m, var_name)
     expr = exp(ps_m, expression)
+    jvar_name = _remove_underscore(var_name)
 
     for t in time_steps, d in devices
        name = PSY.get_name(d)
-    
+
        variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
-                                        base_name="{$(var_name)}_{$(name), $(t)}",
+                                        base_name="{$(jvar_name)}_{$(name), $(t)}",
                                         binary=binary)
 
        _add_to_expression!(expr,

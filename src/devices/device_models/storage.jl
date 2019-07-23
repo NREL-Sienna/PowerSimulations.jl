@@ -130,7 +130,7 @@ function reactive_power_constraints(ps_m::CanonicalModel,
 
     device_range(ps_m,
                  range_data,
-                 Symbol("reactive_range_$(St)"),
+                 Symbol("reactiverange_$(St)"),
                  Symbol("Qst_$(St)"))
 
     return

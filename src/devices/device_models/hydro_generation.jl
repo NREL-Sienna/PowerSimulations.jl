@@ -74,7 +74,7 @@ function activepower_constraints(ps_m::CanonicalModel,
 
     range_data = [(PSY.get_name(h), PSY.get_tech(h) |> PSY.get_activepowerlimits) for h in devices]
 
-    device_range(ps_m, range_data, time_steps, hydro_active_range, :Phy)
+    device_range(ps_m, range_data, time_steps, hydro_activerange, :Phy)
 
     return
 
@@ -128,7 +128,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
 
     range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_reactivepowerlimits) for g in devices]
 
-    device_range(ps_m, range_data, time_steps, :hydro_reactive_range, :Qhy)
+    device_range(ps_m, range_data, time_steps, :hydro_reactiverange, :Qhy)
 
     return
 
@@ -145,7 +145,7 @@ function activepower_constraints(ps_m::CanonicalModel,
 
     range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_activepowerlimits) for g in devices]
 
-    device_semicontinuousrange(ps_m, range_data, time_steps, :hydro_active_range, :Phy, :on_hy)
+    device_semicontinuousrange(ps_m, range_data, time_steps, :hydro_activerange, :Phy, :on_hy)
 
     return
 
@@ -162,7 +162,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
 
     range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_reactivepowerlimits) for g in devices]
 
-    device_semicontinuousrange(ps_m, range_data , time_steps, :hydro_reactive_range, :Qhy, :on_hy)
+    device_semicontinuousrange(ps_m, range_data , time_steps, :hydro_reactiverange, :Qhy, :on_hy)
 
     return
 
