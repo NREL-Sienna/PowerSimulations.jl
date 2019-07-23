@@ -5,7 +5,8 @@ end
 function add_variable(ps_m::CanonicalModel,
                       devices::D,
                       var_name::Symbol,
-                      binary::Bool) where {D <: Union{Vector{<:PSY.Device},
+                      binary::Bool,
+                      positive::Bool=true) where {D <: Union{Vector{<:PSY.Device},
                                                       PSY.FlattenIteratorWrapper{<:PSY.Device}}}
 
     time_steps = model_time_steps(ps_m)
@@ -18,7 +19,8 @@ function add_variable(ps_m::CanonicalModel,
 
       variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
                                        base_name="$(jvar_name)_{$(name),$(t)}",
-                                       binary=binary)
+                                       binary=binary,
+                                       lower_bound = 0.0)
     end
 
     return
@@ -43,7 +45,8 @@ function add_variable(ps_m::CanonicalModel,
 
       variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
                                              base_name="$(jvar_name)_{$(name), $(t)}",
-                                             binary=binary)
+                                             binary=binary,
+                                             lower_bound = 0.0)
 
       _add_to_expression!(expr,
                           PSY.get_number(PSY.get_bus(d)),
@@ -74,7 +77,8 @@ function add_variable(ps_m::CanonicalModel,
 
        variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
                                         base_name="$(jvar_name)_{$(name), $(t)}",
-                                        binary=binary)
+                                        binary=binary,
+                                        lower_bound = 0.0)
 
        _add_to_expression!(expr,
                            PSY.get_number(PSY.get_bus(d)),

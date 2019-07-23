@@ -1,11 +1,11 @@
 function include_parameters(ps_m::CanonicalModel,
-                        data::Matrix,
-                        param_name::Symbol,
-                        axs...)
-    
+                            data::Matrix,
+                            param_name::Symbol,
+                            axs...)
+
     _add_param_container!(ps_m, param_name, axs...)
     param = par(ps_m, param_name)
-    
+
     Cidx = CartesianIndices(length.(axs))
 
     for idx in Cidx
@@ -17,9 +17,9 @@ function include_parameters(ps_m::CanonicalModel,
 end
 
 function include_parameters(ps_m::CanonicalModel,
-                        ts_data::Vector{Tuple{String, Int64, Vector{Float64}}},
-                        param_name::Symbol,
-                        expression::Symbol)
+                            ts_data::Vector{Tuple{String, Int64, Vector{Float64}}},
+                            param_name::Symbol,
+                            expression::Symbol)
 
 
     time_steps = model_time_steps(ps_m)
