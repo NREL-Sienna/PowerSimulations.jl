@@ -1,26 +1,62 @@
+#NOTE: varstart + varstop <= 1.0 may be missing.
+@doc raw"""
+    device_commitment(ps_m::CanonicalModel,
+                        initial_conditions::Vector{InitialCondition},
+                        cons_name::Symbol,
+                        var_names::Tuple{Symbol, Symbol, Symbol})
+
+Constructs multi-timestep constraint from initial conditions and binary variable tuple.
+
+# Constraints
+If t = 1:
+
+``` varon[name, 1] == ic.value + varstart[name, 1] - varstop[name, 1] ```
+
+where ic in initial_condtions.
+
+If t > 1:
+
+``` varon[name, t] == varon[name, t-1] + varstart[name, t] - varstop[name, t] ```
+
+# LaTeX
+
+`` x^{on}_1 = x^{on}_{init} + x^{start}_1 - x^{stop}_1, \text{ for } t = 1 ``
+
+`` x^{on}_t = x^{on}_{t-1} + x^{start}_t - x^{stop}_t, \forall t \geq 2 ``
+
+
+# Arguments
+* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* initial_conditions::Vector{InitialCondition} : for time zero 'varon' 
+* cons_name::Symbol : name of the constraint
+* var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
+-  : var_names[1] : varstart
+-  : var_names[2] : varstop
+-  : var_names[3] : varon 
+"""
 function device_commitment(ps_m::CanonicalModel,
                         initial_conditions::Vector{InitialCondition},
                         cons_name::Symbol,
                         var_names::Tuple{Symbol, Symbol, Symbol})
 
     time_steps = model_time_steps(ps_m)
-    var1 = var(ps_m, var_names[1])
-    var2 = var(ps_m, var_names[2])
-    var3 = var(ps_m, var_names[3])
-    var1_names = axes(var1, 1)
-    _add_cons_container!(ps_m, cons_name, var1_names, time_steps)
+    varstart = var(ps_m, var_names[1])
+    varstop = var(ps_m, var_names[2])
+    varon = var(ps_m, var_names[3])
+    varstart_names = axes(varstart, 1)
+    _add_cons_container!(ps_m, cons_name, varstart_names, time_steps)
     constraint = con(ps_m, cons_name)
 
     for ic in initial_conditions
         name = PSY.get_name(ic.device)
         constraint[name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
-                               var3[name, 1] == ic.value + var1[name, 1] - var2[name, 1])
+                               varon[name, 1] == ic.value + varstart[name, 1] - varstop[name, 1])
     end
 
     for t in time_steps[2:end], i in initial_conditions
         name = PSY.get_name(i.device)
-        constraint[name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
-                        var3[name, t] == var3[name, t-1] + var1[name, t] - var2[name, t])
+        constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel,
+                        varon[name, t] == varon[name, t-1] + varstart[name, t] - varstop[name, t])
     end
 
     return
