@@ -2,8 +2,8 @@ function status_init(ps_m::CanonicalModel,
                     devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD <: PSY.ThermalGen}
 
     parameters = model_has_parameters(ps_m)
-    lenght_devices = length(devices)
-    initial_conditions = Vector{InitialCondition}(undef, lenght_devices)
+    length_devices = length(devices)
+    initial_conditions = Vector{InitialCondition}(undef, length_devices)
 
     for (ix, g) in enumerate(devices)
         if parameters
@@ -24,14 +24,14 @@ function output_init(ps_m::CanonicalModel,
                     set_name::Vector{String}) where {PSD <: PSY.ThermalGen}
 
     parameters = model_has_parameters(ps_m)
-    lenght_devices = length(devices)
+    length_devices = length(devices)
 
-    if lenght_devices != length(set_name)
+    if length_devices != length(set_name)
         devices = [d for d in devices if d.name in set_name]
-        lenght_devices = length(devices)
+        length_devices = length(devices)
     end
 
-    initial_conditions = Vector{InitialCondition}(undef, lenght_devices)
+    initial_conditions = Vector{InitialCondition}(undef, length_devices)
 
     for (ix, g) in enumerate(devices)
             if parameters
@@ -53,15 +53,15 @@ function duration_init(ps_m::CanonicalModel,
                         set_name::Vector{String}) where {PSD <: PSY.ThermalGen}
 
     parameters = model_has_parameters(ps_m)
-    lenght_devices = length(devices)
+    length_devices = length(devices)
 
-    if lenght_devices != length(set_name)
+    if length_devices != length(set_name)
         devices = [d for d in devices if d.name in set_name]
-        lenght_devices = length(devices)
+        length_devices = length(devices)
     end
 
-    ini_cond_on = Vector{InitialCondition}(undef, lenght_devices)
-    ini_cond_off = Vector{InitialCondition}(undef, lenght_devices)
+    ini_cond_on = Vector{InitialCondition}(undef, length_devices)
+    ini_cond_off = Vector{InitialCondition}(undef, length_devices)
 
     for (ix, g) in enumerate(devices)
         if parameters

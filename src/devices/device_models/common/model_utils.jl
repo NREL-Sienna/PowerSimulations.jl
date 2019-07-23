@@ -7,3 +7,8 @@ function _add_cons_container!(ps_m::CanonicalModel, cons_name::Symbol, ax1, ax2)
     ps_m.constraints[cons_name] = JuMPConstraintArray(undef, ax1, ax2)
     return
 end
+
+function _add_param_container!(ps_m::CanonicalModel, param_name::Symbol, axs...)
+    ps_m.parameters[param_name] = JuMPParamArray(undef, axs...)
+    return
+end

@@ -7,19 +7,20 @@ function add_variable(ps_m::CanonicalModel,
                       var_name::Symbol,
                       binary::Bool) where {D <: Union{Vector{<:PSY.Device},
                                                       PSY.FlattenIteratorWrapper{<:PSY.Device}}}
+    
+    time_steps = model_time_steps(ps_m)
+    _add_var_container!(ps_m, var_name, (PSY.get_name(d) for d in devices), time_steps)
+    variable = var(ps_m, var_name)
 
-   time_steps = model_time_steps(ps_m)
-   ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, (PSY.get_name(d) for d in devices), time_steps)
-
-   for t in time_steps, d in devices
+    for t in time_steps, d in devices
       name = PSY.get_name(d)
-      
-      ps_m.variables[var_name][name, t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                        base_name="$(var_name)_{$(name), $(t)}",
-                                                        binary=binary)
-   end
+    
+      variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
+                                       base_name="$(var_name)_{$(name),$(t)}",
+                                       binary=binary)
+    end
 
-   return
+    return
 
 end
 
@@ -30,23 +31,25 @@ function add_variable(ps_m::CanonicalModel,
                       expression::Symbol) where {D <: Union{Vector{<:PSY.Device},
                                                             PSY.FlattenIteratorWrapper{<:PSY.Device}}}
 
-   time_steps = model_time_steps(ps_m)
-   ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, (PSY.get_name(d) for d in devices), time_steps)
+    time_steps = model_time_steps(ps_m)
+    _add_var_container!(ps_m, var_name, (PSY.get_name(d) for d in devices), time_steps)
+    variable = var(ps_m, var_name)
+    expr = exp(ps_m, expression)
 
-   for t in time_steps, d in devices
+    for t in time_steps, d in devices
       name = PSY.get_name(d)
-
-      ps_m.variables[var_name][name, t] = JuMP.@variable(ps_m.JuMPmodel,
+    
+      variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
                                              base_name="{$(var_name)}_{$(name), $(t)}",
                                              binary=binary)
 
-      _add_to_expression!(ps_m.expressions[expression],
+      _add_to_expression!(expr,
                           PSY.get_number(PSY.get_bus(d)),
                           t,
-                          ps_m.variables[var_name][name, t])
-   end
+                          variable[name, t])
+    end
 
-   return
+    return
 
 end
 
@@ -59,21 +62,23 @@ function add_variable(ps_m::CanonicalModel,
                                           PSY.FlattenIteratorWrapper{<:PSY.Device}}}
 
     time_steps = model_time_steps(ps_m)
-    ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel, (PSY.get_name(d) for d in devices), time_steps)
+    _add_var_container!(ps_m, var_name, (PSY.get_name(d) for d in devices), time_steps)
+    variable = var(ps_m, var_name)
+    expr = exp(ps_m, expression)
 
-   for t in time_steps, d in devices
+    for t in time_steps, d in devices
        name = PSY.get_name(d)
+    
+       variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
+                                        base_name="{$(var_name)}_{$(name), $(t)}",
+                                        binary=binary)
 
-       ps_m.variables[var_name][name, t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                        base_name = "{$(var_name)}_{$(name), $(t)}",
-                                                        binary = binary)
-
-       _add_to_expression!(ps_m.expressions[expression],
+       _add_to_expression!(expr,
                            PSY.get_number(PSY.get_bus(d)),
                            t,
-                           ps_m.variables[var_name][name, t], sign)
-   end
+                           variable[name, t], sign)
+    end
 
-   return
+    return
 
 end
