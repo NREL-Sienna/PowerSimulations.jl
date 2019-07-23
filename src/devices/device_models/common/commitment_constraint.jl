@@ -1,4 +1,3 @@
-#NOTE: varstart + varstop <= 1.0 may be missing.
 @doc raw"""
     device_commitment(ps_m::CanonicalModel,
                         initial_conditions::Vector{InitialCondition},

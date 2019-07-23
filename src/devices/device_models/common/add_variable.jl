@@ -1,12 +1,42 @@
+""" Returns the correct container spec for the selected type of JuMP Model"""
 function _container_spec(m::M, ax...) where M <: JuMP.AbstractModel
     return JuMP.Containers.DenseAxisArray{JuMP.variable_type(m)}(undef, ax...)
 end
 
+@doc raw"""
+    add_variable(ps_m::CanonicalModel,
+                      devices::D,
+                      var_name::Symbol,
+                      binary::Bool)
+
+Adds a positive variable to the optimization model. Based on the inputs, the variable can
+be specified as binary.
+
+# Bounds
+
+``` 0 <= varstart[name, t]  ```
+
+If binary = true:
+
+``` varstart[name, t] in {0,1} ```
+
+# LaTeX
+
+``  x^{device}_t >= 0.0 \forall t ``
+
+``  x^{device}_t \in {0,1} \forall t iff \text{binary = true}``
+
+
+# Arguments
+* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* devices : Vector or Iterator with the devices
+* var_name::Symbol : Base Name for the variable
+* binary::Bool : Select if the variable is binary
+"""
 function add_variable(ps_m::CanonicalModel,
                       devices::D,
                       var_name::Symbol,
-                      binary::Bool,
-                      positive::Bool=true) where {D <: Union{Vector{<:PSY.Device},
+                      binary::Bool) where {D <: Union{Vector{<:PSY.Device},
                                                       PSY.FlattenIteratorWrapper{<:PSY.Device}}}
 
     time_steps = model_time_steps(ps_m)
@@ -27,43 +57,46 @@ function add_variable(ps_m::CanonicalModel,
 
 end
 
-function add_variable(ps_m::CanonicalModel,
+@doc raw"""
+    add_variable(ps_m::CanonicalModel,
                       devices::D,
                       var_name::Symbol,
                       binary::Bool,
-                      expression::Symbol) where {D <: Union{Vector{<:PSY.Device},
-                                                            PSY.FlattenIteratorWrapper{<:PSY.Device}}}
+                      expression::Symbol,
+                      sign::Float64)
 
-    time_steps = model_time_steps(ps_m)
-    _add_var_container!(ps_m, var_name, (PSY.get_name(d) for d in devices), time_steps)
-    variable = var(ps_m, var_name)
-    jvar_name = _remove_underscore(var_name)
-    expr = exp(ps_m, expression)
+Adds a positive variable to the optimization model and to the affine expressions contained
+in the canonical model according to the specified sign. Based on the inputs, the variable can
+be specified as binary.
 
-    for t in time_steps, d in devices
-      name = PSY.get_name(d)
+# Bounds
 
-      variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
-                                             base_name="$(jvar_name)_{$(name), $(t)}",
-                                             binary=binary,
-                                             lower_bound = 0.0)
+``` 0 <= varstart[name, t]  ```
 
-      _add_to_expression!(expr,
-                          PSY.get_number(PSY.get_bus(d)),
-                          t,
-                          variable[name, t])
-    end
+If binary = true:
 
-    return
+``` varstart[name, t] in {0,1} ```
 
-end
+# LaTeX
 
+``  x^{device}_t >= 0.0 \forall t ``
+
+``  x^{device}_t \in {0,1} \forall t iff \text{binary = true}``
+
+# Arguments
+* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* devices : Vector or Iterator with the devices
+* var_name::Symbol : Base Name for the variable
+* binary::Bool : Select if the variable is binary
+* expression::Symbol : Expression name stored in canonical_model.expressions to add the variable
+* sign::Float64 : sign of the addition of the variable to the expression. Default Value is 1.0
+"""
 function add_variable(ps_m::CanonicalModel,
                       devices::D,
                       var_name::Symbol,
                       binary::Bool,
                       expression::Symbol,
-                      sign::Float64) where {D <: Union{Vector{<:PSY.Device},
+                      sign::Float64=1.0) where {D <: Union{Vector{<:PSY.Device},
                                           PSY.FlattenIteratorWrapper{<:PSY.Device}}}
 
     time_steps = model_time_steps(ps_m)

@@ -37,7 +37,8 @@ function activepower_variables!(ps_m::CanonicalModel,
         _add_to_expression!(ps_m.expressions[:nodal_balance_active],
                             PSY.get_bus(d) |> PSY.get_number,
                             t,
-                            ps_m.variables[var_name][PSY.get_name(d), t])
+                            ps_m.variables[var_name][PSY.get_name(d), t],
+                            1.0)
     end
 
     return
@@ -66,7 +67,8 @@ function reactivepower_variables!(ps_m::CanonicalModel,
         _add_to_expression!(ps_m.expressions[:nodal_balance_reactive],
                             PSY.get_bus(d) |> PSY.get_number,
                             t,
-                            ps_m.variables[var_name][PSY.get_name(d), t])
+                            ps_m.variables[var_name][PSY.get_name(d), t],
+                            1.0)
     end
 
     return
