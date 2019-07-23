@@ -32,7 +32,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     ramp_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    #time_constraints!(ps_m, devices, device_formulation, system_formulation)
+    time_constraints!(ps_m, devices, device_formulation, system_formulation)
 
     #Cost Function
     cost_function(ps_m, devices, device_formulation, system_formulation)
@@ -72,7 +72,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     ramp_constraints!(ps_m, devices, device_formulation, system_formulation)
 
-    #time_constraints!(ps_m, devices, device_formulation, system_formulation)
+    time_constraints!(ps_m, devices, device_formulation, system_formulation)
 
     #Cost Function
     cost_function(ps_m, devices, device_formulation, system_formulation)
