@@ -167,43 +167,207 @@ function reactivepower_constraints(ps_m::CanonicalModel,
     return
 
 end
-
-# # Injection expression
-
-# function nodal_expression(ps_m::CanonicalModel, devices::Array{R, 1}, system_formulation::Type{S}, time_steps::UnitRange{Int64}) where {H <: PSY.Hydrogen, S <: PM.AbstractPowerFormulation}
-#
-#     for t in time_steps, d in devices
-#
-#         _add_to_expression!(ps_m.expressions[:nodal_balance_active], d.bus.number, t, d.tech.rating * values(d.scalingfactor)[t])
-#
-#         _add_to_expression!(ps_m.expressions[:nodal_balance_reactive], d.bus.number, t, d.tech.rating * values(d.scalingfactor)[t]*sin(acos(d.tech.powerfactor)))
-#
-#     end
-#
-#     return
-#
-# end
-#
-# function nodal_expression(ps_m::CanonicalModel, devices::Array{R, 1}, system_formulation::Type{S}, time_steps::UnitRange{Int64}) where {H <: PSY.Hydrogen, S <: PM.AbstractActivePowerFormulation}
-#
-#     for t in time_steps, d in devices
-#
-#         _add_to_expression!(ps_m.expressions[:nodal_balance_active], d.bus.number, t, d.tech.rating * values(d.scalingfactor)[t])
-#
-#     end
-#
-#     return
-#
-# end
-#
-
-# # hydro generation cost
-
-# function cost_function(ps_m::CanonicalModel, devices::Array{PSY.HydroGen, 1}, device_formulation::Type{D}, system_formulation::Type{S}) where {D <: HydroDispatchRunOfRiver, S <: PM.AbstractPowerFormulation}
-#
-#     add_to_cost(ps_m, devices, :Phy, :curtailcost)
-#
-#     return
-#
-# end
 =#
+############################ injection expression with parameters ####################################
+
+########################################### Devices ####################################################
+
+function _nodal_expression_param(ps_m::CanonicalModel,
+                                devices::PSY.FlattenIteratorWrapper{H},
+                                system_formulation::Type{S}) where {H <: PSY.HydroGen,
+                                                                    S <: PM.AbstractPowerFormulation}
+
+    time_steps = model_time_steps(ps_m)
+    ts_data_active = Vector{Tuple{String, Int64, Vector{Float64}}}(undef, length(devices))
+    ts_data_reactive = Vector{Tuple{String, Int64, Vector{Float64}}}(undef, length(devices))
+
+    for (ix, d) in enumerate(devices)
+        time_series_vector = fill(PSY.get_tech(d) |> PSY.get_rating, (time_steps[end]))
+        ts_data_active[ix] = (PSY.get_name(d), PSY.get_bus(d) |> PSY.get_number, time_series_vector)
+        ts_data_reactive[ix] = (PSY.get_name(d), PSY.get_bus(d) |> PSY.get_number, time_series_vector * sin(acos(PSY.get_tech(d) |> PSY.get_powerfactor)))
+    end
+
+    include_parameters(ps_m,
+                    ts_data_active,
+                    Symbol("P_$(H)"),
+                    :nodal_balance_active)
+    include_parameters(ps_m,
+                    ts_data_reactive,
+                    Symbol("Q_$(H)"),
+                    :nodal_balance_reactive)
+
+    return
+
+end
+
+function _nodal_expression_param(ps_m::CanonicalModel,
+                                devices::PSY.FlattenIteratorWrapper{H},
+                                system_formulation::Type{S}) where {H <: PSY.HydroGen,
+                                                                    S <: PM.AbstractActivePowerFormulation}
+
+    time_steps = model_time_steps(ps_m)
+    ts_data_active = Vector{Tuple{String, Int64, Vector{Float64}}}(undef, length(devices))
+
+    for (ix, d) in enumerate(devices)
+        time_series_vector = fill(PSY.get_tech(d) |> PSY.get_rating, (time_steps[end]))
+        ts_data_active[ix] = (PSY.get_name(d), PSY.get_bus(d) |> PSY.get_number, time_series_vector)
+    end
+
+    include_parameters(ps_m,
+                    ts_data_active,
+                    Symbol("P_$(H)"),
+                    :nodal_balance_active)
+
+    return
+
+end
+
+############################################## Time Series ###################################
+function _nodal_expression_param(ps_m::CanonicalModel,
+                                 forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministic{H}},
+                                 system_formulation::Type{S}) where {H <: PSY.HydroGen,
+                                                                     S <: PM.AbstractPowerFormulation}
+
+    time_steps = model_time_steps(ps_m)
+    ts_data_active = Vector{Tuple{String, Int64, Vector{Float64}}}(undef, length(forecasts))
+    ts_data_reactive = Vector{Tuple{String, Int64, Vector{Float64}}}(undef, length(forecasts))
+
+    for (ix, f) in enumerate(forecasts)
+        device = PSY.get_component(f)
+        time_series_vector = values(PSY.get_data(f))*(PSY.get_tech(device) |> PSY.get_rating)
+        ts_data_active[ix] = (PSY.get_name(device), PSY.get_bus(device) |> PSY.get_number, time_series_vector)
+        ts_data_reactive[ix] = (PSY.get_name(device),
+                                PSY.get_bus(device) |> PSY.get_number,
+                                time_series_vector * sin(acos(PSY.get_tech(device) |> PSY.get_powerfactor)))
+    end
+
+    include_parameters(ps_m,
+                    ts_data_active,
+                    Symbol("P_$(H)"),
+                    :nodal_balance_active)
+    include_parameters(ps_m,
+                    ts_data_reactive,
+                    Symbol("Q_$(H)"),
+                    :nodal_balance_reactive)
+
+    return
+
+end
+
+function _nodal_expression_param(ps_m::CanonicalModel,
+                                forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministic{H}},
+                                system_formulation::Type{S}) where {H <: PSY.HydroGen,
+                                                                    S <: PM.AbstractActivePowerFormulation}
+
+    ts_data_active = Vector{Tuple{String, Int64, Vector{Float64}}}(undef, length(forecasts))
+
+    for (ix, f) in enumerate(forecasts)
+        device = PSY.get_component(f)
+        time_series_vector = values(PSY.get_data(f)) * (PSY.get_tech(device) |> PSY.get_rating)
+        ts_data_active[ix] = (PSY.get_name(device),
+                              PSY.get_bus(device) |> PSY.get_number,
+                              time_series_vector)
+    end
+
+    include_parameters(ps_m,
+                    ts_data_active,
+                    Symbol("P_$(H)"),
+                    :nodal_balance_active)
+
+    return
+
+end
+
+############################ injection expression with fixed values ####################################
+########################################### Devices ####################################################
+function _nodal_expression_fixed(ps_m::CanonicalModel,
+                                devices::PSY.FlattenIteratorWrapper{H},
+                                system_formulation::Type{S}) where {H <: PSY.HydroGen,
+                                                                     S <: PM.AbstractPowerFormulation}
+
+    time_steps = model_time_steps(ps_m)
+
+    for t in time_steps, d in devices
+        _add_to_expression!(ps_m.expressions[:nodal_balance_active],
+                            PSY.get_bus(d) |> PSY.get_number,
+                            t,
+                            PSY.get_tech(d) |> PSY.get_rating)
+        _add_to_expression!(ps_m.expressions[:nodal_balance_reactive],
+                            PSY.get_bus(d) |> PSY.get_number,
+                            t,
+                            (PSY.get_tech(d) |> PSY.get_rating) * sin(acos(PSY.get_tech(d) |> PSY.get_powerfactor)))
+    end
+
+    return
+
+end
+
+
+function _nodal_expression_fixed(ps_m::CanonicalModel,
+                                    devices::PSY.FlattenIteratorWrapper{H},
+                                    system_formulation::Type{S}) where {H <: PSY.HydroGen,
+                                                                         S <: PM.AbstractActivePowerFormulation}
+
+    time_steps = model_time_steps(ps_m)
+
+    for t in time_steps, d in devices
+        _add_to_expression!(ps_m.expressions[:nodal_balance_active],
+                            PSY.get_bus(d) |> PSY.get_number,
+                            t,
+                            PSY.get_tech(d) |> PSY.get_rating)
+    end
+
+    return
+
+end
+
+
+############################################## Time Series ###################################
+function _nodal_expression_fixed(ps_m::CanonicalModel,
+                                forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministic{H}},
+                                system_formulation::Type{S}) where {H <: PSY.HydroGen,
+                                                                    S <: PM.AbstractPowerFormulation}
+
+    time_steps = model_time_steps(ps_m)
+
+    for f in forecasts
+        time_series_vector = values(PSY.get_data(f)) * (PSY.get_component(f) |> PSY.get_tech |> PSY.get_rating)
+        device = PSY.get_component(f)
+        for t in time_steps
+            _add_to_expression!(ps_m.expressions[:nodal_balance_active],
+                                PSY.get_bus(device) |> PSY.get_number,
+                                t,
+                                time_series_vector[t])
+            _add_to_expression!(ps_m.expressions[:nodal_balance_reactive],
+                                PSY.get_bus(device) |> PSY.get_number,
+                                t,
+                                time_series_vector[t] * sin(acos(PSY.get_tech(device) |> PSY.get_powerfactor)))
+        end
+    end
+
+    return
+
+end
+
+
+function _nodal_expression_fixed(ps_m::CanonicalModel,
+                                forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministic{H}},
+                                system_formulation::Type{S}) where {H <: PSY.HydroGen,
+                                                                    S <: PM.AbstractActivePowerFormulation}
+
+    time_steps = model_time_steps(ps_m)
+
+    for f in forecasts
+        time_series_vector = values(PSY.get_data(f)) * (PSY.get_component(f) |> PSY.get_tech |> PSY.get_rating)
+        device = PSY.get_component(f)
+        for t in time_steps
+            _add_to_expression!(ps_m.expressions[:nodal_balance_active],
+                                PSY.get_bus(device) |> PSY.get_number,
+                                t,
+                                time_series_vector[t])
+        end
+    end
+
+    return
+
+end

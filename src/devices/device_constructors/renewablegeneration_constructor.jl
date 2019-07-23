@@ -102,6 +102,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     return
 
+
 end
 
 function _internal_device_constructor!(ps_m::CanonicalModel,
@@ -112,14 +113,43 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         kwargs...) where {D <: AbstractRenewableDispatchForm,
                                                           S <: PM.AbstractPowerFormulation}
 
-    if device_formulation != RenewableFixed
-        @warn("The Formulation $(D) only applies to Controllable Renewable Resources, \n Consider Changing the Device Formulation to RenewableFixed")
-    end
+    @warn("The Formulation $(D) only applies to Controllable Renewable Resources, \n Consider Changing the Device Formulation to RenewableFixed")
 
     _internal_device_constructor!(ps_m,
                                   device,
                                   RenewableFixed,
-                                  sys,
+                                  system_formulation,
+                                  sys;
                                   kwargs...)
+
+    return
+
+end
+
+
+function _internal_device_constructor!(ps_m::CanonicalModel,
+                                        device::Type{PSY.RenewableFix},
+                                        device_formulation::Type{RenewableFixed},
+                                        system_formulation::Type{S},
+                                        sys::PSY.System;
+                                        kwargs...) where {S <: PM.AbstractPowerFormulation}
+
+    forecast = get(kwargs, :forecast, true)
+
+    devices = PSY.get_components(device, sys)
+
+    if validate_available_devices(devices, device)
+        return
+    end
+
+    if forecast
+        first_step = PSY.get_forecasts_initial_time(sys)
+        forecasts = PSY.get_forecasts(PSY.Deterministic{PSY.RenewableFix}, sys, first_step)
+        nodal_expression(ps_m, forecasts, system_formulation)
+    else
+        nodal_expression(ps_m, devices, system_formulation)
+    end
+
+    return
 
 end
