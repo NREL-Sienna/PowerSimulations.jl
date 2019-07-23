@@ -90,7 +90,7 @@ function activepower_constraints(ps_m::CanonicalModel,
 
     ts_data = [(PSY.get_name(h), values(PSY.get_scalingfactor(h))*(PSY.get_tech(h) |> PSY.get_rating)) for h in devices]
 
-    device_timeseries_ub(ps_m, ts_data , time_steps, hydro_active_ub, :Phy)
+    device_timeseries_ub(ps_m, ts_data , time_steps, hydro_active, :Phy)
 
     return
 
@@ -107,7 +107,7 @@ function activepower_constraints(ps_m::CanonicalModel,
     ts_data_ub = [(PSY.get_name(h), values(PSY.get_scalingfactor(h))*(PSY.get_tech(h) |> PSY.get_rating)) for h in devices]
     ts_data_lb = [(PSY.get_name(h), values(PSY.get_scalingfactor(h))*(PSY.get_tech(h) |> PSY.get_rating)) for h in devices]
 
-    device_timeseries_ub(ps_m, ts_data_ub , time_steps, :hydro_active_ub, :Phy)
+    device_timeseries_ub(ps_m, ts_data_ub , time_steps, :hydro_active, :Phy)
     device_timeseries_lb(ps_m, ts_data_lb , time_steps, :hydro_active_lb, :Phy)
 
     return

@@ -42,7 +42,7 @@ function add_variable(ps_m::CanonicalModel,
       name = PSY.get_name(d)
 
       variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
-                                             base_name="{$(jvar_name)}_{$(name), $(t)}",
+                                             base_name="$(jvar_name)_{$(name), $(t)}",
                                              binary=binary)
 
       _add_to_expression!(expr,
@@ -73,7 +73,7 @@ function add_variable(ps_m::CanonicalModel,
        name = PSY.get_name(d)
 
        variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
-                                        base_name="{$(jvar_name)}_{$(name), $(t)}",
+                                        base_name="$(jvar_name)_{$(name), $(t)}",
                                         binary=binary)
 
        _add_to_expression!(expr,
