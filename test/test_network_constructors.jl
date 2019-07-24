@@ -112,9 +112,9 @@ end
     network = PM.StandardACPForm
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [1056, 240, 288, 144, 240],
-                                                    c_sys14 => [2832, 240, 960, 480, 672],
-                                                    c_sys14_dc => [2832, 288, 864, 432, 720])
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [1056, 240, 144, 144, 240],
+                                                    c_sys14 => [2832, 240, 480, 480, 672],
+                                                    c_sys14_dc => [2832, 240, 432, 432, 720])
 
     for (ix, sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
