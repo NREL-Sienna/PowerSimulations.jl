@@ -36,13 +36,17 @@ If binary = true:
 function add_variable(ps_m::CanonicalModel,
                       devices::D,
                       var_name::Symbol,
-                      binary::Bool) where {D <: Union{Vector{<:PSY.Device},
+                      binary::Bool; kwargs...) where {D <: Union{Vector{<:PSY.Device},
                                                       PSY.FlattenIteratorWrapper{<:PSY.Device}}}
 
     time_steps = model_time_steps(ps_m)
     _add_var_container!(ps_m, var_name, (PSY.get_name(d) for d in devices), time_steps)
     variable = var(ps_m, var_name)
     jvar_name = _remove_underscore(var_name)
+
+    lb = get(kwargs, :ub_value_field, nothing)
+    init_field = get(kwargs, :initial_value_field, nothing)
+    ub_field = get(kwargs, :ub_value_field, nothing)
 
     for t in time_steps, d in devices
       name = PSY.get_name(d)
@@ -51,6 +55,10 @@ function add_variable(ps_m::CanonicalModel,
                                        base_name="$(jvar_name)_{$(name),$(t)}",
                                        binary=binary,
                                        lower_bound = 0.0)
+
+        !isnothing(ub_field) && JuMP.set_upper_bound(variable[name, t], getfield(d,ub_field))
+        !isnothing(ub_field) && JuMP.set_lower_bound(variable[name, t], getfield(d,ub_field))
+        !isnothing(init_field) && JuMP.set_start_value(variable[name, t], getfield(d,ub_field))
     end
 
     return
@@ -96,7 +104,7 @@ function add_variable(ps_m::CanonicalModel,
                       var_name::Symbol,
                       binary::Bool,
                       expression::Symbol,
-                      sign::Float64=1.0) where {D <: Union{Vector{<:PSY.Device},
+                      sign::Float64=1.0; kwargs...) where {D <: Union{Vector{<:PSY.Device},
                                           PSY.FlattenIteratorWrapper{<:PSY.Device}}}
 
     time_steps = model_time_steps(ps_m)
@@ -105,13 +113,21 @@ function add_variable(ps_m::CanonicalModel,
     expr = exp(ps_m, expression)
     jvar_name = _remove_underscore(var_name)
 
-    for t in time_steps, d in devices
-       name = PSY.get_name(d)
+    lb = get(kwargs, :ub_value_field, nothing)
+    init_field = get(kwargs, :initial_value_field, nothing)
+    ub_field = get(kwargs, :ub_value_field, nothing)
 
-       variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
+    for t in time_steps, d in devices
+        name = PSY.get_name(d)
+
+        variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
                                         base_name="$(jvar_name)_{$(name), $(t)}",
                                         binary=binary,
                                         lower_bound = 0.0)
+
+        !isnothing(ub_field) && JuMP.set_upper_bound(variable[name, t], getfield(d,ub_field))
+        !isnothing(ub_field) && JuMP.set_lower_bound(variable[name, t], getfield(d,ub_field))
+        !isnothing(init_field) && JuMP.set_start_value(variable[name, t], getfield(d,ub_field))
 
        _add_to_expression!(expr,
                            PSY.get_number(PSY.get_bus(d)),
