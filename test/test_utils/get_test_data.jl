@@ -24,6 +24,11 @@ c_sys5_re_only = PSY.System(nodes5, renewable_generators5, loads5, branches5, no
 add_forecasts!(c_sys5_re_only, load_forecast_DA)
 add_forecasts!(c_sys5_re_only, ren_forecast_DA)
 
+#System with HydroPower Energy
+c_sys5_hy = PSY.System(nodes5, vcat(thermal_generators5, hydro_generators5[1]), loads5, branches5, nothing, 100.0, nothing, nothing, nothing);
+add_forecasts!(c_sys5_hy, [hydro_forecast_DA[1]])
+add_forecasts!(c_sys5_hy, load_forecast_DA)
+
 #System with Storage Device
 c_sys5_bat = PSY.System(nodes5, thermal_generators5, loads5, branches5, battery5, 100.0, nothing, nothing, nothing);
 add_forecasts!(c_sys5_bat, load_forecast_DA)

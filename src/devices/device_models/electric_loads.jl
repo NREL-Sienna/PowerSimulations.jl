@@ -99,8 +99,8 @@ function activepower_constraints(ps_m::CanonicalModel,
     if model_has_parameters(ps_m)
         device_timeseries_param_ub(ps_m,
                                    _get_time_series(devices, time_steps),
-                                   Symbol("active_ub_$(L)"),
-                                   Symbol("Param_$(L))"),
+                                   Symbol("active_$(L)"),
+                                   Symbol("P_$(L))"),
                                    Symbol("P_$(L)"))
     else
         range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_maxactivepower(d))) for d in devices]
@@ -128,14 +128,14 @@ function activepower_constraints(ps_m::CanonicalModel,
     if model_has_parameters(ps_m)
         device_timeseries_ub_bigM(ps_m,
                                  _get_time_series(devices, time_steps),
-                                 Symbol("active_ub_$(L)"),
+                                 Symbol("active_$(L)"),
                                  Symbol("P_$(L)"),
                                  Symbol("P_$(L)"),
                                  Symbol("ON_$(L)"))
     else
         device_timeseries_ub_bin(ps_m,
                                 _get_time_series(devices, time_steps),
-                                Symbol("active_ub_$(L)"),
+                                Symbol("active_$(L)"),
                                 Symbol("P_$(L)"),
                                 Symbol("ON_$(L)"))
     end
@@ -169,13 +169,13 @@ function activepower_constraints(ps_m::CanonicalModel,
     if model_has_parameters(ps_m)
         device_timeseries_param_ub(ps_m,
                                    _get_time_series(devices),
-                                   Symbol("active_ub_$(L)"),
+                                   Symbol("active_$(L)"),
                                    Symbol("P_$(L)"),
                                    Symbol("P_$(L)"))
     else
         device_timeseries_ub(ps_m,
                             _get_time_series(devices),
-                            Symbol("active_ub_$(L)"),
+                            Symbol("active_$(L)"),
                             Symbol("P_$(L)"))
     end
 
@@ -192,14 +192,14 @@ function activepower_constraints(ps_m::CanonicalModel,
     if model_has_parameters(ps_m)
         device_timeseries_ub_bigM(ps_m,
                                  _get_time_series(devices),
-                                 Symbol("active_ub_$(L)"),
+                                 Symbol("active_$(L)"),
                                  Symbol("P_$(L)"),
                                  Symbol("P_$(L)"),
                                  Symbol("ON_$(L)"))
     else
         device_timeseries_ub_bin(ps_m,
                                 _get_time_series(devices),
-                                Symbol("active_ub_$(L)"),
+                                Symbol("active_$(L)"),
                                 Symbol("P_$(L)"),
                                 Symbol("ON_$(L)"))
     end
@@ -285,11 +285,11 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 
     include_parameters(ps_m,
                     ts_data_active,
-                    Symbol("Param_P_$(L)"),
+                    Symbol("P_$(L)"),
                     :nodal_balance_active)
     include_parameters(ps_m,
                     ts_data_reactive,
-                    Symbol("Param_Q_$(L)"),
+                    Symbol("Q_$(L)"),
                     :nodal_balance_reactive)
 
     return
@@ -312,7 +312,7 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 
     include_parameters(ps_m,
                     ts_data_active,
-                    Symbol("Param_P_$(L)"),
+                    Symbol("P_$(L)"),
                     :nodal_balance_active)
 
     return

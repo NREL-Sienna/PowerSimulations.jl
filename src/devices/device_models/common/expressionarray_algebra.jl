@@ -30,22 +30,6 @@ function _add_to_expression!(expression_array::T,
                              ix::Int64,
                              jx::Int64,
                              var::JV,
-                             multiplier::Int64) where {T, JV <: JuMP.AbstractVariableRef}
-
-    if isassigned(expression_array, ix, jx)
-        JuMP.add_to_expression!(expression_array[ix,jx], multiplier, var)
-    else
-        expression_array[ix,jx] = multiplier*var
-    end
-
-    return
-
-end
-
-function _add_to_expression!(expression_array::T,
-                             ix::Int64,
-                             jx::Int64,
-                             var::JV,
                              multiplier::Float64) where {T, JV <: JuMP.AbstractVariableRef}
 
     if isassigned(expression_array, ix, jx)
@@ -70,21 +54,6 @@ function _add_to_expression!(expression_array::T,
         JuMP.add_to_expression!(expression_array[ix,jx], constant)
     else
         expression_array[ix,jx] = multiplier*var + constant
-    end
-
-    return
-
-end
-
-function _add_to_expression!(expression_array::T,
-                             ix::Int64,
-                             jx::Int64,
-                             var::JV) where {T, JV <: JuMP.AbstractVariableRef}
-
-    if isassigned(expression_array, ix, jx)
-        JuMP.add_to_expression!(expression_array[ix,jx], 1.0, var)
-    else
-        expression_array[ix,jx] = 1.0*var
     end
 
     return
