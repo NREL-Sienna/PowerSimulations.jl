@@ -33,22 +33,14 @@ function flow_variables(ps_m::CanonicalModel,
                         devices::PSY.FlattenIteratorWrapper{B}) where {B <: PSY.ACBranch,
                                                              S <: StandardPTDFForm}
 
-    time_steps = model_time_steps(ps_m)
     var_name = Symbol("Pbr_$(B)")
-    ps_m.variables[var_name] = PSI._container_spec(ps_m.JuMPmodel,
-                                                    (PSY.get_name(d) for d in devices),
-                                                     time_steps)
 
-    for d in devices
-        cp = PSY.get_arch(d)
-        bus_fr = cp.from.number
-        bus_to = cp.to.number
-        name = PSY.get_name(d)
-        for t in time_steps
-            ps_m.variables[var_name][name, t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                            base_name="$(bus_fr), $(bus_to)_{$(name), $(t)}")
-        end
-    end
+    add_variable(ps_m,
+                devices,
+                var_name,
+                false,
+                ub_value = d -> PSY.get_rate(d),
+                lb_value = d -> -1.0*PSY.get_rate(d))
 
     return
 
