@@ -20,26 +20,15 @@ This function add the variables for power generation output to the model
 function activepower_variables!(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{T}) where {T <: PSY.ThermalGen}
 
-    time_steps = model_time_steps(ps_m)
-    var_name = Symbol("P_$(T)")
-    ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel,
-                                              (PSY.get_name(d) for d in devices),
-                                              time_steps)
 
-    for t in time_steps, d in devices
-        device_name = PSY.get_name(d)
-        ps_m.variables[var_name][PSY.get_name(d), t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                base_name="P_{$(device_name), $(t)}",
-                                                upper_bound = (PSY.get_tech(d) |> PSY.get_activepowerlimits).max,
-                                                lower_bound = 0.0,
-                                                start = PSY.get_tech(d) |> PSY.get_activepower
-                                                )
-        _add_to_expression!(ps_m.expressions[:nodal_balance_active],
-                            PSY.get_bus(d) |> PSY.get_number,
-                            t,
-                            ps_m.variables[var_name][PSY.get_name(d), t],
-                            1.0)
-    end
+    add_variable(ps_m,
+                 devices,
+                 Symbol("P_$(T)"),
+                 false,
+                 :nodal_balance_active;
+                 ub_value = d -> d.tech.activepowerlimits.max,
+                 lb_value = d -> d.tech.activepowerlimits.min,
+                 init_value = d -> d.tech.activepower)
 
     return
 
@@ -51,25 +40,14 @@ This function add the variables for power generation output to the model
 function reactivepower_variables!(ps_m::CanonicalModel,
                                  devices::PSY.FlattenIteratorWrapper{T}) where {T <: PSY.ThermalGen}
 
-    time_steps = model_time_steps(ps_m)
-    var_name = Symbol("Q_$(T)")
-    ps_m.variables[var_name] = _container_spec(ps_m.JuMPmodel,
-                                              (PSY.get_name(d) for d in devices),
-                                              time_steps)
-
-     for t in time_steps, d in devices
-        device_name = PSY.get_name(d)
-        ps_m.variables[var_name][PSY.get_name(d), t] = JuMP.@variable(ps_m.JuMPmodel,
-                                            base_name="Q_{$(device_name), $(t)}",
-                                            upper_bound = (PSY.get_tech(d) |> PSY.get_reactivepowerlimits).max,
-                                            lower_bound = (PSY.get_tech(d) |> PSY.get_reactivepowerlimits).min,
-                                            start = PSY.get_tech(d) |> PSY.get_reactivepower)
-        _add_to_expression!(ps_m.expressions[:nodal_balance_reactive],
-                            PSY.get_bus(d) |> PSY.get_number,
-                            t,
-                            ps_m.variables[var_name][PSY.get_name(d), t],
-                            1.0)
-    end
+    add_variable(ps_m,
+                 devices,
+                 Symbol("Q_$(T)"),
+                 false,
+                 :nodal_balance_reactive;
+                 ub_value = d -> d.tech.reactivepowerlimits.max,
+                 lb_value = d -> d.tech.reactivepowerlimits.min,
+                 init_value = d -> d.tech.reactivepower)
 
     return
 
