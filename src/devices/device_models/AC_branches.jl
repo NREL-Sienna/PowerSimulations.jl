@@ -82,9 +82,15 @@ function branch_rate_constraint(ps_m::CanonicalModel,
 
     device_range(ps_m,
                 range_data,
+<<<<<<< HEAD
                 Symbol("RateLimitFT_$(B)"),
                 Symbol("FpFT_$(B)"))
     
+=======
+                Symbol("rate_limit_fwd_$(B)"),
+                Symbol("Pbr_fwd_$(B)"))
+
+>>>>>>> 1d91d4617d4c04a984661bf39fcee1973e5b47ee
     device_range(ps_m,
                 range_data,
                 Symbol("RateLimitTF_$(B)"),

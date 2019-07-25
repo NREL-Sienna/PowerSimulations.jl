@@ -19,7 +19,8 @@ end
 function include_parameters(ps_m::CanonicalModel,
                             ts_data::Vector{Tuple{String, Int64, Vector{Float64}}},
                             param_name::Symbol,
-                            expression::Symbol)
+                            expression::Symbol,
+                            sign::Float64 = 1.0)
 
 
     time_steps = model_time_steps(ps_m)
@@ -29,7 +30,7 @@ function include_parameters(ps_m::CanonicalModel,
 
     for t in time_steps, r in ts_data
         param[r[1], t] = PJ.add_parameter(ps_m.JuMPmodel, r[3][t]);
-        _add_to_expression!(expr, r[2], t, param[r[1], t])
+        _add_to_expression!(expr, r[2], t, param[r[1], t], sign)
     end
 
     return
