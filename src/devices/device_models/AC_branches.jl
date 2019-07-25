@@ -33,7 +33,7 @@ function flow_variables(ps_m::CanonicalModel,
                         devices::PSY.FlattenIteratorWrapper{B}) where {B <: PSY.ACBranch,
                                                              S <: StandardPTDFForm}
 
-    var_name = Symbol("Pbr_$(B)")
+    var_name = Symbol("Fp_$(B)")
 
     add_variable(ps_m,
                 devices,
@@ -51,33 +51,15 @@ end
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
-                                system_formulation::Type{StandardPTDFForm}) where {B <: PSY.ACBranch,
+                                system_formulation::Union{Type{PM.DCPlosslessForm}, Type{StandardPTDFForm}}) where {B <: PSY.ACBranch,
                                                                     D <: AbstractBranchFormulation}
 
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
 
     device_range(ps_m,
                 range_data,
-                Symbol("rate_limit_$(B)"),
-                Symbol("Pbr_$(B)"))
-
-
-    return
-
-end
-
-function branch_rate_constraint(ps_m::CanonicalModel,
-                                devices::PSY.FlattenIteratorWrapper{B},
-                                device_formulation::Type{D},
-                                system_formulation::Type{PM.DCPlosslessForm}) where {B <: PSY.ACBranch,
-                                                                    D <: AbstractBranchFormulation}
-
-    range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
-
-    device_range(ps_m,
-                range_data,
-                Symbol("rate_limit_fwd_$(B)"),
-                Symbol("Pbr_fwd_$(B)"))
+                Symbol("RateLimit_$(B)"),
+                Symbol("Fp_$(B)"))
 
 
     return
@@ -95,13 +77,13 @@ function branch_rate_constraint(ps_m::CanonicalModel,
 
     device_range(ps_m,
                 range_data,
-                Symbol("rate_limit_fwd_$(B)"),
-                Symbol("Pbr_fwd_$(B)"))
+                Symbol("RateLimitFT_$(B)"),
+                Symbol("FpFT_$(B)"))
     
     device_range(ps_m,
                 range_data,
-                Symbol("rate_limit_bwd_$(B)"),
-                Symbol("Pbr_bwd_$(B)"))
+                Symbol("RateLimittf_$(B)"),
+                Symbol("Fptf_$(B)"))
 
 
     return
@@ -116,17 +98,17 @@ function branch_rate_constraint(ps_m::CanonicalModel,
                                         D <: AbstractBranchFormulation,
                                         S <: PM.AbstractPowerFormulation}
 
-    @show range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
+    range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
     rating_constraint(ps_m,
                         range_data,
-                        Symbol("rate_limit_fwd_$(B)"),
-                        (Symbol("Pbr_fwd_$(B)"), Symbol("Qbr_fwd_$(B)")))
+                        Symbol("RateLimitFT_$(B)"),
+                        (Symbol("FpFT_$(B)"), Symbol("FqFT_$(B)")))
 
     rating_constraint(ps_m,
                         range_data,
-                        Symbol("rate_limit_bwd_$(B)"),
-                        (Symbol("Pbr_bwd_$(B)"), Symbol("Qbr_bwd_$(B)")))
+                        Symbol("RateLimitTF_$(B)"),
+                        (Symbol("FpTF_$(B)"), Symbol("FqTF_$(B)")))
 
     return
 

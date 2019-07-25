@@ -21,7 +21,7 @@ function flow_variables(ps_m::CanonicalModel,
                         devices::PSY.FlattenIteratorWrapper{B}) where {B <: PSY.DCBranch}
 
     time_steps = model_time_steps(ps_m)
-    var_name = Symbol("Pbr_$(B)")
+    var_name = Symbol("Fp_$(B)")
     ps_m.variables[var_name] = PSI._container_spec(ps_m.JuMPmodel,
                                                   (PSY.get_name(d) for d in devices),
                                                    time_steps)
@@ -54,8 +54,8 @@ function branch_rate_constraint(ps_m::CanonicalModel,
                                 device_formulation::Type{HVDCLossless},
                                 system_formulation::Type{PM.DCPlosslessForm}) where {B <: PSY.DCBranch}
 
-    var_name = Symbol("Pbr_fwd_$(B)")
-    con_name = Symbol("rate_limit_fwd_$(B)")
+    var_name = Symbol("FpFT_$(B)")
+    con_name = Symbol("RateLimitFT_$(B)")
     time_steps = model_time_steps(ps_m)
     ps_m.constraints[con_name] = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
 
@@ -75,9 +75,9 @@ function branch_rate_constraint(ps_m::CanonicalModel,
                                 system_formulation::Type{S}) where {B <: PSY.DCBranch,
                                                                     S <: PM.AbstractPowerFormulation}
 
-    for dir in ("fwd", "bwd")
-        var_name = Symbol("Pbr_$(dir)_$(B)")
-        con_name = Symbol("rate_limit_$(dir)_$(B)")
+    for dir in ("FT", "TF")
+        var_name = Symbol("Fp$(dir)_$(B)")
+        con_name = Symbol("RateLimit_$(dir)_$(B)")
         time_steps = model_time_steps(ps_m)
         ps_m.constraints[con_name] = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
 
@@ -110,8 +110,8 @@ function branch_rate_constraint(ps_m::CanonicalModel,
                                 device_formulation::Type{HVDCDispatch},
                                 system_formulation::Type{PM.DCPlosslessForm}) where {B <: PSY.DCBranch}
 
-    var_name = Symbol("Pbr_fwd_$(B)")
-    con_name = Symbol("rate_limit_fwd_$(B)")
+    var_name = Symbol("Fp_$(B)")
+    con_name = Symbol("RateLimit_$(B)")
     time_steps = model_time_steps(ps_m)
     ps_m.constraints[con_name] = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
 
@@ -139,9 +139,9 @@ function branch_rate_constraint(ps_m::CanonicalModel,
 
     time_steps = model_time_steps(ps_m)
 
-    for dir in ("fwd", "bwd")
-        var_name = Symbol("Pbr_$(dir)_$(B)")
-        con_name = Symbol("rate_limit_$(dir)_$(B)")
+    for dir in ("FT", "TF")
+        var_name = Symbol("Fp$(dir)_$(B)")
+        con_name = Symbol("RateLimit$(dir)_$(B)")
         ps_m.constraints[con_name] = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
 
         for t in time_steps, d in devices

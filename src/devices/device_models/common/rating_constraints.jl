@@ -8,17 +8,17 @@ Constructs constraint from rating data and related variable tuple.
 
 # Constraint
 
-``` var1[r[1], t] + var2[r[1], t] <= r[2]^2 ```
+``` var1[r[1], t]^2 + var2[r[1], t]^2 <= r[2]^2 ```
 
 where r in rating data and t in time steps.
 
 # LaTeX
 
-`` x_1 + x_2 \leq r^2 ``
+`` x_1^2 + x_2^2 \leq r^2 ``
 
 # Arguments
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations
-* rating_data::Vector{NamedMinMax} : rating data name (1) and value (2)
+* rating_data::Vector{Tuple{String, Float64}} : rating data name (1) and value (2)
 * cons_name::Symbol : name of the constraint
 * var_names::Tuple{Symbol, Symbol} : the names of the variables
 - : var_names[1] : var1

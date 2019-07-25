@@ -298,8 +298,8 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.DCPlosslessForm}
     pm_var_map = Dict{Type,Dict{Symbol, Union{Symbol,NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta)
-    pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = :Pbr_fwd, to_from = nothing))
-    pm_var_map[PSY.DCBranch] = Dict(:p_dc => (from_to = :Pbr_fwd, to_from = nothing))
+    pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = :Fp, to_from = nothing))
+    pm_var_map[PSY.DCBranch] = Dict(:p_dc => (from_to = :Fp, to_from = nothing))
 
     return pm_var_map
 end
@@ -308,8 +308,8 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowe
     pm_var_map = Dict{Type,Dict{Symbol, Union{Symbol,NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta)
-    pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = :Pbr_fwd, to_from = :Pbr_bwd))
-    pm_var_map[PSY.DCBranch] = Dict(:p_dc => (from_to = :Pbr_fwd, to_from = :Pbr_bwd))
+    pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = :FpFT, to_from = :FpTF))
+    pm_var_map[PSY.DCBranch] = Dict(:p_dc => (from_to = :FpFT, to_from = :FpTF))
 
     return pm_var_map
 end
@@ -319,10 +319,10 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerFormu
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta,
                                 :vm => :Vm)
-    pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = :Pbr_fwd, to_from = :Pbr_bwd),
-                                    :q => (from_to = :Qbr_fwd, to_from = :Qbr_bwd))
-    pm_var_map[PSY.DCBranch] = Dict(:p_dc => (from_to = :Pbr_fwd, to_from = :Pbr_bwd),
-                                    :q_dc => (from_to = :Qdc_fwd, to_from = :Qdc_bwd))
+    pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = :FpFT, to_from = :FpTF),
+                                    :q => (from_to = :FqFT, to_from = :FqTF))
+    pm_var_map[PSY.DCBranch] = Dict(:p_dc => (from_to = :FpFT, to_from = :FpTF),
+                                    :q_dc => (from_to = :FqFT, to_from = :FqTF))
 
     return pm_var_map
 end
