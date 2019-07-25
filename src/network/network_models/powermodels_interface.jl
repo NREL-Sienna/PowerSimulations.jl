@@ -346,7 +346,8 @@ function add_pm_var_refs!(ps_m::CanonicalModel, system_formulation::Type{S}, sys
                                                         (PSY.get_name(b) for b in values(bus_dict)),
                                                         time_steps)
             for t in time_steps, (pm_bus, bus) in bus_dict
-                ps_m.variables[ps_v][PSY.get_name(bus), t] = pm_vars[pm_v][pm_bus]
+                name = PSY.get_name(bus)
+                ps_m.variables[ps_v][name, t] = pm_vars[pm_v][pm_bus]
             end
         end
     end

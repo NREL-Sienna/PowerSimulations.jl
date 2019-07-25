@@ -84,7 +84,8 @@ function branch_rate_constraint(ps_m::CanonicalModel,
         for t in time_steps, d in devices
             min_rate = max(PSY.get_activepowerlimits_from(d).min, PSY.get_activepowerlimits_to(d).min)
             max_rate = min(PSY.get_activepowerlimits_from(d).max, PSY.get_activepowerlimits_to(d).max)
-            ps_m.constraints[con_name][PSY.get_name(d), t] = JuMP.@constraint(ps_m.JuMPmodel, min_rate <= ps_m.variables[var_name][PSY.get_name(d), t] <= max_rate)
+            name = PSY.get_name(d)
+            ps_m.constraints[con_name][name, t] = JuMP.@constraint(ps_m.JuMPmodel, min_rate <= ps_m.variables[var_name][name, t] <= max_rate)
         end
     end
 
