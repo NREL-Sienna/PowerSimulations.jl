@@ -69,9 +69,9 @@ end
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
-                                system_formulation::Type{DCPlosslessForm}) where {B <: PSY.ACBranch,
+                                system_formulation::Type{PM.DCPlosslessForm}) where {B <: PSY.ACBranch,
                                                                     D <: AbstractBranchFormulation}
-                                                                    
+
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
 
     device_range(ps_m,
@@ -116,14 +116,14 @@ function branch_rate_constraint(ps_m::CanonicalModel,
                                         D <: AbstractBranchFormulation,
                                         S <: PM.AbstractPowerFormulation}
 
-    range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
+    @show range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
-    norm_two_constraint(ps_m,
+    rating_constraint(ps_m,
                         range_data,
                         Symbol("rate_limit_fwd_$(B)"),
                         (Symbol("Pbr_fwd_$(B)"), Symbol("Qbr_fwd_$(B)")))
 
-    norm_two_constraint(ps_m,
+    rating_constraint(ps_m,
                         range_data,
                         Symbol("rate_limit_bwd_$(B)"),
                         (Symbol("Pbr_bwd_$(B)"), Symbol("Qbr_bwd_$(B)")))

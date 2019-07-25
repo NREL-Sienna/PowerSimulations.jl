@@ -38,7 +38,7 @@ end
 end
 =#
 @testset "Network Constructors" begin
-    #include("test_network_constructors.jl")
+    include("test_network_constructors.jl")
 end
 #=
 @testset "Services Constructors" begin

@@ -52,7 +52,7 @@ end
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
                                 device_formulation::Type{HVDCLossless},
-                                system_formulation::Type{DCPlosslessForm}) where {B <: PSY.DCBranch}
+                                system_formulation::Type{PM.DCPlosslessForm}) where {B <: PSY.DCBranch}
 
     var_name = Symbol("Pbr_fwd_$(B)")
     con_name = Symbol("rate_limit_fwd_$(B)")
@@ -108,7 +108,7 @@ end
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
                                 device_formulation::Type{HVDCDispatch},
-                                system_formulation::Type{DCPlosslessForm}) where {B <: PSY.DCBranch}
+                                system_formulation::Type{PM.DCPlosslessForm}) where {B <: PSY.DCBranch}
 
     var_name = Symbol("Pbr_fwd_$(B)")
     con_name = Symbol("rate_limit_fwd_$(B)")
