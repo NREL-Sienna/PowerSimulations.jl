@@ -56,7 +56,7 @@ function add_variable(ps_m::CanonicalModel,
     variable = var(ps_m, var_name)
     jvar_name = _remove_underscore(var_name)
 
-    lb_f = get(kwargs, :ub_value, nothing)
+    lb_f = get(kwargs, :lb_value, nothing)
     init_f= get(kwargs, :initial_value, nothing)
     ub_f = get(kwargs, :ub_value, nothing)
 
@@ -66,9 +66,8 @@ function add_variable(ps_m::CanonicalModel,
                                         base_name="$(jvar_name)_{$(name), $(t)}",
                                         binary=binary,
                                         lower_bound = 0.0)
-
         !isnothing(ub_f) && JuMP.set_upper_bound(variable[name, t], ub_f(d))
-        !isnothing(ub_f) && JuMP.set_lower_bound(variable[name, t], lb_f(d))
+        !isnothing(lb_f) && JuMP.set_lower_bound(variable[name, t], lb_f(d))
         !isnothing(init_f) && JuMP.set_start_value(variable[name, t], init_f(d))
 
         if !(isnothing(expression))

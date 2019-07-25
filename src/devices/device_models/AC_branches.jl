@@ -97,7 +97,7 @@ function branch_rate_constraint(ps_m::CanonicalModel,
                 range_data,
                 Symbol("rate_limit_fwd_$(B)"),
                 Symbol("Pbr_fwd_$(B)"))
-    
+
     device_range(ps_m,
                 range_data,
                 Symbol("rate_limit_bwd_$(B)"),
@@ -116,7 +116,7 @@ function branch_rate_constraint(ps_m::CanonicalModel,
                                         D <: AbstractBranchFormulation,
                                         S <: PM.AbstractPowerFormulation}
 
-    @show range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
+    range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
     rating_constraint(ps_m,
                         range_data,
