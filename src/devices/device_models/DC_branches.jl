@@ -106,33 +106,6 @@ function branch_rate_constraint(ps_m::CanonicalModel,
 
 end
 
-#= this one is not needed due to the one starting on line 52
-function branch_rate_constraint(ps_m::CanonicalModel,
-                                devices::PSY.FlattenIteratorWrapper{B},
-                                device_formulation::Type{HVDCDispatch},
-                                system_formulation::Type{PM.DCPlosslessForm}) where {B <: PSY.DCBranch}
-
-    var_name = Symbol("Fp_$(B)")
-    con_name = Symbol("RateLimit_$(B)")
-    time_steps = model_time_steps(ps_m)
-    ps_m.constraints[con_name] = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
-
-    for t in time_steps, d in devices
-        min_rate = max(PSY.get_activepowerlimits_from(d).min, PSY.get_activepowerlimits_to(d).min)
-        max_rate = min(PSY.get_activepowerlimits_from(d).max, PSY.get_activepowerlimits_to(d).max)
-        ps_m.constraints[con_name][PSY.get_name(d), t] = JuMP.@constraint(ps_m.JuMPmodel, min_rate <= ps_m.variables[var_name][PSY.get_name(d), t] <= max_rate)
-        _add_to_expression!(ps_m.expressions[:nodal_balance_active],
-                            PSY.get_arch(d).to |> PSY.get_number,
-                            t,
-                            ps_m.variables[var_name][PSY.get_name(d), t],
-                            -PSY.get_loss(d).l1,
-                            -PSY.get_loss(d).l0)
-    end
-
-    return
-
-end=#
-
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
