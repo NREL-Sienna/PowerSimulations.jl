@@ -1,6 +1,10 @@
 mutable struct SimulationRef
     raw::String
     models::String
+    run_count::Dict{Int64, Int64}
+    date_ref::Dict{Int64, Dates.DateTime}
+    current_time::Dates.DateTime
+    reset::Bool
 end
 
 mutable struct Stage
@@ -45,8 +49,13 @@ mutable struct Simulation
                         simulation_folder::String;
                         kwargs...) where {T<:PM.AbstractPowerFormulation}
 
-
-    sim_ref = SimulationRef("init", "init")
+    sim_ref = SimulationRef("init",
+                            "init",
+                            Dict{Int64, Int64}(),
+                            Dict{Int64, Dates.DateTime}(),
+                            Dates.now(),
+                            true
+                            )
 
     dates, validation, stages_vector = build_simulation!(sim_ref,
                                                         base_name,
@@ -66,3 +75,5 @@ mutable struct Simulation
     end
 
 end
+
+get_steps(s::Simulation) = s.steps

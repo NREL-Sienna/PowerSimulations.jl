@@ -63,7 +63,7 @@ end
 function _export_optimizer_log(optimizer_log::Dict{Symbol, Any}, path::String)
     df = DataFrames.DataFrame(optimizer_log)
 
-    file_path = joinpath(path,"optimizer_log.feather")
+    file_path = joinpath(path,"$(round(Dates.now(),Dates.Minute))-optimizer_log.feather")
 
     Feather.write(file_path, df)
 

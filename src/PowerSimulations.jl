@@ -51,6 +51,7 @@ export ThermalDispatchNoMin
 export construct_device!
 export construct_network!
 export solve_op_model!
+export run_sim_model!
 export write_model_result
 
 
