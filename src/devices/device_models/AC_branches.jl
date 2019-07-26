@@ -55,8 +55,9 @@ end
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
-                                system_formulation::Union{Type{PM.DCPlosslessForm}, Type{StandardPTDFForm}}) where {B <: PSY.ACBranch,
-                                                                    D <: AbstractBranchFormulation}
+                                system_formulation::Type{S}) where {B <: PSY.ACBranch,
+                                                                    D <: AbstractBranchFormulation,
+                                                                    S <: PM.DCPlosslessForm}
 
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
 

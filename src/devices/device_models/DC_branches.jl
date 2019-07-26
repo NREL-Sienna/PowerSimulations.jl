@@ -51,11 +51,13 @@ end
 
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
-                                device_formulation::Type{HVDCLossless},
-                                system_formulation::Type{PM.DCPlosslessForm}) where {B <: PSY.DCBranch}
+                                device_formulation::Type{D},
+                                system_formulation::Type{S}) where {B <: PSY.DCBranch,
+                                                                    D <: AbstractDCLineForm,
+                                                                    S <: PM.DCPlosslessForm}
 
-    var_name = Symbol("FpFT_$(B)")
-    con_name = Symbol("RateLimitFT_$(B)")
+    var_name = Symbol("Fp_$(B)")
+    con_name = Symbol("RateLimit_$(B)")
     time_steps = model_time_steps(ps_m)
     ps_m.constraints[con_name] = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
 
@@ -104,7 +106,7 @@ function branch_rate_constraint(ps_m::CanonicalModel,
 
 end
 
-
+#= this one is not needed due to the one starting on line 52
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
                                 device_formulation::Type{HVDCDispatch},
@@ -129,12 +131,13 @@ function branch_rate_constraint(ps_m::CanonicalModel,
 
     return
 
-end
+end=#
 
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
-                                device_formulation::Type{HVDCDispatch},
+                                device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B <: PSY.DCBranch,
+                                                                    D <: AbstractDCLineForm,
                                                                     S <: PM.AbstractPowerFormulation}
 
     time_steps = model_time_steps(ps_m)
