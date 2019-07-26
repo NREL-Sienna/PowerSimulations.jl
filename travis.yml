@@ -14,22 +14,10 @@ notifications:
 
 ## uncomment the following lines to allow failures on nightly julia
 ## (tests will run but not make your overall status red)
-matrix:
-  exclude:
-    - os: windows
-      julia: nightly
-      language: julia
-
-  include:
-    - os: windows
-      language: sh
-      before_install:
-        - choco install julia
-
-  allow_failures:
-  - julia: nightly
-  - os: osx
-  - os: windows
+allow_failures:
+- julia: nightly
+- os: osx
+- os: windows
 
 addons:
   apt_packages:
