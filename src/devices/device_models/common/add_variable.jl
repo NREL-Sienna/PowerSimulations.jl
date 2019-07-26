@@ -64,8 +64,7 @@ function add_variable(ps_m::CanonicalModel,
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(ps_m.JuMPmodel,
                                         base_name="$(jvar_name)_{$(name), $(t)}",
-                                        binary=binary,
-                                        lower_bound = 0.0)
+                                        binary=binary)
         !isnothing(ub_f) && JuMP.set_upper_bound(variable[name, t], ub_f(d))
         !isnothing(lb_f) && JuMP.set_lower_bound(variable[name, t], lb_f(d))
         !isnothing(init_f) && JuMP.set_start_value(variable[name, t], init_f(d))
