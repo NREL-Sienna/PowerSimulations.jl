@@ -58,24 +58,34 @@ export write_model_result
 
 #################################################################################
 # Imports
+#Modeling Imports
 import JuMP
-import ParameterJuMP
-import MathOptFormat
-import TimeSeries
-import PowerSystems
-import PowerModels
-import MathOptInterface
-import DataFrames
-import LinearAlgebra
-#import LinearAlgebra.BLAS #needed for the simulation stage
-import Dates
-import Feather
-
 # so that users do not need to import JuMP to use a solver with PowerModels
 import JuMP: with_optimizer
 export with_optimizer
+import MathOptInterface
+import ParameterJuMP
+import LinearAlgebra
+import PowerSystems
+import PowerModels
+
+#TimeStamp Management Imports
+import Dates
+import TimeSeries
+
+#I/O Imports
+import MathOptFormat
+import DataFrames
+import Feather
+
 
 #################################################################################
+#Type Alias for long type signatures
+const MinMax = NamedTuple{(:min, :max), NTuple{2, Float64}}
+const NamedMinMax = Tuple{String, MinMax}
+const UpDown = NamedTuple{(:up, :down), NTuple{2, Float64}}
+const InOut = NamedTuple{(:in, :out), NTuple{2, Float64}}
+
 # Type Alias From other Packages
 const PM = PowerModels
 const PSY = PowerSystems
@@ -93,11 +103,11 @@ const JuMPAffineExpressionArray = Matrix{GAE{V}} where V <: JuMP.AbstractVariabl
 const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 
-#Type Alias for long type signatures
-const MinMax = NamedTuple{(:min, :max), NTuple{2, Float64}}
-const NamedMinMax = Tuple{String, MinMax}
-const UpDown = NamedTuple{(:up, :down), NTuple{2, Float64}}
-const InOut = NamedTuple{(:in, :out), NTuple{2, Float64}}
+#################################################################################
+##### JuMP methods overloading
+JuMP.Model(optimizer::Nothing; kwargs...) = JuMP.Model(kwargs...)
+
+#################################################################################
 
 #################################################################################
 # Includes
@@ -148,18 +158,16 @@ include("services/services_constructor.jl")
 #Operational Model Constructors
 include("operation_models/operation_models.jl")
 
-#Utils
-include("routines/printing.jl")
+#Simulations Model Files
+include("simulation_models/simulation_feedback.jl")
+
+#Routines
+include("routines/get_results.jl")
 include("routines/solve_routines.jl")
-include("routines/simulation_feedback.jl")
-include("routines/optimization_debugging.jl")
-include("routines/simulation_routines.jl")
-include("routines/write_model.jl")
 
-#################################################################################
-##### JuMP methods overloading
-JuMP.Model(optimizer::Nothing; kwargs...) = JuMP.Model(kwargs...)
-
-#################################################################################
+#Utils
+include("utils/optimization_debugging.jl")
+include("utils/write_model.jl")
+include("utils/printing.jl")
 
 end

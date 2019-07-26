@@ -36,7 +36,6 @@ end
 mutable struct Simulation
     steps::Int64
     stages::Vector{Stage}
-    feedback_ref::Any
     valid_timeseries::Bool
     daterange::NTuple{2,Dates.DateTime} #Inital Time of the first forecast and Inital Time of the last forecast
     ref::SimulationRef
@@ -45,7 +44,6 @@ mutable struct Simulation
     function Simulation(base_name::String,
                         steps::Int64,
                         stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}},
-                        feedback_ref,
                         simulation_folder::String;
                         kwargs...) where {T<:PM.AbstractPowerFormulation}
 
@@ -61,13 +59,11 @@ mutable struct Simulation
                                                         base_name,
                                                         steps,
                                                         stages,
-                                                        feedback_ref,
                                                         simulation_folder;
                                                         kwargs...)
 
     new(steps,
         stages_vector,
-        feedback_ref,
         validation,
         dates,
         sim_ref)

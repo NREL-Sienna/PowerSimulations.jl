@@ -1,5 +1,4 @@
-include("get_results.jl")
-
+""" Solves Operational Models"""
 function solve_op_model!(op_model::OperationModel; kwargs...)
 
     optimizer_log_dict = Dict{Symbol, Any}()
@@ -53,6 +52,8 @@ function _run_stage(stage::Stage, results_path::String)
 
 end
 
+
+"""Runs Simulations"""
 function run_sim_model!(sim::Simulation; verbose::Bool = false)
 
     if sim.ref.reset
