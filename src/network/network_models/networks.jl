@@ -23,7 +23,7 @@ export
     QCWRPowerModel, QCWRForm,
     SOCWRConicPowerModel, SOCWRConicForm,
     QCWRTriPowerModel, QCWRTriForm,
-    SOCBFpowerModel, SOCBFForm,
+    SOCBFPowerModel, SOCBFForm,
     SOCBFConicPowerModel, SOCBFConicForm,
 
     # sdp relaxations
@@ -44,7 +44,7 @@ abstract type AbstractConicPowerFormulation <: AbstractPowerFormulation end
 abstract type AbstractBFForm <: AbstractPowerFormulation end
 
 "for variants of branch flow models that target QP or NLP solvers"
-abstract type AbstractBFqPForm <: AbstractBFForm end
+abstract type AbstractBFQPForm <: AbstractBFForm end
 
 "for variants of branch flow models that target conic solvers"
 abstract type AbstractBFConicForm <: AbstractBFForm end
@@ -367,7 +367,7 @@ QCWRTriPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, 
 
 
 ""
-abstract type SOCBFForm <: AbstractBFqPForm end
+abstract type SOCBFForm <: AbstractBFQPForm end
 
 """
 Second-order cone relaxation of branch flow model
@@ -396,10 +396,10 @@ Extended as discussed in:
 }
 ```
 """
-const SOCBFpowerModel = GenericPowerModel{SOCBFForm}
+const SOCBFPowerModel = GenericPowerModel{SOCBFForm}
 
 "default SOC constructor"
-SOCBFpowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, SOCBFForm; kwargs...)
+SOCBFPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, SOCBFForm; kwargs...)
 
 
 ""
