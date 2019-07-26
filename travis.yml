@@ -1,5 +1,4 @@
 ## Documentation: http://docs.travis-ci.org/user/languages/julia/
-## Documentation: http://docs.travis-ci.org/user/languages/julia/
 language: julia
 os:
   - linux
