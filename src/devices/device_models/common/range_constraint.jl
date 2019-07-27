@@ -188,7 +188,7 @@ function device_semicontinuousrange_param(ps_m::CanonicalModel,
 
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it. In the future this can be updated
     set_name = (r[1] for r in scrange_data)
-    _add_params_container!(ps_m, param_name, set_name, time_steps)
+    _add_param_container!(ps_m, param_name, set_name, time_steps)
     param = par(ps_m, param_name)
 
     _add_cons_container!(ps_m, ub_name, set_name, time_steps)

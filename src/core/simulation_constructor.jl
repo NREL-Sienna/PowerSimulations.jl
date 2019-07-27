@@ -72,6 +72,8 @@ function _build_stages(sim_ref::SimulationRef,
         write_op_model(op_mod, joinpath(stage_path, "optimization_model.json"))
         PSY.to_json(v[2], joinpath(stage_path ,"sys_data.json"))
         mod_stages[k] = Stage(k, op_mod, v[3])
+        sim_ref.run_count[k] = 0
+        sim_ref.date_ref[k] = PSY.get_forecast_initial_times(v[2])[1]
     end
 
     return mod_stages
