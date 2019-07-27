@@ -11,13 +11,13 @@ end
                       expression::Symbol,
                       sign::Float64)
 
-Adds a positive variable to the optimization model and to the affine expressions contained
+Adds a variable to the optimization model and to the affine expressions contained
 in the canonical model according to the specified sign. Based on the inputs, the variable can
 be specified as binary.
 
 # Bounds
 
-``` 0 <= varstart[name, t]  ```
+``` varstart[name, t]  ```
 
 If binary = true:
 
@@ -25,7 +25,7 @@ If binary = true:
 
 # LaTeX
 
-``  x^{device}_t >= 0.0 \forall t ``
+``  x^{device}_t \forall t ``
 
 ``  x^{device}_t \in {0,1} \forall t iff \text{binary = true}``
 
@@ -80,5 +80,41 @@ function add_variable(ps_m::CanonicalModel,
     end
 
     return
+
+end
+
+@doc raw"""
+    set_variable_bounds(ps_m::CanonicalModel,
+                            bounds::Vector{NamedMinMax},
+                            var_name::Symbol)
+
+Adds a bounds to a variable in the optimization model.
+
+# Bounds
+
+``` bounds.min <= varstart[name, t] <= bounds.max  ```
+
+
+# LaTeX
+
+``  x^{device}_t >= bound^{min} \forall t ``
+
+``  x^{device}_t <= bound^{max} \forall t ``
+
+# Arguments
+* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* bounds::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
+* var_name::Symbol : Base Name for the variable
+
+"""
+function set_variable_bounds(ps_m::CanonicalModel,
+                            bounds::Vector{NamedMinMax},
+                            var_name::Symbol)
+
+    for t in model_time_steps(ps_m), (name, bound) in bounds
+        var = ps_m.variables[var_name][name, t]
+        JuMP.set_upper_bound(var, bound.max)
+        JuMP.set_lower_bound(var, bound.min)
+    end
 
 end
