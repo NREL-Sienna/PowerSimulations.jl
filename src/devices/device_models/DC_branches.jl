@@ -6,6 +6,7 @@ struct HVDCDispatch <: AbstractDCLineForm end
 
 struct VoltageSourceDC <: AbstractDCLineForm end
 
+#################################### Branch Variables ##################################################
 
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
@@ -48,6 +49,11 @@ function flow_variables(ps_m::CanonicalModel,
     return
 
 end
+
+#################################### Flow Variable Bounds ##################################################
+
+
+#################################### Rate Limits Constraints ##################################################
 
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
@@ -97,17 +103,6 @@ end
 
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
-                                device_formulation::Type{HVDCLossless},
-                                system_formulation::Type{StandardPTDFForm}) where {B <: PSY.DCBranch}
-    
-    # This is intended to to nothing since flow constraints are populated in ptdf_networkflow()
-
-    return
-
-end
-
-function branch_rate_constraint(ps_m::CanonicalModel,
-                                devices::PSY.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B <: PSY.DCBranch,
                                                                     D <: AbstractDCLineForm,
@@ -137,13 +132,5 @@ function branch_rate_constraint(ps_m::CanonicalModel,
 
 end
 
-function branch_rate_constraint(ps_m::CanonicalModel,
-                                devices::PSY.FlattenIteratorWrapper{B},
-                                device_formulation::Type{HVDCDispatch},
-                                system_formulation::Type{StandardPTDFForm}) where {B <: PSY.DCBranch}
 
-    # This is intended to to nothing since flow constraints are populated in ptdf_networkflow()
-
-    return
-
-end
+#################################### Flow Limits Constraints ##################################################
