@@ -1,32 +1,3 @@
-function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory}; kwargs...)
-
-    if isa(optimizer, Nothing)
-        @info("The optimization model has no optimizer attached")
-    end
-
-    parameters = get(kwargs, :parameters, true)
-
-    if :JuMPmodel in keys(kwargs) && parameters
-
-        if !haskey(m.ext, :params)
-            @info("Model doesn't have Parameters enabled. Parameters will be enabled")
-        end
-
-        PJ.enable_parameters(kwargs[:JuMPmodel])
-
-        return kwargs[:JuMPmodel]
-
-    end
-
-    JuMPmodel = JuMP.Model(optimizer)
-    if parameters
-        PJ.enable_parameters(JuMPmodel)
-    end
-
-    return JuMPmodel
-
-end
-
 function build_op_model!(op_model::OperationModel;
                          optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
                          kwargs...)

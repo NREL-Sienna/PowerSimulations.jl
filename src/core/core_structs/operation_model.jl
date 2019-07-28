@@ -16,11 +16,11 @@ mutable struct OperationModel{M <: AbstractOperationsModel}
     canonical_model::CanonicalModel
 
     function OperationModel(op_model::Type{M},
-                                model_ref::ModelReference,
-                                sys::PSY.System;
-                                optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
-                                kwargs...) where {M <: AbstractOperationsModel,
-                                                  T <: PM.AbstractPowerFormulation}
+                            model_ref::ModelReference,
+                            sys::PSY.System;
+                            optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
+                            kwargs...) where {M <: AbstractOperationsModel,
+                                              T <: PM.AbstractPowerFormulation}
 
         ps_model = build_canonical_model(model_ref.transmission,
                                          model_ref.devices,
