@@ -27,7 +27,6 @@ function activepower_variables!(ps_m::CanonicalModel,
                  false,
                  :nodal_balance_active;
                  ub_value = d -> d.tech.activepowerlimits.max,
-                 lb_value = d -> d.tech.activepowerlimits.min,
                  init_value = d -> d.tech.activepower)
 
     return

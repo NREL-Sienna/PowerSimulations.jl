@@ -13,7 +13,7 @@ function ptdf_networkflow(ps_m::CanonicalModel,
 
     var_dict = Dict{Type,Symbol}()
     for btype in Set(branch_types)
-        var_dict[btype] = Symbol("Fbr_$(btype)")
+        var_dict[btype] = Symbol("Fp_$(btype)")
         typed_branches = PSY.FlattenIteratorWrapper(btype, Vector([[b for b in branches if typeof(b) == btype]]))
         flow_variables(ps_m, StandardPTDFForm, typed_branches)
     end

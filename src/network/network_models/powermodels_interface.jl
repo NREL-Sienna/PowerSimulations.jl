@@ -294,24 +294,35 @@ end
 
 #### PM accessor functions ########
 
-function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowerFormulation}
-    pm_var_map = Dict{Type,Dict{Symbol,Symbol}}()
+function PMvarmap(system_formulation::Type{S}) where {S <: PM.DCPlosslessForm}
+    pm_var_map = Dict{Type,Dict{Symbol, Union{Symbol,NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta)
-    pm_var_map[PSY.ACBranch] = Dict(:p => :Fbr)
-    pm_var_map[PSY.DCBranch] = Dict(:p_dc => :Fp)
+    pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = :Fp, to_from = nothing))
+    pm_var_map[PSY.DCBranch] = Dict(:p_dc => (from_to = :Fp, to_from = nothing))
+
+    return pm_var_map
+end
+
+function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowerFormulation}
+    pm_var_map = Dict{Type,Dict{Symbol, Union{Symbol,NamedTuple}}}()
+
+    pm_var_map[PSY.Bus] = Dict(:va => :theta)
+    pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = :FpFT, to_from = :FpTF))
+    pm_var_map[PSY.DCBranch] = Dict(:p_dc => (from_to = :FpFT, to_from = :FpTF))
 
     return pm_var_map
 end
 
 function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerFormulation}
-    pm_var_map = Dict{Type,Dict{Symbol,Symbol}}()
+    pm_var_map = Dict{Type,Dict{Symbol, Union{Symbol,NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta,
                                 :vm => :Vm)
-    pm_var_map[PSY.ACBranch] = Dict(:p => :Fbr,
-                                    :q => :Qbr)
-    pm_var_map[PSY.DCBranch] = Dict(:p_dc => :Fp)
+    pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = :FpFT, to_from = :FpTF),
+                                    :q => (from_to = :FqFT, to_from = :FqTF))
+    pm_var_map[PSY.DCBranch] = Dict(:p_dc => (from_to = :FpFT, to_from = :FpTF),
+                                    :q_dc => (from_to = :FqFT, to_from = :FqTF))
 
     return pm_var_map
 end
@@ -325,44 +336,41 @@ function add_pm_var_refs!(ps_m::CanonicalModel, system_formulation::Type{S}, sys
     DCbranch_dict = ps_m.pm_model.ext[:PMmap].arcs_dc
     DCbranch_types = typeof.(values(DCbranch_dict))
 
+    pm_vars = ps_m.pm_model.var[:nw][1][:cnd][1]
+
     pm_var_map = PMvarmap(system_formulation)
     
     for (pm_v, ps_v) in pm_var_map[PSY.Bus]
-        if pm_v in keys(ps_m.pm_model.var[:nw][1][:cnd][1])
+        if pm_v in keys(pm_vars)
             ps_m.variables[ps_v] = PSI._container_spec(ps_m.JuMPmodel,
                                                         (PSY.get_name(b) for b in values(bus_dict)),
                                                         time_steps)
             for t in time_steps, (pm_bus, bus) in bus_dict
-                ps_m.variables[ps_v][PSY.get_name(bus), t] = ps_m.pm_model.var[:nw][1][:cnd][1][pm_v][pm_bus]
+                name = PSY.get_name(bus)
+                ps_m.variables[ps_v][name, t] = pm_vars[pm_v][pm_bus]
             end
         end
     end
 
-    for br_type in Set(ACbranch_types)
-        branches = [b for b in ACbranch_dict if typeof(b[2]) == br_type]
-        for (pm_v, ps_v) in pm_var_map[PSY.ACBranch]
-            if pm_v in keys(ps_m.pm_model.var[:nw][1][:cnd][1])
-                var_name = Symbol("$(ps_v)_$(br_type)")
-                ps_m.variables[var_name] = PSI._container_spec(ps_m.JuMPmodel,
-                                                            (PSY.get_name(b[2]) for b in branches),
-                                                            time_steps)
-                for t in time_steps, (pm_arc, branch) in branches
-                    ps_m.variables[var_name][PSY.get_name(branch), t] = ps_m.pm_model.var[:nw][1][:cnd][1][pm_v][pm_arc]
-                end
-            end
-        end
-    end
+    add_pm_var_refs!(ps_m, PSY.ACBranch, ACbranch_types, ACbranch_dict, pm_var_map, pm_vars, time_steps)
+    add_pm_var_refs!(ps_m, PSY.DCBranch, DCbranch_types, DCbranch_dict, pm_var_map, pm_vars, time_steps)
 
-    for br_type in Set(DCbranch_types)
-        branches = [b for b in DCbranch_dict if typeof(b[2]) == br_type]
-        for (pm_v, ps_v) in pm_var_map[PSY.DCBranch]
-            if pm_v in keys(ps_m.pm_model.var[:nw][1][:cnd][1])
-                var_name = Symbol("$(ps_v)_$(br_type)")
-                ps_m.variables[var_name] = PSI._container_spec(ps_m.JuMPmodel,
-                                                            (PSY.get_name(b[2]) for b in branches),
-                                                            time_steps)
-                for t in time_steps, (pm_arc, branch) in branches
-                    ps_m.variables[var_name][PSY.get_name(branch), t] = ps_m.pm_model.var[:nw][1][:cnd][1][pm_v][pm_arc]
+end
+
+function add_pm_var_refs!(ps_m::CanonicalModel, d_class::Type, device_types::Vector, pm_map::Dict, pm_var_map::Dict, pm_vars::Dict, time_steps::UnitRange{Int64})
+    for d_type in Set(device_types)
+        devices = [d for d in pm_map if typeof(d[2]) == d_type]
+        for (pm_v, ps_v) in pm_var_map[d_class]
+            if pm_v in keys(pm_vars)
+                for dir in typeof(ps_v) |> fieldnames
+                    isnothing(getfield(ps_v,dir)) && continue
+                    var_name = Symbol("$(getfield(ps_v,dir))_$(d_type)")
+                    ps_m.variables[var_name] = PSI._container_spec(ps_m.JuMPmodel,
+                                                                        (PSY.get_name(d[2]) for d in devices),
+                                                                        time_steps)
+                    for t in time_steps, (pm_d, d) in devices
+                        ps_m.variables[var_name][PSY.get_name(d), t] = pm_vars[pm_v][getfield(pm_d, dir)]
+                    end
                 end
             end
         end

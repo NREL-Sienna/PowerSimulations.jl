@@ -43,7 +43,7 @@ end
     PTDF_ref = Dict{PSY.System, PSY.PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc);
     test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [264, 264, 0, 0, 264],
                                                     c_sys14 => [600, 600, 0, 0, 816],
-                                                    c_sys14_dc => [552, 552, 0, 0, 768])
+                                                    c_sys14_dc => [600, 600, 0, 0, 768])
 
     for (ix, sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)
@@ -112,9 +112,9 @@ end
     network = PM.StandardACPForm
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [1056, 240, 288, 144, 240],
-                                                    c_sys14 => [2832, 240, 960, 480, 672],
-                                                    c_sys14_dc => [2832, 288, 864, 432, 720])
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [1056, 240, 144, 144, 240],
+                                                    c_sys14 => [2832, 240, 480, 480, 672],
+                                                    c_sys14_dc => [2832, 336, 432, 432, 720]) # TODO: changed the interval constraint number to 336 from 240. double check
 
     for (ix, sys) in enumerate(systems), p in parameters
         buses = get_components(PSY.Bus, sys)

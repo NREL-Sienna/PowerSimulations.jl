@@ -1,8 +1,12 @@
 
 struct PMmap
     bus::Dict{Int64,PSY.Bus}
-    arcs::Dict{Tuple{Int64, Int64, Int64}, b} where b <: PSY.ACBranch
-    arcs_dc::Dict{Tuple{Int64, Int64, Int64}, d} where d <: PSY.DCBranch
+    arcs::Dict{NamedTuple{(:from_to,:to_from), 
+                            Tuple{Tuple{Int64,Int64,Int64}, 
+                            Tuple{Int64,Int64,Int64}}}, t where t<:PSY.ACBranch}
+    arcs_dc::Dict{NamedTuple{(:from_to,:to_from), 
+                            Tuple{Tuple{Int64,Int64,Int64}, 
+                            Tuple{Int64,Int64,Int64}}}, t where t<:PSY.DCBranch}
 end
 
 function get_branch_to_pm(ix::Int64, branch::PSY.PhaseShiftingTransformer)
@@ -134,12 +138,16 @@ function get_branch_to_pm(ix::Int64, branch::PSY.HVDCLine)
     return PM_branch
 end
 
-function get_branches_to_pm(sys::PSY.System)
+function get_branches_to_pm(sys::PSY.System) 
 
         PM_ac_branches = Dict{String, Any}()
         PM_dc_branches = Dict{String, Any}()
-        PMmap_ac = Dict{Tuple{Int64, Int64, Int64}, t where t<:PSY.ACBranch}()
-        PMmap_dc = Dict{Tuple{Int64, Int64, Int64}, t where t<:PSY.DCBranch}()
+        PMmap_ac = Dict{NamedTuple{(:from_to,:to_from), 
+                            Tuple{Tuple{Int64,Int64,Int64}, 
+                            Tuple{Int64,Int64,Int64}}}, t where t<:PSY.ACBranch}()
+        PMmap_dc = Dict{NamedTuple{(:from_to,:to_from), 
+                            Tuple{Tuple{Int64,Int64,Int64}, 
+                            Tuple{Int64,Int64,Int64}}}, t where t<:PSY.DCBranch}()
 
         for (ix, branch) in enumerate(PSY.get_components(PSY.Branch, sys))
             if isa(branch, PSY.DCBranch)
@@ -147,14 +155,14 @@ function get_branches_to_pm(sys::PSY.System)
                 if PM_dc_branches["$(ix)"]["br_status"] == true
                     f = PM_dc_branches["$(ix)"]["f_bus"]
                     t = PM_dc_branches["$(ix)"]["t_bus"]
-                    PMmap_dc[(ix,f,t)] = branch
+                    PMmap_dc[(from_to=(ix,f,t),to_from=(ix,t,f))] = branch
                 end
             else
                 PM_ac_branches["$(ix)"] = get_branch_to_pm(ix, branch)
                 if PM_ac_branches["$(ix)"]["br_status"] == true
                     f = PM_ac_branches["$(ix)"]["f_bus"]
                     t = PM_ac_branches["$(ix)"]["t_bus"]
-                    PMmap_ac[(ix,f,t)] = branch
+                    PMmap_ac[(from_to=(ix,f,t),to_from=(ix,t,f))] = branch
                 end
             end
         end

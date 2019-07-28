@@ -6,12 +6,16 @@ abstract type AbstractBranchFormulation <: AbstractDeviceFormulation end
 abstract type AbstractLineForm <: AbstractBranchFormulation end
 
 struct StaticLine <: AbstractLineForm end
+struct StaticLineUnbounded <: AbstractLineForm end
+
+struct FlowMonitoredLine <: AbstractLineForm end
 
 #Abstract Transformer Models
 
 abstract type AbstractTransformerForm <: AbstractBranchFormulation end
 
 struct StaticTransformer <: AbstractTransformerForm end
+struct StaticTransformerUnbounded <: AbstractTransformerForm end
 
 # Not implemented yet
 struct TapControl <: AbstractTransformerForm end
@@ -33,28 +37,80 @@ function flow_variables(ps_m::CanonicalModel,
                         devices::PSY.FlattenIteratorWrapper{B}) where {B <: PSY.ACBranch,
                                                              S <: StandardPTDFForm}
 
-    time_steps = model_time_steps(ps_m)
-    var_name = Symbol("Fbr_$(B)")
-    ps_m.variables[var_name] = PSI._container_spec(ps_m.JuMPmodel,
-                                                    (PSY.get_name(d) for d in devices),
-                                                     time_steps)
+    var_name = Symbol("Fp_$(B)")
 
-    for d in devices
-        cp = PSY.get_arch(d)
-        bus_fr = cp.from.number
-        bus_to = cp.to.number
-        name = PSY.get_name(d)
-        for t in time_steps
-            ps_m.variables[var_name][name, t] = JuMP.@variable(ps_m.JuMPmodel,
-                                                            base_name="$(bus_fr), $(bus_to)_{$(name), $(t)}")
-        end
-    end
+    add_variable(ps_m,
+                devices,
+                var_name,
+                false)
+                #ub_value = d -> PSY.get_rate(d), # Add flow bounds in rate constraints
+                #lb_value = d -> -1.0*PSY.get_rate(d))
 
     return
 
 end
 
-#################################### Flow Limits Variables ##################################################
+#################################### Flow Variable Bounds ##################################################
+
+
+function branch_rate_bounds(ps_m::CanonicalModel,
+                                devices::PSY.FlattenIteratorWrapper{B},
+                                device_formulation::Type{D},
+                                system_formulation::Type{S}) where {B <: PSY.ACBranch,
+                                                                    D <: AbstractBranchFormulation,
+                                                                    S <: PM.DCPlosslessForm}
+
+    range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
+
+    set_variable_bounds(ps_m,
+                        range_data,
+                        Symbol("Fp_$(B)"))
+
+    return
+
+end
+
+function branch_rate_bounds(ps_m::CanonicalModel,
+                                devices::PSY.FlattenIteratorWrapper{B},
+                                device_formulation::Type{D},
+                                system_formulation::Type{S}) where {B <: PSY.ACBranch,
+                                                                    D <: AbstractBranchFormulation,
+                                                                    S <: PM.AbstractPowerFormulation}
+
+    range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
+
+    set_variable_bounds(ps_m,
+                        range_data,
+                        Symbol("FpFT_$(B)"))
+
+    set_variable_bounds(ps_m,
+                        range_data,
+                        Symbol("FpTF_$(B)"))
+
+    return
+
+end
+
+#################################### Rate Limits Constraints ##################################################
+
+
+function branch_rate_constraint(ps_m::CanonicalModel,
+                                devices::PSY.FlattenIteratorWrapper{B},
+                                device_formulation::Type{D},
+                                system_formulation::Type{S}) where {B <: PSY.ACBranch,
+                                                                    D <: AbstractBranchFormulation,
+                                                                    S <: PM.DCPlosslessForm}
+
+    range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
+
+    device_range(ps_m,
+                range_data,
+                Symbol("RateLimit_$(B)"),
+                Symbol("Fp_$(B)"))
+
+    return
+
+end
 
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
@@ -67,9 +123,13 @@ function branch_rate_constraint(ps_m::CanonicalModel,
 
     device_range(ps_m,
                 range_data,
-                Symbol("rate_limit_$(B)"),
-                Symbol("Fbr_$(B)"))
-
+                Symbol("RateLimitFT_$(B)"),
+                Symbol("FpFT_$(B)"))
+    
+    device_range(ps_m,
+                range_data,
+                Symbol("RateLimitTF_$(B)"),
+                Symbol("FpTF_$(B)"))
 
     return
 
@@ -83,12 +143,61 @@ function branch_rate_constraint(ps_m::CanonicalModel,
                                         D <: AbstractBranchFormulation,
                                         S <: PM.AbstractPowerFormulation}
 
-    range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
+    range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
-    norm_two_constraint(ps_m,
+    rating_constraint(ps_m,
                         range_data,
-                        Symbol("rate_limit_$(B)"),
-                        (Symbol("Fbr_$(B)"), Symbol("Qbr_$(B)")))
+                        Symbol("RateLimitFT_$(B)"),
+                        (Symbol("FpFT_$(B)"), Symbol("FqFT_$(B)")))
+
+    rating_constraint(ps_m,
+                        range_data,
+                        Symbol("RateLimitTF_$(B)"),
+                        (Symbol("FpTF_$(B)"), Symbol("FqTF_$(B)")))
+
+    return
+
+end
+
+#################################### Flow Limits Constraints ##################################################
+
+function branch_flow_constraint(ps_m::CanonicalModel,
+                                devices::PSY.FlattenIteratorWrapper{PSY.MonitoredLine}, 
+                                device_formulation::Type{FlowMonitoredLine},
+                                system_formulation::Union{Type{PM.DCPlosslessForm}, Type{StandardPTDFForm}})
+
+
+    flow_range_data = [(PSY.get_name(h), PSY.get_flowlimits(h)) for h in devices]
+
+    var_name = Symbol("Fp_$(B)")
+
+    device_range(ps_m,
+                range_data,
+                Symbol("FlowLimit_$(B)"),
+                var_name)
+
+    return
+
+end
+
+function branch_flow_constraint(ps_m::CanonicalModel,
+                                devices::PSY.FlattenIteratorWrapper{PSY.MonitoredLine},
+                                device_formulation::Type{FlowMonitoredLine},
+                                system_formulation::Type{S}) where {S <: PM.AbstractPowerFormulation}
+
+    FTflow_range_data = [(PSY.get_name(h), PSY.get_flowlimits(h)) for h in devices]
+    TFflow_range_data = [(PSY.get_name(h), (min = PSY.get_flowlimits(h).max, max = PSY.get_flowlimits(h).min)) for h in devices]
+
+    device_range(ps_m,
+                FTflow_range_data,
+                Symbol("FlowLimitFT_$(B)"),
+                Symbol("FpFT_$(B)"))
+    
+    device_range(ps_m,
+                TFflow_range_data,
+                Symbol("FlowLimitTF_$(B)"),
+                Symbol("FpTF_$(B)"))
+
 
     return
 

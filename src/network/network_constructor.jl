@@ -18,6 +18,14 @@ function construct_network!(ps_m::CanonicalModel,
         buses = PSY.get_components(PSY.Bus, sys)
         ac_branches = PSY.get_components(PSY.ACBranch, sys)
         ptdf_networkflow(ps_m, ac_branches, buses, :nodal_balance_active, kwargs[:PTDF])
+
+        dc_branches = PSY.get_components(PSY.DCBranch, sys)
+        dc_branch_types = typeof.(dc_branches)
+        for btype in Set(dc_branch_types)
+            typed_dc_branches = PSY.FlattenIteratorWrapper(btype, Vector([[b for b in dc_branches if typeof(b) == btype]]))
+            flow_variables(ps_m, StandardPTDFForm, typed_dc_branches)
+        end
+
     else
         throw(ArgumentError("no PTDF matrix supplied"))
     end
