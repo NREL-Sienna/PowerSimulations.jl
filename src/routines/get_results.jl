@@ -16,11 +16,11 @@ function _result_dataframe(variable::JuMP.Containers.DenseAxisArray)
 
 end
 
-function get_model_result(ps_m::CanonicalModel)
+function get_model_result(op_m::OperationModel)
 
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
 
-    for (k, v) in ps_m.variables
+    for (k, v) in vars(op_m.canonical_model)
 
         results_dict[k] = _result_dataframe(v)
 
@@ -30,9 +30,9 @@ function get_model_result(ps_m::CanonicalModel)
 
 end
 
-function write_model_result(ps_m::CanonicalModel, path::String)
+function write_model_result(op_m::OperationModel, path::String)
 
-    for (k, v) in ps_m.variables
+    for (k, v) in vars(op_m.canonical_model)
 
         file_path = joinpath(path,"$(k).feather")
 
@@ -44,7 +44,11 @@ function write_model_result(ps_m::CanonicalModel, path::String)
 
 end
 
-function optimizer_log!(optimizer_log::Dict{Symbol, Any}, ps_m::CanonicalModel)
+function get_optimizer_log(op_m::OperationModel)
+
+    ps_m = op_m.canonical_model
+
+    optimizer_log = Dict{Symbol, Any}()
 
     optimizer_log[:obj_value] = JuMP.objective_value(ps_m.JuMPmodel)
     optimizer_log[:termination_status] = JuMP.termination_status(ps_m.JuMPmodel)
@@ -57,7 +61,8 @@ function optimizer_log!(optimizer_log::Dict{Symbol, Any}, ps_m::CanonicalModel)
         optimizer_log[:solve_time] = "Not Supported by solver"
     end
 
-    return
+    return optimizer_log
+
 end
 
 function _export_optimizer_log(optimizer_log::Dict{Symbol, Any}, path::String)
@@ -71,7 +76,11 @@ function _export_optimizer_log(optimizer_log::Dict{Symbol, Any}, path::String)
 
 end
 
-function write_optimizer_log(optimizer_log::Dict{Symbol, Any}, ps_m::CanonicalModel, path::String)
+function write_optimizer_log(timed_log::Dict{Symbol, Any}, op_m::OperationModel, path::String)
+
+    ps_m = op_m.canonical_model
+
+    optimizer_log = Dict{Symbol, Any}()
 
     optimizer_log[:obj_value] = JuMP.objective_value(ps_m.JuMPmodel)
     optimizer_log[:termination_status] = Int(JuMP.termination_status(ps_m.JuMPmodel))
@@ -84,6 +93,7 @@ function write_optimizer_log(optimizer_log::Dict{Symbol, Any}, ps_m::CanonicalMo
         optimizer_log[:solve_time] = "Not Supported by solver"
     end
 
+    merge!(optimizer_log, timed_log)
     _export_optimizer_log(optimizer_log, path)
 
     return

@@ -47,13 +47,19 @@ export ThermalDispatchNoMin
 #export EconomicDispatch
 #export OptimalPowerFlow
 
-#functions
+# Functions
+## Construction Exports
 export construct_device!
 export construct_network!
+## Op Model Exports
 export solve_op_model!
+## Sim Model Exports
 export run_sim_model!
+export set_stage_optimizer!
+## Utils Exports
 export write_model_result
-
+export get_constraint_index
+export get_var_index
 
 
 #################################################################################

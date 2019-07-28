@@ -3,14 +3,19 @@ function _prepare_workspace!(ref::SimulationRef, base_name::String, folder::Stri
     !isdir(folder) && error("Specified folder is not valid")
 
     cd(folder)
-    simulation_path = joinpath(folder, "$(Dates.today())-$(base_name)")
+    global_path = joinpath(folder, "$(base_name)")
+    isdir(global_path) && mkpath(global_path)
+    simulation_path = joinpath(global_path, "$(round(Dates.now(),Dates.Minute))-$(base_name)")
     raw_ouput = joinpath(simulation_path, "raw_output")
     mkpath(raw_ouput)
     models_json_ouput = joinpath(simulation_path, "models_json")
     mkpath(models_json_ouput)
+    results_path = joinpath(simulation_path, "results")
+    mkpath(results_path)
 
     ref.raw = raw_ouput
     ref.models = models_json_ouput
+    ref.results = results_path
 
     return
 
@@ -57,7 +62,8 @@ function _get_dates(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int
 end
 
 function _build_stages(sim_ref::SimulationRef,
-                       stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}}; kwargs...) where {T<:PM.AbstractPowerFormulation}
+                       stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}};
+                       kwargs...) where {T<:PM.AbstractPowerFormulation}
 
     mod_stages = Vector{Stage}(undef, length(stages))
 
@@ -72,7 +78,6 @@ function _build_stages(sim_ref::SimulationRef,
         write_op_model(op_mod, joinpath(stage_path, "optimization_model.json"))
         PSY.to_json(v[2], joinpath(stage_path ,"sys_data.json"))
         mod_stages[k] = Stage(k, op_mod, v[3])
-        sim_ref.run_count[k] = 0
         sim_ref.date_ref[k] = PSY.get_forecast_initial_times(v[2])[1]
     end
 
@@ -84,7 +89,6 @@ function build_simulation!(sim_ref::SimulationRef,
                           base_name::String,
                           steps::Int64,
                           stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}},
-                          feedback_ref,
                           simulation_folder::String;
                           kwargs...) where {T<:PM.AbstractPowerFormulation}
 

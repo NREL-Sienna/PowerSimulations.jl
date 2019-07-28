@@ -1,10 +1,33 @@
 mutable struct SimulationRef
     raw::String
     models::String
-    run_count::Dict{Int64, Int64}
+    results::String
+    run_count::Dict{Int64, Dict{Int64, Int64}}
     date_ref::Dict{Int64, Dates.DateTime}
     current_time::Dates.DateTime
     reset::Bool
+end
+
+function _initialize_sim_ref(steps::Int64, stages::Base.KeySet)
+
+    count_dict = Dict{Int64, Dict{Int64, Int64}}()
+
+    for s in 1:steps
+        count_dict[s] = Dict{Int64, Int64}()
+        for st in stages
+            count_dict[s][st] = 0
+        end
+    end
+
+    return sim_ref = SimulationRef("init",
+                                   "init",
+                                   "init",
+                                   count_dict,
+                                   Dict{Int64, Dates.DateTime}(),
+                                   Dates.now(),
+                                   true
+                                   )
+
 end
 
 mutable struct Stage
@@ -21,7 +44,7 @@ mutable struct Stage
         model,
         execution_count,
         JuMP.solver_name(model.canonical_model.JuMPmodel)
-    )
+        )
 
     end
 
@@ -37,7 +60,7 @@ mutable struct Simulation
     steps::Int64
     stages::Vector{Stage}
     valid_timeseries::Bool
-    daterange::NTuple{2,Dates.DateTime} #Inital Time of the first forecast and Inital Time of the last forecast
+    daterange::NTuple{2, Dates.DateTime} #Inital Time of the first forecast and Inital Time of the last forecast
     ref::SimulationRef
 
 
@@ -47,13 +70,8 @@ mutable struct Simulation
                         simulation_folder::String;
                         kwargs...) where {T<:PM.AbstractPowerFormulation}
 
-    sim_ref = SimulationRef("init",
-                            "init",
-                            Dict{Int64, Int64}(),
-                            Dict{Int64, Dates.DateTime}(),
-                            Dates.now(),
-                            true
-                            )
+
+    sim_ref = _initialize_sim_ref(steps, keys(stages))
 
     dates, validation, stages_vector = build_simulation!(sim_ref,
                                                         base_name,

@@ -1,31 +1,36 @@
 """ Solves Operational Models"""
 function solve_op_model!(op_model::OperationModel; kwargs...)
 
-    optimizer_log_dict = Dict{Symbol, Any}()
+    timed_log = Dict{Symbol, Any}()
 
     if op_model.canonical_model.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
 
         if !(:optimizer in keys(kwargs))
 
-            @error("No Optimizer has been defined, can't solve the operational problem")
+            error("No Optimizer has been defined, can't solve the operational problem")
 
         else
-            _, optimizer_log_dict[:timed_solve_time],
-            optimizer_log_dict[:solve_bytes_alloc],
-            optimizer_log_dict[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical_model.JuMPmodel, kwargs[:optimizer])
+            _, timed_log[:timed_solve_time],
+            timed_log[:solve_bytes_alloc],
+            timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical_model.JuMPmodel,
+                                                          kwargs[:optimizer])
 
         end
 
     else
 
-        JuMP.optimize!(op_model.canonical_model.JuMPmodel)
+        _, timed_log[:timed_solve_time],
+        timed_log[:solve_bytes_alloc],
+        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical_model.JuMPmodel)
 
     end
 
-    vars_result = get_model_result(op_model.canonical_model)
-    optimizer_log!(optimizer_log_dict, op_model.canonical_model)
+    vars_result = get_model_result(op_model)
+    optimizer_log = get_optimizer_log(op_model)
+    obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_model.canonical_model.JuMPmodel))
+    merge!(optimizer_log, timed_log)
 
-    return OpertationModelResults(vars_result, optimizer_log_dict)
+    return OpertationModelResults(vars_result, obj_value, optimizer_log)
 
 end
 
@@ -37,14 +42,13 @@ function _run_stage(stage::Stage, results_path::String)
             error("No Optimizer has been defined, can't solve the operational problem")
         end
 
-        optimizer_log_dict = Dict{Symbol, Any}()
+        timed_log = Dict{Symbol, Any}()
+        _, timed_log[:timed_solve_time],
+        timed_log[:solve_bytes_alloc],
+        timed_log[:sec_in_gc] =  @timed JuMP.optimize!(stage.model.canonical_model.JuMPmodel)
 
-        _, optimizer_log_dict[:timed_solve_time],
-        optimizer_log_dict[:solve_bytes_alloc],
-        optimizer_log_dict[:sec_in_gc] = @timed JuMP.optimize!(stage.model.canonical_model.JuMPmodel)
-
-        write_model_result(stage.model.canonical_model, results_path)
-        write_optimizer_log(optimizer_log_dict, stage.model.canonical_model, results_path)
+        write_model_result(stage.model, results_path)
+        write_optimizer_log(timed_log, stage.model, results_path)
 
     end
 
@@ -74,7 +78,7 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false)
                 raw_results_path = joinpath(sim.ref.raw,"step-$(s)-stage-$(ix)","$(sim.ref.current_time)")
                 mkpath(raw_results_path)
                 _run_stage(stage, raw_results_path)
-                sim.ref.run_count[ix] += 1
+                sim.ref.run_count[s][ix] += 1
                 sim.ref.date_ref[ix] = sim.ref.date_ref[ix] + interval
             end
         end
