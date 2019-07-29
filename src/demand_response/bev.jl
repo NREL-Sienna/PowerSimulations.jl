@@ -130,8 +130,8 @@ function demandconstraints(demand :: BevDemand{T,L}, prices :: TimeArray{Float64
     if demand.timeboundary == nothing
         @constraint(model, boundaryconstraint, battery[1] == battery[NT])
     else
-        @constraint(model, boundaryleftconstraint , demand.timeboundary[1] <= battery[1 ] <= demand.timeboundary[1])
-        @constraint(model, boundaryrightconstraint, demand.timeboundary[2] <= battery[NT] <= demand.timeboundary[2])
+        @constraint(model, boundaryleftconstraint , demand.timeboundary[1] <= battery[1 ] <= demand.timeboundary[2])
+        @constraint(model, boundaryrightconstraint, demand.timeboundary[1] <= battery[NT] <= demand.timeboundary[2])
     end
 
     @constraint(model, balanceconstraint[i=1:NP], battery[i+1] == battery[i] + charge[i] - consumption[i])
