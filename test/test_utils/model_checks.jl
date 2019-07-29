@@ -62,3 +62,8 @@ function moi_ubvalue_test(op_model::OperationModel, con_name::Symbol, value::Num
     return
 
 end
+
+function psi_checksolve_test(op_model::OperationModel, status)
+    JuMP.optimize!(op_model.canonical.JuMPmodel)
+    @test termination_status(op_model.canonical.JuMPmodel) in status
+end
