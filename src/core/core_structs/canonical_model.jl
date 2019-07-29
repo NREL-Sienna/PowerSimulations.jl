@@ -21,6 +21,7 @@ function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory}; k
     end
 
     JuMPmodel = JuMP.Model(optimizer)
+
     if parameters
         PJ.enable_parameters(JuMPmodel)
     end

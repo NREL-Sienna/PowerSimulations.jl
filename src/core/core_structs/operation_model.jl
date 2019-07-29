@@ -50,10 +50,12 @@ function OperationModel(op_model::Type{M},
                         kwargs...) where {M <: AbstractOperationModel,
                                                 T <: PM.AbstractPowerFormulation}
 
+    optimizer = get(kwargs, :optimizer, nothing)
+
     return OperationModel(op_model,
                           ModelReference(T),
                           sys,
-                          CanonicalModel(T, sys, nothing; kwargs...))
+                          CanonicalModel(T, sys, optimizer; kwargs...))
 
 end
 
