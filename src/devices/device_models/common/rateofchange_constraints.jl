@@ -41,7 +41,7 @@ function device_linear_rateofchange(ps_m::CanonicalModel,
 
     time_steps = model_time_steps(ps_m)
     up_name = _middle_rename(cons_name, "_", "up")
-    down_name = _middle_rename(cons_name, "_", "down")
+    down_name = _middle_rename(cons_name, "_", "dn")
 
     variable = var(ps_m, var_name)
 
@@ -115,7 +115,7 @@ function device_mixedinteger_rateofchange(ps_m::CanonicalModel,
 
     time_steps = model_time_steps(ps_m)
     up_name = _middle_rename(cons_name, "_", "up")
-    down_name = _middle_rename(cons_name, "_", "down")
+    down_name = _middle_rename(cons_name, "_", "dn")
 
     variable = var(ps_m, var_names[1])
     varstart = var(ps_m, var_names[2])
