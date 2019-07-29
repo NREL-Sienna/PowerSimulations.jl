@@ -33,6 +33,8 @@ function  _build_canonical(::Type{T},
     @info "Building Objective"
     JuMP.@objective(canonical.JuMPmodel, Min, canonical.cost_function)
 
+    return canonical
+
 end
 
 function build_op_model!(op_model::OperationModel; kwargs...)
