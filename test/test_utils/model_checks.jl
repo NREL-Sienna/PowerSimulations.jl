@@ -67,3 +67,9 @@ function psi_checksolve_test(op_model::OperationModel, status)
     JuMP.optimize!(op_model.canonical.JuMPmodel)
     @test termination_status(op_model.canonical.JuMPmodel) in status
 end
+
+function psi_checksolve_test(op_model::OperationModel, status, expected_result, tol = 0.0)
+    res = solve_op_model!(op_model)
+    @test termination_status(op_model.canonical.JuMPmodel) in status
+    @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], expected_result, atol = tol)
+end

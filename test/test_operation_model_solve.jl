@@ -15,9 +15,8 @@ services = Dict{Symbol, PSI.ServiceModel}()
         @info("Testing solve ED with CopperPlatePowerModel network")
         @testset "ED CopperPlatePowerModel model parameters = $(p)" begin
         ED = OperationModel(TestOptModel, model_ref, sys; optimizer = OSQP_optimizer, parameters = p)
-        res = solve_op_model!(ED)
-        @test termination_status(ED.canonical.JuMPmodel) == MOI.OPTIMAL
-        @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 10000)
+        psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[sys], 10000)
+
         end
     end
 end
@@ -35,9 +34,7 @@ end
         @info("Testing solve ED with StandardPTDFForm network")
         @testset "ED StandardPTDFForm model parameters = $(p)" begin
         ED = OperationModel(TestOptModel, model_ref, sys; PTDF = PTDF_ref[sys], optimizer = OSQP_optimizer, parameters = p)
-        res = solve_op_model!(ED)
-        @test termination_status(ED.canonical.JuMPmodel) == MOI.OPTIMAL
-        @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 10000)
+        psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[sys], 10000)
         end
     end
 end
@@ -56,10 +53,8 @@ end
         @testset "ED model $(net) and parameters = $(p)" begin
         model_ref = ModelReference(net, devices, branches, services);
         ED = OperationModel(TestOptModel, model_ref, sys; optimizer = ipopt_optimizer, parameters = p);
-        res = solve_op_model!(ED)
         #The tolerance range here is large because NFA has a much lower objective value
-        @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 35000)
-        @test termination_status(ED.canonical.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_results[sys], 35000)
         end
     end
 
@@ -79,10 +74,9 @@ end
         @testset "ED model $(net) and parameters = $(p)" begin
         model_ref = ModelReference(net, devices, branches, services);
         ED = OperationModel(TestOptModel, model_ref, sys; optimizer = ipopt_optimizer, parameters = p);
-        res = solve_op_model!(ED)
         #The tolerance range here is large because NFA has a much lower objective value
-        @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 10000)
-        @test termination_status(ED.canonical.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_results[sys], 10000)
+
         end
     end
 
@@ -103,10 +97,9 @@ end
         @testset "ED model $(net) and parameters = $(p)" begin
         model_ref = ModelReference(net, devices, branches, services);
         ED = OperationModel(TestOptModel, model_ref, sys; optimizer = ipopt_optimizer, parameters = p);
-        res = solve_op_model!(ED)
         #The tolerance range here is large because Relaxations have a lower objective value
-        @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 25000)
-        @test termination_status(ED.canonical.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_results[sys], 25000)
+
         end
     end
 
@@ -128,9 +121,7 @@ end
         @testset "ED model $(net) and parameters = $(p)" begin
         model_ref = ModelReference(net, devices, branches, services);
         ED = OperationModel(TestOptModel, model_ref, sys; optimizer = ipopt_optimizer, parameters = p);
-        res = solve_op_model!(ED)
-        @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 10000)
-        @test termination_status(ED.canonical.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_results[sys], 10000)
         end
     end
 
@@ -152,9 +143,7 @@ end
         @testset "UC model $(net) and parameters = $(p)" begin
         model_ref= ModelReference(net, devices, branches, services);
         UC = OperationModel(TestOptModel, model_ref, sys; PTDF = PTDF_ref[sys], optimizer = GLPK_optimizer, parameters = p)
-        res = solve_op_model!(UC)
-        @test termination_status(UC.canonical.JuMPmodel) == MOI.OPTIMAL
-        @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], 340000, atol = 100000)
+        psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
         end
     end
 
