@@ -11,7 +11,7 @@ function  _build_canonical(::Type{T},
     # Build Injection devices
     for mod in devices
         @info "Building $(mod[2].device) with $(mod[2].formulation) formulation"
-        _internal_device_constructor!(canonical, mod[2][1], mod[2][2], T, sys; kwargs...)
+        _internal_device_constructor!(canonical, mod[2].device, mod[2].formulation, T, sys; kwargs...)
     end
 
     # Build Network
@@ -21,12 +21,12 @@ function  _build_canonical(::Type{T},
     # Build Branches
     for mod in branches
         @info "Building $(mod[2].device) with $(mod[2].formulation) formulation"
-        _internal_device_constructor!(canonical, mod[2][1], mod[2][2], T, sys; kwargs...)
+        _internal_device_constructor!(canonical, mod[2].device, mod[2].formulation, T, sys; kwargs...)
     end
 
     #Build Service
     for mod in services
-        #construct_service!(canonical, mod[2][1], mod[2][2], T, sys, time_steps, resolution; kwargs...)
+        #construct_service!(canonical, mod[2].device, mod[2].formulation, T, sys, time_steps, resolution; kwargs...)
     end
 
     # Objective Function
