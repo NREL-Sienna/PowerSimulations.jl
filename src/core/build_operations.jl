@@ -6,7 +6,7 @@ function  _build_canonical(::Type{T},
                             optimizer::Union{Nothing, JuMP.OptimizerFactory};
                             kwargs...) where {T <: PM.AbstractPowerFormulation}
 
-    canonical = CanonicalModel(T, sys, optimizer)
+    canonical = CanonicalModel(T, sys, optimizer; kwargs...)
 
     # Build Injection devices
     for mod in devices
@@ -16,7 +16,7 @@ function  _build_canonical(::Type{T},
 
     # Build Network
     @info "Building $(T) network formulation"
-    construct_network!(canonical, T, sys; kwargs...)
+    _internal_network_constructor(canonical, T, sys; kwargs...)
 
     # Build Branches
     for mod in branches
