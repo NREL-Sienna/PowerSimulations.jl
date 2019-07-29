@@ -38,7 +38,11 @@ function checkcharging(f)
             if optimizeresult && !limitresult
                 @warn string("BEV ", i, " in '", EVIPRO_DATA, "' violates charging limits.")
             end
-            optimizeresult && energyresult && limitresult
+            batteryresult = verifybattery(bev, charging)
+            if optimizeresult && !batteryresult
+                @warn string("BEV ", i, " in '", EVIPRO_DATA, "' violates battery limits.")
+            end
+            optimizeresult && energyresult && limitresult && batteryresult
         end
     end
     @debug string("Maximum charging discrepancy: ", deltamax, " kWh.")
