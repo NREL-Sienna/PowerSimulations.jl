@@ -68,7 +68,7 @@ end
     end
 
     #PTDF input Error testing
-    ps_model = OperationModel(TestOptModel, network, sys; optimizer = OSQP_optimizer, parameters = p)
+    ps_model = OperationModel(TestOptModel, network, c_sys5; optimizer = GLPK_optimizer)
     construct_device!(ps_model, :Thermal, thermal_model);
     construct_device!(ps_model, :Load, load_model);
     @test_throws ArgumentError construct_network!(ps_model, network)
@@ -165,11 +165,11 @@ end
 
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
-        ps_model = OperationModel(TestOptModel, network, sys; optimizer = ipopt_optimizer, parameters = p)
-        construct_device!(ps_model, :Thermal, thermal_model; parameters = p);
-        construct_device!(ps_model, :Load, load_model; parameters = p);
-        construct_network!(ps_model, network; parameters = p);
-        construct_device!(ps_model, :Line, line_model; parameters = p);
+        ps_model = OperationModel(TestOptModel, network, sys; optimizer = ipopt_optimizer)
+        construct_device!(ps_model, :Thermal, thermal_model);
+        construct_device!(ps_model, :Load, load_model);
+        construct_network!(ps_model, network);
+        construct_device!(ps_model, :Line, line_model);
         @test !isnothing(ps_model.canonical.pm_model)
     end
 
@@ -181,12 +181,12 @@ end
 
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
-        ps_model = OperationModel(TestOptModel, network, sys; optimizer = ipopt_optimizer, parameters = p)
-        construct_device!(ps_model, :Thermal, thermal_model; parameters = p);
-        construct_device!(ps_model, :Load, load_model; parameters = p);
-        construct_network!(ps_model, network; parameters = p);
-        construct_device!(ps_model, :Line, line_model; parameters = p);
-        construct_device!(ps_model, :DCLine, dc_line; parameters = p);
+        ps_model = OperationModel(TestOptModel, network, sys; optimizer = ipopt_optimizer)
+        construct_device!(ps_model, :Thermal, thermal_model);
+        construct_device!(ps_model, :Load, load_model);
+        construct_network!(ps_model, network);
+        construct_device!(ps_model, :Line, line_model);
+        construct_device!(ps_model, :DCLine, dc_line);
         @test !isnothing(ps_model.canonical.pm_model)
     end
 
@@ -201,12 +201,12 @@ end
 
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
-        ps_model = OperationModel(TestOptModel, network, sys; optimizer = ipopt_optimizer, parameters = p)
-        construct_device!(ps_model, :Thermal, thermal_model; parameters = p);
-        construct_device!(ps_model, :Load, load_model; parameters = p);
-        construct_network!(ps_model, network; parameters = p);
-        construct_device!(ps_model, :Line, line_model; parameters = p);
-        construct_device!(ps_model, :DCLine, dc_line; parameters = p);
+        ps_model = OperationModel(TestOptModel, network, sys; optimizer = ipopt_optimizer)
+        construct_device!(ps_model, :Thermal, thermal_model);
+        construct_device!(ps_model, :Load, load_model);
+        construct_network!(ps_model, network);
+        construct_device!(ps_model, :Line, line_model);
+        construct_device!(ps_model, :DCLine, dc_line);
         @test !isnothing(ps_model.canonical.pm_model)
     end
 
