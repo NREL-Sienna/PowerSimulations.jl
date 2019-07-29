@@ -1,4 +1,4 @@
-struct OptimalPowerFlow <: AbstractOperationsModel end
+struct OptimalPowerFlow <: AbstractOperationModel end
 
 function OptimalPowerFlow(sys::PSY.System, transmission::Type{S}; optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing, kwargs...) where {S <: PM.AbstractPowerFormulation}
 

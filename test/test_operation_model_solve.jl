@@ -16,7 +16,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
         @testset "ED CopperPlatePowerModel model parameters = $(p)" begin
         ED = OperationModel(TestOptModel, model_ref, sys; optimizer = OSQP_optimizer, parameters = p)
         res = solve_op_model!(ED)
-        @test termination_status(ED.canonical_model.JuMPmodel) == MOI.OPTIMAL
+        @test termination_status(ED.canonical.JuMPmodel) == MOI.OPTIMAL
         @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 10000)
         end
     end
@@ -36,7 +36,7 @@ end
         @testset "ED StandardPTDFForm model parameters = $(p)" begin
         ED = OperationModel(TestOptModel, model_ref, sys; PTDF = PTDF_ref[sys], optimizer = OSQP_optimizer, parameters = p)
         res = solve_op_model!(ED)
-        @test termination_status(ED.canonical_model.JuMPmodel) == MOI.OPTIMAL
+        @test termination_status(ED.canonical.JuMPmodel) == MOI.OPTIMAL
         @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 10000)
         end
     end
@@ -59,7 +59,7 @@ end
         res = solve_op_model!(ED)
         #The tolerance range here is large because NFA has a much lower objective value
         @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 35000)
-        @test termination_status(ED.canonical_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        @test termination_status(ED.canonical.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
         end
     end
 
@@ -82,7 +82,7 @@ end
         res = solve_op_model!(ED)
         #The tolerance range here is large because NFA has a much lower objective value
         @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 10000)
-        @test termination_status(ED.canonical_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        @test termination_status(ED.canonical.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
         end
     end
 
@@ -106,7 +106,7 @@ end
         res = solve_op_model!(ED)
         #The tolerance range here is large because Relaxations have a lower objective value
         @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 25000)
-        @test termination_status(ED.canonical_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        @test termination_status(ED.canonical.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
         end
     end
 
@@ -130,7 +130,7 @@ end
         ED = OperationModel(TestOptModel, model_ref, sys; optimizer = ipopt_optimizer, parameters = p);
         res = solve_op_model!(ED)
         @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], test_results[sys], atol = 10000)
-        @test termination_status(ED.canonical_model.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        @test termination_status(ED.canonical.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
         end
     end
 
@@ -153,7 +153,7 @@ end
         model_ref= ModelReference(net, devices, branches, services);
         UC = OperationModel(TestOptModel, model_ref, sys; PTDF = PTDF_ref[sys], optimizer = GLPK_optimizer, parameters = p)
         res = solve_op_model!(UC)
-        @test termination_status(UC.canonical_model.JuMPmodel) == MOI.OPTIMAL
+        @test termination_status(UC.canonical.JuMPmodel) == MOI.OPTIMAL
         @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], 340000, atol = 100000)
         end
     end

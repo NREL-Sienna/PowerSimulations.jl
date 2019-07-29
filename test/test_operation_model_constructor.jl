@@ -9,7 +9,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
     op_model = OperationModel(TestOptModel, model_ref,
                                             c_sys5;
                                             optimizer = GLPK_optimizer)
-    j_model = op_model.canonical_model.JuMPmodel
+    j_model = op_model.canonical.JuMPmodel
     @test (:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 120
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 120
@@ -22,7 +22,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
     op_model = OperationModel(TestOptModel, model_ref,
                                             c_sys14;
                                             optimizer = OSQP_optimizer)
-    j_model = op_model.canonical_model.JuMPmodel
+    j_model = op_model.canonical.JuMPmodel
     @test (:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 120
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 120
@@ -36,7 +36,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
                                             c_sys5_re;
                                             forecast = false,
                                             optimizer = GLPK_optimizer)
-    j_model = op_model.canonical_model.JuMPmodel
+    j_model = op_model.canonical.JuMPmodel
     @test (:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 5
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 5
@@ -51,7 +51,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
                                             forecast = false,
                                             parameters = false,
                                             optimizer = GLPK_optimizer)
-    j_model = op_model.canonical_model.JuMPmodel
+    j_model = op_model.canonical.JuMPmodel
     @test !(:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 5
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 5
@@ -96,8 +96,8 @@ end
             op_model = OperationModel(TestOptModel,
                                       model_ref,
                                       system; PTDF = PTDF5);
-        @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-        @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
+        @test :nodal_balance_active in keys(op_model.canonical.expressions)
+        @test (:params in keys(op_model.canonical.JuMPmodel.ext))
         end
 
 

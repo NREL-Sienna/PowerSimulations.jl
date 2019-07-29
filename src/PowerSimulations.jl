@@ -119,8 +119,8 @@ JuMP.Model(optimizer::Nothing; kwargs...) = JuMP.Model(kwargs...)
 # Includes
 
 #Abstract Models
-include("network/network_models/networks.jl")
-include("services/service_models/services.jl")
+include("network_models/networks.jl")
+include("service_models/services.jl")
 
 #Core Models and constructors
 include("core/core_structs/device_model.jl")
@@ -128,11 +128,9 @@ include("core/core_structs/canonical_model.jl")
 include("core/core_structs/service_model.jl")
 include("core/core_structs/operation_model.jl")
 include("core/core_structs/simulation_model.jl")
-include("core/device_constructor.jl")
-include("core/canonical_constructor.jl")
-include("core/operations_constructor.jl")
 include("core/core_structs/results_model.jl")
-include("core/simulation_constructor.jl")
+include("core/build_operations.jl")
+include("core/build_simulations.jl")
 
 #Device Modeling components
 include("devices/device_models/common.jl")
@@ -145,21 +143,21 @@ include("devices/device_models/storage.jl")
 include("devices/device_models/hydro_generation.jl")
 
 #Network models
-include("network/network_models/copperplate_model.jl")
-include("network/network_models/powermodels_interface.jl")
-include("network/network_models/ptdf_model.jl")
+include("network_models/copperplate_model.jl")
+include("network_models/powermodels_interface.jl")
+include("network_models/ptdf_model.jl")
 
 #Device constructors
 include("devices/device_constructors/device_constructors.jl")
 
 #Network constructors
-include("network/network_constructor.jl")
+include("network_models/network_constructor.jl")
 
 #Services Models
 #include("service_models/reserves.jl")
 
 #Services constructors
-include("services/services_constructor.jl")
+include("service_models/services_constructor.jl")
 
 #Operational Model Constructors
 include("operation_models/operation_models.jl")

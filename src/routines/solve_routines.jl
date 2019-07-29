@@ -3,7 +3,7 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
 
     timed_log = Dict{Symbol, Any}()
 
-    if op_model.canonical_model.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
+    if op_model.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
 
         if !(:optimizer in keys(kwargs))
 
@@ -12,7 +12,7 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
         else
             _, timed_log[:timed_solve_time],
             timed_log[:solve_bytes_alloc],
-            timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical_model.JuMPmodel,
+            timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel,
                                                           kwargs[:optimizer])
 
         end
@@ -21,13 +21,13 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
 
         _, timed_log[:timed_solve_time],
         timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical_model.JuMPmodel)
+        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel)
 
     end
 
     vars_result = get_model_result(op_model)
     optimizer_log = get_optimizer_log(op_model)
-    obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_model.canonical_model.JuMPmodel))
+    obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_model.canonical.JuMPmodel))
     merge!(optimizer_log, timed_log)
 
     return OpertationModelResults(vars_result, obj_value, optimizer_log)
@@ -38,14 +38,14 @@ end
 function _run_stage(stage::Stage, results_path::String)
 
     for run in stage.execution_count
-        if stage.model.canonical_model.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
+        if stage.model.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
             error("No Optimizer has been defined, can't solve the operational problem")
         end
 
         timed_log = Dict{Symbol, Any}()
         _, timed_log[:timed_solve_time],
         timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] =  @timed JuMP.optimize!(stage.model.canonical_model.JuMPmodel)
+        timed_log[:sec_in_gc] =  @timed JuMP.optimize!(stage.model.canonical.JuMPmodel)
 
         write_model_result(stage.model, results_path)
         write_optimizer_log(timed_log, stage.model, results_path)

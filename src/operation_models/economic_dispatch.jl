@@ -1,5 +1,5 @@
-struct EconomicDispatch <: AbstractOperationsModel end
-struct SCEconomicDispatch <: AbstractOperationsModel end
+struct EconomicDispatch <: AbstractOperationModel end
+struct SCEconomicDispatch <: AbstractOperationModel end
 
 function EconomicDispatch(sys::PSY.System, transmission::Type{S}; optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing, kwargs...) where {S <: PM.AbstractPowerFormulation}
 

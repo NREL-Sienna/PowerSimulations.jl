@@ -43,7 +43,7 @@ mutable struct Stage
     new(key,
         model,
         execution_count,
-        JuMP.solver_name(model.canonical_model.JuMPmodel)
+        JuMP.solver_name(model.canonical.JuMPmodel)
         )
 
     end

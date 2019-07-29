@@ -1,4 +1,4 @@
-struct UnitCommitment <: AbstractOperationsModel end
+struct UnitCommitment <: AbstractOperationModel end
 
 function UnitCommitment(sys::PSY.System, transmission::Type{S}; optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing, kwargs...) where {S <: PM.AbstractPowerFormulation}
 

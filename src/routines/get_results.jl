@@ -20,7 +20,7 @@ function get_model_result(op_m::OperationModel)
 
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
 
-    for (k, v) in vars(op_m.canonical_model)
+    for (k, v) in vars(op_m.canonical)
 
         results_dict[k] = _result_dataframe(v)
 
@@ -32,7 +32,7 @@ end
 
 function write_model_result(op_m::OperationModel, path::String)
 
-    for (k, v) in vars(op_m.canonical_model)
+    for (k, v) in vars(op_m.canonical)
 
         file_path = joinpath(path,"$(k).feather")
 
@@ -46,7 +46,7 @@ end
 
 function get_optimizer_log(op_m::OperationModel)
 
-    ps_m = op_m.canonical_model
+    ps_m = op_m.canonical
 
     optimizer_log = Dict{Symbol, Any}()
 
@@ -78,7 +78,7 @@ end
 
 function write_optimizer_log(timed_log::Dict{Symbol, Any}, op_m::OperationModel, path::String)
 
-    ps_m = op_m.canonical_model
+    ps_m = op_m.canonical
 
     optimizer_log = Dict{Symbol, Any}()
 
