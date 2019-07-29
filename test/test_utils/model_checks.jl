@@ -52,3 +52,13 @@ function psi_checkobjfun_test(op_model::OperationModel, exp_type)
     return
 
 end
+
+function moi_ubvalue_test(op_model::OperationModel, con_name::Symbol, value::Number)
+
+    for con in op_model.canonical.constraints[con_name]
+        @test JuMP.constraint_object(con).set.lower == value
+    end
+
+    return
+
+end
