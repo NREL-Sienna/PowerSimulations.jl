@@ -81,9 +81,9 @@ end
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimit_Line]
     parameters = [true, false]
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [384, 264, 144, 144, 264],
-                                                    c_sys14 => [936, 600, 480, 480, 816],
-                                                    c_sys14_dc => [984, 600, 432, 432, 816])
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [384, 264, 144, 144, 288],
+                                                    c_sys14 => [936, 600, 480, 480, 840],
+                                                    c_sys14_dc => [984, 600, 432, 432, 840])
 
     for (ix, sys) in enumerate(systems), p in parameters
         ps_model = OperationModel(TestOptModel, network, sys; optimizer = OSQP_optimizer, parameters = p)
