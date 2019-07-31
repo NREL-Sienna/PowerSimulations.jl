@@ -62,7 +62,7 @@ function post_nip_expr(pm::PM.GenericPowerModel)
     for (n, network) in PM.nws(pm)
         @assert !PM.ismulticonductor(pm, nw=n)
         PM.variable_voltage(pm, nw=n)
-        PM.variable_branch_flow(pm, nw=n, bounded = false)
+        PM.variable_branch_flow(pm, nw=n; bounded = false)
         PM.variable_dcline_flow(pm, nw=n)
 
         PM.constraint_model_voltage(pm, nw=n)
@@ -336,32 +336,32 @@ function add_pm_var_refs!(ps_m::CanonicalModel, system_formulation::Type{S}, sys
     DCbranch_dict = ps_m.pm_model.ext[:PMmap].arcs_dc
     DCbranch_types = typeof.(values(DCbranch_dict))
 
-    pm_vars = ps_m.pm_model.var[:nw][1][:cnd][1]
+    pm_var_names = keys(ps_m.pm_model.var[:nw][1][:cnd][1])
 
     pm_var_map = PMvarmap(system_formulation)
     
     for (pm_v, ps_v) in pm_var_map[PSY.Bus]
-        if pm_v in keys(pm_vars)
+        if pm_v in pm_var_names
             ps_m.variables[ps_v] = PSI._container_spec(ps_m.JuMPmodel,
                                                         (PSY.get_name(b) for b in values(bus_dict)),
                                                         time_steps)
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
-                ps_m.variables[ps_v][name, t] = pm_vars[pm_v][pm_bus]
+                ps_m.variables[ps_v][name, t] = PM.var(ps_m.pm_model, t, 1, pm_v)[1] #pm_vars[pm_v][pm_bus]
             end
         end
     end
 
-    add_pm_var_refs!(ps_m, PSY.ACBranch, ACbranch_types, ACbranch_dict, pm_var_map, pm_vars, time_steps)
-    add_pm_var_refs!(ps_m, PSY.DCBranch, DCbranch_types, DCbranch_dict, pm_var_map, pm_vars, time_steps)
+    add_pm_var_refs!(ps_m, PSY.ACBranch, ACbranch_types, ACbranch_dict, pm_var_map, pm_var_names, time_steps)
+    add_pm_var_refs!(ps_m, PSY.DCBranch, DCbranch_types, DCbranch_dict, pm_var_map, pm_var_names, time_steps)
 
 end
 
-function add_pm_var_refs!(ps_m::CanonicalModel, d_class::Type, device_types::Vector, pm_map::Dict, pm_var_map::Dict, pm_vars::Dict, time_steps::UnitRange{Int64})
+function add_pm_var_refs!(ps_m::CanonicalModel, d_class::Type, device_types::Vector, pm_map::Dict, pm_var_map::Dict, pm_var_names::Base.KeySet, time_steps::UnitRange{Int64})
     for d_type in Set(device_types)
         devices = [d for d in pm_map if typeof(d[2]) == d_type]
         for (pm_v, ps_v) in pm_var_map[d_class]
-            if pm_v in keys(pm_vars)
+            if pm_v in pm_var_names
                 for dir in typeof(ps_v) |> fieldnames
                     isnothing(getfield(ps_v,dir)) && continue
                     var_name = Symbol("$(getfield(ps_v,dir))_$(d_type)")
@@ -369,7 +369,7 @@ function add_pm_var_refs!(ps_m::CanonicalModel, d_class::Type, device_types::Vec
                                                                         (PSY.get_name(d[2]) for d in devices),
                                                                         time_steps)
                     for t in time_steps, (pm_d, d) in devices
-                        ps_m.variables[var_name][PSY.get_name(d), t] = pm_vars[pm_v][getfield(pm_d, dir)]
+                        ps_m.variables[var_name][PSY.get_name(d), t] = PM.var(ps_m.pm_model, t, 1, pm_v, getfield(pm_d, dir))
                     end
                 end
             end

@@ -173,12 +173,19 @@ end
 function get_buses_to_pm(buses::PSY.FlattenIteratorWrapper{PSY.Bus})
     PM_buses = Dict{String, Any}()
     PMmap_buses = Dict{Int64, PSY.Bus}()
+
+    pm_bustypes = Dict{PSY.BusType, Int64}(PSY.ISOLATED => 4,
+                    PSY.PQ => 1,
+                    PSY.PV => 2,
+                    PSY.REF => 3,
+                    PSY.SLACK => 3)
+
     for bus in buses
         number = PSY.get_number(bus)
         PM_bus = Dict{String, Any}(
         "zone"     => 1,
         "bus_i"    => number,
-        "bus_type" => PSY.get_bustype(bus),
+        "bus_type" => pm_bustypes[PSY.get_bustype(bus)],
         "vmax"     => PSY.get_voltagelimits(bus).max,
         "area"     => 1,
         "vmin"     => PSY.get_voltagelimits(bus).min,
