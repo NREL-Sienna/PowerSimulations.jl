@@ -47,7 +47,7 @@ end
 end
 
 @testset "Operation Models" begin
-    include("test_operation_model_constructor.jl")
+    #include("test_operation_model_constructor.jl")
     #include("test_operation_model_solve.jl")
 end
 

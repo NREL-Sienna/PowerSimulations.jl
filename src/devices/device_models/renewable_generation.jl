@@ -17,7 +17,8 @@ function activepower_variables(ps_m::CanonicalModel,
                  devices,
                  Symbol("P_$(R)"),
                  false,
-                 :nodal_balance_active)
+                 :nodal_balance_active;
+                 lb = x -> 0.0)
 
     return
 
@@ -118,7 +119,7 @@ function activepower_constraints(ps_m::CanonicalModel,
         time_steps = model_time_steps(ps_m)
         device_timeseries_param_ub(ps_m,
                             _get_time_series(devices, time_steps),
-                            Symbol("active_$(R)"),
+                            Symbol("activerange_$(R)"),
                             Symbol("$(R)"),
                             Symbol("P_$(R)"))
 
@@ -162,13 +163,13 @@ function activepower_constraints(ps_m::CanonicalModel,
     if parameters
         device_timeseries_param_ub(ps_m,
                                    _get_time_series(forecasts),
-                                   Symbol("active_$(R)"),
+                                   Symbol("activerange_$(R)"),
                                    Symbol("P_$(R)"),
                                    Symbol("P_$(R)"))
     else
         device_timeseries_ub(ps_m,
                             _get_time_series(forecasts),
-                            Symbol("active_$(R)"),
+                            Symbol("activerange_$(R)"),
                             Symbol("P_$(R)"))
     end
 

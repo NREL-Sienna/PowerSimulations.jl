@@ -17,7 +17,7 @@ be specified as binary.
 
 # Bounds
 
-``` varstart[name, t]  ```
+``` lb_value_function <= varstart[name, t] <= ub_value_function ```
 
 If binary = true:
 
@@ -25,7 +25,7 @@ If binary = true:
 
 # LaTeX
 
-``  x^{device}_t \forall t ``
+``  lb \ge x^{device}_t \le ub \forall t ``
 
 ``  x^{device}_t \in {0,1} \forall t iff \text{binary = true}``
 
@@ -39,7 +39,7 @@ If binary = true:
 
 # Accepted Keyword Arguments
 * ub_value_function : Provides the function over device to obtain the value for a upper_bound
-* lb_value_function : Provides the function over device to obtain the value for a lower_bound other than 0
+* lb_value_function : Provides the function over device to obtain the value for a lower_bound. If the variable is meant to be positive define lb = x -> 0.0
 * initial_value_function : Provides the function over device to obtain the warm start value
 
 """
@@ -69,7 +69,6 @@ function add_variable(ps_m::CanonicalModel,
 
         !isnothing(ub_f) && JuMP.set_upper_bound(variable[name, t], ub_f(d))
         !isnothing(lb_f) && !binary && JuMP.set_lower_bound(variable[name, t], lb_f(d))
-        isnothing(lb_f) && !binary && JuMP.set_lower_bound(variable[name, t], 0.0)
         !isnothing(init_f) && JuMP.set_start_value(variable[name, t], init_f(d))
 
         if !(isnothing(expression))
