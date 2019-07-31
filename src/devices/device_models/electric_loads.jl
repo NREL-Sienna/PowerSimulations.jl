@@ -16,7 +16,8 @@ function activepower_variables(ps_m::CanonicalModel,
                  devices,
                  Symbol("P_$(L)"),
                  false,
-                 :nodal_balance_active, -1.0)
+                 :nodal_balance_active, -1.0;
+                 lb = x -> 0.0)
 
     return
 
@@ -62,9 +63,10 @@ function reactivepower_constraints(ps_m::CanonicalModel,
     ps_m.constraints[key] = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
 
     for t in time_steps, d in devices
-            ps_m.constraints[key][PSY.get_name(d), t] = JuMP.@constraint(ps_m.JuMPmodel,
-                                                             ps_m.variables[Symbol("Q_$(L)")][PSY.get_name(d), t] ==
-                                                             ps_m.variables[Symbol("P_$(L)")][PSY.get_name(d), t] * sin(atan((PSY.get_maxreactivepower(d)/PSY.get_maxactivepower(d)))))
+        name = PSY.get_name(d)
+        pf = sin(atan((PSY.get_maxreactivepower(d)/PSY.get_maxactivepower(d))))
+        ps_m.constraints[key][PSY.get_name(d), t] = JuMP.@constraint(ps_m.JuMPmodel,
+                        ps_m.variables[Symbol("Q_$(L)")][name, t] == ps_m.variables[Symbol("P_$(L)")][name, t]*pf)
     end
 
     return
