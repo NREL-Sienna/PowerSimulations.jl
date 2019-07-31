@@ -113,9 +113,9 @@ end
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimitFT_Line, :RateLimitTF_Line]
     parameters = [true, false]
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [1056, 240, 144, 144, 240],
-                                                    c_sys14 => [2832, 240, 480, 480, 672],
-                                                    c_sys14_dc => [2832, 336, 432, 432, 720]) # TODO: changed the interval constraint number to 336 from 240. double check
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [1056, 240, 144, 144, 264],
+                                                    c_sys14 => [2832, 240, 480, 480, 696],
+                                                    c_sys14_dc => [2832, 336, 432, 432, 744]) # TODO: changed the interval constraint number to 336 from 240. double check
 
     for (ix, sys) in enumerate(systems), p in parameters
         ps_model = OperationModel(TestOptModel, network, sys; optimizer = ipopt_optimizer, parameters = p)
