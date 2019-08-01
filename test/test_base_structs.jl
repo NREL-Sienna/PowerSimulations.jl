@@ -7,6 +7,7 @@
                                                 true,
                                                 1:24,
                                                 Dates.Hour(1),
+                                                Dates.now(),
                                                 Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                                                 Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                                                 JuMP.AffExpr(0),

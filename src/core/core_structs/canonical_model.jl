@@ -73,7 +73,8 @@ function _canonical_init(bus_numbers::Vector{Int64},
                         optimizer::Union{Nothing,JuMP.OptimizerFactory},
                         transmission::Type{S},
                         time_steps::UnitRange{Int64},
-                        resolution::Dates.Period; kwargs...) where {S <: PM.AbstractPowerFormulation}
+                        resolution::Dates.Period,
+                        initial_time::Dates.DateTime; kwargs...) where {S <: PM.AbstractPowerFormulation}
 
     parameters = get(kwargs, :parameters, false)
     jump_model = _pass_abstract_jump(optimizer; kwargs...)
@@ -85,6 +86,7 @@ function _canonical_init(bus_numbers::Vector{Int64},
                               get(kwargs, :sequential_runs, false),
                               time_steps,
                               resolution,
+                              initial_time,
                               DSDA(),
                               DSDA(),
                               zero(JuMP.GenericAffExpr{Float64, V}),
@@ -107,6 +109,7 @@ mutable struct CanonicalModel
     sequential_runs::Bool
     time_steps::UnitRange{Int64}
     resolution::Dates.Period
+    initoal_time::Dates.DateTime
     variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     cost_function::JuMP.AbstractJuMPScalar
@@ -121,6 +124,7 @@ mutable struct CanonicalModel
                             sequential_runs::Bool,
                             time_steps::UnitRange{Int64},
                             resolution::Dates.Period,
+                            initoal_time::Dates.DateTime,
                             variables::Dict{Symbol, JuMP.Containers.DenseAxisArray},
                             constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray},
                             cost_function::JuMP.AbstractJuMPScalar,
@@ -143,6 +147,7 @@ mutable struct CanonicalModel
             sequential_runs,
             time_steps,
             resolution,
+            initoal_time,
             variables,
             constraints,
             cost_function,
@@ -162,6 +167,9 @@ function  CanonicalModel(::Type{T},
 
 
     forecast = get(kwargs, :forecast, true)
+    initial_time = get(kwargs,
+                       :initial_time,
+                       PSY.get_forecasts_initial_time(sys))
 
     if forecast
         horizon = PSY.get_forecasts_horizon(sys)
@@ -178,7 +186,8 @@ function  CanonicalModel(::Type{T},
                            optimizer,
                            T,
                            time_steps,
-                           resolution;
+                           resolution,
+                           initial_time;
                            kwargs...)
 
 end
@@ -188,6 +197,7 @@ model_time_steps(ps_m::CanonicalModel) = ps_m.time_steps
 model_resolution(ps_m::CanonicalModel) = ps_m.resolution
 model_has_parameters(ps_m::CanonicalModel) = ps_m.parametrized
 model_runs_sequentially(ps_m::CanonicalModel) = ps_m.sequential_runs
+model_initial_time(ps_m::CanonicalModel) = ps_m.initial_time
 vars(ps_m::CanonicalModel) = ps_m.variables
 cons(ps_m::CanonicalModel) = ps_m.constraints
 var(ps_m::CanonicalModel, name::Symbol) = ps_m.variables[name]

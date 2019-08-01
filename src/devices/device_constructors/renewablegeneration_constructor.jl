@@ -23,7 +23,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     #Constraints
     if forecast
-        first_step = PSY.get_forecasts_initial_time(sys)
+        first_step = model_initial_time(ps_m)
         forecasts = PSY.get_forecasts(PSY.Deterministic{R}, sys, first_step)
         activepower_constraints(ps_m, forecasts, device_formulation, system_formulation)
     else
