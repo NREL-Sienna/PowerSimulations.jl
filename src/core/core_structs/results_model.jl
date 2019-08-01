@@ -7,3 +7,7 @@ end
 function get_variable(res_model::OpertationModelResults, key::Symbol)
     return get(res_model.variables, key, nothing)
 end
+
+function get_optimizer_log(res_model::OpertationModelResults)
+    return res_model.optimizer_log
+end
