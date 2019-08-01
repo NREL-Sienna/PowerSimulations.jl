@@ -48,7 +48,7 @@ function OperationModel(op_model::Type{M},
                         ::Type{T},
                         sys::PSY.System;
                         kwargs...) where {M <: AbstractOperationModel,
-                                                T <: PM.AbstractPowerFormulation}
+                                          T <: PM.AbstractPowerFormulation}
 
     optimizer = get(kwargs, :optimizer, nothing)
 
@@ -56,6 +56,17 @@ function OperationModel(op_model::Type{M},
                           ModelReference(T),
                           sys,
                           CanonicalModel(T, sys, optimizer; kwargs...))
+
+end
+
+function OperationModel(::Type{T},
+                        sys::PSY.System;
+                        kwargs...) where {T <: PM.AbstractPowerFormulation}
+
+
+    return OperationModel(DefaultOpModel,
+                         T,
+                         sys; kwargs)
 
 end
 
