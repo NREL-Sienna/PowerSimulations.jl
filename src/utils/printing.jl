@@ -7,9 +7,9 @@ function Base.show(io::IO, op_model::CanonicalModel)
 end
 
 function Base.show(io::IO, op_model::Simulation)
-    println(io, "Simulation")
+    println(io, "Simulation Model")
 end
 
-function Base.show(io::IO, res_model::OperationModel)
+function Base.show(io::IO, res_model::OpertationModelResults)
     println(io, "Results Model")
 end
