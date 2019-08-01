@@ -109,7 +109,7 @@ mutable struct CanonicalModel
     sequential_runs::Bool
     time_steps::UnitRange{Int64}
     resolution::Dates.Period
-    initoal_time::Dates.DateTime
+    initial_time::Dates.DateTime
     variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     cost_function::JuMP.AbstractJuMPScalar
@@ -124,7 +124,7 @@ mutable struct CanonicalModel
                             sequential_runs::Bool,
                             time_steps::UnitRange{Int64},
                             resolution::Dates.Period,
-                            initoal_time::Dates.DateTime,
+                            initial_time::Dates.DateTime,
                             variables::Dict{Symbol, JuMP.Containers.DenseAxisArray},
                             constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray},
                             cost_function::JuMP.AbstractJuMPScalar,
@@ -147,7 +147,7 @@ mutable struct CanonicalModel
             sequential_runs,
             time_steps,
             resolution,
-            initoal_time,
+            initial_time,
             variables,
             constraints,
             cost_function,
