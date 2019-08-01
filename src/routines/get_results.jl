@@ -23,11 +23,10 @@ function _result_dataframe_d(constraint::JuMP.Containers.DenseAxisArray)
     names = Array{Symbol, 1}(undef, length(constraint.axes[1]))
 
     for (ix, name) in enumerate(constraint.axes[1])
-
-        result[ix] = JuMP.dual(constraint[name])/100
-
-        # names[ix] = Symbol(name)
-
+        try result[ix] = JuMP.dual(constraint[name])
+        catch
+            result[ix] = NAN
+        end
     end
 
     return DataFrames.DataFrame(Price = result)
