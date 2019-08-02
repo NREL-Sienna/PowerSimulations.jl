@@ -1,11 +1,11 @@
 
 struct PMmap
     bus::Dict{Int64,PSY.Bus}
-    arcs::Dict{NamedTuple{(:from_to,:to_from), 
-                            Tuple{Tuple{Int64,Int64,Int64}, 
+    arcs::Dict{NamedTuple{(:from_to,:to_from),
+                            Tuple{Tuple{Int64,Int64,Int64},
                             Tuple{Int64,Int64,Int64}}}, t where t<:PSY.ACBranch}
-    arcs_dc::Dict{NamedTuple{(:from_to,:to_from), 
-                            Tuple{Tuple{Int64,Int64,Int64}, 
+    arcs_dc::Dict{NamedTuple{(:from_to,:to_from),
+                            Tuple{Tuple{Int64,Int64,Int64},
                             Tuple{Int64,Int64,Int64}}}, t where t<:PSY.DCBranch}
 end
 
@@ -138,15 +138,15 @@ function get_branch_to_pm(ix::Int64, branch::PSY.HVDCLine)
     return PM_branch
 end
 
-function get_branches_to_pm(sys::PSY.System) 
+function get_branches_to_pm(sys::PSY.System)
 
         PM_ac_branches = Dict{String, Any}()
         PM_dc_branches = Dict{String, Any}()
-        PMmap_ac = Dict{NamedTuple{(:from_to,:to_from), 
-                            Tuple{Tuple{Int64,Int64,Int64}, 
+        PMmap_ac = Dict{NamedTuple{(:from_to,:to_from),
+                            Tuple{Tuple{Int64,Int64,Int64},
                             Tuple{Int64,Int64,Int64}}}, t where t<:PSY.ACBranch}()
-        PMmap_dc = Dict{NamedTuple{(:from_to,:to_from), 
-                            Tuple{Tuple{Int64,Int64,Int64}, 
+        PMmap_dc = Dict{NamedTuple{(:from_to,:to_from),
+                            Tuple{Tuple{Int64,Int64,Int64},
                             Tuple{Int64,Int64,Int64}}}, t where t<:PSY.DCBranch}()
 
         for (ix, branch) in enumerate(PSY.get_components(PSY.Branch, sys))

@@ -99,4 +99,3 @@ function storage_energy_init(ps_m::CanonicalModel,
     return
 
 end
-

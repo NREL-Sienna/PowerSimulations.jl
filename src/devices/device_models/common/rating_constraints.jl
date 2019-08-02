@@ -32,7 +32,7 @@ function rating_constraint(ps_m::CanonicalModel,
     var1 = var(ps_m, var_names[1])
     var2 = var(ps_m, var_names[2])
     _add_cons_container!(ps_m, cons_name, (r[1] for r in rating_data), time_steps)
-    constraint = con(ps_m, cons_name)        
+    constraint = con(ps_m, cons_name)
 
     for r in rating_data
         for t in time_steps
