@@ -3,9 +3,9 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
                                         sys::PSY.System;
-                                        kwargs...) where {H <: PSY.HydroGen,
-                                                          D <: AbstractHydroFormulation,
-                                                          S <: PM.AbstractPowerFormulation}
+                                        kwargs...) where {H<:PSY.HydroGen,
+                                                          D<:AbstractHydroFormulation,
+                                                          S<:PM.AbstractPowerFormulation}
 
     forecast = get(kwargs, :forecast, true)
 
@@ -35,8 +35,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{HydroFixed},
                                         system_formulation::Type{S},
                                         sys::PSY.System;
-                                        kwargs...) where {H <: PSY.HydroGen,
-                                                          S <: PM.AbstractPowerFormulation}
+                                        kwargs...) where {H<:PSY.HydroGen,
+                                                          S<:PM.AbstractPowerFormulation}
 
     forecast = get(kwargs, :forecast, true)
 
@@ -63,8 +63,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
                                         sys::PSY.System;
-                                        kwargs...) where {D <: AbstractHydroFormulation,
-                                                          S <: PM.AbstractPowerFormulation}
+                                        kwargs...) where {D<:AbstractHydroFormulation,
+                                                          S<:PM.AbstractPowerFormulation}
 
     @warn("The Formulation $(D) only applies to Dispatchable Hydro, *
                Consider Changing the Device Formulation to HydroFixed")
@@ -83,7 +83,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{HydroFixed},
                                         system_formulation::Type{S},
                                         sys::PSY.System;
-                                        kwargs...) where {S <: PM.AbstractPowerFormulation}
+                                        kwargs...) where {S<:PM.AbstractPowerFormulation}
 
     forecast = get(kwargs, :forecast, true)
 

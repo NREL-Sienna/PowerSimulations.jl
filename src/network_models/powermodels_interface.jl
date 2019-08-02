@@ -210,14 +210,14 @@ end
 
 
 "active power only models ignore reactive power variables"
-function variable_reactive_net_injection(pm::PM.GenericPowerModel{T}; kwargs...) where T <: PM.AbstractDCPForm
+function variable_reactive_net_injection(pm::PM.GenericPowerModel{T}; kwargs...) where T<:PM.AbstractDCPForm
     return
 end
 
 "active power only models ignore reactive power flows"
 function constraint_power_balance_ni(pm::PM.GenericPowerModel{T},
                            n::Int, c::Int, i::Int,
-                           bus_arcs, bus_arcs_dc) where T <: PM.AbstractDCPForm
+                           bus_arcs, bus_arcs_dc) where T<:PM.AbstractDCPForm
     p = PM.var(pm, n, c, :p)
     pni = PM.var(pm, n, c, :pni, i)
     p_dc = PM.var(pm, n, c, :p_dc)
@@ -231,7 +231,7 @@ end
 ""
 function constraint_power_balance_ni_expr(pm::PM.GenericPowerModel{T},
                                 n::Int, c::Int, i::Int,
-                                bus_arcs, bus_arcs_dc, pni_expr, qni_expr) where T <: PM.AbstractDCPForm
+                                bus_arcs, bus_arcs_dc, pni_expr, qni_expr) where T<:PM.AbstractDCPForm
     p = PM.var(pm, n, c, :p)
     p_dc = PM.var(pm, n, c, :p_dc)
 
@@ -244,7 +244,7 @@ end
 ""
 function powermodels_network!(ps_m::CanonicalModel,
                               system_formulation::Type{S},
-                              sys::PSY.System) where {S <: PM.AbstractPowerFormulation}
+                              sys::PSY.System) where {S<:PM.AbstractPowerFormulation}
 
     time_steps = model_time_steps(ps_m)
     pm_data, PM_map = pass_to_pm(sys, time_steps[end])
@@ -270,7 +270,7 @@ end
 ""
 function powermodels_network!(ps_m::CanonicalModel,
                               system_formulation::Type{S},
-                              sys::PSY.System) where {S <: PM.AbstractActivePowerFormulation}
+                              sys::PSY.System) where {S<:PM.AbstractActivePowerFormulation}
 
     time_steps = model_time_steps(ps_m)
     pm_data, PM_map = pass_to_pm(sys, time_steps[end])
@@ -287,14 +287,14 @@ function powermodels_network!(ps_m::CanonicalModel,
 
     ps_m.pm_model = build_nip_expr_model(pm_data, pm_f, jump_model=ps_m.JuMPmodel);
     ps_m.pm_model.ext[:PMmap] = PM_map
-    
+
     return
 
 end
 
 #### PM accessor functions ########
 
-function PMvarmap(system_formulation::Type{S}) where {S <: PM.DCPlosslessForm}
+function PMvarmap(system_formulation::Type{S}) where {S<:PM.DCPlosslessForm}
     pm_var_map = Dict{Type,Dict{Symbol, Union{Symbol,NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta)
@@ -304,7 +304,7 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.DCPlosslessForm}
     return pm_var_map
 end
 
-function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowerFormulation}
+function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractActivePowerFormulation}
     pm_var_map = Dict{Type,Dict{Symbol, Union{Symbol,NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta)
@@ -314,7 +314,7 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowe
     return pm_var_map
 end
 
-function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerFormulation}
+function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractPowerFormulation}
     pm_var_map = Dict{Type,Dict{Symbol, Union{Symbol,NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta,
@@ -327,7 +327,7 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerFormu
     return pm_var_map
 end
 
-function add_pm_var_refs!(ps_m::CanonicalModel, system_formulation::Type{S}, sys::PSY.System) where {S <: PM.AbstractPowerFormulation}
+function add_pm_var_refs!(ps_m::CanonicalModel, system_formulation::Type{S}, sys::PSY.System) where {S<:PM.AbstractPowerFormulation}
 
     time_steps = model_time_steps(ps_m)
     bus_dict = ps_m.pm_model.ext[:PMmap].bus
@@ -339,7 +339,7 @@ function add_pm_var_refs!(ps_m::CanonicalModel, system_formulation::Type{S}, sys
     pm_var_names = keys(ps_m.pm_model.var[:nw][1][:cnd][1])
 
     pm_var_map = PMvarmap(system_formulation)
-    
+
     for (pm_v, ps_v) in pm_var_map[PSY.Bus]
         if pm_v in pm_var_names
             ps_m.variables[ps_v] = PSI._container_spec(ps_m.JuMPmodel,

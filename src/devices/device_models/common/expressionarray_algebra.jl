@@ -1,6 +1,6 @@
 ###### Operations for JuMPExpressionMatrix ######
 
-function _remove_undef!(expression_array::T) where T <: JuMPExpressionMatrix
+function _remove_undef!(expression_array::T) where T<:JuMPExpressionMatrix
 
     for j in 1:size(expression_array)[2]
 
@@ -30,7 +30,7 @@ function _add_to_expression!(expression_array::T,
                              ix::Int64,
                              jx::Int64,
                              var::JV,
-                             multiplier::Float64) where {T, JV <: JuMP.AbstractVariableRef}
+                             multiplier::Float64) where {T, JV<:JuMP.AbstractVariableRef}
 
     if isassigned(expression_array, ix, jx)
         JuMP.add_to_expression!(expression_array[ix,jx], multiplier, var)
@@ -47,7 +47,7 @@ function _add_to_expression!(expression_array::T,
                              jx::Int64,
                              var::JV,
                              multiplier::Float64,
-                             constant::Float64) where {T, JV <: JuMP.AbstractVariableRef}
+                             constant::Float64) where {T, JV<:JuMP.AbstractVariableRef}
 
     if isassigned(expression_array, ix, jx)
         JuMP.add_to_expression!(expression_array[ix,jx], multiplier, var)

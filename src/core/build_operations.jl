@@ -4,7 +4,7 @@ function  _build_canonical(::Type{T},
                             services::Dict{Symbol, ServiceModel},
                             sys::PSY.System,
                             optimizer::Union{Nothing, JuMP.OptimizerFactory};
-                            kwargs...) where {T <: PM.AbstractPowerFormulation}
+                            kwargs...) where {T<:PM.AbstractPowerFormulation}
 
     canonical = CanonicalModel(T, sys, optimizer; kwargs...)
 

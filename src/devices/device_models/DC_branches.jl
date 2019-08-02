@@ -1,17 +1,17 @@
-abstract type AbstractDCLineForm <: AbstractBranchFormulation end
+abstract type AbstractDCLineForm<:AbstractBranchFormulation end
 
-struct HVDCLossless <: AbstractDCLineForm end
+struct HVDCLossless<:AbstractDCLineForm end
 
-struct HVDCDispatch <: AbstractDCLineForm end
+struct HVDCDispatch<:AbstractDCLineForm end
 
-struct VoltageSourceDC <: AbstractDCLineForm end
+struct VoltageSourceDC<:AbstractDCLineForm end
 
 #################################### Branch Variables ##################################################
 
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{S},
-                        devices::PSY.FlattenIteratorWrapper{B}) where {B <: PSY.DCBranch,
-                                                                        S <: PM.AbstractPowerFormulation}
+                        devices::PSY.FlattenIteratorWrapper{B}) where {B<:PSY.DCBranch,
+                                                                        S<:PM.AbstractPowerFormulation}
 
     return
 
@@ -19,7 +19,7 @@ end
 
 function flow_variables(ps_m::CanonicalModel,
                         system_formulation::Type{StandardPTDFForm},
-                        devices::PSY.FlattenIteratorWrapper{B}) where {B <: PSY.DCBranch}
+                        devices::PSY.FlattenIteratorWrapper{B}) where {B<:PSY.DCBranch}
 
     time_steps = model_time_steps(ps_m)
     var_name = Symbol("Fp_$(B)")
@@ -58,9 +58,9 @@ end
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
-                                system_formulation::Type{S}) where {B <: PSY.DCBranch,
-                                                                    D <: AbstractDCLineForm,
-                                                                    S <: PM.DCPlosslessForm}
+                                system_formulation::Type{S}) where {B<:PSY.DCBranch,
+                                                                    D<:AbstractDCLineForm,
+                                                                    S<:PM.DCPlosslessForm}
 
     var_name = Symbol("Fp_$(B)")
     con_name = Symbol("RateLimit_$(B)")
@@ -80,8 +80,8 @@ end
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
                                 device_formulation::Type{HVDCLossless},
-                                system_formulation::Type{S}) where {B <: PSY.DCBranch,
-                                                                    S <: PM.AbstractPowerFormulation}
+                                system_formulation::Type{S}) where {B<:PSY.DCBranch,
+                                                                    S<:PM.AbstractPowerFormulation}
 
     for dir in ("FT", "TF")
         var_name = Symbol("Fp$(dir)_$(B)")
@@ -104,9 +104,9 @@ end
 function branch_rate_constraint(ps_m::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
-                                system_formulation::Type{S}) where {B <: PSY.DCBranch,
-                                                                    D <: AbstractDCLineForm,
-                                                                    S <: PM.AbstractPowerFormulation}
+                                system_formulation::Type{S}) where {B<:PSY.DCBranch,
+                                                                    D<:AbstractDCLineForm,
+                                                                    S<:PM.AbstractPowerFormulation}
 
     time_steps = model_time_steps(ps_m)
 

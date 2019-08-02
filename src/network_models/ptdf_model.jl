@@ -2,7 +2,7 @@ function ptdf_networkflow(ps_m::CanonicalModel,
                           branches::PSY.FlattenIteratorWrapper{B},
                           buses::PSY.FlattenIteratorWrapper{PSY.Bus},
                           expression::Symbol,
-                          PTDF::PSY.PTDF) where {B <: PSY.Branch}
+                          PTDF::PSY.PTDF) where {B<:PSY.Branch}
 
     time_steps = model_time_steps(ps_m)
     ps_m.constraints[:network_flow] = JuMPConstraintArray(undef, PTDF.axes[1], time_steps)

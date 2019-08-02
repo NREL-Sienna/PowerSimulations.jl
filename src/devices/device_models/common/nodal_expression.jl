@@ -1,7 +1,7 @@
 ##################################################################################################
 function nodal_expression(ps_m::CanonicalModel,
                          devices,
-                         system_formulation::Type{S}) where {S <: PM.AbstractPowerFormulation}
+                         system_formulation::Type{S}) where {S<:PM.AbstractPowerFormulation}
 
 
 

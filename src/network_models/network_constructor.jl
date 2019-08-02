@@ -1,4 +1,4 @@
-function _internal_network_constructor(canonical::CanonicalModel, 
+function _internal_network_constructor(canonical::CanonicalModel,
                                         system_formulation::Type{CopperPlatePowerModel},
                                         sys::PSY.System;
                                         kwargs...)
@@ -11,7 +11,7 @@ function _internal_network_constructor(canonical::CanonicalModel,
     return
 end
 
-function _internal_network_constructor(canonical::CanonicalModel, 
+function _internal_network_constructor(canonical::CanonicalModel,
                                         system_formulation::Type{StandardPTDFForm},
                                         sys::PSY.System;
                                         kwargs...)
@@ -42,11 +42,11 @@ function _internal_network_constructor(canonical::CanonicalModel,
 
 end
 
-function _internal_network_constructor(canonical::CanonicalModel, 
+function _internal_network_constructor(canonical::CanonicalModel,
                                         system_formulation::Type{T},
                                         sys::PSY.System;
-                                        kwargs...) where {T <: PM.AbstractPowerFormulation}
-        
+                                        kwargs...) where {T<:PM.AbstractPowerFormulation}
+
     incompat_list = [PM.SDPWRMForm,
                      PM.SparseSDPWRMForm,
                      PM.SOCWRConicForm,
@@ -65,7 +65,7 @@ function _internal_network_constructor(canonical::CanonicalModel,
 end
 
 function construct_network!(op_model::OperationModel,
-                            system_formulation::Type{S}; kwargs...) where {S <: PM.AbstractPowerFormulation}
+                            system_formulation::Type{S}; kwargs...) where {S<:PM.AbstractPowerFormulation}
 
     sys = get_system(op_model)
     _internal_network_constructor(op_model.canonical, system_formulation, sys; kwargs... )

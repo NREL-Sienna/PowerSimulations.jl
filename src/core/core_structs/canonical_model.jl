@@ -47,7 +47,8 @@ end
 function _make_expressions_dict(transmission::Type{S},
                                 V::DataType,
                                 bus_numbers::Vector{Int64},
-                                time_steps::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractPowerFormulation}
+                                time_steps::UnitRange{Int64};
+                                kwargs...) where {S<:PM.AbstractPowerFormulation}
 
     return DSDA(:nodal_balance_active =>  _make_container_array(V,
                                                                 bus_numbers,
@@ -61,7 +62,8 @@ end
 function _make_expressions_dict(transmission::Type{S},
                                 V::DataType,
                                 bus_numbers::Vector{Int64},
-                                time_steps::UnitRange{Int64}; kwargs...) where {S <: PM.AbstractActivePowerFormulation}
+                                time_steps::UnitRange{Int64};
+                                kwargs...) where {S<:PM.AbstractActivePowerFormulation}
 
     return DSDA(:nodal_balance_active =>  _make_container_array(V,
                                                                 bus_numbers,
@@ -74,7 +76,8 @@ function _canonical_init(bus_numbers::Vector{Int64},
                         transmission::Type{S},
                         time_steps::UnitRange{Int64},
                         resolution::Dates.Period,
-                        initial_time::Dates.DateTime; kwargs...) where {S <: PM.AbstractPowerFormulation}
+                        initial_time::Dates.DateTime;
+                        kwargs...) where {S<:PM.AbstractPowerFormulation}
 
     parameters = get(kwargs, :parameters, false)
     jump_model = _pass_abstract_jump(optimizer; kwargs...)
@@ -163,7 +166,7 @@ end
 function  CanonicalModel(::Type{T},
                          sys::PSY.System,
                          optimizer::Union{Nothing,JuMP.OptimizerFactory};
-                         kwargs...) where {T <: PM.AbstractPowerFormulation}
+                         kwargs...) where {T<:PM.AbstractPowerFormulation}
 
 
     forecast = get(kwargs, :forecast, true)

@@ -1,15 +1,15 @@
 abstract type AbstractOperationModel end
 
-struct DefaultOpModel <: AbstractOperationModel end
+struct DefaultOpModel<:AbstractOperationModel end
 
-mutable struct ModelReference{T <: PM.AbstractPowerFormulation}
+mutable struct ModelReference{T<:PM.AbstractPowerFormulation}
     transmission::Type{T}
     devices::Dict{Symbol, DeviceModel}
     branches::Dict{Symbol, DeviceModel}
     services::Dict{Symbol, ServiceModel}
 end
 
-function ModelReference(::Type{T}) where {T <: PM.AbstractPowerFormulation}
+function ModelReference(::Type{T}) where {T<:PM.AbstractPowerFormulation}
 
     return  ModelReference(T,
                            Dict{Symbol, DeviceModel}(),
@@ -18,7 +18,7 @@ function ModelReference(::Type{T}) where {T <: PM.AbstractPowerFormulation}
 
 end
 
-mutable struct OperationModel{M <: AbstractOperationModel}
+mutable struct OperationModel{M<:AbstractOperationModel}
     op_model::Type{M}
     model_ref::ModelReference
     sys::PSY.System
@@ -29,8 +29,8 @@ function OperationModel(::Type{M},
                         model_ref::ModelReference,
                         sys::PSY.System;
                         optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
-                        kwargs...) where {M <: AbstractOperationModel,
-                                            T <: PM.AbstractPowerFormulation}
+                        kwargs...) where {M<:AbstractOperationModel,
+                                            T<:PM.AbstractPowerFormulation}
 
     canonical = _build_canonical(model_ref.transmission,
                                 model_ref.devices,
@@ -47,8 +47,8 @@ end
 function OperationModel(op_model::Type{M},
                         ::Type{T},
                         sys::PSY.System;
-                        kwargs...) where {M <: AbstractOperationModel,
-                                          T <: PM.AbstractPowerFormulation}
+                        kwargs...) where {M<:AbstractOperationModel,
+                                          T<:PM.AbstractPowerFormulation}
 
     optimizer = get(kwargs, :optimizer, nothing)
 
@@ -61,12 +61,12 @@ end
 
 function OperationModel(::Type{T},
                         sys::PSY.System;
-                        kwargs...) where {T <: PM.AbstractPowerFormulation}
+                        kwargs...) where {T<:PM.AbstractPowerFormulation}
 
 
     return OperationModel(DefaultOpModel,
                          T,
-                         sys; kwargs)
+                         sys; kwargs...)
 
 end
 
@@ -76,7 +76,8 @@ get_branches_ref(op_model::OperationModel) = op_model.model_ref.branches
 get_services_ref(op_model::OperationModel) = op_model.model_ref.services
 get_system(op_model::OperationModel) = op_model.sys
 
-function set_transmission_ref!(op_model::OperationModel, transmission::Type{T}) where {T <: PM.AbstractPowerFormulation}
+function set_transmission_ref!(op_model::OperationModel,
+                               transmission::Type{T}) where {T<:PM.AbstractPowerFormulation}
     op_model.model_ref.transmission = transmission
     build_op_model!(op_model)
     return
@@ -102,8 +103,8 @@ end
 
 function set_device_model!(op_model::OperationModel,
                            name::Symbol,
-                           device::DeviceModel{D, B}) where {D <: PSY.Injection,
-                                                             B <: AbstractDeviceFormulation}
+                           device::DeviceModel{D, B}) where {D<:PSY.Injection,
+                                                             B<:AbstractDeviceFormulation}
 
     if haskey(op_model.model_ref.devices, name)
         op_model.model_ref.devices[name] = device
@@ -118,8 +119,8 @@ end
 
 function set_branch_model!(op_model::OperationModel,
                            name::Symbol,
-                           branch::DeviceModel{D, B}) where {D <: PSY.Branch,
-                                                             B <: AbstractDeviceFormulation}
+                           branch::DeviceModel{D, B}) where {D<:PSY.Branch,
+                                                             B<:AbstractDeviceFormulation}
 
     if haskey(op_model.model_ref.devices, name)
         op_model.model_ref.branches[name] = branch

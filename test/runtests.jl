@@ -15,7 +15,7 @@ const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
 
-abstract type TestOptModel <: PSI.AbstractOperationModel end
+abstract type TestOptModel<:PSI.AbstractOperationModel end
 
 ipopt_optimizer = JuMP.with_optimizer(Ipopt.Optimizer, print_level = 0)
 ipopt_ws_solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, mu_init=1e-4, print_level=0)

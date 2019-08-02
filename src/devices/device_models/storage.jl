@@ -1,13 +1,13 @@
-abstract type AbstractStorageForm <: AbstractDeviceFormulation end
+abstract type AbstractStorageForm<:AbstractDeviceFormulation end
 
-struct BookKeeping <: AbstractStorageForm end
+struct BookKeeping<:AbstractStorageForm end
 
-struct BookKeepingwReservation <: AbstractStorageForm end
+struct BookKeepingwReservation<:AbstractStorageForm end
 
 #################################################Storage Variables#################################
 
 function active_power_variables(ps_m::CanonicalModel,
-                                devices::PSY.FlattenIteratorWrapper{St}) where {St <: PSY.Storage}
+                                devices::PSY.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
 
     add_variable(ps_m,
                  devices,
@@ -27,7 +27,7 @@ end
 
 
 function reactive_power_variables(ps_m::CanonicalModel,
-                                  devices::PSY.FlattenIteratorWrapper{St}) where {St <: PSY.Storage}
+                                  devices::PSY.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
     add_variable(ps_m,
                  devices,
                  Symbol("Qst_$(St)"),
@@ -40,7 +40,7 @@ end
 
 
 function energy_storage_variables(ps_m::CanonicalModel,
-                                  devices::PSY.FlattenIteratorWrapper{St}) where St <: PSY.Storage
+                                  devices::PSY.FlattenIteratorWrapper{St}) where St<:PSY.Storage
 
     add_variable(ps_m,
                  devices,
@@ -53,7 +53,7 @@ end
 
 
 function storage_reservation_variables(ps_m::CanonicalModel,
-                                       devices::PSY.FlattenIteratorWrapper{St}) where St <: PSY.Storage
+                                       devices::PSY.FlattenIteratorWrapper{St}) where St<:PSY.Storage
 
     add_variable(ps_m,
                  devices,
@@ -70,8 +70,8 @@ end
 function active_power_constraints(ps_m::CanonicalModel,
                                   devices::PSY.FlattenIteratorWrapper{St},
                                   device_formulation::Type{BookKeeping},
-                                  system_formulation::Type{S}) where {St <: PSY.Storage,
-                                                                      S <: PM.AbstractPowerFormulation}
+                                  system_formulation::Type{S}) where {St<:PSY.Storage,
+                                                                      S<:PM.AbstractPowerFormulation}
 
     range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
     range_data_out = [(PSY.get_name(s), PSY.get_outputactivepowerlimits(s)) for s in devices]
@@ -93,8 +93,8 @@ end
 function active_power_constraints(ps_m::CanonicalModel,
                                   devices::PSY.FlattenIteratorWrapper{St},
                                   device_formulation::Type{BookKeepingwReservation},
-                                  system_formulation::Type{S}) where {St <: PSY.Storage,
-                                                                      S <: PM.AbstractPowerFormulation}
+                                  system_formulation::Type{S}) where {St<:PSY.Storage,
+                                                                      S<:PM.AbstractPowerFormulation}
 
     range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
     range_data_out = [(PSY.get_name(s), PSY.get_outputactivepowerlimits(s)) for s in devices]
@@ -122,9 +122,9 @@ This function adds the reactive  power limits of generators when there are Commi
 function reactive_power_constraints(ps_m::CanonicalModel,
                                    devices::PSY.FlattenIteratorWrapper{St},
                                    device_formulation::Type{D},
-                                   system_formulation::Type{S}) where {St <: PSY.Storage,
-                                                                       D <: AbstractStorageForm,
-                                                                       S <: PM.AbstractPowerFormulation}
+                                   system_formulation::Type{S}) where {St<:PSY.Storage,
+                                                                       D<:AbstractStorageForm,
+                                                                       S<:PM.AbstractPowerFormulation}
 
     range_data = [(PSY.get_name(s), PSY.get_reactivepowerlimits(s)) for s in devices]
 
@@ -143,9 +143,9 @@ end
 function energy_capacity_constraints(ps_m::CanonicalModel,
                                     devices::PSY.FlattenIteratorWrapper{St},
                                     device_formulation::Type{D},
-                                    system_formulation::Type{S}) where {St <: PSY.Storage,
-                                                                        D <: AbstractStorageForm,
-                                                                        S <: PM.AbstractPowerFormulation}
+                                    system_formulation::Type{S}) where {St<:PSY.Storage,
+                                                                        D<:AbstractStorageForm,
+                                                                        S<:PM.AbstractPowerFormulation}
 
     range_data = [(PSY.get_name(s), PSY.get_capacity(s)) for s in devices]
 
@@ -159,7 +159,7 @@ end
 
 ###################################################### book keeping constraints #################################
 
-function make_efficiency_data(devices::PSY.FlattenIteratorWrapper{St}) where {St <: PSY.Storage}
+function make_efficiency_data(devices::PSY.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
 
     names = Vector{String}(undef, length(devices))
     in_out = Vector{InOut}(undef, length(devices))
@@ -178,9 +178,9 @@ end
 function energy_balance_constraint(ps_m::CanonicalModel,
                                    devices::PSY.FlattenIteratorWrapper{St},
                                    device_formulation::Type{D},
-                                   system_formulation::Type{S}) where {St <: PSY.Storage,
-                                                            D <: AbstractStorageForm,
-                                                            S <: PM.AbstractPowerFormulation}
+                                   system_formulation::Type{S}) where {St<:PSY.Storage,
+                                                            D<:AbstractStorageForm,
+                                                            S<:PM.AbstractPowerFormulation}
 
     key = Symbol("energy_$(St)")
 

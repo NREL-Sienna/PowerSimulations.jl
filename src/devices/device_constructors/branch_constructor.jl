@@ -4,9 +4,9 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            device_formulation::Type{Br},
                            system_formulation::Type{CopperPlatePowerModel},
                            sys::PSY.System;
-                           kwargs...) where {Br <: AbstractBranchFormulation,
-                                             B <: PSY.DCBranch}
-    # This code is meant to do nothing 
+                           kwargs...) where {Br<:AbstractBranchFormulation,
+                                             B<:PSY.DCBranch}
+    # This code is meant to do nothing
 
     return
 
@@ -17,9 +17,9 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            device_formulation::Type{Br},
                            system_formulation::Type{CopperPlatePowerModel},
                            sys::PSY.System;
-                           kwargs...) where {Br <: AbstractBranchFormulation,
-                                             B <: PSY.ACBranch}
-    # This code is meant to do nothing 
+                           kwargs...) where {Br<:AbstractBranchFormulation,
+                                             B<:PSY.ACBranch}
+    # This code is meant to do nothing
 
     return
 
@@ -30,12 +30,12 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            device_formulation::Type{Br},
                            system_formulation::Type{S},
                            sys::PSY.System;
-                           kwargs...) where {Br <: AbstractBranchFormulation,
-                                             B <: PSY.Branch,
-                                             S <: PM.AbstractPowerFormulation}
+                           kwargs...) where {Br<:AbstractBranchFormulation,
+                                             B<:PSY.Branch,
+                                             S<:PM.AbstractPowerFormulation}
 
     devices = PSY.get_components(device, sys)
-    
+
     isempty(devices) && return
 
     branch_rate_bounds(ps_m,
@@ -57,10 +57,10 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            device_formulation::Type{FlowMonitoredLine},
                            system_formulation::Type{S},
                            sys::PSY.System;
-                           kwargs...) where {S <: PM.AbstractPowerFormulation}
+                           kwargs...) where {S<:PM.AbstractPowerFormulation}
 
     devices = PSY.get_components(device, sys)
-    
+
     isempty(devices) && return
 
     branch_rate_bounds(ps_m,
@@ -87,8 +87,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            device_formulation::Union{Type{StaticLineUnbounded}, Type{StaticTransformerUnbounded}},
                            system_formulation::Type{S},
                            sys::PSY.System;
-                           kwargs...) where {B <: PSY.Branch,
-                                             S <: PM.AbstractPowerFormulation}
+                           kwargs...) where {B<:PSY.Branch,
+                                             S<:PM.AbstractPowerFormulation}
 
 
     # do nothing
@@ -101,12 +101,12 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                            device_formulation::Type{Br},
                            system_formulation::Type{S},
                            sys::PSY.System;
-                           kwargs...) where {Br <: AbstractBranchFormulation,
-                                             B <: PSY.DCBranch,
-                                             S <: PM.AbstractPowerFormulation}
+                           kwargs...) where {Br<:AbstractBranchFormulation,
+                                             B<:PSY.DCBranch,
+                                             S<:PM.AbstractPowerFormulation}
 
     devices = PSY.get_components(device, sys)
-    
+
     isempty(devices) && return
 
     branch_rate_constraint(ps_m,

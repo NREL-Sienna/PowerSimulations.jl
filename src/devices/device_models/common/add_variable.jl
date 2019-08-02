@@ -1,5 +1,5 @@
 """ Returns the correct container spec for the selected type of JuMP Model"""
-function _container_spec(m::M, ax...) where M <: JuMP.AbstractModel
+function _container_spec(m::M, ax...) where M<:JuMP.AbstractModel
     return JuMP.Containers.DenseAxisArray{JuMP.variable_type(m)}(undef, ax...)
 end
 
@@ -48,7 +48,7 @@ function add_variable(ps_m::CanonicalModel,
                       var_name::Symbol,
                       binary::Bool,
                       expression::Union{Nothing,Symbol}=nothing,
-                      sign::Float64=1.0; kwargs...) where {D <: Union{Vector{<:PSY.Device},
+                      sign::Float64=1.0; kwargs...) where {D<:Union{Vector{<:PSY.Device},
                                           PSY.FlattenIteratorWrapper{<:PSY.Device}}}
 
     time_steps = model_time_steps(ps_m)

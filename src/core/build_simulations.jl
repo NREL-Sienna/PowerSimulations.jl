@@ -22,7 +22,7 @@ function _prepare_workspace!(ref::SimulationRef, base_name::String, folder::Stri
 end
 
 function _validate_steps(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}},
-                         steps::Int64) where {T <: PM.AbstractPowerFormulation}
+                         steps::Int64) where {T<:PM.AbstractPowerFormulation}
 
     for (k,v) in stages
 
@@ -39,7 +39,7 @@ function _validate_steps(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System
 
 end
 
-function _get_dates(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}}) where {T <: PM.AbstractPowerFormulation}
+function _get_dates(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}}) where {T<:PM.AbstractPowerFormulation}
     k = keys(stages)
     k_size = length(k)
     range = Vector{Dates.DateTime}(undef, 2)
