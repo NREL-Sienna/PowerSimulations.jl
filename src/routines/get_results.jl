@@ -1,7 +1,6 @@
 function _result_dataframe(variable::JuMP.Containers.DenseAxisArray)
 
     result = Array{Float64, length(variable.axes)}(undef, length(variable.axes[2]), length(variable.axes[1]))
-    # TODO: Remove this line once PowerSystems moves to Symbols
     names = Array{Symbol, 1}(undef, length(variable.axes[1]))
 
     for t in variable.axes[2], (ix, name) in enumerate(variable.axes[1])
@@ -19,7 +18,6 @@ end
 function _result_dataframe_d(constraint::JuMP.Containers.DenseAxisArray)
 
     result = Array{Float64, length(constraint.axes)}(undef, length(constraint.axes[1]))
-    # TODO: Remove this line once PowerSystems moves to Symbols
     names = Array{Symbol, 1}(undef, length(constraint.axes[1]))
 
     for (ix, name) in enumerate(constraint.axes[1])
@@ -86,11 +84,12 @@ function get_optimizer_log(op_m::OperationModel)
     optimizer_log[:termination_status] = JuMP.termination_status(ps_m.JuMPmodel)
     optimizer_log[:primal_status] = JuMP.primal_status(ps_m.JuMPmodel)
     optimizer_log[:dual_status] = JuMP.dual_status(ps_m.JuMPmodel)
+    optimizer_log[:solver] =  JuMP.solver_name(ps_m.JuMPmodel)
     try
         optimizer_log[:solve_time] = MOI.get(ps_m.JuMPmodel, MOI.SolveTime())
     catch
-        @warn("SolveTime() property not supported by the Solver")
-        optimizer_log[:solve_time] = "Not Supported by solver"
+        @warn("SolveTime() property not supported by $(optimizer_log[:solver])")
+        optimizer_log[:solve_time] = "Not Supported by $(optimizer_log[:solver])"
     end
 
     return optimizer_log
