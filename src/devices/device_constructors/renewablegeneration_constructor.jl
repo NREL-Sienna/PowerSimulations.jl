@@ -102,7 +102,6 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     return
 
-
 end
 
 function _internal_device_constructor!(ps_m::CanonicalModel,

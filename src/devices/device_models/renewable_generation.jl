@@ -38,7 +38,6 @@ function reactivepower_variables(ps_m::CanonicalModel,
 end
 
 ####################################### Reactive Power Constraints ######################################
-
 function reactivepower_constraints(ps_m::CanonicalModel,
                                     devices::PSY.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableFullDispatch},
@@ -48,12 +47,14 @@ function reactivepower_constraints(ps_m::CanonicalModel,
     range_data = Vector{NamedMinMax}(undef, length(devices))
 
     for (ix, d) in enumerate(devices)
-        if isnothing(PSY.get_tech(d) |> PSY.get_reactivepowerlimits)
+        tech = PSY.get_tech(d)
+        name = PSY.get_name(d)
+        if isnothing(PSY.get_reactivepowerlimits(tech))
             limits = (min = 0.0, max = 0.0)
             range_data[ix] = (PSY.get_name(d), limits)
-            @warn("Reactive Power Limits of $(PSY.get_name) are nothing. Q_$(PSY.get_name(d)) is set to 0.0")
+            @warn("Reactive Power Limits of $(name) are nothing. Q_$(name) is set to 0.0")
         else
-            range_data[ix] = (PSY.get_name(d), PSY.get_tech(d) |> PSY.get_reactivepowerlimits)
+            range_data[ix] = (name, PSY.get_reactivepowerlimits(tech))
         end
     end
 
@@ -70,7 +71,7 @@ function reactivepower_constraints(ps_m::CanonicalModel,
                                     devices::PSY.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableConstantPowerFactor},
                                     system_formulation::Type{S}) where {R<:PSY.RenewableGen,
-                                                                         S<:PM.AbstractPowerFormulation}
+                                                                        S<:PM.AbstractPowerFormulation}
 
     names = (PSY.get_name(d) for d in devices)
     time_steps = model_time_steps(ps_m)
@@ -80,9 +81,11 @@ function reactivepower_constraints(ps_m::CanonicalModel,
     ps_m.constraints[constraint_name] = JuMPConstraintArray(undef, names, time_steps)
 
     for t in time_steps, d in devices
-        ps_m.constraints[constraint_name][PSY.get_name(d), t] = JuMP.@constraint(ps_m.JuMPmodel,
-                                ps_m.variables[q_variable_name][PSY.get_name(d), t] ==
-                                ps_m.variables[p_variable_name][PSY.get_name(d), t]*sin(acos(PSY.get_tech(d) |> PSY.get_powerfactor)))
+        name = PSY.get_name(d)
+        pf = sin(acos(PSY.get_tech(d) |> PSY.get_powerfactor))
+        ps_m.constraints[constraint_name][name, t] = JuMP.@constraint(ps_m.JuMPmodel,
+                                ps_m.variables[q_variable_name][name, t] ==
+                                ps_m.variables[p_variable_name][name, t] * pf)
     end
 
     return
@@ -99,7 +102,8 @@ function _get_time_series(devices::PSY.FlattenIteratorWrapper{R},
 
     for (ix, d) in enumerate(devices)
         names[ix] = PSY.get_name(d)
-        series[ix] = fill(PSY.get_tech(d) |> PSY.get_rating, (time_steps[end]))
+        tech = PSY.get_tech(d)
+        series[ix] = fill(PSY.get_rating(tech), (time_steps[end]))
     end
 
     return names, series
@@ -143,8 +147,9 @@ function _get_time_series(forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministi
     series = Vector{Vector{Float64}}(undef, length(forecasts))
 
     for (ix, f) in enumerate(forecasts)
-        names[ix] = PSY.get_component(f) |> PSY.get_name
-        series[ix] = values(PSY.get_data(f)) * (PSY.get_component(f) |> PSY.get_tech |> PSY.get_rating)
+        component = PSY.get_component(f)
+        names[ix] = PSY.get_name(component)
+        series[ix] = values(PSY.get_data(f)) * PSY.get_tech(component).rating
     end
 
     return names, series
@@ -367,8 +372,9 @@ function _nodal_expression_fixed(ps_m::CanonicalModel,
     time_steps = model_time_steps(ps_m)
 
     for f in forecasts
-        time_series_vector = values(PSY.get_data(f)) * (PSY.get_component(f) |> PSY.get_tech |> PSY.get_rating)
         device = PSY.get_component(f)
+
+        time_series_vector = values(PSY.get_data(f)) * (PSY.get_tech(device) |> PSY.get_rating)
         for t in time_steps
             _add_to_expression!(ps_m.expressions[:nodal_balance_active],
                                 PSY.get_bus(device) |> PSY.get_number,
