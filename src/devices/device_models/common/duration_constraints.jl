@@ -26,7 +26,7 @@ function device_duration_retrospective(ps_m::CanonicalModel,
                     JuMP.add_to_expression!(lhs_on, ps_m.variables[var_names[2]][name, i])
                 end
             end
-            if t <= max(1, duration_data[ix].up - initial_duration_on[ix].value) && initial_duration_on[ix].value > 0
+            if t <= max(0, duration_data[ix].up - initial_duration_on[ix].value) && initial_duration_on[ix].value > 0
                 JuMP.add_to_expression!(lhs_on, 1)
             end
 
@@ -40,7 +40,7 @@ function device_duration_retrospective(ps_m::CanonicalModel,
                     JuMP.add_to_expression!(lhs_off, ps_m.variables[var_names[3]][name, i])
                 end
             end
-            if t <=  max(1, duration_data[ix].down - initial_duration_off[ix].value) && initial_duration_off[ix].value > 0
+            if t <=  max(0, duration_data[ix].down - initial_duration_off[ix].value) && initial_duration_off[ix].value > 0
                 JuMP.add_to_expression!(lhs_off, 1)
             end
 

@@ -1,49 +1,41 @@
+@testset "Storage data misspecification" begin
+    # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
+    warn_message = "The data doesn't devices of type GenericBattery, consider changing the device models"
+    model = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
+    op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5)
+    @test_logs (:warn, warn_message) construct_device!(op_model, :Storage, model)
+    op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys14)
+    @test_logs (:warn, warn_message) construct_device!(op_model, :Storage, model)
+end
+
 @testset "Storage Basic Storage With DC - PF" begin
     model = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
-    network = PM.DCPlosslessForm
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, network, time_steps, Dates.Hour(1))
-    construct_device!(ps_model, model, network, c_sys5_bat)
-    @test JuMP.num_variables(ps_model.JuMPmodel) == 72
-    @test JuMP.num_constraints(ps_model.JuMPmodel, GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == 0
-    @test JuMP.num_constraints(ps_model.JuMPmodel, GenericAffExpr{Float64, VariableRef}, MOI.GreaterThan{Float64}) == 0
-    @test JuMP.num_constraints(ps_model.JuMPmodel, GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 72
-    @test JuMP.num_constraints(ps_model.JuMPmodel, GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == 24
+    op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5_bat)
+    construct_device!(op_model, :Storage, model)
+    moi_tests(op_model, false, 72, 72, 0, 0, 24, false)
+    psi_checkobjfun_test(op_model, GAEVF)
 end
 
 @testset "Storage Basic Storage With AC - PF" begin
     model = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
-    network = PM.StandardACPForm
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, PM.AbstractPowerFormulation, time_steps, Dates.Hour(1))
-    construct_device!(ps_model, model, network, c_sys5_bat)
-    @test JuMP.num_variables(ps_model.JuMPmodel) == 96
-    @test JuMP.num_constraints(ps_model.JuMPmodel, GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == 0
-    @test JuMP.num_constraints(ps_model.JuMPmodel, GenericAffExpr{Float64, VariableRef}, MOI.GreaterThan{Float64}) == 0
-    @test JuMP.num_constraints(ps_model.JuMPmodel, GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 96
-    @test JuMP.num_constraints(ps_model.JuMPmodel, GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == 24
+    op_model = OperationModel(TestOptModel, PM.StandardACPForm, c_sys5_bat)
+    construct_device!(op_model, :Storage, model)
+    moi_tests(op_model, false, 96, 96, 0, 0, 24, false)
+    psi_checkobjfun_test(op_model, GAEVF)
 end
 
 @testset "Storage with Reservation DC - PF" begin
-model = DeviceModel(PSY.GenericBattery, PSI.BookKeepingwReservation)
-    network = PM.DCPlosslessForm
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, network, time_steps, Dates.Hour(1))
-    construct_device!(ps_model, model, network, c_sys5_bat)
-    @test JuMP.num_variables(ps_model.JuMPmodel) == 96
-    @test JuMP.num_constraints(ps_model.JuMPmodel, GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == 48
-    @test JuMP.num_constraints(ps_model.JuMPmodel, GenericAffExpr{Float64, VariableRef}, MOI.GreaterThan{Float64}) == 48
-    @test JuMP.num_constraints(ps_model.JuMPmodel, GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 24
-    @test JuMP.num_constraints(ps_model.JuMPmodel, GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == 24
-    @test (VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel)
+    model = DeviceModel(PSY.GenericBattery, PSI.BookKeepingwReservation)
+    op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5_bat)
+    construct_device!(op_model, :Storage, model)
+    moi_tests(op_model, false, 96, 24, 48, 48, 24, true)
+    psi_checkobjfun_test(op_model, GAEVF)
 end
 
 @testset "Storage with Reservation With AC - PF" begin
     model = DeviceModel(PSY.GenericBattery, PSI.BookKeepingwReservation)
-    network = PM.StandardACPForm
-    ps_model = PSI._canonical_model_init(bus_numbers5, nothing, network, time_steps, Dates.Hour(1))
-    construct_device!(ps_model, model, network, c_sys5_bat)
-    @test JuMP.num_variables(ps_model.JuMPmodel) == 120
-    @test JuMP.num_constraints(ps_model.JuMPmodel, GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == 48
-    @test JuMP.num_constraints(ps_model.JuMPmodel, GenericAffExpr{Float64, VariableRef}, MOI.GreaterThan{Float64}) == 48
-    @test JuMP.num_constraints(ps_model.JuMPmodel, GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 48
-    @test JuMP.num_constraints(ps_model.JuMPmodel, GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == 24
-    @test (VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(ps_model.JuMPmodel)
+    op_model = OperationModel(TestOptModel, PM.StandardACPForm, c_sys5_bat)
+    construct_device!(op_model, :Storage, model)
+    moi_tests(op_model, false, 120, 48, 48, 48, 24, true)
+    psi_checkobjfun_test(op_model, GAEVF)
 end

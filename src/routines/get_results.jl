@@ -16,6 +16,23 @@ function _result_dataframe(variable::JuMP.Containers.DenseAxisArray)
 
 end
 
+function _result_dataframe_d(constraint::JuMP.Containers.DenseAxisArray)
+
+    result = Array{Float64, length(constraint.axes)}(undef, length(constraint.axes[1]))
+    # TODO: Remove this line once PowerSystems moves to Symbols
+    names = Array{Symbol, 1}(undef, length(constraint.axes[1]))
+
+    for (ix, name) in enumerate(constraint.axes[1])
+        try result[ix] = JuMP.dual(constraint[name])
+        catch
+            result[ix] = NAN
+        end
+    end
+
+    return DataFrames.DataFrame(Price = result)
+
+end
+
 function get_model_result(op_m::OperationModel)
 
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
@@ -23,6 +40,21 @@ function get_model_result(op_m::OperationModel)
     for (k, v) in vars(op_m.canonical)
 
         results_dict[k] = _result_dataframe(v)
+
+    end
+
+    return results_dict
+
+end
+
+function get_model_duals(op_m::OperationModel, cons::Vector{Symbol})
+
+    results_dict = Dict{Symbol, DataFrames.DataFrame}()
+
+    for c in cons
+
+        v = con(op_m.canonical, c)
+        results_dict[c] = _result_dataframe_d(v)
 
     end
 
