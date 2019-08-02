@@ -31,7 +31,7 @@ function  _build_canonical(::Type{T},
 
     # Objective Function
     @info "Building Objective"
-    JuMP.@objective(canonical.JuMPmodel, Min, canonical.cost_function)
+    JuMP.@objective(canonical.JuMPmodel, MOI.MIN_SENSE, canonical.cost_function)
 
     return canonical
 

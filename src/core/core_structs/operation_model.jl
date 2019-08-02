@@ -164,7 +164,7 @@ function construct_device!(op_model::OperationModel,
                                   kwargs...)
 
     JuMP.@objective(op_model.canonical.JuMPmodel,
-                    Min,
+                    MOI.MIN_SENSE,
                     op_model.canonical.cost_function)
 
     return

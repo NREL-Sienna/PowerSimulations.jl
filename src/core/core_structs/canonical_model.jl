@@ -83,7 +83,7 @@ function _canonical_init(bus_numbers::Vector{Int64},
     jump_model = _pass_abstract_jump(optimizer; kwargs...)
     V = JuMP.variable_type(jump_model)
 
-    ps_model = CanonicalModel(jump_model,
+    canonical = CanonicalModel(jump_model,
                               optimizer,
                               parameters,
                               get(kwargs, :sequential_runs, false),
@@ -101,7 +101,7 @@ function _canonical_init(bus_numbers::Vector{Int64},
                               Dict{Symbol,Array{InitialCondition}}(),
                               nothing);
 
-    return ps_model
+    return canonical
 
 end
 
