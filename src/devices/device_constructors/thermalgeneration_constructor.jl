@@ -2,17 +2,17 @@
 This function creates the model for a full themal dis`pa`tch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function _internal_device_constructor!(ps_m::CanonicalModel,
-                                        device::Type{T},
-                                        device_formulation::Type{D},
-                                        system_formulation::Type{S},
+                                        ::Type{T},
+                                        ::Type{D},
+                                        ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {T<:PSY.ThermalGen,
                                                           D<:AbstractThermalFormulation,
                                                           S<:PM.AbstractPowerFormulation}
 
-    devices = PSY.get_components(device, sys)
+    devices = PSY.get_components(T, sys)
 
-    if validate_available_devices(devices, device)
+    if validate_available_devices(devices, T)
         return
     end
 
@@ -24,18 +24,18 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     commitment_variables!(ps_m, devices)
 
     #Constraints
-    activepower_constraints!(ps_m, devices, device_formulation, system_formulation)
+    activepower_constraints!(ps_m, devices, D, S)
 
-    reactivepower_constraints!(ps_m, devices, device_formulation, system_formulation)
+    reactivepower_constraints!(ps_m, devices, D, S)
 
-    commitment_constraints!(ps_m, devices, device_formulation, system_formulation)
+    commitment_constraints!(ps_m, devices, D, S)
 
-    ramp_constraints!(ps_m, devices, device_formulation, system_formulation)
+    ramp_constraints!(ps_m, devices, D, S)
 
-    time_constraints!(ps_m, devices, device_formulation, system_formulation)
+    time_constraints!(ps_m, devices, D, S)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation)
+    cost_function(ps_m, devices, D, S)
 
     return
 
@@ -46,17 +46,17 @@ end
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function _internal_device_constructor!(ps_m::CanonicalModel,
-                                        device::Type{T},
-                                        device_formulation::Type{D},
-                                        system_formulation::Type{S},
-                                        sys::PSY.System;
-                                        kwargs...) where {T<:PSY.ThermalGen,
-                                                          D<:AbstractThermalFormulation,
-                                                          S<:PM.AbstractActivePowerFormulation}
+                                       ::Type{T},
+                                       ::Type{D},
+                                       ::Type{S},
+                                       sys::PSY.System;
+                                       kwargs...) where {T<:PSY.ThermalGen,
+                                                         D<:AbstractThermalFormulation,
+                                                         S<:PM.AbstractActivePowerFormulation}
 
-    devices = PSY.get_components(device, sys)
+    devices = PSY.get_components(T, sys)
 
-    if validate_available_devices(devices, device)
+    if validate_available_devices(devices, T)
         return
     end
 
@@ -66,16 +66,16 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     commitment_variables!(ps_m, devices)
 
     #Constraints
-    activepower_constraints!(ps_m, devices, device_formulation, system_formulation)
+    activepower_constraints!(ps_m, devices, D, S)
 
-    commitment_constraints!(ps_m, devices, device_formulation, system_formulation)
+    commitment_constraints!(ps_m, devices, D, S)
 
-    ramp_constraints!(ps_m, devices, device_formulation, system_formulation)
+    ramp_constraints!(ps_m, devices, D, S)
 
-    time_constraints!(ps_m, devices, device_formulation, system_formulation)
+    time_constraints!(ps_m, devices, D, S)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation)
+    cost_function(ps_m, devices, D, S)
 
     return
 
@@ -85,16 +85,16 @@ end
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function _internal_device_constructor!(ps_m::CanonicalModel,
-                                        device::Type{T},
-                                        device_formulation::Type{ThermalRampLimited},
-                                        system_formulation::Type{S},
+                                        ::Type{T},
+                                        ::Type{ThermalRampLimited},
+                                        ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {T<:PSY.ThermalGen,
                                                           S<:PM.AbstractPowerFormulation}
 
-    devices = PSY.get_components(device, sys)
+    devices = PSY.get_components(T, sys)
 
-    if validate_available_devices(devices, device)
+    if validate_available_devices(devices, T)
         return
     end
 
@@ -104,14 +104,14 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     reactivepower_variables!(ps_m, devices)
 
     #Constraints
-    activepower_constraints!(ps_m, devices, device_formulation, system_formulation)
+    activepower_constraints!(ps_m, devices, ThermalRampLimited, S)
 
-    reactivepower_constraints!(ps_m, devices, device_formulation, system_formulation)
+    reactivepower_constraints!(ps_m, devices, ThermalRampLimited, S)
 
-    ramp_constraints!(ps_m, devices, device_formulation, system_formulation)
+    ramp_constraints!(ps_m, devices, ThermalRampLimited, S)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation)
+    cost_function(ps_m, devices, ThermalRampLimited, S)
 
     return
 
@@ -122,16 +122,16 @@ end
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function _internal_device_constructor!(ps_m::CanonicalModel,
-                                        device::Type{T},
-                                        device_formulation::Type{ThermalRampLimited},
-                                        system_formulation::Type{S},
-                                        sys::PSY.System;
-                                        kwargs...) where {T<:PSY.ThermalGen,
-                                                          S<:PM.AbstractActivePowerFormulation}
+                                       ::Type{T},
+                                       ::Type{ThermalRampLimited},
+                                       ::Type{S},
+                                       sys::PSY.System;
+                                       kwargs...) where {T<:PSY.ThermalGen,
+                                                         S<:PM.AbstractActivePowerFormulation}
 
-    devices = PSY.get_components(device, sys)
+    devices = PSY.get_components(T, sys)
 
-    if validate_available_devices(devices, device)
+    if validate_available_devices(devices, T)
         return
     end
 
@@ -139,12 +139,12 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     activepower_variables!(ps_m, devices)
 
     #Constraints
-    activepower_constraints!(ps_m, devices, device_formulation, system_formulation)
+    activepower_constraints!(ps_m, devices, ThermalRampLimited, S)
 
-    ramp_constraints!(ps_m, devices, device_formulation, system_formulation)
+    ramp_constraints!(ps_m, devices, ThermalRampLimited, S)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation)
+    cost_function(ps_m, devices, ThermalRampLimited, S)
 
     return
 
@@ -153,17 +153,17 @@ end
 
 
 function _internal_device_constructor!(ps_m::CanonicalModel,
-                                       device::Type{T},
-                                       device_formulation::Type{D},
-                                       system_formulation::Type{S},
+                                       ::Type{T},
+                                       ::Type{D},
+                                       ::Type{S},
                                        sys::PSY.System;
                                        kwargs...) where {T<: PSY.ThermalGen,
                                                          D<:AbstractThermalDispatchForm,
                                                          S<:PM.AbstractPowerFormulation}
 
-    devices = PSY.get_components(device, sys)
+    devices = PSY.get_components(T, sys)
 
-    if validate_available_devices(devices, device)
+    if validate_available_devices(devices, T)
         return
     end
 
@@ -173,29 +173,29 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     reactivepower_variables!(ps_m, devices)
 
     #Constraints
-    activepower_constraints!(ps_m, devices, device_formulation, system_formulation)
+    activepower_constraints!(ps_m, devices, D, S)
 
-    reactivepower_constraints!(ps_m, devices, device_formulation, system_formulation)
+    reactivepower_constraints!(ps_m, devices, D, S)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation)
+    cost_function(ps_m, devices, D, S)
 
     return
 
 end
 
 function _internal_device_constructor!(ps_m::CanonicalModel,
-                                        device::Type{T},
-                                        device_formulation::Type{D},
-                                        system_formulation::Type{S},
+                                        ::Type{T},
+                                        ::Type{D},
+                                        ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {T<: PSY.ThermalGen,
                                                           D<:AbstractThermalDispatchForm,
                                                           S<:PM.AbstractActivePowerFormulation}
 
-    devices = PSY.get_components(device, sys)
+    devices = PSY.get_components(T, sys)
 
-    if validate_available_devices(devices, device)
+    if validate_available_devices(devices, T)
         return
     end
 
@@ -203,10 +203,10 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     activepower_variables!(ps_m, devices)
 
     #Constraints
-    activepower_constraints!(ps_m, devices, device_formulation, system_formulation)
+    activepower_constraints!(ps_m, devices, D, S)
 
     #Cost Function
-    cost_function(ps_m, devices, device_formulation, system_formulation)
+    cost_function(ps_m, devices, D, S)
 
     return
 

@@ -18,7 +18,7 @@ struct ThermalDispatchNoMin<:AbstractThermalDispatchForm end
 This function add the variables for power generation output to the model
 """
 function activepower_variables!(ps_m::CanonicalModel,
-                                devices::PSY.FlattenIteratorWrapper{T}) where {T<:PSY.ThermalGen}
+                           devices::PSY.FlattenIteratorWrapper{T}) where {T<:PSY.ThermalGen}
 
 
     add_variable(ps_m,
@@ -38,7 +38,7 @@ end
 This function add the variables for power generation output to the model
 """
 function reactivepower_variables!(ps_m::CanonicalModel,
-                                 devices::PSY.FlattenIteratorWrapper{T}) where {T<:PSY.ThermalGen}
+                           devices::PSY.FlattenIteratorWrapper{T}) where {T<:PSY.ThermalGen}
 
     add_variable(ps_m,
                  devices,
@@ -57,7 +57,7 @@ end
 This function add the variables for power generation commitment to the model
 """
 function commitment_variables!(ps_m::CanonicalModel,
-                              devices::PSY.FlattenIteratorWrapper{T}) where {T<:PSY.ThermalGen}
+                           devices::PSY.FlattenIteratorWrapper{T}) where {T<:PSY.ThermalGen}
 
     time_steps = model_time_steps(ps_m)
     var_names = [Symbol("ON_$(T)"), Symbol("START_$(T)"), Symbol("STOP_$(T)")]
@@ -159,8 +159,9 @@ function reactivepower_constraints!(ps_m::CanonicalModel,
                                    devices::PSY.FlattenIteratorWrapper{T},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S}) where {T<:PSY.ThermalGen,
-                                                                        D<:AbstractThermalDispatchForm,
-                                                                        S<:PM.AbstractPowerFormulation}
+                                                                       D<:AbstractThermalDispatchForm,
+                                                                       S<:PM.AbstractPowerFormulation}
+
     range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_reactivepowerlimits) for g in devices]
 
     device_range(ps_m,
