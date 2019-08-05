@@ -81,7 +81,7 @@ If t = 1:
 
 ``` variable[name, 1] - initial_conditions[ix].value <= rate_data[2][ix].up + rate_data[3][ix].max*varstart[name, 1] ```
 
-``` initial_conditions[ix].value - variable[name, 1] <= rate_data[2][ix].down + rate_data[3][ix].min*varstart[name, 1] ```
+``` initial_conditions[ix].value - variable[name, 1] <= rate_data[2][ix].down + rate_data[3][ix].min*varstop[name, 1] ```
 
 If t > 1:
 
@@ -131,7 +131,7 @@ function device_mixedinteger_rateofchange(ps_m::CanonicalModel,
         con_up[name, 1] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, 1] - initial_conditions[ix].value
                                                             <= rate_data[2][ix].up + rate_data[3][ix].max*varstart[name, 1])
         con_down[name, 1] = JuMP.@constraint(ps_m.JuMPmodel, initial_conditions[ix].value - variable[name, 1]
-                                                            <= rate_data[2][ix].down + rate_data[3][ix].min*varstart[name, 1])
+                                                            <= rate_data[2][ix].down + rate_data[3][ix].min*varstop[name, 1])
     end
 
     for t in time_steps[2:end], (ix, name) in enumerate(rate_data[1])
