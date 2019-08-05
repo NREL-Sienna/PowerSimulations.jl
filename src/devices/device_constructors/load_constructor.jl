@@ -22,8 +22,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     #Constraints
     if forecast
-        first_step = model_initial_time(ps_m)
-        forecasts = PSY.get_forecasts(PSY.Deterministic{L}, sys, first_step)
+        forecasts = _retrieve_forecasts(sys, L)
         activepower_constraints(ps_m, forecasts, device_formulation, system_formulation)
     else
         activepower_constraints(ps_m, devices, device_formulation, system_formulation)
@@ -60,8 +59,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     #Constraints
     if forecast
-        first_step = PSY.get_forecasts_initial_time(sys)
-        forecasts = PSY.get_forecasts(PSY.Deterministic{L}, sys, first_step)
+        forecasts = _retrieve_forecasts(sys, L)
         activepower_constraints(ps_m, forecasts, device_formulation, system_formulation)
     else
         activepower_constraints(ps_m, devices, device_formulation, system_formulation)
@@ -99,8 +97,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     #Constraints
     if forecast
-        first_step = PSY.get_forecasts_initial_time(sys)
-        forecasts = PSY.get_forecasts(PSY.Deterministic{L}, sys, first_step)
+        forecasts = _retrieve_forecasts(sys, L)
         activepower_constraints(ps_m, forecasts, device_formulation, system_formulation)
     else
         activepower_constraints(ps_m, devices, device_formulation, system_formulation)
@@ -138,8 +135,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     #Constraints
     if forecast
-        first_step = PSY.get_forecasts_initial_time(sys)
-        forecasts = PSY.get_forecasts(PSY.Deterministic{L}, sys, first_step)
+        forecasts = _retrieve_forecasts(sys, L)
         activepower_constraints(ps_m, forecasts, device_formulation, system_formulation)
     else
         activepower_constraints(ps_m, devices, device_formulation, system_formulation)
@@ -169,8 +165,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     end
 
     if forecast
-        first_step = PSY.get_forecasts_initial_time(sys)
-        forecasts = PSY.get_forecasts(PSY.Deterministic{L}, sys, first_step)
+        forecasts = _retrieve_forecasts(sys, L)
         nodal_expression(ps_m, forecasts, system_formulation)
     else
         nodal_expression(ps_m, devices, system_formulation)

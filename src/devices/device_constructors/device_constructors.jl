@@ -1,4 +1,5 @@
 include("common/constructor_validations.jl")
+include("common/device_constructor_utils.jl")
 include("thermalgeneration_constructor.jl")
 include("hydrogeneration_constructor.jl")
 include("branch_constructor.jl")

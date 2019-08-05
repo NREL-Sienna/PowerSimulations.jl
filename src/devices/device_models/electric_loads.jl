@@ -148,7 +148,7 @@ end
 
 ######################### output constraints with Time Series ##############################################
 
-function _get_time_series(forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministic{L}}) where {L<:PSY.ElectricLoad}
+function _get_time_series(forecasts::Vector{PSY.Deterministic{L}}) where {L<:PSY.ElectricLoad}
 
     names = Vector{String}(undef, length(forecasts))
     series = Vector{Vector{Float64}}(undef, length(forecasts))
@@ -163,7 +163,7 @@ function _get_time_series(forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministi
 end
 
 function activepower_constraints(ps_m::CanonicalModel,
-                                 devices::PSY.FlattenIteratorWrapper{PSY.Deterministic{L}},
+                                 devices::Vector{PSY.Deterministic{L}},
                                  device_formulation::Type{DispatchablePowerLoad},
                                  system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
                                                                      S<:PM.AbstractPowerFormulation}
@@ -186,7 +186,7 @@ function activepower_constraints(ps_m::CanonicalModel,
 end
 
 function activepower_constraints(ps_m::CanonicalModel,
-                                 devices::PSY.FlattenIteratorWrapper{PSY.Deterministic{L}},
+                                 devices::Vector{PSY.Deterministic{L}},
                                  device_formulation::Type{InterruptiblePowerLoad},
                                  system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
                                                                      S<:PM.AbstractPowerFormulation}
@@ -268,7 +268,7 @@ end
 
 ############################################## Time Series ###################################
 function _nodal_expression_param(ps_m::CanonicalModel,
-                                forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministic{L}},
+                                forecasts::Vector{PSY.Deterministic{L}},
                                 system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
                                                                     S<:PM.AbstractPowerFormulation}
 
@@ -299,7 +299,7 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 end
 
 function _nodal_expression_param(ps_m::CanonicalModel,
-                                forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministic{L}},
+                                forecasts::Vector{PSY.Deterministic{L}},
                                 system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
                                                                     S<:PM.AbstractActivePowerFormulation}
 
@@ -369,7 +369,7 @@ end
 ############################################## Time Series ###################################
 
 function _nodal_expression_fixed(ps_m::CanonicalModel,
-                                forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministic{L}},
+                                forecasts::Vector{PSY.Deterministic{L}},
                                 system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
                                                                     S<:PM.AbstractPowerFormulation}
 
@@ -397,7 +397,7 @@ end
 
 
 function _nodal_expression_fixed(ps_m::CanonicalModel,
-                                forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministic{L}},
+                                forecasts::Vector{PSY.Deterministic{L}},
                                 system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
                                                                     S<:PM.AbstractActivePowerFormulation}
 

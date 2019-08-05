@@ -141,7 +141,7 @@ end
 
 ######################### output constraints with Time Series ##############################################
 
-function _get_time_series(forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministic{R}}) where {R<:PSY.RenewableGen}
+function _get_time_series(forecasts::Vector{PSY.Deterministic{R}}) where {R<:PSY.RenewableGen}
 
     names = Vector{String}(undef, length(forecasts))
     series = Vector{Vector{Float64}}(undef, length(forecasts))
@@ -157,7 +157,7 @@ function _get_time_series(forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministi
 end
 
 function activepower_constraints(ps_m::CanonicalModel,
-                                 forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministic{R}},
+                                 forecasts::Vector{PSY.Deterministic{R}},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S}) where {R<:PSY.RenewableGen,
                                                                      D<:AbstractRenewableDispatchForm,
@@ -238,7 +238,7 @@ end
 
 ############################################## Time Series ###################################
 function _nodal_expression_param(ps_m::CanonicalModel,
-                                 forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministic{R}},
+                                 forecasts::Vector{PSY.Deterministic{R}},
                                  system_formulation::Type{S}) where {R<:PSY.RenewableGen,
                                                                      S<:PM.AbstractPowerFormulation}
 
@@ -269,7 +269,7 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 end
 
 function _nodal_expression_param(ps_m::CanonicalModel,
-                                forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministic{R}},
+                                forecasts::Vector{PSY.Deterministic{R}},
                                 system_formulation::Type{S}) where {R<:PSY.RenewableGen,
                                                                     S<:PM.AbstractActivePowerFormulation}
 
@@ -338,7 +338,7 @@ end
 
 ############################################## Time Series ###################################
 function _nodal_expression_fixed(ps_m::CanonicalModel,
-                                forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministic{R}},
+                                forecasts::Vector{PSY.Deterministic{R}},
                                 system_formulation::Type{S}) where {R<:PSY.RenewableGen,
                                                                     S<:PM.AbstractPowerFormulation}
 
@@ -365,7 +365,7 @@ end
 
 
 function _nodal_expression_fixed(ps_m::CanonicalModel,
-                                forecasts::PSY.FlattenIteratorWrapper{PSY.Deterministic{R}},
+                                forecasts::Vector{PSY.Deterministic{R}},
                                 system_formulation::Type{S}) where {R<:PSY.RenewableGen,
                                                                     S<:PM.AbstractActivePowerFormulation}
 
