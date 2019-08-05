@@ -141,7 +141,7 @@ end
                                     scrange_data::Vector{NamedMinMax},
                                     cons_name::Symbol,
                                     var_name::Symbol,
-                                    param_name::Symbol)
+                                    param_reference::RefParam)
 
 Constructs min/max range constraint from device variable with parameter setting.
 
@@ -171,13 +171,13 @@ where r in range_data.
 * scrange_data::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
-* param_name::Symbol : the name of the parameter
+* param_reference::RefParam : RefParam of the parameter
 """
 function device_semicontinuousrange_param(ps_m::CanonicalModel,
                                           scrange_data::Vector{NamedMinMax},
                                           cons_name::Symbol,
                                           var_name::Symbol,
-                                          param_name::Symbol)
+                                          param_reference::RefParam)
 
     time_steps = model_time_steps(ps_m)
     ub_name = _middle_rename(cons_name, "_", "ub")
@@ -188,16 +188,13 @@ function device_semicontinuousrange_param(ps_m::CanonicalModel,
 
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it. In the future this can be updated
     set_name = (r[1] for r in scrange_data)
-    _add_param_container!(ps_m, param_name, set_name, time_steps)
-    param = par(ps_m, param_name)
+    _add_param_container!(ps_m, param_reference, set_name, time_steps)
+    param = par(ps_m, param_reference)
 
     _add_cons_container!(ps_m, ub_name, set_name, time_steps)
     _add_cons_container!(ps_m, lb_name, set_name, time_steps)
     con_ub = con(ps_m, ub_name)
     con_lb = con(ps_m, lb_name)
-    #ps_m.parameters[param_name] = JuMPParamArray(undef, set_name, time_steps)
-    #ps_m.constraints[ub_name] = JuMPConstraintArray(undef, set_name, time_steps)
-    #ps_m.constraints[lb_name] = JuMPConstraintArray(undef, set_name, time_steps)
 
     for t in time_steps, r in scrange_data
         param[r[1], t] = PJ.add_parameter(ps_m.JuMPmodel, 1.0)

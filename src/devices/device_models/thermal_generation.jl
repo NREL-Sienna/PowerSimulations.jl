@@ -87,7 +87,7 @@ function activepower_constraints!(ps_m::CanonicalModel,
                                          range_data,
                                          Symbol("activerange_$(T)"),
                                          Symbol("P_$(T)"),
-                                         Symbol("ON_$(T)"))
+                                         RefParam{JuMP.VariableRef}(Symbol("ON_$(T)")))
     else
         device_range(ps_m,
                     range_data,
@@ -139,7 +139,7 @@ function activepower_constraints!(ps_m::CanonicalModel,
                                          range_data,
                                          Symbol("activerange_$(T)"),
                                          Symbol("P_$(T)"),
-                                         Symbol("ON_$(T)"))
+                                         RefParam{JuMP.VariableRef}(Symbol("ON_$(T)")))
     else
         device_range(ps_m,
                     range_data,
