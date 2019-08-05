@@ -62,7 +62,7 @@ thermal_generators5_uc_testing = [ThermalStandard("Alta", true, nodes5[1],
                             ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75)
                         ),
                         ThermalStandard("Solitude", true, nodes5[3],
-                            TechThermal(6.5, 5.20, (min=2.5, max=5.20), 1.00, (min =-3.90, max=3.90), (up=0.0012, down=0.0012), (up=5.0, down=3.0)),
+                            TechThermal(6.5, 2.70, (min=2.5, max=5.20), 1.00, (min =-3.90, max=3.90), (up=0.0012, down=0.0012), (up=5.0, down=3.0)),
                             ThreePartCost((0.0, 3000.0), 0.0, 3.0, 1.5)
                         ),
                         ThermalStandard("Sundance", true, nodes5[4],
