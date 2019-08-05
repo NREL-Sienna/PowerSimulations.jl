@@ -189,11 +189,11 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 
     include_parameters(ps_m,
                     ts_data_active,
-                    Symbol("P_$(H)"),
+                    RefParam{H}(Symbol("P_$(H)")),
                     :nodal_balance_active)
     include_parameters(ps_m,
                     ts_data_reactive,
-                    Symbol("Q_$(H)"),
+                    RefParam{H}(Symbol("Q_$(H)")),
                     :nodal_balance_reactive)
 
     return
@@ -215,7 +215,7 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 
     include_parameters(ps_m,
                     ts_data_active,
-                    Symbol("P_$(H)"),
+                    RefParam{H}(Symbol("P_$(H)")),
                     :nodal_balance_active)
 
     return
@@ -243,11 +243,11 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 
     include_parameters(ps_m,
                     ts_data_active,
-                    Symbol("P_$(H)"),
+                    RefParam{H}(Symbol("P_$(H)")),
                     :nodal_balance_active)
     include_parameters(ps_m,
                     ts_data_reactive,
-                    Symbol("Q_$(H)"),
+                    RefParam{H}(Symbol("Q_$(H)")),
                     :nodal_balance_reactive)
 
     return
@@ -271,7 +271,7 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 
     include_parameters(ps_m,
                     ts_data_active,
-                    Symbol("P_$(H)"),
+                    RefParam{H}(Symbol("P_$(H)")),
                     :nodal_balance_active)
 
     return

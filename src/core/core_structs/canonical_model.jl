@@ -1,5 +1,12 @@
 const DSDA = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
+"""Reference for parameters update when present"""
+struct RefParam{T}
+    access_ref::Symbol
+end
+
+const DRDA = Dict{RefParam, JuMP.Containers.DenseAxisArray}
+
 function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory}; kwargs...)
 
     if isa(optimizer, Nothing)
@@ -97,7 +104,7 @@ function _canonical_init(bus_numbers::Vector{Int64},
                                                      V,
                                                      bus_numbers,
                                                      time_steps; kwargs...),
-                              parameters ? DSDA() : nothing,
+                              parameters ? DRDA() : nothing,
                               Dict{Symbol,Array{InitialCondition}}(),
                               nothing);
 
@@ -117,7 +124,7 @@ mutable struct CanonicalModel
     constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
-    parameters::Union{Nothing, Dict{Symbol, JuMP.Containers.DenseAxisArray}}
+    parameters::Union{Nothing, Dict{RefParam, JuMP.Containers.DenseAxisArray}}
     initial_conditions::Dict{Symbol, Array{InitialCondition}}
     pm_model::Union{Nothing, PM.GenericPowerModel}
 
@@ -132,7 +139,7 @@ mutable struct CanonicalModel
                             constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray},
                             cost_function::JuMP.AbstractJuMPScalar,
                             expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray},
-                            parameters::Union{Nothing, Dict{Symbol, JuMP.Containers.DenseAxisArray}},
+                            parameters::Union{Nothing, Dict{RefParam, JuMP.Containers.DenseAxisArray}},
                             initial_conditions::Dict{Symbol, Array{InitialCondition}},
                             pm_model::Union{Nothing, PM.GenericPowerModel})
 
@@ -205,7 +212,7 @@ vars(ps_m::CanonicalModel) = ps_m.variables
 cons(ps_m::CanonicalModel) = ps_m.constraints
 var(ps_m::CanonicalModel, name::Symbol) = ps_m.variables[name]
 con(ps_m::CanonicalModel, name::Symbol) = ps_m.constraints[name]
-par(ps_m::CanonicalModel, name::Symbol) = ps_m.parameters[name]
+par(ps_m::CanonicalModel, param_reference::RefParam) = ps_m.parameters[param_reference]
 exp(ps_m::CanonicalModel, name::Symbol) = ps_m.expressions[name]
 ini_cond(ps_m::CanonicalModel, name::Symbol) = ps_m.initial_conditions[name]
 

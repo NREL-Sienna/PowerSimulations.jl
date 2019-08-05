@@ -124,7 +124,7 @@ function activepower_constraints(ps_m::CanonicalModel,
         device_timeseries_param_ub(ps_m,
                             _get_time_series(devices, time_steps),
                             Symbol("activerange_$(R)"),
-                            Symbol("$(R)"),
+                            RefParam{R}(Symbol("P_$(R)")),
                             Symbol("P_$(R)"))
 
     else
@@ -169,7 +169,7 @@ function activepower_constraints(ps_m::CanonicalModel,
         device_timeseries_param_ub(ps_m,
                                    _get_time_series(forecasts),
                                    Symbol("activerange_$(R)"),
-                                   Symbol("P_$(R)"),
+                                   RefParam{R}(Symbol("P_$(R)")),
                                    Symbol("P_$(R)"))
     else
         device_timeseries_ub(ps_m,
@@ -203,11 +203,11 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 
     include_parameters(ps_m,
                     ts_data_active,
-                    Symbol("P_$(R)"),
+                    RefParam{R}(Symbol("P_$(R)")),
                     :nodal_balance_active)
     include_parameters(ps_m,
                     ts_data_reactive,
-                    Symbol("Q_$(R)"),
+                    RefParam{R}(Symbol("Q_$(R)")),
                     :nodal_balance_reactive)
 
     return
@@ -229,7 +229,7 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 
     include_parameters(ps_m,
                     ts_data_active,
-                    Symbol("P_$(R)"),
+                    RefParam{R}(Symbol("P_$(R)")),
                     :nodal_balance_active)
 
     return
@@ -257,11 +257,11 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 
     include_parameters(ps_m,
                     ts_data_active,
-                    Symbol("P_$(R)"),
+                    RefParam{R}(Symbol("P_$(R)")),
                     :nodal_balance_active)
     include_parameters(ps_m,
                     ts_data_reactive,
-                    Symbol("Q_$(R)"),
+                    RefParam{R}(Symbol("Q_$(R)")),
                     :nodal_balance_reactive)
 
     return
@@ -285,7 +285,7 @@ function _nodal_expression_param(ps_m::CanonicalModel,
 
     include_parameters(ps_m,
                     ts_data_active,
-                    Symbol("P_$(R)"),
+                    RefParam{R}(Symbol("P_$(R)")),
                     :nodal_balance_active)
 
     return

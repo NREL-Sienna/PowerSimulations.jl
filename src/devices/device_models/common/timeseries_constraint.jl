@@ -89,7 +89,7 @@ end
     device_timeseries_param_ub(ps_m::CanonicalModel,
                                     ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
-                                    param_name::Symbol,
+                                    param_reference::RefParam,
                                     var_name::Symbol)
 
 Constructs upper bound for given variable and time series data parameter as upper bound.
@@ -106,13 +106,13 @@ Constructs upper bound for given variable and time series data parameter as uppe
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations
 * ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}} : timeseries data name (1) and values (2)
 * cons_name::Symbol : name of the constraint
-* param_name::Symbol : name of the parameter
+* param_reference::RefParam : RefParam of the parameter
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_param_ub(ps_m::CanonicalModel,
                                     ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
-                                    param_name::Symbol,
+                                    param_reference::RefParam,
                                     var_name::Symbol)
 
     time_steps = model_time_steps(ps_m)
@@ -120,8 +120,8 @@ function device_timeseries_param_ub(ps_m::CanonicalModel,
     variable = var(ps_m, var_name)
     _add_cons_container!(ps_m, ub_name, ts_data[1], time_steps)
     constraint = con(ps_m, ub_name)
-    _add_param_container!(ps_m, param_name, ts_data[1], time_steps)
-    param = par(ps_m, param_name)
+    _add_param_container!(ps_m, param_reference, ts_data[1], time_steps)
+    param = par(ps_m, param_reference)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
         param[name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[2][ix][t]);
@@ -136,7 +136,7 @@ end
     device_timeseries_param_lb(ps_m::CanonicalModel,
                                     ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
-                                    param_name::Symbol,
+                                    param_reference::RefParam,
                                     var_name::Symbol)
 
 Constructs upper bound for given variable and time series data parameter as upper bound.
@@ -153,13 +153,13 @@ Constructs upper bound for given variable and time series data parameter as uppe
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations
 * ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}} : timeseries data name (1) and values (2)
 * cons_name::Symbol : name of the constraint
-* param_name::Symbol : name of the parameter
+* param_reference::RefParam : RefParam of the parameter
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_param_lb(ps_m::CanonicalModel,
                                     ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
-                                    param_name::Symbol,
+                                    param_reference::RefParam,
                                     var_name::Symbol)
 
     time_steps = model_time_steps(ps_m)
@@ -167,8 +167,8 @@ function device_timeseries_param_lb(ps_m::CanonicalModel,
     lb_name = _middle_rename(cons_name, "_", "lb")
     _add_cons_container!(ps_m, lb_name, ts_data[1], time_steps)
     constraint = con(ps_m, lb_name)
-    _add_param_container!(ps_m, param_name, ts_data[1], time_steps)
-    param = par(ps_m, param_name)
+    _add_param_container!(ps_m, param_reference, ts_data[1], time_steps)
+    param = par(ps_m, param_reference)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
         param[name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[2][ix][t])
@@ -233,7 +233,7 @@ end
                                     ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
                                     var_name::Symbol,
-                                    param_name::Symbol,
+                                    param_reference::RefParam,
                                     binvar_name::Symbol,
                                     M_value::Float64 = 1e6)
 
@@ -257,6 +257,7 @@ Uses BigM constraint type to allow for parameter.
 * ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}} : timeseries data name (1) and values (2)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol :  name of the variable
+param_reference::RefParam : RefParam of the parameters
 * binvar_name::Symbol : name of binary variable
 * M_value::Float64 : bigM
 """
@@ -264,7 +265,7 @@ function device_timeseries_ub_bigM(ps_m::CanonicalModel,
                                     ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
                                     var_name::Symbol,
-                                    param_name::Symbol,
+                                    param_reference::RefParam,
                                     binvar_name::Symbol,
                                     M_value::Float64 = 1e6)
 
@@ -280,8 +281,8 @@ function device_timeseries_ub_bigM(ps_m::CanonicalModel,
     con_ub = con(ps_m, ub_name)
     con_status = con(ps_m, key_status)
 
-    _add_param_container!(ps_m, param_name, ts_data[1], time_steps)
-    param = par(ps_m, param_name)
+    _add_param_container!(ps_m, param_reference, ts_data[1], time_steps)
+    param = par(ps_m, param_reference)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
         param[name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[2][ix][t]);
