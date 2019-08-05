@@ -59,15 +59,15 @@ function device_commitment(ps_m::CanonicalModel,
         constraint[name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
                                varon[name, 1] == ic.value + varstart[name, 1] - varstop[name, 1])
         aux_constraint[name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
-                               varstart[name, 1] + - varstop[name, 1] <= 1.0)
+                               varstart[name, 1] + varstop[name, 1] <= 1.0)
     end
 
     for t in time_steps[2:end], i in initial_conditions
         name = PSY.get_name(i.device)
         constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel,
                         varon[name, t] == varon[name, t-1] + varstart[name, t] - varstop[name, t])
-        aux_constraint[name, 1] = JuMP.@constraint(ps_m.JuMPmodel,
-                                varstart[name, t] + - varstop[name, t] <= 1.0)
+        aux_constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel,
+                                varstart[name, t] + varstop[name, t] <= 1.0)
     end
 
     return
