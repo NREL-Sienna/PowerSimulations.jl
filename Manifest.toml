@@ -297,7 +297,9 @@ version = "0.12.2"
 
 [[PowerSystems]]
 deps = ["CSV", "DataFrames", "Dates", "InteractiveUtils", "JSON2", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "UUIDs", "YAML"]
-path = "/Users/jdlara/.julia/dev/PowerSystems"
+git-tree-sha1 = "28ecea264403d58c7edfa9f223f6a4d1b210cffd"
+repo-rev = "dev"
+repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
 version = "0.4.0"
 
