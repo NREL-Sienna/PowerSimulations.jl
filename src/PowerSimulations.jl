@@ -58,7 +58,9 @@ export run_sim_model!
 export set_stage_optimizer!
 ## Utils Exports
 export write_model_result
-export get_constraint_index
+export get_all_constraint_index
+export get_all_var_index
+export get_con_index
 export get_var_index
 
 
