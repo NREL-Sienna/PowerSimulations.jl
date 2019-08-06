@@ -58,7 +58,7 @@ end
 
 
 """Runs Simulations"""
-function run_sim_model!(sim::Simulation; verbose::Bool = false)
+function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
 
     if sim.ref.reset
         sim.ref.reset = false

@@ -1,3 +1,10 @@
+######## Structs for Inter-Model Feedback ########
+abstract type FeedbackModel end
+
+struct Synchronize <: FeedbackModel end
+struct RecedingHorizon <: FeedbackModel end
+
+######## Internal Simulation Object Structs ########
 mutable struct _Stage
     key::Int64
     model::OperationModel
@@ -20,13 +27,6 @@ mutable struct _Stage
     end
 
 end
-
-function _set_stage_optimizer!(stage::_Stage, optimizer_factory::JuMP.OptimizerFactory)
-    JuMP.set_optimizer(stage.model.canonical_mode.JuMPmodel,
-                       optimizer_factory)
-    stage.solver = JuMP.solver_name(stage.model.canonical_mode.JuMPmodel)
-end
-
 
 mutable struct SimulationRef
     raw::String
@@ -60,12 +60,14 @@ function _initialize_sim_ref(steps::Int64, stages_keys::Base.KeySet)
 
 end
 
+######## Exposed Structs to define a Simulation Object ########
+
 mutable struct Stage
     model::ModelReference
     execution_count::Int64
     sys::PSY.System
     optimizer::JuMP.OptimizerFactory
-    feedback_ref::Dict{NTuple{2,Int64}, Any}
+    feedback_ref::Dict{Int64, Type{<:FeedbackModel}}
 end
 
 mutable struct Simulation
@@ -102,4 +104,7 @@ mutable struct Simulation
 
 end
 
+################# accessor functions ####################
+
 get_steps(s::Simulation) = s.steps
+get_daterange(s::Simulation) = s.daterange
