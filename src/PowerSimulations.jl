@@ -54,7 +54,6 @@ export construct_device!
 export construct_network!
 ## Op Model Exports
 export solve_op_model!
-export write_memory_results
 ## Sim Model Exports
 export run_sim_model!
 export set_stage_optimizer!
@@ -64,7 +63,7 @@ export get_all_constraint_index
 export get_all_var_index
 export get_con_index
 export get_var_index
-export operation_model_read
+export load_operation_results
 
 
 #################################################################################

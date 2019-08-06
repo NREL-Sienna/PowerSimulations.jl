@@ -12,12 +12,10 @@ function _write_op_model(results::OperationModelResults, save_path::String)
         folder_path = new_folder
         write_variable_results(results.variables, folder_path) 
         write_optimizer_results(results.optimizer_log, folder_path)
-        write_time_results(results.times, folder_path)
+        write_time_stamps(results.times, folder_path)
         println("Files written to $folder_path folder.")
     
     end
-
-return results
 
 end
 

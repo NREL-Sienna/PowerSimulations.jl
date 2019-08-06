@@ -1,0 +1,13 @@
+[deps]
+Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+DataStreams = "9a8bc11e-79be-5b39-94d7-1ccc349a1a85"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+Feather = "becb17da-46f6-5d3c-ad1b-1c5fe96bc73c"
+FeatherFiles = "b675d258-116a-5741-b937-b79f054b0542"
+LibCURL = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
+MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+PowerSimulations = "e690365d-45e2-57bb-ac84-44ba829e73c4"
+PowerSystems = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
+TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"

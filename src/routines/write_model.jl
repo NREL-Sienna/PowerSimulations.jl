@@ -10,8 +10,8 @@ function write_memory_results(results::OperationModelResults, save_path::String)
     folder_path = new_folder
     write_variable_results(results.variables, folder_path) 
     write_optimizer_results(results.optimizer_log, folder_path)
-    write_time_results(results.times, folder_path)
-    return println("Files written to $folder_path.")
+    write_time_stamps(results.times, folder_path)
+   
 end
 # taking the outputted files for the variable DataFrame and writing them to a featherfile
 
@@ -45,7 +45,7 @@ end
 
 # taking the outputted files for the time_Series DataFrame and writing them to a featherfile
 
-function write_time_results(time_stamp::DataFrames.DataFrame, save_path::AbstractString)
+function write_time_stamps(time_stamp::DataFrames.DataFrame, save_path::AbstractString)
 
     df = DataFrames.DataFrame(time_stamp)
     file_path = joinpath(save_path,"time_stamp.feather")
@@ -55,20 +55,6 @@ function write_time_results(time_stamp::DataFrames.DataFrame, save_path::Abstrac
 end
 
 # These functions are writing directly to the feather file and skipping printing to memory.
-
-function write_model_result(ps_m::CanonicalModel, path::String)
-
-    for (k, v) in ps_m.variables
-
-        file_path = joinpath(path,"$(k).feather")
-
-        Feather.write(file_path, _result_dataframe(v))
-
-    end
-
-    return
-
-end
 
 function write_model_result(op_m::OperationModel, path::String)
 

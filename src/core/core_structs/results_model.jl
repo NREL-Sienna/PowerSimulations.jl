@@ -20,7 +20,7 @@ end
 
 # passing in name of folder path and the name of the folder
  
-function operation_model_read(path::AbstractString, directory::AbstractString) 
+function load_operation_results(path::AbstractString, directory::AbstractString) 
     
     folder_path = joinpath(path, directory)
     files_in_folder = collect(readdir(folder_path))
