@@ -114,6 +114,12 @@ function _feedback_rule_check(::Type{Synchronize},
                to synchronize with stage $(stage_number_to)")
     end
 
+    if (to_stage_count % from_stage_count) != 0
+        error("The number of steps in stage $(stage_number_to) needs to be a
+                mutiple of the horizon length of stage $(stage_number_from) to
+                use Synchronize")
+    end
+
     return
 
 end
