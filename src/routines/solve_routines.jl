@@ -35,7 +35,7 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
 end
 
 
-function _run_stage(stage::Stage, results_path::String)
+function _run_stage(stage::_Stage, results_path::String)
 
     for run in stage.execution_count
         if stage.model.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER

@@ -21,14 +21,13 @@ function _prepare_workspace!(ref::SimulationRef, base_name::String, folder::Stri
 
 end
 
-function _validate_steps(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}},
-                         steps::Int64) where {T<:PM.AbstractPowerFormulation}
+function _validate_steps(stages::Dict{Int64, Stage}, steps::Int64)
 
     for (k,v) in stages
 
-        forecast_count = length(PSY.get_forecast_initial_times(v[2]))
+        forecast_count = length(PSY.get_forecast_initial_times(v.sys))
 
-        if steps*v[3] > forecast_count #checks that there are enough time series to run
+        if steps*v.execution_count > forecast_count #checks that there are enough time series to run
             error("The number of available time series is not enough to perform the
                    desired amount of simulation steps.")
         end
@@ -39,16 +38,16 @@ function _validate_steps(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System
 
 end
 
-function _get_dates(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}}) where {T<:PM.AbstractPowerFormulation}
+function _get_dates(stages::Dict{Int64, Stage})
     k = keys(stages)
     k_size = length(k)
     range = Vector{Dates.DateTime}(undef, 2)
     @assert k_size == maximum(k)
 
     for i in 1:k_size
-        initial_times = PSY.get_forecast_initial_times(stages[i][2])
+        initial_times = PSY.get_forecast_initial_times(stages[i].sys)
         i == 1 && (range[1] = initial_times[1])
-        interval = PSY.get_forecasts_interval(stages[i][2])
+        interval = PSY.get_forecasts_interval(stages[i].sys)
         for (ix,element) in enumerate(initial_times[1:end-1])
             if !(element + interval == initial_times[ix+1])
                 error("The sequence of forecasts is invalid")
@@ -62,23 +61,23 @@ function _get_dates(stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int
 end
 
 function _build_stages(sim_ref::SimulationRef,
-                       stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}};
-                       kwargs...) where {T<:PM.AbstractPowerFormulation}
+                       stages::Dict{Int64, Stage};
+                       kwargs...)
 
-    mod_stages = Vector{Stage}(undef, length(stages))
+    mod_stages = Vector{_Stage}(undef, length(stages))
 
     for (k, v) in stages
         @info("Building Stage $(k)")
-        op_mod = OperationModel(DefaultOpModel, v[1], v[2];
-                                optimizer = v[4],
+        op_mod = OperationModel(DefaultOpModel, v.model, v.sys;
+                                optimizer = v.optimizer,
                                 sequential_runs = true,
                                 parameters = true, kwargs...)
         stage_path = joinpath(sim_ref.models,"stage_$(k)_model")
         mkpath(stage_path)
         write_op_model(op_mod, joinpath(stage_path, "optimization_model.json"))
-        PSY.to_json(v[2], joinpath(stage_path ,"sys_data.json"))
-        mod_stages[k] = Stage(k, op_mod, v[3])
-        sim_ref.date_ref[k] = PSY.get_forecast_initial_times(v[2])[1]
+        PSY.to_json(v.sys, joinpath(stage_path ,"sys_data.json"))
+        mod_stages[k] = _Stage(k, op_mod, v.execution_count, false)
+        sim_ref.date_ref[k] = PSY.get_forecast_initial_times(v.sys)[1]
     end
 
     return mod_stages
@@ -88,9 +87,9 @@ end
 function build_simulation!(sim_ref::SimulationRef,
                           base_name::String,
                           steps::Int64,
-                          stages::Dict{Int64, Tuple{ModelReference{T}, PSY.System, Int64, JuMP.OptimizerFactory}},
+                          stages::Dict{Int64, Stage},
                           simulation_folder::String;
-                          kwargs...) where {T<:PM.AbstractPowerFormulation}
+                          kwargs...)
 
 
     _validate_steps(stages, steps)

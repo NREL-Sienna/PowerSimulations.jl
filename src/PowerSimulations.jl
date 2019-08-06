@@ -4,6 +4,7 @@ module PowerSimulations
 # Exports
 
 # Base Models
+export Stage
 export Simulation
 export OperationModel
 export ModelReference
