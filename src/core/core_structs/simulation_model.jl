@@ -5,23 +5,28 @@ struct Synchronize <: FeedbackModel end
 struct RecedingHorizon <: FeedbackModel end
 
 ######## Internal Simulation Object Structs ########
-mutable struct _Stage
+abstract type AbstractStage end
+
+mutable struct _Stage <: AbstractStage
     key::Int64
     model::OperationModel
     execution_count::Int64
     optimizer::String
+    feedback_ref::Dict{Int64, Type{<:FeedbackModel}}
     update::Bool
 
     function _Stage(key::Int64,
                    model::OperationModel,
                    execution_count::Int64,
+                   feedback_ref::Dict{Int64, Type{<:FeedbackModel}},
                    update::Bool)
 
     new(key,
         model,
         execution_count,
         JuMP.solver_name(model.canonical.JuMPmodel),
-        update::Bool
+        feedback_ref,
+        update
         )
 
     end
@@ -62,13 +67,19 @@ end
 
 ######## Exposed Structs to define a Simulation Object ########
 
-mutable struct Stage
+mutable struct Stage <: AbstractStage
     model::ModelReference
     execution_count::Int64
     sys::PSY.System
     optimizer::JuMP.OptimizerFactory
     feedback_ref::Dict{Int64, Type{<:FeedbackModel}}
 end
+
+get_execution_count(s::S) where S <: AbstractStage = s.execution_count
+get_sys(s::S) where S <: AbstractStage = s.sys
+get_feedback_ref(s::S) where S <: AbstractStage = s.feedback_ref
+
+get_model_ref(s::Stage) = s.model
 
 mutable struct Simulation
     steps::Int64
@@ -82,7 +93,7 @@ mutable struct Simulation
                         steps::Int64,
                         stages::Dict{Int64, Stage},
                         simulation_folder::String;
-                        kwargs...)
+                        verbose::Bool = false, kwargs...)
 
 
     sim_ref = _initialize_sim_ref(steps, keys(stages))
@@ -92,7 +103,7 @@ mutable struct Simulation
                                                         steps,
                                                         stages,
                                                         simulation_folder;
-                                                        kwargs...)
+                                                        verbose = verbose, kwargs...)
 
     new(steps,
         stages_vector,
