@@ -30,7 +30,7 @@ end
         model = DeviceModel(PSY.InterruptibleLoad, m)
         op_model = OperationModel(TestOptModel, n, c_sys5_il; parameters = p)
         construct_device!(op_model, :Load, model);
-        moi_tests(op_model, p, 24, !p*24, 24 - !p*24, 0, 0, false)
+        moi_tests(op_model, p, 24, 0, 24, 0, 0, false)
         psi_checkobjfun_test(op_model, GAEVF)
     end
 end
@@ -43,7 +43,7 @@ end
         model = DeviceModel(PSY.InterruptibleLoad, m)
         op_model = OperationModel(TestOptModel, n, c_sys5_il; parameters = p)
         construct_device!(op_model, :Load, model);
-        moi_tests(op_model, p, 48, !p*24, 24 - !p*24, 0, 24, false)
+        moi_tests(op_model, p, 48, 0, 24, 0, 24, false)
         psi_checkobjfun_test(op_model, GAEVF)
     end
 end
@@ -66,7 +66,6 @@ end
     networks = [PM.StandardACPForm]
     param_spec = [true, false]
     for m in models, n in networks, p in param_spec
-        @show p
         model = DeviceModel(PSY.InterruptibleLoad, m)
         op_model = OperationModel(TestOptModel, n, c_sys5_il; parameters = p)
         construct_device!(op_model, :Load, model);

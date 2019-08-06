@@ -27,7 +27,7 @@ end
 
     op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5_uc; parameters = true)
     construct_device!(op_model, :Thermal, model)
-    moi_tests(op_model, true, 480, 0, 468, 132, 120, true)
+    moi_tests(op_model, true, 480, 0, 480, 120, 120, true)
     psi_constraint_test(op_model, uc_constraint_names)
     psi_checkbinvar_test(op_model, bin_variable_names)
     psi_checkobjfun_test(op_model, GAEVF)
@@ -62,7 +62,7 @@ end
 
     op_model = OperationModel(TestOptModel, PM.StandardACPForm, c_sys5_uc; parameters = true)
     construct_device!(op_model, :Thermal, model)
-    moi_tests(op_model, true, 600, 0, 588, 252, 120, true)
+    moi_tests(op_model, true, 600, 0, 600, 240, 120, true)
     psi_constraint_test(op_model, uc_constraint_names)
     psi_checkbinvar_test(op_model, bin_variable_names)
     psi_checkobjfun_test(op_model, GAEVF)
@@ -128,7 +128,7 @@ end
         op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5; parameters = p)
         construct_device!(op_model, :Thermal, model)
         moi_tests(op_model, p, 120, 120, 0, 0, 0, false)
-        moi_ubvalue_test(op_model, :activerange_ThermalStandard, 0.0)
+        moi_lbvalue_test(op_model, :activerange_ThermalStandard, 0.0)
         psi_checkobjfun_test(op_model, GAEVF)
     end
 
@@ -137,7 +137,7 @@ end
         op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys14; parameters = p)
         construct_device!(op_model, :Thermal, model)
         moi_tests(op_model, p, 120, 120, 0, 0, 0, false)
-        moi_ubvalue_test(op_model, :activerange_ThermalStandard, 0.0)
+        moi_lbvalue_test(op_model, :activerange_ThermalStandard, 0.0)
         psi_checkobjfun_test(op_model, GQEVF)
     end
 end
@@ -150,7 +150,7 @@ end
         op_model = OperationModel(TestOptModel, PM.StandardACPForm, c_sys5; parameters = p)
         construct_device!(op_model, :Thermal, model)
         moi_tests(op_model, p, 240, 240, 0, 0, 0, false)
-        moi_ubvalue_test(op_model, :activerange_ThermalStandard, 0.0)
+        moi_lbvalue_test(op_model, :activerange_ThermalStandard, 0.0)
         psi_checkobjfun_test(op_model, GAEVF)
     end
 
@@ -159,7 +159,7 @@ end
         op_model = OperationModel(TestOptModel, PM.StandardACPForm, c_sys14; parameters = p)
         construct_device!(op_model, :Thermal, model)
         moi_tests(op_model, p, 240, 240, 0, 0, 0, false)
-        moi_ubvalue_test(op_model, :activerange_ThermalStandard, 0.0)
+        moi_lbvalue_test(op_model, :activerange_ThermalStandard, 0.0)
         psi_checkobjfun_test(op_model, GQEVF)
     end
 end

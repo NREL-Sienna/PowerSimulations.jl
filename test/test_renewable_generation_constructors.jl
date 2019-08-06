@@ -14,8 +14,8 @@ end
     #5 Bus testing case
     op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5_re)
     construct_device!(op_model, :Renewable, model)
-    moi_tests(op_model, false, 72, 72, 0, 0, 0, false)
-    moi_ubvalue_test(op_model, :activerange_RenewableDispatch, 0.0)
+    moi_tests(op_model, false, 72, 0, 72, 0, 0, false)
+
     psi_checkobjfun_test(op_model, GAEVF)
 
     # Using Parameters Testing
@@ -27,7 +27,7 @@ end
     # No Forecast - No Parameters Testing
     op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5_re; forecast = false)
     construct_device!(op_model, :Renewable, model)
-    moi_tests(op_model, false, 3, 3, 0, 0, 0, false)
+    moi_tests(op_model, false, 3, 0, 3, 0, 0, false)
     psi_checkobjfun_test(op_model, GAEVF)
 
     # No Forecast Testing
@@ -46,8 +46,8 @@ end
             moi_tests(op_model, p, 144, 24, 72, 0, 48, false)
             psi_checkobjfun_test(op_model, GAEVF)
         else
-            moi_tests(op_model, p, 144, 96, 0, 0, 48, false)
-            moi_ubvalue_test(op_model, :activerange_RenewableDispatch, 0.0)
+            moi_tests(op_model, p, 144, 24, 72, 0, 48, false)
+
             psi_checkobjfun_test(op_model, GAEVF)
         end
     end
@@ -59,8 +59,8 @@ end
             moi_tests(op_model, p, 6, 1, 3, 0, 2, false)
             psi_checkobjfun_test(op_model, GAEVF)
         else
-            moi_tests(op_model, p, 6, 4, 0, 0, 2, false)
-            moi_ubvalue_test(op_model, :activerange_RenewableDispatch, 0.0)
+            moi_tests(op_model, p, 6, 1, 3, 0, 2, false)
+
             psi_checkobjfun_test(op_model, GAEVF)
         end
     end
@@ -72,8 +72,8 @@ end
     #5 Bus testing case
     op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5_re)
     construct_device!(op_model, :Renewable, model)
-    moi_tests(op_model, false, 72, 72, 0, 0, 0, false)
-    moi_ubvalue_test(op_model, :activerange_RenewableDispatch, 0.0)
+    moi_tests(op_model, false, 72, 0, 72, 0, 0, false)
+
     psi_checkobjfun_test(op_model, GAEVF)
 
     # Using Parameters Testing
@@ -85,7 +85,7 @@ end
     # No Forecast - No Parameters Testing
     op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5_re; forecast = false)
     construct_device!(op_model, :Renewable, model)
-    moi_tests(op_model, false, 3, 3, 0, 0, 0, false)
+    moi_tests(op_model, false, 3, 0, 3, 0, 0, false)
     psi_checkobjfun_test(op_model, GAEVF)
 
     # No Forecast Testing
@@ -104,8 +104,8 @@ end
             moi_tests(op_model, p, 144, 0, 72, 0, 72, false)
             psi_checkobjfun_test(op_model, GAEVF)
         else
-            moi_tests(op_model, p, 144, 72, 0, 0, 72, false)
-            moi_ubvalue_test(op_model, :activerange_RenewableDispatch, 0.0)
+            moi_tests(op_model, p, 144, 0, 72, 0, 72, false)
+
             psi_checkobjfun_test(op_model, GAEVF)
         end
     end
@@ -117,8 +117,8 @@ end
             moi_tests(op_model, p, 6, 0, 3, 0, 3, false)
             psi_checkobjfun_test(op_model, GAEVF)
         else
-            moi_tests(op_model, p, 6, 3, 0, 0, 3, false)
-            moi_ubvalue_test(op_model, :activerange_RenewableDispatch, 0.0)
+            moi_tests(op_model, p, 6, 0, 3, 0, 3, false)
+
             psi_checkobjfun_test(op_model, GAEVF)
         end
     end

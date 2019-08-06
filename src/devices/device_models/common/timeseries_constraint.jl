@@ -21,7 +21,7 @@ Constructs upper bound (and 0 as lower bound) for given variable and time series
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_ub(ps_m::CanonicalModel,
-                              ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
+                              ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
                               cons_name::Symbol,
                               var_name::Symbol)
 
@@ -32,7 +32,7 @@ function device_timeseries_ub(ps_m::CanonicalModel,
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
 
-        constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel, 0.0 <= variable[name, t] <= ts_data[2][ix][t])
+        constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t] <= ts_data[2][ix]*ts_data[3][ix][t])
 
     end
 
@@ -65,7 +65,7 @@ where (ix, name) in enumerate(ts_data[1]).
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_lb(ps_m::CanonicalModel,
-                              ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
+                              ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
                               cons_name::Symbol,
                               var_name::Symbol)
 
@@ -76,7 +76,7 @@ function device_timeseries_lb(ps_m::CanonicalModel,
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
 
-        constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel, ts_data[2][ix][t] <= variable[name, t])
+        constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel, ts_data[2][ix]*ts_data[3][ix][t] <= variable[name, t])
 
     end
 
@@ -110,7 +110,7 @@ Constructs upper bound for given variable and time series data parameter as uppe
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_param_ub(ps_m::CanonicalModel,
-                                    ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
+                                    ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
                                     param_reference::RefParam,
                                     var_name::Symbol)
@@ -124,8 +124,8 @@ function device_timeseries_param_ub(ps_m::CanonicalModel,
     param = par(ps_m, param_reference)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
-        param[name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[2][ix][t]);
-        constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t] <= param[name, t])
+        param[name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[3][ix][t])
+        constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel, variable[name, t] <= ts_data[2][ix]*param[name, t])
     end
 
     return
@@ -157,7 +157,7 @@ Constructs upper bound for given variable and time series data parameter as uppe
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_param_lb(ps_m::CanonicalModel,
-                                    ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
+                                    ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
                                     param_reference::RefParam,
                                     var_name::Symbol)
@@ -171,8 +171,8 @@ function device_timeseries_param_lb(ps_m::CanonicalModel,
     param = par(ps_m, param_reference)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
-        param[name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[2][ix][t])
-        constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel, param[name, t] <= variable[name, t])
+        param[name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[3][ix][t])
+        constraint[name, t] = JuMP.@constraint(ps_m.JuMPmodel, ts_data[2][ix]*param[name, t] <= variable[name, t])
     end
 
     return
@@ -206,7 +206,7 @@ where (ix, name) in enumerate(ts_data[1]).
 * binvar_name::Symbol : name of binary variable
 """
 function device_timeseries_ub_bin(ps_m::CanonicalModel,
-                                    ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
+                                    ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
@@ -221,7 +221,7 @@ function device_timeseries_ub_bin(ps_m::CanonicalModel,
     con_ub = con(ps_m, ub_name)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
-        con_ub[name, t] =  JuMP.@constraint(ps_m.JuMPmodel, varcts[name, t] <= varbin[name, t]*ts_data[2][ix][t])
+        con_ub[name, t] =  JuMP.@constraint(ps_m.JuMPmodel, varcts[name, t] <= varbin[name, t]*ts_data[2][ix]*ts_data[3][ix][t])
     end
 
     return
@@ -262,7 +262,7 @@ param_reference::RefParam : RefParam of the parameters
 * M_value::Float64 : bigM
 """
 function device_timeseries_ub_bigM(ps_m::CanonicalModel,
-                                    ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}},
+                                    ts_data::Tuple{Vector{String}, Vector{Float64},Vector{Vector{Float64}}},
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     param_reference::RefParam,
@@ -285,8 +285,8 @@ function device_timeseries_ub_bigM(ps_m::CanonicalModel,
     param = par(ps_m, param_reference)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
-        param[name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[2][ix][t]);
-        con_ub[name, t] = JuMP.@constraint(ps_m.JuMPmodel, varcts[name, t] - param[name, t] <= (1 - varbin[name, t])*M_value)
+        param[name, t] = PJ.add_parameter(ps_m.JuMPmodel, ts_data[3][ix][t])
+        con_ub[name, t] = JuMP.@constraint(ps_m.JuMPmodel, varcts[name, t] - param[name, t]*ts_data[2][ix] <= (1 - varbin[name, t])*M_value)
         con_status[name, t] =  JuMP.@constraint(ps_m.JuMPmodel, varcts[name, t] <= varbin[name, t]*M_value)
     end
 
