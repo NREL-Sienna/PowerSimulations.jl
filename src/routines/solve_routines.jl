@@ -80,6 +80,7 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false)
                 _run_stage(stage, raw_results_path)
                 sim.ref.run_count[s][ix] += 1
                 sim.ref.date_ref[ix] = sim.ref.date_ref[ix] + interval
+                update_stage!(stage, sim)
             end
         end
     end

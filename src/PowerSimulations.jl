@@ -165,6 +165,7 @@ include("service_models/services_constructor.jl")
 include("operation_models/operation_models.jl")
 
 #Simulations Model Files
+include("simulation_models/parameter_update.jl")
 include("simulation_models/simulation_feedback.jl")
 
 #Routines

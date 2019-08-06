@@ -1,9 +1,8 @@
-
 """Updates the forecast parameter value"""
 function parameter_update!(param_reference::PSI.RefParam{T},
-                           param_array,
-                           stage_number,
-                           sim) where T <: PSY.Component
+                           param_array::JuMPParamArray,
+                           stage_number::Int64,
+                           sim::Simulation) where T <: PSY.Component
 
     forecasts = PSY.get_component_forecasts(T,
                                             sim.stages[stage_number].model.sys,
@@ -15,4 +14,17 @@ function parameter_update!(param_reference::PSI.RefParam{T},
             JuMP.fix(val, value)
         end
     end
+
+    return
+
+end
+
+
+function parameter_update!(param_reference::PSI.RefParam{JuMP.VariableRef},
+                           param_array::JuMPParamArray,
+                           stage_number::Int64,
+                           sim::Simulation)
+
+    return
+
 end
