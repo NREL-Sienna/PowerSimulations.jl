@@ -1,37 +1,68 @@
 """ Solves Operational Models"""
+
+function _write_op_model(results::OperationModelResults, save_path::String)
+    
+    if !isdir(save_path) 
+
+        @error "Specified path is not valid. Run write_memory_results to save results."
+
+    else
+
+        new_folder = mkdir("$save_path/$(round(Dates.now(),Dates.Minute))")
+        folder_path = new_folder
+        write_variable_results(results.variables, folder_path) 
+        write_optimizer_results(results.optimizer_log, folder_path)
+        write_time_results(results.times, folder_path)
+        println("Files written to $folder_path folder.")
+    
+    end
+
+return results
+
+end
+
 function solve_op_model!(op_model::OperationModel; kwargs...)
 
     timed_log = Dict{Symbol, Any}()
 
-    if op_model.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
+    save_path = get(kwargs, :save_path, nothing)
+    
+        if op_model.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
 
-        if !(:optimizer in keys(kwargs))
+            if !(:optimizer in keys(kwargs))
 
-            error("No Optimizer has been defined, can't solve the operational problem")
+                error("No Optimizer has been defined, can't solve the operational problem")
+
+            else
+                _, timed_log[:timed_solve_time],
+                timed_log[:solve_bytes_alloc],
+                timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel,
+                                                                kwargs[:optimizer])
+
+            end
 
         else
+
             _, timed_log[:timed_solve_time],
             timed_log[:solve_bytes_alloc],
-            timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel,
-                                                          kwargs[:optimizer])
+            timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel)
 
         end
+        #creating the results to print to memory
+        vars_result = get_model_result(op_model)
+        optimizer_log = get_optimizer_log(op_model)
+        time_stamp = get_time_stamp(op_model)
+        obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_model.canonical.JuMPmodel))
+        merge!(optimizer_log, timed_log)
 
-    else
+        #results to be printed to memory
+        results = OperationModelResults(vars_result, obj_value, optimizer_log, time_stamp)
 
-        _, timed_log[:timed_solve_time],
-        timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel)
-
-    end
-
-    vars_result = get_model_result(op_model)
-    optimizer_log = get_optimizer_log(op_model)
-    obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_model.canonical.JuMPmodel))
-    merge!(optimizer_log, timed_log)
-
-    return OpertationModelResults(vars_result, obj_value, optimizer_log)
-
+         if isnothing(save_path)
+         else
+            results = _write_op_model(results, save_path)
+         end
+return results
 end
 
 
