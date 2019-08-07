@@ -1,32 +1,37 @@
-mutable struct _Stage
+######## Structs for Inter-Model Feedback ########
+abstract type FeedbackModel end
+
+struct Synchronize <: FeedbackModel end
+struct RecedingHorizon <: FeedbackModel end
+
+######## Internal Simulation Object Structs ########
+abstract type AbstractStage end
+
+mutable struct _Stage <: AbstractStage
     key::Int64
     model::OperationModel
     execution_count::Int64
     optimizer::String
+    feedback_ref::Dict{Int64, Type{<:FeedbackModel}}
     update::Bool
 
     function _Stage(key::Int64,
                    model::OperationModel,
                    execution_count::Int64,
+                   feedback_ref::Dict{Int64, Type{<:FeedbackModel}},
                    update::Bool)
 
     new(key,
         model,
         execution_count,
         JuMP.solver_name(model.canonical.JuMPmodel),
-        update::Bool
+        feedback_ref,
+        update
         )
 
     end
 
 end
-
-function _set_stage_optimizer!(stage::_Stage, optimizer_factory::JuMP.OptimizerFactory)
-    JuMP.set_optimizer(stage.model.canonical_mode.JuMPmodel,
-                       optimizer_factory)
-    stage.solver = JuMP.solver_name(stage.model.canonical_mode.JuMPmodel)
-end
-
 
 mutable struct SimulationRef
     raw::String
@@ -60,13 +65,21 @@ function _initialize_sim_ref(steps::Int64, stages_keys::Base.KeySet)
 
 end
 
-mutable struct Stage
+######## Exposed Structs to define a Simulation Object ########
+
+mutable struct Stage <: AbstractStage
     model::ModelReference
     execution_count::Int64
     sys::PSY.System
     optimizer::JuMP.OptimizerFactory
-    feedback_ref::Dict{NTuple{2,Int64}, Any}
+    feedback_ref::Dict{Int64, Type{<:FeedbackModel}}
 end
+
+get_execution_count(s::S) where S <: AbstractStage = s.execution_count
+get_sys(s::S) where S <: AbstractStage = s.sys
+get_feedback_ref(s::S) where S <: AbstractStage = s.feedback_ref
+
+get_model_ref(s::Stage) = s.model
 
 mutable struct Simulation
     steps::Int64
@@ -80,7 +93,7 @@ mutable struct Simulation
                         steps::Int64,
                         stages::Dict{Int64, Stage},
                         simulation_folder::String;
-                        kwargs...)
+                        verbose::Bool = false, kwargs...)
 
 
     sim_ref = _initialize_sim_ref(steps, keys(stages))
@@ -90,7 +103,7 @@ mutable struct Simulation
                                                         steps,
                                                         stages,
                                                         simulation_folder;
-                                                        kwargs...)
+                                                        verbose = verbose, kwargs...)
 
     new(steps,
         stages_vector,
@@ -102,4 +115,7 @@ mutable struct Simulation
 
 end
 
+################# accessor functions ####################
+
 get_steps(s::Simulation) = s.steps
+get_daterange(s::Simulation) = s.daterange

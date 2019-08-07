@@ -92,7 +92,8 @@ function get_time_stamp(op_model::OperationModel)
 
     initial_time = PSY.get_forecast_initial_times(op_model.sys)[1]
     interval = PSY.get_forecasts_resolution(op_model.sys)
-    range = collect(initial_time:interval:initial_time+ Dates.Hour(24))
+    horizon = PSY.get_forecasts_horizon(op_model.sys)
+    range = collect(initial_time:interval:initial_time+ interval.*horizon)
     time_stamp = DataFrames.DataFrame(Range = range[:,1])
   
     return time_stamp

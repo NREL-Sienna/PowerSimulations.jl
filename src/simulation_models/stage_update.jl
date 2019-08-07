@@ -19,11 +19,20 @@ function parameter_update!(param_reference::PSI.RefParam{T},
 
 end
 
-
 function parameter_update!(param_reference::PSI.RefParam{JuMP.VariableRef},
                            param_array::JuMPParamArray,
                            stage_number::Int64,
                            sim::Simulation)
+
+    return
+
+end
+
+function update_stage!(stage::_Stage, sim::Simulation)
+
+    for (k, v) in stage.model.canonical.parameters
+        parameter_update!(k, v, stage.key, sim)
+    end
 
     return
 

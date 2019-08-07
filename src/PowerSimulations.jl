@@ -43,6 +43,10 @@ export ThermalDispatch
 export ThermalRampLimited
 export ThermalDispatchNoMin
 
+# Feedback Models
+export RecedingHorizon
+export Synchronize
+
 #operation_models
 #export UnitCommitment
 #export EconomicDispatch
@@ -56,7 +60,6 @@ export construct_network!
 export solve_op_model!
 ## Sim Model Exports
 export run_sim_model!
-export set_stage_optimizer!
 ## Utils Exports
 export write_model_result
 export get_all_constraint_index
@@ -167,8 +170,7 @@ include("service_models/services_constructor.jl")
 include("operation_models/operation_models.jl")
 
 #Simulations Model Files
-include("simulation_models/parameter_update.jl")
-include("simulation_models/simulation_feedback.jl")
+include("simulation_models/stage_update.jl")
 
 #Routines
 include("routines/get_results.jl")

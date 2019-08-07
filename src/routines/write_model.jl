@@ -4,7 +4,7 @@ function write_op_model(op_model::OperationModel, path::String)
     MOI.write_to_file(MOF_model, path)
 end
 
-function write_memory_results(results::OperationModelResults, save_path::String)
+function write_results(results::OperationModelResults, save_path::String)
 
     new_folder = mkdir("$save_path/$(round(Dates.now(),Dates.Minute))")
     folder_path = new_folder

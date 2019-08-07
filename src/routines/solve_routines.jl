@@ -1,20 +1,21 @@
 """ Solves Operational Models"""
 
 function _write_op_model(results::OperationModelResults, save_path::String)
-    
-    if !isdir(save_path) 
+ 
+    try 
 
-        @error "Specified path is not valid. Run write_memory_results to save results."
-
-    else
-
+        isdir(save_path)
         new_folder = mkdir("$save_path/$(round(Dates.now(),Dates.Minute))")
         folder_path = new_folder
         write_variable_results(results.variables, folder_path) 
         write_optimizer_results(results.optimizer_log, folder_path)
         write_time_stamps(results.times, folder_path)
         println("Files written to $folder_path folder.")
-    
+
+    catch 
+        
+        @error("Specified path is not valid. Run write_results to save results.")
+        
     end
 
 end
@@ -58,9 +59,9 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
 
          if isnothing(save_path)
          else
-            results = _write_op_model(results, save_path)
+             _write_op_model(results, save_path)
          end
-return results
+     return results
 end
 
 
@@ -87,7 +88,7 @@ end
 
 
 """Runs Simulations"""
-function run_sim_model!(sim::Simulation; verbose::Bool = false)
+function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
 
     if sim.ref.reset
         sim.ref.reset = false

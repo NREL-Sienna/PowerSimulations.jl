@@ -32,12 +32,14 @@ function OperationModel(::Type{M},
                         kwargs...) where {M<:AbstractOperationModel,
                                             T<:PM.AbstractPowerFormulation}
 
+    verbose = get(kwargs, :verbose, true)
     canonical = _build_canonical(model_ref.transmission,
                                 model_ref.devices,
                                 model_ref.branches,
                                 model_ref.services,
                                 sys,
-                                optimizer;
+                                optimizer,
+                                verbose;
                                 kwargs...)
 
     return  OperationModel(M, model_ref, sys, canonical)
@@ -77,38 +79,38 @@ get_services_ref(op_model::OperationModel) = op_model.model_ref.services
 get_system(op_model::OperationModel) = op_model.sys
 
 function set_transmission_ref!(op_model::OperationModel,
-                               transmission::Type{T}) where {T<:PM.AbstractPowerFormulation}
+                               transmission::Type{T}; kwargs...) where {T<:PM.AbstractPowerFormulation}
     op_model.model_ref.transmission = transmission
-    build_op_model!(op_model)
+    build_op_model!(op_model; kwargs...)
     return
 end
 
-function set_devices_ref!(op_model::OperationModel, devices::Dict{Symbol, DeviceModel})
+function set_devices_ref!(op_model::OperationModel, devices::Dict{Symbol, DeviceModel}; kwargs...)
     op_model.model_ref.devices = devices
-    build_op_model!(op_model)
+    build_op_model!(op_model; kwargs...)
     return
 end
 
-function set_branches_ref!(op_model::OperationModel, branches::Dict{Symbol, DeviceModel})
+function set_branches_ref!(op_model::OperationModel, branches::Dict{Symbol, DeviceModel}; kwargs...)
     op_model.model_ref.branches = branches
-    build_op_model!(op_model)
+    build_op_model!(op_model; kwargs...)
     return
 end
 
-function add_services_ref!(op_model::OperationModel, services::Dict{Symbol, DeviceModel})
+function add_services_ref!(op_model::OperationModel, services::Dict{Symbol, DeviceModel}; kwargs...)
     op_model.model_ref.services = services
-    build_op_model!(op_model)
+    build_op_model!(op_model; kwargs...)
     return
 end
 
 function set_device_model!(op_model::OperationModel,
                            name::Symbol,
-                           device::DeviceModel{D, B}) where {D<:PSY.Injection,
-                                                             B<:AbstractDeviceFormulation}
+                           device::DeviceModel{D, B}; kwargs...) where {D<:PSY.Injection,
+                                                                        B<:AbstractDeviceFormulation}
 
     if haskey(op_model.model_ref.devices, name)
         op_model.model_ref.devices[name] = device
-        build_op_model!(op_model)
+        build_op_model!(op_model; kwargs...)
     else
         error("Device Model with name $(name) doesn't exist in the model")
     end
