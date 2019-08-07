@@ -12,7 +12,7 @@ Constructs upper bound for given variable and time series data and a multiplier.
 
 # LaTeX
 
-`` x_t \leq r^{val} * r_t, \forall t ``
+`` x_t \leq r^{val} r_t, \forall t ``
 
 # Arguments
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations
@@ -54,7 +54,7 @@ Constructs lower bound for given variable subject to time series data and a mult
 
 # LaTeX
 
-`` r^{var} r_t \leq x_t, \forall t ``
+`` r^{val} r_t \leq x_t, \forall t ``
 
 where (ix, name) in enumerate(ts_data[1]).
 
@@ -97,11 +97,11 @@ Constructs upper bound for given variable using a parameter. The constraint is
 
 # Constraint
 
-``` variable[name, t] <= val * param[name, t] ```
+``` variable[name, t] <= ts_data[2][ix]*param[name, t] ```
 
 # LaTeX
 
-`` x^{var}_t \leq x^{val} x^{param}_t, \forall t ``
+`` x^{var}_t \leq r^{val} x^{param}_t, \forall t ``
 
 # Arguments
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations
@@ -145,11 +145,11 @@ Constructs lower bound for given variable using a parameter. The constraint is
 
 # Constraint
 
-``` val * param[name, t] <= variable[name, t] ```
+``` ts_data[2][ix] * param[name, t] <= variable[name, t] ```
 
 # LaTeX
 
-`` x^{val} x^{param}_t \leq x^{var}_t, \forall t ``
+`` r^{val} x^{param}_t \leq x^{var}_t, \forall t ``
 
 # Arguments
 * ps_m::CanonicalModel : the canonical model built in PowerSimulations
@@ -245,13 +245,13 @@ Constructs upper bound for variable and time series and a multiplier or confines
 
 # Constraints
 
-``` varcts[name, t] - val * param[name, t] <= (1 - varbin[name, t])*M_value ```
+``` varcts[name, t] - ts_data[2][ix] * param[name, t] <= (1 - varbin[name, t])*M_value ```
 
 ``` varcts[name, t] <= varbin[name, t]*M_value ```
 
 # LaTeX
 
-`` x^{cts}_t - x^{val} * x^{param}_t \leq M(1 - x^{bin}_t ), forall t ``
+`` x^{cts}_t - r^{val} x^{param}_t \leq M(1 - x^{bin}_t ), forall t ``
 
 `` x^{cts}_t \leq M x^{bin}_t, \forall t ``
 
