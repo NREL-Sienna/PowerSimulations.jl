@@ -8,8 +8,9 @@ services = Dict{Symbol, PSI.ServiceModel}()
     model_ref = ModelReference(CopperPlatePowerModel, devices, branches, services);
     op_model = OperationModel(TestOptModel, model_ref,
                                             c_sys5;
-                                            optimizer = GLPK_optimizer)
-    j_model = op_model.canonical_model.JuMPmodel
+                                            optimizer = GLPK_optimizer,
+                                            parameters = true)
+    j_model = op_model.canonical.JuMPmodel
     @test (:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 120
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 120
@@ -22,8 +23,8 @@ services = Dict{Symbol, PSI.ServiceModel}()
     op_model = OperationModel(TestOptModel, model_ref,
                                             c_sys14;
                                             optimizer = OSQP_optimizer)
-    j_model = op_model.canonical_model.JuMPmodel
-    @test (:params in keys(j_model.ext))
+    j_model = op_model.canonical.JuMPmodel
+    @test !(:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 120
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 120
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == 0
@@ -36,8 +37,8 @@ services = Dict{Symbol, PSI.ServiceModel}()
                                             c_sys5_re;
                                             forecast = false,
                                             optimizer = GLPK_optimizer)
-    j_model = op_model.canonical_model.JuMPmodel
-    @test (:params in keys(j_model.ext))
+    j_model = op_model.canonical.JuMPmodel
+    @test !(:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 5
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 5
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.LessThan{Float64}) == 0
@@ -51,7 +52,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
                                             forecast = false,
                                             parameters = false,
                                             optimizer = GLPK_optimizer)
-    j_model = op_model.canonical_model.JuMPmodel
+    j_model = op_model.canonical.JuMPmodel
     @test !(:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 5
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 5
@@ -86,7 +87,7 @@ end
                    c_sys5_re,
                    c_sys5_bat];
 
-    for net in networks, thermal in thermal_gens, system in systems
+    for net in networks, thermal in thermal_gens, system in systems, p in [true, false]
         @testset "Operation Model $(net) - $(thermal) - $(system)" begin
             thermal_model = DeviceModel(PSY.ThermalStandard, thermal)
             devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, thermal),
@@ -95,9 +96,9 @@ end
             model_ref = ModelReference(net, devices, branches, services);
             op_model = OperationModel(TestOptModel,
                                       model_ref,
-                                      system; PTDF = PTDF5);
-        @test :nodal_balance_active in keys(op_model.canonical_model.expressions)
-        @test (:params in keys(op_model.canonical_model.JuMPmodel.ext))
+                                      system; PTDF = PTDF5, parameters = p);
+        @test :nodal_balance_active in keys(op_model.canonical.expressions)
+        @test (:params in keys(op_model.canonical.JuMPmodel.ext)) == p
         end
 
 

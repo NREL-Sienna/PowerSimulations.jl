@@ -3,9 +3,9 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
                                         sys::PSY.System;
-                                        kwargs...) where {L <: PSY.ControllableLoad,
-                                                            D <: AbstractControllablePowerLoadForm,
-                                                            S <: PM.AbstractPowerFormulation}
+                                        kwargs...) where {L<:PSY.ControllableLoad,
+                                                            D<:AbstractControllablePowerLoadForm,
+                                                            S<:PM.AbstractPowerFormulation}
 
     forecast = get(kwargs, :forecast, true)
 
@@ -22,8 +22,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     #Constraints
     if forecast
-        first_step = PSY.get_forecasts_initial_time(sys)
-        forecasts = PSY.get_forecasts(PSY.Deterministic{L}, sys, first_step)
+        forecasts = _retrieve_forecasts(sys, L)
         activepower_constraints(ps_m, forecasts, device_formulation, system_formulation)
     else
         activepower_constraints(ps_m, devices, device_formulation, system_formulation)
@@ -43,9 +42,9 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
                                         sys::PSY.System;
-                                        kwargs...) where {L <: PSY.ControllableLoad,
-                                                            D <: AbstractControllablePowerLoadForm,
-                                                            S <: PM.AbstractActivePowerFormulation}
+                                        kwargs...) where {L<:PSY.ControllableLoad,
+                                                            D<:AbstractControllablePowerLoadForm,
+                                                            S<:PM.AbstractActivePowerFormulation}
 
     forecast = get(kwargs, :forecast, true)
 
@@ -60,8 +59,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     #Constraints
     if forecast
-        first_step = PSY.get_forecasts_initial_time(sys)
-        forecasts = PSY.get_forecasts(PSY.Deterministic{L}, sys, first_step)
+        forecasts = _retrieve_forecasts(sys, L)
         activepower_constraints(ps_m, forecasts, device_formulation, system_formulation)
     else
         activepower_constraints(ps_m, devices, device_formulation, system_formulation)
@@ -79,8 +77,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{InterruptiblePowerLoad},
                                         system_formulation::Type{S},
                                         sys::PSY.System;
-                                        kwargs...) where {L <: PSY.ControllableLoad,
-                                                          S <: PM.AbstractPowerFormulation}
+                                        kwargs...) where {L<:PSY.ControllableLoad,
+                                                          S<:PM.AbstractPowerFormulation}
 
     forecast = get(kwargs, :forecast, true)
 
@@ -99,8 +97,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     #Constraints
     if forecast
-        first_step = PSY.get_forecasts_initial_time(sys)
-        forecasts = PSY.get_forecasts(PSY.Deterministic{L}, sys, first_step)
+        forecasts = _retrieve_forecasts(sys, L)
         activepower_constraints(ps_m, forecasts, device_formulation, system_formulation)
     else
         activepower_constraints(ps_m, devices, device_formulation, system_formulation)
@@ -120,8 +117,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{InterruptiblePowerLoad},
                                         system_formulation::Type{S},
                                         sys::PSY.System;
-                                        kwargs...) where {L <: PSY.ControllableLoad,
-                                                          S <: PM.AbstractActivePowerFormulation}
+                                        kwargs...) where {L<:PSY.ControllableLoad,
+                                                          S<:PM.AbstractActivePowerFormulation}
 
     forecast = get(kwargs, :forecast, true)
 
@@ -138,8 +135,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     #Constraints
     if forecast
-        first_step = PSY.get_forecasts_initial_time(sys)
-        forecasts = PSY.get_forecasts(PSY.Deterministic{L}, sys, first_step)
+        forecasts = _retrieve_forecasts(sys, L)
         activepower_constraints(ps_m, forecasts, device_formulation, system_formulation)
     else
         activepower_constraints(ps_m, devices, device_formulation, system_formulation)
@@ -157,8 +153,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{StaticPowerLoad},
                                         system_formulation::Type{S},
                                         sys::PSY.System;
-                                        kwargs...) where {L <: PSY.ElectricLoad,
-                                                          S <: PM.AbstractPowerFormulation}
+                                        kwargs...) where {L<:PSY.ElectricLoad,
+                                                          S<:PM.AbstractPowerFormulation}
 
     forecast = get(kwargs, :forecast, true)
 
@@ -169,8 +165,7 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     end
 
     if forecast
-        first_step = PSY.get_forecasts_initial_time(sys)
-        forecasts = PSY.get_forecasts(PSY.Deterministic{L}, sys, first_step)
+        forecasts = _retrieve_forecasts(sys, L)
         nodal_expression(ps_m, forecasts, system_formulation)
     else
         nodal_expression(ps_m, devices, system_formulation)
@@ -185,9 +180,9 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
                                         sys::PSY.System;
-                                        kwargs...) where {L <: PSY.StaticLoad,
-                                                          D <: AbstractControllablePowerLoadForm,
-                                                          S <: PM.AbstractPowerFormulation}
+                                        kwargs...) where {L<:PSY.StaticLoad,
+                                                          D<:AbstractControllablePowerLoadForm,
+                                                          S<:PM.AbstractPowerFormulation}
 
     if device_formulation != StaticPowerLoad
         @warn("The Formulation $(D) only applies to Controllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad")

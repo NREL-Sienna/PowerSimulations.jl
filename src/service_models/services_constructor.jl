@@ -3,9 +3,9 @@ function construct_service!(ps_m::CanonicalModel,
                             service_formulation::Type{SV},
                             system_formulation::Type{S},
                             sys::PSY.System;
-                            kwargs...) where {SD <: PSY.Service,
-                                              SV <: AbstractServiceFormulation,
-                                              S <:  PM.AbstractPowerFormulation}
+                            kwargs...) where {SD<:PSY.Service,
+                                              SV<:AbstractServiceFormulation,
+                                              S<: PM.AbstractPowerFormulation}
 
     return
 

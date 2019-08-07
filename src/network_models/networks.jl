@@ -1,6 +1,6 @@
-abstract type CopperPlatePowerModel <: PM.AbstractActivePowerFormulation  end
+abstract type CopperPlatePowerModel<:PM.AbstractActivePowerFormulation  end
 
-abstract type StandardPTDFForm <: PM.DCPlosslessForm end
+abstract type StandardPTDFForm<:PM.DCPlosslessForm end
 
 #= This code is from PowerModel's network definitions. Added here just for reference.
 
@@ -35,19 +35,19 @@ export
 ##### Top Level Abstract Types #####
 
 "active power only models"
-abstract type AbstractActivePowerFormulation <: AbstractPowerFormulation end
+abstract type AbstractActivePowerFormulation<:AbstractPowerFormulation end
 
 "variants that target conic solvers"
-abstract type AbstractConicPowerFormulation <: AbstractPowerFormulation end
+abstract type AbstractConicPowerFormulation<:AbstractPowerFormulation end
 
 "for branch flow models"
-abstract type AbstractBFForm <: AbstractPowerFormulation end
+abstract type AbstractBFForm<:AbstractPowerFormulation end
 
 "for variants of branch flow models that target QP or NLP solvers"
-abstract type AbstractBFQPForm <: AbstractBFForm end
+abstract type AbstractBFQPForm<:AbstractBFForm end
 
 "for variants of branch flow models that target conic solvers"
-abstract type AbstractBFConicForm <: AbstractBFForm end
+abstract type AbstractBFConicForm<:AbstractBFForm end
 
 
 
@@ -56,10 +56,10 @@ abstract type AbstractBFConicForm <: AbstractBFForm end
 ##### Exact Non-Convex Models #####
 
 ""
-abstract type AbstractACPForm <: AbstractPowerFormulation end
+abstract type AbstractACPForm<:AbstractPowerFormulation end
 
 ""
-abstract type StandardACPForm <: AbstractACPForm end
+abstract type StandardACPForm<:AbstractACPForm end
 
 """
 AC power flow formulation with polar bus voltage variables.
@@ -95,10 +95,10 @@ ACPPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, Stan
 
 
 ""
-abstract type AbstractACRForm <: AbstractPowerFormulation end
+abstract type AbstractACRForm<:AbstractPowerFormulation end
 
 ""
-abstract type StandardACRForm <: AbstractACRForm end
+abstract type StandardACRForm<:AbstractACRForm end
 
 """
 AC power flow formulation with rectangular bus voltage variables.
@@ -119,10 +119,10 @@ const ACRPowerModel = GenericPowerModel{StandardACRForm}
 ACRPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, StandardACRForm; kwargs...)
 
 ""
-abstract type AbstractACTForm <: AbstractPowerFormulation end
+abstract type AbstractACTForm<:AbstractPowerFormulation end
 
 ""
-abstract type StandardACTForm <: AbstractACTForm end
+abstract type StandardACTForm<:AbstractACTForm end
 
 """
 AC power flow formulation (nonconvex) with variables for voltage angle, voltage magnitude squared, and real and imaginary part of voltage crossproducts. A tangens constraint is added to represent meshed networks in an exact manner.
@@ -156,10 +156,10 @@ ACTPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, Stan
 
 
 ""
-abstract type AbstractDCPForm <: AbstractActivePowerFormulation end
+abstract type AbstractDCPForm<:AbstractActivePowerFormulation end
 
 "active power only formulations where p[(i, j)] = -p[(j, i)]"
-abstract type DCPlosslessForm <: AbstractDCPForm end
+abstract type DCPlosslessForm<:AbstractDCPForm end
 
 
 """
@@ -187,7 +187,7 @@ DCPPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, DCPl
 
 
 
-abstract type NFAForm <: DCPlosslessForm end
+abstract type NFAForm<:DCPlosslessForm end
 
 """
 The an active power only network flow approximation, also known as the transportation model.
@@ -206,10 +206,10 @@ NFAPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, NFAF
 
 
 ""
-abstract type AbstractDCPLLForm <: AbstractDCPForm end
+abstract type AbstractDCPLLForm<:AbstractDCPForm end
 
 ""
-abstract type StandardDCPLLForm <: AbstractDCPLLForm end
+abstract type StandardDCPLLForm<:AbstractDCPLLForm end
 
 ""
 const DCPLLPowerModel = GenericPowerModel{StandardDCPLLForm}
@@ -220,9 +220,9 @@ DCPLLPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, St
 
 
 ""
-abstract type AbstractLPACForm <: AbstractPowerFormulation end
+abstract type AbstractLPACForm<:AbstractPowerFormulation end
 
-abstract type AbstractLPACCForm <: AbstractLPACForm end
+abstract type AbstractLPACCForm<:AbstractLPACForm end
 
 """
 The LPAC Cold-Start AC Power Flow Approximation.
@@ -265,16 +265,16 @@ LPACCPowerModel(data::Dict{String, Any}; kwargs...) =
 ##### Quadratic Relaxations #####
 
 ""
-abstract type AbstractWRForm <: AbstractPowerFormulation end
+abstract type AbstractWRForm<:AbstractPowerFormulation end
 
 ""
-abstract type AbstractWRConicForm <: AbstractConicPowerFormulation end
+abstract type AbstractWRConicForm<:AbstractConicPowerFormulation end
 
 ""
-abstract type SOCWRConicForm <: AbstractWRConicForm end
+abstract type SOCWRConicForm<:AbstractWRConicForm end
 
 ""
-abstract type SOCWRForm <: AbstractWRForm end
+abstract type SOCWRForm<:AbstractWRForm end
 
 """
 Second-order cone relaxation of bus injection model of AC OPF.
@@ -311,7 +311,7 @@ SOCWRConicPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(dat
 
 
 ""
-abstract type QCWRForm <: AbstractWRForm end
+abstract type QCWRForm<:AbstractWRForm end
 
 """
 "Quadratic-Convex" relaxation of AC OPF
@@ -339,7 +339,7 @@ QCWRPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, QCW
 
 
 ""
-abstract type QCWRTriForm <: QCWRForm end
+abstract type QCWRTriForm<:QCWRForm end
 
 """
 "Quadratic-Convex" relaxation of AC OPF with convex hull of triple product
@@ -367,7 +367,7 @@ QCWRTriPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, 
 
 
 ""
-abstract type SOCBFForm <: AbstractBFQPForm end
+abstract type SOCBFForm<:AbstractBFQPForm end
 
 """
 Second-order cone relaxation of branch flow model
@@ -403,7 +403,7 @@ SOCBFPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, SO
 
 
 ""
-abstract type SOCBFConicForm <: AbstractBFConicForm end
+abstract type SOCBFConicForm<:AbstractBFConicForm end
 
 ""
 const SOCBFConicPowerModel = GenericPowerModel{SOCBFConicForm}
@@ -419,11 +419,11 @@ SOCBFConicPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(dat
 ###### SDP Relaxations ######
 
 ""
-abstract type AbstractWRMForm <: AbstractConicPowerFormulation end
+abstract type AbstractWRMForm<:AbstractConicPowerFormulation end
 
 
 ""
-abstract type SDPWRMForm <: AbstractWRMForm end
+abstract type SDPWRMForm<:AbstractWRMForm end
 
 """
 Semi-definite relaxation of AC OPF
@@ -463,7 +463,7 @@ const SDPWRMPowerModel = GenericPowerModel{SDPWRMForm}
 SDPWRMPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, SDPWRMForm; kwargs...)
 
 
-abstract type SparseSDPWRMForm <: SDPWRMForm end
+abstract type SparseSDPWRMForm<:SDPWRMForm end
 
 """
 Sparsity-exploiting semidefinite relaxation of AC OPF

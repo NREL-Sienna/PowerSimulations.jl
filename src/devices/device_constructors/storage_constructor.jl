@@ -3,9 +3,9 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
                                         sys::PSY.System;
-                                        kwargs...) where {St <: PSY.Storage,
-                                                            D <: AbstractStorageForm,
-                                                            S <: PM.AbstractPowerFormulation}
+                                        kwargs...) where {St<:PSY.Storage,
+                                                            D<:AbstractStorageForm,
+                                                            S<:PM.AbstractPowerFormulation}
 
 
     devices = PSY.get_components(device, sys)
@@ -42,9 +42,9 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{D},
                                         system_formulation::Type{S},
                                         sys::PSY.System;
-                                        kwargs...) where {St <: PSY.Storage,
-                                                            D <: AbstractStorageForm,
-                                                            S <: PM.AbstractActivePowerFormulation}
+                                        kwargs...) where {St<:PSY.Storage,
+                                                            D<:AbstractStorageForm,
+                                                            S<:PM.AbstractActivePowerFormulation}
 
     devices = PSY.get_components(device, sys)
 
@@ -77,8 +77,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{BookKeepingwReservation},
                                         system_formulation::Type{S},
                                         sys::PSY.System;
-                                        kwargs...) where {St <: PSY.Storage,
-                                                          S <: PM.AbstractPowerFormulation}
+                                        kwargs...) where {St<:PSY.Storage,
+                                                          S<:PM.AbstractPowerFormulation}
 
 
     devices = PSY.get_components(device, sys)
@@ -117,8 +117,8 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
                                         device_formulation::Type{BookKeepingwReservation},
                                         system_formulation::Type{S},
                                         sys::PSY.System;
-                                        kwargs...) where {St <: PSY.Storage,
-                                                          S <: PM.AbstractActivePowerFormulation}
+                                        kwargs...) where {St<:PSY.Storage,
+                                                          S<:PM.AbstractActivePowerFormulation}
 
     devices = PSY.get_components(device, sys)
 
