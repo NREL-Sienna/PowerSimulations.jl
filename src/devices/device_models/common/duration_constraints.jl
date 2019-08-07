@@ -310,7 +310,7 @@ function device_duration_param(ps_m::CanonicalModel,
             end
         end
         if t <= duration_data[ix].down
-            lhs_off += initial_duration_on[ix].value #typo? off not on?
+            lhs_off += initial_duration_off[ix].value
             con_down[name, t] = JuMP.@constraint(ps_m.JuMPmodel, varstart[name, t]*duration_data[ix].down - lhs_off <= 0.0)
         else
             con_down[name, t] = JuMP.@constraint(ps_m.JuMPmodel, lhs_off + varon[name, t] <= 1.0)

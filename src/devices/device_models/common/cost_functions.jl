@@ -71,7 +71,6 @@ function ps_cost(ps_m::CanonicalModel,
 
 end
 
-#in true quadratic case, it does not appear to return anything.
 @doc raw"""
     ps_cost(ps_m::CanonicalModel,
                 variable::JuMP.Containers.DenseAxisArray{JV},
