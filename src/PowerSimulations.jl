@@ -43,7 +43,7 @@ export ThermalDispatch
 export ThermalRampLimited
 export ThermalDispatchNoMin
 
-# Feedback Models
+# feedforward Models
 export RecedingHorizon
 export Synchronize
 
