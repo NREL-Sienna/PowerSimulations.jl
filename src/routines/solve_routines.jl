@@ -1,21 +1,21 @@
 """ Solves Operational Models"""
 
 function _write_op_model(results::OperationModelResults, save_path::String)
- 
-    try 
+
+    try
 
         isdir(save_path)
         new_folder = mkdir("$save_path/$(round(Dates.now(),Dates.Minute))")
         folder_path = new_folder
-        write_variable_results(results.variables, folder_path) 
-        write_optimizer_results(results.optimizer_log, folder_path)
-        write_time_stamps(results.times, folder_path)
+        _write_variable_results(results.variables, folder_path)
+        _write_optimizer_log(results.optimizer_log, folder_path)
+        _write_time_stamps(results.times, folder_path)
         println("Files written to $folder_path folder.")
 
-    catch 
-        
+    catch
+
         @error("Specified path is not valid. Run write_results to save results.")
-        
+
     end
 
 end
@@ -25,7 +25,7 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
     timed_log = Dict{Symbol, Any}()
 
     save_path = get(kwargs, :save_path, nothing)
-    
+
         if op_model.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
 
             if !(:optimizer in keys(kwargs))
@@ -77,8 +77,8 @@ function _run_stage(stage::_Stage, results_path::String)
         timed_log[:solve_bytes_alloc],
         timed_log[:sec_in_gc] =  @timed JuMP.optimize!(stage.model.canonical.JuMPmodel)
 
-        write_model_result(stage.model, results_path)
-        write_optimizer_log(timed_log, stage.model, results_path)
+        _export_model_result(stage.model, results_path)
+        _export_optimizer_log(timed_log, stage.model, results_path)
 
     end
 
@@ -110,7 +110,7 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
                 _run_stage(stage, raw_results_path)
                 sim.ref.run_count[s][ix] += 1
                 sim.ref.date_ref[ix] = sim.ref.date_ref[ix] + interval
-                update_stage!(stage, sim)
+                #update_stage!(stage, sim)
             end
         end
     end
