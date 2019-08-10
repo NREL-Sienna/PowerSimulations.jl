@@ -72,8 +72,11 @@ function _export_model_result(op_m::OperationModel, path::String)
 
 end
 
-function _export_optimizer_log(optimizer_log::Dict{Symbol, Any}, ps_m::CanonicalModel, path::String)
+function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
+                               op_model::OperationModel,
+                               path::String)
 
+    ps_m = op_model.canonical
     optimizer_log[:obj_value] = JuMP.objective_value(ps_m.JuMPmodel)
     optimizer_log[:termination_status] = Int(JuMP.termination_status(ps_m.JuMPmodel))
     optimizer_log[:primal_status] = Int(JuMP.primal_status(ps_m.JuMPmodel))
@@ -85,7 +88,7 @@ function _export_optimizer_log(optimizer_log::Dict{Symbol, Any}, ps_m::Canonical
         optimizer_log[:solve_time] = "Not Supported by solver"
     end
 
-    _export_optimizer_log(optimizer_log, path)
+    _write_optimizer_log(optimizer_log, path)
 
     return
 
