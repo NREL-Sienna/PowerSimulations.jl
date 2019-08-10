@@ -71,7 +71,6 @@ function _build_stages(sim_ref::SimulationRef,
         verbose && @info("Building Stage $(k)")
         op_mod = OperationModel(DefaultOpModel, v.model, v.sys;
                                 optimizer = v.optimizer,
-                                sequential_runs = true,
                                 parameters = true,
                                 verbose = verbose,
                                 kwargs...)
@@ -116,8 +115,8 @@ function _feedforward_rule_check(::Type{Synchronize},
 
     if (to_stage_count % from_stage_count) != 0
         error("The number of steps in stage $(stage_number_to) needs to be a
-                mutiple of the horizon length of stage $(stage_number_from) to
-                use Synchronize")
+               mutiple of the horizon length of stage $(stage_number_from) to
+               use Synchronize")
     end
 
     return
@@ -139,7 +138,7 @@ function _check_feedforward_ref(stages::Dict{Int64, Stage})
 
     for (stage_number,stage) in stages
         for (k,v) in stage.feedforward_ref
-        _feedforward_rule_check(v, stage_number, stage, k, stages[k])
+        _feedforward_rule_check(v, k, stages[k], stage_number, stage)
         end
     end
 

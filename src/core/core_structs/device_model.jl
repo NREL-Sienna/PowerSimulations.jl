@@ -12,16 +12,29 @@ mutable struct DeviceModel{D<:PSY.Device,
                            B<:AbstractDeviceFormulation}
     device::Type{D}
     formulation::Type{B}
+    feedforward::Bool
 
-    function DeviceModel(device::Type{D},
-                         formulation::Type{B}) where {D<:PSY.Device,
-                                                      B<:AbstractDeviceFormulation}
+    function DeviceModel(::Type{D},
+                         ::Type{B},
+                         feedforward::Bool) where {D<:PSY.Device,
+                                        B<:AbstractDeviceFormulation}
 
-                        _validate_device_formulation(D)
-                        _validate_device_formulation(B)
-                        new{D, B}(D, B)
+    _validate_device_formulation(D)
+    _validate_device_formulation(B)
+    new{D, B}(D, B, feedforward)
 
     end
+
+end
+
+function DeviceModel(::Type{D},
+                        ::Type{B}) where {D<:PSY.Device,
+                                    B<:AbstractDeviceFormulation}
+
+                    _validate_device_formulation(D)
+                    _validate_device_formulation(B)
+
+    return DeviceModel(D, B, false)
 
 end
 
