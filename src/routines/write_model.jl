@@ -51,6 +51,7 @@ function _write_time_stamps(time_stamp::DataFrames.DataFrame, save_path::Abstrac
     Feather.write(file_path, df)
 
     return
+
 end
 
 function write_model_result(results::OperationModelResults, save_path::String)
