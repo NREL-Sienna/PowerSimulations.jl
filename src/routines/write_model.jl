@@ -66,7 +66,8 @@ function _export_model_result(op_m::OperationModel, path::String)
     _write_variable_results(results.variables, folder_path)
     _write_optimizer_log(results.optimizer_log, folder_path)
     _write_time_stamps(results.times, folder_path)
-
+    
+    end
     return
 
 end

@@ -6,6 +6,12 @@ struct OperationModelResults
 
 end
 
+struct StackedArea
+    time_range::Array
+    data_matrix::Matrix
+
+end
+
 function get_variable(res_model::OperationModelResults, key::Symbol)
         try 
             !isnothing(res_model.variables)
@@ -53,4 +59,13 @@ function load_operation_results(path::AbstractString, directory::AbstractString)
 
     return results
 
+end
+
+function plot_results(res::OperationModelResults)
+
+    time_range = res.times[:Range][1:24]
+    variable = res.variables[:P_ThermalStandard]
+    data_matrix = convert(Matrix, variable)
+
+    return StackedArea(time_range, data_matrix)
 end

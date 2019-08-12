@@ -69,6 +69,7 @@ export get_var_index
 export load_operation_results
 
 
+
 #################################################################################
 # Imports
 #Modeling Imports
@@ -180,5 +181,6 @@ include("routines/write_model.jl")
 #Utils
 include("utils/optimization_debugging.jl")
 include("utils/printing.jl")
+include("utils/plot_recipes.jl")
 
 end
