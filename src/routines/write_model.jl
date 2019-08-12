@@ -1,21 +1,16 @@
+""" Exports the OpModel JuMP object in MathOptFormat"""
 function write_op_model(op_model::OperationModel, path::String)
     MOF_model = MOPFM
     MOI.copy_to(MOF_model, JuMP.backend(op_model.canonical.JuMPmodel))
     MOI.write_to_file(MOF_model, path)
+
+    return
+
 end
 
-function write_results(results::OperationModelResults, save_path::String)
-
-    new_folder = mkdir("$save_path/$(round(Dates.now(),Dates.Minute))")
-    folder_path = new_folder
-    write_variable_results(results.variables, folder_path) 
-    write_optimizer_results(results.optimizer_log, folder_path)
-    write_time_stamps(results.times, folder_path)
-   
-end
 # taking the outputted files for the variable DataFrame and writing them to a featherfile
 
-function write_variable_results(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path::AbstractString)
+function _write_variable_results(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path::AbstractString)
 
     for (k,v) in vars_results
 
@@ -26,9 +21,7 @@ function write_variable_results(vars_results::Dict{Symbol, DataFrames.DataFrame}
     return
 end
 
-# taking the outputted files for the optimizer log DataFrame and writing them to a featherfile
-
-function write_optimizer_results(optimizer_log::Dict{Symbol, Any}, save_path::AbstractString)
+function _write_optimizer_log(optimizer_log::Dict{Symbol, Any}, save_path::AbstractString)
 
     optimizer_log[:termination_status] = Int(optimizer_log[:termination_status])
     optimizer_log[:primal_status] = Int(optimizer_log[:primal_status])
@@ -38,25 +31,36 @@ function write_optimizer_results(optimizer_log::Dict{Symbol, Any}, save_path::Ab
     df = DataFrames.DataFrame(optimizer_log)
     file_path = joinpath(save_path,"optimizer_log.feather")
     Feather.write(file_path, df)
-    # println("feather file written to $file_path")
-    
+
     return
+
 end
 
 # taking the outputted files for the time_Series DataFrame and writing them to a featherfile
 
-function write_time_stamps(time_stamp::DataFrames.DataFrame, save_path::AbstractString)
+function _write_time_stamps(time_stamp::DataFrames.DataFrame, save_path::AbstractString)
 
     df = DataFrames.DataFrame(time_stamp)
     file_path = joinpath(save_path,"time_stamp.feather")
     Feather.write(file_path, df)
-    
+
     return
+end
+
+function write_model_result(results::OperationModelResults, save_path::String)
+
+    folder_path = joinpath(save_path, "$(round(Dates.now(),Dates.Minute))")r
+    _write_variable_results(results.variables, folder_path)
+    _write_optimizer_log(results.optimizer_log, folder_path)
+    _write_time_stamps(results.times, folder_path)
+
+    return
+
 end
 
 # These functions are writing directly to the feather file and skipping printing to memory.
 
-function write_model_result(op_m::OperationModel, path::String)
+function _export_model_result(op_m::OperationModel, path::String)
 
     for (k, v) in vars(op_m.canonical)
 
@@ -70,22 +74,7 @@ function write_model_result(op_m::OperationModel, path::String)
 
 end
 
-# internal function to export the optimizer_log
-
-function _export_optimizer_log(optimizer_log::Dict{Symbol, Any}, path::String)
-    df = DataFrames.DataFrame(optimizer_log)
-
-    file_path = joinpath(path,"optimizer_log.feather")
-
-    Feather.write(file_path, df)
-
-    return
-
-end
-
-# function to create the optimizer log dictionary from the optimizer and write it to feather file
-
-function write_optimizer_log(optimizer_log::Dict{Symbol, Any}, ps_m::CanonicalModel, path::String)
+function _export_optimizer_log(optimizer_log::Dict{Symbol, Any}, ps_m::CanonicalModel, path::String)
 
     optimizer_log[:obj_value] = JuMP.objective_value(ps_m.JuMPmodel)
     optimizer_log[:termination_status] = Int(JuMP.termination_status(ps_m.JuMPmodel))
@@ -103,6 +92,3 @@ function write_optimizer_log(optimizer_log::Dict{Symbol, Any}, ps_m::CanonicalMo
     return
 
 end
-
-
-
