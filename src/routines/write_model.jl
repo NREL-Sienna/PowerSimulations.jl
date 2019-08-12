@@ -51,7 +51,6 @@ function _write_time_stamps(time_stamp::DataFrames.DataFrame, save_path::Abstrac
     Feather.write(file_path, df)
 
     return
-
 end
 
 function write_model_result(results::OperationModelResults, save_path::String)
@@ -65,7 +64,7 @@ function write_model_result(results::OperationModelResults, save_path::String)
 
 end
 
-function write_model_result(results::OperationModelResults, save_path::String)
+#function write_model_result(results::OperationModelResults, save_path::String)
 
 function _export_model_result(op_m::OperationModel, path::String)
 
@@ -73,16 +72,6 @@ function _export_model_result(op_m::OperationModel, path::String)
 
 end
 
-function write_model_result(results::OperationModelResults, save_path::String)
-
-    folder_path = joinpath(save_path, "$(round(Dates.now(),Dates.Minute))")r
-    _write_variable_results(results.variables, folder_path)
-    _write_optimizer_log(results.optimizer_log, folder_path)
-    _write_time_stamps(results.times, folder_path)
-
-    return
-
-end
 
 function _export_optimizer_log(optimizer_log::Dict{Symbol, Any}, ps_m::CanonicalModel, path::String)
 
