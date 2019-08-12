@@ -66,26 +66,18 @@ end
 
 function write_model_result(results::OperationModelResults, save_path::String)
 
-    folder_path = joinpath(save_path, "$(round(Dates.now(),Dates.Minute))")r
-    _write_variable_results(results.variables, folder_path)
-    _write_optimizer_log(results.optimizer_log, folder_path)
-    _write_time_stamps(results.times, folder_path)
+function _export_model_result(op_m::OperationModel, path::String)
 
     return
 
 end
 
-# These functions are writing directly to the feather file and skipping printing to memory.
+function write_model_result(results::OperationModelResults, save_path::String)
 
-function _export_model_result(op_m::OperationModel, path::String)
-
-    for (k, v) in vars(op_m.canonical)
-
-        file_path = joinpath(path,"$(k).feather")
-
-        Feather.write(file_path, _result_dataframe(v))
-
-    end
+    folder_path = joinpath(save_path, "$(round(Dates.now(),Dates.Minute))")r
+    _write_variable_results(results.variables, folder_path)
+    _write_optimizer_log(results.optimizer_log, folder_path)
+    _write_time_stamps(results.times, folder_path)
 
     return
 
