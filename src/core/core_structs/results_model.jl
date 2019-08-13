@@ -13,6 +13,13 @@ struct StackedArea
 
 end
 
+struct BarPlot
+    time_range::Array
+    bar_data::Matrix
+    labels::Array
+
+end
+
 function get_variable(res_model::OperationModelResults, key::Symbol)
         try 
             !isnothing(res_model.variables)
@@ -62,14 +69,29 @@ function load_operation_results(path::AbstractString, directory::AbstractString)
 
 end
 
-function plot_results(res::OperationModelResults, variable::String)
+function get_stacked_plot(res::OperationModelResults, variable::String)
 
-    time_range = res.times[!,:Range][1:24]
+    time_range = res.times[!,:Range]
+    @show time_range
     variable = res.variables[Symbol(variable)]
     data_matrix = convert(Matrix, variable)
     labels = collect(names(variable))
-    # hacky needs fixed
-    legend = [string(labels[1]), string(labels[2]), string(labels[3]), string(labels[4]), string(labels[5])]
+    legend = string.(labels)
+  
     return StackedArea(time_range, data_matrix, legend)
-    
+   
 end
+
+function get_bar_plot(res::OperationModelResults, variable::String)
+
+    time_range = res.times[!,:Range]
+    variable = res.variables[Symbol(variable)]
+    data = convert(Matrix, variable)
+    bar_data = sum(data,1)
+    labels = collect(names(variable))
+    legend = string.(labels)
+  
+    return BarPlot(time_range, bar_data, legend)
+   
+end
+#legend = [string(labels[1]), string(labels[2]), string(labels[3]), string(labels[4]), string(labels[5])]

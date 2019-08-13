@@ -1,31 +1,55 @@
 
 #;@userplot StackedArea
 using RecipesBase
-@recipe function AreaPlot(res::OperationModelResults, variable::String) # variable::DataFrames.DataFrame)
+@recipe function StackedPlot(res::StackedArea, variable::String) # variable::DataFrames.DataFrame)
   
-  plot_res = plot_results(res, variable)
-  labels = plot_res.labels
-  legend = [string(labels[1]), string(labels[2]), string(labels[3]), string(labels[4]), string(labels[5])]
-  time = plot_res.time_range
-  interval = Dates.Hour(convert(Dates.DateTime,time[24])- convert(Dates.DateTime, time[1]))
-  data = plot_res.data_matrix
+  legend = res.labels
+  time = res.time_range
   n = length(time)
-  x = 1:n
-  y = data
-  z = cumsum(y, dims = 2) 
-  time = Dates.plot_res.time_range
+  interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))
+  data = res.data_matrix
+  z = cumsum(data, dims = 2) 
+
   grid := false
   title := variable
   seriestype := :shape
   label := legend
   xlabel := "$interval"
-  ylabel := "Power (MW)"
+  ylabel := "Generation (MW)"
+  xticks := time[1]:Dates.Hour(n-2):time[n-1]
   
     #create filled polygon
     
     for c=1:size(z,2)
-        sx = [x; reverse(x)]
-        sy = vcat(z[:,c], c==1 ? zeros(24) : reverse(z[:,c-1]))
+        sx = [time[1:n-1]; reverse(time[1:n-1])]
+        sy = vcat(z[:,c], c==1 ? zeros(n-1) : reverse(z[:,c-1]))
+        @series (sx, sy)
+    end
+  
+end
+
+@recipe function StackedPlot(res::BarPlot, variable::String) # variable::DataFrames.DataFrame)
+  
+  legend = res.labels
+  time = res.time_range
+  n = length(time)
+  interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))
+  data = res.bar_data
+  z = cumsum(data, dims = 2) 
+
+  grid := false
+  title := variable
+  seriestype := :shape
+  label := legend
+  xlabel := "$interval"
+  ylabel := "Generation (MW)"
+  xticks := time[1]
+  
+    #create filled polygon
+    
+    for c=1:size(z,2)
+        sx = [1; reverse(1)]
+        sy = vcat(z[:,c], c==1 ? zeros(n-1) : reverse(z[:,c-1]))
         @series (sx, sy)
     end
   
