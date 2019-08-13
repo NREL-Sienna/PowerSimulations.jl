@@ -67,6 +67,7 @@ export get_all_var_index
 export get_con_index
 export get_var_index
 export load_operation_results
+export plot_results
 
 
 

@@ -9,6 +9,7 @@ end
 struct StackedArea
     time_range::Array
     data_matrix::Matrix
+    labels::Array
 
 end
 
@@ -61,11 +62,14 @@ function load_operation_results(path::AbstractString, directory::AbstractString)
 
 end
 
-function plot_results(res::OperationModelResults)
+function plot_results(res::OperationModelResults, variable::String)
 
-    time_range = res.times[:Range][1:24]
-    variable = res.variables[:P_ThermalStandard]
+    time_range = res.times[!,:Range][1:24]
+    variable = res.variables[Symbol(variable)]
     data_matrix = convert(Matrix, variable)
-
-    return StackedArea(time_range, data_matrix)
+    labels = collect(names(variable))
+    # hacky needs fixed
+    legend = [string(labels[1]), string(labels[2]), string(labels[3]), string(labels[4]), string(labels[5])]
+    return StackedArea(time_range, data_matrix, legend)
+    
 end
