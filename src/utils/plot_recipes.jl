@@ -1,8 +1,9 @@
 
 using RecipesBase
-@recipe function StackedPlot(results::StackedArea, variable::String) 
+@recipe function StackedPlot(res::OperationModelResults, variable::String; sort) 
   
- # results = get_stacked_plot_data(res, variable)
+  results = get_stacked_plot_data(res, variable; sort)
+  @show results
   time = results.time_range
   n = length(time)
   data = results.data_matrix
