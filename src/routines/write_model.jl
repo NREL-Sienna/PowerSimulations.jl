@@ -6,6 +6,12 @@ function write_op_model(op_model::OperationModel, path::String)
 
     return
 
+    new_folder = mkdir("$save_path/$(round(Dates.now(),Dates.Minute))")
+    folder_path = new_folder
+    write_variable_results(results.variables, folder_path) 
+    write_optimizer_results(results.optimizer_log, folder_path)
+    _write_time_stamps(results.times, folder_path)
+   
 end
 
 # taking the outputted files for the variable DataFrame and writing them to a featherfile
@@ -45,16 +51,6 @@ function _write_time_stamps(time_stamp::DataFrames.DataFrame, save_path::Abstrac
     Feather.write(file_path, df)
 
     return
-end
-
-function write_model_result(results::OperationModelResults, save_path::String)
-
-    folder_path = joinpath(save_path, "$(round(Dates.now(),Dates.Minute))")r
-    _write_variable_results(results.variables, folder_path)
-    _write_optimizer_log(results.optimizer_log, folder_path)
-    _write_time_stamps(results.times, folder_path)
-
-    return
 
 end
 
@@ -66,10 +62,12 @@ function _export_model_result(op_m::OperationModel, path::String)
 
         file_path = joinpath(path,"$(k).feather")
 
-        Feather.write(file_path, _result_dataframe(v))
-
+    folder_path = joinpath(save_path, "$(round(Dates.now(),Dates.Minute))")r
+    _write_variable_results(results.variables, folder_path)
+    _write_optimizer_log(results.optimizer_log, folder_path)
+    _write_time_stamps(results.times, folder_path)
+    
     end
-
     return
 
 end

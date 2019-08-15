@@ -6,6 +6,8 @@ struct OperationModelResults
 
 end
 
+
+
 function get_variable(res_model::OperationModelResults, key::Symbol)
         try 
             !isnothing(res_model.variables)
@@ -54,3 +56,4 @@ function load_operation_results(path::AbstractString, directory::AbstractString)
     return results
 
 end
+
