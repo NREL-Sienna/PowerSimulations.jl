@@ -61,13 +61,16 @@ export solve_op_model!
 ## Sim Model Exports
 export run_sim_model!
 ## Utils Exports
-export write_model_result
+export write_results
 export get_all_constraint_index
 export get_all_var_index
 export get_con_index
 export get_var_index
 export load_operation_results
-export plot_results
+export get_stacked_plot_data
+export get_bar_plot_data
+export get_stacked_generation_data
+
 
 
 

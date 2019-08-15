@@ -77,13 +77,13 @@ function load_operation_results(path::AbstractString, directory::AbstractString)
 
 end
 
-function get_stacked_plot(res::OperationModelResults, variable::String; kwargs...)
+function get_stacked_plot_data(res::OperationModelResults, variable::String; kwargs...)
 
     sort = get(kwargs, :sort, nothing)
     time_range = res.times[!,:Range]
     variable = res.variables[Symbol(variable)]
     Alphabetical = sort!(names(variable))
-    
+
     if isnothing(sort)
         variable = variable[:, Alphabetical]
     else
@@ -98,7 +98,7 @@ function get_stacked_plot(res::OperationModelResults, variable::String; kwargs..
    
 end
 
-function get_bar_plot(res::OperationModelResults, variable::String; kwargs...)
+function get_bar_plot_data(res::OperationModelResults, variable::String; kwargs...)
 
     sort = get(kwargs, :sort, nothing)
     time_range = res.times[!,:Range]
@@ -120,7 +120,7 @@ function get_bar_plot(res::OperationModelResults, variable::String; kwargs...)
    
 end
 
-function get_stacked_generation(res::OperationModelResults; kwargs...)
+function get_stacked_generation_data(res::OperationModelResults; kwargs...)
 
     sort = get(kwargs, :sort, nothing)
     time_range = res.times[!,:Range]
