@@ -1,85 +1,116 @@
 
-#;@userplot StackedArea
-using RecipesBase
-@recipe function StackedPlot(res::StackedArea, variable::String) # variable::DataFrames.DataFrame)
+
+@recipe function StackedPlot(res::StackedArea, variable::String) 
   
-  legend = res.labels
   time = res.time_range
   n = length(time)
-  interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))
   data = res.data_matrix
   z = cumsum(data, dims = 2) 
 
   grid := false
   title := variable
-  seriestype := :shape
-  label := legend
-  xlabel := "$interval"
+  label := res.labels
+  legend := :topleft
+  time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))
+  xlabel := "$time_interval"
   ylabel := "Generation (MW)"
-  xticks := time[1]:Dates.Hour(n-2):time[n-1]
+  xtick := time[1]:Dates.Hour(6):time[n-1]
   
     #create filled polygon
-    
+    sy = vcat(z[:,1],zeros(n-1))
+    sx = [time[1:n-1]; reverse(time[1:n-1])]
+  
     for c=1:size(z,2)
-        sx = [time[1:n-1]; reverse(time[1:n-1])]
-        sy = vcat(z[:,c], c==1 ? zeros(n-1) : reverse(z[:,c-1]))
-        @series (sx, sy)
+
+      if c !== 1
+
+       sy = hcat(sy,vcat(z[:,c],reverse(z[:,c-1])))
+
+      end
+
     end
+  
+  @series begin
+    seriestype := :shape
+    sx, sy
+  end
+
+end
+
+@recipe function StackedGen(res::StackedGeneration) 
+  
+  time = res.time_range
+  n = length(time)
+  data = res.data_matrix
+  z = cumsum(data, dims = 2) 
+
+  grid := false
+  title := "Generation Type"
+  seriestype := :shape
+  label := res.labels
+  legend := :bottomright
+  time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))
+  xlabel := "$time_interval"
+  ylabel := "Generation (MW)"
+  xtick := time[1]:Dates.Hour(6):time[n-1]
+  
+    #create filled polygon
+  sy = vcat(z[:,1],zeros(n-1)) 
+  sx = [time[1:n-1]; reverse(time[1:n-1])]
+
+  for c=1:size(z,2)
+
+    if c !== 1
+
+      sy = hcat(sy,vcat(z[:,c],reverse(z[:,c-1])))
+
+    end
+
+  end
+  
+  @series begin
+
+    seriestype := :shape
+    sx, sy
+
+  end
   
 end
 
-@recipe function StackedPlot(res::BarPlot, variable::String) # variable::DataFrames.DataFrame)
+@recipe function BarPlot(res::BarPlot, variable::String)
   
-  legend = res.labels
   time = res.time_range
   n = length(time)
-  interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))
-  data = res.bar_data
+  data_point = res.bar_data
+  data = [data_point; data_point] 
+  @show data
   z = cumsum(data, dims = 2) 
 
   grid := false
   title := variable
   seriestype := :shape
-  label := legend
-  xlabel := "$interval"
+  label := res.labels
+  start_time = time[1]
+  time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))
+  xlabel := "$time_interval, $start_time"
   ylabel := "Generation (MW)"
-  xticks := time[1]
+  xlims := (1, 8)
+  xticks := false
+  n = 2
   
     #create filled polygon
     
     for c=1:size(z,2)
-        sx = [1; reverse(1)]
-        sy = vcat(z[:,c], c==1 ? zeros(n-1) : reverse(z[:,c-1]))
-        @series (sx, sy)
+        sx = [[4,5]; [5,4]]
+        sy = vcat(z[:,c], c==1 ? zeros(n) : reverse(z[:,c-1]))
+       @series sx, sy
     end
   
 end
 
-# function create_plot_data(results::OperationModelResults)
-
-#=
-
-    time_range = res.times[!,:Range]
-    variable = res.variables[:P_ThermalStandard]
-    s_names = names(res.variables[:P_ThermalStandard])
-    a = variable[!, s_names[1]]
-    b = variable[!, s_names[2]]
-    c = variable[!, s_names[3]]
-    d = variable[!, s_names[4]]
-    e = variable[!, s_names[5]]
 
 
-end 
 
-@recipe function plot(::T, n = 1; customcolor = :green)
-    markershape --> :auto        # if markershape is unset, make it :auto
-    markercolor :=  customcolor  # force markercolor to be customcolor
-    xrotation   --> 45           # if xrotation is unset, make it 45
-    zrotation   --> 90           # if zrotation is unset, make it 90
-    rand(10,n)                   # return the arguments (input data) for the next recipe
-  end
-
-=#
 
 
 

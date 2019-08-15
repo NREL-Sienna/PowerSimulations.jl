@@ -20,6 +20,14 @@ struct BarPlot
 
 end
 
+struct StackedGeneration
+    time_range::Array
+    data_matrix::Matrix
+    labels::Array
+
+end
+
+
 function get_variable(res_model::OperationModelResults, key::Symbol)
         try 
             !isnothing(res_model.variables)
@@ -69,11 +77,19 @@ function load_operation_results(path::AbstractString, directory::AbstractString)
 
 end
 
-function get_stacked_plot(res::OperationModelResults, variable::String)
+function get_stacked_plot(res::OperationModelResults, variable::String; kwargs...)
 
+    sort = get(kwargs, :sort, nothing)
     time_range = res.times[!,:Range]
-    @show time_range
     variable = res.variables[Symbol(variable)]
+    Alphabetical = sort!(names(variable))
+    
+    if isnothing(sort)
+        variable = variable[:, Alphabetical]
+    else
+        variable = variable[:,sort]
+    end
+
     data_matrix = convert(Matrix, variable)
     labels = collect(names(variable))
     legend = string.(labels)
@@ -82,16 +98,52 @@ function get_stacked_plot(res::OperationModelResults, variable::String)
    
 end
 
-function get_bar_plot(res::OperationModelResults, variable::String)
+function get_bar_plot(res::OperationModelResults, variable::String; kwargs...)
 
+    sort = get(kwargs, :sort, nothing)
     time_range = res.times[!,:Range]
     variable = res.variables[Symbol(variable)]
+    Alphabetical = sort!(names(variable))
+
+    if isnothing(sort)
+        variable = variable[:, Alphabetical]
+    else
+        variable = variable[:,sort]
+    end
+
     data = convert(Matrix, variable)
-    bar_data = sum(data,1)
+    bar_data = sum(data, dims = 1)
     labels = collect(names(variable))
     legend = string.(labels)
   
     return BarPlot(time_range, bar_data, legend)
    
 end
-#legend = [string(labels[1]), string(labels[2]), string(labels[3]), string(labels[4]), string(labels[5])]
+
+function get_stacked_generation(res::OperationModelResults; kwargs...)
+
+    sort = get(kwargs, :sort, nothing)
+    time_range = res.times[!,:Range]
+    key_name = collect(keys(res.variables))
+    Alphabetical = sort!(key_name)
+
+    if !isnothing(sort)
+        labels = sort
+    else
+        labels = Alphabetical
+    end
+
+    variable = res.variables[Symbol(labels[1])]
+    data_matrix = sum(convert(Matrix, variable), dims = 2)
+    legend = string.(labels)
+
+    for i in 1:length(labels)
+        if i !== 1
+            variable = res.variables[Symbol(labels[i])]
+            data_matrix = hcat(data_matrix, sum(convert(Matrix, variable), dims = 2))
+        end
+    end
+ 
+    return StackedGeneration(time_range, data_matrix, legend)
+   
+end
