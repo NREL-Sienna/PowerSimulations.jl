@@ -186,5 +186,6 @@ include("routines/write_model.jl")
 include("utils/optimization_debugging.jl")
 include("utils/printing.jl")
 include("utils/plot_recipes.jl")
+include("utils/plot_results.jl")
 
 end

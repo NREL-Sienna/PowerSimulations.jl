@@ -1,15 +1,16 @@
 
-
-@recipe function StackedPlot(res::StackedArea, variable::String) 
+using RecipesBase
+@recipe function StackedPlot(results::StackedArea, variable::String) 
   
-  time = res.time_range
+ # results = get_stacked_plot_data(res, variable)
+  time = results.time_range
   n = length(time)
-  data = res.data_matrix
+  data = results.data_matrix
   z = cumsum(data, dims = 2) 
 
   grid := false
   title := variable
-  label := res.labels
+  label := results.labels
   legend := :topleft
   time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))
   xlabel := "$time_interval"
@@ -37,7 +38,7 @@
 
 end
 
-@recipe function StackedGen(res::StackedGeneration) 
+@recipe function StackedGeneration(res::StackedGeneration) 
   
   time = res.time_range
   n = length(time)
