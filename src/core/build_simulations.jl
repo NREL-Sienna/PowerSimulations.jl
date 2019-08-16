@@ -71,7 +71,6 @@ function _build_stages(sim_ref::SimulationRef,
         verbose && @info("Building Stage $(k)")
         op_mod = OperationModel(DefaultOpModel, v.model, v.sys;
                                 optimizer = v.optimizer,
-                                sequential_runs = true,
                                 parameters = true,
                                 verbose = verbose,
                                 kwargs...)
@@ -79,7 +78,7 @@ function _build_stages(sim_ref::SimulationRef,
         mkpath(stage_path)
         write_op_model(op_mod, joinpath(stage_path, "optimization_model.json"))
         PSY.to_json(v.sys, joinpath(stage_path ,"sys_data.json"))
-        mod_stages[k] = _Stage(k, op_mod, v.execution_count, v.feedback_ref, true)
+        mod_stages[k] = _Stage(k, op_mod, v.execution_count, v.feedforward_ref, true)
         sim_ref.date_ref[k] = PSY.get_forecast_initial_times(v.sys)[1]
     end
 
@@ -87,20 +86,20 @@ function _build_stages(sim_ref::SimulationRef,
 
 end
 
-function _feedback_rule_check(::Type{T},
+function _feedforward_rule_check(::Type{T},
                               stage_number_from::Int64,
                               from_stage::Stage,
                               stage_number_to::Int64,
-                              to_stage::Stage,) where T <: FeedbackModel
+                              to_stage::Stage,) where T <: FeedForwardSequence
 
-    error("Feedback Model $(T) not implemented")
+    error("feedforward Model $(T) not implemented")
 
     return
 
 end
 
 
-function _feedback_rule_check(::Type{Synchronize},
+function _feedforward_rule_check(::Type{Synchronize},
                               stage_number_from::Int64,
                               from_stage::Stage,
                               stage_number_to::Int64,
@@ -116,15 +115,15 @@ function _feedback_rule_check(::Type{Synchronize},
 
     if (to_stage_count % from_stage_count) != 0
         error("The number of steps in stage $(stage_number_to) needs to be a
-                mutiple of the horizon length of stage $(stage_number_from) to
-                use Synchronize")
+               mutiple of the horizon length of stage $(stage_number_from) to
+               use Synchronize")
     end
 
     return
 
 end
 
-function _feedback_rule_check(::Type{RecedingHorizon},
+function _feedforward_rule_check(::Type{RecedingHorizon},
                               stage_number_from::Int64,
                               from_stage::Stage,
                               stage_number_to::Int64,
@@ -135,11 +134,11 @@ function _feedback_rule_check(::Type{RecedingHorizon},
 
 end
 
-function _check_feedback_ref(stages::Dict{Int64, Stage})
+function _check_feedforward_ref(stages::Dict{Int64, Stage})
 
     for (stage_number,stage) in stages
-        for (k,v) in stage.feedback_ref
-        _feedback_rule_check(v, stage_number, stage, k, stages[k])
+        for (k,v) in stage.feedforward_ref
+        _feedforward_rule_check(v, k, stages[k], stage_number, stage)
         end
     end
 
@@ -156,7 +155,7 @@ function build_simulation!(sim_ref::SimulationRef,
 
 
     _validate_steps(stages, steps)
-    _check_feedback_ref(stages)
+    _check_feedforward_ref(stages)
     dates, validation = _get_dates(stages)
     _prepare_workspace!(sim_ref, base_name, simulation_folder)
 
