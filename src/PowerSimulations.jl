@@ -90,6 +90,7 @@ import ParameterJuMP
 import LinearAlgebra
 import PowerSystems
 import PowerModels
+using RecipesBase
 
 #TimeStamp Management Imports
 import Dates

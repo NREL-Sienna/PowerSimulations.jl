@@ -1,5 +1,4 @@
 
-using RecipesBase
 @recipe function StackedPlot(res::OperationModelResults, variable::String; sort) 
   
   results = get_stacked_plot_data(res, variable; sort)
