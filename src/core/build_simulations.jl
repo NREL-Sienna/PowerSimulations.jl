@@ -90,7 +90,7 @@ function _feedforward_rule_check(::Type{T},
                               stage_number_from::Int64,
                               from_stage::Stage,
                               stage_number_to::Int64,
-                              to_stage::Stage,) where T <: feedforwardModel
+                              to_stage::Stage,) where T <: FeedForwardSequence
 
     error("feedforward Model $(T) not implemented")
 

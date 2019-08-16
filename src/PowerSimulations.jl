@@ -43,9 +43,13 @@ export ThermalDispatch
 export ThermalRampLimited
 export ThermalDispatchNoMin
 
-# feedforward Models
+# feedforward sequences
 export RecedingHorizon
 export Synchronize
+
+# feedforward models
+export Range
+export SemiContinuousRange
 
 #operation_models
 #export UnitCommitment

@@ -1,8 +1,8 @@
 ######## Structs for Inter-Model feedforward ########
-abstract type feedforwardModel end
+abstract type FeedForwardSequence end
 
-struct Synchronize <: feedforwardModel end
-struct RecedingHorizon <: feedforwardModel end
+struct Synchronize <: FeedForwardSequence end
+struct RecedingHorizon <: FeedForwardSequence end
 
 ######## Internal Simulation Object Structs ########
 abstract type AbstractStage end
@@ -12,13 +12,13 @@ mutable struct _Stage <: AbstractStage
     model::OperationModel
     execution_count::Int64
     optimizer::String
-    feedforward_ref::Dict{Int64, Type{<:feedforwardModel}}
+    feedforward_ref::Dict{Int64, Type{<:FeedForwardSequence}}
     update::Bool
 
     function _Stage(key::Int64,
                    model::OperationModel,
                    execution_count::Int64,
-                   feedforward_ref::Dict{Int64, Type{<:feedforwardModel}},
+                   feedforward_ref::Dict{Int64, Type{<:FeedForwardSequence}},
                    update::Bool)
 
     new(key,
@@ -72,7 +72,20 @@ mutable struct Stage <: AbstractStage
     execution_count::Int64
     sys::PSY.System
     optimizer::JuMP.OptimizerFactory
-    feedforward_ref::Dict{Int64, Type{<:feedforwardModel}}
+    feedforward_ref::Dict{Int64, Type{<:FeedForwardSequence}}
+end
+
+function Stage(model::ModelReference,
+            execution_count::Int64,
+            sys::PSY.System,
+            optimizer::JuMP.OptimizerFactory)
+
+    return Stage(model,
+                execution_count,
+                sys,
+                optimizer,
+                Dict{Int, DataType}())
+
 end
 
 get_execution_count(s::S) where S <: AbstractStage = s.execution_count
