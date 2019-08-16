@@ -92,8 +92,6 @@ optimize!(constraints.model, with_optimizer(GLPK.Optimizer))
 locateddemands = constraints.result()
 ```
 """
-
-
 function demandconstraints(demand :: BevDemand{T,L}, prices :: TimeArray{Float64,1,T,Array{Float64,1}}) where L where T <: TimeType
 
     # FIXME: Add DC constraints.
@@ -139,7 +137,7 @@ function demandconstraints(demand :: BevDemand{T,L}, prices :: TimeArray{Float64
     @constraint(model, balanceconstraint[i=1:NP], battery[i+1] == battery[i] + charge[i] - consumption[i])
 
     @objective(model, Min, sum(price[i] * charge[i] for i = 1:NP))
-    #print(battery[1].val())
+
     #Contains optimization charging results with charging rate from charger during each time interval
     function result() :: LocatedDemand{T,L}
         TimeArray(
@@ -215,7 +213,23 @@ end
 
 
 """
-Greedy charging LP
+Represent demand constraints for a BEV Greedy charging scenario LP as a JuMP model, maximizing the BEV's battery level.
+
+# Arguments
+- `demand :: BevDemand{T,L}`: the BEV demand
+- `prices :: TimeArray{T}`  : the electricity prices
+
+# Returns
+- `locations :: TimeArray{T,L}`   : location of the BEV during each time interval
+- `model :: JuMP.Model`           : a JuMP model containing the constraints, where
+                                    `charge` is the kWh charge during the time
+                                    interval and `battery` is the batter level at
+                                    the start of the interval and where the start
+                                    of the intervals are given by `locations`
+- `result() :: LocatedDemand{T,}` : a function that results the located demand,
+                                    but which can only be called after the model
+                                    has been solved
+
 """
 function demandconstraints2(demand :: BevDemand{T,L}, prices :: TimeArray{Float64,1,T,Array{Float64,1}}) where L where T <: TimeType
 
@@ -262,7 +276,7 @@ function demandconstraints2(demand :: BevDemand{T,L}, prices :: TimeArray{Float6
     @constraint(model, balanceconstraint[i=1:NP], battery[i+1] == battery[i] + charge[i] - consumption[i])
 
     @objective(model, Max, sum(battery[i] for i = 1:NP))
-    #print(battery[1].val())
+
     #Contains optimization charging results with charging rate from charger during each time interval
     function result() :: LocatedDemand{T,L}
         TimeArray(
@@ -327,6 +341,7 @@ function demandconstraints2(demand :: BevDemand{T,L}, prices :: TimeArray{Float6
         result=result,
         result2=result2,
         result3=result3,
+        objectiveValue=objectiveValue,
         termStatus=LPTerminationStatus,
         ConsumpAndChargeMax=hcat([consumption], [chargemax]),
         batteryCapacity=[demand.capacity.min, demand.capacity.max]
@@ -335,8 +350,25 @@ function demandconstraints2(demand :: BevDemand{T,L}, prices :: TimeArray{Float6
 end
 
 
+
 """
-Greedy Charging procedural approach
+Procedural approach for BEV Greedy charging scenario, maximizing the BEV's battery level.
+
+# Arguments
+- `demand :: BevDemand{T,L}`: the BEV demand
+- `prices :: TimeArray{T}`  : the electricity prices
+
+# Returns
+- `locations :: TimeArray{T,L}`   : location of the BEV during each time interval
+- `model :: JuMP.Model`           : a JuMP model containing the constraints, where
+                                    `charge` is the kWh charge during the time
+                                    interval and `battery` is the batter level at
+                                    the start of the interval and where the start
+                                    of the intervals are given by `locations`
+- `result() :: LocatedDemand{T,}` : a function that results the located demand,
+                                    but which can only be called after the model
+                                    has been solved
+
 """
 function greedyChargingDemand(demand :: BevDemand{T,L}, prices :: TimeArray{Float64,1,T,Array{Float64,1}}) where L where T <: TimeType
     eff = applyefficiencies(demand)
@@ -357,15 +389,11 @@ function greedyChargingDemand(demand :: BevDemand{T,L}, prices :: TimeArray{Floa
     chargemax = duration .* map(v -> min(v[1][1][2].ac, demand.rate.ac.max), xv[1:NP])
     consumption = duration .* map(v -> v[1][2], xv[1:NP])
 
-    #Initialize battery levels
-    battery = [demand.capacity.max] #Initial and final battery values?
-    charge = []
 
     #Find value of greatest consumption in back-to-back time interval
-    consumpMax = [0]
-    consumpCompare = [0]
-    for i in 1:95
-        print(consumption[i])
+    consumpMax = [0.0]
+    consumpCompare = [0.0]
+    for i in 1:94
         if i == 1
             if consumption[1] > 0
                 consumpCompare[1] += consumption[1]
@@ -381,8 +409,13 @@ function greedyChargingDemand(demand :: BevDemand{T,L}, prices :: TimeArray{Floa
             end
         end
     end
-    print(string(consumpMax[1], " "))
-    #Attempt greedy charging procedure with inital battery level at maximum capacity
+
+    ##Attempt greedy charging procedure with inital battery level at maximum capacity
+
+    #Initialize battery levels
+    battery = [demand.capacity.max] #Initial and final battery values?
+    charge = []
+
     for i in 1:95
         if (battery[i] < demand.capacity.max) && (chargemax[i] > 0)
             if (battery[i] + chargemax[i]) > demand.capacity.max
@@ -458,11 +491,18 @@ function greedyChargingDemand(demand :: BevDemand{T,L}, prices :: TimeArray{Floa
         elseif battery[96] >= battery[1] && consumpMax[1] <= (demand.capacity.max - demand.capacity.min)
             #Shift data down such that the maximum battery level lies along the
             #maximum battery capacity line.
-            shift = maximum(battery) - demand.capacity.max
+            shift1 = minimum(battery) - demand.capacity.min
+            for i in 1:96
+                battery[i] -= shift1
+            end
+            if(maximum(battery) > demand.capacity.max)
+                shift = maximum(battery) - demand.capacity.max
+            else
+                shift = 0
+            end
             battery = [battery[96] - shift]
             charge = []
-            println(string("initial:", battery[96] - shift))
-            println(string("batteryCap", demand.capacity.max))
+
 
             #Apply greedy charging procedure with new inital battery level
             for i in 1:95
@@ -538,6 +578,9 @@ function greedyChargingDemand(demand :: BevDemand{T,L}, prices :: TimeArray{Floa
         )
     end
 
+    function consumpMaxValue()
+        consumpMax
+    end
     (
         locations=TimeArray(xt, location),
         result=result,
@@ -546,12 +589,32 @@ function greedyChargingDemand(demand :: BevDemand{T,L}, prices :: TimeArray{Floa
         objectiveValue=sum(charge),
         ConsumpAndChargeMax=hcat([consumption], [chargemax]),
         batteryCapacity=[demand.capacity.min, demand.capacity.max],
+        consumpMaxValue=consumpMaxValue
     )
 
 end
 
 
-"""Full charge each charge time"""
+"""
+Represent demand constraints for a BEV full charge scenario LP as a JuMP model, minimizing the price paid while
+constraining BEVs to charge continuously if not fully charged and charging is available.
+
+# Arguments
+- `demand :: BevDemand{T,L}`: the BEV demand
+- `prices :: TimeArray{T}`  : the electricity prices
+
+# Returns
+- `locations :: TimeArray{T,L}`   : location of the BEV during each time interval
+- `model :: JuMP.Model`           : a JuMP model containing the constraints, where
+                                    `charge` is the kWh charge during the time
+                                    interval and `battery` is the batter level at
+                                    the start of the interval and where the start
+                                    of the intervals are given by `locations`
+- `result() :: LocatedDemand{T,}` : a function that results the located demand,
+                                    but which can only be called after the model
+                                    has been solved
+
+"""
 function fullChargeDemand(demand :: BevDemand{T,L}, prices :: TimeArray{Float64,1,T,Array{Float64,1}}) where L where T <: TimeType
 
     # FIXME: Add DC constraints.
