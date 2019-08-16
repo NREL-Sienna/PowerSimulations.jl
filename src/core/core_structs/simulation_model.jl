@@ -1,8 +1,8 @@
-######## Structs for Inter-Model Feedback ########
-abstract type FeedbackModel end
+######## Structs for Inter-Model feedforward ########
+abstract type FeedForwardSequence end
 
-struct Synchronize <: FeedbackModel end
-struct RecedingHorizon <: FeedbackModel end
+struct Synchronize <: FeedForwardSequence end
+struct RecedingHorizon <: FeedForwardSequence end
 
 ######## Internal Simulation Object Structs ########
 abstract type AbstractStage end
@@ -12,20 +12,20 @@ mutable struct _Stage <: AbstractStage
     model::OperationModel
     execution_count::Int64
     optimizer::String
-    feedback_ref::Dict{Int64, Type{<:FeedbackModel}}
+    feedforward_ref::Dict{Int64, Type{<:FeedForwardSequence}}
     update::Bool
 
     function _Stage(key::Int64,
                    model::OperationModel,
                    execution_count::Int64,
-                   feedback_ref::Dict{Int64, Type{<:FeedbackModel}},
+                   feedforward_ref::Dict{Int64, Type{<:FeedForwardSequence}},
                    update::Bool)
 
     new(key,
         model,
         execution_count,
         JuMP.solver_name(model.canonical.JuMPmodel),
-        feedback_ref,
+        feedforward_ref,
         update
         )
 
@@ -72,12 +72,25 @@ mutable struct Stage <: AbstractStage
     execution_count::Int64
     sys::PSY.System
     optimizer::JuMP.OptimizerFactory
-    feedback_ref::Dict{Int64, Type{<:FeedbackModel}}
+    feedforward_ref::Dict{Int64, Type{<:FeedForwardSequence}}
+end
+
+function Stage(model::ModelReference,
+            execution_count::Int64,
+            sys::PSY.System,
+            optimizer::JuMP.OptimizerFactory)
+
+    return Stage(model,
+                execution_count,
+                sys,
+                optimizer,
+                Dict{Int, DataType}())
+
 end
 
 get_execution_count(s::S) where S <: AbstractStage = s.execution_count
 get_sys(s::S) where S <: AbstractStage = s.sys
-get_feedback_ref(s::S) where S <: AbstractStage = s.feedback_ref
+get_feedforward_ref(s::S) where S <: AbstractStage = s.feedforward_ref
 
 get_model_ref(s::Stage) = s.model
 

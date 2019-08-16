@@ -43,9 +43,13 @@ export ThermalDispatch
 export ThermalRampLimited
 export ThermalDispatchNoMin
 
-# Feedback Models
+# feedforward sequences
 export RecedingHorizon
 export Synchronize
+
+# feedforward models
+export Range
+export SemiContinuousRange
 
 #operation_models
 #export UnitCommitment
@@ -86,6 +90,7 @@ import ParameterJuMP
 import LinearAlgebra
 import PowerSystems
 import PowerModels
+import RecipesBase
 
 #TimeStamp Management Imports
 import Dates
@@ -186,7 +191,7 @@ include("routines/write_model.jl")
 include("utils/optimization_debugging.jl")
 include("utils/printing.jl")
 include("utils/plot_results.jl")
-include("utils/plot_recipes.jl")
+#include("utils/plot_recipes.jl")
 
 
 end

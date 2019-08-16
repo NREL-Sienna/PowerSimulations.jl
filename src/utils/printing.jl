@@ -13,5 +13,3 @@ end
 function Base.show(io::IO, res_model::OperationModelResults)
     println(io, "Results Model")
  end
-
-

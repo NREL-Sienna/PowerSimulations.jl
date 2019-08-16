@@ -1,9 +1,6 @@
-
-using RecipesBase
-@recipe function StackedPlot(res::OperationModelResults, variable::String; sort) 
+RecipesBase.@recipe function StackedPlot(res::OperationModelResults, variable::String; sort) 
   
   results = get_stacked_plot_data(res, variable; sort)
-  @show results
   time = results.time_range
   n = length(time)
   data = results.data_matrix
@@ -32,14 +29,14 @@ using RecipesBase
 
     end
   
-  @series begin
+    RecipesBase.@series begin
     seriestype := :shape
     sx, sy
   end
 
 end
 
-@recipe function StackedGeneration(res::StackedGeneration) 
+RecipesBase.@recipe function StackedGeneration(res::StackedGeneration) 
   
   time = res.time_range
   n = length(time)
@@ -70,7 +67,7 @@ end
 
   end
   
-  @series begin
+  RecipesBase.@series begin
 
     seriestype := :shape
     sx, sy
@@ -79,13 +76,12 @@ end
   
 end
 
-@recipe function BarPlot(res::BarPlot, variable::String)
+RecipesBase.@recipe function BarPlot(res::BarPlot, variable::String)
   
   time = res.time_range
   n = length(time)
   data_point = res.bar_data
-  data = [data_point; data_point] 
-  @show data
+  data = [data_point; data_point]
   z = cumsum(data, dims = 2) 
 
   grid := false
@@ -105,15 +101,7 @@ end
     for c=1:size(z,2)
         sx = [[4,5]; [5,4]]
         sy = vcat(z[:,c], c==1 ? zeros(n) : reverse(z[:,c-1]))
-       @series sx, sy
+        RecipesBase.@series sx, sy
     end
   
 end
-
-
-
-
-
-
-
-

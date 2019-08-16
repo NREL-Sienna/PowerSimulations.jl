@@ -7,9 +7,9 @@ function status_init(ps_m::CanonicalModel,
 
     for (ix, g) in enumerate(devices)
         if parameters
-            initial_conditions[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(PSY.get_tech(g) |> PSY.get_activepower > 0)))
+            initial_conditions[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(PSY.get_activepower(g) > 0)))
         else
-            initial_conditions[ix] = InitialCondition(g, 1.0*(PSY.get_tech(g) |> PSY.get_activepower > 0))
+            initial_conditions[ix] = InitialCondition(g, 1.0*(PSY.get_activepower(g) > 0))
         end
     end
 
@@ -35,9 +35,9 @@ function output_init(ps_m::CanonicalModel,
 
     for (ix, g) in enumerate(devices)
             if parameters
-                initial_conditions[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, PSY.get_tech(g) |> PSY.get_activepower))
+                initial_conditions[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, PSY.get_activepower(g) ))
             else
-                initial_conditions[ix] = InitialCondition(g, PSY.get_tech(g) |> PSY.get_activepower)
+                initial_conditions[ix] = InitialCondition(g, PSY.get_activepower(g))
             end
     end
 
@@ -65,11 +65,11 @@ function duration_init(ps_m::CanonicalModel,
 
     for (ix, g) in enumerate(devices)
         if parameters
-            ini_cond_on[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 999.0*(PSY.get_tech(g) |> PSY.get_activepower > 0)))
-            ini_cond_off[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 999.0*(PSY.get_tech(g) |> PSY.get_activepower < 0)))
+            ini_cond_on[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 999.0*(PSY.get_activepower(g) > 0)))
+            ini_cond_off[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 999.0*(PSY.get_activepower(g) < 0)))
         else
-            ini_cond_on[ix] = InitialCondition(g, 999.0*(PSY.get_tech(g) |> PSY.get_activepower > 0))
-            ini_cond_off[ix] = InitialCondition(g, 999.0*(PSY.get_tech(g) |> PSY.get_activepower < 0))
+            ini_cond_on[ix] = InitialCondition(g, 999.0*(PSY.get_activepower(g) > 0))
+            ini_cond_off[ix] = InitialCondition(g, 999.0*(PSY.get_activepower(g) < 0))
         end
     end
 
