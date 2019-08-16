@@ -186,12 +186,13 @@ include("simulation_models/stage_update.jl")
 include("routines/get_results.jl")
 include("routines/solve_routines.jl")
 include("routines/write_model.jl")
+#include("make_report.jl")
 
 #Utils
 include("utils/optimization_debugging.jl")
 include("utils/printing.jl")
 include("utils/plot_results.jl")
-#include("utils/plot_recipes.jl")
+include("utils/plot_recipes.jl")
 
 
 end
