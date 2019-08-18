@@ -45,7 +45,7 @@ function checkcharging(f)
                 @warn string("BEV ", i, " in '", EVIPRO_DATA, "' solution failed with ", JuMP.termination_status(problem.model), ".")
                 false
             else
-                charging = problem.result()
+                charging = problem.result() |> locateddemand
                 verify(bev, charging, message=string("BEV ", i, " in '", EVIPRO_DATA, "'")) |> all
             end
         end
@@ -57,5 +57,29 @@ end
 @testset "Price-insensitive constraints for demands on EVIpro dataset" begin
     @trytotest begin
         checkcharging(demandconstraints)
+    end
+end
+
+
+@testset "Price-sensitive constraints for demands on EVIpro dataset" begin
+    pricing = TimeArray([Time(0), Time(12)], [10., 3.])
+    @trytotest begin
+        checkcharging(x -> demandconstraintsprices(x, pricing))
+    end
+end
+
+
+@testset "Greedy price-sensitive strategy for constraints for demands on EVIpro dataset" begin
+    pricing = TimeArray([Time(0), Time(12)], [10., 3.])
+    @trytotest begin
+        checkcharging(x -> demandconstraintsgreedy(x, pricing))
+    end
+end
+
+
+@testset "Full-charge strategy for price-sensitive constraints for demands on EVIpro dataset" begin
+    pricing = TimeArray([Time(0), Time(12)], [10., 3.])
+    @trytotest begin
+        checkcharging(x -> demandconstraintsfull(x, pricing))
     end
 end

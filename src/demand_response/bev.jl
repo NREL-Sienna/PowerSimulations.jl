@@ -5,7 +5,7 @@
 
 using Dates, JuMP, TimeSeries
 
-import PowerSystems: BevDemand, LocatedDemand, aligntimes
+import PowerSystems: BevDemand, ChargingPlan, LocatedDemand, aligntimes
 
 
 """
@@ -38,13 +38,12 @@ Represent demand constraints for a BEV as a JuMP model.
 - `demand :: BevDemand{T,L}`: the BEV demand
 
 # Returns
-- `locations :: TimeArray{T,L}`   : location of the BEV during each time interval
 - `model :: JuMP.Model`           : a JuMP model containing the constraints, where
                                     `charge` is the kWh charge during the time
                                     interval and `battery` is the batter level at
                                     the start of the interval and where the start
                                     of the intervals are given by `locations`
-- `result() :: LocatedDemand{T,}` : a function that results the located demand,
+- `result() :: ChargingPlan{T,L}` : a function that returns the charging plan, 
                                     but which can only be called after the model
                                     has been solved
 """
@@ -62,7 +61,6 @@ Represent demand constraints for a BEV as a JuMP model, minimizing the price pai
 - `prices :: TimeArray{T}`  : the electricity prices
 
 # Returns
-- `locations :: TimeArray{T,L}`   : location of the BEV during each time interval
 - `model :: JuMP.Model`           : a JuMP model containing the constraints, where
                                     `charge` is the kWh charge during the time
                                     interval and `battery` is the batter level at
@@ -95,7 +93,7 @@ pricing = TimeArray([Time(0), Time(12)], [10., 3.])
 
 constraints = demandconstraintsprices(example, pricing)
 optimize!(constraints.model, with_optimizer(GLPK.Optimizer))
-locateddemands = constraints.result()
+chargingplan = constraints.result()
 ```
 """
 function demandconstraintsprices(demand :: BevDemand{T,L}, prices :: TimeArray{Float64,1,T,Array{Float64,1}}) where L where T <: TimeType
@@ -139,28 +137,17 @@ function demandconstraintsprices(demand :: BevDemand{T,L}, prices :: TimeArray{F
 
     @objective(model, Min, sum(price[i] * charge[i] for i = 1:NP))
 
-    function result() ####:: LocatedDemand{T,L}
+    function result() ChargingPlan{T,L}
         TimeArray(
             xt,
-            collect(
-                zip(
-                    location,
-                    mapslices(
-                        x -> (chargerate=x[1], chargeamount=x[2], batterylevel=x[3]),
-                        hcat(
-                            vcat(eff.(JuMP.value.(chargevars   ) ./ duration), NaN),
-                            vcat(     JuMP.value.(chargevars   )             , NaN),
-                                      JuMP.value.(batteryLevels)                   ,
-                        ),
-                        dims=2
-                    )
-                )
+            vcat(
+                [(location=location[i] , chargerate=eff(JuMP.value(charge[i]) / duration[i]), chargeamount=JuMP.value(charge[i]), batterylevel=JuMP.value(battery[i] )) for i in 1:NP],
+                 (location=location[NT], chargerate=NaN                                     , chargeamount=NaN                  , batterylevel=JuMP.value(battery[NT]))
             )
         )
     end
 
     (
-        locations=TimeArray(xt, location),
         model=model,
         result=result,
     )
@@ -176,13 +163,12 @@ Represent demand constraints for a BEV Greedy charging scenario LP as a JuMP mod
 - `prices :: TimeArray{T}`  : the electricity prices
 
 # Returns
-- `locations :: TimeArray{T,L}`   : location of the BEV during each time interval
 - `model :: JuMP.Model`           : a JuMP model containing the constraints, where
                                     `charge` is the kWh charge during the time
                                     interval and `battery` is the batter level at
                                     the start of the interval and where the start
                                     of the intervals are given by `locations`
-- `result() :: LocatedDemand{T,}` : a function that results the located demand,
+- `result() :: ChargingPlan{T,L}` : a function that returns the charging plan, 
                                     but which can only be called after the model
                                     has been solved
 
@@ -227,28 +213,17 @@ function demandconstraintsgreedy(demand :: BevDemand{T,L}, prices :: TimeArray{F
 
     @objective(model, Max, sum(battery[i] for i = 1:NP))
 
-    function result() ####:: LocatedDemand{T,L}
+    function result() ChargingPlan{T,L}
         TimeArray(
             xt,
-            collect(
-                zip(
-                    location,
-                    mapslices(
-                        x -> (chargerate=x[1], chargeamount=x[2], batterylevel=x[3]),
-                        hcat(
-                            vcat(eff.(JuMP.value.(chargevars   ) ./ duration), NaN),
-                            vcat(     JuMP.value.(chargevars   )             , NaN),
-                                      JuMP.value.(batteryLevels)                   ,
-                        ),
-                        dims=2
-                    )
-                )
+            vcat(
+                [(location=location[i] , chargerate=eff(JuMP.value(charge[i]) / duration[i]), chargeamount=JuMP.value(charge[i]), batterylevel=JuMP.value(battery[i] )) for i in 1:NP],
+                 (location=location[NT], chargerate=NaN                                     , chargeamount=NaN                  , batterylevel=JuMP.value(battery[NT]))
             )
         )
     end
 
     (
-        locations=TimeArray(xt, location),
         model=model,
         result=result,
     )
@@ -265,13 +240,12 @@ constraining BEVs to charge continuously if not fully charged and charging is av
 - `prices :: TimeArray{T}`  : the electricity prices
 
 # Returns
-- `locations :: TimeArray{T,L}`   : location of the BEV during each time interval
 - `model :: JuMP.Model`           : a JuMP model containing the constraints, where
                                     `charge` is the kWh charge during the time
                                     interval and `battery` is the batter level at
                                     the start of the interval and where the start
                                     of the intervals are given by `locations`
-- `result() :: LocatedDemand{T,}` : a function that results the located demand,
+- `result() :: ChargingPlan{T,L}` : a function that returns the charging plan, 
                                     but which can only be called after the model
                                     has been solved
 
@@ -343,28 +317,17 @@ function demandconstraintsfull(demand :: BevDemand{T,L}, prices :: TimeArray{Flo
     @objective(model, Min, sum(price[i] * charge[i] for i = 1:NP))
 
     #Contains optimization charging results with charging rate from charger during each time interval
-    function result() ####:: LocatedDemand{T,L}
+    function result() ChargingPlan{T,L}
         TimeArray(
             xt,
-            collect(
-                zip(
-                    location,
-                    mapslices(
-                        x -> (chargerate=x[1], chargeamount=x[2], batterylevel=x[3]),
-                        hcat(
-                            vcat(eff.(JuMP.value.(chargevars   ) ./ duration), NaN),
-                            vcat(     JuMP.value.(chargevars   )             , NaN),
-                                      JuMP.value.(batteryLevels)                   ,
-                        ),
-                        dims=2
-                    )
-                )
+            vcat(
+                [(location=location[i] , chargerate=eff(JuMP.value(charge[i]) / duration[i]), chargeamount=JuMP.value(charge[i]), batterylevel=JuMP.value(battery[i] )) for i in 1:NP],
+                 (location=location[NT], chargerate=NaN                                     , chargeamount=NaN                  , batterylevel=JuMP.value(battery[NT]))
             )
         )
     end
 
     (
-        locations=TimeArray(xt, location),
         model=model,
         result=result,
     )
