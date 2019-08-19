@@ -134,7 +134,7 @@ function _pwlgencost(ps_m::CanonicalModel,
         cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}()
-    _pwlparamcheck(cost_component) ? @warn("Data provide is not suitable for linear implementation of PWL cost, this will result in a INVALID SOLUTION") : nothing ;
+    _pwlparamcheck(cost_component) ? nothing : @warn("Data provide is not suitable for linear implementation of PWL cost, this will result in a INVALID SOLUTION") ;
     # TODO: implement a fallback to either Linear Cost function or SOS2 based PWL Cost function
     upperbound(i) = (i == 1 ? cost_component[i][2] : (cost_component[i][2] - cost_component[i-1][2]));
     pwlvars = JuMP.@variable(ps_m.JuMPmodel, [i = 1:length(cost_component)], base_name = "{$(variable)}_{pwl}", start = 0.0, lower_bound = 0.0, upper_bound = upperbound(i))
