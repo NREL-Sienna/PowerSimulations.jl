@@ -29,9 +29,11 @@ RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String)
     end
   
     RecipesBase.@series begin
-    seriestype := :shape
-    sx, sy
-  end
+
+      seriestype := :shape
+      sx, sy
+
+    end
 
 end
 

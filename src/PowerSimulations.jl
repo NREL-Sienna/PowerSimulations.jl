@@ -186,6 +186,7 @@ include("simulation_models/stage_update.jl")
 include("routines/get_results.jl")
 include("routines/solve_routines.jl")
 include("routines/write_model.jl")
+#include("make_report.jl")
 
 #Utils
 include("utils/optimization_debugging.jl")
