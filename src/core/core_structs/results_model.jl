@@ -56,4 +56,3 @@ function load_operation_results(path::AbstractString, directory::AbstractString)
     return results
 
 end
-
