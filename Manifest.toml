@@ -37,7 +37,11 @@ version = "0.5.0"
 deps = ["Compat", "Future", "JSON", "Missings", "Printf", "Reexport"]
 git-tree-sha1 = "26601961df6afacdd16d67c1eec6cfe75e5ae9ab"
 uuid = "324d7699-5711-5eae-9e2f-1d82baa6b597"
+<<<<<<< HEAD
 version = "0.5.4"
+=======
+version = "0.5.5"
+>>>>>>> 551f75dd5ffb1c10f7ff8d3560b281516d738dbb
 
 [[Codecs]]
 deps = ["Test"]
@@ -61,7 +65,11 @@ version = "2.1.0"
 deps = ["CategoricalArrays", "Compat", "InvertedIndices", "IteratorInterfaceExtensions", "Missings", "PooledArrays", "Printf", "REPL", "Reexport", "SortingAlgorithms", "Statistics", "StatsBase", "TableTraits", "Tables", "Unicode"]
 git-tree-sha1 = "def266a7e5eb6f633ef4c72633d2a328b9450052"
 uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+<<<<<<< HEAD
 version = "0.19.0"
+=======
+version = "0.19.2"
+>>>>>>> 551f75dd5ffb1c10f7ff8d3560b281516d738dbb
 
 [[DataStructures]]
 deps = ["InteractiveUtils", "OrderedCollections"]
@@ -240,10 +248,9 @@ version = "0.4.1"
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[Mocking]]
-deps = ["Compat", "Dates"]
-git-tree-sha1 = "4bf69aaf823b119b034e091e16b18311aa191663"
+git-tree-sha1 = "7f42a32a8cef08f45d43c35663e73bd4e3b35f6d"
 uuid = "78c3b35d-d492-501b-9361-3d52fe80e533"
-version = "0.5.7"
+version = "0.6.0"
 
 [[NaNMath]]
 deps = ["Compat"]
@@ -286,14 +293,19 @@ version = "0.5.2"
 
 [[PowerModels]]
 deps = ["InfrastructureModels", "JSON", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento", "SparseArrays"]
-git-tree-sha1 = "1e3deea188e92d904bcffd4992d8e309786b9257"
+git-tree-sha1 = "564250c8a1ba31eb1d524c5f636620f3568c6561"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
-version = "0.12.2"
+version = "0.12.4"
 
 [[PowerSystems]]
 deps = ["CSV", "DataFrames", "Dates", "InteractiveUtils", "JSON2", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "UUIDs", "YAML"]
+<<<<<<< HEAD
 git-tree-sha1 = "0bf63c682b3e2891f0a300946e1a962fe32c8836"
 repo-rev = "dev"
+=======
+git-tree-sha1 = "733fa374958c47d72d955bf006a6ec4164607bff"
+repo-rev = "struct_updates"
+>>>>>>> 551f75dd5ffb1c10f7ff8d3560b281516d738dbb
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
 version = "0.4.0"
@@ -343,12 +355,15 @@ git-tree-sha1 = "7b1d07f411bc8ddb7977ec7f377b97b158514fe0"
 uuid = "189a3867-3050-52da-a836-e630ba90ab69"
 version = "0.2.0"
 
+<<<<<<< HEAD
 [[Requires]]
 deps = ["Test"]
 git-tree-sha1 = "f6fbf4ba64d295e146e49e021207993b6b48c7d1"
 uuid = "ae029012-a4dd-5104-9daa-d747884805df"
 version = "0.5.2"
 
+=======
+>>>>>>> 551f75dd5ffb1c10f7ff8d3560b281516d738dbb
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 
