@@ -1,6 +1,5 @@
-RecipesBase.@recipe function StackedPlot(res::OperationModelResults, variable::String; sort) 
+RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String) 
   
-  results = get_stacked_plot_data(res, variable; sort)
   time = results.time_range
   n = length(time)
   data = results.data_matrix
@@ -30,9 +29,11 @@ RecipesBase.@recipe function StackedPlot(res::OperationModelResults, variable::S
     end
   
     RecipesBase.@series begin
-    seriestype := :shape
-    sx, sy
-  end
+
+      seriestype := :shape
+      sx, sy
+
+    end
 
 end
 
