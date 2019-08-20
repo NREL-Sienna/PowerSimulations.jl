@@ -1,0 +1,10 @@
+---
+title : Weave example
+author : Lily Hanig
+date: 16th August 2019
+
+---
+
+```julia
+plot(stacked_gen)
+```
