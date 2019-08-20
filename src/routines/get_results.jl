@@ -1,6 +1,6 @@
 # Internal functions to create the variable DataFrame
 
-function _result_dataframe(variable::JuMP.Containers.DenseAxisArray)
+function _result_dataframe_vars(variable::JuMP.Containers.DenseAxisArray)
 
     result = Array{Float64, length(variable.axes)}(undef, length(variable.axes[2]), length(variable.axes[1]))
     names = Array{Symbol, 1}(undef, length(variable.axes[1]))
@@ -17,7 +17,7 @@ function _result_dataframe(variable::JuMP.Containers.DenseAxisArray)
 
 end
 
-function _result_dataframe_d(constraint::JuMP.Containers.DenseAxisArray)
+function _result_dataframe_duals(constraint::JuMP.Containers.DenseAxisArray)
 
     result = Array{Float64, length(constraint.axes)}(undef, length(constraint.axes[1]))
     names = Array{Symbol, 1}(undef, length(constraint.axes[1]))
@@ -41,7 +41,7 @@ function get_model_result(op_m::OperationModel)
 
     for (k, v) in vars(op_m.canonical)
 
-        results_dict[k] = _result_dataframe(v)
+        results_dict[k] = _result_dataframe_vars(v)
 
     end
 
@@ -56,7 +56,7 @@ function get_model_duals(op_m::OperationModel, cons::Vector{Symbol})
     for c in cons
 
         v = con(op_m.canonical, c)
-        results_dict[c] = _result_dataframe_d(v)
+        results_dict[c] = _result_dataframe_duals(v)
 
     end
 
