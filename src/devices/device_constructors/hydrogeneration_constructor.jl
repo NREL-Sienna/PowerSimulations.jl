@@ -1,7 +1,6 @@
-function _internal_device_constructor!(ps_m::CanonicalModel,
-                                        device::Type{H},
-                                        device_formulation::Type{D},
-                                        system_formulation::Type{S},
+function _internal_device_constructor!(canonical_model::CanonicalModel,
+                                        model::DeviceModel{H, D},
+                                        ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {H<:PSY.HydroGen,
                                                           D<:AbstractHydroFormulation,
@@ -9,9 +8,9 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 
     forecast = get(kwargs, :forecast, true)
 
-    devices = PSY.get_components(device, sys)
+    devices = PSY.get_components(H, sys)
 
-    if validate_available_devices(devices, device)
+    if validate_available_devices(devices, H)
         return
     end
 
@@ -20,9 +19,9 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     if forecast
         first_step = PSY.get_forecasts_initial_time(sys)
         forecasts = PSY.get_forecasts(PSY.Deterministic{H}, sys, first_step)
-        nodal_expression(ps_m, forecasts, system_formulation)
+        nodal_expression(canonical_model, forecasts, S)
     else
-        nodal_expression(ps_m, devices, system_formulation)
+        nodal_expression(canonical_model, devices, S)
     end
     =#
     return
@@ -30,38 +29,35 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
 end
 
 
-function _internal_device_constructor!(ps_m::CanonicalModel,
-                                        device::Type{H},
-                                        device_formulation::Type{HydroFixed},
-                                        system_formulation::Type{S},
+function _internal_device_constructor!(canonical_model::CanonicalModel,
+                                        model::DeviceModel{H, HydroFixed},
+                                        ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {H<:PSY.HydroGen,
                                                           S<:PM.AbstractPowerFormulation}
 
     forecast = get(kwargs, :forecast, true)
 
-    devices = PSY.get_components(device, sys)
+    devices = PSY.get_components(H, sys)
 
-    if validate_available_devices(devices, device)
+    if validate_available_devices(devices, H)
         return
     end
 
     if forecast
-        first_step = PSY.get_forecasts_initial_time(sys)
-        forecasts = PSY.get_forecasts(PSY.Deterministic{H}, sys, first_step)
-        nodal_expression(ps_m, forecasts, system_formulation)
+        forecasts = _retrieve_forecasts(sys, H)
+        nodal_expression(canonical_model, forecasts, S)
     else
-        nodal_expression(ps_m, devices, system_formulation)
+        nodal_expression(canonical_model, devices, S)
     end
 
     return
 
 end
 
-function _internal_device_constructor!(ps_m::CanonicalModel,
-                                        device::Type{PSY.HydroFix},
-                                        device_formulation::Type{D},
-                                        system_formulation::Type{S},
+function _internal_device_constructor!(canonical_model::CanonicalModel,
+                                        model::DeviceModel{PSY.HydroFix, D},
+                                        ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {D<:AbstractHydroFormulation,
                                                           S<:PM.AbstractPowerFormulation}
@@ -69,36 +65,33 @@ function _internal_device_constructor!(ps_m::CanonicalModel,
     @warn("The Formulation $(D) only applies to Dispatchable Hydro, *
                Consider Changing the Device Formulation to HydroFixed")
 
-    _internal_device_constructor!(ps_m,
-                                  device,
-                                  HydroFixed,
-                                  system_formulation,
+    _internal_device_constructor!(canonical_model,
+                                  DeviceModel(PSY.HydroFix, HydroFixed),
+                                  S,
                                   sys;
                                   kwargs...)
 
 end
 
-function _internal_device_constructor!(ps_m::CanonicalModel,
-                                        device::Type{PSY.HydroFix},
-                                        device_formulation::Type{HydroFixed},
-                                        system_formulation::Type{S},
+function _internal_device_constructor!(canonical_model::CanonicalModel,
+                                        model::DeviceModel{PSY.HydroFix, HydroFixed},
+                                        ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {S<:PM.AbstractPowerFormulation}
 
     forecast = get(kwargs, :forecast, true)
 
-    devices = PSY.get_components(device, sys)
+    devices = PSY.get_components(PSY.HydroFix, sys)
 
-    if validate_available_devices(devices, device)
+    if validate_available_devices(devices, PSY.HydroFix)
         return
     end
 
     if forecast
-        first_step = PSY.get_forecasts_initial_time(sys)
-        forecasts = PSY.get_forecasts(PSY.Deterministic{PSY.HydroFix}, sys, first_step)
-        nodal_expression(ps_m, forecasts, system_formulation)
+        forecasts = _retrieve_forecasts(sys, PSY.HydroFix)
+        nodal_expression(canonical_model, forecasts, S)
     else
-        nodal_expression(ps_m, devices, system_formulation)
+        nodal_expression(canonical_model, devices, S)
     end
 
     return

@@ -1,5 +1,5 @@
 @doc raw"""
-    device_range(ps_m::CanonicalModel,
+    device_range(canonical_model::CanonicalModel,
                         range_data::Vector{NamedMinMax},
                         cons_name::Symbol,
                         var_name::Symbol)
@@ -24,31 +24,31 @@ where r in range_data.
 `` r^{min} \leq x \leq r^{max}, \text{ otherwise } ``
 
 # Arguments
-* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * range_data::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 """
-function device_range(ps_m::CanonicalModel,
-                        range_data::Vector{NamedMinMax},
-                        cons_name::Symbol,
-                        var_name::Symbol)
+function device_range(canonical_model::CanonicalModel,
+                    range_data::Vector{NamedMinMax},
+                    cons_name::Symbol,
+                    var_name::Symbol)
 
-    time_steps = model_time_steps(ps_m)
-    variable = var(ps_m, var_name)
+    time_steps = model_time_steps(canonical_model)
+    variable = var(canonical_model, var_name)
     set_name = (r[1] for r in range_data)
-    _add_cons_container!(ps_m, cons_name, set_name, time_steps)
-    constraint = con(ps_m, cons_name)
+    _add_cons_container!(canonical_model, cons_name, set_name, time_steps)
+    constraint = con(canonical_model, cons_name)
 
     for r in range_data
           if abs(r[2].min - r[2].max) <= eps()
             @warn("The min - max values in range constraint with eps() distance to each other. Range Constraint will be modified for Equality Constraint")
                 for t in time_steps
-                    constraint[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, variable[r[1], t] == r[2].max)
+                    constraint[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[r[1], t] == r[2].max)
                 end
           else
                 for t in time_steps
-                    constraint[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, r[2].min <= variable[r[1], t] <= r[2].max)
+                    constraint[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, r[2].min <= variable[r[1], t] <= r[2].max)
                 end
             end
     end
@@ -58,7 +58,7 @@ function device_range(ps_m::CanonicalModel,
 end
 
 @doc raw"""
-    device_semicontinuousrange(ps_m::CanonicalModel,
+    device_semicontinuousrange(canonical_model::CanonicalModel,
                                     scrange_data::Vector{NamedMinMax},
                                     cons_name::Symbol,
                                     var_name::Symbol,
@@ -88,45 +88,45 @@ where r in range_data.
 `` r^{min} x^{bin} \leq x^{cts} \leq r^{max} x^{bin}, \text{ otherwise } ``
 
 # Arguments
-* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * scrange_data::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 * binvar_name::Symbol : the name of the binary variable
 """
-function device_semicontinuousrange(ps_m::CanonicalModel,
+function device_semicontinuousrange(canonical_model::CanonicalModel,
                                     scrange_data::Vector{NamedMinMax},
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
 
-    time_steps = model_time_steps(ps_m)
+    time_steps = model_time_steps(canonical_model)
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
 
-    varcts = var(ps_m, var_name)
-    varbin = var(ps_m, binvar_name)
+    varcts = var(canonical_model, var_name)
+    varbin = var(canonical_model, binvar_name)
 
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
 
     set_name = (r[1] for r in scrange_data)
-    _add_cons_container!(ps_m, ub_name, set_name, time_steps)
-    _add_cons_container!(ps_m, lb_name, set_name, time_steps)
-    con_ub = con(ps_m, ub_name)
-    con_lb = con(ps_m, lb_name)
+    _add_cons_container!(canonical_model, ub_name, set_name, time_steps)
+    _add_cons_container!(canonical_model, lb_name, set_name, time_steps)
+    con_ub = con(canonical_model, ub_name)
+    con_lb = con(canonical_model, lb_name)
 
     for t in time_steps, r in scrange_data
 
             if r[2].min == 0.0
 
-                con_ub[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, varcts[r[1], t] <= r[2].max*varbin[r[1], t])
-                con_lb[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, varcts[r[1], t] >= 0.0)
+                con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] <= r[2].max*varbin[r[1], t])
+                con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] >= 0.0)
 
             else
 
-                con_ub[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, varcts[r[1], t] <= r[2].max*varbin[r[1], t])
-                con_lb[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, varcts[r[1], t] >= r[2].min*varbin[r[1], t])
+                con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] <= r[2].max*varbin[r[1], t])
+                con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] >= r[2].min*varbin[r[1], t])
 
             end
 
@@ -137,7 +137,7 @@ function device_semicontinuousrange(ps_m::CanonicalModel,
 end
 
 @doc raw"""
-    device_semicontinuousrange_param(ps_m::CanonicalModel,
+    device_semicontinuousrange_param(canonical_model::CanonicalModel,
                                     scrange_data::Vector{NamedMinMax},
                                     cons_name::Symbol,
                                     var_name::Symbol,
@@ -167,46 +167,46 @@ where r in range_data.
 `` r^{min} x^{param} \leq x^{var} \leq r^{min} x^{param}, \text{ otherwise } ``
 
 # Arguments
-* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * scrange_data::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 * param_reference::RefParam : RefParam of the parameter
 """
-function device_semicontinuousrange_param(ps_m::CanonicalModel,
+function device_semicontinuousrange_param(canonical_model::CanonicalModel,
                                           scrange_data::Vector{NamedMinMax},
                                           cons_name::Symbol,
                                           var_name::Symbol,
                                           param_reference::RefParam)
 
-    time_steps = model_time_steps(ps_m)
+    time_steps = model_time_steps(canonical_model)
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
 
-    variable = var(ps_m, var_name)
+    variable = var(canonical_model, var_name)
 
 
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it. In the future this can be updated
     set_name = (r[1] for r in scrange_data)
-    _add_param_container!(ps_m, param_reference, set_name, time_steps)
-    param = par(ps_m, param_reference)
+    _add_param_container!(canonical_model, param_reference, set_name, time_steps)
+    param = par(canonical_model, param_reference)
 
-    _add_cons_container!(ps_m, ub_name, set_name, time_steps)
-    _add_cons_container!(ps_m, lb_name, set_name, time_steps)
-    con_ub = con(ps_m, ub_name)
-    con_lb = con(ps_m, lb_name)
+    _add_cons_container!(canonical_model, ub_name, set_name, time_steps)
+    _add_cons_container!(canonical_model, lb_name, set_name, time_steps)
+    con_ub = con(canonical_model, ub_name)
+    con_lb = con(canonical_model, lb_name)
 
     for t in time_steps, r in scrange_data
-        param[r[1], t] = PJ.add_parameter(ps_m.JuMPmodel, 1.0)
+        param[r[1], t] = PJ.add_parameter(canonical_model.JuMPmodel, 1.0)
         if r[2].min == 0.0
 
-            con_ub[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, variable[r[1], t] <= r[2].max*param[r[1], t])
-            con_lb[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, variable[r[1], t] >= 0.0)
+            con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[r[1], t] <= r[2].max*param[r[1], t])
+            con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[r[1], t] >= 0.0)
 
         else
 
-            con_ub[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, variable[r[1], t] <= r[2].max*param[r[1], t])
-            con_lb[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, variable[r[1], t] >= r[2].min*param[r[1], t])
+            con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[r[1], t] <= r[2].max*param[r[1], t])
+            con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[r[1], t] >= r[2].min*param[r[1], t])
 
         end
 
@@ -217,7 +217,7 @@ function device_semicontinuousrange_param(ps_m::CanonicalModel,
 end
 
 @doc raw"""
-    reserve_device_semicontinuousrange(ps_m::CanonicalModel,
+    reserve_device_semicontinuousrange(canonical_model::CanonicalModel,
                                     scrange_data::Vector{NamedMinMax},
                                     cons_name::Symbol,
                                     var_name::Symbol,
@@ -247,45 +247,45 @@ where r in range_data.
 `` r^{min} (1 - x^{bin} ) \leq x^{cts} \leq r^{max} (1 - x^{bin} ), \text{ otherwise } ``
 
 # Arguments
-* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * scrange_data::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 * binvar_name::Symbol : the name of the binary variable
 """
-function reserve_device_semicontinuousrange(ps_m::CanonicalModel,
+function reserve_device_semicontinuousrange(canonical_model::CanonicalModel,
                                             scrange_data::Vector{NamedMinMax},
                                             cons_name::Symbol,
                                             var_name::Symbol,
                                             binvar_name::Symbol)
 
-    time_steps = model_time_steps(ps_m)
+    time_steps = model_time_steps(canonical_model)
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
 
-    varcts = var(ps_m, var_name)
-    varbin = var(ps_m, binvar_name)
+    varcts = var(canonical_model, var_name)
+    varbin = var(canonical_model, binvar_name)
 
     # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     # In the future this can be updated
 
     set_name = (r[1] for r in scrange_data)
-    _add_cons_container!(ps_m, ub_name, set_name, time_steps)
-    _add_cons_container!(ps_m, lb_name, set_name, time_steps)
-    con_ub = con(ps_m, ub_name)
-    con_lb = con(ps_m, lb_name)
+    _add_cons_container!(canonical_model, ub_name, set_name, time_steps)
+    _add_cons_container!(canonical_model, lb_name, set_name, time_steps)
+    con_ub = con(canonical_model, ub_name)
+    con_lb = con(canonical_model, lb_name)
 
     for t in time_steps, r in scrange_data
 
             if r[2].min == 0.0
 
-                con_ub[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, varcts[r[1], t] <= r[2].max*(1-varbin[r[1], t]))
-                con_lb[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, varcts[r[1], t] >= 0.0)
+                con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] <= r[2].max*(1-varbin[r[1], t]))
+                con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] >= 0.0)
 
             else
 
-                con_ub[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, varcts[r[1], t] <= r[2].max*(1-varbin[r[1], t]))
-                con_lb[r[1], t] = JuMP.@constraint(ps_m.JuMPmodel, varcts[r[1], t] >= r[2].min*(1-varbin[r[1], t]))
+                con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] <= r[2].max*(1-varbin[r[1], t]))
+                con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] >= r[2].min*(1-varbin[r[1], t]))
 
             end
 

@@ -35,7 +35,7 @@ end
     include("test_renewable_generation_constructors.jl")
     include("test_load_constructors.jl")
     include("test_storage_constructors.jl")
-    #include("test_hydro_generation_constructors.jl")
+    include("test_hydro_generation_constructors.jl")
 end
 
 @testset "Network Constructors" begin
@@ -47,8 +47,8 @@ end
 end
 
 @testset "Operation Models" begin
-    include("test_operation_model_constructor.jl")
-    include("test_operation_model_solve.jl")
+    #include("test_operation_model_constructor.jl")
+    #include("test_operation_model_solve.jl")
 end
 
 @testset "Simulation Models" begin

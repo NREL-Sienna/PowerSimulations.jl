@@ -1,4 +1,4 @@
-function construct_service!(ps_m::CanonicalModel,
+function construct_service!(canonical_model::CanonicalModel,
                             service::Type{SD},
                             service_formulation::Type{SV},
                             system_formulation::Type{S},

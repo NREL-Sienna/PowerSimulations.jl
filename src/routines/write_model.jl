@@ -74,13 +74,13 @@ function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
                                op_model::OperationModel,
                                path::String)
 
-    ps_m = op_model.canonical
-    optimizer_log[:obj_value] = JuMP.objective_value(ps_m.JuMPmodel)
-    optimizer_log[:termination_status] = Int(JuMP.termination_status(ps_m.JuMPmodel))
-    optimizer_log[:primal_status] = Int(JuMP.primal_status(ps_m.JuMPmodel))
-    optimizer_log[:dual_status] = Int(JuMP.dual_status(ps_m.JuMPmodel))
+    canonical_model = op_model.canonical
+    optimizer_log[:obj_value] = JuMP.objective_value(canonical_model.JuMPmodel)
+    optimizer_log[:termination_status] = Int(JuMP.termination_status(canonical_model.JuMPmodel))
+    optimizer_log[:primal_status] = Int(JuMP.primal_status(canonical_model.JuMPmodel))
+    optimizer_log[:dual_status] = Int(JuMP.dual_status(canonical_model.JuMPmodel))
     try
-        optimizer_log[:solve_time] = MOI.get(ps_m.JuMPmodel, MOI.SolveTime())
+        optimizer_log[:solve_time] = MOI.get(canonical_model.JuMPmodel, MOI.SolveTime())
     catch
         @warn("SolveTime() property not supported by the Solver")
         optimizer_log[:solve_time] = "Not Supported by solver"

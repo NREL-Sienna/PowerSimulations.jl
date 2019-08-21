@@ -1,5 +1,5 @@
 @doc raw"""
-    device_duration_retrospective(ps_m::CanonicalModel,
+    device_duration_retrospective(canonical_model::CanonicalModel,
                                         set_names::Vector{String},
                                         duration_data::Vector{UpDown},
                                         initial_duration_on::Vector{InitialCondition},
@@ -37,7 +37,7 @@ for i in the set of time steps.
 
 
 # Arguments
-* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * set_names::Vector{String} : names of the sets to be used with the constraints
 * duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
 * initial_duration_on::Vector{InitialCondition} : gives initial number of time steps variable is up
@@ -48,7 +48,7 @@ for i in the set of time steps.
 - : var_names[2] : varstart
 - : var_names[3] : varstop
 """
-function device_duration_retrospective(ps_m::CanonicalModel,
+function device_duration_retrospective(canonical_model::CanonicalModel,
                                         set_names::Vector{String},
                                         duration_data::Vector{UpDown},
                                         initial_duration_on::Vector{InitialCondition},
@@ -56,23 +56,23 @@ function device_duration_retrospective(ps_m::CanonicalModel,
                                         cons_name::Symbol,
                                         var_names::Tuple{Symbol, Symbol, Symbol})
 
-    time_steps = model_time_steps(ps_m)
+    time_steps = model_time_steps(canonical_model)
 
-    varon = var(ps_m, var_names[1])
-    varstart = var(ps_m, var_names[2])
-    varstop = var(ps_m, var_names[3])
+    varon = var(canonical_model, var_names[1])
+    varstart = var(canonical_model, var_names[2])
+    varstop = var(canonical_model, var_names[3])
 
     name_up = _middle_rename(cons_name, "_", "up")
     name_down = _middle_rename(cons_name, "_", "dn")
 
-    _add_cons_container!(ps_m, name_up, set_names, time_steps)
-    _add_cons_container!(ps_m, name_down, set_names, time_steps)
-    con_up = con(ps_m, name_up)
-    con_down = con(ps_m, name_down)
+    _add_cons_container!(canonical_model, name_up, set_names, time_steps)
+    _add_cons_container!(canonical_model, name_down, set_names, time_steps)
+    con_up = con(canonical_model, name_up)
+    con_down = con(canonical_model, name_down)
 
         for t in time_steps, (ix, name) in enumerate(set_names)
             # Minimum Up-time Constraint
-            lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0)
+            lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}(0)
             for i in (t-duration_data[ix].up + 1):t
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_on, varstart[name, i])
@@ -82,10 +82,10 @@ function device_duration_retrospective(ps_m::CanonicalModel,
                 JuMP.add_to_expression!(lhs_on, 1)
             end
 
-            con_up[name, t] = JuMP.@constraint(ps_m.JuMPmodel, lhs_on - varon[name, t] <= 0.0)
+            con_up[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, lhs_on - varon[name, t] <= 0.0)
 
             # Minimum Down-time Constraint
-            lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0)
+            lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}(0)
             for i in (t-duration_data[ix].down + 1):t
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_off, varstop[name, i])
@@ -95,7 +95,7 @@ function device_duration_retrospective(ps_m::CanonicalModel,
                 JuMP.add_to_expression!(lhs_off, 1)
             end
 
-            con_down[name, t] = JuMP.@constraint(ps_m.JuMPmodel, lhs_off + varon[name, t] <= 1.0)
+            con_down[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, lhs_off + varon[name, t] <= 1.0)
 
         end
 
@@ -103,7 +103,7 @@ function device_duration_retrospective(ps_m::CanonicalModel,
 
 end
 @doc raw"""
-    device_duration_look_ahead(ps_m::CanonicalModel,
+    device_duration_look_ahead(canonical_model::CanonicalModel,
                              set_names::Vector{String},
                              duration_data::Vector{UpDown},
                              initial_duration_on::Vector{InitialCondition},
@@ -141,7 +141,7 @@ for i in the set of time steps.
 
 
 # Arguments
-* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * set_names::Vector{String} : names of the sets to be used with the constraints
 * duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
 * initial_duration_on::Vector{InitialCondition} : gives initial number of time steps variable is up
@@ -152,7 +152,7 @@ for i in the set of time steps.
 - : var_names[2] : varstart
 - : var_names[3] : varstop
 """
-function device_duration_look_ahead(ps_m::CanonicalModel,
+function device_duration_look_ahead(canonical_model::CanonicalModel,
                              set_names::Vector{String},
                              duration_data::Vector{UpDown},
                              initial_duration_on::Vector{InitialCondition},
@@ -160,23 +160,23 @@ function device_duration_look_ahead(ps_m::CanonicalModel,
                              cons_name::Symbol,
                              var_names::Tuple{Symbol, Symbol, Symbol})
 
-    time_steps = model_time_steps(ps_m)
+    time_steps = model_time_steps(canonical_model)
 
-    varon = var(ps_m, var_names[1])
-    varstart = var(ps_m, var_names[2])
-    varstop = var(ps_m, var_names[3])
+    varon = var(canonical_model, var_names[1])
+    varstart = var(canonical_model, var_names[2])
+    varstop = var(canonical_model, var_names[3])
 
     name_up = _middle_rename(cons_name, "_", "up")
     name_down = _middle_rename(cons_name, "_", "dn")
 
-    _add_cons_container!(ps_m, name_up, set_names, time_steps)
-    _add_cons_container!(ps_m, name_down, set_names, time_steps)
-    con_up = con(ps_m, name_up)
-    con_down = con(ps_m, name_down)
+    _add_cons_container!(canonical_model, name_up, set_names, time_steps)
+    _add_cons_container!(canonical_model, name_down, set_names, time_steps)
+    con_up = con(canonical_model, name_up)
+    con_down = con(canonical_model, name_down)
 
     for t in time_steps, (ix, name) in enumerate(set_names)
         # Minimum Up-time Constraint
-        lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0)
+        lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}(0)
         for i in (t-duration_data[ix].up + 1):t
             if i in time_steps
                 JuMP.add_to_expression!(lhs_on, varon[name, i])
@@ -186,10 +186,10 @@ function device_duration_look_ahead(ps_m::CanonicalModel,
             lhs_on += initial_duration_on[ix].value
         end
 
-        con_up[name, t] = JuMP.@constraint(ps_m.JuMPmodel, varstop[name, t]*duration_data[ix].up - lhs_on <= 0.0)
+        con_up[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, varstop[name, t]*duration_data[ix].up - lhs_on <= 0.0)
 
         # Minimum Down-time Constraint
-        lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0)
+        lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}(0)
         for i in (t-duration_data[ix].down + 1):t
             if i in time_steps
                 JuMP.add_to_expression!(lhs_off, (1-varon[name, i]))
@@ -199,7 +199,7 @@ function device_duration_look_ahead(ps_m::CanonicalModel,
             lhs_off += initial_duration_off[ix].value
         end
 
-        con_down[name, t] = JuMP.@constraint(ps_m.JuMPmodel, varstart[name, t]*duration_data[ix].down - lhs_off <= 0.0 )
+        con_down[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, varstart[name, t]*duration_data[ix].down - lhs_off <= 0.0 )
 
     end
 end
@@ -207,7 +207,7 @@ end
 
 @doc raw"""
 
-    device_duration_param(ps_m::CanonicalModel,
+    device_duration_param(canonical_model::CanonicalModel,
                              set_names::Vector{String},
                              duration_data::Vector{UpDown},
                              initial_duration_on::Vector{InitialCondition},
@@ -245,7 +245,7 @@ for i in the set of time steps. Otherwise:
 for i in the set of time steps.
 
 # Arguments
-* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * set_names::Vector{String} : names of the sets to be used with the constraints
 * duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
 * initial_duration_on::Vector{InitialCondition} : gives initial number of time steps variable is up
@@ -256,7 +256,7 @@ for i in the set of time steps.
 - : var_names[2] : varstart
 - : var_names[3] : varstop
 """
-function device_duration_param(ps_m::CanonicalModel,
+function device_duration_param(canonical_model::CanonicalModel,
                              set_names::Vector{String},
                              duration_data::Vector{UpDown},
                              initial_duration_on::Vector{InitialCondition},
@@ -264,23 +264,23 @@ function device_duration_param(ps_m::CanonicalModel,
                              cons_name::Symbol,
                              var_names::Tuple{Symbol, Symbol, Symbol})
 
-    time_steps = model_time_steps(ps_m)
+    time_steps = model_time_steps(canonical_model)
 
-    varon = var(ps_m, var_names[1])
-    varstart = var(ps_m, var_names[2])
-    varstop = var(ps_m, var_names[3])
+    varon = var(canonical_model, var_names[1])
+    varstart = var(canonical_model, var_names[2])
+    varstop = var(canonical_model, var_names[3])
 
     name_up = _middle_rename(cons_name, "_", "up")
     name_down = _middle_rename(cons_name, "_", "dn")
 
-    _add_cons_container!(ps_m, name_up, set_names, time_steps)
-    _add_cons_container!(ps_m, name_down, set_names, time_steps)
-    con_up = con(ps_m, name_up)
-    con_down = con(ps_m, name_down)
+    _add_cons_container!(canonical_model, name_up, set_names, time_steps)
+    _add_cons_container!(canonical_model, name_down, set_names, time_steps)
+    con_up = con(canonical_model, name_up)
+    con_down = con(canonical_model, name_down)
 
     for t in time_steps, (ix, name) in enumerate(set_names)
         # Minimum Up-time Constraint
-        lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0)
+        lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}(0)
         for i in (t-duration_data[ix].up + 1):t
             if t <= duration_data[ix].up
                 if in(i, time_steps)
@@ -292,14 +292,14 @@ function device_duration_param(ps_m::CanonicalModel,
         end
         if t <= duration_data[ix].up
             lhs_on += initial_duration_on[ix].value
-            con_up[name, t] = JuMP.@constraint(ps_m.JuMPmodel, varstop[name, t]*duration_data[ix].up - lhs_on <= 0.0)
+            con_up[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, varstop[name, t]*duration_data[ix].up - lhs_on <= 0.0)
          else
-            con_up[name, t] = JuMP.@constraint(ps_m.JuMPmodel, lhs_on - varon[name, t] <= 0.0)
+            con_up[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, lhs_on - varon[name, t] <= 0.0)
 
         end
 
         # Minimum Down-time Constraint
-        lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}(0)
+        lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}(0)
         for i in (t-duration_data[ix].down + 1):t
             if t <= duration_data[ix].down
                 if in(i, time_steps)
@@ -311,9 +311,9 @@ function device_duration_param(ps_m::CanonicalModel,
         end
         if t <= duration_data[ix].down
             lhs_off += initial_duration_off[ix].value
-            con_down[name, t] = JuMP.@constraint(ps_m.JuMPmodel, varstart[name, t]*duration_data[ix].down - lhs_off <= 0.0)
+            con_down[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, varstart[name, t]*duration_data[ix].down - lhs_off <= 0.0)
         else
-            con_down[name, t] = JuMP.@constraint(ps_m.JuMPmodel, lhs_off + varon[name, t] <= 1.0)
+            con_down[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, lhs_off + varon[name, t] <= 1.0)
         end
 
     end

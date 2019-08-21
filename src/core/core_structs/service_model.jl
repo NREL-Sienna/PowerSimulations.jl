@@ -8,13 +8,13 @@ end
 
 
 
-function construct_service!(ps_m::CanonicalModel,
+function construct_service!(canonical_model::CanonicalModel,
                            service_model::ServiceModel,
                            system_formulation::Type{S},
                            sys::PSY.System;
                            kwargs...) where {S<:PM.AbstractPowerFormulation}
 
-    construct_service!(ps_m,
+    construct_service!(canonical_model,
                       service_model.service,
                       service_model.formulation,
                       system_formulation,

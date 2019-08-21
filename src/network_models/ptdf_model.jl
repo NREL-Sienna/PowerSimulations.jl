@@ -1,35 +1,35 @@
-function ptdf_networkflow(ps_m::CanonicalModel,
+function ptdf_networkflow(canonical_model::CanonicalModel,
                           branches::PSY.FlattenIteratorWrapper{B},
                           buses::PSY.FlattenIteratorWrapper{PSY.Bus},
                           expression::Symbol,
                           PTDF::PSY.PTDF) where {B<:PSY.Branch}
 
-    time_steps = model_time_steps(ps_m)
-    ps_m.constraints[:network_flow] = JuMPConstraintArray(undef, PTDF.axes[1], time_steps)
-    ps_m.constraints[:nodal_balance] = JuMPConstraintArray(undef, PTDF.axes[2], time_steps)
+    time_steps = model_time_steps(canonical_model)
+    canonical_model.constraints[:network_flow] = JuMPConstraintArray(undef, PTDF.axes[1], time_steps)
+    canonical_model.constraints[:nodal_balance] = JuMPConstraintArray(undef, PTDF.axes[2], time_steps)
     branch_types = typeof.(branches)
 
-    _remove_undef!(ps_m.expressions[expression])
+    _remove_undef!(canonical_model.expressions[expression])
 
     var_dict = Dict{Type,Symbol}()
     for btype in Set(branch_types)
         var_dict[btype] = Symbol("Fp_$(btype)")
         typed_branches = PSY.FlattenIteratorWrapper(btype, Vector([[b for b in branches if typeof(b) == btype]]))
-        flow_variables(ps_m, StandardPTDFForm, typed_branches)
+        flow_variables(canonical_model, StandardPTDFForm, typed_branches)
     end
 
     for t in time_steps
         for b in branches
-            ps_m.constraints[:network_flow][PSY.get_name(b), t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_dict[typeof(b)]][PSY.get_name(b), t] == PTDF[PSY.get_name(b), :]'*ps_m.expressions[expression].data[:, t])
+            canonical_model.constraints[:network_flow][PSY.get_name(b), t] = JuMP.@constraint(canonical_model.JuMPmodel, canonical_model.variables[var_dict[typeof(b)]][PSY.get_name(b), t] == PTDF[PSY.get_name(b), :]'*canonical_model.expressions[expression].data[:, t])
         end
 
         for b in branches
-            _add_to_expression!(ps_m.expressions[expression], (PSY.get_arc(b)).from |> PSY.get_number, t, ps_m.variables[var_dict[typeof(b)]][PSY.get_name(b), t], -1.0)
-            _add_to_expression!(ps_m.expressions[expression], (PSY.get_arc(b)).to |> PSY.get_number, t, ps_m.variables[var_dict[typeof(b)]][PSY.get_name(b), t], 1.0)
+            _add_to_expression!(canonical_model.expressions[expression], (PSY.get_arc(b)).from |> PSY.get_number, t, canonical_model.variables[var_dict[typeof(b)]][PSY.get_name(b), t], -1.0)
+            _add_to_expression!(canonical_model.expressions[expression], (PSY.get_arc(b)).to |> PSY.get_number, t, canonical_model.variables[var_dict[typeof(b)]][PSY.get_name(b), t], 1.0)
         end
 
         for b in buses
-            ps_m.constraints[:nodal_balance][PSY.get_number(b), t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.expressions[expression][PSY.get_number(b), t] == 0)
+            canonical_model.constraints[:nodal_balance][PSY.get_number(b), t] = JuMP.@constraint(canonical_model.JuMPmodel, canonical_model.expressions[expression][PSY.get_number(b), t] == 0)
         end
     end
 
@@ -54,14 +54,14 @@ to = TimerOutput()
                               Dict{Symbol, JuMPAffineExpressionArray}(:nodal_balance_active => JuMPAffineExpressionArray(undef, 5, 24),
                                                                          :nodal_balance_reactive => JuMPAffineExpressionArray(undef, 5, 24)),
                               nothing);
-@timeit to "build_thermal"    construct_device!(ps_m, PSY.ThermalGen, ThermalDispatch, PM.StandardACPForm, sys5b);
-@timeit to "build_load"    construct_device!(ps_m, PSY.PowerLoad, StaticPowerLoad, PM.StandardACPForm, sys5b);
-@timeit to "add_flow"      flow_variables(ps_m, PM.DCPlosslessForm, branches5, 1:24)
+@timeit to "build_thermal"    construct_device!(canonical_model, PSY.ThermalGen, ThermalDispatch, PM.StandardACPForm, sys5b);
+@timeit to "build_load"    construct_device!(canonical_model, PSY.PowerLoad, StaticPowerLoad, PM.StandardACPForm, sys5b);
+@timeit to "add_flow"      flow_variables(canonical_model, PM.DCPlosslessForm, branches5, 1:24)
 @timeit to "PTDF cons" begin
-    @timeit to "allocate_space" ps_m.constraints["Flow_con1"] = JuMPConstraintArray(undef, [b.name for b in branches5], 1:24)
+    @timeit to "allocate_space" canonical_model.constraints["Flow_con1"] = JuMPConstraintArray(undef, [b.name for b in branches5], 1:24)
     @timeit to "make constraints" for t in 1:24
                                     for b in branches5
-                                        ps_m.constraints["Flow_con1"][b.name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[key][b.name, t] == PTDF[b.name, :].data'*ps_m.expressions[:nodal_balance_active][:, t])
+                                        canonical_model.constraints["Flow_con1"][b.name, t] = JuMP.@constraint(canonical_model.JuMPmodel, canonical_model.variables[key][b.name, t] == PTDF[b.name, :].data'*canonical_model.expressions[:nodal_balance_active][:, t])
                                     end
                                 end
                             end
@@ -96,18 +96,18 @@ to = TimerOutput()
                               Dict{Symbol, JuMPAffineExpressionArray}(:nodal_balance_active => JuMPAffineExpressionArray(undef, 5, 24),
                                                                          :nodal_balance_reactive => JuMPAffineExpressionArray(undef, 5, 24)),
                               nothing);
-@timeit to "build_thermal"    construct_device!(ps_m, PSY.ThermalGen, ThermalDispatch, PM.StandardACPForm, sys5b);
-@timeit to "build_load"    construct_device!(ps_m, PSY.PowerLoad, StaticPowerLoad, PM.StandardACPForm, sys5b);
-@timeit to "add_flow"      flow_variables(ps_m, PM.DCPlosslessForm, branches5, 1:24)
+@timeit to "build_thermal"    construct_device!(canonical_model, PSY.ThermalGen, ThermalDispatch, PM.StandardACPForm, sys5b);
+@timeit to "build_load"    construct_device!(canonical_model, PSY.PowerLoad, StaticPowerLoad, PM.StandardACPForm, sys5b);
+@timeit to "add_flow"      flow_variables(canonical_model, PM.DCPlosslessForm, branches5, 1:24)
 @timeit to "PTDF cons" begin
-    @timeit to "allocate_space" ps_m.constraints["Flow_con2"] = JuMPConstraintArray(undef, [b.name for b in branches5], 1:24)
+    @timeit to "allocate_space" canonical_model.constraints["Flow_con2"] = JuMPConstraintArray(undef, [b.name for b in branches5], 1:24)
     @timeit to "make constraints" begin for t in 1:24
             for b in branches5
-                expr = JuMP.AffExpr(0.0, ps_m.variables[key][b.name, t] => 1.0)
+                expr = JuMP.AffExpr(0.0, canonical_model.variables[key][b.name, t] => 1.0)
                     for n in nodes5
-                        JuMP.add_to_expression!(expr, -1*PTDF[b.name, :].data[n.number]*ps_m.expressions[:nodal_balance_active][n.number, t])
+                        JuMP.add_to_expression!(expr, -1*PTDF[b.name, :].data[n.number]*canonical_model.expressions[:nodal_balance_active][n.number, t])
                     end
-                ps_m.constraints["Flow_con2"][b.name, t] = JuMP.@constraint(ps_m.JuMPmodel, expr == 0.0)
+                canonical_model.constraints["Flow_con2"][b.name, t] = JuMP.@constraint(canonical_model.JuMPmodel, expr == 0.0)
         end
     end
     end

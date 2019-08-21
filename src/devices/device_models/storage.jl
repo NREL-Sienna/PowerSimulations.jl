@@ -6,16 +6,16 @@ struct BookKeepingwReservation<:AbstractStorageForm end
 
 #################################################Storage Variables#################################
 
-function active_power_variables(ps_m::CanonicalModel,
+function active_power_variables(canonical_model::CanonicalModel,
                                 devices::PSY.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
 
-    add_variable(ps_m,
+    add_variable(canonical_model,
                  devices,
                  Symbol("Psin_$(St)"),
                  false,
                  :nodal_balance_active,
                  -1.0)
-    add_variable(ps_m,
+    add_variable(canonical_model,
                  devices,
                  Symbol("Psout_$(St)"),
                  false,
@@ -26,9 +26,9 @@ function active_power_variables(ps_m::CanonicalModel,
 end
 
 
-function reactive_power_variables(ps_m::CanonicalModel,
+function reactive_power_variables(canonical_model::CanonicalModel,
                                   devices::PSY.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
-    add_variable(ps_m,
+    add_variable(canonical_model,
                  devices,
                  Symbol("Qst_$(St)"),
                  false,
@@ -39,10 +39,10 @@ function reactive_power_variables(ps_m::CanonicalModel,
 end
 
 
-function energy_storage_variables(ps_m::CanonicalModel,
+function energy_storage_variables(canonical_model::CanonicalModel,
                                   devices::PSY.FlattenIteratorWrapper{St}) where St<:PSY.Storage
 
-    add_variable(ps_m,
+    add_variable(canonical_model,
                  devices,
                  Symbol("Est_$(St)"),
                  false)
@@ -52,10 +52,10 @@ function energy_storage_variables(ps_m::CanonicalModel,
 end
 
 
-function storage_reservation_variables(ps_m::CanonicalModel,
+function storage_reservation_variables(canonical_model::CanonicalModel,
                                        devices::PSY.FlattenIteratorWrapper{St}) where St<:PSY.Storage
 
-    add_variable(ps_m,
+    add_variable(canonical_model,
                  devices,
                  Symbol("Rst_$(St)"),
                  true)
@@ -67,7 +67,7 @@ end
 
 ###################################################### output power constraints#################################
 
-function active_power_constraints(ps_m::CanonicalModel,
+function active_power_constraints(canonical_model::CanonicalModel,
                                   devices::PSY.FlattenIteratorWrapper{St},
                                   device_formulation::Type{BookKeeping},
                                   system_formulation::Type{S}) where {St<:PSY.Storage,
@@ -76,12 +76,12 @@ function active_power_constraints(ps_m::CanonicalModel,
     range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
     range_data_out = [(PSY.get_name(s), PSY.get_outputactivepowerlimits(s)) for s in devices]
 
-    device_range(ps_m,
+    device_range(canonical_model,
                  range_data_in,
                  Symbol("inputpower_range_$(St)"),
                  Symbol("Psin_$(St)"))
 
-    device_range(ps_m,
+    device_range(canonical_model,
                 range_data_out,
                 Symbol("outputpower_range_$(St)"),
                 Symbol("Psout_$(St)"))
@@ -90,7 +90,7 @@ function active_power_constraints(ps_m::CanonicalModel,
 
 end
 
-function active_power_constraints(ps_m::CanonicalModel,
+function active_power_constraints(canonical_model::CanonicalModel,
                                   devices::PSY.FlattenIteratorWrapper{St},
                                   device_formulation::Type{BookKeepingwReservation},
                                   system_formulation::Type{S}) where {St<:PSY.Storage,
@@ -99,13 +99,13 @@ function active_power_constraints(ps_m::CanonicalModel,
     range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
     range_data_out = [(PSY.get_name(s), PSY.get_outputactivepowerlimits(s)) for s in devices]
 
-    reserve_device_semicontinuousrange(ps_m,
+    reserve_device_semicontinuousrange(canonical_model,
                                        range_data_in,
                                        Symbol("inputpower_range_$(St)"),
                                        Symbol("Psin_$(St)"),
                                        Symbol("Rst_$(St)"))
 
-    reserve_device_semicontinuousrange(ps_m,
+    reserve_device_semicontinuousrange(canonical_model,
                                        range_data_out,
                                        Symbol("outputpower_range_$(St)"),
                                        Symbol("Psout_$(St)"),
@@ -119,7 +119,7 @@ end
 """
 This function adds the reactive  power limits of generators when there are CommitmentVariables
 """
-function reactive_power_constraints(ps_m::CanonicalModel,
+function reactive_power_constraints(canonical_model::CanonicalModel,
                                    devices::PSY.FlattenIteratorWrapper{St},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S}) where {St<:PSY.Storage,
@@ -128,7 +128,7 @@ function reactive_power_constraints(ps_m::CanonicalModel,
 
     range_data = [(PSY.get_name(s), PSY.get_reactivepowerlimits(s)) for s in devices]
 
-    device_range(ps_m,
+    device_range(canonical_model,
                  range_data,
                  Symbol("reactiverange_$(St)"),
                  Symbol("Qst_$(St)"))
@@ -140,7 +140,7 @@ end
 
 ###################################################### Energy Capacity constraints#################################
 
-function energy_capacity_constraints(ps_m::CanonicalModel,
+function energy_capacity_constraints(canonical_model::CanonicalModel,
                                     devices::PSY.FlattenIteratorWrapper{St},
                                     device_formulation::Type{D},
                                     system_formulation::Type{S}) where {St<:PSY.Storage,
@@ -149,7 +149,7 @@ function energy_capacity_constraints(ps_m::CanonicalModel,
 
     range_data = [(PSY.get_name(s), PSY.get_capacity(s)) for s in devices]
 
-    device_range(ps_m,
+    device_range(canonical_model,
                  range_data,
                  Symbol("energy_capacity_$(St)"),
                  Symbol("Est_$(St)"))
@@ -175,7 +175,7 @@ end
 
 
 
-function energy_balance_constraint(ps_m::CanonicalModel,
+function energy_balance_constraint(canonical_model::CanonicalModel,
                                    devices::PSY.FlattenIteratorWrapper{St},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S}) where {St<:PSY.Storage,
@@ -184,15 +184,15 @@ function energy_balance_constraint(ps_m::CanonicalModel,
 
     key = Symbol("energy_$(St)")
 
-    if !(key in keys(ps_m.initial_conditions))
+    if !(key in keys(canonical_model.initial_conditions))
         @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-        storage_energy_init(ps_m, devices)
+        storage_energy_init(canonical_model, devices)
     end
 
     efficiency_data = make_efficiency_data(devices)
 
-    energy_balance(ps_m,
-                   ps_m.initial_conditions[key],
+    energy_balance(canonical_model,
+                   canonical_model.initial_conditions[key],
                    efficiency_data,
                    Symbol("energy_balance_$(St)"),
                    (Symbol("Psout_$(St)"), Symbol("Psin_$(St)"), Symbol("Est_$(St)")))

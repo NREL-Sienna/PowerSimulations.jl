@@ -1,8 +1,14 @@
 ######## Structs for Formulation feedforward ########
 abstract type FeedForwardModel end
 
-struct Range <: FeedForwardModel end
-struct SemiContinuousRange <: FeedForwardModel end
+struct RangeFF <: FeedForwardModel 
+    var_prefix::Symbol
+end
+
+struct SemiContinuousFF <: FeedForwardModel
+    range_prefix::Symbol
+    bin_prefix::Symbol
+end
 
 abstract type AbstractDeviceFormulation end
 
@@ -18,16 +24,17 @@ mutable struct DeviceModel{D<:PSY.Device,
                            B<:AbstractDeviceFormulation}
     device::Type{D}
     formulation::Type{B}
-    feedforward::Union{Nothing, Type{<: FeedForwardModel}}
+    feedforward::Union{Nothing, FeedForwardModel}
 
     function DeviceModel(::Type{D},
                          ::Type{B},
-                         feedforward::Union{Nothing, Type{F}}) where {D<:PSY.Device,
-                                                                      B<:AbstractDeviceFormulation,
-                                                                      F<:FeedForwardModel}
+                         feedforward::Union{Nothing, F}) where {D<:PSY.Device,
+                                                                B<:AbstractDeviceFormulation,
+                                                                F<:FeedForwardModel}
 
     _validate_device_formulation(D)
     _validate_device_formulation(B)
+    
     new{D, B}(D, B, feedforward)
 
     end

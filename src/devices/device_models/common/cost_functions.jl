@@ -1,5 +1,5 @@
 @doc raw"""
-    ps_cost(ps_m::CanonicalModel,
+    ps_cost(canonical_model::CanonicalModel,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::Float64,
                 dt::Float64,
@@ -21,13 +21,13 @@ Returns:
 
 # Arguments
 
-* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::Float64 : cost to be associated with variable
 * dt::Float64 : fraction of hour 
 * sign::Float64 : positive or negative sign to be associated cost term
 """
-function ps_cost(ps_m::CanonicalModel,
+function ps_cost(canonical_model::CanonicalModel,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::Float64,
                 dt::Float64,
@@ -40,7 +40,7 @@ function ps_cost(ps_m::CanonicalModel,
 end
 
 @doc raw"""
-    ps_cost(ps_m::CanonicalModel,
+    ps_cost(canonical_model::CanonicalModel,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::PSY.VariableCost{Float64},
                 dt::Float64,
@@ -51,28 +51,28 @@ Does this by calling ```ps_cost``` that has Float64 cost component input.
 
 Returns:
 
-``` ps_cost(ps_m, variable, PSY.get_cost(cost_component), dt, sign) ```
+``` ps_cost(canonical_model, variable, PSY.get_cost(cost_component), dt, sign) ```
 
 # Arguments
 
-* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{Float64} : container for cost to be associated with variable
 * dt::Float64 : fraction of hour 
 * sign::Float64 : positive or negative sign to be associated cost term
 """
-function ps_cost(ps_m::CanonicalModel,
+function ps_cost(canonical_model::CanonicalModel,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::PSY.VariableCost{Float64},
                 dt::Float64,
                 sign::Float64) where {JV<:JuMP.AbstractVariableRef}
 
-    return  ps_cost(ps_m, variable, PSY.get_cost(cost_component), dt, sign)
+    return  ps_cost(canonical_model, variable, PSY.get_cost(cost_component), dt, sign)
 
 end
 
 @doc raw"""
-    ps_cost(ps_m::CanonicalModel,
+    ps_cost(canonical_model::CanonicalModel,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::PSY.VariableCost{NTuple{2, Float64}}
                 dt::Float64,
@@ -90,18 +90,18 @@ Returns quadratic cost terms for sum of variables with common factor to be used 
 
 for quadratic factor large enough. Otherwise
 
-``` return ps_cost(ps_m, variable, cost_component[2], dt, 1.0) ```
+``` return ps_cost(canonical_model, variable, cost_component[2], dt, 1.0) ```
 
 Returns ```gen_cost```
 
 # Arguments
 
-* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 * sign::Float64 : positive or negative sign to be associated cost term
 """
-function ps_cost(ps_m::CanonicalModel,
+function ps_cost(canonical_model::CanonicalModel,
                  variable::JuMP.Containers.DenseAxisArray{JV},
                  cost_component::PSY.VariableCost{NTuple{2, Float64}},
                  dt::Float64,
@@ -111,7 +111,7 @@ function ps_cost(ps_m::CanonicalModel,
         gen_cost = sum(variable.^2)*cost_component[1] + sum(variable)*cost_component[2]
         return sign*gen_cost*dt
     else
-        return ps_cost(ps_m, variable, cost_component[2], dt, 1.0)
+        return ps_cost(canonical_model, variable, cost_component[2], dt, 1.0)
     end
 
 end
@@ -129,15 +129,15 @@ function _pwlparamcheck(cost_)
     return flag
 end
 
-function _pwlgencost(ps_m::CanonicalModel,
+function _pwlgencost(canonical_model::CanonicalModel,
         variable::JV,
         cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
-    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}()
+    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}()
     _pwlparamcheck(cost_component) ? nothing : @warn("Data provide is not suitable for linear implementation of PWL cost, this will result in a INVALID SOLUTION") ;
     # TODO: implement a fallback to either Linear Cost function or SOS2 based PWL Cost function
     upperbound(i) = (i == 1 ? cost_component[i][2] : (cost_component[i][2] - cost_component[i-1][2]));
-    pwlvars = JuMP.@variable(ps_m.JuMPmodel, [i = 1:length(cost_component)], base_name = "{$(variable)}_{pwl}", start = 0.0, lower_bound = 0.0, upper_bound = upperbound(i))
+    pwlvars = JuMP.@variable(canonical_model.JuMPmodel, [i = 1:length(cost_component)], base_name = "{$(variable)}_{pwl}", start = 0.0, lower_bound = 0.0, upper_bound = upperbound(i))
 
     for (ix, pwlvar) in enumerate(pwlvars)
         if ix == 1
@@ -148,7 +148,7 @@ function _pwlgencost(ps_m::CanonicalModel,
         end
     end
 
-    c = JuMP.@constraint(ps_m.JuMPmodel, variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars) ]) )
+    c = JuMP.@constraint(canonical_model.JuMPmodel, variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars) ]) )
 #     JuMP.set_name(c,"{$(variable)}_{pwl}")
 
     return gen_cost
@@ -156,7 +156,7 @@ function _pwlgencost(ps_m::CanonicalModel,
 end
 
 @doc raw"""
-    ps_cost(ps_m::CanonicalModel,
+    ps_cost(canonical_model::CanonicalModel,
                  variable::JuMP.Containers.DenseAxisArray{JV},
                  cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
                  dt::Float64,
@@ -180,23 +180,23 @@ where ``c_v`` is given by
 
 # Arguments
 
-* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}}
 * dt::Float64 : fraction of hour 
 * sign::Float64 : positive or negative sign to be associated cost term
 """
-function ps_cost(ps_m::CanonicalModel,
+function ps_cost(canonical_model::CanonicalModel,
                  variable::JuMP.Containers.DenseAxisArray{JV},
                  cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
                  dt::Float64,
                  sign::Float64) where {JV<:JuMP.AbstractVariableRef}
 
-    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(ps_m)}()
+    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}()
     cost_array = cost_component.cost
     for var in variable
         in(true,iszero.(last.(cost_array))) ? continue : nothing ;
-        c = _pwlgencost(ps_m, var, cost_array)
+        c = _pwlgencost(canonical_model, var, cost_array)
         JuMP.add_to_expression!(gen_cost,c)
     end
 
@@ -205,7 +205,7 @@ function ps_cost(ps_m::CanonicalModel,
 end
 
 @doc raw"""
-    add_to_cost(ps_m::CanonicalModel,
+    add_to_cost(canonical_model::CanonicalModel,
                      devices::D,
                      var_name::Symbol,
                      cost_symbol::Symbol,
@@ -217,12 +217,12 @@ Adds cost expression for each device using appropriate call to ```ps_cost```.
 
 for d in devices
 
-```    cost_expression = ps_cost(ps_m,
+```    cost_expression = ps_cost(canonical_model,
                               variable[PSY.get_name(d), :],
                               getfield(PSY.get_op_cost(d), cost_symbol),
                               dt,
                               sign) ```
-``` ps_m.cost_function += cost_expression ```
+``` canonical_model.cost_function += cost_expression ```
 
 # LaTeX
 
@@ -230,33 +230,33 @@ for d in devices
 
 # Arguments
 
-* ps_m::CanonicalModel : the canonical model built in PowerSimulations
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * devices::D : set of devices
 * var_name::Symbol : name of variable
 * cost_symbol::Symbol : symbol associated with costx
 """
-function add_to_cost(ps_m::CanonicalModel,
+function add_to_cost(canonical_model::CanonicalModel,
                      devices::D,
                      var_name::Symbol,
                      cost_symbol::Symbol,
                      sign::Float64 = 1.0) where {D<:PSY.FlattenIteratorWrapper{<:PSY.Device}}
 
-    resolution = model_resolution(ps_m)
+    resolution = model_resolution(canonical_model)
     dt = Dates.value(Dates.Minute(resolution))/60
-    variable = var(ps_m, var_name)
+    variable = var(canonical_model, var_name)
 
     for d in devices
-        cost_expression = ps_cost(ps_m,
+        cost_expression = ps_cost(canonical_model,
                                   variable[PSY.get_name(d), :],
                                   getfield(PSY.get_op_cost(d), cost_symbol),
                                   dt,
                                   sign)
         T_ce = typeof(cost_expression)
-        T_cf = typeof(ps_m.cost_function)
+        T_cf = typeof(canonical_model.cost_function)
         if  T_cf<:JuMP.GenericAffExpr && T_ce<:JuMP.GenericQuadExpr
-            ps_m.cost_function += cost_expression
+            canonical_model.cost_function += cost_expression
         else
-            JuMP.add_to_expression!(ps_m.cost_function, cost_expression)
+            JuMP.add_to_expression!(canonical_model.cost_function, cost_expression)
         end
     end
 
