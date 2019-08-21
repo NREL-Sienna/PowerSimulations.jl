@@ -61,7 +61,7 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
          else
              _write_op_model(results, save_path)
          end
-     return results
+     return "hello"
 end
 
 
