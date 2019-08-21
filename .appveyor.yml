@@ -12,6 +12,7 @@ platform:
 ## uncomment the following lines to allow failures on nightly julia
 ## (tests will run but not make your overall status red)
 matrix:
+  - TOXENV: py37
   allow_failures:
   - julia_version: latest
   - julia_version: 1.3
