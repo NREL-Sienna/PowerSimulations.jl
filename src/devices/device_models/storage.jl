@@ -14,12 +14,14 @@ function active_power_variables(canonical_model::CanonicalModel,
                  Symbol("Psin_$(St)"),
                  false,
                  :nodal_balance_active,
-                 -1.0)
+                 -1.0;
+                 lb_value = d -> 0.0,)
     add_variable(canonical_model,
                  devices,
                  Symbol("Psout_$(St)"),
                  false,
-                 :nodal_balance_active)
+                 :nodal_balance_active;
+                 lb_value = d -> 0.0,)
 
     return
 
@@ -45,7 +47,8 @@ function energy_storage_variables(canonical_model::CanonicalModel,
     add_variable(canonical_model,
                  devices,
                  Symbol("Est_$(St)"),
-                 false)
+                 false;
+                 lb_value = d -> 0.0,)
 
     return
 
