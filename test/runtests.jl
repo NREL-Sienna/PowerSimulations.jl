@@ -8,9 +8,6 @@ using Ipopt
 using GLPK
 using OSQP
 
-# required for reducing logging during tests
-using Memento
-
 const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
@@ -47,8 +44,8 @@ end
 end
 
 @testset "Operation Models" begin
-    #include("test_operation_model_constructor.jl")
-    #include("test_operation_model_solve.jl")
+    include("test_operation_model_constructor.jl")
+    include("test_operation_model_solve.jl")
 end
 
 @testset "Simulation Models" begin
