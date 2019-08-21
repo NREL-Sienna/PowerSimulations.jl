@@ -139,9 +139,9 @@ version = "0.5.0"
 
 [[HTTP]]
 deps = ["Base64", "Dates", "IniFile", "MbedTLS", "Sockets"]
-git-tree-sha1 = "03ddc88af7f2d963fac5aa9f3ac8e11914d68a78"
+git-tree-sha1 = "c4a527dba1d26add0e85946e1a53f42a1b343acc"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-version = "0.8.4"
+version = "0.8.5"
 
 [[InfrastructureModels]]
 deps = ["JuMP", "Memento"]
@@ -296,7 +296,7 @@ version = "0.12.4"
 
 [[PowerSystems]]
 deps = ["CSV", "DataFrames", "Dates", "InteractiveUtils", "JSON2", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "UUIDs", "YAML"]
-git-tree-sha1 = "733fa374958c47d72d955bf006a6ec4164607bff"
+git-tree-sha1 = "260dde6a4cab5f84d38fa418f47ffe7c13f72357"
 repo-rev = "struct_updates"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
