@@ -33,7 +33,9 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     devices = PSY.get_components(B, sys)
 
-    isempty(devices) && return
+    if validate_available_devices(devices,B)
+        return
+    end
 
     branch_rate_bounds(canonical_model, devices, Br, S)
 
@@ -51,7 +53,9 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     devices = PSY.get_components(PSY.MonitoredLine, sys)
 
-    isempty(devices) && return
+    if validate_available_devices(devices, PSY.MonitoredLine)
+        return
+    end
 
     branch_rate_bounds(canonical_model,
                         devices,
@@ -79,8 +83,6 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                        kwargs...) where {B<:PSY.Branch,
                                                         Br<:Union{Type{StaticLineUnbounded}, Type{StaticTransformerUnbounded}},
                                                         S<:PM.AbstractPowerFormulation}
-
-
     # do nothing
     return
 
@@ -96,12 +98,11 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     devices = PSY.get_components(B, sys)
 
-    isempty(devices) && return
+    if validate_available_devices(devices, B)
+        return
+    end
 
-    branch_rate_constraint(canonical_model,
-                        devices,
-                        Br,
-                        S)
+    branch_rate_constraint(canonical_model, devices, Br, S)
 
     return
 
