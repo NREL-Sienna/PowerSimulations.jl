@@ -105,15 +105,21 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[DocStringExtensions]]
 deps = ["LibGit2", "Markdown", "Pkg", "Test"]
-git-tree-sha1 = "0513f1a8991e9d83255e0140aace0d0fc4486600"
+git-tree-sha1 = "4d30e889c9f106a51ffa4791a88ffd4765bf20c3"
 uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
-version = "0.8.0"
+version = "0.7.0"
 
 [[Documenter]]
 deps = ["Base64", "DocStringExtensions", "InteractiveUtils", "JSON", "LibGit2", "Logging", "Markdown", "REPL", "Test", "Unicode"]
 git-tree-sha1 = "c61d6eedbc3c4323c08b64af12d29c8ee0fcbb5f"
 uuid = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 version = "0.23.2"
+
+[[DocumenterTools]]
+deps = ["Base64", "DocStringExtensions", "LibGit2"]
+git-tree-sha1 = "4c311de5cf6f8fe7a0489b9e3b02fbe3148dde15"
+uuid = "35a29f4d-8980-5a13-9543-d66fff28ecb8"
+version = "0.1.1"
 
 [[EzXML]]
 deps = ["BinaryProvider", "Libdl", "Printf"]
