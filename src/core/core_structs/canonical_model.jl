@@ -170,7 +170,7 @@ mutable struct CanonicalModel
 
 end
 
-function  CanonicalModel(::Type{T},
+function CanonicalModel(::Type{T},
                          sys::PSY.System,
                          optimizer::Union{Nothing,JuMP.OptimizerFactory};
                          kwargs...) where {T<:PM.AbstractPowerFormulation}
@@ -220,8 +220,8 @@ ini_cond(canonical_model::CanonicalModel, name::Symbol) = canonical_model.initia
 # This function is added here because Canonical Model hasn't been defined until now.
 
 function InitialCondition(canonical::CanonicalModel,
-    device::PSY.Device,
-    value::Float64)
+                            device::PSY.Device,
+                            value::Float64)
 
     if model_has_parameters(canonical)
         return InitialCondition(device, PJ.add_parameter(canonical.JuMPmodel, value))
