@@ -33,6 +33,8 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     time_constraints!(canonical_model, devices, D, S)
 
+    feedforward!(canonical_model, T, model.feedforward)
+
     #Cost Function
     cost_function(canonical_model, devices, D, S)
 
@@ -72,6 +74,8 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     time_constraints!(canonical_model, devices, D, S)
 
+    feedforward!(canonical_model, T, model.feedforward)
+
     #Cost Function
     cost_function(canonical_model, devices, D, S)
 
@@ -107,6 +111,8 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     ramp_constraints!(canonical_model, devices, ThermalRampLimited, S)
 
+    feedforward!(canonical_model, T, model.feedforward)
+
     #Cost Function
     cost_function(canonical_model, devices, ThermalRampLimited, S)
 
@@ -138,6 +144,8 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     activepower_constraints!(canonical_model, devices, ThermalRampLimited, S)
 
     ramp_constraints!(canonical_model, devices, ThermalRampLimited, S)
+
+    feedforward!(canonical_model, T, model.feedforward)
 
     #Cost Function
     cost_function(canonical_model, devices, ThermalRampLimited, S)
@@ -172,6 +180,8 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     reactivepower_constraints!(canonical_model, devices, D, S)
 
+    feedforward!(canonical_model, T, model.feedforward)
+
     #Cost Function
     cost_function(canonical_model, devices, D, S)
 
@@ -198,6 +208,8 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     #Constraints
     activepower_constraints!(canonical_model, devices, D, S)
+
+    feedforward!(canonical_model, T, model.feedforward)
 
     #Cost Function
     cost_function(canonical_model, devices, D, S)

@@ -48,8 +48,9 @@ export RecedingHorizon
 export Synchronize
 
 # feedforward models
-export Range
-export SemiContinuousRange
+export UpperBoundFF
+export SemiContinuousFF
+export RangeFF
 
 #operation_models
 #export UnitCommitment
@@ -148,6 +149,9 @@ include("core/core_structs/simulation_model.jl")
 include("core/core_structs/results_model.jl")
 include("core/build_operations.jl")
 include("core/build_simulations.jl")
+
+#FeedForward Model Files
+include("simulation_models/feedforward_models.jl")
 
 #Device Modeling components
 include("devices/device_models/common.jl")

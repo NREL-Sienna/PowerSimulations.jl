@@ -82,20 +82,10 @@ function activepower_constraints!(canonical_model::CanonicalModel,
 
     range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_activepowerlimits) for g in devices]
 
-    if model_runs_sequentially(canonical_model)
-        device_semicontinuousrange_param(canonical_model,
-                                         range_data,
-                                         Symbol("activerange_$(T)"),
-                                         Symbol("P_$(T)"),
-                                         RefParam{JuMP.VariableRef}(Symbol("ON_$(T)")))
-    else
-        device_range(canonical_model,
-                    range_data,
-                    Symbol("activerange_$(T)"),
-                    Symbol("P_$(T)")
-                    )
-    end
-
+    device_range(canonical_model,
+                 range_data,
+                 Symbol("activerange_$(T)"),
+                 Symbol("P_$(T)"))
     return
 
 end
@@ -477,7 +467,6 @@ function time_constraints!(canonical_model::CanonicalModel,
     duration_data = _get_data_for_tdc(devices, resolution)
 
     if !(isempty(duration_data[1]))
-
         key_on =  Symbol("duration_on_$(T)")
         key_off =  Symbol("duration_off_$(T)")
         if !(key_on in keys(canonical_model.initial_conditions))
@@ -519,15 +508,51 @@ function time_constraints!(canonical_model::CanonicalModel,
 
 end
 
+########################## FeedForward Constraints #########################################
+
+function feedforward!(canonical_model::CanonicalModel,
+                     device_type::Type{T},
+                     ff_model::UpperBoundFF) where {T<:PSY.ThermalGen}
+
+    for prefix in get_vars_prefix(ff_model)
+        var_name = Symbol(prefix, "_$(T)")
+        parameter_ref = RefParam{JuMP.VariableRef}(var_name)
+        ub_ff(canonical_model,
+              Symbol("FF_$(T)"),
+                     parameter_ref,
+                     var_name)
+    end
+
+    return
+
+end
+
+function feedforward!(canonical_model::CanonicalModel,
+                     device_type::Type{T},
+                     ff_model::SemiContinuousFF) where {T<:PSY.ThermalGen}
+
+    bin_var = Symbol(get_bin_prefix(ff_model), "_$(T)")
+    parameter_ref = RefParam{JuMP.VariableRef}(bin_var)
+    for prefix in get_vars_prefix(ff_model)
+        var_name = Symbol(prefix, "_$(T)")
+        semicontinuousrange_ff(canonical_model,
+                               Symbol("FFbin_$(T)"),
+                               parameter_ref,
+                               var_name)
+    end
+
+    return
+
+end
 
 ########################### Cost Function Calls#############################################
 
 function cost_function(canonical_model::CanonicalModel,
                        devices::PSY.FlattenIteratorWrapper{T},
-                       device_formulation::Type{D},
-                       system_formulation::Type{S}) where {T<:PSY.ThermalGen,
-                                                           D<:AbstractThermalDispatchForm,
-                                                           S<:PM.AbstractPowerFormulation}
+                       ::Type{D},
+                       ::Type{S}) where {T<:PSY.ThermalGen,
+                                         D<:AbstractThermalDispatchForm,
+                                         S<:PM.AbstractPowerFormulation}
 
     add_to_cost(canonical_model,
                 devices,
@@ -541,10 +566,10 @@ end
 
 function cost_function(canonical_model::CanonicalModel,
                        devices::PSY.FlattenIteratorWrapper{T},
-                       device_formulation::Type{D},
-                       system_formulation::Type{S}) where {T<:PSY.ThermalGen,
-                                                           D<:AbstractThermalFormulation,
-                                                           S<:PM.AbstractPowerFormulation}
+                       ::Type{D},
+                       ::Type{S}) where {T<:PSY.ThermalGen,
+                                         D<:AbstractThermalFormulation,
+                                         S<:PM.AbstractPowerFormulation}
 
     #Variable Cost component
     add_to_cost(canonical_model, devices, Symbol("P_$(T)"), :variable)
