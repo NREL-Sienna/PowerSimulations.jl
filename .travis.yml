@@ -52,7 +52,7 @@ after_success:
 jobs:
   include:
     - stage: "Documentation"
-      julia: 1.0
+      julia: 1.1
       os: linux
       script:
         - julia --project -e 'using Pkg; Pkg.build(); Pkg.add("Documenter"); Pkg.instantiate()'
