@@ -1,6 +1,6 @@
 @testset "Load data misspecification" begin
     model = DeviceModel(PSY.InterruptibleLoad, PSI.DispatchablePowerLoad)
-    warn_message = "The data doesn't devices of type InterruptibleLoad, consider changing the device models"
+    warn_message = "The data doesn't include devices of type InterruptibleLoad, consider changing the device models"
     op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5)
     @test_logs (:warn, warn_message) construct_device!(op_model, :Load, model);
     model = DeviceModel(PSY.PowerLoad, PSI.DispatchablePowerLoad)
