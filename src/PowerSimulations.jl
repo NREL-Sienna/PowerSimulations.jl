@@ -77,7 +77,7 @@ export get_var_index
 export get_stacked_plot_data
 export get_bar_plot_data
 export get_stacked_generation_data
-
+export make_report
 
 
 
@@ -94,6 +94,7 @@ import LinearAlgebra
 import PowerSystems
 import PowerModels
 import RecipesBase
+import Weave
 
 #TimeStamp Management Imports
 import Dates
@@ -193,13 +194,13 @@ include("routines/make_initial_conditions.jl")
 include("routines/get_results.jl")
 include("routines/solve_routines.jl")
 include("routines/write_model.jl")
-#include("make_report.jl")
 
 #Utils
 include("utils/optimization_debugging.jl")
 include("utils/printing.jl")
 include("utils/plot_results.jl")
 include("utils/plot_recipes.jl")
+include("utils/make_report.jl")
 
 
 end

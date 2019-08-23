@@ -1,10 +1,71 @@
 ---
 title : Weave example
 author : Lily Hanig
-date: 16th August 2019
+date: 20th August 2019
 
 ---
+# Plots
 
-```julia
-plot(stacked_gen)
+
+```{julia;echo=false; fig_cap="Renewable Dispatch"; fig_align = "center"}
+
+using Plots
+using RecipesBase
+gr()
+
+plot(WEAVE_ARGS["stacked_renew"], "P_RenewableDispatch")
 ```
+
+```{julia; echo = false; fig_cap="Thermal Standard"; fig_align = "center"}
+
+plot(WEAVE_ARGS["stacked_therm"], "P_ThermalStandard")
+```
+
+```{julia; echo = false; fig_cap="Stacked Variables"; fig_align = "center"}
+using Plots
+using RecipesBase
+gr()
+
+plot(WEAVE_ARGS["stacked_gen"])
+```
+
+# Bar Plots
+
+```{julia; echo=false; fig_cap="Renewable Dispatch"; fig_align = "center"}
+using Plots
+using RecipesBase
+
+gr()
+
+plot(WEAVE_ARGS["bar_renew"], "P_RenewableDispatch")
+
+```
+
+```{julia; echo=false; fig_cap="Thermal Standard"; fig_align = "center"}
+using Plots
+using RecipesBase
+gr()
+
+plot(WEAVE_ARGS["bar_therm"], "P_ThermalStandard")
+
+```
+
+# Tables
+
+
+## Thermal Standard Table
+
+```{julia; echo=false; title = "Renewable Dispatch", align =center}
+
+WEAVE_ARGS["P_therm"]
+
+```
+
+## Renewable Dispatch Table
+
+```{julia; echo=false; align = "center"; title = "Renewable Dispatch"}
+
+WEAVE_ARGS["P_renew"]
+
+```
+
