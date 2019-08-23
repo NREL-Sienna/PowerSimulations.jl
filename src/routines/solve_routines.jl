@@ -41,19 +41,21 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
 
 end
 
-
 function _run_stage(stage::_Stage, results_path::String)
 
     for run in stage.executions
         if stage.model.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
-            error("No Optimizer has been defined, can't solve the operational problem")
+            error("No Optimizer has been defined, can't solve the operational problem stage with key $(stage.key)")
         end
 
         timed_log = Dict{Symbol, Any}()
         _, timed_log[:timed_solve_time],
         timed_log[:solve_bytes_alloc],
         timed_log[:sec_in_gc] =  @timed JuMP.optimize!(stage.model.canonical.JuMPmodel)
-
+        model_status = JuMP.primal_status(stage.model.canonical.JuMPmodel)
+        if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+            error("Stage $(stage.key) status is $(model_status)")
+        end
         _export_model_result(stage.model, results_path)
         _export_optimizer_log(timed_log, stage.model, results_path)
         stage.execution_count += 1
