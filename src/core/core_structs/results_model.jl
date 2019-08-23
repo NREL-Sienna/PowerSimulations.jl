@@ -2,7 +2,7 @@ struct OperationModelResults
     variables::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict{Symbol, Any}
     optimizer_log::Dict{Symbol, Any}
-    times::DataFrames.DataFrame
+    time_stamp::DataFrames.DataFrame
 
 end
 
@@ -19,8 +19,8 @@ function get_optimizer_log(res_model::OperationModelResults)
     return res_model.optimizer_log
 end
 
-function get_times(res_model::OperationModelResults, key::Symbol)
-    return res_model.times
+function get_time_stamp(res_model::OperationModelResults, key::Symbol)
+    return res_model.time_stamp
 end
 
 # passing in name of folder path and the name of the folder

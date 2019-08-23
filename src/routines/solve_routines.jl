@@ -1,73 +1,50 @@
-""" Solves Operational Models"""
-
-function _write_op_model(results::OperationModelResults, save_path::String)
-
-    try
-
-        isdir(save_path)
-        new_folder = mkdir("$save_path/$(round(Dates.now(),Dates.Minute))")
-        folder_path = new_folder
-        _write_variable_results(results.variables, folder_path)
-        _write_optimizer_log(results.optimizer_log, folder_path)
-        _write_time_stamps(results.times, folder_path)
-        println("Files written to $folder_path folder.")
-
-    catch
-
-        @error("Specified path is not valid. Run write_results to save results.")
-
-    end
-
-end
-
 function solve_op_model!(op_model::OperationModel; kwargs...)
 
     timed_log = Dict{Symbol, Any}()
 
     save_path = get(kwargs, :save_path, nothing)
 
-        if op_model.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
+    if op_model.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
 
-            if !(:optimizer in keys(kwargs))
+        if !(:optimizer in keys(kwargs))
 
-                error("No Optimizer has been defined, can't solve the operational problem")
-
-            else
-                _, timed_log[:timed_solve_time],
-                timed_log[:solve_bytes_alloc],
-                timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel,
-                                                                kwargs[:optimizer])
-
-            end
+            error("No Optimizer has been defined, can't solve the operational problem")
 
         else
-
             _, timed_log[:timed_solve_time],
             timed_log[:solve_bytes_alloc],
-            timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel)
+            timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel,
+                                                            kwargs[:optimizer])
 
         end
-        #creating the results to print to memory
-        vars_result = get_model_result(op_model)
-        optimizer_log = get_optimizer_log(op_model)
-        time_stamp = get_time_stamp(op_model)
-        obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_model.canonical.JuMPmodel))
-        merge!(optimizer_log, timed_log)
 
-        #results to be printed to memory
-        results = OperationModelResults(vars_result, obj_value, optimizer_log, time_stamp)
+    else
 
-         if isnothing(save_path)
-         else
-             _write_op_model(results, save_path)
-         end
+        _, timed_log[:timed_solve_time],
+        timed_log[:solve_bytes_alloc],
+        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel)
+
+    end
+    #creating the results to print to memory
+    vars_result = get_model_result(op_model)
+    optimizer_log = get_optimizer_log(op_model)
+    time_stamp = get_time_stamp(op_model)
+    obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_model.canonical.JuMPmodel))
+    merge!(optimizer_log, timed_log)
+
+    #results to be printed to memory
+    results = OperationModelResults(vars_result, obj_value, optimizer_log, time_stamp)
+
+    !isnothing(save_path) && write_model_results(results, save_path)
+
      return results
+
 end
 
 
 function _run_stage(stage::_Stage, results_path::String)
 
-    for run in stage.execution_count
+    for run in stage.executions
         if stage.model.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
             error("No Optimizer has been defined, can't solve the operational problem")
         end
@@ -79,7 +56,7 @@ function _run_stage(stage::_Stage, results_path::String)
 
         _export_model_result(stage.model, results_path)
         _export_optimizer_log(timed_log, stage.model, results_path)
-
+        stage.execution_count += 1
     end
 
     return
@@ -102,7 +79,7 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
         for (ix, stage) in enumerate(sim.stages)
             verbose && println("Stage $(ix)")
             interval = PSY.get_forecasts_interval(stage.model.sys)
-            for run in 1:stage.execution_count
+            for run in 1:stage.executions
                 sim.ref.current_time = sim.ref.date_ref[ix]
                 verbose && println("Simulation TimeStamp: $(sim.ref.current_time)")
                 raw_results_path = joinpath(sim.ref.raw,"step-$(s)-stage-$(ix)","$(sim.ref.current_time)")
@@ -110,8 +87,10 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
                 _run_stage(stage, raw_results_path)
                 sim.ref.run_count[s][ix] += 1
                 sim.ref.date_ref[ix] = sim.ref.date_ref[ix] + interval
-                #update_stage!(stage, sim)
+                update_stage!(stage, sim)
             end
+            @assert stage.executions == stage.execution_count
+            stage.execution_count = 0 # reset stage execution_count
         end
     end
 
