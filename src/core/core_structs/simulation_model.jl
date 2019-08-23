@@ -10,6 +10,7 @@ abstract type AbstractStage end
 mutable struct _Stage <: AbstractStage
     key::Int64
     model::OperationModel
+    executions::Int64
     execution_count::Int64
     optimizer::String
     feedforward_ref::Dict{Int64, Type{<:FeedForwardSequence}}
@@ -17,13 +18,14 @@ mutable struct _Stage <: AbstractStage
 
     function _Stage(key::Int64,
                    model::OperationModel,
-                   execution_count::Int64,
+                   executions::Int64,
                    feedforward_ref::Dict{Int64, Type{<:FeedForwardSequence}},
                    update::Bool)
 
     new(key,
         model,
-        execution_count,
+        executions,
+        0,
         JuMP.solver_name(model.canonical.JuMPmodel),
         feedforward_ref,
         update

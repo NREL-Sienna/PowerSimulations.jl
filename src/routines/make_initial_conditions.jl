@@ -19,7 +19,6 @@ function status_init(canonical_model::CanonicalModel,
             initial_conditions[ix] = InitialCondition(g, 1.0*(PSY.get_activepower(g) > 0))
         end
     end
-
     key = Symbol("status_$(PSD)")
     if key in keys(canonical_model.initial_conditions) && !isempty(canonical_model.initial_conditions[key])
         vcat(canonical_model.initial_conditions[key],initial_conditions)
@@ -52,7 +51,6 @@ function output_init(canonical_model::CanonicalModel,
                 initial_conditions[ix] = InitialCondition(g, PSY.get_activepower(g))
             end
     end
-
     key = Symbol("output_$(PSD)")
     if key in keys(canonical_model.initial_conditions) && !isempty(canonical_model.initial_conditions[key])
         vcat(canonical_model.initial_conditions[key],initial_conditions)
@@ -63,7 +61,6 @@ function output_init(canonical_model::CanonicalModel,
     return isempty(initial_conditions)
 
 end
-
 
 function duration_init_off(canonical_model::CanonicalModel,
                         devices::PSY.FlattenIteratorWrapper{PSD},
@@ -140,7 +137,6 @@ function storage_energy_init(canonical_model::CanonicalModel,
         devices = [d for d in devices if d.name in set_name]
         length_devices = length(devices)
     end
-
     energy_initial_conditions  = Vector{InitialCondition}(undef, length(devices))
 
     for (i, g) in enumerate(devices)

@@ -32,7 +32,8 @@ function device_timeseries_ub(canonical_model::CanonicalModel,
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
 
-        constraint[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t] <= ts_data[2][ix]*ts_data[3][ix][t])
+        constraint[name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
+                                    variable[name, t] <= ts_data[2][ix]*ts_data[3][ix][t])
 
     end
 
@@ -126,7 +127,8 @@ function device_timeseries_param_ub(canonical_model::CanonicalModel,
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
         param[name, t] = PJ.add_parameter(canonical_model.JuMPmodel, ts_data[3][ix][t])
-        constraint[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t] <= ts_data[2][ix]*param[name, t])
+        constraint[name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
+                                        variable[name, t] <= ts_data[2][ix]*param[name, t])
     end
 
     return

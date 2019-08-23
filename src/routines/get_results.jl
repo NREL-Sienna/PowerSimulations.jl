@@ -6,11 +6,8 @@ function _result_dataframe_vars(variable::JuMP.Containers.DenseAxisArray)
     names = Array{Symbol, 1}(undef, length(variable.axes[1]))
 
     for t in variable.axes[2], (ix, name) in enumerate(variable.axes[1])
-
         result[t, ix] = JuMP.value(variable[name, t])
-
         names[ix] = Symbol(name)
-
     end
 
     return DataFrames.DataFrame(result, names)
@@ -40,9 +37,7 @@ function get_model_result(op_m::OperationModel)
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
 
     for (k, v) in vars(op_m.canonical)
-
         results_dict[k] = _result_dataframe_vars(v)
-
     end
 
     return results_dict
@@ -54,10 +49,8 @@ function get_model_duals(op_m::OperationModel, cons::Vector{Symbol})
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
 
     for c in cons
-
         v = con(op_m.canonical, c)
         results_dict[c] = _result_dataframe_duals(v)
-
     end
 
     return results_dict
@@ -95,7 +88,7 @@ function get_time_stamp(op_model::OperationModel)
     horizon = PSY.get_forecasts_horizon(op_model.sys)
     range = collect(initial_time:interval:initial_time+ interval.*horizon)
     time_stamp = DataFrames.DataFrame(Range = range[:,1])
-  
+
     return time_stamp
 end
 

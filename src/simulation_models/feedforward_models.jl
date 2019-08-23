@@ -185,7 +185,7 @@ function semicontinuousrange_ff(canonical_model::CanonicalModel,
 
     for name in axes[1]
         ub_value = JuMP.upper_bound(variable[name, 1])
-        lb_value = JuMP.upper_bound(variable[name, 1])
+        lb_value = JuMP.lower_bound(variable[name, 1])
         param[name] = PJ.add_parameter(canonical_model.JuMPmodel, 1.0)
         for t in axes[2]
             con_ub[name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
@@ -193,6 +193,9 @@ function semicontinuousrange_ff(canonical_model::CanonicalModel,
             if lb_value != 0.0
                 con_lb[name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
                                             variable[name, t] >= lb_value*param[name])
+            else
+                @show "here"
+                delete!(canonical_model.parameters, lb_name)
             end
         end
     end
@@ -200,3 +203,41 @@ function semicontinuousrange_ff(canonical_model::CanonicalModel,
     return
 
 end
+
+########################## FeedForward Constraints #########################################
+
+function feedforward!(canonical_model::CanonicalModel,
+                     device_type::Type{I},
+                     ff_model::UpperBoundFF) where {I<:PSY.Injection}
+
+    for prefix in get_vars_prefix(ff_model)
+        var_name = Symbol(prefix, "_$(I)")
+        parameter_ref = RefParam{JuMP.VariableRef}(var_name)
+        ub_ff(canonical_model,
+              Symbol("FF_$(I)"),
+                     parameter_ref,
+                     var_name)
+    end
+
+    return
+
+end
+
+function feedforward!(canonical_model::CanonicalModel,
+                     device_type::Type{I},
+                     ff_model::SemiContinuousFF) where {I<:PSY.Injection}
+
+    bin_var = Symbol(get_bin_prefix(ff_model), "_$(I)")
+    parameter_ref = RefParam{JuMP.VariableRef}(bin_var)
+    for prefix in get_vars_prefix(ff_model)
+        var_name = Symbol(prefix, "_$(I)")
+        semicontinuousrange_ff(canonical_model,
+                               Symbol("FFbin_$(I)"),
+                               parameter_ref,
+                               var_name)
+    end
+
+    return
+
+end
+

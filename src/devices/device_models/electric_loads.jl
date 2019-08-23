@@ -17,7 +17,8 @@ function activepower_variables(canonical_model::CanonicalModel,
                  Symbol("P_$(L)"),
                  false,
                  :nodal_balance_active, -1.0;
-                 lb = x -> 0.0)
+                 ub_value = x -> PSY.get_maxactivepower(x),
+                 lb_value = x -> 0.0)
 
     return
 
@@ -30,7 +31,9 @@ function reactivepower_variables(canonical_model::CanonicalModel,
                  devices,
                  Symbol("Q_$(L)"),
                  false,
-                 :nodal_balance_reactive, -1.0)
+                 :nodal_balance_reactive, -1.0;
+                 ub_value = x -> PSY.get_maxreactivepower(x),
+                 lb_value = x -> 0.0)
 
     return
 

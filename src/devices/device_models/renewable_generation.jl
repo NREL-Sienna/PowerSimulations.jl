@@ -18,7 +18,8 @@ function activepower_variables(canonical_model::CanonicalModel,
                  Symbol("P_$(R)"),
                  false,
                  :nodal_balance_active;
-                 lb = x -> 0.0)
+                 lb_value = x -> 0.0,
+                 ub_value = x -> PSY.get_tech(x) |> PSY.get_rating)
 
     return
 

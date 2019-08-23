@@ -29,6 +29,8 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     energy_capacity_constraints(canonical_model, devices, D, S)
 
+    feedforward!(canonical_model, St, model.feedforward)
+
     # Energy Balanace limits
     energy_balance_constraint(canonical_model, devices, D, S)
 
@@ -62,6 +64,8 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     active_power_constraints(canonical_model, devices, D, S)
 
     energy_capacity_constraints(canonical_model, devices, D, S)
+
+    feedforward!(canonical_model, St, model.feedforward)
 
     # Energy Balanace limits
     energy_balance_constraint(canonical_model, devices, D, S)
@@ -102,6 +106,8 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     energy_capacity_constraints(canonical_model, devices, model.formulation, S)
 
+    feedforward!(canonical_model, St, model.feedforward)
+
     # Energy Balanace limits
     energy_balance_constraint(canonical_model, devices, model.formulation, S)
 
@@ -136,6 +142,8 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     active_power_constraints(canonical_model, devices, model.formulation, S)
 
     energy_capacity_constraints(canonical_model, devices, model.formulation, S)
+
+    feedforward!(canonical_model, St, model.feedforward)
 
     # Energy Balanace limits
     energy_balance_constraint(canonical_model, devices, model.formulation, S)

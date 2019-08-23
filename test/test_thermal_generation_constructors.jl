@@ -1,6 +1,6 @@
 @testset "ThermalGen data misspecification" begin
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
-    warn_message = "The data doesn't devices of type ThermalStandard, consider changing the device models"
+    warn_message = "The data doesn't include devices of type ThermalStandard, consider changing the device models"
     model = DeviceModel(ThermalStandard, PSI.ThermalUnitCommitment)
     op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5_re_only)
     @test_logs (:warn, warn_message) construct_device!(op_model, :Thermal, model)
