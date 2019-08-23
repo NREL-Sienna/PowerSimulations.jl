@@ -1,5 +1,3 @@
-import Pkg;
-Pkg.add("Documenter")
 using Documenter
 using PowerSimulations
 
