@@ -48,8 +48,9 @@ export RecedingHorizon
 export Synchronize
 
 # feedforward models
-export Range
-export SemiContinuousRange
+export UpperBoundFF
+export SemiContinuousFF
+export RangeFF
 
 #operation_models
 #export UnitCommitment
@@ -65,12 +66,14 @@ export solve_op_model!
 ## Sim Model Exports
 export run_sim_model!
 ## Utils Exports
-export write_results
+export write_op_model
+export write_model_results
+export load_operation_results
 export get_all_constraint_index
 export get_all_var_index
 export get_con_index
 export get_var_index
-export load_operation_results
+# Plotting Utils
 export get_stacked_plot_data
 export get_bar_plot_data
 export get_stacked_generation_data
@@ -149,6 +152,9 @@ include("core/core_structs/results_model.jl")
 include("core/build_operations.jl")
 include("core/build_simulations.jl")
 
+#FeedForward Model Files
+include("simulation_models/feedforward_models.jl")
+
 #Device Modeling components
 include("devices/device_models/common.jl")
 include("devices/device_models/renewable_generation.jl")
@@ -183,6 +189,7 @@ include("operation_models/operation_models.jl")
 include("simulation_models/stage_update.jl")
 
 #Routines
+include("routines/make_initial_conditions.jl")
 include("routines/get_results.jl")
 include("routines/solve_routines.jl")
 include("routines/write_model.jl")

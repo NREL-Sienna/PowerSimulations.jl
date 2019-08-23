@@ -6,5 +6,5 @@ function _retrieve_forecasts(sys::PSY.System, ::Type{C}) where {C <: PSY.Compone
     isempty(forecasts) && error("System has no forecasts for device $(C)")
 
     return collect(forecasts)
-
+    #TODO: Remove this collect
 end

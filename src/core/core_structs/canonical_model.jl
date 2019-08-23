@@ -170,7 +170,7 @@ mutable struct CanonicalModel
 
 end
 
-function  CanonicalModel(::Type{T},
+function CanonicalModel(::Type{T},
                          sys::PSY.System,
                          optimizer::Union{Nothing,JuMP.OptimizerFactory};
                          kwargs...) where {T<:PM.AbstractPowerFormulation}
@@ -203,25 +203,25 @@ function  CanonicalModel(::Type{T},
 end
 
 _variable_type(cm::CanonicalModel) = JuMP.variable_type(cm.JuMPmodel)
-model_time_steps(ps_m::CanonicalModel) = ps_m.time_steps
-model_resolution(ps_m::CanonicalModel) = ps_m.resolution
-model_has_parameters(ps_m::CanonicalModel) = ps_m.parametrized
-model_runs_sequentially(ps_m::CanonicalModel) = ps_m.sequential_runs
-model_initial_time(ps_m::CanonicalModel) = ps_m.initial_time
-vars(ps_m::CanonicalModel) = ps_m.variables
-cons(ps_m::CanonicalModel) = ps_m.constraints
-var(ps_m::CanonicalModel, name::Symbol) = ps_m.variables[name]
-con(ps_m::CanonicalModel, name::Symbol) = ps_m.constraints[name]
-par(ps_m::CanonicalModel, param_reference::RefParam) = ps_m.parameters[param_reference]
-exp(ps_m::CanonicalModel, name::Symbol) = ps_m.expressions[name]
-ini_cond(ps_m::CanonicalModel, name::Symbol) = ps_m.initial_conditions[name]
+model_time_steps(canonical_model::CanonicalModel) = canonical_model.time_steps
+model_resolution(canonical_model::CanonicalModel) = canonical_model.resolution
+model_has_parameters(canonical_model::CanonicalModel) = canonical_model.parametrized
+model_runs_sequentially(canonical_model::CanonicalModel) = canonical_model.sequential_runs
+model_initial_time(canonical_model::CanonicalModel) = canonical_model.initial_time
+vars(canonical_model::CanonicalModel) = canonical_model.variables
+cons(canonical_model::CanonicalModel) = canonical_model.constraints
+var(canonical_model::CanonicalModel, name::Symbol) = canonical_model.variables[name]
+con(canonical_model::CanonicalModel, name::Symbol) = canonical_model.constraints[name]
+par(canonical_model::CanonicalModel, param_reference::RefParam) = canonical_model.parameters[param_reference]
+exp(canonical_model::CanonicalModel, name::Symbol) = canonical_model.expressions[name]
+ini_cond(canonical_model::CanonicalModel, name::Symbol) = canonical_model.initial_conditions[name]
 
 
 # This function is added here because Canonical Model hasn't been defined until now.
 
 function InitialCondition(canonical::CanonicalModel,
-    device::PSY.Device,
-    value::Float64)
+                            device::PSY.Device,
+                            value::Float64)
 
     if model_has_parameters(canonical)
         return InitialCondition(device, PJ.add_parameter(canonical.JuMPmodel, value))

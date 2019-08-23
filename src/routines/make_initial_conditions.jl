@@ -1,29 +1,29 @@
-function status_init(ps_m::CanonicalModel,
+function status_init(canonical_model::CanonicalModel,
                     devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
-    parameters = model_has_parameters(ps_m)
+    parameters = model_has_parameters(canonical_model)
     length_devices = length(devices)
     initial_conditions = Vector{InitialCondition}(undef, length_devices)
 
     for (ix, g) in enumerate(devices)
         if parameters
-            initial_conditions[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 1.0*(PSY.get_activepower(g) > 0)))
+            initial_conditions[ix] = InitialCondition(g, PJ.add_parameter(canonical_model.JuMPmodel, 1.0*(PSY.get_activepower(g) > 0)))
         else
             initial_conditions[ix] = InitialCondition(g, 1.0*(PSY.get_activepower(g) > 0))
         end
     end
 
-    ps_m.initial_conditions[Symbol("status_$(PSD)")] = initial_conditions
+    canonical_model.initial_conditions[Symbol("status_$(PSD)")] = initial_conditions
 
     return
 
 end
 
-function output_init(ps_m::CanonicalModel,
+function output_init(canonical_model::CanonicalModel,
                     devices::PSY.FlattenIteratorWrapper{PSD},
                     set_name::Vector{String}) where {PSD<:PSY.ThermalGen}
 
-    parameters = model_has_parameters(ps_m)
+    parameters = model_has_parameters(canonical_model)
     length_devices = length(devices)
 
     if length_devices != length(set_name)
@@ -35,24 +35,24 @@ function output_init(ps_m::CanonicalModel,
 
     for (ix, g) in enumerate(devices)
             if parameters
-                initial_conditions[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, PSY.get_activepower(g) ))
+                initial_conditions[ix] = InitialCondition(g, PJ.add_parameter(canonical_model.JuMPmodel, PSY.get_activepower(g) ))
             else
                 initial_conditions[ix] = InitialCondition(g, PSY.get_activepower(g))
             end
     end
 
-    ps_m.initial_conditions[Symbol("output_$(PSD)")] = initial_conditions
+    canonical_model.initial_conditions[Symbol("output_$(PSD)")] = initial_conditions
 
     return isempty(initial_conditions)
 
 end
 
 
-function duration_init(ps_m::CanonicalModel,
+function duration_init(canonical_model::CanonicalModel,
                         devices::PSY.FlattenIteratorWrapper{PSD},
                         set_name::Vector{String}) where {PSD<:PSY.ThermalGen}
 
-    parameters = model_has_parameters(ps_m)
+    parameters = model_has_parameters(canonical_model)
     length_devices = length(devices)
 
     if length_devices != length(set_name)
@@ -65,36 +65,36 @@ function duration_init(ps_m::CanonicalModel,
 
     for (ix, g) in enumerate(devices)
         if parameters
-            ini_cond_on[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 999.0*(PSY.get_activepower(g) > 0)))
-            ini_cond_off[ix] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 999.0*(PSY.get_activepower(g) < 0)))
+            ini_cond_on[ix] = InitialCondition(g, PJ.add_parameter(canonical_model.JuMPmodel, 999.0*(PSY.get_activepower(g) > 0)))
+            ini_cond_off[ix] = InitialCondition(g, PJ.add_parameter(canonical_model.JuMPmodel, 999.0*(PSY.get_activepower(g) < 0)))
         else
             ini_cond_on[ix] = InitialCondition(g, 999.0*(PSY.get_activepower(g) > 0))
             ini_cond_off[ix] = InitialCondition(g, 999.0*(PSY.get_activepower(g) < 0))
         end
     end
 
-    ps_m.initial_conditions[Symbol("duration_on_$(PSD)")] = ini_cond_on
-    ps_m.initial_conditions[Symbol("duration_off_$(PSD)")] = ini_cond_off
+    canonical_model.initial_conditions[Symbol("duration_on_$(PSD)")] = ini_cond_on
+    canonical_model.initial_conditions[Symbol("duration_off_$(PSD)")] = ini_cond_off
 
     return isempty(ini_cond_on)
 
 end
 
-function storage_energy_init(ps_m::CanonicalModel,
+function storage_energy_init(canonical_model::CanonicalModel,
                              devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.Storage}
 
-    parameters = model_has_parameters(ps_m)
+    parameters = model_has_parameters(canonical_model)
     energy_initial_conditions  = Vector{InitialCondition}(undef, length(devices))
 
     for (i, g) in enumerate(devices)
             if parameters
-                energy_initial_conditions[i] = InitialCondition(g, PJ.add_parameter(ps_m.JuMPmodel, 0.0))
+                energy_initial_conditions[i] = InitialCondition(g, PJ.add_parameter(canonical_model.JuMPmodel, 0.0))
             else
                 energy_initial_conditions[i] = InitialCondition(g, 0.0)
             end
     end
 
-    ps_m.initial_conditions[Symbol("energy_$(PSD)")] = energy_initial_conditions
+    canonical_model.initial_conditions[Symbol("energy_$(PSD)")] = energy_initial_conditions
 
     return
 

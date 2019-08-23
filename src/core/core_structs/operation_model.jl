@@ -159,8 +159,7 @@ function construct_device!(op_model::OperationModel,
     end
 
     _internal_device_constructor!(op_model.canonical,
-                                  device_model.device,
-                                  device_model.formulation,
+                                  device_model,
                                   get_transmission_ref(op_model),
                                   get_system(op_model);
                                   kwargs...)

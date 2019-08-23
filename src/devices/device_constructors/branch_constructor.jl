@@ -1,118 +1,108 @@
 
-function _internal_device_constructor!(ps_m::CanonicalModel,
-                           device::Type{B},
-                           device_formulation::Type{Br},
-                           system_formulation::Type{CopperPlatePowerModel},
+function _internal_device_constructor!(canonical_model::CanonicalModel,
+                            model::DeviceModel{B, Br},
+                           ::Type{CopperPlatePowerModel},
                            sys::PSY.System;
-                           kwargs...) where {Br<:AbstractBranchFormulation,
-                                             B<:PSY.DCBranch}
+                           kwargs...) where {B<:PSY.DCBranch,
+                                             Br<:AbstractBranchFormulation}
     # This code is meant to do nothing
 
     return
 
 end
 
-function _internal_device_constructor!(ps_m::CanonicalModel,
-                           device::Type{B},
-                           device_formulation::Type{Br},
-                           system_formulation::Type{CopperPlatePowerModel},
+function _internal_device_constructor!(canonical_model::CanonicalModel,
+                           model::DeviceModel{B, Br},
+                           ::Type{CopperPlatePowerModel},
                            sys::PSY.System;
-                           kwargs...) where {Br<:AbstractBranchFormulation,
-                                             B<:PSY.ACBranch}
+                           kwargs...) where {B<:PSY.ACBranch,
+                                             Br<:AbstractBranchFormulation}
     # This code is meant to do nothing
 
     return
 
 end
 
-function _internal_device_constructor!(ps_m::CanonicalModel,
-                           device::Type{B},
-                           device_formulation::Type{Br},
-                           system_formulation::Type{S},
+function _internal_device_constructor!(canonical_model::CanonicalModel,
+                           model::DeviceModel{B, Br},
+                           ::Type{S},
                            sys::PSY.System;
-                           kwargs...) where {Br<:AbstractBranchFormulation,
-                                             B<:PSY.Branch,
+                           kwargs...) where {B<:PSY.Branch,
+                                             Br<:AbstractBranchFormulation,
                                              S<:PM.AbstractPowerFormulation}
 
-    devices = PSY.get_components(device, sys)
+    devices = PSY.get_components(B, sys)
 
-    isempty(devices) && return
+    if validate_available_devices(devices,B)
+        return
+    end
 
-    branch_rate_bounds(ps_m,
-                        devices,
-                        device_formulation,
-                        system_formulation)
+    branch_rate_bounds(canonical_model, devices, Br, S)
 
-    branch_rate_constraint(ps_m,
-                        devices,
-                        device_formulation,
-                        system_formulation)
+    branch_rate_constraint(canonical_model, devices, Br, S)
 
     return
 
 end
 
-function _internal_device_constructor!(ps_m::CanonicalModel,
-                           device::Type{PSY.MonitoredLine},
-                           device_formulation::Type{FlowMonitoredLine},
-                           system_formulation::Type{S},
+function _internal_device_constructor!(canonical_model::CanonicalModel,
+                           model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
+                           ::Type{S},
                            sys::PSY.System;
                            kwargs...) where {S<:PM.AbstractPowerFormulation}
 
-    devices = PSY.get_components(device, sys)
+    devices = PSY.get_components(PSY.MonitoredLine, sys)
 
-    isempty(devices) && return
+    if validate_available_devices(devices, PSY.MonitoredLine)
+        return
+    end
 
-    branch_rate_bounds(ps_m,
+    branch_rate_bounds(canonical_model,
                         devices,
-                        device_formulation,
-                        system_formulation)
+                        model.formulation,
+                        S)
 
-    branch_rate_constraint(ps_m,
+    branch_rate_constraint(canonical_model,
                         devices,
-                        device_formulation,
-                        system_formulation)
+                        model.formulation,
+                        S)
 
-    branch_flow_constraint(ps_m,
+    branch_flow_constraint(canonical_model,
                         devices,
-                        device_formulation,
-                        system_formulation)
+                        model.formulation,
+                        S)
 
     return
 
 end
 
-function _internal_device_constructor!(ps_m::CanonicalModel,
-                           device::Type{B},
-                           device_formulation::Union{Type{StaticLineUnbounded}, Type{StaticTransformerUnbounded}},
-                           system_formulation::Type{S},
-                           sys::PSY.System;
-                           kwargs...) where {B<:PSY.Branch,
-                                             S<:PM.AbstractPowerFormulation}
-
-
+function _internal_device_constructor!(canonical_model::CanonicalModel,
+                                       model::DeviceModel{B, Br},
+                                       ::Type{S},
+                                       sys::PSY.System;
+                                       kwargs...) where {B<:PSY.Branch,
+                                                        Br<:Union{Type{StaticLineUnbounded}, Type{StaticTransformerUnbounded}},
+                                                        S<:PM.AbstractPowerFormulation}
     # do nothing
     return
 
 end
 
-function _internal_device_constructor!(ps_m::CanonicalModel,
-                           device::Type{B},
-                           device_formulation::Type{Br},
-                           system_formulation::Type{S},
+function _internal_device_constructor!(canonical_model::CanonicalModel,
+                           model::DeviceModel{B, Br},
+                           ::Type{S},
                            sys::PSY.System;
                            kwargs...) where {Br<:AbstractBranchFormulation,
                                              B<:PSY.DCBranch,
                                              S<:PM.AbstractPowerFormulation}
 
-    devices = PSY.get_components(device, sys)
+    devices = PSY.get_components(B, sys)
 
-    isempty(devices) && return
+    if validate_available_devices(devices, B)
+        return
+    end
 
-    branch_rate_constraint(ps_m,
-                        devices,
-                        device_formulation,
-                        system_formulation)
+    branch_rate_constraint(canonical_model, devices, Br, S)
 
     return
 

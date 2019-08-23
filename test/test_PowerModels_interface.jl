@@ -1,4 +1,6 @@
 # Suppress warnings during testing.
+# required for reducing logging during tests
+using Memento
 setlevel!(getlogger(PowerModels), "error")
 
 # is this the best way to find a file in a package?

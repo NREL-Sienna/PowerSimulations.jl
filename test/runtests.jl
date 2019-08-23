@@ -8,9 +8,6 @@ using Ipopt
 using GLPK
 using OSQP
 
-# required for reducing logging during tests
-using Memento
-
 const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
@@ -35,7 +32,7 @@ end
     include("test_renewable_generation_constructors.jl")
     include("test_load_constructors.jl")
     include("test_storage_constructors.jl")
-    #include("test_hydro_generation_constructors.jl")
+    include("test_hydro_generation_constructors.jl")
 end
 
 @testset "Network Constructors" begin
