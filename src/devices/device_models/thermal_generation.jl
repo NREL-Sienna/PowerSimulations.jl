@@ -506,8 +506,7 @@ function missing_init_cond(initial_conditions::Vector{InitialCondition},
         if isempty(missing_device)
             return nothing
         else
-            device_iter = Base.Iterators.Flatten(missing_device)
-            return device_iter
+            return missing_device
         end
     end
 end
