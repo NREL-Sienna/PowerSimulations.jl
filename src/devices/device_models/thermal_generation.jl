@@ -203,7 +203,6 @@ function commitment_constraints!(canonical_model::CanonicalModel,
         status_init(canonical_model, devices)
     else
         status_miss = missing_init_cond(canonical_model.initial_conditions[key], devices)
-        @show status_miss
         if !isnothing(status_miss)
             @warn("Initial status conditions not provided. This can lead to unwanted results")
             status_init(canonical_model, status_miss)
