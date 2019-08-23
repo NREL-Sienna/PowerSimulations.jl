@@ -303,6 +303,8 @@ function ramp_constraints!(canonical_model::CanonicalModel,
     end
 
     rate_data = _get_data_for_rocc(canonical_model.initial_conditions[key], resolution)
+    canonical_model.initial_conditions[key] = filter_init_cond(canonical_model.initial_conditions[key],
+                                                                rate_data[1])
 
     if !isempty(rate_data[1])
         @assert length(rate_data[2]) == length(canonical_model.initial_conditions[key])
@@ -347,7 +349,8 @@ function ramp_constraints!(canonical_model::CanonicalModel,
     end
 
     rate_data = _get_data_for_rocc(canonical_model.initial_conditions[key], resolution)
-    
+    canonical_model.initial_conditions[key] = filter_init_cond(canonical_model.initial_conditions[key],
+                                                                rate_data[1])
     if !isempty(rate_data[1])
         @assert length(rate_data[2]) == length(canonical_model.initial_conditions[key])
 
@@ -393,7 +396,8 @@ function ramp_constraints!(canonical_model::CanonicalModel,
     end
 
     rate_data = _get_data_for_rocc(canonical_model.initial_conditions[key], resolution)
-    
+    canonical_model.initial_conditions[key] = filter_init_cond(canonical_model.initial_conditions[key],
+                                                                rate_data[1])
 
     if !isempty(rate_data[1])
         @assert length(rate_data[2]) == length(canonical_model.initial_conditions[key])
@@ -438,6 +442,9 @@ function ramp_constraints!(canonical_model::CanonicalModel,
         end
     end
 
+    rate_data = _get_data_for_rocc(canonical_model.initial_conditions[key], resolution)
+    canonical_model.initial_conditions[key] = filter_init_cond(canonical_model.initial_conditions[key],
+                                                                rate_data[1])
     if !isempty(rate_data[1])
         @assert length(rate_data[2]) == length(canonical_model.initial_conditions[key])
 
@@ -517,6 +524,12 @@ function missing_init_cond(initial_conditions::Vector{InitialCondition},
     end
 end
 
+function filter_init_cond(initial_conditions::Vector{InitialCondition},
+                            set_name::Vector{String})
+    fil_init_ = filter(x-> in(PSY.get_name(x.device),set_name), initial_conditions)
+    return fil_init_
+end
+
 function time_constraints!(canonical_model::CanonicalModel,
                           devices::PSY.FlattenIteratorWrapper{T},
                           device_formulation::Type{D},
@@ -557,6 +570,11 @@ function time_constraints!(canonical_model::CanonicalModel,
     sort!(canonical_model.initial_conditions[key_on],by=x-> PSY.get_name(x.device))
     sort!(canonical_model.initial_conditions[key_off],by=x-> PSY.get_name(x.device))
     duration_data = _get_data_for_tdc(canonical_model.initial_conditions[key_off], resolution)
+
+    canonical_model.initial_conditions[key_off] = filter_init_cond(canonical_model.initial_conditions[key_off],
+                                                                    duration_data[1])
+    canonical_model.initial_conditions[key_on] = filter_init_cond(canonical_model.initial_conditions[key_on],
+                                                                    duration_data[1])                                                                   
 
     if !(isempty(duration_data[1]))
 
