@@ -28,7 +28,7 @@ function activepower_variables!(canonical_model::CanonicalModel,
                  :nodal_balance_active;
                  ub_value = d -> d.tech.activepowerlimits.max,
                  lb_value = d -> 0.0,
-                 init_value = d -> d.tech.activepower)
+                 init_value = d -> PSY.get_tech(d) |> PSY.get_activepower)
 
     return
 
@@ -502,43 +502,6 @@ function time_constraints!(canonical_model::CanonicalModel,
         end
     else
         @warn "Data doesn't contain generators with time-up/down limits, consider adjusting your formulation"
-    end
-
-    return
-
-end
-
-########################## FeedForward Constraints #########################################
-
-function feedforward!(canonical_model::CanonicalModel,
-                     device_type::Type{T},
-                     ff_model::UpperBoundFF) where {T<:PSY.ThermalGen}
-
-    for prefix in get_vars_prefix(ff_model)
-        var_name = Symbol(prefix, "_$(T)")
-        parameter_ref = RefParam{JuMP.VariableRef}(var_name)
-        ub_ff(canonical_model,
-              Symbol("FF_$(T)"),
-                     parameter_ref,
-                     var_name)
-    end
-
-    return
-
-end
-
-function feedforward!(canonical_model::CanonicalModel,
-                     device_type::Type{T},
-                     ff_model::SemiContinuousFF) where {T<:PSY.ThermalGen}
-
-    bin_var = Symbol(get_bin_prefix(ff_model), "_$(T)")
-    parameter_ref = RefParam{JuMP.VariableRef}(bin_var)
-    for prefix in get_vars_prefix(ff_model)
-        var_name = Symbol(prefix, "_$(T)")
-        semicontinuousrange_ff(canonical_model,
-                               Symbol("FFbin_$(T)"),
-                               parameter_ref,
-                               var_name)
     end
 
     return

@@ -189,6 +189,7 @@ include("operation_models/operation_models.jl")
 include("simulation_models/stage_update.jl")
 
 #Routines
+include("routines/make_initial_conditions.jl")
 include("routines/get_results.jl")
 include("routines/solve_routines.jl")
 include("routines/write_model.jl")

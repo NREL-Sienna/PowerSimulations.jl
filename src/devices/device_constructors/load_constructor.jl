@@ -29,6 +29,8 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     reactivepower_constraints(canonical_model, devices, D, S)
 
+    feedforward!(canonical_model, L, model.feedforward)
+
     #Cost Function
     cost_function(canonical_model, devices, D, S)
 
@@ -62,6 +64,8 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     else
         activepower_constraints(canonical_model, devices, D, S)
     end
+
+    feedforward!(canonical_model, L, model.feedforward)
 
     #Cost Function
     cost_function(canonical_model, devices, D, S)
@@ -102,6 +106,8 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     reactivepower_constraints(canonical_model, devices, model.formulation, S)
 
+    feedforward!(canonical_model, L, model.feedforward)
+
     #Cost Function
     cost_function(canonical_model, devices, model.formulation, S)
 
@@ -136,6 +142,8 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     else
         activepower_constraints(canonical_model, devices, model.formulation, S)
     end
+
+    feedforward!(canonical_model, L, model.feedforward)
 
     #Cost Function
     cost_function(canonical_model, devices, model.formulation, S)
