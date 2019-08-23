@@ -37,9 +37,9 @@ addons:
 jobs:
   include:
     - stage: "Documentation"
-      julia: 1.1
+      julia: 1.0
       os: linux
       script:
-        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.build("PowerSimulations"); Pkg.instantiate()'
-        - DOCUMENTER_DEBUG=true julia --project=docs/ docs/make.jl
+        - julia --project=docs/ -e 'using Pkg; Pkg.instantiate(); Pkg.develop(PackageSpec(path=pwd())); Pkg.build("PowerSimulations");'
+        - julia --project=docs/ -e 'ENV["DOCUMENTER_DEBUG"] = "true"; include("docs/make.jl")'
       after_success: skip
