@@ -314,6 +314,7 @@ version = "0.12.2"
 [[PowerSystems]]
 deps = ["CSV", "DataFrames", "Dates", "InteractiveUtils", "JSON2", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "UUIDs", "YAML"]
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 <<<<<<< HEAD
 <<<<<<< HEAD
 git-tree-sha1 = "0bf63c682b3e2891f0a300946e1a962fe32c8836"
@@ -325,6 +326,10 @@ git-tree-sha1 = "7bef21c4a256c5b2dd7c972539b7ddb32fb2b5b4"
 >>>>>>> 0707352baebd9fe4645798ff18612282e32c80ac
 repo-rev = "struct_updates"
 >>>>>>> 551f75dd5ffb1c10f7ff8d3560b281516d738dbb
+=======
+git-tree-sha1 = "0bf63c682b3e2891f0a300946e1a962fe32c8836"
+repo-rev = "dev"
+>>>>>>> Stashed changes
 =======
 git-tree-sha1 = "0bf63c682b3e2891f0a300946e1a962fe32c8836"
 repo-rev = "dev"
