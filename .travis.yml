@@ -55,6 +55,6 @@ jobs:
       julia: 1.1
       os: linux
       script:
-        - julia --project -e 'using Pkg; Pkg.build(); Pkg.add("Documenter"); Pkg.instantiate()'
+        - julia --project=docs/ -e 'using Pkg; Pkg.build(); Pkg.add("Documenter"); Pkg.instantiate()'
         - julia --project=docs/ -e 'ENV["DOCUMENTER_DEBUG"] = "true"; include("docs/make.jl")'
       after_success: skip
