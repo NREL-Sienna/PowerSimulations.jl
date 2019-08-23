@@ -55,6 +55,6 @@ jobs:
       julia: 1.0
       os: linux
       script:
-        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.build("PowerSimulations"); Pkg.instantiate();'
+        - julia --project -e 'using Pkg; Pkg.build(); Pkg.add("Documenter"); Pkg.instantiate()'
         - julia --project=docs/ -e 'ENV["DOCUMENTER_DEBUG"] = "true"; include("docs/make.jl")'
       after_success: skip
