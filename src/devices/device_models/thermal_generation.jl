@@ -200,12 +200,13 @@ function commitment_constraints!(canonical_model::CanonicalModel,
     
     if !(key in keys(canonical_model.initial_conditions)) 
         @warn("Initial status conditions not provided. This can lead to unwanted results")
-        status_init(canonical_model, devices)
+        device_name = map(x-> PSY.get_name(x), devices)
+        status_init(canonical_model, devices, device_name)
     else
         status_miss = missing_init_cond(canonical_model.initial_conditions[key], devices)
         if !isnothing(status_miss)
             @warn("Initial status conditions not provided. This can lead to unwanted results")
-            status_init(canonical_model, status_miss)
+            status_init(canonical_model, devices, status_miss)
         end
     end
 
@@ -291,12 +292,13 @@ function ramp_constraints!(canonical_model::CanonicalModel,
 
     if !(key in keys(canonical_model.initial_conditions))
         @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-        output_init(canonical_model, devices)
+        device_name = map(x-> PSY.get_name(x), devices)
+        output_init(canonical_model, devices, device_name)
     else
         ramp_miss = missing_init_cond(canonical_model.initial_conditions[key], devices)
         if !isnothing(ramp_miss)
             @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-            output_init(canonical_model, ramp_miss)
+            output_init(canonical_model, devices, ramp_miss)
         end
     end
 
@@ -334,12 +336,13 @@ function ramp_constraints!(canonical_model::CanonicalModel,
 
     if !(key in keys(canonical_model.initial_conditions))
         @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-        output_init(canonical_model, devices)
+        device_name = map(x-> PSY.get_name(x), devices)
+        output_init(canonical_model, devices,device_name)
     else
         ramp_miss = missing_init_cond(canonical_model.initial_conditions[key], devices)
         if !isnothing(ramp_miss)
             @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-            output_init(canonical_model, ramp_miss)
+            output_init(canonical_model,devices, ramp_miss)
         end
     end
 
@@ -379,12 +382,13 @@ function ramp_constraints!(canonical_model::CanonicalModel,
 
     if !(key in keys(canonical_model.initial_conditions))
         @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-        output_init(canonical_model, devices)
+        device_name = map(x-> PSY.get_name(x), devices)
+        output_init(canonical_model, devices, device_name)
     else
         ramp_miss = missing_init_cond(canonical_model.initial_conditions[key], devices)
         if !isnothing(ramp_miss)
             @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-            output_init(canonical_model, ramp_miss)
+            output_init(canonical_model, devices, ramp_miss)
         end
     end
 
@@ -424,12 +428,13 @@ function ramp_constraints!(canonical_model::CanonicalModel,
 
     if !(key in keys(canonical_model.initial_conditions))
         @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-        output_init(canonical_model, devices)
+        device_name = map(x-> PSY.get_name(x), devices)
+        output_init(canonical_model, devices,device_name)
     else
         ramp_miss = missing_init_cond(canonical_model.initial_conditions[key], devices)
         if !isnothing(ramp_miss)
             @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-            output_init(canonical_model, ramp_miss)
+            output_init(canonical_model,devices, ramp_miss)
         end
     end
 
@@ -496,12 +501,14 @@ end
 
 function missing_init_cond(initial_conditions::Vector{InitialCondition},
                             devices::PSY.FlattenIteratorWrapper{T}) where {T<:PSY.ThermalGen}
+    
+    device_names = map(x-> PSY.get_name(x), devices)
     if isempty(initial_conditions)
-        return devices
+        return device_names
     else
         init_cond_devices = map(x-> PSY.get_name(x.device), initial_conditions)
-        missing_device = filter(x-> !in(PSY.get_name(x),init_cond_devices),collect(devices))
-        
+        missing_device = filter(x-> !in(x,init_cond_devices),device_names)
+
         if isempty(missing_device)
             return nothing
         else
@@ -525,7 +532,7 @@ function time_constraints!(canonical_model::CanonicalModel,
 
     if !(key_on in keys(canonical_model.initial_conditions))
         @warn("Initial Conditions for Minimum Up Time constraints not provided. This can lead to unwanted results")
-        duration_init_on(canonical_model, devices)
+        duration_init_on(canonical_model, collect(devices))
     else
         dur_on_miss = missing_init_cond(canonical_model.initial_conditions[key_on], devices)
         if !isnothing(dur_on_miss)
@@ -536,7 +543,7 @@ function time_constraints!(canonical_model::CanonicalModel,
 
     if !(key_off in keys(canonical_model.initial_conditions))
         @warn("Initial Conditions for Minimum Down Time constraints not provided. This can lead to unwanted results")
-        duration_init_off(canonical_model, devices)
+        duration_init_off(canonical_model, collect(devices))
     else
         dur_off_miss = missing_init_cond(canonical_model.initial_conditions[key_off], devices)
         if !isnothing(dur_off_miss)
