@@ -197,10 +197,17 @@ function commitment_constraints!(canonical_model::CanonicalModel,
                                                                      S<:PM.AbstractPowerFormulation}
 
     key = Symbol("status_$(T)")
-
-    if !(key in keys(canonical_model.initial_conditions))
+    
+    if !(key in keys(canonical_model.initial_conditions)) 
         @warn("Initial status conditions not provided. This can lead to unwanted results")
-        status_init(canonical_model, devices)
+        device_name = map(x-> PSY.get_name(x), devices)
+        status_init(canonical_model, devices, device_name)
+    else
+        status_miss = missing_init_cond(canonical_model.initial_conditions[key], devices)
+        if !isnothing(status_miss)
+            @warn("Initial status conditions not provided. This can lead to unwanted results")
+            status_init(canonical_model, devices, status_miss)
+        end
     end
 
     device_commitment(canonical_model,
@@ -220,8 +227,8 @@ end
 """
 This function gets the data for the generators
 """
-function _get_data_for_rocc(devices::PSY.FlattenIteratorWrapper{T},
-                            resolution::Dates.Period) where {T<:PSY.ThermalGen}
+function _get_data_for_rocc(initial_conditions::Vector{InitialCondition},
+                            resolution::Dates.Period)
 
     if resolution > Dates.Minute(1)
         minutes_per_period = Dates.value(Dates.Minute(resolution))
@@ -229,6 +236,7 @@ function _get_data_for_rocc(devices::PSY.FlattenIteratorWrapper{T},
         minutes_per_period = Dates.value(Dates.Second(resolution))/60
     end
 
+    devices = map(x-> x.device, initial_conditions)
     lenght_devices = length(devices)
     set_name = Vector{String}(undef, lenght_devices)
     ramp_params = Vector{UpDown}(undef, lenght_devices)
@@ -279,14 +287,24 @@ function ramp_constraints!(canonical_model::CanonicalModel,
                                                     S<:PM.AbstractPowerFormulation}
     time_steps = model_time_steps(canonical_model)
     resolution = model_resolution(canonical_model)
-    rate_data = _get_data_for_rocc(devices, resolution)
+
+    key = Symbol("output_$(T)")
+
+    if !(key in keys(canonical_model.initial_conditions))
+        @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
+        device_name = map(x-> PSY.get_name(x), devices)
+        output_init(canonical_model, devices, device_name)
+    else
+        ramp_miss = missing_init_cond(canonical_model.initial_conditions[key], devices)
+        if !isnothing(ramp_miss)
+            @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
+            output_init(canonical_model, devices, ramp_miss)
+        end
+    end
+
+    rate_data = _get_data_for_rocc(canonical_model.initial_conditions[key], resolution)
 
     if !isempty(rate_data[1])
-        key = Symbol("output_$(T)")
-        if !(key in keys(canonical_model.initial_conditions))
-            @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-            output_init(canonical_model, devices, rate_data[1])
-        end
         @assert length(rate_data[2]) == length(canonical_model.initial_conditions[key])
         # Here goes the reactive power ramp limits
         device_mixedinteger_rateofchange(canonical_model,
@@ -313,15 +331,24 @@ function ramp_constraints!(canonical_model::CanonicalModel,
                                                    S<:PM.AbstractPowerFormulation}
     time_steps = model_time_steps(canonical_model)
     resolution = model_resolution(canonical_model)
-    rate_data = _get_data_for_rocc(devices, resolution)
 
-    if !isempty(rate_data[1])
-        key = Symbol("output_$(T)")
-        if !(key in keys(canonical_model.initial_conditions))
+    key = Symbol("output_$(T)")
+
+    if !(key in keys(canonical_model.initial_conditions))
+        @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
+        device_name = map(x-> PSY.get_name(x), devices)
+        output_init(canonical_model, devices,device_name)
+    else
+        ramp_miss = missing_init_cond(canonical_model.initial_conditions[key], devices)
+        if !isnothing(ramp_miss)
             @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-            output_init(canonical_model, devices, rate_data[1])
+            output_init(canonical_model,devices, ramp_miss)
         end
+    end
 
+    rate_data = _get_data_for_rocc(canonical_model.initial_conditions[key], resolution)
+    
+    if !isempty(rate_data[1])
         @assert length(rate_data[2]) == length(canonical_model.initial_conditions[key])
 
         # Here goes the reactive power ramp limits
@@ -350,15 +377,25 @@ function ramp_constraints!(canonical_model::CanonicalModel,
                                                    S<:PM.AbstractActivePowerFormulation}
 
     resolution = model_resolution(canonical_model)
-    rate_data = _get_data_for_rocc(devices, resolution)
+
+    key = Symbol("output_$(T)")
+
+    if !(key in keys(canonical_model.initial_conditions))
+        @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
+        device_name = map(x-> PSY.get_name(x), devices)
+        output_init(canonical_model, devices, device_name)
+    else
+        ramp_miss = missing_init_cond(canonical_model.initial_conditions[key], devices)
+        if !isnothing(ramp_miss)
+            @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
+            output_init(canonical_model, devices, ramp_miss)
+        end
+    end
+
+    rate_data = _get_data_for_rocc(canonical_model.initial_conditions[key], resolution)
+    
 
     if !isempty(rate_data[1])
-        key = Symbol("output_$(T)")
-        if !(key in keys(canonical_model.initial_conditions))
-            @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-            output_init(canonical_model, devices, rate_data[1])
-        end
-
         @assert length(rate_data[2]) == length(canonical_model.initial_conditions[key])
 
         device_mixedinteger_rateofchange(canonical_model,
@@ -387,15 +424,21 @@ function ramp_constraints!(canonical_model::CanonicalModel,
                                                     S<:PM.AbstractActivePowerFormulation}
 
     resolution = model_resolution(canonical_model)
-    rate_data = _get_data_for_rocc(devices, resolution)
+    key = Symbol("output_$(T)")
+
+    if !(key in keys(canonical_model.initial_conditions))
+        @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
+        device_name = map(x-> PSY.get_name(x), devices)
+        output_init(canonical_model, devices,device_name)
+    else
+        ramp_miss = missing_init_cond(canonical_model.initial_conditions[key], devices)
+        if !isnothing(ramp_miss)
+            @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
+            output_init(canonical_model,devices, ramp_miss)
+        end
+    end
 
     if !isempty(rate_data[1])
-        key = Symbol("output_$(T)")
-        if !(key in keys(canonical_model.initial_conditions))
-            @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-            output_init(canonical_model, devices, rate_data[1])
-        end
-
         @assert length(rate_data[2]) == length(canonical_model.initial_conditions[key])
 
         device_linear_rateofchange(canonical_model,
@@ -417,11 +460,12 @@ end
 If the fraction of hours that a generator has a duration constraint is less than
 the fraction of hours that a single time_step represents then it is not binding.
 """
-function _get_data_for_tdc(devices::PSY.FlattenIteratorWrapper{T},
-                           resolution::Dates.Period) where {T<:PSY.ThermalGen}
+function _get_data_for_tdc(initial_conditions::Vector{InitialCondition},
+                           resolution::Dates.Period) 
 
     steps_per_hour = 60/Dates.value(Dates.Minute(resolution))
     fraction_of_hour = 1/steps_per_hour
+    devices = map(x-> x.device, initial_conditions)
     lenght_devices = length(devices)
     set_name = Vector{String}(undef, lenght_devices)
     time_params = Vector{UpDown}(undef, lenght_devices)
@@ -455,6 +499,24 @@ function _get_data_for_tdc(devices::PSY.FlattenIteratorWrapper{T},
 
 end
 
+function missing_init_cond(initial_conditions::Vector{InitialCondition},
+                            devices::PSY.FlattenIteratorWrapper{T}) where {T<:PSY.ThermalGen}
+    
+    device_names = map(x-> PSY.get_name(x), devices)
+    if isempty(initial_conditions)
+        return device_names
+    else
+        init_cond_devices = map(x-> PSY.get_name(x.device), initial_conditions)
+        missing_device = filter(x-> !in(x,init_cond_devices),device_names)
+
+        if isempty(missing_device)
+            return nothing
+        else
+            return missing_device
+        end
+    end
+end
+
 function time_constraints!(canonical_model::CanonicalModel,
                           devices::PSY.FlattenIteratorWrapper{T},
                           device_formulation::Type{D},
@@ -464,15 +526,39 @@ function time_constraints!(canonical_model::CanonicalModel,
 
     parameters = model_has_parameters(canonical_model)
     resolution = model_resolution(canonical_model)
-    duration_data = _get_data_for_tdc(devices, resolution)
+    
+    key_on =  Symbol("duration_on_$(T)")
+    key_off =  Symbol("duration_off_$(T)")
+
+    if !(key_on in keys(canonical_model.initial_conditions))
+        @warn("Initial Conditions for Minimum Up Time constraints not provided. This can lead to unwanted results")
+        device_name = map(x-> PSY.get_name(x), devices)
+        duration_init_on(canonical_model, devices, device_name )
+    else
+        dur_on_miss = missing_init_cond(canonical_model.initial_conditions[key_on], devices)
+        if !isnothing(dur_on_miss)
+            @warn("Initial Conditions for Minimum Up Time constraints not provided. This can lead to unwanted results")
+            duration_init_on(canonical_model, devices, dur_on_miss)
+        end
+    end
+
+    if !(key_off in keys(canonical_model.initial_conditions))
+        @warn("Initial Conditions for Minimum Down Time constraints not provided. This can lead to unwanted results")
+        device_name = map(x-> PSY.get_name(x), devices)
+        duration_init_off(canonical_model, devices, device_name)
+    else
+        dur_off_miss = missing_init_cond(canonical_model.initial_conditions[key_off], devices)
+        if !isnothing(dur_off_miss)
+            @warn("Initial Conditions for Minimum Down Time constraints not provided. This can lead to unwanted results")
+            duration_init_off(canonical_model, devices, dur_off_miss)
+        end
+    end
+
+    sort!(canonical_model.initial_conditions[key_on],by=x-> PSY.get_name(x.device))
+    sort!(canonical_model.initial_conditions[key_off],by=x-> PSY.get_name(x.device))
+    duration_data = _get_data_for_tdc(canonical_model.initial_conditions[key_off], resolution)
 
     if !(isempty(duration_data[1]))
-        key_on =  Symbol("duration_on_$(T)")
-        key_off =  Symbol("duration_off_$(T)")
-        if !(key_on in keys(canonical_model.initial_conditions))
-            @warn("Initial Conditions for Time Up/Down constraints not provided. This can lead to unwanted results")
-            time_limits = duration_init(canonical_model, devices, duration_data[1])
-        end
 
         @assert length(duration_data[2]) == length(canonical_model.initial_conditions[key_on])
         @assert length(duration_data[2]) == length(canonical_model.initial_conditions[key_off])
