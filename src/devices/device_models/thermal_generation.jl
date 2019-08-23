@@ -417,11 +417,12 @@ end
 If the fraction of hours that a generator has a duration constraint is less than
 the fraction of hours that a single time_step represents then it is not binding.
 """
-function _get_data_for_tdc(devices::PSY.FlattenIteratorWrapper{T},
-                           resolution::Dates.Period) where {T<:PSY.ThermalGen}
+function _get_data_for_tdc(initial_conditions::Vector{InitialCondition},
+                           resolution::Dates.Period) 
 
     steps_per_hour = 60/Dates.value(Dates.Minute(resolution))
     fraction_of_hour = 1/steps_per_hour
+    devices = map(x-> x.device, initial_conditions)
     lenght_devices = length(devices)
     set_name = Vector{String}(undef, lenght_devices)
     time_params = Vector{UpDown}(undef, lenght_devices)
@@ -455,6 +456,22 @@ function _get_data_for_tdc(devices::PSY.FlattenIteratorWrapper{T},
 
 end
 
+function missing_init_cond(initial_conditions::Vector{InitialCondition},
+                            devices::PSY.FlattenIteratorWrapper{T}) where {T<:PSY.ThermalGen}
+    if isempty(initial_conditions)
+        return devices
+    else
+        init_cond_devices = map(x-> x.device.name, initial_conditions)
+        missing_device = filter(x-> !in(x.name,init_cond_devices),collect(devices))
+
+        if isempty(missing_device)
+            return nothing
+        else
+            return missing_device
+        end
+    end
+end
+
 function time_constraints!(canonical_model::CanonicalModel,
                           devices::PSY.FlattenIteratorWrapper{T},
                           device_formulation::Type{D},
@@ -464,15 +481,37 @@ function time_constraints!(canonical_model::CanonicalModel,
 
     parameters = model_has_parameters(canonical_model)
     resolution = model_resolution(canonical_model)
-    duration_data = _get_data_for_tdc(devices, resolution)
+    
+    key_on =  Symbol("duration_on_$(T)")
+    key_off =  Symbol("duration_off_$(T)")
+
+    if !(key_on in keys(canonical_model.initial_conditions))
+        @warn("Initial Conditions for Minimum Up Time constraints not provided. This can lead to unwanted results")
+        duration_init_on(canonical_model, devices)
+    else
+        dur_on_miss = missing_init_cond(canonical_model.initial_conditions[key_on], devices)
+        if !isnothing(dur_on_miss)
+            @warn("Initial Conditions for Minimum Up Time constraints not provided. This can lead to unwanted results")
+            duration_init_on(canonical_model, dur_on_miss)
+        end
+    end
+
+    if !(key_off in keys(canonical_model.initial_conditions))
+        @warn("Initial Conditions for Minimum Down Time constraints not provided. This can lead to unwanted results")
+        duration_init_off(canonical_model, devices)
+    else
+        dur_off_miss = missing_init_cond(canonical_model.initial_conditions[key_off], devices)
+        if !isnothing(dur_off_miss)
+            @warn("Initial Conditions for Minimum Down Time constraints not provided. This can lead to unwanted results")
+            duration_init_off(canonical_model, dur_off_miss)
+        end
+    end
+
+    sort!(canonical_model.initial_conditions[key_on],by=x-> x.device.name)
+    sort!(canonical_model.initial_conditions[key_off],by=x-> x.device.name)
+    duration_data = _get_data_for_tdc(canonical_model.initial_conditions[key_off], resolution)
 
     if !(isempty(duration_data[1]))
-        key_on =  Symbol("duration_on_$(T)")
-        key_off =  Symbol("duration_off_$(T)")
-        if !(key_on in keys(canonical_model.initial_conditions))
-            @warn("Initial Conditions for Time Up/Down constraints not provided. This can lead to unwanted results")
-            time_limits = duration_init(canonical_model, devices, duration_data[1])
-        end
 
         @assert length(duration_data[2]) == length(canonical_model.initial_conditions[key_on])
         @assert length(duration_data[2]) == length(canonical_model.initial_conditions[key_off])
