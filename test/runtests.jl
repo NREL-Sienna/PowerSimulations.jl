@@ -126,7 +126,7 @@ generators_hg = [
 sys5b = PSY.System(nodes5, vcat(generators5,renewables), loads5_DA, branches5, nothing,  100.0);
 sys5b_uc = PSY.System(nodes5, generators5_uc, loads5_DA, branches5, nothing,  100.0);
 sys5b_storage = PSY.System(nodes5, vcat(generators5_uc,renewables), loads5_DA, branches5, battery,  100.0);
-
+#=
 @testset "Common Functionalities" begin
     include("PowerModels_interface.jl")
 end
@@ -151,3 +151,4 @@ end
     include("operation_model_constructor.jl")
     include("operation_model_solve.jl")
 end
+=#

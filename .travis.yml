@@ -52,9 +52,9 @@ after_success:
 jobs:
   include:
     - stage: "Documentation"
-      julia: 1.0
+      julia: 1.1
       os: linux
       script:
-        - julia --project -e 'using Pkg; Pkg.build(); Pkg.add("Documenter"); Pkg.instantiate()'
-        - julia --project -e 'ENV["DOCUMENTER_DEBUG"] = "true"; include("docs/make.jl")'
+        - julia --project=docs/ -e 'using Pkg; Pkg.build(); Pkg.add("Documenter"); Pkg.instantiate()'
+        - julia --project=docs/ -e 'ENV["DOCUMENTER_DEBUG"] = "true"; include("docs/make.jl")'
       after_success: skip
