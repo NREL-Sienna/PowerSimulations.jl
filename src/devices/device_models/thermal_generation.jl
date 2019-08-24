@@ -6,6 +6,8 @@ abstract type AbstractThermalDispatchForm<:AbstractThermalFormulation end
 
 struct ThermalUnitCommitment<:AbstractThermalFormulation end
 
+struct ThermalBasicUnitCommitment<:AbstractThermalFormulation end
+
 struct ThermalDispatch<:AbstractThermalDispatchForm end
 
 struct ThermalRampLimited<:AbstractThermalDispatchForm end
@@ -197,8 +199,8 @@ function commitment_constraints!(canonical_model::CanonicalModel,
                                                                      S<:PM.AbstractPowerFormulation}
 
     key = Symbol("status_$(T)")
-    
-    if !(key in keys(canonical_model.initial_conditions)) 
+
+    if !(key in keys(canonical_model.initial_conditions))
         @warn("Initial status conditions not provided. This can lead to unwanted results")
         device_name = map(x-> PSY.get_name(x), devices)
         status_init(canonical_model, devices, device_name)
@@ -468,7 +470,7 @@ If the fraction of hours that a generator has a duration constraint is less than
 the fraction of hours that a single time_step represents then it is not binding.
 """
 function _get_data_for_tdc(initial_conditions::Vector{InitialCondition},
-                           resolution::Dates.Period) 
+                           resolution::Dates.Period)
 
     steps_per_hour = 60/Dates.value(Dates.Minute(resolution))
     fraction_of_hour = 1/steps_per_hour
@@ -508,7 +510,7 @@ end
 
 function missing_init_cond(initial_conditions::Vector{InitialCondition},
                             devices::PSY.FlattenIteratorWrapper{T}) where {T<:PSY.ThermalGen}
-    
+
     device_names = map(x-> PSY.get_name(x), devices)
     if isempty(initial_conditions)
         return device_names
@@ -539,7 +541,7 @@ function time_constraints!(canonical_model::CanonicalModel,
 
     parameters = model_has_parameters(canonical_model)
     resolution = model_resolution(canonical_model)
-    
+
     key_on =  Symbol("duration_on_$(T)")
     key_off =  Symbol("duration_off_$(T)")
 
@@ -574,7 +576,7 @@ function time_constraints!(canonical_model::CanonicalModel,
     canonical_model.initial_conditions[key_off] = filter_init_cond(canonical_model.initial_conditions[key_off],
                                                                     duration_data[1])
     canonical_model.initial_conditions[key_on] = filter_init_cond(canonical_model.initial_conditions[key_on],
-                                                                    duration_data[1])                                                                   
+                                                                    duration_data[1])
 
     if !(isempty(duration_data[1]))
 

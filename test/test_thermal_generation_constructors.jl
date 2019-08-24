@@ -77,6 +77,65 @@ end
     end
 end
 
+################################### Basic Unit Commitment tests ############################
+@testset "Thermal Basic UC With DC - PF" begin
+    bin_variable_names = [:ON_ThermalStandard,
+                          :START_ThermalStandard,
+                          :STOP_ThermalStandard]
+    model = DeviceModel(PSY.ThermalStandard, PSI.ThermalBasicUnitCommitment)
+
+    @info "5-Bus testing"
+    op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5_uc)
+    construct_device!(op_model, :Thermal, model)
+    moi_tests(op_model, false, 480, 0, 240, 120, 120, true)
+    psi_checkbinvar_test(op_model, bin_variable_names)
+    psi_checkobjfun_test(op_model, GAEVF)
+
+    op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5_uc; parameters = true)
+    construct_device!(op_model, :Thermal, model)
+    moi_tests(op_model, true, 480, 0, 240, 120, 120, true)
+    psi_checkbinvar_test(op_model, bin_variable_names)
+    psi_checkobjfun_test(op_model, GAEVF)
+
+    @info "14-Bus testing"
+    for p in [true, false]
+        op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys14; parameters = p)
+        construct_device!(op_model, :Thermal, model)
+        moi_tests(op_model, p, 480, 0, 240, 120, 120, true)
+        psi_checkbinvar_test(op_model, bin_variable_names)
+        psi_checkobjfun_test(op_model, GQEVF)
+    end
+end
+
+@testset "Thermal Basic UC With AC - PF" begin
+    bin_variable_names = [:ON_ThermalStandard,
+                          :START_ThermalStandard,
+                          :STOP_ThermalStandard]
+     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalBasicUnitCommitment)
+
+    @info "5-Bus testing"
+    op_model = OperationModel(TestOptModel, PM.StandardACPForm, c_sys5_uc)
+    construct_device!(op_model, :Thermal, model)
+    moi_tests(op_model, false, 600, 0, 360, 240, 120, true)
+    psi_checkbinvar_test(op_model, bin_variable_names)
+    psi_checkobjfun_test(op_model, GAEVF)
+
+    op_model = OperationModel(TestOptModel, PM.StandardACPForm, c_sys5_uc; parameters = true)
+    construct_device!(op_model, :Thermal, model)
+    moi_tests(op_model, true, 600, 0, 360, 240, 120, true)
+    psi_checkbinvar_test(op_model, bin_variable_names)
+    psi_checkobjfun_test(op_model, GAEVF)
+
+    @info "14-Bus testing"
+    for p in [true, false]
+        op_model = OperationModel(TestOptModel, PM.StandardACPForm, c_sys14; parameters = p)
+        construct_device!(op_model, :Thermal, model)
+        moi_tests(op_model, p, 600, 0, 360, 240, 120, true)
+        psi_checkbinvar_test(op_model, bin_variable_names)
+        psi_checkobjfun_test(op_model, GQEVF)
+    end
+end
+
 
 ################################### Basic Dispatch tests ###################################
 @testset "Thermal Dispatch With DC - PF" begin
