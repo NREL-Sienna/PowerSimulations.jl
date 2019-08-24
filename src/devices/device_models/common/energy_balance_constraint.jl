@@ -25,7 +25,7 @@ If t > 1:
 
 # Arguments
 * canonical_model::CanonicalModel : the canonical model built in PowerSimulations
-* initial_conditions::Vector{InitialCondition} : for time zero 'varenergy' 
+* initial_conditions::Vector{InitialCondition} : for time zero 'varenergy'
 * efficiency_data::Tuple{Vector{String}, Vector{InOut}} :: charging/discharging efficiencies
 * cons_name::Symbol : name of the constraint
 * var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
@@ -44,14 +44,14 @@ function energy_balance(canonical_model::CanonicalModel,
     resolution = model_resolution(canonical_model)
     fraction_of_hour = Dates.value(Dates.Minute(resolution))/60
     name_index = efficiency_data[1]
-  
+
     varin = var(canonical_model, var_names[1])
     varout = var(canonical_model, var_names[2])
     varenergy = var(canonical_model, var_names[3])
-  
+
     _add_cons_container!(canonical_model, cons_name, name_index, time_steps)
     constraint = con(canonical_model, cons_name)
-    
+
     for (ix, name) in enumerate(name_index)
         eff_in = efficiency_data[2][ix].in
         eff_out = efficiency_data[2][ix].out

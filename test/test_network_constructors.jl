@@ -25,10 +25,10 @@ dc_line = DeviceModel(PSY.HVDCLine, PSI.HVDCDispatch)
         construct_device!(ps_model, :TTf, ttransformer_model; parameters = p);
         construct_device!(ps_model, :DCLine, dc_line; parameters = p);
 
-        moi_tests(ps_model, p, test_results[sys][1], 
-                                test_results[sys][2], 
-                                test_results[sys][3], 
-                                test_results[sys][4], 
+        moi_tests(ps_model, p, test_results[sys][1],
+                                test_results[sys][2],
+                                test_results[sys][3],
+                                test_results[sys][4],
                                 test_results[sys][5], false)
         psi_constraint_test(ps_model, constraint_names)
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -57,10 +57,10 @@ end
         construct_device!(ps_model, :TTf, ttransformer_model; parameters = p);
         construct_device!(ps_model, :DCLine, dc_line; parameters = p);
 
-        moi_tests(ps_model, p, test_results[sys][1], 
-                                test_results[sys][2], 
-                                test_results[sys][3], 
-                                test_results[sys][4], 
+        moi_tests(ps_model, p, test_results[sys][1],
+                                test_results[sys][2],
+                                test_results[sys][3],
+                                test_results[sys][4],
                                 test_results[sys][5], false)
         psi_constraint_test(ps_model, constraint_names)
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -95,10 +95,10 @@ end
         construct_device!(ps_model, :TTf, ttransformer_model; parameters = p);
         construct_device!(ps_model, :DCLine, dc_line; parameters = p);
 
-        moi_tests(ps_model, p, test_results[sys][1], 
-                                test_results[sys][2], 
-                                test_results[sys][3], 
-                                test_results[sys][4], 
+        moi_tests(ps_model, p, test_results[sys][1],
+                                test_results[sys][2],
+                                test_results[sys][3],
+                                test_results[sys][4],
                                 test_results[sys][5], false)
         psi_constraint_test(ps_model, constraint_names)
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -127,10 +127,10 @@ end
         construct_device!(ps_model, :TTf, ttransformer_model; parameters = p);
         construct_device!(ps_model, :DCLine, dc_line; parameters = p);
 
-        moi_tests(ps_model, p, test_results[sys][1], 
-                                test_results[sys][2], 
-                                test_results[sys][3], 
-                                test_results[sys][4], 
+        moi_tests(ps_model, p, test_results[sys][1],
+                                test_results[sys][2],
+                                test_results[sys][3],
+                                test_results[sys][4],
                                 test_results[sys][5], false)
         psi_constraint_test(ps_model, constraint_names)
         psi_checkobjfun_test(ps_model, objfuncs[ix])
