@@ -9,7 +9,7 @@ makedocs(
     authors = "Jose Daniel Lara, Clayton Barrows and Dheepak Krishnamurthy",
     pages = Any[ "Home" => "index.md",
                  # "User Guide" => "man/guide.md",
-                "API" => Any["PowerSystems" => "api/PowerSystems.md"]
+                "API" => Any["PowerSimulations" => "api/PowerSimulations.md"]
     ]
 )
 
