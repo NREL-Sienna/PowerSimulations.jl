@@ -133,7 +133,7 @@ function storage_energy_init(canonical_model::CanonicalModel,
 
     parameters = model_has_parameters(canonical_model)
     length_devices = length(devices)
-    
+
     if length_devices != length(set_name)
         devices = [d for d in devices if d.name in set_name]
         length_devices = length(devices)
