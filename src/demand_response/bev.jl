@@ -141,8 +141,24 @@ function demandconstraintsprices(demand :: BevDemand{T,L}, prices :: TimeArray{F
         TimeArray(
             xt,
             vcat(
-                [(location=location[i] , chargerate=eff(JuMP.value(charge[i]) / duration[i]), chargeamount=JuMP.value(charge[i]), batterylevel=JuMP.value(battery[i] )) for i in 1:NP],
-                 (location=location[NT], chargerate=NaN                                     , chargeamount=NaN                  , batterylevel=JuMP.value(battery[NT]))
+                [(
+                    location        = location[i]                             ,
+                    duration        = duration[i]                             ,
+                    load            = eff(JuMP.value(charge[i]) / duration[i]),
+                    chargerate      = JuMP.value(charge[i]) / duration[i]     ,
+                    maxchargerate   = chargemax[i]                            ,
+                    consumptionrate = consumption[i] / duration[i]            ,
+                    batterylevel    = JuMP.value(battery[i])                  ,
+                ) for i in 1:NP],
+                (
+                    location        = location[NT]                            ,
+                    duration        = NaN                                     ,
+                    load            = NaN                                     ,
+                    chargerate      = NaN                                     , 
+                    maxchargerate   = NaN                                     ,
+                    consumptionrate = NaN                                     ,
+                    batterylevel    = JuMP.value(battery[NT])                 ,
+                )
             )
         )
     end
@@ -152,6 +168,29 @@ function demandconstraintsprices(demand :: BevDemand{T,L}, prices :: TimeArray{F
         result=result,
     )
 
+end
+
+
+"""
+Represent demand constraints for a BEV Greedy charging scenario LP as a JuMP model, maximizing the BEV's battery level.
+
+# Arguments
+- `demand :: BevDemand{T,L}`: the BEV demand
+
+# Returns
+- `model :: JuMP.Model`           : a JuMP model containing the constraints, where
+                                    `charge` is the kWh charge during the time
+                                    interval and `battery` is the batter level at
+                                    the start of the interval and where the start
+                                    of the intervals are given by `locations`
+- `result() :: ChargingPlan{T,L}` : a function that returns the charging plan, 
+                                    but which can only be called after the model
+                                    has been solved
+
+"""
+function demandconstraintsgreedy(demand :: BevDemand{T,L}) where L where T <: TimeType
+    pricing = map(v -> 1., demand.power)
+    demandconstraintsgreedy(demand, pricing)
 end
 
 
@@ -217,8 +256,24 @@ function demandconstraintsgreedy(demand :: BevDemand{T,L}, prices :: TimeArray{F
         TimeArray(
             xt,
             vcat(
-                [(location=location[i] , chargerate=eff(JuMP.value(charge[i]) / duration[i]), chargeamount=JuMP.value(charge[i]), batterylevel=JuMP.value(battery[i] )) for i in 1:NP],
-                 (location=location[NT], chargerate=NaN                                     , chargeamount=NaN                  , batterylevel=JuMP.value(battery[NT]))
+                [(
+                    location        = location[i]                             ,
+                    duration        = duration[i]                             ,
+                    load            = eff(JuMP.value(charge[i]) / duration[i]),
+                    chargerate      = JuMP.value(charge[i]) / duration[i]     ,
+                    maxchargerate   = chargemax[i]                            ,
+                    consumptionrate = consumption[i] / duration[i]            ,
+                    batterylevel    = JuMP.value(battery[i])                  ,
+                ) for i in 1:NP],
+                (
+                    location        = location[NT]                            ,
+                    duration        = NaN                                     ,
+                    load            = NaN                                     ,
+                    chargerate      = NaN                                     , 
+                    maxchargerate   = NaN                                     ,
+                    consumptionrate = NaN                                     ,
+                    batterylevel    = JuMP.value(battery[NT])                 ,
+                )
             )
         )
     end
@@ -228,6 +283,30 @@ function demandconstraintsgreedy(demand :: BevDemand{T,L}, prices :: TimeArray{F
         result=result,
     )
 
+end
+
+
+"""
+Represent demand constraints for a BEV full charge scenario LP as a JuMP model, minimizing the price paid while
+constraining BEVs to charge continuously if not fully charged and charging is available.
+
+# Arguments
+- `demand :: BevDemand{T,L}`: the BEV demand
+
+# Returns
+- `model :: JuMP.Model`           : a JuMP model containing the constraints, where
+                                    `charge` is the kWh charge during the time
+                                    interval and `battery` is the batter level at
+                                    the start of the interval and where the start
+                                    of the intervals are given by `locations`
+- `result() :: ChargingPlan{T,L}` : a function that returns the charging plan, 
+                                    but which can only be called after the model
+                                    has been solved
+
+"""
+function demandconstraintsfull(demand :: BevDemand{T,L}) where L where T <: TimeType
+    pricing = map(v -> 1., demand.power)
+    demandconstraintsfull(demand, pricing)
 end
 
 
@@ -321,8 +400,24 @@ function demandconstraintsfull(demand :: BevDemand{T,L}, prices :: TimeArray{Flo
         TimeArray(
             xt,
             vcat(
-                [(location=location[i] , chargerate=eff(JuMP.value(charge[i]) / duration[i]), chargeamount=JuMP.value(charge[i]), batterylevel=JuMP.value(battery[i] )) for i in 1:NP],
-                 (location=location[NT], chargerate=NaN                                     , chargeamount=NaN                  , batterylevel=JuMP.value(battery[NT]))
+                [(
+                    location        = location[i]                             ,
+                    duration        = duration[i]                             ,
+                    load            = eff(JuMP.value(charge[i]) / duration[i]),
+                    chargerate      = JuMP.value(charge[i]) / duration[i]     ,
+                    maxchargerate   = chargemax[i]                            ,
+                    consumptionrate = consumption[i] / duration[i]            ,
+                    batterylevel    = JuMP.value(battery[i])                  ,
+                ) for i in 1:NP],
+                (
+                    location        = location[NT]                            ,
+                    duration        = NaN                                     ,
+                    load            = NaN                                     ,
+                    chargerate      = NaN                                     , 
+                    maxchargerate   = NaN                                     ,
+                    consumptionrate = NaN                                     ,
+                    batterylevel    = JuMP.value(battery[NT])                 ,
+                )
             )
         )
     end
