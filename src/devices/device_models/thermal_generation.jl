@@ -126,19 +126,11 @@ function activepower_constraints!(canonical_model::CanonicalModel,
 
     range_data = [(PSY.get_name(g), (min = 0.0, max=(PSY.get_tech(g) |> PSY.get_activepowerlimits).max)) for g in devices]
 
-    if model_runs_sequentially(canonical_model)
-        device_semicontinuousrange_param(canonical_model,
-                                         range_data,
-                                         Symbol("activerange_$(T)"),
-                                         Symbol("P_$(T)"),
-                                         RefParam{JuMP.VariableRef}(Symbol("ON_$(T)")))
-    else
-        device_range(canonical_model,
-                    range_data,
-                    Symbol("activerange_$(T)"),
-                    Symbol("P_$(T)")
-                    )
-    end
+    device_range(canonical_model,
+                range_data,
+                Symbol("activerange_$(T)"),
+                Symbol("P_$(T)")
+                )
 
     return
 
