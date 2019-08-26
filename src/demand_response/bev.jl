@@ -189,30 +189,6 @@ Represent demand constraints for a BEV Greedy charging scenario LP as a JuMP mod
 
 """
 function demandconstraintsgreedy(demand :: BevDemand{T,L}) where L where T <: TimeType
-    pricing = map(v -> 1., demand.power)
-    demandconstraintsgreedy(demand, pricing)
-end
-
-
-"""
-Represent demand constraints for a BEV Greedy charging scenario LP as a JuMP model, maximizing the BEV's battery level.
-
-# Arguments
-- `demand :: BevDemand{T,L}`: the BEV demand
-- `prices :: TimeArray{T}`  : the electricity prices
-
-# Returns
-- `model :: JuMP.Model`           : a JuMP model containing the constraints, where
-                                    `charge` is the kWh charge during the time
-                                    interval and `battery` is the batter level at
-                                    the start of the interval and where the start
-                                    of the intervals are given by `locations`
-- `result() :: ChargingPlan{T,L}` : a function that returns the charging plan, 
-                                    but which can only be called after the model
-                                    has been solved
-
-"""
-function demandconstraintsgreedy(demand :: BevDemand{T,L}, prices :: TimeArray{Float64,1,T,Array{Float64,1}}) where L where T <: TimeType
 
     # FIXME: Add DC constraints.s
 
@@ -220,7 +196,7 @@ function demandconstraintsgreedy(demand :: BevDemand{T,L}, prices :: TimeArray{F
 
     onehour = Time(1) - Time(0)
     eff = applyefficiencies(demand)
-    x = aligntimes(aligntimes(demand.locations, demand.power), prices)
+    x = aligntimes(demand.locations, demand.power)
     xt = timestamp(x)
     xv = values(x)
 
@@ -228,11 +204,11 @@ function demandconstraintsgreedy(demand :: BevDemand{T,L}, prices :: TimeArray{F
     NP = NT - 1
 
     hour = map(t -> t.instant / onehour, xt)
-    location = map(v -> v[1][1][1], xv)
+    location = map(v -> v[1][1], xv)
     duration = (xt[2:NT] - xt[1:NP]) / onehour
-    chargemin = duration .* map(v -> min(v[1][1][2].ac, demand.rate.ac.min), xv[1:NP])
-    chargemax = duration .* map(v -> min(v[1][1][2].ac, demand.rate.ac.max), xv[1:NP])
-    consumption = duration .* map(v -> v[1][2], xv[1:NP])
+    chargemin = duration .* map(v -> min(v[1][2].ac, demand.rate.ac.min), xv[1:NP])
+    chargemax = duration .* map(v -> min(v[1][2].ac, demand.rate.ac.max), xv[1:NP])
+    consumption = duration .* map(v -> v[2], xv[1:NP])
 
     model = Model()
 

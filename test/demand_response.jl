@@ -4,6 +4,7 @@ using JuMP
 using MathOptInterface
 using PowerSimulations
 using PowerSystems
+using Setfield
 using Test
 using TimeSeries
 
@@ -59,24 +60,23 @@ end
 
 
 @testset "Price-sensitive constraints for demands on EVIpro dataset" begin
-    pricing = TimeArray([Time(0), Time(12)], [10., 3.])
     @trytotest begin
+        pricing = TimeArray([Time(0), Time(12)], [10., 3.])
         checkcharging(x -> demandconstraintsprices(x, pricing))
     end
 end
 
 
-@testset "Greedy price-sensitive strategy for constraints for demands on EVIpro dataset" begin
-    pricing = TimeArray([Time(0), Time(12)], [10., 3.])
+@testset "Greedy strategy for constraints for demands on EVIpro dataset" begin
     @trytotest begin
-        checkcharging(x -> demandconstraintsgreedy(x, pricing))
+        checkcharging(x -> demandconstraintsgreedy(x))
     end
 end
 
 
-@testset "Full-charge strategy for price-sensitive constraints for demands on EVIpro dataset" begin
-    pricing = TimeArray([Time(0), Time(12)], [10., 3.])
+@testset "Full-charge price-sensitive strategy for price-sensitive constraints for demands on EVIpro dataset" begin
     @trytotest begin
+        pricing = TimeArray([Time(0), Time(12)], [10., 3.])
         checkcharging(x -> demandconstraintsfull(x, pricing))
     end
 end
