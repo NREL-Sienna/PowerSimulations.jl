@@ -34,9 +34,6 @@ function checkcharging(f)
     for bev in bevs
         i += 1
         bev = augment(bev)
-        if bev.capacity.max < 30. # FIXME: Exclude vehicles with small batteries.
-            continue
-        end
         @test begin
             problem = f(bev)
             JuMP.optimize!(problem.model, the_optimizer)
