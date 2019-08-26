@@ -35,9 +35,9 @@ function get_stacked_plot_data(res::OperationModelResults, variable::String; kwa
     data_matrix = convert(Matrix, variable)
     labels = collect(names(variable))
     legend = string.(labels)
-  
+
     return StackedArea(time_range, data_matrix, legend)
-   
+
 end
 
 function get_bar_plot_data(res::OperationModelResults, variable::String; kwargs...)
@@ -57,9 +57,9 @@ function get_bar_plot_data(res::OperationModelResults, variable::String; kwargs.
     bar_data = sum(data, dims = 1)
     labels = collect(names(variable))
     legend = string.(labels)
-  
+
     return BarPlot(time_range, bar_data, legend)
-   
+
 end
 
 function get_stacked_generation_data(res::OperationModelResults; kwargs...)
@@ -85,7 +85,7 @@ function get_stacked_generation_data(res::OperationModelResults; kwargs...)
             data_matrix = hcat(data_matrix, sum(convert(Matrix, variable), dims = 2))
         end
     end
- 
+
     return StackedGeneration(time_range, data_matrix, legend)
-   
+
 end

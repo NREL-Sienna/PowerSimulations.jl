@@ -188,8 +188,15 @@ function energy_balance_constraint(canonical_model::CanonicalModel,
     key = Symbol("energy_$(St)")
 
     if !(key in keys(canonical_model.initial_conditions))
-        @warn("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
-        storage_energy_init(canonical_model, devices)
+        @warn("Initial status conditions not provided. This can lead to unwanted results")
+        device_name = map(x-> PSY.get_name(x), devices)
+        storage_energy_init(canonical_model, devices, device_name)
+    else
+        storage_miss = missing_init_cond(canonical_model.initial_conditions[key], devices)
+        if !isnothing(storage_miss)
+            @warn("Initial status conditions not provided. This can lead to unwanted results")
+            storage_energy_init(canonical_model, devices, storage_miss)
+        end
     end
 
     efficiency_data = make_efficiency_data(devices)

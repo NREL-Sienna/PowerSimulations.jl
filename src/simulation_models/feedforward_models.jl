@@ -190,13 +190,8 @@ function semicontinuousrange_ff(canonical_model::CanonicalModel,
         for t in axes[2]
             con_ub[name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
                                             variable[name, t] <= ub_value*param[name])
-            if lb_value != 0.0
-                con_lb[name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
-                                            variable[name, t] >= lb_value*param[name])
-            else
-                @show "here"
-                delete!(canonical_model.parameters, lb_name)
-            end
+            con_lb[name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
+                                        variable[name, t] >= lb_value*param[name])
         end
     end
 

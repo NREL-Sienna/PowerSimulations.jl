@@ -24,7 +24,7 @@ Returns:
 * canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::Float64 : cost to be associated with variable
-* dt::Float64 : fraction of hour 
+* dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
 """
 function ps_cost(canonical_model::CanonicalModel,
@@ -58,7 +58,7 @@ Returns:
 * canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{Float64} : container for cost to be associated with variable
-* dt::Float64 : fraction of hour 
+* dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
 """
 function ps_cost(canonical_model::CanonicalModel,
@@ -183,7 +183,7 @@ where ``c_v`` is given by
 * canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}}
-* dt::Float64 : fraction of hour 
+* dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
 """
 function ps_cost(canonical_model::CanonicalModel,
