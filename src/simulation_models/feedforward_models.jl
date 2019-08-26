@@ -1,9 +1,3 @@
-function feedforward!(canonical_model::CanonicalModel,
-                     device_type::Type{T},
-                     ff_model::Nothing) where {T<:PSY.Component}
-    return
-end
-
 @doc raw"""
         ub_ff(canonical_model::CanonicalModel,
               cons_name::Symbol,
@@ -200,6 +194,12 @@ function semicontinuousrange_ff(canonical_model::CanonicalModel,
 end
 
 ########################## FeedForward Constraints #########################################
+
+function feedforward!(canonical_model::CanonicalModel,
+                     device_type::Type{T},
+                     ff_model::Nothing) where {T<:PSY.Component}
+    return
+end
 
 function feedforward!(canonical_model::CanonicalModel,
                      device_type::Type{I},
