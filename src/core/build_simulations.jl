@@ -65,6 +65,7 @@ function _build_stages(sim_ref::SimulationRef,
                        verbose::Bool = true;
                        kwargs...)
 
+    system_to_file = get(kwargs, :system_to_file, true)
     mod_stages = Vector{_Stage}(undef, length(stages))
 
     for (k, v) in stages
@@ -77,7 +78,7 @@ function _build_stages(sim_ref::SimulationRef,
         stage_path = joinpath(sim_ref.models,"stage_$(k)_model")
         mkpath(stage_path)
         write_op_model(op_mod, joinpath(stage_path, "optimization_model.json"))
-        PSY.to_json(v.sys, joinpath(stage_path ,"sys_data.json"))
+        system_to_file && PSY.to_json(v.sys, joinpath(stage_path ,"sys_data.json"))
         mod_stages[k] = _Stage(k, op_mod, v.execution_count, v.feedforward_ref, true)
         sim_ref.date_ref[k] = PSY.get_forecast_initial_times(v.sys)[1]
     end
@@ -113,7 +114,7 @@ function _feedforward_rule_check(::Type{Synchronize},
                to synchronize with stage $(stage_number_to)")
     end
 
-    if (to_stage_count % from_stage_count) != 0
+    if (from_stage_count % to_stage_count) != 0
         error("The number of steps in stage $(stage_number_to) needs to be a
                mutiple of the horizon length of stage $(stage_number_from) to
                use Synchronize")
