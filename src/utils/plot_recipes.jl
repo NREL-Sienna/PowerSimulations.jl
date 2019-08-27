@@ -27,9 +27,7 @@ RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String)
       sy = hcat(sy,vcat(z[:,c],reverse(z[:,c-1])))
 
     end
-
   end
-
   RecipesBase.@series begin
       
     seriestype := :path
@@ -84,7 +82,6 @@ RecipesBase.@recipe function StackedGeneration(res::StackedGeneration)
 end
 
 RecipesBase.@recipe function BarPlot(res::BarPlot, variable::String)
-  
   time = res.time_range
   n = length(time)
   data_point = res.bar_data
