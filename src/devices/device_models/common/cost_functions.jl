@@ -129,13 +129,47 @@ function _pwlparamcheck(cost_)
     return flag
 end
 
+function _gen_cost(canonical_model::CanonicalModel,
+                    variable::JV,
+                    cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
+    
+    if !_pwlparamcheck(cost_component) 
+        @warn("Data provide is not suitable for linear implementation of PWL cost, Using SOS-2 implementation") ;
+        gen_cost = _pwlgencost_sos(canonical_model,variable,cost_component)
+    else
+        gen_cost = _pwlgencost(canonical_model,variable,cost_component)
+    end
+    return gen_cost
+end
+
+
+function _pwlgencost_sos(canonical_model::CanonicalModel,
+        variable::JV,
+        cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
+
+    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}()
+    pwlvars = JuMP.@variable(canonical_model.JuMPmodel, [i = 1:length(cost_component)-1], 
+                            base_name = "{$(variable)}_{pwl}", 
+                            start = 0.0, lower_bound = 0.0, upper_bound = 1.0)
+
+    sos2 = JuMP.@constraint(canonical_model.JuMPmodel, pwlvars in MOI.SOS2(collect(1:length(pwlvars))))
+
+    for (ix, var) in enumerate(pwlvars)
+        JuMP.add_to_expression!(gen_cost,cost_component[ix][1] * var) ;
+    end
+
+    c = JuMP.@constraint(canonical_model.JuMPmodel, variable == 
+                        sum([var*cost_component[ix][2] for (ix, var) in enumerate(pwlvars) ]) );
+
+    return gen_cost
+
+end
+
 function _pwlgencost(canonical_model::CanonicalModel,
         variable::JV,
         cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}()
-    _pwlparamcheck(cost_component) ? nothing : @warn("Data provide is not suitable for linear implementation of PWL cost, this will result in a INVALID SOLUTION") ;
-    # TODO: implement a fallback to either Linear Cost function or SOS2 based PWL Cost function
     upperbound(i) = (i == 1 ? cost_component[i][2] : (cost_component[i][2] - cost_component[i-1][2]));
     pwlvars = JuMP.@variable(canonical_model.JuMPmodel, [i = 1:length(cost_component)], base_name = "{$(variable)}_{pwl}", start = 0.0, lower_bound = 0.0, upper_bound = upperbound(i))
 
@@ -196,7 +230,7 @@ function ps_cost(canonical_model::CanonicalModel,
     cost_array = cost_component.cost
     for var in variable
         in(true,iszero.(last.(cost_array))) ? continue : nothing ;
-        c = _pwlgencost(canonical_model, var, cost_array)
+        c = _gen_cost(canonical_model, var, cost_array)
         JuMP.add_to_expression!(gen_cost,c)
     end
 
