@@ -22,7 +22,7 @@ end
 function get_stacked_plot_data(res::OperationModelResults, variable::String; kwargs...)
 
     sort = get(kwargs, :sort, nothing)
-    time_range = res.times[!,:Range]
+    time_range = res.time_stamp[!,:Range]
     variable = res.variables[Symbol(variable)]
     Alphabetical = sort!(names(variable))
 
@@ -43,7 +43,7 @@ end
 function get_bar_plot_data(res::OperationModelResults, variable::String; kwargs...)
 
     sort = get(kwargs, :sort, nothing)
-    time_range = res.times[!,:Range]
+    time_range = res.time_stamp[!,:Range]
     variable = res.variables[Symbol(variable)]
     Alphabetical = sort!(names(variable))
 
@@ -65,7 +65,7 @@ end
 function get_stacked_generation_data(res::OperationModelResults; kwargs...)
 
     sort = get(kwargs, :sort, nothing)
-    time_range = res.times[!,:Range]
+    time_range = res.time_stamp[!,:Range]
     key_name = collect(keys(res.variables))
     Alphabetical = sort!(key_name)
 
