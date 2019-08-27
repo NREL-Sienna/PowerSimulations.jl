@@ -54,6 +54,54 @@ end
 
 
 """
+Represent time-of-use demand constraints for a BEV as a JuMP model.
+
+See <https://github.nrel.gov/SIIP/dr-study-1/issues/26#issuecomment-22885> for pricing schedules.
+
+# Arguments
+- `demand  :: BevDemand{T,L}`: the BEV demand
+- `daytime :: Bool`          : whether to use daytime (default) time-of-use
+                               schedule instead of nightime ones
+- `summer  :: Bool`          : whether to use a summer (default) time-of-use
+                               schedule instead of a winter one
+
+# Returns
+- `model :: JuMP.Model`           : a JuMP model containing the constraints, where
+                                    `charge` is the kWh charge during the time
+                                    interval and `battery` is the batter level at
+                                    the start of the interval and where the start
+                                    of the intervals are given by `locations`
+- `result() :: ChargingPlan{T,L}` : a function that returns the charging plan, 
+                                    but which can only be called after the model
+                                    has been solved
+"""
+function demandconstraintstou(demand :: BevDemand{T,L}; daytime = true :: Bool, summer = true :: Bool) where L where T <: TimeType
+    # FIXME: This assumes a single-day simulation.
+    pricing =
+        if daytime
+            TimeArray(
+                         [Time(0), Time(9), Time(14), Time(18), Time(21), Time(23,59,59)],
+                if summer 
+                         [     4.,      8.,      14.,       8.,       4.,             4.]
+                else
+                         [     4.,      5.,       8.,       5.,       4.,             4.]
+                end
+            )
+        else 
+            TimeArray(
+                         [Time(0), Time(7), Time(13), Time(20), Time(23), Time(23,59,59)],
+                if summer
+                         [    13.,     27.,      49.,      27.,      13.,            13.]
+                else
+                         [    13.,     21.,      34.,      21.,      13.,            13.]
+                end
+            )
+        end
+    demandconstraintsprices(demand, pricing)
+end
+
+
+"""
 Represent demand constraints for a BEV as a JuMP model, minimizing the price paid.
 
 # Arguments

@@ -69,7 +69,18 @@ end
 
 @testset "Greedy strategy for constraints for demands on EVIpro dataset" begin
     @trytotest begin
-        checkcharging(x -> demandconstraintsgreedy(x))
+        checkcharging(demandconstraintsgreedy)
+    end
+end
+
+
+@testset "Time-of-use strategies for constraints for demands on EVIpro dataset" begin
+    @trytotest begin
+        for t in [true, false]
+            for s in [true, false]
+                checkcharging(x -> demandconstraintstou(x, daytime=t, summer=s))
+            end
+        end
     end
 end
 
