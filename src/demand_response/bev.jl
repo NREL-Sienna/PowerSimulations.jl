@@ -56,14 +56,12 @@ end
 """
 Represent time-of-use demand constraints for a BEV as a JuMP model.
 
-See <https://github.nrel.gov/SIIP/dr-study-1/issues/26#issuecomment-22885> for pricing schedules.
+See <https://github.nrel.gov/SIIP/dr-study-1/issues/26#issuecomment-22885> and <https://github.nrel.gov/SIIP/dr-study-1/issues/26#issuecomment-22886> for pricing schedules.
 
 # Arguments
 - `demand  :: BevDemand{T,L}`: the BEV demand
 - `daytime :: Bool`          : whether to use daytime (default) time-of-use
                                schedule instead of nightime ones
-- `summer  :: Bool`          : whether to use a summer (default) time-of-use
-                               schedule instead of a winter one
 
 # Returns
 - `model :: JuMP.Model`           : a JuMP model containing the constraints, where
@@ -75,26 +73,18 @@ See <https://github.nrel.gov/SIIP/dr-study-1/issues/26#issuecomment-22885> for p
                                     but which can only be called after the model
                                     has been solved
 """
-function demandconstraintstou(demand :: BevDemand{T,L}; daytime = true :: Bool, summer = true :: Bool) where L where T <: TimeType
+function demandconstraintstou(demand :: BevDemand{T,L}; daytime = true :: Bool) where L where T <: TimeType
     # FIXME: This assumes a single-day simulation.
     pricing =
         if daytime
-            TimeArray(
-                         [Time(0), Time(9), Time(14), Time(18), Time(21), Time(23,59,59)],
-                if summer 
-                         [     4.,      8.,      14.,       8.,       4.,             4.]
-                else
-                         [     4.,      5.,       8.,       5.,       4.,             4.]
-                end
+            TimeArray( # This is a summer schedule, but summer vs winter makes little difference in results.
+                [Time(0), Time(9), Time(14), Time(18), Time(21), Time(23,59,59)],
+                [     4.,      8.,      14.,       8.,       4.,             4.]
             )
-        else 
-            TimeArray(
-                         [Time(0), Time(7), Time(13), Time(20), Time(23), Time(23,59,59)],
-                if summer
-                         [    13.,     27.,      49.,      27.,      13.,            13.]
-                else
-                         [    13.,     21.,      34.,      21.,      13.,            13.]
-                end
+        else  
+            TimeArray( # This is a notional schedule.
+                [Time(0), Time(10), Time(16), Time(23,59,59)],
+                [    15.,      5.,      15.,             15.]
             )
         end
     demandconstraintsprices(demand, pricing)
