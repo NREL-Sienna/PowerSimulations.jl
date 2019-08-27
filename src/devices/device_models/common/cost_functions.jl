@@ -148,7 +148,7 @@ function _pwlgencost_sos(canonical_model::CanonicalModel,
         cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}()
-    pwlvars = JuMP.@variable(canonical_model.JuMPmodel, [i = 1:length(cost_component)],
+    pwlvars = JuMP.@variable(canonical_model.JuMPmodel, [i = 1:length(cost_component)-1],
                             base_name = "{$(variable)}_{pwl}",
                             start = 0.0, lower_bound = 0.0, upper_bound = 1.0)
 
