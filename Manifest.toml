@@ -15,6 +15,12 @@ version = "1.0.0"
 [[Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
+[[BenchmarkTools]]
+deps = ["JSON", "Printf", "Statistics", "Test"]
+git-tree-sha1 = "5d1dd8577643ba9014574cd40d9c028cd5e4b85a"
+uuid = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+version = "0.4.2"
+
 [[BinDeps]]
 deps = ["Compat", "Libdl", "SHA", "URIParser"]
 git-tree-sha1 = "12093ca6cdd0ee547c39b1870e0c9c3f154d9ca9"
@@ -151,9 +157,9 @@ version = "0.8.5"
 
 [[InfrastructureModels]]
 deps = ["JuMP", "Memento"]
-git-tree-sha1 = "d380c59122887b4794e72bf92e9cf2a664654f18"
+git-tree-sha1 = "4739474cbd631b821dba4253c05150f1d1880d22"
 uuid = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
-version = "0.2.2"
+version = "0.3.2"
 
 [[IniFile]]
 deps = ["Test"]
@@ -202,9 +208,9 @@ version = "0.1.1"
 
 [[JuMP]]
 deps = ["Calculus", "DataStructures", "ForwardDiff", "LinearAlgebra", "MathOptInterface", "NaNMath", "Random", "SparseArrays", "Statistics"]
-git-tree-sha1 = "a37fdb14ee3a04b4df44c20a73da89c57035bdf2"
+git-tree-sha1 = "a970a86abc924f2c126cdb4978a5e8923d0e7b22"
 uuid = "4076af6c-e467-56ae-b986-b466b2749572"
-version = "0.19.2"
+version = "0.20.0"
 
 [[LibGit2]]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
@@ -225,15 +231,15 @@ uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[MathOptFormat]]
 deps = ["DataStructures", "GZip", "HTTP", "JSON", "JSONSchema", "MathOptInterface"]
-git-tree-sha1 = "aa564896a2d83c52bda3dd0d973066e50aff4327"
+git-tree-sha1 = "ea0a2de12570fe2ed7f2ad1892f635e29d2d1ed1"
 uuid = "f4570300-c277-12e8-125c-4912f86ce65d"
-version = "0.1.1"
+version = "0.2.0"
 
 [[MathOptInterface]]
-deps = ["Compat", "Unicode"]
-git-tree-sha1 = "5d3de69c9220610d0336ab45d3eb8b6ac7a7c807"
+deps = ["BenchmarkTools", "LinearAlgebra", "OrderedCollections", "SparseArrays", "Test", "Unicode"]
+git-tree-sha1 = "5e6e36e2f01efbc62b3f8bf68c8cf82035e2c6a6"
 uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
-version = "0.8.4"
+version = "0.9.1"
 
 [[MbedTLS]]
 deps = ["BinaryProvider", "Dates", "Distributed", "Libdl", "Random", "Sockets", "Test"]
@@ -280,9 +286,9 @@ version = "1.1.0"
 
 [[ParameterJuMP]]
 deps = ["JuMP", "MathOptInterface", "SparseArrays"]
-git-tree-sha1 = "6bb57b5884b98e2c49e9ba193d702b2dc0bb44ab"
+git-tree-sha1 = "061bbb1cfaed57f3a65c5e688285f8da9bef0178"
 uuid = "774612a8-9878-5177-865a-ca53ae2495f9"
-version = "0.1.1"
+version = "0.1.2"
 
 [[Parameters]]
 deps = ["OrderedCollections"]
@@ -307,14 +313,16 @@ version = "0.5.2"
 
 [[PowerModels]]
 deps = ["InfrastructureModels", "JSON", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento", "SparseArrays"]
-git-tree-sha1 = "1e3deea188e92d904bcffd4992d8e309786b9257"
+git-tree-sha1 = "4071c5e37e2784bb7cdb2878f9a794c02b2944e6"
+repo-rev = "master"
+repo-url = "https://github.com/lanl-ansi/PowerModels.jl.git"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 version = "0.12.2"
 
 [[PowerSystems]]
 deps = ["CSV", "DataFrames", "Dates", "InteractiveUtils", "JSON2", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "UUIDs", "YAML"]
-git-tree-sha1 = "bcb54097b116d7ca0ce85bfd654cafb07a997a42"
-repo-rev = "struct_updates"
+git-tree-sha1 = "f80ba6075c7ee051baf34aaf53b64e3f00866c41"
+repo-rev = "dev"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
 version = "0.4.0"
