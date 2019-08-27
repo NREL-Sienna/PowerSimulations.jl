@@ -77,9 +77,7 @@ end
 @testset "Time-of-use strategies for constraints for demands on EVIpro dataset" begin
     @trytotest begin
         for t in [true, false]
-            for s in [true, false]
-                checkcharging(x -> demandconstraintstou(x, daytime=t, summer=s))
-            end
+            checkcharging(x -> demandconstraintstou(x, daytime=t))
         end
     end
 end
