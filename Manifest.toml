@@ -313,15 +313,17 @@ version = "0.5.2"
 
 [[PowerModels]]
 deps = ["InfrastructureModels", "JSON", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento", "SparseArrays"]
-git-tree-sha1 = "4071c5e37e2784bb7cdb2878f9a794c02b2944e6"
-repo-rev = "master"
-repo-url = "https://github.com/lanl-ansi/PowerModels.jl.git"
+git-tree-sha1 = "b269795e423417007b32876695f296a12dfd59ac"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
+<<<<<<< HEAD
 version = "0.12.2"
+=======
+version = "0.12.5"
+>>>>>>> 514212b26e9fa24e279b37e665df0be41af0ad60
 
 [[PowerSystems]]
 deps = ["CSV", "DataFrames", "Dates", "InteractiveUtils", "JSON2", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "UUIDs", "YAML"]
-git-tree-sha1 = "f80ba6075c7ee051baf34aaf53b64e3f00866c41"
+git-tree-sha1 = "9cb7277732b456e886cee61f383c3dafcfd487da"
 repo-rev = "dev"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
