@@ -194,6 +194,12 @@ git-tree-sha1 = "a3f24677c21f5bbe9d2a714f95dcd58337fb2856"
 uuid = "82899510-4779-5014-852e-03e436cf321d"
 version = "1.0.0"
 
+[[Highlights]]		
+ deps = ["DocStringExtensions", "InteractiveUtils", "REPL"]		
+ git-tree-sha1 = "7c11ddfe03e192ec33aec1d78838ed039320ae27"		
+ uuid = "eafb193a-b7ab-5a9e-9068-77385905fa72"		
+ version = "0.4.1"
+
 [[JSON]]
 deps = ["Dates", "Mmap", "Parsers", "Unicode"]
 git-tree-sha1 = "b34d7cef7b337321e97d22242c3c2b91f476748e"
@@ -273,6 +279,12 @@ git-tree-sha1 = "7f42a32a8cef08f45d43c35663e73bd4e3b35f6d"
 uuid = "78c3b35d-d492-501b-9361-3d52fe80e533"
 version = "0.6.0"
 
+[[Mustache]]		
+ deps = ["Printf", "Tables"]		
+ git-tree-sha1 = "f39de3a12232eb47bd0629b3a661054287780276"		
+ uuid = "ffc61752-8dc7-55ee-8c37-f3e9cdd09e70"		
+ version = "0.5.13"
+ 
 [[NaNMath]]
 deps = ["Compat"]
 git-tree-sha1 = "ce3b85e484a5d4c71dd5316215069311135fa9f2"
@@ -361,6 +373,12 @@ deps = ["Pkg"]
 git-tree-sha1 = "7b1d07f411bc8ddb7977ec7f377b97b158514fe0"
 uuid = "189a3867-3050-52da-a836-e630ba90ab69"
 version = "0.2.0"
+
+[[Requires]]		
+ deps = ["Test"]		
+ git-tree-sha1 = "f6fbf4ba64d295e146e49e021207993b6b48c7d1"		
+ uuid = "ae029012-a4dd-5104-9daa-d747884805df"		
+ version = "0.5.2"
 
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
