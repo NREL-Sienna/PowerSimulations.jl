@@ -333,7 +333,7 @@ version = "0.5.2"
 deps = ["InfrastructureModels", "JSON", "JuMP", "LinearAlgebra", "MathOptInterface", "Memento", "SparseArrays"]
 git-tree-sha1 = "b269795e423417007b32876695f296a12dfd59ac"
 uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
-version = "0.12.5"
+version = "0.12.4"
 
 [[PowerSystems]]
 deps = ["CSV", "DataFrames", "Dates", "InteractiveUtils", "JSON2", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "UUIDs", "YAML"]
