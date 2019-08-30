@@ -74,10 +74,9 @@ export get_all_var_index
 export get_con_index
 export get_var_index
 # Plotting Utils
-export get_stacked_plot_data
-export get_bar_plot_data
-export get_stacked_generation_data
-export make_report
+export report
+export plot
+export sort_data
 
 
 
@@ -95,6 +94,7 @@ import PowerSystems
 import PowerModels
 import RecipesBase
 import Weave
+import DataStructures
 
 #TimeStamp Management Imports
 import Dates
@@ -201,6 +201,7 @@ include("utils/printing.jl")
 include("utils/plot_results.jl")
 include("utils/plot_recipes.jl")
 include("utils/make_report.jl")
+
 
 
 end
