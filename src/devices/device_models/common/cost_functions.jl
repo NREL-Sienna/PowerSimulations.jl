@@ -116,6 +116,17 @@ function ps_cost(canonical_model::CanonicalModel,
 
 end
 
+@doc raw"""
+    _pwlparamcheck(cost_)
+
+Returns True/False depending on compatibility of the cost data with the linear implementation method
+
+Returns ```flag```
+
+# Arguments
+
+* cost_::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
+"""
 function _pwlparamcheck(cost_)
     flag = true;
 
@@ -129,12 +140,24 @@ function _pwlparamcheck(cost_)
     return flag
 end
 
+@doc raw"""
+    _gen_cost(cost_)
+
+Returns JuMP expression for a piecewise linear cost function depending on the data compatibility.
+
+Returns ```gen_cost```
+
+# Arguments
+
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
+* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
+* cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
+"""
 function _gen_cost(canonical_model::CanonicalModel,
                     variable::JV,
                     cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
     if !_pwlparamcheck(cost_component)
-        @warn("Data provide is not suitable for linear implementation of PWL cost, Using SOS-2 implementation") ;
         gen_cost = _pwlgencost_sos(canonical_model,variable,cost_component)
     else
         gen_cost = _pwlgencost(canonical_model,variable,cost_component)
@@ -142,14 +165,40 @@ function _gen_cost(canonical_model::CanonicalModel,
     return gen_cost
 end
 
+@doc raw"""
+    _pwlgencost_sos(canonical_model::CanonicalModel,
+                variable::JuMP.Containers.DenseAxisArray{JV},
+                cost_component::PSY.VariableCost{NTuple{2, Float64}}) where {JV <: JuMP.AbstractVariableRef}
 
+Returns piecewise cost expression using SOS Type-2 implementation for canonical model.
+
+# Equations
+
+``` variable = sum(sos_var[i]*cost_component[2][i])```
+
+``` gen_cost = sum(sos_var[i]*cost_component[1][i]) ```
+
+# LaTeX
+
+`` variable = (sum_{i\in I} c_{2,i} sos_i) ``
+
+`` gen_cost = (sum_{i\in I} c_{1,i} sos_i) ``
+
+Returns ```gen_cost```
+
+# Arguments
+
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
+* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
+* cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
+"""
 function _pwlgencost_sos(canonical_model::CanonicalModel,
         variable::JV,
         cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}()
     pwlvars = JuMP.@variable(canonical_model.JuMPmodel, [i = 1:length(cost_component)],
-                            base_name = "{$(variable)}_{pwl}",
+                            base_name = "{$(variable)}_{sos}",
                             start = 0.0, lower_bound = 0.0, upper_bound = 1.0)
 
     sos2 = JuMP.@constraint(canonical_model.JuMPmodel, pwlvars in MOI.SOS2(collect(1:length(pwlvars))))
@@ -165,6 +214,36 @@ function _pwlgencost_sos(canonical_model::CanonicalModel,
 
 end
 
+@doc raw"""
+    _pwlgencost_sos(canonical_model::CanonicalModel,
+                variable::JuMP.Containers.DenseAxisArray{JV},
+                cost_component::PSY.VariableCost{NTuple{2, Float64}}) where {JV <: JuMP.AbstractVariableRef}
+
+Returns piecewise cost expression using linear implementation for canonical model.
+
+# Equations
+
+``` 0 <= pwl_var[i] <= (cost_component[2][i] - cost_component[2][i-1])```
+
+``` variable = sum(pwl_var[i])```
+
+``` gen_cost = sum(pwl_var[i]*cost_component[1][i]/cost_component[2][i]) ```
+
+# LaTeX
+`` 0 <= pwl_i <= (c_{2,i} - c_{2,i-1})``
+
+`` variable = (sum_{i\in I} pwl_i) ``
+
+`` gen_cost = (sum_{i\in I}  pwl_i) c_{1,i}/c_{2,i} ``
+
+Returns ```gen_cost```
+
+# Arguments
+
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
+* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
+* cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
+"""
 function _pwlgencost(canonical_model::CanonicalModel,
         variable::JV,
         cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
@@ -185,7 +264,6 @@ function _pwlgencost(canonical_model::CanonicalModel,
     end
 
     c = JuMP.@constraint(canonical_model.JuMPmodel, variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars) ]) )
-#     JuMP.set_name(c,"{$(variable)}_{pwl}")
 
     return gen_cost
 
@@ -282,9 +360,16 @@ function add_to_cost(canonical_model::CanonicalModel,
     variable = var(canonical_model, var_name)
 
     for d in devices
+        cost_component = getfield(PSY.get_op_cost(d), cost_symbol)
+        cost_array = cost_component.cost
+        if !_pwlparamcheck(cost_component)
+            @warn("The cost function provided for device $(d) is not compatible with a linear PWL cost function.
+                An SOS-2 formulation will be added to the model.
+                This will result in additional binary variables added to the model.") ;
+        end
         cost_expression = ps_cost(canonical_model,
                                   variable[PSY.get_name(d), :],
-                                  getfield(PSY.get_op_cost(d), cost_symbol),
+                                  cost_component,
                                   dt,
                                   sign)
         T_ce = typeof(cost_expression)
