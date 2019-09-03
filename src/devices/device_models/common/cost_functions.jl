@@ -363,9 +363,7 @@ function add_to_cost(canonical_model::CanonicalModel,
         cost_component = getfield(PSY.get_op_cost(d), cost_symbol)
         cost_array = cost_component.cost
         if !_pwlparamcheck(cost_component)
-            @warn("The cost function provided for device $(d) is not compatible with a linear PWL cost function. 
-                An SOS-2 formulation will be added to the model. 
-                This will result in additional binary variables added to the model.") ;
+            @warn("The cost function provided for device $(d) is not compatible with a linear PWL cost function. An SOS-2 formulation will be added to the model. This will result in additional binary variables added to the model.") ;
         end
         cost_expression = ps_cost(canonical_model,
                                   variable[PSY.get_name(d), :],
