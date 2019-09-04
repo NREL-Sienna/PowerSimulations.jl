@@ -10,10 +10,10 @@ version = "0.2.3"
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
 [[BenchmarkTools]]
-deps = ["JSON", "Printf", "Statistics", "Test"]
-git-tree-sha1 = "5d1dd8577643ba9014574cd40d9c028cd5e4b85a"
+deps = ["JSON", "Printf", "Statistics"]
+git-tree-sha1 = "90b73db83791c5f83155016dd1cc1f684d4e1361"
 uuid = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
-version = "0.4.2"
+version = "0.4.3"
 
 [[BinDeps]]
 deps = ["Compat", "Libdl", "SHA", "URIParser"]
@@ -302,7 +302,7 @@ version = "0.12.5"
 
 [[PowerSystems]]
 deps = ["CSV", "DataFrames", "Dates", "InteractiveUtils", "JSON", "JSON2", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "UUIDs", "YAML"]
-git-tree-sha1 = "229230c60dcb3a314cfa347dd3eb6a599662464f"
+git-tree-sha1 = "7162417290df1293f07ab6213d5a3b85640f6b9b"
 repo-rev = "dev"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"

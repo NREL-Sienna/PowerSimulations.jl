@@ -140,8 +140,19 @@ function reactive_power_constraints(canonical_model::CanonicalModel,
 
 end
 
+########################## Make initial Conditions for a Model #############################
+function initial_conditions!(canonical_model::CanonicalModel,
+                            devices::PSY.FlattenIteratorWrapper{St},
+                            device_formulation::Type{D}) where {St<:PSY.Storage,
+                                                                D<:AbstractStorageForm}
 
-###################################################### Energy Capacity constraints#################################
+    storage_energy_init(canonical_model, devices)
+
+return
+
+end
+
+###################################################### Energy Capacity constraints##########
 
 function energy_capacity_constraints(canonical_model::CanonicalModel,
                                     devices::PSY.FlattenIteratorWrapper{St},
@@ -160,7 +171,7 @@ function energy_capacity_constraints(canonical_model::CanonicalModel,
 
 end
 
-###################################################### book keeping constraints #################################
+###################################################### book keeping constraints ############
 
 function make_efficiency_data(devices::PSY.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
 

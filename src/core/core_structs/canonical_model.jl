@@ -214,8 +214,6 @@ var(canonical_model::CanonicalModel, name::Symbol) = canonical_model.variables[n
 con(canonical_model::CanonicalModel, name::Symbol) = canonical_model.constraints[name]
 par(canonical_model::CanonicalModel, param_reference::RefParam) = canonical_model.parameters[param_reference]
 exp(canonical_model::CanonicalModel, name::Symbol) = canonical_model.expressions[name]
-ini_cond(canonical_model::CanonicalModel, name::Symbol) = canonical_model.initial_conditions[name]
-
 
 # This function is added here because Canonical Model hasn't been defined until now.
 
@@ -230,3 +228,9 @@ function InitialCondition(canonical::CanonicalModel,
     end
 
 end
+
+function  get_ini_cond(canonical_model::CanonicalModel, name::Symbol)
+    return get(canonical_model.initial_conditions, name, Vector{InitialCondition}())
+end
+
+device_name(ini_cond::InitialCondition) = PSY.get_name(ini_cond.device)
