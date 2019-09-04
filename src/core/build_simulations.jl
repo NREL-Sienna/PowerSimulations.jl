@@ -147,7 +147,7 @@ function _check_feedforward_ref(stages::Dict{Int64, Stage})
 
 end
 
-function build_simulation!(sim_ref::SimulationRef,
+function _build_simulation!(sim_ref::SimulationRef,
                           base_name::String,
                           steps::Int64,
                           stages::Dict{Int64, Stage},

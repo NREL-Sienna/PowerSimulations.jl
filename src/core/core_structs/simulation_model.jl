@@ -113,7 +113,7 @@ mutable struct Simulation
 
     sim_ref = _initialize_sim_ref(steps, keys(stages))
 
-    dates, validation, stages_vector = build_simulation!(sim_ref,
+    dates, validation, stages_vector = _build_simulation!(sim_ref,
                                                         base_name,
                                                         steps,
                                                         stages,
