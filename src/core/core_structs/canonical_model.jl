@@ -87,6 +87,7 @@ function _canonical_init(bus_numbers::Vector{Int64},
                         kwargs...) where {S<:PM.AbstractPowerFormulation}
 
     parameters = get(kwargs, :parameters, false)
+    ini_con = get(kwargs, :initial_conditions, Dict{Symbol,Array{InitialCondition}}())
     jump_model = _pass_abstract_jump(optimizer; kwargs...)
     V = JuMP.variable_type(jump_model)
 
@@ -105,7 +106,7 @@ function _canonical_init(bus_numbers::Vector{Int64},
                                                      bus_numbers,
                                                      time_steps; kwargs...),
                               parameters ? DRDA() : nothing,
-                              Dict{Symbol,Array{InitialCondition}}(),
+                              ini_con,
                               nothing);
 
     return canonical
@@ -218,8 +219,8 @@ exp(canonical_model::CanonicalModel, name::Symbol) = canonical_model.expressions
 # This function is added here because Canonical Model hasn't been defined until now.
 
 function InitialCondition(canonical::CanonicalModel,
-                            device::PSY.Device,
-                            value::Float64)
+                          device::PSY.Device,
+                          value::Float64)
 
     if model_has_parameters(canonical)
         return InitialCondition(device, PJ.add_parameter(canonical.JuMPmodel, value))
