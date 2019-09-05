@@ -86,10 +86,10 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
                 verbose && println("Simulation TimeStamp: $(sim.ref.current_time)")
                 raw_results_path = joinpath(sim.ref.raw,"step-$(s)-stage-$(ix)","$(sim.ref.current_time)")
                 mkpath(raw_results_path)
+                update_stage!(stage, s, sim)
                 _run_stage(stage, raw_results_path)
                 sim.ref.run_count[s][ix] += 1
                 sim.ref.date_ref[ix] = sim.ref.date_ref[ix] + interval
-                update_stage!(stage, sim)
             end
             @assert stage.executions == stage.execution_count
             stage.execution_count = 0 # reset stage execution_count

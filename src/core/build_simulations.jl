@@ -106,6 +106,9 @@ function _feedforward_rule_check(::Type{Synchronize},
                               stage_number_to::Int64,
                               to_stage::Stage)
 
+    #Don't check for same Stage.
+    stage_number_from == stage_number_to && return
+
     from_stage_count = PSY.get_forecasts_horizon(from_stage.sys)
     to_stage_count = get_execution_count(to_stage)
 
