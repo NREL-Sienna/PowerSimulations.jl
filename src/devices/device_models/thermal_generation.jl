@@ -221,7 +221,7 @@ function initial_conditions!(canonical_model::CanonicalModel,
     return
 
 end
-
+#=
 
 function initial_conditions!(canonical_model::CanonicalModel,
                             devices::PSY.FlattenIteratorWrapper{T},
@@ -233,7 +233,7 @@ function initial_conditions!(canonical_model::CanonicalModel,
     return
 
 end
-
+=#
 ########################### Ramp/Rate of Change constraints ################################
 """
 This function gets the data for the generators

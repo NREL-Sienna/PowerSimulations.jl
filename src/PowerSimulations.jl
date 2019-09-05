@@ -75,10 +75,11 @@ export get_all_var_index
 export get_con_index
 export get_var_index
 # Plotting Utils
-export get_stacked_plot_data
+export report
 export get_bar_plot_data
-export get_stacked_generation_data
-export make_report
+export stack_plot
+export bar_plot
+export sort_data
 
 
 
