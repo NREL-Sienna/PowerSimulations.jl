@@ -7,6 +7,14 @@ end
 
 const DRDA = Dict{UpdateRef, JuMP.Containers.DenseAxisArray}
 
+# This is defined here to be able to define the canonical model. If this line is moved
+# update the reference in line 1 of file initial_conditions.jl
+mutable struct InitialCondition{T<:Union{PJ.ParameterRef, Float64}}
+    device::PSY.Device
+    access_ref::UpdateRef
+    value::T
+end
+
 function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory},
                               parameters::Bool,
                               JuMPmodel::Union{JuMP.AbstractModel,Nothing})
@@ -224,23 +232,3 @@ var(canonical_model::CanonicalModel, name::Symbol) = canonical_model.variables[n
 con(canonical_model::CanonicalModel, name::Symbol) = canonical_model.constraints[name]
 par(canonical_model::CanonicalModel, param_reference::UpdateRef) = canonical_model.parameters[param_reference]
 exp(canonical_model::CanonicalModel, name::Symbol) = canonical_model.expressions[name]
-
-# This function is added here because Canonical Model hasn't been defined until now.
-
-function InitialCondition(canonical::CanonicalModel,
-                          device::PSY.Device,
-                          value::Float64)
-
-    if model_has_parameters(canonical)
-        return InitialCondition(device, PJ.add_parameter(canonical.JuMPmodel, value))
-    else
-        return InitialCondition(device, value)
-    end
-
-end
-
-function  get_ini_cond(canonical_model::CanonicalModel, name::Symbol)
-    return get(canonical_model.initial_conditions, name, Vector{InitialCondition}())
-end
-
-device_name(ini_cond::InitialCondition) = PSY.get_name(ini_cond.device)

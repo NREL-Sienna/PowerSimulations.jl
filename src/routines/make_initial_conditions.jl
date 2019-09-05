@@ -7,38 +7,28 @@ function status_init(canonical_model::CanonicalModel,
     parameters = model_has_parameters(canonical_model)
     length_devices = length(devices)
     ini_conds = get_ini_cond(canonical_model, key)
+    ref_key = parameters ? key : :activepower
 
     if isempty(ini_conds)
         @info("Setting initial conditions for the status of all devices $(PSD) based on system data")
         ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
-
         for (ix, g) in enumerate(devices)
-            if parameters
-                ini_conds[ix] = InitialCondition(g,
-                                                PJ.add_parameter(canonical_model.JuMPmodel,
-                                                1.0*(PSY.get_activepower(g) > 0)))
-            else
-                ini_conds[ix] = InitialCondition(g,
-                                                1.0*(PSY.get_activepower(g) > 0))
-            end
+
+            ini_conds[ix] = InitialCondition(canonical_model,
+                                            g,
+                                            ref_key,
+                                            1.0*(PSY.get_activepower(g) > 0))
         end
-
     else
-
         ic_devices = (ic.device for ic in ini_conds)
         for g in devices
             g in ic_devices && continue
             @info("Setting initial conditions for the status device $(g.name) based on system data")
-            if parameters
-                push!(ini_conds, InitialCondition(g,
-                                                PJ.add_parameter(canonical_model.JuMPmodel,
-                                                1.0*(PSY.get_activepower(g) > 0))))
-            else
-                push!(ini_conds, InitialCondition(g,
-                                                1.0*(PSY.get_activepower(g) > 0)))
-            end
+                push!(ini_conds, InitialCondition(canonical_model,
+                                                  g,
+                                                  ref_key,
+                                                  1.0*(PSY.get_activepower(g) > 0)))
         end
-
     end
 
     @assert length(ini_conds) == length(devices)
@@ -54,36 +44,27 @@ function output_init(canonical_model::CanonicalModel,
     parameters = model_has_parameters(canonical_model)
     length_devices = length(devices)
     ini_conds = get_ini_cond(canonical_model, key)
+    ref_key = parameters ? key : :activepower
 
     if isempty(ini_conds)
         @info("Setting $(key) initial_condition of all devices $(PSD) based on system data")
         ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
-
         for (ix, g) in enumerate(devices)
-            if parameters
-                ini_conds[ix] = InitialCondition(g,
-                                                PJ.add_parameter(canonical_model.JuMPmodel,
-                                                PSY.get_activepower(g)))
-            else
-                ini_conds[ix] = InitialCondition(g,
+                ini_conds[ix] = InitialCondition(canonical_model,
+                                                g,
+                                                ref_key,
                                                 PSY.get_activepower(g))
-            end
         end
 
     else
-
         ic_devices = (ic.device for ic in ini_conds)
-
         for g in devices
             g in ic_devices && continue
             @info("Setting $(key) initial_condition of device $(g.name) based on system data")
-            if parameters
-                push!(ini_conds, InitialCondition(g,
-                                                PJ.add_parameter(canonical_model.JuMPmodel,
-                                                PSY.get_activepower(g))))
-            else
-                push!(ini_conds, InitialCondition(g, PSY.get_activepower(g)))
-            end
+                push!(ini_conds, InitialCondition(canonical_model,
+                                                g,
+                                                ref_key,
+                                                PSY.get_activepower(g)))
         end
 
     end
@@ -100,6 +81,7 @@ function duration_init(canonical_model::CanonicalModel,
     keys = [Symbol("duration_on_$(PSD)"), Symbol("duration_off_$(PSD)")]
     parameters = model_has_parameters(canonical_model)
     length_devices = length(devices)
+    ref_key = parameters ? Symbol("ON_$(PSD)") : :activepower
 
     for (ik, key) in enumerate(keys)
         ini_conds = get_ini_cond(canonical_model, key)
@@ -111,14 +93,10 @@ function duration_init(canonical_model::CanonicalModel,
             for (ix, g) in enumerate(devices)
                 times = [999.0*(PSY.get_activepower(g) > 0),  # Time on
                          999.0*(PSY.get_activepower(g) <= 0)] # Time off
-
-                if parameters
-                    ini_conds[ix] = InitialCondition(g,
-                                    PJ.add_parameter(canonical_model.JuMPmodel, times[ik]))
-                else
-                    ini_conds[ix] = InitialCondition(g, times[ik])
-                end
-
+                ini_conds[ix] = InitialCondition(canonical_model,
+                                                    g,
+                                                    ref_key,
+                                                    times[ik])
             end
 
         else
@@ -130,13 +108,10 @@ function duration_init(canonical_model::CanonicalModel,
                 times = [999.0*(PSY.get_activepower(g) > 0),  # Time on
                          999.0*(PSY.get_activepower(g) <= 0)] # Time off
                 @info("Setting $(key) initial_condition of device $(g.name) based on system data")
-                if parameters
-                    push!(ini_conds, InitialCondition(g,
-                                                    PJ.add_parameter(canonical_model.JuMPmodel,
-                                                    times[ik])))
-                else
-                    push!(ini_conds, InitialCondition(g, times[ik]))
-                end
+                push!(ini_conds, InitialCondition(canonical_model,
+                                                  g,
+                                                  ref_key,
+                                                  times[ik]))
             end
 
         end
@@ -144,8 +119,6 @@ function duration_init(canonical_model::CanonicalModel,
         @assert length(ini_conds) == length(devices)
 
     end
-
-
 
     return
 
@@ -160,38 +133,28 @@ function storage_energy_init(canonical_model::CanonicalModel,
     parameters = model_has_parameters(canonical_model)
     length_devices = length(devices)
     ini_conds = get_ini_cond(canonical_model, key)
-
+    ref_key = parameters ? key : :energy
 
     if isempty(ini_conds)
         @info("Setting $(key) initial_condition of all devices $(PSD) based on system data")
         ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
 
         for (ix, g) in enumerate(devices)
-            if parameters
-                    ini_conds[ix] = InitialCondition(g,
-                                                    PJ.add_parameter(canonical_model.JuMPmodel,
-                                                    PSY.get_energy(g)))
-            else
-                    ini_conds[ix] = InitialCondition(g, PSY.get_energy(g))
-            end
+            ini_conds[ix] = InitialCondition(canonical_model,
+                                                g,
+                                                ref_key,
+                                                PSY.get_energy(g))
         end
-
     else
-
         ic_devices = (ic.device for ic in ini_conds)
-
         for g in devices
             g in ic_devices && continue
             @info("Setting $(key) initial_condition of device $(g.name) based on system data")
-            if parameters
-                push!(ini_conds, InitialCondition(g,
-                                                PJ.add_parameter(canonical_model.JuMPmodel,
-                                                PSY.get_energy(g))))
-            else
-                push!(ini_conds, InitialCondition(g, PSY.get_energy(g)))
-            end
+            push!(ini_conds, InitialCondition(canonical_model,
+                                            g,
+                                            ref_key,
+                                            PSY.get_energy(g)))
         end
-
     end
 
         @assert length(ini_conds) == length(devices)
