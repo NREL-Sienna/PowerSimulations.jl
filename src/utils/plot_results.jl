@@ -88,13 +88,3 @@ function get_stacked_generation_data(res::OperationModelResults; kwargs...)
 
     return StackedGeneration(time_range, data_matrix, legend)
 
-<<<<<<< HEAD
-    for i in 1:length(labels)
-       
-          variables[labels[i]] = res.variables[labels[i]]  
-      
-    end
-   =#
-=======
-end
->>>>>>> parent of e06340e... manifest
