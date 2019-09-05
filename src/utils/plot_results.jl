@@ -19,6 +19,32 @@ struct StackedGeneration
 
 end
 
+struct BarGeneration
+    time_range::Array
+    bar_data::Matrix
+    labels::Array
+
+end
+
+
+""" 		
+		
+get_stacked_plot_data(res::OperationModelResults, variable::String)		
+       
+This function takes in results of struct OperationModelResult. It takes the       		
+dataframe from whichever variable name was given and converts it to type StackedArea.		
+StackedArea is the type of struct that signals the plot() function to use the 		
+StackedArea plot recipe method.   		
+       
+#Example		
+       
+to make a single stack plot for the P_ThermalStandard variable:		
+       
+P_ThermalStandard = get_stacked_plot_data(res, "P_ThermalStandard")		
+plot(P_ThermalStandard)		
+       
+"""
+
 function get_stacked_plot_data(res::OperationModelResults, variable::String; kwargs...)
 
     sort = get(kwargs, :sort, nothing)
@@ -87,6 +113,27 @@ function get_stacked_generation_data(res::OperationModelResults; kwargs...)
     end
     bar_data = sum(data_matrix, dims = 1)
     return BarGeneration(time_range, bar_data, legend)
+
+end
+
+function get_bar_gen_data(res::OperationModelResults)		
+
+   time_range = res.time_stamp[!,:Range]		
+   key_name = collect(keys(res.variables))		
+
+   variable = res.variables[Symbol(key_name[1])]		
+   data_matrix = sum(convert(Matrix, variable), dims = 2)		    
+   legend = string.(key_name)		  
+
+
+    for i in 1:length(key_name)		 
+       if i !== 1		   
+           variable = res.variables[Symbol(key_name[i])]		    
+           data_matrix = hcat(data_matrix, sum(convert(Matrix, variable), dims = 2))		            
+       end		    
+   end		    
+   bar_data = sum(data_matrix, dims = 1)		
+   return BarGeneration(time_range, bar_data, legend)		
 
 end
 
@@ -159,7 +206,7 @@ function sort_data(res::OperationModelResults; kwargs...)
         labels = Alphabetical
     end
     
-    variable_dict = DataStructures.OrderedDict()
+    variable_dict = Dict()
 
     for i in 1:length(labels)
        
