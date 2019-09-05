@@ -1,8 +1,8 @@
 ######## Structs for Inter-Model feedforward ########
-abstract type FeedForwardSequence end
+abstract type FeedForwardChronology end
 
-struct Synchronize <: FeedForwardSequence end
-struct RecedingHorizon <: FeedForwardSequence end
+struct Synchronize <: FeedForwardChronology end
+struct RecedingHorizon <: FeedForwardChronology end
 
 ######## Internal Simulation Object Structs ########
 abstract type AbstractStage end
@@ -13,13 +13,13 @@ mutable struct _Stage <: AbstractStage
     executions::Int64
     execution_count::Int64
     optimizer::String
-    feedforward_ref::Dict{Int64, Type{<:FeedForwardSequence}}
+    feedforward_ref::Dict{Int64, Type{<:FeedForwardChronology}}
     update::Bool
 
     function _Stage(key::Int64,
                    model::OperationModel,
                    executions::Int64,
-                   feedforward_ref::Dict{Int64, Type{<:FeedForwardSequence}},
+                   feedforward_ref::Dict{Int64, Type{<:FeedForwardChronology}},
                    update::Bool)
 
     new(key,
@@ -74,7 +74,7 @@ mutable struct Stage <: AbstractStage
     execution_count::Int64
     sys::PSY.System
     optimizer::JuMP.OptimizerFactory
-    feedforward_ref::Dict{Int64, Type{<:FeedForwardSequence}}
+    feedforward_ref::Dict{Int64, Type{<:FeedForwardChronology}}
 end
 
 function Stage(model::ModelReference,
