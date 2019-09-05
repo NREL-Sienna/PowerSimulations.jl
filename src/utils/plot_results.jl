@@ -111,8 +111,8 @@ function get_stacked_generation_data(res::OperationModelResults; kwargs...)
             data_matrix = hcat(data_matrix, sum(convert(Matrix, variable), dims = 2))
         end
     end
-    bar_data = sum(data_matrix, dims = 1)
-    return BarGeneration(time_range, bar_data, legend)
+  
+    return StackedGeneration(time_range, data_matrix, legend)
 
 end
 

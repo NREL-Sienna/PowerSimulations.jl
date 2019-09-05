@@ -127,43 +127,43 @@ RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String)
 
 end
 
-RecipesBase.@recipe function StackedGeneration(res::StackedGeneration)		   RecipesBase.@series begin
+RecipesBase.@recipe function StackedGeneration(res::StackedGeneration)		  
 
   time = convert.(Dates.DateTime,res.time_range)		
- n = length(time)		
- data = res.data_matrix		
- z = cumsum(data, dims = 2)		
- # Plot Attributes		
- grid := false		
- title := "Generation Type"		
- alpha := 0.6		
- seriescolor := [:lightblue :orange :lightgreen :red :turquoise]  		
- label := res.labels		
- legend := :bottomright		
- time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))		
- xlabel := "$time_interval"		
- ylabel := "Generation (MW)"		
- xtick := time[1]:Dates.Hour(12):time[n-1]		
+  n = length(time)		
+  data = res.data_matrix		
+  z = cumsum(data, dims = 2)		
+  # Plot Attributes		
+  grid := false		
+  title := "Generation Type"		
+  alpha := 0.6		
+  seriescolor := [:lightblue :orange :lightgreen :red :turquoise]  		
+  label := res.labels		
+  legend := :bottomright		
+  time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))		
+  xlabel := "$time_interval"		
+  ylabel := "Generation (MW)"		
+  xtick := time[1]:Dates.Hour(12):time[n-1]		
 
   # Create filled polygon		
  sy = vcat(z[:,1],zeros(n-1))		
  sx = [time[1:n-1]; reverse(time[1:n-1])]		
 
-  for c=1:size(z,2)		
+for c=1:size(z,2)		
    if c !== 1		
      sy = hcat(sy,vcat(z[:,c],reverse(z[:,c-1])))		
    end		
- end		
+end		
 
   RecipesBase.@series begin		
 
-    seriestype := :shape		
+  seriestype := :shape		
    sx, sy		
-
 
   end		
 
 end		
+
 
 RecipesBase.@recipe function BarPlot(res::BarPlot, variable::String)		
 
@@ -182,7 +182,7 @@ RecipesBase.@recipe function BarPlot(res::BarPlot, variable::String)
  xlabel := "$time_interval, $start_time"		
  ylabel := "Generation(MW)"		
  alpha := 0.6		 
- seriescolor := [:lightblue :orange :lightgreen :red :turquoise :blue]         		     seriescolor := [:lightblue :orange :lightgreen :red :turquoise]  
+ seriescolor := [:lightblue :orange :lightgreen :red :turquoise :blue]   
  xlims := (1, 8)
  xticks := false		
  n = 2		
@@ -211,6 +211,9 @@ RecipesBase.@recipe function BarGen(res::BarGeneration)
    label := res.labels	
    start_time = time[1]
    xticks := false
+   alpha := 0.6		 
+   seriescolor := [:lightblue :orange :lightgreen :red :turquoise :blue] 
+   xlims := (1, 8)
 
    for c=1:size(z,2)		
     sx = [[4,5]; [5,4]]		

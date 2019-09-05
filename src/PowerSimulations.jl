@@ -75,7 +75,7 @@ export get_all_var_index
 export get_con_index
 export get_var_index
 # Plotting Utils
-export report
+#export report
 export stack_plot
 export bar_plot
 export sort_data
