@@ -90,6 +90,25 @@ function stack_plot(res::OperationModelResults)
 end
 """
 
+function stack_plot(res::OperationModelResults)
+    
+  key_name = string.(collect(keys(res.variables)))
+
+  for i in 1:length(key_name)
+
+    variable_stack = get_stacked_plot_data(res, key_name[i])
+    p3 = RecipesBase.plot(variable_stack, key_name[i])
+    display(p3)
+
+  end
+
+  stacked_gen = get_stacked_generation_data(res)
+  p4 = RecipesBase.plot(stacked_gen)
+  display(p4)
+
+end
+"""
+
     Recipe StackedPlot(results::StackedArea, variable::String)
 
   time = res.time_range
