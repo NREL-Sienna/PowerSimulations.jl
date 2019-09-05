@@ -1,6 +1,6 @@
 function include_parameters(canonical_model::CanonicalModel,
                             data::Matrix,
-                            param_reference::RefParam,
+                            param_reference::UpdateRef,
                             axs...)
 
     _add_param_container!(canonical_model, param_reference, axs...)
@@ -18,7 +18,7 @@ end
 
 function include_parameters(canonical_model::CanonicalModel,
                             ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
-                            param_reference::RefParam,
+                            param_reference::UpdateRef,
                             expression::Symbol,
                             multiplier::Float64 = 1.0)
 
@@ -62,11 +62,11 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
 
     include_parameters(canonical_model,
                     ts_data_active,
-                    RefParam{G}(Symbol("P_$(G)")),
+                    UpdateRef{G}(Symbol("P_$(G)")),
                     :nodal_balance_active)
     include_parameters(canonical_model,
                     ts_data_reactive,
-                    RefParam{G}(Symbol("Q_$(G)")),
+                    UpdateRef{G}(Symbol("Q_$(G)")),
                     :nodal_balance_reactive)
 
     return
@@ -91,7 +91,7 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
 
     include_parameters(canonical_model,
                     ts_data_active,
-                    RefParam{G}(Symbol("P_$(G)")),
+                    UpdateRef{G}(Symbol("P_$(G)")),
                     :nodal_balance_active)
 
     return
@@ -121,11 +121,11 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
 
     include_parameters(canonical_model,
                     ts_data_active,
-                    RefParam{G}(Symbol("P_$(G)")),
+                    UpdateRef{G}(Symbol("P_$(G)")),
                     :nodal_balance_active)
     include_parameters(canonical_model,
                     ts_data_reactive,
-                    RefParam{G}(Symbol("Q_$(G)")),
+                    UpdateRef{G}(Symbol("Q_$(G)")),
                     :nodal_balance_reactive)
 
     return
@@ -151,7 +151,7 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
 
     include_parameters(canonical_model,
                     ts_data_active,
-                    RefParam{G}(Symbol("P_$(G)")),
+                    UpdateRef{G}(Symbol("P_$(G)")),
                     :nodal_balance_active)
 
     return

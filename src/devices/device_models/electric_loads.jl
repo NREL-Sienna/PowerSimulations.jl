@@ -105,7 +105,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
         device_timeseries_param_ub(canonical_model,
                                    _get_time_series(devices, time_steps),
                                    Symbol("active_$(L)"),
-                                   RefParam{L}(Symbol("P_$(L)")),
+                                   UpdateRef{L}(Symbol("P_$(L)")),
                                    Symbol("P_$(L)"))
     else
         range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_maxactivepower(d))) for d in devices]
@@ -135,7 +135,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
                                  _get_time_series(devices, time_steps),
                                  Symbol("active_$(L)"),
                                  Symbol("P_$(L)"),
-                                 RefParam{L}(Symbol("P_$(L)")),
+                                 UpdateRef{L}(Symbol("P_$(L)")),
                                  Symbol("ON_$(L)"))
     else
         device_timeseries_ub_bin(canonical_model,
@@ -178,7 +178,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
         device_timeseries_param_ub(canonical_model,
                                    _get_time_series(devices),
                                    Symbol("active_$(L)"),
-                                   RefParam{L}(Symbol("P_$(L)")),
+                                   UpdateRef{L}(Symbol("P_$(L)")),
                                    Symbol("P_$(L)"))
     else
         device_timeseries_ub(canonical_model,
@@ -202,7 +202,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
                                  _get_time_series(devices),
                                  Symbol("active_$(L)"),
                                  Symbol("P_$(L)"),
-                                 RefParam{L}(Symbol("P_$(L)")),
+                                 UpdateRef{L}(Symbol("P_$(L)")),
                                  Symbol("ON_$(L)"))
     else
         device_timeseries_ub_bin(canonical_model,
@@ -242,11 +242,11 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
 
     include_parameters(canonical_model,
                   ts_data_active,
-                  RefParam{L}(Symbol("P_$(L)")),
+                  UpdateRef{L}(Symbol("P_$(L)")),
                   :nodal_balance_active)
     include_parameters(canonical_model,
                    ts_data_reactive,
-                   RefParam{L}(Symbol("Q_$(L)")),
+                   UpdateRef{L}(Symbol("Q_$(L)")),
                    :nodal_balance_reactive)
 
     return
@@ -271,7 +271,7 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
 
     include_parameters(canonical_model,
                   ts_data_active,
-                  RefParam{L}(Symbol("P_$(L)")),
+                  UpdateRef{L}(Symbol("P_$(L)")),
                   :nodal_balance_active)
 
     return
@@ -302,12 +302,12 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
 
     include_parameters(canonical_model,
                     ts_data_active,
-                    RefParam{L}(Symbol("P_$(L)")),
+                    UpdateRef{L}(Symbol("P_$(L)")),
                     :nodal_balance_active,
                     -1.0)
     include_parameters(canonical_model,
                     ts_data_reactive,
-                    RefParam{L}(Symbol("Q_$(L)")),
+                    UpdateRef{L}(Symbol("Q_$(L)")),
                     :nodal_balance_reactive,
                     -1.0)
 
@@ -334,7 +334,7 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
 
     include_parameters(canonical_model,
                     ts_data_active,
-                    RefParam{L}(Symbol("P_$(L)")),
+                    UpdateRef{L}(Symbol("P_$(L)")),
                     :nodal_balance_active,
                     -1.0)
 

@@ -1,11 +1,11 @@
 const DSDA = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
 """Reference for parameters update when present"""
-struct RefParam{T}
+struct UpdateRef{T}
     access_ref::Symbol
 end
 
-const DRDA = Dict{RefParam, JuMP.Containers.DenseAxisArray}
+const DRDA = Dict{UpdateRef, JuMP.Containers.DenseAxisArray}
 
 function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory},
                               parameters::Bool,
@@ -127,7 +127,7 @@ mutable struct CanonicalModel
     constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
-    parameters::Union{Nothing, Dict{RefParam, JuMP.Containers.DenseAxisArray}}
+    parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}}
     initial_conditions::Dict{Symbol, Array{InitialCondition}}
     pm_model::Union{Nothing, PM.GenericPowerModel}
 
@@ -142,7 +142,7 @@ mutable struct CanonicalModel
                             constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray},
                             cost_function::JuMP.AbstractJuMPScalar,
                             expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray},
-                            parameters::Union{Nothing, Dict{RefParam, JuMP.Containers.DenseAxisArray}},
+                            parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}},
                             initial_conditions::Dict{Symbol, Array{InitialCondition}},
                             pm_model::Union{Nothing, PM.GenericPowerModel})
 
@@ -222,7 +222,7 @@ vars(canonical_model::CanonicalModel) = canonical_model.variables
 cons(canonical_model::CanonicalModel) = canonical_model.constraints
 var(canonical_model::CanonicalModel, name::Symbol) = canonical_model.variables[name]
 con(canonical_model::CanonicalModel, name::Symbol) = canonical_model.constraints[name]
-par(canonical_model::CanonicalModel, param_reference::RefParam) = canonical_model.parameters[param_reference]
+par(canonical_model::CanonicalModel, param_reference::UpdateRef) = canonical_model.parameters[param_reference]
 exp(canonical_model::CanonicalModel, name::Symbol) = canonical_model.expressions[name]
 
 # This function is added here because Canonical Model hasn't been defined until now.

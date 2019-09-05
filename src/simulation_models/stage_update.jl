@@ -1,5 +1,5 @@
 """Updates the forecast parameter value"""
-function parameter_update!(param_reference::RefParam{T},
+function parameter_update!(param_reference::UpdateRef{T},
                            param_array::JuMPParamArray,
                            stage_number::Int64,
                            sim::Simulation) where T <: PSY.Component
@@ -19,7 +19,7 @@ function parameter_update!(param_reference::RefParam{T},
 end
 
 function feedforward_update(::Type{Synchronize},
-                             param_reference::RefParam{JuMP.VariableRef},
+                             param_reference::UpdateRef{JuMP.VariableRef},
                              param_array::JuMPParamArray,
                              to_stage::_Stage,
                              from_stage::_Stage)
@@ -36,7 +36,7 @@ function feedforward_update(::Type{Synchronize},
 end
 
 function feedforward_update(::Type{RecedingHorizon},
-                            param_reference::RefParam{JuMP.VariableRef},
+                            param_reference::UpdateRef{JuMP.VariableRef},
                             param_array::JuMPParamArray,
                             to_stage::_Stage,
                             from_stage::_Stage)
@@ -53,7 +53,7 @@ function feedforward_update(::Type{RecedingHorizon},
 end
 
 """Updates the forecast parameter value"""
-function parameter_update!(param_reference::RefParam{JuMP.VariableRef},
+function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
                            param_array::JuMPParamArray,
                            stage_number::Int64,
                            sim::Simulation)

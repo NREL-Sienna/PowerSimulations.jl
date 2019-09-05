@@ -1,7 +1,7 @@
 @doc raw"""
         ub_ff(canonical_model::CanonicalModel,
               cons_name::Symbol,
-              param_reference::RefParam,
+              param_reference::UpdateRef,
               var_name::Symbol)
 
 Constructs a parametrized upper bound constraint to implement feedforward from other models.
@@ -22,7 +22,7 @@ The Parameters are initialized using the uppper boundary values of the provided 
 """
 function ub_ff(canonical_model::CanonicalModel,
                cons_name::Symbol,
-               param_reference::RefParam,
+               param_reference::UpdateRef,
                var_name::Symbol)
 
     time_steps = model_time_steps(canonical_model)
@@ -55,7 +55,7 @@ end
 @doc raw"""
         range_ff(canonical_model::CanonicalModel,
                         cons_name::Symbol,
-                        param_reference::NTuple{2, RefParam},
+                        param_reference::NTuple{2, UpdateRef},
                         var_name::Symbol)
 
 Constructs min/max range parametrized constraint from device variable to include feedforward.
@@ -74,13 +74,13 @@ where r in range_data.
 
 # Arguments
 * canonical_model::CanonicalModel : the canonical model built in PowerSimulations
-* param_reference::NTuple{2, RefParam} : Tuple with the lower bound and upper bound parameter reference
+* param_reference::NTuple{2, UpdateRef} : Tuple with the lower bound and upper bound parameter reference
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 """
 function range_ff(canonical_model::CanonicalModel,
                   cons_name::Symbol,
-                  param_reference::NTuple{2, RefParam},
+                  param_reference::NTuple{2, UpdateRef},
                   var_name::Symbol)
 
     time_steps = model_time_steps(canonical_model)
@@ -126,7 +126,7 @@ end
             semicontinuousrange_ff(canonical_model::CanonicalModel,
                                     cons_name::Symbol,
                                     var_name::Symbol,
-                                    param_reference::RefParam)
+                                    param_reference::UpdateRef)
 
 Constructs min/max range constraint from device variable with parameter setting.
 
@@ -153,11 +153,11 @@ where r in range_data.
 * canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
-* param_reference::RefParam : RefParam of the parameter
+* param_reference::UpdateRef : UpdateRef of the parameter
 """
 function semicontinuousrange_ff(canonical_model::CanonicalModel,
                                 cons_name::Symbol,
-                                param_reference::RefParam,
+                                param_reference::UpdateRef,
                                 var_name::Symbol)
 
     time_steps = model_time_steps(canonical_model)
@@ -207,7 +207,7 @@ function feedforward!(canonical_model::CanonicalModel,
 
     for prefix in get_vars_prefix(ff_model)
         var_name = Symbol(prefix, "_$(I)")
-        parameter_ref = RefParam{JuMP.VariableRef}(var_name)
+        parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         ub_ff(canonical_model,
               Symbol("FF_$(I)"),
                      parameter_ref,
@@ -223,7 +223,7 @@ function feedforward!(canonical_model::CanonicalModel,
                      ff_model::SemiContinuousFF) where {I<:PSY.Injection}
 
     bin_var = Symbol(get_bin_prefix(ff_model), "_$(I)")
-    parameter_ref = RefParam{JuMP.VariableRef}(bin_var)
+    parameter_ref = UpdateRef{JuMP.VariableRef}(bin_var)
     for prefix in get_vars_prefix(ff_model)
         var_name = Symbol(prefix, "_$(I)")
         semicontinuousrange_ff(canonical_model,
@@ -235,4 +235,3 @@ function feedforward!(canonical_model::CanonicalModel,
     return
 
 end
-
