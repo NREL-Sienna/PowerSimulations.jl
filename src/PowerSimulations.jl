@@ -78,10 +78,9 @@ export get_var_index
 export get_stacked_plot_data
 export get_bar_plot_data
 export get_stacked_generation_data
-export sort_data
-export report
-export bar_plot
-export stack_plot
+export make_report
+
+
 
 #################################################################################
 # Imports
