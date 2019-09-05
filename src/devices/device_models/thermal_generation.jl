@@ -226,9 +226,9 @@ end
 function initial_conditions!(canonical_model::CanonicalModel,
                             devices::PSY.FlattenIteratorWrapper{T},
                             device_formulation::Type{D}) where {T<:PSY.ThermalGen,
-                                                                D<:AbstractThermalFormulation}
+                                                                D<:AbstractThermalDispatchForm}
 
-    status_init(canonical_model, devices)
+    output_init(canonical_model, devices)
 
     return
 
@@ -336,20 +336,20 @@ function ramp_constraints!(canonical_model::CanonicalModel,
     key = Symbol("P_$(T)")
 
     if !(key in keys(canonical_model.initial_conditions))
-        error("Initial Conditions for Rate of Change Constraints not provided. This can lead to unwanted results")
+        error("Initial Conditions for $(T) Rate of Change Constraints not in the model")
     end
 
     time_steps = model_time_steps(canonical_model)
     resolution = model_resolution(canonical_model)
-    rate_data = _get_data_for_rocc(canonical_model.initial_conditions[key], resolution)
     initial_conditions = get_ini_cond(canonical_model, key)
+    rate_data = _get_data_for_rocc(initial_conditions, resolution)
     ini_conds, ramp_params, minmax_params = _get_data_for_rocc(initial_conditions, resolution)
 
     if !isempty(ini_conds)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
         device_linear_rateofchange(canonical_model,
-                                    ramp_params,
-                                   canonical_model.initial_conditions[key],
+                                  ramp_params,
+                                  ini_conds,
                                    Symbol("ramp_$(T)"),
                                    Symbol("P_$(T)"))
     else
@@ -375,12 +375,12 @@ function _get_data_for_tdc(initial_conditions_on::Vector{InitialCondition},
     lenght_devices_off = length(initial_conditions_off)
     @assert lenght_devices_off == lenght_devices_on
     time_params = Vector{UpDown}(undef, lenght_devices_on)
-    ini_conds = Matrix{InitialCondition}(undef, lenght_devices_on)
+    ini_conds = Matrix{InitialCondition}(undef, lenght_devices_on, 2)
 
     idx = 0
     for (ix, ic) in enumerate(initial_conditions_on)
         g = ic.device
-        @assert g == lenght_devices_off[ix].device
+        @assert g == initial_conditions_off[ix].device
         tech = PSY.get_tech(g)
         non_binding_up = false
         non_binding_down = false
@@ -393,7 +393,7 @@ function _get_data_for_tdc(initial_conditions_on::Vector{InitialCondition},
                 idx += 1
             end
             ini_conds[idx, 1] = ic
-            ini_conds[ix, 1] = lenght_devices_off[ix]
+            ini_conds[idx, 2] = initial_conditions_off[ix]
             up_val = round(timelimits.up * steps_per_hour, RoundUp)
             down_val = round(timelimits.down * steps_per_hour, RoundUp)
             time_params[idx] = time_params[idx] = (up = up_val, down = down_val)
@@ -401,7 +401,7 @@ function _get_data_for_tdc(initial_conditions_on::Vector{InitialCondition},
     end
 
     if idx < lenght_devices_on
-        deleteat!(ini_conds, idx+1:lenght_devices_on)
+        ini_conds = ini_conds[1:idx,:]
         deleteat!(time_params, idx+1:lenght_devices_on)
     end
 
@@ -416,8 +416,8 @@ function time_constraints!(canonical_model::CanonicalModel,
                                                    D<:AbstractThermalFormulation,
                                                    S<:PM.AbstractPowerFormulation}
 
-    keys =  [Symbol("duration_on_$(T)"), Symbol("duration_off_$(T)")]
-    for key in keys
+    ic_keys =  [Symbol("duration_on_$(T)"), Symbol("duration_off_$(T)")]
+    for key in ic_keys
         if !(key in keys(canonical_model.initial_conditions))
             error("Initial Conditions for $(T) Time Constraint not in the model")
         end
@@ -425,8 +425,8 @@ function time_constraints!(canonical_model::CanonicalModel,
 
     parameters = model_has_parameters(canonical_model)
     resolution = model_resolution(canonical_model)
-    initial_conditions_on  = get_ini_cond(canonical_model, keys[1])
-    initial_conditions_off = get_ini_cond(canonical_model, keys[2])
+    initial_conditions_on  = get_ini_cond(canonical_model, ic_keys[1])
+    initial_conditions_off = get_ini_cond(canonical_model, ic_keys[2])
     ini_conds, time_params = _get_data_for_tdc(initial_conditions_on,
                                                initial_conditions_off,
                                                resolution)

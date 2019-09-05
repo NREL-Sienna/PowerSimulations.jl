@@ -1,22 +1,31 @@
-"""
-   report(res::OperationModelResults)
 
-This function uses weave to either generate a LaTeX or HTML
-file based on the report_design.jmd (julia markdown) file 
-that it reads from. Out_path in the weave function dictates
-where the created file gets exported. 
+function make_report(res::OperationModelResults; kwargs...)
 
-#Examples report(results) for the 5-bus renewable system
-will create 6 plots, 3 stack plots with the Plot() function
-and 3 bar plots with the Plot() function. 
-It will also make a table for each variable passed through results.
+Order_gen = get(kwargs, :Order_gen, nothing)
+Order_renew = get(kwargs, :Order_renew, nothing)
+Order_therm = get(kwargs, :Order_therm, nothing)
 
-kwargs: PDF = "pdf" (or anything), will create a LaTeX file that
-can be run to create a PDF. The default option for this function is
-HTML.
+if !(:Order_renew in keys(kwargs))
+   stacked_renew = get_stacked_plot_data(res, "P_RenewableDispatch")
+   bar_renew = get_bar_plot_data(res, "P_RenewableDispatch")
+else
+   stacked_renew = get_stacked_plot_data(res, "P_RenewableDispatch"; sort = Order_renew)
+   bar_renew = get_bar_plot_data(res, "P_RenewableDispatch"; sort = Order_renew)
+end
 
-"""
-function report(res::OperationModelResults; kwargs...)
+if !(:Order_therm in keys(kwargs))
+   stacked_therm = get_stacked_plot_data(res, "P_ThermalStandard")
+   bar_therm = get_bar_plot_data(res, "P_ThermalStandard")
+else
+   stacked_therm = get_stacked_plot_data(res, "P_ThermalStandard"; sort = Order_therm) 
+   bar_therm = get_bar_plot_data(res, "P_ThermalStandard"; sort = Order_therm)
+end
+
+if !(:Order_gen in keys(kwargs))
+   stacked_gen = get_stacked_generation_data(res)
+else
+   stacked_gen = get_stacked_generation_data(res; sort = Order_gen) 
+end
 
 if !(:PDF in keys(kwargs))
    doctype = "md2html"
@@ -24,12 +33,14 @@ else
    doctype = "md2tex"
 end
 
-variables = collect(values(res.variables))
-args = Dict("res" => res, "variables" => variables)
-
 Weave.weave(joinpath("/Users/lhanig/.julia/dev/PowerSimulations/src/utils/", "report_design.jmd"), 
             out_path="/Users/lhanig/GitHub", latex_cmd = "xelatex",doctype = doctype,
-            args = args)
-      
+            args = Dict("stacked_gen" => stacked_gen, 
+            "stacked_renew" => stacked_renew, 
+            "stacked_therm" => stacked_therm,
+            "bar_therm" => bar_therm,
+            "bar_renew" => bar_renew,
+            "P_therm" => res.variables[:P_ThermalStandard],
+            "P_renew" => res.variables[:P_RenewableDispatch]))
 
 end

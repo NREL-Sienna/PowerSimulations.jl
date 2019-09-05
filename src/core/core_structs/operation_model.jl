@@ -171,3 +171,7 @@ function construct_device!(op_model::OperationModel,
     return
 
 end
+
+function get_initial_conditions(op_model::OperationModel)
+    return op_model.canonical.initial_conditions
+end

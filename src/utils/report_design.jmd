@@ -7,33 +7,65 @@ date: 20th August 2019
 # Plots
 
 
-```{julia; echo=false; fig_align = "center"}
+```{julia;echo=false; fig_cap="Renewable Dispatch"; fig_align = "center"}
+
 using Plots
 using RecipesBase
 gr()
-using PowerSimulations
 
-Plot(WEAVE_ARGS["res"])
+plot(WEAVE_ARGS["stacked_renew"], "P_RenewableDispatch")
+```
+
+```{julia; echo = false; fig_cap="Thermal Standard"; fig_align = "center"}
+
+plot(WEAVE_ARGS["stacked_therm"], "P_ThermalStandard")
+```
+
+```{julia; echo = false; fig_cap="Stacked Variables"; fig_align = "center"}
+using Plots
+using RecipesBase
+gr()
+
+plot(WEAVE_ARGS["stacked_gen"])
+```
+
+# Bar Plots
+
+```{julia; echo=false; fig_cap="Renewable Dispatch"; fig_align = "center"}
+using Plots
+using RecipesBase
+
+gr()
+
+plot(WEAVE_ARGS["bar_renew"], "P_RenewableDispatch")
 
 ```
 
-```{julia; echo=false; fig_align = "center"}
+```{julia; echo=false; fig_cap="Thermal Standard"; fig_align = "center"}
 using Plots
 using RecipesBase
 gr()
-using PowerSimulations
 
-Plot(WEAVE_ARGS["res"]; plot_type = "bar")
+plot(WEAVE_ARGS["bar_therm"], "P_ThermalStandard")
 
 ```
 
 # Tables
 
 
-```julia; echo = false
+## Thermal Standard Table
 
-for i in 1:length(WEAVE_ARGS["variables"])
-    display(WEAVE_ARGS["variables"][i])
-end
+```{julia; echo=false; title = "Renewable Dispatch", align =center}
+
+WEAVE_ARGS["P_therm"]
 
 ```
+
+## Renewable Dispatch Table
+
+```{julia; echo=false; align = "center"; title = "Renewable Dispatch"}
+
+WEAVE_ARGS["P_renew"]
+
+```
+

@@ -10,7 +10,7 @@ function get_variable(res_model::OperationModelResults, key::Symbol)
         try
             !isnothing(res_model.variables)
         catch
-            error("No variable has been found.")
+            error("No variable with key $(key) has been found.")
         end
     return get(res_model.variables, key, nothing)
 end

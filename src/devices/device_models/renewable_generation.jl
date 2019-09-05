@@ -125,7 +125,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
         device_timeseries_param_ub(canonical_model,
                             _get_time_series(devices, time_steps),
                             Symbol("activerange_$(R)"),
-                            RefParam{R}(Symbol("P_$(R)")),
+                            UpdateRef{R}(Symbol("P_$(R)")),
                             Symbol("P_$(R)"))
 
     else
@@ -170,7 +170,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
         device_timeseries_param_ub(canonical_model,
                                    _get_time_series(forecasts),
                                    Symbol("activerange_$(R)"),
-                                   RefParam{R}(Symbol("P_$(R)")),
+                                   UpdateRef{R}(Symbol("P_$(R)")),
                                    Symbol("P_$(R)"))
     else
         device_timeseries_ub(canonical_model,

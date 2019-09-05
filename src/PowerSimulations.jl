@@ -63,6 +63,7 @@ export construct_device!
 export construct_network!
 ## Op Model Exports
 export solve_op_model!
+export get_initial_conditions
 ## Sim Model Exports
 export run_sim_model!
 ## Utils Exports
@@ -74,11 +75,13 @@ export get_all_var_index
 export get_con_index
 export get_var_index
 # Plotting Utils
-export report
-export plot
+export get_stacked_plot_data
+export get_bar_plot_data
+export get_stacked_generation_data
 export sort_data
-
-
+export report
+export bar_plot
+export stack_plot
 
 #################################################################################
 # Imports
@@ -94,7 +97,6 @@ import PowerSystems
 import PowerModels
 import RecipesBase
 import Weave
-import DataStructures
 
 #TimeStamp Management Imports
 import Dates
@@ -201,7 +203,6 @@ include("utils/printing.jl")
 include("utils/plot_results.jl")
 include("utils/plot_recipes.jl")
 include("utils/make_report.jl")
-
 
 
 end

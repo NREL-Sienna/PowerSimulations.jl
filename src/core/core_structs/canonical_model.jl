@@ -1,29 +1,29 @@
 const DSDA = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
 """Reference for parameters update when present"""
-struct RefParam{T}
+struct UpdateRef{T}
     access_ref::Symbol
 end
 
-const DRDA = Dict{RefParam, JuMP.Containers.DenseAxisArray}
+const DRDA = Dict{UpdateRef, JuMP.Containers.DenseAxisArray}
 
-function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory}; kwargs...)
+function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory},
+                              parameters::Bool,
+                              JuMPmodel::Union{JuMP.AbstractModel,Nothing})
 
     if isa(optimizer, Nothing)
         @info("The optimization model has no optimizer attached")
     end
 
-    parameters = get(kwargs, :parameters, false)
+    if !isnothing(JuMPmodel) && parameters
 
-    if :JuMPmodel in keys(kwargs) && parameters
-
-        if !haskey(kwargs[:JuMPmodel].ext, :params)
+        if !haskey(JuMPmodel.ext, :params)
             @info("Model doesn't have Parameters enabled. Parameters will be enabled")
         end
 
-        PJ.enable_parameters(kwargs[:JuMPmodel])
+        PJ.enable_parameters(JuMPmodel)
 
-        return kwargs[:JuMPmodel]
+        return JuMPmodel
 
     end
 
@@ -37,9 +37,7 @@ function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory}; k
 
 end
 
-function _make_container_array(V::DataType, ax...; kwargs...)
-
-    parameters = get(kwargs, :parameters, false)
+function _make_container_array(V::DataType, parameters::Bool, ax...)
 
     if parameters
         return JuMP.Containers.DenseAxisArray{PGAE{V}}(undef, ax...)
@@ -54,46 +52,50 @@ end
 function _make_expressions_dict(transmission::Type{S},
                                 V::DataType,
                                 bus_numbers::Vector{Int64},
-                                time_steps::UnitRange{Int64};
-                                kwargs...) where {S<:PM.AbstractPowerFormulation}
+                                time_steps::UnitRange{Int64},
+                                parameters::Bool) where {S<:PM.AbstractPowerFormulation}
 
     return DSDA(:nodal_balance_active =>  _make_container_array(V,
+                                                                parameters,
                                                                 bus_numbers,
-                                                                time_steps; kwargs...),
+                                                                time_steps),
                 :nodal_balance_reactive => _make_container_array(V,
+                                                                 parameters,
                                                                  bus_numbers,
-                                                                 time_steps; kwargs...))
+                                                                 time_steps))
 
 end
 
 function _make_expressions_dict(transmission::Type{S},
                                 V::DataType,
                                 bus_numbers::Vector{Int64},
-                                time_steps::UnitRange{Int64};
-                                kwargs...) where {S<:PM.AbstractActivePowerFormulation}
+                                time_steps::UnitRange{Int64},
+                                parameters::Bool) where {S<:PM.AbstractActivePowerFormulation}
 
     return DSDA(:nodal_balance_active =>  _make_container_array(V,
+                                                                parameters,
                                                                 bus_numbers,
-                                                                time_steps; kwargs...))
+                                                                time_steps))
 end
 
 
 function _canonical_init(bus_numbers::Vector{Int64},
+                        jump_model::JuMP.AbstractModel,
                         optimizer::Union{Nothing,JuMP.OptimizerFactory},
                         transmission::Type{S},
                         time_steps::UnitRange{Int64},
                         resolution::Dates.Period,
-                        initial_time::Dates.DateTime;
-                        kwargs...) where {S<:PM.AbstractPowerFormulation}
+                        initial_time::Dates.DateTime,
+                        parameters::Bool,
+                        sequential_runs::Bool,
+                        ini_con::Dict{Symbol,Array{InitialCondition}}) where {S<:PM.AbstractPowerFormulation}
 
-    parameters = get(kwargs, :parameters, false)
-    jump_model = _pass_abstract_jump(optimizer; kwargs...)
     V = JuMP.variable_type(jump_model)
 
     canonical = CanonicalModel(jump_model,
                               optimizer,
                               parameters,
-                              get(kwargs, :sequential_runs, false),
+                              sequential_runs,
                               time_steps,
                               resolution,
                               initial_time,
@@ -103,9 +105,10 @@ function _canonical_init(bus_numbers::Vector{Int64},
                               _make_expressions_dict(transmission,
                                                      V,
                                                      bus_numbers,
-                                                     time_steps; kwargs...),
+                                                     time_steps,
+                                                     parameters),
                               parameters ? DRDA() : nothing,
-                              Dict{Symbol,Array{InitialCondition}}(),
+                              ini_con,
                               nothing);
 
     return canonical
@@ -124,7 +127,7 @@ mutable struct CanonicalModel
     constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
-    parameters::Union{Nothing, Dict{RefParam, JuMP.Containers.DenseAxisArray}}
+    parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}}
     initial_conditions::Dict{Symbol, Array{InitialCondition}}
     pm_model::Union{Nothing, PM.GenericPowerModel}
 
@@ -139,7 +142,7 @@ mutable struct CanonicalModel
                             constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray},
                             cost_function::JuMP.AbstractJuMPScalar,
                             expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray},
-                            parameters::Union{Nothing, Dict{RefParam, JuMP.Containers.DenseAxisArray}},
+                            parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}},
                             initial_conditions::Dict{Symbol, Array{InitialCondition}},
                             pm_model::Union{Nothing, PM.GenericPowerModel})
 
@@ -175,8 +178,12 @@ function CanonicalModel(::Type{T},
                          optimizer::Union{Nothing,JuMP.OptimizerFactory};
                          kwargs...) where {T<:PM.AbstractPowerFormulation}
 
-
+    sequential_runs = get(kwargs, :sequential_runs, false)
+    user_defined_model = get(kwargs, :JuMPmodel, nothing)
+    ini_con = get(kwargs, :initial_conditions, Dict{Symbol,Array{InitialCondition}}())
+    parameters = get(kwargs, :parameters, false)
     forecast = get(kwargs, :forecast, true)
+    jump_model = _pass_abstract_jump(optimizer, parameters, user_defined_model)
     initial_time = get(kwargs,
                        :initial_time,
                        PSY.get_forecasts_initial_time(sys))
@@ -193,12 +200,15 @@ function CanonicalModel(::Type{T},
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
 
     return _canonical_init(bus_numbers,
+                           jump_model,
                            optimizer,
                            T,
                            time_steps,
                            resolution,
-                           initial_time;
-                           kwargs...)
+                           initial_time,
+                           parameters,
+                           sequential_runs,
+                           ini_con)
 
 end
 
@@ -212,14 +222,14 @@ vars(canonical_model::CanonicalModel) = canonical_model.variables
 cons(canonical_model::CanonicalModel) = canonical_model.constraints
 var(canonical_model::CanonicalModel, name::Symbol) = canonical_model.variables[name]
 con(canonical_model::CanonicalModel, name::Symbol) = canonical_model.constraints[name]
-par(canonical_model::CanonicalModel, param_reference::RefParam) = canonical_model.parameters[param_reference]
+par(canonical_model::CanonicalModel, param_reference::UpdateRef) = canonical_model.parameters[param_reference]
 exp(canonical_model::CanonicalModel, name::Symbol) = canonical_model.expressions[name]
 
 # This function is added here because Canonical Model hasn't been defined until now.
 
 function InitialCondition(canonical::CanonicalModel,
-                            device::PSY.Device,
-                            value::Float64)
+                          device::PSY.Device,
+                          value::Float64)
 
     if model_has_parameters(canonical)
         return InitialCondition(device, PJ.add_parameter(canonical.JuMPmodel, value))
