@@ -22,6 +22,10 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     energy_storage_variables(canonical_model, devices)
 
+    #Initial Conditions
+
+    initial_conditions!(canonical_model, devices, D)
+
     #Constraints
     active_power_constraints(canonical_model, devices, D, S)
 
@@ -59,6 +63,10 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     active_power_variables(canonical_model, devices);
 
     energy_storage_variables(canonical_model, devices);
+
+    #Initial Conditions
+
+    initial_conditions!(canonical_model, devices, D)
 
     #Constraints
     active_power_constraints(canonical_model, devices, D, S)
@@ -99,6 +107,10 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     storage_reservation_variables(canonical_model, devices)
 
+    #Initial Conditions
+
+    initial_conditions!(canonical_model, devices, model.formulation)
+
     #Constraints
     active_power_constraints(canonical_model, devices, model.formulation, S)
 
@@ -137,6 +149,10 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     energy_storage_variables(canonical_model, devices)
 
     storage_reservation_variables(canonical_model, devices)
+
+    #Initial Conditions
+
+    initial_conditions!(canonical_model, devices, model.formulation)
 
     #Constraints
     active_power_constraints(canonical_model, devices, model.formulation, S)

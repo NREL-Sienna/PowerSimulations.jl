@@ -91,7 +91,7 @@ function _feedforward_rule_check(::Type{T},
                               stage_number_from::Int64,
                               from_stage::Stage,
                               stage_number_to::Int64,
-                              to_stage::Stage,) where T <: FeedForwardSequence
+                              to_stage::Stage,) where T <: FeedForwardChronology
 
     error("feedforward Model $(T) not implemented")
 
@@ -105,6 +105,9 @@ function _feedforward_rule_check(::Type{Synchronize},
                               from_stage::Stage,
                               stage_number_to::Int64,
                               to_stage::Stage)
+
+    #Don't check for same Stage.
+    stage_number_from == stage_number_to && return
 
     from_stage_count = PSY.get_forecasts_horizon(from_stage.sys)
     to_stage_count = get_execution_count(to_stage)
@@ -147,7 +150,7 @@ function _check_feedforward_ref(stages::Dict{Int64, Stage})
 
 end
 
-function build_simulation!(sim_ref::SimulationRef,
+function _build_simulation!(sim_ref::SimulationRef,
                           base_name::String,
                           steps::Int64,
                           stages::Dict{Int64, Stage},

@@ -1,160 +1,164 @@
+######################### Initialize Functions for Storage #################################
 function status_init(canonical_model::CanonicalModel,
-                    devices::PSY.FlattenIteratorWrapper{PSD},
-                    set_name::Vector{String}) where {PSD<:PSY.ThermalGen}
+                     devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
+
+    key = Symbol("ON_$(PSD)")
     parameters = model_has_parameters(canonical_model)
     length_devices = length(devices)
+    ini_conds = get_ini_cond(canonical_model, key)
+    ref_key = parameters ? key : :activepower
 
-    if length_devices != length(set_name)
-        devices = [d for d in devices if d.name in set_name]
-        length_devices = length(devices)
-    end
+    if isempty(ini_conds)
+        @info("Setting initial conditions for the status of all devices $(PSD) based on system data")
+        ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
+        for (ix, g) in enumerate(devices)
 
-    initial_conditions = Vector{InitialCondition}(undef, length_devices)
-
-    for (ix, g) in enumerate(devices)
-        if parameters
-            initial_conditions[ix] = InitialCondition(g, PJ.add_parameter(canonical_model.JuMPmodel, 1.0*(PSY.get_activepower(g) > 0)))
-        else
-            initial_conditions[ix] = InitialCondition(g, 1.0*(PSY.get_activepower(g) > 0))
+            ini_conds[ix] = InitialCondition(canonical_model,
+                                            g,
+                                            ref_key,
+                                            1.0*(PSY.get_activepower(g) > 0))
+        end
+    else
+        ic_devices = (ic.device for ic in ini_conds)
+        for g in devices
+            g in ic_devices && continue
+            @info("Setting initial conditions for the status device $(g.name) based on system data")
+                push!(ini_conds, InitialCondition(canonical_model,
+                                                  g,
+                                                  ref_key,
+                                                  1.0*(PSY.get_activepower(g) > 0)))
         end
     end
-    key = Symbol("status_$(PSD)")
-    if key in keys(canonical_model.initial_conditions) && !isempty(canonical_model.initial_conditions[key])
-        vcat(canonical_model.initial_conditions[key],initial_conditions)
-    else
-        canonical_model.initial_conditions[key] = initial_conditions
-    end
+
+    @assert length(ini_conds) == length(devices)
 
     return
 
 end
 
 function output_init(canonical_model::CanonicalModel,
-                    devices::PSY.FlattenIteratorWrapper{PSD},
-                    set_name::Vector{String}) where {PSD<:PSY.ThermalGen}
+                    devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
+    key = Symbol("P_$(PSD)")
     parameters = model_has_parameters(canonical_model)
     length_devices = length(devices)
+    ini_conds = get_ini_cond(canonical_model, key)
+    ref_key = parameters ? key : :activepower
 
-    if length_devices != length(set_name)
-        devices = [d for d in devices if d.name in set_name]
-        length_devices = length(devices)
-    end
-
-    initial_conditions = Vector{InitialCondition}(undef, length_devices)
-
-    for (ix, g) in enumerate(devices)
-            if parameters
-                initial_conditions[ix] = InitialCondition(g, PJ.add_parameter(canonical_model.JuMPmodel, PSY.get_activepower(g) ))
-            else
-                initial_conditions[ix] = InitialCondition(g, PSY.get_activepower(g))
-            end
-    end
-    key = Symbol("output_$(PSD)")
-    if key in keys(canonical_model.initial_conditions) && !isempty(canonical_model.initial_conditions[key])
-        vcat(canonical_model.initial_conditions[key],initial_conditions)
-    else
-        canonical_model.initial_conditions[key] = initial_conditions
-    end
-
-    return isempty(initial_conditions)
-
-end
-
-function duration_init_off(canonical_model::CanonicalModel,
-                        devices::PSY.FlattenIteratorWrapper{PSD},
-                        set_name::Vector{String}) where {PSD<:PSY.ThermalGen}
-
-    parameters = model_has_parameters(canonical_model)
-    length_devices = length(devices)
-
-    if length_devices != length(set_name)
-        devices = [d for d in devices if d.name in set_name]
-        length_devices = length(devices)
-    end
-
-    ini_cond_off = Vector{InitialCondition}(undef, length_devices)
-
-    for (ix, g) in enumerate(devices)
-        if parameters
-            ini_cond_off[ix] = InitialCondition(g, PJ.add_parameter(canonical_model.JuMPmodel, 999.0*(PSY.get_activepower(g) < 0)))
-        else
-            ini_cond_off[ix] = InitialCondition(g, 999.0*(PSY.get_activepower(g) < 0))
+    if isempty(ini_conds)
+        @info("Setting $(key) initial_condition of all devices $(PSD) based on system data")
+        ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
+        for (ix, g) in enumerate(devices)
+                ini_conds[ix] = InitialCondition(canonical_model,
+                                                g,
+                                                ref_key,
+                                                PSY.get_activepower(g))
         end
-    end
-    key = Symbol("duration_off_$(PSD)")
-    if key in keys(canonical_model.initial_conditions) && !isempty(canonical_model.initial_conditions[key])
-        vcat(canonical_model.initial_conditions[key],ini_cond_off)
+
     else
-        canonical_model.initial_conditions[key] = ini_cond_off
-    end
-
-    return isempty(ini_cond_off)
-
-end
-
-function duration_init_on(canonical_model::CanonicalModel,
-                        devices::PSY.FlattenIteratorWrapper{PSD},
-                        set_name::Vector{String}) where {PSD<:PSY.ThermalGen}
-
-    parameters = model_has_parameters(canonical_model)
-    length_devices = length(devices)
-
-    if length_devices != length(set_name)
-        devices = [d for d in devices if d.name in set_name]
-        length_devices = length(devices)
-    end
-
-    ini_cond_on = Vector{InitialCondition}(undef, length_devices)
-
-    for (ix, g) in enumerate(devices)
-        if parameters
-            ini_cond_on[ix] = InitialCondition(g, PJ.add_parameter(canonical_model.JuMPmodel, 999.0*(PSY.get_activepower(g) > 0)))
-        else
-            ini_cond_on[ix] = InitialCondition(g, 999.0*(PSY.get_activepower(g) > 0))
+        ic_devices = (ic.device for ic in ini_conds)
+        for g in devices
+            g in ic_devices && continue
+            @info("Setting $(key) initial_condition of device $(g.name) based on system data")
+                push!(ini_conds, InitialCondition(canonical_model,
+                                                g,
+                                                ref_key,
+                                                PSY.get_activepower(g)))
         end
+
     end
 
-    key = Symbol("duration_on_$(PSD)")
-    if key in keys(canonical_model.initial_conditions) && !isempty(canonical_model.initial_conditions[key])
-        vcat(canonical_model.initial_conditions[key],ini_cond_on)
-    else
-        canonical_model.initial_conditions[key] = ini_cond_on
-    end
+    @assert length(ini_conds) == length(devices)
 
-    return isempty(ini_cond_on)
+    return
 
 end
 
-function storage_energy_init(canonical_model::CanonicalModel,
-                             devices::PSY.FlattenIteratorWrapper{PSD},
-                             set_name::Vector{String}) where {PSD<:PSY.Storage}
+function duration_init(canonical_model::CanonicalModel,
+                        devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
+    keys = [Symbol("duration_on_$(PSD)"), Symbol("duration_off_$(PSD)")]
     parameters = model_has_parameters(canonical_model)
     length_devices = length(devices)
+    ref_key = parameters ? Symbol("ON_$(PSD)") : :activepower
 
-    if length_devices != length(set_name)
-        devices = [d for d in devices if d.name in set_name]
-        length_devices = length(devices)
-    end
-    energy_initial_conditions  = Vector{InitialCondition}(undef, length(devices))
+    for (ik, key) in enumerate(keys)
+        ini_conds = get_ini_cond(canonical_model, key)
 
-    for (i, g) in enumerate(devices)
-            if parameters
-                energy_initial_conditions[i] = InitialCondition(g, PJ.add_parameter(canonical_model.JuMPmodel, 0.0))
-            else
-                energy_initial_conditions[i] = InitialCondition(g, 0.0)
+        if isempty(ini_conds)
+            @info("Setting $(key) initial_condition of all devices $(PSD) based on system data")
+            ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
+
+            for (ix, g) in enumerate(devices)
+                times = [999.0*(PSY.get_activepower(g) > 0),  # Time on
+                         999.0*(PSY.get_activepower(g) <= 0)] # Time off
+                ini_conds[ix] = InitialCondition(canonical_model,
+                                                    g,
+                                                    ref_key,
+                                                    times[ik])
             end
-    end
 
-    key = Symbol("energy_$(PSD)")
-    if key in keys(canonical_model.initial_conditions) && !isempty(canonical_model.initial_conditions[key])
-        vcat(canonical_model.initial_conditions[key],energy_initial_conditions)
-    else
-        canonical_model.initial_conditions[key] = energy_initial_conditions
+        else
+
+            ic_devices = (ic.device for ic in ini_conds)
+
+            for g in devices
+                g in ic_devices && continue
+                times = [999.0*(PSY.get_activepower(g) > 0),  # Time on
+                         999.0*(PSY.get_activepower(g) <= 0)] # Time off
+                @info("Setting $(key) initial_condition of device $(g.name) based on system data")
+                push!(ini_conds, InitialCondition(canonical_model,
+                                                  g,
+                                                  ref_key,
+                                                  times[ik]))
+            end
+
+        end
+
+        @assert length(ini_conds) == length(devices)
+
     end
 
     return
+
+end
+
+######################### Initialize Functions for Storage #################################
+
+function storage_energy_init(canonical_model::CanonicalModel,
+                             devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.Storage}
+
+    key = Symbol("E_$(PSD)")
+    parameters = model_has_parameters(canonical_model)
+    length_devices = length(devices)
+    ini_conds = get_ini_cond(canonical_model, key)
+    ref_key = parameters ? key : :energy
+
+    if isempty(ini_conds)
+        @info("Setting $(key) initial_condition of all devices $(PSD) based on system data")
+        ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
+
+        for (ix, g) in enumerate(devices)
+            ini_conds[ix] = InitialCondition(canonical_model,
+                                                g,
+                                                ref_key,
+                                                PSY.get_energy(g))
+        end
+    else
+        ic_devices = (ic.device for ic in ini_conds)
+        for g in devices
+            g in ic_devices && continue
+            @info("Setting $(key) initial_condition of device $(g.name) based on system data")
+            push!(ini_conds, InitialCondition(canonical_model,
+                                            g,
+                                            ref_key,
+                                            PSY.get_energy(g)))
+        end
+    end
+
+        @assert length(ini_conds) == length(devices)
+
+        return
 
 end

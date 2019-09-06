@@ -10,15 +10,15 @@ Constructs allowed rate-of-change constraints from variables, initial condtions,
 # Constraints
 If t = 1:
 
-``` variable[name, 1] - initial_conditions[ix].value <= rate_data[2][ix].up ```
+``` variable[name, 1] - initial_conditions[ix].value <= rate_data[1][ix].up ```
 
-``` initial_conditions[ix].value - variable[name, 1] <= rate_data[2][ix].down ```
+``` initial_conditions[ix].value - variable[name, 1] <= rate_data[1][ix].down ```
 
 If t > 1:
 
-``` variable[name, t] - variable[name, t-1] <= rate_data[2][ix].up ```
+``` variable[name, t] - variable[name, t-1] <= rate_data[1][ix].up ```
 
-``` variable[name, t-1] - variable[name, t] <= rate_data[2][ix].down ```
+``` variable[name, t-1] - variable[name, t] <= rate_data[1][ix].down ```
 
 # LaTeX
 
@@ -34,7 +34,7 @@ If t > 1:
 * var_name::Tuple{Symbol, Symbol, Symbol} : the name of the variable
 """
 function device_linear_rateofchange(canonical_model::CanonicalModel,
-                                    rate_data::Tuple{Vector{String}, Vector{UpDown}},
+                                    rate_data::Vector{UpDown},
                                     initial_conditions::Vector{InitialCondition},
                                     cons_name::Symbol,
                                     var_name::Symbol)
@@ -45,22 +45,24 @@ function device_linear_rateofchange(canonical_model::CanonicalModel,
 
     variable = var(canonical_model, var_name)
 
-    set_name = rate_data[1]
+    set_name = (device_name(ic) for ic in initial_conditions)
     _add_cons_container!(canonical_model, up_name, set_name, time_steps)
     _add_cons_container!(canonical_model, down_name, set_name, time_steps)
     con_up = con(canonical_model, up_name)
     con_down = con(canonical_model, down_name)
 
-    for (ix, name) in enumerate(rate_data[1])
+    for (ix, ic) in enumerate(initial_conditions)
+        name = device_name(ic)
         con_up[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, 1] - initial_conditions[ix].value
-                                                                <= rate_data[2][ix].up)
+                                                                <= rate_data[ix].up)
         con_down[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, initial_conditions[ix].value - variable[name, 1]
-                                                                <= rate_data[2][ix].down)
+                                                                <= rate_data[ix].down)
     end
 
-    for t in time_steps[2:end], (ix, name) in enumerate(rate_data[1])
-        con_up[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t] - variable[name, t-1] <= rate_data[2][ix].up)
-        con_down[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t-1] - variable[name, t] <= rate_data[2][ix].down)
+    for t in time_steps[2:end], (ix, ic) in enumerate(initial_conditions)
+        name = device_name(ic)
+        con_up[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t] - variable[name, t-1] <= rate_data[ix].up)
+        con_down[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t-1] - variable[name, t] <= rate_data[ix].down)
     end
 
     return
@@ -79,15 +81,15 @@ Constructs allowed rate-of-change constraints from variables, initial condtions,
 # Equations
 If t = 1:
 
-``` variable[name, 1] - initial_conditions[ix].value <= rate_data[2][ix].up + rate_data[3][ix].max*varstart[name, 1] ```
+``` variable[name, 1] - initial_conditions[ix].value <= rate_data[1][ix].up + rate_data[2][ix].max*varstart[name, 1] ```
 
-``` initial_conditions[ix].value - variable[name, 1] <= rate_data[2][ix].down + rate_data[3][ix].min*varstop[name, 1] ```
+``` initial_conditions[ix].value - variable[name, 1] <= rate_data[1][ix].down + rate_data[2][ix].min*varstop[name, 1] ```
 
 If t > 1:
 
-``` variable[name, t] - variable[name, t-1] <= rate_data[2][ix].up + rate_data[3][ix].max*varstart[name, t] ```
+``` variable[name, t] - variable[name, t-1] <= rate_data[1][ix].up + rate_data[2][ix].max*varstart[name, t] ```
 
-``` variable[name, t-1] - variable[name, t] <= rate_data[2][ix].down + rate_data[3][ix].min*varstop[name, t] ```
+``` variable[name, t-1] - variable[name, t] <= rate_data[1][ix].down + rate_data[2][ix].min*varstop[name, t] ```
 
 # LaTeX
 
@@ -108,7 +110,7 @@ If t > 1:
 - : var_names[3] : 'varstop'
 """
 function device_mixedinteger_rateofchange(canonical_model::CanonicalModel,
-                                          rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}},
+                                          rate_data::Tuple{Vector{UpDown}, Vector{MinMax}},
                                           initial_conditions::Vector{InitialCondition},
                                           cons_name::Symbol,
                                           var_names::Tuple{Symbol, Symbol, Symbol})
@@ -121,24 +123,26 @@ function device_mixedinteger_rateofchange(canonical_model::CanonicalModel,
     varstart = var(canonical_model, var_names[2])
     varstop = var(canonical_model, var_names[3])
 
-    set_name = rate_data[1]
+    set_name = (device_name(ic) for ic in initial_conditions)
     _add_cons_container!(canonical_model, up_name, set_name, time_steps)
     _add_cons_container!(canonical_model, down_name, set_name, time_steps)
     con_up = con(canonical_model, up_name)
     con_down = con(canonical_model, down_name)
 
-    for (ix, name) in enumerate(rate_data[1])
+    for (ix, ic) in enumerate(initial_conditions)
+        name = device_name(ic)
         con_up[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, 1] - initial_conditions[ix].value
-                                                            <= rate_data[2][ix].up + rate_data[3][ix].max*varstart[name, 1])
+                                                            <= rate_data[1][ix].up + rate_data[2][ix].max*varstart[name, 1])
         con_down[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, initial_conditions[ix].value - variable[name, 1]
-                                                            <= rate_data[2][ix].down + rate_data[3][ix].min*varstop[name, 1])
+                                                            <= rate_data[1][ix].down + rate_data[2][ix].min*varstop[name, 1])
     end
 
-    for t in time_steps[2:end], (ix, name) in enumerate(rate_data[1])
+    for t in time_steps[2:end], (ix, ic) in enumerate(initial_conditions)
+        name = device_name(ic)
         con_up[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t] - variable[name, t-1]
-                                                            <= rate_data[2][ix].up + rate_data[3][ix].max*varstart[name, t])
+                                                            <= rate_data[1][ix].up + rate_data[2][ix].max*varstart[name, t])
         con_down[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t-1] - variable[name, t]
-                                                            <= rate_data[2][ix].down + rate_data[3][ix].min*varstop[name, t])
+                                                            <= rate_data[1][ix].down + rate_data[2][ix].min*varstop[name, t])
     end
 
     return

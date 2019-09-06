@@ -90,7 +90,7 @@ end
     device_timeseries_param_ub(canonical_model::CanonicalModel,
                                     ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
-                                    param_reference::RefParam,
+                                    param_reference::UpdateRef,
                                     var_name::Symbol)
 
 Constructs upper bound for given variable using a parameter. The constraint is
@@ -108,13 +108,13 @@ Constructs upper bound for given variable using a parameter. The constraint is
 * canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}} : timeseries data name (1), multiplier (2) and values (3)
 * cons_name::Symbol : name of the constraint
-* param_reference::RefParam : RefParam to access the parameter
+* param_reference::UpdateRef : UpdateRef to access the parameter
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_param_ub(canonical_model::CanonicalModel,
                                     ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
-                                    param_reference::RefParam,
+                                    param_reference::UpdateRef,
                                     var_name::Symbol)
 
     time_steps = model_time_steps(canonical_model)
@@ -139,7 +139,7 @@ end
     device_timeseries_param_lb(canonical_model::CanonicalModel,
                                     ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
-                                    param_reference::RefParam,
+                                    param_reference::UpdateRef,
                                     var_name::Symbol)
 
 Constructs lower bound for given variable using a parameter. The constraint is
@@ -157,13 +157,13 @@ Constructs lower bound for given variable using a parameter. The constraint is
 * canonical_model::CanonicalModel : the canonical model built in PowerSimulations
 * ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}} : timeseries data name (1) and values (2)
 * cons_name::Symbol : name of the constraint
-* param_reference::RefParam : RefParam to access the parameter
+* param_reference::UpdateRef : UpdateRef to access the parameter
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_param_lb(canonical_model::CanonicalModel,
                                     ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
-                                    param_reference::RefParam,
+                                    param_reference::UpdateRef,
                                     var_name::Symbol)
 
     time_steps = model_time_steps(canonical_model)
@@ -238,7 +238,7 @@ end
                                     ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
                                     cons_name::Symbol,
                                     var_name::Symbol,
-                                    param_reference::RefParam,
+                                    param_reference::UpdateRef,
                                     binvar_name::Symbol,
                                     M_value::Float64 = 1e6)
 
@@ -262,7 +262,7 @@ Constructs upper bound for variable and time series and a multiplier or confines
 * ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}} : timeseries data name (1) and values (2)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol :  name of the variable
-param_reference::RefParam : RefParam of access the parameters
+param_reference::UpdateRef : UpdateRef of access the parameters
 * binvar_name::Symbol : name of binary variable
 * M_value::Float64 : bigM
 """
@@ -270,7 +270,7 @@ function device_timeseries_ub_bigM(canonical_model::CanonicalModel,
                                     ts_data::Tuple{Vector{String}, Vector{Float64},Vector{Vector{Float64}}},
                                     cons_name::Symbol,
                                     var_name::Symbol,
-                                    param_reference::RefParam,
+                                    param_reference::UpdateRef,
                                     binvar_name::Symbol,
                                     M_value::Float64 = 1e6)
 

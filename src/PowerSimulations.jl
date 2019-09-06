@@ -63,6 +63,7 @@ export construct_device!
 export construct_network!
 ## Op Model Exports
 export solve_op_model!
+export get_initial_conditions
 ## Sim Model Exports
 export run_sim_model!
 ## Utils Exports
@@ -77,9 +78,6 @@ export get_var_index
 export get_stacked_plot_data
 export get_bar_plot_data
 export get_stacked_generation_data
-
-
-
 
 #################################################################################
 # Imports
@@ -145,6 +143,7 @@ include("service_models/services.jl")
 #Core Models and constructors
 include("core/core_structs/device_model.jl")
 include("core/core_structs/canonical_model.jl")
+include("core/core_structs/initial_conditions.jl")
 include("core/core_structs/service_model.jl")
 include("core/core_structs/operation_model.jl")
 include("core/core_structs/simulation_model.jl")

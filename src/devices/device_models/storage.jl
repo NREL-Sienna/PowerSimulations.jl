@@ -140,8 +140,19 @@ function reactive_power_constraints(canonical_model::CanonicalModel,
 
 end
 
+########################## Make initial Conditions for a Model #############################
+function initial_conditions!(canonical_model::CanonicalModel,
+                            devices::PSY.FlattenIteratorWrapper{St},
+                            device_formulation::Type{D}) where {St<:PSY.Storage,
+                                                                D<:AbstractStorageForm}
 
-###################################################### Energy Capacity constraints#################################
+    storage_energy_init(canonical_model, devices)
+
+return
+
+end
+
+###################################################### Energy Capacity constraints##########
 
 function energy_capacity_constraints(canonical_model::CanonicalModel,
                                     devices::PSY.FlattenIteratorWrapper{St},
@@ -160,7 +171,7 @@ function energy_capacity_constraints(canonical_model::CanonicalModel,
 
 end
 
-###################################################### book keeping constraints #################################
+###################################################### book keeping constraints ############
 
 function make_efficiency_data(devices::PSY.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
 
@@ -185,18 +196,10 @@ function energy_balance_constraint(canonical_model::CanonicalModel,
                                                             D<:AbstractStorageForm,
                                                             S<:PM.AbstractPowerFormulation}
 
-    key = Symbol("energy_$(St)")
+    key = Symbol("E_$(St)")
 
     if !(key in keys(canonical_model.initial_conditions))
-        @warn("Initial status conditions not provided. This can lead to unwanted results")
-        device_name = map(x-> PSY.get_name(x), devices)
-        storage_energy_init(canonical_model, devices, device_name)
-    else
-        storage_miss = missing_init_cond(canonical_model.initial_conditions[key], devices)
-        if !isnothing(storage_miss)
-            @warn("Initial status conditions not provided. This can lead to unwanted results")
-            storage_energy_init(canonical_model, devices, storage_miss)
-        end
+        error("Initial Conditions for $(St) Energy Constraints not in the model")
     end
 
     efficiency_data = make_efficiency_data(devices)

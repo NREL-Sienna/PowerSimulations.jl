@@ -8,7 +8,7 @@ function _add_cons_container!(canonical_model::CanonicalModel, cons_name::Symbol
     return
 end
 
-function _add_param_container!(canonical_model::CanonicalModel, param_reference::RefParam, axs...)
+function _add_param_container!(canonical_model::CanonicalModel, param_reference::UpdateRef, axs...)
     canonical_model.parameters[param_reference] = JuMPParamArray(undef, axs...)
     return
 end
