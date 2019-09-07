@@ -25,9 +25,25 @@ function feedforward_update(::Type{Synchronize},
                              from_stage::_Stage)
 
     variable = var(from_stage.model.canonical, param_reference.access_ref)
-
     for device_name in axes(variable)[1]
         val = JuMP.value(variable[device_name, to_stage.execution_count + 1])
+        PJ.fix(param_array[device_name], val)
+    end
+
+    return
+
+end
+
+function feedforward_update(::Type{Sequential},
+                             param_reference::UpdateRef{JuMP.VariableRef},
+                             param_array::JuMPParamArray,
+                             to_stage::_Stage,
+                             from_stage::_Stage)
+
+    variable = var(from_stage.model.canonical, param_reference.access_ref)
+
+    for device_name in axes(variable)[1]
+        val = JuMP.value(variable[device_name, end])
         PJ.fix(param_array[device_name], val)
     end
 
@@ -58,10 +74,11 @@ function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
                            stage_number::Int64,
                            sim::Simulation)
 
-    feedforward_ref = sim.stages[stage_number].feedforward_ref
+    chronology_ref = sim.stages[stage_number].chronology_ref
     current_stage = sim.stages[stage_number]
 
-    for (k, ref) in feedforward_ref
+    for (k, ref) in chronology_ref
+        current_stage == sim.stages[k] && continue
         feedforward_update(ref, param_reference, param_array, current_stage, sim.stages[k])
     end
 
@@ -69,7 +86,7 @@ function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
 
 end
 
-function _initial_condition_update!(::Type{Synchronize},
+function _initial_condition_update!(::Type{Sequential},
                                     ini_cond_array,
                                     to_stage::_Stage,
                                     from_stage::_Stage)
@@ -109,9 +126,8 @@ function intial_condition_update!(ini_cond_array,
                                   step::Int64,
                                   sim::Simulation)
 
-    feedforward_ref = sim.stages[stage_number].feedforward_ref[stage_number]
+    chronology_ref = sim.stages[stage_number].chronology_ref[stage_number]
     current_stage = sim.stages[stage_number]
-
     #checks if current stage is the first in the step and the execution is the first to
     # look backwards on the previous step
     intra_step_update = (stage_number == 1 && current_stage.execution_count == 0)
@@ -119,7 +135,6 @@ function intial_condition_update!(ini_cond_array,
     intra_stage_update = (stage_number > 1 && current_stage.execution_count == 0)
     #checks that the current run and stage ininital conditions is based on the current results
     inner_stage_update = (stage_number > 1 && current_stage.execution_count > 0)
-
     # makes the update based on the last stage.
     if intra_step_update
         from_stage = sim.stages[end]
@@ -135,14 +150,13 @@ function intial_condition_update!(ini_cond_array,
         error("Condition not implemented")
     end
 
-    _initial_condition_update!(feedforward_ref, ini_cond_array, current_stage, from_stage)
+    _initial_condition_update!(chronology_ref, ini_cond_array, current_stage, from_stage)
 
     return
 
 end
 
 function update_stage!(stage::_Stage, step::Int64, sim::Simulation)
-
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && stage.execution_count == 0) && return
 

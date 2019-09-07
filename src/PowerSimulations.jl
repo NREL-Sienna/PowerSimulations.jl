@@ -46,6 +46,7 @@ export ThermalDispatchNoMin
 # feedforward sequences
 export RecedingHorizon
 export Synchronize
+export Sequential
 
 # feedforward models
 export UpperBoundFF
