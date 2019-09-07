@@ -78,7 +78,6 @@ function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
     current_stage = sim.stages[stage_number]
 
     for (k, ref) in chronology_ref
-        current_stage == sim.stages[k] && continue
         feedforward_update(ref, param_reference, param_array, current_stage, sim.stages[k])
     end
 
@@ -120,13 +119,20 @@ function _initial_condition_update!(::Type{RecedingHorizon},
 
 end
 
+function _initial_condition_update!(::Nothing,
+                                    ini_cond_array,
+                                    to_stage::_Stage,
+                                    from_stage::_Stage)
+    return
+end
+
 
 function intial_condition_update!(ini_cond_array,
                                   stage_number::Int64,
                                   step::Int64,
                                   sim::Simulation)
 
-    chronology_ref = sim.stages[stage_number].chronology_ref[stage_number]
+    chronology_ref = sim.stages[stage_number].ini_cond_chron
     current_stage = sim.stages[stage_number]
     #checks if current stage is the first in the step and the execution is the first to
     # look backwards on the previous step
