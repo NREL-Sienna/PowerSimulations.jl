@@ -11,7 +11,7 @@ function status_init(canonical_model::CanonicalModel,
     ref_key = parameters ? Symbol("ON_$(PSD)") : :activepower
 
     if isempty(ini_conds)
-        @info("Setting initial conditions for the status of all devices $(PSD) based on system data")
+        @info("Setting $(key.quantity) initial conditions for the status of all devices $(PSD) based on system data")
         ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
         for (ix, g) in enumerate(devices)
 
@@ -24,7 +24,7 @@ function status_init(canonical_model::CanonicalModel,
         ic_devices = (ic.device for ic in ini_conds)
         for g in devices
             g in ic_devices && continue
-            @info("Setting initial conditions for the status device $(g.name) based on system data")
+            @info("Setting $(key.quantity) initial conditions for the status device $(g.name) based on system data")
                 push!(ini_conds, InitialCondition(canonical_model,
                                                   g,
                                                   ref_key,
@@ -49,7 +49,7 @@ function output_init(canonical_model::CanonicalModel,
     ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
 
     if isempty(ini_conds)
-        @info("Setting $(key) initial_condition of all devices $(PSD) based on system data")
+        @info("Setting $(key.quantity) initial_condition of all devices $(PSD) based on system data")
         ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
         for (ix, g) in enumerate(devices)
                 ini_conds[ix] = InitialCondition(canonical_model,
@@ -62,7 +62,7 @@ function output_init(canonical_model::CanonicalModel,
         ic_devices = (ic.device for ic in ini_conds)
         for g in devices
             g in ic_devices && continue
-            @info("Setting $(key) initial_condition of device $(g.name) based on system data")
+            @info("Setting $(key.quantity) initial_condition of device $(g.name) based on system data")
                 push!(ini_conds, InitialCondition(canonical_model,
                                                 g,
                                                 ref_key,
@@ -89,7 +89,7 @@ function duration_init(canonical_model::CanonicalModel,
         ini_conds = get_ini_cond(canonical_model, key)
 
         if isempty(ini_conds)
-            @info("Setting $(key) initial_condition of all devices $(PSD) based on system data")
+            @info("Setting $(key.quantity) initial_condition of all devices $(PSD) based on system data")
             ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
 
             for (ix, g) in enumerate(devices)
@@ -109,7 +109,7 @@ function duration_init(canonical_model::CanonicalModel,
                 g in ic_devices && continue
                 times = [999.0*(PSY.get_activepower(g) > 0),  # Time on
                          999.0*(PSY.get_activepower(g) <= 0)] # Time off
-                @info("Setting $(key) initial_condition of device $(g.name) based on system data")
+                @info("Setting $(key.quantity) initial_condition of device $(g.name) based on system data")
                 push!(ini_conds, InitialCondition(canonical_model,
                                                   g,
                                                   ref_key,
@@ -138,7 +138,7 @@ function storage_energy_init(canonical_model::CanonicalModel,
     ref_key = parameters ? Symbol("E_$(PSD)") : :energy
 
     if isempty(ini_conds)
-        @info("Setting $(key) initial_condition of all devices $(PSD) based on system data")
+        @info("Setting $(key.quantity) initial_condition of all devices $(PSD) based on system data")
         ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
 
         for (ix, g) in enumerate(devices)
@@ -151,7 +151,7 @@ function storage_energy_init(canonical_model::CanonicalModel,
         ic_devices = (ic.device for ic in ini_conds)
         for g in devices
             g in ic_devices && continue
-            @info("Setting $(key) initial_condition of device $(g.name) based on system data")
+            @info("Setting $(key.quantity) initial_condition of device $(g.name) based on system data")
             push!(ini_conds, InitialCondition(canonical_model,
                                             g,
                                             ref_key,

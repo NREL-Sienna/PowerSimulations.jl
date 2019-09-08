@@ -53,6 +53,13 @@ export UpperBoundFF
 export SemiContinuousFF
 export RangeFF
 
+# Initial Conditions Quantities
+export DevicePower
+export DeviceStatus
+export TimeDurationON
+export TimeDurationOFF
+export DeviceEnergy
+
 #operation_models
 #export UnitCommitment
 #export EconomicDispatch
