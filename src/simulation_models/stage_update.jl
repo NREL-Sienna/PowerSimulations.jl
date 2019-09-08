@@ -90,13 +90,13 @@ function _initial_condition_update!(::Type{Sequential},
                                     to_stage::_Stage,
                                     from_stage::_Stage)
 
-        for ic in ini_cond_array
-            variable = var(from_stage.model.canonical, ic.access_ref)
-            device_name = ic.device.name
-            step = axes(variable)[2][end]
-            var_value = JuMP.value(variable[device_name, step])
-            PJ.fix(ic.value, var_value)
-        end
+    for ic in ini_cond_array
+        variable = var(from_stage.model.canonical, ic.access_ref)
+        device_name = ic.device.name
+        step = axes(variable)[2][end]
+        var_value = JuMP.value(variable[device_name, step])
+        PJ.fix(ic.value, var_value)
+    end
 
     return
 
@@ -107,13 +107,13 @@ function _initial_condition_update!(::Type{RecedingHorizon},
                                     to_stage::_Stage,
                                     from_stage::_Stage)
 
-        for ic in ini_cond_array
-            variable = var(from_stage.model.canonical, ic.access_ref)
-            device_name = ic.device.name
-            step = axes(variable)[2][1]
-            var_value = JuMP.value(variable[device_name, step])
-            PJ.fix(ic.value, var_value)
-        end
+    for ic in ini_cond_array
+        variable = var(from_stage.model.canonical, ic.access_ref)
+        device_name = ic.device.name
+        step = axes(variable)[2][1]
+        var_value = JuMP.value(variable[device_name, step])
+        PJ.fix(ic.value, var_value)
+    end
 
     return
 
@@ -146,11 +146,9 @@ function intial_condition_update!(ini_cond_array,
         from_stage = sim.stages[end]
     # Updates the next stage in the same step
     elseif intra_stage_update
-        @show intra_stage_update
         from_stage = sim.stages[stage_number-1]
     # Update is done on the current stage
     elseif inner_stage_update
-        @show inner_stage_update
         from_stage = current_stage
     else
         error("Condition not implemented")

@@ -3,11 +3,12 @@ function status_init(canonical_model::CanonicalModel,
                      devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
 
-    key = Symbol("ON_$(PSD)")
+    key = ICKey(DeviceStatus, PSD)
     parameters = model_has_parameters(canonical_model)
     length_devices = length(devices)
     ini_conds = get_ini_cond(canonical_model, key)
-    ref_key = parameters ? key : :activepower
+    # Improve here
+    ref_key = parameters ? Symbol("ON_$(PSD)") : :activepower
 
     if isempty(ini_conds)
         @info("Setting initial conditions for the status of all devices $(PSD) based on system data")
@@ -40,11 +41,12 @@ end
 function output_init(canonical_model::CanonicalModel,
                     devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
-    key = Symbol("P_$(PSD)")
+    key = ICKey(DevicePower, PSD)
     parameters = model_has_parameters(canonical_model)
     length_devices = length(devices)
     ini_conds = get_ini_cond(canonical_model, key)
-    ref_key = parameters ? key : :activepower
+    # Improve this
+    ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
 
     if isempty(ini_conds)
         @info("Setting $(key) initial_condition of all devices $(PSD) based on system data")
@@ -78,7 +80,7 @@ end
 function duration_init(canonical_model::CanonicalModel,
                         devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
-    keys = [Symbol("duration_on_$(PSD)"), Symbol("duration_off_$(PSD)")]
+    keys = [ICKey(TimeDurationON, PSD), ICKey(TimeDurationOFF, PSD)]
     parameters = model_has_parameters(canonical_model)
     length_devices = length(devices)
     ref_key = parameters ? Symbol("ON_$(PSD)") : :activepower
@@ -129,11 +131,11 @@ end
 function storage_energy_init(canonical_model::CanonicalModel,
                              devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.Storage}
 
-    key = Symbol("E_$(PSD)")
+    key = ICKey(DeviceEnergy, PSD)
     parameters = model_has_parameters(canonical_model)
     length_devices = length(devices)
     ini_conds = get_ini_cond(canonical_model, key)
-    ref_key = parameters ? key : :energy
+    ref_key = parameters ? Symbol("E_$(PSD)") : :energy
 
     if isempty(ini_conds)
         @info("Setting $(key) initial_condition of all devices $(PSD) based on system data")

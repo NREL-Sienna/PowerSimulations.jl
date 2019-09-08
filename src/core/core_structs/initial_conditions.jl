@@ -1,3 +1,9 @@
+struct DevicePower <: InitialConditionQuantity end
+struct DeviceStatus <: InitialConditionQuantity end
+struct TimeDurationON <: InitialConditionQuantity end
+struct TimeDurationOFF <: InitialConditionQuantity end
+struct DeviceEnergy <: InitialConditionQuantity end
+
 # The struct InitialCondition is located in Line 10 of file canonical_model.
 function InitialCondition(canonical::CanonicalModel,
                             device::T,
@@ -28,8 +34,8 @@ end
 
 get_condition(ic::InitialCondition) = ic.value
 
-function  get_ini_cond(canonical_model::CanonicalModel, name::Symbol)
-    return get(canonical_model.initial_conditions, name, Vector{InitialCondition}())
+function  get_ini_cond(canonical_model::CanonicalModel, key::ICKey)
+    return get(canonical_model.initial_conditions, key, Vector{InitialCondition}())
 end
 
 device_name(ini_cond::InitialCondition) = PSY.get_name(ini_cond.device)
