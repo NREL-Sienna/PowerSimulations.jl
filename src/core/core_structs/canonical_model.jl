@@ -7,6 +7,22 @@ end
 
 const DRDA = Dict{UpdateRef, JuMP.Containers.DenseAxisArray}
 
+# This is defined here to be able to define the canonical model. If this line is moved
+# update the reference in line 1 of file initial_conditions.jl
+abstract type InitialConditionQuantity end
+mutable struct InitialCondition{T<:Union{PJ.ParameterRef, Float64}}
+    device::PSY.Device
+    access_ref::UpdateRef
+    value::T
+end
+
+struct ICKey{IC<:InitialConditionQuantity, D<:PSY.Device}
+    quantity::Type{IC}
+    device_type::Type{D}
+end
+
+const DICKDA = Dict{ICKey, Array{InitialCondition}}
+
 function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory},
                               parameters::Bool,
                               JuMPmodel::Union{JuMP.AbstractModel,Nothing})
@@ -88,7 +104,7 @@ function _canonical_init(bus_numbers::Vector{Int64},
                         initial_time::Dates.DateTime,
                         parameters::Bool,
                         sequential_runs::Bool,
-                        ini_con::Dict{Symbol,Array{InitialCondition}}) where {S<:PM.AbstractPowerFormulation}
+                        ini_con::DICKDA) where {S<:PM.AbstractPowerFormulation}
 
     V = JuMP.variable_type(jump_model)
 
@@ -128,7 +144,7 @@ mutable struct CanonicalModel
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}}
-    initial_conditions::Dict{Symbol, Array{InitialCondition}}
+    initial_conditions::DICKDA
     pm_model::Union{Nothing, PM.GenericPowerModel}
 
     function CanonicalModel(JuMPmodel::JuMP.AbstractModel,
@@ -143,7 +159,7 @@ mutable struct CanonicalModel
                             cost_function::JuMP.AbstractJuMPScalar,
                             expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray},
                             parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}},
-                            initial_conditions::Dict{Symbol, Array{InitialCondition}},
+                            initial_conditions::DICKDA,
                             pm_model::Union{Nothing, PM.GenericPowerModel})
 
         #prevents having empty parameters and parametrized canonical model
@@ -180,7 +196,7 @@ function CanonicalModel(::Type{T},
 
     sequential_runs = get(kwargs, :sequential_runs, false)
     user_defined_model = get(kwargs, :JuMPmodel, nothing)
-    ini_con = get(kwargs, :initial_conditions, Dict{Symbol,Array{InitialCondition}}())
+    ini_con = get(kwargs, :initial_conditions, DICKDA())
     parameters = get(kwargs, :parameters, false)
     forecast = get(kwargs, :forecast, true)
     jump_model = _pass_abstract_jump(optimizer, parameters, user_defined_model)
@@ -218,29 +234,12 @@ model_resolution(canonical_model::CanonicalModel) = canonical_model.resolution
 model_has_parameters(canonical_model::CanonicalModel) = canonical_model.parametrized
 model_runs_sequentially(canonical_model::CanonicalModel) = canonical_model.sequential_runs
 model_initial_time(canonical_model::CanonicalModel) = canonical_model.initial_time
+#Internal Variables, Constraints and Parameters accessors
 vars(canonical_model::CanonicalModel) = canonical_model.variables
 cons(canonical_model::CanonicalModel) = canonical_model.constraints
 var(canonical_model::CanonicalModel, name::Symbol) = canonical_model.variables[name]
 con(canonical_model::CanonicalModel, name::Symbol) = canonical_model.constraints[name]
+var(canonical_model::CanonicalModel, ref::UpdateRef) = canonical_model.variables[ref.access_ref]
+con(canonical_model::CanonicalModel, ref::UpdateRef) = canonical_model.constraints[ref.access_ref]
 par(canonical_model::CanonicalModel, param_reference::UpdateRef) = canonical_model.parameters[param_reference]
 exp(canonical_model::CanonicalModel, name::Symbol) = canonical_model.expressions[name]
-
-# This function is added here because Canonical Model hasn't been defined until now.
-
-function InitialCondition(canonical::CanonicalModel,
-                          device::PSY.Device,
-                          value::Float64)
-
-    if model_has_parameters(canonical)
-        return InitialCondition(device, PJ.add_parameter(canonical.JuMPmodel, value))
-    else
-        return InitialCondition(device, value)
-    end
-
-end
-
-function  get_ini_cond(canonical_model::CanonicalModel, name::Symbol)
-    return get(canonical_model.initial_conditions, name, Vector{InitialCondition}())
-end
-
-device_name(ini_cond::InitialCondition) = PSY.get_name(ini_cond.device)

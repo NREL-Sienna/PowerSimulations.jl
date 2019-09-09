@@ -46,11 +46,19 @@ export ThermalDispatchNoMin
 # feedforward sequences
 export RecedingHorizon
 export Synchronize
+export Sequential
 
 # feedforward models
 export UpperBoundFF
 export SemiContinuousFF
 export RangeFF
+
+# Initial Conditions Quantities
+export DevicePower
+export DeviceStatus
+export TimeDurationON
+export TimeDurationOFF
+export DeviceEnergy
 
 #operation_models
 #export UnitCommitment
@@ -147,6 +155,7 @@ include("service_models/services.jl")
 #Core Models and constructors
 include("core/core_structs/device_model.jl")
 include("core/core_structs/canonical_model.jl")
+include("core/core_structs/initial_conditions.jl")
 include("core/core_structs/service_model.jl")
 include("core/core_structs/operation_model.jl")
 include("core/core_structs/simulation_model.jl")
