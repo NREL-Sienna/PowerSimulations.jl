@@ -1,4 +1,4 @@
-"""Updates the forecast parameter value"""
+#########################TimeSeries Data Updating###########################################
 function parameter_update!(param_reference::UpdateRef{T},
                            param_array::JuMPParamArray,
                            stage_number::Int64,
@@ -18,55 +18,124 @@ function parameter_update!(param_reference::UpdateRef{T},
 
 end
 
-function feedforward_update(::Type{Synchronize},
-                             param_reference::UpdateRef{JuMP.VariableRef},
-                             param_array::JuMPParamArray,
-                             to_stage::_Stage,
-                             from_stage::_Stage)
+# This makes the choice in which variable to get from the results.
 
-    variable = var(from_stage.model.canonical, param_reference.access_ref)
-    for device_name in axes(variable)[1]
-        val = JuMP.value(variable[device_name, to_stage.execution_count + 1])
-        PJ.fix(param_array[device_name], val)
-    end
+function _get_stage_variable(chron::Type{RecedingHorizon},
+                           from_stage::_Stage,
+                           device_name::String,
+                           var_ref::UpdateRef,
+                           to_stage_execution_count::Int64)
 
-    return
-
+    variable = var(from_stage.model.canonical, var_ref)
+    step = axes(variable)[2][1]
+    return JuMP.value(variable[device_name, step])
 end
 
-function feedforward_update(::Type{Sequential},
-                             param_reference::UpdateRef{JuMP.VariableRef},
-                             param_array::JuMPParamArray,
-                             to_stage::_Stage,
-                             from_stage::_Stage)
+function _get_stage_variable(chron::Type{Sequential},
+                             from_stage::_Stage,
+                             device_name::String,
+                             var_ref::UpdateRef,
+                             to_stage_execution_count::Int64)
 
-    variable = var(from_stage.model.canonical, param_reference.access_ref)
+    variable = var(from_stage.model.canonical, var_ref)
+    step = axes(variable)[2][end]
 
-    for device_name in axes(variable)[1]
-        val = JuMP.value(variable[device_name, end])
-        PJ.fix(param_array[device_name], val)
-    end
-
-    return
-
+    return JuMP.value(variable[device_name, step])
 end
 
-function feedforward_update(::Type{RecedingHorizon},
+function _get_stage_variable(chron::Type{Synchronize},
+                           from_stage::_Stage,
+                           device_name::String,
+                           var_ref::UpdateRef,
+                           to_stage_execution_count::Int64)
+
+    variable = var(from_stage.model.canonical, var_ref)
+    step = axes(variable)[2][to_stage_execution_count + 1]
+    return JuMP.value(variable[device_name, step])
+end
+
+#########################FeedForward Variables Updating#####################################
+
+function feedforward_update(::Type{Chron},
                             param_reference::UpdateRef{JuMP.VariableRef},
                             param_array::JuMPParamArray,
                             to_stage::_Stage,
-                            from_stage::_Stage)
+                            from_stage::_Stage) where Chron <: Chronology
 
-    variable = var(from_stage.model.canonical, param_reference.access_ref)
-
-    for device_name in axes(variable)[1]
-        val = JuMP.value(variable[device_name, 1])
-        PJ.fix(param_array[device_name], val)
+    to_stage_execution_count = to_stage.execution_count
+    for device_name in axes(param_array)[1]
+        var_value = _get_stage_variable(Chron, from_stage, device_name, param_reference, to_stage_execution_count)
+        PJ.fix(param_array[device_name], var_value)
     end
 
     return
 
 end
+
+#########################Initial Condition Updating#########################################
+
+# This calculates the value of the quantity for the intitial conditions.
+function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationOFF, PSD},
+                                ic::InitialCondition,
+                                var_value::Float64) where PSD <: PSY.Device
+
+    current_counter = value(ic)
+    new_counter = current_counter + (1.0 - 1.0*(var_value > eps()))
+
+    return new_counter
+end
+
+function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationON, PSD},
+                                ic::InitialCondition,
+                                var_value::Float64) where PSD <: PSY.Device
+
+    current_counter = value(ic)
+    new_counter = current_counter + 1.0*(var_value > eps())
+
+    return new_counter
+end
+
+function _calculate_ic_quantity(initial_condition_key::ICKey{DeviceStatus, PSD},
+                                ic::InitialCondition,
+                               var_value::Float64) where PSD <: PSY.Device
+    return 1.0*(var_value > eps())
+end
+
+function _calculate_ic_quantity(initial_condition_key::ICKey{DevicePower, PSD},
+                               ic::InitialCondition,
+                               var_value::Float64) where PSD <: PSY.Device
+    return var_value
+end
+
+function _initial_condition_update!(initial_condition_key::ICKey,
+                                    ::Type{Chron},
+                                    ini_cond_vector::Vector{InitialCondition},
+                                    to_stage::_Stage,
+                                    from_stage::_Stage) where Chron <: Chronology
+
+    to_stage_execution_count = to_stage.execution_count
+    for ic in ini_cond_vector
+        device_name = ic.device.name
+        access_ref = ic.access_ref
+        var_value = _get_stage_variable(Chron, from_stage, device_name, access_ref, to_stage_execution_count)
+        quantity = _calculate_ic_quantity(initial_condition_key, ic, var_value)
+        PJ.fix(ic.value, quantity)
+    end
+
+    return
+
+end
+
+function _initial_condition_update!(initial_condition_key::ICKey,
+                                    ::Nothing,
+                                    ini_cond_vector::Vector{InitialCondition},
+                                    to_stage::_Stage,
+                                    from_stage::_Stage)
+        # Meant to do nothing
+    return
+end
+
+#############################Interfacing Functions##########################################
 
 """Updates the forecast parameter value"""
 function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
@@ -85,49 +154,8 @@ function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
 
 end
 
-function _initial_condition_update!(::Type{Sequential},
-                                    ini_cond_array,
-                                    to_stage::_Stage,
-                                    from_stage::_Stage)
-
-    for ic in ini_cond_array
-        variable = var(from_stage.model.canonical, ic.access_ref)
-        device_name = ic.device.name
-        step = axes(variable)[2][end]
-        var_value = JuMP.value(variable[device_name, step])
-        PJ.fix(ic.value, var_value)
-    end
-
-    return
-
-end
-
-function _initial_condition_update!(::Type{RecedingHorizon},
-                                    ini_cond_array,
-                                    to_stage::_Stage,
-                                    from_stage::_Stage)
-
-    for ic in ini_cond_array
-        variable = var(from_stage.model.canonical, ic.access_ref)
-        device_name = ic.device.name
-        step = axes(variable)[2][1]
-        var_value = JuMP.value(variable[device_name, step])
-        PJ.fix(ic.value, var_value)
-    end
-
-    return
-
-end
-
-function _initial_condition_update!(::Nothing,
-                                    ini_cond_array,
-                                    to_stage::_Stage,
-                                    from_stage::_Stage)
-    return
-end
-
-
-function intial_condition_update!(ini_cond_array,
+function intial_condition_update!(initial_condition_key::ICKey,
+                                  ini_cond_vector::Vector{InitialCondition},
                                   stage_number::Int64,
                                   step::Int64,
                                   sim::Simulation)
@@ -154,7 +182,11 @@ function intial_condition_update!(ini_cond_array,
         error("Condition not implemented")
     end
 
-    _initial_condition_update!(chronology_ref, ini_cond_array, current_stage, from_stage)
+    _initial_condition_update!(initial_condition_key,
+                               chronology_ref,
+                               ini_cond_vector,
+                               current_stage,
+                               from_stage)
 
     return
 
@@ -170,7 +202,7 @@ function update_stage!(stage::_Stage, step::Int64, sim::Simulation)
 
     # Set initial conditions of the stage I am about to run.
     for (k, v) in stage.model.canonical.initial_conditions
-        intial_condition_update!(v, stage.key, step, sim)
+        intial_condition_update!(k, v, stage.key, step, sim)
     end
 
     return
