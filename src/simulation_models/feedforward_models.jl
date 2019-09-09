@@ -160,11 +160,21 @@ function semicontinuousrange_ff(canonical_model::CanonicalModel,
                                 param_reference::UpdateRef,
                                 var_name::Symbol)
 
+
+
     time_steps = model_time_steps(canonical_model)
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
 
     variable = var(canonical_model, var_name)
+
+    # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
+    for v in variable
+        if JuMP.has_lower_bound(v)
+            JuMP.set_lower_bound(v, 0.0)
+        end
+    end
+
     axes = JuMP.axes(variable)
     set_name = axes[1]
     @assert axes[2] == time_steps
