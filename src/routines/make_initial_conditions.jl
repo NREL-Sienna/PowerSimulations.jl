@@ -1,4 +1,9 @@
-######################### Initialize Functions for Storage #################################
+"""
+Status Initis is always calculated based on the Power Output of the device
+This is to make it easier to calculate when the previous model doesn't
+contain binaries. For instance, looking back on an ED model to find the
+IC of the UC model
+"""
 function status_init(canonical_model::CanonicalModel,
                      devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
@@ -8,7 +13,7 @@ function status_init(canonical_model::CanonicalModel,
     length_devices = length(devices)
     ini_conds = get_ini_cond(canonical_model, key)
     # Improve here
-    ref_key = parameters ? Symbol("ON_$(PSD)") : :activepower
+    ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
 
     if isempty(ini_conds)
         @info("Setting $(key.quantity) initial conditions for the status of all devices $(PSD) based on system data")
@@ -83,7 +88,7 @@ function duration_init(canonical_model::CanonicalModel,
     keys = [ICKey(TimeDurationON, PSD), ICKey(TimeDurationOFF, PSD)]
     parameters = model_has_parameters(canonical_model)
     length_devices = length(devices)
-    ref_key = parameters ? Symbol("ON_$(PSD)") : :activepower
+    ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
 
     for (ik, key) in enumerate(keys)
         ini_conds = get_ini_cond(canonical_model, key)

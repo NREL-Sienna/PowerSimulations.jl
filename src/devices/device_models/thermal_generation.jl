@@ -190,7 +190,7 @@ function commitment_constraints!(canonical_model::CanonicalModel,
                                                                      D<:AbstractThermalFormulation,
                                                                      S<:PM.AbstractPowerFormulation}
 
-    key = Symbol("ON_$(T)")
+    key = ICKey(DeviceStatus, T)
 
     if !(key in keys(canonical_model.initial_conditions))
         error("Initial status conditions not provided. This can lead to unwanted results")
@@ -296,7 +296,7 @@ function ramp_constraints!(canonical_model::CanonicalModel,
                            system_formulation::Type{S}) where {T<:PSY.ThermalGen,
                                                     D<:AbstractThermalFormulation,
                                                     S<:PM.AbstractPowerFormulation}
-    key = Symbol("P_$(T)")
+    key = ICKey(DevicePower, T)
 
     if !(key in keys(canonical_model.initial_conditions))
         error("Initial Conditions for $(T) Rate of Change Constraints not in the model")
@@ -333,7 +333,7 @@ function ramp_constraints!(canonical_model::CanonicalModel,
                                                    D<:AbstractThermalDispatchForm,
                                                    S<:PM.AbstractPowerFormulation}
 
-    key = Symbol("P_$(T)")
+    key = ICKey(DevicePower, T)
 
     if !(key in keys(canonical_model.initial_conditions))
         error("Initial Conditions for $(T) Rate of Change Constraints not in the model")
@@ -416,7 +416,7 @@ function time_constraints!(canonical_model::CanonicalModel,
                                                    D<:AbstractThermalFormulation,
                                                    S<:PM.AbstractPowerFormulation}
 
-    ic_keys =  [Symbol("duration_on_$(T)"), Symbol("duration_off_$(T)")]
+    ic_keys = [ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T)]
     for key in ic_keys
         if !(key in keys(canonical_model.initial_conditions))
             error("Initial Conditions for $(T) Time Constraint not in the model")
