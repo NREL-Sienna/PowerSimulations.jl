@@ -196,7 +196,7 @@ function sort_data(res::OperationModelResults; kwargs...)
     Variables[:STOP_ThermalStandard] = get(kwargs, :STOP_ThermalStandard, nothing)
     Variables[:ON_ThermalStandard] = get(kwargs, :ON_ThermalStandard, nothing)
     Variable_dict = get(kwargs, :Variables, nothing)
-    
+   
     key_name = collect(keys(res.variables))
     Alphabetical = sort!(key_name)
 
@@ -215,14 +215,17 @@ function sort_data(res::OperationModelResults; kwargs...)
     end
 
     for (k,v) in Variables, k in keys(variable_dict)
-    
+        
         variable = variable_dict[k]
         Alphabetical = sort!(names(variable))
-        
-        if isnothing(v)
+        order = Variables[k]
+
+        if isnothing(order)
             variable = variable[:, Alphabetical]
         else
-            variable = variable[:,k]
+            
+            variable = variable[:, order]
+            
         end
         variable_dict[k] = variable
 
