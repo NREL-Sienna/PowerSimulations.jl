@@ -26,7 +26,7 @@ function _get_stage_variable(chron::Type{RecedingHorizon},
                            var_ref::UpdateRef,
                            to_stage_execution_count::Int64)
 
-    variable = var(from_stage.model.canonical, var_ref)
+    variable = get_value(from_stage.model.canonical, var_ref)
     step = axes(variable)[2][1]
     return JuMP.value(variable[device_name, step])
 end
@@ -37,7 +37,7 @@ function _get_stage_variable(chron::Type{Sequential},
                              var_ref::UpdateRef,
                              to_stage_execution_count::Int64)
 
-    variable = var(from_stage.model.canonical, var_ref)
+    variable = get_value(from_stage.model.canonical, var_ref)
     step = axes(variable)[2][end]
 
     return JuMP.value(variable[device_name, step])
@@ -49,7 +49,7 @@ function _get_stage_variable(chron::Type{Synchronize},
                            var_ref::UpdateRef,
                            to_stage_execution_count::Int64)
 
-    variable = var(from_stage.model.canonical, var_ref)
+    variable = get_value(from_stage.model.canonical, var_ref)
     step = axes(variable)[2][to_stage_execution_count + 1]
     return JuMP.value(variable[device_name, step])
 end
@@ -80,7 +80,20 @@ function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationOFF, PS
                                 var_value::Float64) where PSD <: PSY.Device
 
     current_counter = value(ic)
-    new_counter = current_counter + (1.0 - 1.0*(var_value > eps()))
+    last_status = 1.0*(var_value > eps())
+    new_counter = NaN
+
+    # The unit was off-line and was turned on. Reset counter to 0.0
+    if current_counter > 0.0 && last_status >= 1.0
+        new_counter = 0.0
+    end
+
+    # The unit was off and stayed off.
+    if current_counter > 0.0 && last_status < 0.0
+        new_counter = current_counter + 1.0
+    end
+
+    @assert new_counter != NaN
 
     return new_counter
 end
@@ -89,8 +102,22 @@ function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationON, PSD
                                 ic::InitialCondition,
                                 var_value::Float64) where PSD <: PSY.Device
 
+
     current_counter = value(ic)
-    new_counter = current_counter + 1.0*(var_value > eps())
+    last_status = 1.0*(var_value > eps())
+    new_counter = NaN
+
+    # The unit was on-line and was turned off. Reset counter to 0.0
+    if current_counter > 0.0 && last_status < 1.0
+        new_counter = 0.0
+    end
+
+    # The unit was off and stayed off.
+    if current_counter > 0.0 && last_status >= 1.0
+        new_counter = current_counter + 1.0
+    end
+
+    @assert new_counter != NaN
 
     return new_counter
 end
@@ -116,8 +143,8 @@ function _initial_condition_update!(initial_condition_key::ICKey,
     to_stage_execution_count = to_stage.execution_count
     for ic in ini_cond_vector
         device_name = ic.device.name
-        access_ref = ic.access_ref
-        var_value = _get_stage_variable(Chron, from_stage, device_name, access_ref, to_stage_execution_count)
+        update_ref = ic.update_ref
+        var_value = _get_stage_variable(Chron, from_stage, device_name, update_ref, to_stage_execution_count)
         quantity = _calculate_ic_quantity(initial_condition_key, ic, var_value)
         PJ.fix(ic.value, quantity)
     end
@@ -195,7 +222,6 @@ end
 function update_stage!(stage::_Stage, step::Int64, sim::Simulation)
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && stage.execution_count == 0) && return
-
     for (k, v) in stage.model.canonical.parameters
         parameter_update!(k, v, stage.key, sim)
     end
