@@ -6,12 +6,11 @@ the results variables dictionary, and makes a bar plot for all of the variables.
 
 #Examples
 
-for a results with 6 variables, each with 10 generators:
-
+results = solve_op_model!(OpModel)
 bar_plot(results)
 
-generates a bar plot for each variable, with 10 generators,
-and one bar plot of the 6 variables (7 plots)
+generates a bar plot for each variable,
+and one bar plot of all the variables
 
 """
 
@@ -42,12 +41,11 @@ the results variables dictionary, and makes a stack plot for all of the variable
 
 #Examples
 
-for a results with 6 variables, each with 10 generators:
-
+results = solve_op_model!(OpModel)
 stack_plot(results)
 
-generates a stack plot for each variable, with 10 generators,
-and one stack plot of the 6 variables (7 plots)
+generates a stack plot for each variable,
+and one stack plot of all the variables
 
 """
 
