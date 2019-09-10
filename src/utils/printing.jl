@@ -13,3 +13,7 @@ end
 function Base.show(io::IO, res_model::OperationModelResults)
     println(io, "Results Model")
  end
+
+ function Base.show(io::IO, stage::Stage)
+    println(io, "Simulation Stage")
+ end
