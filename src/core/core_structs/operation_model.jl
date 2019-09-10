@@ -30,7 +30,7 @@ function OperationModel(::Type{M},
                         sys::PSY.System;
                         optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
                         kwargs...) where {M<:AbstractOperationModel,
-                                            T<:PM.AbstractPowerFormulation}
+                                          T<:PM.AbstractPowerFormulation}
 
     verbose = get(kwargs, :verbose, true)
     canonical = _build_canonical(model_ref.transmission,
@@ -174,4 +174,10 @@ end
 
 function get_initial_conditions(op_model::OperationModel)
     return op_model.canonical.initial_conditions
+end
+
+function get_initial_conditions(op_model::OperationModel, ic::InitialConditionQuantity, device::PSY.Device)
+    canonical = op_model.canonical
+    key = ICKey(ic, device)
+    return get_ini_cond(canonical, key)
 end

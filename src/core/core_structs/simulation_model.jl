@@ -1,52 +1,3 @@
-######## Structs for Inter-Model feedforward ########
-abstract type Chronology end
-
-struct Synchronize <: Chronology end
-struct RecedingHorizon <: Chronology end
-struct Sequential <: Chronology end
-
-######## Internal Simulation Object Structs ########
-abstract type AbstractStage end
-
-mutable struct _Stage <: AbstractStage
-    key::Int64
-    model::OperationModel
-    executions::Int64
-    execution_count::Int64
-    optimizer::String
-    chronology_ref::Dict{Int64, Type{<:Chronology}}
-    ini_cond_chron::Union{Type{<:Chronology}, Nothing}
-    update::Bool
-
-    function _Stage(key::Int64,
-                   model::OperationModel,
-                   executions::Int64,
-                   chronology_ref::Dict{Int64, Type{<:Chronology}},
-                   update::Bool)
-
-    ini_cond_chron = get(chronology_ref, 0, nothing)
-    if !isempty(get_initial_conditions(model))
-        if isnothing(ini_cond_chron)
-            @warn("Initial Conditions chronology set for Stage $(key) which contains Initial conditions")
-        end
-    end
-
-    pop!(chronology_ref, 0, nothing)
-
-    new(key,
-        model,
-        executions,
-        0,
-        JuMP.solver_name(model.canonical.JuMPmodel),
-        chronology_ref,
-        ini_cond_chron,
-        update
-        )
-
-    end
-
-end
-
 mutable struct SimulationRef
     raw::String
     models::String
@@ -78,35 +29,6 @@ function _initialize_sim_ref(steps::Int64, stages_keys::Base.KeySet)
                                    )
 
 end
-
-######## Exposed Structs to define a Simulation Object ########
-
-mutable struct Stage <: AbstractStage
-    model::ModelReference
-    execution_count::Int64
-    sys::PSY.System
-    optimizer::JuMP.OptimizerFactory
-    chronology_ref::Dict{Int64, Type{<:Chronology}}
-end
-
-function Stage(model::ModelReference,
-            execution_count::Int64,
-            sys::PSY.System,
-            optimizer::JuMP.OptimizerFactory)
-
-    return Stage(model,
-                execution_count,
-                sys,
-                optimizer,
-                Dict{Int, DataType}())
-
-end
-
-get_execution_count(s::S) where S <: AbstractStage = s.execution_count
-get_sys(s::S) where S <: AbstractStage = s.sys
-get_chronology_ref(s::S) where S <: AbstractStage = s.chronology_ref
-
-get_model_ref(s::Stage) = s.model
 
 mutable struct Simulation
     steps::Int64
