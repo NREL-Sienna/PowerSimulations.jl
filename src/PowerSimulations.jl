@@ -110,7 +110,6 @@ import MathOptFormat
 import DataFrames
 import Feather
 
-
 #################################################################################
 #Type Alias for long type signatures
 const MinMax = NamedTuple{(:min, :max), NTuple{2, Float64}}

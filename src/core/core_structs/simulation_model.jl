@@ -27,7 +27,7 @@ mutable struct _Stage <: AbstractStage
     ini_cond_chron = get(chronology_ref, 0, nothing)
     if !isempty(get_initial_conditions(model))
         if isnothing(ini_cond_chron)
-            @warn("Initial Conditions chronology set for Stage $(key) which contains Initial         conditions")
+            @warn("Initial Conditions chronology set for Stage $(key) which contains Initial conditions")
         end
     end
 
