@@ -168,13 +168,6 @@ function semicontinuousrange_ff(canonical_model::CanonicalModel,
 
     variable = var(canonical_model, var_name)
 
-    # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
-    for v in variable
-        if JuMP.has_lower_bound(v)
-            JuMP.set_lower_bound(v, 0.0)
-        end
-    end
-
     axes = JuMP.axes(variable)
     set_name = axes[1]
     @assert axes[2] == time_steps
@@ -196,6 +189,13 @@ function semicontinuousrange_ff(canonical_model::CanonicalModel,
                                             variable[name, t] <= ub_value*param[name])
             con_lb[name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
                                         variable[name, t] >= lb_value*param[name])
+        end
+    end
+
+    # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
+    for v in variable
+        if JuMP.has_lower_bound(v)
+            JuMP.set_lower_bound(v, 0.0)
         end
     end
 
