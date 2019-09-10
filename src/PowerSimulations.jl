@@ -148,9 +148,12 @@ include("network_models/networks.jl")
 include("service_models/services.jl")
 
 #Core Models and constructors
+include("core/core_structs/aux_structs.jl")
+include("core/core_structs/cache_models.jl")
+include("core/core_structs/feedforward_model.jl")
 include("core/core_structs/device_model.jl")
-include("core/core_structs/canonical_model.jl")
 include("core/core_structs/initial_conditions.jl")
+include("core/core_structs/canonical_model.jl")
 include("core/core_structs/service_model.jl")
 include("core/core_structs/operation_model.jl")
 include("core/core_structs/simulation_model.jl")

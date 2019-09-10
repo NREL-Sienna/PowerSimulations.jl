@@ -1,31 +1,3 @@
-######## Structs for Formulation feedforward ########
-abstract type FeedForwardModel end
-
-struct UpperBoundFF <: FeedForwardModel
-    vars_prefix::Vector{Symbol}
-end
-
-UpperBoundFF(var::Symbol) = UpperBoundFF([var])
-get_vars_prefix(p::UpperBoundFF) = p.vars_prefix
-
-struct RangeFF <: FeedForwardModel
-    lb_vars_prefix::Vector{Symbol}
-    ub_vars_prefix::Vector{Symbol}
-end
-
-RangeFF(var_lb::Symbol, var_ub::Symbol) = RangeFF([var_lb], [var_ub])
-get_vars_prefix(p::RangeFF) = (p.lb_var_prefix, p.lb_var_prefix)
-
-struct SemiContinuousFF <: FeedForwardModel
-    vars_prefix::Vector{Symbol}
-    bin_prefix::Symbol
-end
-
-SemiContinuousFF(var::Symbol, bin_var::Symbol) = SemiContinuousFF([var], bin_var)
-
-get_bin_prefix(p::SemiContinuousFF) = p.bin_prefix
-get_vars_prefix(p::SemiContinuousFF) = p.vars_prefix
-
 abstract type AbstractDeviceFormulation end
 
 function _validate_device_formulation(device_model::Type{D}) where {D<:Union{AbstractDeviceFormulation, PSY.Device}}
@@ -67,4 +39,3 @@ function DeviceModel(::Type{D},
     return DeviceModel(D, B, nothing)
 
 end
-

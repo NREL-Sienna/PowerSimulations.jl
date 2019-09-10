@@ -1,28 +1,27 @@
+abstract type InitialConditionQuantity end
 struct DevicePower <: InitialConditionQuantity end
 struct DeviceStatus <: InitialConditionQuantity end
 struct TimeDurationON <: InitialConditionQuantity end
 struct TimeDurationOFF <: InitialConditionQuantity end
 struct DeviceEnergy <: InitialConditionQuantity end
 
-# The struct InitialCondition is located in Line 10 of file canonical_model.
-function InitialCondition(canonical::CanonicalModel,
-                            device::T,
-                            access_ref::Symbol,
-                            value::Float64) where T <: PSY.Device
-
-    if model_has_parameters(canonical)
-        return InitialCondition(device,
-                                UpdateRef{PJ.ParameterRef}(access_ref),
-                                PJ.add_parameter(canonical.JuMPmodel, value))
-    else
-        !hasfield(T, access_ref) && error("Device of of type $(T) doesn't contain
-                                            the field $(access_ref)")
-        return InitialCondition(device,
-                                UpdateRef{T}(access_ref),
-                                value)
-    end
-
+mutable struct InitialCondition{T<:Union{PJ.ParameterRef, Float64}}
+    device::PSY.Device
+    access_ref::UpdateRef
+    value::T
+    cache::Union{Nothing, AbstractCache}
 end
+
+function InitialCondition(device::PSY.Device, access_ref::UpdateRef, value::T) where {T<:Union{PJ.ParameterRef, Float64}}
+    return InitialCondition(device, access_ref, value, nothing)
+end
+
+struct ICKey{IC<:InitialConditionQuantity, D<:PSY.Device}
+    quantity::Type{IC}
+    device_type::Type{D}
+end
+
+const DICKDA = Dict{ICKey, Array{InitialCondition}}
 
 function value(p::InitialCondition{Float64})
     return p.value
@@ -33,9 +32,5 @@ function value(p::InitialCondition{PJ.ParameterRef})
 end
 
 get_condition(ic::InitialCondition) = ic.value
-
-function  get_ini_cond(canonical_model::CanonicalModel, key::ICKey)
-    return get(canonical_model.initial_conditions, key, Vector{InitialCondition}())
-end
 
 device_name(ini_cond::InitialCondition) = PSY.get_name(ini_cond.device)

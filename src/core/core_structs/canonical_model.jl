@@ -1,28 +1,3 @@
-const DSDA = Dict{Symbol, JuMP.Containers.DenseAxisArray}
-
-"""Reference for parameters update when present"""
-struct UpdateRef{T}
-    access_ref::Symbol
-end
-
-const DRDA = Dict{UpdateRef, JuMP.Containers.DenseAxisArray}
-
-# This is defined here to be able to define the canonical model. If this line is moved
-# update the reference in line 1 of file initial_conditions.jl
-abstract type InitialConditionQuantity end
-mutable struct InitialCondition{T<:Union{PJ.ParameterRef, Float64}}
-    device::PSY.Device
-    access_ref::UpdateRef
-    value::T
-end
-
-struct ICKey{IC<:InitialConditionQuantity, D<:PSY.Device}
-    quantity::Type{IC}
-    device_type::Type{D}
-end
-
-const DICKDA = Dict{ICKey, Array{InitialCondition}}
-
 function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory},
                               parameters::Bool,
                               JuMPmodel::Union{JuMP.AbstractModel,Nothing})
@@ -226,6 +201,29 @@ function CanonicalModel(::Type{T},
                            sequential_runs,
                            ini_con)
 
+end
+
+function InitialCondition(canonical::CanonicalModel,
+                          device::T,
+                          access_ref::Symbol,
+                          value::Float64) where T <: PSY.Device
+
+    if model_has_parameters(canonical)
+        return InitialCondition(device,
+                                UpdateRef{PJ.ParameterRef}(access_ref),
+                                PJ.add_parameter(canonical.JuMPmodel, value))
+    else
+        !hasfield(T, access_ref) && error("Device of of type $(T) doesn't contain
+                                            the field $(access_ref)")
+        return InitialCondition(device,
+                                UpdateRef{T}(access_ref),
+                                value)
+    end
+
+end
+
+function get_ini_cond(canonical_model::CanonicalModel, key::ICKey)
+    return get(canonical_model.initial_conditions, key, Vector{InitialCondition}())
 end
 
 _variable_type(cm::CanonicalModel) = JuMP.variable_type(cm.JuMPmodel)
