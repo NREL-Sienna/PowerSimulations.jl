@@ -118,17 +118,22 @@ function device_semicontinuousrange(canonical_model::CanonicalModel,
 
     for t in time_steps, r in scrange_data
 
-            if r[2].min == 0.0
+        # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
+        if JuMP.has_lower_bound(varcts[r[1], t])
+            JuMP.set_lower_bound(varcts[r[1], t], 0.0)
+        end
 
-                con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] <= r[2].max*varbin[r[1], t])
-                con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] >= 0.0)
+        if r[2].min == 0.0
 
-            else
+            con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] <= r[2].max*varbin[r[1], t])
+            con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] >= 0.0)
 
-                con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] <= r[2].max*varbin[r[1], t])
-                con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] >= r[2].min*varbin[r[1], t])
+        else
 
-            end
+            con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] <= r[2].max*varbin[r[1], t])
+            con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] >= r[2].min*varbin[r[1], t])
+
+        end
 
     end
 
