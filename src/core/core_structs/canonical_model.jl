@@ -206,24 +206,42 @@ end
 function InitialCondition(canonical::CanonicalModel,
                           device::T,
                           access_ref::Symbol,
-                          value::Float64) where T <: PSY.Device
+                          value::Float64,
+                          cache::Union{Nothing, Type{<:AbstractCache}}=nothing) where T <: PSY.Device
 
     if model_has_parameters(canonical)
         return InitialCondition(device,
                                 UpdateRef{PJ.ParameterRef}(access_ref),
-                                PJ.add_parameter(canonical.JuMPmodel, value))
+                                PJ.add_parameter(canonical.JuMPmodel, value),
+                                cache)
     else
         !hasfield(T, access_ref) && error("Device of of type $(T) doesn't contain
                                             the field $(access_ref)")
         return InitialCondition(device,
                                 UpdateRef{T}(access_ref),
-                                value)
+                                value,
+                                cache)
     end
 
 end
 
 function get_ini_cond(canonical_model::CanonicalModel, key::ICKey)
     return get(canonical_model.initial_conditions, key, Vector{InitialCondition}())
+end
+
+# Var_ref
+function get_value(canonical::CanonicalModel, ref::UpdateRef{JuMP.VariableRef})
+    return var(canonical, ref.access_ref)
+end
+
+# param_ref
+function get_value(canonical::CanonicalModel, ref::UpdateRef{PJ.ParameterRef})
+    for (k, v) in canonical.parameters
+        if v.access_ref == ref.access_ref
+            return v
+        end
+    end
+    return
 end
 
 _variable_type(cm::CanonicalModel) = JuMP.variable_type(cm.JuMPmodel)
@@ -237,7 +255,5 @@ vars(canonical_model::CanonicalModel) = canonical_model.variables
 cons(canonical_model::CanonicalModel) = canonical_model.constraints
 var(canonical_model::CanonicalModel, name::Symbol) = canonical_model.variables[name]
 con(canonical_model::CanonicalModel, name::Symbol) = canonical_model.constraints[name]
-var(canonical_model::CanonicalModel, ref::UpdateRef) = canonical_model.variables[ref.access_ref]
-con(canonical_model::CanonicalModel, ref::UpdateRef) = canonical_model.constraints[ref.access_ref]
 par(canonical_model::CanonicalModel, param_reference::UpdateRef) = canonical_model.parameters[param_reference]
 exp(canonical_model::CanonicalModel, name::Symbol) = canonical_model.expressions[name]

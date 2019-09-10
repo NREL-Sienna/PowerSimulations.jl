@@ -60,6 +60,9 @@ export TimeDurationON
 export TimeDurationOFF
 export DeviceEnergy
 
+# cache_models
+export TimeStatusChange
+
 #operation_models
 #export UnitCommitment
 #export EconomicDispatch
@@ -133,6 +136,9 @@ const GAE{V} = JuMP.GenericAffExpr{Float64, V} where V<:JuMP.AbstractVariableRef
 const JuMPAffineExpressionArray = Matrix{GAE{V}} where V<:JuMP.AbstractVariableRef
 const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
+const DSDA = Dict{Symbol, JuMP.Containers.DenseAxisArray}
+const Parameter = ParameterJuMP.ParameterRef
+export Parameter
 
 #################################################################################
 ##### JuMP methods overloading
@@ -156,6 +162,8 @@ include("core/core_structs/initial_conditions.jl")
 include("core/core_structs/canonical_model.jl")
 include("core/core_structs/service_model.jl")
 include("core/core_structs/operation_model.jl")
+include("core/core_structs/chronology.jl")
+include("core/core_structs/simulations_stages.jl")
 include("core/core_structs/simulation_model.jl")
 include("core/core_structs/results_model.jl")
 include("core/build_operations.jl")

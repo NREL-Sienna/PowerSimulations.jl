@@ -7,9 +7,9 @@ struct DeviceEnergy <: InitialConditionQuantity end
 
 mutable struct InitialCondition{T<:Union{PJ.ParameterRef, Float64}}
     device::PSY.Device
-    access_ref::UpdateRef
+    update_ref::UpdateRef
     value::T
-    cache::Union{Nothing, AbstractCache}
+    cache::Union{Nothing, Type{<:AbstractCache}}
 end
 
 function InitialCondition(device::PSY.Device, access_ref::UpdateRef, value::T) where {T<:Union{PJ.ParameterRef, Float64}}
