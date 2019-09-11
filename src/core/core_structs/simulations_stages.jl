@@ -9,7 +9,7 @@ mutable struct _Stage <: AbstractStage
     optimizer::String
     chronology_ref::Dict{Int64, Type{<:Chronology}}
     ini_cond_chron::Union{Type{<:Chronology}, Nothing}
-    cache::Vector{<:AbstractCache}
+    cache::Dict{Type{<:AbstractCache}, AbstractCache}
 
     function _Stage(key::Int64,
                    model::OperationModel,
@@ -26,6 +26,12 @@ mutable struct _Stage <: AbstractStage
 
     pop!(chronology_ref, 0, nothing)
 
+    cache_dict = Dict{Type{<:AbstractCache}, AbstractCache}()
+    for c in cache
+        cache_dict[typeof(c)] = c
+    end
+
+
     new(key,
         model,
         executions,
@@ -33,7 +39,7 @@ mutable struct _Stage <: AbstractStage
         JuMP.solver_name(model.canonical.JuMPmodel),
         chronology_ref,
         ini_cond_chron,
-        cache
+        cache_dict
         )
 
     end

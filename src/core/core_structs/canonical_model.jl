@@ -211,7 +211,7 @@ function InitialCondition(canonical::CanonicalModel,
 
     if model_has_parameters(canonical)
         return InitialCondition(device,
-                                UpdateRef{PJ.ParameterRef}(access_ref),
+                                UpdateRef{PJ.VariableRef}(access_ref),
                                 PJ.add_parameter(canonical.JuMPmodel, value),
                                 cache)
     else
@@ -237,7 +237,7 @@ end
 # param_ref
 function get_value(canonical::CanonicalModel, ref::UpdateRef{PJ.ParameterRef})
     for (k, v) in canonical.parameters
-        if v.access_ref == ref.access_ref
+        if k.access_ref == ref.access_ref
             return v
         end
     end

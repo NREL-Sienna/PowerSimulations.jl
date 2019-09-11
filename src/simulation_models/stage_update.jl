@@ -44,14 +44,31 @@ function _get_stage_variable(chron::Type{Sequential},
 end
 
 function _get_stage_variable(chron::Type{Synchronize},
-                           from_stage::_Stage,
-                           device_name::String,
-                           var_ref::UpdateRef,
-                           to_stage_execution_count::Int64)
+                            from_stage::_Stage,
+                            device_name::String,
+                            var_ref::UpdateRef,
+                            to_stage_execution_count::Int64)
 
     variable = get_value(from_stage.model.canonical, var_ref)
     step = axes(variable)[2][to_stage_execution_count + 1]
     return JuMP.value(variable[device_name, step])
+end
+
+################################Cache Update################################################
+function _update_cache!(c::TimeStatusChange, stage::_Stage)
+    parameter = get_value(stage.model.canonical, c.ref)
+
+    for name in parameter.axes[1]
+        param_status = PJ.value(parameter[name])
+        if c.value[name][:status] == param_status
+            c.value[name][:count] += 1.0
+        elseif c.value[name][:status] != param_status
+            c.value[name][:count] = 1.0
+            c.value[name][:status] = param_status
+        end
+    end
+
+    return
 end
 
 #########################FeedForward Variables Updating#####################################
@@ -74,63 +91,63 @@ end
 
 #########################Initial Condition Updating#########################################
 
-# This calculates the value of the quantity for the intitial conditions.
+# TODO: Consider when more than one UC model is used for the stages that the counts need
+# to be scaled.
 function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationOFF, PSD},
                                 ic::InitialCondition,
-                                var_value::Float64) where PSD <: PSY.Device
+                                var_value::Float64,
+                                cache::Union{Nothing,AbstractCache}) where PSD <: PSY.Device
 
-    current_counter = value(ic)
-    last_status = 1.0*(var_value > eps())
-    new_counter = NaN
+    name = device_name(ic)
+    time_cache = cache_value(cache, name)
 
-    # The unit was off-line and was turned on. Reset counter to 0.0
-    if current_counter > 0.0 && last_status >= 1.0
-        new_counter = 0.0
+    current_counter = time_cache[:count]
+    last_status = time_cache[:status]
+    @assert last_status == 1.0*(var_value > eps())
+
+    if last_status >= 1.0
+        return current_counter
     end
 
-    # The unit was off and stayed off.
-    if current_counter > 0.0 && last_status < 0.0
-        new_counter = current_counter + 1.0
+    if last_status < 1.0
+        return 0.0
     end
-
-    @assert new_counter != NaN
-
-    return new_counter
 end
 
 function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationON, PSD},
                                 ic::InitialCondition,
-                                var_value::Float64) where PSD <: PSY.Device
+                                var_value::Float64,
+                                cache::Union{Nothing,AbstractCache}) where PSD <: PSY.Device
 
+    name = device_name(ic)
+    time_cache = cache_value(cache, name)
 
-    current_counter = value(ic)
-    last_status = 1.0*(var_value > eps())
-    new_counter = NaN
+    current_counter = time_cache[:count]
+    last_status = time_cache[:status]
+    @assert last_status == 1.0*(var_value > eps())
 
-    # The unit was on-line and was turned off. Reset counter to 0.0
-    if current_counter > 0.0 && last_status < 1.0
-        new_counter = 0.0
+    if last_status >= 1.0
+        return 0.0
     end
 
-    # The unit was off and stayed off.
-    if current_counter > 0.0 && last_status >= 1.0
-        new_counter = current_counter + 1.0
+    if last_status < 1.0
+        return current_counter
     end
 
-    @assert new_counter != NaN
-
-    return new_counter
 end
 
 function _calculate_ic_quantity(initial_condition_key::ICKey{DeviceStatus, PSD},
                                 ic::InitialCondition,
-                               var_value::Float64) where PSD <: PSY.Device
+                                var_value::Float64,
+                                cache::Union{Nothing,AbstractCache}) where PSD <: PSY.Device
     return 1.0*(var_value > eps())
 end
 
 function _calculate_ic_quantity(initial_condition_key::ICKey{DevicePower, PSD},
                                ic::InitialCondition,
-                               var_value::Float64) where PSD <: PSY.Device
+                               var_value::Float64,
+                               cache::Union{Nothing,AbstractCache}) where PSD <: PSY.Device
+
     return var_value
 end
 
@@ -142,10 +159,11 @@ function _initial_condition_update!(initial_condition_key::ICKey,
 
     to_stage_execution_count = to_stage.execution_count
     for ic in ini_cond_vector
-        device_name = ic.device.name
+        name = device_name(ic)
         update_ref = ic.update_ref
-        var_value = _get_stage_variable(Chron, from_stage, device_name, update_ref, to_stage_execution_count)
-        quantity = _calculate_ic_quantity(initial_condition_key, ic, var_value)
+        var_value = _get_stage_variable(Chron, from_stage, name, update_ref, to_stage_execution_count)
+        cache = get(from_stage.cache, ic.cache, nothing)
+        quantity = _calculate_ic_quantity(initial_condition_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
     end
 
@@ -163,6 +181,15 @@ function _initial_condition_update!(initial_condition_key::ICKey,
 end
 
 #############################Interfacing Functions##########################################
+
+function cache_update!(stage::_Stage)
+    for (k, v) in stage.cache
+        _update_cache!(v, stage)
+    end
+
+    return
+
+end
 
 """Updates the forecast parameter value"""
 function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
@@ -208,7 +235,6 @@ function intial_condition_update!(initial_condition_key::ICKey,
     else
         error("Condition not implemented")
     end
-
     _initial_condition_update!(initial_condition_key,
                                chronology_ref,
                                ini_cond_vector,
@@ -221,10 +247,13 @@ end
 
 function update_stage!(stage::_Stage, step::Int64, sim::Simulation)
     # Is first run of first stage? Yes -> do nothing
-    (step == 1 && stage.execution_count == 0) && return
+    (step == 1 && stage.key == 1 && stage.execution_count == 0) && return
+
     for (k, v) in stage.model.canonical.parameters
         parameter_update!(k, v, stage.key, sim)
     end
+
+    cache_update!(stage)
 
     # Set initial conditions of the stage I am about to run.
     for (k, v) in stage.model.canonical.initial_conditions

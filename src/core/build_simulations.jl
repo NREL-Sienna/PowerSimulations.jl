@@ -60,6 +60,15 @@ function _get_dates(stages::Dict{Int64, Stage})
 
 end
 
+function _populate_cache!(cache_vector::Vector{<:AbstractCache}, op_model::OperationModel)
+
+    for cache in cache_vector
+        build_cache!(cache, op_model)
+    end
+
+    return
+end
+
 function _build_stages(sim_ref::SimulationRef,
                        stages::Dict{Int64, Stage},
                        verbose::Bool = true;
@@ -79,6 +88,7 @@ function _build_stages(sim_ref::SimulationRef,
         mkpath(stage_path)
         write_op_model(op_mod, joinpath(stage_path, "optimization_model.json"))
         system_to_file && PSY.to_json(v.sys, joinpath(stage_path ,"sys_data.json"))
+        _populate_cache!(v.cache, op_mod)
         mod_stages[k] = _Stage(k, op_mod, v.execution_count, v.chronology_ref, v.cache)
         sim_ref.date_ref[k] = PSY.get_forecast_initial_times(v.sys)[1]
     end

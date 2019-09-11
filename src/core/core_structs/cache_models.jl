@@ -4,11 +4,13 @@ abstract type AbstractCache end
 Tracks the last time status of a device changed in a simulation
 """
 mutable struct TimeStatusChange <: AbstractCache
-    value::Float64
-    last_status::Float64
+    value::JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}
     ref::UpdateRef
 end
 
 function TimeStatusChange(parameter::Symbol)
-    return TimeStatusChange(0.0, 999.0, UpdateRef{Parameter}(parameter))
+    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, 1)
+    return TimeStatusChange(value_array, UpdateRef{Parameter}(parameter))
 end
+
+cache_value(cache::AbstractCache, key) = cache.value[key]
