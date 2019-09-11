@@ -125,6 +125,15 @@ function activepower_constraints!(canonical_model::CanonicalModel,
                                                                      S<:PM.AbstractPowerFormulation}
 
     range_data = [(PSY.get_name(g), (min = 0.0, max=(PSY.get_tech(g) |> PSY.get_activepowerlimits).max)) for g in devices]
+    var_key = Symbol("P_$(T)")
+    variable = var(canonical_model, var_key)
+
+    # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
+    for v in variable
+        if JuMP.has_lower_bound(v)
+            JuMP.set_lower_bound(v, 0.0)
+        end
+    end
 
     device_range(canonical_model,
                 range_data,
