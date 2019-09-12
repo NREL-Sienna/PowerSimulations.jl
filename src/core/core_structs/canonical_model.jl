@@ -211,7 +211,7 @@ function InitialCondition(canonical::CanonicalModel,
 
     if model_has_parameters(canonical)
         return InitialCondition(device,
-                                UpdateRef{PJ.VariableRef}(access_ref),
+                                UpdateRef{JuMP.VariableRef}(access_ref),
                                 PJ.add_parameter(canonical.JuMPmodel, value),
                                 cache)
     else
