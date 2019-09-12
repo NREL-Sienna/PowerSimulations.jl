@@ -7,16 +7,13 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
     if op_model.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
 
         if !(:optimizer in keys(kwargs))
-
             error("No Optimizer has been defined, can't solve the operational problem")
-
-        else
-            _, timed_log[:timed_solve_time],
-            timed_log[:solve_bytes_alloc],
-            timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel,
-                                                            kwargs[:optimizer])
-
         end
+
+        _, timed_log[:timed_solve_time],
+        timed_log[:solve_bytes_alloc],
+        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel,
+                                                        kwargs[:optimizer])
 
     else
 
