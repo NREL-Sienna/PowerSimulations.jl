@@ -160,7 +160,6 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     initial_conditions!(canonical_model, devices, model.formulation)
 
-
     #Constraints
     activepower_constraints!(canonical_model, devices, model.formulation, S)
 
@@ -201,7 +200,9 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     initial_conditions!(canonical_model, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(canonical_model, devices, model.formulation, S)
+    if !(isa(model.feedforward, SemiContinuousFF))
+        activepower_constraints!(canonical_model, devices, D, S)
+    end
 
     reactivepower_constraints!(canonical_model, devices, model.formulation, S)
 
@@ -241,7 +242,9 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     initial_conditions!(canonical_model, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(canonical_model, devices, model.formulation, S)
+    if !(isa(model.feedforward, SemiContinuousFF))
+        activepower_constraints!(canonical_model, devices, D, S)
+    end
 
     ramp_constraints!(canonical_model, devices, model.formulation, S)
 
@@ -278,7 +281,9 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     #Initial Conditions
 
     #Constraints
-    activepower_constraints!(canonical_model, devices, D, S)
+    if !(isa(model.feedforward, SemiContinuousFF))
+        activepower_constraints!(canonical_model, devices, D, S)
+    end
 
     reactivepower_constraints!(canonical_model, devices, D, S)
 
@@ -311,7 +316,10 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     #Initial Conditions
 
     #Constraints
-    activepower_constraints!(canonical_model, devices, D, S)
+    # Slighly hacky for now
+    if !(isa(model.feedforward, SemiContinuousFF))
+        activepower_constraints!(canonical_model, devices, D, S)
+    end
 
     feedforward!(canonical_model, T, model.feedforward)
 
