@@ -141,34 +141,6 @@ function _pwlparamcheck(cost_)
 end
 
 @doc raw"""
-    _gen_cost(cost_)
-
-Returns JuMP expression for a piecewise linear cost function depending on the data compatibility.
-
-Returns ```gen_cost```
-
-# Arguments
-
-* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
-* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
-* cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
-"""
-function _gen_cost(canonical_model::CanonicalModel,
-                    variable::JV,
-                    cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
-
-    # If array is full of tuples with zeros return 0.0
-    in(true, iszero.(last.(cost_component))) && return 0.0
-
-    if !_pwlparamcheck(cost_component)
-        gen_cost = _pwlgencost_sos(canonical_model, variable, cost_component)
-    else
-        gen_cost = _pwlgencost(canonical_model, variable, cost_component)
-    end
-    return gen_cost
-end
-
-@doc raw"""
     _pwlgencost_sos(canonical_model::CanonicalModel,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::PSY.VariableCost{NTuple{2, Float64}}) where {JV <: JuMP.AbstractVariableRef}
@@ -247,7 +219,7 @@ Returns ```gen_cost```
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 """
-function _pwlgencost(canonical_model::CanonicalModel,
+function _pwlgencost_linear(canonical_model::CanonicalModel,
         variable::JV,
         cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
@@ -270,6 +242,37 @@ function _pwlgencost(canonical_model::CanonicalModel,
 
     return gen_cost
 
+end
+
+@doc raw"""
+    _gen_cost(cost_)
+
+Returns JuMP expression for a piecewise linear cost function depending on the data compatibility.
+
+Returns ```gen_cost```
+
+# Arguments
+
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
+* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
+* cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
+"""
+function _pwl_cost(canonical_model::CanonicalModel,
+                    variable::JV,
+                    cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
+
+    # If array is full of tuples with zeros return 0.0
+    in(true, iszero.(last.(cost_component))) && return 0.0
+
+    if !_pwlparamcheck(cost_component)
+        @warn("The cost function provided for $(variable) device is not compatible with a linear PWL cost function.
+        An SOS-2 formulation will be added to the model.
+        This will result in additional binary variables added to the model.")
+        gen_cost = _pwlgencost_sos(canonical_model, variable, cost_component)
+    else
+        gen_cost = _pwlgencost_linear(canonical_model, variable, cost_component)
+    end
+    return gen_cost
 end
 
 @doc raw"""
@@ -312,7 +315,7 @@ function ps_cost(canonical_model::CanonicalModel,
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}()
     cost_array = cost_component.cost
     for var in variable
-        c = _gen_cost(canonical_model, var, cost_array)
+        c = _pwl_cost(canonical_model, var, cost_array)
         JuMP.add_to_expression!(gen_cost, c)
     end
 
@@ -363,10 +366,6 @@ function add_to_cost(canonical_model::CanonicalModel,
 
     for d in devices
         cost_component = getfield(PSY.get_op_cost(d), cost_symbol)
-        cost_array = cost_component.cost
-        if !_pwlparamcheck(cost_component)
-            @warn("The cost function provided for device $(d) is not compatible with a linear PWL cost function. An SOS-2 formulation will be added to the model. This will result in additional binary variables added to the model.")
-        end
         cost_expression = ps_cost(canonical_model,
                                   variable[PSY.get_name(d), :],
                                   cost_component,
