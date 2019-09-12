@@ -201,7 +201,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     #Constraints
     if !(isa(model.feedforward, SemiContinuousFF))
-        activepower_constraints!(canonical_model, devices, D, S)
+        activepower_constraints!(canonical_model, devices, ThermalRampLimited, S)
     end
 
     reactivepower_constraints!(canonical_model, devices, model.formulation, S)
@@ -243,7 +243,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 
     #Constraints
     if !(isa(model.feedforward, SemiContinuousFF))
-        activepower_constraints!(canonical_model, devices, D, S)
+        activepower_constraints!(canonical_model, devices, ThermalRampLimited, S)
     end
 
     ramp_constraints!(canonical_model, devices, model.formulation, S)

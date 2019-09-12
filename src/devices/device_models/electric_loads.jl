@@ -233,8 +233,8 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
     for (ix, d) in enumerate(devices)
         bus_number = PSY.get_bus(d) |> PSY.get_number
         name = PSY.get_name(d)
-        active_power = PSY.get_maxactivepower(d)
-        reactive_power = PSY.get_maxreactivepower(d)
+        active_power = PSY.get_activepower(d)
+        reactive_power = PSY.get_reactivepower(d)
         time_series_vector = ones(time_steps[end])
         ts_data_active[ix] = (name, bus_number, active_power, time_series_vector, -1.0)
         ts_data_reactive[ix] = (name, bus_number, reactive_power, time_series_vector, -1.0)
@@ -264,7 +264,7 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
     for (ix, d) in enumerate(devices)
         bus_number = PSY.get_bus(d) |> PSY.get_number
         name = PSY.get_name(d)
-        active_power = PSY.get_maxactivepower(d)
+        active_power = PSY.get_activepower(d)
         time_series_vector = ones(time_steps[end])
         ts_data_active[ix] = (name, bus_number, active_power, time_series_vector, -1.0)
     end
@@ -355,8 +355,8 @@ function _nodal_expression_fixed(canonical_model::CanonicalModel,
 
     for t in time_steps, d in devices
         bus_number = PSY.get_bus(d) |> PSY.get_number
-        active_power = PSY.get_maxactivepower(d)
-        reactive_power = PSY.get_maxreactivepower(d)
+        active_power = PSY.get_activepower(d)
+        reactive_power = PSY.get_reactivepower(d)
         _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
                             bus_number,
                             t,
@@ -381,7 +381,7 @@ function _nodal_expression_fixed(canonical_model::CanonicalModel,
 
     for t in time_steps, d in devices
         bus_number = PSY.get_bus(d) |> PSY.get_number
-        active_power = PSY.get_maxactivepower(d)
+        active_power = PSY.get_activepower(d)
         _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
                             bus_number,
                             t,
