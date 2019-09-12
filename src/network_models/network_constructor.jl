@@ -28,7 +28,7 @@ function _internal_network_constructor(canonical::CanonicalModel,
         dc_branches = PSY.get_components(PSY.DCBranch, sys)
         dc_branch_types = typeof.(dc_branches)
         for btype in Set(dc_branch_types)
-            typed_dc_branches = PSY.FlattenIteratorWrapper(btype, Vector([[b for b in dc_branches if typeof(b) == btype]]))
+            typed_dc_branches = IS.FlattenIteratorWrapper(btype, Vector([[b for b in dc_branches if typeof(b) == btype]]))
             flow_variables(canonical,
                            StandardPTDFForm,
                            typed_dc_branches)

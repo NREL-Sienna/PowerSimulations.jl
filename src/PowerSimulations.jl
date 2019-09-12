@@ -101,6 +101,7 @@ import MathOptInterface
 import ParameterJuMP
 import LinearAlgebra
 import PowerSystems
+import InfrastructureSystems
 import PowerModels
 import RecipesBase
 
@@ -124,6 +125,7 @@ const InOut = NamedTuple{(:in, :out), NTuple{2, Float64}}
 const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
+const IS = PowerSimulations
 const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
 const PJ = ParameterJuMP

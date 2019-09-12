@@ -5,7 +5,7 @@ contain binaries. For instance, looking back on an ED model to find the
 IC of the UC model
 """
 function status_init(canonical_model::CanonicalModel,
-                     devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
+                     devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
 
     key = ICKey(DeviceStatus, PSD)
@@ -44,7 +44,7 @@ function status_init(canonical_model::CanonicalModel,
 end
 
 function output_init(canonical_model::CanonicalModel,
-                    devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
+                    devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
     key = ICKey(DevicePower, PSD)
     parameters = model_has_parameters(canonical_model)
@@ -83,7 +83,7 @@ function output_init(canonical_model::CanonicalModel,
 end
 
 function duration_init(canonical_model::CanonicalModel,
-                        devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
+                        devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
     keys = [ICKey(TimeDurationON, PSD), ICKey(TimeDurationOFF, PSD)]
     parameters = model_has_parameters(canonical_model)
@@ -136,7 +136,7 @@ end
 ######################### Initialize Functions for Storage #################################
 
 function storage_energy_init(canonical_model::CanonicalModel,
-                             devices::PSY.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.Storage}
+                             devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.Storage}
 
     key = ICKey(DeviceEnergy, PSD)
     parameters = model_has_parameters(canonical_model)

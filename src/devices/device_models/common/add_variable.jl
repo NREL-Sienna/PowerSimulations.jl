@@ -49,7 +49,7 @@ function add_variable(canonical_model::CanonicalModel,
                       binary::Bool,
                       expression::Union{Nothing,Symbol}=nothing,
                       sign::Float64=1.0; kwargs...) where {D<:Union{Vector{<:PSY.Device},
-                                          PSY.FlattenIteratorWrapper{<:PSY.Device}}}
+                                          IS.FlattenIteratorWrapper{<:PSY.Device}}}
 
     time_steps = model_time_steps(canonical_model)
     _add_var_container!(canonical_model, var_name, (PSY.get_name(d) for d in devices), time_steps)

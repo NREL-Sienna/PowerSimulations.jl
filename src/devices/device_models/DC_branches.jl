@@ -10,7 +10,7 @@ struct VoltageSourceDC<:AbstractDCLineForm end
 
 function flow_variables(canonical_model::CanonicalModel,
                         system_formulation::Type{S},
-                        devices::PSY.FlattenIteratorWrapper{B}) where {B<:PSY.DCBranch,
+                        devices::IS.FlattenIteratorWrapper{B}) where {B<:PSY.DCBranch,
                                                                         S<:PM.AbstractPowerFormulation}
 
     return
@@ -19,7 +19,7 @@ end
 
 function flow_variables(canonical_model::CanonicalModel,
                         system_formulation::Type{StandardPTDFForm},
-                        devices::PSY.FlattenIteratorWrapper{B}) where {B<:PSY.DCBranch}
+                        devices::IS.FlattenIteratorWrapper{B}) where {B<:PSY.DCBranch}
 
     time_steps = model_time_steps(canonical_model)
     var_name = Symbol("Fp_$(B)")
@@ -56,7 +56,7 @@ end
 #################################### Rate Limits Constraints ##################################################
 
 function branch_rate_constraint(canonical_model::CanonicalModel,
-                                devices::PSY.FlattenIteratorWrapper{B},
+                                devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.DCBranch,
                                                                     D<:AbstractDCLineForm,
@@ -78,7 +78,7 @@ function branch_rate_constraint(canonical_model::CanonicalModel,
 end
 
 function branch_rate_constraint(canonical_model::CanonicalModel,
-                                devices::PSY.FlattenIteratorWrapper{B},
+                                devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{HVDCLossless},
                                 system_formulation::Type{S}) where {B<:PSY.DCBranch,
                                                                     S<:PM.AbstractPowerFormulation}
@@ -102,7 +102,7 @@ function branch_rate_constraint(canonical_model::CanonicalModel,
 end
 
 function branch_rate_constraint(canonical_model::CanonicalModel,
-                                devices::PSY.FlattenIteratorWrapper{B},
+                                devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.DCBranch,
                                                                     D<:AbstractDCLineForm,

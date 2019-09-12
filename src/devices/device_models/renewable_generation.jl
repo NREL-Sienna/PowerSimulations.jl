@@ -11,7 +11,7 @@ struct RenewableConstantPowerFactor<:AbstractRenewableDispatchForm end
 ########################### renewable generation variables ############################################
 
 function activepower_variables(canonical_model::CanonicalModel,
-                               devices::PSY.FlattenIteratorWrapper{R}) where {R<:PSY.RenewableGen}
+                               devices::IS.FlattenIteratorWrapper{R}) where {R<:PSY.RenewableGen}
 
     add_variable(canonical_model,
                  devices,
@@ -26,7 +26,7 @@ function activepower_variables(canonical_model::CanonicalModel,
 end
 
 function reactivepower_variables(canonical_model::CanonicalModel,
-                                 devices::PSY.FlattenIteratorWrapper{R}) where {R<:PSY.RenewableGen}
+                                 devices::IS.FlattenIteratorWrapper{R}) where {R<:PSY.RenewableGen}
 
     add_variable(canonical_model,
                  devices,
@@ -40,7 +40,7 @@ end
 
 ####################################### Reactive Power Constraints ######################################
 function reactivepower_constraints(canonical_model::CanonicalModel,
-                                    devices::PSY.FlattenIteratorWrapper{R},
+                                    devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableFullDispatch},
                                     system_formulation::Type{S}) where {R<:PSY.RenewableGen,
                                                                          S<:PM.AbstractPowerFormulation}
@@ -69,7 +69,7 @@ function reactivepower_constraints(canonical_model::CanonicalModel,
 end
 
 function reactivepower_constraints(canonical_model::CanonicalModel,
-                                    devices::PSY.FlattenIteratorWrapper{R},
+                                    devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableConstantPowerFactor},
                                     system_formulation::Type{S}) where {R<:PSY.RenewableGen,
                                                                         S<:PM.AbstractPowerFormulation}
@@ -95,7 +95,7 @@ end
 
 
 ######################## output constraints without Time Series ###################################
-function _get_time_series(devices::PSY.FlattenIteratorWrapper{R},
+function _get_time_series(devices::IS.FlattenIteratorWrapper{R},
                           time_steps::UnitRange{Int64}) where {R<:PSY.RenewableGen}
 
     names = Vector{String}(undef, length(devices))
@@ -112,7 +112,7 @@ function _get_time_series(devices::PSY.FlattenIteratorWrapper{R},
 end
 
 function activepower_constraints(canonical_model::CanonicalModel,
-                                devices::PSY.FlattenIteratorWrapper{R},
+                                devices::IS.FlattenIteratorWrapper{R},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {R<:PSY.RenewableGen,
                                                          D<:AbstractRenewableDispatchForm,
@@ -185,7 +185,7 @@ end
 
 ##################################### renewable generation cost ######################################
 function cost_function(canonical_model::CanonicalModel,
-                       devices::PSY.FlattenIteratorWrapper{PSY.RenewableDispatch},
+                       devices::IS.FlattenIteratorWrapper{PSY.RenewableDispatch},
                        device_formulation::Type{D},
                        system_formulation::Type{S}) where {D<:AbstractRenewableDispatchForm,
                                                            S<:PM.AbstractPowerFormulation}

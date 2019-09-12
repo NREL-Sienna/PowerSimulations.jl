@@ -42,7 +42,7 @@ end
 ########################################### Devices ####################################################
 
 function _nodal_expression_param(canonical_model::CanonicalModel,
-                                devices::PSY.FlattenIteratorWrapper{G},
+                                devices::IS.FlattenIteratorWrapper{G},
                                 system_formulation::Type{S}) where {G<:PSY.Generator,
                                                                     S<:PM.AbstractPowerFormulation}
 
@@ -74,7 +74,7 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
 end
 
 function _nodal_expression_param(canonical_model::CanonicalModel,
-                                devices::PSY.FlattenIteratorWrapper{G},
+                                devices::IS.FlattenIteratorWrapper{G},
                                 system_formulation::Type{S}) where {G<:PSY.Generator,
                                                                     S<:PM.AbstractActivePowerFormulation}
 
@@ -161,7 +161,7 @@ end
 ############################ injection expression with fixed values ####################################
 ########################################### Devices ####################################################
 function _nodal_expression_fixed(canonical_model::CanonicalModel,
-                                devices::PSY.FlattenIteratorWrapper{G},
+                                devices::IS.FlattenIteratorWrapper{G},
                                 system_formulation::Type{S}) where {G<:PSY.Generator,
                                                                      S<:PM.AbstractPowerFormulation}
 
@@ -186,7 +186,7 @@ function _nodal_expression_fixed(canonical_model::CanonicalModel,
 end
 
 function _nodal_expression_fixed(canonical_model::CanonicalModel,
-                                    devices::PSY.FlattenIteratorWrapper{G},
+                                    devices::IS.FlattenIteratorWrapper{G},
                                     system_formulation::Type{S}) where {G<:PSY.Generator,
                                                                          S<:PM.AbstractActivePowerFormulation}
 
