@@ -1,28 +1,3 @@
-const DSDA = Dict{Symbol, JuMP.Containers.DenseAxisArray}
-
-"""Reference for parameters update when present"""
-struct UpdateRef{T}
-    access_ref::Symbol
-end
-
-const DRDA = Dict{UpdateRef, JuMP.Containers.DenseAxisArray}
-
-# This is defined here to be able to define the canonical model. If this line is moved
-# update the reference in line 1 of file initial_conditions.jl
-abstract type InitialConditionQuantity end
-mutable struct InitialCondition{T<:Union{PJ.ParameterRef, Float64}}
-    device::PSY.Device
-    access_ref::UpdateRef
-    value::T
-end
-
-struct ICKey{IC<:InitialConditionQuantity, D<:PSY.Device}
-    quantity::Type{IC}
-    device_type::Type{D}
-end
-
-const DICKDA = Dict{ICKey, Array{InitialCondition}}
-
 function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory},
                               parameters::Bool,
                               JuMPmodel::Union{JuMP.AbstractModel,Nothing})
@@ -228,6 +203,47 @@ function CanonicalModel(::Type{T},
 
 end
 
+function InitialCondition(canonical::CanonicalModel,
+                          device::T,
+                          access_ref::Symbol,
+                          value::Float64,
+                          cache::Union{Nothing, Type{<:AbstractCache}}=nothing) where T <: PSY.Device
+
+    if model_has_parameters(canonical)
+        return InitialCondition(device,
+                                UpdateRef{PJ.VariableRef}(access_ref),
+                                PJ.add_parameter(canonical.JuMPmodel, value),
+                                cache)
+    else
+        !hasfield(T, access_ref) && error("Device of of type $(T) doesn't contain
+                                            the field $(access_ref)")
+        return InitialCondition(device,
+                                UpdateRef{T}(access_ref),
+                                value,
+                                cache)
+    end
+
+end
+
+function get_ini_cond(canonical_model::CanonicalModel, key::ICKey)
+    return get(canonical_model.initial_conditions, key, Vector{InitialCondition}())
+end
+
+# Var_ref
+function get_value(canonical::CanonicalModel, ref::UpdateRef{JuMP.VariableRef})
+    return var(canonical, ref.access_ref)
+end
+
+# param_ref
+function get_value(canonical::CanonicalModel, ref::UpdateRef{PJ.ParameterRef})
+    for (k, v) in canonical.parameters
+        if k.access_ref == ref.access_ref
+            return v
+        end
+    end
+    return
+end
+
 _variable_type(cm::CanonicalModel) = JuMP.variable_type(cm.JuMPmodel)
 model_time_steps(canonical_model::CanonicalModel) = canonical_model.time_steps
 model_resolution(canonical_model::CanonicalModel) = canonical_model.resolution
@@ -239,7 +255,5 @@ vars(canonical_model::CanonicalModel) = canonical_model.variables
 cons(canonical_model::CanonicalModel) = canonical_model.constraints
 var(canonical_model::CanonicalModel, name::Symbol) = canonical_model.variables[name]
 con(canonical_model::CanonicalModel, name::Symbol) = canonical_model.constraints[name]
-var(canonical_model::CanonicalModel, ref::UpdateRef) = canonical_model.variables[ref.access_ref]
-con(canonical_model::CanonicalModel, ref::UpdateRef) = canonical_model.constraints[ref.access_ref]
 par(canonical_model::CanonicalModel, param_reference::UpdateRef) = canonical_model.parameters[param_reference]
 exp(canonical_model::CanonicalModel, name::Symbol) = canonical_model.expressions[name]

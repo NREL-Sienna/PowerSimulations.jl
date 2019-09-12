@@ -60,6 +60,9 @@ export TimeDurationON
 export TimeDurationOFF
 export DeviceEnergy
 
+# cache_models
+export TimeStatusChange
+
 #operation_models
 #export UnitCommitment
 #export EconomicDispatch
@@ -110,7 +113,6 @@ import MathOptFormat
 import DataFrames
 import Feather
 
-
 #################################################################################
 #Type Alias for long type signatures
 const MinMax = NamedTuple{(:min, :max), NTuple{2, Float64}}
@@ -134,6 +136,9 @@ const GAE{V} = JuMP.GenericAffExpr{Float64, V} where V<:JuMP.AbstractVariableRef
 const JuMPAffineExpressionArray = Matrix{GAE{V}} where V<:JuMP.AbstractVariableRef
 const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
+const DSDA = Dict{Symbol, JuMP.Containers.DenseAxisArray}
+const Parameter = ParameterJuMP.ParameterRef
+export Parameter
 
 #################################################################################
 ##### JuMP methods overloading
@@ -149,13 +154,19 @@ include("network_models/networks.jl")
 include("service_models/services.jl")
 
 #Core Models and constructors
+include("core/core_structs/aux_structs.jl")
+include("core/core_structs/cache_models.jl")
+include("core/core_structs/feedforward_model.jl")
 include("core/core_structs/device_model.jl")
-include("core/core_structs/canonical_model.jl")
 include("core/core_structs/initial_conditions.jl")
+include("core/core_structs/canonical_model.jl")
 include("core/core_structs/service_model.jl")
 include("core/core_structs/operation_model.jl")
+include("core/core_structs/chronology.jl")
+include("core/core_structs/simulations_stages.jl")
 include("core/core_structs/simulation_model.jl")
 include("core/core_structs/results_model.jl")
+include("core/build_cache.jl")
 include("core/build_operations.jl")
 include("core/build_simulations.jl")
 

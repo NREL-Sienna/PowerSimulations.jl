@@ -103,12 +103,13 @@ function duration_init(canonical_model::CanonicalModel,
                 ini_conds[ix] = InitialCondition(canonical_model,
                                                     g,
                                                     ref_key,
-                                                    times[ik])
+                                                    times[ik],
+                                                    TimeStatusChange)
             end
 
         else
 
-            ic_devices = (ic.device for ic in ini_conds)
+            ic_devices = (ic.device for ic in ini_conds if !isnothing(ic.cache))
 
             for g in devices
                 g in ic_devices && continue
@@ -118,7 +119,8 @@ function duration_init(canonical_model::CanonicalModel,
                 push!(ini_conds, InitialCondition(canonical_model,
                                                   g,
                                                   ref_key,
-                                                  times[ik]))
+                                                  times[ik],
+                                                  TimeStatusChange))
             end
 
         end

@@ -13,7 +13,7 @@
                                                 JuMP.AffExpr(0),
                                                 Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
                                                 nothing,
-                                                Dict{Symbol, Array{InitialCondition}}(),
+                                                Dict{PSI.ICKey, Array{InitialCondition}}(),
                                                 nothing)
 end
 

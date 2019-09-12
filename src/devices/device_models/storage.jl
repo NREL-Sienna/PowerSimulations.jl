@@ -72,8 +72,8 @@ end
 
 function active_power_constraints(canonical_model::CanonicalModel,
                                   devices::PSY.FlattenIteratorWrapper{St},
-                                  device_formulation::Type{BookKeeping},
-                                  system_formulation::Type{S}) where {St<:PSY.Storage,
+                                  ::Type{BookKeeping},
+                                  ::Type{S}) where {St<:PSY.Storage,
                                                                       S<:PM.AbstractPowerFormulation}
 
     range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
@@ -95,8 +95,8 @@ end
 
 function active_power_constraints(canonical_model::CanonicalModel,
                                   devices::PSY.FlattenIteratorWrapper{St},
-                                  device_formulation::Type{BookKeepingwReservation},
-                                  system_formulation::Type{S}) where {St<:PSY.Storage,
+                                  ::Type{BookKeepingwReservation},
+                                  ::Type{S}) where {St<:PSY.Storage,
                                                                       S<:PM.AbstractPowerFormulation}
 
     range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
@@ -124,8 +124,8 @@ This function adds the reactive  power limits of generators when there are Commi
 """
 function reactive_power_constraints(canonical_model::CanonicalModel,
                                    devices::PSY.FlattenIteratorWrapper{St},
-                                   device_formulation::Type{D},
-                                   system_formulation::Type{S}) where {St<:PSY.Storage,
+                                   ::Type{D},
+                                   ::Type{S}) where {St<:PSY.Storage,
                                                                        D<:AbstractStorageForm,
                                                                        S<:PM.AbstractPowerFormulation}
 
@@ -143,7 +143,7 @@ end
 ########################## Make initial Conditions for a Model #############################
 function initial_conditions!(canonical_model::CanonicalModel,
                             devices::PSY.FlattenIteratorWrapper{St},
-                            device_formulation::Type{D}) where {St<:PSY.Storage,
+                            ::Type{D}) where {St<:PSY.Storage,
                                                                 D<:AbstractStorageForm}
 
     storage_energy_init(canonical_model, devices)
@@ -156,8 +156,8 @@ end
 
 function energy_capacity_constraints(canonical_model::CanonicalModel,
                                     devices::PSY.FlattenIteratorWrapper{St},
-                                    device_formulation::Type{D},
-                                    system_formulation::Type{S}) where {St<:PSY.Storage,
+                                    ::Type{D},
+                                    ::Type{S}) where {St<:PSY.Storage,
                                                                         D<:AbstractStorageForm,
                                                                         S<:PM.AbstractPowerFormulation}
 
@@ -191,12 +191,12 @@ end
 
 function energy_balance_constraint(canonical_model::CanonicalModel,
                                    devices::PSY.FlattenIteratorWrapper{St},
-                                   device_formulation::Type{D},
-                                   system_formulation::Type{S}) where {St<:PSY.Storage,
+                                   ::Type{D},
+                                   ::Type{S}) where {St<:PSY.Storage,
                                                             D<:AbstractStorageForm,
                                                             S<:PM.AbstractPowerFormulation}
 
-    key = Symbol("E_$(St)")
+    key = ICKey(DeviceEnergy, St)
 
     if !(key in keys(canonical_model.initial_conditions))
         error("Initial Conditions for $(St) Energy Constraints not in the model")
