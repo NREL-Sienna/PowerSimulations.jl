@@ -328,7 +328,7 @@ end
                      devices::D,
                      var_name::Symbol,
                      cost_symbol::Symbol,
-                     sign::Float64 = 1.0) where {D<:PSY.FlattenIteratorWrapper{<:PSY.Device}}
+                     sign::Float64 = 1.0) where {D<:IS.FlattenIteratorWrapper{<:PSY.Device}}
 
 Adds cost expression for each device using appropriate call to ```ps_cost```.
 
@@ -358,7 +358,7 @@ function add_to_cost(canonical_model::CanonicalModel,
                      devices::D,
                      var_name::Symbol,
                      cost_symbol::Symbol,
-                     sign::Float64 = 1.0) where {D<:PSY.FlattenIteratorWrapper{<:PSY.Device}}
+                     sign::Float64 = 1.0) where {D<:IS.FlattenIteratorWrapper{<:PSY.Device}}
 
     resolution = model_resolution(canonical_model)
     dt = Dates.value(Dates.Minute(resolution))/60

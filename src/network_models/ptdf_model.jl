@@ -1,6 +1,6 @@
 function ptdf_networkflow(canonical_model::CanonicalModel,
-                          branches::PSY.FlattenIteratorWrapper{B},
-                          buses::PSY.FlattenIteratorWrapper{PSY.Bus},
+                          branches::IS.FlattenIteratorWrapper{B},
+                          buses::IS.FlattenIteratorWrapper{PSY.Bus},
                           expression::Symbol,
                           PTDF::PSY.PTDF) where {B<:PSY.Branch}
 
@@ -14,7 +14,7 @@ function ptdf_networkflow(canonical_model::CanonicalModel,
     var_dict = Dict{Type,Symbol}()
     for btype in Set(branch_types)
         var_dict[btype] = Symbol("Fp_$(btype)")
-        typed_branches = PSY.FlattenIteratorWrapper(btype, Vector([[b for b in branches if typeof(b) == btype]]))
+        typed_branches = IS.FlattenIteratorWrapper(btype, Vector([[b for b in branches if typeof(b) == btype]]))
         flow_variables(canonical_model, StandardPTDFForm, typed_branches)
     end
 
