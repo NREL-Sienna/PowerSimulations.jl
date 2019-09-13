@@ -494,6 +494,8 @@ function cost_function(canonical_model::CanonicalModel,
                                          D<:AbstractThermalFormulation,
                                          S<:PM.AbstractPowerFormulation}
 
+    # replace all thesse with add_all_to_cost()
+
     #Variable Cost component
     add_to_cost(canonical_model, devices, Symbol("P_$(T)"), :variable)
 
