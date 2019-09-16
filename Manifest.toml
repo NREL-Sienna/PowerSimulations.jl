@@ -157,7 +157,7 @@ version = "0.3.2"
 
 [[InfrastructureSystems]]
 deps = ["CSV", "DataFrames", "Dates", "InteractiveUtils", "JSON", "JSON2", "Logging", "Mustache", "Test", "TimeSeries", "UUIDs", "YAML"]
-git-tree-sha1 = "92c2ad1bcb943f7474e2bb070c07809579fa388d"
+git-tree-sha1 = "a158c7321542c878d9479a525ce7e136251ddaa2"
 repo-rev = "master"
 repo-url = "https://github.com/NREL/InfrastructureSystems.jl.git"
 uuid = "2cd47ed4-ca9b-11e9-27f2-ab636a7671f1"
@@ -315,7 +315,7 @@ version = "0.12.5"
 
 [[PowerSystems]]
 deps = ["CSV", "DataFrames", "Dates", "InfrastructureSystems", "InteractiveUtils", "JSON", "JSON2", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "UUIDs", "YAML"]
-git-tree-sha1 = "647a4d30b4fcf804fbeac83ec2e4e24509556083"
+git-tree-sha1 = "f1c4270eb1ad023cfec29a4cc37d65afc8ebe60b"
 repo-rev = "dev"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
