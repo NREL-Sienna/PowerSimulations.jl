@@ -221,9 +221,10 @@ function _pwlgencost_linear(canonical_model::CanonicalModel,
         cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}()
+    upperbound(i) = (i == 1 ? cost_component[i][2] : (cost_component[i][2] - cost_component[i-1][2]))
     pwlvars = JuMP.@variable(canonical_model.JuMPmodel, [i = 1:length(cost_component)],
                             base_name = "{$(variable)}_{pwl}", start = 0.0,
-                            lower_bound = 0.0, upper_bound = 1.0)
+                            lower_bound = 0.0, upper_bound = upperbound(i))
 
     for (ix, pwlvar) in enumerate(pwlvars)
         if ix == 1
@@ -235,20 +236,10 @@ function _pwlgencost_linear(canonical_model::CanonicalModel,
     end
 
     c = JuMP.@constraint(canonical_model.JuMPmodel, variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars) ]) )
-    c = JuMP.@constraint(canonical_model.JuMPmodel, UC == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars) ]) )
-
 
     return gen_cost
 
 end
-#=
-from 
-@variable(m, 0 <= lambda_lg[g in thermal_gens,gen_pwl_points[g],time_periods] <= 1)
-
-@constraint(m, pg[g,t] == sum((gen["piecewise_production"][l]["mw"] - gen["piecewise_production"][1]["mw"])*lambda_lg[g,l,t] for l in gen_pwl_points[g])) # (21)
-@constraint(m, cg[g,t] == sum((gen["piecewise_production"][l]["cost"] - gen["piecewise_production"][1]["cost"])*lambda_lg[g,l,t] for l in gen_pwl_points[g])) # (22)
-@constraint(m, ug[g,t] == sum(lambda_lg[g,l,t] for l in gen_pwl_points[g])) # (23)
-=#
 
 @doc raw"""
     _gen_cost(cost_)
@@ -390,14 +381,50 @@ function add_to_cost(canonical_model::CanonicalModel,
 
 end
 
-function add_all_to_cost(anonical_model::CanonicalModel,
+function add_all_to_cost(canonical_model::CanonicalModel,
     devices::D,
-    var_names::Vector{Symbol},
-    cost_symbol::Symbol,
-    sign::Float64 = 1.0) where {D<:IS.FlattenIteratorWrapper{<:PSY.Device}}
+    var_names::NamedTuple{(:p, :start, :stop, :on),NTuple{4,Symbol}}) where {D<:IS.FlattenIteratorWrapper{<:PSY.Device}}
 
         #Variable Cost component
-        add_to_cost(canonical_model, devices, Symbol("P_$(T)"), :variable) # replace with PGlib formualtion
+        #add_to_cost(canonical_model, devices, Symbol("P_$(T)"), :variable) # replace with PGlib formualtion
+
+        #=
+        from pglib
+        @variable(m, 0 <= lambda_lg[g in thermal_gens,gen_pwl_points[g],time_periods] <= 1)
+
+        @constraint(m, pg[g,t] == sum((gen["piecewise_production"][l]["mw"] - gen["piecewise_production"][1]["mw"])*lambda_lg[g,l,t] for l in gen_pwl_points[g])) # (21)
+        @constraint(m, cg[g,t] == sum((gen["piecewise_production"][l]["cost"] - gen["piecewise_production"][1]["cost"])*lambda_lg[g,l,t] for l in gen_pwl_points[g])) # (22)
+        @constraint(m, ug[g,t] == sum(lambda_lg[g,l,t] for l in gen_pwl_points[g])) # (23)
+        =#
+
+        resolution = model_resolution(canonical_model)
+        dt = Dates.value(Dates.Minute(resolution))/60
+        variable = var(canonical_model, var_names[:p])
+
+        for d in devices
+            cost_component = getfield(PSY.get_op_cost(d), :variable)
+            cost_expression = ps_cost(canonical_model,
+                                    variable[PSY.get_name(d), :],
+                                    cost_component,
+                                    dt,
+                                    sign)
+
+            gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}()
+            c = JuMP.@variable(canonical_model.JuMPmodel, [i = 1:length(cost_component)],
+                                base_name"{$()_cost}", start=0.0, lower_bound=0.0)
+            pwlvars = JuMP.@variable(canonical_model.JuMPmodel, [i = 1:length(cost_component)],
+                                    base_name = "{$(variable)}_{pwl}", start = 0.0,
+                                    lower_bound = 0.0, upper_bound = 1.0)
+        
+            for (ix, pwlvar) in enumerate(pwlvars)
+                JuMP.add_to_expression!(gen_cost, cost_component[ix][2] * pwlvar)
+            end
+
+            JuMP.@constraint(canonical_model.JuMPmodel, var_names[:p] == sum([pwlvar * cost_component[ix][1] for (ix, pwlvar) in enumerate(pwlvars) ]) )
+            JuMP.@constraint(canonical_model.JuMPmodel, var_names[:on] == sum([pwlvar * cost_component[ix][2] for (ix, pwlvar) in enumerate(pwlvars) ]) )
+            JuMP.@constraint(canonical_model.JuMPmodel, var_names[:on] == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars) ]) )
+            
+        end
 
         #Commitment Cost Components
         add_to_cost(canonical_model, devices, Symbol("START_$(T)"), :startup)
