@@ -130,12 +130,8 @@ Returns ```flag```
 function _pwlparamcheck(cost_)
     flag = true
 
-    for i in 1:(length(cost_)-1)
-        if i == 1
-            (cost_[i][1]/cost_[i][2]) <= ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) ? nothing : flag = false
-        else
-            ((cost_[i][1] - cost_[i-1][1])/(cost_[i][2] - cost_[i-1][2])) <= ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) ? nothing : flag = false
-        end
+    for i in 2:(length(cost_)-1)
+        ((cost_[i][1] - cost_[i-1][1])/(cost_[i][2] - cost_[i-1][2])) <= ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) && flag = false
     end
     return flag
 end
