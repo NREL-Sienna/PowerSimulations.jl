@@ -7,7 +7,7 @@ struct BookKeepingwReservation<:AbstractStorageForm end
 #################################################Storage Variables#################################
 
 function active_power_variables(canonical_model::CanonicalModel,
-                                devices::PSY.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
+                                devices::IS.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
 
     add_variable(canonical_model,
                  devices,
@@ -29,7 +29,7 @@ end
 
 
 function reactive_power_variables(canonical_model::CanonicalModel,
-                                  devices::PSY.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
+                                  devices::IS.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
     add_variable(canonical_model,
                  devices,
                  Symbol("Qst_$(St)"),
@@ -42,7 +42,7 @@ end
 
 
 function energy_storage_variables(canonical_model::CanonicalModel,
-                                  devices::PSY.FlattenIteratorWrapper{St}) where St<:PSY.Storage
+                                  devices::IS.FlattenIteratorWrapper{St}) where St<:PSY.Storage
 
     add_variable(canonical_model,
                  devices,
@@ -56,7 +56,7 @@ end
 
 
 function storage_reservation_variables(canonical_model::CanonicalModel,
-                                       devices::PSY.FlattenIteratorWrapper{St}) where St<:PSY.Storage
+                                       devices::IS.FlattenIteratorWrapper{St}) where St<:PSY.Storage
 
     add_variable(canonical_model,
                  devices,
@@ -71,7 +71,7 @@ end
 ###################################################### output power constraints#################################
 
 function active_power_constraints(canonical_model::CanonicalModel,
-                                  devices::PSY.FlattenIteratorWrapper{St},
+                                  devices::IS.FlattenIteratorWrapper{St},
                                   ::Type{BookKeeping},
                                   ::Type{S}) where {St<:PSY.Storage,
                                                                       S<:PM.AbstractPowerFormulation}
@@ -94,7 +94,7 @@ function active_power_constraints(canonical_model::CanonicalModel,
 end
 
 function active_power_constraints(canonical_model::CanonicalModel,
-                                  devices::PSY.FlattenIteratorWrapper{St},
+                                  devices::IS.FlattenIteratorWrapper{St},
                                   ::Type{BookKeepingwReservation},
                                   ::Type{S}) where {St<:PSY.Storage,
                                                                       S<:PM.AbstractPowerFormulation}
@@ -123,7 +123,7 @@ end
 This function adds the reactive  power limits of generators when there are CommitmentVariables
 """
 function reactive_power_constraints(canonical_model::CanonicalModel,
-                                   devices::PSY.FlattenIteratorWrapper{St},
+                                   devices::IS.FlattenIteratorWrapper{St},
                                    ::Type{D},
                                    ::Type{S}) where {St<:PSY.Storage,
                                                                        D<:AbstractStorageForm,
@@ -142,7 +142,7 @@ end
 
 ########################## Make initial Conditions for a Model #############################
 function initial_conditions!(canonical_model::CanonicalModel,
-                            devices::PSY.FlattenIteratorWrapper{St},
+                            devices::IS.FlattenIteratorWrapper{St},
                             ::Type{D}) where {St<:PSY.Storage,
                                                                 D<:AbstractStorageForm}
 
@@ -155,7 +155,7 @@ end
 ###################################################### Energy Capacity constraints##########
 
 function energy_capacity_constraints(canonical_model::CanonicalModel,
-                                    devices::PSY.FlattenIteratorWrapper{St},
+                                    devices::IS.FlattenIteratorWrapper{St},
                                     ::Type{D},
                                     ::Type{S}) where {St<:PSY.Storage,
                                                                         D<:AbstractStorageForm,
@@ -173,7 +173,7 @@ end
 
 ###################################################### book keeping constraints ############
 
-function make_efficiency_data(devices::PSY.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
+function make_efficiency_data(devices::IS.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
 
     names = Vector{String}(undef, length(devices))
     in_out = Vector{InOut}(undef, length(devices))
@@ -190,7 +190,7 @@ end
 
 
 function energy_balance_constraint(canonical_model::CanonicalModel,
-                                   devices::PSY.FlattenIteratorWrapper{St},
+                                   devices::IS.FlattenIteratorWrapper{St},
                                    ::Type{D},
                                    ::Type{S}) where {St<:PSY.Storage,
                                                             D<:AbstractStorageForm,

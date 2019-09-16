@@ -155,6 +155,14 @@ git-tree-sha1 = "4739474cbd631b821dba4253c05150f1d1880d22"
 uuid = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
 version = "0.3.2"
 
+[[InfrastructureSystems]]
+deps = ["CSV", "DataFrames", "Dates", "InteractiveUtils", "JSON", "JSON2", "Logging", "Mustache", "Test", "TimeSeries", "UUIDs", "YAML"]
+git-tree-sha1 = "a158c7321542c878d9479a525ce7e136251ddaa2"
+repo-rev = "master"
+repo-url = "https://github.com/NREL/InfrastructureSystems.jl.git"
+uuid = "2cd47ed4-ca9b-11e9-27f2-ab636a7671f1"
+version = "0.1.0"
+
 [[IniFile]]
 deps = ["Test"]
 git-tree-sha1 = "098e4d2c533924c921f9f9847274f2ad89e018b8"
@@ -254,6 +262,12 @@ git-tree-sha1 = "bd2623f8b728af988d2afec53d611acb621f3bc4"
 uuid = "78c3b35d-d492-501b-9361-3d52fe80e533"
 version = "0.7.0"
 
+[[Mustache]]
+deps = ["Printf", "Tables"]
+git-tree-sha1 = "f39de3a12232eb47bd0629b3a661054287780276"
+uuid = "ffc61752-8dc7-55ee-8c37-f3e9cdd09e70"
+version = "0.5.13"
+
 [[NaNMath]]
 deps = ["Compat"]
 git-tree-sha1 = "ce3b85e484a5d4c71dd5316215069311135fa9f2"
@@ -300,8 +314,8 @@ uuid = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 version = "0.12.5"
 
 [[PowerSystems]]
-deps = ["CSV", "DataFrames", "Dates", "InteractiveUtils", "JSON", "JSON2", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "UUIDs", "YAML"]
-git-tree-sha1 = "9eedad4a66e9e2fbccd63cea63f85db3ac619f3f"
+deps = ["CSV", "DataFrames", "Dates", "InfrastructureSystems", "InteractiveUtils", "JSON", "JSON2", "LinearAlgebra", "Logging", "SparseArrays", "TimeSeries", "UUIDs", "YAML"]
+git-tree-sha1 = "f1c4270eb1ad023cfec29a4cc37d65afc8ebe60b"
 repo-rev = "dev"
 repo-url = "https://github.com/NREL/PowerSystems.jl.git"
 uuid = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
