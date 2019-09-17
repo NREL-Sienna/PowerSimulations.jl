@@ -39,6 +39,7 @@ export BookKeeping
 export BookKeepingwReservation
 ######## Thermal Formulations ########
 export ThermalUnitCommitment
+export ThermalBasicUnitCommitment
 export ThermalDispatch
 export ThermalRampLimited
 export ThermalDispatchNoMin
