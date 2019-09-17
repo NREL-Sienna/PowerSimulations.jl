@@ -7,7 +7,6 @@ version = "0.2.0"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Feather = "becb17da-46f6-5d3c-ad1b-1c5fe96bc73c"
-InfrastructureSystems = "2cd47ed4-ca9b-11e9-27f2-ab636a7671f1"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MathOptFormat = "f4570300-c277-12e8-125c-4912f86ce65d"
@@ -30,6 +29,7 @@ PowerModels = "~0.12"
 PowerSystems = "~v0.4"
 TimeSeries = "~v0.16"
 julia = "~1.2"
+
 
 [extras]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
