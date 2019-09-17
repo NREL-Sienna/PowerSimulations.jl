@@ -14,21 +14,26 @@ using Weave
 
 results = solve_op_model!(OpModel)
 out_path = "/Users/lhanig/GitHub"
-jmd = "/Users/lhanig/.julia/dev/PowerSimulations/src/utils/report_design.jmd"
 
-report(results, jmd, out_path)
 
-kwargs: doctype = "md2html" to create an HTML
-default is PDF via latex
+report(results, out_path) 
+
+# kwargs: 
+doctype = "md2html" to create an HTML, default is PDF via latex
+
+jmd = "custom file path/report_design.jmd"
+report(results, out_path; jmd = jmd)
+jmd has a default of ".../pwd()/report_design/report_design.jmd"
 
 """
 
 
 
-function report(res::OperationModelResults, jmd::String, out_path::String; kwargs...)
+function report(res::OperationModelResults,out_path::String; kwargs...)
 
-    println("hello")
     doctype = get(kwargs, :doctype, "md2pdf")
+    default_string = joinpath(pwd(), "src/utils/report_design/report_design.jmd")
+    jmd = get(kwargs, :jmd, default_string)
     args = Dict("res" => res, "variables" => res.variables)
     Weave.weave(jmd, out_path=out_path, latex_cmd = "xelatex",
                 doctype = doctype, args = args)
