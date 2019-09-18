@@ -158,6 +158,8 @@ function construct_device!(op_model::OperationModel,
         error("Device with model name $(name) already exists in the Opertaion Model")
     end
 
+    op_model.model_ref.devices[name] = device_model
+
     _internal_device_constructor!(op_model.canonical,
                                   device_model,
                                   get_transmission_ref(op_model),
