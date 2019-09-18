@@ -495,7 +495,7 @@ function cost_function(canonical_model::CanonicalModel,
                                          S<:PM.AbstractPowerFormulation}
 
 
-    add_all_to_cost(cannonical_model, devices, (p=Symbol("P_$(T)"),
+    add_all_to_cost(canonical_model, devices, (p=Symbol("P_$(T)"),
                                                 start=Symbol("START_$(T)"),
                                                 stop=Symbol("STOP_$(T)"),
                                                 on=Symbol("ON_$(T)")))

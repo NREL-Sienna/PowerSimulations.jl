@@ -414,11 +414,11 @@ function add_all_to_cost(canonical_model::CanonicalModel,
 
             gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}()
             c = JuMP.@variable(canonical_model.JuMPmodel, [i = 1:length(cost_component)],
-                                base_name"{$()_cost}", start=0.0, lower_bound=0.0)
+                                base_name="{$(d.name)_cost}", start=0.0, lower_bound=0.0)
             pwlvars = JuMP.@variable(canonical_model.JuMPmodel, [i = 1:length(cost_component)],
                                     base_name = "{$(variable)}_{pwl}", start = 0.0,
                                     lower_bound = 0.0, upper_bound = 1.0)
-        
+
             for (ix, pwlvar) in enumerate(pwlvars)
                 JuMP.add_to_expression!(gen_cost, cost_component[ix][2] * pwlvar)
             end
@@ -426,7 +426,7 @@ function add_all_to_cost(canonical_model::CanonicalModel,
             JuMP.@constraint(canonical_model.JuMPmodel, var_names[:p] == sum([pwlvar * cost_component[ix][1] for (ix, pwlvar) in enumerate(pwlvars) ]) )
             JuMP.@constraint(canonical_model.JuMPmodel, var_names[:on] == sum([pwlvar * cost_component[ix][2] for (ix, pwlvar) in enumerate(pwlvars) ]) )
             JuMP.@constraint(canonical_model.JuMPmodel, var_names[:on] == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars) ]) )
-            
+
         end
 
         #Commitment Cost Components
