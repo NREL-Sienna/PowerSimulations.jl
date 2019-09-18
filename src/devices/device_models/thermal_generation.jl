@@ -494,6 +494,13 @@ function cost_function(canonical_model::CanonicalModel,
                                          D<:AbstractThermalFormulation,
                                          S<:PM.AbstractPowerFormulation}
 
+
+    add_all_to_cost(cannonical_model, devices, (p=Symbol("P_$(T)"),
+                                                start=Symbol("START_$(T)"),
+                                                stop=Symbol("STOP_$(T)"),
+                                                on=Symbol("ON_$(T)")))
+
+    #= for now skip this TODO: replace with a better solution
     #Variable Cost component
     add_to_cost(canonical_model, devices, Symbol("P_$(T)"), :variable)
 
@@ -501,7 +508,7 @@ function cost_function(canonical_model::CanonicalModel,
     add_to_cost(canonical_model, devices, Symbol("START_$(T)"), :startup)
     add_to_cost(canonical_model, devices, Symbol("STOP_$(T)"), :shutdn)
     add_to_cost(canonical_model, devices, Symbol("ON_$(T)"), :fixed)
-
+    =#
     return
 
 end
