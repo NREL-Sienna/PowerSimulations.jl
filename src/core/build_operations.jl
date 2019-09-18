@@ -43,11 +43,11 @@ function build_op_model!(op_model::OperationModel; kwargs...)
     verbose = get(kwargs, :verbose, true)
     optimizer = get(kwargs, :optimizer, nothing)
 
-    op_model.canonical = _build_canonical(op_model.transmission,
-                                          op_model.devices,
-                                          op_model.branches,
-                                          op_model.services,
-                                          op_model.system,
+    op_model.canonical = _build_canonical(op_model.model_ref.transmission,
+                                          op_model.model_ref.devices,
+                                          op_model.model_ref.branches,
+                                          op_model.model_ref.services,
+                                          op_model.sys,
                                           optimizer,
                                           verbose;
                                           kwargs...)
