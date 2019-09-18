@@ -38,7 +38,7 @@ export HydroFixed
 export BookKeeping
 export BookKeepingwReservation
 ######## Thermal Formulations ########
-export ThermalUnitCommitment
+export ThermalStandardUnitCommitment
 export ThermalBasicUnitCommitment
 export ThermalDispatch
 export ThermalRampLimited
