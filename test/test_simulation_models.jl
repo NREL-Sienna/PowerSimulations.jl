@@ -6,7 +6,7 @@ branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine)
 
 services = Dict{Symbol, PSI.ServiceModel}()
 
-devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalUnitCommitment),
+devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalStandardUnitCommitment),
                                     :Ren => DeviceModel(PSY.RenewableDispatch, PSI.RenewableFullDispatch),
                                     :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad),
                                     :ILoads =>  DeviceModel(PSY.InterruptibleLoad, PSI.StaticPowerLoad))
@@ -28,4 +28,3 @@ devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStanda
                                     :ILoads =>  DeviceModel(PSY.InterruptibleLoad, PSI.InterruptiblePowerLoad,))
 
 model_ref_ed= ModelReference(CopperPlatePowerModel, devices, branches, services);
-

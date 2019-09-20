@@ -2,8 +2,8 @@ abstract type AbstractOperationModel end
 
 struct DefaultOpModel<:AbstractOperationModel end
 
-mutable struct ModelReference{T<:PM.AbstractPowerFormulation}
-    transmission::Type{T}
+mutable struct ModelReference
+    transmission::Type{<:PM.AbstractPowerFormulation}
     devices::Dict{Symbol, DeviceModel}
     branches::Dict{Symbol, DeviceModel}
     services::Dict{Symbol, ServiceModel}
@@ -157,6 +157,8 @@ function construct_device!(op_model::OperationModel,
     if haskey(op_model.model_ref.devices, name)
         error("Device with model name $(name) already exists in the Opertaion Model")
     end
+
+    op_model.model_ref.devices[name] = device_model
 
     _internal_device_constructor!(op_model.canonical,
                                   device_model,

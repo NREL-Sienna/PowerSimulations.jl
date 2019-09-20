@@ -130,15 +130,15 @@ Returns ```flag```
 function _pwlparamcheck(cost_)
     flag = true
 
-    for i in 1:(length(cost_)-1)
-        if i == 1
-            (cost_[i][1]/cost_[i][2]) <= ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) ? nothing : flag = false
-        else
-            ((cost_[i][1] - cost_[i-1][1])/(cost_[i][2] - cost_[i-1][2])) <= ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) ? nothing : flag = false
+    l = length(cost_)
+    for i in 1:(l-2)
+        if ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) > ((cost_[i+2][1] - cost_[i+1][1])/(cost_[i+2][2] - cost_[i+1][2]))
+            flag = false
         end
     end
     return flag
 end
+
 
 @doc raw"""
     _pwlgencost_sos(canonical_model::CanonicalModel,
@@ -262,7 +262,7 @@ function _pwl_cost(canonical_model::CanonicalModel,
                     cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
     # If array is full of tuples with zeros return 0.0
-    in(true, iszero.(last.(cost_component))) && return 0.0
+    all(iszero.(last.(cost_component))) && return 0.0
 
     if !_pwlparamcheck(cost_component)
         @warn("The cost function provided for $(variable) device is not compatible with a linear PWL cost function.

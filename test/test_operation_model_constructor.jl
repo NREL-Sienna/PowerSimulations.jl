@@ -78,7 +78,7 @@ end
                 PM.QCWRForm,
                 PM.QCWRTriForm];
 
-    thermal_gens = [PSI.ThermalUnitCommitment,
+    thermal_gens = [PSI.ThermalStandardUnitCommitment,
                     PSI.ThermalDispatch,
                     PSI.ThermalRampLimited,
                     PSI.ThermalDispatchNoMin];

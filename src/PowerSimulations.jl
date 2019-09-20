@@ -38,7 +38,8 @@ export HydroFixed
 export BookKeeping
 export BookKeepingwReservation
 ######## Thermal Formulations ########
-export ThermalUnitCommitment
+export ThermalStandardUnitCommitment
+export ThermalBasicUnitCommitment
 export ThermalDispatch
 export ThermalRampLimited
 export ThermalDispatchNoMin
@@ -75,6 +76,12 @@ export construct_network!
 ## Op Model Exports
 export solve_op_model!
 export get_initial_conditions
+export set_transmission_ref!
+export set_devices_ref!
+export set_branches_ref!
+export set_device_model!
+export set_branch_model!
+export set_device_model!
 ## Sim Model Exports
 export run_sim_model!
 ## Utils Exports
