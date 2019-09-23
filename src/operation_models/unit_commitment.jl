@@ -1,14 +1,14 @@
-struct UnitCommitment <: AbstractOperationsModel end
+struct UnitCommitment<:AbstractOperationModel end
 
-function UnitCommitment(system::PSY.System, transmission::Type{S}; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...) where {S <: PM.AbstractPowerFormulation}
+function UnitCommitment(sys::PSY.System, transmission::Type{S}; optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing, kwargs...) where {S<:PM.AbstractPowerFormulation}
 
-    devices = Dict{Symbol, PSI.DeviceModel}(:ThermalGenerators => PSI.DeviceModel(PSY.ThermalGen, PSI.ThermalUnitCommitment),
-                                            :RenewableGenerators => PSI.DeviceModel(PSY.RenewableGen, PSI.RenewableFullDispatch),
-                                            :Loads => PSI.DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
+    devices = Dict{Symbol, DeviceModel}(:ThermalGenerators => DeviceModel(PSY.ThermalGen, ThermalStandardUnitCommitment),
+                                            :RenewableGenerators => DeviceModel(PSY.RenewableGen, RenewableFullDispatch),
+                                            :Loads => DeviceModel(PSY.PowerLoad, StaticPowerLoad))
 
-branches = Dict{Symbol, PSI.DeviceModel}(:Lines => PSI.DeviceModel(PSY.Branch, PSI.SeriesLine))
-services = Dict{Symbol, PSI.ServiceModel}(:Reserves => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
-    return PowerOperationModel(UnitCommitment,
+branches = Dict{Symbol, DeviceModel}(:Lines => DeviceModel(PSY.Branch, SeriesLine))
+services = Dict{Symbol, ServiceModel}(:Reserves => ServiceModel(PSY.Reserve, AbstractReservesForm))
+    return OperationModel(UnitCommitment,
                                    transmission,
                                     devices,
                                     branches,

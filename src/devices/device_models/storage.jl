@@ -1,58 +1,118 @@
-abstract type AbstractStorageForm <: AbstractDeviceFormulation end
+abstract type AbstractStorageForm<:AbstractDeviceFormulation end
 
-abstract type BookKeepingModel <: AbstractStorageForm end
+struct BookKeeping<:AbstractStorageForm end
 
+struct BookKeepingwReservation<:AbstractStorageForm end
 
-# storage variables
+#################################################Storage Variables#################################
 
-function activepower_variables(ps_m::CanonicalModel, devices::Array{T,1}, time_range::UnitRange{Int64}) where {T <: PSY.Storage}
+function active_power_variables(canonical_model::CanonicalModel,
+                                devices::IS.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
 
-    add_variable(ps_m, devices, time_range, :Psin, false,:var_active, -1)
-    add_variable(ps_m, devices, time_range, :Psout, false, :var_active)
-
-    return
-
-end
-
-
-function reactivepower_variables(ps_m::CanonicalModel, devices::Array{T,1}, time_range::UnitRange{Int64}) where {T <: PSY.Storage}
-
-    add_variable(ps_m, devices, time_range, :Qst, false, :var_reactive)
-
-    return
-
-end
-
-
-function energystorage_variables(ps_m::CanonicalModel, devices::Array{T,1}, time_range::UnitRange{Int64}) where T <: PSY.Storage
-
-    add_variable(ps_m, devices, time_range,:Est, false)
+    add_variable(canonical_model,
+                 devices,
+                 Symbol("Psin_$(St)"),
+                 false,
+                 :nodal_balance_active,
+                 -1.0;
+                 lb_value = d -> 0.0,)
+    add_variable(canonical_model,
+                 devices,
+                 Symbol("Psout_$(St)"),
+                 false,
+                 :nodal_balance_active;
+                 lb_value = d -> 0.0,)
 
     return
 
 end
 
 
-function storagereservation_variables(ps_m::CanonicalModel, devices::Array{T,1}, time_range::UnitRange{Int64}) where T <: PSY.Storage
-
-    add_variable(ps_m, devices, time_range, :Sst, true)
+function reactive_power_variables(canonical_model::CanonicalModel,
+                                  devices::IS.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
+    add_variable(canonical_model,
+                 devices,
+                 Symbol("Qst_$(St)"),
+                 false,
+                 :nodal_balance_reactive)
 
     return
 
 end
 
 
-# output constraints
+function energy_storage_variables(canonical_model::CanonicalModel,
+                                  devices::IS.FlattenIteratorWrapper{St}) where St<:PSY.Storage
 
-function activepower_constraints(ps_m::CanonicalModel, devices::Array{St,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {St <: PSY.Storage, D <: AbstractStorageForm, S <: PM.AbstractPowerFormulation}
+    add_variable(canonical_model,
+                 devices,
+                 Symbol("Est_$(St)"),
+                 false;
+                 lb_value = d -> 0.0,)
 
-    range_data_in = [(s.name, s.inputactivepowerlimits) for s in devices]
+    return
 
-    range_data_out = [(s.name, s.outputactivepowerlimits) for s in devices]
+end
 
-    device_semicontinuousrange(ps_m, range_data_in, time_range, :storage_inputpower_range, :Psin, :Est)
 
-    reserve_device_semicontinuousrange(ps_m, range_data_in, time_range, :storage_outputpower_range, :Psout, :Sst)
+function storage_reservation_variables(canonical_model::CanonicalModel,
+                                       devices::IS.FlattenIteratorWrapper{St}) where St<:PSY.Storage
+
+    add_variable(canonical_model,
+                 devices,
+                 Symbol("Rst_$(St)"),
+                 true)
+
+    return
+
+end
+
+
+###################################################### output power constraints#################################
+
+function active_power_constraints(canonical_model::CanonicalModel,
+                                  devices::IS.FlattenIteratorWrapper{St},
+                                  ::Type{BookKeeping},
+                                  ::Type{S}) where {St<:PSY.Storage,
+                                                                      S<:PM.AbstractPowerFormulation}
+
+    range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
+    range_data_out = [(PSY.get_name(s), PSY.get_outputactivepowerlimits(s)) for s in devices]
+
+    device_range(canonical_model,
+                 range_data_in,
+                 Symbol("inputpower_range_$(St)"),
+                 Symbol("Psin_$(St)"))
+
+    device_range(canonical_model,
+                range_data_out,
+                Symbol("outputpower_range_$(St)"),
+                Symbol("Psout_$(St)"))
+
+    return
+
+end
+
+function active_power_constraints(canonical_model::CanonicalModel,
+                                  devices::IS.FlattenIteratorWrapper{St},
+                                  ::Type{BookKeepingwReservation},
+                                  ::Type{S}) where {St<:PSY.Storage,
+                                                                      S<:PM.AbstractPowerFormulation}
+
+    range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
+    range_data_out = [(PSY.get_name(s), PSY.get_outputactivepowerlimits(s)) for s in devices]
+
+    reserve_device_semicontinuousrange(canonical_model,
+                                       range_data_in,
+                                       Symbol("inputpower_range_$(St)"),
+                                       Symbol("Psin_$(St)"),
+                                       Symbol("Rst_$(St)"))
+
+    reserve_device_semicontinuousrange(canonical_model,
+                                       range_data_out,
+                                       Symbol("outputpower_range_$(St)"),
+                                       Symbol("Psout_$(St)"),
+                                       Symbol("Rst_$(St)"))
 
     return
 
@@ -62,32 +122,93 @@ end
 """
 This function adds the reactive  power limits of generators when there are CommitmentVariables
 """
-function reactivepower_constraints(ps_m::CanonicalModel, devices::Array{St,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}) where {St <: PSY.Storage, D <: AbstractStorageForm, S <: PM.AbstractPowerFormulation}
+function reactive_power_constraints(canonical_model::CanonicalModel,
+                                   devices::IS.FlattenIteratorWrapper{St},
+                                   ::Type{D},
+                                   ::Type{S}) where {St<:PSY.Storage,
+                                                                       D<:AbstractStorageForm,
+                                                                       S<:PM.AbstractPowerFormulation}
 
-    range_data = [(s.name, s.reactivepowerlimits) for s in devices]
+    range_data = [(PSY.get_name(s), PSY.get_reactivepowerlimits(s)) for s in devices]
 
-    device_range(ps_m, range_data , time_range, :storage_reactive_range, :Qst)
+    device_range(canonical_model,
+                 range_data,
+                 Symbol("reactiverange_$(St)"),
+                 Symbol("Qst_$(St)"))
 
     return
 
 end
 
+########################## Make initial Conditions for a Model #############################
+function initial_conditions!(canonical_model::CanonicalModel,
+                            devices::IS.FlattenIteratorWrapper{St},
+                            ::Type{D}) where {St<:PSY.Storage,
+                                                                D<:AbstractStorageForm}
 
-# book keeping constraints
+    storage_energy_init(canonical_model, devices)
 
-function energy_balance_constraint(ps_m::CanonicalModel, devices::Array{T,1}, device_formulation::Type{D}, system_formulation::Type{S}, time_range::UnitRange{Int64}, initial_conditions::Array{Float64,1}) where {T <: PSY.Storage, D <: AbstractStorageForm, S <: PM.AbstractPowerFormulation}
+return
 
-    named_initial_conditions = [(d.name, initial_conditions[ix]) for (ix, d) in enumerate(devices)]
+end
 
-    p_eff_data = [ (d.name,d.energy) for d in devices if !isa(d.energy, Nothing)]
+###################################################### Energy Capacity constraints##########
 
-    if !isempty(p_eff_data)
+function energy_capacity_constraints(canonical_model::CanonicalModel,
+                                    devices::IS.FlattenIteratorWrapper{St},
+                                    ::Type{D},
+                                    ::Type{S}) where {St<:PSY.Storage,
+                                                                        D<:AbstractStorageForm,
+                                                                        S<:PM.AbstractPowerFormulation}
 
-        energy_balance(ps_m,time_range,named_initial_conditions,p_eff_data, :energy_balance,(:Psout,:Psin,:Est))
+    range_data = [(PSY.get_name(s), PSY.get_capacity(s)) for s in devices]
 
-    else
-        @warn "Data doesn't contain Storage efficiency , consider adjusting your formulation"
+    device_range(canonical_model,
+                 range_data,
+                 Symbol("energy_capacity_$(St)"),
+                 Symbol("Est_$(St)"))
+    return
+
+end
+
+###################################################### book keeping constraints ############
+
+function make_efficiency_data(devices::IS.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
+
+    names = Vector{String}(undef, length(devices))
+    in_out = Vector{InOut}(undef, length(devices))
+
+    for (ix, d) in enumerate(devices)
+        names[ix] = PSY.get_name(d)
+        in_out[ix] = PSY.get_efficiency(d)
     end
+
+    return names, in_out
+
+end
+
+
+
+function energy_balance_constraint(canonical_model::CanonicalModel,
+                                   devices::IS.FlattenIteratorWrapper{St},
+                                   ::Type{D},
+                                   ::Type{S}) where {St<:PSY.Storage,
+                                                            D<:AbstractStorageForm,
+                                                            S<:PM.AbstractPowerFormulation}
+
+    key = ICKey(DeviceEnergy, St)
+
+    if !(key in keys(canonical_model.initial_conditions))
+        error("Initial Conditions for $(St) Energy Constraints not in the model")
+    end
+
+    efficiency_data = make_efficiency_data(devices)
+
+    energy_balance(canonical_model,
+                   canonical_model.initial_conditions[key],
+                   efficiency_data,
+                   Symbol("energy_balance_$(St)"),
+                   (Symbol("Psout_$(St)"), Symbol("Psin_$(St)"), Symbol("Est_$(St)")))
 
     return
 

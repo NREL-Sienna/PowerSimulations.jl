@@ -1,16 +1,16 @@
-struct EconomicDispatch <: AbstractOperationsModel end
-struct SCEconomicDispatch <: AbstractOperationsModel end
+struct EconomicDispatch<:AbstractOperationModel end
+struct SCEconomicDispatch<:AbstractOperationModel end
 
-function EconomicDispatch(system::PSY.System, transmission::Type{S}; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...) where {S <: PM.AbstractPowerFormulation}
+function EconomicDispatch(sys::PSY.System, transmission::Type{S}; optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing, kwargs...) where {S<:PM.AbstractPowerFormulation}
 
-    devices = Dict{Symbol, PSI.DeviceModel}(:ThermalGenerators => PSI.DeviceModel(PSY.ThermalGen, PSI.ThermalDispatch),
-                                            :RenewableGenerators => PSI.DeviceModel(PSY.RenewableGen, PSI.RenewableFullDispatch),
-                                            :Loads => PSI.DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
+    devices = Dict{Symbol, DeviceModel}(:ThermalGenerators => DeviceModel(PSY.ThermalGen, ThermalDispatch),
+                                            :RenewableGenerators => DeviceModel(PSY.RenewableGen, RenewableFullDispatch),
+                                            :Loads => DeviceModel(PSY.PowerLoad, StaticPowerLoad))
 
-    branches = Dict{Symbol, PSI.DeviceModel}(:Lines => PSI.DeviceModel(PSY.Branch, PSI.SeriesLine))
-    services = Dict{Symbol, PSI.ServiceModel}(:Reserves => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
+    branches = Dict{Symbol, DeviceModel}(:Lines => DeviceModel(PSY.Branch, SeriesLine))
+    services = Dict{Symbol, ServiceModel}(:Reserves => ServiceModel(PSY.Reserve, AbstractReservesForm))
 
-    return PowerOperationModel(EconomicDispatch,
+    return OperationModel(EconomicDispatch,
                                    transmission,
                                     devices,
                                     branches,
@@ -20,7 +20,7 @@ function EconomicDispatch(system::PSY.System, transmission::Type{S}; optimizer::
 
 end
 
-function SCEconomicDispatch(system::PSY.System; optimizer::Union{Nothing,JuMP.OptimizerFactory}=nothing, kwargs...)
+function SCEconomicDispatch(sys::PSY.System; optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing, kwargs...)
 
     if :PTDF in keys(kwargs)
 
@@ -28,17 +28,17 @@ function SCEconomicDispatch(system::PSY.System; optimizer::Union{Nothing,JuMP.Op
 
     else
         @info "PTDF matrix not provided. It will be constructed using PowerSystems.PTDF"
-        PTDF, A = PowerSystems.buildptdf(system.branches, system.buses);
+        PTDF, A = PowerSystems.buildptdf(get_components(PSY.Branch, system), get_components(PSY.Bus, system));
     end
 
-    devices = Dict{Symbol, PSI.DeviceModel}(:ThermalGenerators => PSI.DeviceModel(PSY.ThermalGen, PSI.ThermalDispatch),
-    :RenewableGenerators => PSI.DeviceModel(PSY.RenewableGen, PSI.RenewableFullDispatch),
-    :Loads => PSI.DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
+    devices = Dict{Symbol, DeviceModel}(:ThermalGenerators => DeviceModel(PSY.ThermalGen, ThermalDispatch),
+    :RenewableGenerators => DeviceModel(PSY.RenewableGen, RenewableFullDispatch),
+    :Loads => DeviceModel(PSY.PowerLoad, StaticPowerLoad))
 
-    branches = Dict{Symbol, PSI.DeviceModel}(:Lines => PSI.DeviceModel(PSY.Branch, PSI.SeriesLine))
-    services = Dict{Symbol, PSI.ServiceModel}(:Reserves => PSI.ServiceModel(PSY.Reserve, PSI.AbstractReservesForm))
+    branches = Dict{Symbol, DeviceModel}(:Lines => DeviceModel(PSY.Branch, SeriesLine))
+    services = Dict{Symbol, ServiceModel}(:Reserves => ServiceModel(PSY.Reserve, AbstractReservesForm))
 
-    return PowerOperationModel(EconomicDispatch,
+    return OperationModel(EconomicDispatch,
                                     StandardPTDFForm,
                                     devices,
                                     branches,

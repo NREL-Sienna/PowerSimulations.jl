@@ -3,8 +3,14 @@ using PowerSimulations
 
 makedocs(
     sitename = "PowerSimulations",
-    format = Documenter.HTML(),
-    modules = [PowerSimulations]
+    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
+    modules = [PowerSimulations],
+    strict = true,
+    authors = "Jose Daniel Lara, Clayton Barrows and Dheepak Krishnamurthy",
+    pages = Any[ "Home" => "index.md",
+                 # "User Guide" => "man/guide.md",
+                "API" => Any["PowerSimulations" => "api/PowerSimulations.md"]
+    ]
 )
 
 # Documenter can also automatically deploy documentation to gh-pages.

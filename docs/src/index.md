@@ -1,3 +1,5 @@
-# PowerSimulations.jl
+# PowerSimulations.jl Documentation
 
-Documentation for PowerSimulations.jl
+```@meta
+CurrentModule = PowerSimulations
+```

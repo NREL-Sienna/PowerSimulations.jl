@@ -1,122 +1,150 @@
-function device_linear_rateofchange(ps_m::CanonicalModel,
+@doc raw"""
+    device_linear_rateofchange(canonical_model::CanonicalModel,
                                     rate_data::Tuple{Vector{String}, Vector{UpDown}},
                                     initial_conditions::Vector{InitialCondition},
-                                    time_range::UnitRange{Int64},
                                     cons_name::Symbol,
                                     var_name::Symbol)
 
+Constructs allowed rate-of-change constraints from variables, initial condtions, and rate data.
 
-    up_name = Symbol(cons_name,:_up)
-    down_name = Symbol(cons_name,:_down)
+# Constraints
+If t = 1:
 
-    set_name = rate_data[1]
+``` variable[name, 1] - initial_conditions[ix].value <= rate_data[1][ix].up ```
 
-    ps_m.constraints[up_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_range)
-    ps_m.constraints[down_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_range)
+``` initial_conditions[ix].value - variable[name, 1] <= rate_data[1][ix].down ```
 
-    for (ix, name) in enumerate(rate_data[1])
-        ps_m.constraints[up_name][name, 1] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_name][name, 1] - initial_conditions[ix].value <= rate_data[2][ix].up)
-        ps_m.constraints[down_name][name, 1] = JuMP.@constraint(ps_m.JuMPmodel, initial_conditions[ix].value - ps_m.variables[var_name][name, 1] <= rate_data[2][ix].down)
-    end
+If t > 1:
 
-    for t in time_range[2:end], (ix, name) in enumerate(rate_data[1])
-        ps_m.constraints[up_name][name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_name][name, t-1] - ps_m.variables[var_name][name, t] <= rate_data[2][ix].up)
-        ps_m.constraints[down_name][name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_name][name, t] - ps_m.variables[var_name][name, t-1] <= rate_data[2][ix].down)
-    end
+``` variable[name, t] - variable[name, t-1] <= rate_data[1][ix].up ```
 
-    return
+``` variable[name, t-1] - variable[name, t] <= rate_data[1][ix].down ```
 
-end
+# LaTeX
 
-function device_mixedinteger_rateofchange(ps_m::CanonicalModel,
-                                            rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}},
-                                            initial_conditions::Vector{InitialCondition},
-                                            time_range::UnitRange{Int64},
-                                            cons_name::Symbol,
-                                            var_names::Tuple{Symbol,Symbol,Symbol})
+`` r^{down} \leq x_1 - x_{init} \leq r^{up}, \text{ for } t = 1 ``
 
-    
-                                            
-    up_name = Symbol(cons_name,:_up)
-    down_name = Symbol(cons_name,:_down)
+`` r^{down} \leq x_t - x_{t-1} \leq r^{up}, \forall t \geq 2 ``
 
-    set_name = rate_data[1]
-
-    ps_m.constraints[up_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_range)
-    ps_m.constraints[down_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_range)
-
-    for (ix, name) in enumerate(rate_data[1])
-        ps_m.constraints[up_name][name, 1] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_names[1]][name, 1] - initial_conditions[ix].value <= rate_data[2][ix].up + rate_data[3][ix].max*ps_m.variables[var_names[2]][name, 1])
-        ps_m.constraints[down_name][name, 1] = JuMP.@constraint(ps_m.JuMPmodel, initial_conditions[ix].value - ps_m.variables[var_names[1]][name, 1] <= rate_data[2][ix].down + rate_data[3][ix].min*ps_m.variables[var_names[3]][name, 1])
-    end
-
-    for t in time_range[2:end], (ix, name) in enumerate(rate_data[1])
-        ps_m.constraints[up_name][name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_names[1]][name, t-1] - ps_m.variables[var_names[1]][name, t] <= rate_data[2][ix].up + rate_data[3][ix].max*ps_m.variables[var_names[2]][name, t])
-        ps_m.constraints[down_name][name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_names[1]][name, t] - ps_m.variables[var_names[1]][name, t-1] <= rate_data[2][ix].down + rate_data[3][ix].min*ps_m.variables[var_names[3]][name, t])
-    end
-
-    return
-
-end
-
-#Old implementation of initial_conditions
-#=
-function device_linear_rateofchange(ps_m::CanonicalModel,
+# Arguments
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
+* rate_data::Tuple{Vector{String}, Vector{UpDown}} : gives name (1) and max ramp up/down rates (2)
+* initial_conditions::Vector{InitialCondition} : for time zero 'variable'
+* cons_name::Symbol : name of the constraint
+* var_name::Tuple{Symbol, Symbol, Symbol} : the name of the variable
+"""
+function device_linear_rateofchange(canonical_model::CanonicalModel,
                                     rate_data::Vector{UpDown},
-                                    initial_conditions::Vector{Float64},
-                                    time_range::UnitRange{Int64},
+                                    initial_conditions::Vector{InitialCondition},
                                     cons_name::Symbol,
                                     var_name::Symbol)
 
+    time_steps = model_time_steps(canonical_model)
+    up_name = _middle_rename(cons_name, "_", "up")
+    down_name = _middle_rename(cons_name, "_", "dn")
 
-    up_name = Symbol(cons_name,:_up)
-    down_name = Symbol(cons_name,:_down)
+    variable = var(canonical_model, var_name)
 
-    set_name = [name for r in rate_data]
+    set_name = (device_name(ic) for ic in initial_conditions)
+    _add_cons_container!(canonical_model, up_name, set_name, time_steps)
+    _add_cons_container!(canonical_model, down_name, set_name, time_steps)
+    con_up = con(canonical_model, up_name)
+    con_down = con(canonical_model, down_name)
 
-    ps_m.constraints[up_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_range)
-    ps_m.constraints[down_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_range)
-
-    for (ix,r) in enumerate(rate_data)
-        ps_m.constraints[up_name][name, 1] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_name][name, 1] - initial_conditions[ix] <= rate_data[2][ix].up)
-        ps_m.constraints[down_name][name, 1] = JuMP.@constraint(ps_m.JuMPmodel, initial_conditions[ix] - ps_m.variables[var_name][name, 1] <= rate_data[2][ix].down)
+    for (ix, ic) in enumerate(initial_conditions)
+        name = device_name(ic)
+        con_up[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, 1] - initial_conditions[ix].value
+                                                                <= rate_data[ix].up)
+        con_down[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, initial_conditions[ix].value - variable[name, 1]
+                                                                <= rate_data[ix].down)
     end
 
-    for t in time_range[2:end], r in rate_data
-        ps_m.constraints[up_name][name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_name][name, t-1] - ps_m.variables[var_name][name, t] <= rate_data[2][ix].up)
-        ps_m.constraints[down_name][name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_name][name, t] - ps_m.variables[var_name][name, t-1] <= rate_data[2][ix].down)
-    end
-
-    return
-
-end
-
-function device_mixedinteger_rateofchange(ps_m::CanonicalModel,
-                                            rate_data::Array{Tuple{String,NamedTuple{(:up, :down),Tuple{Float64,Float64}},NamedTuple{(:min, :max),Tuple{Float64,Float64}}},1},
-                                            initial_conditions::Vector{Float64},
-                                            time_range::UnitRange{Int64},
-                                            cons_name::Symbol,
-                                            var_names::Tuple{Symbol,Symbol,Symbol})
-
-    up_name = Symbol(cons_name,:_up)
-    down_name = Symbol(cons_name,:_down)
-
-    set_name = [name for r in rate_data]
-
-    ps_m.constraints[up_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_range)
-    ps_m.constraints[down_name] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, set_name, time_range)
-
-    for (ix,r) in enumerate(rate_data)
-        ps_m.constraints[up_name][name, 1] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_names[1]][name, 1] - initial_conditions[ix] <= rate_data[2][ix].up + rate_data[3][ix].max*ps_m.variables[var_names[2]][name, 1])
-        ps_m.constraints[down_name][name, 1] = JuMP.@constraint(ps_m.JuMPmodel, initial_conditions[ix] - ps_m.variables[var_names[1]][name, 1] <= rate_data[2][ix].down + rate_data[3][ix].min*ps_m.variables[var_names[3]][name, 1])
-    end
-
-    for t in time_range[2:end], r in rate_data
-        ps_m.constraints[up_name][name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_names[1]][name, t-1] - ps_m.variables[var_names[1]][name, t] <= rate_data[2][ix].up + rate_data[3][ix].max*ps_m.variables[var_names[2]][name, t])
-        ps_m.constraints[down_name][name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[var_names[1]][name, t] - ps_m.variables[var_names[1]][name, t-1] <= rate_data[2][ix].down + rate_data[3][ix].min*ps_m.variables[var_names[3]][name, t])
+    for t in time_steps[2:end], (ix, ic) in enumerate(initial_conditions)
+        name = device_name(ic)
+        con_up[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t] - variable[name, t-1] <= rate_data[ix].up)
+        con_down[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t-1] - variable[name, t] <= rate_data[ix].down)
     end
 
     return
 
 end
-=#
+
+@doc raw"""
+    device_mixedinteger_rateofchange(canonical_model::CanonicalModel,
+                                          rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}},
+                                          initial_conditions::Vector{InitialCondition},
+                                          cons_name::Symbol,
+                                          var_names::Tuple{Symbol, Symbol, Symbol})
+
+Constructs allowed rate-of-change constraints from variables, initial condtions, start/stop status, and rate data
+
+# Equations
+If t = 1:
+
+``` variable[name, 1] - initial_conditions[ix].value <= rate_data[1][ix].up + rate_data[2][ix].max*varstart[name, 1] ```
+
+``` initial_conditions[ix].value - variable[name, 1] <= rate_data[1][ix].down + rate_data[2][ix].min*varstop[name, 1] ```
+
+If t > 1:
+
+``` variable[name, t] - variable[name, t-1] <= rate_data[1][ix].up + rate_data[2][ix].max*varstart[name, t] ```
+
+``` variable[name, t-1] - variable[name, t] <= rate_data[1][ix].down + rate_data[2][ix].min*varstop[name, t] ```
+
+# LaTeX
+
+`` r^{down} + r^{min} x^{stop}_1 \leq x_1 - x_{init} \leq r^{up} + r^{max} x^{start}_1, \text{ for } t = 1 ``
+
+`` r^{down} + r^{min} x^{stop}_t \leq x_t - x_{t-1} \leq r^{up} + r^{max} x^{start}_t, \forall t \geq 2 ``
+
+# Arguments
+* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
+* rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}} : (1) gives name
+                                                                     (2) gives min/max ramp rates
+                                                                     (3) gives min/max for 'variable'
+* initial_conditions::Vector{InitialCondition} : for time zero 'variable'
+* cons_name::Symbol : name of the constraint
+* var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
+- : var_names[1] : 'variable'
+- : var_names[2] : 'varstart'
+- : var_names[3] : 'varstop'
+"""
+function device_mixedinteger_rateofchange(canonical_model::CanonicalModel,
+                                          rate_data::Tuple{Vector{UpDown}, Vector{MinMax}},
+                                          initial_conditions::Vector{InitialCondition},
+                                          cons_name::Symbol,
+                                          var_names::Tuple{Symbol, Symbol, Symbol})
+
+    time_steps = model_time_steps(canonical_model)
+    up_name = _middle_rename(cons_name, "_", "up")
+    down_name = _middle_rename(cons_name, "_", "dn")
+
+    variable = var(canonical_model, var_names[1])
+    varstart = var(canonical_model, var_names[2])
+    varstop = var(canonical_model, var_names[3])
+
+    set_name = (device_name(ic) for ic in initial_conditions)
+    _add_cons_container!(canonical_model, up_name, set_name, time_steps)
+    _add_cons_container!(canonical_model, down_name, set_name, time_steps)
+    con_up = con(canonical_model, up_name)
+    con_down = con(canonical_model, down_name)
+
+    for (ix, ic) in enumerate(initial_conditions)
+        name = device_name(ic)
+        con_up[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, 1] - initial_conditions[ix].value
+                                                            <= rate_data[1][ix].up + rate_data[2][ix].max*varstart[name, 1])
+        con_down[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, initial_conditions[ix].value - variable[name, 1]
+                                                            <= rate_data[1][ix].down + rate_data[2][ix].min*varstop[name, 1])
+    end
+
+    for t in time_steps[2:end], (ix, ic) in enumerate(initial_conditions)
+        name = device_name(ic)
+        con_up[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t] - variable[name, t-1]
+                                                            <= rate_data[1][ix].up + rate_data[2][ix].max*varstart[name, t])
+        con_down[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t-1] - variable[name, t]
+                                                            <= rate_data[1][ix].down + rate_data[2][ix].min*varstop[name, t])
+    end
+
+    return
+
+end

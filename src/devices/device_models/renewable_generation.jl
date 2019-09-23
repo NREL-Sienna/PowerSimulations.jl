@@ -1,65 +1,92 @@
-abstract type AbstractRenewableFormulation <: AbstractDeviceFormulation end
+abstract type AbstractRenewableFormulation<:AbstractDeviceFormulation end
 
-abstract type AbstractRenewableDispatchForm <: AbstractRenewableFormulation end
+abstract type AbstractRenewableDispatchForm<:AbstractRenewableFormulation end
 
-struct RenewableFixed <: AbstractRenewableFormulation end
+struct RenewableFixed<:AbstractRenewableFormulation end
 
-struct RenewableFullDispatch <: AbstractRenewableDispatchForm end
+struct RenewableFullDispatch<:AbstractRenewableDispatchForm end
 
-struct RenewableConstantPowerFactor <: AbstractRenewableDispatchForm end
+struct RenewableConstantPowerFactor<:AbstractRenewableDispatchForm end
 
-# renewable variables
+########################### renewable generation variables ############################################
 
-function activepower_variables(ps_m::CanonicalModel, devices::Array{R,1}, time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen}
+function activepower_variables(canonical_model::CanonicalModel,
+                               devices::IS.FlattenIteratorWrapper{R}) where {R<:PSY.RenewableGen}
 
-    add_variable(ps_m,
+    add_variable(canonical_model,
                  devices,
-                 time_range,
-                 :Pre,
+                 Symbol("P_$(R)"),
                  false,
-                 :var_active)
+                 :nodal_balance_active;
+                 lb_value = x -> 0.0,
+                 ub_value = x -> PSY.get_tech(x) |> PSY.get_rating)
 
     return
 
 end
 
-function reactivepower_variables(ps_m::CanonicalModel, devices::Array{R,1}, time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen}
+function reactivepower_variables(canonical_model::CanonicalModel,
+                                 devices::IS.FlattenIteratorWrapper{R}) where {R<:PSY.RenewableGen}
 
-    add_variable(ps_m,
+    add_variable(canonical_model,
                  devices,
-                 time_range,
-                 :Qre,
+                 Symbol("Q_$(R)"),
                  false,
-                 :var_reactive)
+                 :nodal_balance_reactive)
 
     return
 
 end
 
-###### output constraints without Time Series ##############
+####################################### Reactive Power Constraints ######################################
+function reactivepower_constraints(canonical_model::CanonicalModel,
+                                    devices::IS.FlattenIteratorWrapper{R},
+                                    device_formulation::Type{RenewableFullDispatch},
+                                    system_formulation::Type{S}) where {R<:PSY.RenewableGen,
+                                                                         S<:PM.AbstractPowerFormulation}
 
-function activepower_constraints(ps_m::CanonicalModel,
-                                devices::Array{R,1},
-                                device_formulation::Type{D},
-                                system_formulation::Type{S},
-                                parameters::Bool) where {R <: PSY.RenewableGen,
-                                                                    D <: AbstractRenewableDispatchForm,
-                                                                    S <: PM.AbstractPowerFormulation}
+    range_data = Vector{NamedMinMax}(undef, length(devices))
 
+    for (ix, d) in enumerate(devices)
+        tech = PSY.get_tech(d)
+        name = PSY.get_name(d)
+        if isnothing(PSY.get_reactivepowerlimits(tech))
+            limits = (min = 0.0, max = 0.0)
+            range_data[ix] = (PSY.get_name(d), limits)
+            @warn("Reactive Power Limits of $(name) are nothing. Q_$(name) is set to 0.0")
+        else
+            range_data[ix] = (name, PSY.get_reactivepowerlimits(tech))
+        end
+    end
 
-    if parameters
-        device_timeseries_param_ub(ps_m,
-                                    _get_time_series(devices),
-                                    time_range,
-                                    :renewable_active_ub,
-                                    Symbol("Pre_$(eltype(devices))"),
-                                    :Pre)
-    else
-        device_timeseries_ub(ps_m,
-                            _get_time_series(devices),
-                            time_range,
-                            :renewable_active_ub,
-                            :Pre)
+    device_range(canonical_model,
+                range_data,
+                Symbol("reactiverange_$(R)"),
+                Symbol("Q_$(R)"))
+
+    return
+
+end
+
+function reactivepower_constraints(canonical_model::CanonicalModel,
+                                    devices::IS.FlattenIteratorWrapper{R},
+                                    device_formulation::Type{RenewableConstantPowerFactor},
+                                    system_formulation::Type{S}) where {R<:PSY.RenewableGen,
+                                                                        S<:PM.AbstractPowerFormulation}
+
+    names = (PSY.get_name(d) for d in devices)
+    time_steps = model_time_steps(canonical_model)
+    p_variable_name = Symbol("P_$(R)")
+    q_variable_name = Symbol("Q_$(R)")
+    constraint_name = Symbol("reactiverange_$(R)")
+    canonical_model.constraints[constraint_name] = JuMPConstraintArray(undef, names, time_steps)
+
+    for t in time_steps, d in devices
+        name = PSY.get_name(d)
+        pf = sin(acos(PSY.get_tech(d) |> PSY.get_powerfactor))
+        canonical_model.constraints[constraint_name][name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
+                                canonical_model.variables[q_variable_name][name, t] ==
+                                canonical_model.variables[p_variable_name][name, t] * pf)
     end
 
     return
@@ -67,250 +94,107 @@ function activepower_constraints(ps_m::CanonicalModel,
 end
 
 
-function reactivepower_constraints(ps_m::CanonicalModel,
-                                devices::Array{R,1},
-                                device_formulation::Type{RenewableFullDispatch},
-                                system_formulation::Type{S}) where {R <: PSY.RenewableGen,
-                                                                    S <: PM.AbstractPowerFormulation}
-
-    range_data = [(r.name, r.tech.reactivepowerlimits) for r in devices]
-
-    device_range(ps_m,
-                range_data ,
-                time_range,
-                :renewable_reactive_range,
-                :Qre)
-
-    return
-
-end
-
-
-function reactivepower_constraints(ps_m::CanonicalModel,
-                                devices::Array{R,1},
-                                device_formulation::Type{RenewableConstantPowerFactor},
-                                system_formulation::Type{S}) where {R <: PSY.RenewableGen,
-                                                                    S <: PM.AbstractPowerFormulation}
-
-    names = [r.name for r in devices]
-
-    ps_m.constraints[:renewable_reactive] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, names, time_range)
-
-    for t in time_range, d in devices
-        ps_m.constraints[:renewable_reactive][d.name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[:Qre][d.name, t] == ps_m.variables[:Pre][d.name, t]*sin(acos(d.tech.powerfactor)))
-    end
-
-    return
-
-end
-
-###### output constraints with Time Series ##############
-
-function _get_time_series(devices::Array{T}) where {T <: PSY.RenewableGen}
+######################## output constraints without Time Series ###################################
+function _get_time_series(devices::IS.FlattenIteratorWrapper{R},
+                          time_steps::UnitRange{Int64}) where {R<:PSY.RenewableGen}
 
     names = Vector{String}(undef, length(devices))
     series = Vector{Vector{Float64}}(undef, length(devices))
 
-    for (ix,d) in enumerate(devices)
-        names[ix] = d.name
-        series[ix] = values(d.scalingfactor)*d.tech.installedcapacity
+    for (ix, d) in enumerate(devices)
+        names[ix] = PSY.get_name(d)
+        tech = PSY.get_tech(d)
+        series[ix] = fill(PSY.get_rating(tech), (time_steps[end]))
     end
 
     return names, series
 
 end
 
-function activepower_constraints(ps_m::CanonicalModel,
-                                 devices::Array{R,1},
+function activepower_constraints(canonical_model::CanonicalModel,
+                                devices::IS.FlattenIteratorWrapper{R},
+                                device_formulation::Type{D},
+                                system_formulation::Type{S}) where {R<:PSY.RenewableGen,
+                                                         D<:AbstractRenewableDispatchForm,
+                                                         S<:PM.AbstractPowerFormulation}
+
+    parameters = model_has_parameters(canonical_model)
+
+    if parameters
+        time_steps = model_time_steps(canonical_model)
+        device_timeseries_param_ub(canonical_model,
+                            _get_time_series(devices, time_steps),
+                            Symbol("activerange_$(R)"),
+                            UpdateRef{R}(Symbol("P_$(R)")),
+                            Symbol("P_$(R)"))
+
+    else
+        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_tech(d) |> PSY.get_rating)) for d in devices]
+        device_range(canonical_model,
+                    range_data,
+                    Symbol("activerange_$(R)"),
+                    Symbol("P_$(R)"))
+    end
+
+    return
+
+end
+
+######################### output constraints with Time Series ##############################################
+
+function _get_time_series(forecasts::Vector{PSY.Deterministic{R}}) where {R<:PSY.RenewableGen}
+
+    names = Vector{String}(undef, length(forecasts))
+    ratings = Vector{Float64}(undef, length(forecasts))
+    series = Vector{Vector{Float64}}(undef, length(forecasts))
+
+    for (ix, f) in enumerate(forecasts)
+        component = PSY.get_component(f)
+        names[ix] = PSY.get_name(component)
+        series[ix] = values(PSY.get_data(f))
+        ratings[ix] = PSY.get_tech(component).rating
+    end
+
+    return names, ratings, series
+
+end
+
+function activepower_constraints(canonical_model::CanonicalModel,
+                                 forecasts::Vector{PSY.Deterministic{R}},
                                  device_formulation::Type{D},
-                                 system_formulation::Type{S},
-                                 time_range::UnitRange{Int64},
-                                 parameters::Bool) where {R <: PSY.RenewableGen,
-                                                                      D <: AbstractRenewableDispatchForm,
-                                                                      S <: PM.AbstractPowerFormulation}
+                                 system_formulation::Type{S}) where {R<:PSY.RenewableGen,
+                                                                     D<:AbstractRenewableDispatchForm,
+                                                                     S<:PM.AbstractPowerFormulation}
 
-    if parameters
-        device_timeseries_param_ub(ps_m,
-                                   _get_time_series(devices),
-                                   time_range,
-                                   :renewable_active_ub,
-                                   Symbol("Pre_$(eltype(devices))"),
-                                   :Pre)
+    if model_has_parameters(canonical_model)
+        device_timeseries_param_ub(canonical_model,
+                                   _get_time_series(forecasts),
+                                   Symbol("activerange_$(R)"),
+                                   UpdateRef{R}(Symbol("P_$(R)")),
+                                   Symbol("P_$(R)"))
     else
-        device_timeseries_ub(ps_m,
-                            _get_time_series(devices),
-                            time_range,
-                            :renewable_active_ub,
-                            :Pre)
+        device_timeseries_ub(canonical_model,
+                            _get_time_series(forecasts),
+                            Symbol("activerange_$(R)"),
+                            Symbol("P_$(R)"))
     end
 
     return
 
 end
 
-
-function reactivepower_constraints(ps_m::CanonicalModel,
-                                   devices::Array{R,1},
-                                   device_formulation::Type{RenewableFullDispatch},
-                                   system_formulation::Type{S},
-                                   time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen,
-                                                                        S <: PM.AbstractPowerFormulation}
-
-    range_data = [(r.name, r.tech.reactivepowerlimits) for r in devices]
-
-    device_range(ps_m,
-                range_data ,
-                time_range,
-                :renewable_reactive_range,
-                :Qre)
-
-    return
-
-end
-
-
-function reactivepower_constraints(ps_m::CanonicalModel,
-                                   devices::Array{R,1},
-                                   device_formulation::Type{RenewableConstantPowerFactor},
-                                   system_formulation::Type{S},
-                                   time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen,
-                                                                        S <: PM.AbstractPowerFormulation}
-
-    names = [r.name for r in devices]
-
-    ps_m.constraints[:renewable_reactive] = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}(undef, names, time_range)
-
-    for t in time_range, d in devices
-        ps_m.constraints[:renewable_reactive][d.name, t] = JuMP.@constraint(ps_m.JuMPmodel, ps_m.variables[:Qre][d.name, t] == ps_m.variables[:Pre][d.name, t]*sin(acos(d.tech.powerfactor)))
-    end
-
-    return
-
-end
-
-##### Injection Expression with parameters #####
-
-function _nodal_expression_param(ps_m::CanonicalModel,
-                                devices::Array{R,1},
-                                system_formulation::Type{S},
-                                time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen,
-                                                                     S <: PM.AbstractPowerFormulation}
-
-    ts_data_active = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(devices))
-    ts_data_reactive = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(devices))
-
-    for (ix,d) in enumerate(devices)
-        ts_data_active[ix] = (d.name, d.bus.number, values(d.scalingfactor)*d.tech.installedcapacity)
-        ts_data_reactive[ix] = (d.name, d.bus.number, values(d.scalingfactor)*d.tech.installedcapacity)
-    end
-
-    add_parameters(ps_m,
-                   ts_data_active,
-                   time_range,
-                   Symbol("Pre_$(eltype(devices))"),
-                   :var_active)
-    add_parameters(ps_m,
-                   ts_data_reactive,
-                   time_range,
-                   Symbol("Qre_$(eltype(devices))"),
-                   :var_reactive)
-
-    return
-
-end
-
-function _nodal_expression_param(ps_m::CanonicalModel,
-                                devices::Array{R,1},
-                                system_formulation::Type{S},
-                                time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen,
-                                                                     S <: PM.AbstractActivePowerFormulation}
-
-    ts_data_active = Vector{Tuple{String,Int64,Vector{Float64}}}(undef, length(devices))
-
-    for (ix,d) in enumerate(devices)
-        ts_data_active[ix] = (d.name, d.bus.number, values(d.scalingfactor)*d.tech.installedcapacity)
-    end
-
-    add_parameters(ps_m,
-                   ts_data_active,
-                   time_range,
-                   Symbol("Pre_$(eltype(devices))"),
-                   :var_active)
-    return
-
-end
-
-
-###### injection expression with fixed values #######
-
-function _nodal_expression_fixed(ps_m::CanonicalModel,
-                                devices::Array{R,1},
-                                system_formulation::Type{S},
-                                time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen,
-                                                                     S <: PM.AbstractPowerFormulation}
-
-    for t in time_range, d in devices
-        _add_to_expression!(ps_m.expressions[:var_active],
-                            d.bus.number,
-                            t,
-                            d.tech.installedcapacity * values(d.scalingfactor)[t])
-        _add_to_expression!(ps_m.expressions[:var_reactive],
-                            d.bus.number,
-                            t,
-                            d.tech.installedcapacity * values(d.scalingfactor)[t]*sin(acos(d.tech.powerfactor)))
-    end
-
-    return
-
-end
-
-
-function _nodal_expression_fixed(ps_m::CanonicalModel,
-                                devices::Array{R,1},
-                                system_formulation::Type{S},
-                                time_range::UnitRange{Int64}) where {R <: PSY.RenewableGen,
-                                                                     S <: PM.AbstractActivePowerFormulation}
-
-    for t in time_range, d in devices
-        _add_to_expression!(ps_m.expressions[:var_active],
-                            d.bus.number,
-                            t,
-                            d.tech.installedcapacity * values(d.scalingfactor)[t])
-    end
-
-    return
-
-end
-
-
-function nodal_expression(ps_m::CanonicalModel,
-                          devices::Array{R,1},
-                          system_formulation::Type{S},
-                          time_range::UnitRange{Int64},
-                          parameters::Bool) where {R <: PSY.RenewableGen,
-                                                          S <: PM.AbstractPowerFormulation}
-
-    if parameters
-        _nodal_expression_param(ps_m, devices, system_formulation, time_range)
-    else
-        _nodal_expression_fixed(ps_m, devices, system_formulation, time_range)
-    end
-
-    return
-
-end
-
-
-
-######## renewable generation cost ##############
-
-function cost_function(ps_m::CanonicalModel,
-                       devices::Array{PSY.RenewableCurtailment,1},
+##################################### renewable generation cost ######################################
+function cost_function(canonical_model::CanonicalModel,
+                       devices::IS.FlattenIteratorWrapper{PSY.RenewableDispatch},
                        device_formulation::Type{D},
-                       system_formulation::Type{S}) where {D <: AbstractRenewableDispatchForm,
-                                                           S <: PM.AbstractPowerFormulation}
+                       system_formulation::Type{S}) where {D<:AbstractRenewableDispatchForm,
+                                                           S<:PM.AbstractPowerFormulation}
 
-    add_to_cost(ps_m, devices, :Pre, :curtailpenalty, -1)
+    add_to_cost(canonical_model,
+                devices,
+                Symbol("P_RenewableDispatch"),
+                :fixed,
+                -1.0)
 
     return
 

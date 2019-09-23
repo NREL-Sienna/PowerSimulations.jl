@@ -1,103 +1,199 @@
-function construct_device!(ps_m::CanonicalModel,
-                           device::Type{L},
-                           device_formulation::Type{D},
-                           system_formulation::Type{S},
-                           sys::PSY.System,
-                           time_range::UnitRange{Int64};
-                           kwargs...) where {L <: PSY.ElectricLoad,
-                                             D <: PSI.AbstractControllablePowerLoadForm,
-                                             S <: PM.AbstractPowerFormulation}
+function _internal_device_constructor!(canonical_model::CanonicalModel,
+                                       model::DeviceModel{L, D},
+                                       ::Type{S},
+                                       sys::PSY.System;
+                                       kwargs...) where {L<:PSY.ControllableLoad,
+                                                         D<:AbstractControllablePowerLoadForm,
+                                                         S<:PM.AbstractPowerFormulation}
 
-    parameters = get(kwargs, :parameters, true)
+    forecast = get(kwargs, :forecast, true)
 
-    fixed_resources = [fs for fs in sys.loads if isa(fs,PSY.PowerLoad)]
+    devices = PSY.get_components(L, sys)
 
-    controllable_resources = [fs for fs in sys.loads if !isa(fs,PSY.PowerLoad)]
-
-        if !isempty(controllable_resources)
-
-            #Variables
-            activepower_variables(ps_m, controllable_resources, time_range);
-
-            reactivepower_variables(ps_m, controllable_resources, time_range);
-
-            #Constraints
-            activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range, parameters)
-
-            reactivepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range)
-
-            #Cost Function
-            cost_function(ps_m, controllable_resources, device_formulation, system_formulation)
-
-        else
-            @warn("The Data Doesn't Contain Controllable Loads, Consider Changing the Device Formulation to StaticPowerLoad")
-
-        end
-
-        #add to expression
-
-        if !isempty(fixed_resources)
-            nodal_expression(ps_m, fixed_resources, system_formulation, time_range, parameters)
-        end
-
+    if validate_available_devices(devices, L)
         return
+    end
 
-end
+    #Variables
+    activepower_variables(canonical_model, devices)
 
-function construct_device!(ps_m::CanonicalModel,
-                           device::Type{L},
-                           device_formulation::Type{D},
-                           system_formulation::Type{S},
-                           sys::PSY.System,
-                           time_range::UnitRange{Int64};
-                           kwargs...) where {L <: PSY.ElectricLoad,
-                                             D <: PSI.AbstractControllablePowerLoadForm,
-                                             S <: PM.AbstractActivePowerFormulation}
+    reactivepower_variables(canonical_model, devices)
 
-    parameters = get(kwargs, :parameters, true)
-
-    fixed_resources = [fs for fs in sys.loads if isa(fs,PSY.PowerLoad)]
-
-    controllable_resources = [fs for fs in sys.loads if !isa(fs,PSY.PowerLoad)]
-
-    if !isempty(controllable_resources)
-
-        #Variables
-        activepower_variables(ps_m, controllable_resources, time_range);
-
-        #Constraints
-        activepower_constraints(ps_m, controllable_resources, device_formulation, system_formulation, time_range, parameters)
-
-        #Cost Function
-        cost_function(ps_m, controllable_resources, device_formulation, system_formulation)
-
+    #Constraints
+    if forecast
+        forecasts = _retrieve_forecasts(sys, L)
+        activepower_constraints(canonical_model, forecasts, D, S)
     else
-        @warn("The Data Doesn't Contain Controllable Loads, Consider Changing the Device Formulation to StaticPowerLoad")
+        activepower_constraints(canonical_model, devices, D, S)
     end
 
-    #add to expression
+    reactivepower_constraints(canonical_model, devices, D, S)
 
-    if !isempty(fixed_resources)
-        nodal_expression(ps_m, fixed_resources, system_formulation, time_range, parameters)
+    feedforward!(canonical_model, L, model.feedforward)
+
+    #Cost Function
+    cost_function(canonical_model, devices, D, S)
+
+    return
+
+end
+
+function _internal_device_constructor!(canonical_model::CanonicalModel,
+                                      model::DeviceModel{L, D},
+                                      ::Type{S},
+                                      sys::PSY.System;
+                                      kwargs...) where {L<:PSY.ControllableLoad,
+                                                        D<:AbstractControllablePowerLoadForm,
+                                                        S<:PM.AbstractActivePowerFormulation}
+
+    forecast = get(kwargs, :forecast, true)
+
+    devices = PSY.get_components(L, sys)
+
+    if validate_available_devices(devices, L)
+        return
+    end
+
+    #Variables
+    activepower_variables(canonical_model, devices)
+
+    #Constraints
+    if forecast
+        forecasts = _retrieve_forecasts(sys, L)
+        activepower_constraints(canonical_model, forecasts, D, S)
+    else
+        activepower_constraints(canonical_model, devices, D, S)
+    end
+
+    feedforward!(canonical_model, L, model.feedforward)
+
+    #Cost Function
+    cost_function(canonical_model, devices, D, S)
+
+    return
+
+end
+
+function _internal_device_constructor!(canonical_model::CanonicalModel,
+                                        model::DeviceModel{L, InterruptiblePowerLoad},
+                                        ::Type{S},
+                                        sys::PSY.System;
+                                        kwargs...) where {L<:PSY.ControllableLoad,
+                                                          S<:PM.AbstractPowerFormulation}
+
+    forecast = get(kwargs, :forecast, true)
+
+    devices = PSY.get_components(L, sys)
+
+    if validate_available_devices(devices, L)
+        return
+    end
+
+    #Variables
+    activepower_variables(canonical_model, devices)
+
+    reactivepower_variables(canonical_model, devices)
+
+    commitment_variables(canonical_model, devices)
+
+    #Constraints
+    if forecast
+        forecasts = _retrieve_forecasts(sys, L)
+        activepower_constraints(canonical_model, forecasts, model.formulation, S)
+    else
+        activepower_constraints(canonical_model, devices, model.formulation, S)
+    end
+
+    reactivepower_constraints(canonical_model, devices, model.formulation, S)
+
+    feedforward!(canonical_model, L, model.feedforward)
+
+    #Cost Function
+    cost_function(canonical_model, devices, model.formulation, S)
+
+    return
+
+end
+
+function _internal_device_constructor!(canonical_model::CanonicalModel,
+                                      model::DeviceModel{L, InterruptiblePowerLoad},
+                                      ::Type{S},
+                                      sys::PSY.System;
+                                      kwargs...) where {L<:PSY.ControllableLoad,
+                                                        S<:PM.AbstractActivePowerFormulation}
+
+    forecast = get(kwargs, :forecast, true)
+
+    devices = PSY.get_components(L, sys)
+
+    if validate_available_devices(devices, L)
+        return
+    end
+
+    #Variables
+    activepower_variables(canonical_model, devices)
+
+    commitment_variables(canonical_model, devices)
+
+    #Constraints
+    if forecast
+        forecasts = _retrieve_forecasts(sys, L)
+        activepower_constraints(canonical_model, forecasts, model.formulation, S)
+    else
+        activepower_constraints(canonical_model, devices, model.formulation, S)
+    end
+
+    feedforward!(canonical_model, L, model.feedforward)
+
+    #Cost Function
+    cost_function(canonical_model, devices, model.formulation, S)
+
+    return
+
+end
+
+function _internal_device_constructor!(canonical_model::CanonicalModel,
+                                        model::DeviceModel{L, StaticPowerLoad},
+                                        ::Type{S},
+                                        sys::PSY.System;
+                                        kwargs...) where {L<:PSY.ElectricLoad,
+                                                          S<:PM.AbstractPowerFormulation}
+
+    forecast = get(kwargs, :forecast, true)
+
+    devices = PSY.get_components(L, sys)
+
+    if validate_available_devices(devices, L)
+        return
+    end
+
+    if forecast
+        forecasts = _retrieve_forecasts(sys, L)
+        nodal_expression(canonical_model, forecasts, S)
+    else
+        nodal_expression(canonical_model, devices, S)
     end
 
     return
 
 end
 
-function construct_device!(ps_m::CanonicalModel,
-                           device::Type{L},
-                           device_formulation::Type{PSI.StaticPowerLoad},
-                           system_formulation::Type{S},
-                           sys::PSY.System,
-                           time_range::UnitRange{Int64};
-                           kwargs...) where {L <: PSY.ElectricLoad,
-                                             S <: PM.AbstractPowerFormulation}
+function _internal_device_constructor!(canonical_model::CanonicalModel,
+                                        model::DeviceModel{L, D},
+                                        ::Type{S},
+                                        sys::PSY.System;
+                                        kwargs...) where {L<:PSY.StaticLoad,
+                                                          D<:AbstractControllablePowerLoadForm,
+                                                          S<:PM.AbstractPowerFormulation}
 
-    parameters = get(kwargs, :parameters, true)
+    if D != StaticPowerLoad
+        @warn("The Formulation $(D) only applies to Controllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad")
+    end
 
-    nodal_expression(ps_m, sys.loads, system_formulation, time_range, parameters)
-
-    return
+    _internal_device_constructor!(canonical_model,
+                                  DeviceModel(L, StaticPowerLoad),
+                                  S,
+                                  sys;
+                                  kwargs...)
 
 end
