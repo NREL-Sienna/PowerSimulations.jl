@@ -29,7 +29,7 @@ ParameterJuMP = "~v0.1"
 PowerModels = "~0.12"
 PowerSystems = "~v0.4"
 TimeSeries = "~v0.16"
-julia = "~1.2"
+julia = "^1.2"
 
 [extras]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
