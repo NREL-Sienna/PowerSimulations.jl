@@ -40,6 +40,7 @@ end
 
 function _run_stage(stage::_Stage, results_path::String)
 
+    
     for run in stage.executions
         if stage.model.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
             error("No Optimizer has been defined, can't solve the operational problem stage with key $(stage.key)")
@@ -71,7 +72,7 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
     elseif sim.ref.reset == false
         error("Reset the simulation")
     end
-
+    variable_names = Dict()
     steps = get_steps(sim)
     for s in 1:steps
         verbose && println("Step $(s)")
@@ -91,8 +92,34 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
             @assert stage.executions == stage.execution_count
             stage.execution_count = 0 # reset stage execution_count
         end
+        
     end
+    
+    function make_reference_table(steps, sim)
+        references = Dict()
+        variables = Dict()
+        for (ix, stage) in sim.stages
+            interval = PSY.get_forecasts_interval(stage.model.sys)
+            for run in 1:stage.executions
+                date = sim.ref.date_ref[ix]
+                variable_names = collect(keys(sim.stages[ix].model.canonical.variables))
+                for n in 1:length(variable_names)
+                    variables[variable_names[n]] = DataFrames.DataFrame()
+                    for s in 1:steps
 
-    return
+                        full_path = joinpath(sim.ref.raw,"step-$(s)-stage-$(ix)","$(date)")
+                        variables[variable_names[n]] = vcat(date, "step-$(s)", full_path)
+                    end
+                end
+                sim.ref.date_ref[ix] = sim.ref.date_ref[ix] + interval
+            end
+            references["stage-$ix"] = variables
+            println("$variables")
+            println("$references")
+        end
+    end
+    
+    
+    return references
 
 end

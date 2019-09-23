@@ -12,12 +12,14 @@ end
 
 function _write_variable_results(vars_results::OperationModel, save_path::AbstractString)
 
+    
     for (k,v) in vars(vars_results.canonical)
          file_path = joinpath(save_path,"$(k).feather")
+         
          Feather.write(file_path, _result_dataframe_vars(v))
     end
-
-    return
+    println("$variable_names")
+    return 
 
 end
 
@@ -49,7 +51,7 @@ end
 
 # These functions are writing directly to the feather file and skipping printing to memory.
 function _export_model_result(op_m::OperationModel, save_path::String)
-
+    
     _write_variable_results(op_m, save_path)
     _write_time_stamps(get_time_stamp(op_m), save_path)
 

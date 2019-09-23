@@ -12,22 +12,26 @@ bar_plot(results)
 generates a bar plot for each variable,
 and one bar plot of all the variables
 
+kwargs: plot attributes, such as seriescolor = [:red :blue :orange]
+will override the default series color
 """
 
-function bar_plot(res::OperationModelResults)
+function bar_plot(res::OperationModelResults; kwargs...)
 
+  default = [:lightblue :darkorange :lightgreen :red :turquoise :blue :orange]
+  seriescolor = get(kwargs, :seriescolor, default)
   key_name = string.(collect(keys(res.variables)))
 
   for i in 1:length(key_name)
 
     variable_bar = get_bar_plot_data(res, key_name[i])
-    p = RecipesBase.plot(variable_bar, key_name[i])
+    p = RecipesBase.plot(variable_bar, key_name[i]; seriescolor = seriescolor)
     display(p)
     
   end
 
   bar_gen = get_bar_gen_data(res)
-  p2 = RecipesBase.plot(bar_gen)
+  p2 = RecipesBase.plot(bar_gen; seriescolor = seriescolor)
   display(p2)
 
 end
@@ -47,22 +51,27 @@ stack_plot(results)
 generates a stack plot for each variable,
 and one stack plot of all the variables
 
+kwargs: plot attributes, such as seriescolor = [:red :blue :orange]
+will override the default series color
+
 """
 
-function stack_plot(res::OperationModelResults)
-    
+function stack_plot(res::OperationModelResults; kwargs...)
+
+  default = [:lightblue :darkorange :lightgreen :red :turquoise :blue :orange]
+  seriescolor = get(kwargs, :seriescolor, default)  
   key_name = string.(collect(keys(res.variables)))
 
   for i in 1:length(key_name)
 
     variable_stack = get_stacked_plot_data(res, key_name[i])
-    p3 = RecipesBase.plot(variable_stack, key_name[i])
+    p3 = RecipesBase.plot(variable_stack, key_name[i]; seriescolor = seriescolor)
     display(p3)
 
   end
 
   stacked_gen = get_stacked_generation_data(res)
-  p4 = RecipesBase.plot(stacked_gen)
+  p4 = RecipesBase.plot(stacked_gen; seriescolor = seriescolor)
   display(p4)
 
 end
@@ -99,8 +108,7 @@ RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String)
   title := variable		
   label := results.labels		
   legend := :topleft		
-  alpha := 0.6		
-  seriescolor := [:lightblue :darkorange :lightgreen :red :turquoise :blue :orange]		
+  alpha := 0.6			
   time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))		
   xlabel := "$time_interval"		
   ylabel := "Generation (MW)"		
@@ -134,8 +142,7 @@ RecipesBase.@recipe function StackedGeneration(res::StackedGeneration)
   # Plot Attributes		
   grid := false		
   title := "Generation Type"		
-  alpha := 0.6		
-  seriescolor := [:lightblue :orange :lightgreen :red :turquoise]  		
+  alpha := 0.6				
   label := res.labels		
   legend := :bottomright		
   time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))		
@@ -179,8 +186,7 @@ RecipesBase.@recipe function BarPlot(res::BarPlot, variable::String)
  time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))		
  xlabel := "$time_interval, $start_time"		
  ylabel := "Generation(MW)"		
- alpha := 0.6		 
- seriescolor := [:lightblue :orange :lightgreen :red :turquoise :blue]   
+ alpha := 0.6		  
  xlims := (1, 8)
  xticks := false		
  n = 2		
@@ -210,7 +216,6 @@ RecipesBase.@recipe function BarGen(res::BarGeneration)
    start_time = time[1]
    xticks := false
    alpha := 0.6		 
-   seriescolor := [:lightblue :orange :lightgreen :red :turquoise :blue] 
    xlims := (1, 8)
 
    for c=1:size(z,2)		
