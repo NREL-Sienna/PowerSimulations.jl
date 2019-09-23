@@ -93,9 +93,13 @@ export get_all_var_index
 export get_con_index
 export get_var_index
 # Plotting Utils
+export sort_data
 export get_stacked_plot_data
 export get_bar_plot_data
 export get_stacked_generation_data
+export bar_plot
+export stack_plot
+export report
 
 #################################################################################
 # Imports
@@ -111,6 +115,8 @@ import PowerSystems
 import InfrastructureSystems
 import PowerModels
 import RecipesBase
+import Requires
+
 
 #TimeStamp Management Imports
 import Dates
@@ -220,13 +226,19 @@ include("routines/make_initial_conditions.jl")
 include("routines/get_results.jl")
 include("routines/solve_routines.jl")
 include("routines/write_model.jl")
-#include("make_report.jl")
+
 
 #Utils
 include("utils/optimization_debugging.jl")
 include("utils/printing.jl")
 include("utils/plot_results.jl")
 include("utils/plot_recipes.jl")
+
+#Initialization
+
+function __init__()
+   Requires.@require Weave = "44d3d7a6-8a23-5bf8-98c5-b353f8df5ec9" include("utils/make_report.jl")
+end
 
 
 end
