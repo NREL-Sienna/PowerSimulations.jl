@@ -18,7 +18,16 @@ will override the default series color
 
 function bar_plot(res::OperationModelResults; kwargs...)
 
-  default = [:lightblue :darkorange :lightgreen :red :turquoise :blue :orange]
+  default = hcat([Colors.RGBA(0.7,0.1,0.1,0.95)], # maroon
+           [Colors.RGBA(0,0,0,0.8)], [:lightblue], # Dark gray
+           [Colors.RGBA(0.33,0.42,0.18,0.9)], [:pink], # olive green
+           [Colors.RGBA(0.93,0.46,0,1)], [Colors.RGBA(0.56,0.28,0.54,1)], # orange, orchid
+           [Colors.RGBA(0.9,0.5,0.6,0.80)],  # dark pink
+           [Colors.RGBA(1, 1, 0.5, 0.6)], # light yellow
+           [Colors.RGBA(0.27, 0.5, 0.7, 0.9)], # steel blue
+           [Colors.RGBA(1, 0.757, 0.15, 01)], # canary yellow
+           [Colors.RGBA(0.8, 0.6, 0.3, 1)], [:red]) # khaki
+
   seriescolor = get(kwargs, :seriescolor, default)
   key_name = string.(collect(keys(res.variables)))
 
@@ -186,7 +195,7 @@ RecipesBase.@recipe function BarPlot(res::BarPlot, variable::String)
  time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))		
  xlabel := "$time_interval, $start_time"		
  ylabel := "Generation(MW)"		
- alpha := 0.6		  
+ #alpha := 0.6		  
  xlims := (1, 8)
  xticks := false		
  n = 2		
@@ -215,7 +224,7 @@ RecipesBase.@recipe function BarGen(res::BarGeneration)
    label := res.labels	
    start_time = time[1]
    xticks := false
-   alpha := 0.6		 
+   #alpha := 0.6		 
    xlims := (1, 8)
 
    for c=1:size(z,2)		

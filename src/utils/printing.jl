@@ -65,40 +65,37 @@ end
 function Base.show(io::IO, op_model::Simulation)
     println(io, "Simulation Model")
 end
-#=
+
 function Base.show(io::IO, res_model::OperationModelResults)
     println(io, "Results Model")
  end
-=#
+#=
+
 function Base.show(io::IO, res_model::OperationModelResults)
     println(io, "\nResults Model")
     println(io, "===============\n")
-    println(io, "Variables")
-    println(io, "---------\n")
+   
     for (k, v) in res_model.variables
-        time = DataFrames.DataFrame(Time = res_model.time_stamp[1:24, :Range])
+        time = DataFrames.DataFrame(Time = res_model.time_stamp[:Range])
         var = hcat(time, v)
         println(io, "$(k)")
-        println(io, "==================\n")
+        println(io, "==================")
         println(io, "$(var)\n")
     end
+    
     println(io, "Optimizer Log")
-    println(io, "-------------\n")
+    println(io, "-------------")
     for (k, v) in res_model.optimizer_log
         println(io, "        $(k) = $(v)")
     end
     println(io, "\n")
-   # println(io, "Time Stamp")
-   # println(io, "----------\n")
-   # println(io, "    $(res_model.time_stamp)")
-    println(io, "\n")
-    println(io, "Total Cost")
-    println(io, "----------\n")
     for (k, v) in res_model.total_cost
-        println(io, "        $(k) = $(v)")
+        println(io, "Total Cost: $(k) = $(v)")
     end
  end
 
  function Base.show(io::IO, stage::Stage)
     println(io, "Simulation Stage")
  end
+
+ =#
