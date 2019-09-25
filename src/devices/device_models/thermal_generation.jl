@@ -4,9 +4,11 @@ abstract type AbstractThermalFormulation<:AbstractDeviceFormulation end
 
 abstract type AbstractThermalDispatchForm<:AbstractThermalFormulation end
 
-struct ThermalUnitCommitment<:AbstractThermalFormulation end
+abstract type AbstractThermalUnitCommitment<:AbstractThermalFormulation end
 
-struct ThermalBasicUnitCommitment<:AbstractThermalFormulation end
+struct ThermalBasicUnitCommitment<:AbstractThermalUnitCommitment end
+
+struct ThermalStandardUnitCommitment<:AbstractThermalUnitCommitment end
 
 struct ThermalDispatch<:AbstractThermalDispatchForm end
 

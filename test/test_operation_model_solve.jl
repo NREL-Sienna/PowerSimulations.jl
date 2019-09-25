@@ -128,7 +128,7 @@ end
 end
 
 @testset "Solving UC Linear Networks" begin
-    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalUnitCommitment),
+    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalStandardUnitCommitment),
                                         :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
     parameters_value = [true, false]
     systems = [c_sys5, c_sys5_dc]

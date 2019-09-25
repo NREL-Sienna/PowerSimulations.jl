@@ -28,11 +28,11 @@ true finally end
     Net = PSI.CopperPlatePowerModel
     m = Model();
     netinjection = PSI.instantiate_network(Net, sys5);
-    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalUnitCommitment , Net, sys5);
+    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalStandardUnitCommitment , Net, sys5);
     PSI.construct_device!(m, netinjection, RenewableGen, PSI.RenewableCurtail, Net, sys5);
     PSI.construct_device!(m, netinjection, ElectricLoad, PSI.InterruptibleLoad, Net, sys5);
     PSI.construct_network!(m, [(device=Branch, formulation=PSI.PiLine)], netinjection, Net, sys5)
-    PSI.construct_service!(m, simple_reserve, PSI.RampLimitedReserve, [(device = ThermalGen, formulation =PSI.ThermalUnitCommitment ),
+    PSI.construct_service!(m, simple_reserve, PSI.RampLimitedReserve, [(device = ThermalGen, formulation =PSI.ThermalStandardUnitCommitment ),
                                                               (device = RenewableGen, formulation = PSI.RenewableCurtail)],
                                                               sys5)
     m.obj_dict

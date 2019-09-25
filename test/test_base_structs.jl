@@ -1,5 +1,5 @@
 @testset "DeviceModel Tests" begin
-    @test_throws ArgumentError DeviceModel(PSY.ThermalGen, PSI.ThermalUnitCommitment)
+    @test_throws ArgumentError DeviceModel(PSY.ThermalGen, PSI.ThermalStandardUnitCommitment)
     @test_throws ArgumentError DeviceModel(PSY.ThermalStandard, PSI.AbstractDeviceFormulation)
     @test_throws ArgumentError PSI.CanonicalModel(JuMP.Model(),
                                                 nothing,
