@@ -124,16 +124,15 @@ RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String)
   grid := false		
   title := variable		
   label := results.labels		
-  legend := :topleft		
-  alpha := 0.6			
+  legend := :topleft				
   time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))		
   xlabel := "$time_interval"		
   ylabel := "Generation (MW)"		
   xtick := time[1]:Dates.Hour(12):time[n-1]
 
     #create filled polygon
-    sy = vcat(z[:,1],zeros(n-1))		
-    sx = [time[1:n-1]; reverse(time[1:n-1])]		
+    sy = vcat(z[:,1],zeros(n))		
+    sx = [time[1:n]; reverse(time[1:n])]		
 
      for c=1:size(z,2)		
       if c !== 1		
@@ -158,18 +157,17 @@ RecipesBase.@recipe function StackedGeneration(res::StackedGeneration)
   z = cumsum(data, dims = 2)		
   # Plot Attributes		
   grid := false		
-  title := "Generation Type"		
-  alpha := 0.6				
+  title := "Generation Type"				
   label := res.labels		
   legend := :bottomright		
   time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))		
   xlabel := "$time_interval"		
   ylabel := "Generation (MW)"		
-  xtick := time[1]:Dates.Hour(12):time[n-1]		
+  xtick := time[1]:Dates.Hour(12):time[n]		
 
   # Create filled polygon		
  sy = vcat(z[:,1],zeros(n-1))		
- sx = [time[1:n-1]; reverse(time[1:n-1])]		
+ sx = [time[1:n]; reverse(time[1:n])]		
 
 for c=1:size(z,2)		
    if c !== 1		
@@ -202,8 +200,7 @@ RecipesBase.@recipe function BarPlot(res::BarPlot, variable::String)
  start_time = time[1]		
  time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))		
  xlabel := "$time_interval, $start_time"		
- ylabel := "Generation(MW)"		
- #alpha := 0.6		  
+ ylabel := "Generation(MW)"			  
  xlims := (1, 8)
  xticks := false		
  n = 2		
@@ -231,8 +228,7 @@ RecipesBase.@recipe function BarGen(res::BarGeneration)
    seriestype := :shape		 
    label := res.labels	
    start_time = time[1]
-   xticks := false
-   #alpha := 0.6		 
+   xticks := false 
    xlims := (1, 8)
 
    for c=1:size(z,2)		
