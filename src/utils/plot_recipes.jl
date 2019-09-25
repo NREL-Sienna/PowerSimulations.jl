@@ -166,7 +166,7 @@ RecipesBase.@recipe function StackedGeneration(res::StackedGeneration)
   xtick := time[1]:Dates.Hour(12):time[n]		
 
   # Create filled polygon		
- sy = vcat(z[:,1],zeros(n-1))		
+ sy = vcat(z[:,1],zeros(n))		
  sx = [time[1:n]; reverse(time[1:n])]		
 
 for c=1:size(z,2)		
