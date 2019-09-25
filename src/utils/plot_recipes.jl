@@ -125,7 +125,7 @@ RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String)
   title := variable		
   label := results.labels		
   legend := :topleft				
-  time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))		
+  time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))	+ Dates.Hour(1)
   xlabel := "$time_interval"		
   ylabel := "Generation (MW)"		
   xtick := time[1]:Dates.Hour(12):time[n-1]
@@ -160,7 +160,7 @@ RecipesBase.@recipe function StackedGeneration(res::StackedGeneration)
   title := "Generation Type"				
   label := res.labels		
   legend := :bottomright		
-  time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))		
+  time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))+Dates.Hour(1)		
   xlabel := "$time_interval"		
   ylabel := "Generation (MW)"		
   xtick := time[1]:Dates.Hour(12):time[n]		
@@ -198,7 +198,8 @@ RecipesBase.@recipe function BarPlot(res::BarPlot, variable::String)
  seriestype := :shape		  
  label := res.labels		
  start_time = time[1]		
- time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))		
+ time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-
+                  convert(Dates.DateTime,time[1]))+Dates.Hour(1)
  xlabel := "$time_interval, $start_time"		
  ylabel := "Generation(MW)"			  
  xlims := (1, 8)
@@ -218,7 +219,7 @@ end
 RecipesBase.@recipe function BarGen(res::BarGeneration)
 
   time = convert.(Dates.DateTime,res.time_range)
-  n = 2
+  n = size(time,1)
   data_point = res.bar_data	
   data = [data_point; data_point]
   z = cumsum(data, dims = 2)
@@ -227,10 +228,13 @@ RecipesBase.@recipe function BarGen(res::BarGeneration)
    title := "Generation Type"	
    seriestype := :shape		 
    label := res.labels	
-   start_time = time[1]
+   start_time = time[1]	
+   time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-
+                    convert(Dates.DateTime,time[1]))+Dates.Hour(1)
+   xlabel := "$time_interval, $start_time"	
    xticks := false 
    xlims := (1, 8)
-
+   n = 2
    for c=1:size(z,2)		
     sx = [[4,5]; [5,4]]		
     sy = vcat(z[:,c], c==1 ? zeros(n) : reverse(z[:,c-1]))		
