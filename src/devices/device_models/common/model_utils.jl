@@ -31,3 +31,7 @@ function _remove_underscore(original::Symbol)
 
     return parts[1]
 end
+
+function remove_char(s::String, char::String)
+    return replace(s, Regex("[$char]") => "")
+end
