@@ -19,7 +19,7 @@ function status_init(canonical_model::CanonicalModel,
         @info("Setting $(key.quantity) initial conditions for the status of all devices $(PSD) based on system data")
         ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
         for (ix, g) in enumerate(devices)
-            status_value = PSY.get_activepower(g) > 0) ? 1.0 : 0.0
+            status_value = PSY.get_activepower(g) > 0 ? 1.0 : 0.0
             ini_conds[ix] = InitialCondition(canonical_model,
                                             g,
                                             ref_key,
@@ -30,7 +30,7 @@ function status_init(canonical_model::CanonicalModel,
         for g in devices
             g in ic_devices && continue
             @info("Setting $(key.quantity) initial conditions for the status device $(g.name) based on system data")
-                status_value = PSY.get_activepower(g) > 0) ? 1.0 : 0.0
+                status_value = PSY.get_activepower(g) > 0 ? 1.0 : 0.0
                 push!(ini_conds, InitialCondition(canonical_model,
                                                   g,
                                                   ref_key,
