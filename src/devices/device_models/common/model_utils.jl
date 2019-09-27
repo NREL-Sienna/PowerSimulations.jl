@@ -32,6 +32,10 @@ function _remove_underscore(original::Symbol)
     return parts[1]
 end
 
+function replace_char(s::String, char::String, replacement::String)
+    return replace(s, Regex("[$char]") => "replacement")
+end
+
 function remove_char(s::String, char::String)
-    return replace(s, Regex("[$char]") => "")
+    return replace_char(s::String, char::String, "")
 end

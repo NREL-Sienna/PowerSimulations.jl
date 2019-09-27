@@ -5,7 +5,7 @@ function _prepare_workspace!(ref::SimulationRef, base_name::String, folder::Stri
     cd(folder)
     global_path = joinpath(folder, "$(base_name)")
     isdir(global_path) && mkpath(global_path)
-    _sim_path = remove_char("$(round(Dates.now(),Dates.Minute))-$(base_name)", ":")
+    _sim_path = replace_char("$(round(Dates.now(),Dates.Minute))-$(base_name)", ":", "-")
     simulation_path = joinpath(global_path, _sim_path)
     raw_ouput = joinpath(simulation_path, "raw_output")
     mkpath(raw_ouput)
