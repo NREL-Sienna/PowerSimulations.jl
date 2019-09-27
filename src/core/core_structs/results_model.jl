@@ -46,10 +46,55 @@ function load_operation_results(path::AbstractString, directory::AbstractString)
         optimizer = Dict{Symbol, Any}(eachcol(Feather.read("$file_path"),true))
 
         file_path = joinpath(folder_path,"time_stamp.feather")
-        time_stamp = Feather.read("$file_path")
+        temp_time_stamp = Feather.read("$file_path")
+        time_stamp = temp_time_stamp[1:(size(temp_time_stamp,1)-1),:]
+        
 
         obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer[:obj_value])
         results = OperationModelResults(variable_dict, obj_value, optimizer, time_stamp)
+
+    return results
+
+end
+
+function load_simulation_results(stage::String,
+                                 step::Array,
+                                 date_range::StepRange,
+                                 variable::Array, 
+                                 references::Dict{Any,Any})
+
+    time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
+    variable_dict = Dict()
+    for l in 1:length(variable)
+        date_df = references[stage][variable[l]]
+        step_df = DataFrames.DataFrame(Date = Dates.DateTime[], Step = String[], File_Path = String[])
+        
+        for n in 1:length(step)
+            step_df = vcat(step_df,date_df[date_df.Step .== step[n], :])
+        end
+        n = length(date_range)
+        variable_dict[(variable[l])] = DataFrames.DataFrame()
+        
+        for time in date_range
+        
+                file_path = step_df[step_df.Date .== time, :File_Path][1]
+        
+                variable_dict[(variable[l])] = vcat(variable_dict[(variable[l])],Feather.read("$file_path")) 
+                if l == 1
+                    time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
+                    temp_time_stamp = Feather.read("$time_file_path")
+                    t = size(temp_time_stamp, 1)
+                    time_stamp = vcat(time_stamp,temp_time_stamp[(1:t-1),:])
+                    
+                end
+        end
+    end
+    first_file = references[stage][variable[1]]
+    file_path = first_file[first_file.Date .== date_range[1], :File_Path][1]
+    opt_file_path = joinpath(dirname(file_path),"optimizer_log.feather")
+    optimizer = Dict{Symbol, Any}(eachcol(Feather.read("$opt_file_path"),true))
+    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer[:obj_value])
+    results = OperationModelResults(variable_dict, obj_value, optimizer, time_stamp)
 
     return results
 

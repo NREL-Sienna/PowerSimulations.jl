@@ -84,10 +84,12 @@ export set_branch_model!
 export set_device_model!
 ## Sim Model Exports
 export run_sim_model!
+export make_references
 ## Utils Exports
 export write_op_model
 export write_model_results
 export load_operation_results
+export load_simulation_results
 export get_all_constraint_index
 export get_all_var_index
 export get_con_index
@@ -126,6 +128,7 @@ import TimeSeries
 import MathOptFormat
 import DataFrames
 import Feather
+import Colors
 
 #################################################################################
 #Type Alias for long type signatures

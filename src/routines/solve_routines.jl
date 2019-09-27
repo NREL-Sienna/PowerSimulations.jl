@@ -66,12 +66,13 @@ end
 
 """Runs Simulations"""
 function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
-
+    
     if sim.ref.reset
         sim.ref.reset = false
     elseif sim.ref.reset == false
         error("Reset the simulation")
     end
+    
     variable_names = Dict()
     steps = get_steps(sim)
     for s in 1:steps
@@ -94,32 +95,49 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
         end
         
     end
-    
-    function make_reference_table(steps, sim)
-        references = Dict()
-        variables = Dict()
-        for (ix, stage) in sim.stages
-            interval = PSY.get_forecasts_interval(stage.model.sys)
-            for run in 1:stage.executions
-                date = sim.ref.date_ref[ix]
-                variable_names = collect(keys(sim.stages[ix].model.canonical.variables))
-                for n in 1:length(variable_names)
-                    variables[variable_names[n]] = DataFrames.DataFrame()
-                    for s in 1:steps
-
-                        full_path = joinpath(sim.ref.raw,"step-$(s)-stage-$(ix)","$(date)")
-                        variables[variable_names[n]] = vcat(date, "step-$(s)", full_path)
-                    end
-                end
-                sim.ref.date_ref[ix] = sim.ref.date_ref[ix] + interval
-            end
-            references["stage-$ix"] = variables
-            println("$variables")
-            println("$references")
-        end
-    end
-    
+    date_run = convert(String,last(split(dirname(sim.ref.raw),"/")))
+    references = make_references(sim, date_run)
     
     return references
 
+end
+
+function make_references(sim::Simulation, date_run::String)
+  
+    sim.ref.date_ref[1] = sim.daterange[1]
+    sim.ref.date_ref[2] = sim.daterange[1]
+
+    references = Dict()
+    for (ix, stage) in enumerate(sim.stages)
+        variables = Dict()
+        interval = PSY.get_forecasts_interval(stage.model.sys)
+        variable_names = collect(keys(sim.stages[ix].model.canonical.variables))
+        for n in 1:length(variable_names)
+            variables[variable_names[n]] = DataFrames.DataFrame(Date = Dates.DateTime[], Step = String[], File_Path = String[])
+        end
+        for s in 1:(sim.steps)
+            sim.ref.current_time = sim.ref.date_ref[ix]
+            for run in 1:stage.executions
+                for n in 1:length(variable_names)
+            
+                    initial_path = joinpath(dirname(dirname(sim.ref.raw)), date_run, "raw_output")
+                    full_path = joinpath(initial_path,"step-$(s)-stage-$(ix)","$(sim.ref.current_time)","$(variable_names[n]).feather")
+        
+                    if isfile(full_path)
+                        date_df = DataFrames.DataFrame(Date = sim.ref.current_time, Step = "step-$(s)", File_Path = full_path)
+                        variables[variable_names[n]] = vcat(variables[variable_names[n]], date_df)
+                    else
+                        println("$full_path, no such file")        
+                     end
+                end
+                sim.ref.run_count[s][ix] += 1 
+                sim.ref.date_ref[ix] = sim.ref.date_ref[ix] + interval
+                
+            end
+        end
+        
+        references["stage-$ix"] = variables
+        stage.execution_count = 0 
+    end
+    return references
 end

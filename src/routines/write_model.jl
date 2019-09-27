@@ -18,7 +18,7 @@ function _write_variable_results(vars_results::OperationModel, save_path::Abstra
          
          Feather.write(file_path, _result_dataframe_vars(v))
     end
-    println("$variable_names")
+   
     return 
 
 end
