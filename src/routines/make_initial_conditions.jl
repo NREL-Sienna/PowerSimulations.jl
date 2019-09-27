@@ -1,3 +1,5 @@
+const missing_initial_conditions_time_count = 999.0
+
 """
 Status Initis is always calculated based on the Power Output of the device
 This is to make it easier to calculate when the previous model doesn't
@@ -99,8 +101,8 @@ function duration_init(canonical_model::CanonicalModel,
             ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
 
             for (ix, g) in enumerate(devices)
-                time_on = (PSY.get_activepower(g) > 0) ? 999.0 : 0.0
-                time_off = PSY.get_activepower(g) <= 0 ? 999.0 : 0.0
+                time_on = (PSY.get_activepower(g) > 0) ? missing_initial_conditions_time_count : 0.0
+                time_off = PSY.get_activepower(g) <= 0 ? missing_initial_conditions_time_count : 0.0
                 times = [time_on, time_off]
                 ini_conds[ix] = InitialCondition(canonical_model,
                                                     g,
@@ -115,8 +117,8 @@ function duration_init(canonical_model::CanonicalModel,
 
             for g in devices
                 g in ic_devices && continue
-                time_on = (PSY.get_activepower(g) > 0) ? 999.0 : 0.0
-                time_off = PSY.get_activepower(g) <= 0 ? 999.0 : 0.0
+                time_on = (PSY.get_activepower(g) > 0) ? missing_initial_conditions_time_count : 0.0
+                time_off = PSY.get_activepower(g) <= 0 ? missing_initial_conditions_time_count : 0.0
                 times = [time_on, time_off]
                 @info("Setting $(key.quantity) initial_condition of device $(g.name) based on system data")
                 push!(ini_conds, InitialCondition(canonical_model,
