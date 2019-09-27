@@ -103,7 +103,8 @@ function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationOFF, PS
 
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
-    @assert last_status == 1.0*(var_value > eps())
+    var_status = var_value > eps() ? 1.0 : 0.0
+    @assert last_status == var_status
 
     if last_status >= 1.0
         return current_counter
@@ -124,7 +125,8 @@ function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationON, PSD
 
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
-    @assert last_status == 1.0*(var_value > eps())
+    var_status = var_value > eps() ? 1.0 : 0.0
+    @assert last_status == var_status
 
     if last_status >= 1.0
         return 0.0
@@ -140,7 +142,7 @@ function _calculate_ic_quantity(initial_condition_key::ICKey{DeviceStatus, PSD},
                                 ic::InitialCondition,
                                 var_value::Float64,
                                 cache::Union{Nothing,AbstractCache}) where PSD <: PSY.Device
-    return 1.0*(var_value > eps())
+    return var_value > eps() ? 1.0 : 0.0
 end
 
 function _calculate_ic_quantity(initial_condition_key::ICKey{DevicePower, PSD},
