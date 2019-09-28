@@ -1,4 +1,4 @@
-function _prepare_workspace!(ref::SimulationRef, base_name::String, folder::String)
+function _prepare_workspace!(ref::SimulationRef, base_name::AbstractString, folder::AbstractString)
 
     !isdir(folder) && error("Specified folder is not valid")
 
@@ -24,7 +24,7 @@ end
 
 function _validate_steps(stages::Dict{Int64, Stage}, steps::Int64)
 
-    for (k,v) in stages
+    for (_, s) in stages
 
         forecast_count = length(PSY.get_forecast_initial_times(v.sys))
 
