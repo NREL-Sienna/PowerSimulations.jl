@@ -22,7 +22,7 @@ function _result_dataframe_duals(constraint::JuMP.Containers.DenseAxisArray)
     for (ix, name) in enumerate(constraint.axes[1])
         try result[ix] = JuMP.dual(constraint[name])
         catch
-            result[ix] = NAN
+            result[ix] = NaN
         end
     end
 
@@ -91,4 +91,3 @@ function get_time_stamp(op_model::OperationModel)
 
     return time_stamp
 end
-
