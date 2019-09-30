@@ -76,12 +76,6 @@ thermal_generators5_uc_testing = [ThermalStandard("Alta", true, nodes5[1], 0.0, 
 c_sys5_uc = PSY.System(nodes5, thermal_generators5_uc_testing, loads5, branches5, nothing, 100.0, nothing, nothing, nothing);
 add_forecasts!(c_sys5_uc, load_forecast_DA)
 
-# Small UC test Cases
-ramp_test_sys = PSY.System(joinpath(DATA_DIR, "UC_test/ramp_test.json"));
-duration_test_sys = PSY.System(joinpath(DATA_DIR, "UC_test/duration_test.json"));
-cost_test_sys = PSY.System(joinpath(DATA_DIR, "UC_test/cost_test.json"));
-cost_test_sos_sys = PSY.System(joinpath(DATA_DIR, "UC_test/cost_test_sos.json"));
-
 #= RTS Data
 RTS_GMLC_DIR = joinpath(DATA_DIR, "RTS_GMLC")
 const DESCRIPTORS = joinpath(RTS_GMLC_DIR, "user_descriptors.yaml")
