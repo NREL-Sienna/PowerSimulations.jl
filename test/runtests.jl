@@ -53,5 +53,6 @@ end
 end
 
 @testset "Simulation Models" begin
+    include("test_uc_constraints.jl")
     #include("test_simulation_models.jl")
 end
