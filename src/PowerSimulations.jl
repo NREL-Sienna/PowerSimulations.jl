@@ -99,9 +99,13 @@ export sort_data
 export get_stacked_plot_data
 export get_bar_plot_data
 export get_stacked_generation_data
+export get_stacked_aggregation_data
+export fuel_plot
 export bar_plot
 export stack_plot
 export report
+export make_fuel_dictionary
+
 
 #################################################################################
 # Imports
@@ -234,8 +238,10 @@ include("routines/write_model.jl")
 #Utils
 include("utils/optimization_debugging.jl")
 include("utils/printing.jl")
+include("utils/plot_fuel_results.jl")
 include("utils/plot_results.jl")
 include("utils/plot_recipes.jl")
+include("utils/call_plots.jl")
 
 #Initialization
 
