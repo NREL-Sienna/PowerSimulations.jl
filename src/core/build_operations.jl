@@ -27,7 +27,7 @@ function  _build_canonical(::Type{T},
 
     #Build Service
     for mod in services
-        #construct_service!(canonical, mod[2].device, mod[2].formulation, T, sys, time_steps, resolution; kwargs...)
+        construct_service!(canonical, mod[2].service, mod[2].formulation, devices, T, sys; kwargs...)
     end
 
     # Objective Function

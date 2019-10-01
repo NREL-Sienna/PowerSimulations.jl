@@ -11,12 +11,14 @@ end
 function construct_service!(canonical_model::CanonicalModel,
                            service_model::ServiceModel,
                            system_formulation::Type{S},
+                           devices::Dict{Symbol, DeviceModel},
                            sys::PSY.System;
                            kwargs...) where {S<:PM.AbstractPowerFormulation}
 
     construct_service!(canonical_model,
                       service_model.service,
                       service_model.formulation,
+                      devices,
                       system_formulation,
                       sys;
                       kwargs...)

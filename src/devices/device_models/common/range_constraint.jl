@@ -255,7 +255,7 @@ where r in range_data.
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 """
-function device_range(canonical_model::CanonicalModel,
+function reserve_device_range(canonical_model::CanonicalModel,
                     range_data::Vector{NamedMinMax},
                     cons_name::Symbol,
                     powervar_name::Symbol,

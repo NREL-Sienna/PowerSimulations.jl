@@ -7,3 +7,5 @@ abstract type AbstractRegulationReserveForm<:AbstractReservesForm end
 struct RampLimitedReserve<:AbstractReservesForm end
 
 struct LoadProportionalReserve<:AbstractReservesForm end
+
+struct SpinningReserve <:AbstractReserveForm end
