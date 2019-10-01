@@ -1,12 +1,31 @@
 function construct_service!(canonical_model::CanonicalModel,
                             service::Type{SD},
                             service_formulation::Type{SV},
+                            devices::Dict{Symbol, DeviceModel},
                             system_formulation::Type{S},
                             sys::PSY.System;
                             kwargs...) where {SD<:PSY.Service,
                                               SV<:AbstractServiceFormulation,
-                                              S<: PM.AbstractPowerModel}
+                                              S<:PM.AbstractPowerFormulation}
+                                              
+                                              
+    for mod in devices
+        devices = PSY.get_components(mod[2].device, sys)
 
+        contributingdevices = filter(x -> x in service.contributingdevices, devices)
+
+        if validate_available_devices(contributingdevices, mod[2].device)
+            return
+        end
+
+        #Variables
+        activereserve_variables!(canonical_model, contributingdevices)
+
+        #Constraints
+        activereserve_constraints!(canonical_model, contributingdevices, mod[2].formulation, S)
+
+        reserve_ramp_constraints!(canonical_model, contributingdevices,  mod[2].formulation, S)
+    end
     return
 
 end

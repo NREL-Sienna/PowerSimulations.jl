@@ -20,8 +20,8 @@ function build_op_model!(op_model::OperationModel{M}; kwargs...) where M<:Abstra
     end
 
     #Build Service
-    for (_, service_model) in op_model.model_ref.services
-        #construct_service!(canonical, service_model, transmission; kwargs...)
+    for mod in services
+        construct_service!(canonical, mod[2].service, mod[2].formulation, devices, T, sys; kwargs...)
     end
 
     # Objective Function
