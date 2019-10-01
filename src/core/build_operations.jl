@@ -26,8 +26,8 @@ function _build_canonical!(canonical::CanonicalModel, ref::ModelReference, sys::
     end
 
     #Build Service
-    for (_, service_model) in ref.services
-        #construct_service!(canonical, sys, service_model, transmission; kwargs...)
+    for mod in services
+        construct_service!(canonical, mod[2].service, mod[2].formulation, devices, T, sys; kwargs...)
     end
 
     # Objective Function
