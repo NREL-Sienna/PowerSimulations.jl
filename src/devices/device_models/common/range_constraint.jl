@@ -153,7 +153,8 @@ end
     reserve_device_semicontinuousrange(canonical_model::CanonicalModel,
                                     scrange_data::Vector{NamedMinMax},
                                     cons_name::Symbol,
-                                    var_name::Symbol,
+                                    powervar_name::Symbol,
+                                    reservevar_name::Symbol,
                                     binvar_name::Symbol)
 Constructs min/max range constraint from device variable and on/off decision variable.
 # Constraints
@@ -177,14 +178,16 @@ where r in range_data.
 function reserve_device_semicontinuousrange(canonical_model::CanonicalModel,
                                             scrange_data::Vector{NamedMinMax},
                                             cons_name::Symbol,
-                                            var_name::Symbol,
+                                            powervar_name::Symbol,
+                                            reservevar_name::Symbol,
                                             binvar_name::Symbol)
 
     time_steps = model_time_steps(canonical_model)
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
 
-    varcts = var(canonical_model, var_name)
+    power = var(canonical_model, powervar_name)
+    reserve = var(canonical_model, reservevar_name)
     varbin = var(canonical_model, binvar_name)
 
     # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
@@ -200,13 +203,13 @@ function reserve_device_semicontinuousrange(canonical_model::CanonicalModel,
 
             if r[2].min == 0.0
 
-                con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] <= r[2].max*(1-varbin[r[1], t]))
-                con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] >= 0.0)
+                con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, power[r[1], t] + reserve[r[1], t]  <= r[2].max*(1-varbin[r[1], t]))
+                con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, power[r[1], t] + reserve[r[1], t]  >= 0.0)
 
             else
 
-                con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] <= r[2].max*(1-varbin[r[1], t]))
-                con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] >= r[2].min*(1-varbin[r[1], t]))
+                con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, power[r[1], t] + reserve[r[1], t] <= r[2].max*(1-varbin[r[1], t]))
+                con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, power[r[1], t] + reserve[r[1], t] >= r[2].min*(1-varbin[r[1], t]))
 
             end
 
