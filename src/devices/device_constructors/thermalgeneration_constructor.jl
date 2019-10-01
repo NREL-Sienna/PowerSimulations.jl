@@ -1,5 +1,5 @@
 """
-This function creates the model for a full themal dis`pa`tch formulation depending on combination of devices, device_formulation and system_formulation
+This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function _internal_device_constructor!(canonical_model::CanonicalModel,
                                        model::DeviceModel{T, D},
@@ -92,7 +92,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
 end
 
 """
-This function creates the model for a full themal dis`pa`tch formulation depending on combination of devices, device_formulation and system_formulation
+This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
 function _internal_device_constructor!(canonical_model::CanonicalModel,
                                        model::DeviceModel{T, ThermalBasicUnitCommitment},

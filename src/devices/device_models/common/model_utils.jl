@@ -31,3 +31,13 @@ function _remove_underscore(original::Symbol)
 
     return parts[1]
 end
+
+"Replaces the string in `char` with the string`replacement`"
+function replace_chars(s::String, char::String, replacement::String)
+    return replace(s, Regex("[$char]") => replacement)
+end
+
+"Removes the string `char` from the original string"
+function remove_chars(s::String, char::String)
+    return replace_chars(s::String, char::String, "")
+end

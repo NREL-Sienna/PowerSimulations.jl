@@ -1,11 +1,12 @@
-function _prepare_workspace!(ref::SimulationRef, base_name::String, folder::String)
+function _prepare_workspace!(ref::SimulationRef, base_name::AbstractString, folder::AbstractString)
 
     !isdir(folder) && error("Specified folder is not valid")
 
     cd(folder)
     global_path = joinpath(folder, "$(base_name)")
     isdir(global_path) && mkpath(global_path)
-    simulation_path = joinpath(global_path, "$(round(Dates.now(),Dates.Minute))-$(base_name)")
+    _sim_path = replace_chars("$(round(Dates.now(),Dates.Minute))-$(base_name)", ":", "-")
+    simulation_path = joinpath(global_path, _sim_path)
     raw_ouput = joinpath(simulation_path, "raw_output")
     mkpath(raw_ouput)
     models_json_ouput = joinpath(simulation_path, "models_json")
@@ -23,11 +24,11 @@ end
 
 function _validate_steps(stages::Dict{Int64, Stage}, steps::Int64)
 
-    for (k,v) in stages
+    for (_, s) in stages
 
-        forecast_count = length(PSY.get_forecast_initial_times(v.sys))
+        forecast_count = length(PSY.get_forecast_initial_times(s.sys))
 
-        if steps*v.execution_count > forecast_count #checks that there are enough time series to run
+        if steps*s.execution_count > forecast_count #checks that there are enough time series to run
             error("The number of available time series is not enough to perform the
                    desired amount of simulation steps.")
         end
