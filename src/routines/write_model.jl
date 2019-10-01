@@ -86,7 +86,7 @@ function write_model_results(results::OperationModelResults, save_path::String)
         @error("Specified path is not valid. Run write_results to save results.")
     end
 
-    _new_folder_path = replace_char("$save_path/$(round(Dates.now(),Dates.Minute))", ":", "-")
+    _new_folder_path = replace_chars("$save_path/$(round(Dates.now(),Dates.Minute))", ":", "-")
     new_folder = mkdir(_new_folder_path)
     folder_path = new_folder
     _write_variable_results(results.variables, folder_path)
