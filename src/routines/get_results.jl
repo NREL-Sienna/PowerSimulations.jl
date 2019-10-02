@@ -2,15 +2,50 @@
 
 function _result_dataframe_vars(variable::JuMP.Containers.DenseAxisArray)
 
-    result = Array{Float64, length(variable.axes)}(undef, length(variable.axes[2]), length(variable.axes[1]))
-    names = Array{Symbol, 1}(undef, length(variable.axes[1]))
+    if length(axes(variable)) == 1
+        result = Vector{Float64}(undef, length(first(variable.axes)))
 
-    for t in variable.axes[2], (ix, name) in enumerate(variable.axes[1])
-        result[t, ix] = JuMP.value(variable[name, t])
-        names[ix] = Symbol(name)
+        for t in variable.axes[1]
+            result[t] = JuMP.value(variable[t])
+        end
+
+        return DataFrames.DataFrame(var = result)
+
+    elseif length(axes(variable)) == 2
+
+        result = Array{Float64, length(variable.axes)}(undef, length(variable.axes[2]), length(variable.axes[1]))
+        names = Array{Symbol, 1}(undef, length(variable.axes[1]))
+
+        for t in variable.axes[2], (ix, name) in enumerate(variable.axes[1])
+            result[t, ix] = JuMP.value(variable[name, t])
+            names[ix] = Symbol(name)
+        end
+
+        return DataFrames.DataFrame(result, names)
+
+    elseif length(axes(variable)) == 3
+        extra_dims = sum(length(axes(variable)[2:end-1]))
+        extra_vars = [Symbol("S$(s)") for s in 1:extra_dims]
+        result_df = DataFrames.DataFrame()
+        names = vcat(extra_vars, Symbol.(axes(variable)[1]))
+
+        for i in variable.axes[2]
+            third_dim = collect(fill(i,size(variable)[end]))
+            result = Array{Float64 ,2}(undef, length(last(variable.axes)),
+                                              length(first(variable.axes)))
+            for t in last(variable.axes), (ix, name) in enumerate(first(variable.axes))
+                result[t, ix] = JuMP.value(variable[name, i, t])
+            end
+            res = DataFrames.DataFrame(hcat(third_dim, result))
+            result_df = vcat(result_df, res)
+        end
+
+        return DataFrames.names!(result_df, names)
+
+    else
+        error("Dimension Number $(length(axes(variable))) not Supported")
+
     end
-
-    return DataFrames.DataFrame(result, names)
 
 end
 
