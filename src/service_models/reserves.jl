@@ -12,8 +12,7 @@ function activereserve_variables!(canonical_model::CanonicalModel,
                  false,
                  :reserve_balance_active;
                  ub_value = d -> d.tech.activepowerlimits.max,
-                 lb_value = d -> d.tech.activepowerlimits.min,
-                 init_value = 0 )
+                 lb_value = d -> 0 )
 
     return
 
@@ -23,7 +22,7 @@ end
 This function add the variables for reserves to the model
 """
 function activereserve_variables!(canonical_model::CanonicalModel,
-                           devices::Vector{T}) where {T<:PSY.HydroGen}
+                           devices::Vector{H}) where {H<:PSY.HydroGen}
 
     return
 
@@ -33,7 +32,7 @@ end
 This function add the variables for reserves to the model
 """
 function activereserve_variables!(canonical_model::CanonicalModel,
-                           devices::Vector{T}) where {T<:PSY.RenewableGen}
+                           devices::Vector{R}) where {R<:PSY.RenewableGen}
 
     add_variable(canonical_model,
                  devices,
@@ -41,8 +40,7 @@ function activereserve_variables!(canonical_model::CanonicalModel,
                  false,
                  :reserve_balance_active;
                  ub_value = d -> d.tech.activepowerlimits.max,
-                 lb_value = d -> d.tech.activepowerlimits.min,
-                 init_value = 0 )
+                 lb_value = 0 )
 
     return
 
@@ -53,7 +51,7 @@ This function adds the active power limits of generators when there are Commitme
 """
 
 function activereserve_constraints!(canonical_model::CanonicalModel,
-                                 devices::IS.FlattenIteratorWrapper{T},
+                                 devices::Vector{T},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S}) where {T<:PSY.ThermalGen,
                                                                      D<:AbstractThermalDispatchForm,
@@ -64,8 +62,9 @@ function activereserve_constraints!(canonical_model::CanonicalModel,
     reserve_device_range(canonical_model,
                  range_data,
                  Symbol("activerange_$(T)"),
-                 Symbol("P_$(T)"),
+                 (Symbol("P_$(T)"),
                  Symbol("R_$(T)"))
+                 )
     return
 
 end
@@ -75,7 +74,7 @@ This function adds the active power limits of generators when there are Commitme
 """
 
 function activereserve_constraints!(canonical_model::CanonicalModel,
-                                 devices::IS.FlattenIteratorWrapper{T},
+                                 devices::Vector{T},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S}) where {T<:PSY.ThermalGen,
                                                                      D<:AbstractThermalUnitCommitment,
@@ -86,8 +85,8 @@ function activereserve_constraints!(canonical_model::CanonicalModel,
     reserve_device_semicontinuousrange(canonical_model,
                  range_data,
                  Symbol("activerange_$(T)"),
-                 Symbol("P_$(T)"),
-                 Symbol("R_$(T)"),
+                 (Symbol("P_$(T)"),
+                 Symbol("R_$(T)")),
                  Symbol("ON_$(T)"))
     return
 
@@ -98,7 +97,7 @@ This function adds the active power limits of generators when there are Commitme
 """
 
 function activereserve_constraints!(canonical_model::CanonicalModel,
-                                 devices::IS.FlattenIteratorWrapper{T},
+                                 devices::Vector{T},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S}) where {T<:PSY.HydroGen,
                                                                      D<:AbstractThermalUnitCommitment,
@@ -109,24 +108,9 @@ function activereserve_constraints!(canonical_model::CanonicalModel,
 end
 
 ######################## output constraints without Time Series ###################################
-function _get_time_series(devices::IS.FlattenIteratorWrapper{R},
-                          time_steps::UnitRange{Int64}) where {R<:PSY.RenewableGen}
-
-    names = Vector{String}(undef, length(devices))
-    series = Vector{Vector{Float64}}(undef, length(devices))
-
-    for (ix, d) in enumerate(devices)
-        names[ix] = PSY.get_name(d)
-        tech = PSY.get_tech(d)
-        series[ix] = fill(PSY.get_rating(tech), (time_steps[end]))
-    end
-
-    return names, series
-
-end
 
 function activereserve_constraints!(canonical_model::CanonicalModel,
-                                devices::IS.FlattenIteratorWrapper{R},
+                                devices::Vector{R},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {R<:PSY.RenewableGen,
                                                          D<:AbstractRenewableDispatchForm,
@@ -158,23 +142,6 @@ end
 
 ######################### output constraints with Time Series ##############################################
 
-function _get_time_series(forecasts::Vector{PSY.Deterministic{R}}) where {R<:PSY.RenewableGen}
-
-    names = Vector{String}(undef, length(forecasts))
-    ratings = Vector{Float64}(undef, length(forecasts))
-    series = Vector{Vector{Float64}}(undef, length(forecasts))
-
-    for (ix, f) in enumerate(forecasts)
-        component = PSY.get_component(f)
-        names[ix] = PSY.get_name(component)
-        series[ix] = values(PSY.get_data(f))
-        ratings[ix] = PSY.get_tech(component).rating
-    end
-
-    return names, ratings, series
-
-end
-
 function activereserve_constraints!(canonical_model::CanonicalModel,
                                  forecasts::Vector{PSY.Deterministic{R}},
                                  device_formulation::Type{D},
@@ -202,66 +169,15 @@ function activereserve_constraints!(canonical_model::CanonicalModel,
 end
 
 ########################### Ramp/Rate of Change constraints ################################
-"""
-This function gets the data for the generators
-"""
-function _get_data_for_rocc(initial_conditions::Vector{InitialCondition},
-                            resolution::Dates.Period)
-
-    if resolution > Dates.Minute(1)
-        minutes_per_period = Dates.value(Dates.Minute(resolution))
-    else
-        minutes_per_period = Dates.value(Dates.Second(resolution))/60
-    end
-
-    lenght_devices = length(initial_conditions)
-    ini_conds = Vector{InitialCondition}(undef, lenght_devices)
-    ramp_params = Vector{UpDown}(undef, lenght_devices)
-    minmax_params = Vector{MinMax}(undef, lenght_devices)
-
-    idx = 0
-    for ic in initial_conditions
-        g = ic.device
-        gen_tech = PSY.get_tech(g)
-        name = PSY.get_name(g)
-        non_binding_up = false
-        non_binding_down = false
-        ramplimits =  PSY.get_ramplimits(gen_tech)
-        rating = PSY.get_rating(gen_tech)
-        if !isnothing(ramplimits)
-            p_lims = PSY.get_activepowerlimits(gen_tech)
-            max_rate = abs(p_lims.min - p_lims.max)/minutes_per_period
-            if (ramplimits.up*rating >= max_rate) & (ramplimits.down*rating >= max_rate)
-                @info "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
-                continue
-            else
-                idx += 1
-            end
-            ini_conds[idx] = ic
-            ramp_params[idx] = (up = ramplimits.up*rating*minutes_per_period,
-                                down = ramplimits.down*rating*minutes_per_period)
-            minmax_params[idx] = p_lims
-        end
-    end
-
-    if idx < lenght_devices
-        deleteat!(ini_conds, idx+1:lenght_devices)
-        deleteat!(ramp_params, idx+1:lenght_devices)
-        deleteat!(minmax_params, idx+1:lenght_devices)
-    end
-
-    return ini_conds, ramp_params, minmax_params
-
-end
 
 """
 This function adds the ramping limits of generators when there are CommitmentVariables
 """
 function reserve_ramp_constraints!(canonical_model::CanonicalModel,
-                           devices::IS.FlattenIteratorWrapper{T},
+                           devices::Vector{T},
                            device_formulation::Type{D},
                            system_formulation::Type{S}) where {T<:PSY.ThermalGen,
-                                                    D<:AbstractThermalFormulation,
+                                                    D<:AbstractThermalUnitCommitment,
                                                     S<:PM.AbstractPowerFormulation}
     key = ICKey(DevicePower, T)
 
@@ -295,7 +211,7 @@ function reserve_ramp_constraints!(canonical_model::CanonicalModel,
 end
 
 function reserve_ramp_constraints!(canonical_model::CanonicalModel,
-                          devices::IS.FlattenIteratorWrapper{T},
+                          devices::Vector{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S}) where {T<:PSY.ThermalGen,
                                                    D<:AbstractThermalDispatchForm,
@@ -330,7 +246,7 @@ function reserve_ramp_constraints!(canonical_model::CanonicalModel,
 end
 
 function reserve_ramp_constraints!(canonical_model::CanonicalModel,
-                           devices::IS.FlattenIteratorWrapper{T},
+                           devices::Vector{T},
                            device_formulation::Type{D},
                            system_formulation::Type{S}) where {T<:PSY.HydroGen,
                                                     D<:AbstractThermalFormulation,
@@ -340,7 +256,7 @@ function reserve_ramp_constraints!(canonical_model::CanonicalModel,
 end
 
 function reserve_ramp_constraints!(canonical_model::CanonicalModel,
-                           devices::IS.FlattenIteratorWrapper{T},
+                           devices::Vector{T},
                            device_formulation::Type{D},
                            system_formulation::Type{S}) where {T<:PSY.RenewableGen,
                                                     D<:AbstractThermalFormulation,
@@ -352,25 +268,25 @@ end
 """
 This function adds the active power limits of generators when there are CommitmentVariables
 """
-function reserve_constraints!(canonical_model::CanonicalModel,
-                                service::G,
-                                device_formulation::Type{D},
-                                service_formulation::Type{R},
-                                system_formulation::Type{S}) where {G<:PSY.Reserve,
-                                                                    D<:AbstractThermalFormulation,
-                                                                    R<:AbstractReserveForm,
-                                                                    S<:PM.AbstractPowerFormulation}
+# function reserve_constraints!(canonical_model::CanonicalModel,
+#                                 service::G,
+#                                 device_formulation::Type{D},
+#                                 service_formulation::Type{R},
+#                                 system_formulation::Type{S}) where {G<:PSY.Reserve,
+#                                                                     D<:AbstractThermalFormulation,
+#                                                                     R<:AbstractReservesForm,
+#                                                                     S<:PM.AbstractPowerFormulation}
 
-    requirement = service.requirement
-    devices = service.contributingdevices
-    reserve_constraint(canonical_model,
-                        requirement,
-                        Symbol("P_$(T)"),
-                        Symbol("ON_$(T)"))
+#     requirement = service.requirement
+#     devices = service.contributingdevices
+#     reserve_constraint(canonical_model,
+#                         requirement,
+#                         Symbol("P_$(T)"),
+#                         Symbol("ON_$(T)"))
 
-    return
+#     return
 
-end
+# end
 
 
 #=
