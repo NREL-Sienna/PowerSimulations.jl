@@ -1,9 +1,9 @@
 ######## Internal Simulation Object Structs ########
 abstract type AbstractStage end
 
-mutable struct _Stage <: AbstractStage
+mutable struct _Stage{M<:AbstractOperationModel} <: AbstractStage
     key::Int64
-    op_model::Type{<:AbstractOperationModel}
+    op_model::Type{M}
     sys::PSY.System
     canonical::CanonicalModel
     executions::Int64
@@ -14,12 +14,12 @@ mutable struct _Stage <: AbstractStage
     cache::Dict{Type{<:AbstractCache}, AbstractCache}
 
     function _Stage(key::Int64,
-                    op_model::Type{<:AbstractOperationModel},
+                    op_model::Type{M},
                     sys::PSY.System,
                     canonical::CanonicalModel,
                     executions::Int64,
                     chronology_ref::Dict{Int64, Type{<:Chronology}},
-                    cache::Vector{<:AbstractCache})
+                    cache::Vector{<:AbstractCache}) where M <: AbstractOperationModel
 
     ini_cond_chron = get(chronology_ref, 0, nothing)
     if !isempty(get_initial_conditions(canonical))
@@ -36,17 +36,16 @@ mutable struct _Stage <: AbstractStage
     end
 
 
-    new(key,
-        op_model,
-        sys,
-        canonical,
-        executions,
-        0,
-        JuMP.solver_name(canonical.JuMPmodel),
-        chronology_ref,
-        ini_cond_chron,
-        cache_dict
-        )
+    new{M}(key,
+           op_model,
+           sys,
+           canonical,
+           executions,
+           0,
+           JuMP.solver_name(canonical.JuMPmodel),
+           chronology_ref,
+           ini_cond_chron,
+           cache_dict)
 
     end
 

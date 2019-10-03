@@ -40,25 +40,23 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
 
 end
 
-function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::String)
+function _run_stage(stage::_Stage{M}, start_time::Dates.DateTime, results_path::String) where M<:AbstractOperationModel
 
-    for run in stage.executions
-        if stage.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
-            error("No Optimizer has been defined, can't solve the operational problem stage with key $(stage.key)")
-        end
-
-        timed_log = Dict{Symbol, Any}()
-        _, timed_log[:timed_solve_time],
-        timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] =  @timed JuMP.optimize!(stage.canonical.JuMPmodel)
-        model_status = JuMP.primal_status(stage.canonical.JuMPmodel)
-        if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-            error("Stage $(stage.key) status is $(model_status)")
-        end
-        _export_model_result(stage, start_time, results_path)
-        _export_optimizer_log(timed_log, stage.canonical, results_path)
-        stage.execution_count += 1
+    if stage.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
+        error("No Optimizer has been defined, can't solve the operational problem stage with key $(stage.key)")
     end
+
+    timed_log = Dict{Symbol, Any}()
+    _, timed_log[:timed_solve_time],
+    timed_log[:solve_bytes_alloc],
+    timed_log[:sec_in_gc] =  @timed JuMP.optimize!(stage.canonical.JuMPmodel)
+    model_status = JuMP.primal_status(stage.canonical.JuMPmodel)
+    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+        error("Stage $(stage.key) status is $(model_status)")
+    end
+    _export_model_result(stage, start_time, results_path)
+    _export_optimizer_log(timed_log, stage.canonical, results_path)
+    stage.execution_count += 1
 
     return
 
