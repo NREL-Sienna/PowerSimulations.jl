@@ -40,7 +40,7 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
 
 end
 
-function _run_stage(stage::_Stage, results_path::String)
+function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::String)
 
     
     for run in stage.executions
@@ -56,7 +56,7 @@ function _run_stage(stage::_Stage, results_path::String)
         if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
             error("Stage $(stage.key) status is $(model_status)")
         end
-        _export_model_result(stage.model, results_path)
+        _export_model_result(stage.model, start_time, results_path)
         _export_optimizer_log(timed_log, stage.model, results_path)
         stage.execution_count += 1
     end
@@ -87,8 +87,9 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
                 verbose && println("Simulation TimeStamp: $(sim.ref.current_time)")
                 raw_results_path = joinpath(sim.ref.raw,"step-$(s)-stage-$(ix)","$(sim.ref.current_time)")
                 mkpath(raw_results_path)
+    
                 update_stage!(stage, s, sim)
-                _run_stage(stage, raw_results_path)
+                _run_stage(stage, sim.ref.current_time, raw_results_path)
                 sim.ref.run_count[s][ix] += 1
                 sim.ref.date_ref[ix] = sim.ref.date_ref[ix] + interval
             end
@@ -118,8 +119,9 @@ function make_references(sim::Simulation, date_run::String)
             variables[variable_names[n]] = DataFrames.DataFrame(Date = Dates.DateTime[], Step = String[], File_Path = String[])
         end
         for s in 1:(sim.steps)
-            sim.ref.current_time = sim.ref.date_ref[ix]
+            
             for run in 1:stage.executions
+                sim.ref.current_time = sim.ref.date_ref[ix]
                 for n in 1:length(variable_names)
             
                     initial_path = joinpath(dirname(dirname(sim.ref.raw)), date_run, "raw_output")
