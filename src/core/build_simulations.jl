@@ -1,7 +1,7 @@
 function _prepare_workspace!(ref::SimulationRef, base_name::AbstractString, folder::AbstractString)
 
     !isdir(folder) && error("Specified folder is not valid")
-
+    current_working_directory = pwd()
     cd(folder)
     global_path = joinpath(folder, "$(base_name)")
     isdir(global_path) && mkpath(global_path)
@@ -17,7 +17,7 @@ function _prepare_workspace!(ref::SimulationRef, base_name::AbstractString, fold
     ref.raw = raw_ouput
     ref.models = models_json_ouput
     ref.results = results_path
-
+    cd(current_working_directory)
     return
 
 end
@@ -95,9 +95,11 @@ function _build_stages(sim_ref::SimulationRef,
         system_to_file && IS.to_json(v.sys, joinpath(stage_path ,"sys_data.json"))
         _populate_cache!(v.cache, canonical)
         mod_stages[k] = _Stage(k,
+                               v.model,
                                v.op_model,
                                v.sys,
                                canonical,
+                               v.optimizer,
                                v.execution_count,
                                v.chronology_ref,
                                v.cache)
