@@ -210,7 +210,7 @@ include("devices/device_constructors/device_constructors.jl")
 include("network_models/network_constructor.jl")
 
 #Services Models
-#include("service_models/reserves.jl")
+include("service_models/reserves.jl")
 
 #Services constructors
 include("service_models/services_constructor.jl")
