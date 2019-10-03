@@ -61,10 +61,10 @@ function _get_dates(stages::Dict{Int64, Stage})
 
 end
 
-function _populate_cache!(cache_vector::Vector{<:AbstractCache}, op_model::OperationModel)
+function _populate_cache!(cache_vector::Vector{<:AbstractCache}, canonical::CanonicalModel)
 
     for cache in cache_vector
-        build_cache!(cache, op_model)
+        build_cache!(cache, canonical)
     end
 
     return
@@ -80,17 +80,27 @@ function _build_stages(sim_ref::SimulationRef,
 
     for (k, v) in stages
         verbose && @info("Building Stage $(k)")
-        op_mod = OperationModel(DefaultOpModel, v.model, v.sys;
-                                optimizer = v.optimizer,
-                                parameters = true,
-                                verbose = verbose,
-                                kwargs...)
+        canonical = _build_canonical(v.model.transmission,
+                                    v.model.devices,
+                                    v.model.branches,
+                                    v.model.services,
+                                    v.sys,
+                                    v.optimizer,
+                                    verbose;
+                                    parameters = true,
+                                    kwargs...)
         stage_path = joinpath(sim_ref.models,"stage_$(k)_model")
         mkpath(stage_path)
-        write_op_model(op_mod, joinpath(stage_path, "optimization_model.json"))
+        write_op_model(canonical, joinpath(stage_path, "optimization_model.json"))
         system_to_file && IS.to_json(v.sys, joinpath(stage_path ,"sys_data.json"))
-        _populate_cache!(v.cache, op_mod)
-        mod_stages[k] = _Stage(k, op_mod, v.execution_count, v.chronology_ref, v.cache)
+        _populate_cache!(v.cache, canonical)
+        mod_stages[k] = _Stage(k,
+                               v.op_model,
+                               v.sys,
+                               canonical,
+                               v.execution_count,
+                               v.chronology_ref,
+                               v.cache)
         sim_ref.date_ref[k] = PSY.get_forecast_initial_times(v.sys)[1]
     end
 

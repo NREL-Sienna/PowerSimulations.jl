@@ -257,3 +257,4 @@ var(canonical_model::CanonicalModel, name::Symbol) = canonical_model.variables[n
 con(canonical_model::CanonicalModel, name::Symbol) = canonical_model.constraints[name]
 par(canonical_model::CanonicalModel, param_reference::UpdateRef) = canonical_model.parameters[param_reference]
 exp(canonical_model::CanonicalModel, name::Symbol) = canonical_model.expressions[name]
+get_initial_conditions(canonical_model::CanonicalModel) = canonical_model.initial_conditions

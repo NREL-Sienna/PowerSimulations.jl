@@ -19,7 +19,6 @@ function ModelReference(::Type{T}) where {T<:PM.AbstractPowerFormulation}
 end
 
 mutable struct OperationModel{M<:AbstractOperationModel}
-    op_model::Type{M}
     model_ref::ModelReference
     sys::PSY.System
     canonical::CanonicalModel
@@ -42,11 +41,11 @@ function OperationModel(::Type{M},
                                 verbose;
                                 kwargs...)
 
-    return  OperationModel(M, model_ref, sys, canonical)
+    return  OperationModel{M}(model_ref, sys, canonical)
 
 end
 
-function OperationModel(op_model::Type{M},
+function OperationModel(::Type{M},
                         ::Type{T},
                         sys::PSY.System;
                         kwargs...) where {M<:AbstractOperationModel,
@@ -54,8 +53,7 @@ function OperationModel(op_model::Type{M},
 
     optimizer = get(kwargs, :optimizer, nothing)
 
-    return OperationModel(op_model,
-                          ModelReference(T),
+    return OperationModel{M}(ModelReference(T),
                           sys,
                           CanonicalModel(T, sys, optimizer; kwargs...))
 
@@ -66,9 +64,7 @@ function OperationModel(::Type{T},
                         kwargs...) where {T<:PM.AbstractPowerFormulation}
 
 
-    return OperationModel(DefaultOpModel,
-                         T,
-                         sys; kwargs...)
+    return OperationModel{DefaultOpModel}(T, sys; kwargs...)
 
 end
 
@@ -175,7 +171,7 @@ function construct_device!(op_model::OperationModel,
 end
 
 function get_initial_conditions(op_model::OperationModel)
-    return op_model.canonical.initial_conditions
+    return get_initial_conditions(canonical.initial_conditions)
 end
 
 function get_initial_conditions(op_model::OperationModel, ic::InitialConditionQuantity, device::PSY.Device)

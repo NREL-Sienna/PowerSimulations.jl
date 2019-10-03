@@ -10,9 +10,9 @@ function _write_variable_results(vars_results::Dict{Symbol, DataFrames.DataFrame
 
 end
 
-function _write_variable_results(vars_results::OperationModel, save_path::AbstractString)
+function _write_variable_results(canonical::CanonicalModel, save_path::AbstractString)
 
-    for (k,v) in vars(vars_results.canonical)
+    for (k,v) in vars(canonical)
          file_path = joinpath(save_path,"$(k).feather")
          Feather.write(file_path, _result_dataframe_vars(v))
     end
@@ -48,11 +48,16 @@ function _write_time_stamps(time_stamp::DataFrames.DataFrame, save_path::Abstrac
 end
 
 # These functions are writing directly to the feather file and skipping printing to memory.
+
 function _export_model_result(op_m::OperationModel, start_time::Dates.DateTime, save_path::String)
+    _export_model_result(op_m.canonical, start_time, save_path)
+    return
+end
 
-    _write_variable_results(op_m, save_path)
+# These functions are writing directly to the feather file and skipping printing to memory.
+function _export_model_result(canonical::CanonicalModel, start_time::Dates.DateTime, save_path::String)
+    _write_variable_results(canonical, save_path)
     _write_time_stamps(get_time_stamp(op_m, start_time), save_path)
-
     return
 
 end
@@ -100,8 +105,14 @@ end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
 function write_op_model(op_model::OperationModel, save_path::String)
+    write_op_model(op_model.canonical, save_path)
+    return
+end
+
+""" Exports the OpModel JuMP object in MathOptFormat"""
+function write_op_model(canonical_model::CanonicalModel, save_path::String)
     MOF_model = MOPFM
-    MOI.copy_to(MOF_model, JuMP.backend(op_model.canonical.JuMPmodel))
+    MOI.copy_to(MOF_model, JuMP.backend(canonical_model.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)
 
     return
