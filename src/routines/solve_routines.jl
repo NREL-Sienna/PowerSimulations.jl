@@ -55,8 +55,8 @@ function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::Str
         if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
             error("Stage $(stage.key) status is $(model_status)")
         end
-        _export_model_result(stage.model, start_time, results_path)
-        _export_optimizer_log(timed_log, stage.model, results_path)
+        _export_model_result(stage, start_time, results_path)
+        _export_optimizer_log(timed_log, stage.canonical, results_path)
         stage.execution_count += 1
     end
 

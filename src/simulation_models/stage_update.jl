@@ -4,7 +4,7 @@ function parameter_update!(param_reference::UpdateRef{T},
                            stage_number::Int64,
                            sim::Simulation) where T <: PSY.Component
 
-    forecasts = PSY.get_component_forecasts(T, sim.stages[stage_number].model.sys,
+    forecasts = PSY.get_component_forecasts(T, sim.stages[stage_number].sys,
                                                sim.ref.date_ref[stage_number])
     for forecast in forecasts
         device = PSY.get_forecast_component_name(forecast)
@@ -26,7 +26,7 @@ function _get_stage_variable(chron::Type{RecedingHorizon},
                            var_ref::UpdateRef,
                            to_stage_execution_count::Int64)
 
-    variable = get_value(from_stage.model.canonical, var_ref)
+    variable = get_value(from_stage.canonical, var_ref)
     step = axes(variable)[2][1]
     return JuMP.value(variable[device_name, step])
 end
@@ -37,7 +37,7 @@ function _get_stage_variable(chron::Type{Sequential},
                              var_ref::UpdateRef,
                              to_stage_execution_count::Int64)
 
-    variable = get_value(from_stage.model.canonical, var_ref)
+    variable = get_value(from_stage.canonical, var_ref)
     step = axes(variable)[2][end]
 
     return JuMP.value(variable[device_name, step])
@@ -49,14 +49,14 @@ function _get_stage_variable(chron::Type{Synchronize},
                             var_ref::UpdateRef,
                             to_stage_execution_count::Int64)
 
-    variable = get_value(from_stage.model.canonical, var_ref)
+    variable = get_value(from_stage.canonical, var_ref)
     step = axes(variable)[2][to_stage_execution_count + 1]
     return JuMP.value(variable[device_name, step])
 end
 
 ################################Cache Update################################################
 function _update_cache!(c::TimeStatusChange, stage::_Stage)
-    parameter = get_value(stage.model.canonical, c.ref)
+    parameter = get_value(stage.canonical, c.ref)
 
     for name in parameter.axes[1]
         param_status = PJ.value(parameter[name])
@@ -251,14 +251,14 @@ function update_stage!(stage::_Stage, step::Int64, sim::Simulation)
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && stage.key == 1 && stage.execution_count == 0) && return
 
-    for (k, v) in stage.model.canonical.parameters
+    for (k, v) in stage.canonical.parameters
         parameter_update!(k, v, stage.key, sim)
     end
 
     cache_update!(stage)
 
     # Set initial conditions of the stage I am about to run.
-    for (k, v) in stage.model.canonical.initial_conditions
+    for (k, v) in stage.canonical.initial_conditions
         intial_condition_update!(k, v, stage.key, step, sim)
     end
 
