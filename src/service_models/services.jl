@@ -8,4 +8,4 @@ struct RampLimitedReserve<:AbstractReservesFormulation end
 
 struct LoadProportionalReserve<:AbstractReservesForm end
 
-struct SpinningReserve <:AbstractReserveForm end
+struct SpinningReserve <:AbstractReservesForm end

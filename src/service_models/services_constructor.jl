@@ -8,24 +8,33 @@ function construct_service!(canonical::CanonicalModel,
                                               SV<:AbstractServiceFormulation,
                                               S<:PM.AbstractPowerFormulation}
                                               
-                                              
-    for mod in devices
-        devices = PSY.get_components(mod[2].device, sys)
+    sys_service = PSY.get_components(service, sys)
+    for serv in sys_service 
+        for mod in devices
+            sys_devices = PSY.get_components(mod[2].device, sys)
 
-        contributingdevices = filter(x -> x in service.contributingdevices, devices)
+            contributingdevices = filter(x -> x in serv.contributingdevices, collect(sys_devices))
 
-        if validate_available_devices(contributingdevices, mod[2].device)
-            return
+            if validate_available_devices(contributingdevices, mod[2].device)
+                return
+            end
+
+            #Variables
+            activereserve_variables!(canonical_model, contributingdevices)
+
+            #Constraints
+            activereserve_constraints!(canonical_model, contributingdevices, mod[2].formulation, S)
+
+            reserve_ramp_constraints!(canonical_model, contributingdevices,  mod[2].formulation, S)
+
         end
-
-        #Variables
-        activereserve_variables!(canonical_model, contributingdevices)
-
-        #Constraints
-        activereserve_constraints!(canonical_model, contributingdevices, mod[2].formulation, S)
-
-        reserve_ramp_constraints!(canonical_model, contributingdevices,  mod[2].formulation, S)
+        buses = PSY.get_components(PSY.Bus, sys)
+        bus_count = length(buses)
+        _retrieve_forecasts(sys, PSY.StaticReserve)
+        # Adding actual demand for that service by using the serv.service -> find the forecast
+        copper_plate_reserve(canonical_model,:reserve_balance_active,bus_count) # based on type of reserve/service
     end
+
     return
 
 end
