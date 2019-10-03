@@ -32,6 +32,7 @@ and a value exists for that field it prints the value.
 
 
 """
+#=
 function Base.show(io::IO, ::MIME"text/plain", op_model::OperationModel)
 
     println(io, "\nOperation Model")
@@ -56,7 +57,7 @@ function Base.show(io::IO, ::MIME"text/plain", op_model::OperationModel)
 end
 
 
-
+=#
 
 function Base.show(io::IO, op_model::CanonicalModel)
     println(io, "Canonical()")

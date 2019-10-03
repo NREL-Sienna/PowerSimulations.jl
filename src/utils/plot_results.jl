@@ -120,11 +120,9 @@ function get_bar_gen_data(res::OperationModelResults)
 
    time_range = res.time_stamp[!,:Range]
    key_name = collect(keys(res.variables))
-
    variable = res.variables[Symbol(key_name[1])]
    data_matrix = sum(convert(Matrix, variable), dims = 2)
    legend = string.(key_name)
-
 
     for i in 1:length(key_name)
        if i !== 1
@@ -160,21 +158,21 @@ sorted_results = sort_data(res)
     [:WindBusA :WindBusB :WindBusC] (alphabetical)
 
 example 2:
-my_order = [:WindBusC :WindBusB :WindBusA]
+my_order = [:WindBusC, :WindBusB, :WindBusA]
 sorted_results = sort_data(res; P_RenewableDispatch = my_order)
 
 >sorted_results.variables[P_RenewableDispatch] will be in the order
     [:WindBusC :WindBusB :WindBusA] (my_order)
 
 example 3:
-my_order = [:WindBusC :WindBusA]
+my_order = [:WindBusC, :WindBusA]
 sorted_results = sort_data(res; P_RenewableDispatch = my_order)
 
 >sorted_results.variables[P_RenewableDispatch] will be in the order
     [:WindBusC :WindBusA] (my_order)
 
 example 4:
-my_variable_order = [:P_ThermalStandard :ON_ThermalStandard]
+my_variable_order = [:P_ThermalStandard, :ON_ThermalStandard]
 sorted_results = sort_data(res; Variables = my_variable_order)
 
 >sorted_results.variables

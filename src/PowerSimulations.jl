@@ -100,11 +100,11 @@ export get_stacked_plot_data
 export get_bar_plot_data
 export get_stacked_generation_data
 export get_stacked_aggregation_data
-export fuel_plot
 export bar_plot
 export stack_plot
 export report
 export make_fuel_dictionary
+export fuel_plot
 
 
 #################################################################################

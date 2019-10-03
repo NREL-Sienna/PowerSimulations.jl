@@ -12,7 +12,7 @@ fuel_plot(res, generator_dict)
 
 """
 
-function fuel_plot(res::OperationModelResults, generator_dict::Dict; kwargs...)
+function fuel_plot(res::PSI.OperationModelResults, generator_dict::Dict; kwargs...)
 
     color_range = [Colors.RGBA(0.7,0.1,0.1,0.95), # maroon
     Colors.RGBA(0,0,0,0.8), :lightblue, # Dark gray
@@ -31,15 +31,21 @@ function fuel_plot(res::OperationModelResults, generator_dict::Dict; kwargs...)
     color_fuel = DataFrames.DataFrame(fuels = fuels, colors = color_range)
   
     stack = get_stacked_aggregation_data(res, generator_dict)
-    default = [1]
-    for i in 1:length(stack.labels)
-      specific_color = (color_fuel[findall(in(["$(stack.labels[i])"]),
+    bar = get_bar_aggregation_data(res, generator_dict)
+    default =  [(color_fuel[findall(in(["$(bar.labels[1])"]),
+    color_fuel.fuels), :][:,:colors])[1]]
+    for i in 2:length(bar.labels)
+      specific_color = (color_fuel[findall(in(["$(bar.labels[i])"]),
                         color_fuel.fuels), :][:,:colors])[1]
-      default = [last(default) specific_color]
+      default = [default specific_color]
+      println("$default")
     end
+
     seriescolor = get(kwargs, :seriescolor, default) 
-    RecipesBase.plot(stack; seriescolor = seriescolor)
-  
+    P1 = RecipesBase.plot(stack; seriescolor = seriescolor)
+    P2 = RecipesBase.plot(bar; seriescolor = seriescolor)
+    display(P1)
+    display(P2)
   end
   
   

@@ -56,6 +56,41 @@ function load_operation_results(path::AbstractString, directory::AbstractString)
     return results
 
 end
+function _count_time_overlap(stage::String,
+                            step::Array,
+                            date_range::StepRange,
+                            variable::Array, 
+                            references::Dict{Any,Any})
+    variable_dict = Dict()
+    ref_time_stamp = DataFrames.DataFrame()                    
+    for l in 1:length(variable)
+        date_df = references[stage][variable[l]]
+        step_df = DataFrames.DataFrame(Date = Dates.DateTime[], Step = String[], File_Path = String[])
+
+        for n in 1:length(step)
+            step_df = vcat(step_df,date_df[date_df.Step .== step[n], :])
+        end
+        n = length(date_range)
+        variable_dict[(variable[l])] = DataFrames.DataFrame()
+    
+        for time in date_range
+            
+            file_path = step_df[step_df.Date .== time, :File_Path][1]
+            
+            if l == 1
+                time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
+                temp_time_stamp = DataFrames.DataFrame(Feather.read("$time_file_path"))
+                t = size(temp_time_stamp, 1)
+                ref_time_stamp = vcat(ref_time_stamp,temp_time_stamp[(1:t-1),:])
+                
+            end
+        
+        end
+        
+    end
+    extra_time_length = size(unique(ref_time_stamp),1)./(length(step)+1)
+    return extra_time_length
+    end
 
 function load_simulation_results(stage::String,
                                  step::Array,
@@ -63,8 +98,12 @@ function load_simulation_results(stage::String,
                                  variable::Array, 
                                  references::Dict{Any,Any})
 
-    time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
+    
     variable_dict = Dict()
+    time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
+
+    extra_time_length = _count_time_overlap(stage, step, date_range, variable, references)
+
     for l in 1:length(variable)
         date_df = references[stage][variable[l]]
         step_df = DataFrames.DataFrame(Date = Dates.DateTime[], Step = String[], File_Path = String[])
@@ -74,21 +113,22 @@ function load_simulation_results(stage::String,
         end
         n = length(date_range)
         variable_dict[(variable[l])] = DataFrames.DataFrame()
-        
         for time in date_range
-        
-                file_path = step_df[step_df.Date .== time, :File_Path][1]
-        
-                variable_dict[(variable[l])] = vcat(variable_dict[(variable[l])],Feather.read("$file_path")) 
-                if l == 1
-                    time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
-                    temp_time_stamp = Feather.read("$time_file_path")
-                    t = size(temp_time_stamp, 1)
-                    time_stamp = vcat(time_stamp,temp_time_stamp[(1:t-1),:])
-                    
-                end
+            file_path = step_df[step_df.Date .== time, :File_Path][1]
+            var = Feather.read("$file_path")
+            correct_var_length = size(1:(size(var,1) - extra_time_length),1)
+            variable_dict[(variable[l])] = vcat(variable_dict[(variable[l])],var[1:correct_var_length,:]) 
+            if l == 1
+                time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
+                temp_time_stamp = DataFrames.DataFrame(Feather.read("$time_file_path"))
+                non_overlap = size((1:size(temp_time_stamp, 1) - extra_time_length - 1),1)
+                time_stamp = vcat(time_stamp,temp_time_stamp[(1:non_overlap),:])
+                
+            end
         end
+        
     end
+    
     first_file = references[stage][variable[1]]
     file_path = first_file[first_file.Date .== date_range[1], :File_Path][1]
     opt_file_path = joinpath(dirname(file_path),"optimizer_log.feather")

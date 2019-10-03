@@ -108,7 +108,7 @@ RecipesBase.@recipe function BarPlot(res::BarPlot, variable::String)
                   convert(Dates.DateTime,time[1]))+Dates.Hour(1)
  xlabel := "$time_interval, $start_time"		
  ylabel := "Generation(MW)"			  
- xlims := (1, 8)
+ xlims := (2, 7)
  xticks := false		
  n = 2		
 
@@ -138,8 +138,9 @@ RecipesBase.@recipe function BarGen(res::BarGeneration)
    time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-
                     convert(Dates.DateTime,time[1]))+Dates.Hour(1)
    xlabel := "$time_interval, $start_time"	
+   ylabel := "Generation (MW)"	
    xticks := false 
-   xlims := (1, 8)
+   xlims := (2, 7)
    n = 2
    for c=1:size(z,2)		
     sx = [[4,5]; [5,4]]		
