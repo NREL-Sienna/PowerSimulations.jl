@@ -47,8 +47,6 @@ function _write_time_stamps(time_stamp::DataFrames.DataFrame, save_path::Abstrac
 
 end
 
-# These functions are writing directly to the feather file and skipping printing to memory.
-
 function _export_model_result(op_m::OperationModel, start_time::Dates.DateTime, save_path::String)
     _export_model_result(op_m.canonical, start_time, save_path)
     return
