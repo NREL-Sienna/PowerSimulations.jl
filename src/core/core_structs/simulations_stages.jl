@@ -3,20 +3,23 @@ abstract type AbstractStage end
 
 mutable struct _Stage{M<:AbstractOperationModel} <: AbstractStage
     key::Int64
+    reference::ModelReference
     op_model::Type{M}
     sys::PSY.System
     canonical::CanonicalModel
+    optimizer::JuMP.OptimizerFactory
     executions::Int64
     execution_count::Int64
-    optimizer::String
     chronology_ref::Dict{Int64, Type{<:Chronology}}
     ini_cond_chron::Union{Type{<:Chronology}, Nothing}
     cache::Dict{Type{<:AbstractCache}, AbstractCache}
 
     function _Stage(key::Int64,
+                    reference::ModelReference,
                     op_model::Type{M},
                     sys::PSY.System,
                     canonical::CanonicalModel,
+                    optimizer::JuMP.OptimizerFactory,
                     executions::Int64,
                     chronology_ref::Dict{Int64, Type{<:Chronology}},
                     cache::Vector{<:AbstractCache}) where M <: AbstractOperationModel
@@ -37,12 +40,13 @@ mutable struct _Stage{M<:AbstractOperationModel} <: AbstractStage
 
 
     new{M}(key,
+           reference,
            op_model,
            sys,
            canonical,
+           optimizer,
            executions,
            0,
-           JuMP.solver_name(canonical.JuMPmodel),
            chronology_ref,
            ini_cond_chron,
            cache_dict)
