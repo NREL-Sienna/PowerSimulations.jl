@@ -51,7 +51,6 @@ end
 
 # These functions are writing directly to the feather file and skipping printing to memory.
 function _export_model_result(op_m::OperationModel, start_time::Dates.DateTime, save_path::String)
-    
     _write_variable_results(op_m, save_path)
     _write_time_stamps(get_time_stamp(op_m, start_time), save_path)
 
