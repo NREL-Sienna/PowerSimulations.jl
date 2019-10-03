@@ -23,8 +23,13 @@ function get_time_stamp(res_model::OperationModelResults, key::Symbol)
     return res_model.time_stamp
 end
 
-# passing in name of folder path and the name of the folder
+"""
+    results = load_operation_results(path, folder_name)
 
+This function can be used to load results from a file of a single-step
+problem, or for a single file within a simulation.
+
+"""
 function load_operation_results(path::AbstractString, directory::AbstractString)
 
     folder_path = joinpath(path, directory)
@@ -56,42 +61,54 @@ function load_operation_results(path::AbstractString, directory::AbstractString)
     return results
 
 end
+# This function returns the length of time_stamp for each step
+# that is unique to that step and not overlapping with the next.
+
 function _count_time_overlap(stage::String,
                             step::Array,
                             date_range::StepRange,
                             variable::Array, 
                             references::Dict{Any,Any})
-    variable_dict = Dict()
-    ref_time_stamp = DataFrames.DataFrame()                    
-    for l in 1:length(variable)
-        date_df = references[stage][variable[l]]
-        step_df = DataFrames.DataFrame(Date = Dates.DateTime[], Step = String[], File_Path = String[])
 
-        for n in 1:length(step)
-            step_df = vcat(step_df,date_df[date_df.Step .== step[n], :])
-        end
-        n = length(date_range)
-        variable_dict[(variable[l])] = DataFrames.DataFrame()
-    
-        for time in date_range
-            
-            file_path = step_df[step_df.Date .== time, :File_Path][1]
-            
-            if l == 1
-                time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
-                temp_time_stamp = DataFrames.DataFrame(Feather.read("$time_file_path"))
-                t = size(temp_time_stamp, 1)
-                ref_time_stamp = vcat(ref_time_stamp,temp_time_stamp[(1:t-1),:])
-                
-            end
-        
-        end
-        
+    ref_time_stamp = DataFrames.DataFrame()                    
+    date_df = references[stage][variable[1]]
+    step_df = DataFrames.DataFrame(Date = Dates.DateTime[], 
+                                   Step = String[], 
+                                   File_Path = String[])
+
+    for n in 1:length(step)
+        step_df = vcat(step_df,date_df[date_df.Step .== step[n], :])
     end
+    for time in date_range
+        
+        file_path = step_df[step_df.Date .== time, :File_Path][1]
+        time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
+        temp_time_stamp = DataFrames.DataFrame(Feather.read("$time_file_path"))
+        t = size(temp_time_stamp, 1)
+        ref_time_stamp = vcat(ref_time_stamp,temp_time_stamp[(1:t-1),:])    
+
+    end  
+    
     extra_time_length = size(unique(ref_time_stamp),1)./(length(step)+1)
     return extra_time_length
     end
 
+"""
+    results = load_simulation_results(stage, step, date_range,variable,references)
+
+This function goes through the reference table of file paths and
+aggregates the results over time into a struct of type OperationModelResults
+
+# Example
+
+date_range = (Dates.DateTime(2020, April, 4):Dates.Hour(24):Dates.DateTime(2020, April, 5))
+stage = "stage-1"
+step = ["step-1","step-2"] # has to match the date range
+variable = [:P_ThermalStandard, :P_RenewableDispatch]
+
+results = load_simulation_results(stage,step, date_range, variable, ref)
+
+"""
 function load_simulation_results(stage::String,
                                  step::Array,
                                  date_range::StepRange,
@@ -101,8 +118,9 @@ function load_simulation_results(stage::String,
     
     variable_dict = Dict()
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
-
-    extra_time_length = _count_time_overlap(stage, step, date_range, variable, references)
+    extra_time_length = _count_time_overlap(stage, step,
+                                            date_range, variable,
+                                            references)
 
     for l in 1:length(variable)
         date_df = references[stage][variable[l]]
@@ -111,7 +129,6 @@ function load_simulation_results(stage::String,
         for n in 1:length(step)
             step_df = vcat(step_df,date_df[date_df.Step .== step[n], :])
         end
-        n = length(date_range)
         variable_dict[(variable[l])] = DataFrames.DataFrame()
         for time in date_range
             file_path = step_df[step_df.Date .== time, :File_Path][1]

@@ -30,7 +30,7 @@ RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String)
   grid := false		
   title := variable		
   label := results.labels		
-  legend := :topleft				
+  legend := :outerright			
   time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))	+ Dates.Hour(1)
   xlabel := "$time_interval"		
   ylabel := "Generation (MW)"		
@@ -64,8 +64,8 @@ RecipesBase.@recipe function StackedGeneration(res::StackedGeneration)
   # Plot Attributes		
   grid := false		
   title := "Generation Type"				
-  label := res.labels		
-  legend := :bottomright		
+  label  := res.labels
+  legend := :outerright	
   time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))+Dates.Hour(1)		
   xlabel := "$time_interval"		
   ylabel := "Generation (MW)"		
@@ -101,7 +101,8 @@ RecipesBase.@recipe function BarPlot(res::BarPlot, variable::String)
  # Plot Attributes		
  grid := false		
  title := variable		
- seriestype := :shape		  
+ seriestype := :shape	
+ legend := :outerright	  
  label := res.labels		
  start_time = time[1]		
  time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-
@@ -133,7 +134,8 @@ RecipesBase.@recipe function BarGen(res::BarGeneration)
    grid := false		 
    title := "Generation Type"	
    seriestype := :shape		 
-   label := res.labels	
+   label := res.labels
+   legend := :outerright
    start_time = time[1]	
    time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-
                     convert(Dates.DateTime,time[1]))+Dates.Hour(1)

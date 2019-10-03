@@ -104,6 +104,7 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
     return references
 
 end
+""" Creates a reference table for date/step/stage/variable to its file path """
 
 function make_references(sim::Simulation, date_run::String)
   
@@ -112,23 +113,26 @@ function make_references(sim::Simulation, date_run::String)
 
     references = Dict()
     for (ix, stage) in enumerate(sim.stages)
+
         variables = Dict()
         interval = PSY.get_forecasts_interval(stage.model.sys)
         variable_names = collect(keys(sim.stages[ix].model.canonical.variables))
         for n in 1:length(variable_names)
-            variables[variable_names[n]] = DataFrames.DataFrame(Date = Dates.DateTime[], Step = String[], File_Path = String[])
+            variables[variable_names[n]] = DataFrames.DataFrame(Date = Dates.DateTime[],
+                                           Step = String[], File_Path = String[])
         end
         for s in 1:(sim.steps)
-            
             for run in 1:stage.executions
                 sim.ref.current_time = sim.ref.date_ref[ix]
                 for n in 1:length(variable_names)
             
                     initial_path = joinpath(dirname(dirname(sim.ref.raw)), date_run, "raw_output")
-                    full_path = joinpath(initial_path,"step-$(s)-stage-$(ix)","$(sim.ref.current_time)","$(variable_names[n]).feather")
+                    full_path = joinpath(initial_path, "step-$(s)-stage-$(ix)",
+                                "$(sim.ref.current_time)", "$(variable_names[n]).feather")
         
                     if isfile(full_path)
-                        date_df = DataFrames.DataFrame(Date = sim.ref.current_time, Step = "step-$(s)", File_Path = full_path)
+                        date_df = DataFrames.DataFrame(Date = sim.ref.current_time, 
+                                                       Step = "step-$(s)", File_Path = full_path)
                         variables[variable_names[n]] = vcat(variables[variable_names[n]], date_df)
                     else
                         println("$full_path, no such file")        

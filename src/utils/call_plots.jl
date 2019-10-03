@@ -38,12 +38,13 @@ function fuel_plot(res::PSI.OperationModelResults, generator_dict::Dict; kwargs.
       specific_color = (color_fuel[findall(in(["$(bar.labels[i])"]),
                         color_fuel.fuels), :][:,:colors])[1]
       default = [default specific_color]
-      println("$default")
+      
     end
-
-    seriescolor = get(kwargs, :seriescolor, default) 
-    P1 = RecipesBase.plot(stack; seriescolor = seriescolor)
+  
+    seriescolor = (get(kwargs, :seriescolor, default))
+    P1 = RecipesBase.plot(stack; seriescolor = seriescolor, label = reverse(stack.labels))
     P2 = RecipesBase.plot(bar; seriescolor = seriescolor)
+ 
     display(P1)
     display(P2)
   end
