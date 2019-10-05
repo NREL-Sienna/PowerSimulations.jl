@@ -198,10 +198,8 @@ function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
                            param_array::JuMPParamArray,
                            stage_number::Int64,
                            sim::Simulation)
-
     chronology_ref = sim.stages[stage_number].chronology_ref
     current_stage = sim.stages[stage_number]
-
     for (k, ref) in chronology_ref
         feedforward_update(ref, param_reference, param_array, current_stage, sim.stages[k])
     end
@@ -247,7 +245,7 @@ function intial_condition_update!(initial_condition_key::ICKey,
 
 end
 
-function update_stage!(stage::_Stage, step::Int64, sim::Simulation)
+function update_stage!(stage::_Stage{M}, step::Int64, sim::Simulation) where M<:AbstractOperationModel
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && stage.key == 1 && stage.execution_count == 0) && return
 

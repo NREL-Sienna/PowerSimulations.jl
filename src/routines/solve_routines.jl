@@ -40,7 +40,7 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
 
 end
 
-function _run_stage(stage::_Stage{M}, start_time::Dates.DateTime, results_path::String) where M<:AbstractOperationModel
+function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::String)
 
     if stage.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
         error("No Optimizer has been defined, can't solve the operational problem stage with key $(stage.key)")
