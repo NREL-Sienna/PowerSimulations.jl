@@ -39,7 +39,6 @@ function _get_stage_variable(chron::Type{Sequential},
 
     variable = get_value(from_stage.canonical, var_ref)
     step = axes(variable)[2][end]
-
     return JuMP.value(variable[device_name, step])
 end
 
@@ -148,7 +147,27 @@ end
 function _calculate_ic_quantity(initial_condition_key::ICKey{DevicePower, PSD},
                                ic::InitialCondition,
                                var_value::Float64,
-                               cache::Union{Nothing,AbstractCache}) where PSD <: PSY.Device
+                               cache::Union{Nothing,AbstractCache}) where PSD <: PSY.ThermalGen
+
+
+    if isnothing(cache)
+        status_change_to_on = value(ic) <= eps() && var_value >= eps()
+        status_change_to_off = value(ic) >= eps() && var_value <= eps()
+    else
+        name = device_name(ic)
+        time_cache = cache_value(cache, name)
+        status_change_to_on = time_cache[:status] >= eps() && var_value <= eps()
+        status_change_to_off = time_cache[:status] <= eps() && var_value >= eps()
+    end
+
+
+    if status_change_to_on
+        return ic.device.tech.activepowerlimits.min
+    end
+
+    if status_change_to_off
+        return 0.0
+    end
 
     return var_value
 end
@@ -185,6 +204,8 @@ end
 #############################Interfacing Functions##########################################
 
 function cache_update!(stage::_Stage)
+
+
     for (k, v) in stage.cache
         _update_cache!(v, stage)
     end
@@ -214,7 +235,7 @@ function intial_condition_update!(initial_condition_key::ICKey,
                                   step::Int64,
                                   sim::Simulation)
 
-    chronology_ref = sim.stages[stage_number].ini_cond_chron
+    chronology_ref = nothing
     current_stage = sim.stages[stage_number]
     #checks if current stage is the first in the step and the execution is the first to
     # look backwards on the previous step
@@ -226,12 +247,15 @@ function intial_condition_update!(initial_condition_key::ICKey,
     # makes the update based on the last stage.
     if intra_step_update
         from_stage = sim.stages[end]
+        chronology_ref = sim.stages[stage_number].ini_cond_chron
     # Updates the next stage in the same step
     elseif intra_stage_update
         from_stage = sim.stages[stage_number-1]
+        chronology_ref = sim.stages[stage_number].chronology_ref[stage_number-1]
     # Update is done on the current stage
     elseif inner_stage_update
         from_stage = current_stage
+        chronology_ref = sim.stages[stage_number].ini_cond_chron
     else
         error("Condition not implemented")
     end

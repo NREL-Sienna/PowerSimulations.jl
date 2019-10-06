@@ -49,7 +49,7 @@ function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::Str
     timed_log = Dict{Symbol, Any}()
     _, timed_log[:timed_solve_time],
     timed_log[:solve_bytes_alloc],
-    timed_log[:sec_in_gc] =  @timed JuMP.optimize!(stage.canonical.JuMPmodel)
+    timed_log[:sec_in_gc] = @timed JuMP.optimize!(stage.canonical.JuMPmodel)
     model_status = JuMP.primal_status(stage.canonical.JuMPmodel)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("Stage $(stage.key) status is $(model_status)")

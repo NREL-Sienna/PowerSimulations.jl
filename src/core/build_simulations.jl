@@ -77,7 +77,6 @@ function _build_stages(sim_ref::SimulationRef,
 
     system_to_file = get(kwargs, :system_to_file, true)
     mod_stages = Vector{_Stage}(undef, length(stages))
-
     for (k, v) in stages
         verbose && @info("Building Stage $(k)")
         canonical = _build_canonical(v.model.transmission,

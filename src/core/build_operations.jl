@@ -8,7 +8,6 @@ function  _build_canonical(::Type{T},
                             kwargs...) where {T<:PM.AbstractPowerFormulation}
 
     canonical = CanonicalModel(T, sys, optimizer; kwargs...)
-
     # Build Injection devices
     for (_, d) in devices
         verbose && @info "Building $(d.device) with $(d.formulation) formulation"
