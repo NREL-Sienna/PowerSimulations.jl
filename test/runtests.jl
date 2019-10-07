@@ -6,6 +6,7 @@ using JuMP
 using Test
 using Ipopt
 using GLPK
+using Cbc
 using OSQP
 
 const PM = PowerModels
@@ -17,6 +18,7 @@ abstract type TestOptModel<:PSI.AbstractOperationModel end
 ipopt_optimizer = JuMP.with_optimizer(Ipopt.Optimizer, print_level = 0)
 ipopt_ws_solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, mu_init=1e-4, print_level=0)
 GLPK_optimizer = JuMP.with_optimizer(GLPK.Optimizer)
+Cbc_optimizer = JuMP.with_optimizer(Cbc.Optimizer)
 OSQP_optimizer = JuMP.with_optimizer(OSQP.Optimizer, verbose = false)
 
 include("test_utils/get_test_data.jl")

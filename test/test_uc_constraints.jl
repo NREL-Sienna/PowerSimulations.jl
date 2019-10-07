@@ -1,12 +1,12 @@
 
 function build_init(gens, data)
-    init = Vector{InitialCondition}(undef, length(collect(gens))) 
+    init = Vector{InitialCondition}(undef, length(collect(gens)))
     for (ix,g) in enumerate(gens)
         init[ix] = InitialCondition(g,
                     PSI.UpdateRef{PSY.Device}(Symbol("P_$(typeof(g))")),
                     data[ix],TimeStatusChange)
     end
-    return init 
+    return init
 end
 
 # Common System Information
@@ -25,18 +25,18 @@ UC_devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalSta
                         Hour(1):
                         DateTime("1/1/2024  4:00:00", "d/m/y  H:M:S"))
     gen_ramp = [ThermalStandard("Alta", true, node,0.20, 0.010,
-            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6), 
-                            (min=0.0, max=0.40), nothing, 
+            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
+                            (min=0.0, max=0.40), nothing,
                             nothing, nothing),
             ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0)
             ),
-            ThermalStandard("Park City", true, node,0.70,0.20, 
-                TechThermal(2.0,PSY.PrimeMovers(6),PSY.ThermalFuels(6), 
+            ThermalStandard("Park City", true, node,0.70,0.20,
+                TechThermal(2.0,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
                             (min=0.7, max=2.20), nothing,
                             (up = 0.010625, down= 0.010625),nothing),
                 ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75)
             )];
-    ramp_load = [ 0.9, 1.1, 2.485, 2.175, 0.9]; 
+    ramp_load = [ 0.9, 1.1, 2.485, 2.175, 0.9];
     load_forecast_ramp = Deterministic(load, "scalingfactor", TimeArray(DA_ramp, ramp_load))
     ramp_test_sys = PSY.System(100.0);
     add_component!(ramp_test_sys, node)
@@ -47,7 +47,7 @@ UC_devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalSta
 
     model_ref = ModelReference(CopperPlatePowerModel, ED_devices, branches, services)
     ED = OperationModel(TestOptModel, model_ref,
-                        ramp_test_sys; optimizer = GLPK_optimizer, 
+                        ramp_test_sys; optimizer = Cbc_optimizer,
                         parameters = true)
     psi_checksolve_test(ED, [MOI.OPTIMAL], 11191.00)
     moi_tests(ED, true, 10, 10, 10, 0, 5, false)
@@ -59,14 +59,14 @@ end
                         Hour(1):
                         DateTime("1/1/2024  6:00:00", "d/m/y  H:M:S"))
     gens_dur = [ThermalStandard("Alta", true, node,0.40, 0.010,
-            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6), 
-                            (min=0.3, max=0.9), nothing, 
+            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
+                            (min=0.3, max=0.9), nothing,
                             nothing, (up=4, down=2)),
             ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0)
             ),
-            ThermalStandard("Park City", true, node,1.70,0.20, 
-                TechThermal(2.2125,PSY.PrimeMovers(6),PSY.ThermalFuels(6), 
-                                (min=0.7, max=2.2), nothing, 
+            ThermalStandard("Park City", true, node,1.70,0.20,
+                TechThermal(2.2125,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
+                                (min=0.7, max=2.2), nothing,
                                 nothing, (up=6, down=4)),
                 ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75)
             )];
@@ -93,7 +93,7 @@ end
 
     model_ref = ModelReference(CopperPlatePowerModel, UC_devices, branches, services);
     UC = OperationModel(TestOptModel, model_ref,
-                        duration_test_sys; optimizer = GLPK_optimizer, 
+                        duration_test_sys; optimizer = Cbc_optimizer,
                         parameters = true, initial_conditions = init_cond);
     psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
     moi_tests(UC, true, 56, 0, 56, 14, 21, true)
@@ -102,15 +102,15 @@ end
 ## PWL linear Cost implementation test
 @testset "Solving UC with CopperPlate testing Linear PWL" begin
     gens_cost = [ThermalStandard("Alta", true, node,0.52, 0.010,
-            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6), 
-                            (min = 0.22, max = 0.55), nothing, 
+            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
+                            (min = 0.22, max = 0.55), nothing,
                             nothing, nothing),
             ThreePartCost([ (589.99, 0.220),(884.99, 0.33)
                     ,(1210.04, 0.44),(1543.44, 0.55)],532.44, 5665.23, 0.0)
             ),
-            ThermalStandard("Park City", true, node,0.62,0.20, 
-                TechThermal(2.2125,PSY.PrimeMovers(6),PSY.ThermalFuels(6), 
-                            (min = 0.62, max = 1.55), nothing, 
+            ThermalStandard("Park City", true, node,0.62,0.20,
+                TechThermal(2.2125,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
+                            (min = 0.62, max = 1.55), nothing,
                             nothing, nothing),
                 ThreePartCost([   (1264.80, 0.62),(1897.20, 0.93),
                     (2594.4787, 1.24),(3433.04, 1.55)   ], 235.397, 5665.23, 0.0)
@@ -118,7 +118,7 @@ end
     DA_cost  = collect(DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):
                         Hour(1):
                         DateTime("1/1/2024  1:00:00", "d/m/y  H:M:S"))
-    cost_load = [1.3,2.1]; 
+    cost_load = [1.3,2.1];
     load_forecast_cost = Deterministic(load, "scalingfactor", TimeArray(DA_cost, cost_load))
     cost_test_sys = PSY.System(100.0);
     add_component!(cost_test_sys, node)
@@ -130,7 +130,7 @@ end
 
     model_ref = ModelReference(CopperPlatePowerModel, UC_devices, branches, services);
     UC = OperationModel(TestOptModel, model_ref,
-                        cost_test_sys; optimizer = GLPK_optimizer, 
+                        cost_test_sys; optimizer = Cbc_optimizer,
                         parameters = true);
     psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919354838)
     moi_tests(UC, true, 32, 0, 8, 4, 10, true)
@@ -139,23 +139,23 @@ end
 ## PWL SOS-2 Cost implementation test
 @testset "Solving UC with CopperPlate testing SOS2 implementation" begin
     gens_cost_sos = [ThermalStandard("Alta", true, node,0.52, 0.010,
-            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6), 
-                            (min = 0.22, max = 0.55), nothing, 
+            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
+                            (min = 0.22, max = 0.55), nothing,
                             nothing, nothing),
             ThreePartCost([ (1122.43, 0.22),(1417.43, 0.33),
                     (1742.48, 0.44),(2075.88, 0.55) ],0.0, 5665.23, 0.0)
             ),
-            ThermalStandard("Park City", true, node,0.62,0.20, 
-                TechThermal(2.2125,PSY.PrimeMovers(6),PSY.ThermalFuels(6), 
-                            (min = 0.62, max = 1.55), nothing, 
+            ThermalStandard("Park City", true, node,0.62,0.20,
+                TechThermal(2.2125,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
+                            (min = 0.62, max = 1.55), nothing,
                             nothing, nothing),
                 ThreePartCost([ (1500.19, 0.62),(2132.59, 0.929),
                     (2829.875, 1.24),(3668.444, 1.55)], 0.0, 5665.23, 0.0)
-            )]; 
+            )];
     DA_cost_sos   = collect(DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):
                         Hour(1):
                         DateTime("1/1/2024  1:00:00", "d/m/y  H:M:S"))
-    cost_sos_load = [1.3,2.1]; 
+    cost_sos_load = [1.3,2.1];
     load_forecast_cost_sos  = Deterministic(load, "scalingfactor", TimeArray(DA_cost_sos, cost_sos_load))
     cost_test_sos_sys = PSY.System(100.0);
     add_component!(cost_test_sos_sys, node)
@@ -166,7 +166,7 @@ end
 
     model_ref = ModelReference(CopperPlatePowerModel, UC_devices, branches, services);
     UC = OperationModel(TestOptModel, model_ref,
-                        cost_test_sos_sys; optimizer = GLPK_optimizer, 
+                        cost_test_sos_sys; optimizer = Cbc_optimizer,
                         parameters = true);
     psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919,10.0)
     moi_tests(UC, true, 32, 0, 8, 4, 14, true)
