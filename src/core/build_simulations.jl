@@ -2,9 +2,8 @@ function _prepare_workspace!(ref::SimulationRef, base_name::AbstractString, fold
 
     !isdir(folder) && error("Specified folder is not valid")
     current_working_directory = pwd()
-    cd(folder)
     global_path = joinpath(folder, "$(base_name)")
-    isdir(global_path) && mkpath(global_path)
+    !isdir(global_path) && mkpath(global_path)
     _sim_path = replace_chars("$(round(Dates.now(),Dates.Minute))-$(base_name)", ":", "-")
     simulation_path = joinpath(global_path, _sim_path)
     raw_ouput = joinpath(simulation_path, "raw_output")
@@ -17,7 +16,6 @@ function _prepare_workspace!(ref::SimulationRef, base_name::AbstractString, fold
     ref.raw = raw_ouput
     ref.models = models_json_ouput
     ref.results = results_path
-    cd(current_working_directory)
     return
 
 end
@@ -61,10 +59,10 @@ function _get_dates(stages::Dict{Int64, Stage})
 
 end
 
-function _populate_cache!(cache_vector::Vector{<:AbstractCache}, canonical::CanonicalModel)
+function _populate_cache!(stage::_Stage)
 
-    for cache in cache_vector
-        build_cache!(cache, canonical)
+    for (k, cache) in stage.cache
+        build_cache!(cache, stage.canonical)
     end
 
     return
@@ -77,32 +75,32 @@ function _build_stages(sim_ref::SimulationRef,
 
     system_to_file = get(kwargs, :system_to_file, true)
     mod_stages = Vector{_Stage}(undef, length(stages))
-    for (k, v) in stages
+    for (k, stage) in stages
         verbose && @info("Building Stage $(k)")
-        canonical = _build_canonical(v.model.transmission,
-                                    v.model.devices,
-                                    v.model.branches,
-                                    v.model.services,
-                                    v.sys,
-                                    v.optimizer,
+        canonical = _build_canonical(stage.model.transmission,
+                                    stage.model.devices,
+                                    stage.model.branches,
+                                    stage.model.services,
+                                    stage.sys,
+                                    stage.optimizer,
                                     verbose;
                                     parameters = true,
                                     kwargs...)
         stage_path = joinpath(sim_ref.models,"stage_$(k)_model")
         mkpath(stage_path)
-        write_op_model(canonical, joinpath(stage_path, "optimization_model.json"))
-        system_to_file && IS.to_json(v.sys, joinpath(stage_path ,"sys_data.json"))
-        _populate_cache!(v.cache, canonical)
+        _write_canonical_model(canonical, joinpath(stage_path, "optimization_model.json"))
+        system_to_file && IS.to_json(stage.sys, joinpath(stage_path ,"sys_data.json"))
         mod_stages[k] = _Stage(k,
-                               v.model,
-                               v.op_model,
-                               v.sys,
+                               stage.model,
+                               stage.op_model,
+                               stage.sys,
                                canonical,
-                               v.optimizer,
-                               v.execution_count,
-                               v.chronology_ref,
-                               v.cache)
-        sim_ref.date_ref[k] = PSY.get_forecast_initial_times(v.sys)[1]
+                               stage.optimizer,
+                               stage.execution_count,
+                               stage.chronology_ref,
+                               stage.cache)
+        _populate_cache!(mod_stages[k])
+        sim_ref.date_ref[k] = PSY.get_forecast_initial_times(stage.sys)[1]
     end
 
     return mod_stages
