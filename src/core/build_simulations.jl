@@ -122,34 +122,41 @@ function _feedforward_rule_check(::Type{T},
 end
 
 
-function _feedforward_rule_check(::Type{Synchronize},
-                              stage_number_from::Int64,
-                              from_stage::Stage,
-                              stage_number_to::Int64,
-                              to_stage::Stage)
+function _feedforward_rule_check(synch::Synchronize,
+                                 stage_number_from::Int64,
+                                 from_stage::Stage,
+                                 stage_number_to::Int64,
+                                 to_stage::Stage)
 
     #Don't check for same Stage.
     stage_number_from == stage_number_to && return
 
-    from_stage_count = PSY.get_forecasts_horizon(from_stage.sys)
+    from_stage_horizon = PSY.get_forecasts_horizon(from_stage.sys)
     to_stage_count = get_execution_count(to_stage)
+    to_stage_synch = synch.to_steps
+    from_stage_synch = synch.from_steps
 
-    if from_stage_count < to_stage_count
-        error("The number of steps in stage $(stage_number_from) is insufficient
-               to synchronize with stage $(stage_number_to)")
+    if from_stage_synch < from_stage_horizon
+        error("The lookahead length $(from_stage_horizon) in stage $(from_stage.key) is insufficient to synchronize with $(from_stage_synch) feedforward steps")
     end
 
-    if (from_stage_count % to_stage_count) != 0
-        error("The number of steps in stage $(stage_number_to) needs to be a
-               mutiple of the horizon length of stage $(stage_number_from) to
-               use Synchronize")
+    if to_stage_synch*from_stage_synch != to_stage_count
+        error("The execution total in stage $(to_stage.key) is inconsistent with a chronology
+                of $(from_stage_synch) feedforward steps and $(to_stage_synch) runs. The expected
+                number of executions is $(to_stage_synch*from_stage_synch)")
+    end
+
+    if (from_stage_horizon % from_stage_synch) != 0
+        error("The number of feedforward steps $(from_stage_horizon) in stage $(to_stage.key)
+               needs to be a mutiple of the horizon length $(from_stage_horizon)
+               of stage $(from_stage.key) to use Synchronize with parameters ($(from_stage_synch), $(to_stage_synch))")
     end
 
     return
 
 end
 
-function _feedforward_rule_check(::Type{Sequential},
+function _feedforward_rule_check(sync::Sequential,
                               stage_number_from::Int64,
                               from_stage::Stage,
                               stage_number_to::Int64,
@@ -159,7 +166,7 @@ function _feedforward_rule_check(::Type{Sequential},
 
 end
 
-function _feedforward_rule_check(::Type{RecedingHorizon},
+function _feedforward_rule_check(sync::RecedingHorizon,
                                 stage_number_from::Int64,
                                 from_stage::Stage,
                                 stage_number_to::Int64,
