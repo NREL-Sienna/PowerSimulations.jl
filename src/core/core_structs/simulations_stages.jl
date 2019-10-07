@@ -10,8 +10,8 @@ mutable struct _Stage{M<:AbstractOperationModel} <: AbstractStage
     optimizer::JuMP.OptimizerFactory
     executions::Int64
     execution_count::Int64
-    chronology_ref::Dict{Int64, Type{<:Chronology}}
-    ini_cond_chron::Union{Type{<:Chronology}, Nothing}
+    chronology_ref::Dict{Int64, <:Chronology}
+    ini_cond_chron::Union{<:Chronology, Nothing}
     cache::Dict{Type{<:AbstractCache}, AbstractCache}
 
     function _Stage(key::Int64,
@@ -21,7 +21,7 @@ mutable struct _Stage{M<:AbstractOperationModel} <: AbstractStage
                     canonical::CanonicalModel,
                     optimizer::JuMP.OptimizerFactory,
                     executions::Int64,
-                    chronology_ref::Dict{Int64, Type{<:Chronology}},
+                    chronology_ref::Dict{Int64, <:Chronology},
                     cache::Vector{<:AbstractCache}) where M <: AbstractOperationModel
 
     ini_cond_chron = get(chronology_ref, 0, nothing)
@@ -63,7 +63,7 @@ mutable struct Stage <: AbstractStage
     execution_count::Int64
     sys::PSY.System
     optimizer::JuMP.OptimizerFactory
-    chronology_ref::Dict{Int64, Type{<:Chronology}}
+    chronology_ref::Dict{Int64, <:Chronology}
     cache::Vector{<:AbstractCache}
 
     function Stage(::Type{M},
@@ -71,7 +71,7 @@ mutable struct Stage <: AbstractStage
                    execution_count::Int64,
                    sys::PSY.System,
                    optimizer::JuMP.OptimizerFactory,
-                   chronology_ref=Dict{Int, Type{<:Chronology}}(),
+                   chronology_ref=Dict{Int, <:Chronology}(),
                    cache::Vector{<:AbstractCache}=Vector{AbstractCache}()) where M<:AbstractOperationModel
 
         new(M,
@@ -90,7 +90,7 @@ function Stage(::Type{M},
                 execution_count::Int64,
                 sys::PSY.System,
                 optimizer::JuMP.OptimizerFactory,
-                chronology_ref::Dict{Int64, DataType},
+                chronology_ref::Dict{Int64, <:Chronology},
                 cache::Union{Nothing, AbstractCache}=nothing) where M<:AbstractOperationModel
 
     cacheinput = isnothing(cache) ? Vector{AbstractCache}() : [cache]
@@ -102,7 +102,7 @@ function Stage(model::ModelReference,
                execution_count::Int64,
                sys::PSY.System,
                optimizer::JuMP.OptimizerFactory,
-               chronology_ref::Dict{Int64, DataType},
+               chronology_ref::Dict{Int64, <:Chronology},
                cache::Union{Nothing, AbstractCache}=nothing)
 
     return Stage(DefaultOpModel, model, execution_count, sys, optimizer, chronology_ref, cache)
