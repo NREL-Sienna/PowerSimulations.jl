@@ -275,15 +275,15 @@ function _get_data_for_rocc(initial_conditions::Vector{InitialCondition},
         if !isnothing(ramplimits)
             p_lims = PSY.get_activepowerlimits(gen_tech)
             max_rate = abs(p_lims.min - p_lims.max)/minutes_per_period
-            if (ramplimits.up >= max_rate) & (ramplimits.down >= max_rate)
+            if (ramplimits.up*rating >= max_rate) & (ramplimits.down*rating >= max_rate)
                 @info "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
                 continue
             else
                 idx += 1
             end
             ini_conds[idx] = ic
-            ramp_params[idx] = (up = ramplimits.up*minutes_per_period,
-                                down = ramplimits.down*minutes_per_period)
+            ramp_params[idx] = (up = ramplimits.up*rating*minutes_per_period,
+                                down = ramplimits.down*rating*minutes_per_period)
             minmax_params[idx] = p_lims
         end
     end
@@ -316,6 +316,7 @@ function ramp_constraints!(canonical_model::CanonicalModel,
     time_steps = model_time_steps(canonical_model)
     resolution = model_resolution(canonical_model)
     initial_conditions = get_ini_cond(canonical_model, key)
+    rate_data = _get_data_for_rocc(initial_conditions, resolution)
     ini_conds, ramp_params, minmax_params = _get_data_for_rocc(initial_conditions, resolution)
 
     if !isempty(ini_conds)
@@ -329,7 +330,7 @@ function ramp_constraints!(canonical_model::CanonicalModel,
                                          Symbol("STOP_$(T)"))
                                         )
     else
-        @warn "Data doesn't contain generators with ramp limits, consider changing your formulation $(D)"
+        @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
     end
 
     return
@@ -352,6 +353,7 @@ function ramp_constraints!(canonical_model::CanonicalModel,
     time_steps = model_time_steps(canonical_model)
     resolution = model_resolution(canonical_model)
     initial_conditions = get_ini_cond(canonical_model, key)
+    rate_data = _get_data_for_rocc(initial_conditions, resolution)
     ini_conds, ramp_params, minmax_params = _get_data_for_rocc(initial_conditions, resolution)
 
     if !isempty(ini_conds)
@@ -362,7 +364,7 @@ function ramp_constraints!(canonical_model::CanonicalModel,
                                    Symbol("ramp_$(T)"),
                                    Symbol("P_$(T)"))
     else
-        @warn "Data doesn't contain generators with ramp limits, consider changing your formulation $(D)"
+        @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
     end
 
     return
@@ -461,7 +463,7 @@ function time_constraints!(canonical_model::CanonicalModel,
                                         )
         end
     else
-        @warn "Data doesn't contain generators with time-up/down limits, consider changing your formulation $(D)"
+        @warn "Data doesn't contain generators with time-up/down limits, consider adjusting your formulation"
     end
 
     return
