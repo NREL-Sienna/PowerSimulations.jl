@@ -86,3 +86,13 @@ function create_rts_system(forecast_resolution=Dates.Hour(1))
 end
 c_rts = create_rts_system();
 =#
+
+function build_init(gens, data)
+    init = Vector{InitialCondition}(undef, length(collect(gens)))
+    for (ix,g) in enumerate(gens)
+        init[ix] = InitialCondition(g,
+                    PSI.UpdateRef{PSY.Device}(Symbol("P_$(typeof(g))")),
+                    data[ix],TimeStatusChange)
+    end
+    return init
+end
