@@ -137,19 +137,19 @@ function _feedforward_rule_check(synch::Synchronize,
     from_stage_synch = synch.from_steps
 
     if from_stage_synch < from_stage_horizon
-        error("The lookahead length $(from_stage_horizon) in stage $(from_stage.key) is insufficient to synchronize with $(from_stage_synch) feedforward steps")
+        error("The lookahead length $(from_stage_horizon) in stage is insufficient to synchronize with $(from_stage_synch) feedforward steps")
     end
 
     if to_stage_synch*from_stage_synch != to_stage_count
-        error("The execution total in stage $(to_stage.key) is inconsistent with a chronology
+        error("The execution total in stage is inconsistent with a chronology
                 of $(from_stage_synch) feedforward steps and $(to_stage_synch) runs. The expected
                 number of executions is $(to_stage_synch*from_stage_synch)")
     end
 
     if (from_stage_horizon % from_stage_synch) != 0
-        error("The number of feedforward steps $(from_stage_horizon) in stage $(to_stage.key)
+        error("The number of feedforward steps $(from_stage_horizon) in stage
                needs to be a mutiple of the horizon length $(from_stage_horizon)
-               of stage $(from_stage.key) to use Synchronize with parameters ($(from_stage_synch), $(to_stage_synch))")
+               of stage to use Synchronize with parameters ($(from_stage_synch), $(to_stage_synch))")
     end
 
     return
