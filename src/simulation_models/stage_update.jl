@@ -72,15 +72,19 @@ end
 
 #########################FeedForward Variables Updating#####################################
 
-function feedforward_update(::Type{Chron},
+function feedforward_update(synch::Chron,
                             param_reference::UpdateRef{JuMP.VariableRef},
                             param_array::JuMPParamArray,
                             to_stage::_Stage,
                             from_stage::_Stage) where Chron <: Chronology
 
-    to_stage_execution_count = to_stage.execution_count
+
+    !(to_stage.execution_count % synch.to_steps == 0) && return
+
+    var_count = to_stage.execution_count ÷ synch.to_steps
+
     for device_name in axes(param_array)[1]
-        var_value = _get_stage_variable(Chron, from_stage, device_name, param_reference, to_stage_execution_count)
+        var_value = _get_stage_variable(Chron, from_stage, device_name, param_reference, var_count)
         PJ.fix(param_array[device_name], var_value)
     end
 
@@ -173,7 +177,7 @@ function _calculate_ic_quantity(initial_condition_key::ICKey{DevicePower, PSD},
 end
 
 function _initial_condition_update!(initial_condition_key::ICKey,
-                                    ::Type{Chron},
+                                    synch::Chron,
                                     ini_cond_vector::Vector{InitialCondition},
                                     to_stage::_Stage,
                                     from_stage::_Stage) where Chron <: Chronology
@@ -219,6 +223,7 @@ function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
                            param_array::JuMPParamArray,
                            stage_number::Int64,
                            sim::Simulation)
+
     chronology_ref = sim.stages[stage_number].chronology_ref
     current_stage = sim.stages[stage_number]
     for (k, ref) in chronology_ref
@@ -226,6 +231,7 @@ function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
     end
 
     return
+
 
 end
 
