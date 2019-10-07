@@ -18,7 +18,7 @@ abstract type TestOptModel<:PSI.AbstractOperationModel end
 ipopt_optimizer = JuMP.with_optimizer(Ipopt.Optimizer, print_level = 0)
 ipopt_ws_solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, mu_init=1e-4, print_level=0)
 GLPK_optimizer = JuMP.with_optimizer(GLPK.Optimizer)
-Cbc_optimizer = JuMP.with_optimizer(Cbc.Optimizer)
+Cbc_optimizer = JuMP.with_optimizer(Cbc.Optimizer, logLevel=0)
 OSQP_optimizer = JuMP.with_optimizer(OSQP.Optimizer, verbose = false)
 
 include("test_utils/get_test_data.jl")
@@ -55,6 +55,5 @@ end
 end
 
 @testset "Simulation Models" begin
-    include("test_uc_constraints.jl")
     #include("test_simulation_models.jl")
 end
