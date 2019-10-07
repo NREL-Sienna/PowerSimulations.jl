@@ -28,16 +28,16 @@ export HVDCDispatch
 export StaticPowerLoad
 export InterruptiblePowerLoad
 export DispatchablePowerLoad
-######## Renewable Formulations ########
+######## Renewable Forms ########
 export RenewableFixed
 export RenewableFullDispatch
 export RenewableConstantPowerFactor
-######## Hydro Formulations ########
+######## Hydro Forms ########
 export HydroFixed
-######## Renewable Formulations ########
+######## Renewable Forms ########
 export BookKeeping
 export BookKeepingwReservation
-######## Thermal Formulations ########
+######## Thermal Forms ########
 export ThermalStandardUnitCommitment
 export ThermalBasicUnitCommitment
 export ThermalDispatch

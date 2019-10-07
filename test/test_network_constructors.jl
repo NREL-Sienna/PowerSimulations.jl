@@ -212,7 +212,7 @@ end
 
 end
 
-@testset  "Network Unsupported Power Model Formulations" begin
+@testset  "Network Unsupported Power Model Forms" begin
     incompat_list = [PM.SDPWRMForm,
                     PM.SparseSDPWRMForm,
                     PM.SOCWRConicForm,

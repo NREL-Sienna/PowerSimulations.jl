@@ -1,12 +1,12 @@
-abstract type AbstractLoadFormulation<:AbstractDeviceFormulation end
+abstract type AbstractLoadForm <: AbstractDeviceForm end
 
-abstract type AbstractControllablePowerLoadForm<:AbstractLoadFormulation end
+abstract type AbstractFormControllablePowerLoadForm <: AbstractLoadForm end
 
-struct StaticPowerLoad<:AbstractLoadFormulation end
+struct StaticPowerLoad <: AbstractLoadForm end
 
-struct InterruptiblePowerLoad<:AbstractControllablePowerLoadForm end
+struct InterruptiblePowerLoad <: AbstractFormControllablePowerLoadForm end
 
-struct DispatchablePowerLoad<:AbstractControllablePowerLoadForm end
+struct DispatchablePowerLoad <: AbstractFormControllablePowerLoadForm end
 
 ########################### dispatchable load variables ############################################
 
@@ -59,7 +59,7 @@ function reactivepower_constraints(canonical_model::CanonicalModel,
                                    devices::IS.FlattenIteratorWrapper{L},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
-                                                                       D<:AbstractControllablePowerLoadForm,
+                                                                       D<:AbstractFormControllablePowerLoadForm,
                                                                        S<:PM.AbstractPowerFormulation}
     time_steps = model_time_steps(canonical_model)
     key = Symbol("reactive_$(L)")
@@ -450,7 +450,7 @@ function _nodal_expression_fixed(canonical_model::CanonicalModel,
 
 end
 
-##################################### Controllable Load Cost ######################################
+##################################### FormControllable Load Cost ######################################
 
 function cost_function(canonical_model::CanonicalModel,
                        devices::IS.FlattenIteratorWrapper{L},

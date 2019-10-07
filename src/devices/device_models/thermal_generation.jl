@@ -1,20 +1,20 @@
 ########################### Thermal Generation Models ######################################
 
-abstract type AbstractThermalFormulation<:AbstractDeviceFormulation end
+abstract type AbstractThermalForm <: AbstractDeviceForm end
 
-abstract type AbstractThermalDispatchForm<:AbstractThermalFormulation end
+abstract type AbstractThermalDispatchForm <: AbstractThermalForm end
 
-abstract type AbstractThermalUnitCommitment<:AbstractThermalFormulation end
+abstract type AbstractThermalUnitCommitment <: AbstractThermalForm end
 
-struct ThermalBasicUnitCommitment<:AbstractThermalUnitCommitment end
+struct ThermalBasicUnitCommitment <: AbstractThermalUnitCommitment end
 
-struct ThermalStandardUnitCommitment<:AbstractThermalUnitCommitment end
+struct ThermalStandardUnitCommitment <: AbstractThermalUnitCommitment end
 
-struct ThermalDispatch<:AbstractThermalDispatchForm end
+struct ThermalDispatch <: AbstractThermalDispatchForm end
 
-struct ThermalRampLimited<:AbstractThermalDispatchForm end
+struct ThermalRampLimited <: AbstractThermalDispatchForm end
 
-struct ThermalDispatchNoMin<:AbstractThermalDispatchForm end
+struct ThermalDispatchNoMin <: AbstractThermalDispatchForm end
 
 ########################### Active Dispatch Variables ######################################
 
@@ -101,7 +101,7 @@ function activepower_constraints!(canonical_model::CanonicalModel,
                                  devices::IS.FlattenIteratorWrapper{T},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S}) where {T<:PSY.ThermalGen,
-                                                                      D<:AbstractThermalFormulation,
+                                                                      D<:AbstractThermalForm,
                                                                       S<:PM.AbstractPowerFormulation}
 
     range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_activepowerlimits) for g in devices]
@@ -175,7 +175,7 @@ function reactivepower_constraints!(canonical_model::CanonicalModel,
                                    devices::IS.FlattenIteratorWrapper{T},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S}) where {T<:PSY.ThermalGen,
-                                                                        D<:AbstractThermalFormulation,
+                                                                        D<:AbstractThermalForm,
                                                                         S<:PM.AbstractPowerFormulation}
 
     range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_reactivepowerlimits) for g in devices]
@@ -198,7 +198,7 @@ function commitment_constraints!(canonical_model::CanonicalModel,
                                  devices::IS.FlattenIteratorWrapper{T},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S}) where {T<:PSY.ThermalGen,
-                                                                     D<:AbstractThermalFormulation,
+                                                                     D<:AbstractThermalForm,
                                                                      S<:PM.AbstractPowerFormulation}
 
     key = ICKey(DeviceStatus, T)
@@ -223,7 +223,7 @@ end
 function initial_conditions!(canonical_model::CanonicalModel,
                             devices::IS.FlattenIteratorWrapper{T},
                             device_formulation::Type{D}) where {T<:PSY.ThermalGen,
-                                                                D<:AbstractThermalFormulation}
+                                                                D<:AbstractThermalForm}
 
     status_init(canonical_model, devices)
     output_init(canonical_model, devices)
@@ -305,7 +305,7 @@ function ramp_constraints!(canonical_model::CanonicalModel,
                            devices::IS.FlattenIteratorWrapper{T},
                            device_formulation::Type{D},
                            system_formulation::Type{S}) where {T<:PSY.ThermalGen,
-                                                    D<:AbstractThermalFormulation,
+                                                    D<:AbstractThermalForm,
                                                     S<:PM.AbstractPowerFormulation}
     key = ICKey(DevicePower, T)
 
@@ -424,7 +424,7 @@ function time_constraints!(canonical_model::CanonicalModel,
                           devices::IS.FlattenIteratorWrapper{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S}) where {T<:PSY.ThermalGen,
-                                                   D<:AbstractThermalFormulation,
+                                                   D<:AbstractThermalForm,
                                                    S<:PM.AbstractPowerFormulation}
 
     ic_keys = [ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T)]
@@ -493,7 +493,7 @@ function cost_function(canonical_model::CanonicalModel,
                        devices::IS.FlattenIteratorWrapper{T},
                        ::Type{D},
                        ::Type{S}) where {T<:PSY.ThermalGen,
-                                         D<:AbstractThermalFormulation,
+                                         D<:AbstractThermalForm,
                                          S<:PM.AbstractPowerFormulation}
 
     #Variable Cost component

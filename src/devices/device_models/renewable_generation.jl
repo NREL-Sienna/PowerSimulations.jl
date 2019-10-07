@@ -1,12 +1,12 @@
-abstract type AbstractRenewableFormulation<:AbstractDeviceFormulation end
+abstract type AbstractRenewableForm <: AbstractDeviceForm end
 
-abstract type AbstractRenewableDispatchForm<:AbstractRenewableFormulation end
+abstract type AbstractRenewableDispatchForm <: AbstractRenewableForm end
 
-struct RenewableFixed<:AbstractRenewableFormulation end
+struct RenewableFixed <: AbstractRenewableForm end
 
-struct RenewableFullDispatch<:AbstractRenewableDispatchForm end
+struct RenewableFullDispatch <: AbstractRenewableDispatchForm end
 
-struct RenewableConstantPowerFactor<:AbstractRenewableDispatchForm end
+struct RenewableConstantPowerFactor <: AbstractRenewableDispatchForm end
 
 ########################### renewable generation variables ############################################
 

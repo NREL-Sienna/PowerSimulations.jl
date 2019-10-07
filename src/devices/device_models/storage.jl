@@ -1,8 +1,8 @@
-abstract type AbstractStorageForm<:AbstractDeviceFormulation end
+abstract type AbstractStorageForm <: AbstractDeviceForm end
 
-struct BookKeeping<:AbstractStorageForm end
+struct BookKeeping <: AbstractStorageForm end
 
-struct BookKeepingwReservation<:AbstractStorageForm end
+struct BookKeepingwReservation <: AbstractStorageForm end
 
 #################################################Storage Variables#################################
 

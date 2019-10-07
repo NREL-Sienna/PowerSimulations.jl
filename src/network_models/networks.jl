@@ -1,6 +1,6 @@
-abstract type CopperPlatePowerModel<:PM.AbstractActivePowerFormulation  end
+abstract type CopperPlatePowerModel <: PM.AbstractActivePowerFormulation  end
 
-abstract type StandardPTDFForm<:PM.DCPlosslessForm end
+abstract type StandardPTDFForm <: PM.DCPlosslessForm end
 
 #= This code is from PowerModel's network definitions. Added here just for reference.
 
@@ -38,7 +38,7 @@ export
 abstract type AbstractActivePowerFormulation<:AbstractPowerFormulation end
 
 "variants that target conic solvers"
-abstract type AbstractConicPowerFormulation<:AbstractPowerFormulation end
+abstract type AbstractConicPowerForm<:AbstractPowerFormulation end
 
 "for branch flow models"
 abstract type AbstractBFForm<:AbstractPowerFormulation end
@@ -156,7 +156,7 @@ ACTPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, Stan
 
 
 ""
-abstract type AbstractDCPForm<:AbstractActivePowerFormulation end
+abstract type AbstractDCPForm<:AbstractActivePowerFormulationulation end
 
 "active power only formulations where p[(i, j)] = -p[(j, i)]"
 abstract type DCPlosslessForm<:AbstractDCPForm end
@@ -268,7 +268,7 @@ LPACCPowerModel(data::Dict{String, Any}; kwargs...) =
 abstract type AbstractWRForm<:AbstractPowerFormulation end
 
 ""
-abstract type AbstractWRConicForm<:AbstractConicPowerFormulation end
+abstract type AbstractWRConicForm<:AbstractConicPowerForm end
 
 ""
 abstract type SOCWRConicForm<:AbstractWRConicForm end
@@ -419,7 +419,7 @@ SOCBFConicPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(dat
 ###### SDP Relaxations ######
 
 ""
-abstract type AbstractWRMForm<:AbstractConicPowerFormulation end
+abstract type AbstractWRMForm<:AbstractConicPowerForm end
 
 
 ""
@@ -526,6 +526,6 @@ AbstractWForms = Union{AbstractWRForms, AbstractBFForm}
 AbstractPForms = Union{AbstractACPForm, AbstractACTForm, AbstractDCPForm, AbstractLPACForm}
 
 "union of all conic form branches"
-AbstractConicForms = Union{AbstractConicPowerFormulation, AbstractBFConicForm}
+AbstractConicForms = Union{AbstractConicPowerForm, AbstractBFConicForm}
 
 =#

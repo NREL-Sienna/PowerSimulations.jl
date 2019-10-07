@@ -108,7 +108,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                        kwargs...) where {D<:AbstractRenewableDispatchForm,
                                                           S<:PM.AbstractPowerFormulation}
 
-    @warn("The Formulation $(D) only applies to Controllable Renewable Resources, \n Consider Changing the Device Formulation to RenewableFixed")
+    @warn("The Form $(D) only applies to FormControllable Renewable Resources, \n Consider Changing the Device Form to RenewableFixed")
 
     _internal_device_constructor!(canonical_model,
                                   DeviceModel(PSY.RenewableFix,RenewableFixed),

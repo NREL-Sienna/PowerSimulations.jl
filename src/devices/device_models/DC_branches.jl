@@ -1,10 +1,10 @@
-abstract type AbstractDCLineForm<:AbstractBranchFormulation end
+abstract type AbstractDCLineForm <: AbstractBranchForm end
 
-struct HVDCLossless<:AbstractDCLineForm end
+struct HVDCLossless <: AbstractDCLineForm end
 
-struct HVDCDispatch<:AbstractDCLineForm end
+struct HVDCDispatch <: AbstractDCLineForm end
 
-struct VoltageSourceDC<:AbstractDCLineForm end
+struct VoltageSourceDC <: AbstractDCLineForm end
 
 #################################### Branch Variables ##################################################
 

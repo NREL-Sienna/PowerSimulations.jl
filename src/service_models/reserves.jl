@@ -22,7 +22,7 @@ function make_pmax_rsv_constraint(m::JuMP.AbstractModel, t::Int64, device::G, fo
     return JuMP.@constraint(m, m[:p_th][device.name, t] + m[:p_rsv][device.name, t]  <= device.tech.activepowerlimits.max)
 end
 
-function make_pmax_rsv_constraint(m::JuMP.AbstractModel, t::Int64, device::G, formulation::Type{D}) where {G<:PSY.ThermalGen, D<:AbstractThermalFormulation}
+function make_pmax_rsv_constraint(m::JuMP.AbstractModel, t::Int64, device::G, formulation::Type{D}) where {G<:PSY.ThermalGen, D<:AbstractThermalForm}
     return JuMP.@constraint(m, m[:p_th][device.name, t] + m[:p_rsv][device.name, t] <= device.tech.activepowerlimits.max * m[:on_th][device.name, t])
 end
 
@@ -35,7 +35,7 @@ function make_pmax_rsv_constraint(m::JuMP.AbstractModel, t::Int64, device::G, fo
 end
 
 # ramp constraints
-function make_pramp_rsv_constraint(m::JuMP.AbstractModel, t::Int64, device::G, formulation::Type{D}, timeframe) where {G<:PSY.ThermalGen, D<:AbstractThermalFormulation}
+function make_pramp_rsv_constraint(m::JuMP.AbstractModel, t::Int64, device::G, formulation::Type{D}, timeframe) where {G<:PSY.ThermalGen, D<:AbstractThermalForm}
     rmax = device.tech.ramplimits != nothing  ? device.tech.ramplimits.up : device.tech.activepowerlimits.max
     return JuMP.@constraint(m, m[:p_rsv][device.name, t] <= rmax/60 * timeframe)
 end
