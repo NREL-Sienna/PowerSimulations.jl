@@ -12,7 +12,7 @@ function _internal_network_constructor(canonical::CanonicalModel,
 end
 
 function _internal_network_constructor(canonical::CanonicalModel,
-                                        system_formulation::Type{StandardPTDFForm},
+                                        system_formulation::Type{StandardPTDF},
                                         sys::PSY.System;
                                         kwargs...)
 
@@ -30,7 +30,7 @@ function _internal_network_constructor(canonical::CanonicalModel,
         for btype in Set(dc_branch_types)
             typed_dc_branches = IS.FlattenIteratorWrapper(btype, Vector([[b for b in dc_branches if typeof(b) == btype]]))
             flow_variables(canonical,
-                           StandardPTDFForm,
+                           StandardPTDF,
                            typed_dc_branches)
         end
 

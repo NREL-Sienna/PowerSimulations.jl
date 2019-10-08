@@ -1,10 +1,8 @@
 function _prepare_workspace!(ref::SimulationRef, base_name::AbstractString, folder::AbstractString)
 
     !isdir(folder) && error("Specified folder is not valid")
-
-    cd(folder)
     global_path = joinpath(folder, "$(base_name)")
-    isdir(global_path) && mkpath(global_path)
+    !isdir(global_path) && mkpath(global_path)
     _sim_path = replace_chars("$(round(Dates.now(),Dates.Minute))-$(base_name)", ":", "-")
     simulation_path = joinpath(global_path, _sim_path)
     raw_ouput = joinpath(simulation_path, "raw_output")
@@ -61,10 +59,10 @@ function _get_dates(stages::Dict{Int64, Stage})
 
 end
 
-function _populate_cache!(cache_vector::Vector{<:AbstractCache}, op_model::OperationModel)
+function _populate_cache!(stage::_Stage)
 
-    for cache in cache_vector
-        build_cache!(cache, op_model)
+    for (k, cache) in stage.cache
+        build_cache!(cache, stage.canonical)
     end
 
     return
@@ -77,21 +75,32 @@ function _build_stages(sim_ref::SimulationRef,
 
     system_to_file = get(kwargs, :system_to_file, true)
     mod_stages = Vector{_Stage}(undef, length(stages))
-
-    for (k, v) in stages
-        verbose && @info("Building Stage $(k)")
-        op_mod = OperationModel(DefaultOpModel, v.model, v.sys;
-                                optimizer = v.optimizer,
-                                parameters = true,
-                                verbose = verbose,
-                                kwargs...)
-        stage_path = joinpath(sim_ref.models,"stage_$(k)_model")
+    for (key, stage) in stages
+        verbose && @info("Building Stage $(key)")
+        canonical = _build_canonical(stage.model.transmission,
+                                    stage.model.devices,
+                                    stage.model.branches,
+                                    stage.model.services,
+                                    stage.sys,
+                                    stage.optimizer,
+                                    verbose;
+                                    parameters = true,
+                                    kwargs...)
+        stage_path = joinpath(sim_ref.models,"stage_$(key)_model")
         mkpath(stage_path)
-        write_op_model(op_mod, joinpath(stage_path, "optimization_model.json"))
-        system_to_file && IS.to_json(v.sys, joinpath(stage_path ,"sys_data.json"))
-        _populate_cache!(v.cache, op_mod)
-        mod_stages[k] = _Stage(k, op_mod, v.execution_count, v.chronology_ref, v.cache)
-        sim_ref.date_ref[k] = PSY.get_forecast_initial_times(v.sys)[1]
+        _write_canonical_model(canonical, joinpath(stage_path, "optimization_model.json"))
+        system_to_file && IS.to_json(stage.sys, joinpath(stage_path ,"sys_data.json"))
+        mod_stages[key] = _Stage(key,
+                               stage.model,
+                               stage.op_model,
+                               stage.sys,
+                               canonical,
+                               stage.optimizer,
+                               stage.execution_count,
+                               stage.chronology_ref,
+                               stage.cache)
+        _populate_cache!(mod_stages[key])
+        sim_ref.date_ref[key] = PSY.get_forecast_initial_times(stage.sys)[1]
     end
 
     return mod_stages
@@ -111,34 +120,41 @@ function _feedforward_rule_check(::Type{T},
 end
 
 
-function _feedforward_rule_check(::Type{Synchronize},
-                              stage_number_from::Int64,
-                              from_stage::Stage,
-                              stage_number_to::Int64,
-                              to_stage::Stage)
+function _feedforward_rule_check(synch::Synchronize,
+                                 stage_number_from::Int64,
+                                 from_stage::Stage,
+                                 stage_number_to::Int64,
+                                 to_stage::Stage)
 
     #Don't check for same Stage.
     stage_number_from == stage_number_to && return
 
-    from_stage_count = PSY.get_forecasts_horizon(from_stage.sys)
+    from_stage_horizon = PSY.get_forecasts_horizon(from_stage.sys)
     to_stage_count = get_execution_count(to_stage)
+    to_stage_synch = synch.to_steps
+    from_stage_synch = synch.from_steps
 
-    if from_stage_count < to_stage_count
-        error("The number of steps in stage $(stage_number_from) is insufficient
-               to synchronize with stage $(stage_number_to)")
+    if from_stage_synch < from_stage_horizon
+        error("The lookahead length $(from_stage_horizon) in stage is insufficient to synchronize with $(from_stage_synch) feedforward steps")
     end
 
-    if (from_stage_count % to_stage_count) != 0
-        error("The number of steps in stage $(stage_number_to) needs to be a
-               mutiple of the horizon length of stage $(stage_number_from) to
-               use Synchronize")
+    if to_stage_synch*from_stage_synch != to_stage_count
+        error("The execution total in stage is inconsistent with a chronology
+                of $(from_stage_synch) feedforward steps and $(to_stage_synch) runs. The expected
+                number of executions is $(to_stage_synch*from_stage_synch)")
+    end
+
+    if (from_stage_horizon % from_stage_synch) != 0
+        error("The number of feedforward steps $(from_stage_horizon) in stage
+               needs to be a mutiple of the horizon length $(from_stage_horizon)
+               of stage to use Synchronize with parameters ($(from_stage_synch), $(to_stage_synch))")
     end
 
     return
 
 end
 
-function _feedforward_rule_check(::Type{Sequential},
+function _feedforward_rule_check(sync::Sequential,
                               stage_number_from::Int64,
                               from_stage::Stage,
                               stage_number_to::Int64,
@@ -148,7 +164,7 @@ function _feedforward_rule_check(::Type{Sequential},
 
 end
 
-function _feedforward_rule_check(::Type{RecedingHorizon},
+function _feedforward_rule_check(sync::RecedingHorizon,
                                 stage_number_from::Int64,
                                 from_stage::Stage,
                                 stage_number_to::Int64,
@@ -163,7 +179,7 @@ function _check_chronology_ref(stages::Dict{Int64, Stage})
     for (stage_number,stage) in stages
         for (k, v) in stage.chronology_ref
             k < 1 && continue
-            _feedforward_rule_check(v, k, stages[k], stage_number, stage)
+            _feedforward_rule_check(v, k, stages[key], stage_number, stage)
         end
     end
 

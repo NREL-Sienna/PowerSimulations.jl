@@ -15,7 +15,7 @@ function ptdf_networkflow(canonical_model::CanonicalModel,
     for btype in Set(branch_types)
         var_dict[btype] = Symbol("Fp_$(btype)")
         typed_branches = IS.FlattenIteratorWrapper(btype, Vector([[b for b in branches if typeof(b) == btype]]))
-        flow_variables(canonical_model, StandardPTDFForm, typed_branches)
+        flow_variables(canonical_model, StandardPTDF, typed_branches)
     end
 
     for t in time_steps

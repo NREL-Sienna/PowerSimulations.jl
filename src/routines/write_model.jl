@@ -10,9 +10,9 @@ function _write_variable_results(vars_results::Dict{Symbol, DataFrames.DataFrame
 
 end
 
-function _write_variable_results(vars_results::OperationModel, save_path::AbstractString)
+function _write_variable_results(canonical::CanonicalModel, save_path::AbstractString)
 
-    for (k,v) in vars(vars_results.canonical)
+    for (k,v) in vars(canonical)
          file_path = joinpath(save_path,"$(k).feather")
          Feather.write(file_path, _result_dataframe_vars(v))
     end
@@ -47,12 +47,16 @@ function _write_time_stamps(time_stamp::DataFrames.DataFrame, save_path::Abstrac
 
 end
 
+function _export_model_result(op_m::OperationModel, save_path::String)
+    _write_variable_results(op_m.canonical, save_path)
+    _write_time_stamps(get_time_stamp(op_m), save_path)
+    return
+end
+
 # These functions are writing directly to the feather file and skipping printing to memory.
-function _export_model_result(op_m::OperationModel, start_time::Dates.DateTime, save_path::String)
-
-    _write_variable_results(op_m, save_path)
-    _write_time_stamps(get_time_stamp(op_m, start_time), save_path)
-
+function _export_model_result(stage::_Stage, start_time::Dates.DateTime, save_path::String)
+    _write_variable_results(stage.canonical, save_path)
+    _write_time_stamps(get_time_stamp(stage, start_time), save_path)
     return
 
 end
@@ -60,8 +64,16 @@ end
 function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
                                op_model::OperationModel,
                                path::String)
+    _export_optimizer_log(optimizer_log, op_model.canonical_model, path)
 
-    canonical_model = op_model.canonical
+    return
+
+end
+
+function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
+                               canonical_model::CanonicalModel,
+                               path::String)
+
     optimizer_log[:obj_value] = JuMP.objective_value(canonical_model.JuMPmodel)
     optimizer_log[:termination_status] = Int(JuMP.termination_status(canonical_model.JuMPmodel))
     optimizer_log[:primal_status] = Int(JuMP.primal_status(canonical_model.JuMPmodel))
@@ -100,8 +112,14 @@ end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
 function write_op_model(op_model::OperationModel, save_path::String)
+    _write_canonical_model(op_model.canonical, save_path)
+    return
+end
+
+""" Exports the OpModel JuMP object in MathOptFormat"""
+function _write_canonical_model(canonical_model::CanonicalModel, save_path::String)
     MOF_model = MOPFM
-    MOI.copy_to(MOF_model, JuMP.backend(op_model.canonical.JuMPmodel))
+    MOI.copy_to(MOF_model, JuMP.backend(canonical_model.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)
 
     return

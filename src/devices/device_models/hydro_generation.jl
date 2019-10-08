@@ -1,16 +1,16 @@
-abstract type AbstractHydroFormulation<:AbstractDeviceFormulation end
+abstract type AbstractHydroFormulation <: AbstractDeviceFormulation end
 
-abstract type AbstractHydroDispatchForm<:AbstractHydroFormulation end
+abstract type AbstractHydroDispatchFormulation <: AbstractHydroFormulation end
 
-struct HydroFixed<:AbstractHydroFormulation end
+struct HydroFixed <: AbstractHydroFormulation end
 
-struct HydroDispatchRunOfRiver<:AbstractHydroDispatchForm end
+struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
 
-struct HydroDispatchSeasonalFlow<:AbstractHydroDispatchForm end
+struct HydroDispatchSeasonalFlow <: AbstractHydroDispatchFormulation end
 
-struct HydroCommitmentRunOfRiver<:AbstractHydroFormulation end
+struct HydroCommitmentRunOfRiver <: AbstractHydroFormulation end
 
-struct HydroCommitmentSeasonalFlow<:AbstractHydroFormulation end
+struct HydroCommitmentSeasonalFlow <: AbstractHydroFormulation end
 
 #=
 # hydro variables
@@ -69,7 +69,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
                                   device_formulation::Type{D},
                                   system_formulation::Type{S},
                                   time_steps::UnitRange{Int64}) where {H<:PSY.HydroGen,
-                                                                       D<:AbstractHydroDispatchForm,
+                                                                       D<:AbstractHydroDispatchFormulation,
                                                                        S<:PM.AbstractPowerFormulation}
 
     range_data = [(PSY.get_name(h), PSY.get_tech(h) |> PSY.get_activepowerlimits) for h in devices]
@@ -123,7 +123,7 @@ function reactivepower_constraints(canonical_model::CanonicalModel,
                                    device_formulation::Type{D},
                                    system_formulation::Type{S},
                                    time_steps::UnitRange{Int64}) where {H<:PSY.HydroGen,
-                                                                        D<:AbstractHydroDispatchForm,
+                                                                        D<:AbstractHydroDispatchFormulation,
                                                                         S<:PM.AbstractPowerFormulation}
 
     range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_reactivepowerlimits) for g in devices]

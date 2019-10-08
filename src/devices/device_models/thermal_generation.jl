@@ -1,20 +1,20 @@
 ########################### Thermal Generation Models ######################################
 
-abstract type AbstractThermalFormulation<:AbstractDeviceFormulation end
+abstract type AbstractThermalFormulation <: AbstractDeviceFormulation end
 
-abstract type AbstractThermalDispatchForm<:AbstractThermalFormulation end
+abstract type AbstractThermalDispatchFormulation <: AbstractThermalFormulation end
 
-abstract type AbstractThermalUnitCommitment<:AbstractThermalFormulation end
+abstract type AbstractThermalUnitCommitment <: AbstractThermalFormulation end
 
-struct ThermalBasicUnitCommitment<:AbstractThermalUnitCommitment end
+struct ThermalBasicUnitCommitment <: AbstractThermalUnitCommitment end
 
-struct ThermalStandardUnitCommitment<:AbstractThermalUnitCommitment end
+struct ThermalStandardUnitCommitment <: AbstractThermalUnitCommitment end
 
-struct ThermalDispatch<:AbstractThermalDispatchForm end
+struct ThermalDispatch <: AbstractThermalDispatchFormulation end
 
-struct ThermalRampLimited<:AbstractThermalDispatchForm end
+struct ThermalRampLimited <: AbstractThermalDispatchFormulation end
 
-struct ThermalDispatchNoMin<:AbstractThermalDispatchForm end
+struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
 
 ########################### Active Dispatch Variables ######################################
 
@@ -81,7 +81,7 @@ function activepower_constraints!(canonical_model::CanonicalModel,
                                  devices::IS.FlattenIteratorWrapper{T},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S}) where {T<:PSY.ThermalGen,
-                                                                     D<:AbstractThermalDispatchForm,
+                                                                     D<:AbstractThermalDispatchFormulation,
                                                                      S<:PM.AbstractPowerFormulation}
 
     range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_activepowerlimits) for g in devices]
@@ -154,7 +154,7 @@ function reactivepower_constraints!(canonical_model::CanonicalModel,
                                    devices::IS.FlattenIteratorWrapper{T},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S}) where {T<:PSY.ThermalGen,
-                                                                       D<:AbstractThermalDispatchForm,
+                                                                       D<:AbstractThermalDispatchFormulation,
                                                                        S<:PM.AbstractPowerFormulation}
 
     range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_reactivepowerlimits) for g in devices]
@@ -237,7 +237,7 @@ end
 function initial_conditions!(canonical_model::CanonicalModel,
                             devices::IS.FlattenIteratorWrapper{T},
                             device_formulation::Type{D}) where {T<:PSY.ThermalGen,
-                                                                D<:AbstractThermalDispatchForm}
+                                                                D<:AbstractThermalDispatchFormulation}
 
     output_init(canonical_model, devices)
 
@@ -341,7 +341,7 @@ function ramp_constraints!(canonical_model::CanonicalModel,
                           devices::IS.FlattenIteratorWrapper{T},
                           device_formulation::Type{D},
                           system_formulation::Type{S}) where {T<:PSY.ThermalGen,
-                                                   D<:AbstractThermalDispatchForm,
+                                                   D<:AbstractThermalDispatchFormulation,
                                                    S<:PM.AbstractPowerFormulation}
 
     key = ICKey(DevicePower, T)
@@ -476,7 +476,7 @@ function cost_function(canonical_model::CanonicalModel,
                        devices::IS.FlattenIteratorWrapper{T},
                        ::Type{D},
                        ::Type{S}) where {T<:PSY.ThermalGen,
-                                         D<:AbstractThermalDispatchForm,
+                                         D<:AbstractThermalDispatchFormulation,
                                          S<:PM.AbstractPowerFormulation}
 
     add_to_cost(canonical_model,
