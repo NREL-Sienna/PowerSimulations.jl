@@ -1,7 +1,6 @@
 function _prepare_workspace!(ref::SimulationRef, base_name::AbstractString, folder::AbstractString)
 
     !isdir(folder) && error("Specified folder is not valid")
-    current_working_directory = pwd()
     global_path = joinpath(folder, "$(base_name)")
     !isdir(global_path) && mkpath(global_path)
     _sim_path = replace_chars("$(round(Dates.now(),Dates.Minute))-$(base_name)", ":", "-")
@@ -16,6 +15,7 @@ function _prepare_workspace!(ref::SimulationRef, base_name::AbstractString, fold
     ref.raw = raw_ouput
     ref.models = models_json_ouput
     ref.results = results_path
+
     return
 
 end
