@@ -37,7 +37,7 @@ dc_line = DeviceModel(PSY.HVDCLine, PSI.HVDCDispatch)
 end
 
 @testset "Network DC-PF with PTDF formulation" begin
-    network = StandardPTDFForm
+    network = StandardPTDF
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimit_Line, :nodal_balance, :network_flow]

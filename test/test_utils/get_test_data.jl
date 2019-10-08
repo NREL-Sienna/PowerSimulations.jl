@@ -47,7 +47,7 @@ PTDF5_dc = PSY.PTDF(b_ac_5, nodes5);
 b_ac_14 = collect(get_components(PSY.ACBranch, c_sys14_dc))
 PTDF14_dc = PSY.PTDF(b_ac_14, nodes14);
 
-# System to test UC Formulations
+# System to test UC Forms
 #Park City and Sundance Have non-binding Ramp Limitst at an Hourly Resolution
 # Solitude, Sundance and Brighton have binding time_up constraints.
 # Solitude and Brighton have binding time_dn constraints.

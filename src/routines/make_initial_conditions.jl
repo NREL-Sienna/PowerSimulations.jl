@@ -63,7 +63,8 @@ function output_init(canonical_model::CanonicalModel,
                 ini_conds[ix] = InitialCondition(canonical_model,
                                                 g,
                                                 ref_key,
-                                                PSY.get_activepower(g))
+                                                PSY.get_activepower(g),
+                                                TimeStatusChange)
         end
 
     else
@@ -74,7 +75,8 @@ function output_init(canonical_model::CanonicalModel,
                 push!(ini_conds, InitialCondition(canonical_model,
                                                 g,
                                                 ref_key,
-                                                PSY.get_activepower(g)))
+                                                PSY.get_activepower(g),
+                                                TimeStatusChange))
         end
 
     end

@@ -1,10 +1,10 @@
-abstract type AbstractDCLineForm<:AbstractBranchFormulation end
+abstract type AbstractDCLineFormulation <: AbstractBranchFormulation end
 
-struct HVDCLossless<:AbstractDCLineForm end
+struct HVDCLossless <: AbstractDCLineFormulation end
 
-struct HVDCDispatch<:AbstractDCLineForm end
+struct HVDCDispatch <: AbstractDCLineFormulation end
 
-struct VoltageSourceDC<:AbstractDCLineForm end
+struct VoltageSourceDC <: AbstractDCLineFormulation end
 
 #################################### Branch Variables ##################################################
 
@@ -18,7 +18,7 @@ function flow_variables(canonical_model::CanonicalModel,
 end
 
 function flow_variables(canonical_model::CanonicalModel,
-                        system_formulation::Type{StandardPTDFForm},
+                        system_formulation::Type{StandardPTDF},
                         devices::IS.FlattenIteratorWrapper{B}) where {B<:PSY.DCBranch}
 
     time_steps = model_time_steps(canonical_model)
@@ -59,7 +59,7 @@ function branch_rate_constraint(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.DCBranch,
-                                                                    D<:AbstractDCLineForm,
+                                                                    D<:AbstractDCLineFormulation,
                                                                     S<:PM.DCPlosslessForm}
 
     var_name = Symbol("Fp_$(B)")
@@ -105,7 +105,7 @@ function branch_rate_constraint(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.DCBranch,
-                                                                    D<:AbstractDCLineForm,
+                                                                    D<:AbstractDCLineFormulation,
                                                                     S<:PM.AbstractPowerFormulation}
 
     time_steps = model_time_steps(canonical_model)

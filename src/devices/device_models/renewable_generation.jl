@@ -1,12 +1,12 @@
-abstract type AbstractRenewableFormulation<:AbstractDeviceFormulation end
+abstract type AbstractRenewableFormulation <: AbstractDeviceFormulation end
 
-abstract type AbstractRenewableDispatchForm<:AbstractRenewableFormulation end
+abstract type AbstractRenewableDispatchFormulation <: AbstractRenewableFormulation end
 
-struct RenewableFixed<:AbstractRenewableFormulation end
+struct RenewableFixed <: AbstractRenewableFormulation end
 
-struct RenewableFullDispatch<:AbstractRenewableDispatchForm end
+struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
 
-struct RenewableConstantPowerFactor<:AbstractRenewableDispatchForm end
+struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
 ########################### renewable generation variables ############################################
 
@@ -115,7 +115,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{R},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {R<:PSY.RenewableGen,
-                                                         D<:AbstractRenewableDispatchForm,
+                                                         D<:AbstractRenewableDispatchFormulation,
                                                          S<:PM.AbstractPowerFormulation}
 
     parameters = model_has_parameters(canonical_model)
@@ -163,7 +163,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
                                  forecasts::Vector{PSY.Deterministic{R}},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S}) where {R<:PSY.RenewableGen,
-                                                                     D<:AbstractRenewableDispatchForm,
+                                                                     D<:AbstractRenewableDispatchFormulation,
                                                                      S<:PM.AbstractPowerFormulation}
 
     if model_has_parameters(canonical_model)
@@ -187,7 +187,7 @@ end
 function cost_function(canonical_model::CanonicalModel,
                        devices::IS.FlattenIteratorWrapper{PSY.RenewableDispatch},
                        device_formulation::Type{D},
-                       system_formulation::Type{S}) where {D<:AbstractRenewableDispatchForm,
+                       system_formulation::Type{S}) where {D<:AbstractRenewableDispatchFormulation,
                                                            S<:PM.AbstractPowerFormulation}
 
     add_to_cost(canonical_model,
