@@ -244,7 +244,7 @@ end
 ""
 function powermodels_network!(canonical_model::CanonicalModel,
                               system_formulation::Type{S},
-                              sys::PSY.System) where {S<:PM.AbstractPowerFormulation}
+                              sys::PSY.System) where {S<:PM.AbstracPowerModel}
 
     time_steps = model_time_steps(canonical_model)
     pm_data, PM_map = pass_to_pm(sys, time_steps[end])
@@ -270,7 +270,7 @@ end
 ""
 function powermodels_network!(canonical_model::CanonicalModel,
                               system_formulation::Type{S},
-                              sys::PSY.System) where {S<:PM.AbstractActivePowerFormulation}
+                              sys::PSY.System) where {S<:PM.AbstractActivePowerModel}
 
     time_steps = model_time_steps(canonical_model)
     pm_data, PM_map = pass_to_pm(sys, time_steps[end])
@@ -304,7 +304,7 @@ function PMvarmap(system_formulation::Type{S}) where {S<:PM.DCPlosslessForm}
     return pm_var_map
 end
 
-function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractActivePowerFormulation}
+function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractActivePowerModel}
     pm_var_map = Dict{Type,Dict{Symbol, Union{Symbol,NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta)
@@ -314,7 +314,7 @@ function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractActivePowerF
     return pm_var_map
 end
 
-function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractPowerFormulation}
+function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstracPowerModel}
     pm_var_map = Dict{Type,Dict{Symbol, Union{Symbol,NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta,
@@ -327,7 +327,7 @@ function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractPowerFormula
     return pm_var_map
 end
 
-function add_pm_var_refs!(canonical_model::CanonicalModel, system_formulation::Type{S}, sys::PSY.System) where {S<:PM.AbstractPowerFormulation}
+function add_pm_var_refs!(canonical_model::CanonicalModel, system_formulation::Type{S}, sys::PSY.System) where {S<:PM.AbstracPowerModel}
 
     time_steps = model_time_steps(canonical_model)
     bus_dict = canonical_model.pm_model.ext[:PMmap].bus

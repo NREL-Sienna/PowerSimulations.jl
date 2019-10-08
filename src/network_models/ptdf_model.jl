@@ -54,8 +54,8 @@ to = TimerOutput()
                               Dict{Symbol, JuMPAffineExpressionArray}(:nodal_balance_active => JuMPAffineExpressionArray(undef, 5, 24),
                                                                          :nodal_balance_reactive => JuMPAffineExpressionArray(undef, 5, 24)),
                               nothing);
-@timeit to "build_thermal"    construct_device!(canonical_model, PSY.ThermalGen, ThermalDispatch, PM.StandardACPForm, sys5b);
-@timeit to "build_load"    construct_device!(canonical_model, PSY.PowerLoad, StaticPowerLoad, PM.StandardACPForm, sys5b);
+@timeit to "build_thermal"    construct_device!(canonical_model, PSY.ThermalGen, ThermalDispatch, PM.StandardACPModel, sys5b);
+@timeit to "build_load"    construct_device!(canonical_model, PSY.PowerLoad, StaticPowerLoad, PM.StandardACPModel, sys5b);
 @timeit to "add_flow"      flow_variables(canonical_model, PM.DCPlosslessForm, branches5, 1:24)
 @timeit to "PTDF cons" begin
     @timeit to "allocate_space" canonical_model.constraints["Flow_con1"] = JuMPConstraintArray(undef, [b.name for b in branches5], 1:24)
@@ -96,8 +96,8 @@ to = TimerOutput()
                               Dict{Symbol, JuMPAffineExpressionArray}(:nodal_balance_active => JuMPAffineExpressionArray(undef, 5, 24),
                                                                          :nodal_balance_reactive => JuMPAffineExpressionArray(undef, 5, 24)),
                               nothing);
-@timeit to "build_thermal"    construct_device!(canonical_model, PSY.ThermalGen, ThermalDispatch, PM.StandardACPForm, sys5b);
-@timeit to "build_load"    construct_device!(canonical_model, PSY.PowerLoad, StaticPowerLoad, PM.StandardACPForm, sys5b);
+@timeit to "build_thermal"    construct_device!(canonical_model, PSY.ThermalGen, ThermalDispatch, PM.StandardACPModel, sys5b);
+@timeit to "build_load"    construct_device!(canonical_model, PSY.PowerLoad, StaticPowerLoad, PM.StandardACPModel, sys5b);
 @timeit to "add_flow"      flow_variables(canonical_model, PM.DCPlosslessForm, branches5, 1:24)
 @timeit to "PTDF cons" begin
     @timeit to "allocate_space" canonical_model.constraints["Flow_con2"] = JuMPConstraintArray(undef, [b.name for b in branches5], 1:24)

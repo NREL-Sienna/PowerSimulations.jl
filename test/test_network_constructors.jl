@@ -107,8 +107,8 @@ end
 
 end
 
-@testset  "Network Solve AC-PF PowerModels StandardACPForm" begin
-    network = PM.StandardACPForm
+@testset  "Network Solve AC-PF PowerModels StandardACPModel" begin
+    network = PM.StandardACPModel
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimitFT_Line, :RateLimitTF_Line]
@@ -157,9 +157,9 @@ end
 end
 
 @testset  "Network AC-PF PowerModels non-convex models" begin
-    networks = [#PM.StandardACPForm, Already tested
-                PM.StandardACRForm,
-                PM.StandardACTForm
+    networks = [#PM.StandardACPModel, Already tested
+                PM.StandardACRModel,
+                PM.StandardACTModel
                 ]
     systems = [c_sys5, c_sys14, c_sys14_dc]
 

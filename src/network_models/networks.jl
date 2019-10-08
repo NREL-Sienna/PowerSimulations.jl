@@ -1,4 +1,4 @@
-abstract type CopperPlatePowerModel <: PM.AbstractActivePowerFormulation  end
+abstract type CopperPlatePowerModel <: PM.AbstractActivePowerModel  end
 
 abstract type StandardPTDF <: PM.DCPlosslessForm end
 
@@ -6,9 +6,9 @@ abstract type StandardPTDF <: PM.DCPlosslessForm end
 
 export
     # exact non-convex models
-    ACPPowerModel, StandardACPForm,
-    ACRPowerModel, StandardACRForm,
-    ACTPowerModel, StandardACTForm,
+    ACPPowerModel, StandardACPModel,
+    ACRPowerModel, StandardACRModel,
+    ACTPowerModel, StandardACTModel,
 
     # linear approximations
     DCPPowerModel, DCPlosslessForm,
@@ -35,13 +35,13 @@ export
 ##### Top Level Abstract Types #####
 
 "active power only models"
-abstract type AbstractActivePowerFormulation<:AbstractPowerFormulation end
+abstract type AbstractActivePowerModel<:AbstracPowerModel end
 
 "variants that target conic solvers"
-abstract type AbstractConicPowerFormulation<:AbstractPowerFormulation end
+abstract type AbstractConicPowerFormulation<:AbstracPowerModel end
 
 "for branch flow models"
-abstract type AbstractBFFormulation<:AbstractPowerFormulation end
+abstract type AbstractBFFormulation<:AbstracPowerModel end
 
 "for variants of branch flow models that target QP or NLP solvers"
 abstract type AbstractBFQPFormulation<:AbstractBFFormulation end
@@ -56,10 +56,10 @@ abstract type AbstractBFConicFormulation<:AbstractBFFormulation end
 ##### Exact Non-Convex Models #####
 
 ""
-abstract type AbstractACPFormulation<:AbstractPowerFormulation end
+abstract type AbstractACPModelulation<:AbstracPowerModel end
 
 ""
-abstract type StandardACPForm<:AbstractACPFormulation end
+abstract type StandardACPModel<:AbstractACPModelulation end
 
 """
 AC power flow formulation with polar bus voltage variables.
@@ -88,17 +88,17 @@ History and discussion:
 }
 ```
 """
-const ACPPowerModel = GenericPowerModel{StandardACPForm}
+const ACPPowerModel = GenericPowerModel{StandardACPModel}
 
 ""
-ACPPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, StandardACPForm; kwargs...)
+ACPPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, StandardACPModel; kwargs...)
 
 
 ""
-abstract type AbstractACRFormulation<:AbstractPowerFormulation end
+abstract type AbstractACRModelulation<:AbstracPowerModel end
 
 ""
-abstract type StandardACRForm<:AbstractACRFormulation end
+abstract type StandardACRModel<:AbstractACRModelulation end
 
 """
 AC power flow formulation with rectangular bus voltage variables.
@@ -113,16 +113,16 @@ AC power flow formulation with rectangular bus voltage variables.
 }
 ```
 """
-const ACRPowerModel = GenericPowerModel{StandardACRForm}
+const ACRPowerModel = GenericPowerModel{StandardACRModel}
 
 "default rectangular AC constructor"
-ACRPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, StandardACRForm; kwargs...)
+ACRPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, StandardACRModel; kwargs...)
 
 ""
-abstract type AbstractACTFormulation<:AbstractPowerFormulation end
+abstract type AbstractACTModelulation<:AbstracPowerModel end
 
 ""
-abstract type StandardACTForm<:AbstractACTFormulation end
+abstract type StandardACTModel<:AbstractACTModelulation end
 
 """
 AC power flow formulation (nonconvex) with variables for voltage angle, voltage magnitude squared, and real and imaginary part of voltage crossproducts. A tangens constraint is added to represent meshed networks in an exact manner.
@@ -141,10 +141,10 @@ AC power flow formulation (nonconvex) with variables for voltage angle, voltage 
 }
 ```
 """
-const ACTPowerModel = GenericPowerModel{StandardACTForm}
+const ACTPowerModel = GenericPowerModel{StandardACTModel}
 
 "default AC constructor"
-ACTPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, StandardACTForm; kwargs...)
+ACTPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, StandardACTModel; kwargs...)
 
 
 
@@ -156,7 +156,7 @@ ACTPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, Stan
 
 
 ""
-abstract type AbstractDCPForm<:AbstractActivePowerFormulationulation end
+abstract type AbstractDCPForm<:AbstractActivePowerModelulation end
 
 "active power only formulations where p[(i, j)] = -p[(j, i)]"
 abstract type DCPlosslessForm<:AbstractDCPForm end
@@ -220,7 +220,7 @@ DCPLLPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, St
 
 
 ""
-abstract type AbstractLPACFormulation<:AbstractPowerFormulation end
+abstract type AbstractLPACFormulation<:AbstracPowerModel end
 
 abstract type AbstractLPACCForm<:AbstractLPACFormulation end
 
@@ -265,7 +265,7 @@ LPACCPowerModel(data::Dict{String, Any}; kwargs...) =
 ##### Quadratic Relaxations #####
 
 ""
-abstract type AbstractWRFormulation<:AbstractPowerFormulation end
+abstract type AbstractWRFormulation<:AbstracPowerModel end
 
 ""
 abstract type AbstractWRConicFormulation<:AbstractConicPowerFormulation end
@@ -521,9 +521,9 @@ SparseSDPWRMPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(d
 # type hierarchy can resolve the issue instead.
 #
 
-AbstractWRFormulations = Union{AbstractACTFormulation, AbstractWRFormulation, AbstractWRConicFormulation, AbstractWRMFormulation}
+AbstractWRFormulations = Union{AbstractACTModelulation, AbstractWRFormulation, AbstractWRConicFormulation, AbstractWRMFormulation}
 AbstractWFormulations = Union{AbstractWRFormulations, AbstractBFFormulation}
-AbstractPFormulations = Union{AbstractACPFormulation, AbstractACTFormulation, AbstractDCPForm, AbstractLPACFormulation}
+AbstractPFormulations = Union{AbstractACPModelulation, AbstractACTModelulation, AbstractDCPForm, AbstractLPACFormulation}
 
 "union of all conic form branches"
 AbstractConicFormulations = Union{AbstractConicPowerFormulation, AbstractBFConicFormulation}

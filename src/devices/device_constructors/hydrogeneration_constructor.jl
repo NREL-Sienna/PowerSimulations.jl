@@ -4,7 +4,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         sys::PSY.System;
                                         kwargs...) where {H<:PSY.HydroGen,
                                                           D<:AbstractHydroFormulation,
-                                                          S<:PM.AbstractPowerFormulation}
+                                                          S<:PM.AbstracPowerModel}
 
     forecast = get(kwargs, :forecast, true)
 
@@ -34,7 +34,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {H<:PSY.HydroGen,
-                                                          S<:PM.AbstractPowerFormulation}
+                                                          S<:PM.AbstracPowerModel}
 
     forecast = get(kwargs, :forecast, true)
 
@@ -60,7 +60,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {D<:AbstractHydroFormulation,
-                                                          S<:PM.AbstractPowerFormulation}
+                                                          S<:PM.AbstracPowerModel}
 
     @warn("The Formulation $(D) only applies to Dispatchable Hydro, *
                Consider Changing the Device Formulation to HydroFixed")
@@ -77,7 +77,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         model::DeviceModel{PSY.HydroFix, HydroFixed},
                                         ::Type{S},
                                         sys::PSY.System;
-                                        kwargs...) where {S<:PM.AbstractPowerFormulation}
+                                        kwargs...) where {S<:PM.AbstracPowerModel}
 
     forecast = get(kwargs, :forecast, true)
 

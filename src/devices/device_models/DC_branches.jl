@@ -11,7 +11,7 @@ struct VoltageSourceDC <: AbstractDCLineFormulation end
 function flow_variables(canonical_model::CanonicalModel,
                         system_formulation::Type{S},
                         devices::IS.FlattenIteratorWrapper{B}) where {B<:PSY.DCBranch,
-                                                                        S<:PM.AbstractPowerFormulation}
+                                                                        S<:PM.AbstracPowerModel}
 
     return
 
@@ -81,7 +81,7 @@ function branch_rate_constraint(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{HVDCLossless},
                                 system_formulation::Type{S}) where {B<:PSY.DCBranch,
-                                                                    S<:PM.AbstractPowerFormulation}
+                                                                    S<:PM.AbstracPowerModel}
 
     for dir in ("FT", "TF")
         var_name = Symbol("Fp$(dir)_$(B)")
@@ -106,7 +106,7 @@ function branch_rate_constraint(canonical_model::CanonicalModel,
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.DCBranch,
                                                                     D<:AbstractDCLineFormulation,
-                                                                    S<:PM.AbstractPowerFormulation}
+                                                                    S<:PM.AbstracPowerModel}
 
     time_steps = model_time_steps(canonical_model)
 
