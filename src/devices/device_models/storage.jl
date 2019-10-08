@@ -74,7 +74,7 @@ function active_power_constraints(canonical_model::CanonicalModel,
                                   devices::IS.FlattenIteratorWrapper{St},
                                   ::Type{BookKeeping},
                                   ::Type{S}) where {St<:PSY.Storage,
-                                                                      S<:PM.AbstractPowerFormulation}
+                                                                      S<:PM.AbstracPowerModel}
 
     range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
     range_data_out = [(PSY.get_name(s), PSY.get_outputactivepowerlimits(s)) for s in devices]
@@ -97,7 +97,7 @@ function active_power_constraints(canonical_model::CanonicalModel,
                                   devices::IS.FlattenIteratorWrapper{St},
                                   ::Type{BookKeepingwReservation},
                                   ::Type{S}) where {St<:PSY.Storage,
-                                                                      S<:PM.AbstractPowerFormulation}
+                                                                      S<:PM.AbstracPowerModel}
 
     range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
     range_data_out = [(PSY.get_name(s), PSY.get_outputactivepowerlimits(s)) for s in devices]
@@ -127,7 +127,7 @@ function reactive_power_constraints(canonical_model::CanonicalModel,
                                    ::Type{D},
                                    ::Type{S}) where {St<:PSY.Storage,
                                                                        D<:AbstractStorageFormulation,
-                                                                       S<:PM.AbstractPowerFormulation}
+                                                                       S<:PM.AbstracPowerModel}
 
     range_data = [(PSY.get_name(s), PSY.get_reactivepowerlimits(s)) for s in devices]
 
@@ -159,7 +159,7 @@ function energy_capacity_constraints(canonical_model::CanonicalModel,
                                     ::Type{D},
                                     ::Type{S}) where {St<:PSY.Storage,
                                                                         D<:AbstractStorageFormulation,
-                                                                        S<:PM.AbstractPowerFormulation}
+                                                                        S<:PM.AbstracPowerModel}
 
     range_data = [(PSY.get_name(s), PSY.get_capacity(s)) for s in devices]
 
@@ -194,7 +194,7 @@ function energy_balance_constraint(canonical_model::CanonicalModel,
                                    ::Type{D},
                                    ::Type{S}) where {St<:PSY.Storage,
                                                             D<:AbstractStorageFormulation,
-                                                            S<:PM.AbstractPowerFormulation}
+                                                            S<:PM.AbstracPowerModel}
 
     key = ICKey(DeviceEnergy, St)
 

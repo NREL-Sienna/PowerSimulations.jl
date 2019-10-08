@@ -24,7 +24,7 @@ end
 
 # test PowerSimulations type extentions
 DCAngleModel = (data::Dict{String, Any}; kwargs...) -> PM.GenericPowerModel(data, PM.DCPlosslessForm; kwargs...)
-StandardACModel = (data::Dict{String, Any}; kwargs...) -> PM.GenericPowerModel(data, PM.StandardACPForm; kwargs...)
+StandardACModel = (data::Dict{String, Any}; kwargs...) -> PM.GenericPowerModel(data, PM.StandardACPModel; kwargs...)
 
 @testset "PM with type extensions" begin
     pm = PowerSimulations.build_nip_model(case5_data, DCAngleModel)

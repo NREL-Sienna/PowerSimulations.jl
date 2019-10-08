@@ -3,13 +3,13 @@ abstract type AbstractOperationModel end
 struct DefaultOpModel<:AbstractOperationModel end
 
 mutable struct ModelReference
-    transmission::Type{<:PM.AbstractPowerFormulation}
+    transmission::Type{<:PM.AbstracPowerModel}
     devices::Dict{Symbol, DeviceModel}
     branches::Dict{Symbol, DeviceModel}
     services::Dict{Symbol, ServiceModel}
 end
 
-function ModelReference(::Type{T}) where {T<:PM.AbstractPowerFormulation}
+function ModelReference(::Type{T}) where {T<:PM.AbstracPowerModel}
 
     return  ModelReference(T,
                            Dict{Symbol, DeviceModel}(),
@@ -29,7 +29,7 @@ function OperationModel(::Type{M},
                         sys::PSY.System;
                         optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
                         kwargs...) where {M<:AbstractOperationModel,
-                                          T<:PM.AbstractPowerFormulation}
+                                          T<:PM.AbstracPowerModel}
 
     verbose = get(kwargs, :verbose, true)
     canonical = _build_canonical(model_ref.transmission,
@@ -49,7 +49,7 @@ function OperationModel(::Type{M},
                         ::Type{T},
                         sys::PSY.System;
                         kwargs...) where {M<:AbstractOperationModel,
-                                          T<:PM.AbstractPowerFormulation}
+                                          T<:PM.AbstracPowerModel}
 
     optimizer = get(kwargs, :optimizer, nothing)
 
@@ -61,7 +61,7 @@ end
 
 function OperationModel(::Type{T},
                         sys::PSY.System;
-                        kwargs...) where {T<:PM.AbstractPowerFormulation}
+                        kwargs...) where {T<:PM.AbstracPowerModel}
 
 
     return OperationModel{DefaultOpModel}(T, sys; kwargs...)
@@ -75,7 +75,7 @@ get_services_ref(op_model::OperationModel) = op_model.model_ref.services
 get_system(op_model::OperationModel) = op_model.sys
 
 function set_transmission_ref!(op_model::OperationModel,
-                               transmission::Type{T}; kwargs...) where {T<:PM.AbstractPowerFormulation}
+                               transmission::Type{T}; kwargs...) where {T<:PM.AbstracPowerModel}
     op_model.model_ref.transmission = transmission
     build_op_model!(op_model; kwargs...)
     return

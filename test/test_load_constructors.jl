@@ -11,7 +11,7 @@ end
 
 @testset "StaticPowerLoad" begin
     models = [PSI.StaticPowerLoad, PSI.DispatchablePowerLoad, PSI.InterruptiblePowerLoad]
-    networks = [PM.DCPlosslessForm, PM.StandardACPForm]
+    networks = [PM.DCPlosslessForm, PM.StandardACPModel]
     param_spec = [true, false]
     for m in models, n in networks, p in param_spec
         model = DeviceModel(PSY.PowerLoad, m)
@@ -37,7 +37,7 @@ end
 
 @testset "DispatchablePowerLoad AC- PF" begin
     models = [PSI.DispatchablePowerLoad, ]
-    networks = [PM.StandardACPForm]
+    networks = [PM.StandardACPModel]
     param_spec = [true, false]
     for m in models, n in networks, p in param_spec
         model = DeviceModel(PSY.InterruptibleLoad, m)
@@ -63,7 +63,7 @@ end
 
 @testset "InterruptiblePowerLoad AC- PF" begin
     models = [PSI.InterruptiblePowerLoad]
-    networks = [PM.StandardACPForm]
+    networks = [PM.StandardACPModel]
     param_spec = [true, false]
     for m in models, n in networks, p in param_spec
         model = DeviceModel(PSY.InterruptibleLoad, m)

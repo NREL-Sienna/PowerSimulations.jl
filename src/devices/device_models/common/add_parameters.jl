@@ -44,7 +44,7 @@ end
 function _nodal_expression_param(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{G},
                                 system_formulation::Type{S}) where {G<:PSY.Generator,
-                                                                    S<:PM.AbstractPowerFormulation}
+                                                                    S<:PM.AbstracPowerModel}
 
     time_steps = model_time_steps(canonical_model)
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, length(devices))
@@ -76,7 +76,7 @@ end
 function _nodal_expression_param(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{G},
                                 system_formulation::Type{S}) where {G<:PSY.Generator,
-                                                                    S<:PM.AbstractActivePowerFormulation}
+                                                                    S<:PM.AbstractActivePowerModel}
 
     time_steps = model_time_steps(canonical_model)
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, length(devices))
@@ -102,7 +102,7 @@ end
 function _nodal_expression_param(canonical_model::CanonicalModel,
                                  forecasts::Vector{PSY.Deterministic{G}},
                                  system_formulation::Type{S}) where {G<:PSY.Generator,
-                                                                     S<:PM.AbstractPowerFormulation}
+                                                                     S<:PM.AbstracPowerModel}
 
     time_steps = model_time_steps(canonical_model)
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, length(forecasts))
@@ -135,7 +135,7 @@ end
 function _nodal_expression_param(canonical_model::CanonicalModel,
                                 forecasts::Vector{PSY.Deterministic{G}},
                                 system_formulation::Type{S}) where {G<:PSY.Generator,
-                                                                    S<:PM.AbstractActivePowerFormulation}
+                                                                    S<:PM.AbstractActivePowerModel}
 
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, length(forecasts))
 
@@ -163,7 +163,7 @@ end
 function _nodal_expression_fixed(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{G},
                                 system_formulation::Type{S}) where {G<:PSY.Generator,
-                                                                     S<:PM.AbstractPowerFormulation}
+                                                                     S<:PM.AbstracPowerModel}
 
     time_steps = model_time_steps(canonical_model)
 
@@ -188,7 +188,7 @@ end
 function _nodal_expression_fixed(canonical_model::CanonicalModel,
                                     devices::IS.FlattenIteratorWrapper{G},
                                     system_formulation::Type{S}) where {G<:PSY.Generator,
-                                                                         S<:PM.AbstractActivePowerFormulation}
+                                                                         S<:PM.AbstractActivePowerModel}
 
     time_steps = model_time_steps(canonical_model)
 
@@ -209,7 +209,7 @@ end
 function _nodal_expression_fixed(canonical_model::CanonicalModel,
                                 forecasts::Vector{PSY.Deterministic{G}},
                                 system_formulation::Type{S}) where {G<:PSY.Generator,
-                                                                    S<:PM.AbstractPowerFormulation}
+                                                                    S<:PM.AbstracPowerModel}
 
     time_steps = model_time_steps(canonical_model)
 
@@ -238,7 +238,7 @@ end
 function _nodal_expression_fixed(canonical_model::CanonicalModel,
                                 forecasts::Vector{PSY.Deterministic{G}},
                                 system_formulation::Type{S}) where {G<:PSY.Generator,
-                                                                    S<:PM.AbstractActivePowerFormulation}
+                                                                    S<:PM.AbstractActivePowerModel}
 
     time_steps = model_time_steps(canonical_model)
 

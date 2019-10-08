@@ -4,7 +4,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                        sys::PSY.System;
                                        kwargs...) where {L<:PSY.ControllableLoad,
                                                          D<:AbstractFormulationControllablePowerLoadFormulation,
-                                                         S<:PM.AbstractPowerFormulation}
+                                                         S<:PM.AbstracPowerModel}
 
     forecast = get(kwargs, :forecast, true)
 
@@ -44,7 +44,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                       sys::PSY.System;
                                       kwargs...) where {L<:PSY.ControllableLoad,
                                                         D<:AbstractFormulationControllablePowerLoadFormulation,
-                                                        S<:PM.AbstractActivePowerFormulation}
+                                                        S<:PM.AbstractActivePowerModel}
 
     forecast = get(kwargs, :forecast, true)
 
@@ -79,7 +79,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {L<:PSY.ControllableLoad,
-                                                          S<:PM.AbstractPowerFormulation}
+                                                          S<:PM.AbstracPowerModel}
 
     forecast = get(kwargs, :forecast, true)
 
@@ -120,7 +120,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                       ::Type{S},
                                       sys::PSY.System;
                                       kwargs...) where {L<:PSY.ControllableLoad,
-                                                        S<:PM.AbstractActivePowerFormulation}
+                                                        S<:PM.AbstractActivePowerModel}
 
     forecast = get(kwargs, :forecast, true)
 
@@ -157,7 +157,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {L<:PSY.ElectricLoad,
-                                                          S<:PM.AbstractPowerFormulation}
+                                                          S<:PM.AbstracPowerModel}
 
     forecast = get(kwargs, :forecast, true)
 
@@ -184,7 +184,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         sys::PSY.System;
                                         kwargs...) where {L<:PSY.StaticLoad,
                                                           D<:AbstractFormulationControllablePowerLoadFormulation,
-                                                          S<:PM.AbstractPowerFormulation}
+                                                          S<:PM.AbstracPowerModel}
 
     if D != StaticPowerLoad
         @warn("The Formulation $(D) only applies to FormulationControllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad")

@@ -45,7 +45,7 @@ end
 function _internal_network_constructor(canonical::CanonicalModel,
                                         system_formulation::Type{T},
                                         sys::PSY.System;
-                                        kwargs...) where {T<:PM.AbstractPowerFormulation}
+                                        kwargs...) where {T<:PM.AbstracPowerModel}
 
     incompat_list = [PM.SDPWRMForm,
                      PM.SparseSDPWRMForm,
@@ -65,7 +65,7 @@ function _internal_network_constructor(canonical::CanonicalModel,
 end
 
 function construct_network!(op_model::OperationModel,
-                            system_formulation::Type{S}; kwargs...) where {S<:PM.AbstractPowerFormulation}
+                            system_formulation::Type{S}; kwargs...) where {S<:PM.AbstracPowerModel}
 
     sys = get_system(op_model)
     _internal_network_constructor(op_model.canonical, system_formulation, sys; kwargs... )
