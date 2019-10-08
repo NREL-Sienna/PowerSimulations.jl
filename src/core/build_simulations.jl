@@ -75,8 +75,8 @@ function _build_stages(sim_ref::SimulationRef,
 
     system_to_file = get(kwargs, :system_to_file, true)
     mod_stages = Vector{_Stage}(undef, length(stages))
-    for (k, stage) in stages
-        verbose && @info("Building Stage $(k)")
+    for (key, stage) in stages
+        verbose && @info("Building Stage $(key)")
         canonical = _build_canonical(stage.model.transmission,
                                     stage.model.devices,
                                     stage.model.branches,
@@ -86,11 +86,11 @@ function _build_stages(sim_ref::SimulationRef,
                                     verbose;
                                     parameters = true,
                                     kwargs...)
-        stage_path = joinpath(sim_ref.models,"stage_$(k)_model")
+        stage_path = joinpath(sim_ref.models,"stage_$(key)_model")
         mkpath(stage_path)
         _write_canonical_model(canonical, joinpath(stage_path, "optimization_model.json"))
         system_to_file && IS.to_json(stage.sys, joinpath(stage_path ,"sys_data.json"))
-        mod_stages[k] = _Stage(k,
+        mod_stages[key] = _Stage(key,
                                stage.model,
                                stage.op_model,
                                stage.sys,
@@ -99,8 +99,8 @@ function _build_stages(sim_ref::SimulationRef,
                                stage.execution_count,
                                stage.chronology_ref,
                                stage.cache)
-        _populate_cache!(mod_stages[k])
-        sim_ref.date_ref[k] = PSY.get_forecast_initial_times(stage.sys)[1]
+        _populate_cache!(mod_stages[key])
+        sim_ref.date_ref[key] = PSY.get_forecast_initial_times(stage.sys)[1]
     end
 
     return mod_stages
@@ -179,7 +179,7 @@ function _check_chronology_ref(stages::Dict{Int64, Stage})
     for (stage_number,stage) in stages
         for (k, v) in stage.chronology_ref
             k < 1 && continue
-            _feedforward_rule_check(v, k, stages[k], stage_number, stage)
+            _feedforward_rule_check(v, k, stages[key], stage_number, stage)
         end
     end
 
