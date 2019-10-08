@@ -205,7 +205,7 @@ end
 #############################Interfacing Functions##########################################
 function cache_update!(stage::_Stage)
 
-    for (key, cache) in stage.cache
+    for (_, cache) in stage.cache
         _update_cache!(cache, stage)
     end
 
