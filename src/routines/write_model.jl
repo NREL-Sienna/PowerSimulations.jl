@@ -1,27 +1,51 @@
+struct OptimizerLog
+
+    termination_status::Int64
+    primal_status::Int64
+    dual_status::Int64
+    solve_time::Dates.DateTime
+
+end
+
+
 # taking the outputted files for the variable DataFrame and writing them to a featherfile
-function _write_variable_results(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path::AbstractString)
+function write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path::AbstractString; kwargs...)
 
+    file_type = get(kwargs, :file_type, Feather)
     for (k,v) in vars_results
-         file_path = joinpath(save_path,"$(k).feather")
-         Feather.write(file_path, vars_results[k])
+         file_path = joinpath(save_path,"$(k).$file_type")
+         file_type.write(file_path, vars_results[k])
     end
 
     return
-
 end
 
-function _write_variable_results(vars_results::OperationModel, save_path::AbstractString)
+function write_data(vars_results::OperationModel, save_path::AbstractString; kwargs...)
 
+    file_type = get(kwargs, :file_type, Feather)
     for (k,v) in vars(vars_results.canonical)
-         file_path = joinpath(save_path,"$(k).feather")
-         Feather.write(file_path, _result_dataframe_vars(v))
+         file_path = joinpath(save_path,"$(k).$file_type")
+         file_type.write(file_path, _result_dataframe_vars(v))
     end
 
     return
-
 end
 
-function _write_optimizer_log(optimizer_log::Dict{Symbol, Any}, save_path::AbstractString)
+function write_data(data::DataFrames.DataFrame, save_path::AbstractString, file_name::String; kwargs...)
+
+    file_type = get(kwargs, :file_type, Feather)
+    file_path = joinpath(save_path,"$file_name.$file_type")
+    file_type.write(file_path, data)
+
+    return
+end
+
+function serialize_opt(optimizer_log::Dict)
+
+    JSON.json(optimizer_log::Dict; dicttype=Dict, inttype=Int64)
+    return optimizer_log
+end
+function _write_optimizer_log(optimizer_log::OptimizerLog, save_path::AbstractString)
 
     optimizer_log[:termination_status] = Int(optimizer_log[:termination_status])
     optimizer_log[:primal_status] = Int(optimizer_log[:primal_status])
@@ -36,22 +60,12 @@ function _write_optimizer_log(optimizer_log::Dict{Symbol, Any}, save_path::Abstr
 
 end
 
-# taking the outputted files for the time_Series DataFrame and writing them to a featherfile
-function _write_time_stamps(time_stamp::DataFrames.DataFrame, save_path::AbstractString)
-
-    df = DataFrames.DataFrame(time_stamp)
-    file_path = joinpath(save_path,"time_stamp.feather")
-    Feather.write(file_path, df)
-
-    return
-
-end
 
 # These functions are writing directly to the feather file and skipping printing to memory.
 function _export_model_result(op_m::OperationModel, start_time::Dates.DateTime, save_path::String)
 
-    _write_variable_results(op_m, save_path)
-    _write_time_stamps(get_time_stamp(op_m, start_time), save_path)
+    write_data(op_m, save_path)
+    write_data(get_time_stamp(op_m, start_time), save_path, "time_stamp")
 
     return
 
@@ -89,9 +103,9 @@ function write_model_results(results::OperationModelResults, save_path::String)
     _new_folder_path = replace_chars("$save_path/$(round(Dates.now(),Dates.Minute))", ":", "-")
     new_folder = mkdir(_new_folder_path)
     folder_path = new_folder
-    _write_variable_results(results.variables, folder_path)
+    write_data(results.variables, folder_path)
     _write_optimizer_log(results.optimizer_log, folder_path)
-    _write_time_stamps(results.time_stamp, folder_path)
+    write_data(results.time_stamp, folder_path, "time_stamp")
     println("Files written to $folder_path folder.")
 
     return
