@@ -3,7 +3,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {St<:PSY.Storage,
-                                                          D<:AbstractStorageForm,
+                                                          D<:AbstractStorageFormulation,
                                                           S<:PM.AbstractPowerFormulation}
 
 
@@ -47,7 +47,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {St<:PSY.Storage,
-                                                          D<:AbstractStorageForm,
+                                                          D<:AbstractStorageFormulation,
                                                           S<:PM.AbstractActivePowerFormulation}
 
     devices = PSY.get_components(St, sys)

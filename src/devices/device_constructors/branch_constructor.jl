@@ -4,21 +4,21 @@ _internal_device_constructor!(canonical_model::CanonicalModel,
                               ::Type{CopperPlatePowerModel},
                               sys::PSY.System;
                                kwargs...) where {B<:PSY.DCBranch,
-                                                 Br<:AbstractBranchForm} = nothing
+                                                 Br<:AbstractBranchFormulation} = nothing
 
 _internal_device_constructor!(canonical_model::CanonicalModel,
                               model::DeviceModel{B, Br},
                               ::Type{CopperPlatePowerModel},
                               sys::PSY.System;
                               kwargs...) where {B<:PSY.ACBranch,
-                                                Br<:AbstractBranchForm} = nothing
+                                                Br<:AbstractBranchFormulation} = nothing
 
 function _internal_device_constructor!(canonical_model::CanonicalModel,
                            model::DeviceModel{B, Br},
                            ::Type{S},
                            sys::PSY.System;
                            kwargs...) where {B<:PSY.Branch,
-                                             Br<:AbstractBranchForm,
+                                             Br<:AbstractBranchFormulation,
                                              S<:PM.AbstractPowerFormulation}
 
     devices = PSY.get_components(B, sys)
@@ -79,7 +79,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                            model::DeviceModel{B, Br},
                            ::Type{S},
                            sys::PSY.System;
-                           kwargs...) where {Br<:AbstractBranchForm,
+                           kwargs...) where {Br<:AbstractBranchFormulation,
                                              B<:PSY.DCBranch,
                                              S<:PM.AbstractPowerFormulation}
 

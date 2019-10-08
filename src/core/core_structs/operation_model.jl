@@ -102,7 +102,7 @@ end
 function set_device_model!(op_model::OperationModel,
                            name::Symbol,
                            device::DeviceModel{D, B}; kwargs...) where {D<:PSY.Injection,
-                                                                        B<:AbstractDeviceForm}
+                                                                        B<:AbstractDeviceFormulation}
 
     if haskey(op_model.model_ref.devices, name)
         op_model.model_ref.devices[name] = device
@@ -118,7 +118,7 @@ end
 function set_branch_model!(op_model::OperationModel,
                            name::Symbol,
                            branch::DeviceModel{D, B}) where {D<:PSY.Branch,
-                                                             B<:AbstractDeviceForm}
+                                                             B<:AbstractDeviceFormulation}
 
     if haskey(op_model.model_ref.devices, name)
         op_model.model_ref.branches[name] = branch

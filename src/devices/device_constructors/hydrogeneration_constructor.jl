@@ -3,7 +3,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {H<:PSY.HydroGen,
-                                                          D<:AbstractHydroForm,
+                                                          D<:AbstractHydroFormulation,
                                                           S<:PM.AbstractPowerFormulation}
 
     forecast = get(kwargs, :forecast, true)
@@ -14,7 +14,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
         return
     end
 
-    #error("Currently only HydroFixed Form is Enabled")
+    #error("Currently only HydroFixed Formulation is Enabled")
     #=
     if forecast
         first_step = PSY.get_forecasts_initial_time(sys)
@@ -59,11 +59,11 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         model::DeviceModel{PSY.HydroFix, D},
                                         ::Type{S},
                                         sys::PSY.System;
-                                        kwargs...) where {D<:AbstractHydroForm,
+                                        kwargs...) where {D<:AbstractHydroFormulation,
                                                           S<:PM.AbstractPowerFormulation}
 
-    @warn("The Form $(D) only applies to Dispatchable Hydro, *
-               Consider Changing the Device Form to HydroFixed")
+    @warn("The Formulation $(D) only applies to Dispatchable Hydro, *
+               Consider Changing the Device Formulation to HydroFixed")
 
     _internal_device_constructor!(canonical_model,
                                   DeviceModel(PSY.HydroFix, HydroFixed),

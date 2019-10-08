@@ -66,7 +66,7 @@ end
 
 @testset "Operation Model Constructors with Parameters" begin
     networks = [PSI.CopperPlatePowerModel,
-                PSI.StandardPTDFForm,
+                PSI.StandardPTDF,
                 PM.DCPlosslessForm,
                 PM.NFAForm,
                 PM.StandardACPForm,

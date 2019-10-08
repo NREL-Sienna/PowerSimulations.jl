@@ -1,12 +1,12 @@
-abstract type AbstractLoadForm <: AbstractDeviceForm end
+abstract type AbstractLoadFormulation <: AbstractDeviceFormulation end
 
-abstract type AbstractFormControllablePowerLoadForm <: AbstractLoadForm end
+abstract type AbstractFormulationControllablePowerLoadFormulation <: AbstractLoadFormulation end
 
-struct StaticPowerLoad <: AbstractLoadForm end
+struct StaticPowerLoad <: AbstractLoadFormulation end
 
-struct InterruptiblePowerLoad <: AbstractFormControllablePowerLoadForm end
+struct InterruptiblePowerLoad <: AbstractFormulationControllablePowerLoadFormulation end
 
-struct DispatchablePowerLoad <: AbstractFormControllablePowerLoadForm end
+struct DispatchablePowerLoad <: AbstractFormulationControllablePowerLoadFormulation end
 
 ########################### dispatchable load variables ############################################
 
@@ -59,7 +59,7 @@ function reactivepower_constraints(canonical_model::CanonicalModel,
                                    devices::IS.FlattenIteratorWrapper{L},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
-                                                                       D<:AbstractFormControllablePowerLoadForm,
+                                                                       D<:AbstractFormulationControllablePowerLoadFormulation,
                                                                        S<:PM.AbstractPowerFormulation}
     time_steps = model_time_steps(canonical_model)
     key = Symbol("reactive_$(L)")
@@ -450,7 +450,7 @@ function _nodal_expression_fixed(canonical_model::CanonicalModel,
 
 end
 
-##################################### FormControllable Load Cost ######################################
+##################################### FormulationControllable Load Cost ######################################
 
 function cost_function(canonical_model::CanonicalModel,
                        devices::IS.FlattenIteratorWrapper{L},

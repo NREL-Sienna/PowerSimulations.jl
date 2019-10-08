@@ -4,7 +4,7 @@
     op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5)
     @test_logs (:warn, warn_message) construct_device!(op_model, :Load, model);
     model = DeviceModel(PSY.PowerLoad, PSI.DispatchablePowerLoad)
-    warn_message = "The Form DispatchablePowerLoad only applies to FormControllable Loads, \n Consider Changing the Device Form to StaticPowerLoad"
+    warn_message = "The Formulation DispatchablePowerLoad only applies to FormulationControllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad"
     op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5)
     @test_logs (:warn, warn_message) construct_device!(op_model, :Load, model);
 end

@@ -1,7 +1,7 @@
-abstract type AbstractServiceForm end
+abstract type AbstractServiceFormulation end
 
 mutable struct ServiceModel{D<:PSY.Service,
-                            B<:AbstractServiceForm}
+                            B<:AbstractServiceFormulation}
     service::Type{D}
     formulation::Type{B}
 end

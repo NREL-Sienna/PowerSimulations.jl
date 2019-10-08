@@ -1,6 +1,6 @@
 abstract type CopperPlatePowerModel <: PM.AbstractActivePowerFormulation  end
 
-abstract type StandardPTDFForm <: PM.DCPlosslessForm end
+abstract type StandardPTDF <: PM.DCPlosslessForm end
 
 #= This code is from PowerModel's network definitions. Added here just for reference.
 
@@ -38,16 +38,16 @@ export
 abstract type AbstractActivePowerFormulation<:AbstractPowerFormulation end
 
 "variants that target conic solvers"
-abstract type AbstractConicPowerForm<:AbstractPowerFormulation end
+abstract type AbstractConicPowerFormulation<:AbstractPowerFormulation end
 
 "for branch flow models"
-abstract type AbstractBFForm<:AbstractPowerFormulation end
+abstract type AbstractBFFormulation<:AbstractPowerFormulation end
 
 "for variants of branch flow models that target QP or NLP solvers"
-abstract type AbstractBFQPForm<:AbstractBFForm end
+abstract type AbstractBFQPFormulation<:AbstractBFFormulation end
 
 "for variants of branch flow models that target conic solvers"
-abstract type AbstractBFConicForm<:AbstractBFForm end
+abstract type AbstractBFConicFormulation<:AbstractBFFormulation end
 
 
 
@@ -56,10 +56,10 @@ abstract type AbstractBFConicForm<:AbstractBFForm end
 ##### Exact Non-Convex Models #####
 
 ""
-abstract type AbstractACPForm<:AbstractPowerFormulation end
+abstract type AbstractACPFormulation<:AbstractPowerFormulation end
 
 ""
-abstract type StandardACPForm<:AbstractACPForm end
+abstract type StandardACPForm<:AbstractACPFormulation end
 
 """
 AC power flow formulation with polar bus voltage variables.
@@ -95,10 +95,10 @@ ACPPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, Stan
 
 
 ""
-abstract type AbstractACRForm<:AbstractPowerFormulation end
+abstract type AbstractACRFormulation<:AbstractPowerFormulation end
 
 ""
-abstract type StandardACRForm<:AbstractACRForm end
+abstract type StandardACRForm<:AbstractACRFormulation end
 
 """
 AC power flow formulation with rectangular bus voltage variables.
@@ -119,17 +119,17 @@ const ACRPowerModel = GenericPowerModel{StandardACRForm}
 ACRPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, StandardACRForm; kwargs...)
 
 ""
-abstract type AbstractACTForm<:AbstractPowerFormulation end
+abstract type AbstractACTFormulation<:AbstractPowerFormulation end
 
 ""
-abstract type StandardACTForm<:AbstractACTForm end
+abstract type StandardACTForm<:AbstractACTFormulation end
 
 """
 AC power flow formulation (nonconvex) with variables for voltage angle, voltage magnitude squared, and real and imaginary part of voltage crossproducts. A tangens constraint is added to represent meshed networks in an exact manner.
 ```
 @ARTICLE{4349090,
   author={R. A. Jabr},
-  title={A Conic Quadratic Format for the Load Flow Equations of Meshed Networks},
+  title={A Conic Quadratic Formulationat for the Load Flow Equations of Meshed Networks},
   journal={IEEE Transactions on Power Systems},
   year={2007},
   month={Nov},
@@ -206,10 +206,10 @@ NFAPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, NFAF
 
 
 ""
-abstract type AbstractDCPLLForm<:AbstractDCPForm end
+abstract type AbstractDCPLLFormulation<:AbstractDCPForm end
 
 ""
-abstract type StandardDCPLLForm<:AbstractDCPLLForm end
+abstract type StandardDCPLLForm<:AbstractDCPLLFormulation end
 
 ""
 const DCPLLPowerModel = GenericPowerModel{StandardDCPLLForm}
@@ -220,9 +220,9 @@ DCPLLPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, St
 
 
 ""
-abstract type AbstractLPACForm<:AbstractPowerFormulation end
+abstract type AbstractLPACFormulation<:AbstractPowerFormulation end
 
-abstract type AbstractLPACCForm<:AbstractLPACForm end
+abstract type AbstractLPACCForm<:AbstractLPACFormulation end
 
 """
 The LPAC Cold-Start AC Power Flow Approximation.
@@ -265,16 +265,16 @@ LPACCPowerModel(data::Dict{String, Any}; kwargs...) =
 ##### Quadratic Relaxations #####
 
 ""
-abstract type AbstractWRForm<:AbstractPowerFormulation end
+abstract type AbstractWRFormulation<:AbstractPowerFormulation end
 
 ""
-abstract type AbstractWRConicForm<:AbstractConicPowerForm end
+abstract type AbstractWRConicFormulation<:AbstractConicPowerFormulation end
 
 ""
-abstract type SOCWRConicForm<:AbstractWRConicForm end
+abstract type SOCWRConicForm<:AbstractWRConicFormulation end
 
 ""
-abstract type SOCWRForm<:AbstractWRForm end
+abstract type SOCWRForm<:AbstractWRFormulation end
 
 """
 Second-order cone relaxation of bus injection model of AC OPF.
@@ -311,7 +311,7 @@ SOCWRConicPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(dat
 
 
 ""
-abstract type QCWRForm<:AbstractWRForm end
+abstract type QCWRForm<:AbstractWRFormulation end
 
 """
 "Quadratic-Convex" relaxation of AC OPF
@@ -367,7 +367,7 @@ QCWRTriPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, 
 
 
 ""
-abstract type SOCBFForm<:AbstractBFQPForm end
+abstract type SOCBFForm<:AbstractBFQPFormulation end
 
 """
 Second-order cone relaxation of branch flow model
@@ -403,7 +403,7 @@ SOCBFPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(data, SO
 
 
 ""
-abstract type SOCBFConicForm<:AbstractBFConicForm end
+abstract type SOCBFConicForm<:AbstractBFConicFormulation end
 
 ""
 const SOCBFConicPowerModel = GenericPowerModel{SOCBFConicForm}
@@ -419,11 +419,11 @@ SOCBFConicPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(dat
 ###### SDP Relaxations ######
 
 ""
-abstract type AbstractWRMForm<:AbstractConicPowerForm end
+abstract type AbstractWRMFormulation<:AbstractConicPowerFormulation end
 
 
 ""
-abstract type SDPWRMForm<:AbstractWRMForm end
+abstract type SDPWRMForm<:AbstractWRMFormulation end
 
 """
 Semi-definite relaxation of AC OPF
@@ -521,11 +521,11 @@ SparseSDPWRMPowerModel(data::Dict{String, Any}; kwargs...) = GenericPowerModel(d
 # type hierarchy can resolve the issue instead.
 #
 
-AbstractWRForms = Union{AbstractACTForm, AbstractWRForm, AbstractWRConicForm, AbstractWRMForm}
-AbstractWForms = Union{AbstractWRForms, AbstractBFForm}
-AbstractPForms = Union{AbstractACPForm, AbstractACTForm, AbstractDCPForm, AbstractLPACForm}
+AbstractWRFormulations = Union{AbstractACTFormulation, AbstractWRFormulation, AbstractWRConicFormulation, AbstractWRMFormulation}
+AbstractWFormulations = Union{AbstractWRFormulations, AbstractBFFormulation}
+AbstractPFormulations = Union{AbstractACPFormulation, AbstractACTFormulation, AbstractDCPForm, AbstractLPACFormulation}
 
 "union of all conic form branches"
-AbstractConicForms = Union{AbstractConicPowerForm, AbstractBFConicForm}
+AbstractConicFormulations = Union{AbstractConicPowerFormulation, AbstractBFConicFormulation}
 
 =#

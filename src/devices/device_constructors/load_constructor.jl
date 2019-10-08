@@ -3,7 +3,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                        ::Type{S},
                                        sys::PSY.System;
                                        kwargs...) where {L<:PSY.ControllableLoad,
-                                                         D<:AbstractFormControllablePowerLoadForm,
+                                                         D<:AbstractFormulationControllablePowerLoadFormulation,
                                                          S<:PM.AbstractPowerFormulation}
 
     forecast = get(kwargs, :forecast, true)
@@ -43,7 +43,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                       ::Type{S},
                                       sys::PSY.System;
                                       kwargs...) where {L<:PSY.ControllableLoad,
-                                                        D<:AbstractFormControllablePowerLoadForm,
+                                                        D<:AbstractFormulationControllablePowerLoadFormulation,
                                                         S<:PM.AbstractActivePowerFormulation}
 
     forecast = get(kwargs, :forecast, true)
@@ -183,11 +183,11 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {L<:PSY.StaticLoad,
-                                                          D<:AbstractFormControllablePowerLoadForm,
+                                                          D<:AbstractFormulationControllablePowerLoadFormulation,
                                                           S<:PM.AbstractPowerFormulation}
 
     if D != StaticPowerLoad
-        @warn("The Form $(D) only applies to FormControllable Loads, \n Consider Changing the Device Form to StaticPowerLoad")
+        @warn("The Formulation $(D) only applies to FormulationControllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad")
     end
 
     _internal_device_constructor!(canonical_model,

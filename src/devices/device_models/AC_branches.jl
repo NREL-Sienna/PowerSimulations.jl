@@ -1,25 +1,25 @@
 #Generic Branch Models
-abstract type AbstractBranchForm <: AbstractDeviceForm end
+abstract type AbstractBranchFormulation <: AbstractDeviceFormulation end
 
 #Abstract Line Models
 
-abstract type AbstractLineForm <: AbstractBranchForm end
+abstract type AbstractLineFormulation <: AbstractBranchFormulation end
 
-struct StaticLine <: AbstractLineForm end
-struct StaticLineUnbounded <: AbstractLineForm end
+struct StaticLine <: AbstractLineFormulation end
+struct StaticLineUnbounded <: AbstractLineFormulation end
 
-struct FlowMonitoredLine <: AbstractLineForm end
+struct FlowMonitoredLine <: AbstractLineFormulation end
 
 #Abstract Transformer Models
 
-abstract type AbstractTransformerForm <: AbstractBranchForm end
+abstract type AbstractTransformerFormulation <: AbstractBranchFormulation end
 
-struct StaticTransformer <: AbstractTransformerForm end
-struct StaticTransformerUnbounded <: AbstractTransformerForm end
+struct StaticTransformer <: AbstractTransformerFormulation end
+struct StaticTransformerUnbounded <: AbstractTransformerFormulation end
 
 # Not implemented yet
-struct TapControl <: AbstractTransformerForm end
-struct PhaseControl <: AbstractTransformerForm end
+struct TapControl <: AbstractTransformerFormulation end
+struct PhaseControl <: AbstractTransformerFormulation end
 
 #################################### Branch Variables ##################################################
 # Because of the way we integrate with PowerModels, most of the time PowerSimulations will create variables
@@ -35,7 +35,7 @@ end
 function flow_variables(canonical_model::CanonicalModel,
                         system_formulation::Type{S},
                         devices::IS.FlattenIteratorWrapper{B}) where {B<:PSY.ACBranch,
-                                                             S<:StandardPTDFForm}
+                                                             S<:StandardPTDF}
 
     var_name = Symbol("Fp_$(B)")
 
@@ -57,7 +57,7 @@ function branch_rate_bounds(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.ACBranch,
-                                                                    D<:AbstractBranchForm,
+                                                                    D<:AbstractBranchFormulation,
                                                                     S<:PM.DCPlosslessForm}
 
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
@@ -74,7 +74,7 @@ function branch_rate_bounds(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.ACBranch,
-                                                                    D<:AbstractBranchForm,
+                                                                    D<:AbstractBranchFormulation,
                                                                     S<:PM.AbstractPowerFormulation}
 
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
@@ -98,7 +98,7 @@ function branch_rate_constraint(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.ACBranch,
-                                                                    D<:AbstractBranchForm,
+                                                                    D<:AbstractBranchFormulation,
                                                                     S<:PM.DCPlosslessForm}
 
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
@@ -116,7 +116,7 @@ function branch_rate_constraint(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.ACBranch,
-                                                                    D<:AbstractBranchForm,
+                                                                    D<:AbstractBranchFormulation,
                                                                     S<:PM.AbstractActivePowerFormulation}
 
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
@@ -140,7 +140,7 @@ function branch_rate_constraint(canonical_model::CanonicalModel,
     devices::IS.FlattenIteratorWrapper{B},
     device_formulation::Type{D},
     system_formulation::Type{S}) where {B<:PSY.ACBranch,
-                                        D<:AbstractBranchForm,
+                                        D<:AbstractBranchFormulation,
                                         S<:PM.AbstractPowerFormulation}
 
     range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
@@ -164,7 +164,7 @@ end
 function branch_flow_constraint(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
                                 device_formulation::Type{FlowMonitoredLine},
-                                system_formulation::Union{Type{PM.DCPlosslessForm}, Type{StandardPTDFForm}})
+                                system_formulation::Union{Type{PM.DCPlosslessForm}, Type{StandardPTDF}})
 
 
     flow_range_data = [(PSY.get_name(h), PSY.get_flowlimits(h)) for h in devices]

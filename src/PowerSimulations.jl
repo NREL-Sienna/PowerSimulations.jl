@@ -11,7 +11,7 @@ export ModelReference
 export InitialCondition
 
 #Network Relevant Exports
-export StandardPTDFForm
+export StandardPTDF
 export CopperPlatePowerModel
 
 ######## Device Models ########
@@ -28,16 +28,16 @@ export HVDCDispatch
 export StaticPowerLoad
 export InterruptiblePowerLoad
 export DispatchablePowerLoad
-######## Renewable Forms ########
+######## Renewable Formulations ########
 export RenewableFixed
 export RenewableFullDispatch
 export RenewableConstantPowerFactor
-######## Hydro Forms ########
+######## Hydro Formulations ########
 export HydroFixed
-######## Renewable Forms ########
+######## Renewable Formulations ########
 export BookKeeping
 export BookKeepingwReservation
-######## Thermal Forms ########
+######## Thermal Formulations ########
 export ThermalStandardUnitCommitment
 export ThermalBasicUnitCommitment
 export ThermalDispatch

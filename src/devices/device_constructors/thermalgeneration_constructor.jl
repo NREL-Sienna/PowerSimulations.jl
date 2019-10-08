@@ -6,7 +6,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                        ::Type{S},
                                        sys::PSY.System;
                                        kwargs...) where {T<:PSY.ThermalGen,
-                                                         D<:AbstractThermalForm,
+                                                         D<:AbstractThermalFormulation,
                                                          S<:PM.AbstractPowerFormulation}
 
     devices = PSY.get_components(T, sys)
@@ -55,7 +55,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                        ::Type{S},
                                        sys::PSY.System;
                                        kwargs...) where {T<:PSY.ThermalGen,
-                                                         D<:AbstractThermalForm,
+                                                         D<:AbstractThermalFormulation,
                                                          S<:PM.AbstractActivePowerFormulation}
 
     devices = PSY.get_components(T, sys)
@@ -264,7 +264,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                        ::Type{S},
                                        sys::PSY.System;
                                        kwargs...) where {T<: PSY.ThermalGen,
-                                                         D<:AbstractThermalDispatchForm,
+                                                         D<:AbstractThermalDispatchFormulation,
                                                          S<:PM.AbstractPowerFormulation}
 
     devices = PSY.get_components(T, sys)
@@ -301,7 +301,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                        ::Type{S},
                                        sys::PSY.System;
                                        kwargs...) where {T<: PSY.ThermalGen,
-                                                         D<:AbstractThermalDispatchForm,
+                                                         D<:AbstractThermalDispatchFormulation,
                                                          S<:PM.AbstractActivePowerFormulation}
 
     devices = PSY.get_components(T, sys)

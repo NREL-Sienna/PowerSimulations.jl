@@ -1,9 +1,9 @@
-abstract type AbstractServiceForm end
+abstract type AbstractServiceFormulation end
 
-abstract type AbstractReservesForm<:AbstractServiceForm end
+abstract type AbstractReservesFormulation<:AbstractServiceFormulation end
 
-abstract type AbstractRegulationReserveForm<:AbstractReservesForm end
+abstract type AbstractRegulationReserveFormulation<:AbstractReservesFormulation end
 
-struct RampLimitedReserve<:AbstractReservesForm end
+struct RampLimitedReserve<:AbstractReservesFormulation end
 
-struct LoadProportionalReserve<:AbstractReservesForm end
+struct LoadProportionalReserve<:AbstractReservesFormulation end

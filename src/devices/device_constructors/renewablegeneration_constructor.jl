@@ -3,7 +3,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {R<:PSY.RenewableGen,
-                                                          D<:AbstractRenewableDispatchForm,
+                                                          D<:AbstractRenewableDispatchFormulation,
                                                           S<:PM.AbstractPowerFormulation}
 
 
@@ -44,7 +44,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {R<:PSY.RenewableGen,
-                                                          D<:AbstractRenewableDispatchForm,
+                                                          D<:AbstractRenewableDispatchFormulation,
                                                           S<:PM.AbstractActivePowerFormulation}
 
     forecast = get(kwargs, :forecast, true)
@@ -105,10 +105,10 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                        model::DeviceModel{PSY.RenewableFix, D},
                                        system_formulation::Type{S},
                                        sys::PSY.System;
-                                       kwargs...) where {D<:AbstractRenewableDispatchForm,
+                                       kwargs...) where {D<:AbstractRenewableDispatchFormulation,
                                                           S<:PM.AbstractPowerFormulation}
 
-    @warn("The Form $(D) only applies to FormControllable Renewable Resources, \n Consider Changing the Device Form to RenewableFixed")
+    @warn("The Formulation $(D) only applies to FormulationControllable Renewable Resources, \n Consider Changing the Device Formulation to RenewableFixed")
 
     _internal_device_constructor!(canonical_model,
                                   DeviceModel(PSY.RenewableFix,RenewableFixed),
