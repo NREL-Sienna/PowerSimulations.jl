@@ -19,7 +19,6 @@ function parameter_update!(param_reference::UpdateRef{T},
 end
 
 # This makes the choice in which variable to get from the results.
-
 function _get_stage_variable(chron::Type{RecedingHorizon},
                            from_stage::_Stage,
                            device_name::String,
@@ -71,7 +70,6 @@ function _update_cache!(c::TimeStatusChange, stage::_Stage)
 end
 
 #########################FeedForward Variables Updating#####################################
-
 function feedforward_update(synch::Chron,
                             param_reference::UpdateRef{JuMP.VariableRef},
                             param_array::JuMPParamArray,
@@ -93,7 +91,6 @@ function feedforward_update(synch::Chron,
 end
 
 #########################Initial Condition Updating#########################################
-
 # TODO: Consider when more than one UC model is used for the stages that the counts need
 # to be scaled.
 function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationOFF, PSD},
@@ -206,7 +203,6 @@ function _initial_condition_update!(initial_condition_key::ICKey,
 end
 
 #############################Interfacing Functions##########################################
-
 function cache_update!(stage::_Stage)
 
 
