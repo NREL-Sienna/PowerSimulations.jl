@@ -1,20 +1,22 @@
-struct OptimizerLog
-
-    termination_status::Enum
-    primal_status::Enum
-    dual_status::Enum
-    solve_time::Float64
-
-end
-
 
 # taking the outputted files for the variable DataFrame and writing them to a featherfile
 function write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path::AbstractString; kwargs...)
 
     file_type = get(kwargs, :file_type, Feather)
-    for (k,v) in vars_results
-         file_path = joinpath(save_path,"$(k).$file_type")
-         file_type.write(file_path, vars_results[k])
+    if file_type == Feather
+        for (k,v) in vars_results
+            file_path = joinpath(save_path,"$(k).feather")
+            file_type.write(file_path, vars_results[k])
+        end
+    else
+        try
+            for (k,v) in vars_results
+                file_path = joinpath(save_path,"$(k).$file_type")
+                file_type.write(file_path, vars_results[k])
+            end
+        catch
+            error("unsupported file type: $file_type")
+        end
     end
 
     return
@@ -24,10 +26,21 @@ end
 function write_data(vars_results::OperationModel, save_path::AbstractString; kwargs...)
 
     file_type = get(kwargs, :file_type, Feather)
-    for (k,v) in vars(vars_results.canonical)
-         file_path = joinpath(save_path,"$(k).$file_type")
-         file_type.write(file_path, _result_dataframe_vars(v))
-
+  
+    if file_type == Feather
+        for (k,v) in vars(vars_results.canonical)
+            file_path = joinpath(save_path,"$(k).feather")
+            file_type.write(file_path, _result_dataframe_vars(v))
+        end
+    else
+        try
+            for (k,v) in vars(vars_results.canonical)
+                file_path = joinpath(save_path,"$(k).$file_type")
+                file_type.write(file_path, _result_dataframe_vars(v))
+            end
+        catch
+            error("unsupported file type: $file_type")
+        end
     end
 
     return
@@ -35,27 +48,35 @@ end
 
 function write_data(data::DataFrames.DataFrame, save_path::AbstractString, file_name::String; kwargs...)
 
+    if isfile(save_path)
+        save_path = dirname(save_path)
+    end
     file_type = get(kwargs, :file_type, Feather)
-    file_path = joinpath(save_path,"$file_name.$file_type")
-    file_type.write(file_path, data)
+    if file_type == Feather
+        file_path = joinpath(save_path,"$file_name.feather")
+        file_type.write(file_path, data)
+    else
+        try
+            file_path = joinpath(save_path,"$file_name.$file_type")
+            file_type.write(file_path, data)
+        catch
+            error("unsupported file type: $file_type")
+        end
+    end
 
     return
 end
 
-function serialize_opt(optimizer_log::OptimizerLog)
-
-    return JSON.json(Int(optimizer_log))
-end
 
 function _write_optimizer_log(optimizer_log::Dict, save_path::AbstractString)
 
-    OptimizerLog = OptimizerLog(optimizer_log[:termination_status], optimizer_log[:primal_status],
-                               optimizer_log[:dual_status], optimizer_log[:solve_time])
-   
-    optimizer_log = DataFrames.DataFrame(serialize_opt(OptimizerLog))
+    optimizer_log[:dual_status] = Int(optimizer_log[:dual_status])
+    optimizer_log[:termination_status] = Int(optimizer_log[:termination_status])
+    optimizer_log[:primal_status] = Int(optimizer_log[:primal_status])
+    optimizer_log = DataFrames.DataFrame(optimizer_log)
     file_path = joinpath(save_path,"optimizer_log.feather")
     Feather.write(file_path, optimizer_log)
-    println("hello")
+   
     return
 
 end
