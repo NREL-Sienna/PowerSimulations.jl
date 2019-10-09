@@ -3,20 +3,13 @@
 function write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path::AbstractString; kwargs...)
 
     file_type = get(kwargs, :file_type, Feather)
-    if file_type == Feather
+    if file_type == Feather || file_type == CSV
         for (k,v) in vars_results
-            file_path = joinpath(save_path,"$(k).feather")
+            file_path = joinpath(save_path,"$(k).$(lowercase("$file_type"))")
             file_type.write(file_path, vars_results[k])
         end
     else
-        try
-            for (k,v) in vars_results
-                file_path = joinpath(save_path,"$(k).$file_type")
-                file_type.write(file_path, vars_results[k])
-            end
-        catch
-            error("unsupported file type: $file_type")
-        end
+        error("unsupported file type: $file_type")
     end
 
     return
@@ -27,20 +20,13 @@ function write_data(vars_results::OperationModel, save_path::AbstractString; kwa
 
     file_type = get(kwargs, :file_type, Feather)
   
-    if file_type == Feather
+    if file_type == Feather || file_type == CSV
         for (k,v) in vars(vars_results.canonical)
-            file_path = joinpath(save_path,"$(k).feather")
+            file_path = joinpath(save_path,"$(k).$(lowercase("$file_type"))")
             file_type.write(file_path, _result_dataframe_vars(v))
         end
     else
-        try
-            for (k,v) in vars(vars_results.canonical)
-                file_path = joinpath(save_path,"$(k).$file_type")
-                file_type.write(file_path, _result_dataframe_vars(v))
-            end
-        catch
-            error("unsupported file type: $file_type")
-        end
+        error("unsupported file type: $file_type")
     end
 
     return
@@ -52,16 +38,11 @@ function write_data(data::DataFrames.DataFrame, save_path::AbstractString, file_
         save_path = dirname(save_path)
     end
     file_type = get(kwargs, :file_type, Feather)
-    if file_type == Feather
-        file_path = joinpath(save_path,"$file_name.feather")
+    if file_type == Feather || file_type == CSV
+        file_path = joinpath(save_path,"$(k).$(lowercase("$file_type"))")
         file_type.write(file_path, data)
     else
-        try
-            file_path = joinpath(save_path,"$file_name.$file_type")
-            file_type.write(file_path, data)
-        catch
-            error("unsupported file type: $file_type")
-        end
+        error("unsupported file type: $file_type")
     end
 
     return
