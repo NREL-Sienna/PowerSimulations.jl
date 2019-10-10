@@ -12,7 +12,7 @@ end
 """
     ModelReference(::Type{T}) where {T<:PM.AbstractPowerFormulation}
 
-Creates a model reference of the Power Formulation, devices, branches, and services
+Creates a model reference of the Power Formulation, devices, branches, and services. 
 
 # Arguments
 -`model::Type{T}) where {T<:PM.AbstractPowerFormulation} = CopperPlatePowerModel`:
