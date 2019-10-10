@@ -23,7 +23,23 @@ function get_time_stamp(res_model::OperationModelResults, key::Symbol)
     return res_model.time_stamp
 end
 
-# passing in name of folder path and the name of the folder
+"""
+    results = load_operation_results(path, folder_name)
+
+This function can be used to load results from a folder
+of results from a single-step problem, or for a single foulder
+within a simulation.
+
+# Arguments
+-`path::AbstractString = folder path` 
+-`directory::AbstractString = "2019-10-03T09-18-00"`: the foulder name that contains
+feather files of the results.
+
+# Example
+```julia
+results = load_operation_results("/Users/test/", "2019-10-03T09-18-00")
+```
+"""
 
 function load_operation_results(path::AbstractString, directory::AbstractString)
 
