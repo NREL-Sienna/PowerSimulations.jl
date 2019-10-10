@@ -1,57 +1,67 @@
+
 # taking the outputted files for the variable DataFrame and writing them to a featherfile
-function _write_variable_results(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path::AbstractString)
+function write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path::AbstractString; kwargs...)
 
-    for (k,v) in vars_results
-         file_path = joinpath(save_path,"$(k).feather")
-         Feather.write(file_path, vars_results[k])
+    file_type = get(kwargs, :file_type, Feather)
+    if file_type == Feather || file_type == CSV
+        for (k,v) in vars_results
+            file_path = joinpath(save_path,"$(k).$(lowercase("$file_type"))")
+            file_type.write(file_path, vars_results[k])
+        end
+    else
+        error("unsupported file type: $file_type")
     end
 
     return
-
 end
 
-function _write_variable_results(canonical::CanonicalModel, save_path::AbstractString)
 
-    for (k,v) in vars(canonical)
-         file_path = joinpath(save_path,"$(k).feather")
-         Feather.write(file_path, _result_dataframe_vars(v))
+function write_data(vars_results::OperationModel, save_path::AbstractString; kwargs...)
+
+    file_type = get(kwargs, :file_type, Feather)
+  
+    if file_type == Feather || file_type == CSV
+        for (k,v) in vars(vars_results.canonical)
+            file_path = joinpath(save_path,"$(k).$(lowercase("$file_type"))")
+            file_type.write(file_path, _result_dataframe_vars(v))
+        end
+    else
+        error("unsupported file type: $file_type")
     end
 
     return
-
 end
 
-function _write_optimizer_log(optimizer_log::Dict{Symbol, Any}, save_path::AbstractString)
+function write_data(data::DataFrames.DataFrame, save_path::AbstractString, file_name::String; kwargs...)
 
+    if isfile(save_path)
+        save_path = dirname(save_path)
+    end
+    file_type = get(kwargs, :file_type, Feather)
+    if file_type == Feather || file_type == CSV
+        file_path = joinpath(save_path,"$(k).$(lowercase("$file_type"))")
+        file_type.write(file_path, data)
+    else
+        error("unsupported file type: $file_type")
+    end
+
+    return
+end
+
+
+function _write_optimizer_log(optimizer_log::Dict, save_path::AbstractString)
+
+    optimizer_log[:dual_status] = Int(optimizer_log[:dual_status])
     optimizer_log[:termination_status] = Int(optimizer_log[:termination_status])
     optimizer_log[:primal_status] = Int(optimizer_log[:primal_status])
-    optimizer_log[:dual_status] = Int(optimizer_log[:dual_status])
-    optimizer_log[:solve_time] = optimizer_log[:solve_time]
-
-    df = DataFrames.DataFrame(optimizer_log)
+    optimizer_log = DataFrames.DataFrame(optimizer_log)
     file_path = joinpath(save_path,"optimizer_log.feather")
-    Feather.write(file_path, df)
-
+    Feather.write(file_path, optimizer_log)
+   
     return
 
 end
 
-# taking the outputted files for the time_Series DataFrame and writing them to a featherfile
-function _write_time_stamps(time_stamp::DataFrames.DataFrame, save_path::AbstractString)
-
-    df = DataFrames.DataFrame(time_stamp)
-    file_path = joinpath(save_path,"time_stamp.feather")
-    Feather.write(file_path, df)
-
-    return
-
-end
-
-function _export_model_result(op_m::OperationModel, save_path::String)
-    _write_variable_results(op_m.canonical, save_path)
-    _write_time_stamps(get_time_stamp(op_m), save_path)
-    return
-end
 
 # These functions are writing directly to the feather file and skipping printing to memory.
 function _export_model_result(stage::_Stage, start_time::Dates.DateTime, save_path::String)
@@ -59,12 +69,9 @@ function _export_model_result(stage::_Stage, start_time::Dates.DateTime, save_pa
     _write_time_stamps(get_time_stamp(stage, start_time), save_path)
     return
 
-end
+    write_data(op_m, save_path)
+    write_data(get_time_stamp(op_m, start_time), save_path, "time_stamp")
 
-function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
-                               op_model::OperationModel,
-                               path::String)
-    _export_optimizer_log(optimizer_log, op_model.canonical_model, path)
 
     return
 
@@ -82,7 +89,7 @@ function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
         optimizer_log[:solve_time] = MOI.get(canonical_model.JuMPmodel, MOI.SolveTime())
     catch
         @warn("SolveTime() property not supported by the Solver")
-        optimizer_log[:solve_time] = "Not Supported by solver"
+        optimizer_log[:solve_time] = nothing #"Not Supported by solver"
     end
 
     _write_optimizer_log(optimizer_log, path)
@@ -101,9 +108,9 @@ function write_model_results(results::OperationModelResults, save_path::String)
     _new_folder_path = replace_chars("$save_path/$(round(Dates.now(),Dates.Minute))", ":", "-")
     new_folder = mkdir(_new_folder_path)
     folder_path = new_folder
-    _write_variable_results(results.variables, folder_path)
+    write_data(results.variables, folder_path)
     _write_optimizer_log(results.optimizer_log, folder_path)
-    _write_time_stamps(results.time_stamp, folder_path)
+    write_data(results.time_stamp, folder_path, "time_stamp")
     println("Files written to $folder_path folder.")
 
     return
