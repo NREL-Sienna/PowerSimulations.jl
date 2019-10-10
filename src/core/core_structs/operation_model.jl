@@ -16,9 +16,9 @@ Creates a model reference of the Power Formulation, devices, branches, and servi
 
 # Arguments
 -`model::Type{T}) where {T<:PM.AbstractPowerFormulation} = CopperPlatePowerModel`:
--`devices::Dict{Symbol, DeviceModel} = devices`: 
--`branches::Dict{Symbol, BranchModel} = branches`:
--`services::Dict{Symbol, ServiceModel} = services`:
+-`devices::Dict{Symbol, DeviceModel} = devices`: device dictionary
+-`branches::Dict{Symbol, BranchModel} = branches`: branch dictionary
+-`services::Dict{Symbol, ServiceModel} = services`: service dictionary
 
 # Example
 ```julia
