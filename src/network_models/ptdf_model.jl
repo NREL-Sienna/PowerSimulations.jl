@@ -15,7 +15,7 @@ function ptdf_networkflow(canonical_model::CanonicalModel,
     for btype in Set(branch_types)
         var_dict[btype] = Symbol("Fp_$(btype)")
         typed_branches = IS.FlattenIteratorWrapper(btype, Vector([[b for b in branches if typeof(b) == btype]]))
-        flow_variables(canonical_model, StandardPTDF, typed_branches)
+        flow_variables(canonical_model, StandardPTDFModel, typed_branches)
     end
 
     for t in time_steps
@@ -56,7 +56,7 @@ to = TimerOutput()
                               nothing);
 @timeit to "build_thermal"    construct_device!(canonical_model, PSY.ThermalGen, ThermalDispatch, PM.StandardACPModel, sys5b);
 @timeit to "build_load"    construct_device!(canonical_model, PSY.PowerLoad, StaticPowerLoad, PM.StandardACPModel, sys5b);
-@timeit to "add_flow"      flow_variables(canonical_model, PM.DCPlosslessForm, branches5, 1:24)
+@timeit to "add_flow"      flow_variables(canonical_model, PM.DCPPowerModel, branches5, 1:24)
 @timeit to "PTDF cons" begin
     @timeit to "allocate_space" canonical_model.constraints["Flow_con1"] = JuMPConstraintArray(undef, [b.name for b in branches5], 1:24)
     @timeit to "make constraints" for t in 1:24
@@ -98,7 +98,7 @@ to = TimerOutput()
                               nothing);
 @timeit to "build_thermal"    construct_device!(canonical_model, PSY.ThermalGen, ThermalDispatch, PM.StandardACPModel, sys5b);
 @timeit to "build_load"    construct_device!(canonical_model, PSY.PowerLoad, StaticPowerLoad, PM.StandardACPModel, sys5b);
-@timeit to "add_flow"      flow_variables(canonical_model, PM.DCPlosslessForm, branches5, 1:24)
+@timeit to "add_flow"      flow_variables(canonical_model, PM.DCPPowerModel, branches5, 1:24)
 @timeit to "PTDF cons" begin
     @timeit to "allocate_space" canonical_model.constraints["Flow_con2"] = JuMPConstraintArray(undef, [b.name for b in branches5], 1:24)
     @timeit to "make constraints" begin for t in 1:24

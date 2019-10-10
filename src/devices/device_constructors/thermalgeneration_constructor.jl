@@ -7,7 +7,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                        sys::PSY.System;
                                        kwargs...) where {T<:PSY.ThermalGen,
                                                          D<:AbstractThermalFormulation,
-                                                         S<:PM.AbstracPowerModel}
+                                                         S<:PM.AbstractPowerModel}
 
     devices = PSY.get_components(T, sys)
 
@@ -99,7 +99,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                        ::Type{S},
                                        sys::PSY.System;
                                        kwargs...) where {T<:PSY.ThermalGen,
-                                                         S<:PM.AbstracPowerModel}
+                                                         S<:PM.AbstractPowerModel}
 
     devices = PSY.get_components(T, sys)
 
@@ -182,7 +182,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {T<:PSY.ThermalGen,
-                                                          S<:PM.AbstracPowerModel}
+                                                          S<:PM.AbstractPowerModel}
 
     devices = PSY.get_components(T, sys)
 
@@ -265,7 +265,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                        sys::PSY.System;
                                        kwargs...) where {T<: PSY.ThermalGen,
                                                          D<:AbstractThermalDispatchFormulation,
-                                                         S<:PM.AbstracPowerModel}
+                                                         S<:PM.AbstractPowerModel}
 
     devices = PSY.get_components(T, sys)
 

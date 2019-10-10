@@ -43,7 +43,7 @@ function reactivepower_constraints(canonical_model::CanonicalModel,
                                     devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableFullDispatch},
                                     system_formulation::Type{S}) where {R<:PSY.RenewableGen,
-                                                                         S<:PM.AbstracPowerModel}
+                                                                         S<:PM.AbstractPowerModel}
 
     range_data = Vector{NamedMinMax}(undef, length(devices))
 
@@ -72,7 +72,7 @@ function reactivepower_constraints(canonical_model::CanonicalModel,
                                     devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableConstantPowerFactor},
                                     system_formulation::Type{S}) where {R<:PSY.RenewableGen,
-                                                                        S<:PM.AbstracPowerModel}
+                                                                        S<:PM.AbstractPowerModel}
 
     names = (PSY.get_name(d) for d in devices)
     time_steps = model_time_steps(canonical_model)
@@ -116,7 +116,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {R<:PSY.RenewableGen,
                                                          D<:AbstractRenewableDispatchFormulation,
-                                                         S<:PM.AbstracPowerModel}
+                                                         S<:PM.AbstractPowerModel}
 
     parameters = model_has_parameters(canonical_model)
 
@@ -164,7 +164,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
                                  device_formulation::Type{D},
                                  system_formulation::Type{S}) where {R<:PSY.RenewableGen,
                                                                      D<:AbstractRenewableDispatchFormulation,
-                                                                     S<:PM.AbstracPowerModel}
+                                                                     S<:PM.AbstractPowerModel}
 
     if model_has_parameters(canonical_model)
         device_timeseries_param_ub(canonical_model,
@@ -188,7 +188,7 @@ function cost_function(canonical_model::CanonicalModel,
                        devices::IS.FlattenIteratorWrapper{PSY.RenewableDispatch},
                        device_formulation::Type{D},
                        system_formulation::Type{S}) where {D<:AbstractRenewableDispatchFormulation,
-                                                           S<:PM.AbstracPowerModel}
+                                                           S<:PM.AbstractPowerModel}
 
     add_to_cost(canonical_model,
                 devices,

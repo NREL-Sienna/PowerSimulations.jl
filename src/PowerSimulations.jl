@@ -11,7 +11,7 @@ export ModelReference
 export InitialCondition
 
 #Network Relevant Exports
-export StandardPTDF
+export StandardPTDFModel
 export CopperPlatePowerModel
 
 ######## Device Models ########
