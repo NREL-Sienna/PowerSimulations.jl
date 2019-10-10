@@ -1,3 +1,23 @@
+"""
+    solve_op_model!(op_model::OperationModel; kwargs...)
+
+This solves the operational model for a single instance and 
+outputs results of objective value, time log, variables, and a time stamp.
+
+# Arguments
+-`op_model::OperationModel = op_model`: operation model 
+created in OperationModel()
+
+# Examples
+```julia
+results = solve_op_model!(OpModel)
+```
+# Accepted Key Words 
+* save_path::String : If a file path is provided the results 
+automatically get written to feather files
+* optimizer : The optimizer that is used to solve the model
+
+"""
 function solve_op_model!(op_model::OperationModel; kwargs...)
 
     timed_log = Dict{Symbol, Any}()
@@ -66,7 +86,32 @@ function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::Str
 end
 
 
-"""Runs Simulations"""
+""" 
+    run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
+
+Solves the simulation model for sequential Simulations
+and populates a nested folder structure created in Simulation()
+with a dated folder of featherfiles that contain the results for
+each stage and step. This function calls the function make_references
+which creates a dictionary with variable, stage, step, date, and file path
+to the desired file. This reference table is used to retrieve the results
+within the nested file structure.
+
+# Arguments
+- `sim::Simulation=sim`: simulation object created by Simulation()
+
+# Outputs 
+- `references::Dict`: references is a dictionary that can be called in
+load_simulation_results() to parse the desired raw output files.
+
+# Example
+```julia
+sim = Simulation("test", 7, stages, "/Users/lhanig/Downloads/";
+verbose = true, system_to_file = false)
+references = run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
+```
+
+"""
 function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
     
     if sim.ref.reset
@@ -104,7 +149,30 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
     return references
 
 end
-""" Creates a reference table for date/step/stage/variable to its file path """
+""" 
+    make_references(sim::Simulation, date_run::String)
+
+Creates a dictionary of variables with a dictionary of stages
+that contains dataframes of date/step/and desired file path
+so that the results can be parsed sequentially by variable
+and stage type.
+
+**Note:** make_references can only be run after run_sim_model
+or else, the folder structure will not yet be populated with results
+
+# Arguments
+-`sim::Simulation = sim`: simulation object created by Simulation()
+-`date_run::String = "2019-10-03T09-18-00-test"``: the name of the file created
+that contains the specific simulation run of the date run and "-test"
+
+# Example
+```julia
+sim = Simulation("test", 7, stages, "/Users/lhanig/Downloads/"; verbose = true, system_to_file = false)
+run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
+references = make_references(sim, "2019-10-03T09-18-00-test")
+```
+
+"""
 
 function make_references(sim::Simulation, date_run::String)
   

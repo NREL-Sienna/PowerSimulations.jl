@@ -26,11 +26,25 @@ end
 """
     results = load_operation_results(path, folder_name)
 
-This function can be used to load results from a file of a single-step
-problem, or for a single file within a simulation.
+This function can be used to load results from a folder
+of results from a single-step problem, or for a single foulder
+within a simulation.
 
+# Arguments
+-`path::AbstractString = folder path` 
+-`directory::AbstractString = "2019-10-03T09-18-00"`: the foulder name that contains
+feather files of the results.
+
+# Example
+```julia
+results = load_operation_results("/Users/test/", "2019-10-03T09-18-00")
+```
 """
 function load_operation_results(path::AbstractString, directory::AbstractString)
+
+    if isfile(path)
+        path = dirname(path)
+    end
 
     folder_path = joinpath(path, directory)
     files_in_folder = collect(readdir(folder_path))
@@ -99,15 +113,21 @@ function _count_time_overlap(stage::String,
 This function goes through the reference table of file paths and
 aggregates the results over time into a struct of type OperationModelResults
 
+**Note:** the array of steps should match the date range provided.
+# Arguments
+-`stage::String = "stage-1"``: The stage of the results getting parsed, stage-1 or stage-2
+-`step::Array{String} = ["step-1", "step-2", "step-3"]`: the steps of the results getting parsed
+-`date_range::StepRange = 2020/01/01T:00:00:00 : 2020/01/03:00:00:00`: the date range to be parsed
+-`variable::Array{Symbol} = [:P_ThermalStandard, :P_RenewableDispatch]`: the variables to be parsed
+
 # Example
-
-date_range = (Dates.DateTime(2020, April, 4):Dates.Hour(24):Dates.DateTime(2020, April, 5))
+```julia
+date_range = (Dates.DateTime(2020, April, 4):Dates.Hour(24):Dates.DateTime(2020, April, 6))
 stage = "stage-1"
-step = ["step-1","step-2"] # has to match the date range
+step = ["step-1","step-2", "step-3"] # has to match the date range
 variable = [:P_ThermalStandard, :P_RenewableDispatch]
-
-results = load_simulation_results(stage,step, date_range, variable, ref)
-
+results = load_simulation_results(stage,step, date_range, variable, references)
+```
 """
 function load_simulation_results(stage::String,
                                  step::Array,

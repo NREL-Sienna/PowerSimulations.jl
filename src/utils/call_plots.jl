@@ -4,12 +4,13 @@
 This function makes a stack plot of the results by fuel type
 and assigns each fuel type a specific color.
 
-#Example
+# Example
 
+```julia
 res = solve_op_model!(OpModel)
 generator_dict = make_fuel_dictionary(sys, res)
 fuel_plot(res, generator_dict)
-
+```
 """
 
 function fuel_plot(res::PSI.OperationModelResults, generator_dict::Dict; kwargs...)
@@ -42,7 +43,7 @@ function fuel_plot(res::PSI.OperationModelResults, generator_dict::Dict; kwargs.
     end
   
     seriescolor = (get(kwargs, :seriescolor, default))
-    P1 = RecipesBase.plot(stack; seriescolor = seriescolor, label = reverse(stack.labels))
+    P1 = RecipesBase.plot(stack; seriescolor = seriescolor)
     P2 = RecipesBase.plot(bar; seriescolor = seriescolor)
  
     display(P1)
