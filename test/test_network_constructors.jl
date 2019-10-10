@@ -37,7 +37,7 @@ dc_line = DeviceModel(PSY.HVDCLine, PSI.HVDCDispatch)
 end
 
 @testset "Network DC-PF with PTDF formulation" begin
-    network = StandardPTDF
+    network = StandardPTDFModel
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimit_Line, :nodal_balance, :network_flow]
@@ -76,7 +76,7 @@ end
 end
 
 @testset "Network DC lossless -PF network with PowerModels DCPlosslessForm" begin
-    network = PM.DCPlosslessForm
+    network = PM.DCPPowerModel
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimit_Line]
@@ -139,7 +139,7 @@ end
 end
 
 @testset  "Network Solve AC-PF PowerModels linear approximation models" begin
-    networks = [PM.DCPlosslessForm, PM.NFAForm]
+    networks = [PM.DCPPowerModel, PM.NFAForm]
     systems = [c_sys5, c_sys14, c_sys14_dc]
     p = true
     for network in networks, sys in systems

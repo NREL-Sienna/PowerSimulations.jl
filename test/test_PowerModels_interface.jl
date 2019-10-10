@@ -23,7 +23,7 @@ case5_dc_data = PM.replicate(case5_dc_data, 2)
 end
 
 # test PowerSimulations type extentions
-DCAngleModel = (data::Dict{String, Any}; kwargs...) -> PM.GenericPowerModel(data, PM.DCPlosslessForm; kwargs...)
+DCAngleModel = (data::Dict{String, Any}; kwargs...) -> PM.GenericPowerModel(data, PM.DCPPowerModel; kwargs...)
 StandardACModel = (data::Dict{String, Any}; kwargs...) -> PM.GenericPowerModel(data, PM.StandardACPModel; kwargs...)
 
 @testset "PM with type extensions" begin

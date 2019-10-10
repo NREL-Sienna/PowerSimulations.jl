@@ -22,7 +22,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
 end
 
 @testset "Solving ED with PTDF Models" begin
-    model_ref = ModelReference(StandardPTDF, devices, branches, services);
+    model_ref = ModelReference(StandardPTDFModel, devices, branches, services);
     parameters_value = [true, false]
     systems = [c_sys5, c_sys14, c_sys14_dc]
     PTDF_ref = Dict{PSY.System, PSY.PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc)
@@ -31,8 +31,8 @@ end
                                              c_sys14_dc => 142000.0)
 
     for sys in systems, p in parameters_value
-        @info("Testing solve ED with StandardPTDF network")
-        @testset "ED StandardPTDF model parameters = $(p)" begin
+        @info("Testing solve ED with StandardPTDFModel network")
+        @testset "ED StandardPTDFModel model parameters = $(p)" begin
         ED = OperationModel(TestOptModel, model_ref, sys; PTDF = PTDF_ref[sys], optimizer = OSQP_optimizer, parameters = p)
         psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[sys], 10000)
         end
@@ -42,7 +42,7 @@ end
 @testset "Solving ED With PowerModels with loss-less convex models" begin
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters_value = [true, false]
-    networks = [PM.DCPlosslessForm,
+    networks = [PM.DCPPowerModel,
                 PM.NFAForm]
     test_results = Dict{PSY.System, Float64}(c_sys5 => 330000.0,
                                              c_sys14 => 142000.0,
@@ -132,9 +132,9 @@ end
                                         :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
     parameters_value = [true, false]
     systems = [c_sys5, c_sys5_dc]
-    networks = [PM.DCPlosslessForm,
+    networks = [PM.DCPPowerModel,
                 PM.NFAForm,
-                StandardPTDF,
+                StandardPTDFModel,
                 CopperPlatePowerModel]
     PTDF_ref = Dict{PSY.System, PSY.PTDF}(c_sys5 => PTDF5, c_sys5_dc => PTDF5_dc)
 

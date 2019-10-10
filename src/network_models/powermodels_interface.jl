@@ -210,14 +210,14 @@ end
 
 
 "active power only models ignore reactive power variables"
-function variable_reactive_net_injection(pm::PM.GenericPowerModel{T}; kwargs...) where T<:PM.AbstractDCPForm
+function variable_reactive_net_injection(pm::PM.GenericPowerModel{T}; kwargs...) where T<:PM.AbstractDCPModel
     return
 end
 
 "active power only models ignore reactive power flows"
 function constraint_power_balance_ni(pm::PM.GenericPowerModel{T},
                            n::Int, c::Int, i::Int,
-                           bus_arcs, bus_arcs_dc) where T<:PM.AbstractDCPForm
+                           bus_arcs, bus_arcs_dc) where T<:PM.AbstractDCPModel
     p = PM.var(pm, n, c, :p)
     pni = PM.var(pm, n, c, :pni, i)
     p_dc = PM.var(pm, n, c, :p_dc)
@@ -231,7 +231,7 @@ end
 ""
 function constraint_power_balance_ni_expr(pm::PM.GenericPowerModel{T},
                                 n::Int, c::Int, i::Int,
-                                bus_arcs, bus_arcs_dc, pni_expr, qni_expr) where T<:PM.AbstractDCPForm
+                                bus_arcs, bus_arcs_dc, pni_expr, qni_expr) where T<:PM.AbstractDCPModel
     p = PM.var(pm, n, c, :p)
     p_dc = PM.var(pm, n, c, :p_dc)
 
@@ -244,7 +244,7 @@ end
 ""
 function powermodels_network!(canonical_model::CanonicalModel,
                               system_formulation::Type{S},
-                              sys::PSY.System) where {S<:PM.AbstracPowerModel}
+                              sys::PSY.System) where {S<:PM.AbstractPowerModel}
 
     time_steps = model_time_steps(canonical_model)
     pm_data, PM_map = pass_to_pm(sys, time_steps[end])
@@ -294,7 +294,7 @@ end
 
 #### PM accessor functions ########
 
-function PMvarmap(system_formulation::Type{S}) where {S<:PM.DCPlosslessForm}
+function PMvarmap(system_formulation::Type{S}) where {S<:PM.DCPPowerModel}
     pm_var_map = Dict{Type,Dict{Symbol, Union{Symbol,NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta)
@@ -314,7 +314,7 @@ function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractActivePowerM
     return pm_var_map
 end
 
-function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstracPowerModel}
+function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractPowerModel}
     pm_var_map = Dict{Type,Dict{Symbol, Union{Symbol,NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta,
@@ -327,7 +327,7 @@ function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstracPowerModel}
     return pm_var_map
 end
 
-function add_pm_var_refs!(canonical_model::CanonicalModel, system_formulation::Type{S}, sys::PSY.System) where {S<:PM.AbstracPowerModel}
+function add_pm_var_refs!(canonical_model::CanonicalModel, system_formulation::Type{S}, sys::PSY.System) where {S<:PM.AbstractPowerModel}
 
     time_steps = model_time_steps(canonical_model)
     bus_dict = canonical_model.pm_model.ext[:PMmap].bus

@@ -1,7 +1,7 @@
 struct EconomicDispatch<:AbstractOperationModel end
 struct SCEconomicDispatch<:AbstractOperationModel end
 
-function EconomicDispatch(sys::PSY.System, transmission::Type{S}; optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing, kwargs...) where {S<:PM.AbstracPowerModel}
+function EconomicDispatch(sys::PSY.System, transmission::Type{S}; optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing, kwargs...) where {S<:PM.AbstractPowerModel}
 
     devices = Dict{Symbol, DeviceModel}(:ThermalGenerators => DeviceModel(PSY.ThermalGen, ThermalDispatch),
                                             :RenewableGenerators => DeviceModel(PSY.RenewableGen, RenewableFullDispatch),
@@ -39,7 +39,7 @@ function SCEconomicDispatch(sys::PSY.System; optimizer::Union{Nothing, JuMP.Opti
     services = Dict{Symbol, ServiceModel}(:Reserves => ServiceModel(PSY.Reserve, AbstractReservesFormulation))
 
     return OperationModel(EconomicDispatch,
-                                    StandardPTDF,
+                                    StandardPTDFModel,
                                     devices,
                                     branches,
                                     services,

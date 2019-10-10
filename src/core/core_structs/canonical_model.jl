@@ -44,7 +44,7 @@ function _make_expressions_dict(transmission::Type{S},
                                 V::DataType,
                                 bus_numbers::Vector{Int64},
                                 time_steps::UnitRange{Int64},
-                                parameters::Bool) where {S<:PM.AbstracPowerModel}
+                                parameters::Bool) where {S<:PM.AbstractPowerModel}
 
     return DSDA(:nodal_balance_active =>  _make_container_array(V,
                                                                 parameters,
@@ -79,7 +79,7 @@ function _canonical_init(bus_numbers::Vector{Int64},
                         initial_time::Dates.DateTime,
                         parameters::Bool,
                         sequential_runs::Bool,
-                        ini_con::DICKDA) where {S<:PM.AbstracPowerModel}
+                        ini_con::DICKDA) where {S<:PM.AbstractPowerModel}
 
     V = JuMP.variable_type(jump_model)
 
@@ -167,7 +167,7 @@ end
 function CanonicalModel(::Type{T},
                          sys::PSY.System,
                          optimizer::Union{Nothing,JuMP.OptimizerFactory};
-                         kwargs...) where {T<:PM.AbstracPowerModel}
+                         kwargs...) where {T<:PM.AbstractPowerModel}
 
     sequential_runs = get(kwargs, :sequential_runs, false)
     user_defined_model = get(kwargs, :JuMPmodel, nothing)

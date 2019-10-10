@@ -11,14 +11,14 @@ struct VoltageSourceDC <: AbstractDCLineFormulation end
 function flow_variables(canonical_model::CanonicalModel,
                         system_formulation::Type{S},
                         devices::IS.FlattenIteratorWrapper{B}) where {B<:PSY.DCBranch,
-                                                                        S<:PM.AbstracPowerModel}
+                                                                        S<:PM.AbstractPowerModel}
 
     return
 
 end
 
 function flow_variables(canonical_model::CanonicalModel,
-                        system_formulation::Type{StandardPTDF},
+                        system_formulation::Type{StandardPTDFModel},
                         devices::IS.FlattenIteratorWrapper{B}) where {B<:PSY.DCBranch}
 
     time_steps = model_time_steps(canonical_model)
@@ -60,7 +60,7 @@ function branch_rate_constraint(canonical_model::CanonicalModel,
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.DCBranch,
                                                                     D<:AbstractDCLineFormulation,
-                                                                    S<:PM.DCPlosslessForm}
+                                                                    S<:PM.DCPPowerModel}
 
     var_name = Symbol("Fp_$(B)")
     con_name = Symbol("RateLimit_$(B)")
@@ -81,7 +81,7 @@ function branch_rate_constraint(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{HVDCLossless},
                                 system_formulation::Type{S}) where {B<:PSY.DCBranch,
-                                                                    S<:PM.AbstracPowerModel}
+                                                                    S<:PM.AbstractPowerModel}
 
     for dir in ("FT", "TF")
         var_name = Symbol("Fp$(dir)_$(B)")
@@ -106,7 +106,7 @@ function branch_rate_constraint(canonical_model::CanonicalModel,
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.DCBranch,
                                                                     D<:AbstractDCLineFormulation,
-                                                                    S<:PM.AbstracPowerModel}
+                                                                    S<:PM.AbstractPowerModel}
 
     time_steps = model_time_steps(canonical_model)
 

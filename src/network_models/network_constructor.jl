@@ -12,7 +12,7 @@ function _internal_network_constructor(canonical::CanonicalModel,
 end
 
 function _internal_network_constructor(canonical::CanonicalModel,
-                                        system_formulation::Type{StandardPTDF},
+                                        system_formulation::Type{StandardPTDFModel},
                                         sys::PSY.System;
                                         kwargs...)
 
@@ -30,7 +30,7 @@ function _internal_network_constructor(canonical::CanonicalModel,
         for btype in Set(dc_branch_types)
             typed_dc_branches = IS.FlattenIteratorWrapper(btype, Vector([[b for b in dc_branches if typeof(b) == btype]]))
             flow_variables(canonical,
-                           StandardPTDF,
+                           StandardPTDFModel,
                            typed_dc_branches)
         end
 
@@ -45,13 +45,11 @@ end
 function _internal_network_constructor(canonical::CanonicalModel,
                                         system_formulation::Type{T},
                                         sys::PSY.System;
-                                        kwargs...) where {T<:PM.AbstracPowerModel}
+                                        kwargs...) where {T<:PM.AbstractPowerModel}
 
-    incompat_list = [PM.SDPWRMForm,
-                     PM.SparseSDPWRMForm,
-                     PM.SOCWRConicForm,
-                     PM.SOCBFForm,
-                     PM.SOCBFConicForm]
+    incompat_list = [PM.SDPWRMPowerModel,                                 PM.SparseSDPWRMPowerModel
+                     PM.SOCBFPowerModel,
+                     PM.SOCBFConicPowerModel]
 
     if system_formulation in incompat_list
        throw(ArgumentError("$(sys) formulation is not currently supported in PowerSimulations"))
@@ -65,7 +63,7 @@ function _internal_network_constructor(canonical::CanonicalModel,
 end
 
 function construct_network!(op_model::OperationModel,
-                            system_formulation::Type{S}; kwargs...) where {S<:PM.AbstracPowerModel}
+                            system_formulation::Type{S}; kwargs...) where {S<:PM.AbstractPowerModel}
 
     sys = get_system(op_model)
     _internal_network_constructor(op_model.canonical, system_formulation, sys; kwargs... )

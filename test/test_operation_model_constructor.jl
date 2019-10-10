@@ -66,8 +66,8 @@ end
 
 @testset "Operation Model Constructors with Parameters" begin
     networks = [PSI.CopperPlatePowerModel,
-                PSI.StandardPTDF,
-                PM.DCPlosslessForm,
+                PSI.StandardPTDFModel,
+                PM.DCPPowerModel,
                 PM.NFAForm,
                 PM.StandardACPModel,
                 PM.StandardACRModel,
@@ -110,7 +110,7 @@ end
 @testset "Build Operation Models" begin
     #SCED = PSI.SCEconomicDispatch(c_sys5; optimizer = GLPK_optimizer);
     #OPF = PSI.OptimalPowerFlow(c_sys5, PM.StandardACPModel, optimizer = ipopt_optimizer)
-    #UC = PSI.UnitCommitment(c_sys5, PM.DCPlosslessForm; optimizer = GLPK_optimizer)
+    #UC = PSI.UnitCommitment(c_sys5, PM.DCPPowerModel; optimizer = GLPK_optimizer)
 
     #ED_rts_p = PSI.EconomicDispatch(c_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer);
     #ED_rts = PSI.EconomicDispatch(c_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer, parameters = false);
