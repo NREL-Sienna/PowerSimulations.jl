@@ -15,6 +15,12 @@ function _build_canonical!(canonical::CanonicalModel, ref::ModelReference, sys::
         _internal_service_constructor!(canonical, mod[2], T, sys; kwargs...)
     end
 
+    #Build Service
+    for mod in services
+        verbose && @info "Building $(mod[2].service) with $(mod[2].formulation) formulation"
+        construct_service!(canonical, mod[2], T, sys; kwargs...)
+    end
+
     # Build Injection devices
     for (_, device_model) in ref.devices
         verbose && @info "Building $(device_model.device) with $(device_model.formulation) formulation"
@@ -28,7 +34,7 @@ function _build_canonical!(canonical::CanonicalModel, ref::ModelReference, sys::
     # Build Branches
     for (_, branch_model) in ref.branches
         verbose && @info "Building $(branch_model.device) with $(branch_model.formulation) formulation"
-        construct_device!(canonical, sys, branch_model, transmission; kwargs...)
+        construct_device!(op_model, branch_model, transmission; kwargs...)
     end
 
     # Objective Function

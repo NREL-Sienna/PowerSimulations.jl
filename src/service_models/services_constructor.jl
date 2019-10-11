@@ -25,7 +25,6 @@ function _internal_service_constructor!(canonical_model::CanonicalModel,
         _nodal_expression_fixed!(canonical_model,forecast, T)
         service_balance(canonical_model,service)
     end
-
     return
 
 end
