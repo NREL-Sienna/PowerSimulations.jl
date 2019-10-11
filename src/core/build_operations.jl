@@ -9,6 +9,12 @@ function _build_canonical!(canonical::CanonicalModel, ref::ModelReference, sys::
     verbose = get(kwargs, :verbose, true)
     transmission = ref.transmission
 
+    #Build Service
+    for mod in services
+        verbose && @info "Building $(mod[2].service) with $(mod[2].formulation) formulation"
+        construct_service!(canonical, mod[2], T, sys; kwargs...)
+    end
+
     # Build Injection devices
     for (_, device_model) in ref.devices
         verbose && @info "Building $(device_model.device) with $(device_model.formulation) formulation"
@@ -23,11 +29,6 @@ function _build_canonical!(canonical::CanonicalModel, ref::ModelReference, sys::
     for (_, branch_model) in ref.branches
         verbose && @info "Building $(branch_model.device) with $(branch_model.formulation) formulation"
         construct_device!(canonical, sys, branch_model, transmission; kwargs...)
-    end
-
-    #Build Service
-    for mod in services
-        construct_service!(canonical, mod[2].service, mod[2].formulation, devices, T, sys; kwargs...)
     end
 
     # Objective Function

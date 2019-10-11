@@ -90,3 +90,31 @@ function _add_to_expression!(expression_array::T,
     return
 
 end
+
+function _add_to_expression!(expression_array::T,
+                             ix::Int64,
+                             value::Float64) where T
+
+    if isassigned(expression_array, ix)
+        expression_array[ix].constant +=  value
+    else
+        expression_array[ix] = zero(eltype(expression_array)) + value
+    end
+
+    return
+
+end
+
+function _get_expr(expr::T, 
+                        ix::Float64, 
+                        ij::Float64, 
+                        default::Float64 =0.0) where T
+
+    if isnothing(expr)
+        return default
+    else
+        return expr[ix,ij]
+    end
+        
+end
+
