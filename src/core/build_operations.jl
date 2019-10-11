@@ -3,6 +3,12 @@ function build_op_model!(op_model::OperationModel{M}; kwargs...) where M<:Abstra
     verbose = get(kwargs, :verbose, true)
     transmission = get_transmission_ref(op_model)
 
+    #Build Service
+    for mod in services
+        verbose && @info "Building $(mod[2].service) with $(mod[2].formulation) formulation"
+        construct_service!(canonical, mod[2], T, sys; kwargs...)
+    end
+
     # Build Injection devices
     for (_, device_model) in op_model.model_ref.devices
         verbose && @info "Building $(device_model.device) with $(device_model.formulation) formulation"
@@ -17,11 +23,6 @@ function build_op_model!(op_model::OperationModel{M}; kwargs...) where M<:Abstra
     for (_, branch_model) in op_model.model_ref.branches
         verbose && @info "Building $(branch_model.device) with $(branch_model.formulation) formulation"
         construct_device!(op_model, branch_model, transmission; kwargs...)
-    end
-
-    #Build Service
-    for mod in services
-        construct_service!(canonical, mod[2].service, mod[2].formulation, devices, T, sys; kwargs...)
     end
 
     # Objective Function

@@ -250,11 +250,11 @@ model_resolution(canonical_model::CanonicalModel) = canonical_model.resolution
 model_has_parameters(canonical_model::CanonicalModel) = canonical_model.parametrized
 model_runs_sequentially(canonical_model::CanonicalModel) = canonical_model.sequential_runs
 model_initial_time(canonical_model::CanonicalModel) = canonical_model.initial_time
+add_expression(canonical_model::CanonicalModel,name::Symbol, cont::JuMP.Containers) = push!(canonical_model.expressions, (name=>cont))
 #Internal Variables, Constraints and Parameters accessors
 vars(canonical_model::CanonicalModel) = canonical_model.variables
 cons(canonical_model::CanonicalModel) = canonical_model.constraints
-var(canonical_model::CanonicalModel, name::Symbol) = canonical_model.variables[name]
-con(canonical_model::CanonicalModel, name::Symbol) = canonical_model.constraints[name]
-par(canonical_model::CanonicalModel, param_reference::UpdateRef) = canonical_model.parameters[param_reference]
-exp(canonical_model::CanonicalModel, name::Symbol) = canonical_model.expressions[name]
-get_initial_conditions(canonical_model::CanonicalModel) = canonical_model.initial_conditions
+var(canonical_model::CanonicalModel, name::Symbol) = get(canonical_model.variables,name,nothing)
+con(canonical_model::CanonicalModel, name::Symbol) = get(canonical_model.constraints,name,nothing)
+par(canonical_model::CanonicalModel, param_reference::UpdateRef) = get(canonical_model.parameters,param_reference,nothing)
+exp(canonical_model::CanonicalModel, name::Symbol) = get(canonical_model.expressions,name,nothing)

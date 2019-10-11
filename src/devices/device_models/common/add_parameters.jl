@@ -141,7 +141,6 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
 
     for (ix, f) in enumerate(forecasts)
         device = PSY.get_component(f)
-        device = PSY.get_component(f)
         bus_number = PSY.get_number(PSY.get_bus(device))
         tech = PSY.get_tech(device)
         name = PSY.get_name(device)
