@@ -235,7 +235,9 @@ model_resolution(canonical_model::CanonicalModel) = canonical_model.resolution
 model_has_parameters(canonical_model::CanonicalModel) = canonical_model.parametrized
 model_runs_sequentially(canonical_model::CanonicalModel) = canonical_model.sequential_runs
 model_initial_time(canonical_model::CanonicalModel) = canonical_model.initial_time
-add_expression(canonical_model::CanonicalModel,name::Symbol, cont::JuMP.Containers) = push!(canonical_model.expressions, (name=>cont))
+add_expression(canonical_model::CanonicalModel,
+                name::Symbol, 
+                cont::JuMP.Containers.DenseAxisArray) = push!(canonical_model.expressions, (name=>cont))
 #Internal Variables, Constraints and Parameters accessors
 vars(canonical_model::CanonicalModel) = canonical_model.variables
 cons(canonical_model::CanonicalModel) = canonical_model.constraints
