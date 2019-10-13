@@ -47,7 +47,8 @@ function _internal_network_constructor(canonical::CanonicalModel,
                                         sys::PSY.System;
                                         kwargs...) where {T<:PM.AbstractPowerModel}
 
-    incompat_list = [PM.SDPWRMPowerModel,                                 PM.SparseSDPWRMPowerModel
+    incompat_list = [PM.SDPWRMPowerModel,
+                     PM.SparseSDPWRMPowerModel,
                      PM.SOCBFPowerModel,
                      PM.SOCBFConicPowerModel]
 

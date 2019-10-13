@@ -120,7 +120,7 @@ mutable struct CanonicalModel
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}}
     initial_conditions::DICKDA
-    pm_model::Union{Nothing, PM.GenericPowerModel}
+    pm_model::Union{Nothing, PM.AbstractPowerModel}
 
     function CanonicalModel(JuMPmodel::JuMP.AbstractModel,
                             optimizer_factory::Union{Nothing, JuMP.OptimizerFactory},
@@ -135,7 +135,7 @@ mutable struct CanonicalModel
                             expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray},
                             parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}},
                             initial_conditions::DICKDA,
-                            pm_model::Union{Nothing, PM.GenericPowerModel})
+                            pm_model::Union{Nothing, PM.AbstractPowerModel})
 
         #prevents having empty parameters and parametrized canonical model
         @assert isnothing(parameters) == !parametrized

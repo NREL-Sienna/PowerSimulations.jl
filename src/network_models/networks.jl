@@ -1,7 +1,6 @@
 struct CopperPlatePowerModel <: PM.AbstractActivePowerModel  end
 struct StandardPTDFModel <: PM.AbstractDCPModel end
 
-
 #================================================
     # exact non-convex models
     ACPPowerModel, ACRPowerModel, ACTPowerModel
@@ -22,7 +21,6 @@ struct StandardPTDFModel <: PM.AbstractDCPModel end
 ================================================#
 
 ##### Exact Non-Convex Models #####
-
 import PowerModels: ACPPowerModel
 export ACPPowerModel
 
@@ -38,10 +36,9 @@ import PowerModels: DCPPowerModel
 export DCPPowerModel
 
 import PowerModels: NFAPowerModel
-export DCPPowerModel
+export NFAPowerModel
 
 ##### Quadratic Approximations #####
-
 import PowerModels: DCPLLPowerModel
 export DCPLLPowerModel
 
@@ -49,7 +46,6 @@ import PowerModels: LPACCPowerModel
 export LPACCPowerModel
 
 ##### Quadratic Relaxations #####
-
 import PowerModels: SOCWRPowerModel
 export SOCWRPowerModel
 
