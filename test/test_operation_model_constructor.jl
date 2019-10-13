@@ -67,15 +67,15 @@ end
 @testset "Operation Model Constructors with Parameters" begin
     networks = [PSI.CopperPlatePowerModel,
                 PSI.StandardPTDFModel,
-                PM.DCPPowerModel,
+                DCPPowerModel,
                 NFAPowerModel,
                 ACPPowerModel,
                 ACRPowerModel,
-                PM.StandardACTModel,
+                ACTPowerModel,
                 DCPLLPowerModel,
-                PM.AbstractLPACCForm,
+                LPACCPowerModel,
                 SOCWRPowerModel,
-                PM.QCWRForm,
+                QCRMPowerModel,
                 PM.QCWRTriForm];
 
     thermal_gens = [PSI.ThermalStandardUnitCommitment,
@@ -110,7 +110,7 @@ end
 @testset "Build Operation Models" begin
     #SCED = PSI.SCEconomicDispatch(c_sys5; optimizer = GLPK_optimizer);
     #OPF = PSI.OptimalPowerFlow(c_sys5, ACPPowerModel, optimizer = ipopt_optimizer)
-    #UC = PSI.UnitCommitment(c_sys5, PM.DCPPowerModel; optimizer = GLPK_optimizer)
+    #UC = PSI.UnitCommitment(c_sys5, DCPPowerModel; optimizer = GLPK_optimizer)
 
     #ED_rts_p = PSI.EconomicDispatch(c_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer);
     #ED_rts = PSI.EconomicDispatch(c_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer, parameters = false);

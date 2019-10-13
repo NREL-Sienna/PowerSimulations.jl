@@ -14,7 +14,7 @@ case5_dc_data = PM.replicate(case5_dc_data, 2)
 #  Ideally this would also test the number of constraints generated
 
 @testset "PowerModels Model Build" begin
-    pm = PowerSimulations.build_nip_model(case5_data, PM.DCPPowerModel)
+    pm = PowerSimulations.build_nip_model(case5_data, DCPPowerModel)
     @test JuMP.num_variables(pm.model) == 34
     pm = PowerSimulations.build_nip_model(case5_data, PM.ACPPowerModel)
     @test JuMP.num_variables(pm.model) == 96
