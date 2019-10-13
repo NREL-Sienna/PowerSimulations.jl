@@ -35,7 +35,7 @@ end
 function flow_variables(canonical_model::CanonicalModel,
                         system_formulation::Type{S},
                         devices::IS.FlattenIteratorWrapper{B}) where {B<:PSY.ACBranch,
-                                                             S<:StandardPTDFModel}
+                                                                      S<:StandardPTDFModel}
 
     var_name = Symbol("Fp_$(B)")
 
@@ -51,20 +51,39 @@ function flow_variables(canonical_model::CanonicalModel,
 end
 
 #################################### Flow Variable Bounds ##################################################
-
-
 function branch_rate_bounds(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.ACBranch,
                                                                     D<:AbstractBranchFormulation,
-                                                                    S<:PM.DCPPowerModel}
+                                                                    S<:PM.AbstractDCPModel}
 
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
 
     set_variable_bounds(canonical_model,
                         range_data,
                         Symbol("Fp_$(B)"))
+
+    return
+
+end
+
+function branch_rate_bounds(canonical_model::CanonicalModel,
+                                devices::IS.FlattenIteratorWrapper{B},
+                                device_formulation::Type{D},
+                                system_formulation::Type{S}) where {B<:PSY.ACBranch,
+                                                                    D<:AbstractBranchFormulation,
+                                                                    S<:PM.AbstractDCPLLModel}
+
+    range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
+
+    set_variable_bounds(canonical_model,
+                        range_data,
+                        Symbol("FpFT_$(B)"))
+
+    set_variable_bounds(canonical_model,
+                        range_data,
+                        Symbol("FpTF_$(B)"))
 
     return
 
@@ -92,14 +111,12 @@ function branch_rate_bounds(canonical_model::CanonicalModel,
 end
 
 #################################### Rate Limits Constraints ##################################################
-
-
 function branch_rate_constraint(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.ACBranch,
                                                                     D<:AbstractBranchFormulation,
-                                                                    S<:PM.DCPPowerModel}
+                                                                    S<:PM.AbstractDCPModel}
 
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
 
@@ -117,7 +134,7 @@ function branch_rate_constraint(canonical_model::CanonicalModel,
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.ACBranch,
                                                                     D<:AbstractBranchFormulation,
-                                                                    S<:PM.AbstractActivePowerModel}
+                                                                    S<:PM.AbstractDCPLLModel}
 
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
 
@@ -137,11 +154,11 @@ end
 
 
 function branch_rate_constraint(canonical_model::CanonicalModel,
-    devices::IS.FlattenIteratorWrapper{B},
-    device_formulation::Type{D},
-    system_formulation::Type{S}) where {B<:PSY.ACBranch,
-                                        D<:AbstractBranchFormulation,
-                                        S<:PM.AbstractPowerModel}
+                                devices::IS.FlattenIteratorWrapper{B},
+                                device_formulation::Type{D},
+                                system_formulation::Type{S}) where {B<:PSY.ACBranch,
+                                                                    D<:AbstractBranchFormulation,
+                                                                    S<:PM.AbstractPowerModel}
 
     range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
