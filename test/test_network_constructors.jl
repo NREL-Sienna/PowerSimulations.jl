@@ -139,7 +139,7 @@ end
 end
 
 @testset  "Network Solve AC-PF PowerModels linear approximation models" begin
-    networks = [PM.DCPPowerModel, PM.NFAForm]
+    networks = [PM.DCPPowerModel, NFAPowerModel]
     systems = [c_sys5, c_sys14, c_sys14_dc]
     p = true
     for network in networks, sys in systems
@@ -158,7 +158,7 @@ end
 
 @testset  "Network AC-PF PowerModels non-convex models" begin
     networks = [#ACPPowerModel, Already tested
-                PM.StandardACRModel,
+                ACRPowerModel,
                 PM.StandardACTModel
                 ]
     systems = [c_sys5, c_sys14, c_sys14_dc]
@@ -176,7 +176,7 @@ end
 end
 
 @testset  "Network AC-PF PowerModels quadratic loss approximations models" begin
-    networks = [PM.StandardDCPLLForm, PM.AbstractLPACCForm]
+    networks = [DCPLLPowerModel, PM.AbstractLPACCForm]
     systems = [c_sys5, c_sys14, c_sys14_dc]
 
     for network in networks, sys in systems
@@ -193,7 +193,7 @@ end
 end
 
 @testset  "Network AC-PF PowerModels quadratic relaxations models" begin
-    networks = [ PM.SOCWRForm,
+    networks = [ SOCWRPowerModel,
                  PM.QCWRForm,
                  PM.QCWRTriForm,
                  ]
