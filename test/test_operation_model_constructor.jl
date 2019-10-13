@@ -76,7 +76,7 @@ end
                 LPACCPowerModel,
                 SOCWRPowerModel,
                 QCRMPowerModel,
-                PM.QCWRTriForm];
+                QCLSPowerModel];
 
     thermal_gens = [PSI.ThermalStandardUnitCommitment,
                     PSI.ThermalDispatch,

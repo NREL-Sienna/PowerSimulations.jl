@@ -88,7 +88,7 @@ end
     parameters_value = [true, false]
     networks = [SOCWRPowerModel,
                  QCRMPowerModel,
-                 PM.QCWRTriForm,]
+                 QCLSPowerModel,]
     test_results = Dict{PSY.System, Float64}(c_sys5 => 320000.0,
                                              c_sys14 => 142000.0)
 
