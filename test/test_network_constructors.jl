@@ -76,7 +76,7 @@ end
 end
 
 @testset "Network DC lossless -PF network with PowerModels DCPlosslessForm" begin
-    network = PM.DCPPowerModel
+    network = DCPPowerModel
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimit_Line]
@@ -139,7 +139,7 @@ end
 end
 
 @testset  "Network Solve AC-PF PowerModels linear approximation models" begin
-    networks = [PM.DCPPowerModel, NFAPowerModel]
+    networks = [DCPPowerModel, NFAPowerModel]
     systems = [c_sys5, c_sys14, c_sys14_dc]
     p = true
     for network in networks, sys in systems
@@ -159,7 +159,7 @@ end
 @testset  "Network AC-PF PowerModels non-convex models" begin
     networks = [#ACPPowerModel, Already tested
                 ACRPowerModel,
-                PM.StandardACTModel
+                ACTPowerModel
                 ]
     systems = [c_sys5, c_sys14, c_sys14_dc]
 
@@ -176,7 +176,7 @@ end
 end
 
 @testset  "Network AC-PF PowerModels quadratic loss approximations models" begin
-    networks = [DCPLLPowerModel, PM.AbstractLPACCForm]
+    networks = [DCPLLPowerModel, LPACCPowerModel]
     systems = [c_sys5, c_sys14, c_sys14_dc]
 
     for network in networks, sys in systems
@@ -194,7 +194,7 @@ end
 
 @testset  "Network AC-PF PowerModels quadratic relaxations models" begin
     networks = [ SOCWRPowerModel,
-                 PM.QCWRForm,
+                 QCRMPowerModel,
                  PM.QCWRTriForm,
                  ]
     systems = [c_sys5, c_sys14, c_sys14_dc]

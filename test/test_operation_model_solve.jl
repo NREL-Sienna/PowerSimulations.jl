@@ -42,7 +42,7 @@ end
 @testset "Solving ED With PowerModels with loss-less convex models" begin
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters_value = [true, false]
-    networks = [PM.DCPPowerModel,
+    networks = [DCPPowerModel,
                 NFAPowerModel]
     test_results = Dict{PSY.System, Float64}(c_sys5 => 330000.0,
                                              c_sys14 => 142000.0,
@@ -64,7 +64,7 @@ end
     systems = [c_sys5, c_sys14]
     parameters_value = [true, false]
     networks = [DCPLLPowerModel,
-                PM.AbstractLPACCForm]
+                LPACCPowerModel]
     test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,
                                              c_sys14 => 142000.0,
                                              c_sys14_dc => 142000.0)
@@ -87,7 +87,7 @@ end
     systems = [c_sys5, c_sys14]
     parameters_value = [true, false]
     networks = [SOCWRPowerModel,
-                 PM.QCWRForm,
+                 QCRMPowerModel,
                  PM.QCWRTriForm,]
     test_results = Dict{PSY.System, Float64}(c_sys5 => 320000.0,
                                              c_sys14 => 142000.0)
@@ -111,7 +111,7 @@ end
     parameters_value = [true, false]
     networks = [ACPPowerModel,
                 #ACRPowerModel,
-                PM.StandardACTModel]
+                ACTPowerModel]
     test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,
                                              c_sys14 => 142000.0,
                                              c_sys14_dc => 142000.0)
@@ -132,7 +132,7 @@ end
                                         :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
     parameters_value = [true, false]
     systems = [c_sys5, c_sys5_dc]
-    networks = [PM.DCPPowerModel,
+    networks = [DCPPowerModel,
                 NFAPowerModel,
                 StandardPTDFModel,
                 CopperPlatePowerModel]
