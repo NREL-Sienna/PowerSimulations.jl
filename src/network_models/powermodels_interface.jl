@@ -210,14 +210,14 @@ end
 
 
 "active power only models ignore reactive power variables"
-function variable_reactive_net_injection(pm::PM.AbstractDCPModel; kwargs...)
+function variable_reactive_net_injection(pm::PM.AbstractActivePowerModel; kwargs...)
     return
 end
 
 "active power only models ignore reactive power flows"
-function constraint_power_balance_ni(pm::PM.AbstractDCPModel,
-                           n::Int, c::Int, i::Int,
-                           bus_arcs, bus_arcs_dc)
+function constraint_power_balance_ni(pm::PM.AbstractActivePowerModel,
+                                    n::Int, c::Int, i::Int,
+                                    bus_arcs, bus_arcs_dc)
     p = PM.var(pm, n, c, :p)
     pni = PM.var(pm, n, c, :pni, i)
     p_dc = PM.var(pm, n, c, :p_dc)
@@ -229,9 +229,9 @@ function constraint_power_balance_ni(pm::PM.AbstractDCPModel,
 end
 
 ""
-function constraint_power_balance_ni_expr(pm::PM.AbstractDCPModel,
-                                n::Int, c::Int, i::Int,
-                                bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
+function constraint_power_balance_ni_expr(pm::PM.AbstractActivePowerModel,
+                                        n::Int, c::Int, i::Int,
+                                        bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
     p = PM.var(pm, n, c, :p)
     p_dc = PM.var(pm, n, c, :p_dc)
 
@@ -290,7 +290,7 @@ end
 
 #### PM accessor functions ########
 
-function PMvarmap(system_formulation::Type{S}) where {S<:PM.DCPPowerModel}
+function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractDCPModel}
     pm_var_map = Dict{Type,Dict{Symbol, Union{Symbol,NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta)
@@ -300,7 +300,7 @@ function PMvarmap(system_formulation::Type{S}) where {S<:PM.DCPPowerModel}
     return pm_var_map
 end
 
-function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractActivePowerModel}
+function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractDCPLLModel}
     pm_var_map = Dict{Type,Dict{Symbol, Union{Symbol,NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta)
@@ -323,7 +323,9 @@ function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractPowerModel}
     return pm_var_map
 end
 
-function add_pm_var_refs!(canonical_model::CanonicalModel, system_formulation::Type{S}, sys::PSY.System) where {S<:PM.AbstractPowerModel}
+function add_pm_var_refs!(canonical_model::CanonicalModel,
+                          system_formulation::Type{S},
+                          sys::PSY.System) where {S<:PM.AbstractPowerModel}
 
     time_steps = model_time_steps(canonical_model)
     bus_dict = canonical_model.pm_model.ext[:PMmap].bus
@@ -353,7 +355,14 @@ function add_pm_var_refs!(canonical_model::CanonicalModel, system_formulation::T
 
 end
 
-function add_pm_var_refs!(canonical_model::CanonicalModel, d_class::Type, device_types::Vector, pm_map::Dict, pm_var_map::Dict, pm_var_names::Base.KeySet, time_steps::UnitRange{Int64})
+function add_pm_var_refs!(canonical_model::CanonicalModel,
+                          d_class::Type,
+                          device_types::Vector,
+                          pm_map::Dict,
+                          pm_var_map::Dict,
+                          pm_var_names::Base.KeySet,
+                          time_steps::UnitRange{Int64})
+
     for d_type in Set(device_types)
         devices = [d for d in pm_map if typeof(d[2]) == d_type]
         for (pm_v, ps_v) in pm_var_map[d_class]
