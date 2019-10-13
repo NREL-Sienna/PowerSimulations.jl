@@ -69,7 +69,7 @@ end
                 PSI.StandardPTDFModel,
                 PM.DCPPowerModel,
                 PM.NFAForm,
-                PM.StandardACPModel,
+                ACPPowerModel,
                 PM.StandardACRModel,
                 PM.StandardACTModel,
                 PM.StandardDCPLLForm,
@@ -109,7 +109,7 @@ end
 #=
 @testset "Build Operation Models" begin
     #SCED = PSI.SCEconomicDispatch(c_sys5; optimizer = GLPK_optimizer);
-    #OPF = PSI.OptimalPowerFlow(c_sys5, PM.StandardACPModel, optimizer = ipopt_optimizer)
+    #OPF = PSI.OptimalPowerFlow(c_sys5, ACPPowerModel, optimizer = ipopt_optimizer)
     #UC = PSI.UnitCommitment(c_sys5, PM.DCPPowerModel; optimizer = GLPK_optimizer)
 
     #ED_rts_p = PSI.EconomicDispatch(c_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer);

@@ -40,7 +40,7 @@ end
 @testset "Renewable ACPPower Full Dispatch" begin
     model = DeviceModel(PSY.RenewableDispatch, PSI.RenewableFullDispatch)
     for p in [true, false]
-        op_model = OperationModel(TestOptModel, PM.StandardACPModel, c_sys5_re; parameters = p)
+        op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys5_re; parameters = p)
         construct_device!(op_model, :Renewable, model)
         if p
             moi_tests(op_model, p, 144, 24, 72, 0, 48, false)
@@ -53,7 +53,7 @@ end
     end
     # No Forecast Test
     for p in [true, false]
-        op_model = OperationModel(TestOptModel, PM.StandardACPModel, c_sys5_re; forecast = false, parameters = p)
+        op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys5_re; forecast = false, parameters = p)
         construct_device!(op_model, :Renewable, model)
         if p
             moi_tests(op_model, p, 6, 1, 3, 0, 2, false)
@@ -98,7 +98,7 @@ end
 @testset "Renewable ACPPower ConstantPowerFactor" begin
     model = DeviceModel(PSY.RenewableDispatch, PSI.RenewableConstantPowerFactor)
     for p in [true, false]
-        op_model = OperationModel(TestOptModel, PM.StandardACPModel, c_sys5_re; parameters = p)
+        op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys5_re; parameters = p)
         construct_device!(op_model, :Renewable, model)
         if p
             moi_tests(op_model, p, 144, 0, 72, 0, 72, false)
@@ -111,7 +111,7 @@ end
     end
     # No Forecast Test
     for p in [true, false]
-        op_model = OperationModel(TestOptModel, PM.StandardACPModel, c_sys5_re; forecast = false, parameters = p)
+        op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys5_re; forecast = false, parameters = p)
         construct_device!(op_model, :Renewable, model)
         if p
             moi_tests(op_model, p, 6, 0, 3, 0, 3, false)
@@ -139,10 +139,10 @@ end
     end
 end
 
-@testset "Renewable PM.StandardACPModel FixedOutput" begin
+@testset "Renewable ACPPowerModel FixedOutput" begin
     model = DeviceModel(PSY.RenewableDispatch, PSI.RenewableFixed)
     for p in [true, false]
-        op_model = OperationModel(TestOptModel, PM.StandardACPModel, c_sys5_re; parameters = p)
+        op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys5_re; parameters = p)
         construct_device!(op_model, :Renewable, model)
         if p
             moi_tests(op_model, p, 0, 0, 0, 0, 0, false)

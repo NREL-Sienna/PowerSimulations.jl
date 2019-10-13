@@ -22,18 +22,14 @@ case5_dc_data = PM.replicate(case5_dc_data, 2)
     @test JuMP.num_variables(pm.model) == 110
 end
 
-# test PowerSimulations type extentions
-DCAngleModel = (data::Dict{String, Any}; kwargs...) -> PM.GenericPowerModel(data, PM.DCPPowerModel; kwargs...)
-StandardACModel = (data::Dict{String, Any}; kwargs...) -> PM.GenericPowerModel(data, PM.StandardACPModel; kwargs...)
-
 @testset "PM with type extensions" begin
-    pm = PowerSimulations.build_nip_model(case5_data, DCAngleModel)
+    pm = PowerSimulations.build_nip_model(case5_data, DCPPowerModel)
     JuMP.num_variables(pm.model) == 34
-    pm = PowerSimulations.build_nip_model(case5_data, StandardACModel)
+    pm = PowerSimulations.build_nip_model(case5_data, ACPPowerModel)
     JuMP.num_variables(pm.model) == 96
-    pm = PowerSimulations.build_nip_model(case5_dc_data, PM.DCPPowerModel)
+    pm = PowerSimulations.build_nip_model(case5_dc_data, DCPPowerModel)
     JuMP.num_variables(pm.model) == 36
-    pm = PowerSimulations.build_nip_model(case5_dc_data, DCAngleModel)
+    pm = PowerSimulations.build_nip_model(case5_dc_data, DCPPowerModel)
     JuMP.num_variables(pm.model) == 48
 end
 #=

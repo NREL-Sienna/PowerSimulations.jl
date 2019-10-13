@@ -18,7 +18,7 @@ end
 
 @testset "Storage Basic Storage With AC - PF" begin
     model = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
-    op_model = OperationModel(TestOptModel, PM.StandardACPModel, c_sys5_bat)
+    op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys5_bat)
     construct_device!(op_model, :Storage, model)
     moi_tests(op_model, false, 96, 96, 0, 0, 24, false)
     psi_checkobjfun_test(op_model, GAEVF)
@@ -34,7 +34,7 @@ end
 
 @testset "Storage with Reservation With AC - PF" begin
     model = DeviceModel(PSY.GenericBattery, PSI.BookKeepingwReservation)
-    op_model = OperationModel(TestOptModel, PM.StandardACPModel, c_sys5_bat)
+    op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys5_bat)
     construct_device!(op_model, :Storage, model)
     moi_tests(op_model, false, 120, 48, 48, 48, 24, true)
     psi_checkobjfun_test(op_model, GAEVF)

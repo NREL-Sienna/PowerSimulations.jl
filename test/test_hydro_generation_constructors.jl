@@ -42,9 +42,9 @@ end
 @testset " Hydro Tests" begin
     PSI.activepower_variables(ps_model, generators_hg, 1:24)
     PSI.activepower_constraints(ps_model, generators_hg, PSI.HydroDispatchRunOfRiver, PM.DCPPowerModel, 1:24)
-    PSI.activepower_constraints(ps_model, generators_hg, PSI.HydroDispatchRunOfRiver, PM.StandardACPModel, 1:24)
+    PSI.activepower_constraints(ps_model, generators_hg, PSI.HydroDispatchRunOfRiver, ACPPowerModel, 1:24)
     PSI.reactivepower_variables(ps_model, generators_hg, 1:24)
-    PSI.reactivepower_constraints(ps_model, generators_hg, PSI.HydroDispatchRunOfRiver, PM.StandardACPModel, 1:24)
+    PSI.reactivepower_constraints(ps_model, generators_hg, PSI.HydroDispatchRunOfRiver, ACPPowerModel, 1:24)
 end
 
 @testset " Hydro Tests" begin
@@ -52,8 +52,8 @@ end
     PSI.activepower_variables(ps_model, generators_hg, 1:24)
     PSI.commitment_variables(ps_model, generators_hg, 1:24);
     PSI.activepower_constraints(ps_model, generators_hg, PSI.HydroCommitmentRunOfRiver, PM.DCPPowerModel, 1:24)
-    PSI.activepower_constraints(ps_model, generators_hg, PSI.HydroCommitmentRunOfRiver, PM.StandardACPModel, 1:24)
+    PSI.activepower_constraints(ps_model, generators_hg, PSI.HydroCommitmentRunOfRiver, ACPPowerModel, 1:24)
     PSI.reactivepower_variables(ps_model, generators_hg, 1:24)
-    PSI.reactivepower_constraints(ps_model, generators_hg, PSI.HydroCommitmentRunOfRiver, PM.StandardACPModel, 1:24)
+    PSI.reactivepower_constraints(ps_model, generators_hg, PSI.HydroCommitmentRunOfRiver, ACPPowerModel, 1:24)
 end
 =#
