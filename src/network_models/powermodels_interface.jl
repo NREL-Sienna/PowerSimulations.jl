@@ -14,7 +14,7 @@ function build_nip_model(data::Dict{String, Any},
 end
 
 ""
-function post_nip(pm::PM.GenericPowerModel)
+function post_nip(pm::PM.AbstractPowerModel)
     for (n, network) in PM.nws(pm)
         @assert !PM.ismulticonductor(pm, nw=n)
         PM.variable_voltage(pm, nw=n)
@@ -58,7 +58,7 @@ function build_nip_expr_model(data::Dict{String, Any}, model_constructor; multin
 end
 
 ""
-function post_nip_expr(pm::PM.GenericPowerModel)
+function post_nip_expr(pm::PM.AbstractPowerModel)
     for (n, network) in PM.nws(pm)
         @assert !PM.ismulticonductor(pm, nw=n)
         PM.variable_voltage(pm, nw=n)
@@ -99,7 +99,7 @@ end
 # Model Extention Functions
 
 "generates variables for both `active` and `reactive` net injection"
-function variable_net_injection(pm::PM.GenericPowerModel; kwargs...)
+function variable_net_injection(pm::PM.AbstractPowerModel; kwargs...)
     variable_active_net_injection(pm; kwargs...)
     variable_reactive_net_injection(pm; kwargs...)
 
@@ -108,7 +108,7 @@ function variable_net_injection(pm::PM.GenericPowerModel; kwargs...)
 end
 
 ""
-function variable_active_net_injection(pm::PM.GenericPowerModel; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
+function variable_active_net_injection(pm::PM.AbstractPowerModel; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
     PM.var(pm, nw, cnd)[:pni] = JuMP.@variable(pm.model,
         [i in PM.ids(pm, nw, :bus)], base_name="$(nw)_$(cnd)_pni",
         start = 0.0
@@ -119,7 +119,7 @@ function variable_active_net_injection(pm::PM.GenericPowerModel; nw::Int=pm.cnw,
 end
 
 ""
-function variable_reactive_net_injection(pm::PM.GenericPowerModel; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
+function variable_reactive_net_injection(pm::PM.AbstractPowerModel; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
     PM.var(pm, nw, cnd)[:qni] = JuMP.@variable(pm.model,
         [i in PM.ids(pm, nw, :bus)], base_name="$(nw)_$(cnd)_qni",
         start = 0.0
@@ -130,7 +130,7 @@ end
 
 
 ""
-function constraint_power_balance_ni(pm::PM.GenericPowerModel, i::Int; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
+function constraint_power_balance_ni(pm::PM.AbstractPowerModel, i::Int; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
     if !haskey(PM.con(pm, nw, cnd), :power_balance_p)
         PM.con(pm, nw, cnd)[:power_balance_p] = Dict{Int, JuMP.ConstraintRef}()
     end
@@ -150,7 +150,7 @@ end
 
 
 ""
-function constraint_power_balance_ni(pm::PM.GenericPowerModel,
+function constraint_power_balance_ni(pm::PM.AbstractPowerModel,
                            n::Int, c::Int, i::Int,
                            bus_arcs, bus_arcs_dc)
     p = PM.var(pm, n, c, :p)
@@ -169,7 +169,7 @@ end
 
 
 ""
-function constraint_power_balance_ni_expr(pm::PM.GenericPowerModel,
+function constraint_power_balance_ni_expr(pm::PM.AbstractPowerModel,
                                 i::Int; nw::Int=pm.cnw, cnd::Int=pm.ccnd)
     if !haskey(PM.con(pm, nw, cnd), :power_balance_p)
         PM.con(pm, nw, cnd)[:power_balance_p] = Dict{Int, JuMP.ConstraintRef}()
@@ -193,7 +193,7 @@ end
 
 
 ""
-function constraint_power_balance_ni_expr(pm::PM.GenericPowerModel,
+function constraint_power_balance_ni_expr(pm::PM.AbstractPowerModel,
                                 n::Int, c::Int, i::Int,
                                 bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
     p = PM.var(pm, n, c, :p)
@@ -210,14 +210,14 @@ end
 
 
 "active power only models ignore reactive power variables"
-function variable_reactive_net_injection(pm::PM.GenericPowerModel{T}; kwargs...) where T<:PM.AbstractDCPModel
+function variable_reactive_net_injection(pm::PM.AbstractDCPModel; kwargs...)
     return
 end
 
 "active power only models ignore reactive power flows"
-function constraint_power_balance_ni(pm::PM.GenericPowerModel{T},
+function constraint_power_balance_ni(pm::PM.AbstractDCPModel,
                            n::Int, c::Int, i::Int,
-                           bus_arcs, bus_arcs_dc) where T<:PM.AbstractDCPModel
+                           bus_arcs, bus_arcs_dc)
     p = PM.var(pm, n, c, :p)
     pni = PM.var(pm, n, c, :pni, i)
     p_dc = PM.var(pm, n, c, :p_dc)
@@ -229,9 +229,9 @@ function constraint_power_balance_ni(pm::PM.GenericPowerModel{T},
 end
 
 ""
-function constraint_power_balance_ni_expr(pm::PM.GenericPowerModel{T},
+function constraint_power_balance_ni_expr(pm::PM.AbstractDCPModel,
                                 n::Int, c::Int, i::Int,
-                                bus_arcs, bus_arcs_dc, pni_expr, qni_expr) where T<:PM.AbstractDCPModel
+                                bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
     p = PM.var(pm, n, c, :p)
     p_dc = PM.var(pm, n, c, :p_dc)
 
@@ -258,9 +258,7 @@ function powermodels_network!(canonical_model::CanonicalModel,
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = canonical_model.expressions[:nodal_balance_reactive][bus.number, t]
     end
 
-    pm_f = (data::Dict{String, Any}; kwargs...) -> PM.GenericPowerModel(pm_data, system_formulation; kwargs...)
-
-    canonical_model.pm_model = build_nip_expr_model(pm_data, pm_f, jump_model=canonical_model.JuMPmodel);
+    canonical_model.pm_model = build_nip_expr_model(pm_data, system_formulation, jump_model=canonical_model.JuMPmodel);
     canonical_model.pm_model.ext[:PMmap] = PM_map
 
     return
@@ -283,9 +281,7 @@ function powermodels_network!(canonical_model::CanonicalModel,
         #pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
     end
 
-    pm_f = (data::Dict{String, Any}; kwargs...) -> PM.GenericPowerModel(data, system_formulation; kwargs...)
-
-    canonical_model.pm_model = build_nip_expr_model(pm_data, pm_f, jump_model=canonical_model.JuMPmodel);
+    canonical_model.pm_model = build_nip_expr_model(pm_data, system_formulation, jump_model=canonical_model.JuMPmodel);
     canonical_model.pm_model.ext[:PMmap] = PM_map
 
     return
