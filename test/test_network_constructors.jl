@@ -195,7 +195,7 @@ end
 @testset  "Network AC-PF PowerModels quadratic relaxations models" begin
     networks = [ SOCWRPowerModel,
                  QCRMPowerModel,
-                 PM.QCWRTriForm,
+                 QCLSPowerModel,
                  ]
     systems = [c_sys5, c_sys14, c_sys14_dc]
 
