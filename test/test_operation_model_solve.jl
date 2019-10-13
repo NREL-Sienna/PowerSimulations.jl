@@ -109,7 +109,7 @@ end
 @testset "Solving ED With PowerModels Non-Convex Networks" begin
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters_value = [true, false]
-    networks = [PM.StandardACPModel,
+    networks = [ACPPowerModel,
                 #PM.StandardACRModel,
                 PM.StandardACTModel]
     test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,
