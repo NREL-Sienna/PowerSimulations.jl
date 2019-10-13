@@ -68,13 +68,13 @@ end
     networks = [PSI.CopperPlatePowerModel,
                 PSI.StandardPTDFModel,
                 PM.DCPPowerModel,
-                PM.NFAForm,
+                NFAPowerModel,
                 ACPPowerModel,
-                PM.StandardACRModel,
+                ACRPowerModel,
                 PM.StandardACTModel,
-                PM.StandardDCPLLForm,
+                DCPLLPowerModel,
                 PM.AbstractLPACCForm,
-                PM.SOCWRForm,
+                SOCWRPowerModel,
                 PM.QCWRForm,
                 PM.QCWRTriForm];
 
