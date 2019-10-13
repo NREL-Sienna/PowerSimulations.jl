@@ -213,11 +213,10 @@ end
 end
 
 @testset  "Network Unsupported Power Model Formulations" begin
-    incompat_list = [PM.SDPWRMForm,
-                    PM.SparseSDPWRMForm,
-                    PM.SOCWRConicForm,
-                    PM.SOCBFForm,
-                    PM.SOCBFConicForm]
+incompat_list = [PM.SDPWRMPowerModel,
+                 PM.SparseSDPWRMPowerModel,
+                 PM.SOCBFPowerModel,
+                 PM.SOCBFConicPowerModel]
 
     for network in incompat_list
         ps_model = OperationModel(TestOptModel, network, c_sys5; optimizer = ipopt_optimizer)
