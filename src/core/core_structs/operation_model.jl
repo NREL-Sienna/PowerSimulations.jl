@@ -28,20 +28,15 @@ function OperationModel(::Type{M},
                         model_ref::ModelReference,
                         sys::PSY.System;
                         optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
-                        kwargs...) where {M<:AbstractOperationModel,
-                                          T<:PM.AbstractPowerModel}
+                        kwargs...) where {M<:AbstractOperationModel}
 
-    verbose = get(kwargs, :verbose, true)
-    canonical = _build_canonical(model_ref.transmission,
-                                model_ref.devices,
-                                model_ref.branches,
-                                model_ref.services,
-                                sys,
-                                optimizer,
-                                verbose;
-                                kwargs...)
+    op_model = OperationModel{M}(model_ref,
+                          sys,
+                          CanonicalModel(model_ref.transmission, sys, optimizer; kwargs...))
 
-    return  OperationModel{M}(model_ref, sys, canonical)
+    build_op_model!(op_model; kwargs...)
+
+    return  op_model
 
 end
 
@@ -134,6 +129,7 @@ end
 function set_services_model!(op_model::OperationModel,
                              name::Symbol,
                              service::DeviceModel)
+
     if haskey(op_model.model_ref.devices, name)
         op_model.model_ref.services[name] = service
         build_op_model!(op_model)
@@ -156,11 +152,10 @@ function construct_device!(op_model::OperationModel,
 
     op_model.model_ref.devices[name] = device_model
 
-    _internal_device_constructor!(op_model.canonical,
-                                  device_model,
-                                  get_transmission_ref(op_model),
-                                  get_system(op_model);
-                                  kwargs...)
+    construct_device!(op_model,
+                      device_model,
+                      get_transmission_ref(op_model);
+                      kwargs...)
 
     JuMP.@objective(op_model.canonical.JuMPmodel,
                     MOI.MIN_SENSE,
@@ -174,8 +169,13 @@ function get_initial_conditions(op_model::OperationModel)
     return get_initial_conditions(canonical.initial_conditions)
 end
 
-function get_initial_conditions(op_model::OperationModel, ic::InitialConditionQuantity, device::PSY.Device)
+function get_initial_conditions(op_model::OperationModel,
+                                ic::InitialConditionQuantity,
+                                device::PSY.Device)
+
     canonical = op_model.canonical
     key = ICKey(ic, device)
+
     return get_ini_cond(canonical, key)
+
 end

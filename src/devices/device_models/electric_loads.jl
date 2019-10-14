@@ -1,12 +1,12 @@
 abstract type AbstractLoadFormulation <: AbstractDeviceFormulation end
 
-abstract type AbstractFormulationControllablePowerLoadFormulation <: AbstractLoadFormulation end
+abstract type AbstractControllablePowerLoadFormulation <: AbstractLoadFormulation end
 
 struct StaticPowerLoad <: AbstractLoadFormulation end
 
-struct InterruptiblePowerLoad <: AbstractFormulationControllablePowerLoadFormulation end
+struct InterruptiblePowerLoad <: AbstractControllablePowerLoadFormulation end
 
-struct DispatchablePowerLoad <: AbstractFormulationControllablePowerLoadFormulation end
+struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
 
 ########################### dispatchable load variables ############################################
 
@@ -59,7 +59,7 @@ function reactivepower_constraints(canonical_model::CanonicalModel,
                                    devices::IS.FlattenIteratorWrapper{L},
                                    device_formulation::Type{D},
                                    system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
-                                                                       D<:AbstractFormulationControllablePowerLoadFormulation,
+                                                                       D<:AbstractControllablePowerLoadFormulation,
                                                                        S<:PM.AbstractPowerModel}
     time_steps = model_time_steps(canonical_model)
     key = Symbol("reactive_$(L)")
