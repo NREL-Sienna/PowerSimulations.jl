@@ -218,6 +218,7 @@ function pass_to_pm(sys::PSY.System, time_periods::Int64)
     "storage"        => Dict{String, Any}(),
     "dcline"         => dc_lines,
     "gen"            => Dict{String, Any}(),
+    "switch"         => Dict{String, Any}(),
     "shunt"          => Dict{String, Any}(),
     "load"           => Dict{String, Any}(),
     )

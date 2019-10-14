@@ -5,7 +5,7 @@ function  _build_canonical(::Type{T},
                             sys::PSY.System,
                             optimizer::Union{Nothing, JuMP.OptimizerFactory},
                             verbose::Bool = true;
-                            kwargs...) where {T<:PM.AbstractPowerFormulation}
+                            kwargs...) where {T<:PM.AbstractPowerModel}
 
     canonical = CanonicalModel(T, sys, optimizer; kwargs...)
     # Build Injection devices

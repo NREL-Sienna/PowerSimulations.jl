@@ -44,7 +44,7 @@ function _make_expressions_dict(transmission::Type{S},
                                 V::DataType,
                                 bus_numbers::Vector{Int64},
                                 time_steps::UnitRange{Int64},
-                                parameters::Bool) where {S<:PM.AbstractPowerFormulation}
+                                parameters::Bool) where {S<:PM.AbstractPowerModel}
 
     return DSDA(:nodal_balance_active =>  _make_container_array(V,
                                                                 parameters,
@@ -61,7 +61,7 @@ function _make_expressions_dict(transmission::Type{S},
                                 V::DataType,
                                 bus_numbers::Vector{Int64},
                                 time_steps::UnitRange{Int64},
-                                parameters::Bool) where {S<:PM.AbstractActivePowerFormulation}
+                                parameters::Bool) where {S<:PM.AbstractActivePowerModel}
 
     return DSDA(:nodal_balance_active =>  _make_container_array(V,
                                                                 parameters,
@@ -79,7 +79,7 @@ function _canonical_init(bus_numbers::Vector{Int64},
                         initial_time::Dates.DateTime,
                         parameters::Bool,
                         sequential_runs::Bool,
-                        ini_con::DICKDA) where {S<:PM.AbstractPowerFormulation}
+                        ini_con::DICKDA) where {S<:PM.AbstractPowerModel}
 
     V = JuMP.variable_type(jump_model)
 
@@ -120,7 +120,7 @@ mutable struct CanonicalModel
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}}
     initial_conditions::DICKDA
-    pm_model::Union{Nothing, PM.GenericPowerModel}
+    pm_model::Union{Nothing, PM.AbstractPowerModel}
 
     function CanonicalModel(JuMPmodel::JuMP.AbstractModel,
                             optimizer_factory::Union{Nothing, JuMP.OptimizerFactory},
@@ -135,7 +135,7 @@ mutable struct CanonicalModel
                             expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray},
                             parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}},
                             initial_conditions::DICKDA,
-                            pm_model::Union{Nothing, PM.GenericPowerModel})
+                            pm_model::Union{Nothing, PM.AbstractPowerModel})
 
         #prevents having empty parameters and parametrized canonical model
         @assert isnothing(parameters) == !parametrized
@@ -167,7 +167,7 @@ end
 function CanonicalModel(::Type{T},
                          sys::PSY.System,
                          optimizer::Union{Nothing,JuMP.OptimizerFactory};
-                         kwargs...) where {T<:PM.AbstractPowerFormulation}
+                         kwargs...) where {T<:PM.AbstractPowerModel}
 
     sequential_runs = get(kwargs, :sequential_runs, false)
     user_defined_model = get(kwargs, :JuMPmodel, nothing)

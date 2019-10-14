@@ -60,7 +60,7 @@ function reactivepower_constraints(canonical_model::CanonicalModel,
                                    device_formulation::Type{D},
                                    system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
                                                                        D<:AbstractFormulationControllablePowerLoadFormulation,
-                                                                       S<:PM.AbstractPowerFormulation}
+                                                                       S<:PM.AbstractPowerModel}
     time_steps = model_time_steps(canonical_model)
     key = Symbol("reactive_$(L)")
     canonical_model.constraints[key] = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
@@ -97,7 +97,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
                                  devices::IS.FlattenIteratorWrapper{L},
                                  device_formulation::Type{DispatchablePowerLoad},
                                  system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
-                                                                     S<:PM.AbstractPowerFormulation}
+                                                                     S<:PM.AbstractPowerModel}
 
     time_steps = model_time_steps(canonical_model)
 
@@ -127,7 +127,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
                                  devices::IS.FlattenIteratorWrapper{L},
                                  device_formulation::Type{InterruptiblePowerLoad},
                                  system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
-                                                          S<:PM.AbstractPowerFormulation}
+                                                          S<:PM.AbstractPowerModel}
     time_steps = model_time_steps(canonical_model)
 
     if model_has_parameters(canonical_model)
@@ -160,7 +160,7 @@ function _get_time_series(forecasts::Vector{PSY.Deterministic{L}}) where {L<:PSY
     for (ix, f) in enumerate(forecasts)
         component = PSY.get_component(f)
         names[ix] = PSY.get_name(component)
-        series[ix] = values(PSY.get_data(f))
+        series[ix] = values(PSY.get_timeseries(f))
         ratings[ix] = PSY.get_maxactivepower(component)
     end
 
@@ -172,7 +172,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
                                  devices::Vector{PSY.Deterministic{L}},
                                  device_formulation::Type{DispatchablePowerLoad},
                                  system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
-                                                                     S<:PM.AbstractPowerFormulation}
+                                                                     S<:PM.AbstractPowerModel}
 
     if model_has_parameters(canonical_model)
         device_timeseries_param_ub(canonical_model,
@@ -195,7 +195,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
                                  devices::Vector{PSY.Deterministic{L}},
                                  device_formulation::Type{InterruptiblePowerLoad},
                                  system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
-                                                                     S<:PM.AbstractPowerFormulation}
+                                                                     S<:PM.AbstractPowerModel}
 
     if model_has_parameters(canonical_model)
         device_timeseries_ub_bigM(canonical_model,
@@ -224,7 +224,7 @@ end
 function _nodal_expression_param(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{L},
                                 system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
-                                                                    S<:PM.AbstractPowerFormulation}
+                                                                    S<:PM.AbstractPowerModel}
 
     time_steps = model_time_steps(canonical_model)
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, length(devices))
@@ -256,7 +256,7 @@ end
 function _nodal_expression_param(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{L},
                                 system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
-                                                                    S<:PM.AbstractActivePowerFormulation}
+                                                                    S<:PM.AbstractActivePowerModel}
 
     time_steps = model_time_steps(canonical_model)
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, length(devices))
@@ -282,7 +282,7 @@ end
 function _nodal_expression_param(canonical_model::CanonicalModel,
                                 forecasts::Vector{PSY.Deterministic{L}},
                                 system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
-                                                                    S<:PM.AbstractPowerFormulation}
+                                                                    S<:PM.AbstractPowerModel}
 
     time_steps = model_time_steps(canonical_model)
 
@@ -295,7 +295,7 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
         name = PSY.get_name(device)
         active_power = PSY.get_maxactivepower(device)
         reactive_power = PSY.get_maxreactivepower(device)
-        time_series_vector = values(PSY.get_data(f))
+        time_series_vector = values(PSY.get_timeseries(f))
         ts_data_active[ix] = (name, bus_number, active_power, time_series_vector)
         ts_data_reactive[ix] = (name, bus_number, reactive_power, time_series_vector)
     end
@@ -318,7 +318,7 @@ end
 function _nodal_expression_param(canonical_model::CanonicalModel,
                                 forecasts::Vector{PSY.Deterministic{L}},
                                 system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
-                                                                    S<:PM.AbstractActivePowerFormulation}
+                                                                    S<:PM.AbstractActivePowerModel}
 
     time_steps = model_time_steps(canonical_model)
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, length(forecasts))
@@ -328,7 +328,7 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
         bus_number = PSY.get_bus(device) |> PSY.get_number
         name = PSY.get_name(device)
         active_power = PSY.get_maxactivepower(device)
-        time_series_vector = values(PSY.get_data(f))
+        time_series_vector = values(PSY.get_timeseries(f))
         ts_data_active[ix] = (name, bus_number, active_power, time_series_vector)
     end
 
@@ -349,7 +349,7 @@ end
 function _nodal_expression_fixed(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{L},
                                 system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
-                                                                    S<:PM.AbstractPowerFormulation}
+                                                                    S<:PM.AbstractPowerModel}
 
     time_steps = model_time_steps(canonical_model)
 
@@ -375,7 +375,7 @@ end
 function _nodal_expression_fixed(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{L},
                                 system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
-                                                                    S<:PM.AbstractActivePowerFormulation}
+                                                                    S<:PM.AbstractActivePowerModel}
 
     time_steps = model_time_steps(canonical_model)
 
@@ -397,7 +397,7 @@ end
 function _nodal_expression_fixed(canonical_model::CanonicalModel,
                                 forecasts::Vector{PSY.Deterministic{L}},
                                 system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
-                                                                    S<:PM.AbstractPowerFormulation}
+                                                                    S<:PM.AbstractPowerModel}
 
     time_steps = model_time_steps(canonical_model)
 
@@ -406,7 +406,7 @@ function _nodal_expression_fixed(canonical_model::CanonicalModel,
         bus_number = PSY.get_bus(device) |> PSY.get_number
         active_power = PSY.get_maxactivepower(device)
         reactive_power = PSY.get_maxreactivepower(device)
-        time_series_vector = values(PSY.get_data(f))
+        time_series_vector = values(PSY.get_timeseries(f))
         for t in time_steps
             bus_number = PSY.get_bus(device) |> PSY.get_number
             _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
@@ -428,7 +428,7 @@ end
 function _nodal_expression_fixed(canonical_model::CanonicalModel,
                                 forecasts::Vector{PSY.Deterministic{L}},
                                 system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
-                                                                    S<:PM.AbstractActivePowerFormulation}
+                                                                    S<:PM.AbstractActivePowerModel}
 
     time_steps = model_time_steps(canonical_model)
 
@@ -436,7 +436,7 @@ function _nodal_expression_fixed(canonical_model::CanonicalModel,
         device = PSY.get_component(f)
         bus_number = PSY.get_bus(device) |> PSY.get_number
         active_power = PSY.get_maxactivepower(device)
-        time_series_vector = values(PSY.get_data(f))
+        time_series_vector = values(PSY.get_timeseries(f))
         for t in time_steps
             bus_number = PSY.get_bus(device) |> PSY.get_number
             _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
@@ -456,7 +456,7 @@ function cost_function(canonical_model::CanonicalModel,
                        devices::IS.FlattenIteratorWrapper{L},
                        device_formulation::Type{DispatchablePowerLoad},
                        system_formulation::Type{S}) where {L<:PSY.ControllableLoad,
-                                                           S<:PM.AbstractPowerFormulation}
+                                                           S<:PM.AbstractPowerModel}
 
     add_to_cost(canonical_model,
                 devices,
@@ -472,7 +472,7 @@ function cost_function(canonical_model::CanonicalModel,
                        devices::IS.FlattenIteratorWrapper{L},
                        device_formulation::Type{InterruptiblePowerLoad},
                        system_formulation::Type{S}) where {L<:PSY.ControllableLoad,
-                                                           S<:PM.AbstractPowerFormulation}
+                                                           S<:PM.AbstractPowerModel}
 
     add_to_cost(canonical_model,
                 devices,

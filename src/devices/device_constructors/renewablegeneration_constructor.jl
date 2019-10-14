@@ -4,7 +4,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         sys::PSY.System;
                                         kwargs...) where {R<:PSY.RenewableGen,
                                                           D<:AbstractRenewableDispatchFormulation,
-                                                          S<:PM.AbstractPowerFormulation}
+                                                          S<:PM.AbstractPowerModel}
 
 
     forecast = get(kwargs, :forecast, true)
@@ -45,7 +45,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         sys::PSY.System;
                                         kwargs...) where {R<:PSY.RenewableGen,
                                                           D<:AbstractRenewableDispatchFormulation,
-                                                          S<:PM.AbstractActivePowerFormulation}
+                                                          S<:PM.AbstractActivePowerModel}
 
     forecast = get(kwargs, :forecast, true)
 
@@ -80,7 +80,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         system_formulation::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {R<:PSY.RenewableGen,
-                                                          S<:PM.AbstractPowerFormulation}
+                                                          S<:PM.AbstractPowerModel}
 
     forecast = get(kwargs, :forecast, true)
 
@@ -106,7 +106,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                        system_formulation::Type{S},
                                        sys::PSY.System;
                                        kwargs...) where {D<:AbstractRenewableDispatchFormulation,
-                                                          S<:PM.AbstractPowerFormulation}
+                                                          S<:PM.AbstractPowerModel}
 
     @warn("The Formulation $(D) only applies to FormulationControllable Renewable Resources, \n Consider Changing the Device Formulation to RenewableFixed")
 
@@ -125,7 +125,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                        model::DeviceModel{PSY.RenewableFix, RenewableFixed},
                                        system_formulation::Type{S},
                                        sys::PSY.System;
-                                       kwargs...) where {S<:PM.AbstractPowerFormulation}
+                                       kwargs...) where {S<:PM.AbstractPowerModel}
 
     forecast = get(kwargs, :forecast, true)
 

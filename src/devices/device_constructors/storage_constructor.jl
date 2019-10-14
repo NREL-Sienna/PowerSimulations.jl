@@ -4,7 +4,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         sys::PSY.System;
                                         kwargs...) where {St<:PSY.Storage,
                                                           D<:AbstractStorageFormulation,
-                                                          S<:PM.AbstractPowerFormulation}
+                                                          S<:PM.AbstractPowerModel}
 
 
     devices = PSY.get_components(St, sys)
@@ -48,7 +48,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         sys::PSY.System;
                                         kwargs...) where {St<:PSY.Storage,
                                                           D<:AbstractStorageFormulation,
-                                                          S<:PM.AbstractActivePowerFormulation}
+                                                          S<:PM.AbstractActivePowerModel}
 
     devices = PSY.get_components(St, sys)
 
@@ -87,7 +87,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {St<:PSY.Storage,
-                                                          S<:PM.AbstractPowerFormulation}
+                                                          S<:PM.AbstractPowerModel}
 
 
     devices = PSY.get_components(St, sys)
@@ -132,7 +132,7 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
                                         ::Type{S},
                                         sys::PSY.System;
                                         kwargs...) where {St<:PSY.Storage,
-                                                          S<:PM.AbstractActivePowerFormulation}
+                                                          S<:PM.AbstractActivePowerModel}
 
     devices = PSY.get_components(St, sys)
 
