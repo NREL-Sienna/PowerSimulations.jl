@@ -160,7 +160,7 @@ function _get_time_series(forecasts::Vector{PSY.Deterministic{L}}) where {L<:PSY
     for (ix, f) in enumerate(forecasts)
         component = PSY.get_component(f)
         names[ix] = PSY.get_name(component)
-        series[ix] = values(PSY.get_data(f))
+        series[ix] = values(PSY.get_timeseries(f))
         ratings[ix] = PSY.get_maxactivepower(component)
     end
 
@@ -295,7 +295,7 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
         name = PSY.get_name(device)
         active_power = PSY.get_maxactivepower(device)
         reactive_power = PSY.get_maxreactivepower(device)
-        time_series_vector = values(PSY.get_data(f))
+        time_series_vector = values(PSY.get_timeseries(f))
         ts_data_active[ix] = (name, bus_number, active_power, time_series_vector)
         ts_data_reactive[ix] = (name, bus_number, reactive_power, time_series_vector)
     end
@@ -328,7 +328,7 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
         bus_number = PSY.get_bus(device) |> PSY.get_number
         name = PSY.get_name(device)
         active_power = PSY.get_maxactivepower(device)
-        time_series_vector = values(PSY.get_data(f))
+        time_series_vector = values(PSY.get_timeseries(f))
         ts_data_active[ix] = (name, bus_number, active_power, time_series_vector)
     end
 
@@ -406,7 +406,7 @@ function _nodal_expression_fixed(canonical_model::CanonicalModel,
         bus_number = PSY.get_bus(device) |> PSY.get_number
         active_power = PSY.get_maxactivepower(device)
         reactive_power = PSY.get_maxreactivepower(device)
-        time_series_vector = values(PSY.get_data(f))
+        time_series_vector = values(PSY.get_timeseries(f))
         for t in time_steps
             bus_number = PSY.get_bus(device) |> PSY.get_number
             _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
@@ -436,7 +436,7 @@ function _nodal_expression_fixed(canonical_model::CanonicalModel,
         device = PSY.get_component(f)
         bus_number = PSY.get_bus(device) |> PSY.get_number
         active_power = PSY.get_maxactivepower(device)
-        time_series_vector = values(PSY.get_data(f))
+        time_series_vector = values(PSY.get_timeseries(f))
         for t in time_steps
             bus_number = PSY.get_bus(device) |> PSY.get_number
             _add_to_expression!(canonical_model.expressions[:nodal_balance_active],

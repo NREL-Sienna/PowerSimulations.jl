@@ -151,7 +151,7 @@ function _get_time_series(forecasts::Vector{PSY.Deterministic{R}}) where {R<:PSY
     for (ix, f) in enumerate(forecasts)
         component = PSY.get_component(f)
         names[ix] = PSY.get_name(component)
-        series[ix] = values(PSY.get_data(f))
+        series[ix] = values(PSY.get_timeseries(f))
         ratings[ix] = PSY.get_tech(component).rating
     end
 
