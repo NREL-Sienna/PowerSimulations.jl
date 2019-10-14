@@ -73,7 +73,7 @@ function branch_rate_bounds(canonical_model::CanonicalModel,
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.ACBranch,
                                                                     D<:AbstractBranchFormulation,
-                                                                    S<:PM.AbstractDCPLLModel}
+                                                                    S<:PM.AbstractActivePowerFormulation}
 
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
 
@@ -134,7 +134,7 @@ function branch_rate_constraint(canonical_model::CanonicalModel,
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.ACBranch,
                                                                     D<:AbstractBranchFormulation,
-                                                                    S<:PM.AbstractDCPLLModel}
+                                                                    S<:PM.AbstractActivePowerFormulation}
 
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
 
