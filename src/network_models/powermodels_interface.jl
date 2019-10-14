@@ -300,7 +300,7 @@ function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractDCPModel}
     return pm_var_map
 end
 
-function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractActivePowerFormulation}
+function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractActivePowerModel}
     pm_var_map = Dict{Type,Dict{Symbol, Union{Symbol,NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta)
