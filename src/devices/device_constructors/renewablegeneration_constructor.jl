@@ -6,7 +6,6 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                                              S<:PM.AbstractPowerModel}
 
 
-    forecast = get(kwargs, :forecast, true)
 
 
 
@@ -42,7 +41,6 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                                              D<:AbstractRenewableDispatchFormulation,
                                              S<:PM.AbstractActivePowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
 
 
@@ -73,7 +71,6 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                            kwargs...) where {R<:PSY.RenewableGen,
                                              S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
 
 
@@ -113,7 +110,6 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                            system_formulation::Type{S};
                            kwargs...) where {S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
 
 

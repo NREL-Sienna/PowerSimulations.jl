@@ -5,7 +5,6 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                                              D<:AbstractHydroFormulation,
                                              S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
 
 
@@ -28,7 +27,6 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                            kwargs...) where {H<:PSY.HydroGen,
                                              S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
 
 
@@ -66,7 +64,6 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                            ::Type{S};
                            kwargs...) where {S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
 
 
