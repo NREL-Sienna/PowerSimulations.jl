@@ -38,8 +38,8 @@ function ptdf_networkflow(canonical_model::CanonicalModel,
 # then the PTDF will multiply an expression that contains the flow variable.
         for br in branches
             name = PSY.get_name(br)
-            from_number = (PSY.get_arc(br)).from |> PSY.get_number
-            to_number = (PSY.get_arc(br)).to |> PSY.get_number
+            from_number = PSY.get_number(PSY.get_arc(br).from)
+            to_number = PSY.get_number(PSY.get_arc(br).to)
             flow_variable = canonical_model.variables[var_dict[typeof(br)]]
             _add_to_expression!(nodal_balance_expressions,
                                 from_number, t, flow_variable[name, t], -1.0)

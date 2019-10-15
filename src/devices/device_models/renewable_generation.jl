@@ -19,7 +19,7 @@ function activepower_variables(canonical_model::CanonicalModel,
                  false,
                  :nodal_balance_active;
                  lb_value = x -> 0.0,
-                 ub_value = x -> PSY.get_tech(x) |> PSY.get_rating)
+                 ub_value = x -> PSY.get_rating(PSY.get_tech(x)) )
 
     return
 
@@ -83,7 +83,7 @@ function reactivepower_constraints(canonical_model::CanonicalModel,
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
-        pf = sin(acos(PSY.get_tech(d) |> PSY.get_powerfactor))
+        pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(d))))
         canonical_model.constraints[constraint_name][name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
                                 canonical_model.variables[q_variable_name][name, t] ==
                                 canonical_model.variables[p_variable_name][name, t] * pf)
@@ -129,7 +129,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
                             Symbol("P_$(R)"))
 
     else
-        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_tech(d) |> PSY.get_rating)) for d in devices]
+        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_rating(PSY.get_tech(d)))) for d in devices]
         device_range(canonical_model,
                     range_data,
                     Symbol("activerange_$(R)"),

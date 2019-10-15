@@ -28,18 +28,18 @@ function flow_variables(canonical_model::CanonicalModel,
                                                    time_steps)
 
     for d in devices
-        bus_fr = PSY.get_arc(d).from |> PSY.get_number
-        bus_to = PSY.get_arc(d).to |> PSY.get_number
+        bus_fr = PSY.get_number(PSY.get_arc(d).from)
+        bus_to = PSY.get_number(PSY.get_arc(d).to)
         for t in time_steps
             canonical_model.variables[var_name][PSY.get_name(d), t] = JuMP.@variable(canonical_model.JuMPmodel,
                                                                 base_name="$(bus_fr), $(bus_to)_{$(PSY.get_name(d)), $(t)}")
             _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
-                                PSY.get_arc(d).from |> PSY.get_number,
+                                PSY.get_number(PSY.get_arc(d).from),
                                 t,
                                 canonical_model.variables[var_name][PSY.get_name(d), t],
                                 -1.0)
             _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
-                                PSY.get_arc(d).to |> PSY.get_number,
+                                PSY.get_number(PSY.get_arc(d).to),
                                 t,
                                 canonical_model.variables[var_name][PSY.get_name(d), t],
                                 1.0)
@@ -144,7 +144,7 @@ function branch_rate_constraint(canonical_model::CanonicalModel,
             max_rate = min(PSY.get_activepowerlimits_from(d).max, PSY.get_activepowerlimits_to(d).max)
             canonical_model.constraints[con_name][PSY.get_name(d), t] = JuMP.@constraint(canonical_model.JuMPmodel, min_rate <= canonical_model.variables[var_name][PSY.get_name(d), t] <= max_rate)
             _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
-                                PSY.get_arc(d).to |> PSY.get_number,
+                                PSY.get_number(PSY.get_arc(d).to),
                                 t,
                                 canonical_model.variables[var_name][PSY.get_name(d), t],
                                 -PSY.get_loss(d).l1,
@@ -175,7 +175,7 @@ function branch_rate_constraint(canonical_model::CanonicalModel,
             max_rate = min(PSY.get_activepowerlimits_from(d).max, PSY.get_activepowerlimits_to(d).max)
             canonical_model.constraints[con_name][PSY.get_name(d), t] = JuMP.@constraint(canonical_model.JuMPmodel, min_rate <= canonical_model.variables[var_name][PSY.get_name(d), t] <= max_rate)
             _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
-                                PSY.get_arc(d).to |> PSY.get_number,
+                                PSY.get_number(PSY.get_arc(d).to),
                                 t,
                                 canonical_model.variables[var_name][PSY.get_name(d), t],
                                 -PSY.get_loss(d).l1,
