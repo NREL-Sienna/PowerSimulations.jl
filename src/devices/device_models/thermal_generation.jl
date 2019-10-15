@@ -32,7 +32,7 @@ function activepower_variables!(canonical_model::CanonicalModel,
                  :nodal_balance_active;
                  ub_value = d -> d.tech.activepowerlimits.max,
                  lb_value = d -> d.tech.activepowerlimits.min,
-                 init_value = d -> PSY.get_tech(d) |> PSY.get_activepower)
+                 init_value = d -> PSY.get_activepower(PSY.get_tech(d)))
 
     return
 
@@ -84,7 +84,7 @@ function activepower_constraints!(canonical_model::CanonicalModel,
                                                                      D<:AbstractThermalDispatchFormulation,
                                                                      S<:PM.AbstractPowerModel}
 
-    range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_activepowerlimits) for g in devices]
+    range_data = [(PSY.get_name(g),  PSY.get_activepowerlimits(PSY.get_tech(g))) for g in devices]
 
     device_range(canonical_model,
                  range_data,
@@ -104,7 +104,7 @@ function activepower_constraints!(canonical_model::CanonicalModel,
                                                                       D<:AbstractThermalFormulation,
                                                                       S<:PM.AbstractPowerModel}
 
-    range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_activepowerlimits) for g in devices]
+    range_data = [(PSY.get_name(g),  PSY.get_activepowerlimits(PSY.get_tech(g))) for g in devices]
     device_semicontinuousrange(canonical_model,
                                range_data,
                                Symbol("activerange_$(T)"),
@@ -126,7 +126,7 @@ function activepower_constraints!(canonical_model::CanonicalModel,
                                   system_formulation::Type{S}) where {T<:PSY.ThermalGen,
                                                                      S<:PM.AbstractPowerModel}
 
-    range_data = [(PSY.get_name(g), (min = 0.0, max=(PSY.get_tech(g) |> PSY.get_activepowerlimits).max)) for g in devices]
+    range_data = [(PSY.get_name(g), (min = 0.0, max=( PSY.get_activepowerlimits(PSY.get_tech(g))).max)) for g in devices]
     var_key = Symbol("P_$(T)")
     variable = var(canonical_model, var_key)
 
@@ -157,7 +157,7 @@ function reactivepower_constraints!(canonical_model::CanonicalModel,
                                                                        D<:AbstractThermalDispatchFormulation,
                                                                        S<:PM.AbstractPowerModel}
 
-    range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_reactivepowerlimits) for g in devices]
+    range_data = [(PSY.get_name(g),  PSY.get_reactivepowerlimits(PSY.get_tech(g))) for g in devices]
 
     device_range(canonical_model,
                  range_data ,
@@ -178,7 +178,7 @@ function reactivepower_constraints!(canonical_model::CanonicalModel,
                                                                         D<:AbstractThermalFormulation,
                                                                         S<:PM.AbstractPowerModel}
 
-    range_data = [(PSY.get_name(g), PSY.get_tech(g) |> PSY.get_reactivepowerlimits) for g in devices]
+    range_data = [(PSY.get_name(g),  PSY.get_reactivepowerlimits(PSY.get_tech(g))) for g in devices]
 
     device_semicontinuousrange(canonical_model,
                                range_data,
