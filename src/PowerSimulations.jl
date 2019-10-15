@@ -16,10 +16,13 @@ export CopperPlatePowerModel
 
 ######## Device Models ########
 export DeviceModel
-######## Branche Models ########
+######## Service Models ########
+export ServiceModel
+######## Branch Models ########
 export StaticLine
 export StaticTransformer
 export TapControl
+export StaticLineUnbounded
 #export PhaseControl
 export HVDCLossless
 export HVDCDispatch
@@ -79,6 +82,7 @@ export get_initial_conditions
 export set_transmission_ref!
 export set_devices_ref!
 export set_branches_ref!
+export set_services_ref!
 export set_device_model!
 export set_branch_model!
 export set_device_model!
