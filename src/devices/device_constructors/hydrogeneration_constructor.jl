@@ -38,12 +38,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
         return
     end
 
-    if forecast
-        forecasts = _retrieve_forecasts(sys, H)
-        nodal_expression(canonical, forecasts, S)
-    else
-        nodal_expression(canonical, devices, S)
-    end
+    nodal_expression(canonical, devices, S)
 
     return
 
@@ -59,9 +54,10 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                Consider Changing the Device Formulation to HydroFixed")
 
     construct_device!(canonical,
-                                  DeviceModel(PSY.HydroFix, HydroFixed),
-                                  S;
-                                  kwargs...)
+                      DeviceModel(PSY.HydroFix, HydroFixed),
+                      S;
+                      kwargs...)
+
 
 end
 
@@ -80,12 +76,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
         return
     end
 
-    if forecast
-        forecasts = _retrieve_forecasts(sys, PSY.HydroFix)
-        nodal_expression(canonical, forecasts, S)
-    else
-        nodal_expression(canonical, devices, S)
-    end
+    nodal_expression(canonical, devices, S)
 
     return
 
