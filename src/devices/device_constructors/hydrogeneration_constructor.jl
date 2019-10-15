@@ -38,12 +38,7 @@ function construct_device!(op_model::OperationModel,
         return
     end
 
-    if forecast
-        forecasts = _retrieve_forecasts(sys, H)
-        nodal_expression(op_model.canonical, forecasts, S)
-    else
-        nodal_expression(op_model.canonical, devices, S)
-    end
+    nodal_expression(op_model.canonical, devices, S)
 
     return
 
@@ -59,9 +54,9 @@ function construct_device!(op_model::OperationModel,
                Consider Changing the Device Formulation to HydroFixed")
 
     construct_device!(op_model.canonical,
-                                  DeviceModel(PSY.HydroFix, HydroFixed),
-                                  S;
-                                  kwargs...)
+                      DeviceModel(PSY.HydroFix, HydroFixed),
+                      S;
+                      kwargs...)
 
 end
 
@@ -80,12 +75,7 @@ function construct_device!(op_model::OperationModel,
         return
     end
 
-    if forecast
-        forecasts = _retrieve_forecasts(sys, PSY.HydroFix)
-        nodal_expression(op_model.canonical, forecasts, S)
-    else
-        nodal_expression(op_model.canonical, devices, S)
-    end
+    nodal_expression(op_model.canonical, devices, S)
 
     return
 

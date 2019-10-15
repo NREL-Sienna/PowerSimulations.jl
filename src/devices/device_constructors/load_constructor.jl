@@ -21,12 +21,7 @@ function construct_device!(op_model::OperationModel,
     reactivepower_variables(op_model.canonical, devices)
 
     #Constraints
-    if forecast
-        forecasts = _retrieve_forecasts(sys, L)
-        activepower_constraints(op_model.canonical, forecasts, D, S)
-    else
-        activepower_constraints(op_model.canonical, devices, D, S)
-    end
+    activepower_constraints(op_model.canonical, devices, D, S)
 
     reactivepower_constraints(op_model.canonical, devices, D, S)
 
@@ -60,12 +55,7 @@ function construct_device!(op_model::OperationModel,
     activepower_variables(op_model.canonical, devices)
 
     #Constraints
-    if forecast
-        forecasts = _retrieve_forecasts(sys, L)
-        activepower_constraints(op_model.canonical, forecasts, D, S)
-    else
-        activepower_constraints(op_model.canonical, devices, D, S)
-    end
+    activepower_constraints(op_model.canonical, devices, D, S)
 
     feedforward!(op_model.canonical, L, model.feedforward)
 
@@ -100,12 +90,7 @@ function construct_device!(op_model::OperationModel,
     commitment_variables(op_model.canonical, devices)
 
     #Constraints
-    if forecast
-        forecasts = _retrieve_forecasts(sys, L)
-        activepower_constraints(op_model.canonical, forecasts, model.formulation, S)
-    else
-        activepower_constraints(op_model.canonical, devices, model.formulation, S)
-    end
+    activepower_constraints(op_model.canonical, devices, model.formulation, S)
 
     reactivepower_constraints(op_model.canonical, devices, model.formulation, S)
 
@@ -140,12 +125,7 @@ function construct_device!(op_model::OperationModel,
     commitment_variables(op_model.canonical, devices)
 
     #Constraints
-    if forecast
-        forecasts = _retrieve_forecasts(sys, L)
-        activepower_constraints(op_model.canonical, forecasts, model.formulation, S)
-    else
-        activepower_constraints(op_model.canonical, devices, model.formulation, S)
-    end
+    activepower_constraints(op_model.canonical, devices, model.formulation, S)
 
     feedforward!(op_model.canonical, L, model.feedforward)
 
@@ -172,12 +152,7 @@ function construct_device!(op_model::OperationModel,
         return
     end
 
-    if forecast
-        forecasts = _retrieve_forecasts(sys, L)
-        nodal_expression(op_model.canonical, forecasts, S)
-    else
-        nodal_expression(op_model.canonical, devices, S)
-    end
+    nodal_expression(op_model.canonical, devices, S)
 
     return
 

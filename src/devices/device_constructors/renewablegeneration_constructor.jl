@@ -22,12 +22,7 @@ function construct_device!(op_model::OperationModel,
     reactivepower_variables(op_model.canonical, devices);
 
     #Constraints
-    if forecast
-        forecasts = _retrieve_forecasts(sys, R)
-        activepower_constraints(op_model.canonical, forecasts, D, S)
-    else
-        activepower_constraints(op_model.canonical, devices, D, S)
-    end
+    activepower_constraints(op_model.canonical, devices, D, S)
 
     reactivepower_constraints(op_model.canonical, devices, D, S)
 
@@ -61,12 +56,7 @@ function construct_device!(op_model::OperationModel,
     activepower_variables(op_model.canonical, devices)
 
     #Constraints
-    if forecast
-        forecasts = _retrieve_forecasts(sys, R)
-        activepower_constraints(op_model.canonical, forecasts, D, S)
-    else
-        activepower_constraints(op_model.canonical, devices, D, S)
-    end
+    activepower_constraints(op_model.canonical, devices, D, S)
 
     feedforward!(op_model.canonical, R, model.feedforward)
 
@@ -93,12 +83,7 @@ function construct_device!(op_model::OperationModel,
         return
     end
 
-    if forecast
-        forecasts = _retrieve_forecasts(sys, R)
-        nodal_expression(op_model.canonical, forecasts, system_formulation)
-    else
-        nodal_expression(op_model.canonical, devices, system_formulation)
-    end
+    nodal_expression(op_model.canonical, devices, system_formulation)
 
     return
 
@@ -137,12 +122,7 @@ function construct_device!(op_model::OperationModel,
         return
     end
 
-    if forecast
-        forecasts = _retrieve_forecasts(sys, PSY.RenewableFix)
-        nodal_expression(op_model.canonical, forecasts, system_formulation)
-    else
-        nodal_expression(op_model.canonical, devices, system_formulation)
-    end
+    nodal_expression(op_model.canonical, devices, system_formulation)
 
     return
 
