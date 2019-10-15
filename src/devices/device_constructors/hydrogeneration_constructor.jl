@@ -5,7 +5,6 @@ function construct_device!(op_model::OperationModel,
                                              D<:AbstractHydroFormulation,
                                              S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
     sys = get_system(op_model)
 
@@ -28,7 +27,6 @@ function construct_device!(op_model::OperationModel,
                            kwargs...) where {H<:PSY.HydroGen,
                                              S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
     sys = get_system(op_model)
 
@@ -65,7 +63,6 @@ function construct_device!(op_model::OperationModel,
                            ::Type{S};
                            kwargs...) where {S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
     sys = get_system(op_model)
 

@@ -6,7 +6,6 @@ function construct_device!(op_model::OperationModel,
                                              S<:PM.AbstractPowerModel}
 
 
-    forecast = get(kwargs, :forecast, true)
 
     sys = get_system(op_model)
 
@@ -42,7 +41,6 @@ function construct_device!(op_model::OperationModel,
                                              D<:AbstractRenewableDispatchFormulation,
                                              S<:PM.AbstractActivePowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
     sys = get_system(op_model)
 
@@ -73,7 +71,6 @@ function construct_device!(op_model::OperationModel,
                            kwargs...) where {R<:PSY.RenewableGen,
                                              S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
     sys = get_system(op_model)
 
@@ -112,7 +109,6 @@ function construct_device!(op_model::OperationModel,
                            system_formulation::Type{S};
                            kwargs...) where {S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
     sys = get_system(op_model)
 

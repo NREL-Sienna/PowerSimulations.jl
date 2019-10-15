@@ -5,7 +5,6 @@ function construct_device!(op_model::OperationModel,
                                              D<:AbstractControllablePowerLoadFormulation,
                                              S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
     sys = get_system(op_model)
 
@@ -41,7 +40,6 @@ function construct_device!(op_model::OperationModel,
                                              D<:AbstractControllablePowerLoadFormulation,
                                              S<:PM.AbstractActivePowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
     sys = get_system(op_model)
 
@@ -72,7 +70,6 @@ function construct_device!(op_model::OperationModel,
                            kwargs...) where {L<:PSY.ControllableLoad,
                                              S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
     sys = get_system(op_model)
 
@@ -109,7 +106,6 @@ function construct_device!(op_model::OperationModel,
                            kwargs...) where {L<:PSY.ControllableLoad,
                                              S<:PM.AbstractActivePowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
     sys = get_system(op_model)
 
@@ -142,7 +138,6 @@ function construct_device!(op_model::OperationModel,
                            kwargs...) where {L<:PSY.ElectricLoad,
                                              S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
     sys = get_system(op_model)
 
