@@ -367,7 +367,7 @@ function add_pm_var_refs!(canonical_model::CanonicalModel,
         devices = [d for d in pm_map if typeof(d[2]) == d_type]
         for (pm_v, ps_v) in pm_var_map[d_class]
             if pm_v in pm_var_names
-                for dir in typeof(ps_v) |> fieldnames
+                for dir in fieldnames(typeof(ps_v))
                     isnothing(getfield(ps_v,dir)) && continue
                     var_name = Symbol("$(getfield(ps_v,dir))_$(d_type)")
                     canonical_model.variables[var_name] = PSI._container_spec(canonical_model.JuMPmodel,
