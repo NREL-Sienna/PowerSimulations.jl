@@ -19,7 +19,7 @@ function activepower_variables(canonical_model::CanonicalModel,
                  false,
                  :nodal_balance_active;
                  lb_value = x -> 0.0,
-                 ub_value = x -> PSY.get_rating(PSY.get_tech(x)) )
+                 ub_value = x -> PSY.get_rating(PSY.get_tech(x)))
 
     return
 
@@ -111,6 +111,24 @@ function _get_time_series(devices::IS.FlattenIteratorWrapper{R},
 
 end
 
+function _get_time_series(forecasts::Vector{PSY.Deterministic{R}}) where {R<:PSY.RenewableGen}
+
+    names = Vector{String}(undef, length(forecasts))
+    ratings = Vector{Float64}(undef, length(forecasts))
+    series = Vector{Vector{Float64}}(undef, length(forecasts))
+
+    for (ix, f) in enumerate(forecasts)
+        component = PSY.get_component(f)
+        names[ix] = PSY.get_name(component)
+        series[ix] = values(PSY.get_timeseries(f))
+        ratings[ix] = PSY.get_tech(component).rating
+    end
+
+    return names, ratings, series
+
+end
+
+
 function activepower_constraints(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{R},
                                 device_formulation::Type{D},
@@ -134,49 +152,6 @@ function activepower_constraints(canonical_model::CanonicalModel,
                     range_data,
                     Symbol("activerange_$(R)"),
                     Symbol("P_$(R)"))
-    end
-
-    return
-
-end
-
-######################### output constraints with Time Series ##############################################
-
-function _get_time_series(forecasts::Vector{PSY.Deterministic{R}}) where {R<:PSY.RenewableGen}
-
-    names = Vector{String}(undef, length(forecasts))
-    ratings = Vector{Float64}(undef, length(forecasts))
-    series = Vector{Vector{Float64}}(undef, length(forecasts))
-
-    for (ix, f) in enumerate(forecasts)
-        component = PSY.get_component(f)
-        names[ix] = PSY.get_name(component)
-        series[ix] = values(PSY.get_timeseries(f))
-        ratings[ix] = PSY.get_tech(component).rating
-    end
-
-    return names, ratings, series
-
-end
-
-function activepower_constraints(canonical_model::CanonicalModel,
-                                 forecasts::Vector{PSY.Deterministic{R}},
-                                 device_formulation::Type{D},
-                                 system_formulation::Type{S}) where {R<:PSY.RenewableGen,
-                                                                     D<:AbstractRenewableDispatchFormulation,
-                                                                     S<:PM.AbstractPowerModel}
-
-    if model_has_parameters(canonical_model)
-        device_timeseries_param_ub(canonical_model,
-                                   _get_time_series(forecasts),
-                                   Symbol("activerange_$(R)"),
-                                   UpdateRef{R}(Symbol("P_$(R)")),
-                                   Symbol("P_$(R)"))
-    else
-        device_timeseries_ub(canonical_model,
-                            _get_time_series(forecasts),
-                            Symbol("activerange_$(R)"),
-                            Symbol("P_$(R)"))
     end
 
     return
