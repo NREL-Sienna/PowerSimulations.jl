@@ -194,7 +194,8 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
         @warn("The Formulation $(D) only applies to FormulationControllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad")
     end
 
-    construct_device!(op_model,
+    construct_device!(canonical,
+                      sys,
                       DeviceModel(L, StaticPowerLoad),
                       S;
                       kwargs...)

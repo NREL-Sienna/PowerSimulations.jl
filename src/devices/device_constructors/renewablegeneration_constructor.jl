@@ -112,7 +112,8 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
     @warn("The Formulation $(D) only applies to FormulationControllable Renewable Resources, \n Consider Changing the Device Formulation to RenewableFixed")
 
-    construct_device!(op_model,
+    construct_device!(canonical,
+                      sys,
                       DeviceModel(PSY.RenewableFix,RenewableFixed),
                       system_formulation;
                       kwargs...)
