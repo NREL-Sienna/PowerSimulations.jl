@@ -1,25 +1,26 @@
-function _internal_network_constructor(canonical::CanonicalModel,
-                                        system_formulation::Type{CopperPlatePowerModel},
-                                        sys::PSY.System;
-                                        kwargs...)
+function construct_network!(op_model::OperationModel,
+                            system_formulation::Type{CopperPlatePowerModel};
+                            kwargs...)
 
+    sys = get_system(op_model)
     buses = PSY.get_components(PSY.Bus, sys)
     bus_count = length(buses)
 
-    copper_plate(canonical, :nodal_balance_active, bus_count)
+    copper_plate(op_model.canonical, :nodal_balance_active, bus_count)
 
     return
 end
 
-function _internal_network_constructor(canonical::CanonicalModel,
-                                        system_formulation::Type{StandardPTDF},
-                                        sys::PSY.System;
-                                        kwargs...)
+function construct_network!(op_model::OperationModel,
+                            system_formulation::Type{StandardPTDFModel};
+                            kwargs...)
+
+    sys = get_system(op_model)
 
     if :PTDF in keys(kwargs)
         buses = PSY.get_components(PSY.Bus, sys)
         ac_branches = PSY.get_components(PSY.ACBranch, sys)
-        ptdf_networkflow(canonical,
+        ptdf_networkflow(op_model.canonical,
                          ac_branches,
                          buses,
                          :nodal_balance_active,
@@ -29,8 +30,8 @@ function _internal_network_constructor(canonical::CanonicalModel,
         dc_branch_types = typeof.(dc_branches)
         for btype in Set(dc_branch_types)
             typed_dc_branches = IS.FlattenIteratorWrapper(btype, Vector([[b for b in dc_branches if typeof(b) == btype]]))
-            flow_variables(canonical,
-                           StandardPTDF,
+            flow_variables(op_model.canonical,
+                           StandardPTDFModel,
                            typed_dc_branches)
         end
 
@@ -42,33 +43,24 @@ function _internal_network_constructor(canonical::CanonicalModel,
 
 end
 
-function _internal_network_constructor(canonical::CanonicalModel,
-                                        system_formulation::Type{T},
-                                        sys::PSY.System;
-                                        kwargs...) where {T<:PM.AbstractPowerFormulation}
+function construct_network!(op_model::OperationModel,
+                            system_formulation::Type{T};
+                            kwargs...) where {T<:PM.AbstractPowerModel}
 
-    incompat_list = [PM.SDPWRMForm,
-                     PM.SparseSDPWRMForm,
-                     PM.SOCWRConicForm,
-                     PM.SOCBFForm,
-                     PM.SOCBFConicForm]
+
+    incompat_list = [PM.SDPWRMPowerModel,
+                     PM.SparseSDPWRMPowerModel,
+                     PM.SOCBFPowerModel,
+                     PM.SOCBFConicPowerModel]
 
     if system_formulation in incompat_list
-       throw(ArgumentError("$(sys) formulation is not currently supported in PowerSimulations"))
+       throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
     end
 
-    powermodels_network!(canonical, system_formulation, sys)
-    add_pm_var_refs!(canonical, system_formulation, sys)
-
-    return
-
-end
-
-function construct_network!(op_model::OperationModel,
-                            system_formulation::Type{S}; kwargs...) where {S<:PM.AbstractPowerFormulation}
-
+    op_model.model_ref.transmission = T
     sys = get_system(op_model)
-    _internal_network_constructor(op_model.canonical, system_formulation, sys; kwargs... )
+    powermodels_network!(op_model.canonical, system_formulation, sys)
+    add_pm_var_refs!(op_model.canonical, system_formulation, sys)
 
     return
 
