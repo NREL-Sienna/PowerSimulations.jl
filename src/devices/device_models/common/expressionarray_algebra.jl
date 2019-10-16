@@ -75,20 +75,6 @@ function _add_to_expression!(expression_array::T,
 
 end
 
-function _add_to_expression!(expression_array::T,
-                             ix::Int64,
-                             jx::Int64,
-                             value::Float64) where T
-
-    if isassigned(expression_array, ix, jx)
-        expression_array[ix,jx] +=  value
-    else
-        expression_array[ix,jx] = zero(eltype(expression_array)) + value
-    end
-
-    return
-
-end
 
 function _add_to_expression!(expression_array::T,
                             ix::Int64,
@@ -114,6 +100,21 @@ function _add_to_expression!(expression_array::T,
         expression_array[ix].constant +=  value
     else
         expression_array[ix] = zero(eltype(expression_array)) + value
+    end
+
+    return
+
+end
+
+function _add_to_expression!(expression_array::T,
+                             ix::Int64,
+                             jx::Int64,
+                             value::Float64) where T
+
+    if isassigned(expression_array, ix, jx)
+        expression_array[ix,jx] +=  value
+    else
+        expression_array[ix,jx] = zero(eltype(expression_array)) + value
     end
 
     return

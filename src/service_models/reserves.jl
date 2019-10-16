@@ -74,7 +74,7 @@ end
 function _nodal_expression_fixed!(canonical_model::CanonicalModel,
                                 forecasts::Vector{PSY.Deterministic{L}},
                                 ::Type{S}) where {L<:PSY.Reserve,
-                                                S<:PM.AbstractActivePowerFormulation}
+                                                S<:PM.AbstractActivePowerModel}
 
     time_steps = model_time_steps(canonical_model)
 

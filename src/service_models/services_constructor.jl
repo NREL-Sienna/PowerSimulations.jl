@@ -1,12 +1,14 @@
-function _internal_service_constructor!(canonical_model::CanonicalModel,
+function _internal_service_constructor!(op_model::OperationModel,
                             model::ServiceModel{S, Sr},
-                            ::Type{T},
-                            sys::PSY.System;
+                            ::Type{T};
                             kwargs...) where {S<:PSY.Service,
                                               Sr<:AbstractServiceFormulation,
-                                              T<:PM.AbstractPowerFormulation}
-                                              
+                                              T<:PM.AbstractPowerModel}
+    
+    
+    sys = get_system(op_model)                                          
     services = PSY.get_components(S, sys)
+    canonical_model = op_model.canonical
     _make_expressions_dict(canonical_model,services,sys)
     _build_device_expression!(canonical_model, Symbol("activerange"), sys)
     _build_device_expression!(canonical_model, Symbol("ramp_up"), sys)
