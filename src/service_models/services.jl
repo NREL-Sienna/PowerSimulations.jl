@@ -6,6 +6,6 @@ abstract type AbstractRegulationReserveFormulation<:AbstractReservesFormulation 
 
 struct RampLimitedReserve<:AbstractReservesFormulation end
 
-struct LoadProportionalReserve<:AbstractReservesForm end
+struct LoadProportionalReserve<:AbstractReservesFormulation end
 
-struct SpinningReserve <:AbstractReservesForm end
+struct SpinningReserve <:AbstractReservesFormulation end
