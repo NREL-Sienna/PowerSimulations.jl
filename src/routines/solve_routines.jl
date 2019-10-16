@@ -102,7 +102,6 @@ sim = Simulation("test", 7, stages, "/Users/lhanig/Downloads/";
 verbose = true, system_to_file = false)
 run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
 ```
-
 """
 function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
 
