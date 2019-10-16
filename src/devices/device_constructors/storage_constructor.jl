@@ -5,7 +5,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                                              D<:AbstractStorageFormulation,
                                              S<:PM.AbstractPowerModel}
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(St, sys)
 
@@ -49,7 +49,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                                              D<:AbstractStorageFormulation,
                                              S<:PM.AbstractActivePowerModel}
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(St, sys)
 
@@ -89,7 +89,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                                         kwargs...) where {St<:PSY.Storage,
                                                           S<:PM.AbstractPowerModel}
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(St, sys)
 
@@ -134,7 +134,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                            kwargs...) where {St<:PSY.Storage,
                                              S<:PM.AbstractActivePowerModel}
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(St, sys)
 

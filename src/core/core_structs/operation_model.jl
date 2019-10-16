@@ -194,7 +194,8 @@ function construct_device!(op_model::OperationModel,
 
     op_model.model_ref.devices[name] = device_model
 
-    construct_device!(op_model,
+    construct_device!(op_model.canonical,
+                     get_system(op_model),
                       device_model,
                       get_transmission_ref(op_model);
                       kwargs...)
@@ -206,6 +207,16 @@ function construct_device!(op_model::OperationModel,
     return
 
 end
+
+function construct_network!(op_model::OperationModel,
+                            system_formulation::Type{T};
+                            kwargs...) where {T<:PM.AbstractPowerModel}
+
+    construct_network!(op_model.canonical, get_system(op_model), T; kwargs...)
+
+    return
+end
+
 
 function get_initial_conditions(op_model::OperationModel)
     return get_initial_conditions(canonical.initial_conditions)

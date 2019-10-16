@@ -7,7 +7,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
     forecast = get(kwargs, :forecast, true)
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(H, sys)
 
@@ -30,7 +30,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
     forecast = get(kwargs, :forecast, true)
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(H, sys)
 
@@ -72,7 +72,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
     forecast = get(kwargs, :forecast, true)
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(PSY.HydroFix, sys)
 

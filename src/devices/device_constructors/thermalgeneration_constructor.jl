@@ -8,7 +8,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                                              D<:AbstractThermalFormulation,
                                              S<:PM.AbstractPowerModel}
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(T, sys)
 
@@ -58,7 +58,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                                              D<:AbstractThermalFormulation,
                                              S<:PM.AbstractActivePowerModel}
 
-    sys = get_system(op_model)
+
     devices = PSY.get_components(T, sys)
 
     if validate_available_devices(devices, T)
@@ -101,7 +101,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                            kwargs...) where {T<:PSY.ThermalGen,
                                              S<:PM.AbstractPowerModel}
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(T, sys)
 
@@ -146,7 +146,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                            kwargs...) where {T<:PSY.ThermalGen,
                                              S<:PM.AbstractActivePowerModel}
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(T, sys)
 
@@ -186,7 +186,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                            kwargs...) where {T<:PSY.ThermalGen,
                                              S<:PM.AbstractPowerModel}
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(T, sys)
 
@@ -231,7 +231,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                            kwargs...) where {T<:PSY.ThermalGen,
                                              S<:PM.AbstractActivePowerModel}
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(T, sys)
 
@@ -271,7 +271,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                                              D<:AbstractThermalDispatchFormulation,
                                              S<:PM.AbstractPowerModel}
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(T, sys)
 
@@ -309,7 +309,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                                              D<:AbstractThermalDispatchFormulation,
                                              S<:PM.AbstractActivePowerModel}
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(T, sys)
 

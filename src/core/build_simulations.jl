@@ -77,7 +77,7 @@ function _build_stages(sim_ref::SimulationRef,
     mod_stages = Vector{_Stage}(undef, length(stages))
     for (key, stage) in stages
         verbose && @info("Building Stage $(key)")
-        canonical = _build_canonical(stage.model.transmission,
+        canonical = _build_canonical!(stage.model.transmission,
                                     stage.model.devices,
                                     stage.model.branches,
                                     stage.model.services,

@@ -17,7 +17,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                                              Br<:AbstractBranchFormulation,
                                              S<:PM.AbstractPowerModel}
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(B, sys)
 
@@ -38,7 +38,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                            ::Type{S};
                            kwargs...) where {S<:PM.AbstractPowerModel}
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(PSY.MonitoredLine, sys)
 
@@ -80,7 +80,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                                              B<:PSY.DCBranch,
                                              S<:PM.AbstractPowerModel}
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(B, sys)
 
