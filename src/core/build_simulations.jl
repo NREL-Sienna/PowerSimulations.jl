@@ -77,28 +77,25 @@ function _build_stages(sim_ref::SimulationRef,
     mod_stages = Vector{_Stage}(undef, length(stages))
     for (key, stage) in stages
         verbose && @info("Building Stage $(key)")
-        canonical = _build_canonical!(stage.model.transmission,
-                                    stage.model.devices,
-                                    stage.model.branches,
-                                    stage.model.services,
-                                    stage.sys,
-                                    stage.optimizer,
-                                    verbose;
-                                    parameters = true,
-                                    kwargs...)
+        canonical = CanonicalModel(stage.model.transmission, stage.sys, optimizer; kwargs...)
+        mod_stages[key] = _Stage(key,
+                                stage.model,
+                                stage.op_model,
+                                stage.sys,
+                                canonical,
+                                stage.optimizer,
+                                stage.execution_count,
+                                stage.chronology_ref,
+                                stage.cache)
+        _build_canonical!(mod_stages[key].canonical,
+                          stage.model,
+                          stage.sys;
+                          parameters = true,
+                          kwargs...)
         stage_path = joinpath(sim_ref.models,"stage_$(key)_model")
         mkpath(stage_path)
         _write_canonical_model(canonical, joinpath(stage_path, "optimization_model.json"))
         system_to_file && IS.to_json(stage.sys, joinpath(stage_path ,"sys_data.json"))
-        mod_stages[key] = _Stage(key,
-                               stage.model,
-                               stage.op_model,
-                               stage.sys,
-                               canonical,
-                               stage.optimizer,
-                               stage.execution_count,
-                               stage.chronology_ref,
-                               stage.cache)
         _populate_cache!(mod_stages[key])
         sim_ref.date_ref[key] = PSY.get_forecast_initial_times(stage.sys)[1]
     end
