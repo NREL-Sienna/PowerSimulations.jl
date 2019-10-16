@@ -62,24 +62,21 @@ end
 
 function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::String)
 
-    
-    for run in stage.executions
-        if stage.model.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
-            error("No Optimizer has been defined, can't solve the operational problem stage with key $(stage.key)")
-        end
-
-        timed_log = Dict{Symbol, Any}()
-        _, timed_log[:timed_solve_time],
-        timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] =  @timed JuMP.optimize!(stage.model.canonical.JuMPmodel)
-        model_status = JuMP.primal_status(stage.model.canonical.JuMPmodel)
-        if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-            error("Stage $(stage.key) status is $(model_status)")
-        end
-        _export_model_result(stage.model, start_time, results_path)
-        _export_optimizer_log(timed_log, stage.model, results_path)
-        stage.execution_count += 1
+    if stage.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
+        error("No Optimizer has been defined, can't solve the operational problem stage with key $(stage.key)")
     end
+
+    timed_log = Dict{Symbol, Any}()
+    _, timed_log[:timed_solve_time],
+    timed_log[:solve_bytes_alloc],
+    timed_log[:sec_in_gc] = @timed JuMP.optimize!(stage.canonical.JuMPmodel)
+    model_status = JuMP.primal_status(stage.canonical.JuMPmodel)
+    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+        error("Stage $(stage.key) status is $(model_status)")
+    end
+    _export_model_result(stage, start_time, results_path)
+    _export_optimizer_log(timed_log, stage.canonical, results_path)
+    stage.execution_count += 1
 
     return
 
@@ -126,7 +123,7 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
         verbose && println("Step $(s)")
         for (ix, stage) in enumerate(sim.stages)
             verbose && println("Stage $(ix)")
-            interval = PSY.get_forecasts_interval(stage.model.sys)
+            interval = PSY.get_forecasts_interval(stage.sys)
             for run in 1:stage.executions
                 sim.ref.current_time = sim.ref.date_ref[ix]
                 verbose && println("Simulation TimeStamp: $(sim.ref.current_time)")

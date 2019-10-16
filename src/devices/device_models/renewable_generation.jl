@@ -1,12 +1,12 @@
-abstract type AbstractRenewableFormulation<:AbstractDeviceFormulation end
+abstract type AbstractRenewableFormulation <: AbstractDeviceFormulation end
 
-abstract type AbstractRenewableDispatchForm<:AbstractRenewableFormulation end
+abstract type AbstractRenewableDispatchFormulation <: AbstractRenewableFormulation end
 
-struct RenewableFixed<:AbstractRenewableFormulation end
+struct RenewableFixed <: AbstractRenewableFormulation end
 
-struct RenewableFullDispatch<:AbstractRenewableDispatchForm end
+struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
 
-struct RenewableConstantPowerFactor<:AbstractRenewableDispatchForm end
+struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
 ########################### renewable generation variables ############################################
 
@@ -19,7 +19,7 @@ function activepower_variables(canonical_model::CanonicalModel,
                  false,
                  :nodal_balance_active;
                  lb_value = x -> 0.0,
-                 ub_value = x -> PSY.get_tech(x) |> PSY.get_rating)
+                 ub_value = x -> PSY.get_rating(PSY.get_tech(x)) )
 
     return
 
@@ -43,7 +43,7 @@ function reactivepower_constraints(canonical_model::CanonicalModel,
                                     devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableFullDispatch},
                                     system_formulation::Type{S}) where {R<:PSY.RenewableGen,
-                                                                         S<:PM.AbstractPowerFormulation}
+                                                                         S<:PM.AbstractPowerModel}
 
     range_data = Vector{NamedMinMax}(undef, length(devices))
 
@@ -72,7 +72,7 @@ function reactivepower_constraints(canonical_model::CanonicalModel,
                                     devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableConstantPowerFactor},
                                     system_formulation::Type{S}) where {R<:PSY.RenewableGen,
-                                                                        S<:PM.AbstractPowerFormulation}
+                                                                        S<:PM.AbstractPowerModel}
 
     names = (PSY.get_name(d) for d in devices)
     time_steps = model_time_steps(canonical_model)
@@ -83,7 +83,7 @@ function reactivepower_constraints(canonical_model::CanonicalModel,
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
-        pf = sin(acos(PSY.get_tech(d) |> PSY.get_powerfactor))
+        pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(d))))
         canonical_model.constraints[constraint_name][name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
                                 canonical_model.variables[q_variable_name][name, t] ==
                                 canonical_model.variables[p_variable_name][name, t] * pf)
@@ -115,8 +115,8 @@ function activepower_constraints(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{R},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {R<:PSY.RenewableGen,
-                                                         D<:AbstractRenewableDispatchForm,
-                                                         S<:PM.AbstractPowerFormulation}
+                                                         D<:AbstractRenewableDispatchFormulation,
+                                                         S<:PM.AbstractPowerModel}
 
     parameters = model_has_parameters(canonical_model)
 
@@ -129,7 +129,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
                             Symbol("P_$(R)"))
 
     else
-        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_tech(d) |> PSY.get_rating)) for d in devices]
+        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_rating(PSY.get_tech(d)))) for d in devices]
         device_range(canonical_model,
                     range_data,
                     Symbol("activerange_$(R)"),
@@ -151,7 +151,7 @@ function _get_time_series(forecasts::Vector{PSY.Deterministic{R}}) where {R<:PSY
     for (ix, f) in enumerate(forecasts)
         component = PSY.get_component(f)
         names[ix] = PSY.get_name(component)
-        series[ix] = values(PSY.get_data(f))
+        series[ix] = values(PSY.get_timeseries(f))
         ratings[ix] = PSY.get_tech(component).rating
     end
 
@@ -163,8 +163,8 @@ function activepower_constraints(canonical_model::CanonicalModel,
                                  forecasts::Vector{PSY.Deterministic{R}},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S}) where {R<:PSY.RenewableGen,
-                                                                     D<:AbstractRenewableDispatchForm,
-                                                                     S<:PM.AbstractPowerFormulation}
+                                                                     D<:AbstractRenewableDispatchFormulation,
+                                                                     S<:PM.AbstractPowerModel}
 
     if model_has_parameters(canonical_model)
         device_timeseries_param_ub(canonical_model,
@@ -187,8 +187,8 @@ end
 function cost_function(canonical_model::CanonicalModel,
                        devices::IS.FlattenIteratorWrapper{PSY.RenewableDispatch},
                        device_formulation::Type{D},
-                       system_formulation::Type{S}) where {D<:AbstractRenewableDispatchForm,
-                                                           S<:PM.AbstractPowerFormulation}
+                       system_formulation::Type{S}) where {D<:AbstractRenewableDispatchFormulation,
+                                                           S<:PM.AbstractPowerModel}
 
     add_to_cost(canonical_model,
                 devices,

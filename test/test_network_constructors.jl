@@ -37,7 +37,7 @@ dc_line = DeviceModel(PSY.HVDCLine, PSI.HVDCDispatch)
 end
 
 @testset "Network DC-PF with PTDF formulation" begin
-    network = StandardPTDFForm
+    network = StandardPTDFModel
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimit_Line, :nodal_balance, :network_flow]
@@ -76,7 +76,7 @@ end
 end
 
 @testset "Network DC lossless -PF network with PowerModels DCPlosslessForm" begin
-    network = PM.DCPlosslessForm
+    network = DCPPowerModel
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimit_Line]
@@ -107,8 +107,8 @@ end
 
 end
 
-@testset  "Network Solve AC-PF PowerModels StandardACPForm" begin
-    network = PM.StandardACPForm
+@testset  "Network Solve AC-PF PowerModels StandardACPModel" begin
+    network = ACPPowerModel
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimitFT_Line, :RateLimitTF_Line]
@@ -139,7 +139,7 @@ end
 end
 
 @testset  "Network Solve AC-PF PowerModels linear approximation models" begin
-    networks = [PM.DCPlosslessForm, PM.NFAForm]
+    networks = [DCPPowerModel, NFAPowerModel]
     systems = [c_sys5, c_sys14, c_sys14_dc]
     p = true
     for network in networks, sys in systems
@@ -157,9 +157,9 @@ end
 end
 
 @testset  "Network AC-PF PowerModels non-convex models" begin
-    networks = [#PM.StandardACPForm, Already tested
-                PM.StandardACRForm,
-                PM.StandardACTForm
+    networks = [#ACPPowerModel, Already tested
+                ACRPowerModel,
+                ACTPowerModel
                 ]
     systems = [c_sys5, c_sys14, c_sys14_dc]
 
@@ -176,7 +176,7 @@ end
 end
 
 @testset  "Network AC-PF PowerModels quadratic loss approximations models" begin
-    networks = [PM.StandardDCPLLForm, PM.AbstractLPACCForm]
+    networks = [DCPLLPowerModel, LPACCPowerModel]
     systems = [c_sys5, c_sys14, c_sys14_dc]
 
     for network in networks, sys in systems
@@ -193,9 +193,9 @@ end
 end
 
 @testset  "Network AC-PF PowerModels quadratic relaxations models" begin
-    networks = [ PM.SOCWRForm,
-                 PM.QCWRForm,
-                 PM.QCWRTriForm,
+    networks = [ SOCWRPowerModel,
+                 QCRMPowerModel,
+                 QCLSPowerModel,
                  ]
     systems = [c_sys5, c_sys14, c_sys14_dc]
 
@@ -213,11 +213,10 @@ end
 end
 
 @testset  "Network Unsupported Power Model Formulations" begin
-    incompat_list = [PM.SDPWRMForm,
-                    PM.SparseSDPWRMForm,
-                    PM.SOCWRConicForm,
-                    PM.SOCBFForm,
-                    PM.SOCBFConicForm]
+incompat_list = [PM.SDPWRMPowerModel,
+                 PM.SparseSDPWRMPowerModel,
+                 PM.SOCBFPowerModel,
+                 PM.SOCBFConicPowerModel]
 
     for network in incompat_list
         ps_model = OperationModel(TestOptModel, network, c_sys5; optimizer = ipopt_optimizer)

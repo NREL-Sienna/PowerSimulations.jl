@@ -130,6 +130,9 @@ Returns ```flag```
 function _pwlparamcheck(cost_)
     flag = true
 
+    if cost_[1][1]/cost_[1][2] > ((cost_[2][1] - cost_[1][1])/(cost_[2][2] - cost_[1][2]))
+        flag =false
+    end
     l = length(cost_)
     for i in 1:(l-2)
         if ((cost_[i+1][1] - cost_[i][1])/(cost_[i+1][2] - cost_[i][2])) > ((cost_[i+2][1] - cost_[i+1][1])/(cost_[i+2][2] - cost_[i+1][2]))
@@ -176,13 +179,13 @@ function _pwlgencost_sos(canonical_model::CanonicalModel,
                             base_name = "{$(variable)}_{sos}",
                             start = 0.0, lower_bound = 0.0, upper_bound = 1.0)
 
-    sos2 = JuMP.@constraint(canonical_model.JuMPmodel, pwlvars in MOI.SOS2(collect(1:length(pwlvars))))
-
+    JuMP.@constraint(canonical_model.JuMPmodel, sum(pwlvars)  == 1.0)
+    JuMP.@constraint(canonical_model.JuMPmodel, pwlvars in MOI.SOS2(collect(1:length(pwlvars))))
     for (ix, var) in enumerate(pwlvars)
         JuMP.add_to_expression!(gen_cost, cost_component[ix][1] * var)
     end
 
-    c = JuMP.@constraint(canonical_model.JuMPmodel, variable ==
+    JuMP.@constraint(canonical_model.JuMPmodel, variable ==
                         sum([var*cost_component[ix][2] for (ix, var) in enumerate(pwlvars) ]) )
 
     return gen_cost

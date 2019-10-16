@@ -1,17 +1,17 @@
 @testset "Load data misspecification" begin
     model = DeviceModel(PSY.InterruptibleLoad, PSI.DispatchablePowerLoad)
     warn_message = "The data doesn't include devices of type InterruptibleLoad, consider changing the device models"
-    op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5)
+    op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5)
     @test_logs (:warn, warn_message) construct_device!(op_model, :Load, model);
     model = DeviceModel(PSY.PowerLoad, PSI.DispatchablePowerLoad)
-    warn_message = "The Formulation DispatchablePowerLoad only applies to Controllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad"
-    op_model = OperationModel(TestOptModel, PM.DCPlosslessForm, c_sys5)
+    warn_message = "The Formulation DispatchablePowerLoad only applies to FormulationControllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad"
+    op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5)
     @test_logs (:warn, warn_message) construct_device!(op_model, :Load, model);
 end
 
 @testset "StaticPowerLoad" begin
     models = [PSI.StaticPowerLoad, PSI.DispatchablePowerLoad, PSI.InterruptiblePowerLoad]
-    networks = [PM.DCPlosslessForm, PM.StandardACPForm]
+    networks = [DCPPowerModel, ACPPowerModel]
     param_spec = [true, false]
     for m in models, n in networks, p in param_spec
         model = DeviceModel(PSY.PowerLoad, m)
@@ -24,7 +24,7 @@ end
 
 @testset "DispatchablePowerLoad DC- PF" begin
     models = [PSI.DispatchablePowerLoad]
-    networks = [PM.DCPlosslessForm]
+    networks = [DCPPowerModel]
     param_spec = [true, false]
     for m in models, n in networks, p in param_spec
         model = DeviceModel(PSY.InterruptibleLoad, m)
@@ -37,7 +37,7 @@ end
 
 @testset "DispatchablePowerLoad AC- PF" begin
     models = [PSI.DispatchablePowerLoad, ]
-    networks = [PM.StandardACPForm]
+    networks = [ACPPowerModel]
     param_spec = [true, false]
     for m in models, n in networks, p in param_spec
         model = DeviceModel(PSY.InterruptibleLoad, m)
@@ -50,7 +50,7 @@ end
 
 @testset "InterruptiblePowerLoad DC- PF" begin
     models = [PSI.InterruptiblePowerLoad]
-    networks = [PM.DCPlosslessForm]
+    networks = [DCPPowerModel]
     param_spec = [true, false]
     for m in models, n in networks, p in param_spec
         model = DeviceModel(PSY.InterruptibleLoad, m)
@@ -63,7 +63,7 @@ end
 
 @testset "InterruptiblePowerLoad AC- PF" begin
     models = [PSI.InterruptiblePowerLoad]
-    networks = [PM.StandardACPForm]
+    networks = [ACPPowerModel]
     param_spec = [true, false]
     for m in models, n in networks, p in param_spec
         model = DeviceModel(PSY.InterruptibleLoad, m)

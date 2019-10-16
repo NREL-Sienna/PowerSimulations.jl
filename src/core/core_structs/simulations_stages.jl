@@ -1,24 +1,31 @@
 ######## Internal Simulation Object Structs ########
 abstract type AbstractStage end
 
-mutable struct _Stage <: AbstractStage
+mutable struct _Stage{M<:AbstractOperationModel} <: AbstractStage
     key::Int64
-    model::OperationModel
+    reference::ModelReference
+    op_model::Type{M}
+    sys::PSY.System
+    canonical::CanonicalModel
+    optimizer::JuMP.OptimizerFactory
     executions::Int64
     execution_count::Int64
-    optimizer::String
-    chronology_ref::Dict{Int64, Type{<:Chronology}}
-    ini_cond_chron::Union{Type{<:Chronology}, Nothing}
+    chronology_ref::Dict{Int64, <:Chronology}
+    ini_cond_chron::Union{<:Chronology, Nothing}
     cache::Dict{Type{<:AbstractCache}, AbstractCache}
 
     function _Stage(key::Int64,
-                   model::OperationModel,
-                   executions::Int64,
-                   chronology_ref::Dict{Int64, Type{<:Chronology}},
-                   cache::Vector{<:AbstractCache})
+                    reference::ModelReference,
+                    op_model::Type{M},
+                    sys::PSY.System,
+                    canonical::CanonicalModel,
+                    optimizer::JuMP.OptimizerFactory,
+                    executions::Int64,
+                    chronology_ref::Dict{Int64, <:Chronology},
+                    cache::Vector{<:AbstractCache}) where M <: AbstractOperationModel
 
     ini_cond_chron = get(chronology_ref, 0, nothing)
-    if !isempty(get_initial_conditions(model))
+    if !isempty(get_initial_conditions(canonical))
         if isnothing(ini_cond_chron)
             @warn("Initial Conditions chronology set for Stage $(key) which contains Initial conditions")
         end
@@ -32,15 +39,17 @@ mutable struct _Stage <: AbstractStage
     end
 
 
-    new(key,
-        model,
-        executions,
-        0,
-        JuMP.solver_name(model.canonical.JuMPmodel),
-        chronology_ref,
-        ini_cond_chron,
-        cache_dict
-        )
+    new{M}(key,
+           reference,
+           op_model,
+           sys,
+           canonical,
+           optimizer,
+           executions,
+           0,
+           chronology_ref,
+           ini_cond_chron,
+           cache_dict)
 
     end
 
@@ -49,21 +58,24 @@ end
 ######## Exposed Structs to define a Simulation Object ########
 
 mutable struct Stage <: AbstractStage
+    op_model::Type{<:AbstractOperationModel}
     model::ModelReference
     execution_count::Int64
     sys::PSY.System
     optimizer::JuMP.OptimizerFactory
-    chronology_ref::Dict{Int64, Type{<:Chronology}}
+    chronology_ref::Dict{Int64, <:Chronology}
     cache::Vector{<:AbstractCache}
 
-    function Stage(model::ModelReference,
-                execution_count::Int64,
-                sys::PSY.System,
-                optimizer::JuMP.OptimizerFactory,
-                chronology_ref=Dict{Int, Type{<:Chronology}}(),
-                cache::Vector{<:AbstractCache}=Vector{AbstractCache}())
+    function Stage(::Type{M},
+                   model::ModelReference,
+                   execution_count::Int64,
+                   sys::PSY.System,
+                   optimizer::JuMP.OptimizerFactory,
+                   chronology_ref=Dict{Int, <:Chronology}(),
+                   cache::Vector{<:AbstractCache}=Vector{AbstractCache}()) where M<:AbstractOperationModel
 
-        new(model,
+        new(M,
+            model,
             execution_count,
             sys,
             optimizer,
@@ -73,25 +85,27 @@ mutable struct Stage <: AbstractStage
 
 end
 
-function Stage(model::ModelReference,
+function Stage(::Type{M},
+                model::ModelReference,
                 execution_count::Int64,
                 sys::PSY.System,
                 optimizer::JuMP.OptimizerFactory,
-                chronology_ref::Dict{Int64, DataType},
-                cache::AbstractCache)
+                chronology_ref::Dict{Int64, <:Chronology},
+                cache::Union{Nothing, AbstractCache}=nothing) where M<:AbstractOperationModel
 
-    return Stage(model, execution_count, sys, optimizer, chronology_ref, [cache])
+    cacheinput = isnothing(cache) ? Vector{AbstractCache}() : [cache]
+    return Stage(M, model, execution_count, sys, optimizer, chronology_ref, cacheinput)
 
 end
 
-function Stage(;model::ModelReference,
-                execution_count::Int64,
-                sys::PSY.System,
-                optimizer::JuMP.OptimizerFactory,
-                chronology_ref::Dict{Int64, Type{<:Chronology}},
-                cache::Vector{<:AbstractCache})
+function Stage(model::ModelReference,
+               execution_count::Int64,
+               sys::PSY.System,
+               optimizer::JuMP.OptimizerFactory,
+               chronology_ref::Dict{Int64, <:Chronology},
+               cache::Union{Nothing, AbstractCache}=nothing)
 
-    return Stage(model, execution_count, sys, optimizer, chronology_ref, cache)
+    return Stage(DefaultOpModel, model, execution_count, sys, optimizer, chronology_ref, cache)
 
 end
 

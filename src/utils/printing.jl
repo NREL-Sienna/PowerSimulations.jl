@@ -96,12 +96,13 @@ function Base.show(io::IO, res_model::OperationModelResults)
  end
 
 =#
+
 function Base.show(io::IO, res_model::OperationModelResults)
     println(io, "\nResults Model")
     println(io, "===============\n")
 
     for (k, v) in res_model.variables
-        time = DataFrames.DataFrame(Time = res_model.time_stamp[:Range])
+        time = DataFrames.DataFrame(Time = res_model.time_stamp[!, :Range])
         var = hcat(time, v)
         println(io, "$(k)")
         println(io, "==================")

@@ -1,13 +1,14 @@
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function _internal_device_constructor!(canonical_model::CanonicalModel,
-                                       model::DeviceModel{T, D},
-                                       ::Type{S},
-                                       sys::PSY.System;
-                                       kwargs...) where {T<:PSY.ThermalGen,
-                                                         D<:AbstractThermalFormulation,
-                                                         S<:PM.AbstractPowerFormulation}
+function construct_device!(op_model::OperationModel,
+                           model::DeviceModel{T, D},
+                           ::Type{S};
+                           kwargs...) where {T<:PSY.ThermalGen,
+                                             D<:AbstractThermalFormulation,
+                                             S<:PM.AbstractPowerModel}
+
+    sys = get_system(op_model)
 
     devices = PSY.get_components(T, sys)
 
@@ -16,31 +17,31 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     end
 
     #Variables
-    activepower_variables!(canonical_model, devices)
+    activepower_variables!(op_model.canonical, devices)
 
-    reactivepower_variables!(canonical_model, devices)
+    reactivepower_variables!(op_model.canonical, devices)
 
-    commitment_variables!(canonical_model, devices)
+    commitment_variables!(op_model.canonical, devices)
 
     #Initial Conditions
 
-    initial_conditions!(canonical_model, devices, D)
+    initial_conditions!(op_model.canonical, devices, D)
 
     #Constraints
-    activepower_constraints!(canonical_model, devices, D, S)
+    activepower_constraints!(op_model.canonical, devices, D, S)
 
-    reactivepower_constraints!(canonical_model, devices, D, S)
+    reactivepower_constraints!(op_model.canonical, devices, D, S)
 
-    commitment_constraints!(canonical_model, devices, D, S)
+    commitment_constraints!(op_model.canonical, devices, D, S)
 
-    ramp_constraints!(canonical_model, devices, D, S)
+    ramp_constraints!(op_model.canonical, devices, D, S)
 
-    time_constraints!(canonical_model, devices, D, S)
+    time_constraints!(op_model.canonical, devices, D, S)
 
-    feedforward!(canonical_model, T, model.feedforward)
+    feedforward!(op_model.canonical, T, model.feedforward)
 
     #Cost Function
-    cost_function(canonical_model, devices, D, S)
+    cost_function(op_model.canonical, devices, D, S)
 
     return
 
@@ -50,14 +51,14 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function _internal_device_constructor!(canonical_model::CanonicalModel,
-                                       model::DeviceModel{T, D},
-                                       ::Type{S},
-                                       sys::PSY.System;
-                                       kwargs...) where {T<:PSY.ThermalGen,
-                                                         D<:AbstractThermalFormulation,
-                                                         S<:PM.AbstractActivePowerFormulation}
+function construct_device!(op_model::OperationModel,
+                           model::DeviceModel{T, D},
+                           ::Type{S};
+                           kwargs...) where {T<:PSY.ThermalGen,
+                                             D<:AbstractThermalFormulation,
+                                             S<:PM.AbstractActivePowerModel}
 
+    sys = get_system(op_model)
     devices = PSY.get_components(T, sys)
 
     if validate_available_devices(devices, T)
@@ -65,27 +66,27 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     end
 
     #Variables
-    activepower_variables!(canonical_model, devices)
+    activepower_variables!(op_model.canonical, devices)
 
-    commitment_variables!(canonical_model, devices)
+    commitment_variables!(op_model.canonical, devices)
 
     #Initial Conditions
 
-    initial_conditions!(canonical_model, devices, D)
+    initial_conditions!(op_model.canonical, devices, D)
 
     #Constraints
-    activepower_constraints!(canonical_model, devices, D, S)
+    activepower_constraints!(op_model.canonical, devices, D, S)
 
-    commitment_constraints!(canonical_model, devices, D, S)
+    commitment_constraints!(op_model.canonical, devices, D, S)
 
-    ramp_constraints!(canonical_model, devices, D, S)
+    ramp_constraints!(op_model.canonical, devices, D, S)
 
-    time_constraints!(canonical_model, devices, D, S)
+    time_constraints!(op_model.canonical, devices, D, S)
 
-    feedforward!(canonical_model, T, model.feedforward)
+    feedforward!(op_model.canonical, T, model.feedforward)
 
     #Cost Function
-    cost_function(canonical_model, devices, D, S)
+    cost_function(op_model.canonical, devices, D, S)
 
     return
 
@@ -94,12 +95,13 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function _internal_device_constructor!(canonical_model::CanonicalModel,
-                                       model::DeviceModel{T, ThermalBasicUnitCommitment},
-                                       ::Type{S},
-                                       sys::PSY.System;
-                                       kwargs...) where {T<:PSY.ThermalGen,
-                                                         S<:PM.AbstractPowerFormulation}
+function construct_device!(op_model::OperationModel,
+                           model::DeviceModel{T, ThermalBasicUnitCommitment},
+                           ::Type{S};
+                           kwargs...) where {T<:PSY.ThermalGen,
+                                             S<:PM.AbstractPowerModel}
+
+    sys = get_system(op_model)
 
     devices = PSY.get_components(T, sys)
 
@@ -108,27 +110,27 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     end
 
     #Variables
-    activepower_variables!(canonical_model, devices)
+    activepower_variables!(op_model.canonical, devices)
 
-    reactivepower_variables!(canonical_model, devices)
+    reactivepower_variables!(op_model.canonical, devices)
 
-    commitment_variables!(canonical_model, devices)
+    commitment_variables!(op_model.canonical, devices)
 
     #Initial Conditions
 
-    initial_conditions!(canonical_model, devices, model.formulation)
+    initial_conditions!(op_model.canonical, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(canonical_model, devices, model.formulation, S)
+    activepower_constraints!(op_model.canonical, devices, model.formulation, S)
 
-    reactivepower_constraints!(canonical_model, devices, model.formulation, S)
+    reactivepower_constraints!(op_model.canonical, devices, model.formulation, S)
 
-    commitment_constraints!(canonical_model, devices, model.formulation, S)
+    commitment_constraints!(op_model.canonical, devices, model.formulation, S)
 
-    feedforward!(canonical_model, T, model.feedforward)
+    feedforward!(op_model.canonical, T, model.feedforward)
 
     #Cost Function
-    cost_function(canonical_model, devices, model.formulation, S)
+    cost_function(op_model.canonical, devices, model.formulation, S)
 
     return
 
@@ -138,12 +140,13 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function _internal_device_constructor!(canonical_model::CanonicalModel,
-                                       model::DeviceModel{T, ThermalBasicUnitCommitment},
-                                       ::Type{S},
-                                       sys::PSY.System;
-                                       kwargs...) where {T<:PSY.ThermalGen,
-                                                         S<:PM.AbstractActivePowerFormulation}
+function construct_device!(op_model::OperationModel,
+                           model::DeviceModel{T, ThermalBasicUnitCommitment},
+                           ::Type{S};
+                           kwargs...) where {T<:PSY.ThermalGen,
+                                             S<:PM.AbstractActivePowerModel}
+
+    sys = get_system(op_model)
 
     devices = PSY.get_components(T, sys)
 
@@ -152,23 +155,23 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     end
 
     #Variables
-    activepower_variables!(canonical_model, devices)
+    activepower_variables!(op_model.canonical, devices)
 
-    commitment_variables!(canonical_model, devices)
+    commitment_variables!(op_model.canonical, devices)
 
     #Initial Conditions
 
-    initial_conditions!(canonical_model, devices, model.formulation)
+    initial_conditions!(op_model.canonical, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(canonical_model, devices, model.formulation, S)
+    activepower_constraints!(op_model.canonical, devices, model.formulation, S)
 
-    commitment_constraints!(canonical_model, devices, model.formulation, S)
+    commitment_constraints!(op_model.canonical, devices, model.formulation, S)
 
-    feedforward!(canonical_model, T, model.feedforward)
+    feedforward!(op_model.canonical, T, model.feedforward)
 
     #Cost Function
-    cost_function(canonical_model, devices, model.formulation, S)
+    cost_function(op_model.canonical, devices, model.formulation, S)
 
     return
 
@@ -177,12 +180,13 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function _internal_device_constructor!(canonical_model::CanonicalModel,
-                                        model::DeviceModel{T, ThermalRampLimited},
-                                        ::Type{S},
-                                        sys::PSY.System;
-                                        kwargs...) where {T<:PSY.ThermalGen,
-                                                          S<:PM.AbstractPowerFormulation}
+function construct_device!(op_model::OperationModel,
+                           model::DeviceModel{T, ThermalRampLimited},
+                           ::Type{S};
+                           kwargs...) where {T<:PSY.ThermalGen,
+                                             S<:PM.AbstractPowerModel}
+
+    sys = get_system(op_model)
 
     devices = PSY.get_components(T, sys)
 
@@ -191,27 +195,27 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     end
 
     #Variables
-    activepower_variables!(canonical_model, devices)
+    activepower_variables!(op_model.canonical, devices)
 
-    reactivepower_variables!(canonical_model, devices)
+    reactivepower_variables!(op_model.canonical, devices)
 
     #Initial Conditions
 
-    initial_conditions!(canonical_model, devices, model.formulation)
+    initial_conditions!(op_model.canonical, devices, model.formulation)
 
     #Constraints
     if !(isa(model.feedforward, SemiContinuousFF))
-        activepower_constraints!(canonical_model, devices, ThermalRampLimited, S)
+        activepower_constraints!(op_model.canonical, devices, ThermalRampLimited, S)
     end
 
-    reactivepower_constraints!(canonical_model, devices, model.formulation, S)
+    reactivepower_constraints!(op_model.canonical, devices, model.formulation, S)
 
-    ramp_constraints!(canonical_model, devices, model.formulation, S)
+    ramp_constraints!(op_model.canonical, devices, model.formulation, S)
 
-    feedforward!(canonical_model, T, model.feedforward)
+    feedforward!(op_model.canonical, T, model.feedforward)
 
     #Cost Function
-    cost_function(canonical_model, devices, model.formulation, S)
+    cost_function(op_model.canonical, devices, model.formulation, S)
 
     return
 
@@ -221,12 +225,13 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function _internal_device_constructor!(canonical_model::CanonicalModel,
-                                       model::DeviceModel{T, ThermalRampLimited},
-                                       ::Type{S},
-                                       sys::PSY.System;
-                                       kwargs...) where {T<:PSY.ThermalGen,
-                                                         S<:PM.AbstractActivePowerFormulation}
+function construct_device!(op_model::OperationModel,
+                           model::DeviceModel{T, ThermalRampLimited},
+                           ::Type{S};
+                           kwargs...) where {T<:PSY.ThermalGen,
+                                             S<:PM.AbstractActivePowerModel}
+
+    sys = get_system(op_model)
 
     devices = PSY.get_components(T, sys)
 
@@ -235,23 +240,23 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     end
 
     #Variables
-    activepower_variables!(canonical_model, devices)
+    activepower_variables!(op_model.canonical, devices)
 
     #Initial Conditions
 
-    initial_conditions!(canonical_model, devices, model.formulation)
+    initial_conditions!(op_model.canonical, devices, model.formulation)
 
     #Constraints
     if !(isa(model.feedforward, SemiContinuousFF))
-        activepower_constraints!(canonical_model, devices, ThermalRampLimited, S)
+        activepower_constraints!(op_model.canonical, devices, ThermalRampLimited, S)
     end
 
-    ramp_constraints!(canonical_model, devices, model.formulation, S)
+    ramp_constraints!(op_model.canonical, devices, model.formulation, S)
 
-    feedforward!(canonical_model, T, model.feedforward)
+    feedforward!(op_model.canonical, T, model.feedforward)
 
     #Cost Function
-    cost_function(canonical_model, devices, model.formulation, S)
+    cost_function(op_model.canonical, devices, model.formulation, S)
 
     return
 
@@ -259,13 +264,14 @@ end
 
 
 
-function _internal_device_constructor!(canonical_model::CanonicalModel,
-                                       model::DeviceModel{T, D},
-                                       ::Type{S},
-                                       sys::PSY.System;
-                                       kwargs...) where {T<: PSY.ThermalGen,
-                                                         D<:AbstractThermalDispatchForm,
-                                                         S<:PM.AbstractPowerFormulation}
+function construct_device!(op_model::OperationModel,
+                           model::DeviceModel{T, D},
+                           ::Type{S};
+                           kwargs...) where {T<:PSY.ThermalGen,
+                                             D<:AbstractThermalDispatchFormulation,
+                                             S<:PM.AbstractPowerModel}
+
+    sys = get_system(op_model)
 
     devices = PSY.get_components(T, sys)
 
@@ -274,35 +280,36 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     end
 
     #Variables
-    activepower_variables!(canonical_model, devices)
+    activepower_variables!(op_model.canonical, devices)
 
-    reactivepower_variables!(canonical_model, devices)
+    reactivepower_variables!(op_model.canonical, devices)
 
     #Initial Conditions
 
     #Constraints
     if !(isa(model.feedforward, SemiContinuousFF))
-        activepower_constraints!(canonical_model, devices, D, S)
+        activepower_constraints!(op_model.canonical, devices, D, S)
     end
 
-    reactivepower_constraints!(canonical_model, devices, D, S)
+    reactivepower_constraints!(op_model.canonical, devices, D, S)
 
-    feedforward!(canonical_model, T, model.feedforward)
+    feedforward!(op_model.canonical, T, model.feedforward)
 
     #Cost Function
-    cost_function(canonical_model, devices, D, S)
+    cost_function(op_model.canonical, devices, D, S)
 
     return
 
 end
 
-function _internal_device_constructor!(canonical_model::CanonicalModel,
-                                       model::DeviceModel{T, D},
-                                       ::Type{S},
-                                       sys::PSY.System;
-                                       kwargs...) where {T<: PSY.ThermalGen,
-                                                         D<:AbstractThermalDispatchForm,
-                                                         S<:PM.AbstractActivePowerFormulation}
+function construct_device!(op_model::OperationModel,
+                           model::DeviceModel{T, D},
+                           ::Type{S};
+                           kwargs...) where {T<:PSY.ThermalGen,
+                                             D<:AbstractThermalDispatchFormulation,
+                                             S<:PM.AbstractActivePowerModel}
+
+    sys = get_system(op_model)
 
     devices = PSY.get_components(T, sys)
 
@@ -311,20 +318,20 @@ function _internal_device_constructor!(canonical_model::CanonicalModel,
     end
 
     #Variables
-    activepower_variables!(canonical_model, devices)
+    activepower_variables!(op_model.canonical, devices)
 
     #Initial Conditions
 
     #Constraints
     # Slighly hacky for now
     if !(isa(model.feedforward, SemiContinuousFF))
-        activepower_constraints!(canonical_model, devices, D, S)
+        activepower_constraints!(op_model.canonical, devices, D, S)
     end
 
-    feedforward!(canonical_model, T, model.feedforward)
+    feedforward!(op_model.canonical, T, model.feedforward)
 
     #Cost Function
-    cost_function(canonical_model, devices, D, S)
+    cost_function(op_model.canonical, devices, D, S)
 
     return
 

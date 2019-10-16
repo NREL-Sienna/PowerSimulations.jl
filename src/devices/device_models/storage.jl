@@ -1,8 +1,8 @@
-abstract type AbstractStorageForm<:AbstractDeviceFormulation end
+abstract type AbstractStorageFormulation <: AbstractDeviceFormulation end
 
-struct BookKeeping<:AbstractStorageForm end
+struct BookKeeping <: AbstractStorageFormulation end
 
-struct BookKeepingwReservation<:AbstractStorageForm end
+struct BookKeepingwReservation <: AbstractStorageFormulation end
 
 #################################################Storage Variables#################################
 
@@ -74,7 +74,7 @@ function active_power_constraints(canonical_model::CanonicalModel,
                                   devices::IS.FlattenIteratorWrapper{St},
                                   ::Type{BookKeeping},
                                   ::Type{S}) where {St<:PSY.Storage,
-                                                                      S<:PM.AbstractPowerFormulation}
+                                                                      S<:PM.AbstractPowerModel}
 
     range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
     range_data_out = [(PSY.get_name(s), PSY.get_outputactivepowerlimits(s)) for s in devices]
@@ -97,7 +97,7 @@ function active_power_constraints(canonical_model::CanonicalModel,
                                   devices::IS.FlattenIteratorWrapper{St},
                                   ::Type{BookKeepingwReservation},
                                   ::Type{S}) where {St<:PSY.Storage,
-                                                                      S<:PM.AbstractPowerFormulation}
+                                                                      S<:PM.AbstractPowerModel}
 
     range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
     range_data_out = [(PSY.get_name(s), PSY.get_outputactivepowerlimits(s)) for s in devices]
@@ -126,8 +126,8 @@ function reactive_power_constraints(canonical_model::CanonicalModel,
                                    devices::IS.FlattenIteratorWrapper{St},
                                    ::Type{D},
                                    ::Type{S}) where {St<:PSY.Storage,
-                                                                       D<:AbstractStorageForm,
-                                                                       S<:PM.AbstractPowerFormulation}
+                                                                       D<:AbstractStorageFormulation,
+                                                                       S<:PM.AbstractPowerModel}
 
     range_data = [(PSY.get_name(s), PSY.get_reactivepowerlimits(s)) for s in devices]
 
@@ -144,7 +144,7 @@ end
 function initial_conditions!(canonical_model::CanonicalModel,
                             devices::IS.FlattenIteratorWrapper{St},
                             ::Type{D}) where {St<:PSY.Storage,
-                                                                D<:AbstractStorageForm}
+                                                                D<:AbstractStorageFormulation}
 
     storage_energy_init(canonical_model, devices)
 
@@ -158,8 +158,8 @@ function energy_capacity_constraints(canonical_model::CanonicalModel,
                                     devices::IS.FlattenIteratorWrapper{St},
                                     ::Type{D},
                                     ::Type{S}) where {St<:PSY.Storage,
-                                                                        D<:AbstractStorageForm,
-                                                                        S<:PM.AbstractPowerFormulation}
+                                                                        D<:AbstractStorageFormulation,
+                                                                        S<:PM.AbstractPowerModel}
 
     range_data = [(PSY.get_name(s), PSY.get_capacity(s)) for s in devices]
 
@@ -193,8 +193,8 @@ function energy_balance_constraint(canonical_model::CanonicalModel,
                                    devices::IS.FlattenIteratorWrapper{St},
                                    ::Type{D},
                                    ::Type{S}) where {St<:PSY.Storage,
-                                                            D<:AbstractStorageForm,
-                                                            S<:PM.AbstractPowerFormulation}
+                                                            D<:AbstractStorageFormulation,
+                                                            S<:PM.AbstractPowerModel}
 
     key = ICKey(DeviceEnergy, St)
 

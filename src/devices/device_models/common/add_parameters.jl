@@ -44,17 +44,17 @@ end
 function _nodal_expression_param(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{G},
                                 system_formulation::Type{S}) where {G<:PSY.Generator,
-                                                                    S<:PM.AbstractPowerFormulation}
+                                                                    S<:PM.AbstractPowerModel}
 
     time_steps = model_time_steps(canonical_model)
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, length(devices))
     ts_data_reactive = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, length(devices))
 
     for (ix, d) in enumerate(devices)
-        bus_number = PSY.get_bus(d) |> PSY.get_number
+        bus_number = PSY.get_number(PSY.get_bus(d))
         tech = PSY.get_tech(d)
         name = PSY.get_name(d)
-        pf = sin(acos(PSY.get_tech(d) |> PSY.get_powerfactor))
+        pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(d))))
         time_series_vector = ones(time_steps[end])
         ts_data_active[ix] = (name, bus_number, PSY.get_rating(tech), time_series_vector)
         ts_data_reactive[ix] = (name, bus_number, PSY.get_rating(tech) * pf, time_series_vector)
@@ -76,13 +76,13 @@ end
 function _nodal_expression_param(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{G},
                                 system_formulation::Type{S}) where {G<:PSY.Generator,
-                                                                    S<:PM.AbstractActivePowerFormulation}
+                                                                    S<:PM.AbstractActivePowerModel}
 
     time_steps = model_time_steps(canonical_model)
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, length(devices))
 
     for (ix, d) in enumerate(devices)
-        bus_number = PSY.get_bus(d) |> PSY.get_number
+        bus_number = PSY.get_number(PSY.get_bus(d))
         tech = PSY.get_tech(d)
         name = PSY.get_name(d)
         time_series_vector = ones(time_steps[end])
@@ -102,7 +102,7 @@ end
 function _nodal_expression_param(canonical_model::CanonicalModel,
                                  forecasts::Vector{PSY.Deterministic{G}},
                                  system_formulation::Type{S}) where {G<:PSY.Generator,
-                                                                     S<:PM.AbstractPowerFormulation}
+                                                                     S<:PM.AbstractPowerModel}
 
     time_steps = model_time_steps(canonical_model)
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, length(forecasts))
@@ -110,11 +110,11 @@ function _nodal_expression_param(canonical_model::CanonicalModel,
 
     for (ix, f) in enumerate(forecasts)
         device = PSY.get_component(f)
-        bus_number = PSY.get_bus(device) |> PSY.get_number
+        bus_number = PSY.get_number(PSY.get_bus(device))
         tech = PSY.get_tech(device)
         name = PSY.get_name(device)
-        pf = sin(acos(PSY.get_tech(device) |> PSY.get_powerfactor))
-        time_series_vector = values(PSY.get_data(f))
+        pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
+        time_series_vector = values(PSY.get_timeseries(f))
         ts_data_active[ix] = (name, bus_number, PSY.get_rating(tech), time_series_vector)
         ts_data_reactive[ix] = (name, bus_number, PSY.get_rating(tech) * pf, time_series_vector)
     end
@@ -135,17 +135,17 @@ end
 function _nodal_expression_param(canonical_model::CanonicalModel,
                                 forecasts::Vector{PSY.Deterministic{G}},
                                 system_formulation::Type{S}) where {G<:PSY.Generator,
-                                                                    S<:PM.AbstractActivePowerFormulation}
+                                                                    S<:PM.AbstractActivePowerModel}
 
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, length(forecasts))
 
     for (ix, f) in enumerate(forecasts)
         device = PSY.get_component(f)
         device = PSY.get_component(f)
-        bus_number = PSY.get_bus(device) |> PSY.get_number
+        bus_number = PSY.get_number(PSY.get_bus(device))
         tech = PSY.get_tech(device)
         name = PSY.get_name(device)
-        time_series_vector = values(PSY.get_data(f))
+        time_series_vector = values(PSY.get_timeseries(f))
         ts_data_active[ix] = (name, bus_number, PSY.get_rating(tech), time_series_vector)
     end
 
@@ -163,14 +163,14 @@ end
 function _nodal_expression_fixed(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{G},
                                 system_formulation::Type{S}) where {G<:PSY.Generator,
-                                                                     S<:PM.AbstractPowerFormulation}
+                                                                     S<:PM.AbstractPowerModel}
 
     time_steps = model_time_steps(canonical_model)
 
     for t in time_steps, d in devices
-        bus_number = PSY.get_bus(d) |> PSY.get_number
-        active_power = PSY.get_tech(d) |> PSY.get_rating
-        reactive_power = active_power * sin(acos(PSY.get_tech(d) |> PSY.get_powerfactor))
+        bus_number = PSY.get_number(PSY.get_bus(d))
+        active_power = PSY.get_rating(PSY.get_tech(d))
+        reactive_power = active_power * sin(acos(PSY.get_powerfactor(PSY.get_tech(d))))
         _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
                             bus_number,
                             t,
@@ -188,13 +188,13 @@ end
 function _nodal_expression_fixed(canonical_model::CanonicalModel,
                                     devices::IS.FlattenIteratorWrapper{G},
                                     system_formulation::Type{S}) where {G<:PSY.Generator,
-                                                                         S<:PM.AbstractActivePowerFormulation}
+                                                                         S<:PM.AbstractActivePowerModel}
 
     time_steps = model_time_steps(canonical_model)
 
     for t in time_steps, d in devices
-        bus_number = PSY.get_bus(d) |> PSY.get_number
-        active_power = PSY.get_tech(d) |> PSY.get_rating
+        bus_number = PSY.get_number(PSY.get_bus(d))
+        active_power = PSY.get_rating(PSY.get_tech(d))
         _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
                             bus_number,
                             t,
@@ -209,16 +209,16 @@ end
 function _nodal_expression_fixed(canonical_model::CanonicalModel,
                                 forecasts::Vector{PSY.Deterministic{G}},
                                 system_formulation::Type{S}) where {G<:PSY.Generator,
-                                                                    S<:PM.AbstractPowerFormulation}
+                                                                    S<:PM.AbstractPowerModel}
 
     time_steps = model_time_steps(canonical_model)
 
     for f in forecasts
         device = PSY.get_component(f)
-        bus_number = PSY.get_bus(device) |> PSY.get_number
-        active_power = PSY.get_tech(device) |> PSY.get_rating
-        reactive_power = active_power * sin(acos(PSY.get_tech(device) |> PSY.get_powerfactor))
-        time_series_vector = values(PSY.get_data(f))
+        bus_number = PSY.get_number(PSY.get_bus(device))
+        active_power = PSY.get_rating(PSY.get_tech(device))
+        reactive_power = active_power * sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
+        time_series_vector = values(PSY.get_timeseries(f))
         for t in time_steps
             _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
                                 bus_number,
@@ -238,15 +238,15 @@ end
 function _nodal_expression_fixed(canonical_model::CanonicalModel,
                                 forecasts::Vector{PSY.Deterministic{G}},
                                 system_formulation::Type{S}) where {G<:PSY.Generator,
-                                                                    S<:PM.AbstractActivePowerFormulation}
+                                                                    S<:PM.AbstractActivePowerModel}
 
     time_steps = model_time_steps(canonical_model)
 
     for f in forecasts
         device = PSY.get_component(f)
-        bus_number = PSY.get_bus(device) |> PSY.get_number
-        active_power = PSY.get_tech(device) |> PSY.get_rating
-        time_series_vector = values(PSY.get_data(f))
+        bus_number = PSY.get_number(PSY.get_bus(device))
+        active_power = PSY.get_rating(PSY.get_tech(device))
+        time_series_vector = values(PSY.get_timeseries(f))
         for t in time_steps
             _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
                                 bus_number,
