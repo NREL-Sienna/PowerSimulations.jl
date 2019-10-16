@@ -24,8 +24,8 @@ This function adds the active power limits of generators when there are Commitme
 """
 
 function activereserve_constraints!(canonical_model::CanonicalModel,
-                                    service::Type{S},
-                                    formulations::F) where {S<:PSY.Service,
+                                    service::S,
+                                    formulations::Type{F}) where {S<:PSY.Service,
                                                             F<:AbstractServiceFormulation}
     
     name = Symbol("activerange")
@@ -35,8 +35,8 @@ function activereserve_constraints!(canonical_model::CanonicalModel,
         @error("Failed to find Constraint expression for ActiveRange Constraint")
     end
     device_range_expression!(canonical_model,
-                        name,
                         devices,
+                        name,
                         Symbol("R_$(service.name)")
                         )
 
@@ -50,8 +50,8 @@ end
 This function adds the ramping limits of generators when there are CommitmentVariables
 """
 function reserve_ramp_constraints!(canonical_model::CanonicalModel,
-                                    service::Type{S},
-                                    formulations::F) where {S<:PSY.Service,
+                                    service::S,
+                                    formulations::Type{F}) where {S<:PSY.Service,
                                                             F<:AbstractServiceFormulation}
 
     name = Symbol("ramp_up")
@@ -82,7 +82,7 @@ function _nodal_expression_fixed!(canonical_model::CanonicalModel,
         service = PSY.get_component(f)
         # bus_number = PSY.get_bus(d) |> PSY.get_number
         name = Symbol(service.name,"_","balance")
-        expression = exp(canonical_model, name)
+        expression = PSI.exp(canonical_model, name)
         if isnothing(expression)
             @error("Balance Constraint expression for $(service.name) not created")
         end
@@ -109,7 +109,7 @@ function service_balance(canonical_model::CanonicalModel, service::S) where {S<:
 
     time_steps = model_time_steps(canonical_model)
     name = Symbol(service.name,"_","balance")
-    expression = exp(canonical_model.expressions, name)
+    expression = PSI.exp(canonical_model, name)
     canonical_model.constraints[name] = JuMPConstraintArray(undef, time_steps)
     _remove_undef!(expression)
 
