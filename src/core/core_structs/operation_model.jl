@@ -35,7 +35,6 @@ function ModelReference(::Type{T}) where {T<:PM.AbstractPowerModel}
 end
 
 mutable struct OperationModel{M<:AbstractOperationModel}
-    op_model::Type{M}
     model_ref::ModelReference
     sys::PSY.System
     canonical::CanonicalModel
@@ -52,7 +51,7 @@ end
 This builds the optimization model and populates the operation model
 
 # Arguments
--`::Type{M} where {M<:AbstractOperationModel, T<:PM.AbstractPowerFormulation} = TestOptModel`: 
+-`::Type{M} where {M<:AbstractOperationModel, T<:PM.AbstractPowerFormulation} = TestOptModel`:
 The abstract operation model type
 -`model_ref::ModelReference = model_ref`: The model reference made up of transmission, devices,
                                           branches, and services.
@@ -71,15 +70,14 @@ OpModel = OperationModel(TestOptModel, model_ref, c_sys5_re; PTDF = PTDF5, optim
 # Accepted Key Words
 -`verbose::Bool = true`: verbose default is true
 -`PTDF::PTDF = PTDF`: Passes the PTDF matrix into the optimization model
--`optimizer::union{Nothing,JuMP.OptimizerFactory} = GLPK_optimizer`: The optimizer gets passed 
+-`optimizer::union{Nothing,JuMP.OptimizerFactory} = GLPK_optimizer`: The optimizer gets passed
 into the optimization model the default is nothing.
 -`sequential_runs::Bool = false`: tells the model to do sequential runs
 -`initial_conditions::DICKDA = DICKDA()`: default of Dict{ICKey, Array{InitialCondition}}
 -`parameters::Bool = false`: enable JuMP parameters
--`forecast::Bool = true`: if true, forecast collects the time steps in Power Systems, 
+-`forecast::Bool = true`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
 -`initial_time::Dates.DateTime = PSY.get_forecasts_initial_time(sys)`: initial time of forecast
-                                                    
 """
 function OperationModel(::Type{M},
                         model_ref::ModelReference,
@@ -125,17 +123,17 @@ OpModel = OperationModel(TestOptModel, model_ref, c_sys5_re; PTDF = PTDF5, optim
 # Accepted Key Words
 -`verbose::Bool = true`: verbose default is true
 -`PTDF::PTDF = PTDF`: Passes the PTDF matrix into the optimization model
--`optimizer::union{Nothing,JuMP.OptimizerFactory} = GLPK_optimizer`: The optimizer gets passed 
+-`optimizer::union{Nothing,JuMP.OptimizerFactory} = GLPK_optimizer`: The optimizer gets passed
 into the optimization model the default is nothing.
 -`sequential_runs::Bool = false`: tells the model to do sequential runs
 -`initial_conditions::DICKDA = DICKDA()`: default of Dict{ICKey, Array{InitialCondition}}
 -`parameters::Bool = false`: enable JuMP parameters
--`forecast::Bool = true`: if true, forecast collects the time steps in Power Systems, 
+-`forecast::Bool = true`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
 -`initial_time::Dates.DateTime = PSY.get_forecasts_initial_time(sys)`: initial time of forecast
-                                                     
+
 """
-function OperationModel(op_model::Type{M},
+function OperationModel(::Type{M},
                         ::Type{T},
                         sys::PSY.System;
                         kwargs...) where {M<:AbstractOperationModel,
@@ -143,8 +141,7 @@ function OperationModel(op_model::Type{M},
 
     optimizer = get(kwargs, :optimizer, nothing)
 
-    return OperationModel(op_model,
-                          ModelReference(T),
+    return OperationModel{M}(ModelReference(T),
                           sys,
                           CanonicalModel(T, sys, optimizer; kwargs...))
 
@@ -178,15 +175,15 @@ OpModel = OperationModel(TestOptModel, model_ref, c_sys5_re; PTDF = PTDF5, optim
 # Accepted Key Words
 -`verbose::Bool = true`: verbose default is true
 -`PTDF::PTDF = PTDF`: Passes the PTDF matrix into the optimization model
--`optimizer::union{Nothing,JuMP.OptimizerFactory} = GLPK_optimizer`: The optimizer gets passed 
+-`optimizer::union{Nothing,JuMP.OptimizerFactory} = GLPK_optimizer`: The optimizer gets passed
 into the optimization model the default is nothing.
 -`sequential_runs::Bool = false`: tells the model to do sequential runs
 -`initial_conditions::DICKDA = DICKDA()`: default of Dict{ICKey, Array{InitialCondition}}
 -`parameters::Bool = false`: enable JuMP parameters
--`forecast::Bool = true`: if true, forecast collects the time steps in Power Systems, 
+-`forecast::Bool = true`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
 -`initial_time::Dates.DateTime = PSY.get_forecasts_initial_time(sys)`: initial time of forecast
-                                                     
+
 """
 function OperationModel(::Type{T},
                         sys::PSY.System;
