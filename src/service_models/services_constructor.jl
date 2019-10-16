@@ -1,5 +1,5 @@
 function _internal_service_constructor!(canonical_model::CanonicalModel,
-                            model::DeviceModel{S, Sr},
+                            model::ServiceModel{S, Sr},
                             ::Type{T},
                             sys::PSY.System;
                             kwargs...) where {S<:PSY.Service,
@@ -21,8 +21,8 @@ function _internal_service_constructor!(canonical_model::CanonicalModel,
         reserve_ramp_constraints!(canonical_model,  service, Sr)
 
         #TODO: bulid the balance constraints elsewhere
-        forecast = _retrieve_forecasts(sys, Sr)
-        _nodal_expression_fixed(canonical_model,forecast, T)
+        forecast = _retrieve_forecasts(sys, S)
+        _nodal_expression_fixed!(canonical_model,forecast, T)
         service_balance(canonical_model,service)
     end
     return
@@ -55,7 +55,7 @@ function _build_device_expression!(canonical_model::CanonicalModel,
     expr = exp(canonical_model,name)
     if isnothing(expr)
         V = JuMP.variable_type(canonical_model.JuMPmodel)
-        generators = [get_name(g) for g in PSY.get_components(PSY.Generator,sys)]
+        generators = [PSY.get_name(g) for g in PSY.get_components(PSY.Generator,sys)]
         parameters = model_has_parameters(canonical_model)
         time_steps = model_time_steps(canonical_model)
 

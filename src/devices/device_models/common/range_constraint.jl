@@ -39,7 +39,7 @@ function device_range(canonical_model::CanonicalModel,
     set_name = (r[1] for r in range_data)
     _add_cons_container!(canonical_model, cons_name, set_name, time_steps)
     constraint = con(canonical_model, cons_name)
-    expr_cont = exp(canonical_model,_remove_underscore(cons_name))
+    expr_cont = exp(canonical_model,Symbol(_remove_underscore(cons_name)))
 
     for r in range_data
         if abs(r[2].min - r[2].max) <= eps()
@@ -118,7 +118,7 @@ function device_semicontinuousrange(canonical_model::CanonicalModel,
     _add_cons_container!(canonical_model, lb_name, set_name, time_steps)
     con_ub = con(canonical_model, ub_name)
     con_lb = con(canonical_model, lb_name)
-    expr_cont = exp(canonical_model,_remove_underscore(cons_name))
+    expr_cont = exp(canonical_model,Symbol(_remove_underscore(cons_name)))
 
     for t in time_steps, r in scrange_data
 
@@ -174,15 +174,14 @@ function device_range_expression!(canonical_model::CanonicalModel,
                     var_name::Symbol) where {T<:PSY.Component}
 
     time_steps = model_time_steps(canonical_model)
-    var = var(canonical_model, var_name)
+    var = PSI.var(canonical_model, var_name)
     expression_cont = exp(canonical_model, exp_name)
-
     for t in time_steps , d in devices
-        name = device_name(d)
+        name = PSY.get_name(d)
         if isassigned(expression_cont, name,t)
-            JuMP.add_to_expression!(expression_cont[name,t], 1.0, var[t])
+            JuMP.add_to_expression!(expression_cont[name,t], 1.0, var[name,t])
         else
-            expression_cont.data[name,t] = zero(eltype(expression_cont)) + 1.0*var[t];
+            expression_cont[name,t] = zero(eltype(expression_cont)) + 1.0*var[name,t];
         end
     end
 
