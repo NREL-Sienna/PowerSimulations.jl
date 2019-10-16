@@ -6,39 +6,39 @@ include(joinpath(base_dir, "data/data_5bus_pu.jl"));
 include(joinpath(base_dir, "data/data_14bus_pu.jl"))
 
 #Base Systems
-c_sys5 = PSY.System(nodes5, thermal_generators5, loads5, branches5, nothing, 100.0, nothing, nothing, nothing);
+c_sys5 = PSY.System(nodes5, thermal_generators5, loads5, branches5, nothing, 100.0, nothing, nothing);
 add_forecasts!(c_sys5, load_forecast_DA)
-c_sys14 = PSY.System(nodes14, thermal_generators14, loads14, branches14, nothing, 100.0, nothing, nothing, nothing);
+c_sys14 = PSY.System(nodes14, thermal_generators14, loads14, branches14, nothing, 100.0, nothing, nothing);
 add_forecasts!(c_sys14, forecast_DA14)
 PTDF5 = PSY.PTDF(branches5, nodes5);
 PTDF14 = PSY.PTDF(branches14, nodes14);
 
 #System with Renewable Energy
-c_sys5_re = PSY.System(nodes5, vcat(thermal_generators5, renewable_generators5), loads5, branches5, nothing, 100.0, nothing, nothing, nothing);
+c_sys5_re = PSY.System(nodes5, vcat(thermal_generators5, renewable_generators5), loads5, branches5, nothing, 100.0, nothing, nothing);
 add_forecasts!(c_sys5_re, ren_forecast_DA)
 add_forecasts!(c_sys5_re, load_forecast_DA)
 
-c_sys5_re_only = PSY.System(nodes5, renewable_generators5, loads5, branches5, nothing, 100.0, nothing, nothing, nothing);
+c_sys5_re_only = PSY.System(nodes5, renewable_generators5, loads5, branches5, nothing, 100.0, nothing, nothing);
 add_forecasts!(c_sys5_re_only, load_forecast_DA)
 add_forecasts!(c_sys5_re_only, ren_forecast_DA)
 
 #System with HydroPower Energy
-c_sys5_hy = PSY.System(nodes5, vcat(thermal_generators5, hydro_generators5[1]), loads5, branches5, nothing, 100.0, nothing, nothing, nothing);
+c_sys5_hy = PSY.System(nodes5, vcat(thermal_generators5, hydro_generators5[1]), loads5, branches5, nothing, 100.0, nothing, nothing);
 add_forecasts!(c_sys5_hy, [hydro_forecast_DA[1]])
 add_forecasts!(c_sys5_hy, load_forecast_DA)
 
 #System with Storage Device
-c_sys5_bat = PSY.System(nodes5, thermal_generators5, loads5, branches5, battery5, 100.0, nothing, nothing, nothing);
+c_sys5_bat = PSY.System(nodes5, thermal_generators5, loads5, branches5, battery5, 100.0, nothing, nothing);
 add_forecasts!(c_sys5_bat, load_forecast_DA)
 
 #System with Interruptible Load
-c_sys5_il = PSY.System(nodes5, thermal_generators5, vcat(loads5, interruptible), branches5, nothing, 100.0, nothing, nothing, nothing);
+c_sys5_il = PSY.System(nodes5, thermal_generators5, vcat(loads5, interruptible), branches5, nothing, 100.0, nothing, nothing);
 add_forecasts!(c_sys5_il, load_forecast_DA)
 add_forecasts!(c_sys5_il, Iload_forecast)
 
 #Systems with HVDC data in the branches
-c_sys5_dc = PSY.System(nodes5, vcat(thermal_generators5, renewable_generators5), loads5, branches5_dc, nothing, 100.0, nothing, nothing, nothing);
-c_sys14_dc = PSY.System(nodes14, thermal_generators14, loads14, branches14_dc, nothing, 100.0, nothing, nothing, nothing);
+c_sys5_dc = PSY.System(nodes5, vcat(thermal_generators5, renewable_generators5), loads5, branches5_dc, nothing, 100.0, nothing, nothing);
+c_sys14_dc = PSY.System(nodes14, thermal_generators14, loads14, branches14_dc, nothing, 100.0, nothing, nothing);
 add_forecasts!(c_sys5_dc, load_forecast_DA)
 add_forecasts!(c_sys5_dc, ren_forecast_DA)
 add_forecasts!(c_sys14_dc, forecast_DA14)
@@ -73,7 +73,7 @@ thermal_generators5_uc_testing = [ThermalStandard("Alta", true, nodes5[1], 0.0, 
                TechThermal(7.5, PowerSystems.ST, PowerSystems.COAL, (min=3.0, max=6.0), (min =-4.50, max=4.50), (up=0.0015, down=0.0015), (up=5.0, down=3.0)),
                ThreePartCost((0.0, 1000.0), 0.0, 1.5, 0.75)
            )];
-c_sys5_uc = PSY.System(nodes5, thermal_generators5_uc_testing, loads5, branches5, nothing, 100.0, nothing, nothing, nothing);
+c_sys5_uc = PSY.System(nodes5, thermal_generators5_uc_testing, loads5, branches5, nothing, 100.0, nothing, nothing);
 add_forecasts!(c_sys5_uc, load_forecast_DA)
 
 #= RTS Data
