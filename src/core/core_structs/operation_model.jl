@@ -15,7 +15,7 @@ end
 Creates a model reference of the Power Formulation, devices, branches, and services. 
 
 # Arguments
--`model::Type{T}) where {T<:PM.AbstractPowerFormulation} = CopperPlatePowerModel`:
+-`model::Type{T} where {T<:PM.AbstractPowerFormulation} = CopperPlatePowerModel`:
 -`devices::Dict{Symbol, DeviceModel} = devices`: device dictionary
 -`branches::Dict{Symbol, BranchModel} = branches`: branch dictionary
 -`services::Dict{Symbol, ServiceModel} = services`: service dictionary
@@ -70,7 +70,7 @@ OpModel = OperationModel(TestOptModel, model_ref, c_sys5_re; PTDF = PTDF5, optim
 
 # Accepted Key Words
 -`verbose::Bool = true`: verbose default is true
--`PTDF::PTDF{Tuple} = PTDF`: Passes the PTDF matrix into the optimization model
+-`PTDF::PTDF = PTDF`: Passes the PTDF matrix into the optimization model
 -`optimizer::union{Nothing,JuMP.OptimizerFactory} = GLPK_optimizer`: The optimizer gets passed 
 into the optimization model the default is nothing.
 -`sequential_runs::Bool = false`: tells the model to do sequential runs
@@ -129,7 +129,7 @@ OpModel = OperationModel(TestOptModel, model_ref, c_sys5_re; PTDF = PTDF5, optim
 
 # Accepted Key Words
 -`verbose::Bool = true`: verbose default is true
--`PTDF::PTDF{Tuple} = PTDF`: Passes the PTDF matrix into the optimization model
+-`PTDF::PTDF = PTDF`: Passes the PTDF matrix into the optimization model
 -`optimizer::union{Nothing,JuMP.OptimizerFactory} = GLPK_optimizer`: The optimizer gets passed 
 into the optimization model the default is nothing.
 -`sequential_runs::Bool = false`: tells the model to do sequential runs
@@ -182,7 +182,7 @@ OpModel = OperationModel(TestOptModel, model_ref, c_sys5_re; PTDF = PTDF5, optim
 
 # Accepted Key Words
 -`verbose::Bool = true`: verbose default is true
--`PTDF::PTDF{Tuple} = PTDF`: Passes the PTDF matrix into the optimization model
+-`PTDF::PTDF = PTDF`: Passes the PTDF matrix into the optimization model
 -`optimizer::union{Nothing,JuMP.OptimizerFactory} = GLPK_optimizer`: The optimizer gets passed 
 into the optimization model the default is nothing.
 -`sequential_runs::Bool = false`: tells the model to do sequential runs
