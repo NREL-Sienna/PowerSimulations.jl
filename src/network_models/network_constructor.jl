@@ -41,8 +41,9 @@ function construct_network!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_network!(canonical::CanonicalModel, sys::PSY.System,
-                            system_formulation::Type{T};
+function construct_network!(canonical::CanonicalModel,
+                            sys::PSY.System,
+                            ::Type{T};
                             kwargs...) where {T<:PM.AbstractPowerModel}
 
 
@@ -51,14 +52,12 @@ function construct_network!(canonical::CanonicalModel, sys::PSY.System,
                      PM.SOCBFPowerModel,
                      PM.SOCBFConicPowerModel]
 
-    if system_formulation in incompat_list
+    if T in incompat_list
        throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
     end
 
-    op_model.model_ref.transmission = T
-
-    powermodels_network!(canonical, system_formulation, sys)
-    add_pm_var_refs!(canonical, system_formulation, sys)
+    powermodels_network!(canonical, T, sys)
+    add_pm_var_refs!(canonical, T, sys)
 
     return
 
