@@ -6,7 +6,7 @@ function build_op_model!(op_model::OperationModel{M}; kwargs...) where M<:Abstra
     #Build Service
     for mod in services
         verbose && @info "Building $(mod[2].service) with $(mod[2].formulation) formulation"
-        construct_service!(canonical, mod[2], T, sys; kwargs...)
+        _internal_service_constructor!(canonical, mod[2], T, sys; kwargs...)
     end
 
     # Build Injection devices

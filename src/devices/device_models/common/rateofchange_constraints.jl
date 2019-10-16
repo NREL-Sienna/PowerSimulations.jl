@@ -186,15 +186,15 @@ function device_rateofchange!(canonical_model::CanonicalModel,
                             var_name::Symbol) where {T<:PSY.Component}
 
     time_steps = model_time_steps(canonical_model)
-    var = var(canonical_model, var_name)
+    var = PSI.var(canonical_model, var_name)
     exp_cont = exp(canonical_model, exp_name)
 
     for t in time_steps, d in devices
-        name = device_name(d)
+        name = PSY.get_name(d)
         if isassigned(exp_cont, name,t)
-            JuMP.add_to_expression!(exp_cont[name, t], 1.0, var[name, t])
+            JuMP.add_to_expression!(exp_cont[name, t], 1.0, var[name,t])
         else
-            exp_cont.data[name,t] =  zero(eltype(exp_cont)) + 1.0*var[t];
+            exp_cont[name,t] =  zero(eltype(exp_cont)) + 1.0*var[name,t];
         end
     end
 
