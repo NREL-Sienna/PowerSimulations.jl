@@ -81,7 +81,7 @@ function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
         optimizer_log[:solve_time] = MOI.get(canonical_model.JuMPmodel, MOI.SolveTime())
     catch
         @warn("SolveTime() property not supported by the Solver")
-        optimizer_log[:solve_time] = nothing #"Not Supported by solver"
+        optimizer_log[:solve_time] = NaN #"Not Supported by solver"
     end
     _write_optimizer_log(optimizer_log, path)
     return
