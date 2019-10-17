@@ -77,7 +77,10 @@ function _build_stages(sim_ref::SimulationRef,
     mod_stages = Vector{_Stage}(undef, length(stages))
     for (key, stage) in stages
         verbose && @info("Building Stage $(key)")
-        canonical = CanonicalModel(stage.model.transmission, stage.sys, optimizer; kwargs...)
+        canonical = CanonicalModel(stage.model.transmission,
+                                   stage.sys,
+                                   stage.optimizer;
+                                   kwargs...)
         mod_stages[key] = _Stage(key,
                                 stage.model,
                                 stage.op_model,
@@ -174,9 +177,9 @@ end
 function _check_chronology_ref(stages::Dict{Int64, Stage})
 
     for (stage_number,stage) in stages
-        for (k, v) in stage.chronology_ref
-            k < 1 && continue
-            _feedforward_rule_check(v, k, stages[key], stage_number, stage)
+        for (key, chron) in stage.chronology_ref
+            key < 1 && continue
+            _feedforward_rule_check(chron, key, stages[key], stage_number, stage)
         end
     end
 
