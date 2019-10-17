@@ -80,7 +80,7 @@ function _build_stages(sim_ref::SimulationRef,
         canonical = CanonicalModel(stage.model.transmission,
                                    stage.sys,
                                    stage.optimizer;
-                                   kwargs...)
+                                   parameters = true)
         mod_stages[key] = _Stage(key,
                                 stage.model,
                                 stage.op_model,

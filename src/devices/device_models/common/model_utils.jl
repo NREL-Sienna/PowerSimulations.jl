@@ -9,7 +9,7 @@ function _add_cons_container!(canonical_model::CanonicalModel, cons_name::Symbol
 end
 
 function _add_param_container!(canonical_model::CanonicalModel, param_reference::UpdateRef, axs...)
-    canonical_model.parameters[param_reference] = JuMPParamArray(undef, axs...)
+    canonical_model.parameters[param_reference] = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...)
     return
 end
 
