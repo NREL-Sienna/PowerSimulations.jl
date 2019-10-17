@@ -9,6 +9,9 @@ using GLPK
 using Cbc
 using OSQP
 
+import PowerSystems.UtilsData: TestData
+download(TestData; branch = "master")
+
 const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
