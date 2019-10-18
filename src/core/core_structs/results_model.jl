@@ -40,8 +40,11 @@ feather files of the results.
 results = load_operation_results("/Users/test/", "2019-10-03T09-18-00")
 ```
 """
-
 function load_operation_results(path::AbstractString, directory::AbstractString)
+
+    if isfile(path)
+        path = dirname(path)
+    end
 
     folder_path = joinpath(path, directory)
     files_in_folder = collect(readdir(folder_path))
@@ -62,7 +65,9 @@ function load_operation_results(path::AbstractString, directory::AbstractString)
         optimizer = Dict{Symbol, Any}(eachcol(Feather.read("$file_path"),true))
 
         file_path = joinpath(folder_path,"time_stamp.feather")
-        time_stamp = Feather.read("$file_path")
+        temp_time_stamp = Feather.read("$file_path")
+        time_stamp = temp_time_stamp[1:(size(temp_time_stamp,1)-1),:]
+        
 
         obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer[:obj_value])
         results = OperationModelResults(variable_dict, obj_value, optimizer, time_stamp)

@@ -104,6 +104,7 @@ export get_stacked_generation_data
 export bar_plot
 export stack_plot
 export report
+export load_simulation_results
 
 #################################################################################
 # Imports
@@ -156,6 +157,7 @@ include("core/core_structs/chronology.jl")
 include("core/core_structs/simulations_stages.jl")
 include("core/core_structs/simulation_model.jl")
 include("core/core_structs/results_model.jl")
+include("core/core_structs/aggregation.jl")
 include("core/build_cache.jl")
 include("core/build_operations.jl")
 include("core/build_simulations.jl")
