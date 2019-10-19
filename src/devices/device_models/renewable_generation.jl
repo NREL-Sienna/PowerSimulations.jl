@@ -154,6 +154,109 @@ function activepower_constraints(canonical_model::CanonicalModel,
 
 end
 
+########################## Addition of to the nodal balances ###############################
+function nodal_expression!(canonical_model::CanonicalModel,
+                           devices::IS.FlattenIteratorWrapper{G},
+                           system_formulation::Type{S}) where {G<:PSY.Generator,
+                                                               S<:PM.AbstractPowerModel}
+
+    initial_time = model_initial_time(canonical_model)
+    forecast = model_uses_forecasts(canonical_model)
+    parameters = model_has_parameters(canonical_model)
+    time_steps = model_time_steps(canonical_model)
+    device_total = length(devices)
+    ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, device_total)
+    ts_data_reactive = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, device_total)
+
+    for (ix, device) in enumerate(devices)
+        bus_number = PSY.get_number(PSY.get_bus(device))
+        tech = PSY.get_tech(device)
+        pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
+        active_power = forecast ? PSY.get_rating(tech) : PSY.get_activepower(device)
+        if forecast
+            ts_vector = TS.values(PSY.get_forecast(G,
+                                                   device,
+                                                   initial_time,
+                                                   "rating"))
+        else
+            ts_vector = ones(time_steps[end])
+        end
+        ts_data_active[ix] = (name, bus_number, active_power, ts_vector)
+        ts_data_reactive[ix] = (name, bus_number, active_power * pf, ts_vector)
+    end
+
+    if parameters
+        include_parameters(canonical_model,
+                           ts_data_active,
+                           UpdateRef{G}(Symbol("P_$(G)")),
+                           :nodal_balance_active)
+        include_parameters(canonical_model,
+                           ts_data_reactive,
+                           UpdateRef{G}(Symbol("Q_$(G)")),
+                           :nodal_balance_reactive)
+        return
+    end
+
+    for t in time_steps
+        _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
+                            bus_number, t,
+                            ts_data_active[t][3]*ts_data_active[t][4])
+        _add_to_expression!(canonical_model.expressions[:nodal_balance_reactive],
+                            bus_number, t,
+                            ts_data_reactive[t][3]*ts_data_reactive[t][4])
+    end
+
+    return
+
+end
+
+function nodal_expression!(canonical_model::CanonicalModel,
+                           devices::IS.FlattenIteratorWrapper{G},
+                           system_formulation::Type{S}) where {G<:PSY.Generator,
+                                                               S<:PM.AbstractActivePowerModel}
+
+    initial_time = model_initial_time(canonical_model)
+    forecast = model_uses_forecasts(canonical_model)
+    parameters = model_has_parameters(canonical_model)
+    time_steps = model_time_steps(canonical_model)
+    ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, length(devices))
+
+    for (ix, device) in enumerate(devices)
+        bus_number = PSY.get_number(PSY.get_bus(device))
+        tech = PSY.get_tech(device)
+        active_power = forecast ? PSY.get_rating(tech) : PSY.get_activepower(device)
+        PSY.get_forecast(G, device, initial_time, label)
+        if forecast
+            ts_vector = TS.values(PSY.get_forecast(G,
+                                                   device,
+                                                   initial_time,
+                                                   "rating"))
+        else
+            ts_vector = ones(time_steps[end])
+        end
+        ts_data_active[ix] = (name, bus_number, active_power, ts_vector)
+    end
+
+    if parameters
+        include_parameters(canonical_model,
+                           ts_data_active,
+                           UpdateRef{G}(Symbol("P_$(G)")),
+                           :nodal_balance_active)
+        return
+    end
+
+    for t in time_steps
+        _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
+                            bus_number,
+                            t,
+                            ts_data_active[t])
+    end
+
+    return
+
+
+end
+
 ##################################### renewable generation cost ############################
 function cost_function(canonical_model::CanonicalModel,
                        devices::IS.FlattenIteratorWrapper{PSY.RenewableDispatch},

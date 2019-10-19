@@ -14,6 +14,7 @@ const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
 const PJ = ParameterJuMP
 const MOPFM = MathOptFormat.MOF.Model()
+const TS = TimeSeries
 
 #Type Alias for JuMP and PJ containers
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
