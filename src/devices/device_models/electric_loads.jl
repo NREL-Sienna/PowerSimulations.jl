@@ -90,10 +90,6 @@ function _get_time_series(devices::IS.FlattenIteratorWrapper{T},
 
     return names, series
 
-end
-
-function _get_time_series(forecasts::Vector{PSY.Deterministic{L}}) where {L<:PSY.ElectricLoad}
-
     names = Vector{String}(undef, length(forecasts))
     ratings = Vector{Float64}(undef, length(forecasts))
     series = Vector{Vector{Float64}}(undef, length(forecasts))

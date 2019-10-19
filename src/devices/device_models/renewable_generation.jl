@@ -8,7 +8,7 @@ struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
 
 struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
-########################### renewable generation variables ############################################
+########################### renewable generation variables #################################
 
 function activepower_variables(canonical_model::CanonicalModel,
                                devices::IS.FlattenIteratorWrapper{R}) where {R<:PSY.RenewableGen}
@@ -38,7 +38,7 @@ function reactivepower_variables(canonical_model::CanonicalModel,
 
 end
 
-####################################### Reactive Power Constraints ######################################
+####################################### Reactive Power Constraints #########################
 function reactivepower_constraints(canonical_model::CanonicalModel,
                                     devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableFullDispatch},
@@ -94,7 +94,7 @@ function reactivepower_constraints(canonical_model::CanonicalModel,
 end
 
 
-######################## output constraints without Time Series ###################################
+######################## output constraints without Time Series ############################
 function _get_time_series(devices::IS.FlattenIteratorWrapper{R},
                           time_steps::UnitRange{Int64}) where {R<:PSY.RenewableGen}
 
@@ -108,10 +108,6 @@ function _get_time_series(devices::IS.FlattenIteratorWrapper{R},
     end
 
     return names, series
-
-end
-
-function _get_time_series(forecasts::Vector{PSY.Deterministic{R}}) where {R<:PSY.RenewableGen}
 
     names = Vector{String}(undef, length(forecasts))
     ratings = Vector{Float64}(undef, length(forecasts))
@@ -158,7 +154,7 @@ function activepower_constraints(canonical_model::CanonicalModel,
 
 end
 
-##################################### renewable generation cost ######################################
+##################################### renewable generation cost ############################
 function cost_function(canonical_model::CanonicalModel,
                        devices::IS.FlattenIteratorWrapper{PSY.RenewableDispatch},
                        device_formulation::Type{D},
