@@ -79,7 +79,6 @@ function _canonical_init(bus_numbers::Vector{Int64},
                         forecast::Bool,
                         initial_time::Dates.DateTime,
                         parameters::Bool,
-                        sequential_runs::Bool,
                         ini_con::DICKDA) where {S<:PM.AbstractPowerModel}
 
     V = JuMP.variable_type(jump_model)
@@ -87,7 +86,6 @@ function _canonical_init(bus_numbers::Vector{Int64},
     canonical = CanonicalModel(jump_model,
                               optimizer,
                               parameters,
-                              sequential_runs,
                               time_steps,
                               resolution,
                               forecast,
@@ -112,7 +110,6 @@ mutable struct CanonicalModel
     JuMPmodel::JuMP.AbstractModel
     optimizer_factory::Union{Nothing, JuMP.OptimizerFactory}
     parametrized::Bool
-    sequential_runs::Bool
     time_steps::UnitRange{Int64}
     resolution::Dates.Period
     forecast::Bool
@@ -128,7 +125,6 @@ mutable struct CanonicalModel
     function CanonicalModel(JuMPmodel::JuMP.AbstractModel,
                             optimizer_factory::Union{Nothing, JuMP.OptimizerFactory},
                             parametrized::Bool,
-                            sequential_runs::Bool,
                             time_steps::UnitRange{Int64},
                             resolution::Dates.Period,
                             forecast::Bool,
@@ -144,15 +140,9 @@ mutable struct CanonicalModel
         #prevents having empty parameters and parametrized canonical model
         @assert isnothing(parameters) == !parametrized
 
-        if (sequential_runs && sequential_runs != parametrized)
-            throw(ArgumentError("Sequential simulations can't run when the specified OperationModel
-                                 is not parametrized"))
-        end
-
         new(JuMPmodel,
             optimizer_factory,
             parametrized,
-            sequential_runs,
             time_steps,
             resolution,
             forecast,
@@ -201,7 +191,6 @@ function CanonicalModel(::Type{T},
                            forecast,
                            initial_time,
                            parameters,
-                           sequential_runs,
                            ini_con)
 
 end
