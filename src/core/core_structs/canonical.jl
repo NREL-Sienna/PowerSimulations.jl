@@ -164,6 +164,7 @@ function CanonicalModel(::Type{T},
                         optimizer::Union{Nothing,JuMP.OptimizerFactory};
                         kwargs...) where {T<:PM.AbstractPowerModel}
 
+    PSY.check_forecast_consistency(sys)
     user_defined_model = get(kwargs, :JuMPmodel, nothing)
     ini_con = get(kwargs, :initial_conditions, DICKDA())
     parameters = get(kwargs, :parameters, false)
