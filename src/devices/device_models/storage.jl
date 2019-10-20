@@ -198,14 +198,14 @@ function energy_balance_constraint!(canonical::CanonicalModel,
 
     key = ICKey(DeviceEnergy, St)
 
-    if !(key in keys(canonical_model.initial_conditions))
+    if !(key in keys(canonical.initial_conditions))
         error("Initial Conditions for $(St) Energy Constraints not in the model")
     end
 
     efficiency_data = make_efficiency_data(devices)
 
     energy_balance(canonical,
-                   canonical_model.initial_conditions[key],
+                   canonical.initial_conditions[key],
                    efficiency_data,
                    Symbol("energy_balance_$(St)"),
                    (Symbol("Psout_$(St)"), Symbol("Psin_$(St)"), Symbol("Est_$(St)")))

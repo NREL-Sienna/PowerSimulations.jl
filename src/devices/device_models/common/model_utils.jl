@@ -1,15 +1,15 @@
 function _add_var_container!(canonical::CanonicalModel, var_name::Symbol, ax1, ax2)
-    canonical_model.variables[var_name] = _container_spec(canonical_model.JuMPmodel, ax1, ax2)
+    canonical.variables[var_name] = _container_spec(canonical.JuMPmodel, ax1, ax2)
     return
 end
 
 function _add_cons_container!(canonical::CanonicalModel, cons_name::Symbol, ax1, ax2)
-    canonical_model.constraints[cons_name] = JuMPConstraintArray(undef, ax1, ax2)
+    canonical.constraints[cons_name] = JuMPConstraintArray(undef, ax1, ax2)
     return
 end
 
 function _add_param_container!(canonical::CanonicalModel, param_reference::UpdateRef, axs...)
-    canonical_model.parameters[param_reference] = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...)
+    canonical.parameters[param_reference] = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...)
     return
 end
 

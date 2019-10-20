@@ -174,18 +174,18 @@ function _pwlgencost_sos(canonical::CanonicalModel,
         variable::JV,
         cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
-    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}()
-    pwlvars = JuMP.@variable(canonical_model.JuMPmodel, [i = 1:length(cost_component)],
+    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical)}()
+    pwlvars = JuMP.@variable(canonical.JuMPmodel, [i = 1:length(cost_component)],
                             base_name = "{$(variable)}_{sos}",
                             start = 0.0, lower_bound = 0.0, upper_bound = 1.0)
 
-    JuMP.@constraint(canonical_model.JuMPmodel, sum(pwlvars)  == 1.0)
-    JuMP.@constraint(canonical_model.JuMPmodel, pwlvars in MOI.SOS2(collect(1:length(pwlvars))))
+    JuMP.@constraint(canonical.JuMPmodel, sum(pwlvars)  == 1.0)
+    JuMP.@constraint(canonical.JuMPmodel, pwlvars in MOI.SOS2(collect(1:length(pwlvars))))
     for (ix, var) in enumerate(pwlvars)
         JuMP.add_to_expression!(gen_cost, cost_component[ix][1] * var)
     end
 
-    JuMP.@constraint(canonical_model.JuMPmodel, variable ==
+    JuMP.@constraint(canonical.JuMPmodel, variable ==
                         sum([var*cost_component[ix][2] for (ix, var) in enumerate(pwlvars) ]) )
 
     return gen_cost
@@ -226,9 +226,9 @@ function _pwlgencost_linear(canonical::CanonicalModel,
         variable::JV,
         cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
-    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}()
+    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical)}()
     upperbound(i) = (i == 1 ? cost_component[i][2] : (cost_component[i][2] - cost_component[i-1][2]))
-    pwlvars = JuMP.@variable(canonical_model.JuMPmodel, [i = 1:length(cost_component)],
+    pwlvars = JuMP.@variable(canonical.JuMPmodel, [i = 1:length(cost_component)],
                             base_name = "{$(variable)}_{pwl}", start = 0.0,
                             lower_bound = 0.0, upper_bound = upperbound(i))
 
@@ -241,7 +241,7 @@ function _pwlgencost_linear(canonical::CanonicalModel,
         end
     end
 
-    c = JuMP.@constraint(canonical_model.JuMPmodel, variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars) ]) )
+    c = JuMP.@constraint(canonical.JuMPmodel, variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars) ]) )
 
     return gen_cost
 
@@ -315,7 +315,7 @@ function ps_cost(canonical::CanonicalModel,
                  dt::Float64,
                  sign::Float64) where {JV<:JuMP.AbstractVariableRef}
 
-    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical_model)}()
+    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical)}()
     cost_array = cost_component.cost
     for var in variable
         c = _pwl_cost(canonical, var, cost_array)
@@ -344,7 +344,7 @@ for d in devices
                               getfield(PSY.get_op_cost(d), cost_symbol),
                               dt,
                               sign) ```
-``` canonical_model.cost_function += cost_expression ```
+``` canonical.cost_function += cost_expression ```
 
 # LaTeX
 
@@ -363,7 +363,7 @@ function add_to_cost(canonical::CanonicalModel,
                      cost_symbol::Symbol,
                      sign::Float64 = 1.0) where {D<:IS.FlattenIteratorWrapper{<:PSY.Device}}
 
-    resolution = model_resolution(canonical_model)
+    resolution = model_resolution(canonical)
     dt = Dates.value(Dates.Minute(resolution))/60
     variable = var(canonical, var_name)
 
@@ -375,11 +375,11 @@ function add_to_cost(canonical::CanonicalModel,
                                   dt,
                                   sign)
         T_ce = typeof(cost_expression)
-        T_cf = typeof(canonical_model.cost_function)
+        T_cf = typeof(canonical.cost_function)
         if  T_cf<:JuMP.GenericAffExpr && T_ce<:JuMP.GenericQuadExpr
-            canonical_model.cost_function += cost_expression
+            canonical.cost_function += cost_expression
         else
-            JuMP.add_to_expression!(canonical_model.cost_function, cost_expression)
+            JuMP.add_to_expression!(canonical.cost_function, cost_expression)
         end
     end
 

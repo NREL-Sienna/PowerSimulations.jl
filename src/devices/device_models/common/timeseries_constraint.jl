@@ -25,14 +25,14 @@ function device_timeseries_ub(canonical::CanonicalModel,
                               cons_name::Symbol,
                               var_name::Symbol)
 
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     variable = var(canonical, var_name)
     _add_cons_container!(canonical, cons_name, ts_data[1], time_steps)
     constraint = con(canonical, cons_name)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
 
-        constraint[name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
+        constraint[name, t] = JuMP.@constraint(canonical.JuMPmodel,
                                     variable[name, t] <= ts_data[2][ix]*ts_data[3][ix][t])
 
     end
@@ -70,14 +70,14 @@ function device_timeseries_lb(canonical::CanonicalModel,
                               cons_name::Symbol,
                               var_name::Symbol)
 
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     variable = var(canonical, var_name)
     _add_cons_container!(canonical, cons_name, ts_data[1], time_steps)
     constraint = con(canonical, cons_name)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
 
-        constraint[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, ts_data[2][ix]*ts_data[3][ix][t] <= variable[name, t])
+        constraint[name, t] = JuMP.@constraint(canonical.JuMPmodel, ts_data[2][ix]*ts_data[3][ix][t] <= variable[name, t])
 
     end
 
@@ -117,7 +117,7 @@ function device_timeseries_param_ub(canonical::CanonicalModel,
                                     param_reference::UpdateRef,
                                     var_name::Symbol)
 
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     ub_name = _middle_rename(cons_name, "_", "ub")
     variable = var(canonical, var_name)
     _add_cons_container!(canonical, ub_name, ts_data[1], time_steps)
@@ -126,8 +126,8 @@ function device_timeseries_param_ub(canonical::CanonicalModel,
     param = par(canonical, param_reference)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
-        param[name, t] = PJ.add_parameter(canonical_model.JuMPmodel, ts_data[3][ix][t])
-        constraint[name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
+        param[name, t] = PJ.add_parameter(canonical.JuMPmodel, ts_data[3][ix][t])
+        constraint[name, t] = JuMP.@constraint(canonical.JuMPmodel,
                                         variable[name, t] <= ts_data[2][ix]*param[name, t])
     end
 
@@ -166,7 +166,7 @@ function device_timeseries_param_lb(canonical::CanonicalModel,
                                     param_reference::UpdateRef,
                                     var_name::Symbol)
 
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     variable = var(canonical, var_name)
     lb_name = _middle_rename(cons_name, "_", "lb")
     _add_cons_container!(canonical, lb_name, ts_data[1], time_steps)
@@ -175,8 +175,8 @@ function device_timeseries_param_lb(canonical::CanonicalModel,
     param = par(canonical, param_reference)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
-        param[name, t] = PJ.add_parameter(canonical_model.JuMPmodel, ts_data[3][ix][t])
-        constraint[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, ts_data[2][ix]*param[name, t] <= variable[name, t])
+        param[name, t] = PJ.add_parameter(canonical.JuMPmodel, ts_data[3][ix][t])
+        constraint[name, t] = JuMP.@constraint(canonical.JuMPmodel, ts_data[2][ix]*param[name, t] <= variable[name, t])
     end
 
     return
@@ -216,7 +216,7 @@ function device_timeseries_ub_bin(canonical::CanonicalModel,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
 
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     ub_name = _middle_rename(cons_name, "_", "ub")
 
     varcts = var(canonical, var_name)
@@ -226,7 +226,7 @@ function device_timeseries_ub_bin(canonical::CanonicalModel,
     con_ub = con(canonical, ub_name)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
-        con_ub[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[name, t] <= varbin[name, t]*ts_data[2][ix]*ts_data[3][ix][t])
+        con_ub[name, t] = JuMP.@constraint(canonical.JuMPmodel, varcts[name, t] <= varbin[name, t]*ts_data[2][ix]*ts_data[3][ix][t])
     end
 
     return
@@ -274,7 +274,7 @@ function device_timeseries_ub_bigM(canonical::CanonicalModel,
                                     binvar_name::Symbol,
                                     M_value::Float64 = 1e6)
 
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     ub_name = _middle_rename(cons_name, "_", "ub")
     key_status = _middle_rename(cons_name, "_", "status")
 
@@ -290,9 +290,9 @@ function device_timeseries_ub_bigM(canonical::CanonicalModel,
     param = par(canonical, param_reference)
 
     for t in time_steps, (ix, name) in enumerate(ts_data[1])
-        param[name, t] = PJ.add_parameter(canonical_model.JuMPmodel, ts_data[3][ix][t])
-        con_ub[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[name, t] - param[name, t]*ts_data[2][ix] <= (1 - varbin[name, t])*M_value)
-        con_status[name, t] =  JuMP.@constraint(canonical_model.JuMPmodel, varcts[name, t] <= varbin[name, t]*M_value)
+        param[name, t] = PJ.add_parameter(canonical.JuMPmodel, ts_data[3][ix][t])
+        con_ub[name, t] = JuMP.@constraint(canonical.JuMPmodel, varcts[name, t] - param[name, t]*ts_data[2][ix] <= (1 - varbin[name, t])*M_value)
+        con_status[name, t] =  JuMP.@constraint(canonical.JuMPmodel, varcts[name, t] <= varbin[name, t]*M_value)
     end
 
     return

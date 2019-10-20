@@ -11,7 +11,7 @@ function status_init(canonical::CanonicalModel,
 
 
     key = ICKey(DeviceStatus, PSD)
-    parameters = model_has_parameters(canonical_model)
+    parameters = model_has_parameters(canonical)
     length_devices = length(devices)
     ini_conds = get_ini_cond(canonical, key)
     # Improve here
@@ -19,7 +19,7 @@ function status_init(canonical::CanonicalModel,
 
     if isempty(ini_conds)
         @info("Setting $(key.quantity) initial conditions for the status of all devices $(PSD) based on system data")
-        ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
+        ini_conds = canonical.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
         for (ix, g) in enumerate(devices)
             status_value = (PSY.get_activepower(g) > 0) ? 1.0 : 0.0
             ini_conds[ix] = InitialCondition(canonical,
@@ -50,7 +50,7 @@ function output_init(canonical::CanonicalModel,
                     devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
     key = ICKey(DevicePower, PSD)
-    parameters = model_has_parameters(canonical_model)
+    parameters = model_has_parameters(canonical)
     length_devices = length(devices)
     ini_conds = get_ini_cond(canonical, key)
     # Improve this
@@ -58,7 +58,7 @@ function output_init(canonical::CanonicalModel,
 
     if isempty(ini_conds)
         @info("Setting $(key.quantity) initial_condition of all devices $(PSD) based on system data")
-        ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
+        ini_conds = canonical.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
         for (ix, g) in enumerate(devices)
                 ini_conds[ix] = InitialCondition(canonical,
                                                 g,
@@ -91,7 +91,7 @@ function duration_init(canonical::CanonicalModel,
                         devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
     keys = [ICKey(TimeDurationON, PSD), ICKey(TimeDurationOFF, PSD)]
-    parameters = model_has_parameters(canonical_model)
+    parameters = model_has_parameters(canonical)
     length_devices = length(devices)
     ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
 
@@ -100,7 +100,7 @@ function duration_init(canonical::CanonicalModel,
 
         if isempty(ini_conds)
             @info("Setting $(key.quantity) initial_condition of all devices $(PSD) based on system data")
-            ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
+            ini_conds = canonical.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
 
             for (ix, g) in enumerate(devices)
                 time_on = (PSY.get_activepower(g) > 0) ? MISSING_INITIAL_CONDITIONS_TIME_COUNT : 0.0
@@ -146,14 +146,14 @@ function storage_energy_init(canonical::CanonicalModel,
                              devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.Storage}
 
     key = ICKey(DeviceEnergy, PSD)
-    parameters = model_has_parameters(canonical_model)
+    parameters = model_has_parameters(canonical)
     length_devices = length(devices)
     ini_conds = get_ini_cond(canonical, key)
     ref_key = parameters ? Symbol("E_$(PSD)") : :energy
 
     if isempty(ini_conds)
         @info("Setting $(key.quantity) initial_condition of all devices $(PSD) based on system data")
-        ini_conds = canonical_model.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
+        ini_conds = canonical.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
 
         for (ix, g) in enumerate(devices)
             ini_conds[ix] = InitialCondition(canonical,

@@ -81,12 +81,12 @@ function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
                                canonical::CanonicalModel,
                                path::String)
 
-    optimizer_log[:obj_value] = JuMP.objective_value(canonical_model.JuMPmodel)
-    optimizer_log[:termination_status] = Int(JuMP.termination_status(canonical_model.JuMPmodel))
-    optimizer_log[:primal_status] = Int(JuMP.primal_status(canonical_model.JuMPmodel))
-    optimizer_log[:dual_status] = Int(JuMP.dual_status(canonical_model.JuMPmodel))
+    optimizer_log[:obj_value] = JuMP.objective_value(canonical.JuMPmodel)
+    optimizer_log[:termination_status] = Int(JuMP.termination_status(canonical.JuMPmodel))
+    optimizer_log[:primal_status] = Int(JuMP.primal_status(canonical.JuMPmodel))
+    optimizer_log[:dual_status] = Int(JuMP.dual_status(canonical.JuMPmodel))
     try
-        optimizer_log[:solve_time] = MOI.get(canonical_model.JuMPmodel, MOI.SolveTime())
+        optimizer_log[:solve_time] = MOI.get(canonical.JuMPmodel, MOI.SolveTime())
     catch
         @warn("SolveTime() property not supported by the Solver")
         optimizer_log[:solve_time] = nothing #"Not Supported by solver"
@@ -126,7 +126,7 @@ end
 """ Exports the OpModel JuMP object in MathOptFormat"""
 function _write_canonical_model(canonical::CanonicalModel, save_path::String)
     MOF_model = MOPFM
-    MOI.copy_to(MOF_model, JuMP.backend(canonical_model.JuMPmodel))
+    MOI.copy_to(MOF_model, JuMP.backend(canonical.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)
 
     return

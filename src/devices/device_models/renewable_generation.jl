@@ -75,18 +75,18 @@ function reactivepower_constraints!(canonical::CanonicalModel,
                                                                         S<:PM.AbstractPowerModel}
 
     names = (PSY.get_name(d) for d in devices)
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     p_variable_name = Symbol("P_$(R)")
     q_variable_name = Symbol("Q_$(R)")
     constraint_name = Symbol("reactiverange_$(R)")
-    canonical_model.constraints[constraint_name] = JuMPConstraintArray(undef, names, time_steps)
+    canonical.constraints[constraint_name] = JuMPConstraintArray(undef, names, time_steps)
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(d))))
-        canonical_model.constraints[constraint_name][name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
-                                canonical_model.variables[q_variable_name][name, t] ==
-                                canonical_model.variables[p_variable_name][name, t] * pf)
+        canonical.constraints[constraint_name][name, t] = JuMP.@constraint(canonical.JuMPmodel,
+                                canonical.variables[q_variable_name][name, t] ==
+                                canonical.variables[p_variable_name][name, t] * pf)
     end
 
     return
@@ -132,10 +132,10 @@ function activepower_constraints!(canonical::CanonicalModel,
                                                          D<:AbstractRenewableDispatchFormulation,
                                                          S<:PM.AbstractPowerModel}
 
-    parameters = model_has_parameters(canonical_model)
+    parameters = model_has_parameters(canonical)
 
     if parameters
-        time_steps = model_time_steps(canonical_model)
+        time_steps = model_time_steps(canonical)
         device_timeseries_param_ub(canonical,
                             _get_time_series(devices, time_steps),
                             Symbol("activerange_$(R)"),
@@ -160,10 +160,10 @@ function nodal_expression!(canonical::CanonicalModel,
                            system_formulation::Type{S}) where {G<:PSY.Generator,
                                                                S<:PM.AbstractPowerModel}
 
-    initial_time = model_initial_time(canonical_model)
-    forecast = model_uses_forecasts(canonical_model)
-    parameters = model_has_parameters(canonical_model)
-    time_steps = model_time_steps(canonical_model)
+    initial_time = model_initial_time(canonical)
+    forecast = model_uses_forecasts(canonical)
+    parameters = model_has_parameters(canonical)
+    time_steps = model_time_steps(canonical)
     device_total = length(devices)
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, device_total)
     ts_data_reactive = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, device_total)
@@ -198,10 +198,10 @@ function nodal_expression!(canonical::CanonicalModel,
     end
 
     for t in time_steps
-        _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
+        _add_to_expression!(canonical.expressions[:nodal_balance_active],
                             bus_number, t,
                             ts_data_active[t][3]*ts_data_active[t][4])
-        _add_to_expression!(canonical_model.expressions[:nodal_balance_reactive],
+        _add_to_expression!(canonical.expressions[:nodal_balance_reactive],
                             bus_number, t,
                             ts_data_reactive[t][3]*ts_data_reactive[t][4])
     end
@@ -215,10 +215,10 @@ function nodal_expression!(canonical::CanonicalModel,
                            system_formulation::Type{S}) where {G<:PSY.Generator,
                                                                S<:PM.AbstractActivePowerModel}
 
-    initial_time = model_initial_time(canonical_model)
-    forecast = model_uses_forecasts(canonical_model)
-    parameters = model_has_parameters(canonical_model)
-    time_steps = model_time_steps(canonical_model)
+    initial_time = model_initial_time(canonical)
+    forecast = model_uses_forecasts(canonical)
+    parameters = model_has_parameters(canonical)
+    time_steps = model_time_steps(canonical)
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, length(devices))
 
     for (ix, device) in enumerate(devices)
@@ -246,7 +246,7 @@ function nodal_expression!(canonical::CanonicalModel,
     end
 
     for t in time_steps
-        _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
+        _add_to_expression!(canonical.expressions[:nodal_balance_active],
                             bus_number,
                             t,
                             ts_data_active[t])

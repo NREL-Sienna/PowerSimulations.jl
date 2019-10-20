@@ -60,15 +60,15 @@ function reactivepower_constraints!(canonical::CanonicalModel,
                                    system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
                                                                        D<:AbstractControllablePowerLoadFormulation,
                                                                        S<:PM.AbstractPowerModel}
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     key = Symbol("reactive_$(L)")
-    canonical_model.constraints[key] = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
+    canonical.constraints[key] = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(atan((PSY.get_maxreactivepower(d)/PSY.get_maxactivepower(d))))
-        canonical_model.constraints[key][PSY.get_name(d), t] = JuMP.@constraint(canonical_model.JuMPmodel,
-                        canonical_model.variables[Symbol("Q_$(L)")][name, t] == canonical_model.variables[Symbol("P_$(L)")][name, t]*pf)
+        canonical.constraints[key][PSY.get_name(d), t] = JuMP.@constraint(canonical.JuMPmodel,
+                        canonical.variables[Symbol("Q_$(L)")][name, t] == canonical.variables[Symbol("P_$(L)")][name, t]*pf)
     end
 
     return
@@ -81,10 +81,10 @@ function _get_time_series(canonical::CanonicalModel,
                           devices::IS.FlattenIteratorWrapper{<:PSY.ElectricLoad},
                           time_steps::UnitRange{Int64})
 
-    initial_time = model_initial_time(canonical_model)
-    forecast = model_uses_forecasts(canonical_model)
-    parameters = model_has_parameters(canonical_model)
-    time_steps = model_time_steps(canonical_model)
+    initial_time = model_initial_time(canonical)
+    forecast = model_uses_forecasts(canonical)
+    parameters = model_has_parameters(canonical)
+    time_steps = model_time_steps(canonical)
     device_total = length(devices)
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, device_total)
     ts_data_reactive = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, device_total)
@@ -116,9 +116,9 @@ function activepower_constraints!(canonical::CanonicalModel,
                                  system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
                                                                      S<:PM.AbstractPowerModel}
 
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
 
-    if model_has_parameters(canonical_model)
+    if model_has_parameters(canonical)
         device_timeseries_param_ub(canonical,
                                    _get_time_series(devices, time_steps),
                                    Symbol("active_$(L)"),
@@ -134,7 +134,7 @@ function activepower_constraints!(canonical::CanonicalModel,
     end
 
 
-    if model_has_parameters(canonical_model)
+    if model_has_parameters(canonical)
         device_timeseries_param_ub(canonical,
                                    _get_time_series(devices),
                                    Symbol("active_$(L)"),
@@ -159,9 +159,9 @@ function activepower_constraints!(canonical::CanonicalModel,
                                  device_formulation::Type{InterruptiblePowerLoad},
                                  system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
                                                           S<:PM.AbstractPowerModel}
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
 
-    if model_has_parameters(canonical_model)
+    if model_has_parameters(canonical)
         device_timeseries_ub_bigM(canonical,
                                  _get_time_series(devices, time_steps),
                                  Symbol("active_$(L)"),
@@ -178,7 +178,7 @@ function activepower_constraints!(canonical::CanonicalModel,
 
 
 
-    if model_has_parameters(canonical_model)
+    if model_has_parameters(canonical)
         device_timeseries_ub_bigM(canonical,
                                  _get_time_series(devices),
                                  Symbol("active_$(L)"),
@@ -222,13 +222,13 @@ function nodal_expression!(canonical::CanonicalModel,
 
     for t in time_steps
         for device_value in ts_data_active
-            _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
+            _add_to_expression!(canonical.expressions[:nodal_balance_active],
                             device_value[2],
                             t,
                             device_value[3]*device_value[4][t])
         end
         for device_value in ts_data_reactive
-            _add_to_expression!(canonical_model.expressions[:nodal_balance_reactive],
+            _add_to_expression!(canonical.expressions[:nodal_balance_reactive],
                             device_value[2],
                             t,
                             device_value[3]*device_value[4][t])
@@ -242,8 +242,7 @@ end
 
 function nodal_expression!(canonical::CanonicalModel,
                            devices::IS.FlattenIteratorWrapper{L},
-                           system_formulation::Type{S}) where {L<:PSY.ElectricLoad,
-                                                               S<:PM.AbstractActivePowerModel}
+                           system_formulation::Type{<:PM.AbstractActivePowerModel}) where L<:PSY.ElectricLoad
 
     ts_data_active, _ = _get_time_series(canonical, devices)
 
@@ -257,7 +256,7 @@ function nodal_expression!(canonical::CanonicalModel,
     end
 
     for t in time_steps, device_value in ts_data_active
-        _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
+        _add_to_expression!(canonical.expressions[:nodal_balance_active],
                             device_value[2],
                             t,
                             device_value[3]*device_value[4][t])

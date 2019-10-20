@@ -39,7 +39,7 @@ function device_linear_rateofchange(canonical::CanonicalModel,
                                     cons_name::Symbol,
                                     var_name::Symbol)
 
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     up_name = _middle_rename(cons_name, "_", "up")
     down_name = _middle_rename(cons_name, "_", "dn")
 
@@ -53,16 +53,16 @@ function device_linear_rateofchange(canonical::CanonicalModel,
 
     for (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)
-        con_up[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, 1] - get_condition(initial_conditions[ix])
+        con_up[name, 1] = JuMP.@constraint(canonical.JuMPmodel, variable[name, 1] - get_condition(initial_conditions[ix])
                                                                 <= rate_data[ix].up)
-        con_down[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, get_condition(initial_conditions[ix]) - variable[name, 1]
+        con_down[name, 1] = JuMP.@constraint(canonical.JuMPmodel, get_condition(initial_conditions[ix]) - variable[name, 1]
                                                                 <= rate_data[ix].down)
     end
 
     for t in time_steps[2:end], (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)
-        con_up[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t] - variable[name, t-1] <= rate_data[ix].up)
-        con_down[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t-1] - variable[name, t] <= rate_data[ix].down)
+        con_up[name, t] = JuMP.@constraint(canonical.JuMPmodel, variable[name, t] - variable[name, t-1] <= rate_data[ix].up)
+        con_down[name, t] = JuMP.@constraint(canonical.JuMPmodel, variable[name, t-1] - variable[name, t] <= rate_data[ix].down)
     end
 
     return
@@ -115,7 +115,7 @@ function device_mixedinteger_rateofchange(canonical::CanonicalModel,
                                           cons_name::Symbol,
                                           var_names::Tuple{Symbol, Symbol, Symbol})
 
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     up_name = _middle_rename(cons_name, "_", "up")
     down_name = _middle_rename(cons_name, "_", "dn")
 
@@ -131,17 +131,17 @@ function device_mixedinteger_rateofchange(canonical::CanonicalModel,
 
     for (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)
-        con_up[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, 1] - initial_conditions[ix].value
+        con_up[name, 1] = JuMP.@constraint(canonical.JuMPmodel, variable[name, 1] - initial_conditions[ix].value
                                                             <= rate_data[1][ix].up + rate_data[2][ix].max*varstart[name, 1])
-        con_down[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, initial_conditions[ix].value - variable[name, 1]
+        con_down[name, 1] = JuMP.@constraint(canonical.JuMPmodel, initial_conditions[ix].value - variable[name, 1]
                                                             <= rate_data[1][ix].down + rate_data[2][ix].min*varstop[name, 1])
     end
 
     for t in time_steps[2:end], (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)
-        con_up[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t] - variable[name, t-1]
+        con_up[name, t] = JuMP.@constraint(canonical.JuMPmodel, variable[name, t] - variable[name, t-1]
                                                             <= rate_data[1][ix].up + rate_data[2][ix].max*varstart[name, t])
-        con_down[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t-1] - variable[name, t]
+        con_down[name, t] = JuMP.@constraint(canonical.JuMPmodel, variable[name, t-1] - variable[name, t]
                                                             <= rate_data[1][ix].down + rate_data[2][ix].min*varstop[name, t])
     end
 

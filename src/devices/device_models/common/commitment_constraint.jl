@@ -43,7 +43,7 @@ function device_commitment(canonical::CanonicalModel,
                         cons_name::Symbol,
                         var_names::Tuple{Symbol, Symbol, Symbol})
 
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     varstart = var(canonical, var_names[1])
     varstop = var(canonical, var_names[2])
     varon = var(canonical, var_names[3])
@@ -56,17 +56,17 @@ function device_commitment(canonical::CanonicalModel,
 
     for ic in initial_conditions
         name = PSY.get_name(ic.device)
-        constraint[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel,
+        constraint[name, 1] = JuMP.@constraint(canonical.JuMPmodel,
                                varon[name, 1] == ic.value + varstart[name, 1] - varstop[name, 1])
-        aux_constraint[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel,
+        aux_constraint[name, 1] = JuMP.@constraint(canonical.JuMPmodel,
                                varstart[name, 1] + varstop[name, 1] <= 1.0)
     end
 
     for t in time_steps[2:end], i in initial_conditions
         name = PSY.get_name(i.device)
-        constraint[name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
+        constraint[name, t] = JuMP.@constraint(canonical.JuMPmodel,
                         varon[name, t] == varon[name, t-1] + varstart[name, t] - varstop[name, t])
-        aux_constraint[name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
+        aux_constraint[name, t] = JuMP.@constraint(canonical.JuMPmodel,
                                 varstart[name, t] + varstop[name, t] <= 1.0)
     end
 

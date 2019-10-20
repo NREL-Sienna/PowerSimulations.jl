@@ -40,8 +40,8 @@ function energy_balance(canonical::CanonicalModel,
                         cons_name::Symbol,
                         var_names::Tuple{Symbol, Symbol, Symbol})
 
-    time_steps = model_time_steps(canonical_model)
-    resolution = model_resolution(canonical_model)
+    time_steps = model_time_steps(canonical)
+    resolution = model_resolution(canonical)
     fraction_of_hour = Dates.value(Dates.Minute(resolution))/60
     name_index = efficiency_data[1]
 
@@ -56,7 +56,7 @@ function energy_balance(canonical::CanonicalModel,
         eff_in = efficiency_data[2][ix].in
         eff_out = efficiency_data[2][ix].out
 
-        constraint[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel,
+        constraint[name, 1] = JuMP.@constraint(canonical.JuMPmodel,
                                    varenergy[name, 1] == initial_conditions[ix].value + varin[name, 1]*eff_in*fraction_of_hour
                                                     - (varout[name, 1])*fraction_of_hour/eff_out)
 
@@ -66,7 +66,7 @@ function energy_balance(canonical::CanonicalModel,
         eff_in = efficiency_data[2][ix].in
         eff_out = efficiency_data[2][ix].out
 
-        constraint[name, t] = JuMP.@constraint(canonical_model.JuMPmodel,
+        constraint[name, t] = JuMP.@constraint(canonical.JuMPmodel,
                                    varenergy[name, t] == varenergy[name, t-1] + varin[name, t]*eff_in*fraction_of_hour
                                                     - (varout[name, t])*fraction_of_hour/eff_out)
     end

@@ -34,7 +34,7 @@ function device_range(canonical::CanonicalModel,
                     cons_name::Symbol,
                     var_name::Symbol)
 
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     variable = var(canonical, var_name)
     set_name = (r[1] for r in range_data)
     _add_cons_container!(canonical, cons_name, set_name, time_steps)
@@ -44,11 +44,11 @@ function device_range(canonical::CanonicalModel,
           if abs(r[2].min - r[2].max) <= eps()
             @warn("The min - max values in range constraint with eps() distance to each other. Range Constraint will be modified for Equality Constraint")
                 for t in time_steps
-                    constraint[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[r[1], t] == r[2].max)
+                    constraint[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, variable[r[1], t] == r[2].max)
                 end
           else
                 for t in time_steps
-                    constraint[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, r[2].min <= variable[r[1], t] <= r[2].max)
+                    constraint[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, r[2].min <= variable[r[1], t] <= r[2].max)
                 end
             end
     end
@@ -100,7 +100,7 @@ function device_semicontinuousrange(canonical::CanonicalModel,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
 
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
 
@@ -125,13 +125,13 @@ function device_semicontinuousrange(canonical::CanonicalModel,
 
         if r[2].min == 0.0
 
-            con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] <= r[2].max*varbin[r[1], t])
-            con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] >= 0.0)
+            con_ub[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, varcts[r[1], t] <= r[2].max*varbin[r[1], t])
+            con_lb[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, varcts[r[1], t] >= 0.0)
 
         else
 
-            con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] <= r[2].max*varbin[r[1], t])
-            con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] >= r[2].min*varbin[r[1], t])
+            con_ub[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, varcts[r[1], t] <= r[2].max*varbin[r[1], t])
+            con_lb[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, varcts[r[1], t] >= r[2].min*varbin[r[1], t])
 
         end
 
@@ -184,7 +184,7 @@ function reserve_device_semicontinuousrange(canonical::CanonicalModel,
                                             var_name::Symbol,
                                             binvar_name::Symbol)
 
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
 
@@ -204,13 +204,13 @@ function reserve_device_semicontinuousrange(canonical::CanonicalModel,
 
             if r[2].min == 0.0
 
-                con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] <= r[2].max*(1-varbin[r[1], t]))
-                con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] >= 0.0)
+                con_ub[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, varcts[r[1], t] <= r[2].max*(1-varbin[r[1], t]))
+                con_lb[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, varcts[r[1], t] >= 0.0)
 
             else
 
-                con_ub[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] <= r[2].max*(1-varbin[r[1], t]))
-                con_lb[r[1], t] = JuMP.@constraint(canonical_model.JuMPmodel, varcts[r[1], t] >= r[2].min*(1-varbin[r[1], t]))
+                con_ub[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, varcts[r[1], t] <= r[2].max*(1-varbin[r[1], t]))
+                con_lb[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, varcts[r[1], t] >= r[2].min*(1-varbin[r[1], t]))
 
             end
 

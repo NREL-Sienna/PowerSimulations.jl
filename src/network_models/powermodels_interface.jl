@@ -246,20 +246,20 @@ function powermodels_network!(canonical::CanonicalModel,
                               system_formulation::Type{S},
                               sys::PSY.System) where {S<:PM.AbstractPowerModel}
 
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     pm_data, PM_map = pass_to_pm(sys, time_steps[end])
     buses = PSY.get_components(PSY.Bus, sys)
 
-    _remove_undef!(canonical_model.expressions[:nodal_balance_active])
-    _remove_undef!(canonical_model.expressions[:nodal_balance_reactive])
+    _remove_undef!(canonical.expressions[:nodal_balance_active])
+    _remove_undef!(canonical.expressions[:nodal_balance_reactive])
 
     for t in time_steps, bus in buses
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = canonical_model.expressions[:nodal_balance_active][bus.number, t]
-        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = canonical_model.expressions[:nodal_balance_reactive][bus.number, t]
+        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["pni"] = canonical.expressions[:nodal_balance_active][bus.number, t]
+        pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = canonical.expressions[:nodal_balance_reactive][bus.number, t]
     end
 
-    canonical_model.pm_model = build_nip_expr_model(pm_data, system_formulation, jump_model=canonical_model.JuMPmodel);
-    canonical_model.pm_model.ext[:PMmap] = PM_map
+    canonical.pm_model = build_nip_expr_model(pm_data, system_formulation, jump_model=canonical.JuMPmodel);
+    canonical.pm_model.ext[:PMmap] = PM_map
 
     return
 
@@ -270,19 +270,19 @@ function powermodels_network!(canonical::CanonicalModel,
                               system_formulation::Type{S},
                               sys::PSY.System) where {S<:PM.AbstractActivePowerModel}
 
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     pm_data, PM_map = pass_to_pm(sys, time_steps[end])
     buses = PSY.get_components(PSY.Bus, sys)
 
-    _remove_undef!(canonical_model.expressions[:nodal_balance_active])
+    _remove_undef!(canonical.expressions[:nodal_balance_active])
 
     for t in time_steps, bus in buses
-        pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["pni"] = canonical_model.expressions[:nodal_balance_active][PSY.get_number(bus), t]
+        pm_data["nw"]["$(t)"]["bus"]["$(PSY.get_number(bus))"]["pni"] = canonical.expressions[:nodal_balance_active][PSY.get_number(bus), t]
         #pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
     end
 
-    canonical_model.pm_model = build_nip_expr_model(pm_data, system_formulation, jump_model=canonical_model.JuMPmodel);
-    canonical_model.pm_model.ext[:PMmap] = PM_map
+    canonical.pm_model = build_nip_expr_model(pm_data, system_formulation, jump_model=canonical.JuMPmodel);
+    canonical.pm_model.ext[:PMmap] = PM_map
 
     return
 
@@ -327,25 +327,25 @@ function add_pm_var_refs!(canonical::CanonicalModel,
                           system_formulation::Type{S},
                           sys::PSY.System) where {S<:PM.AbstractPowerModel}
 
-    time_steps = model_time_steps(canonical_model)
-    bus_dict = canonical_model.pm_model.ext[:PMmap].bus
-    ACbranch_dict = canonical_model.pm_model.ext[:PMmap].arcs
+    time_steps = model_time_steps(canonical)
+    bus_dict = canonical.pm_model.ext[:PMmap].bus
+    ACbranch_dict = canonical.pm_model.ext[:PMmap].arcs
     ACbranch_types = typeof.(values(ACbranch_dict))
-    DCbranch_dict = canonical_model.pm_model.ext[:PMmap].arcs_dc
+    DCbranch_dict = canonical.pm_model.ext[:PMmap].arcs_dc
     DCbranch_types = typeof.(values(DCbranch_dict))
 
-    pm_var_names = keys(canonical_model.pm_model.var[:nw][1][:cnd][1])
+    pm_var_names = keys(canonical.pm_model.var[:nw][1][:cnd][1])
 
     pm_var_map = PMvarmap(system_formulation)
 
     for (pm_v, ps_v) in pm_var_map[PSY.Bus]
         if pm_v in pm_var_names
-            canonical_model.variables[ps_v] = PSI._container_spec(canonical_model.JuMPmodel,
+            canonical.variables[ps_v] = PSI._container_spec(canonical.JuMPmodel,
                                                         (PSY.get_name(b) for b in values(bus_dict)),
                                                         time_steps)
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
-                canonical_model.variables[ps_v][name, t] = PM.var(canonical_model.pm_model, t, 1, pm_v)[1] #pm_vars[pm_v][pm_bus]
+                canonical.variables[ps_v][name, t] = PM.var(canonical.pm_model, t, 1, pm_v)[1] #pm_vars[pm_v][pm_bus]
             end
         end
     end
@@ -370,11 +370,11 @@ function add_pm_var_refs!(canonical::CanonicalModel,
                 for dir in fieldnames(typeof(ps_v))
                     isnothing(getfield(ps_v,dir)) && continue
                     var_name = Symbol("$(getfield(ps_v,dir))_$(d_type)")
-                    canonical_model.variables[var_name] = PSI._container_spec(canonical_model.JuMPmodel,
+                    canonical.variables[var_name] = PSI._container_spec(canonical.JuMPmodel,
                                                                         (PSY.get_name(d[2]) for d in devices),
                                                                         time_steps)
                     for t in time_steps, (pm_d, d) in devices
-                        canonical_model.variables[var_name][PSY.get_name(d), t] = PM.var(canonical_model.pm_model, t, 1, pm_v, getfield(pm_d, dir))
+                        canonical.variables[var_name][PSY.get_name(d), t] = PM.var(canonical.pm_model, t, 1, pm_v, getfield(pm_d, dir))
                     end
                 end
             end

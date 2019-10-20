@@ -63,7 +63,7 @@ This function add the variables for power generation commitment to the model
 function commitment_variables!(canonical::CanonicalModel,
                            devices::IS.FlattenIteratorWrapper{T}) where {T<:PSY.ThermalGen}
 
-    time_steps = model_time_steps(canonical_model)
+    time_steps = model_time_steps(canonical)
     var_names = [Symbol("ON_$(T)"), Symbol("START_$(T)"), Symbol("STOP_$(T)")]
 
     for v in var_names
@@ -203,12 +203,12 @@ function commitment_constraints!(canonical::CanonicalModel,
 
     key = ICKey(DeviceStatus, T)
 
-    if !(key in keys(canonical_model.initial_conditions))
+    if !(key in keys(canonical.initial_conditions))
         error("Initial status conditions not provided. This can lead to unwanted results")
     end
 
     device_commitment(canonical,
-                     canonical_model.initial_conditions[key],
+                     canonical.initial_conditions[key],
                      Symbol("commitment_$(T)"),
                      (Symbol("START_$(T)"),
                       Symbol("STOP_$(T)"),
@@ -309,12 +309,12 @@ function ramp_constraints!(canonical::CanonicalModel,
                                                     S<:PM.AbstractPowerModel}
     key = ICKey(DevicePower, T)
 
-    if !(key in keys(canonical_model.initial_conditions))
+    if !(key in keys(canonical.initial_conditions))
         error("Initial Conditions for $(T) Rate of Change Constraints not in the model")
     end
 
-    time_steps = model_time_steps(canonical_model)
-    resolution = model_resolution(canonical_model)
+    time_steps = model_time_steps(canonical)
+    resolution = model_resolution(canonical)
     initial_conditions = get_ini_cond(canonical, key)
     rate_data = _get_data_for_rocc(initial_conditions, resolution)
     ini_conds, ramp_params, minmax_params = _get_data_for_rocc(initial_conditions, resolution)
@@ -346,12 +346,12 @@ function ramp_constraints!(canonical::CanonicalModel,
 
     key = ICKey(DevicePower, T)
 
-    if !(key in keys(canonical_model.initial_conditions))
+    if !(key in keys(canonical.initial_conditions))
         error("Initial Conditions for $(T) Rate of Change Constraints not in the model")
     end
 
-    time_steps = model_time_steps(canonical_model)
-    resolution = model_resolution(canonical_model)
+    time_steps = model_time_steps(canonical)
+    resolution = model_resolution(canonical)
     initial_conditions = get_ini_cond(canonical, key)
     rate_data = _get_data_for_rocc(initial_conditions, resolution)
     ini_conds, ramp_params, minmax_params = _get_data_for_rocc(initial_conditions, resolution)
@@ -429,13 +429,13 @@ function time_constraints!(canonical::CanonicalModel,
 
     ic_keys = [ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T)]
     for key in ic_keys
-        if !(key in keys(canonical_model.initial_conditions))
+        if !(key in keys(canonical.initial_conditions))
             error("Initial Conditions for $(T) Time Constraint not in the model")
         end
     end
 
-    parameters = model_has_parameters(canonical_model)
-    resolution = model_resolution(canonical_model)
+    parameters = model_has_parameters(canonical)
+    resolution = model_resolution(canonical)
     initial_conditions_on  = get_ini_cond(canonical, ic_keys[1])
     initial_conditions_off = get_ini_cond(canonical, ic_keys[2])
     ini_conds, time_params = _get_data_for_tdc(initial_conditions_on,
