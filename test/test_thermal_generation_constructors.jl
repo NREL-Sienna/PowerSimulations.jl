@@ -393,9 +393,10 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
 
     model_ref = ModelReference(CopperPlatePowerModel, UC_devices, branches, services)
     UC = OperationModel(TestOptModel, model_ref,
-                        cost_test_sys; optimizer = Cbc_optimizer)
+                        cost_test_sys; optimizer = Cbc_optimizer,
+                        parameters = true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919354838)
-    moi_tests(UC, true, 32, 0, 8, 4, 10, false)
+    moi_tests(UC, true, 32, 0, 8, 4, 10, true)
 end
 
 ## PWL SOS-2 Cost implementation test
@@ -430,7 +431,8 @@ end
 
     model_ref = ModelReference(CopperPlatePowerModel, UC_devices, branches, services)
     UC = OperationModel(TestOptModel, model_ref,
-                        cost_test_sos_sys; optimizer = Cbc_optimizer)
+                        cost_test_sos_sys; optimizer = Cbc_optimizer,
+                        parameters = true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919,10.0)
-    moi_tests(UC, true, 32, 0, 8, 4, 14, false)
+    moi_tests(UC, true, 32, 0, 8, 4, 14, true)
 end
