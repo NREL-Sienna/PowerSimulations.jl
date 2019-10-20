@@ -1,5 +1,5 @@
 @doc raw"""
-    rating_constraint(canonical_model::CanonicalModel,
+    rating_constraint!(canonical_model::CanonicalModel,
                             rating_data::Vector{Tuple{String, Float64}},
                             cons_name::Symbol,
                             var_names::Tuple{Symbol, Symbol})
@@ -24,7 +24,7 @@ where r in rating data and t in time steps.
 - : var_names[1] : var1
 - : var_names[2] : var2
 """
-function rating_constraint(canonical_model::CanonicalModel,
+function rating_constraint!(canonical_model::CanonicalModel,
                             rating_data::Vector{Tuple{String, Float64}},
                             cons_name::Symbol,
                             var_names::Tuple{Symbol, Symbol})

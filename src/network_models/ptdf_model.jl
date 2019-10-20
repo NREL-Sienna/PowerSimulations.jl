@@ -20,7 +20,7 @@ function ptdf_networkflow(canonical_model::CanonicalModel,
         var_dict[btype] = Symbol("Fp_$(btype)")
         typed_branches = IS.FlattenIteratorWrapper(btype,
                                            Vector([[b for b in branches if isa(b, btype)]]))
-        flow_variables(canonical_model, StandardPTDFModel, typed_branches)
+        flow_variables!(canonical_model, StandardPTDFModel, typed_branches)
     end
 
     for t in time_steps

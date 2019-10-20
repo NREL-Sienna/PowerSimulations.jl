@@ -25,9 +25,9 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
         return
     end
 
-    branch_rate_bounds(canonical, devices, Br, S)
+    branch_rate_bounds!(canonical, devices, Br, S)
 
-    branch_rate_constraint(canonical, devices, Br, S)
+    branch_rate_constraint!(canonical, devices, Br, S)
 
     return
 
@@ -46,17 +46,17 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
         return
     end
 
-    branch_rate_bounds(canonical,
+    branch_rate_bounds!(canonical,
                         devices,
                         model.formulation,
                         S)
 
-    branch_rate_constraint(canonical,
+    branch_rate_constraint!(canonical,
                         devices,
                         model.formulation,
                         S)
 
-    branch_flow_constraint(canonical,
+    branch_flow_constraint!(canonical,
                         devices,
                         model.formulation,
                         S)
@@ -88,7 +88,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
         return
     end
 
-    branch_rate_constraint(canonical, devices, Br, S)
+    branch_rate_constraint!(canonical, devices, Br, S)
 
     return
 

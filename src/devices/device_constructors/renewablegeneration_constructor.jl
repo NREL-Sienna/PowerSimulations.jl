@@ -16,14 +16,14 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables(canonical, devices);
+    activepower_variables!(canonical, devices);
 
-    reactivepower_variables(canonical, devices);
+    reactivepower_variables!(canonical, devices);
 
     #Constraints
-    activepower_constraints(canonical, devices, D, S)
+    activepower_constraints!(canonical, devices, D, S)
 
-    reactivepower_constraints(canonical, devices, D, S)
+    reactivepower_constraints!(canonical, devices, D, S)
 
     feedforward!(canonical, R, model.feedforward)
 
@@ -51,10 +51,10 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables(canonical, devices)
+    activepower_variables!(canonical, devices)
 
     #Constraints
-    activepower_constraints(canonical, devices, D, S)
+    activepower_constraints!(canonical, devices, D, S)
 
     feedforward!(canonical, R, model.feedforward)
 
@@ -80,7 +80,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
         return
     end
 
-    nodal_expression(canonical, devices, system_formulation)
+    nodal_expression!(canonical, devices, system_formulation)
 
     return
 
@@ -119,7 +119,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
         return
     end
 
-    nodal_expression(canonical, devices, system_formulation)
+    nodal_expression!(canonical, devices, system_formulation)
 
     return
 

@@ -10,7 +10,7 @@ struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
 ########################### renewable generation variables #################################
 
-function activepower_variables(canonical_model::CanonicalModel,
+function activepower_variables!(canonical_model::CanonicalModel,
                                devices::IS.FlattenIteratorWrapper{R}) where {R<:PSY.RenewableGen}
 
     add_variable(canonical_model,
@@ -25,7 +25,7 @@ function activepower_variables(canonical_model::CanonicalModel,
 
 end
 
-function reactivepower_variables(canonical_model::CanonicalModel,
+function reactivepower_variables!(canonical_model::CanonicalModel,
                                  devices::IS.FlattenIteratorWrapper{R}) where {R<:PSY.RenewableGen}
 
     add_variable(canonical_model,
@@ -39,7 +39,7 @@ function reactivepower_variables(canonical_model::CanonicalModel,
 end
 
 ####################################### Reactive Power Constraints #########################
-function reactivepower_constraints(canonical_model::CanonicalModel,
+function reactivepower_constraints!(canonical_model::CanonicalModel,
                                     devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableFullDispatch},
                                     system_formulation::Type{S}) where {R<:PSY.RenewableGen,
@@ -68,7 +68,7 @@ function reactivepower_constraints(canonical_model::CanonicalModel,
 
 end
 
-function reactivepower_constraints(canonical_model::CanonicalModel,
+function reactivepower_constraints!(canonical_model::CanonicalModel,
                                     devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableConstantPowerFactor},
                                     system_formulation::Type{S}) where {R<:PSY.RenewableGen,
@@ -125,7 +125,7 @@ function _get_time_series(devices::IS.FlattenIteratorWrapper{R},
 end
 
 
-function activepower_constraints(canonical_model::CanonicalModel,
+function activepower_constraints!(canonical_model::CanonicalModel,
                                 devices::IS.FlattenIteratorWrapper{R},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {R<:PSY.RenewableGen,

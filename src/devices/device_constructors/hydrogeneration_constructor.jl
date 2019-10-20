@@ -36,7 +36,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
         return
     end
 
-    nodal_expression(canonical, devices, S)
+    nodal_expression!(canonical, devices, S)
 
     return
 
@@ -73,7 +73,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
         return
     end
 
-    nodal_expression(canonical, devices, S)
+    nodal_expression!(canonical, devices, S)
 
     return
 

@@ -1,4 +1,5 @@
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::CanonicalModel,
+                           sys::PSY.System,
                            model::DeviceModel{L, D},
                            ::Type{S};
                            kwargs...) where {L<:PSY.ControllableLoad,
@@ -15,14 +16,14 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables(canonical, devices)
+    activepower_variables!(canonical, devices)
 
-    reactivepower_variables(canonical, devices)
+    reactivepower_variables!(canonical, devices)
 
     #Constraints
-    activepower_constraints(canonical, devices, D, S)
+    activepower_constraints!(canonical, devices, D, S)
 
-    reactivepower_constraints(canonical, devices, D, S)
+    reactivepower_constraints!(canonical, devices, D, S)
 
     feedforward!(canonical, L, model.feedforward)
 
@@ -33,7 +34,8 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::CanonicalModel,
+                           sys::PSY.System,
                            model::DeviceModel{L, D},
                            ::Type{S};
                            kwargs...) where {L<:PSY.ControllableLoad,
@@ -50,10 +52,10 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables(canonical, devices)
+    activepower_variables!(canonical, devices)
 
     #Constraints
-    activepower_constraints(canonical, devices, D, S)
+    activepower_constraints!(canonical, devices, D, S)
 
     feedforward!(canonical, L, model.feedforward)
 
@@ -64,7 +66,8 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::CanonicalModel,
+                           sys::PSY.System,
                            model::DeviceModel{L, InterruptiblePowerLoad},
                            ::Type{S};
                            kwargs...) where {L<:PSY.ControllableLoad,
@@ -80,16 +83,16 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables(canonical, devices)
+    activepower_variables!(canonical, devices)
 
-    reactivepower_variables(canonical, devices)
+    reactivepower_variables!(canonical, devices)
 
-    commitment_variables(canonical, devices)
+    commitment_variables!(canonical, devices)
 
     #Constraints
-    activepower_constraints(canonical, devices, model.formulation, S)
+    activepower_constraints!(canonical, devices, model.formulation, S)
 
-    reactivepower_constraints(canonical, devices, model.formulation, S)
+    reactivepower_constraints!(canonical, devices, model.formulation, S)
 
     feedforward!(canonical, L, model.feedforward)
 
@@ -100,7 +103,8 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::CanonicalModel,
+                           sys::PSY.System,
                            model::DeviceModel{L, InterruptiblePowerLoad},
                            ::Type{S};
                            kwargs...) where {L<:PSY.ControllableLoad,
@@ -116,12 +120,12 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables(canonical, devices)
+    activepower_variables!(canonical, devices)
 
-    commitment_variables(canonical, devices)
+    commitment_variables!(canonical, devices)
 
     #Constraints
-    activepower_constraints(canonical, devices, model.formulation, S)
+    activepower_constraints!(canonical, devices, model.formulation, S)
 
     feedforward!(canonical, L, model.feedforward)
 
@@ -132,7 +136,8 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::CanonicalModel,
+                           sys::PSY.System,
                            model::DeviceModel{L, StaticPowerLoad},
                            ::Type{S};
                            kwargs...) where {L<:PSY.ElectricLoad,
@@ -147,13 +152,14 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
         return
     end
 
-    nodal_expression(canonical, devices, S)
+    nodal_expression!(canonical, devices, S)
 
     return
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::CanonicalModel,
+                           sys::PSY.System,
                            model::DeviceModel{L, D},
                            ::Type{S};
                            kwargs...) where {L<:PSY.StaticLoad,
