@@ -38,6 +38,13 @@ mutable struct OperationModel{M<:AbstractOperationModel}
     model_ref::ModelReference
     sys::PSY.System
     canonical::CanonicalModel
+
+        function OperationModel{M}(model_ref::ModelReference,
+                                    sys::PSY.System,
+                                    canonical::CanonicalModel) where M<:AbstractOperationModel
+            PSY.check_forecast_consistency(sys)
+            new{M}(model_ref, sys, canonical)
+        end
 end
 
 """
@@ -138,7 +145,6 @@ function OperationModel(::Type{M},
                                           T<:PM.AbstractPowerModel}
 
     optimizer = get(kwargs, :optimizer, nothing)
-
     return OperationModel{M}(ModelReference(T),
                           sys,
                           CanonicalModel(T, sys, optimizer; kwargs...))
