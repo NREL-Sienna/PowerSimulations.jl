@@ -19,7 +19,7 @@ end
 function write_data(vars_results::OperationModel, save_path::AbstractString; kwargs...)
 
     file_type = get(kwargs, :file_type, Feather)
-  
+
     if file_type == Feather || file_type == CSV
         for (k,v) in vars(vars_results.canonical)
             file_path = joinpath(save_path,"$(k).$(lowercase("$file_type"))")
@@ -57,7 +57,7 @@ function _write_optimizer_log(optimizer_log::Dict, save_path::AbstractString)
     optimizer_log = DataFrames.DataFrame(optimizer_log)
     file_path = joinpath(save_path,"optimizer_log.feather")
     Feather.write(file_path, optimizer_log)
-   
+
     return
 
 end
@@ -78,7 +78,7 @@ function _export_model_result(stage::_Stage, start_time::Dates.DateTime, save_pa
 end
 
 function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
-                               canonical_model::CanonicalModel,
+                               canonical::CanonicalModel,
                                path::String)
 
     optimizer_log[:obj_value] = JuMP.objective_value(canonical_model.JuMPmodel)
@@ -124,7 +124,7 @@ function write_op_model(op_model::OperationModel, save_path::String)
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
-function _write_canonical_model(canonical_model::CanonicalModel, save_path::String)
+function _write_canonical_model(canonical::CanonicalModel, save_path::String)
     MOF_model = MOPFM
     MOI.copy_to(MOF_model, JuMP.backend(canonical_model.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)

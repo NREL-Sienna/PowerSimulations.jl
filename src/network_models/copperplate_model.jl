@@ -1,4 +1,4 @@
-function copper_plate(canonical_model::CanonicalModel, expression::Symbol, bus_count::Int64)
+function copper_plate(canonical::CanonicalModel, expression::Symbol, bus_count::Int64)
 
     time_steps = model_time_steps(canonical_model)
     devices_netinjection = _remove_undef!(canonical_model.expressions[expression])

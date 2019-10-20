@@ -217,7 +217,7 @@ function InitialCondition(canonical::CanonicalModel,
 
 end
 
-function get_ini_cond(canonical_model::CanonicalModel, key::ICKey)
+function get_ini_cond(canonical::CanonicalModel, key::ICKey)
     return get(canonical_model.initial_conditions, key, Vector{InitialCondition}())
 end
 
@@ -237,16 +237,16 @@ function get_value(canonical::CanonicalModel, ref::UpdateRef{PJ.ParameterRef})
 end
 
 _variable_type(cm::CanonicalModel) = JuMP.variable_type(cm.JuMPmodel)
-model_time_steps(canonical_model::CanonicalModel) = canonical_model.time_steps
-model_resolution(canonical_model::CanonicalModel) = canonical_model.resolution
-model_has_parameters(canonical_model::CanonicalModel) = canonical_model.parametrized
-model_uses_forecasts(canonical_model::CanonicalModel) = canonical_model.forecast
-model_initial_time(canonical_model::CanonicalModel) = canonical_model.initial_time
+model_time_steps(canonical::CanonicalModel) = canonical_model.time_steps
+model_resolution(canonical::CanonicalModel) = canonical_model.resolution
+model_has_parameters(canonical::CanonicalModel) = canonical_model.parametrized
+model_uses_forecasts(canonical::CanonicalModel) = canonical_model.forecast
+model_initial_time(canonical::CanonicalModel) = canonical_model.initial_time
 #Internal Variables, Constraints and Parameters accessors
-vars(canonical_model::CanonicalModel) = canonical_model.variables
-cons(canonical_model::CanonicalModel) = canonical_model.constraints
-var(canonical_model::CanonicalModel, name::Symbol) = canonical_model.variables[name]
-con(canonical_model::CanonicalModel, name::Symbol) = canonical_model.constraints[name]
-par(canonical_model::CanonicalModel, param_reference::UpdateRef) = canonical_model.parameters[param_reference]
-exp(canonical_model::CanonicalModel, name::Symbol) = canonical_model.expressions[name]
-get_initial_conditions(canonical_model::CanonicalModel) = canonical_model.initial_conditions
+vars(canonical::CanonicalModel) = canonical_model.variables
+cons(canonical::CanonicalModel) = canonical_model.constraints
+var(canonical::CanonicalModel, name::Symbol) = canonical_model.variables[name]
+con(canonical::CanonicalModel, name::Symbol) = canonical_model.constraints[name]
+par(canonical::CanonicalModel, param_reference::UpdateRef) = canonical_model.parameters[param_reference]
+exp(canonical::CanonicalModel, name::Symbol) = canonical_model.expressions[name]
+get_initial_conditions(canonical::CanonicalModel) = canonical_model.initial_conditions

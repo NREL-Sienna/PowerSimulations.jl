@@ -1,5 +1,5 @@
 @doc raw"""
-    energy_balance(canonical_model::CanonicalModel,
+    energy_balance(canonical::CanonicalModel,
                         initial_conditions::Vector{InitialCondition},
                         efficiency_data::Tuple{Vector{String}, Vector{InOut}},
                         cons_name::Symbol,
@@ -24,7 +24,7 @@ If t > 1:
 `` x^{energy}_t == x^{energy}_{t-1} + frhr \eta^{in} x^{in}_t - \frac{frhr}{\eta^{out}} x^{out}_t, \forall t \geq 2 ``
 
 # Arguments
-* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::CanonicalModel : the canonical model built in PowerSimulations
 * initial_conditions::Vector{InitialCondition} : for time zero 'varenergy'
 * efficiency_data::Tuple{Vector{String}, Vector{InOut}} :: charging/discharging efficiencies
 * cons_name::Symbol : name of the constraint
@@ -34,7 +34,7 @@ If t > 1:
 - : var_names[3] : varenergy
 
 """
-function energy_balance(canonical_model::CanonicalModel,
+function energy_balance(canonical::CanonicalModel,
                         initial_conditions::Vector{InitialCondition},
                         efficiency_data::Tuple{Vector{String}, Vector{InOut}},
                         cons_name::Symbol,
@@ -45,12 +45,12 @@ function energy_balance(canonical_model::CanonicalModel,
     fraction_of_hour = Dates.value(Dates.Minute(resolution))/60
     name_index = efficiency_data[1]
 
-    varin = var(canonical_model, var_names[1])
-    varout = var(canonical_model, var_names[2])
-    varenergy = var(canonical_model, var_names[3])
+    varin = var(canonical, var_names[1])
+    varout = var(canonical, var_names[2])
+    varenergy = var(canonical, var_names[3])
 
-    _add_cons_container!(canonical_model, cons_name, name_index, time_steps)
-    constraint = con(canonical_model, cons_name)
+    _add_cons_container!(canonical, cons_name, name_index, time_steps)
+    constraint = con(canonical, cons_name)
 
     for (ix, name) in enumerate(name_index)
         eff_in = efficiency_data[2][ix].in

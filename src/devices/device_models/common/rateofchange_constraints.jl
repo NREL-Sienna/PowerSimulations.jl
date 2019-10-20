@@ -1,5 +1,5 @@
 @doc raw"""
-    device_linear_rateofchange(canonical_model::CanonicalModel,
+    device_linear_rateofchange(canonical::CanonicalModel,
                                     rate_data::Tuple{Vector{String}, Vector{UpDown}},
                                     initial_conditions::Vector{InitialCondition},
                                     cons_name::Symbol,
@@ -27,13 +27,13 @@ If t > 1:
 `` r^{down} \leq x_t - x_{t-1} \leq r^{up}, \forall t \geq 2 ``
 
 # Arguments
-* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::CanonicalModel : the canonical model built in PowerSimulations
 * rate_data::Tuple{Vector{String}, Vector{UpDown}} : gives name (1) and max ramp up/down rates (2)
 * initial_conditions::Vector{InitialCondition} : for time zero 'variable'
 * cons_name::Symbol : name of the constraint
 * var_name::Tuple{Symbol, Symbol, Symbol} : the name of the variable
 """
-function device_linear_rateofchange(canonical_model::CanonicalModel,
+function device_linear_rateofchange(canonical::CanonicalModel,
                                     rate_data::Vector{UpDown},
                                     initial_conditions::Vector{InitialCondition},
                                     cons_name::Symbol,
@@ -43,13 +43,13 @@ function device_linear_rateofchange(canonical_model::CanonicalModel,
     up_name = _middle_rename(cons_name, "_", "up")
     down_name = _middle_rename(cons_name, "_", "dn")
 
-    variable = var(canonical_model, var_name)
+    variable = var(canonical, var_name)
 
     set_name = (device_name(ic) for ic in initial_conditions)
-    _add_cons_container!(canonical_model, up_name, set_name, time_steps)
-    _add_cons_container!(canonical_model, down_name, set_name, time_steps)
-    con_up = con(canonical_model, up_name)
-    con_down = con(canonical_model, down_name)
+    _add_cons_container!(canonical, up_name, set_name, time_steps)
+    _add_cons_container!(canonical, down_name, set_name, time_steps)
+    con_up = con(canonical, up_name)
+    con_down = con(canonical, down_name)
 
     for (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)
@@ -70,7 +70,7 @@ function device_linear_rateofchange(canonical_model::CanonicalModel,
 end
 
 @doc raw"""
-    device_mixedinteger_rateofchange(canonical_model::CanonicalModel,
+    device_mixedinteger_rateofchange(canonical::CanonicalModel,
                                           rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}},
                                           initial_conditions::Vector{InitialCondition},
                                           cons_name::Symbol,
@@ -98,7 +98,7 @@ If t > 1:
 `` r^{down} + r^{min} x^{stop}_t \leq x_t - x_{t-1} \leq r^{up} + r^{max} x^{start}_t, \forall t \geq 2 ``
 
 # Arguments
-* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::CanonicalModel : the canonical model built in PowerSimulations
 * rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}} : (1) gives name
                                                                      (2) gives min/max ramp rates
                                                                      (3) gives min/max for 'variable'
@@ -109,7 +109,7 @@ If t > 1:
 - : var_names[2] : 'varstart'
 - : var_names[3] : 'varstop'
 """
-function device_mixedinteger_rateofchange(canonical_model::CanonicalModel,
+function device_mixedinteger_rateofchange(canonical::CanonicalModel,
                                           rate_data::Tuple{Vector{UpDown}, Vector{MinMax}},
                                           initial_conditions::Vector{InitialCondition},
                                           cons_name::Symbol,
@@ -119,15 +119,15 @@ function device_mixedinteger_rateofchange(canonical_model::CanonicalModel,
     up_name = _middle_rename(cons_name, "_", "up")
     down_name = _middle_rename(cons_name, "_", "dn")
 
-    variable = var(canonical_model, var_names[1])
-    varstart = var(canonical_model, var_names[2])
-    varstop = var(canonical_model, var_names[3])
+    variable = var(canonical, var_names[1])
+    varstart = var(canonical, var_names[2])
+    varstop = var(canonical, var_names[3])
 
     set_name = (device_name(ic) for ic in initial_conditions)
-    _add_cons_container!(canonical_model, up_name, set_name, time_steps)
-    _add_cons_container!(canonical_model, down_name, set_name, time_steps)
-    con_up = con(canonical_model, up_name)
-    con_down = con(canonical_model, down_name)
+    _add_cons_container!(canonical, up_name, set_name, time_steps)
+    _add_cons_container!(canonical, down_name, set_name, time_steps)
+    con_up = con(canonical, up_name)
+    con_down = con(canonical, down_name)
 
     for (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)

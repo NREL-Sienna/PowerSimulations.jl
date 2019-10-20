@@ -1,14 +1,14 @@
-function ptdf_networkflow(canonical_model::CanonicalModel,
+function ptdf_networkflow(canonical::CanonicalModel,
                           branches::IS.FlattenIteratorWrapper{B},
                           buses::IS.FlattenIteratorWrapper{PSY.Bus},
                           expression::Symbol,
                           PTDF::PSY.PTDF) where {B<:PSY.Branch}
 
     time_steps = model_time_steps(canonical_model)
-    _add_cons_container!(canonical_model, :network_flow, PTDF.axes[1], time_steps)
-    _add_cons_container!(canonical_model, :nodal_balance, PTDF.axes[2], time_steps)
-    network_flow = con(canonical_model, :network_flow)
-    nodal_balance = con(canonical_model, :nodal_balance)
+    _add_cons_container!(canonical, :network_flow, PTDF.axes[1], time_steps)
+    _add_cons_container!(canonical, :nodal_balance, PTDF.axes[2], time_steps)
+    network_flow = con(canonical, :network_flow)
+    nodal_balance = con(canonical, :nodal_balance)
     nodal_balance_expressions = canonical_model.expressions[expression]
 
     branch_types = typeof.(branches)
@@ -20,7 +20,7 @@ function ptdf_networkflow(canonical_model::CanonicalModel,
         var_dict[btype] = Symbol("Fp_$(btype)")
         typed_branches = IS.FlattenIteratorWrapper(btype,
                                            Vector([[b for b in branches if isa(b, btype)]]))
-        flow_variables!(canonical_model, StandardPTDFModel, typed_branches)
+        flow_variables!(canonical, StandardPTDFModel, typed_branches)
     end
 
     for t in time_steps

@@ -242,7 +242,7 @@ function constraint_power_balance_ni_expr(pm::PM.AbstractActivePowerModel,
 end
 
 ""
-function powermodels_network!(canonical_model::CanonicalModel,
+function powermodels_network!(canonical::CanonicalModel,
                               system_formulation::Type{S},
                               sys::PSY.System) where {S<:PM.AbstractPowerModel}
 
@@ -266,7 +266,7 @@ function powermodels_network!(canonical_model::CanonicalModel,
 end
 
 ""
-function powermodels_network!(canonical_model::CanonicalModel,
+function powermodels_network!(canonical::CanonicalModel,
                               system_formulation::Type{S},
                               sys::PSY.System) where {S<:PM.AbstractActivePowerModel}
 
@@ -323,7 +323,7 @@ function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractPowerModel}
     return pm_var_map
 end
 
-function add_pm_var_refs!(canonical_model::CanonicalModel,
+function add_pm_var_refs!(canonical::CanonicalModel,
                           system_formulation::Type{S},
                           sys::PSY.System) where {S<:PM.AbstractPowerModel}
 
@@ -350,12 +350,12 @@ function add_pm_var_refs!(canonical_model::CanonicalModel,
         end
     end
 
-    add_pm_var_refs!(canonical_model, PSY.ACBranch, ACbranch_types, ACbranch_dict, pm_var_map, pm_var_names, time_steps)
-    add_pm_var_refs!(canonical_model, PSY.DCBranch, DCbranch_types, DCbranch_dict, pm_var_map, pm_var_names, time_steps)
+    add_pm_var_refs!(canonical, PSY.ACBranch, ACbranch_types, ACbranch_dict, pm_var_map, pm_var_names, time_steps)
+    add_pm_var_refs!(canonical, PSY.DCBranch, DCbranch_types, DCbranch_dict, pm_var_map, pm_var_names, time_steps)
 
 end
 
-function add_pm_var_refs!(canonical_model::CanonicalModel,
+function add_pm_var_refs!(canonical::CanonicalModel,
                           d_class::Type,
                           device_types::Vector,
                           pm_map::Dict,

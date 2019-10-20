@@ -1,5 +1,5 @@
 @doc raw"""
-    device_commitment(canonical_model::CanonicalModel,
+    device_commitment(canonical::CanonicalModel,
                         initial_conditions::Vector{InitialCondition},
                         cons_name::Symbol,
                         var_names::Tuple{Symbol, Symbol, Symbol})
@@ -30,7 +30,7 @@ If t > 1:
 
 
 # Arguments
-* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::CanonicalModel : the canonical model built in PowerSimulations
 * initial_conditions::Vector{InitialCondition} : for time zero 'varon'
 * cons_name::Symbol : name of the constraint
 * var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
@@ -38,21 +38,21 @@ If t > 1:
 -  : var_names[2] : varstop
 -  : var_names[3] : varon
 """
-function device_commitment(canonical_model::CanonicalModel,
+function device_commitment(canonical::CanonicalModel,
                         initial_conditions::Vector{InitialCondition},
                         cons_name::Symbol,
                         var_names::Tuple{Symbol, Symbol, Symbol})
 
     time_steps = model_time_steps(canonical_model)
-    varstart = var(canonical_model, var_names[1])
-    varstop = var(canonical_model, var_names[2])
-    varon = var(canonical_model, var_names[3])
+    varstart = var(canonical, var_names[1])
+    varstop = var(canonical, var_names[2])
+    varon = var(canonical, var_names[3])
     varstart_names = axes(varstart, 1)
-    _add_cons_container!(canonical_model, cons_name, varstart_names, time_steps)
-    constraint = con(canonical_model, cons_name)
+    _add_cons_container!(canonical, cons_name, varstart_names, time_steps)
+    constraint = con(canonical, cons_name)
     aux_cons_name = _middle_rename(cons_name, "_", "aux")
-    _add_cons_container!(canonical_model, aux_cons_name, varstart_names, time_steps)
-    aux_constraint = con(canonical_model, aux_cons_name)
+    _add_cons_container!(canonical, aux_cons_name, varstart_names, time_steps)
+    aux_constraint = con(canonical, aux_cons_name)
 
     for ic in initial_conditions
         name = PSY.get_name(ic.device)
