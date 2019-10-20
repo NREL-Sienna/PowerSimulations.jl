@@ -30,14 +30,14 @@ include("test_utils/model_checks.jl")
 if !Sys.iswindows()
 
     @testset "Common Functionalities" begin
-        #include("test_base_structs.jl")
-        #include("test_PowerModels_interface.jl")
+        include("test_base_structs.jl")
+        include("test_PowerModels_interface.jl")
     end
 
     @testset "Device Constructors" begin
         include("test_thermal_generation_constructors.jl")
-        #include("test_renewable_generation_constructors.jl")
-        #include("test_load_constructors.jl")
+        include("test_renewable_generation_constructors.jl")
+        include("test_load_constructors.jl")
         include("test_storage_constructors.jl")
         #include("test_hydro_generation_constructors.jl")
     end
