@@ -209,19 +209,19 @@ function nodal_expression!(canonical_model::CanonicalModel,
 
     for (ix, device) in enumerate(devices)
         bus_number = PSY.get_number(PSY.get_bus(device))
-        tech = PSY.get_tech(device)
-        pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
-        active_power = forecast ? PSY.get_rating(tech) : PSY.get_activepower(device)
+        name = PSY.get_name(device)
+        active_power = forecast ? PSY.get_maxactivepower(tech) : PSY.get_activepower(device)
+        reactive_power = forecast ? PSY.get_maxreactivepower(tech) : PSY.get_reactivepower(device)
         if forecast
-            ts_vector = TS.values(PSY.get_forecast(L,
-                                                   device,
-                                                   initial_time,
-                                                   "maxactivepower"))
+            ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
+                                                                device,
+                                                                initial_time,
+                                                                "maxactivepower")))
         else
             ts_vector = ones(time_steps[end])
         end
         ts_data_active[ix] = (name, bus_number, active_power, ts_vector)
-        ts_data_reactive[ix] = (name, bus_number, active_power * pf, ts_vector)
+        ts_data_reactive[ix] = (name, bus_number, reactive_power, ts_vector)
     end
 
     if parameters
@@ -235,15 +235,22 @@ function nodal_expression!(canonical_model::CanonicalModel,
                         UpdateRef{L}(Symbol("Q_$(L)")),
                         :nodal_balance_reactive,
                         -1.0)
+        return
     end
 
     for t in time_steps
-        _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
-                            bus_number, t,
-                            ts_data_active[t][3]*ts_data_active[t][4])
-        _add_to_expression!(canonical_model.expressions[:nodal_balance_reactive],
-                            bus_number, t,
-                            ts_data_reactive[t][3]*ts_data_reactive[t][4])
+        for device_value in ts_data_active
+            _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
+                            device_value[2],
+                            t,
+                            device_value[3]*device_value[4][t])
+        end
+        for device_value in ts_data_reactive
+            _add_to_expression!(canonical_model.expressions[:nodal_balance_reactive],
+                            device_value[2],
+                            t,
+                            device_value[3]*device_value[4][t])
+        end
     end
 
     return
@@ -265,13 +272,13 @@ function nodal_expression!(canonical_model::CanonicalModel,
 
     for (ix, device) in enumerate(devices)
         bus_number = PSY.get_number(PSY.get_bus(device))
-        tech = PSY.get_tech(device)
-        active_power = forecast ? PSY.get_rating(tech) : PSY.get_activepower(device)
+        name = PSY.get_name(device)
+        active_power = forecast ? PSY.get_maxactivepower(device) : PSY.get_activepower(device)
         if forecast
-            ts_vector = TS.values(PSY.get_forecast(L,
-                                                   device,
-                                                   initial_time,
-                                                   "maxactivepower"))
+            ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
+                                                                device,
+                                                                initial_time,
+                                                                "maxactivepower")))
         else
             ts_vector = ones(time_steps[end])
         end
@@ -284,17 +291,14 @@ function nodal_expression!(canonical_model::CanonicalModel,
                         UpdateRef{L}(Symbol("P_$(L)")),
                         :nodal_balance_active,
                         -1.0)
-        include_parameters(canonical_model,
-                        ts_data_reactive,
-                        UpdateRef{L}(Symbol("Q_$(L)")),
-                        :nodal_balance_reactive,
-                        -1.0)
+        return
     end
 
-    for t in time_steps
+    for t in time_steps, device_value in ts_data_active
         _add_to_expression!(canonical_model.expressions[:nodal_balance_active],
-                            bus_number, t,
-                            ts_data_active[t][3]*ts_data_active[t][4])
+                            device_value[2],
+                            t,
+                            device_value[3]*device_value[4][t])
     end
 
     return
