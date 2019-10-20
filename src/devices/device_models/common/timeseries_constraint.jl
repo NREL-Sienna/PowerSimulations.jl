@@ -1,6 +1,6 @@
 @doc raw"""
     device_timeseries_ub(canonical::CanonicalModel,
-                     ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
+                     ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}
                      cons_name::Symbol,
                      var_name::Symbol)
 
@@ -16,24 +16,27 @@ Constructs upper bound for given variable and time series data and a multiplier.
 
 # Arguments
 * canonical::CanonicalModel : the canonical model built in PowerSimulations
-* ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}} : timeseries data name (1), multiplier (2) and values (3)
+* ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}: timeseries data name (1), multiplier (2) and values (3)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_ub(canonical::CanonicalModel,
-                              ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
+                              ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                               cons_name::Symbol,
                               var_name::Symbol)
 
     time_steps = model_time_steps(canonical)
-    variable = var(canonical, var_name)
-    _add_cons_container!(canonical, cons_name, ts_data[1], time_steps)
+    names = (v[1] for v in ts_data)
+    _add_cons_container!(canonical, cons_name, names, time_steps)
     constraint = con(canonical, cons_name)
+    variable = var(canonical, var_name)
 
-    for t in time_steps, (ix, name) in enumerate(ts_data[1])
-
+    for t in time_steps, data in ts_data
+        name = data[1]
+        forecast = data[4][t]
+        multiplier = data[3]
         constraint[name, t] = JuMP.@constraint(canonical.JuMPmodel,
-                                    variable[name, t] <= ts_data[2][ix]*ts_data[3][ix][t])
+                                    variable[name, t] <= multiplier*forecast)
 
     end
 
@@ -43,7 +46,7 @@ end
 
 @doc raw"""
     device_timeseries_lb(canonical::CanonicalModel,
-                     ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
+                     ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}
                      cons_name::Symbol,
                      var_name::Symbol)
 
@@ -61,23 +64,27 @@ where (ix, name) in enumerate(ts_data[1]).
 
 # Arguments
 * canonical::CanonicalModel : the canonical model built in PowerSimulations
-* ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}} : timeseries data name (1), multiplier (2) and values (3)
+* ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}: timeseries data name (1), multiplier (2) and values (3)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_lb(canonical::CanonicalModel,
-                              ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
+                              ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                               cons_name::Symbol,
                               var_name::Symbol)
 
     time_steps = model_time_steps(canonical)
-    variable = var(canonical, var_name)
-    _add_cons_container!(canonical, cons_name, ts_data[1], time_steps)
+    names = (v[1] for v in ts_data)
+    _add_cons_container!(canonical, cons_name, names, time_steps)
     constraint = con(canonical, cons_name)
+    variable = var(canonical, var_name)
 
-    for t in time_steps, (ix, name) in enumerate(ts_data[1])
-
-        constraint[name, t] = JuMP.@constraint(canonical.JuMPmodel, ts_data[2][ix]*ts_data[3][ix][t] <= variable[name, t])
+    for t in time_steps, data in ts_data
+        name = data[1]
+        forecast = data[4][t]
+        multiplier = data[3]
+        constraint[name, t] = JuMP.@constraint(canonical.JuMPmodel,
+                        multiplier*forecast <= variable[name, t])
 
     end
 
@@ -88,7 +95,7 @@ end
 #NOTE: there is a floating, unnamed lower bound constraint in this function. This may need to be changed.
 @doc raw"""
     device_timeseries_param_ub(canonical::CanonicalModel,
-                                    ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
+                                    ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}
                                     cons_name::Symbol,
                                     param_reference::UpdateRef,
                                     var_name::Symbol)
@@ -106,13 +113,13 @@ Constructs upper bound for given variable using a parameter. The constraint is
 
 # Arguments
 * canonical::CanonicalModel : the canonical model built in PowerSimulations
-* ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}} : timeseries data name (1), multiplier (2) and values (3)
+* ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}: timeseries data name (1), multiplier (2) and values (3)
 * cons_name::Symbol : name of the constraint
 * param_reference::UpdateRef : UpdateRef to access the parameter
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_param_ub(canonical::CanonicalModel,
-                                    ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
+                                    ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                                     cons_name::Symbol,
                                     param_reference::UpdateRef,
                                     var_name::Symbol)
@@ -120,15 +127,19 @@ function device_timeseries_param_ub(canonical::CanonicalModel,
     time_steps = model_time_steps(canonical)
     ub_name = _middle_rename(cons_name, "_", "ub")
     variable = var(canonical, var_name)
-    _add_cons_container!(canonical, ub_name, ts_data[1], time_steps)
+    names = (v[1] for v in ts_data)
+    _add_cons_container!(canonical, ub_name, names, time_steps)
     constraint = con(canonical, ub_name)
-    _add_param_container!(canonical, param_reference, ts_data[1], time_steps)
+    _add_param_container!(canonical, param_reference, names, time_steps)
     param = par(canonical, param_reference)
 
-    for t in time_steps, (ix, name) in enumerate(ts_data[1])
-        param[name, t] = PJ.add_parameter(canonical.JuMPmodel, ts_data[3][ix][t])
+    for t in time_steps, data in ts_data
+        name = data[1]
+        forecast = data[4][t]
+        multiplier = data[3]
+        param[name, t] = PJ.add_parameter(canonical.JuMPmodel, forecast)
         constraint[name, t] = JuMP.@constraint(canonical.JuMPmodel,
-                                        variable[name, t] <= ts_data[2][ix]*param[name, t])
+                                        variable[name, t] <= multiplier*param[name, t])
     end
 
     return
@@ -137,7 +148,7 @@ end
 
 @doc raw"""
     device_timeseries_param_lb(canonical::CanonicalModel,
-                                    ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
+                                    ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}
                                     cons_name::Symbol,
                                     param_reference::UpdateRef,
                                     var_name::Symbol)
@@ -161,7 +172,7 @@ Constructs lower bound for given variable using a parameter. The constraint is
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_param_lb(canonical::CanonicalModel,
-                                    ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
+                                    ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                                     cons_name::Symbol,
                                     param_reference::UpdateRef,
                                     var_name::Symbol)
@@ -169,14 +180,18 @@ function device_timeseries_param_lb(canonical::CanonicalModel,
     time_steps = model_time_steps(canonical)
     variable = var(canonical, var_name)
     lb_name = _middle_rename(cons_name, "_", "lb")
-    _add_cons_container!(canonical, lb_name, ts_data[1], time_steps)
+    names = (v[1] for v in ts_data)
+    _add_cons_container!(canonical, lb_name, names, time_steps)
     constraint = con(canonical, lb_name)
-    _add_param_container!(canonical, param_reference, ts_data[1], time_steps)
+    _add_param_container!(canonical, param_reference, names, time_steps)
     param = par(canonical, param_reference)
 
-    for t in time_steps, (ix, name) in enumerate(ts_data[1])
-        param[name, t] = PJ.add_parameter(canonical.JuMPmodel, ts_data[3][ix][t])
-        constraint[name, t] = JuMP.@constraint(canonical.JuMPmodel, ts_data[2][ix]*param[name, t] <= variable[name, t])
+    for t in time_steps, data in ts_data
+        name = data[1]
+        forecast = data[4][t]
+        multiplier = data[3]
+        param[name, t] = PJ.add_parameter(canonical.JuMPmodel, forecast)
+        constraint[name, t] = JuMP.@constraint(canonical.JuMPmodel, multiplier*param[name, t] <= variable[name, t])
     end
 
     return
@@ -185,7 +200,7 @@ end
 
 @doc raw"""
     device_timeseries_ub_bin(canonical::CanonicalModel,
-                                    ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
+                                    ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
@@ -211,7 +226,7 @@ where (ix, name) in enumerate(ts_data[1]).
 * binvar_name::Symbol : name of binary variable
 """
 function device_timeseries_ub_bin(canonical::CanonicalModel,
-                                    ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
+                                    ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
@@ -222,11 +237,15 @@ function device_timeseries_ub_bin(canonical::CanonicalModel,
     varcts = var(canonical, var_name)
     varbin = var(canonical, binvar_name)
 
-    _add_cons_container!(canonical, ub_name, ts_data[1], time_steps)
+    names = (v[1] for v in ts_data)
+    _add_cons_container!(canonical, ub_name, names, time_steps)
     con_ub = con(canonical, ub_name)
 
-    for t in time_steps, (ix, name) in enumerate(ts_data[1])
-        con_ub[name, t] = JuMP.@constraint(canonical.JuMPmodel, varcts[name, t] <= varbin[name, t]*ts_data[2][ix]*ts_data[3][ix][t])
+    for t in time_steps, data in ts_data
+        name = data[1]
+        forecast = data[4][t]
+        multiplier = data[3]
+        con_ub[name, t] = JuMP.@constraint(canonical.JuMPmodel, varcts[name, t] <= varbin[name, t]*multiplier*forecast)
     end
 
     return
@@ -235,7 +254,7 @@ end
 
 @doc raw"""
     device_timeseries_ub_bigM(canonical::CanonicalModel,
-                                    ts_data::Tuple{Vector{String}, Vector{Float64}, Vector{Vector{Float64}}},
+                                    ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     param_reference::UpdateRef,
@@ -267,7 +286,7 @@ param_reference::UpdateRef : UpdateRef of access the parameters
 * M_value::Float64 : bigM
 """
 function device_timeseries_ub_bigM(canonical::CanonicalModel,
-                                    ts_data::Tuple{Vector{String}, Vector{Float64},Vector{Vector{Float64}}},
+                                    ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     param_reference::UpdateRef,
@@ -280,18 +299,21 @@ function device_timeseries_ub_bigM(canonical::CanonicalModel,
 
     varcts = var(canonical, var_name)
     varbin = var(canonical, binvar_name)
-
-    _add_cons_container!(canonical, ub_name, ts_data[1], time_steps)
-    _add_cons_container!(canonical, key_status, ts_data[1], time_steps)
+    names = (v[1] for v in ts_data)
+    _add_cons_container!(canonical, ub_name, names, time_steps)
+    _add_cons_container!(canonical, key_status, names, time_steps)
     con_ub = con(canonical, ub_name)
     con_status = con(canonical, key_status)
 
-    _add_param_container!(canonical, param_reference, ts_data[1], time_steps)
+    _add_param_container!(canonical, param_reference, names, time_steps)
     param = par(canonical, param_reference)
 
-    for t in time_steps, (ix, name) in enumerate(ts_data[1])
-        param[name, t] = PJ.add_parameter(canonical.JuMPmodel, ts_data[3][ix][t])
-        con_ub[name, t] = JuMP.@constraint(canonical.JuMPmodel, varcts[name, t] - param[name, t]*ts_data[2][ix] <= (1 - varbin[name, t])*M_value)
+    for t in time_steps, data in ts_data
+        name = data[1]
+        forecast = data[4][t]
+        multiplier = data[3]
+        param[name, t] = PJ.add_parameter(canonical.JuMPmodel, forecast)
+        con_ub[name, t] = JuMP.@constraint(canonical.JuMPmodel, varcts[name, t] - param[name, t]*multiplier <= (1 - varbin[name, t])*M_value)
         con_status[name, t] =  JuMP.@constraint(canonical.JuMPmodel, varcts[name, t] <= varbin[name, t]*M_value)
     end
 

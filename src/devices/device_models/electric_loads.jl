@@ -112,34 +112,28 @@ function activepower_constraints!(canonical::CanonicalModel,
                                  device_formulation::Type{DispatchablePowerLoad},
                                  system_formulation::Type{<:PM.AbstractPowerModel}) where L<:PSY.ElectricLoad
 
-    time_steps = model_time_steps(canonical)
     parameters = model_has_parameters(canonical)
+    forecast = model_uses_forecasts(canonical)
 
-    if model_has_parameters(canonical)
-        device_timeseries_param_ub(canonical,
-                                   _get_time_series(devices, time_steps),
-                                   Symbol("active_$(L)"),
-                                   UpdateRef{L}(Symbol("P_$(L)")),
-                                   Symbol("P_$(L)"))
-    else
-        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_maxactivepower(d))) for d in devices]
+    if !parameters && !forecast
+        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_activepower(d))) for d in devices]
         device_range(canonical,
                     range_data,
                     Symbol("activerange_$(L)"),
-                    Symbol("P_$(L)")
-                    )
+                    Symbol("P_$(L)"))
+        return
     end
 
-
-    if model_has_parameters(canonical)
+    ts_data_active, _ = _get_time_series(canonical, devices)
+    if parameters
         device_timeseries_param_ub(canonical,
-                                   _get_time_series(devices),
+                                   ts_data_active,
                                    Symbol("active_$(L)"),
                                    UpdateRef{L}(Symbol("P_$(L)")),
                                    Symbol("P_$(L)"))
     else
         device_timeseries_ub(canonical,
-                            _get_time_series(devices),
+                            ts_data_active,
                             Symbol("active_$(L)"),
                             Symbol("P_$(L)"))
     end
@@ -148,40 +142,34 @@ function activepower_constraints!(canonical::CanonicalModel,
 
 end
 
-"""
-This function works only if the the Param_L <= PSY.get_maxactivepower(g)
-"""
 function activepower_constraints!(canonical::CanonicalModel,
                                  devices::IS.FlattenIteratorWrapper{L},
                                  device_formulation::Type{InterruptiblePowerLoad},
                                  system_formulation::Type{<:PM.AbstractPowerModel}) where L<:PSY.ElectricLoad
-    time_steps = model_time_steps(canonical)
+
     parameters = model_has_parameters(canonical)
-    if model_has_parameters(canonical)
-        device_timeseries_ub_bigM(canonical,
-                                 _get_time_series(devices, time_steps),
-                                 Symbol("active_$(L)"),
-                                 Symbol("P_$(L)"),
-                                 UpdateRef{L}(Symbol("P_$(L)")),
-                                 Symbol("ON_$(L)"))
-    else
-        device_timeseries_ub_bin(canonical,
-                                _get_time_series(devices, time_steps),
-                                Symbol("active_$(L)"),
-                                Symbol("P_$(L)"),
-                                Symbol("ON_$(L)"))
+    forecast = model_uses_forecasts(canonical)
+
+    if !parameters && !forecast
+        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_activepower(d))) for d in devices]
+        device_range(canonical,
+                    range_data,
+                    Symbol("activerange_$(L)"),
+                    Symbol("P_$(L)"))
+        return
     end
 
-    if model_has_parameters(canonical)
+    ts_data_active, _ = _get_time_series(canonical, devices)
+    if parameters
         device_timeseries_ub_bigM(canonical,
-                                 _get_time_series(devices),
+                                 ts_data_active,
                                  Symbol("active_$(L)"),
                                  Symbol("P_$(L)"),
                                  UpdateRef{L}(Symbol("P_$(L)")),
                                  Symbol("ON_$(L)"))
     else
         device_timeseries_ub_bin(canonical,
-                                _get_time_series(devices),
+                                ts_data_active,
                                 Symbol("active_$(L)"),
                                 Symbol("P_$(L)"),
                                 Symbol("ON_$(L)"))
@@ -190,6 +178,7 @@ function activepower_constraints!(canonical::CanonicalModel,
     return
 
 end
+
 
 ########################## Addition of to the nodal balances ###############################
 function nodal_expression!(canonical::CanonicalModel,
@@ -214,18 +203,18 @@ function nodal_expression!(canonical::CanonicalModel,
         return
     end
 
-    for t in time_steps
+    for t in model_time_steps(canonical)
         for device_value in ts_data_active
             _add_to_expression!(canonical.expressions[:nodal_balance_active],
                             device_value[2],
                             t,
-                            device_value[3]*device_value[4][t])
+                            -device_value[3]*device_value[4][t])
         end
         for device_value in ts_data_reactive
             _add_to_expression!(canonical.expressions[:nodal_balance_reactive],
                             device_value[2],
                             t,
-                            device_value[3]*device_value[4][t])
+                            -device_value[3]*device_value[4][t])
         end
     end
 
@@ -238,8 +227,9 @@ function nodal_expression!(canonical::CanonicalModel,
                            devices::IS.FlattenIteratorWrapper{L},
                            system_formulation::Type{<:PM.AbstractActivePowerModel}) where L<:PSY.ElectricLoad
 
-    ts_data_active, _ = _get_time_series(canonical, devices)
+
     parameters = model_has_parameters(canonical)
+    ts_data_active, _ = _get_time_series(canonical, devices)
 
     if parameters
         include_parameters(canonical,
@@ -250,11 +240,11 @@ function nodal_expression!(canonical::CanonicalModel,
         return
     end
 
-    for t in time_steps, device_value in ts_data_active
+    for t in model_time_steps(canonical), device_value in ts_data_active
         _add_to_expression!(canonical.expressions[:nodal_balance_active],
                             device_value[2],
                             t,
-                            device_value[3]*device_value[4][t])
+                            -device_value[3]*device_value[4][t])
     end
 
     return
