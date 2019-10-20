@@ -81,7 +81,6 @@ function _get_time_series(canonical::CanonicalModel,
 
     initial_time = model_initial_time(canonical)
     forecast = model_uses_forecasts(canonical)
-    parameters = model_has_parameters(canonical)
     time_steps = model_time_steps(canonical)
     device_total = length(devices)
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, device_total)
@@ -90,8 +89,8 @@ function _get_time_series(canonical::CanonicalModel,
     for (ix, device) in enumerate(devices)
         bus_number = PSY.get_number(PSY.get_bus(device))
         name = PSY.get_name(device)
-        active_power = forecast ? PSY.get_maxactivepower(tech) : PSY.get_activepower(device)
-        reactive_power = forecast ? PSY.get_maxreactivepower(tech) : PSY.get_reactivepower(device)
+        active_power = forecast ? PSY.get_maxactivepower(device) : PSY.get_activepower(device)
+        reactive_power = forecast ? PSY.get_maxreactivepower(device) : PSY.get_reactivepower(device)
         if forecast
             ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
                                                                 device,
@@ -104,7 +103,7 @@ function _get_time_series(canonical::CanonicalModel,
         ts_data_reactive[ix] = (name, bus_number, reactive_power, ts_vector)
     end
 
-    return ts_data_active[ix], ts_data_reactive[ix]
+    return ts_data_active, ts_data_reactive
 
 end
 
@@ -114,6 +113,7 @@ function activepower_constraints!(canonical::CanonicalModel,
                                  system_formulation::Type{<:PM.AbstractPowerModel}) where L<:PSY.ElectricLoad
 
     time_steps = model_time_steps(canonical)
+    parameters = model_has_parameters(canonical)
 
     if model_has_parameters(canonical)
         device_timeseries_param_ub(canonical,
@@ -156,7 +156,7 @@ function activepower_constraints!(canonical::CanonicalModel,
                                  device_formulation::Type{InterruptiblePowerLoad},
                                  system_formulation::Type{<:PM.AbstractPowerModel}) where L<:PSY.ElectricLoad
     time_steps = model_time_steps(canonical)
-
+    parameters = model_has_parameters(canonical)
     if model_has_parameters(canonical)
         device_timeseries_ub_bigM(canonical,
                                  _get_time_series(devices, time_steps),
@@ -198,6 +198,7 @@ function nodal_expression!(canonical::CanonicalModel,
 
 
     ts_data_active, ts_data_reactive = _get_time_series(canonical, devices)
+    parameters = model_has_parameters(canonical)
 
     if parameters
         include_parameters(canonical,
@@ -238,6 +239,7 @@ function nodal_expression!(canonical::CanonicalModel,
                            system_formulation::Type{<:PM.AbstractActivePowerModel}) where L<:PSY.ElectricLoad
 
     ts_data_active, _ = _get_time_series(canonical, devices)
+    parameters = model_has_parameters(canonical)
 
     if parameters
         include_parameters(canonical,
