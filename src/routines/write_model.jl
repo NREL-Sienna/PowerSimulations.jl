@@ -13,23 +13,6 @@ function write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path:
     return
 end
 
-
-function write_data(vars_results::OperationModel, save_path::AbstractString; kwargs...)
-
-    file_type = get(kwargs, :file_type, Feather)
-
-    if file_type == Feather || file_type == CSV
-        for (k,v) in vars(vars_results.canonical)
-            file_path = joinpath(save_path,"$(k).$(lowercase("$file_type"))")
-            file_type.write(file_path, _result_dataframe_vars(v))
-        end
-    else
-        error("unsupported file type: $file_type")
-    end
-
-    return
-end
-
 function write_data(data::DataFrames.DataFrame, save_path::AbstractString, file_name::String; kwargs...)
     if isfile(save_path)
         save_path = dirname(save_path)
