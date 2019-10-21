@@ -270,10 +270,6 @@ end
 
 
 ############################# UC validation tests ##########################################
-# Common System Information
-node = Bus(1,"nodeA", "PV", 0, 1.0, (min = 0.9, max=1.05), 230);
-load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0);
-
 branches = Dict{Symbol, PSI.DeviceModel}()
 services = Dict{Symbol, PSI.ServiceModel}()
 ED_devices = Dict{Symbol, DeviceModel}(:Generators => PSI.DeviceModel(PSY.ThermalStandard, PSI.ThermalRampLimited),
@@ -282,6 +278,8 @@ UC_devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalSta
                                         :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
 # Testing Ramping Constraint
 @testset "Solving UC with CopperPlate for testing Ramping Constraints" begin
+node = Bus(1,"nodeA", "PV", 0, 1.0, (min = 0.9, max=1.05), 230)
+load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     DA_ramp = collect(DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):
                         Hour(1):
                         DateTime("1/1/2024  4:00:00", "d/m/y  H:M:S"))
@@ -298,13 +296,13 @@ UC_devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalSta
                 ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75)
             )];
     ramp_load = [ 0.9, 1.1, 2.485, 2.175, 0.9];
-    load_forecast_ramp = Deterministic(load, "scalingfactor", TimeArray(DA_ramp, ramp_load))
-    ramp_test_sys = PSY.System(100.0);
+    load_forecast_ramp = Deterministic("maxactivepower", TimeArray(DA_ramp, ramp_load))
+    ramp_test_sys = PSY.System(100.0)
     add_component!(ramp_test_sys, node)
     add_component!(ramp_test_sys, load)
     add_component!(ramp_test_sys, gen_ramp[1])
     add_component!(ramp_test_sys, gen_ramp[2])
-    add_forecasts!(ramp_test_sys, [load_forecast_ramp])
+    add_forecast!(ramp_test_sys, load, load_forecast_ramp)
 
     model_ref = ModelReference(CopperPlatePowerModel, ED_devices, branches, services)
     ED = OperationModel(TestOptModel, model_ref,
@@ -316,6 +314,8 @@ end
 
 # Testing Duration Constraints
 @testset "Solving UC with CopperPlate for testing Duration Constraints" begin
+node = Bus(1,"nodeA", "PV", 0, 1.0, (min = 0.9, max=1.05), 230)
+load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     DA_dur  = collect(DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):
                         Hour(1):
                         DateTime("1/1/2024  6:00:00", "d/m/y  H:M:S"))
@@ -333,13 +333,13 @@ end
             )];
 
     duration_load = [0.3, 0.6, 0.8, 0.7, 1.7, 0.9, 0.7]
-    load_forecast_dur = Deterministic(load, "scalingfactor", TimeArray(DA_dur, duration_load))
-    duration_test_sys = PSY.System(100.0);
+    load_forecast_dur = Deterministic("maxactivepower", TimeArray(DA_dur, duration_load))
+    duration_test_sys = PSY.System(100.0)
     add_component!(duration_test_sys, node)
     add_component!(duration_test_sys, load)
     add_component!(duration_test_sys, gens_dur[1])
     add_component!(duration_test_sys, gens_dur[2])
-    add_forecasts!(duration_test_sys, [load_forecast_dur]);
+    add_forecast!(duration_test_sys, load, load_forecast_dur)
 
     status = [1.0,0.0]
     up_time = [2.0,0.0]
@@ -352,16 +352,18 @@ end
     init_cond[PSI.ICKey(PSI.TimeDurationOFF,typeof(alta))] = build_init(gens_dur, down_time)
 
 
-    model_ref = ModelReference(CopperPlatePowerModel, UC_devices, branches, services);
+    model_ref = ModelReference(CopperPlatePowerModel, UC_devices, branches, services)
     UC = OperationModel(TestOptModel, model_ref,
                         duration_test_sys; optimizer = Cbc_optimizer,
-                        parameters = true, initial_conditions = init_cond);
+                        parameters = true, initial_conditions = init_cond)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
     moi_tests(UC, true, 56, 0, 56, 14, 21, true)
 end
 
 ## PWL linear Cost implementation test
 @testset "Solving UC with CopperPlate testing Linear PWL" begin
+node = Bus(1,"nodeA", "PV", 0, 1.0, (min = 0.9, max=1.05), 230)
+load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     gens_cost = [ThermalStandard("Alta", true, node,0.52, 0.010,
             TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
                             (min = 0.22, max = 0.55), nothing,
@@ -380,25 +382,27 @@ end
                         Hour(1):
                         DateTime("1/1/2024  1:00:00", "d/m/y  H:M:S"))
     cost_load = [1.3,2.1];
-    load_forecast_cost = Deterministic(load, "scalingfactor", TimeArray(DA_cost, cost_load))
-    cost_test_sys = PSY.System(100.0);
+    load_forecast_cost = Deterministic("maxactivepower", TimeArray(DA_cost, cost_load))
+    cost_test_sys = PSY.System(100.0)
     add_component!(cost_test_sys, node)
     add_component!(cost_test_sys, load)
     add_component!(cost_test_sys, gens_cost[1])
     add_component!(cost_test_sys, gens_cost[2])
-    add_forecasts!(cost_test_sys, [load_forecast_cost])
+    add_forecast!(cost_test_sys, load, load_forecast_cost)
 
 
-    model_ref = ModelReference(CopperPlatePowerModel, UC_devices, branches, services);
+    model_ref = ModelReference(CopperPlatePowerModel, UC_devices, branches, services)
     UC = OperationModel(TestOptModel, model_ref,
                         cost_test_sys; optimizer = Cbc_optimizer,
-                        parameters = true);
+                        parameters = true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919354838)
     moi_tests(UC, true, 32, 0, 8, 4, 10, true)
 end
 
 ## PWL SOS-2 Cost implementation test
 @testset "Solving UC with CopperPlate testing SOS2 implementation" begin
+    node = Bus(1,"nodeA", "PV", 0, 1.0, (min = 0.9, max=1.05), 230)
+    load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     gens_cost_sos = [ThermalStandard("Alta", true, node,0.52, 0.010,
             TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
                             (min = 0.22, max = 0.55), nothing,
@@ -417,18 +421,18 @@ end
                         Hour(1):
                         DateTime("1/1/2024  1:00:00", "d/m/y  H:M:S"))
     cost_sos_load = [1.3,2.1];
-    load_forecast_cost_sos  = Deterministic(load, "scalingfactor", TimeArray(DA_cost_sos, cost_sos_load))
-    cost_test_sos_sys = PSY.System(100.0);
+    load_forecast_cost_sos  = Deterministic("maxactivepower", TimeArray(DA_cost_sos, cost_sos_load))
+    cost_test_sos_sys = PSY.System(100.0)
     add_component!(cost_test_sos_sys, node)
     add_component!(cost_test_sos_sys, load)
     add_component!(cost_test_sos_sys, gens_cost_sos[1])
     add_component!(cost_test_sos_sys, gens_cost_sos[2])
-    add_forecasts!(cost_test_sos_sys, [load_forecast_cost_sos])
+    add_forecast!(cost_test_sos_sys, load, load_forecast_cost_sos)
 
-    model_ref = ModelReference(CopperPlatePowerModel, UC_devices, branches, services);
+    model_ref = ModelReference(CopperPlatePowerModel, UC_devices, branches, services)
     UC = OperationModel(TestOptModel, model_ref,
                         cost_test_sos_sys; optimizer = Cbc_optimizer,
-                        parameters = true);
+                        parameters = true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919,10.0)
     moi_tests(UC, true, 32, 0, 8, 4, 14, true)
 end

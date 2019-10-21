@@ -6,7 +6,6 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                                              S<:PM.AbstractPowerModel}
 
 
-    forecast = get(kwargs, :forecast, true)
 
 
 
@@ -17,19 +16,14 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables(canonical, devices);
+    activepower_variables!(canonical, devices);
 
-    reactivepower_variables(canonical, devices);
+    reactivepower_variables!(canonical, devices);
 
     #Constraints
-    if forecast
-        forecasts = _retrieve_forecasts(sys, R)
-        activepower_constraints(canonical, forecasts, D, S)
-    else
-        activepower_constraints(canonical, devices, D, S)
-    end
+    activepower_constraints!(canonical, devices, D, S)
 
-    reactivepower_constraints(canonical, devices, D, S)
+    reactivepower_constraints!(canonical, devices, D, S)
 
     feedforward!(canonical, R, model.feedforward)
 
@@ -47,7 +41,6 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                                              D<:AbstractRenewableDispatchFormulation,
                                              S<:PM.AbstractActivePowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
 
 
@@ -58,15 +51,10 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables(canonical, devices)
+    activepower_variables!(canonical, devices)
 
     #Constraints
-    if forecast
-        forecasts = _retrieve_forecasts(sys, R)
-        activepower_constraints(canonical, forecasts, D, S)
-    else
-        activepower_constraints(canonical, devices, D, S)
-    end
+    activepower_constraints!(canonical, devices, D, S)
 
     feedforward!(canonical, R, model.feedforward)
 
@@ -83,7 +71,6 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                            kwargs...) where {R<:PSY.RenewableGen,
                                              S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
 
 
@@ -93,12 +80,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
         return
     end
 
-    if forecast
-        forecasts = _retrieve_forecasts(sys, R)
-        nodal_expression(canonical, forecasts, system_formulation)
-    else
-        nodal_expression(canonical, devices, system_formulation)
-    end
+    nodal_expression!(canonical, devices, system_formulation)
 
     return
 
@@ -128,7 +110,6 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                            system_formulation::Type{S};
                            kwargs...) where {S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
 
 
@@ -138,12 +119,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
         return
     end
 
-    if forecast
-        forecasts = _retrieve_forecasts(sys, PSY.RenewableFix)
-        nodal_expression(canonical, forecasts, system_formulation)
-    else
-        nodal_expression(canonical, devices, system_formulation)
-    end
+    nodal_expression!(canonical, devices, system_formulation)
 
     return
 

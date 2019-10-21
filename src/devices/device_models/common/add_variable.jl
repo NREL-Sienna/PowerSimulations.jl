@@ -4,7 +4,7 @@ function _container_spec(m::M, ax...) where M<:JuMP.AbstractModel
 end
 
 @doc raw"""
-    add_variable(canonical_model::CanonicalModel,
+    add_variable(canonical::CanonicalModel,
                       devices::D,
                       var_name::Symbol,
                       binary::Bool,
@@ -30,11 +30,11 @@ If binary = true:
 ``  x^{device}_t \in {0,1} \forall t iff \text{binary = true}``
 
 # Arguments
-* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::CanonicalModel : the canonical model built in PowerSimulations
 * devices : Vector or Iterator with the devices
 * var_name::Symbol : Base Name for the variable
 * binary::Bool : Select if the variable is binary
-* expression::Symbol : Expression name stored in canonical_model.expressions to add the variable
+* expression::Symbol : Expression name stored in canonical.expressions to add the variable
 * sign::Float64 : sign of the addition of the variable to the expression. Default Value is 1.0
 
 # Accepted Keyword Arguments
@@ -43,7 +43,7 @@ If binary = true:
 * initial_value_function : Provides the function over device to obtain the warm start value
 
 """
-function add_variable(canonical_model::CanonicalModel,
+function add_variable(canonical::CanonicalModel,
                       devices::D,
                       var_name::Symbol,
                       binary::Bool,
@@ -51,9 +51,9 @@ function add_variable(canonical_model::CanonicalModel,
                       sign::Float64=1.0; kwargs...) where {D<:Union{Vector{<:PSY.Device},
                                           IS.FlattenIteratorWrapper{<:PSY.Device}}}
 
-    time_steps = model_time_steps(canonical_model)
-    _add_var_container!(canonical_model, var_name, (PSY.get_name(d) for d in devices), time_steps)
-    variable = var(canonical_model, var_name)
+    time_steps = model_time_steps(canonical)
+    _add_var_container!(canonical, var_name, (PSY.get_name(d) for d in devices), time_steps)
+    variable = var(canonical, var_name)
     jvar_name = _remove_underscore(var_name)
 
     lb_f = get(kwargs, :lb_value, nothing)
@@ -62,7 +62,7 @@ function add_variable(canonical_model::CanonicalModel,
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
-        variable[name, t] = JuMP.@variable(canonical_model.JuMPmodel,
+        variable[name, t] = JuMP.@variable(canonical.JuMPmodel,
                                         base_name="$(jvar_name)_{$(name), $(t)}",
                                         binary=binary
                                         )
@@ -73,7 +73,7 @@ function add_variable(canonical_model::CanonicalModel,
 
         if !(isnothing(expression))
         bus_number = PSY.get_number(PSY.get_bus(d))
-        _add_to_expression!(exp(canonical_model, expression),
+        _add_to_expression!(exp(canonical, expression),
                             bus_number,
                             t,
                             variable[name, t],
@@ -86,7 +86,7 @@ function add_variable(canonical_model::CanonicalModel,
 end
 
 @doc raw"""
-    set_variable_bounds(canonical_model::CanonicalModel,
+    set_variable_bounds(canonical::CanonicalModel,
                             bounds::Vector{NamedMinMax},
                             var_name::Symbol)
 
@@ -104,17 +104,17 @@ Adds a bounds to a variable in the optimization model.
 ``  x^{device}_t <= bound^{max} \forall t ``
 
 # Arguments
-* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::CanonicalModel : the canonical model built in PowerSimulations
 * bounds::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
 * var_name::Symbol : Base Name for the variable
 
 """
-function set_variable_bounds(canonical_model::CanonicalModel,
+function set_variable_bounds(canonical::CanonicalModel,
                             bounds::Vector{NamedMinMax},
                             var_name::Symbol)
 
-    for t in model_time_steps(canonical_model), (name, bound) in bounds
-        var = canonical_model.variables[var_name][name, t]
+    for t in model_time_steps(canonical), (name, bound) in bounds
+        var = canonical.variables[var_name][name, t]
         JuMP.set_upper_bound(var, bound.max)
         JuMP.set_lower_bound(var, bound.min)
     end
