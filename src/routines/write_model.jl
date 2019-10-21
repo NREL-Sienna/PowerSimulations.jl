@@ -9,6 +9,7 @@ function write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path:
     else
         error("unsupported file type: $file_type")
     end
+
     return
 end
 # taking the outputted files for the variable DataFrame and writing them to a featherfile
@@ -84,15 +85,15 @@ function _export_model_result(stage::_Stage, start_time::Dates.DateTime, save_pa
 end
 
 function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
-                               canonical_model::CanonicalModel,
+                               canonical::CanonicalModel,
                                path::String)
 
-    optimizer_log[:obj_value] = JuMP.objective_value(canonical_model.JuMPmodel)
-    optimizer_log[:termination_status] = Int(JuMP.termination_status(canonical_model.JuMPmodel))
-    optimizer_log[:primal_status] = Int(JuMP.primal_status(canonical_model.JuMPmodel))
-    optimizer_log[:dual_status] = Int(JuMP.dual_status(canonical_model.JuMPmodel))
+    optimizer_log[:obj_value] = JuMP.objective_value(canonical.JuMPmodel)
+    optimizer_log[:termination_status] = Int(JuMP.termination_status(canonical.JuMPmodel))
+    optimizer_log[:primal_status] = Int(JuMP.primal_status(canonical.JuMPmodel))
+    optimizer_log[:dual_status] = Int(JuMP.dual_status(canonical.JuMPmodel))
     try
-        optimizer_log[:solve_time] = MOI.get(canonical_model.JuMPmodel, MOI.SolveTime())
+        optimizer_log[:solve_time] = MOI.get(canonical.JuMPmodel, MOI.SolveTime())
     catch
         @warn("SolveTime() property not supported by the Solver")
         optimizer_log[:solve_time] = NaN #"Not Supported by solver"
@@ -136,9 +137,9 @@ function write_op_model(op_model::OperationModel, save_path::String)
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
-function _write_canonical_model(canonical_model::CanonicalModel, save_path::String)
+function _write_canonical_model(canonical::CanonicalModel, save_path::String)
     MOF_model = MOPFM
-    MOI.copy_to(MOF_model, JuMP.backend(canonical_model.JuMPmodel))
+    MOI.copy_to(MOF_model, JuMP.backend(canonical.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)
     return
 end

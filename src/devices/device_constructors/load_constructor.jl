@@ -1,11 +1,11 @@
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::CanonicalModel,
+                           sys::PSY.System,
                            model::DeviceModel{L, D},
                            ::Type{S};
                            kwargs...) where {L<:PSY.ControllableLoad,
                                              D<:AbstractControllablePowerLoadFormulation,
                                              S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
 
 
@@ -16,19 +16,14 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables(canonical, devices)
+    activepower_variables!(canonical, devices)
 
-    reactivepower_variables(canonical, devices)
+    reactivepower_variables!(canonical, devices)
 
     #Constraints
-    if forecast
-        forecasts = _retrieve_forecasts(sys, L)
-        activepower_constraints(canonical, forecasts, D, S)
-    else
-        activepower_constraints(canonical, devices, D, S)
-    end
+    activepower_constraints!(canonical, devices, D, S)
 
-    reactivepower_constraints(canonical, devices, D, S)
+    reactivepower_constraints!(canonical, devices, D, S)
 
     feedforward!(canonical, L, model.feedforward)
 
@@ -39,14 +34,14 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::CanonicalModel,
+                           sys::PSY.System,
                            model::DeviceModel{L, D},
                            ::Type{S};
                            kwargs...) where {L<:PSY.ControllableLoad,
                                              D<:AbstractControllablePowerLoadFormulation,
                                              S<:PM.AbstractActivePowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
 
 
@@ -57,15 +52,10 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables(canonical, devices)
+    activepower_variables!(canonical, devices)
 
     #Constraints
-    if forecast
-        forecasts = _retrieve_forecasts(sys, L)
-        activepower_constraints(canonical, forecasts, D, S)
-    else
-        activepower_constraints(canonical, devices, D, S)
-    end
+    activepower_constraints!(canonical, devices, D, S)
 
     feedforward!(canonical, L, model.feedforward)
 
@@ -76,13 +66,13 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::CanonicalModel,
+                           sys::PSY.System,
                            model::DeviceModel{L, InterruptiblePowerLoad},
                            ::Type{S};
                            kwargs...) where {L<:PSY.ControllableLoad,
                                              S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
 
 
@@ -93,21 +83,16 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables(canonical, devices)
+    activepower_variables!(canonical, devices)
 
-    reactivepower_variables(canonical, devices)
+    reactivepower_variables!(canonical, devices)
 
-    commitment_variables(canonical, devices)
+    commitment_variables!(canonical, devices)
 
     #Constraints
-    if forecast
-        forecasts = _retrieve_forecasts(sys, L)
-        activepower_constraints(canonical, forecasts, model.formulation, S)
-    else
-        activepower_constraints(canonical, devices, model.formulation, S)
-    end
+    activepower_constraints!(canonical, devices, model.formulation, S)
 
-    reactivepower_constraints(canonical, devices, model.formulation, S)
+    reactivepower_constraints!(canonical, devices, model.formulation, S)
 
     feedforward!(canonical, L, model.feedforward)
 
@@ -118,13 +103,13 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::CanonicalModel,
+                           sys::PSY.System,
                            model::DeviceModel{L, InterruptiblePowerLoad},
                            ::Type{S};
                            kwargs...) where {L<:PSY.ControllableLoad,
                                              S<:PM.AbstractActivePowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
 
 
@@ -135,17 +120,12 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables(canonical, devices)
+    activepower_variables!(canonical, devices)
 
-    commitment_variables(canonical, devices)
+    commitment_variables!(canonical, devices)
 
     #Constraints
-    if forecast
-        forecasts = _retrieve_forecasts(sys, L)
-        activepower_constraints(canonical, forecasts, model.formulation, S)
-    else
-        activepower_constraints(canonical, devices, model.formulation, S)
-    end
+    activepower_constraints!(canonical, devices, model.formulation, S)
 
     feedforward!(canonical, L, model.feedforward)
 
@@ -156,13 +136,13 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::CanonicalModel,
+                           sys::PSY.System,
                            model::DeviceModel{L, StaticPowerLoad},
                            ::Type{S};
                            kwargs...) where {L<:PSY.ElectricLoad,
                                              S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
 
 
@@ -172,18 +152,14 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
         return
     end
 
-    if forecast
-        forecasts = _retrieve_forecasts(sys, L)
-        nodal_expression(canonical, forecasts, S)
-    else
-        nodal_expression(canonical, devices, S)
-    end
+    nodal_expression!(canonical, devices, S)
 
     return
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::CanonicalModel,
+                           sys::PSY.System,
                            model::DeviceModel{L, D},
                            ::Type{S};
                            kwargs...) where {L<:PSY.StaticLoad,
