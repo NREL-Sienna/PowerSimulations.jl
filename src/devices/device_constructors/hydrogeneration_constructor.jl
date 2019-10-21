@@ -1,13 +1,12 @@
-function construct_device!(op_model::OperationModel,
+function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                            model::DeviceModel{H, D},
                            ::Type{S};
                            kwargs...) where {H<:PSY.HydroGen,
                                              D<:AbstractHydroFormulation,
                                              S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(H, sys)
 
@@ -22,15 +21,14 @@ function construct_device!(op_model::OperationModel,
 end
 
 
-function construct_device!(op_model::OperationModel,
+function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                            model::DeviceModel{H, HydroFixed},
                            ::Type{S};
                            kwargs...) where {H<:PSY.HydroGen,
                                              S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(H, sys)
 
@@ -38,18 +36,13 @@ function construct_device!(op_model::OperationModel,
         return
     end
 
-    if forecast
-        forecasts = _retrieve_forecasts(sys, H)
-        nodal_expression(op_model.canonical, forecasts, S)
-    else
-        nodal_expression(op_model.canonical, devices, S)
-    end
+    nodal_expression!(canonical, devices, S)
 
     return
 
 end
 
-function construct_device!(op_model::OperationModel,
+function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                            model::DeviceModel{PSY.HydroFix, D},
                            ::Type{S};
                            kwargs...) where {D<:AbstractHydroFormulation,
@@ -58,21 +51,21 @@ function construct_device!(op_model::OperationModel,
     @warn("The Formulation $(D) only applies to Dispatchable Hydro, *
                Consider Changing the Device Formulation to HydroFixed")
 
-    construct_device!(op_model.canonical,
-                                  DeviceModel(PSY.HydroFix, HydroFixed),
-                                  S;
-                                  kwargs...)
+    construct_device!(canonical,
+                      DeviceModel(PSY.HydroFix, HydroFixed),
+                      S;
+                      kwargs...)
+
 
 end
 
-function construct_device!(op_model::OperationModel,
+function construct_device!(canonical::CanonicalModel, sys::PSY.System,
                            model::DeviceModel{PSY.HydroFix, HydroFixed},
                            ::Type{S};
                            kwargs...) where {S<:PM.AbstractPowerModel}
 
-    forecast = get(kwargs, :forecast, true)
 
-    sys = get_system(op_model)
+
 
     devices = PSY.get_components(PSY.HydroFix, sys)
 
@@ -80,12 +73,7 @@ function construct_device!(op_model::OperationModel,
         return
     end
 
-    if forecast
-        forecasts = _retrieve_forecasts(sys, PSY.HydroFix)
-        nodal_expression(op_model.canonical, forecasts, S)
-    else
-        nodal_expression(op_model.canonical, devices, S)
-    end
+    nodal_expression!(canonical, devices, S)
 
     return
 

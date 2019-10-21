@@ -1,4 +1,4 @@
-function construct_service!(canonical_model::CanonicalModel,
+function construct_service!(canonical::CanonicalModel,
                             service::Type{SD},
                             service_formulation::Type{SV},
                             system_formulation::Type{S},
@@ -50,7 +50,7 @@ function construct_service!(m::JuMP.AbstractModel, service::PSY.StaticReserve, d
 
     if !isempty(dev_set)
 
-        p_rsv =  reservevariables(m, dev_set, sys.time_periods)
+        p_rsv =  reservevariables!(m, dev_set, sys.time_periods)
         m =  reserves(m, dev_set, service, sys.time_periods)
 
     end

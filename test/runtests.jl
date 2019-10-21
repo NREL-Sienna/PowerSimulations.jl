@@ -9,6 +9,9 @@ using GLPK
 using Cbc
 using OSQP
 
+import PowerSystems.UtilsData: TestData
+download(TestData; branch = "master")
+
 const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
@@ -36,7 +39,7 @@ if !Sys.iswindows()
         include("test_renewable_generation_constructors.jl")
         include("test_load_constructors.jl")
         include("test_storage_constructors.jl")
-        include("test_hydro_generation_constructors.jl")
+        #include("test_hydro_generation_constructors.jl")
     end
 
     @testset "Network Constructors" begin

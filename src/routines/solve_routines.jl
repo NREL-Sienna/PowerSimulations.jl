@@ -2,21 +2,23 @@
     solve_op_model!(op_model::OperationModel; kwargs...)
 
 This solves the operational model for a single instance and 
-outputs results of objective value, time log, variables, and a time stamp.
+outputs results of type OperationModelResult: objective value, time log,
+a dictionary of variables and their dataframe of results, and a time stamp.
 
 # Arguments
+
 -`op_model::OperationModel = op_model`: operation model 
-created in OperationModel()
 
 # Examples
+
 ```julia
 results = solve_op_model!(OpModel)
 ```
 # Accepted Key Words 
+
 * save_path::String : If a file path is provided the results 
 automatically get written to feather files
 * optimizer : The optimizer that is used to solve the model
-
 """
 function solve_op_model!(op_model::OperationModel; kwargs...)
 
@@ -82,24 +84,16 @@ function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::Str
 
 end
 
-
 """ 
     run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
 
 Solves the simulation model for sequential Simulations
 and populates a nested folder structure created in Simulation()
 with a dated folder of featherfiles that contain the results for
-each stage and step. This function calls the function make_references
-which creates a dictionary with variable, stage, step, date, and file path
-to the desired file. This reference table is used to retrieve the results
-within the nested file structure.
+each stage and step. 
 
 # Arguments
 - `sim::Simulation=sim`: simulation object created by Simulation()
-
-# Outputs 
-- `references::Dict`: references is a dictionary that can be called in
-load_simulation_results() to parse the desired raw output files.
 
 # Example
 ```julia

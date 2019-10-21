@@ -4,6 +4,7 @@ using Memento
 setlevel!(getlogger(PowerModels), "error")
 
 # is this the best way to find a file in a package?
+base_dir = string(dirname(dirname(pathof(PowerSystems))))
 case5_data = PM.parse_file(joinpath(base_dir, "data/matpower/case5.m"))
 case5_data = PM.replicate(case5_data, 2)
 
