@@ -1,5 +1,5 @@
 # This function returns the length of time_stamp for each step
-# that is unique to that step and not overlapping with the next.
+# that is unique to that step and not overlapping with the next time step.
 
 function _count_time_overlap(stage::String,
     step::Array,
