@@ -4,12 +4,17 @@ function parameter_update!(param_reference::UpdateRef{T},
                            stage_number::Int64,
                            sim::Simulation) where T <: PSY.Component
 
-    forecasts = PSY.get_component_forecasts(T, sim.stages[stage_number].sys,
-                                               sim.ref.date_ref[stage_number])
-    for forecast in forecasts
-        device = PSY.get_forecast_component_name(forecast)
-        for (ix, val) in enumerate(param_array[device,:])
-            value = PSY.get_forecast_value(forecast, ix)
+    devices = PSY.get_components(T, sim.stages[stage_number].sys)
+    initial_forecast_time = sim.ref.date_ref[stage_number]
+
+    for d in devices
+        ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
+                                            d,
+                                            initial_forecast_time,
+                                            "$(param_reference.access_ref)")))
+        device_name = PSY.get_name(d)
+        for (ix, val) in enumerate(param_array[device_name,:])
+            value = ts_vector[ix]
             JuMP.fix(val, value)
         end
     end
