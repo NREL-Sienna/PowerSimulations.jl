@@ -1,5 +1,6 @@
 """
     write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path::AbstractString; kwargs...)
+    
 Receives the variables dictionary from the operation model results and writes each variable dataframe 
 to a file. The default file type is feather.
 
