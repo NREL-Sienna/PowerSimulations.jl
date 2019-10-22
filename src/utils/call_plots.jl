@@ -11,6 +11,10 @@ res = solve_op_model!(OpModel)
 generator_dict = make_fuel_dictionary(sys, res)
 fuel_plot(res, generator_dict)
 ```
+
+# Accepted Key Words
+plot attributes, such as seriescolor = [:red :blue :orange]
+will override the default series color
 """
 
 function fuel_plot(res::PSI.OperationModelResults, generator_dict::Dict; kwargs...)
@@ -48,75 +52,76 @@ function fuel_plot(res::PSI.OperationModelResults, generator_dict::Dict; kwargs.
  
     display(P1)
     display(P2)
+end
+  
+  
+"""
+   bar_plot(OperationModelResults)
+  
+This function plots a bar plot for the generators in each variable within
+the results variables dictionary, and makes a bar plot for all of the variables.
+
+# Arguments
+-`res::OperationModelResults= results`: results to be plotted
+
+# Examples
+
+```julia
+results = solve_op_model!(OpModel)
+bar_plot(results)
+```
+
+# Accepted Key Words
+plot attributes, such as seriescolor = [:red :blue :orange]
+will override the default series color
+"""
+
+function bar_plot(res::OperationModelResults; kwargs...)
+
+  default = hcat([Colors.RGBA(0.7,0.1,0.1,0.95)], # maroon
+            [Colors.RGBA(0,0,0,0.8)], [:lightblue], # Dark gray
+            [Colors.RGBA(0.33,0.42,0.18,0.9)], [:pink], # olive green
+            [Colors.RGBA(0.93,0.46,0,1)], [Colors.RGBA(0.56,0.28,0.54,1)], # orange, orchid
+            [Colors.RGBA(0.9,0.5,0.6,0.80)],  # dark pink
+            [Colors.RGBA(1, 1, 0.5, 0.6)], # light yellow
+            [Colors.RGBA(0.27, 0.5, 0.7, 0.9)], # steel blue
+            [Colors.RGBA(1, 0.757, 0.15, 01)], # canary yellow
+            [Colors.RGBA(0.8, 0.6, 0.3, 1)], [:red]) # khaki
+
+  seriescolor = get(kwargs, :seriescolor, default)
+  key_name = string.(collect(keys(res.variables)))
+
+  for i in 1:length(key_name)
+
+    variable_bar = get_bar_plot_data(res, key_name[i])
+    p = RecipesBase.plot(variable_bar, key_name[i]; seriescolor = seriescolor)
+    display(p)
+
   end
-  
-  
-  """
-    bar_plot(OperationModelResults)
-  
-  This function plots a bar plot for the generators in each variable within
-  the results variables dictionary, and makes a bar plot for all of the variables.
-  
-  #Examples
-  
-  results = solve_op_model!(OpModel)
-  bar_plot(results)
-  
-  generates a bar plot for each variable,
-  and one bar plot of all the variables
-  
-  kwargs: plot attributes, such as seriescolor = [:red :blue :orange]
-  will override the default series color
-  """
-  
-  function bar_plot(res::OperationModelResults; kwargs...)
-  
-    default = hcat([Colors.RGBA(0.7,0.1,0.1,0.95)], # maroon
-             [Colors.RGBA(0,0,0,0.8)], [:lightblue], # Dark gray
-             [Colors.RGBA(0.33,0.42,0.18,0.9)], [:pink], # olive green
-             [Colors.RGBA(0.93,0.46,0,1)], [Colors.RGBA(0.56,0.28,0.54,1)], # orange, orchid
-             [Colors.RGBA(0.9,0.5,0.6,0.80)],  # dark pink
-             [Colors.RGBA(1, 1, 0.5, 0.6)], # light yellow
-             [Colors.RGBA(0.27, 0.5, 0.7, 0.9)], # steel blue
-             [Colors.RGBA(1, 0.757, 0.15, 01)], # canary yellow
-             [Colors.RGBA(0.8, 0.6, 0.3, 1)], [:red]) # khaki
-  
-    seriescolor = get(kwargs, :seriescolor, default)
-    key_name = string.(collect(keys(res.variables)))
-  
-    for i in 1:length(key_name)
-  
-      variable_bar = get_bar_plot_data(res, key_name[i])
-      p = RecipesBase.plot(variable_bar, key_name[i]; seriescolor = seriescolor)
-      display(p)
-      
-    end
-  
-    bar_gen = get_bar_gen_data(res)
-    p2 = RecipesBase.plot(bar_gen; seriescolor = seriescolor)
-    display(p2)
-  
-  end
-  
-  """ 
-  
-    stack_plot(OperationModelResults)
-  
-  This function plots a stack plot for the generators in each variable within
-  the results variables dictionary, and makes a stack plot for all of the variables.
-  
-  #Examples
-  
-  results = solve_op_model!(OpModel)
-  stack_plot(results)
-  
-  generates a stack plot for each variable,
-  and one stack plot of all the variables
-  
-  kwargs: plot attributes, such as seriescolor = [:red :blue :orange]
-  will override the default series color
-  
-  """
+
+  bar_gen = get_bar_gen_data(res)
+  p2 = RecipesBase.plot(bar_gen; seriescolor = seriescolor)
+  display(p2)
+
+end
+
+"""
+     stack_plot(OperationModelResults)
+
+This function plots a stack plot for the generators in each variable within
+the results variables dictionary, and makes a stack plot for all of the variables.
+
+# Examples
+
+```julia
+results = solve_op_model!(OpModel)
+stack_plot(results)
+```
+
+# Accepted Key Words
+plot attributes, such as seriescolor = [:red :blue :orange]
+will override the default series color
+"""
   
   function stack_plot(res::OperationModelResults; kwargs...)
   
