@@ -1,31 +1,23 @@
 function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory},
                               parameters::Bool,
                               JuMPmodel::Union{JuMP.AbstractModel,Nothing})
-
     if isa(optimizer, Nothing)
         @info("The optimization model has no optimizer attached")
     end
-
-    if !isnothing(JuMPmodel) && parameters
-
-        if !haskey(JuMPmodel.ext, :params)
-            @info("Model doesn't have Parameters enabled. Parameters will be enabled")
+    if !isnothing(JuMPmodel)
+        if parameters
+            if !haskey(JuMPmodel.ext, :params)
+                @info("Model doesn't have Parameters enabled. Parameters will be enabled")
+            end
+            PJ.enable_parameters(JuMPmodel)
         end
-
-        PJ.enable_parameters(JuMPmodel)
-
         return JuMPmodel
-
     end
-
     JuMPmodel = JuMP.Model(optimizer)
-
     if parameters
         PJ.enable_parameters(JuMPmodel)
     end
-
     return JuMPmodel
-
 end
 
 function _make_container_array(V::DataType, parameters::Bool, ax...)

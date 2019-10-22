@@ -337,6 +337,14 @@ function construct_device!(op_model::OperationModel,
 
 end
 
+function construct_network!(op_model::OperationModel; kwargs...)
+
+    construct_network!(op_model, op_model.model_ref.transmission; kwargs...)
+
+    return
+end
+
+
 function construct_network!(op_model::OperationModel,
                             system_formulation::Type{T};
                             kwargs...) where {T<:PM.AbstractPowerModel}
