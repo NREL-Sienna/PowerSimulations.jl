@@ -4,6 +4,12 @@
 This function makes a stack plot of the results by fuel type
 and assigns each fuel type a specific color.
 
+# Arguments
+
+`res::OperationModelResults= results`: results to be plotted
+`generator_dict::Dict = generator_dict`: the dictionary of fuel type and an array
+ of the generators per fuel type
+
 # Example
 
 ```julia
@@ -64,7 +70,7 @@ the results variables dictionary, and makes a bar plot for all of the variables.
 # Arguments
 -`res::OperationModelResults= results`: results to be plotted
 
-# Examples
+# Example
 
 ```julia
 results = solve_op_model!(OpModel)
@@ -122,31 +128,31 @@ stack_plot(results)
 plot attributes, such as seriescolor = [:red :blue :orange]
 will override the default series color
 """
+
+function stack_plot(res::OperationModelResults; kwargs...)
   
-  function stack_plot(res::OperationModelResults; kwargs...)
-  
-    default = hcat([Colors.RGBA(0.7,0.1,0.1,0.95)], # maroon
-    [Colors.RGBA(0,0,0,0.8)], [:lightblue], # Dark gray
-    [Colors.RGBA(0.33,0.42,0.18,0.9)], [:pink], # olive green
-    [Colors.RGBA(0.93,0.46,0,1)], [Colors.RGBA(0.56,0.28,0.54,1)], # orange, orchid
-    [Colors.RGBA(0.9,0.5,0.6,0.80)],  # dark pink
-    [Colors.RGBA(1, 1, 0.5, 0.6)], # light yellow
-    [Colors.RGBA(0.27, 0.5, 0.7, 0.9)], # steel blue
-    [Colors.RGBA(1, 0.757, 0.15, 01)], # canary yellow
-    [Colors.RGBA(0.8, 0.6, 0.3, 1)], [:red]) # khaki
-    seriescolor = get(kwargs, :seriescolor, default)  
-    key_name = string.(collect(keys(res.variables)))
-  
-    for i in 1:length(key_name)
-  
-      variable_stack = get_stacked_plot_data(res, key_name[i])
-      p3 = RecipesBase.plot(variable_stack, key_name[i]; seriescolor = seriescolor)
-      display(p3)
-  
-    end
-  
-    stacked_gen = get_stacked_generation_data(res)
-    p4 = RecipesBase.plot(stacked_gen; seriescolor = seriescolor)
-    display(p4)
-  
+  default = hcat([Colors.RGBA(0.7,0.1,0.1,0.95)], # maroon
+  [Colors.RGBA(0,0,0,0.8)], [:lightblue], # Dark gray
+  [Colors.RGBA(0.33,0.42,0.18,0.9)], [:pink], # olive green
+  [Colors.RGBA(0.93,0.46,0,1)], [Colors.RGBA(0.56,0.28,0.54,1)], # orange, orchid
+  [Colors.RGBA(0.9,0.5,0.6,0.80)],  # dark pink
+  [Colors.RGBA(1, 1, 0.5, 0.6)], # light yellow
+  [Colors.RGBA(0.27, 0.5, 0.7, 0.9)], # steel blue
+  [Colors.RGBA(1, 0.757, 0.15, 01)], # canary yellow
+  [Colors.RGBA(0.8, 0.6, 0.3, 1)], [:red]) # khaki
+  seriescolor = get(kwargs, :seriescolor, default)  
+  key_name = string.(collect(keys(res.variables)))
+
+  for i in 1:length(key_name)
+
+    variable_stack = get_stacked_plot_data(res, key_name[i])
+    p3 = RecipesBase.plot(variable_stack, key_name[i]; seriescolor = seriescolor)
+    display(p3)
+
   end
+
+  stacked_gen = get_stacked_generation_data(res)
+  p4 = RecipesBase.plot(stacked_gen; seriescolor = seriescolor)
+  display(p4)
+
+end
