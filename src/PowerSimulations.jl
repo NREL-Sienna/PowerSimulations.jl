@@ -84,6 +84,12 @@ export set_branch_model!
 export set_device_model!
 ## Sim Model Exports
 export run_sim_model!
+## Demand Response
+export demandconstraints
+export demandconstraintsfull
+export demandconstraintsgreedy
+export demandconstraintsprices
+export demandconstraintstou
 ## Utils Exports
 export write_op_model
 export write_model_results
@@ -220,6 +226,10 @@ include("operation_models/operation_models.jl")
 
 #Simulations Model Files
 include("simulation_models/stage_update.jl")
+
+#Demand Reponse Files
+include("demand_response/demand_response.jl")
+include("demand_response/bev.jl")
 
 #Routines
 include("routines/make_initial_conditions.jl")
