@@ -1,4 +1,22 @@
-# taking the outputted files for the variable DataFrame and writing them to a featherfile
+"""
+    write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path::AbstractString; kwargs...)
+Receives the variables dictionary from the operation model results and writes each variable dataframe 
+to a file. The default file type is feather.
+
+# Arguments
+-`vars_results::Dict{Symbol, DataFrames.DataFrame} = res.variables`: dictionary of DataFrames
+-`save_path::AbstractString`: the file path that the variable files should be written to populate.
+
+# Example
+```julia
+res = solve_op_model!(op_model)
+write_data(res.variables, "Users/downloads")
+```
+# Accepted Key Words 
+-`file_type::String = CSV`: default filetype is Feather, but this key word can be used to make it CSV.
+if a different file type is desired the code will have to be changed to accept it.
+
+"""
 function write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path::AbstractString; kwargs...)
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
