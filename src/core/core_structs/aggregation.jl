@@ -187,7 +187,8 @@ optimizer = Dict{Symbol, Any}(eachcol(Feather.read("$opt_file_path"),true))
 obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer[:obj_value])
 results = OperationModelResults(variable_dict, obj_value, optimizer, time_stamp)
 if (:write in keys(kwargs)) == true
-write_model_results(results, normpath("$file_path/../../../../"),"results")
+    file_type = get(kwargs, :file_type, Feather)
+write_model_results(results, normpath("$file_path/../../../../"),"results"; file_type = file_type)
 end
 return results
 

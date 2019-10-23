@@ -31,6 +31,25 @@ function write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path:
 
     return
 end
+
+function write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, time::DataFrames.DataFrame, save_path::AbstractString; kwargs...)
+    file_type = get(kwargs, :file_type, Feather)
+    if file_type == Feather || file_type == CSV
+        for (k,v) in vars_results
+            if size(time,2) == size(v,2)
+                var = hcat(time, v)
+            else
+                var = v
+            end
+            file_path = joinpath(save_path,"$(k).$(lowercase("$file_type"))")
+            file_type.write(file_path, var)
+        end
+    else
+        error("unsupported file type: $file_type")
+    end
+
+    return
+end
 # taking the outputted files for the variable DataFrame and writing them to a featherfile
 function write_data(results::Dict, save_path::AbstractString, variable::String;kwargs...)
     file_type = get(kwargs, :file_type, Feather)
@@ -135,16 +154,16 @@ function write_model_results(results::OperationModelResults, save_path::String)
     println("Files written to $folder_path folder.")
     return
 end
-
-function write_model_results(res::OperationModelResults, path::String, results::String)
+""" Exports Simulation Model Results to a path"""
+function write_model_results(res::OperationModelResults, path::String, results::String; kwargs...)
     if !isdir(path)
         @error("Specified path is not valid. Run write_results to save results.")
     end
     folder_path = joinpath(path,results)
-    write_data(res.variables, folder_path)
-    write_data(res.optimizer_log, folder_path, "optimizer_log")
+    write_data(res.variables, res.time_stamp, folder_path; kwargs...)
+    write_data(res.optimizer_log, folder_path, "optimizer_log"; kwargs...)
     time = DataFrames.DataFrame(Range = convert.(Dates.DateTime,res.time_stamp[!,:Range]))
-    write_data(time, folder_path, "time_stamp")
+    write_data(time, folder_path, "time_stamp"; kwargs...)
     println("Files written to $folder_path folder.")
     return
 end
