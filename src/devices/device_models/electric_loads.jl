@@ -129,7 +129,7 @@ function activepower_constraints!(canonical::CanonicalModel,
         device_timeseries_param_ub(canonical,
                                    ts_data_active,
                                    Symbol("active_$(L)"),
-                                   UpdateRef{L}(Symbol("P_$(L)")),
+                                   UpdateRef{L}(:maxactivepower),
                                    Symbol("P_$(L)"))
     else
         device_timeseries_ub(canonical,
@@ -165,7 +165,7 @@ function activepower_constraints!(canonical::CanonicalModel,
                                  ts_data_active,
                                  Symbol("active_$(L)"),
                                  Symbol("P_$(L)"),
-                                 UpdateRef{L}(Symbol("P_$(L)")),
+                                 UpdateRef{L}(:maxactivepower),
                                  Symbol("ON_$(L)"))
     else
         device_timeseries_ub_bin(canonical,
@@ -192,12 +192,12 @@ function nodal_expression!(canonical::CanonicalModel,
     if parameters
         include_parameters(canonical,
                         ts_data_active,
-                        UpdateRef{L}(Symbol("P_$(L)")),
+                        UpdateRef{L}(:maxactivepower),
                         :nodal_balance_active,
                         -1.0)
         include_parameters(canonical,
                         ts_data_reactive,
-                        UpdateRef{L}(Symbol("Q_$(L)")),
+                        UpdateRef{L}(:maxactivepower),
                         :nodal_balance_reactive,
                         -1.0)
         return
@@ -234,7 +234,7 @@ function nodal_expression!(canonical::CanonicalModel,
     if parameters
         include_parameters(canonical,
                         ts_data_active,
-                        UpdateRef{L}(Symbol("P_$(L)")),
+                        UpdateRef{L}(:maxactivepower),
                         :nodal_balance_active,
                         -1.0)
         return
