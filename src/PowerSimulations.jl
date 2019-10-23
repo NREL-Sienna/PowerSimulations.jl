@@ -157,7 +157,6 @@ include("core/core_structs/chronology.jl")
 include("core/core_structs/simulations_stages.jl")
 include("core/core_structs/simulation_model.jl")
 include("core/core_structs/results_model.jl")
-include("core/core_structs/aggregation.jl")
 include("core/build_cache.jl")
 include("core/build_operations.jl")
 include("core/build_simulations.jl")
@@ -204,12 +203,12 @@ include("routines/get_results.jl")
 include("routines/solve_routines.jl")
 include("routines/write_model.jl")
 
-
 #Utils
 include("utils/optimization_debugging.jl")
 include("utils/printing.jl")
 include("utils/plot_results.jl")
 include("utils/plot_recipes.jl")
+include("utils/aggregation.jl")
 
 #Initialization
 
