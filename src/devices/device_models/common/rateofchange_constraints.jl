@@ -55,10 +55,11 @@ function device_linear_rateofchange(canonical::CanonicalModel,
 
     for (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)
-        con_up[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, 1] - initial_conditions[ix].value
+        con_up[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, 1] - get_condition(initial_conditions[ix])
                                                                 + _get_expr(expr_cont_up,name, 1) <= rate_data[ix].up)
-        con_down[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, initial_conditions[ix].value - variable[name, 1]
+        con_down[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, get_condition(initial_conditions[ix]) - variable[name, 1]
                                                                 - _get_expr(expr_cont_dn,name, 1) <= rate_data[ix].down)
+
     end
 
     for t in time_steps[2:end], (ix, ic) in enumerate(initial_conditions)
