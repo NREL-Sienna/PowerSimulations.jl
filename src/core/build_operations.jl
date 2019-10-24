@@ -34,7 +34,7 @@ function _build_canonical!(canonical::CanonicalModel, ref::ModelReference, sys::
     # Build Branches
     for (_, branch_model) in ref.branches
         verbose && @info "Building $(branch_model.device) with $(branch_model.formulation) formulation"
-        construct_device!(op_model, branch_model, transmission; kwargs...)
+        construct_device!(canonical, sys, branch_model, transmission; kwargs...)
     end
 
     # Objective Function
