@@ -57,15 +57,15 @@ function load_operation_results(path::AbstractString, directory::AbstractString)
             variable = variables[i]
             variable_name = split("$variable", ".feather")[1]
             file_path = joinpath(folder_path,"$variable_name.feather")
-            variable_dict[Symbol(variable_name)] = Feather.read("$file_path") #change key to variable
+            variable_dict[Symbol(variable_name)] = Feather.read(file_path) #change key to variable
 
         end
 
         file_path = joinpath(folder_path,"optimizer_log.feather")
-        optimizer = Dict{Symbol, Any}(eachcol(Feather.read("$file_path"),true))
+        optimizer = Dict{Symbol, Any}(eachcol(Feather.read(file_path),true))
 
         file_path = joinpath(folder_path,"time_stamp.feather")
-        temp_time_stamp = Feather.read("$file_path")
+        temp_time_stamp = Feather.read(file_path)
         time_stamp = temp_time_stamp[1:(size(temp_time_stamp,1)-1),:]
         
 
