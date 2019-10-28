@@ -1,10 +1,10 @@
 function build_op_model!(op_model::OperationModel{M}; kwargs...) where M<:AbstractOperationModel
     sys = get_system(op_model)
-    _build_canonical!(op_model.canonical, op_model.model_ref, sys; kwargs...)
+    _build!(op_model.canonical, op_model.model_ref, sys; kwargs...)
     return
 end
 
-function _build_canonical!(canonical::CanonicalModel, ref::ModelReference, sys::PSY.System; kwargs...)
+function _build!(canonical::CanonicalModel, ref::ModelReference, sys::PSY.System; kwargs...)
 
     verbose = get(kwargs, :verbose, true)
     transmission = ref.transmission

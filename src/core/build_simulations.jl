@@ -90,7 +90,7 @@ function _build_stages(sim_ref::SimulationRef,
                                 stage.execution_count,
                                 stage.chronology_ref,
                                 stage.cache)
-        _build_canonical!(mod_stages[key].canonical,
+        _build!(mod_stages[key].canonical,
                           stage.model,
                           stage.sys;
                           parameters = true,
@@ -133,7 +133,7 @@ function _feedforward_rule_check(synch::Synchronize,
     to_stage_count = get_execution_count(to_stage)
     to_stage_synch = synch.to_steps
     from_stage_synch = synch.from_steps
-    
+
     if from_stage_synch > from_stage_horizon
         error("The lookahead length $(from_stage_horizon) in stage is insufficient to synchronize with $(from_stage_synch) feedforward steps")
     end
