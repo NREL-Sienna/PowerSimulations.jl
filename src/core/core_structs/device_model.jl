@@ -1,9 +1,9 @@
 abstract type AbstractDeviceFormulation end
 
-function _validate_device_formulation(device_model::Type{D}) where {D<:Union{AbstractDeviceFormulation, PSY.Device}}
+function _validate_device_formulation(::Type{D}) where {D<:Union{AbstractDeviceFormulation, PSY.Device}}
 
-    if !isconcretetype(device_model)
-        throw(ArgumentError( "the device model must containt only concrete types, $(device_model) is an Abstract Type"))
+    if !isconcretetype(D)
+        throw(ArgumentError( "the device model must containt only concrete types, $(D) is an Abstract Type"))
     end
 
 end
@@ -32,8 +32,8 @@ end
 """
     DeviceModel(::Type{D}, ::Type{B}) where {D<:PSY.Device,
                                        B<:AbstractDeviceFormulation}
-This validates the device formulation for the Power System Device and the 
-abstract device formulation and returns  Power System Device and the 
+This validates the device formulation for the Power System Device and the
+abstract device formulation and returns  Power System Device and the
 abstract device formulation if the power system device is a concrete type.
 
 # Arguments
