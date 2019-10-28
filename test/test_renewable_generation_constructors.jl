@@ -25,13 +25,13 @@ end
     psi_checkobjfun_test(op_model, GAEVF)
 
     # No Forecast - No Parameters Testing
-    op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5_re; forecast = false)
+    op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5_re; use_forecast_data = false)
     construct_device!(op_model, :Renewable, model)
     moi_tests(op_model, false, 3, 3, 0, 0, 0, false)
     psi_checkobjfun_test(op_model, GAEVF)
 
     # No Forecast Testing
-    op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5_re; parameters = true, forecast = false)
+    op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5_re; parameters = true, use_forecast_data = false)
     construct_device!(op_model, :Renewable, model)
     moi_tests(op_model, true, 3, 0, 3, 0, 0, false)
     psi_checkobjfun_test(op_model, GAEVF)
@@ -53,7 +53,7 @@ end
     end
     # No Forecast Test
     for p in [true, false]
-        op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys5_re; forecast = false, parameters = p)
+        op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys5_re; use_forecast_data = false, parameters = p)
         construct_device!(op_model, :Renewable, model)
         if p
             moi_tests(op_model, p, 6, 1, 3, 0, 2, false)
@@ -83,13 +83,13 @@ end
     psi_checkobjfun_test(op_model, GAEVF)
 
     # No Forecast - No Parameters Testing
-    op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5_re; forecast = false)
+    op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5_re; use_forecast_data = false)
     construct_device!(op_model, :Renewable, model)
     moi_tests(op_model, false, 3, 3, 0, 0, 0, false)
     psi_checkobjfun_test(op_model, GAEVF)
 
     # No Forecast Testing
-    op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5_re; parameters = true, forecast = false)
+    op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5_re; parameters = true, use_forecast_data = false)
     construct_device!(op_model, :Renewable, model)
     moi_tests(op_model, true, 3, 0, 3, 0, 0, false)
     psi_checkobjfun_test(op_model, GAEVF)
@@ -111,7 +111,7 @@ end
     end
     # No Forecast Test
     for p in [true, false]
-        op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys5_re; forecast = false, parameters = p)
+        op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys5_re; use_forecast_data = false, parameters = p)
         construct_device!(op_model, :Renewable, model)
         if p
             moi_tests(op_model, p, 6, 0, 3, 0, 3, false)

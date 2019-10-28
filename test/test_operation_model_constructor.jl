@@ -35,7 +35,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
 
     op_model = OperationModel(TestOptModel, model_ref,
                                             c_sys5_re;
-                                            forecast = false,
+                                            use_forecast_data = false,
                                             optimizer = GLPK_optimizer)
     j_model = op_model.canonical.JuMPmodel
     @test !(:params in keys(j_model.ext))
@@ -49,7 +49,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
 
     op_model = OperationModel(TestOptModel, model_ref,
                                             c_sys5_re;
-                                            forecast = false,
+                                            use_forecast_data = false,
                                             parameters = false,
                                             optimizer = GLPK_optimizer)
     j_model = op_model.canonical.JuMPmodel
