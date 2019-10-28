@@ -10,12 +10,12 @@ mutable struct ModelReference
 end
 
 """
-    ModelReference(::Type{T}) where {T<:PM.AbstractPowerFormulation}
+    ModelReference(::Type{T}) where {T<:PM.AbstractPowerModel}
 
 Creates a model reference of the Power Formulation, devices, branches, and services.
 
 # Arguments
--`model::Type{T<:PM.AbstractPowerFormulation}`:
+-`model::Type{T<:PM.AbstractPowerModel}`:
 -`devices::Dict{Symbol, DeviceModel}`: device dictionary
 -`branches::Dict{Symbol, BranchModel}`: branch dictionary
 -`services::Dict{Symbol, ServiceModel}`: service dictionary
@@ -46,12 +46,12 @@ end
     sys::PSY.System;
     optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
     kwargs...) where {M<:AbstractOperationModel,
-                      T<:PM.AbstractPowerFormulation}
+                      T<:PM.AbstractPowerModel}
 
 This builds the optimization model and populates the operation model
 
 # Arguments
--`::Type{M} where {M<:AbstractOperationModel, T<:PM.AbstractPowerFormulation} = TestOptModel`:
+-`::Type{M} where {M<:AbstractOperationModel, T<:PM.AbstractPowerModel} = TestOptModel`:
 The abstract operation model type
 -`model_ref::ModelReference`: The model reference made up of transmission, devices,
                                           branches, and services.
@@ -98,14 +98,14 @@ end
                     ::Type{T},
                     sys::PSY.System;
                     kwargs...) where {M<:AbstractOperationModel,
-                                    T<:PM.AbstractPowerFormulation}
+                                    T<:PM.AbstractPowerModel}
 
 This uses the Abstract Power Formulation to build the model reference and
 the optimization model and populates the operation model struct.
 
 # Arguments
 -`op_model::Type{M} = where {M<:AbstractOperationModel`: Defines the type of the operation model
--`::Type{T} where T<:PM.AbstractPowerFormulation`: The power formulation used for model ref & optimization model
+-`::Type{T} where T<:PM.AbstractPowerModel`: The power formulation used for model ref & optimization model
 -`sys::PSY.System = c_sys5`: the system created in Power Systems
 
 # Output
@@ -147,7 +147,7 @@ end
     OperationModel(::Type{T},
                     sys::PSY.System;
                     kwargs...) where {M<:AbstractOperationModel,
-                                    T<:PM.AbstractPowerFormulation}
+                                    T<:PM.AbstractPowerModel}
 
 This uses the Abstract Power Formulation to build the model reference and
 the optimization model and populates the operation model struct.
@@ -156,7 +156,7 @@ the optimization model and populates the operation model struct.
 
 # Arguments
 -`op_model::Type{M}`: Defines the type of the operation model
--`::Type{T} where T<:PM.AbstractPowerFormulation`: The power formulation used for model ref & optimization model
+-`::Type{T} where T<:PM.AbstractPowerModel`: The power formulation used for model ref & optimization model
 -`sys::PSY.System`: the system created in Power Systems
 
 # Output

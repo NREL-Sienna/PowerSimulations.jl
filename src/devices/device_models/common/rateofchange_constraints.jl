@@ -46,27 +46,27 @@ function device_linear_rateofchange(canonical::CanonicalModel,
     variable = var(canonical, var_name)
 
     set_name = (device_name(ic) for ic in initial_conditions)
-    _add_cons_container!(canonical_model, up_name, set_name, time_steps)
-    _add_cons_container!(canonical_model, down_name, set_name, time_steps)
-    con_up = con(canonical_model, up_name)
-    con_down = con(canonical_model, down_name)
-    expr_cont_up = exp(canonical_model,Symbol(_remove_underscore(cons_name),"_up"))
-    expr_cont_dn = exp(canonical_model,Symbol(_remove_underscore(cons_name),"_dn"))
+    _add_cons_container!(canonical, up_name, set_name, time_steps)
+    _add_cons_container!(canonical, down_name, set_name, time_steps)
+    con_up = con(canonical, up_name)
+    con_down = con(canonical, down_name)
+    expr_cont_up = exp(canonical,Symbol(_remove_underscore(cons_name),"_up"))
+    expr_cont_dn = exp(canonical,Symbol(_remove_underscore(cons_name),"_dn"))
 
     for (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)
-        con_up[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, 1] - get_condition(initial_conditions[ix])
+        con_up[name, 1] = JuMP.@constraint(canonical.JuMPmodel, variable[name, 1] - get_condition(initial_conditions[ix])
                                                                 + _get_expr(expr_cont_up,name, 1) <= rate_data[ix].up)
-        con_down[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, get_condition(initial_conditions[ix]) - variable[name, 1]
+        con_down[name, 1] = JuMP.@constraint(canonical.JuMPmodel, get_condition(initial_conditions[ix]) - variable[name, 1]
                                                                 - _get_expr(expr_cont_dn,name, 1) <= rate_data[ix].down)
 
     end
 
     for t in time_steps[2:end], (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)
-        con_up[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t] - variable[name, t-1] 
+        con_up[name, t] = JuMP.@constraint(canonical.JuMPmodel, variable[name, t] - variable[name, t-1] 
                                                                     + _get_expr(expr_cont_up,name, t)<= rate_data[ix].up)
-        con_down[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t-1] - variable[name, t] 
+        con_down[name, t] = JuMP.@constraint(canonical.JuMPmodel, variable[name, t-1] - variable[name, t] 
                                                                     - _get_expr(expr_cont_dn,name, t) <= rate_data[ix].down)
     end
 
@@ -129,29 +129,29 @@ function device_mixedinteger_rateofchange(canonical::CanonicalModel,
     varstop = var(canonical, var_names[3])
 
     set_name = (device_name(ic) for ic in initial_conditions)
-    _add_cons_container!(canonical_model, up_name, set_name, time_steps)
-    _add_cons_container!(canonical_model, down_name, set_name, time_steps)
-    con_up = con(canonical_model, up_name)
-    con_down = con(canonical_model, down_name)
-    expr_cont_up = exp(canonical_model,Symbol(_remove_underscore(cons_name),"_up"))
-    expr_cont_dn = exp(canonical_model,Symbol(_remove_underscore(cons_name),"_dn"))
+    _add_cons_container!(canonical, up_name, set_name, time_steps)
+    _add_cons_container!(canonical, down_name, set_name, time_steps)
+    con_up = con(canonical, up_name)
+    con_down = con(canonical, down_name)
+    expr_cont_up = exp(canonical,Symbol(_remove_underscore(cons_name),"_up"))
+    expr_cont_dn = exp(canonical,Symbol(_remove_underscore(cons_name),"_dn"))
 
     for (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)
-        con_up[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, 1] + _get_expr(expr_cont_up,name, 1)
+        con_up[name, 1] = JuMP.@constraint(canonical.JuMPmodel, variable[name, 1] + _get_expr(expr_cont_up,name, 1)
                                                             - initial_conditions[ix].value
                                                             <= rate_data[1][ix].up + rate_data[2][ix].max*varstart[name, 1])
-        con_down[name, 1] = JuMP.@constraint(canonical_model.JuMPmodel, initial_conditions[ix].value - variable[name, 1]
+        con_down[name, 1] = JuMP.@constraint(canonical.JuMPmodel, initial_conditions[ix].value - variable[name, 1]
                                                             - _get_expr(expr_cont_dn,name, 1)
                                                             <= rate_data[1][ix].down + rate_data[2][ix].min*varstop[name, 1])
     end
 
     for t in time_steps[2:end], (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)
-        con_up[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t] - variable[name, t-1]
+        con_up[name, t] = JuMP.@constraint(canonical.JuMPmodel, variable[name, t] - variable[name, t-1]
                                                             + _get_expr(expr_cont_up,name, t)
                                                             <= rate_data[1][ix].up + rate_data[2][ix].max*varstart[name, t])
-        con_down[name, t] = JuMP.@constraint(canonical_model.JuMPmodel, variable[name, t-1] - variable[name, t]
+        con_down[name, t] = JuMP.@constraint(canonical.JuMPmodel, variable[name, t-1] - variable[name, t]
                                                             - _get_expr(expr_cont_dn,name, t)
                                                             <= rate_data[1][ix].down + rate_data[2][ix].min*varstop[name, t])
     end
@@ -162,7 +162,7 @@ end
 
 
 @doc raw"""
-    device_rateofchange(canonical_model::CanonicalModel,
+    device_rateofchange(canonical::CanonicalModel,
                         devices::Vector{T},
                         exp_name::Symbol,
                         var_name::Symbol) where {T<:PSY.Component}
@@ -175,19 +175,19 @@ Constructs expression for rate-of-change constraints from device variable.
 ``` expression_container[device_name, time_index] =+ variable ```
 
 # Arguments
-* canonical_model::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::CanonicalModel : the canonical model built in PowerSimulations
 * devices::Vector{T} : contains devices
 * exp_name::Symbol : name of the expresion that makes up the LHS of a constraint
 * var_name::Symbol : the name of the continuous variable
 """
-function device_rateofchange!(canonical_model::CanonicalModel,
+function device_rateofchange!(canonical::CanonicalModel,
                             devices::Vector{T},
                             exp_name::Symbol,
                             var_name::Symbol) where {T<:PSY.Component}
 
-    time_steps = model_time_steps(canonical_model)
-    var = PSI.var(canonical_model, var_name)
-    exp_cont = exp(canonical_model, exp_name)
+    time_steps = model_time_steps(canonical)
+    var = PSI.var(canonical, var_name)
+    exp_cont = exp(canonical, exp_name)
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)

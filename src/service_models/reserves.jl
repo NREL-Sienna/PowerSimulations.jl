@@ -71,33 +71,56 @@ end
 
 ############################################## Time Series ###################################
 
-function _nodal_expression_fixed!(canonical_model::CanonicalModel,
-                                forecasts::Vector{PSY.Deterministic{L}},
-                                ::Type{S}) where {L<:PSY.Reserve,
-                                                S<:PM.AbstractActivePowerModel}
+function _get_time_series(canonical::CanonicalModel,
+                          service::L) where L<:PSY.Service
 
-    time_steps = model_time_steps(canonical_model)
+    initial_time = model_initial_time(canonical)
+    forecast = model_uses_forecasts(canonical)
+    time_steps = model_time_steps(canonical)
+    ts_data = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, 1)
 
-    for f in forecasts
-        service = PSY.get_component(f)
-        # bus_number = PSY.get_bus(d) |> PSY.get_number
-        name = Symbol(service.name,"_","balance")
-        expression = PSI.exp(canonical_model, name)
-        if isnothing(expression)
-            @error("Balance Constraint expression for $(service.name) not created")
-        end
-        reserve_factor = PSY.get_requirement(service)
-        time_series_vector = values(PSY.get_data(f))
-        for t in time_steps
-            _add_to_expression!(expression,
-                                1,  # TODO: needs to be actual bus numbers 
-                                t,
-                                -1 * time_series_vector[t] * reserve_factor)
-        end
+    name = PSY.get_name(service)
+    requirement = forecast ? PSY.get_requirement(service) : 0.0
+    bus_number = PSY.get_number(PSY.get_bus(service.contributingdevices[1]))
+    if forecast
+        ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
+                                                            service,
+                                                            initial_time,
+                                                            "requirement")))
+    else
+        ts_vector = ones(time_steps[end])
+    end
+    ts_data[1] = (name, bus_number, requirement, ts_vector)
+
+    return ts_data
+
+end
+
+function nodal_expression!(canonical::CanonicalModel,
+                           service::L,
+                           system_formulation::Type{<:PM.AbstractActivePowerModel}) where L<:PSY.Service
+
+
+    parameters = model_has_parameters(canonical)
+    ts_data = _get_time_series(canonical, service)
+
+    if parameters
+        include_parameters(canonical,
+                        ts_data,
+                        UpdateRef{L}(:requirement),
+                        Symbol(service.name,"_","balance"),
+                        -1.0)
+        return
+    end
+
+    for t in model_time_steps(canonical), device_value in ts_data
+        _add_to_expression!(canonical.expressions[Symbol(service.name,"_","balance")],
+                            device_value[2],
+                            t,
+                            -device_value[3]*device_value[4][t])
     end
 
     return
-
 end
 
 

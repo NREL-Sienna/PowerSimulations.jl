@@ -10,21 +10,9 @@ function _build_canonical!(canonical::CanonicalModel, ref::ModelReference, sys::
     transmission = ref.transmission
 
     #Build Service
-    for mod in services
-        verbose && @info "Building $(mod[2].service) with $(mod[2].formulation) formulation"
-        _internal_service_constructor!(canonical, mod[2], T, sys; kwargs...)
-    end
-
-    #Build Service
-    for mod in services
-        verbose && @info "Building $(mod[2].service) with $(mod[2].formulation) formulation"
-        _internal_service_constructor!(canonical, mod[2], T, sys; kwargs...)
-    end
-
-    #Build Service
-    for (_, service_model) in op_model.model_ref.services
+    for (_, service_model) in ref.services
         verbose && @info "Building $(service_model.service) with $(service_model.formulation) formulation"
-        _internal_service_constructor!(op_model, service_model, transmission; kwargs...)
+        construct_service!(canonical, sys, service_model, transmission; kwargs...)
     end
 
     # Build Injection devices

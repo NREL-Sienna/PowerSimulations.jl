@@ -1,31 +1,28 @@
-function _internal_service_constructor!(op_model::OperationModel,
+function construct_service!(canonical::CanonicalModel,sys::PSY.System,
                             model::ServiceModel{S, Sr},
                             ::Type{T};
                             kwargs...) where {S<:PSY.Service,
                                               Sr<:AbstractServiceFormulation,
                                               T<:PM.AbstractPowerModel}
     
-    
-    sys = get_system(op_model)                                          
+                                       
     services = PSY.get_components(S, sys)
-    canonical_model = op_model.canonical
-    _make_expressions_dict(canonical_model,services,sys)
-    _build_device_expression!(canonical_model, Symbol("activerange"), sys)
-    _build_device_expression!(canonical_model, Symbol("ramp_up"), sys)
+    _make_expressions_dict(canonical,services,sys)
+    _build_device_expression!(canonical, Symbol("activerange"), sys)
+    _build_device_expression!(canonical, Symbol("ramp_up"), sys)
     for service in services
         
         #Variables
-        activereserve_variables!(canonical_model, service)
+        activereserve_variables!(canonical, service)
 
         #Constraints
-        activereserve_constraints!(canonical_model, service, Sr)
+        activereserve_constraints!(canonical, service, Sr)
 
-        reserve_ramp_constraints!(canonical_model,  service, Sr)
+        reserve_ramp_constraints!(canonical,  service, Sr)
 
         #TODO: bulid the balance constraints elsewhere
-        forecast = _retrieve_forecasts(sys, S)
-        _nodal_expression_fixed!(canonical_model,forecast, T)
-        service_balance(canonical_model,service)
+        nodal_expression!(canonical,service, T)
+        service_balance(canonical,service)
     end
     return
 

@@ -93,13 +93,15 @@ function _add_to_expression!(expression_array::T,
 end
 
 function _add_to_expression!(expression_array::T,
-                             ix::Int64,
-                             value::Float64) where T
+                            ix::Int64,
+                            parameter::PJ.ParameterRef,
+                            multiplier::Float64) where T
+
 
     if isassigned(expression_array, ix)
-        expression_array[ix].constant +=  value
+        JuMP.add_to_expression!(expression_array[ix], multiplier, parameter);
     else
-        expression_array[ix] = zero(eltype(expression_array)) + value
+        expression_array[ix] =  multiplier*parameter;
     end
 
     return
@@ -108,13 +110,12 @@ end
 
 function _add_to_expression!(expression_array::T,
                              ix::Int64,
-                             jx::Int64,
                              value::Float64) where T
 
-    if isassigned(expression_array, ix, jx)
-        expression_array[ix,jx] +=  value
+    if isassigned(expression_array, ix)
+        expression_array[ix].constant +=  value
     else
-        expression_array[ix,jx] = zero(eltype(expression_array)) + value
+        expression_array[ix] = zero(eltype(expression_array)) + value
     end
 
     return
@@ -131,7 +132,7 @@ function _get_expr(expr::T,
     elseif isassigned(expr)
         return default
     else
-        return expr[ix,ij]
+        return sum(expr[ix,ij])
     end
         
 end

@@ -234,6 +234,7 @@ model_time_steps(canonical_model::CanonicalModel) = canonical_model.time_steps
 model_resolution(canonical_model::CanonicalModel) = canonical_model.resolution
 model_has_parameters(canonical_model::CanonicalModel) = canonical_model.parametrized
 model_runs_sequentially(canonical_model::CanonicalModel) = canonical_model.sequential_runs
+model_uses_forecasts(canonical::CanonicalModel) = canonical.forecast
 model_initial_time(canonical_model::CanonicalModel) = canonical_model.initial_time
 add_expression(canonical_model::CanonicalModel,
                 name::Symbol, 

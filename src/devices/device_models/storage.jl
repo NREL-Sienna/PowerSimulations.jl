@@ -93,22 +93,22 @@ function active_power_constraints!(canonical::CanonicalModel,
 
 end
 
-function active_power_constraints(canonical_model::CanonicalModel,
+function active_power_constraints!(canonical::CanonicalModel,
                                   devices::IS.FlattenIteratorWrapper{St},
                                   ::Type{BookKeepingwReservation},
                                   ::Type{S}) where {St<:PSY.Storage,
-                                                                      S<:PM.AbstractPowerFormulation}
+                                                                      S<:PM.AbstractPowerModel}
 
     range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
     range_data_out = [(PSY.get_name(s), PSY.get_outputactivepowerlimits(s)) for s in devices]
 
-    reserve_device_semicontinuousrange(canonical_model,
+    reserve_device_semicontinuousrange(canonical,
                                        range_data_in,
                                        Symbol("inputpower_range_$(St)"),
                                        Symbol("Psin_$(St)"),
                                        Symbol("Rst_$(St)"))
 
-    reserve_device_semicontinuousrange(canonical_model,
+    reserve_device_semicontinuousrange(canonical,
                                        range_data_out,
                                        Symbol("outputpower_range_$(St)"),
                                        Symbol("Psout_$(St)"),
