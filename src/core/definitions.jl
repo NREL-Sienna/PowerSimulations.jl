@@ -24,5 +24,3 @@ const JuMPAffineExpressionArray = Matrix{GAE{V}} where V<:JuMP.AbstractVariableR
 const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 const DSDA = Dict{Symbol, JuMP.Containers.DenseAxisArray}
-const Parameter = ParameterJuMP.ParameterRef
-export Parameter

@@ -1,7 +1,7 @@
 abstract type AbstractDeviceFormulation end
 
 function _validate_device_formulation(::Type{D})
-                                     where {D<:Union{AbstractDeviceFormulation, PSY.Device}}
+                                     where D<:Union{AbstractDeviceFormulation, PSY.Device}
 
     if !isconcretetype(D)
         throw(ArgumentError("The device model must contain only concrete types, $(D) is an Abstract Type"))
@@ -11,15 +11,14 @@ end
 
 mutable struct DeviceModel{D<:PSY.Device,
                            B<:AbstractDeviceFormulation}
-    device::Type{D}
+    device_type::Type{D}
     formulation::Type{B}
     feedforward::Union{Nothing, FeedForwardModel}
 
     function DeviceModel(::Type{D},
-                         ::Type{B},
-                         feedforward::Union{Nothing, F}) where {D<:PSY.Device,
-                                                                B<:AbstractDeviceFormulation,
-                                                                F<:FeedForwardModel}
+                    ::Type{B},
+                    feedforward::Union{Nothing, FeedForwardModel}) where {D<:PSY.Device,
+                                                            B<:AbstractDeviceFormulation}
 
     _validate_device_formulation(D)
     _validate_device_formulation(B)

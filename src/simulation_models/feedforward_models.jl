@@ -17,7 +17,7 @@ The Parameters are initialized using the uppper boundary values of the provided 
 # Arguments
 * canonical::CanonicalModel : the canonical model built in PowerSimulations
 * cons_name::Symbol : name of the constraint
-* param_reference : Reference to the Parameter used to determine the upperbound
+* param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
 * var_name::Symbol : the name of the continuous variable
 """
 function ub_ff(canonical::CanonicalModel,
