@@ -1,17 +1,17 @@
 function build_op_model!(op_model::OperationModel{M}; kwargs...) where M<:AbstractOperationModel
     sys = get_system(op_model)
-    _build_canonical!(op_model.canonical, op_model.model_ref, sys; kwargs...)
+    _build!(op_model.canonical, op_model.model_ref, sys; kwargs...)
     return
 end
 
-function _build_canonical!(canonical::CanonicalModel, ref::ModelReference, sys::PSY.System; kwargs...)
+function _build!(canonical::CanonicalModel, ref::ModelReference, sys::PSY.System; kwargs...)
 
     verbose = get(kwargs, :verbose, true)
     transmission = ref.transmission
 
     # Build Injection devices
-    for (_, device_model) in ref.devices
-        verbose && @info "Building $(device_model.device) with $(device_model.formulation) formulation"
+    for device_model in values(ref.devices)
+        verbose && @info "Building $(device_model.device_type) with $(device_model.formulation) formulation"
         construct_device!(canonical, sys, device_model, transmission; kwargs...)
     end
 
@@ -20,13 +20,13 @@ function _build_canonical!(canonical::CanonicalModel, ref::ModelReference, sys::
     construct_network!(canonical, sys, transmission; kwargs...)
 
     # Build Branches
-    for (_, branch_model) in ref.branches
-        verbose && @info "Building $(branch_model.device) with $(branch_model.formulation) formulation"
+    for branch_model in values(ref.branches)
+        verbose && @info "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
         construct_device!(canonical, sys, branch_model, transmission; kwargs...)
     end
 
     #Build Service
-    for (_, service_model) in ref.services
+    for service_model in values(ref.services)
         #construct_service!(canonical, sys, service_model, transmission; kwargs...)
     end
 

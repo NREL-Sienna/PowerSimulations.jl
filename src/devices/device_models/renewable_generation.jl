@@ -97,7 +97,7 @@ function _get_time_series(canonical::CanonicalModel,
                           devices::IS.FlattenIteratorWrapper{<:PSY.RenewableGen})
 
     initial_time = model_initial_time(canonical)
-    forecast = model_uses_forecasts(canonical)
+    use_forecast_data = model_uses_forecasts(canonical)
     parameters = model_has_parameters(canonical)
     time_steps = model_time_steps(canonical)
     device_total = length(devices)
@@ -109,8 +109,8 @@ function _get_time_series(canonical::CanonicalModel,
         name = PSY.get_name(device)
         tech = PSY.get_tech(device)
         pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
-        active_power = forecast ? PSY.get_rating(tech) : PSY.get_activepower(device)
-        if forecast
+        active_power = use_forecast_data ? PSY.get_rating(tech) : PSY.get_activepower(device)
+        if use_forecast_data
             ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
                                                                 device,
                                                                 initial_time,
@@ -133,9 +133,9 @@ function activepower_constraints!(canonical::CanonicalModel,
                                 system_formulation::Type{<:PM.AbstractPowerModel}) where R<:PSY.RenewableGen
 
     parameters = model_has_parameters(canonical)
-    forecast = model_uses_forecasts(canonical)
+    use_forecast_data = model_uses_forecasts(canonical)
 
-    if !parameters && !forecast
+    if !parameters && !use_forecast_data
         range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_rating(PSY.get_tech(d)))) for d in devices]
         device_range(canonical,
                     range_data,

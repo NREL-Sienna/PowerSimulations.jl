@@ -11,7 +11,7 @@ function build_cache!(cache::TimeStatusChange, canonical::CanonicalModel)
         value_array[name] = Dict(:count => 999.0, :status => status)
     end
 
-    setfield!(cache, :value, value_array)
+    cache.value = value_array
 
     return
 

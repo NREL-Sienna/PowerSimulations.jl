@@ -2,22 +2,22 @@
 """
     solve_op_model!(op_model::OperationModel; kwargs...)
 
-This solves the operational model for a single instance and 
+This solves the operational model for a single instance and
 outputs results of type OperationModelResult: objective value, time log,
 a dictionary of variables and their dataframe of results, and a time stamp.
 
 # Arguments
 
--`op_model::OperationModel = op_model`: operation model 
+-`op_model::OperationModel = op_model`: operation model
 
 # Examples
 
 ```julia
 results = solve_op_model!(OpModel)
 ```
-# Accepted Key Words 
+# Accepted Key Words
 
-* save_path::String : If a file path is provided the results 
+* save_path::String : If a file path is provided the results
 automatically get written to feather files
 * optimizer : The optimizer that is used to solve the model
 """
@@ -45,7 +45,7 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
         timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel)
 
     end
-    #creating the results to print to memory
+
     vars_result = get_model_result(op_model)
     optimizer_log = get_optimizer_log(op_model)
     time_stamp = get_time_stamp(op_model)
@@ -54,7 +54,6 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
     obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_model.canonical.JuMPmodel))
     merge!(optimizer_log, timed_log)
 
-    #results to be printed to memory
     results = OperationModelResults(vars_result, obj_value, optimizer_log, time_stamp)
 
     !isnothing(save_path) && write_model_results(results, save_path)
@@ -85,13 +84,13 @@ function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::Str
 
 end
 
-""" 
+"""
     run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
 
 Solves the simulation model for sequential Simulations
 and populates a nested folder structure created in Simulation()
 with a dated folder of featherfiles that contain the results for
-each stage and step. 
+each stage and step.
 
 # Arguments
 - `sim::Simulation=sim`: simulation object created by Simulation()

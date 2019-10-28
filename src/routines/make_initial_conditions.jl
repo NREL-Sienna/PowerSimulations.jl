@@ -13,7 +13,7 @@ function status_init(canonical::CanonicalModel,
     key = ICKey(DeviceStatus, PSD)
     parameters = model_has_parameters(canonical)
     length_devices = length(devices)
-    ini_conds = get_ini_cond(canonical, key)
+    ini_conds = get_initial_conditions(canonical, key)
     # Improve here
     ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
 
@@ -52,7 +52,7 @@ function output_init(canonical::CanonicalModel,
     key = ICKey(DevicePower, PSD)
     parameters = model_has_parameters(canonical)
     length_devices = length(devices)
-    ini_conds = get_ini_cond(canonical, key)
+    ini_conds = get_initial_conditions(canonical, key)
     # Improve this
     ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
 
@@ -96,7 +96,7 @@ function duration_init(canonical::CanonicalModel,
     ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
 
     for (ik, key) in enumerate(keys)
-        ini_conds = get_ini_cond(canonical, key)
+        ini_conds = get_initial_conditions(canonical, key)
 
         if isempty(ini_conds)
             @info("Setting $(key.quantity) initial_condition of all devices $(PSD) based on system data")
@@ -148,7 +148,7 @@ function storage_energy_init(canonical::CanonicalModel,
     key = ICKey(DeviceEnergy, PSD)
     parameters = model_has_parameters(canonical)
     length_devices = length(devices)
-    ini_conds = get_ini_cond(canonical, key)
+    ini_conds = get_initial_conditions(canonical, key)
     ref_key = parameters ? Symbol("E_$(PSD)") : :energy
 
     if isempty(ini_conds)
