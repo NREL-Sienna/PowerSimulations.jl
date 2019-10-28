@@ -366,6 +366,6 @@ function get_initial_conditions(op_model::OperationModel,
     canonical = op_model.canonical
     key = ICKey(ic, device)
 
-    return get_ini_cond(canonical, key)
+    return get_initial_conditions(canonical, key)
 
 end

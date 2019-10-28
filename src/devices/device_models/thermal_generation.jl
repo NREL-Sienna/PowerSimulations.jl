@@ -315,7 +315,7 @@ function ramp_constraints!(canonical::CanonicalModel,
 
     time_steps = model_time_steps(canonical)
     resolution = model_resolution(canonical)
-    initial_conditions = get_ini_cond(canonical, key)
+    initial_conditions = get_initial_conditions(canonical, key)
     rate_data = _get_data_for_rocc(initial_conditions, resolution)
     ini_conds, ramp_params, minmax_params = _get_data_for_rocc(initial_conditions, resolution)
 
@@ -352,7 +352,7 @@ function ramp_constraints!(canonical::CanonicalModel,
 
     time_steps = model_time_steps(canonical)
     resolution = model_resolution(canonical)
-    initial_conditions = get_ini_cond(canonical, key)
+    initial_conditions = get_initial_conditions(canonical, key)
     rate_data = _get_data_for_rocc(initial_conditions, resolution)
     ini_conds, ramp_params, minmax_params = _get_data_for_rocc(initial_conditions, resolution)
 
@@ -436,8 +436,8 @@ function time_constraints!(canonical::CanonicalModel,
 
     parameters = model_has_parameters(canonical)
     resolution = model_resolution(canonical)
-    initial_conditions_on  = get_ini_cond(canonical, ic_keys[1])
-    initial_conditions_off = get_ini_cond(canonical, ic_keys[2])
+    initial_conditions_on  = get_initial_conditions(canonical, ic_keys[1])
+    initial_conditions_off = get_initial_conditions(canonical, ic_keys[2])
     ini_conds, time_params = _get_data_for_tdc(initial_conditions_on,
                                                initial_conditions_off,
                                                resolution)

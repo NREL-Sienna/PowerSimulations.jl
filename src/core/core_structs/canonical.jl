@@ -210,7 +210,7 @@ function InitialCondition(canonical::CanonicalModel,
 
 end
 
-function get_ini_cond(canonical::CanonicalModel, key::ICKey)
+function get_initial_conditions(canonical::CanonicalModel, key::ICKey)
     return get(canonical.initial_conditions, key, Vector{InitialCondition}())
 end
 
