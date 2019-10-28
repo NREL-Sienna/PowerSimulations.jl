@@ -11,7 +11,7 @@ function _build!(canonical::CanonicalModel, ref::ModelReference, sys::PSY.System
 
     # Build Injection devices
     for device_model in values(ref.devices)
-        verbose && @info "Building $(device_model.device) with $(device_model.formulation) formulation"
+        verbose && @info "Building $(device_model.device_type) with $(device_model.formulation) formulation"
         construct_device!(canonical, sys, device_model, transmission; kwargs...)
     end
 
@@ -21,7 +21,7 @@ function _build!(canonical::CanonicalModel, ref::ModelReference, sys::PSY.System
 
     # Build Branches
     for branch_model in values(ref.branches)
-        verbose && @info "Building $(branch_model.device) with $(branch_model.formulation) formulation"
+        verbose && @info "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
         construct_device!(canonical, sys, branch_model, transmission; kwargs...)
     end
 
