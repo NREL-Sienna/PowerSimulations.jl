@@ -1,7 +1,7 @@
 abstract type AbstractDeviceFormulation end
 
-function _validate_device_formulation(::Type{D})
-                                     where D<:Union{AbstractDeviceFormulation, PSY.Device}
+function _validate_device_formulation(::Type{D}) where D<:Union{AbstractDeviceFormulation,
+                                                                PSY.Device}
 
     if !isconcretetype(D)
         throw(ArgumentError("The device model must contain only concrete types, $(D) is an Abstract Type"))
@@ -52,7 +52,6 @@ branches = Dict{Symbol, DeviceModel}
     :dc_line => DeviceModel(PSY.HVDCLine, PSI.HVDCDispatch))
 ```
 """
-
 function DeviceModel(::Type{D},
                      ::Type{B}) where {D<:PSY.Device,
                                        B<:AbstractDeviceFormulation}
