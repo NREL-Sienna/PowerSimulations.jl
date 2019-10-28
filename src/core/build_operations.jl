@@ -10,7 +10,7 @@ function _build!(canonical::CanonicalModel, ref::ModelReference, sys::PSY.System
     transmission = ref.transmission
 
     # Build Injection devices
-    for (_, device_model) in ref.devices
+    for device_model in values(ref.devices)
         verbose && @info "Building $(device_model.device) with $(device_model.formulation) formulation"
         construct_device!(canonical, sys, device_model, transmission; kwargs...)
     end
@@ -20,13 +20,13 @@ function _build!(canonical::CanonicalModel, ref::ModelReference, sys::PSY.System
     construct_network!(canonical, sys, transmission; kwargs...)
 
     # Build Branches
-    for (_, branch_model) in ref.branches
+    for branch_model in values(ref.branches)
         verbose && @info "Building $(branch_model.device) with $(branch_model.formulation) formulation"
         construct_device!(canonical, sys, branch_model, transmission; kwargs...)
     end
 
     #Build Service
-    for (_, service_model) in ref.services
+    for service_model in values(ref.services)
         #construct_service!(canonical, sys, service_model, transmission; kwargs...)
     end
 
