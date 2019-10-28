@@ -60,42 +60,40 @@ function device_duration_retrospective(canonical::CanonicalModel,
     name_down = _middle_rename(cons_name, "_", "dn")
 
     set_names = (device_name(ic) for ic in initial_duration[:, 1])
-    _add_cons_container!(canonical, name_up, set_names, time_steps)
-    _add_cons_container!(canonical, name_down, set_names, time_steps)
-    con_up = con(canonical, name_up)
-    con_down = con(canonical, name_down)
+    con_up =_add_cons_container!(canonical, name_up, set_names, time_steps)
+    con_down =_add_cons_container!(canonical, name_down, set_names, time_steps)
 
-        for t in time_steps
-            for (ix, ic) in enumerate(initial_duration[:, 1])
-                name = device_name(ic)
-                # Minimum Up-time Constraint
-                lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(canonical)}(0)
-                for i in (t-duration_data[ix].up + 1):t
-                    if i in time_steps
-                        JuMP.add_to_expression!(lhs_on, varstart[name, i])
-                    end
+    for t in time_steps
+        for (ix, ic) in enumerate(initial_duration[:, 1])
+            name = device_name(ic)
+            # Minimum Up-time Constraint
+            lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(canonical)}(0)
+            for i in (t-duration_data[ix].up + 1):t
+                if i in time_steps
+                    JuMP.add_to_expression!(lhs_on, varstart[name, i])
                 end
-                if t <= max(0, duration_data[ix].up - ic.value) && ic.value > 0
-                    JuMP.add_to_expression!(lhs_on, 1)
-                end
-                con_up[name, t] = JuMP.@constraint(canonical.JuMPmodel, lhs_on - varon[name, t] <= 0.0)
             end
-
-            for (ix, ic) in enumerate(initial_duration[:, 2])
-                name = device_name(ic)
-                # Minimum Down-time Constraint
-                lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(canonical)}(0)
-                for i in (t-duration_data[ix].down + 1):t
-                    if i in time_steps
-                        JuMP.add_to_expression!(lhs_off, varstop[name, i])
-                    end
-                end
-                if t <=  max(0, duration_data[ix].down - ic.value) && ic.value > 0
-                    JuMP.add_to_expression!(lhs_off, 1)
-                end
-                con_down[name, t] = JuMP.@constraint(canonical.JuMPmodel, lhs_off + varon[name, t] <= 1.0)
+            if t <= max(0, duration_data[ix].up - ic.value) && ic.value > 0
+                JuMP.add_to_expression!(lhs_on, 1)
             end
+            con_up[name, t] = JuMP.@constraint(canonical.JuMPmodel, lhs_on - varon[name, t] <= 0.0)
         end
+
+        for (ix, ic) in enumerate(initial_duration[:, 2])
+            name = device_name(ic)
+            # Minimum Down-time Constraint
+            lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(canonical)}(0)
+            for i in (t-duration_data[ix].down + 1):t
+                if i in time_steps
+                    JuMP.add_to_expression!(lhs_off, varstop[name, i])
+                end
+            end
+            if t <=  max(0, duration_data[ix].down - ic.value) && ic.value > 0
+                JuMP.add_to_expression!(lhs_off, 1)
+            end
+            con_down[name, t] = JuMP.@constraint(canonical.JuMPmodel, lhs_off + varon[name, t] <= 1.0)
+        end
+    end
     return
 end
 @doc raw"""
@@ -160,10 +158,8 @@ function device_duration_look_ahead(canonical::CanonicalModel,
     name_down = _middle_rename(cons_name, "_", "dn")
 
     set_names = (device_name(ic) for ic in initial_duration[:, 1])
-    _add_cons_container!(canonical, name_up, set_names, time_steps)
-    _add_cons_container!(canonical, name_down, set_names, time_steps)
-    con_up = con(canonical, name_up)
-    con_down = con(canonical, name_down)
+    con_up = _add_cons_container!(canonical, name_up, set_names, time_steps)
+    con_down = _add_cons_container!(canonical, name_down, set_names, time_steps)
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
@@ -268,10 +264,8 @@ function device_duration_param(canonical::CanonicalModel,
     name_down = _middle_rename(cons_name, "_", "dn")
 
     set_names = (device_name(ic) for ic in initial_duration[:, 1])
-    _add_cons_container!(canonical, name_up, set_names, time_steps)
-    _add_cons_container!(canonical, name_down, set_names, time_steps)
-    con_up = con(canonical, name_up)
-    con_down = con(canonical, name_down)
+    con_up = _add_cons_container!(canonical, name_up, set_names, time_steps)
+    con_down =_add_cons_container!(canonical, name_down, set_names, time_steps)
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])

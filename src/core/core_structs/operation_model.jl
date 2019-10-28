@@ -324,7 +324,7 @@ function construct_device!(op_model::OperationModel,
     op_model.model_ref.devices[name] = device_model
 
     construct_device!(op_model.canonical,
-                     get_system(op_model),
+                      get_system(op_model),
                       device_model,
                       get_transmission_ref(op_model);
                       kwargs...)
