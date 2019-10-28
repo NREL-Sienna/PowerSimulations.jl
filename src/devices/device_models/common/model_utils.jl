@@ -1,3 +1,8 @@
+""" Returns the correct container spec for the selected type of JuMP Model"""
+function _container_spec(m::M, ax...) where M<:JuMP.AbstractModel
+    return JuMP.Containers.DenseAxisArray{JuMP.variable_type(m)}(undef, ax...)
+end
+
 function _add_var_container!(canonical::CanonicalModel, var_name::Symbol, ax1, ax2)
     canonical.variables[var_name] = _container_spec(canonical.JuMPmodel, ax1, ax2)
     return
