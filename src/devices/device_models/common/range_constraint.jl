@@ -35,19 +35,32 @@ function device_range(canonical::Canonical,
                     var_name::Symbol)
 
     time_steps = model_time_steps(canonical)
-    variable = get_variable(canonical, var_name)
+    variable = var(canonical, var_name)
+    ub_name = _middle_rename(cons_name, "_", "ub")
+    lb_name = _middle_rename(cons_name, "_", "lb")
+
     set_name = (r[1] for r in range_data)
-    constraint = _add_cons_container!(canonical, cons_name, set_name, time_steps)
+    con_ub = _add_cons_container!(canonical, ub_name, set_name, time_steps)
+    con_lb = _add_cons_container!(canonical, lb_name, set_name, time_steps)
+    expr_cont = exp(canonical,Symbol(_remove_underscore(cons_name)))
 
     for r in range_data
           if abs(r[2].min - r[2].max) <= eps()
             @warn("The min - max values in range constraint with eps() distance to each other. Range Constraint will be modified for Equality Constraint")
                 for t in time_steps
-                    constraint[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, variable[r[1], t] == r[2].max)
+                    con_ub[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, variable[r[1], t] 
+                                                            + _get_expr(expr_cont,r[1], t) == r[2].max)
+
+                    con_lb[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, variable[r[1], t] 
+                                                            + _get_expr(expr_cont,r[1], t) == r[2].min)
                 end
           else
                 for t in time_steps
-                    constraint[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, r[2].min <= variable[r[1], t] <= r[2].max)
+                    con_ub[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, variable[r[1], t] 
+                                                            + _get_expr(expr_cont,r[1], t) <= r[2].max)
+
+                    con_lb[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, variable[r[1], t] 
+                                                            + _get_expr(expr_cont,r[1], t) >= r[2].min)
                 end
             end
     end
@@ -112,6 +125,7 @@ function device_semicontinuousrange(canonical::Canonical,
     set_name = (r[1] for r in scrange_data)
     con_ub = _add_cons_container!(canonical, ub_name, set_name, time_steps)
     con_lb = _add_cons_container!(canonical, lb_name, set_name, time_steps)
+    expr_cont = exp(canonical,Symbol(_remove_underscore(cons_name)))
 
     for t in time_steps, r in scrange_data
 
@@ -122,13 +136,17 @@ function device_semicontinuousrange(canonical::Canonical,
 
         if r[2].min == 0.0
 
-            con_ub[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, varcts[r[1], t] <= r[2].max*varbin[r[1], t])
-            con_lb[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, varcts[r[1], t] >= 0.0)
+            con_ub[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, varcts[r[1], t] 
+                                + _get_expr(expr_cont,r[1], t) <= r[2].max*varbin[r[1], t])
+            con_lb[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, varcts[r[1], t] 
+                                                    + _get_expr(expr_cont,r[1], t) >= 0.0)
 
         else
 
-            con_ub[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, varcts[r[1], t] <= r[2].max*varbin[r[1], t])
-            con_lb[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, varcts[r[1], t] >= r[2].min*varbin[r[1], t])
+            con_ub[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, varcts[r[1], t] 
+                                + _get_expr(expr_cont,r[1], t) <= r[2].max*varbin[r[1], t])
+            con_lb[r[1], t] = JuMP.@constraint(canonical.JuMPmodel, varcts[r[1], t] 
+                                + _get_expr(expr_cont,r[1], t) >= r[2].min*varbin[r[1], t])
 
         end
 
@@ -214,3 +232,43 @@ function reserve_device_semicontinuousrange(canonical::Canonical,
     return
 
  end
+
+@doc raw"""
+    device_range_expression(canonical::CanonicalModel,
+                        devices::Vector{T},
+                        exp_name::Symbol,
+                        var_name::Symbol) where {T<:PSY.Component}
+
+Constructs expression for min/max range constraint from device variable.
+
+# Expresion
+
+``` expression_container[device_name, time_index] =+ variable ```
+
+# Arguments
+* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* devices::Vector{T} : contains devices
+* exp_name::Symbol : name of the expresion that makes up the LHS of a constraint
+* var_name::Symbol : the name of the continuous variable
+"""
+
+function device_range_expression!(canonical::CanonicalModel,
+                    devices::Vector{T},
+                    exp_name::Symbol,
+                    var_name::Symbol) where {T<:PSY.Component}
+
+    time_steps = model_time_steps(canonical)
+    var = PSI.var(canonical, var_name)
+    expression_cont = exp(canonical, exp_name)
+    for t in time_steps , d in devices
+        name = PSY.get_name(d)
+        if isassigned(expression_cont, name,t)
+            JuMP.add_to_expression!(expression_cont[name,t], 1.0, var[name,t])
+        else
+            expression_cont[name,t] = zero(eltype(expression_cont)) + 1.0*var[name,t];
+        end
+    end
+
+    return
+
+end
