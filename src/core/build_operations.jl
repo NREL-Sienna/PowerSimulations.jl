@@ -9,6 +9,12 @@ function _build!(canonical::Canonical, ref::OperationsTemplate, sys::PSY.System;
     verbose = get(kwargs, :verbose, true)
     transmission = ref.transmission
 
+    #Build Service
+    for (_, service_model) in ref.services
+        verbose && @info "Building $(service_model.service) with $(service_model.formulation) formulation"
+        construct_service!(canonical, sys, service_model, transmission; kwargs...)
+    end
+    
     # Build Injection devices
     for device_model in values(ref.devices)
         verbose && @info "Building $(device_model.device_type) with $(device_model.formulation) formulation"
@@ -23,11 +29,6 @@ function _build!(canonical::Canonical, ref::OperationsTemplate, sys::PSY.System;
     for branch_model in values(ref.branches)
         verbose && @info "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
         construct_device!(canonical, sys, branch_model, transmission; kwargs...)
-    end
-
-    #Build Service
-    for service_model in values(ref.services)
-        #construct_service!(canonical, sys, service_model, transmission; kwargs...)
     end
 
     # Objective Function

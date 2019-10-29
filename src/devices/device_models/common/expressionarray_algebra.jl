@@ -90,3 +90,48 @@ function _add_to_expression!(expression_array::T,
     return
 
 end
+
+function _add_to_expression!(expression_array::T,
+                            ix::Int64,
+                            parameter::PJ.ParameterRef,
+                            multiplier::Float64) where T
+
+
+    if isassigned(expression_array, ix)
+        JuMP.add_to_expression!(expression_array[ix], multiplier, parameter);
+    else
+        expression_array[ix] =  multiplier*parameter;
+    end
+
+    return
+
+end
+
+function _add_to_expression!(expression_array::T,
+                             ix::Int64,
+                             value::Float64) where T
+
+    if isassigned(expression_array, ix)
+        expression_array[ix].constant +=  value
+    else
+        expression_array[ix] = zero(eltype(expression_array)) + value
+    end
+
+    return
+
+end
+
+function _get_expr(expr::T, 
+                        ix::Union{Int64,String},
+                        ij::Union{Int64,String},
+                        default::Float64 =0.0) where T
+
+    if isnothing(expr)
+        return default
+    elseif isassigned(expr)
+        return default
+    else
+        return sum(expr[ix,ij])
+    end
+        
+end

@@ -226,17 +226,20 @@ function get_value(canonical::Canonical, ref::UpdateRef{PJ.ParameterRef})
     return
 end
 
-_variable_type(cm::Canonical) = JuMP.variable_type(cm.JuMPmodel)
-model_time_steps(canonical::Canonical) = canonical.time_steps
-model_resolution(canonical::Canonical) = canonical.resolution
-model_has_parameters(canonical::Canonical) = !isnothing(canonical.parameters)
-model_uses_forecasts(canonical::Canonical) = canonical.use_forecast_data
-model_initial_time(canonical::Canonical) = canonical.initial_time
+_variable_type(cm::CanonicalModel) = JuMP.variable_type(cm.JuMPmodel)
+model_time_steps(canonical::CanonicalModel) = canonical.time_steps
+model_resolution(canonical::CanonicalModel) = canonical.resolution
+model_has_parameters(canonical::CanonicalModel) = canonical.parametrized
+model_uses_forecasts(canonical::CanonicalModel) = canonical.use_forecast_data
+model_initial_time(canonical::CanonicalModel) = canonical.initial_time
+add_expression(canonical::CanonicalModel,
+                name::Symbol, 
+                cont::JuMP.Containers.DenseAxisArray) = push!(canonical.expressions, (name=>cont))
 #Internal Variables, Constraints and Parameters accessors
-get_variables(canonical::Canonical) = canonical.variables
-get_constraints(canonical::Canonical) = canonical.constraints
-get_variable(canonical::Canonical, name::Symbol) = canonical.variables[name]
-get_constraint(canonical::Canonical, name::Symbol) = canonical.constraints[name]
-get_parameters(canonical::Canonical, param_reference::UpdateRef) = canonical.parameters[param_reference]
-get_expression(canonical::Canonical, name::Symbol) = canonical.expressions[name]
-get_initial_conditions(canonical::Canonical) = canonical.initial_conditions
+vars(canonical::CanonicalModel) = canonical.variables
+cons(canonical::CanonicalModel) = canonical.constraints
+var(canonical::CanonicalModel, name::Symbol) = get(canonical.variables,name,nothing)
+con(canonical::CanonicalModel, name::Symbol) = get(canonical.constraints,name,nothing)
+par(canonical::CanonicalModel, param_reference::UpdateRef) = get(canonical.parameters,param_reference,nothing)
+exp(canonical::CanonicalModel, name::Symbol) = get(canonical.expressions,name,nothing)
+get_initial_conditions(canonical::CanonicalModel) = canonical.initial_conditions
