@@ -9,9 +9,9 @@ dc_line = DeviceModel(PSY.HVDCLine, PSI.HVDCDispatch)
     network = CopperPlatePowerModel
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [120, 120, 0, 0, 24],
-                                                   c_sys14 => [120, 120, 0, 0, 24],
-                                                   c_sys14_dc => [120, 120, 0, 0, 24])
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [120, 0, 120, 120, 24],
+                                                   c_sys14 => [120, 0, 120, 120, 24],
+                                                   c_sys14_dc => [120, 0, 120, 120, 24])
     constraint_names = [:CopperPlateBalance]
     objfuncs = [GAEVF, GQEVF, GQEVF]
 
@@ -40,12 +40,12 @@ end
     network = StandardPTDFModel
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
-    constraint_names = [:RateLimit_Line, :nodal_balance, :network_flow]
+    constraint_names = [:RateLimit_lb_Line, :RateLimit_ub_Line, :nodal_balance, :network_flow]
     parameters = [true, false]
     PTDF_ref = Dict{PSY.System, PSY.PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc);
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [264, 264, 0, 0, 264],
-                                                    c_sys14 => [600, 600, 0, 0, 816],
-                                                    c_sys14_dc => [600, 600, 0, 0, 768])
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [264, 0, 264, 264, 264],
+                                                    c_sys14 => [600, 0, 600, 600, 816],
+                                                    c_sys14_dc => [600, 48, 552, 552, 768])
 
     for (ix, sys) in enumerate(systems), p in parameters
         ps_model = OperationModel(TestOptModel, network, sys; optimizer = OSQP_optimizer, parameters = p)
@@ -79,11 +79,11 @@ end
     network = DCPPowerModel
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
-    constraint_names = [:RateLimit_Line]
+    constraint_names = [:RateLimit_lb_Line,:RateLimit_ub_Line]
     parameters = [true, false]
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [384, 264, 144, 144, 288],
-                                                    c_sys14 => [936, 600, 480, 480, 840],
-                                                    c_sys14_dc => [984, 600, 432, 432, 840])
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [384, 0, 408, 408, 288],
+                                                    c_sys14 => [936, 0, 1080, 1080, 840],
+                                                    c_sys14_dc => [984, 48, 984, 984, 840])
 
     for (ix, sys) in enumerate(systems), p in parameters
         ps_model = OperationModel(TestOptModel, network, sys; optimizer = OSQP_optimizer, parameters = p)
@@ -113,9 +113,9 @@ end
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimitFT_Line, :RateLimitTF_Line]
     parameters = [true, false]
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [1056, 240, 144, 144, 264],
-                                                    c_sys14 => [2832, 240, 480, 480, 696],
-                                                    c_sys14_dc => [2832, 336, 432, 432, 744]) # TODO: changed the interval constraint number to 336 from 240. double check
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [1056, 0, 384, 384, 264],
+                                                    c_sys14 => [2832, 0, 720, 720, 696],
+                                                    c_sys14_dc => [2832, 96, 672, 672, 744]) # TODO: changed the interval constraint number to 336 from 240. double check
 
     for (ix, sys) in enumerate(systems), p in parameters
         ps_model = OperationModel(TestOptModel, network, sys; optimizer = ipopt_optimizer, parameters = p)
