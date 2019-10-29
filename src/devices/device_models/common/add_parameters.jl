@@ -3,9 +3,7 @@ function include_parameters(canonical::CanonicalModel,
                             param_reference::UpdateRef,
                             axs...)
 
-    _add_param_container!(canonical, param_reference, axs...)
-    param = par(canonical, param_reference)
-
+    param = _add_param_container!(canonical, param_reference, axs...)
     Cidx = CartesianIndices(length.(axs))
 
     for idx in Cidx
@@ -24,8 +22,7 @@ function include_parameters(canonical::CanonicalModel,
 
 
     time_steps = model_time_steps(canonical)
-    _add_param_container!(canonical, param_reference, (r[1] for r in ts_data), time_steps)
-    param = par(canonical, param_reference)
+    param = _add_param_container!(canonical, param_reference, (r[1] for r in ts_data), time_steps)
     expr = exp(canonical, expression)
 
     for t in time_steps, r in ts_data

@@ -48,11 +48,9 @@ function device_commitment(canonical::CanonicalModel,
     varstop = var(canonical, var_names[2])
     varon = var(canonical, var_names[3])
     varstart_names = axes(varstart, 1)
-    _add_cons_container!(canonical, cons_name, varstart_names, time_steps)
-    constraint = con(canonical, cons_name)
+    constraint = _add_cons_container!(canonical, cons_name, varstart_names, time_steps)
     aux_cons_name = _middle_rename(cons_name, "_", "aux")
-    _add_cons_container!(canonical, aux_cons_name, varstart_names, time_steps)
-    aux_constraint = con(canonical, aux_cons_name)
+    aux_constraint =_add_cons_container!(canonical, aux_cons_name, varstart_names, time_steps)
 
     for ic in initial_conditions
         name = PSY.get_name(ic.device)

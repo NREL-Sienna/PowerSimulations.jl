@@ -40,10 +40,8 @@ function device_range(canonical::CanonicalModel,
     lb_name = _middle_rename(cons_name, "_", "lb")
 
     set_name = (r[1] for r in range_data)
-    _add_cons_container!(canonical, ub_name, set_name, time_steps)
-    _add_cons_container!(canonical, lb_name, set_name, time_steps)
-    con_ub = con(canonical, ub_name)
-    con_lb = con(canonical, lb_name)
+    con_ub = _add_cons_container!(canonical, ub_name, set_name, time_steps)
+    con_lb = _add_cons_container!(canonical, lb_name, set_name, time_steps)
     expr_cont = exp(canonical,Symbol(_remove_underscore(cons_name)))
 
     for r in range_data
@@ -125,10 +123,8 @@ function device_semicontinuousrange(canonical::CanonicalModel,
     #In the future this can be updated
 
     set_name = (r[1] for r in scrange_data)
-    _add_cons_container!(canonical, ub_name, set_name, time_steps)
-    _add_cons_container!(canonical, lb_name, set_name, time_steps)
-    con_ub = con(canonical, ub_name)
-    con_lb = con(canonical, lb_name)
+    con_ub = _add_cons_container!(canonical, ub_name, set_name, time_steps)
+    con_lb = _add_cons_container!(canonical, lb_name, set_name, time_steps)
     expr_cont = exp(canonical,Symbol(_remove_underscore(cons_name)))
 
     for t in time_steps, r in scrange_data
@@ -214,10 +210,8 @@ function reserve_device_semicontinuousrange(canonical::CanonicalModel,
     # In the future this can be updated
 
     set_name = (r[1] for r in scrange_data)
-    _add_cons_container!(canonical, ub_name, set_name, time_steps)
-    _add_cons_container!(canonical, lb_name, set_name, time_steps)
-    con_ub = con(canonical, ub_name)
-    con_lb = con(canonical, lb_name)
+    con_ub = _add_cons_container!(canonical, ub_name, set_name, time_steps)
+    con_lb = _add_cons_container!(canonical, lb_name, set_name, time_steps)
 
     for t in time_steps, r in scrange_data
 

@@ -27,8 +27,7 @@ function device_timeseries_ub(canonical::CanonicalModel,
 
     time_steps = model_time_steps(canonical)
     names = (v[1] for v in ts_data)
-    _add_cons_container!(canonical, cons_name, names, time_steps)
-    constraint = con(canonical, cons_name)
+    constraint = _add_cons_container!(canonical, cons_name, names, time_steps)
     variable = var(canonical, var_name)
 
     for t in time_steps, data in ts_data
@@ -75,8 +74,7 @@ function device_timeseries_lb(canonical::CanonicalModel,
 
     time_steps = model_time_steps(canonical)
     names = (v[1] for v in ts_data)
-    _add_cons_container!(canonical, cons_name, names, time_steps)
-    constraint = con(canonical, cons_name)
+    constraint =_add_cons_container!(canonical, cons_name, names, time_steps)
     variable = var(canonical, var_name)
 
     for t in time_steps, data in ts_data
@@ -128,10 +126,8 @@ function device_timeseries_param_ub(canonical::CanonicalModel,
     ub_name = _middle_rename(cons_name, "_", "ub")
     variable = var(canonical, var_name)
     names = (v[1] for v in ts_data)
-    _add_cons_container!(canonical, ub_name, names, time_steps)
-    constraint = con(canonical, ub_name)
-    _add_param_container!(canonical, param_reference, names, time_steps)
-    param = par(canonical, param_reference)
+    constraint = _add_cons_container!(canonical, ub_name, names, time_steps)
+    param = _add_param_container!(canonical, param_reference, names, time_steps)
 
     for t in time_steps, data in ts_data
         name = data[1]
@@ -181,10 +177,8 @@ function device_timeseries_param_lb(canonical::CanonicalModel,
     variable = var(canonical, var_name)
     lb_name = _middle_rename(cons_name, "_", "lb")
     names = (v[1] for v in ts_data)
-    _add_cons_container!(canonical, lb_name, names, time_steps)
-    constraint = con(canonical, lb_name)
-    _add_param_container!(canonical, param_reference, names, time_steps)
-    param = par(canonical, param_reference)
+    constraint =_add_cons_container!(canonical, lb_name, names, time_steps)
+    param =_add_param_container!(canonical, param_reference, names, time_steps)
 
     for t in time_steps, data in ts_data
         name = data[1]
@@ -238,8 +232,7 @@ function device_timeseries_ub_bin(canonical::CanonicalModel,
     varbin = var(canonical, binvar_name)
 
     names = (v[1] for v in ts_data)
-    _add_cons_container!(canonical, ub_name, names, time_steps)
-    con_ub = con(canonical, ub_name)
+    con_ub =_add_cons_container!(canonical, ub_name, names, time_steps)
 
     for t in time_steps, data in ts_data
         name = data[1]
@@ -300,13 +293,9 @@ function device_timeseries_ub_bigM(canonical::CanonicalModel,
     varcts = var(canonical, var_name)
     varbin = var(canonical, binvar_name)
     names = (v[1] for v in ts_data)
-    _add_cons_container!(canonical, ub_name, names, time_steps)
-    _add_cons_container!(canonical, key_status, names, time_steps)
-    con_ub = con(canonical, ub_name)
-    con_status = con(canonical, key_status)
-
-    _add_param_container!(canonical, param_reference, names, time_steps)
-    param = par(canonical, param_reference)
+    con_ub = _add_cons_container!(canonical, ub_name, names, time_steps)
+    con_status =_add_cons_container!(canonical, key_status, names, time_steps)
+    param =_add_param_container!(canonical, param_reference, names, time_steps)
 
     for t in time_steps, data in ts_data
         name = data[1]
