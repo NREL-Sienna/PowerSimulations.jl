@@ -144,7 +144,7 @@ end
     for p in [true, false]
         op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5; parameters = p)
         construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 120, 120, 0, 0, 0, false)
+        moi_tests(op_model, p, 120, 0, 120, 120, 0, false)
         psi_checkobjfun_test(op_model, GAEVF)
     end
 
@@ -152,7 +152,7 @@ end
     for p in [true, false]
         op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys14; parameters = p)
         construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 120, 120, 0, 0, 0, false)
+        moi_tests(op_model, p, 120, 0, 120, 120, 0, false)
         psi_checkobjfun_test(op_model, GQEVF)
     end
 end
@@ -164,7 +164,7 @@ end
     for p in [true, false]
         op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys5; parameters = p)
         construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 240, 240, 0, 0, 0, false)
+        moi_tests(op_model, p, 240, 0, 240, 240, 0, false)
         psi_checkobjfun_test(op_model, GAEVF)
     end
 
@@ -172,7 +172,7 @@ end
     for p in [true, false]
         op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys14; parameters = p)
         construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 240, 240, 0, 0, 0, false)
+        moi_tests(op_model, p, 240, 0, 240, 240, 0, false)
         psi_checkobjfun_test(op_model, GQEVF)
     end
 end
@@ -186,8 +186,8 @@ end
     for p in [true, false]
         op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5; parameters = p)
         construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 120, 120, 0, 0, 0, false)
-        moi_lbvalue_test(op_model, :activerange_ThermalStandard, 0.0)
+        moi_tests(op_model, p, 120, 0, 120, 120, 0, false)
+        moi_lbvalue_test(op_model, :activerange_lb_ThermalStandard, 0.0)
         psi_checkobjfun_test(op_model, GAEVF)
     end
 
@@ -195,8 +195,8 @@ end
     for p in [true, false]
         op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys14; parameters = p)
         construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 120, 120, 0, 0, 0, false)
-        moi_lbvalue_test(op_model, :activerange_ThermalStandard, 0.0)
+        moi_tests(op_model, p, 120, 0, 120, 120, 0, false)
+        moi_lbvalue_test(op_model, :activerange_lb_ThermalStandard, 0.0)
         psi_checkobjfun_test(op_model, GQEVF)
     end
 end
@@ -208,8 +208,8 @@ end
     for p in [true, false]
         op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys5; parameters = p)
         construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 240, 240, 0, 0, 0, false)
-        moi_lbvalue_test(op_model, :activerange_ThermalStandard, 0.0)
+        moi_tests(op_model, p, 240, 0, 240, 240, 0, false)
+        moi_lbvalue_test(op_model, :activerange_lb_ThermalStandard, 0.0)
         psi_checkobjfun_test(op_model, GAEVF)
     end
 
@@ -217,8 +217,8 @@ end
     for p in [true, false]
         op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys14; parameters = p)
         construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 240, 240, 0, 0, 0, false)
-        moi_lbvalue_test(op_model, :activerange_ThermalStandard, 0.0)
+        moi_tests(op_model, p, 240, 0, 240, 240, 0, false)
+        moi_lbvalue_test(op_model, :activerange_lb_ThermalStandard, 0.0)
         psi_checkobjfun_test(op_model, GQEVF)
     end
 end
@@ -232,7 +232,7 @@ end
     for p in [true, false]
         op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5_uc; parameters = p)
         construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 120, 120, 96, 0, 0, false)
+        moi_tests(op_model, p, 120, 0, 216, 120, 0, false)
         psi_constraint_test(op_model, constraint_names)
         psi_checkobjfun_test(op_model, GAEVF)
     end
@@ -241,7 +241,7 @@ end
     for p in [true, false]
         op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys14; parameters = p)
         construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 120, 120, 0, 0, 0, false)
+        moi_tests(op_model, p, 120, 0, 120, 120, 0, false)
         psi_checkobjfun_test(op_model, GQEVF)
     end
 end
@@ -254,7 +254,7 @@ end
     for p in [true, false]
         op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys5_uc; parameters = p)
         construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 240, 240, 96, 0, 0, false)
+        moi_tests(op_model, p, 240, 0, 336, 240, 0, false)
         psi_constraint_test(op_model, constraint_names)
         psi_checkobjfun_test(op_model, GAEVF)
     end
@@ -263,7 +263,7 @@ end
     for p in [true, false]
         op_model = OperationModel(TestOptModel, ACPPowerModel, c_sys14; parameters = p)
         construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 240, 240, 0, 0, 0, false)
+        moi_tests(op_model, p, 240, 0, 240, 240, 0, false)
         psi_checkobjfun_test(op_model, GQEVF)
     end
 end
@@ -309,7 +309,7 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
                         ramp_test_sys; optimizer = Cbc_optimizer,
                         parameters = true)
     psi_checksolve_test(ED, [MOI.OPTIMAL], 11191.00)
-    moi_tests(ED, true, 10, 10, 10, 0, 5, false)
+    moi_tests(ED, true, 10, 0, 20, 10, 5, false)
 end
 
 # Testing Duration Constraints
@@ -435,4 +435,47 @@ end
                         parameters = true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919,10.0)
     moi_tests(UC, true, 32, 0, 8, 4, 14, true)
+end
+
+## Energy + UP-reserve Test
+@testset "Solving UC with CopperPlate testing upward ramping reserve implementation" begin
+    node = Bus(1,"nodeA", "PV", 0, 1.0, (min = 0.9, max=1.05), 230)
+    load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
+    gens = [ThermalStandard("Alta", true, node,0.52, 0.010,
+            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6), 
+                        (min = 0.22, max = 0.55), nothing, 
+                        nothing, nothing),
+            ThreePartCost([ (589.99, 0.220),(884.99, 0.33)
+                ,(1210.04, 0.44),(1543.44, 0.55)],532.44, 5665.23, 0.0)
+            ),
+            ThermalStandard("Park City", true, node,0.62,0.20, 
+                TechThermal(2.2125,PSY.PrimeMovers(6),PSY.ThermalFuels(6), 
+                        (min = 0.62, max = 1.55), nothing, 
+                        (up = 0.01, down= 0.01), nothing),
+                ThreePartCost([   (1264.80, 0.62),(1897.20, 0.93),
+                (2594.4787, 1.24),(3433.04, 1.55)   ], 235.397, 5665.23, 0.0)
+            )];
+    up_reserve = PSY.StaticReserve("up_reserve",gens,1.0,0.5)
+    DA = collect(DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):
+                        Hour(1):
+                        DateTime("1/1/2024  1:00:00", "d/m/y  H:M:S"))
+    enregy_load = [1.6,1.5];
+    reserve_load = [1.0,1.0];
+    load_forecast  = Deterministic("maxactivepower", TimeArray(DA, enregy_load))
+    reserve_forecast = Deterministic("requirement", TimeArray(DA, reserve_load))
+    sys = PSY.System(100.0)
+    add_component!(sys, node)
+    add_component!(sys, load)
+    add_component!(sys, gens[1])
+    add_component!(sys, gens[2])
+    add_component!(sys, up_reserve)
+    add_forecast!(sys, load, load_forecast)
+    add_forecast!(sys, up_reserve, reserve_forecast)
+    
+    model_ref = ModelReference(CopperPlatePowerModel, UC_devices, branches, services)
+    UC = OperationModel(TestOptModel, model_ref,
+                        sys; optimizer = Cbc_optimizer,
+                        parameters = true)
+    psi_checksolve_test(UC, [MOI.OPTIMAL], 7861.641970967743,1.0)
+    moi_tests(UC, true, 32, 0, 8, 4, 10, true)
 end
