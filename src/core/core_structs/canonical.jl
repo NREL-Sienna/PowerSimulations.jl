@@ -235,11 +235,14 @@ model_resolution(canonical::CanonicalModel) = canonical.resolution
 model_has_parameters(canonical::CanonicalModel) = canonical.parametrized
 model_uses_forecasts(canonical::CanonicalModel) = canonical.use_forecast_data
 model_initial_time(canonical::CanonicalModel) = canonical.initial_time
+add_expression(canonical::CanonicalModel,
+                name::Symbol, 
+                cont::JuMP.Containers.DenseAxisArray) = push!(canonical.expressions, (name=>cont))
 #Internal Variables, Constraints and Parameters accessors
 vars(canonical::CanonicalModel) = canonical.variables
 cons(canonical::CanonicalModel) = canonical.constraints
-var(canonical::CanonicalModel, name::Symbol) = canonical.variables[name]
-con(canonical::CanonicalModel, name::Symbol) = canonical.constraints[name]
-par(canonical::CanonicalModel, param_reference::UpdateRef) = canonical.parameters[param_reference]
-exp(canonical::CanonicalModel, name::Symbol) = canonical.expressions[name]
+var(canonical::CanonicalModel, name::Symbol) = get(canonical.variables,name,nothing)
+con(canonical::CanonicalModel, name::Symbol) = get(canonical.constraints,name,nothing)
+par(canonical::CanonicalModel, param_reference::UpdateRef) = get(canonical.parameters,param_reference,nothing)
+exp(canonical::CanonicalModel, name::Symbol) = get(canonical.expressions,name,nothing)
 get_initial_conditions(canonical::CanonicalModel) = canonical.initial_conditions
