@@ -6,7 +6,7 @@ This function add the variables for reserves to the model
 function activereserve_variables!(canonical_model::CanonicalModel,
                                 service::S) where { S<:PSY.Service}
 
-    devices = service.contributingdevices
+    devices = PSY.get_contributingdevices(service)
     expression = Symbol(service.name,"_","balance")
     add_variable(canonical_model,
                  devices,
@@ -30,7 +30,7 @@ function activereserve_constraints!(canonical_model::CanonicalModel,
                                                             F<:AbstractServiceFormulation}
     
     name = Symbol("activerange")
-    devices = service.contributingdevices
+    devices = PSY.get_contributingdevices(service)
     expression = exp(canonical_model, name)
     if isnothing(expression)
         @error("Failed to find Constraint expression for ActiveRange Constraint")
@@ -56,7 +56,7 @@ function reserve_ramp_constraints!(canonical_model::CanonicalModel,
                                                             F<:AbstractServiceFormulation}
 
     name = Symbol("ramp_up")
-    devices = service.contributingdevices
+    devices = PSY.get_contributingdevices(service)
     expression = exp(canonical_model, name)
     if isnothing(expression)
         @error("Failed to find Constraint expression for ActiveRange Constraint")
@@ -82,7 +82,7 @@ function _get_time_series(canonical::CanonicalModel,
 
     name = PSY.get_name(service)
     requirement = forecast ? PSY.get_requirement(service) : 0.0
-    bus_number = PSY.get_number(PSY.get_bus(service.contributingdevices[1]))
+    bus_number = PSY.get_number(PSY.get_bus(collect(PSY.get_contributingdevices(service))[1]))
     if forecast
         ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
                                                             service,
@@ -97,7 +97,7 @@ function _get_time_series(canonical::CanonicalModel,
 
 end
 
-function nodal_expression!(canonical::CanonicalModel,
+function balance_expression!(canonical::CanonicalModel,
                            service::L,
                            system_formulation::Type{<:PM.AbstractActivePowerModel}) where L<:PSY.Service
 

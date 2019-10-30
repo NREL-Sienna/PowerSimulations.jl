@@ -21,7 +21,7 @@ function construct_service!(canonical::CanonicalModel,sys::PSY.System,
         reserve_ramp_constraints!(canonical,  service, Sr)
 
         #TODO: bulid the balance constraints elsewhere
-        nodal_expression!(canonical,service, T)
+        balance_expression!(canonical,service, T)
         service_balance(canonical,service)
     end
     return
