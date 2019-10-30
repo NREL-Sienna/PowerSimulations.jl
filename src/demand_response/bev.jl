@@ -76,7 +76,7 @@ See <https://github.nrel.gov/SIIP/dr-study-1/issues/26#issuecomment-22885> and <
 function demandconstraintstou(demand :: BevDemand{T,L}; daytime = true :: Bool) where L where T <: TimeType
     # FIXME: This assumes a single-day simulation.
     pricing =
-        if daytime
+        if !daytime
             TimeArray( # This is a summer schedule, but summer vs winter makes little difference in results.
                 [Time(0), Time(9), Time(14), Time(18), Time(21), Time(23,59,59)],
                 [     4.,      8.,      14.,       8.,       4.,             4.]
