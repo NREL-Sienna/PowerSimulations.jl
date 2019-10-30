@@ -241,8 +241,12 @@ add_expression(canonical::CanonicalModel,
 #Internal Variables, Constraints and Parameters accessors
 vars(canonical::CanonicalModel) = canonical.variables
 cons(canonical::CanonicalModel) = canonical.constraints
-var(canonical::CanonicalModel, name::Symbol) = get(canonical.variables,name,nothing)
-con(canonical::CanonicalModel, name::Symbol) = get(canonical.constraints,name,nothing)
-par(canonical::CanonicalModel, param_reference::UpdateRef) = get(canonical.parameters,param_reference,nothing)
-exp(canonical::CanonicalModel, name::Symbol) = get(canonical.expressions,name,nothing)
+var(canonical::CanonicalModel, name::Symbol) = get(canonical.variables, name, 
+                            @error("No Variable container exist with name =$(name) in Canonical model."))
+con(canonical::CanonicalModel, name::Symbol) = get(canonical.constraints, name,
+                            @error("No Constraint exist with name =$(name) in Canonical model."))
+par(canonical::CanonicalModel, param_reference::UpdateRef) = get(canonical.parameters, param_reference,
+                            @error("No Update reference found in Canonical model that matches $(param_reference)."))
+exp(canonical::CanonicalModel, name::Symbol) = get(canonical.expressions, name,
+                            @error("No Expression container exist with name =$(name) in Canonical model."))
 get_initial_conditions(canonical::CanonicalModel) = canonical.initial_conditions
