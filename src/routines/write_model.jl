@@ -176,7 +176,7 @@ end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
 function _write_canonical_model(canonical::CanonicalModel, save_path::String)
-    MOF_model = MOPFM
+    MOF_model = MOPFM()
     MOI.copy_to(MOF_model, JuMP.backend(canonical.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)
     return

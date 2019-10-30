@@ -5,10 +5,8 @@ function ptdf_networkflow(canonical::CanonicalModel,
                           PTDF::PSY.PTDF) where {B<:PSY.Branch}
 
     time_steps = model_time_steps(canonical)
-    _add_cons_container!(canonical, :network_flow, PTDF.axes[1], time_steps)
-    _add_cons_container!(canonical, :nodal_balance, PTDF.axes[2], time_steps)
-    network_flow = con(canonical, :network_flow)
-    nodal_balance = con(canonical, :nodal_balance)
+    network_flow = _add_cons_container!(canonical, :network_flow, PTDF.axes[1], time_steps)
+    nodal_balance =_add_cons_container!(canonical, :nodal_balance, PTDF.axes[2], time_steps)
     nodal_balance_expressions = canonical.expressions[expression]
 
     branch_types = typeof.(branches)

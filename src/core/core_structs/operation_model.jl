@@ -74,7 +74,7 @@ OpModel = OperationModel(TestOptModel, model_ref, c_sys5_re; PTDF = PTDF5, optim
 into the optimization model the default is nothing.
 -`initial_conditions::DICKDA = DICKDA()`: default of Dict{ICKey, Array{InitialCondition}}
 -`parameters::Bool = false`: enable JuMP parameters
--`forecast::Bool = true`: if true, forecast collects the time steps in Power Systems,
+-`use_forecast_data::Bool = true`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
 -`initial_time::Dates.DateTime = PSY.get_forecasts_initial_time(sys)`: initial time of forecast
 """
@@ -126,7 +126,7 @@ OpModel = OperationModel(TestOptModel, model_ref, c_sys5_re; PTDF = PTDF5, optim
 into the optimization model the default is nothing.
 -`initial_conditions::DICKDA = DICKDA()`: default of Dict{ICKey, Array{InitialCondition}}
 -`parameters::Bool = false`: enable JuMP parameters
--`forecast::Bool = true`: if true, forecast collects the time steps in Power Systems,
+-`use_forecast_data::Bool = true`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
 -`initial_time::Dates.DateTime = PSY.get_forecasts_initial_time(sys)`: initial time of forecast
 
@@ -176,7 +176,7 @@ OpModel = OperationModel(TestOptModel, model_ref, c_sys5_re; PTDF = PTDF5, optim
 into the optimization model the default is nothing.
 -`initial_conditions::DICKDA = DICKDA()`: default of Dict{ICKey, Array{InitialCondition}}
 -`parameters::Bool = false`: enable JuMP parameters
--`forecast::Bool = true`: if true, forecast collects the time steps in Power Systems,
+-`use_forecast_data::Bool = true`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
 -`initial_time::Dates.DateTime`: initial time of forecast
 
@@ -321,10 +321,11 @@ function construct_device!(op_model::OperationModel,
         error("Device with model name $(name) already exists in the Opertaion Model")
     end
 
-    op_model.model_ref.devices[name] = device_model
+    devices_ref = get_devices_ref(op_model)
+    devices_ref[name] = device_model
 
     construct_device!(op_model.canonical,
-                     get_system(op_model),
+                      get_system(op_model),
                       device_model,
                       get_transmission_ref(op_model);
                       kwargs...)
@@ -366,6 +367,6 @@ function get_initial_conditions(op_model::OperationModel,
     canonical = op_model.canonical
     key = ICKey(ic, device)
 
-    return get_ini_cond(canonical, key)
+    return get_initial_conditions(canonical, key)
 
 end

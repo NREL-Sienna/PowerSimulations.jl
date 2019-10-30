@@ -80,7 +80,7 @@ function _get_time_series(canonical::CanonicalModel,
                           devices::IS.FlattenIteratorWrapper{<:PSY.ElectricLoad})
 
     initial_time = model_initial_time(canonical)
-    forecast = model_uses_forecasts(canonical)
+    use_forecast_data = model_uses_forecasts(canonical)
     time_steps = model_time_steps(canonical)
     device_total = length(devices)
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, device_total)
@@ -89,9 +89,9 @@ function _get_time_series(canonical::CanonicalModel,
     for (ix, device) in enumerate(devices)
         bus_number = PSY.get_number(PSY.get_bus(device))
         name = PSY.get_name(device)
-        active_power = forecast ? PSY.get_maxactivepower(device) : PSY.get_activepower(device)
-        reactive_power = forecast ? PSY.get_maxreactivepower(device) : PSY.get_reactivepower(device)
-        if forecast
+        active_power = use_forecast_data ? PSY.get_maxactivepower(device) : PSY.get_activepower(device)
+        reactive_power = use_forecast_data ? PSY.get_maxreactivepower(device) : PSY.get_reactivepower(device)
+        if use_forecast_data
             ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
                                                                 device,
                                                                 initial_time,
@@ -113,9 +113,9 @@ function activepower_constraints!(canonical::CanonicalModel,
                                  system_formulation::Type{<:PM.AbstractPowerModel}) where L<:PSY.ElectricLoad
 
     parameters = model_has_parameters(canonical)
-    forecast = model_uses_forecasts(canonical)
+    use_forecast_data = model_uses_forecasts(canonical)
 
-    if !parameters && !forecast
+    if !parameters && !use_forecast_data
         range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_activepower(d))) for d in devices]
         device_range(canonical,
                     range_data,
@@ -148,9 +148,9 @@ function activepower_constraints!(canonical::CanonicalModel,
                                  system_formulation::Type{<:PM.AbstractPowerModel}) where L<:PSY.ElectricLoad
 
     parameters = model_has_parameters(canonical)
-    forecast = model_uses_forecasts(canonical)
+    use_forecast_data = model_uses_forecasts(canonical)
 
-    if !parameters && !forecast
+    if !parameters && !use_forecast_data
         range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_activepower(d))) for d in devices]
         device_range(canonical,
                     range_data,

@@ -68,7 +68,7 @@ function _canonical_init(bus_numbers::Vector{Int64},
                         transmission::Type{S},
                         time_steps::UnitRange{Int64},
                         resolution::Dates.Period,
-                        forecast::Bool,
+                        use_forecast_data::Bool,
                         initial_time::Dates.DateTime,
                         parameters::Bool,
                         ini_con::DICKDA) where {S<:PM.AbstractPowerModel}
@@ -80,7 +80,7 @@ function _canonical_init(bus_numbers::Vector{Int64},
                               parameters,
                               time_steps,
                               resolution,
-                              forecast,
+                              use_forecast_data,
                               initial_time,
                               DSDA(),
                               DSDA(),
@@ -104,7 +104,7 @@ mutable struct CanonicalModel
     parametrized::Bool
     time_steps::UnitRange{Int64}
     resolution::Dates.Period
-    forecast::Bool
+    use_forecast_data::Bool
     initial_time::Dates.DateTime
     variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
@@ -119,7 +119,7 @@ mutable struct CanonicalModel
                             parametrized::Bool,
                             time_steps::UnitRange{Int64},
                             resolution::Dates.Period,
-                            forecast::Bool,
+                            use_forecast_data::Bool,
                             initial_time::Dates.DateTime,
                             variables::Dict{Symbol, JuMP.Containers.DenseAxisArray},
                             constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray},
@@ -137,7 +137,7 @@ mutable struct CanonicalModel
             parametrized,
             time_steps,
             resolution,
-            forecast,
+            use_forecast_data,
             initial_time,
             variables,
             constraints,
@@ -160,11 +160,11 @@ function CanonicalModel(::Type{T},
     user_defined_model = get(kwargs, :JuMPmodel, nothing)
     ini_con = get(kwargs, :initial_conditions, DICKDA())
     parameters = get(kwargs, :parameters, false)
-    forecast = get(kwargs, :forecast, true)
+    use_forecast_data = get(kwargs, :use_forecast_data, true)
     jump_model = _pass_abstract_jump(optimizer, parameters, user_defined_model)
     initial_time = get(kwargs, :initial_time, PSY.get_forecasts_initial_time(sys))
 
-    if forecast
+    if use_forecast_data
         horizon = PSY.get_forecasts_horizon(sys)
         time_steps = 1:horizon
         resolution = PSY.get_forecasts_resolution(sys)
@@ -181,7 +181,7 @@ function CanonicalModel(::Type{T},
                            T,
                            time_steps,
                            resolution,
-                           forecast,
+                           use_forecast_data,
                            initial_time,
                            parameters,
                            ini_con)
@@ -210,7 +210,7 @@ function InitialCondition(canonical::CanonicalModel,
 
 end
 
-function get_ini_cond(canonical::CanonicalModel, key::ICKey)
+function get_initial_conditions(canonical::CanonicalModel, key::ICKey)
     return get(canonical.initial_conditions, key, Vector{InitialCondition}())
 end
 
@@ -233,7 +233,7 @@ _variable_type(cm::CanonicalModel) = JuMP.variable_type(cm.JuMPmodel)
 model_time_steps(canonical::CanonicalModel) = canonical.time_steps
 model_resolution(canonical::CanonicalModel) = canonical.resolution
 model_has_parameters(canonical::CanonicalModel) = canonical.parametrized
-model_uses_forecasts(canonical::CanonicalModel) = canonical.forecast
+model_uses_forecasts(canonical::CanonicalModel) = canonical.use_forecast_data
 model_initial_time(canonical::CanonicalModel) = canonical.initial_time
 #Internal Variables, Constraints and Parameters accessors
 vars(canonical::CanonicalModel) = canonical.variables
