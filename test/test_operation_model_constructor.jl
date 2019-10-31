@@ -9,10 +9,10 @@ services = Dict{Symbol, PSI.ServiceModel}()
     op_model = OperationModel(TestOptModel, model_ref,
                                             c_sys5;
                                             optimizer = GLPK_optimizer,
-                                            parameters = true)
+                                           use_parameters = true)
     moi_tests(op_model, true, 120, 120, 0, 0, 24, false)
-    #=
-    j_model = op_model.canonical.JuMPmodel
+#=
+  j_model = op_model.canonical.JuMPmodel
     @test (:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 120
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 120
@@ -57,7 +57,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
     op_model = OperationModel(TestOptModel, model_ref,
                                             c_sys5_re;
                                             use_forecast_data = false,
-                                            parameters = false,
+                                            use_parameters = false,
                                             optimizer = GLPK_optimizer)
     moi_tests(op_model, false, 5, 5, 0, 0, 1, false)
     #=
@@ -106,7 +106,7 @@ end
             model_ref = ModelReference(net, devices, branches, services);
             op_model = OperationModel(TestOptModel,
                                       model_ref,
-                                      system; PTDF = PTDF5, parameters = p);
+                                      system; PTDF = PTDF5, use_parameters = p);
         @test :nodal_balance_active in keys(op_model.canonical.expressions)
         @test (:params in keys(op_model.canonical.JuMPmodel.ext)) == p
         end
@@ -123,10 +123,10 @@ end
     #UC = PSI.UnitCommitment(c_sys5, DCPPowerModel; optimizer = GLPK_optimizer)
 
     #ED_rts_p = PSI.EconomicDispatch(c_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer);
-    #ED_rts = PSI.EconomicDispatch(c_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer, parameters = false);
+    #ED_rts = PSI.EconomicDispatch(c_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer, use_parameters = false);
     # These other tests can be enabled when CDM parser get the correct HVDC type.
     #OPF_rts = PSI.OptimalPowerFlow(sys_rts, PSI.CopperPlatePowerModel, optimizer = ipopt_optimizer)
-    #UC_rts = PSI.UnitCommitment(sys_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer, parameters = false)
+    #UC_rts = PSI.UnitCommitment(sys_rts, PSI.CopperPlatePowerModel; optimizer = GLPK_optimizer, use_parameters = false)
 end
 
 =#

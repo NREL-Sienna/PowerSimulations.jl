@@ -128,7 +128,7 @@ function activepower_constraints!(canonical::CanonicalModel,
 
     range_data = [(PSY.get_name(g), (min = 0.0, max=( PSY.get_activepowerlimits(PSY.get_tech(g))).max)) for g in devices]
     var_key = Symbol("P_$(T)")
-    variable = var(canonical, var_key)
+    variable = get_variable(canonical, var_key)
 
     # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
     for v in variable
@@ -444,7 +444,7 @@ function time_constraints!(canonical::CanonicalModel,
 
     if !(isempty(ini_conds))
        if parameters
-            device_duration_param(canonical,
+            device_duration_parameters(canonical,
                                 time_params,
                                 ini_conds,
                                 Symbol("duration_$(T)"),

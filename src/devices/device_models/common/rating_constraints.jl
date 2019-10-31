@@ -29,10 +29,10 @@ function rating_constraint!(canonical::CanonicalModel,
                             cons_name::Symbol,
                             var_names::Tuple{Symbol, Symbol})
     time_steps = model_time_steps(canonical)
-    var1 = var(canonical, var_names[1])
-    var2 = var(canonical, var_names[2])
+    var1 = get_variable(canonical, var_names[1])
+    var2 = get_variable(canonical, var_names[2])
     _add_cons_container!(canonical, cons_name, (r[1] for r in rating_data), time_steps)
-    constraint = con(canonical, cons_name)
+    constraint = get_constraint(canonical, cons_name)
 
     for r in rating_data
         for t in time_steps

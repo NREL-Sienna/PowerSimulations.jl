@@ -44,9 +44,9 @@ function device_commitment(canonical::CanonicalModel,
                         var_names::Tuple{Symbol, Symbol, Symbol})
 
     time_steps = model_time_steps(canonical)
-    varstart = var(canonical, var_names[1])
-    varstop = var(canonical, var_names[2])
-    varon = var(canonical, var_names[3])
+    varstart = get_variable(canonical, var_names[1])
+    varstop = get_variable(canonical, var_names[2])
+    varon = get_variable(canonical, var_names[3])
     varstart_names = axes(varstart, 1)
     constraint = _add_cons_container!(canonical, cons_name, varstart_names, time_steps)
     aux_cons_name = _middle_rename(cons_name, "_", "aux")

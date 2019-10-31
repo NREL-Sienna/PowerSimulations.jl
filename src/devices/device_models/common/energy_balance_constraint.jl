@@ -45,9 +45,9 @@ function energy_balance(canonical::CanonicalModel,
     fraction_of_hour = Dates.value(Dates.Minute(resolution))/60
     name_index = efficiency_data[1]
 
-    varin = var(canonical, var_names[1])
-    varout = var(canonical, var_names[2])
-    varenergy = var(canonical, var_names[3])
+    varin = get_variable(canonical, var_names[1])
+    varout = get_variable(canonical, var_names[2])
+    varenergy = get_variable(canonical, var_names[3])
 
     constraint = _add_cons_container!(canonical, cons_name, name_index, time_steps)
 
