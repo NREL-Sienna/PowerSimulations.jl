@@ -27,7 +27,7 @@ function ub_ff(canonical::CanonicalModel,
 
     time_steps = model_time_steps(canonical)
     ub_name = _middle_rename(cons_name, "_", "ub")
-    variable = var(canonical, var_name)
+    variable = get_variable(canonical, var_name)
 
     axes = JuMP.axes(variable)
     set_name = axes[1]
@@ -84,7 +84,7 @@ function range_ff(canonical::CanonicalModel,
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
 
-    variable = var(canonical, var_name)
+    variable = get_variable(canonical, var_name)
     axes = JuMP.axes(variable)
     set_name = axes[1]
     @assert axes[2] == time_steps
@@ -159,7 +159,7 @@ function semicontinuousrange_ff(canonical::CanonicalModel,
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
 
-    variable = var(canonical, var_name)
+    variable = get_variable(canonical, var_name)
 
     axes = JuMP.axes(variable)
     set_name = axes[1]

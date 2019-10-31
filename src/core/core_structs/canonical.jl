@@ -209,7 +209,7 @@ end
 
 # Var_ref
 function get_value(canonical::CanonicalModel, ref::UpdateRef{JuMP.VariableRef})
-    return var(canonical, ref.access_ref)
+    return get_variable(canonical, ref.access_ref)
 end
 
 # param_ref
@@ -229,10 +229,10 @@ model_has_parameters(canonical::CanonicalModel) = !isnothing(canonical.parameter
 model_uses_forecasts(canonical::CanonicalModel) = canonical.use_forecast_data
 model_initial_time(canonical::CanonicalModel) = canonical.initial_time
 #Internal Variables, Constraints and Parameters accessors
-vars(canonical::CanonicalModel) = canonical.variables
-cons(canonical::CanonicalModel) = canonical.constraints
-var(canonical::CanonicalModel, name::Symbol) = canonical.variables[name]
-con(canonical::CanonicalModel, name::Symbol) = canonical.constraints[name]
-par(canonical::CanonicalModel, param_reference::UpdateRef) = canonical.parameters[param_reference]
-exp(canonical::CanonicalModel, name::Symbol) = canonical.expressions[name]
+get_variables(canonical::CanonicalModel) = canonical.variables
+get_constraints(canonical::CanonicalModel) = canonical.constraints
+get_variable(canonical::CanonicalModel, name::Symbol) = canonical.variables[name]
+get_constraint(canonical::CanonicalModel, name::Symbol) = canonical.constraints[name]
+get_parameters(canonical::CanonicalModel, param_reference::UpdateRef) = canonical.parameters[param_reference]
+get_expression(canonical::CanonicalModel, name::Symbol) = canonical.expressions[name]
 get_initial_conditions(canonical::CanonicalModel) = canonical.initial_conditions

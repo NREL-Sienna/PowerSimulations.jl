@@ -43,7 +43,7 @@ function device_linear_rateofchange(canonical::CanonicalModel,
     up_name = _middle_rename(cons_name, "_", "up")
     down_name = _middle_rename(cons_name, "_", "dn")
 
-    variable = var(canonical, var_name)
+    variable = get_variable(canonical, var_name)
 
     set_name = (device_name(ic) for ic in initial_conditions)
     con_up = _add_cons_container!(canonical, up_name, set_name, time_steps)
@@ -117,9 +117,9 @@ function device_mixedinteger_rateofchange(canonical::CanonicalModel,
     up_name = _middle_rename(cons_name, "_", "up")
     down_name = _middle_rename(cons_name, "_", "dn")
 
-    variable = var(canonical, var_names[1])
-    varstart = var(canonical, var_names[2])
-    varstop = var(canonical, var_names[3])
+    variable = get_variable(canonical, var_names[1])
+    varstart = get_variable(canonical, var_names[2])
+    varstop = get_variable(canonical, var_names[3])
 
     set_name = (device_name(ic) for ic in initial_conditions)
     con_up = _add_cons_container!(canonical, up_name, set_name, time_steps)

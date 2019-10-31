@@ -35,7 +35,7 @@ function device_range(canonical::CanonicalModel,
                     var_name::Symbol)
 
     time_steps = model_time_steps(canonical)
-    variable = var(canonical, var_name)
+    variable = get_variable(canonical, var_name)
     set_name = (r[1] for r in range_data)
     constraint = _add_cons_container!(canonical, cons_name, set_name, time_steps)
 
@@ -103,8 +103,8 @@ function device_semicontinuousrange(canonical::CanonicalModel,
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
 
-    varcts = var(canonical, var_name)
-    varbin = var(canonical, binvar_name)
+    varcts = get_variable(canonical, var_name)
+    varbin = get_variable(canonical, binvar_name)
 
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
@@ -185,8 +185,8 @@ function reserve_device_semicontinuousrange(canonical::CanonicalModel,
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
 
-    varcts = var(canonical, var_name)
-    varbin = var(canonical, binvar_name)
+    varcts = get_variable(canonical, var_name)
+    varbin = get_variable(canonical, binvar_name)
 
     # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     # In the future this can be updated

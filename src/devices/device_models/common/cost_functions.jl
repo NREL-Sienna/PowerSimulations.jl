@@ -365,7 +365,7 @@ function add_to_cost(canonical::CanonicalModel,
 
     resolution = model_resolution(canonical)
     dt = Dates.value(Dates.Minute(resolution))/60
-    variable = var(canonical, var_name)
+    variable = get_variable(canonical, var_name)
 
     for d in devices
         cost_component = getfield(PSY.get_op_cost(d), cost_symbol)

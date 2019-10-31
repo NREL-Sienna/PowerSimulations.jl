@@ -3,7 +3,7 @@
                       devices::D,
                       var_name::Symbol,
                       binary::Bool,
-                      expression::Symbol,
+                      expression_name::Symbol,
                       sign::Float64)
 
 Adds a variable to the optimization model and to the affine expressions contained
@@ -29,8 +29,8 @@ If binary = true:
 * devices : Vector or Iterator with the devices
 * var_name::Symbol : Base Name for the variable
 * binary::Bool : Select if the variable is binary
-* expression::Symbol : Expression name stored in canonical.expressions to add the variable
-* sign::Float64 : sign of the addition of the variable to the expression. Default Value is 1.0
+* expression_name::Symbol : Expression_name name stored in canonical.expressions to add the variable
+* sign::Float64 : sign of the addition of the variable to the expression_name. Default Value is 1.0
 
 # Accepted Keyword Arguments
 * ub_value_function : Provides the function over device to obtain the value for a upper_bound
@@ -42,7 +42,7 @@ function add_variable(canonical::CanonicalModel,
                       devices::D,
                       var_name::Symbol,
                       binary::Bool,
-                      expression::Union{Nothing,Symbol}=nothing,
+                      expression_name::Union{Nothing,Symbol}=nothing,
                       sign::Float64=1.0; kwargs...) where {D<:Union{Vector{<:PSY.Device},
                                           IS.FlattenIteratorWrapper{<:PSY.Device}}}
 
@@ -65,9 +65,9 @@ function add_variable(canonical::CanonicalModel,
         !isnothing(lb_f) && !binary && JuMP.set_lower_bound(variable[name, t], lb_f(d))
         !isnothing(init_f) && JuMP.set_start_value(variable[name, t], init_f(d))
 
-        if !(isnothing(expression))
+        if !(isnothing(expression_name))
         bus_number = PSY.get_number(PSY.get_bus(d))
-        _add_to_expression!(exp(canonical, expression),
+        _add_to_expression!(get_expression(canonical, expression_name),
                             bus_number,
                             t,
                             variable[name, t],

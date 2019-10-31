@@ -43,9 +43,9 @@ end
 function _write_data(canonical::CanonicalModel, save_path::AbstractString; kwargs...)
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
-        for (k, v) in vars(canonical)
+        for (k, v) in get_variables(canonical)
             file_path = joinpath(save_path,"$(k).$(lowercase("$file_type"))")
-            file_type.write(file_path, _result_dataframe_vars(v))
+            file_type.write(file_path, _result_dataframe_variables(v))
         end
     else
         error("unsupported file type: $file_type")

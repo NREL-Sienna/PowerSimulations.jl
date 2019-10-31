@@ -52,9 +52,9 @@ function device_duration_retrospective(canonical::CanonicalModel,
 
     time_steps = model_time_steps(canonical)
 
-    varon = var(canonical, var_names[1])
-    varstart = var(canonical, var_names[2])
-    varstop = var(canonical, var_names[3])
+    varon = get_variable(canonical, var_names[1])
+    varstart = get_variable(canonical, var_names[2])
+    varstop = get_variable(canonical, var_names[3])
 
     name_up = _middle_rename(cons_name, "_", "up")
     name_down = _middle_rename(cons_name, "_", "dn")
@@ -150,9 +150,9 @@ function device_duration_look_ahead(canonical::CanonicalModel,
 
     time_steps = model_time_steps(canonical)
 
-    varon = var(canonical, var_names[1])
-    varstart = var(canonical, var_names[2])
-    varstop = var(canonical, var_names[3])
+    varon = get_variable(canonical, var_names[1])
+    varstart = get_variable(canonical, var_names[2])
+    varstop = get_variable(canonical, var_names[3])
 
     name_up = _middle_rename(cons_name, "_", "up")
     name_down = _middle_rename(cons_name, "_", "dn")
@@ -201,7 +201,7 @@ end
 
 
 @doc raw"""
-    device_duration_param(canonical::CanonicalModel,
+    device_duration_parameters(canonical::CanonicalModel,
                              duration_data::Vector{UpDown},
                              initial_duration_on::Vector{InitialCondition},
                              initial_duration_off::Vector{InitialCondition},
@@ -248,7 +248,7 @@ for i in the set of time steps.
 - : var_names[2] : varstart
 - : var_names[3] : varstop
 """
-function device_duration_param(canonical::CanonicalModel,
+function device_duration_parameters(canonical::CanonicalModel,
                                duration_data::Vector{UpDown},
                                initial_duration::Matrix{InitialCondition},
                                cons_name::Symbol,
@@ -256,9 +256,9 @@ function device_duration_param(canonical::CanonicalModel,
 
     time_steps = model_time_steps(canonical)
 
-    varon = var(canonical, var_names[1])
-    varstart = var(canonical, var_names[2])
-    varstop = var(canonical, var_names[3])
+    varon = get_variable(canonical, var_names[1])
+    varstart = get_variable(canonical, var_names[2])
+    varstop = get_variable(canonical, var_names[3])
 
     name_up = _middle_rename(cons_name, "_", "up")
     name_down = _middle_rename(cons_name, "_", "dn")
