@@ -78,7 +78,11 @@ function Base.show(io::IO, res_model::OperationModelResults)
 
     for (k, v) in res_model.variables
         time = DataFrames.DataFrame(Time = res_model.time_stamp[!, :Range])
-        var = hcat(time, v)
+        if size(time,2) == size(v,2)
+            var = hcat(time, v)
+        else
+            var = v
+        end
         println(io, "$(k)")
         println(io, "==================")
         println(io, "$(var)\n")

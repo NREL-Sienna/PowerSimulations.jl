@@ -104,6 +104,7 @@ export get_stacked_generation_data
 export bar_plot
 export stack_plot
 export report
+export load_simulation_results
 
 #################################################################################
 # Imports
@@ -202,12 +203,12 @@ include("routines/get_results.jl")
 include("routines/solve_routines.jl")
 include("routines/write_model.jl")
 
-
 #Utils
 include("utils/optimization_debugging.jl")
 include("utils/printing.jl")
 include("utils/plot_results.jl")
 include("utils/plot_recipes.jl")
+include("utils/aggregation.jl")
 
 #Initialization
 
