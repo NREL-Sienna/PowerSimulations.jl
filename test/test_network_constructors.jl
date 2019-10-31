@@ -16,14 +16,14 @@ dc_line = DeviceModel(PSY.HVDCLine, PSI.HVDCDispatch)
     objfuncs = [GAEVF, GQEVF, GQEVF]
 
     for (ix, sys) in enumerate(systems), p in parameters
-        ps_model = OperationModel(TestOptModel, network, sys; optimizer = OSQP_optimizer, parameters = p)
-        construct_device!(ps_model, :Thermal, thermal_model; parameters = p);
-        construct_device!(ps_model, :Load, load_model; parameters = p);
-        construct_network!(ps_model, network; parameters = p);
-        construct_device!(ps_model, :Line, line_model; parameters = p);
-        construct_device!(ps_model, :Tf, transformer_model; parameters = p);
-        construct_device!(ps_model, :TTf, ttransformer_model; parameters = p);
-        construct_device!(ps_model, :DCLine, dc_line; parameters = p);
+        ps_model = OperationModel(TestOptModel, network, sys; optimizer = OSQP_optimizer, use_parameters = p)
+        construct_device!(ps_model, :Thermal, thermal_model; use_parameters = p);
+        construct_device!(ps_model, :Load, load_model; use_parameters = p);
+        construct_network!(ps_model, network; use_parameters = p);
+        construct_device!(ps_model, :Line, line_model; use_parameters = p);
+        construct_device!(ps_model, :Tf, transformer_model; use_parameters = p);
+        construct_device!(ps_model, :TTf, ttransformer_model; use_parameters = p);
+        construct_device!(ps_model, :DCLine, dc_line; use_parameters = p);
 
         moi_tests(ps_model, p, test_results[sys][1],
                                 test_results[sys][2],
@@ -48,14 +48,14 @@ end
                                                     c_sys14_dc => [600, 600, 0, 0, 768])
 
     for (ix, sys) in enumerate(systems), p in parameters
-        ps_model = OperationModel(TestOptModel, network, sys; optimizer = OSQP_optimizer, parameters = p)
-        construct_device!(ps_model, :Thermal, thermal_model; parameters = p);
-        construct_device!(ps_model, :Load, load_model; parameters = p);
-        construct_network!(ps_model, network; PTDF = PTDF_ref[sys], parameters = p);
-        construct_device!(ps_model, :Line, line_model; parameters = p);
-        construct_device!(ps_model, :Tf, transformer_model; parameters = p);
-        construct_device!(ps_model, :TTf, ttransformer_model; parameters = p);
-        construct_device!(ps_model, :DCLine, dc_line; parameters = p);
+        ps_model = OperationModel(TestOptModel, network, sys; optimizer = OSQP_optimizer, use_parameters = p)
+        construct_device!(ps_model, :Thermal, thermal_model; use_parameters = p);
+        construct_device!(ps_model, :Load, load_model; use_parameters = p);
+        construct_network!(ps_model, network; PTDF = PTDF_ref[sys], use_parameters = p);
+        construct_device!(ps_model, :Line, line_model; use_parameters = p);
+        construct_device!(ps_model, :Tf, transformer_model; use_parameters = p);
+        construct_device!(ps_model, :TTf, ttransformer_model; use_parameters = p);
+        construct_device!(ps_model, :DCLine, dc_line; use_parameters = p);
 
         moi_tests(ps_model, p, test_results[sys][1],
                                 test_results[sys][2],
@@ -86,14 +86,14 @@ end
                                                     c_sys14_dc => [984, 600, 432, 432, 840])
 
     for (ix, sys) in enumerate(systems), p in parameters
-        ps_model = OperationModel(TestOptModel, network, sys; optimizer = OSQP_optimizer, parameters = p)
-        construct_device!(ps_model, :Thermal, thermal_model; parameters = p);
-        construct_device!(ps_model, :Load, load_model; parameters = p);
-        construct_network!(ps_model, network; parameters = p);
-        construct_device!(ps_model, :Line, line_model; parameters = p);
-        construct_device!(ps_model, :Tf, transformer_model; parameters = p);
-        construct_device!(ps_model, :TTf, ttransformer_model; parameters = p);
-        construct_device!(ps_model, :DCLine, dc_line; parameters = p);
+        ps_model = OperationModel(TestOptModel, network, sys; optimizer = OSQP_optimizer, use_parameters = p)
+        construct_device!(ps_model, :Thermal, thermal_model; use_parameters = p);
+        construct_device!(ps_model, :Load, load_model; use_parameters = p);
+        construct_network!(ps_model, network; use_parameters = p);
+        construct_device!(ps_model, :Line, line_model; use_parameters = p);
+        construct_device!(ps_model, :Tf, transformer_model; use_parameters = p);
+        construct_device!(ps_model, :TTf, ttransformer_model; use_parameters = p);
+        construct_device!(ps_model, :DCLine, dc_line; use_parameters = p);
 
         moi_tests(ps_model, p, test_results[sys][1],
                                 test_results[sys][2],
@@ -118,14 +118,14 @@ end
                                                     c_sys14_dc => [2832, 336, 432, 432, 744]) # TODO: changed the interval constraint number to 336 from 240. double check
 
     for (ix, sys) in enumerate(systems), p in parameters
-        ps_model = OperationModel(TestOptModel, network, sys; optimizer = ipopt_optimizer, parameters = p)
-        construct_device!(ps_model, :Thermal, thermal_model; parameters = p);
-        construct_device!(ps_model, :Load, load_model; parameters = p);
-        construct_network!(ps_model, network; parameters = p);
-        construct_device!(ps_model, :Line, line_model; parameters = p);
-        construct_device!(ps_model, :Tf, transformer_model; parameters = p);
-        construct_device!(ps_model, :TTf, ttransformer_model; parameters = p);
-        construct_device!(ps_model, :DCLine, dc_line; parameters = p);
+        ps_model = OperationModel(TestOptModel, network, sys; optimizer = ipopt_optimizer, use_parameters = p)
+        construct_device!(ps_model, :Thermal, thermal_model; use_parameters = p);
+        construct_device!(ps_model, :Load, load_model; use_parameters = p);
+        construct_network!(ps_model, network; use_parameters = p);
+        construct_device!(ps_model, :Line, line_model; use_parameters = p);
+        construct_device!(ps_model, :Tf, transformer_model; use_parameters = p);
+        construct_device!(ps_model, :TTf, ttransformer_model; use_parameters = p);
+        construct_device!(ps_model, :DCLine, dc_line; use_parameters = p);
 
         moi_tests(ps_model, p, test_results[sys][1],
                                 test_results[sys][2],
@@ -144,12 +144,12 @@ end
     p = true
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
-        ps_model = OperationModel(TestOptModel, network, sys; optimizer = OSQP_optimizer, parameters = p)
-        construct_device!(ps_model, :Thermal, thermal_model; parameters = p);
-        construct_device!(ps_model, :Load, load_model; parameters = p);
-        construct_network!(ps_model, network; parameters = p);
-        construct_device!(ps_model, :Line, line_model; parameters = p);
-        construct_device!(ps_model, :DCLine, dc_line; parameters = p);
+        ps_model = OperationModel(TestOptModel, network, sys; optimizer = OSQP_optimizer, use_parameters = p)
+        construct_device!(ps_model, :Thermal, thermal_model; use_parameters = p);
+        construct_device!(ps_model, :Load, load_model; use_parameters = p);
+        construct_network!(ps_model, network; use_parameters = p);
+        construct_device!(ps_model, :Line, line_model; use_parameters = p);
+        construct_device!(ps_model, :DCLine, dc_line; use_parameters = p);
         psi_checksolve_test(ps_model, [MOI.OPTIMAL])
 
     end
