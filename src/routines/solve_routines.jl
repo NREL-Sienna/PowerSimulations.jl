@@ -1,13 +1,13 @@
 """
-    solve_op_model!(op_model::OperationModel; kwargs...)
+    solve_op_model!(op_model::OperationsProblem; kwargs...)
 
 This solves the operational model for a single instance and
-outputs results of type OperationModelResult: objective value, time log,
+outputs results of type OperationsProblemResult: objective value, time log,
 a dictionary of variables and their dataframe of results, and a time stamp.
 
 # Arguments
 
--`op_model::OperationModel = op_model`: operation model
+-`op_model::OperationsProblem = op_model`: operation model
 
 # Examples
 
@@ -20,7 +20,7 @@ results = solve_op_model!(OpModel)
 automatically get written to feather files
 * optimizer : The optimizer that is used to solve the model
 """
-function solve_op_model!(op_model::OperationModel; kwargs...)
+function solve_op_model!(op_model::OperationsProblem; kwargs...)
 
     timed_log = Dict{Symbol, Any}()
 
@@ -53,7 +53,7 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
     obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_model.canonical.JuMPmodel))
     merge!(optimizer_log, timed_log)
 
-    results = OperationModelResults(vars_result, obj_value, optimizer_log, time_stamp)
+    results = OperationsProblemResults(vars_result, obj_value, optimizer_log, time_stamp)
 
     !isnothing(save_path) && write_model_results(results, save_path)
 

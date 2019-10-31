@@ -1,4 +1,4 @@
-function include_parameters(canonical::CanonicalModel,
+function include_parameters(canonical::Canonical,
                             data::Matrix,
                             param_reference::UpdateRef,
                             axs...)
@@ -14,7 +14,7 @@ function include_parameters(canonical::CanonicalModel,
 
 end
 
-function include_parameters(canonical::CanonicalModel,
+function include_parameters(canonical::Canonical,
                             ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                             param_reference::UpdateRef,
                             expression_name::Symbol,

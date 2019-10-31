@@ -67,7 +67,7 @@ end
 
 # Function to write results dataframes and variables to a dictionary
 
-function get_model_result(op_m::OperationModel)
+function get_model_result(op_m::OperationsProblem)
 
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
 
@@ -79,7 +79,7 @@ function get_model_result(op_m::OperationModel)
 
 end
 
-function get_model_duals(op_m::OperationModel, cons::Vector{Symbol})
+function get_model_duals(op_m::OperationsProblem, cons::Vector{Symbol})
 
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
 
@@ -94,7 +94,7 @@ end
 
 # Function to create a dictionary for the optimizer log of the simulation
 
-function get_optimizer_log(op_m::OperationModel)
+function get_optimizer_log(op_m::OperationsProblem)
 
     canonical = op_m.canonical
 
@@ -116,7 +116,7 @@ end
 
 # Function to create a dictionary for the time series of the simulation
 
-function get_time_stamps(op_model::OperationModel)
+function get_time_stamps(op_model::OperationsProblem)
 
     initial_time = PSY.get_forecasts_initial_time(op_model.sys)
     interval = PSY.get_forecasts_resolution(op_model.sys)

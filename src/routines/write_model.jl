@@ -92,7 +92,7 @@ function _write_optimizer_log(optimizer_log::Dict, save_path::AbstractString)
 
 end
 
-function _write_data(canonical::CanonicalModel, save_path::AbstractString; kwargs...)
+function _write_data(canonical::Canonical, save_path::AbstractString; kwargs...)
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
         for (k, v) in get_variables(canonical)
@@ -105,7 +105,7 @@ function _write_data(canonical::CanonicalModel, save_path::AbstractString; kwarg
     return
 end
 
-function write_data(op_model::OperationModel, save_path::AbstractString; kwargs...)
+function write_data(op_model::OperationsProblem, save_path::AbstractString; kwargs...)
     _write_data(op_model.canonical, save_path; kwargs...)
     return
 end
@@ -123,7 +123,7 @@ function _export_model_result(stage::_Stage, start_time::Dates.DateTime, save_pa
 end
 
 function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
-                               canonical::CanonicalModel,
+                               canonical::Canonical,
                                path::String)
 
     optimizer_log[:obj_value] = JuMP.objective_value(canonical.JuMPmodel)
@@ -141,9 +141,9 @@ function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
 end
 
 """ Exports Operational Model Results to a path"""
-function write_model_results(results::OperationModelResults, save_path::String)
+function write_model_results(results::OperationsProblemResults, save_path::String)
     if !isdir(save_path)
-        @error("Specified path is not valid. Run write_results to save results.")
+        error("Specified path is not valid. Run write_results to save results.")
     end
     _new_folder_path = replace_chars("$save_path/$(round(Dates.now(),Dates.Minute))", ":", "-")
     new_folder = mkdir(_new_folder_path)
@@ -155,9 +155,9 @@ function write_model_results(results::OperationModelResults, save_path::String)
     return
 end
 """ Exports Simulation Model Results to a path"""
-function write_model_results(res::OperationModelResults, path::String, results::String; kwargs...)
+function write_model_results(res::OperationsProblemResults, path::String, results::String; kwargs...)
     if !isdir(path)
-        @error("Specified path is not valid. Run write_results to save results.")
+        error("Specified path is not valid. Run write_results to save results.")
     end
     folder_path = joinpath(path,results)
     write_data(res.variables, res.time_stamp, folder_path; kwargs...)
@@ -169,13 +169,13 @@ function write_model_results(res::OperationModelResults, path::String, results::
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
-function write_op_model(op_model::OperationModel, save_path::String)
-    _write_canonical_model(op_model.canonical, save_path)
+function write_op_model(op_model::OperationsProblem, save_path::String)
+    _write_canonical(op_model.canonical, save_path)
     return
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
-function _write_canonical_model(canonical::CanonicalModel, save_path::String)
+function _write_canonical(canonical::Canonical, save_path::String)
     MOF_model = MOPFM()
     MOI.copy_to(MOF_model, JuMP.backend(canonical.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)

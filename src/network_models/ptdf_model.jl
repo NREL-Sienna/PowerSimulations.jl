@@ -1,4 +1,4 @@
-function ptdf_networkflow(canonical::CanonicalModel,
+function ptdf_networkflow(canonical::Canonical,
                           branches::IS.FlattenIteratorWrapper{B},
                           buses::IS.FlattenIteratorWrapper{PSY.Bus},
                           expression::Symbol,

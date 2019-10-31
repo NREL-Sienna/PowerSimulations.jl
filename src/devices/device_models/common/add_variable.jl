@@ -1,5 +1,5 @@
 @doc raw"""
-    add_variable(canonical::CanonicalModel,
+    add_variable(canonical::Canonical,
                       devices::D,
                       var_name::Symbol,
                       binary::Bool,
@@ -25,7 +25,7 @@ If binary = true:
 ``  x^{device}_t \in {0,1} \forall t iff \text{binary = true}``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * devices : Vector or Iterator with the devices
 * var_name::Symbol : Base Name for the variable
 * binary::Bool : Select if the variable is binary
@@ -38,7 +38,7 @@ If binary = true:
 * initial_value_function : Provides the function over device to obtain the warm start value
 
 """
-function add_variable(canonical::CanonicalModel,
+function add_variable(canonical::Canonical,
                       devices::D,
                       var_name::Symbol,
                       binary::Bool,
@@ -80,7 +80,7 @@ function add_variable(canonical::CanonicalModel,
 end
 
 @doc raw"""
-    set_variable_bounds(canonical::CanonicalModel,
+    set_variable_bounds(canonical::Canonical,
                             bounds::Vector{NamedMinMax},
                             var_name::Symbol)
 
@@ -98,12 +98,12 @@ Adds a bounds to a variable in the optimization model.
 ``  x^{device}_t <= bound^{max} \forall t ``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * bounds::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
 * var_name::Symbol : Base Name for the variable
 
 """
-function set_variable_bounds(canonical::CanonicalModel,
+function set_variable_bounds(canonical::Canonical,
                             bounds::Vector{NamedMinMax},
                             var_name::Symbol)
 

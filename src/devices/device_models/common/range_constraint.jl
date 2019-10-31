@@ -1,5 +1,5 @@
 @doc raw"""
-    device_range(canonical::CanonicalModel,
+    device_range(canonical::Canonical,
                         range_data::Vector{NamedMinMax},
                         cons_name::Symbol,
                         var_name::Symbol)
@@ -24,12 +24,12 @@ where r in range_data.
 `` r^{min} \leq x \leq r^{max}, \text{ otherwise } ``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * range_data::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 """
-function device_range(canonical::CanonicalModel,
+function device_range(canonical::Canonical,
                     range_data::Vector{NamedMinMax},
                     cons_name::Symbol,
                     var_name::Symbol)
@@ -57,7 +57,7 @@ function device_range(canonical::CanonicalModel,
 end
 
 @doc raw"""
-    device_semicontinuousrange(canonical::CanonicalModel,
+    device_semicontinuousrange(canonical::Canonical,
                                     scrange_data::Vector{NamedMinMax},
                                     cons_name::Symbol,
                                     var_name::Symbol,
@@ -87,13 +87,13 @@ where r in range_data.
 `` r^{min} x^{bin} \leq x^{cts} \leq r^{max} x^{bin}, \text{ otherwise } ``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * scrange_data::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 * binvar_name::Symbol : the name of the binary variable
 """
-function device_semicontinuousrange(canonical::CanonicalModel,
+function device_semicontinuousrange(canonical::Canonical,
                                     scrange_data::Vector{NamedMinMax},
                                     cons_name::Symbol,
                                     var_name::Symbol,
@@ -139,7 +139,7 @@ function device_semicontinuousrange(canonical::CanonicalModel,
 end
 
 @doc raw"""
-    reserve_device_semicontinuousrange(canonical::CanonicalModel,
+    reserve_device_semicontinuousrange(canonical::Canonical,
                                     scrange_data::Vector{NamedMinMax},
                                     cons_name::Symbol,
                                     var_name::Symbol,
@@ -169,13 +169,13 @@ where r in range_data.
 `` r^{min} (1 - x^{bin} ) \leq x^{cts} \leq r^{max} (1 - x^{bin} ), \text{ otherwise } ``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * scrange_data::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 * binvar_name::Symbol : the name of the binary variable
 """
-function reserve_device_semicontinuousrange(canonical::CanonicalModel,
+function reserve_device_semicontinuousrange(canonical::Canonical,
                                             scrange_data::Vector{NamedMinMax},
                                             cons_name::Symbol,
                                             var_name::Symbol,

@@ -1,5 +1,5 @@
 #=
-function Base.show(io::IO, op_model::OperationModel)
+function Base.show(io::IO, op_model::OperationsProblem)
     println(io, "Operation Model")
 end
 =#
@@ -23,21 +23,21 @@ function _organize_device_model(val::Dict{Symbol,DeviceModel}, field::Symbol, io
 end
 
 """
-    Base.show(io::IO, ::MIME"text/plain", op_model::OperationModel)
+    Base.show(io::IO, ::MIME"text/plain", op_model::OperationsProblem)
 
-This function goes through the fields in OperationModel and then in ModelReference,
+This function goes through the fields in OperationsProblem and then in FormulationTemplate,
 if the field contains a Device model dictionary, it calls organize_device_model() &
 prints the data by field, key, value. If the field is not a Device model dictionary,
 and a value exists for that field it prints the value.
 
 
 """
-function Base.show(io::IO, ::MIME"text/plain", op_model::OperationModel)
+function Base.show(io::IO, ::MIME"text/plain", op_model::OperationsProblem)
 
-    println(io, "\nOperation Model")
+    println(io, "\nOperations Problem")
     println(io, "===============\n")
 
-    for field in fieldnames(ModelReference)
+    for field in fieldnames(FormulationTemplate)
 
         val = getfield(op_model.model_ref, Symbol(field))
 
@@ -58,7 +58,7 @@ end
 
 
 
-function Base.show(io::IO, op_model::CanonicalModel)
+function Base.show(io::IO, op_model::Canonical)
     println(io, "Canonical()")
 end
 
@@ -66,14 +66,14 @@ function Base.show(io::IO, op_model::Simulation)
     println(io, "Simulation()")
 end
 #=
-function Base.show(io::IO, res_model::OperationModelResults)
+function Base.show(io::IO, res_model::OperationsProblemResults)
     println(io, "Results Model")
  end
 
 =#
 
-function Base.show(io::IO, res_model::OperationModelResults)
-    println(io, "\nResults Model")
+function Base.show(io::IO, res_model::OperationsProblemResults)
+    println(io, "\nResults")
     println(io, "===============\n")
 
     for (k, v) in res_model.variables

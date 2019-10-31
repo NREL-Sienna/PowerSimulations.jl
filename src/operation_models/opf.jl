@@ -1,4 +1,4 @@
-struct OptimalPowerFlow<:AbstractOperationModel end
+struct OptimalPowerFlow<:AbstractOperationsProblem end
 
 function OptimalPowerFlow(sys::PSY.System, transmission::Type{S}; optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing, kwargs...) where {S<:PM.AbstractPowerModel}
 
@@ -9,7 +9,7 @@ function OptimalPowerFlow(sys::PSY.System, transmission::Type{S}; optimizer::Uni
     branches = Dict{Symbol, DeviceModel}(:Lines => DeviceModel(PSY.Branch, SeriesLine))
     services = Dict{Symbol, ServiceModel}(:Reserves => ServiceModel(PSY.Reserve, AbstractReservesFormulation))
 
-    return OperationModel(OptimalPowerFlow ,
+    return OperationsProblem(OptimalPowerFlow ,
                                    transmission,
                                     devices,
                                     branches,

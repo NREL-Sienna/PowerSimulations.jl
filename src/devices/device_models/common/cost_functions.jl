@@ -1,5 +1,5 @@
 @doc raw"""
-    ps_cost(canonical::CanonicalModel,
+    ps_cost(canonical::Canonical,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::Float64,
                 dt::Float64,
@@ -21,13 +21,13 @@ Returns:
 
 # Arguments
 
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::Float64 : cost to be associated with variable
 * dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
 """
-function ps_cost(canonical::CanonicalModel,
+function ps_cost(canonical::Canonical,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::Float64,
                 dt::Float64,
@@ -40,7 +40,7 @@ function ps_cost(canonical::CanonicalModel,
 end
 
 @doc raw"""
-    ps_cost(canonical::CanonicalModel,
+    ps_cost(canonical::Canonical,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::PSY.VariableCost{Float64},
                 dt::Float64,
@@ -55,13 +55,13 @@ Returns:
 
 # Arguments
 
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{Float64} : container for cost to be associated with variable
 * dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
 """
-function ps_cost(canonical::CanonicalModel,
+function ps_cost(canonical::Canonical,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::PSY.VariableCost{Float64},
                 dt::Float64,
@@ -72,7 +72,7 @@ function ps_cost(canonical::CanonicalModel,
 end
 
 @doc raw"""
-    ps_cost(canonical::CanonicalModel,
+    ps_cost(canonical::Canonical,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::PSY.VariableCost{NTuple{2, Float64}}
                 dt::Float64,
@@ -96,12 +96,12 @@ Returns ```gen_cost```
 
 # Arguments
 
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 * sign::Float64 : positive or negative sign to be associated cost term
 """
-function ps_cost(canonical::CanonicalModel,
+function ps_cost(canonical::Canonical,
                  variable::JuMP.Containers.DenseAxisArray{JV},
                  cost_component::PSY.VariableCost{NTuple{2, Float64}},
                  dt::Float64,
@@ -144,7 +144,7 @@ end
 
 
 @doc raw"""
-    _pwlgencost_sos(canonical::CanonicalModel,
+    _pwlgencost_sos(canonical::Canonical,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::PSY.VariableCost{NTuple{2, Float64}}) where {JV <: JuMP.AbstractVariableRef}
 
@@ -166,11 +166,11 @@ Returns ```gen_cost```
 
 # Arguments
 
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 """
-function _pwlgencost_sos(canonical::CanonicalModel,
+function _pwlgencost_sos(canonical::Canonical,
         variable::JV,
         cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
@@ -193,7 +193,7 @@ function _pwlgencost_sos(canonical::CanonicalModel,
 end
 
 @doc raw"""
-    _pwlgencost_sos(canonical::CanonicalModel,
+    _pwlgencost_sos(canonical::Canonical,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::PSY.VariableCost{NTuple{2, Float64}}) where {JV <: JuMP.AbstractVariableRef}
 
@@ -218,11 +218,11 @@ Returns ```gen_cost```
 
 # Arguments
 
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 """
-function _pwlgencost_linear(canonical::CanonicalModel,
+function _pwlgencost_linear(canonical::Canonical,
         variable::JV,
         cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
@@ -256,11 +256,11 @@ Returns ```gen_cost```
 
 # Arguments
 
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 """
-function _pwl_cost(canonical::CanonicalModel,
+function _pwl_cost(canonical::Canonical,
                     variable::JV,
                     cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
@@ -279,7 +279,7 @@ function _pwl_cost(canonical::CanonicalModel,
 end
 
 @doc raw"""
-    ps_cost(canonical::CanonicalModel,
+    ps_cost(canonical::Canonical,
                  variable::JuMP.Containers.DenseAxisArray{JV},
                  cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
                  dt::Float64,
@@ -303,13 +303,13 @@ where ``c_v`` is given by
 
 # Arguments
 
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}}
 * dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
 """
-function ps_cost(canonical::CanonicalModel,
+function ps_cost(canonical::Canonical,
                  variable::JuMP.Containers.DenseAxisArray{JV},
                  cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
                  dt::Float64,
@@ -327,7 +327,7 @@ function ps_cost(canonical::CanonicalModel,
 end
 
 @doc raw"""
-    add_to_cost(canonical::CanonicalModel,
+    add_to_cost(canonical::Canonical,
                      devices::D,
                      var_name::Symbol,
                      cost_symbol::Symbol,
@@ -352,12 +352,12 @@ for d in devices
 
 # Arguments
 
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * devices::D : set of devices
 * var_name::Symbol : name of variable
 * cost_symbol::Symbol : symbol associated with costx
 """
-function add_to_cost(canonical::CanonicalModel,
+function add_to_cost(canonical::Canonical,
                      devices::D,
                      var_name::Symbol,
                      cost_symbol::Symbol,

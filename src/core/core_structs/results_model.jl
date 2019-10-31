@@ -1,4 +1,4 @@
-struct OperationModelResults
+struct OperationsProblemResults
     variables::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict{Symbol, Any}
     optimizer_log::Dict{Symbol, Any}
@@ -6,7 +6,7 @@ struct OperationModelResults
 
 end
 
-function get_variable(res_model::OperationModelResults, key::Symbol)
+function get_variable(res_model::OperationsProblemResults, key::Symbol)
         try
             !isnothing(res_model.variables)
         catch
@@ -15,11 +15,11 @@ function get_variable(res_model::OperationModelResults, key::Symbol)
     return get(res_model.variables, key, nothing)
 end
 
-function get_optimizer_log(res_model::OperationModelResults)
+function get_optimizer_log(res_model::OperationsProblemResults)
     return res_model.optimizer_log
 end
 
-function get_time_stamps(res_model::OperationModelResults, key::Symbol)
+function get_time_stamps(res_model::OperationsProblemResults, key::Symbol)
     return res_model.time_stamp
 end
 
@@ -70,7 +70,7 @@ function load_operation_results(path::AbstractString, directory::AbstractString)
 
 
         obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer[:obj_value])
-        results = OperationModelResults(variable_dict, obj_value, optimizer, time_stamp)
+        results = OperationsProblemResults(variable_dict, obj_value, optimizer, time_stamp)
 
     return results
 

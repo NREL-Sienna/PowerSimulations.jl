@@ -1,8 +1,8 @@
-abstract type AbstractOperationModel end
+abstract type AbstractOperationsProblem end
 
-struct DefaultOpModel<:AbstractOperationModel end
+struct DefaultOpModel<:AbstractOperationsProblem end
 
-mutable struct ModelReference
+mutable struct FormulationTemplate
     transmission::Type{<:PM.AbstractPowerModel}
     devices::Dict{Symbol, DeviceModel}
     branches::Dict{Symbol, DeviceModel}
@@ -10,7 +10,7 @@ mutable struct ModelReference
 end
 
 """
-    ModelReference(::Type{T}) where {T<:PM.AbstractPowerFormulation}
+    FormulationTemplate(::Type{T}) where {T<:PM.AbstractPowerFormulation}
 
 Creates a model reference of the Power Formulation, devices, branches, and services.
 
@@ -22,49 +22,49 @@ Creates a model reference of the Power Formulation, devices, branches, and servi
 
 # Example
 ```julia
-model_ref= ModelReference(CopperPlatePowerModel, devices, branches, services)
+model_ref= FormulationTemplate(CopperPlatePowerModel, devices, branches, services)
 ```
 """
-function ModelReference(::Type{T}) where {T<:PM.AbstractPowerModel}
+function FormulationTemplate(::Type{T}) where {T<:PM.AbstractPowerModel}
 
-    return  ModelReference(T,
+    return  FormulationTemplate(T,
                            Dict{Symbol, DeviceModel}(),
                            Dict{Symbol, DeviceModel}(),
                            Dict{Symbol, ServiceModel}())
 
 end
 
-mutable struct OperationModel{M<:AbstractOperationModel}
-    model_ref::ModelReference
+mutable struct OperationsProblem{M<:AbstractOperationsProblem}
+    model_ref::FormulationTemplate
     sys::PSY.System
-    canonical::CanonicalModel
+    canonical::Canonical
 end
 
 """
-    OperationModel(::Type{M},
-    model_ref::ModelReference,
+    OperationsProblem(::Type{M},
+    model_ref::FormulationTemplate,
     sys::PSY.System;
     optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
-    kwargs...) where {M<:AbstractOperationModel,
+    kwargs...) where {M<:AbstractOperationsProblem,
                       T<:PM.AbstractPowerFormulation}
 
 This builds the optimization model and populates the operation model
 
 # Arguments
--`::Type{M} where {M<:AbstractOperationModel, T<:PM.AbstractPowerFormulation} = TestOptModel`:
+-`::Type{M} where {M<:AbstractOperationsProblem, T<:PM.AbstractPowerFormulation} = TestOptModel`:
 The abstract operation model type
--`model_ref::ModelReference`: The model reference made up of transmission, devices,
+-`model_ref::FormulationTemplate`: The model reference made up of transmission, devices,
                                           branches, and services.
 -`sys::PSY.System`: the system created using Power Systems
 
 # Output
--`op_model::OperationModel`: The operation model contains the model type, model, Power
+-`op_model::OperationsProblem`: The operation model contains the model type, model, Power
 Systems system, and optimization model.
 
 # Example
 ```julia
-model_ref= ModelReference(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationModel(TestOptModel, model_ref, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
+model_ref= FormulationTemplate(CopperPlatePowerModel, devices, branches, services)
+OpModel = OperationsProblem(TestOptModel, model_ref, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
 ```
 
 # Accepted Key Words
@@ -78,15 +78,15 @@ into the optimization model the default is nothing.
 if false it runs for one time step
 -`initial_time::Dates.DateTime = PSY.get_forecasts_initial_time(sys)`: initial time of forecast
 """
-function OperationModel(::Type{M},
-                        model_ref::ModelReference,
+function OperationsProblem(::Type{M},
+                        model_ref::FormulationTemplate,
                         sys::PSY.System;
                         optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
-                        kwargs...) where {M<:AbstractOperationModel}
+                        kwargs...) where {M<:AbstractOperationsProblem}
 
-    op_model = OperationModel{M}(model_ref,
+    op_model = OperationsProblem{M}(model_ref,
                           sys,
-                          CanonicalModel(model_ref.transmission, sys, optimizer; kwargs...))
+                          Canonical(model_ref.transmission, sys, optimizer; kwargs...))
 
     build_op_model!(op_model; kwargs...)
 
@@ -94,28 +94,28 @@ function OperationModel(::Type{M},
 
 end
 """
-    OperationModel(op_model::Type{M},
+    OperationsProblem(op_model::Type{M},
                     ::Type{T},
                     sys::PSY.System;
-                    kwargs...) where {M<:AbstractOperationModel,
+                    kwargs...) where {M<:AbstractOperationsProblem,
                                     T<:PM.AbstractPowerFormulation}
 
 This uses the Abstract Power Formulation to build the model reference and
 the optimization model and populates the operation model struct.
 
 # Arguments
--`op_model::Type{M} = where {M<:AbstractOperationModel`: Defines the type of the operation model
+-`op_model::Type{M} = where {M<:AbstractOperationsProblem`: Defines the type of the operation model
 -`::Type{T} where T<:PM.AbstractPowerFormulation`: The power formulation used for model ref & optimization model
 -`sys::PSY.System = c_sys5`: the system created in Power Systems
 
 # Output
--`op_model::OperationModel`: The operation model contains the model type, model, Power
+-`op_model::OperationsProblem`: The operation model contains the model type, model, Power
 Systems system, and optimization model.
 
 # Example
 ```julia
-model_ref= ModelReference(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationModel(TestOptModel, model_ref, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
+model_ref= FormulationTemplate(CopperPlatePowerModel, devices, branches, services)
+OpModel = OperationsProblem(TestOptModel, model_ref, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
 ```
 
 
@@ -131,22 +131,22 @@ if false it runs for one time step
 -`initial_time::Dates.DateTime = PSY.get_forecasts_initial_time(sys)`: initial time of forecast
 
 """
-function OperationModel(::Type{M},
+function OperationsProblem(::Type{M},
                         ::Type{T},
                         sys::PSY.System;
-                        kwargs...) where {M<:AbstractOperationModel,
+                        kwargs...) where {M<:AbstractOperationsProblem,
                                           T<:PM.AbstractPowerModel}
 
     optimizer = get(kwargs, :optimizer, nothing)
-    return OperationModel{M}(ModelReference(T),
+    return OperationsProblem{M}(FormulationTemplate(T),
                           sys,
-                          CanonicalModel(T, sys, optimizer; kwargs...))
+                          Canonical(T, sys, optimizer; kwargs...))
 
 end
 """
-    OperationModel(::Type{T},
+    OperationsProblem(::Type{T},
                     sys::PSY.System;
-                    kwargs...) where {M<:AbstractOperationModel,
+                    kwargs...) where {M<:AbstractOperationsProblem,
                                     T<:PM.AbstractPowerFormulation}
 
 This uses the Abstract Power Formulation to build the model reference and
@@ -160,13 +160,13 @@ the optimization model and populates the operation model struct.
 -`sys::PSY.System`: the system created in Power Systems
 
 # Output
--`op_model::OperationModel`: The operation model contains the model type, model, Power
+-`op_model::OperationsProblem`: The operation model contains the model type, model, Power
 Systems system, and optimization model.
 
 # Example
 ```julia
-model_ref= ModelReference(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationModel(TestOptModel, model_ref, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
+model_ref= FormulationTemplate(CopperPlatePowerModel, devices, branches, services)
+OpModel = OperationsProblem(TestOptModel, model_ref, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
 ```
 
 # Accepted Key Words
@@ -181,29 +181,29 @@ if false it runs for one time step
 -`initial_time::Dates.DateTime`: initial time of forecast
 
 """
-function OperationModel(::Type{T},
+function OperationsProblem(::Type{T},
                         sys::PSY.System;
                         kwargs...) where {T<:PM.AbstractPowerModel}
 
-    return OperationModel(DefaultOpModel,
+    return OperationsProblem(DefaultOpModel,
                          T,
                          sys; kwargs...)
 
 end
 
-get_transmission_ref(op_model::OperationModel) = op_model.model_ref.transmission
-get_devices_ref(op_model::OperationModel) = op_model.model_ref.devices
-get_branches_ref(op_model::OperationModel) = op_model.model_ref.branches
-get_services_ref(op_model::OperationModel) = op_model.model_ref.services
-get_system(op_model::OperationModel) = op_model.sys
+get_transmission_ref(op_model::OperationsProblem) = op_model.model_ref.transmission
+get_devices_ref(op_model::OperationsProblem) = op_model.model_ref.devices
+get_branches_ref(op_model::OperationsProblem) = op_model.model_ref.branches
+get_services_ref(op_model::OperationsProblem) = op_model.model_ref.services
+get_system(op_model::OperationsProblem) = op_model.sys
 
-function set_transmission_ref!(op_model::OperationModel{M},
+function set_transmission_ref!(op_model::OperationsProblem{M},
                                transmission::Type{T}; kwargs...) where {T<:PM.AbstractPowerModel,
-                                                                        M<:AbstractOperationModel}
+                                                                        M<:AbstractOperationsProblem}
 
     # Reset the canonical
     op_model.model_ref.transmission = transmission
-    op_model.canonical = CanonicalModel(transmission,
+    op_model.canonical = Canonical(transmission,
                                         op_model.sys,
                                         op_model.canonical.optimizer_factory; kwargs...)
 
@@ -212,12 +212,12 @@ function set_transmission_ref!(op_model::OperationModel{M},
     return
 end
 
-function set_devices_ref!(op_model::OperationModel{M},
-                          devices::Dict{Symbol, DeviceModel}; kwargs...) where M<:AbstractOperationModel
+function set_devices_ref!(op_model::OperationsProblem{M},
+                          devices::Dict{Symbol, DeviceModel}; kwargs...) where M<:AbstractOperationsProblem
 
     # Reset the canonical
     op_model.model_ref.devices = devices
-    op_model.canonical = CanonicalModel(op_model.model_ref.transmission,
+    op_model.canonical = Canonical(op_model.model_ref.transmission,
                                         op_model.sys,
                                         op_model.canonical.optimizer_factory; kwargs...)
 
@@ -226,12 +226,12 @@ function set_devices_ref!(op_model::OperationModel{M},
     return
 end
 
-function set_branches_ref!(op_model::OperationModel{M},
-                           branches::Dict{Symbol, DeviceModel}; kwargs...) where M<:AbstractOperationModel
+function set_branches_ref!(op_model::OperationsProblem{M},
+                           branches::Dict{Symbol, DeviceModel}; kwargs...) where M<:AbstractOperationsProblem
 
     # Reset the canonical
     op_model.model_ref.branches = branches
-    op_model.canonical = CanonicalModel(op_model.model_ref.transmission,
+    op_model.canonical = Canonical(op_model.model_ref.transmission,
                                         op_model.sys,
                                         op_model.canonical.optimizer_factory; kwargs...)
 
@@ -240,12 +240,12 @@ function set_branches_ref!(op_model::OperationModel{M},
     return
 end
 
-function set_services_ref!(op_model::OperationModel{M},
-                           services::Dict{Symbol, DeviceModel}; kwargs...) where M<:AbstractOperationModel
+function set_services_ref!(op_model::OperationsProblem{M},
+                           services::Dict{Symbol, DeviceModel}; kwargs...) where M<:AbstractOperationsProblem
 
     # Reset the canonical
     op_model.model_ref.services = services
-    op_model.canonical = CanonicalModel(op_model.model_ref.transmission,
+    op_model.canonical = Canonical(op_model.model_ref.transmission,
                                         op_model.sys,
                                         op_model.canonical.optimizer_factory; kwargs...)
 
@@ -254,15 +254,15 @@ function set_services_ref!(op_model::OperationModel{M},
     return
 end
 
-function set_device_model!(op_model::OperationModel{M},
+function set_device_model!(op_model::OperationsProblem{M},
                            name::Symbol,
                            device::DeviceModel{D, B}; kwargs...) where {D<:PSY.Injection,
                                                                         B<:AbstractDeviceFormulation,
-                                                                        M<:AbstractOperationModel}
+                                                                        M<:AbstractOperationsProblem}
 
     if haskey(op_model.model_ref.devices, name)
         op_model.model_ref.devices[name] = device
-        op_model.canonical = CanonicalModel(op_model.model_ref.transmission,
+        op_model.canonical = Canonical(op_model.model_ref.transmission,
                                             op_model.sys,
                                             op_model.canonical.optimizer_factory; kwargs...)
         build_op_model!(op_model; kwargs...)
@@ -274,15 +274,15 @@ function set_device_model!(op_model::OperationModel{M},
 
 end
 
-function set_branch_model!(op_model::OperationModel{M},
+function set_branch_model!(op_model::OperationsProblem{M},
                            name::Symbol,
                            branch::DeviceModel{D, B}; kwargs...) where {D<:PSY.Branch,
                                                                         B<:AbstractDeviceFormulation,
-                                                                        M<:AbstractOperationModel}
+                                                                        M<:AbstractOperationsProblem}
 
     if haskey(op_model.model_ref.branches, name)
         op_model.model_ref.branches[name] = branch
-        op_model.canonical = CanonicalModel(op_model.model_ref.transmission,
+        op_model.canonical = Canonical(op_model.model_ref.transmission,
                                             op_model.sys,
                                             op_model.canonical.optimizer_factory; kwargs...)
         build_op_model!(op_model; kwargs...)
@@ -294,13 +294,13 @@ function set_branch_model!(op_model::OperationModel{M},
 
 end
 
-function set_services_model!(op_model::OperationModel{M},
+function set_services_model!(op_model::OperationsProblem{M},
                              name::Symbol,
-                             service::DeviceModel; kwargs...) where M<:AbstractOperationModel
+                             service::DeviceModel; kwargs...) where M<:AbstractOperationsProblem
 
     if haskey(op_model.model_ref.devices, name)
         op_model.model_ref.services[name] = service
-        op_model.canonical = CanonicalModel(op_model.model_ref.transmission,
+        op_model.canonical = Canonical(op_model.model_ref.transmission,
                                             op_model.sys,
                                             op_model.canonical.optimizer_factory; kwargs...)
         build_op_model!(op_model; kwargs...)
@@ -312,7 +312,7 @@ function set_services_model!(op_model::OperationModel{M},
 
 end
 
-function construct_device!(op_model::OperationModel,
+function construct_device!(op_model::OperationsProblem,
                            name::Symbol,
                            device_model::DeviceModel;
                            kwargs...)
@@ -338,7 +338,7 @@ function construct_device!(op_model::OperationModel,
 
 end
 
-function construct_network!(op_model::OperationModel; kwargs...)
+function construct_network!(op_model::OperationsProblem; kwargs...)
 
     construct_network!(op_model, op_model.model_ref.transmission; kwargs...)
 
@@ -346,7 +346,7 @@ function construct_network!(op_model::OperationModel; kwargs...)
 end
 
 
-function construct_network!(op_model::OperationModel,
+function construct_network!(op_model::OperationsProblem,
                             system_formulation::Type{T};
                             kwargs...) where {T<:PM.AbstractPowerModel}
 
@@ -356,11 +356,11 @@ function construct_network!(op_model::OperationModel,
 end
 
 
-function get_initial_conditions(op_model::OperationModel)
+function get_initial_conditions(op_model::OperationsProblem)
     return op_model.canonical.initial_conditions
 end
 
-function get_initial_conditions(op_model::OperationModel,
+function get_initial_conditions(op_model::OperationsProblem,
                                 ic::InitialConditionQuantity,
                                 device::PSY.Device)
 

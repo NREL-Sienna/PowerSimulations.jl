@@ -6,8 +6,8 @@ module PowerSimulations
 # Base Models
 export Stage
 export Simulation
-export OperationModel
-export ModelReference
+export OperationsProblem
+export FormulationTemplate
 export InitialCondition
 
 #Network Relevant Exports

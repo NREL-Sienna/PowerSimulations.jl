@@ -1,7 +1,7 @@
 const GAEVF = JuMP.GenericAffExpr{Float64, VariableRef}
 const GQEVF = JuMP.GenericQuadExpr{Float64, VariableRef}
 
-function moi_tests(op_model::OperationModel,
+function moi_tests(op_model::OperationsProblem,
                    params::Bool,
                    vars::Int64,
                    interval::Int64,
@@ -23,7 +23,7 @@ function moi_tests(op_model::OperationModel,
 
 end
 
-function psi_constraint_test(op_model::OperationModel, constraint_names::Vector{Symbol})
+function psi_constraint_test(op_model::OperationsProblem, constraint_names::Vector{Symbol})
 
     for con in constraint_names
         @test !isnothing(get(op_model.canonical.constraints, con, nothing))
@@ -33,7 +33,7 @@ function psi_constraint_test(op_model::OperationModel, constraint_names::Vector{
 
 end
 
-function psi_checkbinvar_test(op_model::OperationModel, bin_variable_names::Vector{Symbol})
+function psi_checkbinvar_test(op_model::OperationsProblem, bin_variable_names::Vector{Symbol})
 
     for variable in bin_variable_names
         for v in op_model.canonical.variables[variable]
@@ -45,7 +45,7 @@ function psi_checkbinvar_test(op_model::OperationModel, bin_variable_names::Vect
 
 end
 
-function psi_checkobjfun_test(op_model::OperationModel, exp_type)
+function psi_checkobjfun_test(op_model::OperationsProblem, exp_type)
 
     @test JuMP.objective_function_type(op_model.canonical.JuMPmodel) == exp_type
 
@@ -53,7 +53,7 @@ function psi_checkobjfun_test(op_model::OperationModel, exp_type)
 
 end
 
-function moi_lbvalue_test(op_model::OperationModel, con_name::Symbol, value::Number)
+function moi_lbvalue_test(op_model::OperationsProblem, con_name::Symbol, value::Number)
 
     for con in op_model.canonical.constraints[con_name]
         @test JuMP.constraint_object(con).set.lower == value
@@ -63,12 +63,12 @@ function moi_lbvalue_test(op_model::OperationModel, con_name::Symbol, value::Num
 
 end
 
-function psi_checksolve_test(op_model::OperationModel, status)
+function psi_checksolve_test(op_model::OperationsProblem, status)
     JuMP.optimize!(op_model.canonical.JuMPmodel)
     @test termination_status(op_model.canonical.JuMPmodel) in status
 end
 
-function psi_checksolve_test(op_model::OperationModel, status, expected_result, tol = 0.0)
+function psi_checksolve_test(op_model::OperationsProblem, status, expected_result, tol = 0.0)
     res = solve_op_model!(op_model)
     @test termination_status(op_model.canonical.JuMPmodel) in status
     @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], expected_result, atol = tol)

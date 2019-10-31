@@ -1,4 +1,4 @@
-function construct_network!(canonical::CanonicalModel, sys::PSY.System,
+function construct_network!(canonical::Canonical, sys::PSY.System,
                             system_formulation::Type{CopperPlatePowerModel};
                             kwargs...)
 
@@ -11,7 +11,7 @@ function construct_network!(canonical::CanonicalModel, sys::PSY.System,
     return
 end
 
-function construct_network!(canonical::CanonicalModel, sys::PSY.System,
+function construct_network!(canonical::Canonical, sys::PSY.System,
                             system_formulation::Type{StandardPTDFModel};
                             kwargs...)
 
@@ -41,7 +41,7 @@ function construct_network!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_network!(canonical::CanonicalModel,
+function construct_network!(canonical::Canonical,
                             sys::PSY.System,
                             ::Type{T};
                             kwargs...) where {T<:PM.AbstractPowerModel}

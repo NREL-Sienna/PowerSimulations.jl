@@ -1,4 +1,4 @@
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{St, D},
                            ::Type{S};
                            kwargs...) where {St<:PSY.Storage,
@@ -42,7 +42,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{St, D},
                            ::Type{S};
                            kwargs...) where {St<:PSY.Storage,
@@ -83,7 +83,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                                         model::DeviceModel{St, BookKeepingwReservation},
                                         ::Type{S};
                                         kwargs...) where {St<:PSY.Storage,
@@ -128,7 +128,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{St, BookKeepingwReservation},
                            ::Type{S};
                            kwargs...) where {St<:PSY.Storage,

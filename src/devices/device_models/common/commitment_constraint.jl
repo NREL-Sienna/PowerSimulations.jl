@@ -1,5 +1,5 @@
 @doc raw"""
-    device_commitment(canonical::CanonicalModel,
+    device_commitment(canonical::Canonical,
                         initial_conditions::Vector{InitialCondition},
                         cons_name::Symbol,
                         var_names::Tuple{Symbol, Symbol, Symbol})
@@ -30,7 +30,7 @@ If t > 1:
 
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * initial_conditions::Vector{InitialCondition} : for time zero 'varon'
 * cons_name::Symbol : name of the constraint
 * var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
@@ -38,7 +38,7 @@ If t > 1:
 -  : var_names[2] : varstop
 -  : var_names[3] : varon
 """
-function device_commitment(canonical::CanonicalModel,
+function device_commitment(canonical::Canonical,
                         initial_conditions::Vector{InitialCondition},
                         cons_name::Symbol,
                         var_names::Tuple{Symbol, Symbol, Symbol})

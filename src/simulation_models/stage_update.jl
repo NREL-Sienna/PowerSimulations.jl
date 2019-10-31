@@ -275,7 +275,7 @@ function intial_condition_update!(initial_condition_key::ICKey,
 
 end
 
-function update_stage!(stage::_Stage{M}, step::Int64, sim::Simulation) where M<:AbstractOperationModel
+function update_stage!(stage::_Stage{M}, step::Int64, sim::Simulation) where M<:AbstractOperationsProblem
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && stage.key == 1 && stage.execution_count == 0) && return
 

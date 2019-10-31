@@ -1,8 +1,8 @@
-function build_cache!(cache::TimeStatusChange, op_model::OperationModel)
+function build_cache!(cache::TimeStatusChange, op_model::OperationsProblem)
     build_cache!(cache, op_model.canonical)
 end
 
-function build_cache!(cache::TimeStatusChange, canonical::CanonicalModel)
+function build_cache!(cache::TimeStatusChange, canonical::Canonical)
     parameter = get_value(canonical, cache.ref)
     value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, axes(parameter)...)
 

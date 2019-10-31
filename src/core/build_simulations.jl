@@ -77,7 +77,7 @@ function _build_stages(sim_ref::SimulationRef,
     mod_stages = Vector{_Stage}(undef, length(stages))
     for (key, stage) in stages
         verbose && @info("Building Stage $(key)")
-        canonical = CanonicalModel(stage.model.transmission,
+        canonical = Canonical(stage.model.transmission,
                                    stage.sys,
                                    stage.optimizer;
                                    parameters = true)
@@ -97,7 +97,7 @@ function _build_stages(sim_ref::SimulationRef,
                           kwargs...)
         stage_path = joinpath(sim_ref.models,"stage_$(key)_model")
         mkpath(stage_path)
-        _write_canonical_model(canonical, joinpath(stage_path, "optimization_model.json"))
+        _write_canonical(canonical, joinpath(stage_path, "optimization_model.json"))
         system_to_file && IS.to_json(stage.sys, joinpath(stage_path ,"sys_data.json"))
         _populate_cache!(mod_stages[key])
         sim_ref.date_ref[key] = PSY.get_forecast_initial_times(stage.sys)[1]
@@ -113,7 +113,7 @@ function _feedforward_rule_check(::Type{T},
                               stage_number_to::Int64,
                               to_stage::Stage,) where T <: Chronology
 
-    error("feedforward Model $(T) not implemented")
+    error("Feedforward Model $(T) not implemented")
 
     return
 

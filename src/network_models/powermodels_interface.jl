@@ -242,7 +242,7 @@ function constraint_power_balance_ni_expr(pm::PM.AbstractActivePowerModel,
 end
 
 ""
-function powermodels_network!(canonical::CanonicalModel,
+function powermodels_network!(canonical::Canonical,
                               system_formulation::Type{S},
                               sys::PSY.System) where {S<:PM.AbstractPowerModel}
 
@@ -266,7 +266,7 @@ function powermodels_network!(canonical::CanonicalModel,
 end
 
 ""
-function powermodels_network!(canonical::CanonicalModel,
+function powermodels_network!(canonical::Canonical,
                               system_formulation::Type{S},
                               sys::PSY.System) where {S<:PM.AbstractActivePowerModel}
 
@@ -323,7 +323,7 @@ function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractPowerModel}
     return pm_var_map
 end
 
-function add_pm_var_refs!(canonical::CanonicalModel,
+function add_pm_var_refs!(canonical::Canonical,
                           system_formulation::Type{S},
                           sys::PSY.System) where {S<:PM.AbstractPowerModel}
 
@@ -355,7 +355,7 @@ function add_pm_var_refs!(canonical::CanonicalModel,
 
 end
 
-function add_pm_var_refs!(canonical::CanonicalModel,
+function add_pm_var_refs!(canonical::Canonical,
                           d_class::Type,
                           device_types::Vector,
                           pm_map::Dict,

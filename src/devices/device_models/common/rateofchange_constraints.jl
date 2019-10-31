@@ -1,5 +1,5 @@
 @doc raw"""
-    device_linear_rateofchange(canonical::CanonicalModel,
+    device_linear_rateofchange(canonical::Canonical,
                                     rate_data::Tuple{Vector{String}, Vector{UpDown}},
                                     initial_conditions::Vector{InitialCondition},
                                     cons_name::Symbol,
@@ -27,13 +27,13 @@ If t > 1:
 `` r^{down} \leq x_t - x_{t-1} \leq r^{up}, \forall t \geq 2 ``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * rate_data::Tuple{Vector{String}, Vector{UpDown}} : gives name (1) and max ramp up/down rates (2)
 * initial_conditions::Vector{InitialCondition} : for time zero 'variable'
 * cons_name::Symbol : name of the constraint
 * var_name::Tuple{Symbol, Symbol, Symbol} : the name of the variable
 """
-function device_linear_rateofchange(canonical::CanonicalModel,
+function device_linear_rateofchange(canonical::Canonical,
                                     rate_data::Vector{UpDown},
                                     initial_conditions::Vector{InitialCondition},
                                     cons_name::Symbol,
@@ -68,7 +68,7 @@ function device_linear_rateofchange(canonical::CanonicalModel,
 end
 
 @doc raw"""
-    device_mixedinteger_rateofchange(canonical::CanonicalModel,
+    device_mixedinteger_rateofchange(canonical::Canonical,
                                           rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}},
                                           initial_conditions::Vector{InitialCondition},
                                           cons_name::Symbol,
@@ -96,7 +96,7 @@ If t > 1:
 `` r^{down} + r^{min} x^{stop}_t \leq x_t - x_{t-1} \leq r^{up} + r^{max} x^{start}_t, \forall t \geq 2 ``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}} : (1) gives name
                                                                      (2) gives min/max ramp rates
                                                                      (3) gives min/max for 'variable'
@@ -107,7 +107,7 @@ If t > 1:
 - : var_names[2] : 'varstart'
 - : var_names[3] : 'varstop'
 """
-function device_mixedinteger_rateofchange(canonical::CanonicalModel,
+function device_mixedinteger_rateofchange(canonical::Canonical,
                                           rate_data::Tuple{Vector{UpDown}, Vector{MinMax}},
                                           initial_conditions::Vector{InitialCondition},
                                           cons_name::Symbol,

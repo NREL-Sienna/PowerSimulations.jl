@@ -16,7 +16,7 @@ dc_line = DeviceModel(PSY.HVDCLine, PSI.HVDCDispatch)
     objfuncs = [GAEVF, GQEVF, GQEVF]
 
     for (ix, sys) in enumerate(systems), p in parameters
-        ps_model = OperationModel(TestOptModel, network, sys; optimizer = OSQP_optimizer, use_parameters = p)
+        ps_model = OperationsProblem(TestOptModel, network, sys; optimizer = OSQP_optimizer, use_parameters = p)
         construct_device!(ps_model, :Thermal, thermal_model; use_parameters = p);
         construct_device!(ps_model, :Load, load_model; use_parameters = p);
         construct_network!(ps_model, network; use_parameters = p);
@@ -48,7 +48,7 @@ end
                                                     c_sys14_dc => [600, 600, 0, 0, 768])
 
     for (ix, sys) in enumerate(systems), p in parameters
-        ps_model = OperationModel(TestOptModel, network, sys; optimizer = OSQP_optimizer, use_parameters = p)
+        ps_model = OperationsProblem(TestOptModel, network, sys; optimizer = OSQP_optimizer, use_parameters = p)
         construct_device!(ps_model, :Thermal, thermal_model; use_parameters = p);
         construct_device!(ps_model, :Load, load_model; use_parameters = p);
         construct_network!(ps_model, network; PTDF = PTDF_ref[sys], use_parameters = p);
@@ -68,7 +68,7 @@ end
     end
 
     #PTDF input Error testing
-    ps_model = OperationModel(TestOptModel, network, c_sys5; optimizer = GLPK_optimizer)
+    ps_model = OperationsProblem(TestOptModel, network, c_sys5; optimizer = GLPK_optimizer)
     construct_device!(ps_model, :Thermal, thermal_model);
     construct_device!(ps_model, :Load, load_model);
     @test_throws ArgumentError construct_network!(ps_model, network)
@@ -86,7 +86,7 @@ end
                                                     c_sys14_dc => [984, 600, 432, 432, 840])
 
     for (ix, sys) in enumerate(systems), p in parameters
-        ps_model = OperationModel(TestOptModel, network, sys; optimizer = OSQP_optimizer, use_parameters = p)
+        ps_model = OperationsProblem(TestOptModel, network, sys; optimizer = OSQP_optimizer, use_parameters = p)
         construct_device!(ps_model, :Thermal, thermal_model; use_parameters = p);
         construct_device!(ps_model, :Load, load_model; use_parameters = p);
         construct_network!(ps_model, network; use_parameters = p);
@@ -118,7 +118,7 @@ end
                                                     c_sys14_dc => [2832, 336, 432, 432, 744]) # TODO: changed the interval constraint number to 336 from 240. double check
 
     for (ix, sys) in enumerate(systems), p in parameters
-        ps_model = OperationModel(TestOptModel, network, sys; optimizer = ipopt_optimizer, use_parameters = p)
+        ps_model = OperationsProblem(TestOptModel, network, sys; optimizer = ipopt_optimizer, use_parameters = p)
         construct_device!(ps_model, :Thermal, thermal_model; use_parameters = p);
         construct_device!(ps_model, :Load, load_model; use_parameters = p);
         construct_network!(ps_model, network; use_parameters = p);
@@ -144,7 +144,7 @@ end
     p = true
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
-        ps_model = OperationModel(TestOptModel, network, sys; optimizer = OSQP_optimizer, use_parameters = p)
+        ps_model = OperationsProblem(TestOptModel, network, sys; optimizer = OSQP_optimizer, use_parameters = p)
         construct_device!(ps_model, :Thermal, thermal_model; use_parameters = p);
         construct_device!(ps_model, :Load, load_model; use_parameters = p);
         construct_network!(ps_model, network; use_parameters = p);
@@ -165,7 +165,7 @@ end
 
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
-        ps_model = OperationModel(TestOptModel, network, sys; optimizer = ipopt_optimizer)
+        ps_model = OperationsProblem(TestOptModel, network, sys; optimizer = ipopt_optimizer)
         construct_device!(ps_model, :Thermal, thermal_model);
         construct_device!(ps_model, :Load, load_model);
         construct_network!(ps_model, network);
@@ -181,7 +181,7 @@ end
 
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
-        ps_model = OperationModel(TestOptModel, network, sys; optimizer = ipopt_optimizer)
+        ps_model = OperationsProblem(TestOptModel, network, sys; optimizer = ipopt_optimizer)
         construct_device!(ps_model, :Thermal, thermal_model);
         construct_device!(ps_model, :Load, load_model);
         construct_network!(ps_model, network);
@@ -201,7 +201,7 @@ end
 
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
-        ps_model = OperationModel(TestOptModel, network, sys; optimizer = ipopt_optimizer)
+        ps_model = OperationsProblem(TestOptModel, network, sys; optimizer = ipopt_optimizer)
         construct_device!(ps_model, :Thermal, thermal_model);
         construct_device!(ps_model, :Load, load_model);
         construct_network!(ps_model, network);
@@ -219,7 +219,7 @@ incompat_list = [PM.SDPWRMPowerModel,
                  PM.SOCBFConicPowerModel]
 
     for network in incompat_list
-        ps_model = OperationModel(TestOptModel, network, c_sys5; optimizer = ipopt_optimizer)
+        ps_model = OperationsProblem(TestOptModel, network, c_sys5; optimizer = ipopt_optimizer)
         construct_device!(ps_model, :Thermal, thermal_model);
         construct_device!(ps_model, :Load, load_model);
 

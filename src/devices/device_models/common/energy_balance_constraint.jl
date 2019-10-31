@@ -1,5 +1,5 @@
 @doc raw"""
-    energy_balance(canonical::CanonicalModel,
+    energy_balance(canonical::Canonical,
                         initial_conditions::Vector{InitialCondition},
                         efficiency_data::Tuple{Vector{String}, Vector{InOut}},
                         cons_name::Symbol,
@@ -24,7 +24,7 @@ If t > 1:
 `` x^{energy}_t == x^{energy}_{t-1} + frhr \eta^{in} x^{in}_t - \frac{frhr}{\eta^{out}} x^{out}_t, \forall t \geq 2 ``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * initial_conditions::Vector{InitialCondition} : for time zero 'varenergy'
 * efficiency_data::Tuple{Vector{String}, Vector{InOut}} :: charging/discharging efficiencies
 * cons_name::Symbol : name of the constraint
@@ -34,7 +34,7 @@ If t > 1:
 - : var_names[3] : varenergy
 
 """
-function energy_balance(canonical::CanonicalModel,
+function energy_balance(canonical::Canonical,
                         initial_conditions::Vector{InitialCondition},
                         efficiency_data::Tuple{Vector{String}, Vector{InOut}},
                         cons_name::Symbol,

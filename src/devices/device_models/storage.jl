@@ -6,7 +6,7 @@ struct BookKeepingwReservation <: AbstractStorageFormulation end
 
 #################################################Storage Variables#################################
 
-function active_power_variables!(canonical::CanonicalModel,
+function active_power_variables!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
 
     add_variable(canonical,
@@ -28,7 +28,7 @@ function active_power_variables!(canonical::CanonicalModel,
 end
 
 
-function reactive_power_variables!(canonical::CanonicalModel,
+function reactive_power_variables!(canonical::Canonical,
                                   devices::IS.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
     add_variable(canonical,
                  devices,
@@ -41,7 +41,7 @@ function reactive_power_variables!(canonical::CanonicalModel,
 end
 
 
-function energy_storage_variables!(canonical::CanonicalModel,
+function energy_storage_variables!(canonical::Canonical,
                                   devices::IS.FlattenIteratorWrapper{St}) where St<:PSY.Storage
 
     add_variable(canonical,
@@ -55,7 +55,7 @@ function energy_storage_variables!(canonical::CanonicalModel,
 end
 
 
-function storage_reservation_variables!(canonical::CanonicalModel,
+function storage_reservation_variables!(canonical::Canonical,
                                        devices::IS.FlattenIteratorWrapper{St}) where St<:PSY.Storage
 
     add_variable(canonical,
@@ -70,7 +70,7 @@ end
 
 ###################################################### output power constraints#################################
 
-function active_power_constraints!(canonical::CanonicalModel,
+function active_power_constraints!(canonical::Canonical,
                                   devices::IS.FlattenIteratorWrapper{St},
                                   ::Type{BookKeeping},
                                   ::Type{S}) where {St<:PSY.Storage,
@@ -93,7 +93,7 @@ function active_power_constraints!(canonical::CanonicalModel,
 
 end
 
-function active_power_constraints!(canonical::CanonicalModel,
+function active_power_constraints!(canonical::Canonical,
                                   devices::IS.FlattenIteratorWrapper{St},
                                   ::Type{BookKeepingwReservation},
                                   ::Type{S}) where {St<:PSY.Storage,
@@ -122,7 +122,7 @@ end
 """
 This function adds the reactive  power limits of generators when there are CommitmentVariables
 """
-function reactive_power_constraints!(canonical::CanonicalModel,
+function reactive_power_constraints!(canonical::Canonical,
                                    devices::IS.FlattenIteratorWrapper{St},
                                    ::Type{D},
                                    ::Type{S}) where {St<:PSY.Storage,
@@ -141,7 +141,7 @@ function reactive_power_constraints!(canonical::CanonicalModel,
 end
 
 ########################## Make initial Conditions for a Model #############################
-function initial_conditions!(canonical::CanonicalModel,
+function initial_conditions!(canonical::Canonical,
                             devices::IS.FlattenIteratorWrapper{St},
                             ::Type{D}) where {St<:PSY.Storage,
                                                                 D<:AbstractStorageFormulation}
@@ -154,7 +154,7 @@ end
 
 ###################################################### Energy Capacity constraints##########
 
-function energy_capacity_constraints!(canonical::CanonicalModel,
+function energy_capacity_constraints!(canonical::Canonical,
                                     devices::IS.FlattenIteratorWrapper{St},
                                     ::Type{D},
                                     ::Type{S}) where {St<:PSY.Storage,
@@ -189,7 +189,7 @@ end
 
 
 
-function energy_balance_constraint!(canonical::CanonicalModel,
+function energy_balance_constraint!(canonical::Canonical,
                                    devices::IS.FlattenIteratorWrapper{St},
                                    ::Type{D},
                                    ::Type{S}) where {St<:PSY.Storage,
