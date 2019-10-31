@@ -70,14 +70,13 @@ function _canonical_init(bus_numbers::Vector{Int64},
                         resolution::Dates.Period,
                         use_forecast_data::Bool,
                         initial_time::Dates.DateTime,
-                        parameters::Bool,
+                        make_parameters_container::Bool,
                         ini_con::DICKDA) where {S<:PM.AbstractPowerModel}
 
     V = JuMP.variable_type(jump_model)
 
     canonical = CanonicalModel(jump_model,
                               optimizer,
-                              parameters,
                               time_steps,
                               resolution,
                               use_forecast_data,
@@ -89,8 +88,8 @@ function _canonical_init(bus_numbers::Vector{Int64},
                                                      V,
                                                      bus_numbers,
                                                      time_steps,
-                                                     parameters),
-                              parameters ? DRDA() : nothing,
+                                                     make_parameters_container),
+                              make_parameters_container ? DRDA() : nothing,
                               ini_con,
                               nothing);
 
@@ -101,7 +100,6 @@ end
 mutable struct CanonicalModel
     JuMPmodel::JuMP.AbstractModel
     optimizer_factory::Union{Nothing, JuMP.OptimizerFactory}
-    parametrized::Bool
     time_steps::UnitRange{Int64}
     resolution::Dates.Period
     use_forecast_data::Bool
@@ -116,7 +114,6 @@ mutable struct CanonicalModel
 
     function CanonicalModel(JuMPmodel::JuMP.AbstractModel,
                             optimizer_factory::Union{Nothing, JuMP.OptimizerFactory},
-                            parametrized::Bool,
                             time_steps::UnitRange{Int64},
                             resolution::Dates.Period,
                             use_forecast_data::Bool,
@@ -129,12 +126,8 @@ mutable struct CanonicalModel
                             initial_conditions::DICKDA,
                             pm_model::Union{Nothing, PM.AbstractPowerModel})
 
-        #prevents having empty parameters and parametrized canonical model
-        @assert isnothing(parameters) == !parametrized
-
         new(JuMPmodel,
             optimizer_factory,
-            parametrized,
             time_steps,
             resolution,
             use_forecast_data,
@@ -159,13 +152,13 @@ function CanonicalModel(::Type{T},
     PSY.check_forecast_consistency(sys)
     user_defined_model = get(kwargs, :JuMPmodel, nothing)
     ini_con = get(kwargs, :initial_conditions, DICKDA())
-    parameters = get(kwargs, :parameters, false)
+    make_parameters_container = get(kwargs, :use_parameters, false)
     use_forecast_data = get(kwargs, :use_forecast_data, true)
-    jump_model = _pass_abstract_jump(optimizer, parameters, user_defined_model)
+    jump_model = _pass_abstract_jump(optimizer, make_parameters_container, user_defined_model)
     initial_time = get(kwargs, :initial_time, PSY.get_forecasts_initial_time(sys))
 
     if use_forecast_data
-        horizon = PSY.get_forecasts_horizon(sys)
+        horizon = get(kwargs, :horizon, PSY.get_forecasts_horizon(sys))
         time_steps = 1:horizon
         resolution = PSY.get_forecasts_resolution(sys)
     else
@@ -183,7 +176,7 @@ function CanonicalModel(::Type{T},
                            resolution,
                            use_forecast_data,
                            initial_time,
-                           parameters,
+                           make_parameters_container,
                            ini_con)
 
 end
@@ -232,7 +225,7 @@ end
 _variable_type(cm::CanonicalModel) = JuMP.variable_type(cm.JuMPmodel)
 model_time_steps(canonical::CanonicalModel) = canonical.time_steps
 model_resolution(canonical::CanonicalModel) = canonical.resolution
-model_has_parameters(canonical::CanonicalModel) = canonical.parametrized
+model_has_parameters(canonical::CanonicalModel) = !isnothing(canonical.parameters)
 model_uses_forecasts(canonical::CanonicalModel) = canonical.use_forecast_data
 model_initial_time(canonical::CanonicalModel) = canonical.initial_time
 #Internal Variables, Constraints and Parameters accessors

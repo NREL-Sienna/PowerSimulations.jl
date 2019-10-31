@@ -13,7 +13,7 @@ end
     model = DeviceModel(PSY.HydroFix, PSI.HydroFixed)
 
     # Parameters Testing
-    op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5_hy; parameters = true)
+    op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5_hy; use_parameters = true)
     construct_device!(op_model, :Hydro, model)
     moi_tests(op_model, true, 0, 0, 0, 0, 0, false)
     psi_checkobjfun_test(op_model, GAEVF)
@@ -25,7 +25,7 @@ end
     psi_checkobjfun_test(op_model, GAEVF)
 
     # No Forecast Testing
-    op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5_hy; parameters = true, use_forecast_data = false)
+    op_model = OperationModel(TestOptModel, DCPPowerModel, c_sys5_hy; use_parameters = true, use_forecast_data = false)
     construct_device!(op_model, :Hydro, model);
     moi_tests(op_model, true, 0, 0, 0, 0, 0, false)
     psi_checkobjfun_test(op_model, GAEVF)
