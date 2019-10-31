@@ -1,7 +1,7 @@
 """
     write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path::AbstractString; kwargs...)
-    
-Receives the variables dictionary from the operation model results and writes each variable dataframe 
+
+Receives the variables dictionary from the operation model results and writes each variable dataframe
 to a file. The default file type is feather.
 
 # Arguments
@@ -13,7 +13,7 @@ to a file. The default file type is feather.
 res = solve_op_model!(op_model)
 write_data(res.variables, "Users/downloads")
 ```
-# Accepted Key Words 
+# Accepted Key Words
 -`file_type::String = CSV`: default filetype is Feather, but this key word can be used to make it CSV.
 if a different file type is desired the code will have to be changed to accept it.
 
@@ -118,7 +118,7 @@ end
 # These functions are writing directly to the feather file and skipping printing to memory.
 function _export_model_result(stage::_Stage, start_time::Dates.DateTime, save_path::String)
     write_data(stage, save_path)
-    write_data(get_time_stamp(stage, start_time), save_path, "time_stamp")
+    write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
     return
 end
 

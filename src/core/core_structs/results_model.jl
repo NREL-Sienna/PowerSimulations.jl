@@ -19,7 +19,7 @@ function get_optimizer_log(res_model::OperationModelResults)
     return res_model.optimizer_log
 end
 
-function get_time_stamp(res_model::OperationModelResults, key::Symbol)
+function get_time_stamps(res_model::OperationModelResults, key::Symbol)
     return res_model.time_stamp
 end
 
@@ -31,7 +31,7 @@ of results from a single-step problem, or for a single foulder
 within a simulation.
 
 # Arguments
--`path::AbstractString = folder path` 
+-`path::AbstractString = folder path`
 -`directory::AbstractString = "2019-10-03T09-18-00"`: the foulder name that contains
 feather files of the results.
 
@@ -67,7 +67,7 @@ function load_operation_results(path::AbstractString, directory::AbstractString)
         file_path = joinpath(folder_path,"time_stamp.feather")
         temp_time_stamp = Feather.read(file_path)
         time_stamp = temp_time_stamp[1:(size(temp_time_stamp,1)-1),:]
-        
+
 
         obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer[:obj_value])
         results = OperationModelResults(variable_dict, obj_value, optimizer, time_stamp)
