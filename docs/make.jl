@@ -2,15 +2,20 @@ using Documenter
 using PowerSimulations
 
 makedocs(
-    sitename = "PowerSimulations",
-    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
+    sitename = "PowerSimulations.jl",
+    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true",
+    assets = [
+        "assets/logo.png"
+    ]),
     modules = [PowerSimulations],
     strict = true,
     authors = "Jose Daniel Lara, Clayton Barrows and Dheepak Krishnamurthy",
-    pages = Any[ "Home" => "index.md",
-                 # "User Guide" => "man/guide.md",
-                "API" => Any["PowerSimulations" => "api/PowerSimulations.md"]
-    ]
+    pages = Any[ "Introduction" => "index.md",
+                 #"Quick Start Guide" => "qs_guide.md",
+                 "Operation Model" => "man/op_model.md",
+                 "API" => Any["PowerSimulations" => "api/PowerSimulations.md"]
+    ],
+
 )
 
 # Documenter can also automatically deploy documentation to gh-pages.
