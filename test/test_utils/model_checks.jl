@@ -1,7 +1,7 @@
 const GAEVF = JuMP.GenericAffExpr{Float64, VariableRef}
 const GQEVF = JuMP.GenericQuadExpr{Float64, VariableRef}
 
-function moi_tests(op_model::OperationsProblem,
+function moi_tests(op_problem::OperationsProblem,
                    params::Bool,
                    vars::Int64,
                    interval::Int64,
@@ -10,7 +10,7 @@ function moi_tests(op_model::OperationsProblem,
                    equalto::Int64,
                    binary::Bool)
 
-    JuMPmodel = op_model.canonical.JuMPmodel
+    JuMPmodel = op_problem.canonical.JuMPmodel
     @test (:params in keys(JuMPmodel.ext)) == params
     @test JuMP.num_variables(JuMPmodel) == vars
     @test JuMP.num_constraints(JuMPmodel, GAEVF, MOI.Interval{Float64}) == interval
@@ -23,20 +23,20 @@ function moi_tests(op_model::OperationsProblem,
 
 end
 
-function psi_constraint_test(op_model::OperationsProblem, constraint_names::Vector{Symbol})
+function psi_constraint_test(op_problem::OperationsProblem, constraint_names::Vector{Symbol})
 
     for con in constraint_names
-        @test !isnothing(get(op_model.canonical.constraints, con, nothing))
+        @test !isnothing(get(op_problem.canonical.constraints, con, nothing))
     end
 
     return
 
 end
 
-function psi_checkbinvar_test(op_model::OperationsProblem, bin_variable_names::Vector{Symbol})
+function psi_checkbinvar_test(op_problem::OperationsProblem, bin_variable_names::Vector{Symbol})
 
     for variable in bin_variable_names
-        for v in op_model.canonical.variables[variable]
+        for v in op_problem.canonical.variables[variable]
             @test JuMP.is_binary(v)
         end
     end
@@ -45,17 +45,17 @@ function psi_checkbinvar_test(op_model::OperationsProblem, bin_variable_names::V
 
 end
 
-function psi_checkobjfun_test(op_model::OperationsProblem, exp_type)
+function psi_checkobjfun_test(op_problem::OperationsProblem, exp_type)
 
-    @test JuMP.objective_function_type(op_model.canonical.JuMPmodel) == exp_type
+    @test JuMP.objective_function_type(op_problem.canonical.JuMPmodel) == exp_type
 
     return
 
 end
 
-function moi_lbvalue_test(op_model::OperationsProblem, con_name::Symbol, value::Number)
+function moi_lbvalue_test(op_problem::OperationsProblem, con_name::Symbol, value::Number)
 
-    for con in op_model.canonical.constraints[con_name]
+    for con in op_problem.canonical.constraints[con_name]
         @test JuMP.constraint_object(con).set.lower == value
     end
 
@@ -63,13 +63,13 @@ function moi_lbvalue_test(op_model::OperationsProblem, con_name::Symbol, value::
 
 end
 
-function psi_checksolve_test(op_model::OperationsProblem, status)
-    JuMP.optimize!(op_model.canonical.JuMPmodel)
-    @test termination_status(op_model.canonical.JuMPmodel) in status
+function psi_checksolve_test(op_problem::OperationsProblem, status)
+    JuMP.optimize!(op_problem.canonical.JuMPmodel)
+    @test termination_status(op_problem.canonical.JuMPmodel) in status
 end
 
-function psi_checksolve_test(op_model::OperationsProblem, status, expected_result, tol = 0.0)
-    res = solve_op_model!(op_model)
-    @test termination_status(op_model.canonical.JuMPmodel) in status
+function psi_checksolve_test(op_problem::OperationsProblem, status, expected_result, tol = 0.0)
+    res = solve_op_problem!(op_problem)
+    @test termination_status(op_problem.canonical.JuMPmodel) in status
     @test isapprox(res.total_cost[:OBJECTIVE_FUNCTION], expected_result, atol = tol)
 end

@@ -83,7 +83,7 @@ function _build_stages(sim_ref::SimulationRef,
                                    parameters = true)
         mod_stages[key] = _Stage(key,
                                 stage.model,
-                                stage.op_model,
+                                stage.op_problem,
                                 stage.sys,
                                 canonical,
                                 stage.optimizer,

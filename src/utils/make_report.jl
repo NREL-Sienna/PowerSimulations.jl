@@ -12,7 +12,7 @@ using Requirements
 using PowerSimulations
 using Weave
 
-results = solve_op_model!(OpModel)
+results = solve_op_problem!(OpModel)
 out_path = "/Users/lhanig/GitHub"
 
 

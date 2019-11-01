@@ -1,5 +1,5 @@
 """
-    solve_op_model!(op_model::OperationsProblem; kwargs...)
+    solve_op_problem!(op_problem::OperationsProblem; kwargs...)
 
 This solves the operational model for a single instance and
 outputs results of type OperationsProblemResult: objective value, time log,
@@ -7,12 +7,12 @@ a dictionary of variables and their dataframe of results, and a time stamp.
 
 # Arguments
 
--`op_model::OperationsProblem = op_model`: operation model
+-`op_problem::OperationsProblem = op_problem`: operation model
 
 # Examples
 
 ```julia
-results = solve_op_model!(OpModel)
+results = solve_op_problem!(OpModel)
 ```
 # Accepted Key Words
 
@@ -20,13 +20,13 @@ results = solve_op_model!(OpModel)
 automatically get written to feather files
 * optimizer : The optimizer that is used to solve the model
 """
-function solve_op_model!(op_model::OperationsProblem; kwargs...)
+function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
 
     timed_log = Dict{Symbol, Any}()
 
     save_path = get(kwargs, :save_path, nothing)
 
-    if op_model.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
+    if op_problem.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
 
         if !(:optimizer in keys(kwargs))
             error("No Optimizer has been defined, can't solve the operational problem")
@@ -34,23 +34,23 @@ function solve_op_model!(op_model::OperationsProblem; kwargs...)
 
         _, timed_log[:timed_solve_time],
         timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel,
+        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.canonical.JuMPmodel,
                                                         kwargs[:optimizer])
 
     else
 
         _, timed_log[:timed_solve_time],
         timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel)
+        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.canonical.JuMPmodel)
 
     end
 
-    vars_result = get_model_result(op_model)
-    optimizer_log = get_optimizer_log(op_model)
-    time_stamp = get_time_stamps(op_model)
+    vars_result = get_model_result(op_problem)
+    optimizer_log = get_optimizer_log(op_problem)
+    time_stamp = get_time_stamps(op_problem)
     n = size(time_stamp,1)
     time_stamp = time_stamp[1:n-1, :]
-    obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_model.canonical.JuMPmodel))
+    obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.canonical.JuMPmodel))
     merge!(optimizer_log, timed_log)
 
     results = OperationsProblemResults(vars_result, obj_value, optimizer_log, time_stamp)

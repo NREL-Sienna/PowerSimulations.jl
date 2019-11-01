@@ -77,7 +77,7 @@ export TimeStatusChange
 export construct_device!
 export construct_network!
 ## Op Model Exports
-export solve_op_model!
+export solve_op_problem!
 export get_initial_conditions
 export set_transmission_ref!
 export set_devices_ref!
@@ -89,7 +89,7 @@ export set_device_model!
 ## Sim Model Exports
 export run_sim_model!
 ## Utils Exports
-export write_op_model
+export write_op_problem
 export write_model_results
 export load_operation_results
 export get_all_constraint_index

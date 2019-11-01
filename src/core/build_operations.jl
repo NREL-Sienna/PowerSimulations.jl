@@ -1,6 +1,6 @@
-function build_op_model!(op_model::OperationsProblem{M}; kwargs...) where M<:AbstractOperationsProblem
-    sys = get_system(op_model)
-    _build!(op_model.canonical, op_model.template, sys; kwargs...)
+function build_op_problem!(op_problem::OperationsProblem{M}; kwargs...) where M<:AbstractOperationsProblem
+    sys = get_system(op_problem)
+    _build!(op_problem.canonical, op_problem.template, sys; kwargs...)
     return
 end
 

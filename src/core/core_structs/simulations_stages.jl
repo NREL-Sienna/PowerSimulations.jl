@@ -4,7 +4,7 @@ abstract type AbstractStage end
 mutable struct _Stage{M<:AbstractOperationsProblem} <: AbstractStage
     key::Int64
     reference::FormulationTemplate
-    op_model::Type{M}
+    op_problem::Type{M}
     sys::PSY.System
     canonical::Canonical
     optimizer::JuMP.OptimizerFactory
@@ -16,7 +16,7 @@ mutable struct _Stage{M<:AbstractOperationsProblem} <: AbstractStage
 
     function _Stage(key::Int64,
                     reference::FormulationTemplate,
-                    op_model::Type{M},
+                    op_problem::Type{M},
                     sys::PSY.System,
                     canonical::Canonical,
                     optimizer::JuMP.OptimizerFactory,
@@ -41,7 +41,7 @@ mutable struct _Stage{M<:AbstractOperationsProblem} <: AbstractStage
 
     new{M}(key,
            reference,
-           op_model,
+           op_problem,
            sys,
            canonical,
            optimizer,
@@ -58,7 +58,7 @@ end
 ######## Exposed Structs to define a Simulation Object ########
 
 mutable struct Stage <: AbstractStage
-    op_model::Type{<:AbstractOperationsProblem}
+    op_problem::Type{<:AbstractOperationsProblem}
     model::FormulationTemplate
     execution_count::Int64
     sys::PSY.System

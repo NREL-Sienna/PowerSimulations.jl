@@ -10,7 +10,7 @@ to a file. The default file type is feather.
 
 # Example
 ```julia
-res = solve_op_model!(op_model)
+res = solve_op_problem!(op_problem)
 write_data(res.variables, "Users/downloads")
 ```
 # Accepted Key Words
@@ -105,8 +105,8 @@ function _write_data(canonical::Canonical, save_path::AbstractString; kwargs...)
     return
 end
 
-function write_data(op_model::OperationsProblem, save_path::AbstractString; kwargs...)
-    _write_data(op_model.canonical, save_path; kwargs...)
+function write_data(op_problem::OperationsProblem, save_path::AbstractString; kwargs...)
+    _write_data(op_problem.canonical, save_path; kwargs...)
     return
 end
 
@@ -169,8 +169,8 @@ function write_model_results(res::OperationsProblemResults, path::String, result
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
-function write_op_model(op_model::OperationsProblem, save_path::String)
-    _write_canonical(op_model.canonical, save_path)
+function write_op_problem(op_problem::OperationsProblem, save_path::String)
+    _write_canonical(op_problem.canonical, save_path)
     return
 end
 

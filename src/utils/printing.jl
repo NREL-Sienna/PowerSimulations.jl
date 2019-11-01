@@ -1,5 +1,5 @@
 #=
-function Base.show(io::IO, op_model::OperationsProblem)
+function Base.show(io::IO, op_problem::OperationsProblem)
     println(io, "Operation Model")
 end
 =#
@@ -23,7 +23,7 @@ function _organize_device_model(val::Dict{Symbol,DeviceModel}, field::Symbol, io
 end
 
 """
-    Base.show(io::IO, ::MIME"text/plain", op_model::OperationsProblem)
+    Base.show(io::IO, ::MIME"text/plain", op_problem::OperationsProblem)
 
 This function goes through the fields in OperationsProblem and then in FormulationTemplate,
 if the field contains a Device model dictionary, it calls organize_device_model() &
@@ -32,14 +32,14 @@ and a value exists for that field it prints the value.
 
 
 """
-function Base.show(io::IO, ::MIME"text/plain", op_model::OperationsProblem)
+function Base.show(io::IO, ::MIME"text/plain", op_problem::OperationsProblem)
 
     println(io, "\nOperations Problem")
     println(io, "===============\n")
 
     for field in fieldnames(FormulationTemplate)
 
-        val = getfield(op_model.template, Symbol(field))
+        val = getfield(op_problem.template, Symbol(field))
 
         if typeof(val) == Dict{Symbol,DeviceModel}
 
@@ -58,11 +58,11 @@ end
 
 
 
-function Base.show(io::IO, op_model::Canonical)
+function Base.show(io::IO, op_problem::Canonical)
     println(io, "Canonical()")
 end
 
-function Base.show(io::IO, op_model::Simulation)
+function Base.show(io::IO, op_problem::Simulation)
     println(io, "Simulation()")
 end
 #=
