@@ -6,21 +6,21 @@ struct OperationsProblemResults
 
 end
 
-function get_variable(res_model::OperationsProblemResults, key::Symbol)
+function get_variable(results::OperationsProblemResults, key::Symbol)
         try
-            !isnothing(res_model.variables)
-            return get(res_model.variables, key, nothing)
+            !isnothing(results.variables)
+            return get(results.variables, key, nothing)
         catch
             error("No variable with key $(key) has been found.")
         end
 end
 
-function get_optimizer_log(res_model::OperationsProblemResults)
-    return res_model.optimizer_log
+function get_optimizer_log(results::OperationsProblemResults)
+    return results.optimizer_log
 end
 
-function get_time_stamps(res_model::OperationsProblemResults, key::Symbol)
-    return res_model.time_stamp
+function get_time_stamps(results::OperationsProblemResults, key::Symbol)
+    return results.time_stamp
 end
 
 """

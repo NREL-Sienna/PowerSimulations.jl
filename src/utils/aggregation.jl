@@ -78,7 +78,7 @@ for the desired step range and variables
 -`stage::String = "stage-1"``: The stage of the results getting parsed, stage-1 or stage-2
 -`step::Array{String} = ["step-1", "step-2", "step-3"]`: the steps of the results getting parsed
 -`variable::Array{Symbol} = [:P_ThermalStandard, :P_RenewableDispatch]`: the variables to be parsed
--`references::Dict = ref`: the reference dictionary created in run_sim_model
+-`references::Dict = ref`: the reference dictionary created in run_simulation
 or with make_references
 
 # Example
@@ -129,7 +129,7 @@ optimizer = Dict{Symbol, Any}(eachcol(Feather.read("$opt_file_path"),true))
 obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer[:obj_value])
 results = OperationsProblemResults(variable_dict, obj_value, optimizer, time_stamp)
 if (:write in keys(kwargs)) == true
-write_model_results(results, normpath("$file_path/../../../../"),"results")
+write_results(results, normpath("$file_path/../../../../"),"results")
 end
 
 return results
@@ -143,7 +143,7 @@ aggregates the results over time into a struct of type OperationsProblemResults
 
 # Arguments
 -`stage::String = "stage-1"`: The stage of the results getting parsed, stage-1 or stage-2
--`references::Dict = ref`: the reference dictionary created in run_sim_model
+-`references::Dict = ref`: the reference dictionary created in run_simulation
 or with make_references
 
 # Example
@@ -188,7 +188,7 @@ obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer[:obj_value])
 results = OperationsProblemResults(variable_dict, obj_value, optimizer, time_stamp)
 if (:write in keys(kwargs)) == true
     file_type = get(kwargs, :file_type, Feather)
-write_model_results(results, normpath("$file_path/../../../../"),"results"; file_type = file_type)
+write_results(results, normpath("$file_path/../../../../"),"results"; file_type = file_type)
 end
 return results
 

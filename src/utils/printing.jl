@@ -66,18 +66,18 @@ function Base.show(io::IO, op_problem::Simulation)
     println(io, "Simulation()")
 end
 #=
-function Base.show(io::IO, res_model::OperationsProblemResults)
+function Base.show(io::IO, results::OperationsProblemResults)
     println(io, "Results Model")
  end
 
 =#
 
-function Base.show(io::IO, res_model::OperationsProblemResults)
+function Base.show(io::IO, results::OperationsProblemResults)
     println(io, "\nResults")
     println(io, "===============\n")
 
-    for (k, v) in res_model.variables
-        time = DataFrames.DataFrame(Time = res_model.time_stamp[!, :Range])
+    for (k, v) in results.variables
+        time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
         if size(time,2) == size(v,2)
             var = hcat(time, v)
         else
@@ -90,11 +90,11 @@ function Base.show(io::IO, res_model::OperationsProblemResults)
 
     println(io, "Optimizer Log")
     println(io, "-------------")
-    for (k, v) in res_model.optimizer_log
+    for (k, v) in results.optimizer_log
         println(io, "        $(k) = $(v)")
     end
     println(io, "\n")
-    for (k, v) in res_model.total_cost
+    for (k, v) in results.total_cost
         println(io, "Total Cost: $(k) = $(v)")
     end
  end

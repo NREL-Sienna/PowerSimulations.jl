@@ -55,7 +55,7 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
 
     results = OperationsProblemResults(vars_result, obj_value, optimizer_log, time_stamp)
 
-    !isnothing(save_path) && write_model_results(results, save_path)
+    !isnothing(save_path) && write_results(results, save_path)
 
      return results
 
@@ -91,7 +91,7 @@ that contains dataframes of date/step/and desired file path
 so that the results can be parsed sequentially by variable
 and stage type.
 
-**Note:** make_references can only be run after run_sim_model
+**Note:** make_references can only be run after run_simulation
 or else, the folder structure will not yet be populated with results
 
 # Arguments
@@ -103,7 +103,7 @@ that contains the specific simulation run of the date run and "-test"
 ```julia
 sim = Simulation("test", 7, stages, "/Users/lhanig/Downloads/";
 verbose = true, system_to_file = false)
-run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
+run_simulation!(sim::Simulation; verbose::Bool = false, kwargs...)
 references = make_references(sim, "2019-10-03T09-18-00-test")
 ```
 """
@@ -154,7 +154,7 @@ end
 
 
 """
-    run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
+    run_simulation!(sim::Simulation; verbose::Bool = false, kwargs...)
 
 Solves the simulation model for sequential Simulations
 and populates a nested folder structure created in Simulation()
@@ -168,7 +168,7 @@ each stage and step.
 ```julia
 sim = Simulation("test", 7, stages, "/Users/lhanig/Downloads/";
 verbose = true, system_to_file = false)
-run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
+run_simulation!(sim::Simulation; verbose::Bool = false, kwargs...)
 ```
 
 # Accepted Key Words
@@ -176,7 +176,7 @@ run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
 if no_dict is not used or it's false, a reference dictionary is created.
 
 """
-function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
+function run_simulation!(sim::Simulation; verbose::Bool = false, kwargs...)
 
     if sim.ref.reset
         sim.ref.reset = false

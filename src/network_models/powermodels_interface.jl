@@ -258,8 +258,8 @@ function powermodels_network!(canonical::Canonical,
         pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = canonical.expressions[:nodal_balance_reactive][bus.number, t]
     end
 
-    canonical.pm_model = build_nip_expr_model(pm_data, system_formulation, jump_model=canonical.JuMPmodel);
-    canonical.pm_model.ext[:PMmap] = PM_map
+    canonical.pm = build_nip_expr_model(pm_data, system_formulation, jump_model=canonical.JuMPmodel);
+    canonical.pm.ext[:PMmap] = PM_map
 
     return
 
@@ -281,8 +281,8 @@ function powermodels_network!(canonical::Canonical,
         #pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
     end
 
-    canonical.pm_model = build_nip_expr_model(pm_data, system_formulation, jump_model=canonical.JuMPmodel);
-    canonical.pm_model.ext[:PMmap] = PM_map
+    canonical.pm = build_nip_expr_model(pm_data, system_formulation, jump_model=canonical.JuMPmodel);
+    canonical.pm.ext[:PMmap] = PM_map
 
     return
 
@@ -328,13 +328,13 @@ function add_pm_var_refs!(canonical::Canonical,
                           sys::PSY.System) where {S<:PM.AbstractPowerModel}
 
     time_steps = model_time_steps(canonical)
-    bus_dict = canonical.pm_model.ext[:PMmap].bus
-    ACbranch_dict = canonical.pm_model.ext[:PMmap].arcs
+    bus_dict = canonical.pm.ext[:PMmap].bus
+    ACbranch_dict = canonical.pm.ext[:PMmap].arcs
     ACbranch_types = typeof.(values(ACbranch_dict))
-    DCbranch_dict = canonical.pm_model.ext[:PMmap].arcs_dc
+    DCbranch_dict = canonical.pm.ext[:PMmap].arcs_dc
     DCbranch_types = typeof.(values(DCbranch_dict))
 
-    pm_var_names = keys(canonical.pm_model.var[:nw][1][:cnd][1])
+    pm_var_names = keys(canonical.pm.var[:nw][1][:cnd][1])
 
     pm_var_map = PMvarmap(system_formulation)
 
@@ -345,7 +345,7 @@ function add_pm_var_refs!(canonical::Canonical,
                                                         time_steps)
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
-                canonical.variables[ps_v][name, t] = PM.var(canonical.pm_model, t, 1, pm_v)[1] #pm_vars[pm_v][pm_bus]
+                canonical.variables[ps_v][name, t] = PM.var(canonical.pm, t, 1, pm_v)[1] #pm_vars[pm_v][pm_bus]
             end
         end
     end
@@ -374,7 +374,7 @@ function add_pm_var_refs!(canonical::Canonical,
                                                                         (PSY.get_name(d[2]) for d in devices),
                                                                         time_steps)
                     for t in time_steps, (pm_d, d) in devices
-                        canonical.variables[var_name][PSY.get_name(d), t] = PM.var(canonical.pm_model, t, 1, pm_v, getfield(pm_d, dir))
+                        canonical.variables[var_name][PSY.get_name(d), t] = PM.var(canonical.pm, t, 1, pm_v, getfield(pm_d, dir))
                     end
                 end
             end

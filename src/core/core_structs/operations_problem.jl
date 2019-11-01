@@ -197,7 +197,7 @@ get_branches_ref(op_problem::OperationsProblem) = op_problem.template.branches
 get_services_ref(op_problem::OperationsProblem) = op_problem.template.services
 get_system(op_problem::OperationsProblem) = op_problem.sys
 
-function set_transmission_ref!(op_problem::OperationsProblem{M},
+function set_transmission_template!(op_problem::OperationsProblem{M},
                                transmission::Type{T}; kwargs...) where {T<:PM.AbstractPowerModel,
                                                                         M<:AbstractOperationsProblem}
 
@@ -212,7 +212,7 @@ function set_transmission_ref!(op_problem::OperationsProblem{M},
     return
 end
 
-function set_devices_ref!(op_problem::OperationsProblem{M},
+function set_devices_template!(op_problem::OperationsProblem{M},
                           devices::Dict{Symbol, DeviceModel}; kwargs...) where M<:AbstractOperationsProblem
 
     # Reset the canonical
@@ -226,7 +226,7 @@ function set_devices_ref!(op_problem::OperationsProblem{M},
     return
 end
 
-function set_branches_ref!(op_problem::OperationsProblem{M},
+function set_branches_template!(op_problem::OperationsProblem{M},
                            branches::Dict{Symbol, DeviceModel}; kwargs...) where M<:AbstractOperationsProblem
 
     # Reset the canonical
@@ -240,7 +240,7 @@ function set_branches_ref!(op_problem::OperationsProblem{M},
     return
 end
 
-function set_services_ref!(op_problem::OperationsProblem{M},
+function set_services_template!(op_problem::OperationsProblem{M},
                            services::Dict{Symbol, DeviceModel}; kwargs...) where M<:AbstractOperationsProblem
 
     # Reset the canonical

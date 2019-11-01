@@ -141,7 +141,7 @@ function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
 end
 
 """ Exports Operational Model Results to a path"""
-function write_model_results(results::OperationsProblemResults, save_path::String)
+function write_results(results::OperationsProblemResults, save_path::String)
     if !isdir(save_path)
         error("Specified path is not valid. Run write_results to save results.")
     end
@@ -155,7 +155,7 @@ function write_model_results(results::OperationsProblemResults, save_path::Strin
     return
 end
 """ Exports Simulation Model Results to a path"""
-function write_model_results(res::OperationsProblemResults, path::String, results::String; kwargs...)
+function write_results(res::OperationsProblemResults, path::String, results::String; kwargs...)
     if !isdir(path)
         error("Specified path is not valid. Run write_results to save results.")
     end
