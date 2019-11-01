@@ -74,12 +74,13 @@ function load_operation_results(folder_path::AbstractString)
     end
     optimizer = JSON.parse(open(joinpath(folder_path, "optimizer_log.json")))
     time_stamp = Feather.read(joinpath(folder_path,"time_stamp.feather"))
-    shorten_time_stamp!(time_stamp)
+    time_stamp = shorten_time_stamp(time_stamp)
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     results = make_results(variables, obj_value, optimizer, time_stamp)
     return results
 end
 
-function shorten_time_stamp!(time::DataFrames.DataFrame)
+function shorten_time_stamp(time::DataFrames.DataFrame)
     time = time[1:(size(time,1)-1),:]
+    return time
 end

@@ -28,15 +28,11 @@ function _count_time_overlap(stage::String,
     end
     ref = DataFrames.DataFrame()
     for (ix,time) in enumerate(step_df.Date)
-        try
-            file_path =  step_df[ix, :File_Path]
-            time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
-            time_stamp = DataFrames.DataFrame(Feather.read("$time_file_path"))
-            shorten_time_stamp!(time_stamp)
-            append!(ref,time_stamp)
-        catch
-            @warn "The given date_range is outside the results time stamp."
-        end
+        file_path =  step_df[ix, :File_Path]
+        time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
+        time_stamp = DataFrames.DataFrame(Feather.read("$time_file_path"))
+        time_stamp = shorten_time_stamp(time_stamp)
+        append!(ref,time_stamp)
     end
     if size(unique(ref),2) == size(ref,2)
         extra_time_length = 0
@@ -52,15 +48,11 @@ function _count_time_overlap(stage::String, references::Dict{Any,Any})
     date_df = references[stage][variable[1]]
     ref = DataFrames.DataFrame()
     for (ix,time) in enumerate(date_df.Date)
-        try
-            file_path =  step_df[ix, :File_Path]
-            time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
-            time_stamp = DataFrames.DataFrame(Feather.read("$time_file_path"))
-            shorten_time_stamp!(time_stamp)
-            append!(ref,time_stamp)
-        catch
-    @warn "The given date_range is outside the results time stamp."
-    end
+        file_path =  step_df[ix, :File_Path]
+        time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
+        time_stamp = DataFrames.DataFrame(Feather.read("$time_file_path"))
+        time_stamp = shorten_time_stamp(time_stamp)
+        append!(ref,time_stamp)
     end
     if size(unique(ref),2) == size(ref,2)
     extra_time_length = 0

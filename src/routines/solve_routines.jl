@@ -45,7 +45,7 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
     vars_result = get_model_result(op_model)
     optimizer_log = get_optimizer_log(op_model)
     time_stamp = get_time_stamps(op_model)
-    shorten_time_stamp!(time_stamp)
+    time_stamp = shorten_time_stamp(time_stamp)
     obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_model.canonical.JuMPmodel))
     merge!(optimizer_log, timed_log)
     
