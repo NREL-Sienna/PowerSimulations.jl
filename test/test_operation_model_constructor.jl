@@ -57,7 +57,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
     op_model = OperationModel(TestOptModel, model_ref,
                                             c_sys5_re;
                                             use_forecast_data = false,
-                                            use_parameters = false,
+                                            parameters = false,
                                             optimizer = GLPK_optimizer)
     moi_tests(op_model, false, 5, 5, 0, 0, 1, false)
     #=

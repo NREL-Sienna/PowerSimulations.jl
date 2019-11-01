@@ -1,4 +1,4 @@
-@doc raw"""
+;@doc raw"""
     device_timeseries_ub(canonical::CanonicalModel,
                      ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}
                      cons_name::Symbol,

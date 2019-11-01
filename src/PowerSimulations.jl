@@ -97,7 +97,7 @@ export get_all_var_index
 export get_con_index
 export get_var_index
 # Plotting Utils
-export sort_data
+export sort_data!
 export get_stacked_plot_data
 export get_bar_plot_data
 export get_stacked_generation_data
@@ -130,6 +130,7 @@ import TimeSeries
 import MathOptFormat
 import DataFrames
 import Feather
+import JSON
 
 include("core/definitions.jl")
 
