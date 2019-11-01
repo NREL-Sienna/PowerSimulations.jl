@@ -298,7 +298,7 @@ or else, the folder structure will not yet be populated with results
 
 # Arguments
 -`sim::Simulation = sim`: simulation object created by Simulation()
--`date_run::String = "2019-10-03T09-18-00-test"``: the name of the file created
+-`date_run::String = "2019-10-03T09-18-00"``: the name of the file created
 that contains the specific simulation run of the date run and "-test"
 
 # Example
@@ -317,7 +317,7 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
         variables = Dict()
         interval = PSY.get_forecasts_interval(stage.sys)
         variable_names = collect(keys(sim.stages[ix].canonical.variables))
-        if :dual_constraints in keys(kwargs) && !isnothing(cons(stage.canonical))
+        if :dual_constraints in keys(kwargs) && !isnothing(get_constraints(stage.canonical))
             dual_cons = _concat_string(kwargs[:dual_constraint])
             variable_names = vcat(variable_names, dual_cons)
         end
