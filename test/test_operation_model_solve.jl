@@ -14,7 +14,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
     for sys in systems, p in parameters_value
         @info("Testing solve ED with CopperPlatePowerModel network")
         @testset "ED CopperPlatePowerModel model use_parameters = $(p)" begin
-        ED = OperationsProblem(TestOptModel, template, sys; optimizer = OSQP_optimizer, use_parameters = p)
+        ED = OperationsProblem(TestOpProblem, template, sys; optimizer = OSQP_optimizer, use_parameters = p)
         psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[sys], 10000)
 
         end
@@ -33,7 +33,7 @@ end
     for sys in systems, p in parameters_value
         @info("Testing solve ED with StandardPTDFModel network")
         @testset "ED StandardPTDFModel model use_parameters = $(p)" begin
-        ED = OperationsProblem(TestOptModel, template, sys; PTDF = PTDF_ref[sys], optimizer = OSQP_optimizer, use_parameters = p)
+        ED = OperationsProblem(TestOpProblem, template, sys; PTDF = PTDF_ref[sys], optimizer = OSQP_optimizer, use_parameters = p)
         psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[sys], 10000)
         end
     end
@@ -52,7 +52,7 @@ end
         @info("Testing solve ED with $(net) network")
         @testset "ED model $(net) and use_parameters = $(p)" begin
         template = FormulationTemplate(net, devices, branches, services);
-        ED = OperationsProblem(TestOptModel, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
+        ED = OperationsProblem(TestOpProblem, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
         #The tolerance range here is large because NFA has a much lower objective value
         psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_results[sys], 35000)
         end
@@ -73,7 +73,7 @@ end
         @info("Testing solve ED with $(net) network")
         @testset "ED model $(net) and use_parameters = $(p)" begin
         template = FormulationTemplate(net, devices, branches, services);
-        ED = OperationsProblem(TestOptModel, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
+        ED = OperationsProblem(TestOpProblem, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
         #The tolerance range here is large because NFA has a much lower objective value
         psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_results[sys], 10000)
 
@@ -96,7 +96,7 @@ end
         @info("Testing solve ED with $(net) network")
         @testset "ED model $(net) and use_parameters = $(p)" begin
         template = FormulationTemplate(net, devices, branches, services);
-        ED = OperationsProblem(TestOptModel, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
+        ED = OperationsProblem(TestOpProblem, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
         #The tolerance range here is large because Relaxations have a lower objective value
         psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_results[sys], 25000)
 
@@ -120,7 +120,7 @@ end
         @info("Testing solve ED with $(net) network")
         @testset "ED model $(net) and use_parameters = $(p)" begin
         template = FormulationTemplate(net, devices, branches, services);
-        ED = OperationsProblem(TestOptModel, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
+        ED = OperationsProblem(TestOpProblem, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
         psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_results[sys], 10000)
         end
     end
@@ -142,7 +142,7 @@ end
         @info("Testing solve UC with $(net) network")
         @testset "UC model $(net) and use_parameters = $(p)" begin
         template= FormulationTemplate(net, devices, branches, services);
-        UC = OperationsProblem(TestOptModel, template, sys; PTDF = PTDF_ref[sys], optimizer = GLPK_optimizer, use_parameters = p)
+        UC = OperationsProblem(TestOpProblem, template, sys; PTDF = PTDF_ref[sys], optimizer = GLPK_optimizer, use_parameters = p)
         psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
         end
     end

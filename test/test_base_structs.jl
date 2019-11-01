@@ -5,7 +5,7 @@ end
 
 @testset "OperationsProblem Tests" begin
     for p in [true, false]
-        t = OperationsProblem(TestOptModel, CopperPlatePowerModel, c_sys5; use_parameters = p)
+        t = OperationsProblem(TestOpProblem, CopperPlatePowerModel, c_sys5; use_parameters = p)
         @test PSI.model_has_parameters(t.canonical) == p
     end
 end

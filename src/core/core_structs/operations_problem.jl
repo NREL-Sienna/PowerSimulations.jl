@@ -1,6 +1,6 @@
 abstract type AbstractOperationsProblem end
 
-struct DefaultOpModel<:AbstractOperationsProblem end
+struct DefaultOpProblem<:AbstractOperationsProblem end
 
 mutable struct FormulationTemplate
     transmission::Type{<:PM.AbstractPowerModel}
@@ -51,7 +51,7 @@ end
 This builds the optimization model and populates the operation model
 
 # Arguments
--`::Type{M} where {M<:AbstractOperationsProblem, T<:PM.AbstractPowerFormulation} = TestOptModel`:
+-`::Type{M} where {M<:AbstractOperationsProblem, T<:PM.AbstractPowerFormulation} = TestOpProblem`:
 The abstract operation model type
 -`template::FormulationTemplate`: The model reference made up of transmission, devices,
                                           branches, and services.
@@ -64,7 +64,7 @@ Systems system, and optimization model.
 # Example
 ```julia
 template= FormulationTemplate(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationsProblem(TestOptModel, template, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
+OpModel = OperationsProblem(TestOpProblem, template, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
 ```
 
 # Accepted Key Words
@@ -115,7 +115,7 @@ Systems system, and optimization model.
 # Example
 ```julia
 template= FormulationTemplate(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationsProblem(TestOptModel, template, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
+OpModel = OperationsProblem(TestOpProblem, template, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
 ```
 
 
@@ -166,7 +166,7 @@ Systems system, and optimization model.
 # Example
 ```julia
 template= FormulationTemplate(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationsProblem(TestOptModel, template, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
+OpModel = OperationsProblem(TestOpProblem, template, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
 ```
 
 # Accepted Key Words
@@ -185,7 +185,7 @@ function OperationsProblem(::Type{T},
                         sys::PSY.System;
                         kwargs...) where {T<:PM.AbstractPowerModel}
 
-    return OperationsProblem(DefaultOpModel,
+    return OperationsProblem(DefaultOpProblem,
                          T,
                          sys; kwargs...)
 
