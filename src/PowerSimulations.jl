@@ -192,7 +192,9 @@ include("network_models/network_constructor.jl")
 include("service_models/services_constructor.jl")
 
 #Operational Model Constructors
-#include("operation_problems/operation_problems.jl")
+#include("operation_templates/economic_dispatch.jl")
+#include("operation_templates/unit_commitment.jl")
+#include("operation_templates/opf.jl")
 
 #Simulations Model Files
 include("simulation/stage_update.jl")

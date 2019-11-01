@@ -9,10 +9,10 @@ end
 function get_variable(res_model::OperationsProblemResults, key::Symbol)
         try
             !isnothing(res_model.variables)
+            return get(res_model.variables, key, nothing)
         catch
             error("No variable with key $(key) has been found.")
         end
-    return get(res_model.variables, key, nothing)
 end
 
 function get_optimizer_log(res_model::OperationsProblemResults)

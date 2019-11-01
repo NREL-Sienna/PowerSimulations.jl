@@ -113,4 +113,4 @@ get_execution_count(s::S) where S <: AbstractStage = s.execution_count
 get_sys(s::S) where S <: AbstractStage = s.sys
 get_chronology_ref(s::S) where S <: AbstractStage = s.chronology_ref
 
-get_model_ref(s::Stage) = s.model
+get_template(s::Stage) = s.model

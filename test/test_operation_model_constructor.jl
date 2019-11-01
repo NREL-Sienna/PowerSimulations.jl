@@ -5,8 +5,8 @@ branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine)
                                      :TT => DeviceModel(PSY.TapTransformer , PSI.StaticTransformer))
 services = Dict{Symbol, PSI.ServiceModel}()
 @testset "Operation Model kwargs with CopperPlatePowerModel base" begin
-    model_ref = FormulationTemplate(CopperPlatePowerModel, devices, branches, services);
-    op_model = OperationsProblem(TestOptModel, model_ref,
+    template = FormulationTemplate(CopperPlatePowerModel, devices, branches, services);
+    op_model = OperationsProblem(TestOptModel, template,
                                             c_sys5;
                                             optimizer = GLPK_optimizer,
                                            use_parameters = true)
@@ -22,7 +22,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
     @test JuMP.objective_function_type(j_model) == JuMP.GenericAffExpr{Float64, VariableRef}
 =#
-    op_model = OperationsProblem(TestOptModel, model_ref,
+    op_model = OperationsProblem(TestOptModel, template,
                                             c_sys14;
                                             optimizer = OSQP_optimizer)
     moi_tests(op_model, false, 120, 120, 0, 0, 24, false)
@@ -37,7 +37,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
     @test JuMP.objective_function_type(j_model) == JuMP.GenericQuadExpr{Float64, VariableRef}
     =#
-    op_model = OperationsProblem(TestOptModel, model_ref,
+    op_model = OperationsProblem(TestOptModel, template,
                                             c_sys5_re;
                                             use_forecast_data = false,
                                             optimizer = GLPK_optimizer)
@@ -54,7 +54,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
     @test JuMP.objective_function_type(j_model) == JuMP.GenericAffExpr{Float64, VariableRef}
     =#
 
-    op_model = OperationsProblem(TestOptModel, model_ref,
+    op_model = OperationsProblem(TestOptModel, template,
                                             c_sys5_re;
                                             use_forecast_data = false,
                                             use_parameters = false,
@@ -103,9 +103,9 @@ end
             devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, thermal),
                                                 :Loads =>       DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
             branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine))
-            model_ref = FormulationTemplate(net, devices, branches, services);
+            template = FormulationTemplate(net, devices, branches, services);
             op_model = OperationsProblem(TestOptModel,
-                                      model_ref,
+                                      template,
                                       system; PTDF = PTDF5, use_parameters = p);
         @test :nodal_balance_active in keys(op_model.canonical.expressions)
         @test (:params in keys(op_model.canonical.JuMPmodel.ext)) == p

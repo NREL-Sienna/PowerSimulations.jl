@@ -39,7 +39,7 @@ function Base.show(io::IO, ::MIME"text/plain", op_model::OperationsProblem)
 
     for field in fieldnames(FormulationTemplate)
 
-        val = getfield(op_model.model_ref, Symbol(field))
+        val = getfield(op_model.template, Symbol(field))
 
         if typeof(val) == Dict{Symbol,DeviceModel}
 
