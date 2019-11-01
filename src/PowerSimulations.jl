@@ -67,6 +67,7 @@ export DeviceEnergy
 # cache_models
 export TimeStatusChange
 
+
 #operation_models
 #export UnitCommitment
 #export EconomicDispatch
@@ -191,6 +192,7 @@ include("network_models/network_constructor.jl")
 #Services constructors
 include("service_models/services_constructor.jl")
 
+# Commented out until properly implemented
 #Operational Model Constructors
 #include("operation_templates/economic_dispatch.jl")
 #include("operation_templates/unit_commitment.jl")
