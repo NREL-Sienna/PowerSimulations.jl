@@ -62,27 +62,27 @@ function _count_time_overlap(stage::String, references::Dict{Any,Any})
     return extra_time_length
 end
 
-function _reading_references(results::Dict, variables::Array, stage::String, step::Array,
+function _reading_references(results::Dict, duals::Array, stage::String, step::Array,
                              references::DataFrames.DataFrame, extra_time::Int64)
 
-    for name in (variables)
-        date_df = references[stage][dual[name]]
+    for name in (duals)
+        date_df = references[stage][duals[name]]
         step_df = DataFrames.DataFrame(Date = Dates.DateTime[], Step = String[], File_Path = String[])       
         for n in 1:length(step)
             step_df = vcat(step_df,date_df[date_df.Step .== step[n], :])
         end
-        results[(variables[name])] = DataFrames.DataFrame()
+        results[(duals[name])] = DataFrames.DataFrame()
         for (ix,time) in enumerate(step_df.Date)
             file_path = step_df[ix, :File_Path]
             var = Feather.read("$file_path")
             correct_var_length = size(1:(size(var,1) - extra_time),1)
-            results[(variables[name])] = vcat(results[(variables[name])],var[1:correct_var_length,:]) 
+            results[(duals[name])] = vcat(results[(duals[name])],var[1:correct_var_length,:]) 
         end
     end
     return results
 end
 
-function _reading_references(results::Dict, variables::Array, stage::String,
+function _reading_references(results::Dict, dual::Array, stage::String,
                              references::DataFrames.DataFrame, extra_time::Int64)
     for name in dual
         date_df = references[stage][dual[name]]
