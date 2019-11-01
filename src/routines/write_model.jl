@@ -10,7 +10,7 @@ to a file. The default file type is feather.
 
 # Example
 ```julia
-res = solve_op_model!(op_model)
+res = solve_op_problem!(op_problem)
 write_data(res.variables, "Users/downloads")
 ```
 # Accepted Key Words
@@ -93,7 +93,7 @@ function _write_optimizer_log(optimizer_log::Dict, save_path::AbstractString)
 
 end
 
-function _write_data(canonical::CanonicalModel, save_path::AbstractString; kwargs...)
+function _write_data(canonical::Canonical, save_path::AbstractString; kwargs...)
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
         for (k, v) in get_variables(canonical)
@@ -145,7 +145,7 @@ function _export_model_result(stage::_Stage, start_time::Dates.DateTime, save_pa
 end
 
 function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
-                               canonical::CanonicalModel,
+                               canonical::Canonical,
                                path::String)
 
     optimizer_log[:obj_value] = JuMP.objective_value(canonical.JuMPmodel)
@@ -165,7 +165,7 @@ end
 """ Exports Operational Model Results to a path"""
 function write_model_results(results::Results, save_path::String)
     if !isdir(save_path)
-        @error("Specified path is not valid. Run write_results to save results.")
+        error("Specified path is not valid. Run write_results to save results.")
     end
     new_folder_path = replace_chars("$save_path/$(round(Dates.now(),Dates.Minute))", ":", "-")
     folder_path = mkdir(new_folder_path)
@@ -178,7 +178,7 @@ end
 """ Exports Simulation Model Results to a path"""
 function write_model_results(res::Results, path::String, results::String; kwargs...)
     if !isdir(path)
-        @error("Specified path is not valid. Run write_results to save results.")
+        error("Specified path is not valid. Run write_results to save results.")
     end
     folder_path = joinpath(path,results)
     write_data(res.variables, res.time_stamp, folder_path; kwargs...)
@@ -190,13 +190,13 @@ function write_model_results(res::Results, path::String, results::String; kwargs
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
-function write_op_model(op_model::OperationModel, save_path::String)
-    _write_canonical_model(op_model.canonical, save_path)
+function write_op_problem(op_problem::OperationsProblem, save_path::String)
+    _write_canonical(op_problem.canonical, save_path)
     return
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
-function _write_canonical_model(canonical::CanonicalModel, save_path::String)
+function _write_canonical(canonical::Canonical, save_path::String)
     MOF_model = MOPFM()
     MOI.copy_to(MOF_model, JuMP.backend(canonical.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)

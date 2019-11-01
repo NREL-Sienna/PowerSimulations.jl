@@ -1,12 +1,12 @@
 ######## Internal Simulation Object Structs ########
 abstract type AbstractStage end
 
-mutable struct _Stage{M<:AbstractOperationModel} <: AbstractStage
+mutable struct _Stage{M<:AbstractOperationsProblem} <: AbstractStage
     key::Int64
-    reference::ModelReference
-    op_model::Type{M}
+    reference::FormulationTemplate
+    op_problem::Type{M}
     sys::PSY.System
-    canonical::CanonicalModel
+    canonical::Canonical
     optimizer::JuMP.OptimizerFactory
     executions::Int64
     execution_count::Int64
@@ -15,14 +15,14 @@ mutable struct _Stage{M<:AbstractOperationModel} <: AbstractStage
     cache::Dict{Type{<:AbstractCache}, AbstractCache}
 
     function _Stage(key::Int64,
-                    reference::ModelReference,
-                    op_model::Type{M},
+                    reference::FormulationTemplate,
+                    op_problem::Type{M},
                     sys::PSY.System,
-                    canonical::CanonicalModel,
+                    canonical::Canonical,
                     optimizer::JuMP.OptimizerFactory,
                     executions::Int64,
                     chronology_ref::Dict{Int64, <:Chronology},
-                    cache::Vector{<:AbstractCache}) where M <: AbstractOperationModel
+                    cache::Vector{<:AbstractCache}) where M <: AbstractOperationsProblem
 
     ini_cond_chron = get(chronology_ref, 0, nothing)
     if !isempty(get_initial_conditions(canonical))
@@ -41,7 +41,7 @@ mutable struct _Stage{M<:AbstractOperationModel} <: AbstractStage
 
     new{M}(key,
            reference,
-           op_model,
+           op_problem,
            sys,
            canonical,
            optimizer,
@@ -58,8 +58,8 @@ end
 ######## Exposed Structs to define a Simulation Object ########
 
 mutable struct Stage <: AbstractStage
-    op_model::Type{<:AbstractOperationModel}
-    model::ModelReference
+    op_problem::Type{<:AbstractOperationsProblem}
+    model::FormulationTemplate
     execution_count::Int64
     sys::PSY.System
     optimizer::JuMP.OptimizerFactory
@@ -67,12 +67,12 @@ mutable struct Stage <: AbstractStage
     cache::Vector{<:AbstractCache}
 
     function Stage(::Type{M},
-                   model::ModelReference,
+                   model::FormulationTemplate,
                    execution_count::Int64,
                    sys::PSY.System,
                    optimizer::JuMP.OptimizerFactory,
                    chronology_ref=Dict{Int, <:Chronology}(),
-                   cache::Vector{<:AbstractCache}=Vector{AbstractCache}()) where M<:AbstractOperationModel
+                   cache::Vector{<:AbstractCache}=Vector{AbstractCache}()) where M<:AbstractOperationsProblem
 
         new(M,
             model,
@@ -86,26 +86,26 @@ mutable struct Stage <: AbstractStage
 end
 
 function Stage(::Type{M},
-                model::ModelReference,
+                model::FormulationTemplate,
                 execution_count::Int64,
                 sys::PSY.System,
                 optimizer::JuMP.OptimizerFactory,
                 chronology_ref::Dict{Int64, <:Chronology},
-                cache::Union{Nothing, AbstractCache}=nothing) where M<:AbstractOperationModel
+                cache::Union{Nothing, AbstractCache}=nothing) where M<:AbstractOperationsProblem
 
     cacheinput = isnothing(cache) ? Vector{AbstractCache}() : [cache]
     return Stage(M, model, execution_count, sys, optimizer, chronology_ref, cacheinput)
 
 end
 
-function Stage(model::ModelReference,
+function Stage(model::FormulationTemplate,
                execution_count::Int64,
                sys::PSY.System,
                optimizer::JuMP.OptimizerFactory,
                chronology_ref::Dict{Int64, <:Chronology},
                cache::Union{Nothing, AbstractCache}=nothing)
 
-    return Stage(DefaultOpModel, model, execution_count, sys, optimizer, chronology_ref, cache)
+    return Stage(DefaultOpProblem, model, execution_count, sys, optimizer, chronology_ref, cache)
 
 end
 
@@ -113,4 +113,4 @@ get_execution_count(s::S) where S <: AbstractStage = s.execution_count
 get_sys(s::S) where S <: AbstractStage = s.sys
 get_chronology_ref(s::S) where S <: AbstractStage = s.chronology_ref
 
-get_model_ref(s::Stage) = s.model
+get_template(s::Stage) = s.model

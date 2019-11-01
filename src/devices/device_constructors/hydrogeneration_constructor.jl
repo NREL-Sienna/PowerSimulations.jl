@@ -1,4 +1,4 @@
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{H, D},
                            ::Type{S};
                            kwargs...) where {H<:PSY.HydroGen,
@@ -21,7 +21,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 end
 
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{H, HydroFixed},
                            ::Type{S};
                            kwargs...) where {H<:PSY.HydroGen,
@@ -42,7 +42,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{PSY.HydroFix, D},
                            ::Type{S};
                            kwargs...) where {D<:AbstractHydroFormulation,
@@ -59,7 +59,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{PSY.HydroFix, HydroFixed},
                            ::Type{S};
                            kwargs...) where {S<:PM.AbstractPowerModel}

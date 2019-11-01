@@ -6,7 +6,7 @@ This is to make it easier to calculate when the previous model doesn't
 contain binaries. For instance, looking back on an ED model to find the
 IC of the UC model
 """
-function status_init(canonical::CanonicalModel,
+function status_init(canonical::Canonical,
                      devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
 
@@ -46,7 +46,7 @@ function status_init(canonical::CanonicalModel,
 
 end
 
-function output_init(canonical::CanonicalModel,
+function output_init(canonical::Canonical,
                     devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
     key = ICKey(DevicePower, PSD)
@@ -87,7 +87,7 @@ function output_init(canonical::CanonicalModel,
 
 end
 
-function duration_init(canonical::CanonicalModel,
+function duration_init(canonical::Canonical,
                         devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
     keys = [ICKey(TimeDurationON, PSD), ICKey(TimeDurationOFF, PSD)]
@@ -142,7 +142,7 @@ end
 
 ######################### Initialize Functions for Storage #################################
 
-function storage_energy_init(canonical::CanonicalModel,
+function storage_energy_init(canonical::Canonical,
                              devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.Storage}
 
     key = ICKey(DeviceEnergy, PSD)

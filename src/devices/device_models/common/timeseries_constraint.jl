@@ -1,5 +1,5 @@
-;@doc raw"""
-    device_timeseries_ub(canonical::CanonicalModel,
+@doc raw"""
+    device_timeseries_ub(canonical::Canonical,
                      ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}
                      cons_name::Symbol,
                      var_name::Symbol)
@@ -15,12 +15,12 @@ Constructs upper bound for given variable and time series data and a multiplier.
 `` x_t \leq r^{val} r_t, \forall t ``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}: timeseries data name (1), multiplier (2) and values (3)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the variable
 """
-function device_timeseries_ub(canonical::CanonicalModel,
+function device_timeseries_ub(canonical::Canonical,
                               ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                               cons_name::Symbol,
                               var_name::Symbol)
@@ -44,7 +44,7 @@ function device_timeseries_ub(canonical::CanonicalModel,
 end
 
 @doc raw"""
-    device_timeseries_lb(canonical::CanonicalModel,
+    device_timeseries_lb(canonical::Canonical,
                      ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}
                      cons_name::Symbol,
                      var_name::Symbol)
@@ -62,12 +62,12 @@ Constructs lower bound for given variable subject to time series data and a mult
 where (ix, name) in enumerate(ts_data[1]).
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}: timeseries data name (1), multiplier (2) and values (3)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the variable
 """
-function device_timeseries_lb(canonical::CanonicalModel,
+function device_timeseries_lb(canonical::Canonical,
                               ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                               cons_name::Symbol,
                               var_name::Symbol)
@@ -92,7 +92,7 @@ end
 
 #NOTE: there is a floating, unnamed lower bound constraint in this function. This may need to be changed.
 @doc raw"""
-    device_timeseries_param_ub(canonical::CanonicalModel,
+    device_timeseries_param_ub(canonical::Canonical,
                                     ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}
                                     cons_name::Symbol,
                                     param_reference::UpdateRef,
@@ -110,13 +110,13 @@ Constructs upper bound for given variable using a parameter. The constraint is
 `` x^{var}_t \leq r^{val} x^{param}_t, \forall t ``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}: timeseries data name (1), multiplier (2) and values (3)
 * cons_name::Symbol : name of the constraint
 * param_reference::UpdateRef : UpdateRef to access the parameter
 * var_name::Symbol : the name of the variable
 """
-function device_timeseries_param_ub(canonical::CanonicalModel,
+function device_timeseries_param_ub(canonical::Canonical,
                                     ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                                     cons_name::Symbol,
                                     param_reference::UpdateRef,
@@ -143,7 +143,7 @@ function device_timeseries_param_ub(canonical::CanonicalModel,
 end
 
 @doc raw"""
-    device_timeseries_param_lb(canonical::CanonicalModel,
+    device_timeseries_param_lb(canonical::Canonical,
                                     ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}
                                     cons_name::Symbol,
                                     param_reference::UpdateRef,
@@ -161,13 +161,13 @@ Constructs lower bound for given variable using a parameter. The constraint is
 `` r^{val} x^{param}_t \leq x^{var}_t, \forall t ``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}} : timeseries data name (1) and values (2)
 * cons_name::Symbol : name of the constraint
 * param_reference::UpdateRef : UpdateRef to access the parameter
 * var_name::Symbol : the name of the variable
 """
-function device_timeseries_param_lb(canonical::CanonicalModel,
+function device_timeseries_param_lb(canonical::Canonical,
                                     ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                                     cons_name::Symbol,
                                     param_reference::UpdateRef,
@@ -193,7 +193,7 @@ function device_timeseries_param_lb(canonical::CanonicalModel,
 end
 
 @doc raw"""
-    device_timeseries_ub_bin(canonical::CanonicalModel,
+    device_timeseries_ub_bin(canonical::Canonical,
                                     ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}
                                     cons_name::Symbol,
                                     var_name::Symbol,
@@ -213,13 +213,13 @@ where (ix, name) in enumerate(ts_data[1]).
 `` x^{cts}_t \leq r^{val} r_t x^{bin}_t, \forall t ``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}} : timeseries data name (1) and values (2)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol :  name of the variable
 * binvar_name::Symbol : name of binary variable
 """
-function device_timeseries_ub_bin(canonical::CanonicalModel,
+function device_timeseries_ub_bin(canonical::Canonical,
                                     ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                                     cons_name::Symbol,
                                     var_name::Symbol,
@@ -246,7 +246,7 @@ function device_timeseries_ub_bin(canonical::CanonicalModel,
 end
 
 @doc raw"""
-    device_timeseries_ub_bigM(canonical::CanonicalModel,
+    device_timeseries_ub_bigM(canonical::Canonical,
                                     ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}}
                                     cons_name::Symbol,
                                     var_name::Symbol,
@@ -270,7 +270,7 @@ Constructs upper bound for variable and time series and a multiplier or confines
 `` x^{cts}_t \leq M x^{bin}_t, \forall t ``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * ts_data::Tuple{Vector{String}, Vector{Vector{Float64}}} : timeseries data name (1) and values (2)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol :  name of the variable
@@ -278,7 +278,7 @@ param_reference::UpdateRef : UpdateRef of access the parameters
 * binvar_name::Symbol : name of binary variable
 * M_value::Float64 : bigM
 """
-function device_timeseries_ub_bigM(canonical::CanonicalModel,
+function device_timeseries_ub_bigM(canonical::Canonical,
                                     ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                                     cons_name::Symbol,
                                     var_name::Symbol,

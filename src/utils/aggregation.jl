@@ -18,7 +18,7 @@ get_variables(result::AggregatedResults) = result.dual_variables
 
 function _count_time_overlap(stage::String,
     step::Array,
-    variable::Array, 
+    variable::Array,
     references::Dict{Any,Any})
     date_df = references[stage][variable[1]]
     step_df = DataFrames.DataFrame(Date = Dates.DateTime[], 
@@ -119,14 +119,14 @@ end
     results = load_simulation_results(stage, step,variable,references)
 
 This function goes through the reference table of file paths and
-aggregates the results over time into a struct of type OperationModelResults
+aggregates the results over time into a struct of type OperationsProblemResults
 for the desired step range and variables
 
 # Arguments
 -`stage::String = "stage-1"``: The stage of the results getting parsed, stage-1 or stage-2
 -`step::Array{String} = ["step-1", "step-2", "step-3"]`: the steps of the results getting parsed
 -`variable::Array{Symbol} = [:P_ThermalStandard, :P_RenewableDispatch]`: the variables to be parsed
--`references::Dict = ref`: the reference dictionary created in run_sim_model 
+-`references::Dict = ref`: the reference dictionary created in run_simulation
 or with make_references
 
 # Example
@@ -142,7 +142,7 @@ file in the folder structure
 """
 function load_simulation_results(stage::String,
          step::Array,
-         variable::Array, 
+         variable::Array,
          references::Dict{Any,Any}; kwargs...)
     variables = Dict()
     duals = Dict()
@@ -221,11 +221,11 @@ end
     results = load_simulation_results(stage, references)
 
 This function goes through the reference table of file paths and
-aggregates the results over time into a struct of type OperationModelResults
+aggregates the results over time into a struct of type OperationsProblemResults
 
 # Arguments
 -`stage::String = "stage-1"`: The stage of the results getting parsed, stage-1 or stage-2
--`references::Dict = ref`: the reference dictionary created in run_sim_model 
+-`references::Dict = ref`: the reference dictionary created in run_simulation
 or with make_references
 
 # Example

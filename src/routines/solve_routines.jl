@@ -1,8 +1,8 @@
 """
-    solve_op_model!(op_model::OperationModel; kwargs...)
+    solve_op_problem!(op_problem::OperationsProblem; kwargs...)
 
 This solves the operational model for a single instance and
-outputs results of type OperationModelResult: objective value, time log,
+outputs results of type OperationsProblemResult: objective value, time log,
 a dictionary of variables and their dataframe of results, and a time stamp.
 
 # Arguments
@@ -10,20 +10,20 @@ a dictionary of variables and their dataframe of results, and a time stamp.
 
 # Examples
 ```julia
-results = solve_op_model!(OpModel)
+results = solve_op_problem!(OpModel)
 ```
 # Accepted Key Words
 -`save_path::String`: If a file path is provided the results 
 automatically get written to feather files
 -`optimizer::OptimizerFactory`: The optimizer that is used to solve the model
 """
-function solve_op_model!(op_model::OperationModel; kwargs...)
+function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
 
     timed_log = Dict{Symbol, Any}()
 
     save_path = get(kwargs, :save_path, nothing)
 
-    if op_model.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
+    if op_problem.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
 
         if !(:optimizer in keys(kwargs))
             error("No Optimizer has been defined, can't solve the operational problem")
@@ -31,14 +31,14 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
 
         _, timed_log[:timed_solve_time],
         timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel,
+        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.canonical.JuMPmodel,
                                                         kwargs[:optimizer])
 
     else
 
         _, timed_log[:timed_solve_time],
         timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_model.canonical.JuMPmodel)
+        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.canonical.JuMPmodel)
 
     end
 
@@ -51,7 +51,7 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
     
     results = make_results(vars_result, obj_value, optimizer_log, time_stamp)
 
-    !isnothing(save_path) && write_model_results(results, save_path)
+    !isnothing(save_path) && write_results(results, save_path)
 
      return results
 
@@ -95,7 +95,7 @@ each stage and step.
 ```julia
 sim = Simulation("test", 7, stages, "/Users/lhanig/Downloads/";
 verbose = true, system_to_file = false)
-run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
+run_simulation!(sim::Simulation; verbose::Bool = false, kwargs...)
 ```
 
 # Accepted Key Words

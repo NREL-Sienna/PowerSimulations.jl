@@ -10,7 +10,7 @@ struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
 ########################### renewable generation variables #################################
 
-function activepower_variables!(canonical::CanonicalModel,
+function activepower_variables!(canonical::Canonical,
                                devices::IS.FlattenIteratorWrapper{R}) where R<:PSY.RenewableGen
 
     add_variable(canonical,
@@ -25,7 +25,7 @@ function activepower_variables!(canonical::CanonicalModel,
 
 end
 
-function reactivepower_variables!(canonical::CanonicalModel,
+function reactivepower_variables!(canonical::Canonical,
                                  devices::IS.FlattenIteratorWrapper{R}) where R<:PSY.RenewableGen
 
     add_variable(canonical,
@@ -39,7 +39,7 @@ function reactivepower_variables!(canonical::CanonicalModel,
 end
 
 ####################################### Reactive Power Constraints #########################
-function reactivepower_constraints!(canonical::CanonicalModel,
+function reactivepower_constraints!(canonical::Canonical,
                                     devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableFullDispatch},
                                     system_formulation::Type{<:PM.AbstractPowerModel}) where R<:PSY.RenewableGen
@@ -67,7 +67,7 @@ function reactivepower_constraints!(canonical::CanonicalModel,
 
 end
 
-function reactivepower_constraints!(canonical::CanonicalModel,
+function reactivepower_constraints!(canonical::Canonical,
                                     devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableConstantPowerFactor},
                                     system_formulation::Type{<:PM.AbstractPowerModel}) where R<:PSY.RenewableGen
@@ -93,7 +93,7 @@ end
 
 
 ######################## output constraints without Time Series ############################
-function _get_time_series(canonical::CanonicalModel,
+function _get_time_series(canonical::Canonical,
                           devices::IS.FlattenIteratorWrapper{<:PSY.RenewableGen})
 
     initial_time = model_initial_time(canonical)
@@ -127,7 +127,7 @@ function _get_time_series(canonical::CanonicalModel,
 end
 
 
-function activepower_constraints!(canonical::CanonicalModel,
+function activepower_constraints!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{R},
                                 device_formulation::Type{<:AbstractRenewableDispatchFormulation},
                                 system_formulation::Type{<:PM.AbstractPowerModel}) where R<:PSY.RenewableGen
@@ -163,7 +163,7 @@ function activepower_constraints!(canonical::CanonicalModel,
 end
 
 ########################## Addition of to the nodal balances ###############################
-function nodal_expression!(canonical::CanonicalModel,
+function nodal_expression!(canonical::Canonical,
                            devices::IS.FlattenIteratorWrapper{R},
                            system_formulation::Type{<:PM.AbstractPowerModel}) where R<:PSY.RenewableGen
 
@@ -201,7 +201,7 @@ function nodal_expression!(canonical::CanonicalModel,
 
 end
 
-function nodal_expression!(canonical::CanonicalModel,
+function nodal_expression!(canonical::Canonical,
                            devices::IS.FlattenIteratorWrapper{R},
                            system_formulation::Type{<:PM.AbstractActivePowerModel}) where R<:PSY.RenewableGen
 
@@ -230,7 +230,7 @@ function nodal_expression!(canonical::CanonicalModel,
 end
 
 ##################################### renewable generation cost ############################
-function cost_function(canonical::CanonicalModel,
+function cost_function(canonical::Canonical,
                        devices::IS.FlattenIteratorWrapper{PSY.RenewableDispatch},
                        device_formulation::Type{D},
                        system_formulation::Type{<:PM.AbstractPowerModel}) where D<:AbstractRenewableDispatchFormulation

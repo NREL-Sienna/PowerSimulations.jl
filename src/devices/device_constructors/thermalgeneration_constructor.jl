@@ -1,7 +1,7 @@
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{T, D},
                            ::Type{S};
                            kwargs...) where {T<:PSY.ThermalGen,
@@ -51,7 +51,7 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{T, D},
                            ::Type{S};
                            kwargs...) where {T<:PSY.ThermalGen,
@@ -95,7 +95,7 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{T, ThermalBasicUnitCommitment},
                            ::Type{S};
                            kwargs...) where {T<:PSY.ThermalGen,
@@ -140,7 +140,7 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{T, ThermalBasicUnitCommitment},
                            ::Type{S};
                            kwargs...) where {T<:PSY.ThermalGen,
@@ -180,7 +180,7 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{T, ThermalRampLimited},
                            ::Type{S};
                            kwargs...) where {T<:PSY.ThermalGen,
@@ -225,7 +225,7 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{T, ThermalRampLimited},
                            ::Type{S};
                            kwargs...) where {T<:PSY.ThermalGen,
@@ -264,7 +264,7 @@ end
 
 
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{T, D},
                            ::Type{S};
                            kwargs...) where {T<:PSY.ThermalGen,
@@ -302,7 +302,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{T, D},
                            ::Type{S};
                            kwargs...) where {T<:PSY.ThermalGen,

@@ -1,5 +1,5 @@
 @doc raw"""
-    rating_constraint!(canonical::CanonicalModel,
+    rating_constraint!(canonical::Canonical,
                             rating_data::Vector{Tuple{String, Float64}},
                             cons_name::Symbol,
                             var_names::Tuple{Symbol, Symbol})
@@ -17,14 +17,14 @@ where r in rating data and t in time steps.
 `` x_1^2 + x_2^2 \leq r^2 ``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * rating_data::Vector{Tuple{String, Float64}} : rating data name (1) and value (2)
 * cons_name::Symbol : name of the constraint
 * var_names::Tuple{Symbol, Symbol} : the names of the variables
 - : var_names[1] : var1
 - : var_names[2] : var2
 """
-function rating_constraint!(canonical::CanonicalModel,
+function rating_constraint!(canonical::Canonical,
                             rating_data::Vector{Tuple{String, Float64}},
                             cons_name::Symbol,
                             var_names::Tuple{Symbol, Symbol})
