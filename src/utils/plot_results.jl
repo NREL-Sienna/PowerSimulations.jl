@@ -132,7 +132,7 @@ function get_bar_gen_data(res::OperationsProblemResults)
 end
 
 """
-    sort_data!(results::OperationsProblemResults)
+    sort_data(results::OperationsProblemResults)
 
 This function takes in struct OperationsProblemResults,
 sorts the generators in each variable, and outputs the sorted
@@ -146,14 +146,14 @@ results. The generic function sorts the generators alphabetically.
 
 #Examples
 ```julia
-sort_data!(results)
+new_results = sort_data(results)
 ```
 ***Note:*** only the generators included in 'my_order' will be in the
 results, and consequently, only these will be plotted. This can be a nice
 feature for variables with more than 5 generators.
 
 """
-function sort_data!(res::OperationsProblemResults; kwargs...)
+function sort_data(res::OperationsProblemResults; kwargs...)
 
     Variables = Dict()
     Variables[:P_ThermalStandard]  = get(kwargs, :P_ThermalStandard, nothing)
