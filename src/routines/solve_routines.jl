@@ -44,7 +44,7 @@ function solve_op_model!(op_model::OperationModel; kwargs...)
 
     vars_result = get_model_result(op_model)
     optimizer_log = get_optimizer_log(op_model)
-    time_stamp = get_time_stamp(op_model)
+    time_stamp = get_time_stamps(op_model)
     shorten_time_stamp!(time_stamp)
     obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_model.canonical.JuMPmodel))
     merge!(optimizer_log, timed_log)
@@ -70,7 +70,7 @@ function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::Str
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("Stage $(stage.key) status is $(model_status)")
     end
-    if duals in keys(kwargs)
+    if duals in keys(kwargs) && !isnothing(get_constraints(stage.canonical))
         _export_model_result(stage, start_time, results_path, kwargs[:duals])
     else
         _export_model_result(stage, start_time, results_path)
@@ -99,9 +99,8 @@ run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
 ```
 
 # Accepted Key Words
-`no_dict::Bool = true`: if :no_dict is true a reference dictionary is not created.
-if no_dict is not used or it's false, a reference dictionary is created.
-
+`dual_constraints::Vector{Symbol}`: if dual variables are desired in the
+results, include a vector of the variable names to be included
 """
 function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
     _prepare_workspace!(sim_ref, base_name, simulation_folder)
@@ -136,10 +135,9 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
         end
         
     end
-    ref = get(kwargs, :dict, nothing)
-    if !isnothing(ref)
-        date_run = convert(String,last(split(dirname(sim.ref.raw),"/")))
-        ref = make_references(sim, date_run)
+    date_run = convert(String,last(split(dirname(sim.ref.raw),"/")))
+    ref = make_references(sim, date_run)
+    return reference
     end
 end
 
