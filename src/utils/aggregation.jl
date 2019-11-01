@@ -1,6 +1,3 @@
-# This function returns the length of time_stamp for each step
-# that is unique to that step and not overlapping with the next time step.
-
 struct AggregatedResults <: Results
     variables::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict{Symbol, Any}
@@ -16,6 +13,8 @@ get_time_stamp(result::AggregatedResults) = result.time_stamp
 get_duals(result::AggregatedResults) = result.duals
 get_variables(result::AggregatedResults) = result.dual_variables
 
+# This function returns the length of time_stamp for each step
+# that is unique to that step and not overlapping with the next time step.
 function _count_time_overlap(stage::String,
     step::Array,
     variable::Array,
@@ -103,7 +102,6 @@ function _reading_references(results::Dict, names::Array, stage::String,
             duals[(dual[name])] = vcat(duals[(dual[name])],var[1:correct_var_length,:]) 
         end
     end
-
     return results
 end
 
@@ -115,8 +113,35 @@ function _removing_extra_time(file_path::String, extra_time_length::Number)
     return time_stamp
 end
 
+""" This sums all of the rows in a result dataframe """
+function rowsum(variable::DataFrames.DataFrame, name::String)
+    variable = DataFrames.DataFrame(Symbol(name) => sum.(eachcol(variable)))
+    return variable
+end
+""" This sums each column in a result dataframe """
+function columnsum(variable::DataFrames.DataFrame)
+    shortvar = DataFrames.DataFrame()
+    varnames = collect(names(variable))
+    eachsum = (sum.(eachrow(variable)))
+    for i in 1: size(variable,1)
+        df = DataFrames.DataFrame(Symbol(varnames[i]) => eachsum[i])
+        shortvar = hcat(shortvar,df)
+    end
+    return shortvar
+end
+
+function _find_duals(variables::Array)
+    duals = []
+    for i in 1:length(variables)
+        if occursin("dual", variables[i])
+            duals = vcat(duals, variables[i])
+        end
+    end
+    return duals
+end
+
 """
-    results = load_simulation_results(stage, step,variable,references)
+    load_simulation_results(stage, step,variable,references)
 
 This function goes through the reference table of file paths and
 aggregates the results over time into a struct of type OperationsProblemResults
@@ -146,7 +171,7 @@ function load_simulation_results(stage::String,
          references::Dict{Any,Any}; kwargs...)
     variables = Dict()
     duals = Dict()
-    dual = find_duals(collect(keys(references[stage])))
+    dual = _find_duals(collect(keys(references[stage])))
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
     extra_time_length = _count_time_overlap(stage, step, variable, references)
     for l in 1:length(variable)
@@ -181,44 +206,9 @@ function load_simulation_results(stage::String,
     end
     return results
 end
-function rowsum(variable::DataFrames.DataFrame, name::String)
-    variable = DataFrames.DataFrame(Symbol(name) => sum.(eachcol(variable)))
-    return variable
-end
 
-function columnsum(variable::DataFrames.DataFrame)
-    shortvar = DataFrames.DataFrame()
-    varnames = collect(names(variable))
-    eachsum = (sum.(eachrow(variable)))
-    for i in 1: size(variable,1)
-        df = DataFrames.DataFrame(Symbol(varnames[i]) => eachsum[i])
-        shortvar = hcat(shortvar,df)
-    end
-    return shortvar
-end
-
-function summarize(results::Results; kwargs...)
-    for (variable, data) in results.variables
-        summary = describe(data)
-        if (:rowsum in keys(kwargs)) == true
-            rowsum = rowsum(data,variable)
-        end
-        if (:columnsum in keys(kwargs)) == true
-            colsum = columnsum(data)
-        end
-    end
-end
-function find_duals(variables::Array)
-    duals = []
-    for i in 1:length(variables)
-        if occursin("dual", variables[i])
-            duals = vcat(duals, variables[i])
-        end
-    end
-    return duals
-end
 """
-    results = load_simulation_results(stage, references)
+    load_simulation_results(stage, references)
 
 This function goes through the reference table of file paths and
 aggregates the results over time into a struct of type OperationsProblemResults
@@ -245,7 +235,7 @@ function load_simulation_results(stage::String, references::Dict{Any,Any}; kwarg
     variables = Dict()
     duals = Dict()
     variable = collect(keys(references[stage]))
-    dual = find_duals(variable)
+    dual = _find_duals(variable)
     variable = setdiff(variable,duals)
     
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
