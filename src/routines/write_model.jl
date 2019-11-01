@@ -106,7 +106,7 @@ function _write_data(canonical::Canonical, save_path::AbstractString; kwargs...)
     return
 end
 
-function write_data(canonical::CanonicalModel, save_path::AbstractString, dual_con::Vector{Symbol}; kwargs...)
+function write_data(canonical::Canonical, save_path::AbstractString, dual_con::Vector{Symbol}; kwargs...)
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
         duals = get_model_duals(canonical, dual_con)
@@ -120,7 +120,7 @@ function write_data(canonical::CanonicalModel, save_path::AbstractString, dual_c
     return
 end
 
-function write_data(op_model::OperationModel, save_path::AbstractString; kwargs...)
+function write_data(op_model::OperationsProblem, save_path::AbstractString; kwargs...)
     _write_data(op_model.canonical, save_path; kwargs...)
     return
 end

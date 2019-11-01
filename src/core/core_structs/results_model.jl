@@ -1,20 +1,20 @@
 abstract type Results end
 
 get_results(result::Results) = nothing
-struct OperationModelResults <: Results
+struct OperationsProblemResults <: Results
     variables::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
 end
 
-get_duals(result::OperationModelResults) = nothing
+get_duals(result::OperationsProblemResults) = nothing
 
 function make_results(variables::Dict{Symbol, DataFrames.DataFrame},
                       total_cost::Dict,
                       optimizer_log::Dict,
                       time_stamp::DataFrames.DataFrame)
-    return OperationModelResults(variables, total_cost, optimizer_log, time_stamp)
+    return OperationsProblemResults(variables, total_cost, optimizer_log, time_stamp)
 end
 
 function make_results(variables::Dict{Symbol, DataFrames.DataFrame},
@@ -24,7 +24,7 @@ function make_results(variables::Dict{Symbol, DataFrames.DataFrame},
                       duals::Dict{Symbol, Any})
     return AggregatedResults(variables, total_cost, optimizer_log, time_stamp, duals)
 end
-function get_variable(res_model::OperationModelResults, key::Symbol)
+function get_variable(res_model::OperationsProblemResults, key::Symbol)
         try
             !isnothing(res_model.variables)
         catch
@@ -33,11 +33,11 @@ function get_variable(res_model::OperationModelResults, key::Symbol)
     return get(res_model.variables, key, nothing)
 end
 
-function get_optimizer_log(res_model::OperationModelResults)
+function get_optimizer_log(res_model::OperationsProblemResults)
     return res_model.optimizer_log
 end
 
-function get_time_stamps(res_model::OperationModelResults, key::Symbol)
+function get_time_stamps(res_model::OperationsProblemResults, key::Symbol)
     return res_model.time_stamp
 end
 
