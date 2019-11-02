@@ -8,7 +8,7 @@ struct VoltageSourceDC <: AbstractDCLineFormulation end
 
 #################################### Branch Variables ##################################################
 
-function flow_variables!(canonical::CanonicalModel,
+function flow_variables!(canonical::Canonical,
                         system_formulation::Type{S},
                         devices::IS.FlattenIteratorWrapper{B}) where {B<:PSY.DCBranch,
                                                                         S<:PM.AbstractPowerModel}
@@ -17,7 +17,7 @@ function flow_variables!(canonical::CanonicalModel,
 
 end
 
-function flow_variables!(canonical::CanonicalModel,
+function flow_variables!(canonical::Canonical,
                         system_formulation::Type{StandardPTDFModel},
                         devices::IS.FlattenIteratorWrapper{B}) where {B<:PSY.DCBranch}
 
@@ -55,7 +55,7 @@ end
 
 #################################### Rate Limits Constraints ##################################################
 
-function branch_rate_constraint!(canonical::CanonicalModel,
+function branch_rate_constraint!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.DCBranch,
@@ -77,7 +77,7 @@ function branch_rate_constraint!(canonical::CanonicalModel,
 
 end
 
-function branch_rate_constraint!(canonical::CanonicalModel,
+function branch_rate_constraint!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{HVDCLossless},
                                 system_formulation::Type{S}) where {B<:PSY.DCBranch,
@@ -101,7 +101,7 @@ function branch_rate_constraint!(canonical::CanonicalModel,
 
 end
 
-function branch_rate_constraint!(canonical::CanonicalModel,
+function branch_rate_constraint!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{HVDCLossless},
                                 system_formulation::Type{S}) where {B<:PSY.DCBranch,
@@ -125,7 +125,7 @@ function branch_rate_constraint!(canonical::CanonicalModel,
 
 end
 
-function branch_rate_constraint!(canonical::CanonicalModel,
+function branch_rate_constraint!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.DCBranch,
@@ -156,7 +156,7 @@ function branch_rate_constraint!(canonical::CanonicalModel,
 
 end
 
-function branch_rate_constraint!(canonical::CanonicalModel,
+function branch_rate_constraint!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.DCBranch,

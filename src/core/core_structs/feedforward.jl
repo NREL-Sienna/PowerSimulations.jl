@@ -1,6 +1,6 @@
-abstract type FeedForwardModel end
+abstract type AbstractFeedForwardAffect end
 
-struct UpperBoundFF <: FeedForwardModel
+struct UpperBoundFF <: AbstractFeedForwardAffect
     vars_prefix::Vector{Symbol}
     cache::Union{Nothing, Type{<:AbstractCache}}
 end
@@ -10,7 +10,7 @@ UpperBoundFF(var::Symbol,
 
 get_vars_prefix(p::UpperBoundFF) = p.vars_prefix
 
-struct RangeFF <: FeedForwardModel
+struct RangeFF <: AbstractFeedForwardAffect
     lb_vars_prefix::Vector{Symbol}
     ub_vars_prefix::Vector{Symbol}
     cache::Union{Nothing, Type{<:AbstractCache}}
@@ -22,7 +22,7 @@ RangeFF(var_lb::Symbol,
 
 get_vars_prefix(p::RangeFF) = (p.lb_var_prefix, p.lb_var_prefix)
 
-struct SemiContinuousFF <: FeedForwardModel
+struct SemiContinuousFF <: AbstractFeedForwardAffect
     vars_prefix::Vector{Symbol}
     bin_prefix::Symbol
     cache::Union{Nothing, Type{<:AbstractCache}}

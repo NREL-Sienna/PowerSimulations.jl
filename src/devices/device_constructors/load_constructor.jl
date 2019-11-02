@@ -1,4 +1,4 @@
-function construct_device!(canonical::CanonicalModel,
+function construct_device!(canonical::Canonical,
                            sys::PSY.System,
                            model::DeviceModel{L, D},
                            ::Type{S};
@@ -34,7 +34,7 @@ function construct_device!(canonical::CanonicalModel,
 
 end
 
-function construct_device!(canonical::CanonicalModel,
+function construct_device!(canonical::Canonical,
                            sys::PSY.System,
                            model::DeviceModel{L, D},
                            ::Type{S};
@@ -66,7 +66,7 @@ function construct_device!(canonical::CanonicalModel,
 
 end
 
-function construct_device!(canonical::CanonicalModel,
+function construct_device!(canonical::Canonical,
                            sys::PSY.System,
                            model::DeviceModel{L, InterruptiblePowerLoad},
                            ::Type{S};
@@ -103,7 +103,7 @@ function construct_device!(canonical::CanonicalModel,
 
 end
 
-function construct_device!(canonical::CanonicalModel,
+function construct_device!(canonical::Canonical,
                            sys::PSY.System,
                            model::DeviceModel{L, InterruptiblePowerLoad},
                            ::Type{S};
@@ -136,7 +136,7 @@ function construct_device!(canonical::CanonicalModel,
 
 end
 
-function construct_device!(canonical::CanonicalModel,
+function construct_device!(canonical::Canonical,
                            sys::PSY.System,
                            model::DeviceModel{L, StaticPowerLoad},
                            ::Type{S};
@@ -158,7 +158,7 @@ function construct_device!(canonical::CanonicalModel,
 
 end
 
-function construct_device!(canonical::CanonicalModel,
+function construct_device!(canonical::Canonical,
                            sys::PSY.System,
                            model::DeviceModel{L, D},
                            ::Type{S};

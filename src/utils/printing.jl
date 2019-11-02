@@ -1,5 +1,5 @@
 #=
-function Base.show(io::IO, op_model::OperationModel)
+function Base.show(io::IO, op_problem::OperationsProblem)
     println(io, "Operation Model")
 end
 =#
@@ -23,23 +23,23 @@ function _organize_device_model(val::Dict{Symbol,DeviceModel}, field::Symbol, io
 end
 
 """
-    Base.show(io::IO, ::MIME"text/plain", op_model::OperationModel)
+    Base.show(io::IO, ::MIME"text/plain", op_problem::OperationsProblem)
 
-This function goes through the fields in OperationModel and then in ModelReference,
+This function goes through the fields in OperationsProblem and then in FormulationTemplate,
 if the field contains a Device model dictionary, it calls organize_device_model() &
 prints the data by field, key, value. If the field is not a Device model dictionary,
 and a value exists for that field it prints the value.
 
 
 """
-function Base.show(io::IO, ::MIME"text/plain", op_model::OperationModel)
+function Base.show(io::IO, ::MIME"text/plain", op_problem::OperationsProblem)
 
-    println(io, "\nOperation Model")
+    println(io, "\nOperations Problem")
     println(io, "===============\n")
 
-    for field in fieldnames(ModelReference)
+    for field in fieldnames(FormulationTemplate)
 
-        val = getfield(op_model.model_ref, Symbol(field))
+        val = getfield(op_problem.template, Symbol(field))
 
         if typeof(val) == Dict{Symbol,DeviceModel}
 
@@ -58,27 +58,31 @@ end
 
 
 
-function Base.show(io::IO, op_model::CanonicalModel)
+function Base.show(io::IO, op_problem::Canonical)
     println(io, "Canonical()")
 end
 
-function Base.show(io::IO, op_model::Simulation)
+function Base.show(io::IO, op_problem::Simulation)
     println(io, "Simulation()")
 end
 #=
-function Base.show(io::IO, res_model::OperationModelResults)
+function Base.show(io::IO, results::OperationsProblemResults)
     println(io, "Results Model")
  end
 
 =#
 
-function Base.show(io::IO, res_model::OperationModelResults)
-    println(io, "\nResults Model")
+function Base.show(io::IO, results::OperationsProblemResults)
+    println(io, "\nResults")
     println(io, "===============\n")
 
-    for (k, v) in res_model.variables
-        time = DataFrames.DataFrame(Time = res_model.time_stamp[!, :Range])
-        var = hcat(time, v)
+    for (k, v) in results.variables
+        time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
+        if size(time,2) == size(v,2)
+            var = hcat(time, v)
+        else
+            var = v
+        end
         println(io, "$(k)")
         println(io, "==================")
         println(io, "$(var)\n")
@@ -86,11 +90,11 @@ function Base.show(io::IO, res_model::OperationModelResults)
 
     println(io, "Optimizer Log")
     println(io, "-------------")
-    for (k, v) in res_model.optimizer_log
+    for (k, v) in results.optimizer_log
         println(io, "        $(k) = $(v)")
     end
     println(io, "\n")
-    for (k, v) in res_model.total_cost
+    for (k, v) in results.total_cost
         println(io, "Total Cost: $(k) = $(v)")
     end
  end

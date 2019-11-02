@@ -29,9 +29,9 @@ end
 
 """
 
-get_stacked_plot_data(res::OperationModelResults, variable::String)
+get_stacked_plot_data(res::OperationsProblemResults, variable::String)
 
-This function takes in results of struct OperationModelResult. It takes the
+This function takes in results of struct OperationsProblemResult. It takes the
 dataframe from whichever variable name was given and converts it to type StackedArea.
 StackedArea is the type of struct that signals the plot() function to use the
 StackedArea plot recipe method.
@@ -45,7 +45,7 @@ plot(P_ThermalStandard)
 
 """
 
-function get_stacked_plot_data(res::OperationModelResults, variable::String; kwargs...)
+function get_stacked_plot_data(res::OperationsProblemResults, variable::String; kwargs...)
 
     sort = get(kwargs, :sort, nothing)
     time_range = res.time_stamp[!,:Range]
@@ -66,7 +66,7 @@ function get_stacked_plot_data(res::OperationModelResults, variable::String; kwa
 
 end
 
-function get_bar_plot_data(res::OperationModelResults, variable::String; kwargs...)
+function get_bar_plot_data(res::OperationsProblemResults, variable::String; kwargs...)
 
     sort = get(kwargs, :sort, nothing)
     time_range = res.time_stamp[!,:Range]
@@ -88,7 +88,7 @@ function get_bar_plot_data(res::OperationModelResults, variable::String; kwargs.
 
 end
 
-function get_stacked_generation_data(res::OperationModelResults; kwargs...)
+function get_stacked_generation_data(res::OperationsProblemResults; kwargs...)
 
     sort = get(kwargs, :sort, nothing)
     time_range = res.time_stamp[!,:Range]
@@ -116,7 +116,7 @@ function get_stacked_generation_data(res::OperationModelResults; kwargs...)
 
 end
 
-function get_bar_gen_data(res::OperationModelResults)
+function get_bar_gen_data(res::OperationsProblemResults)
 
    time_range = res.time_stamp[!,:Range]
    key_name = collect(keys(res.variables))
@@ -138,9 +138,9 @@ function get_bar_gen_data(res::OperationModelResults)
 end
 
 """
-    sort_data(results::OperationModelResults)
+    sort_data(results::OperationsProblemResults)
 
-This function takes in struct OperationModelResults,
+This function takes in struct OperationsProblemResults,
 sorts the generators in each variable, and outputs the sorted
 results. The generic function sorts the generators alphabetically.
 
@@ -187,7 +187,7 @@ results, and consequently, only these will be plotted. This can be a nice
 feature for variables with more than 5 generators.
 
 """
-function sort_data(res::OperationModelResults; kwargs...)
+function sort_data(res::OperationsProblemResults; kwargs...)
 
     Variables = Dict()
     Variables[:P_ThermalStandard]  = get(kwargs, :P_ThermalStandard, nothing)
@@ -232,7 +232,7 @@ function sort_data(res::OperationModelResults; kwargs...)
     end
 
 
-    res = OperationModelResults(variable_dict, res.total_cost, res.optimizer_log, res.time_stamp)
+    res = OperationsProblemResults(variable_dict, res.total_cost, res.optimizer_log, res.time_stamp)
 
     return res
 end

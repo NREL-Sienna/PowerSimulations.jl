@@ -1,6 +1,6 @@
 # Internal functions to create the variable DataFrame
 
-function _result_dataframe_vars(variable::JuMP.Containers.DenseAxisArray)
+function _result_dataframe_variables(variable::JuMP.Containers.DenseAxisArray)
 
     if length(axes(variable)) == 1
         result = Vector{Float64}(undef, length(first(variable.axes)))
@@ -67,24 +67,24 @@ end
 
 # Function to write results dataframes and variables to a dictionary
 
-function get_model_result(op_m::OperationModel)
+function get_model_result(op_m::OperationsProblem)
 
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
 
-    for (k, v) in vars(op_m.canonical)
-        results_dict[k] = _result_dataframe_vars(v)
+    for (k, v) in get_variables(op_m.canonical)
+        results_dict[k] = _result_dataframe_variables(v)
     end
 
     return results_dict
 
 end
 
-function get_model_duals(op_m::OperationModel, cons::Vector{Symbol})
+function get_model_duals(op_m::OperationsProblem, cons::Vector{Symbol})
 
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
 
     for c in cons
-        v = con(op_m.canonical, c)
+        v = get_constraint(op_m.canonical, c)
         results_dict[c] = _result_dataframe_duals(v)
     end
 
@@ -94,7 +94,7 @@ end
 
 # Function to create a dictionary for the optimizer log of the simulation
 
-function get_optimizer_log(op_m::OperationModel)
+function get_optimizer_log(op_m::OperationsProblem)
 
     canonical = op_m.canonical
 
@@ -116,18 +116,18 @@ end
 
 # Function to create a dictionary for the time series of the simulation
 
-function get_time_stamp(op_model::OperationModel)
+function get_time_stamps(op_problem::OperationsProblem)
 
-    initial_time = PSY.get_forecasts_initial_time(op_model.sys)
-    interval = PSY.get_forecasts_resolution(op_model.sys)
-    horizon = PSY.get_forecasts_horizon(op_model.sys)
-    range = collect(initial_time:interval:initial_time+ interval.*horizon)
+    initial_time = PSY.get_forecasts_initial_time(op_problem.sys)
+    interval = PSY.get_forecasts_resolution(op_problem.sys)
+    horizon = PSY.get_forecasts_horizon(op_problem.sys)
+    range = collect(initial_time:interval:initial_time+interval.*horizon)
     time_stamp = DataFrames.DataFrame(Range = range[:,1])
 
     return time_stamp
 end
 
-function get_time_stamp(stage::_Stage, start_time::Dates.DateTime)
+function get_time_stamps(stage::_Stage, start_time::Dates.DateTime)
 
     interval = PSY.get_forecasts_resolution(stage.sys)
     horizon = PSY.get_forecasts_horizon(stage.sys)

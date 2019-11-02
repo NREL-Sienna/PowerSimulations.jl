@@ -1,4 +1,4 @@
-struct OperationModelResults
+struct OperationsProblemResults
     variables::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict{Symbol, Any}
     optimizer_log::Dict{Symbol, Any}
@@ -6,21 +6,21 @@ struct OperationModelResults
 
 end
 
-function get_variable(res_model::OperationModelResults, key::Symbol)
+function get_variable(results::OperationsProblemResults, key::Symbol)
         try
-            !isnothing(res_model.variables)
+            !isnothing(results.variables)
+            return get(results.variables, key, nothing)
         catch
             error("No variable with key $(key) has been found.")
         end
-    return get(res_model.variables, key, nothing)
 end
 
-function get_optimizer_log(res_model::OperationModelResults)
-    return res_model.optimizer_log
+function get_optimizer_log(results::OperationsProblemResults)
+    return results.optimizer_log
 end
 
-function get_time_stamp(res_model::OperationModelResults, key::Symbol)
-    return res_model.time_stamp
+function get_time_stamps(results::OperationsProblemResults, key::Symbol)
+    return results.time_stamp
 end
 
 """
@@ -31,7 +31,7 @@ of results from a single-step problem, or for a single foulder
 within a simulation.
 
 # Arguments
--`path::AbstractString = folder path` 
+-`path::AbstractString = folder path`
 -`directory::AbstractString = "2019-10-03T09-18-00"`: the foulder name that contains
 feather files of the results.
 
@@ -40,8 +40,11 @@ feather files of the results.
 results = load_operation_results("/Users/test/", "2019-10-03T09-18-00")
 ```
 """
-
 function load_operation_results(path::AbstractString, directory::AbstractString)
+
+    if isfile(path)
+        path = dirname(path)
+    end
 
     folder_path = joinpath(path, directory)
     files_in_folder = collect(readdir(folder_path))
@@ -54,18 +57,20 @@ function load_operation_results(path::AbstractString, directory::AbstractString)
             variable = variables[i]
             variable_name = split("$variable", ".feather")[1]
             file_path = joinpath(folder_path,"$variable_name.feather")
-            variable_dict[Symbol(variable_name)] = Feather.read("$file_path") #change key to variable
+            variable_dict[Symbol(variable_name)] = Feather.read(file_path) #change key to variable
 
         end
 
         file_path = joinpath(folder_path,"optimizer_log.feather")
-        optimizer = Dict{Symbol, Any}(eachcol(Feather.read("$file_path"),true))
+        optimizer = Dict{Symbol, Any}(eachcol(Feather.read(file_path),true))
 
         file_path = joinpath(folder_path,"time_stamp.feather")
-        time_stamp = Feather.read("$file_path")
+        temp_time_stamp = Feather.read(file_path)
+        time_stamp = temp_time_stamp[1:(size(temp_time_stamp,1)-1),:]
+
 
         obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer[:obj_value])
-        results = OperationModelResults(variable_dict, obj_value, optimizer, time_stamp)
+        results = OperationsProblemResults(variable_dict, obj_value, optimizer, time_stamp)
 
     return results
 

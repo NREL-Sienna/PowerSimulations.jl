@@ -24,7 +24,7 @@ struct PhaseControl <: AbstractTransformerFormulation end
 #################################### Branch Variables ##################################################
 # Because of the way we integrate with PowerModels, most of the time PowerSimulations will create variables
 # for the branch flows either in AC or DC.
-function flow_variables!(canonical::CanonicalModel,
+function flow_variables!(canonical::Canonical,
                         system_formulation::Type{S},
                         devices::IS.FlattenIteratorWrapper{B}) where {B<:PSY.ACBranch,
                                                              S<:PM.AbstractPowerModel}
@@ -32,7 +32,7 @@ function flow_variables!(canonical::CanonicalModel,
 
 end
 
-function flow_variables!(canonical::CanonicalModel,
+function flow_variables!(canonical::Canonical,
                         system_formulation::Type{S},
                         devices::IS.FlattenIteratorWrapper{B}) where {B<:PSY.ACBranch,
                                                                       S<:StandardPTDFModel}
@@ -51,7 +51,7 @@ function flow_variables!(canonical::CanonicalModel,
 end
 
 #################################### Flow Variable Bounds ##################################################
-function branch_rate_bounds!(canonical::CanonicalModel,
+function branch_rate_bounds!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.ACBranch,
@@ -68,7 +68,7 @@ function branch_rate_bounds!(canonical::CanonicalModel,
 
 end
 
-function branch_rate_bounds!(canonical::CanonicalModel,
+function branch_rate_bounds!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.ACBranch,
@@ -89,7 +89,7 @@ function branch_rate_bounds!(canonical::CanonicalModel,
 
 end
 
-function branch_rate_bounds!(canonical::CanonicalModel,
+function branch_rate_bounds!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.ACBranch,
@@ -111,7 +111,7 @@ function branch_rate_bounds!(canonical::CanonicalModel,
 end
 
 #################################### Rate Limits Constraints ##################################################
-function branch_rate_constraint!(canonical::CanonicalModel,
+function branch_rate_constraint!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.ACBranch,
@@ -129,7 +129,7 @@ function branch_rate_constraint!(canonical::CanonicalModel,
 
 end
 
-function branch_rate_constraint!(canonical::CanonicalModel,
+function branch_rate_constraint!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.ACBranch,
@@ -153,7 +153,7 @@ function branch_rate_constraint!(canonical::CanonicalModel,
 end
 
 
-function branch_rate_constraint!(canonical::CanonicalModel,
+function branch_rate_constraint!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
                                 system_formulation::Type{S}) where {B<:PSY.ACBranch,
@@ -178,7 +178,7 @@ end
 
 #################################### Flow Limits Constraints ##################################################
 
-function branch_flow_constraint!(canonical::CanonicalModel,
+function branch_flow_constraint!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
                                 device_formulation::Type{FlowMonitoredLine},
                                 system_formulation::Union{Type{PM.DCPPowerModel}, Type{StandardPTDFModel}})
@@ -197,7 +197,7 @@ function branch_flow_constraint!(canonical::CanonicalModel,
 
 end
 
-function branch_flow_constraint!(canonical::CanonicalModel,
+function branch_flow_constraint!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
                                 device_formulation::Type{FlowMonitoredLine},
                                 system_formulation::Type{S}) where {S<:PM.AbstractPowerModel}

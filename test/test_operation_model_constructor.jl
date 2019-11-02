@@ -5,12 +5,14 @@ branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine)
                                      :TT => DeviceModel(PSY.TapTransformer , PSI.StaticTransformer))
 services = Dict{Symbol, PSI.ServiceModel}()
 @testset "Operation Model kwargs with CopperPlatePowerModel base" begin
-    model_ref = ModelReference(CopperPlatePowerModel, devices, branches, services);
-    op_model = OperationModel(TestOptModel, model_ref,
+    template = FormulationTemplate(CopperPlatePowerModel, devices, branches, services);
+    op_problem = OperationsProblem(TestOpProblem, template,
                                             c_sys5;
                                             optimizer = GLPK_optimizer,
-                                            use_parameters = true)
-    j_model = op_model.canonical.JuMPmodel
+                                           use_parameters = true)
+    moi_tests(op_problem, true, 120, 120, 0, 0, 24, false)
+#=
+  j_model = op_problem.canonical.JuMPmodel
     @test (:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 120
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 120
@@ -19,11 +21,13 @@ services = Dict{Symbol, PSI.ServiceModel}()
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == 24
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
     @test JuMP.objective_function_type(j_model) == JuMP.GenericAffExpr{Float64, VariableRef}
-
-    op_model = OperationModel(TestOptModel, model_ref,
+=#
+    op_problem = OperationsProblem(TestOpProblem, template,
                                             c_sys14;
                                             optimizer = OSQP_optimizer)
-    j_model = op_model.canonical.JuMPmodel
+    moi_tests(op_problem, false, 120, 120, 0, 0, 24, false)
+    #=
+    j_model = op_problem.canonical.JuMPmodel
     @test !(:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 120
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 120
@@ -32,12 +36,14 @@ services = Dict{Symbol, PSI.ServiceModel}()
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == 24
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
     @test JuMP.objective_function_type(j_model) == JuMP.GenericQuadExpr{Float64, VariableRef}
-
-    op_model = OperationModel(TestOptModel, model_ref,
+    =#
+    op_problem = OperationsProblem(TestOpProblem, template,
                                             c_sys5_re;
                                             use_forecast_data = false,
                                             optimizer = GLPK_optimizer)
-    j_model = op_model.canonical.JuMPmodel
+    moi_tests(op_problem, false, 5, 5, 0, 0, 1, false)
+    #=
+    j_model = op_problem.canonical.JuMPmodel
     @test !(:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 5
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 5
@@ -46,13 +52,16 @@ services = Dict{Symbol, PSI.ServiceModel}()
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == 1
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
     @test JuMP.objective_function_type(j_model) == JuMP.GenericAffExpr{Float64, VariableRef}
+    =#
 
-    op_model = OperationModel(TestOptModel, model_ref,
+    op_problem = OperationsProblem(TestOpProblem, template,
                                             c_sys5_re;
                                             use_forecast_data = false,
                                             use_parameters = false,
                                             optimizer = GLPK_optimizer)
-    j_model = op_model.canonical.JuMPmodel
+    moi_tests(op_problem, false, 5, 5, 0, 0, 1, false)
+    #=
+    j_model = op_problem.canonical.JuMPmodel
     @test !(:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 5
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 5
@@ -61,6 +70,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.EqualTo{Float64}) == 1
     @test !((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(j_model))
     @test JuMP.objective_function_type(j_model) == JuMP.GenericAffExpr{Float64, VariableRef}
+    =#
 end
 
 
@@ -93,12 +103,12 @@ end
             devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, thermal),
                                                 :Loads =>       DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
             branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine))
-            model_ref = ModelReference(net, devices, branches, services);
-            op_model = OperationModel(TestOptModel,
-                                      model_ref,
+            template = FormulationTemplate(net, devices, branches, services);
+            op_problem = OperationsProblem(TestOpProblem,
+                                      template,
                                       system; PTDF = PTDF5, use_parameters = p);
-        @test :nodal_balance_active in keys(op_model.canonical.expressions)
-        @test (:params in keys(op_model.canonical.JuMPmodel.ext)) == p
+        @test :nodal_balance_active in keys(op_problem.canonical.expressions)
+        @test (:params in keys(op_problem.canonical.JuMPmodel.ext)) == p
         end
 
 

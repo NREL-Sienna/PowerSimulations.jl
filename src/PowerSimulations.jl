@@ -6,8 +6,8 @@ module PowerSimulations
 # Base Models
 export Stage
 export Simulation
-export OperationModel
-export ModelReference
+export OperationsProblem
+export FormulationTemplate
 export InitialCondition
 
 #Network Relevant Exports
@@ -67,6 +67,7 @@ export DeviceEnergy
 # cache_models
 export TimeStatusChange
 
+
 #operation_models
 #export UnitCommitment
 #export EconomicDispatch
@@ -77,20 +78,20 @@ export TimeStatusChange
 export construct_device!
 export construct_network!
 ## Op Model Exports
-export solve_op_model!
+export solve_op_problem!
 export get_initial_conditions
-export set_transmission_ref!
-export set_devices_ref!
-export set_branches_ref!
-export set_services_ref!
+export set_transmission_template!
+export set_devices_template!
+export set_branches_template!
+export set_services_template!
 export set_device_model!
 export set_branch_model!
 export set_device_model!
 ## Sim Model Exports
-export run_sim_model!
+export run_simulation!
 ## Utils Exports
-export write_op_model
-export write_model_results
+export write_op_problem
+export write_results
 export load_operation_results
 export get_all_constraint_index
 export get_all_var_index
@@ -104,6 +105,7 @@ export get_stacked_generation_data
 export bar_plot
 export stack_plot
 export report
+export load_simulation_results
 
 #################################################################################
 # Imports
@@ -145,23 +147,23 @@ include("service_models/services.jl")
 
 #Core Models and constructors
 include("core/core_structs/aux_structs.jl")
-include("core/core_structs/cache_models.jl")
-include("core/core_structs/feedforward_model.jl")
+include("core/core_structs/cache.jl")
+include("core/core_structs/feedforward.jl")
 include("core/core_structs/device_model.jl")
 include("core/core_structs/initial_conditions.jl")
 include("core/core_structs/canonical.jl")
 include("core/core_structs/service_model.jl")
-include("core/core_structs/operation_model.jl")
+include("core/core_structs/operations_problem.jl")
 include("core/core_structs/chronology.jl")
 include("core/core_structs/simulations_stages.jl")
-include("core/core_structs/simulation_model.jl")
-include("core/core_structs/results_model.jl")
+include("core/core_structs/simulation.jl")
+include("core/core_structs/results.jl")
 include("core/build_cache.jl")
 include("core/build_operations.jl")
 include("core/build_simulations.jl")
 
 #FeedForward Model Files
-include("simulation_models/feedforward_models.jl")
+include("simulation/feedforward_affects.jl")
 
 #Device Modeling components
 include("devices/device_models/common.jl")
@@ -190,11 +192,14 @@ include("network_models/network_constructor.jl")
 #Services constructors
 include("service_models/services_constructor.jl")
 
+# Commented out until properly implemented
 #Operational Model Constructors
-include("operation_models/operation_models.jl")
+#include("operation_templates/economic_dispatch.jl")
+#include("operation_templates/unit_commitment.jl")
+#include("operation_templates/opf.jl")
 
 #Simulations Model Files
-include("simulation_models/stage_update.jl")
+include("simulation/stage_update.jl")
 
 #Routines
 include("routines/make_initial_conditions.jl")
@@ -202,12 +207,12 @@ include("routines/get_results.jl")
 include("routines/solve_routines.jl")
 include("routines/write_model.jl")
 
-
 #Utils
 include("utils/optimization_debugging.jl")
 include("utils/printing.jl")
 include("utils/plot_results.jl")
 include("utils/plot_recipes.jl")
+include("utils/aggregation.jl")
 
 #Initialization
 

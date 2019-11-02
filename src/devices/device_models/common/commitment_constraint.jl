@@ -1,5 +1,5 @@
 @doc raw"""
-    device_commitment(canonical::CanonicalModel,
+    device_commitment(canonical::Canonical,
                         initial_conditions::Vector{InitialCondition},
                         cons_name::Symbol,
                         var_names::Tuple{Symbol, Symbol, Symbol})
@@ -30,7 +30,7 @@ If t > 1:
 
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * initial_conditions::Vector{InitialCondition} : for time zero 'varon'
 * cons_name::Symbol : name of the constraint
 * var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
@@ -38,15 +38,15 @@ If t > 1:
 -  : var_names[2] : varstop
 -  : var_names[3] : varon
 """
-function device_commitment(canonical::CanonicalModel,
+function device_commitment(canonical::Canonical,
                         initial_conditions::Vector{InitialCondition},
                         cons_name::Symbol,
                         var_names::Tuple{Symbol, Symbol, Symbol})
 
     time_steps = model_time_steps(canonical)
-    varstart = var(canonical, var_names[1])
-    varstop = var(canonical, var_names[2])
-    varon = var(canonical, var_names[3])
+    varstart = get_variable(canonical, var_names[1])
+    varstop = get_variable(canonical, var_names[2])
+    varon = get_variable(canonical, var_names[3])
     varstart_names = axes(varstart, 1)
     constraint = _add_cons_container!(canonical, cons_name, varstart_names, time_steps)
     aux_cons_name = _middle_rename(cons_name, "_", "aux")

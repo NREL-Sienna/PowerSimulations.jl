@@ -1,5 +1,5 @@
 @doc raw"""
-    device_duration_retrospective(canonical::CanonicalModel,
+    device_duration_retrospective(canonical::Canonical,
                                         duration_data::Vector{UpDown},
                                         initial_duration::Matrix{InitialCondition},
                                         cons_name::Symbol,
@@ -35,7 +35,7 @@ for i in the set of time steps.
 
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
 * initial_duration::Matrix{InitialCondition} : gives initial conditions for up (column 1) and down (column 2)
 * cons_name::Symbol : name of the constraint
@@ -44,7 +44,7 @@ for i in the set of time steps.
 - : var_names[2] : varstart
 - : var_names[3] : varstop
 """
-function device_duration_retrospective(canonical::CanonicalModel,
+function device_duration_retrospective(canonical::Canonical,
                                         duration_data::Vector{UpDown},
                                         initial_duration::Matrix{InitialCondition},
                                         cons_name::Symbol,
@@ -52,9 +52,9 @@ function device_duration_retrospective(canonical::CanonicalModel,
 
     time_steps = model_time_steps(canonical)
 
-    varon = var(canonical, var_names[1])
-    varstart = var(canonical, var_names[2])
-    varstop = var(canonical, var_names[3])
+    varon = get_variable(canonical, var_names[1])
+    varstart = get_variable(canonical, var_names[2])
+    varstop = get_variable(canonical, var_names[3])
 
     name_up = _middle_rename(cons_name, "_", "up")
     name_down = _middle_rename(cons_name, "_", "dn")
@@ -97,7 +97,7 @@ function device_duration_retrospective(canonical::CanonicalModel,
     return
 end
 @doc raw"""
-    device_duration_look_ahead(canonical::CanonicalModel,
+    device_duration_look_ahead(canonical::Canonical,
                                 duration_data::Vector{UpDown},
                                 initial_duration::Matrix{InitialCondition},
                                 cons_name::Symbol,
@@ -133,7 +133,7 @@ for i in the set of time steps.
 
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
 * initial_duration::Matrix{InitialCondition} : gives initial conditions for up (column 1) and down (column 2)
 * cons_name::Symbol : name of the constraint
@@ -142,7 +142,7 @@ for i in the set of time steps.
 - : var_names[2] : varstart
 - : var_names[3] : varstop
 """
-function device_duration_look_ahead(canonical::CanonicalModel,
+function device_duration_look_ahead(canonical::Canonical,
                              duration_data::Vector{UpDown},
                              initial_duration::Matrix{InitialCondition},
                              cons_name::Symbol,
@@ -150,9 +150,9 @@ function device_duration_look_ahead(canonical::CanonicalModel,
 
     time_steps = model_time_steps(canonical)
 
-    varon = var(canonical, var_names[1])
-    varstart = var(canonical, var_names[2])
-    varstop = var(canonical, var_names[3])
+    varon = get_variable(canonical, var_names[1])
+    varstart = get_variable(canonical, var_names[2])
+    varstop = get_variable(canonical, var_names[3])
 
     name_up = _middle_rename(cons_name, "_", "up")
     name_down = _middle_rename(cons_name, "_", "dn")
@@ -201,7 +201,7 @@ end
 
 
 @doc raw"""
-    device_duration_param(canonical::CanonicalModel,
+    device_duration_parameters(canonical::Canonical,
                              duration_data::Vector{UpDown},
                              initial_duration_on::Vector{InitialCondition},
                              initial_duration_off::Vector{InitialCondition},
@@ -238,7 +238,7 @@ for i in the set of time steps. Otherwise:
 for i in the set of time steps.
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
 * initial_duration_on::Vector{InitialCondition} : gives initial number of time steps variable is up
 * initial_duration_off::Vector{InitialCondition} : gives initial number of time steps variable is down
@@ -248,7 +248,7 @@ for i in the set of time steps.
 - : var_names[2] : varstart
 - : var_names[3] : varstop
 """
-function device_duration_param(canonical::CanonicalModel,
+function device_duration_parameters(canonical::Canonical,
                                duration_data::Vector{UpDown},
                                initial_duration::Matrix{InitialCondition},
                                cons_name::Symbol,
@@ -256,9 +256,9 @@ function device_duration_param(canonical::CanonicalModel,
 
     time_steps = model_time_steps(canonical)
 
-    varon = var(canonical, var_names[1])
-    varstart = var(canonical, var_names[2])
-    varstop = var(canonical, var_names[3])
+    varon = get_variable(canonical, var_names[1])
+    varstart = get_variable(canonical, var_names[2])
+    varstop = get_variable(canonical, var_names[3])
 
     name_up = _middle_rename(cons_name, "_", "up")
     name_down = _middle_rename(cons_name, "_", "dn")
