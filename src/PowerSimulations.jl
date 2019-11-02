@@ -131,6 +131,7 @@ import TimeSeries
 import MathOptFormat
 import DataFrames
 import Feather
+import JSON
 
 include("core/definitions.jl")
 
