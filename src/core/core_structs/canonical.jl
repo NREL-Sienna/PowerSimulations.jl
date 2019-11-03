@@ -113,18 +113,18 @@ mutable struct Canonical
     pm::Union{Nothing, PM.AbstractPowerModel}
 
     function Canonical(JuMPmodel::JuMP.AbstractModel,
-                            optimizer_factory::Union{Nothing, JuMP.OptimizerFactory},
-                            time_steps::UnitRange{Int64},
-                            resolution::Dates.Period,
-                            use_forecast_data::Bool,
-                            initial_time::Dates.DateTime,
-                            variables::Dict{Symbol, JuMP.Containers.DenseAxisArray},
-                            constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray},
-                            cost_function::JuMP.AbstractJuMPScalar,
-                            expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray},
-                            parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}},
-                            initial_conditions::DICKDA,
-                            pm::Union{Nothing, PM.AbstractPowerModel})
+                       optimizer_factory::Union{Nothing, JuMP.OptimizerFactory},
+                       time_steps::UnitRange{Int64},
+                       resolution::Dates.Period,
+                       use_forecast_data::Bool,
+                       initial_time::Dates.DateTime,
+                       variables::Dict{Symbol, JuMP.Containers.DenseAxisArray},
+                       constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray},
+                       cost_function::JuMP.AbstractJuMPScalar,
+                       expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray},
+                       parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}},
+                       initial_conditions::DICKDA,
+                       pm::Union{Nothing, PM.AbstractPowerModel})
 
         new(JuMPmodel,
             optimizer_factory,
@@ -145,9 +145,9 @@ mutable struct Canonical
 end
 
 function Canonical(::Type{T},
-                        sys::PSY.System,
-                        optimizer::Union{Nothing,JuMP.OptimizerFactory};
-                        kwargs...) where {T<:PM.AbstractPowerModel}
+                   sys::PSY.System,
+                   optimizer::Union{Nothing,JuMP.OptimizerFactory};
+                   kwargs...) where {T<:PM.AbstractPowerModel}
 
     PSY.check_forecast_consistency(sys)
     user_defined_model = get(kwargs, :JuMPmodel, nothing)
@@ -160,6 +160,10 @@ function Canonical(::Type{T},
     if use_forecast_data
         horizon = get(kwargs, :horizon, PSY.get_forecasts_horizon(sys))
         time_steps = 1:horizon
+        if length(time_steps) > 100
+            @warn("The number of time steps in the model is over 100. This will result in
+                  large multiperiod optimization problem")
+        end
         resolution = PSY.get_forecasts_resolution(sys)
     else
         resolution = PSY.get_forecasts_resolution(sys)

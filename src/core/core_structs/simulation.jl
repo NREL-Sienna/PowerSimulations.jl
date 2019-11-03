@@ -44,16 +44,13 @@ mutable struct Simulation
                         simulation_folder::String;
                         verbose::Bool = false, kwargs...)
 
-
     sim_ref = _initialize_sim_ref(steps, keys(stages))
-
     dates, validation, stages_vector = _build_simulation!(sim_ref,
                                                         base_name,
                                                         steps,
                                                         stages,
                                                         simulation_folder;
                                                         verbose = verbose, kwargs...)
-
     new(steps,
         stages_vector,
         validation,
