@@ -6,7 +6,7 @@ the results variables dictionary, and makes a bar plot for all of the variables.
 
 #Examples
 
-results = solve_op_model!(OpModel)
+results = solve_op_problem!(OpModel)
 bar_plot(results)
 
 generates a bar plot for each variable,
@@ -41,7 +41,7 @@ the results variables dictionary, and makes a stack plot for all of the variable
 
 #Examples
 
-results = solve_op_model!(OpModel)
+results = solve_op_problem!(OpModel)
 stack_plot(results)
 
 generates a stack plot for each variable,

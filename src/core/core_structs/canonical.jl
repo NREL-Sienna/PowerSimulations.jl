@@ -110,7 +110,7 @@ mutable struct Canonical
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}}
     initial_conditions::DICKDA
-    pm_model::Union{Nothing, PM.AbstractPowerModel}
+    pm::Union{Nothing, PM.AbstractPowerModel}
 
     function Canonical(JuMPmodel::JuMP.AbstractModel,
                        optimizer_factory::Union{Nothing, JuMP.OptimizerFactory},
@@ -124,7 +124,7 @@ mutable struct Canonical
                        expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray},
                        parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}},
                        initial_conditions::DICKDA,
-                       pm_model::Union{Nothing, PM.AbstractPowerModel})
+                       pm::Union{Nothing, PM.AbstractPowerModel})
 
         new(JuMPmodel,
             optimizer_factory,
@@ -138,7 +138,7 @@ mutable struct Canonical
             expressions,
             parameters,
             initial_conditions,
-            pm_model)
+            pm)
 
     end
 

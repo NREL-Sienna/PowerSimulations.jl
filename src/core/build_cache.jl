@@ -1,5 +1,5 @@
-function build_cache!(cache::TimeStatusChange, op_model::OperationsProblem)
-    build_cache!(cache, op_model.canonical)
+function build_cache!(cache::TimeStatusChange, op_problem::OperationsProblem)
+    build_cache!(cache, op_problem.canonical)
 end
 
 function build_cache!(cache::TimeStatusChange, canonical::Canonical)

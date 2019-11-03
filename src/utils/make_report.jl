@@ -12,7 +12,7 @@ using Requirements
 using PowerSimulations
 using Weave
 
-results = solve_op_model!(OpModel)
+results = solve_op_problem!(OpModel)
 out_path = "/Users/lhanig/GitHub"
 
 
@@ -29,7 +29,7 @@ jmd has a default of ".../pwd()/report_design/report_design.jmd"
 
 
 
-function report(res::OperationsProblemResults,out_path::String; kwargs...)
+function report(res::Results,out_path::String; kwargs...)
 
     doctype = get(kwargs, :doctype, "md2pdf")
     default_string = joinpath(pwd(), "src/utils/report_design/report_design.jmd")

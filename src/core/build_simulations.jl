@@ -3,7 +3,7 @@ function _prepare_workspace!(ref::SimulationRef, base_name::AbstractString, fold
     !isdir(folder) && error("Specified folder is not valid")
     global_path = joinpath(folder, "$(base_name)")
     !isdir(global_path) && mkpath(global_path)
-    _sim_path = replace_chars("$(round(Dates.now(),Dates.Minute))-$(base_name)", ":", "-")
+    _sim_path = replace_chars("$(round(Dates.now(),Dates.Minute))", ":", "-")
     simulation_path = joinpath(global_path, _sim_path)
     raw_ouput = joinpath(simulation_path, "raw_output")
     mkpath(raw_ouput)
@@ -83,7 +83,7 @@ function _build_stages(sim_ref::SimulationRef,
                                    parameters = true)
         mod_stages[key] = _Stage(key,
                                 stage.model,
-                                stage.op_model,
+                                stage.op_problem,
                                 stage.sys,
                                 canonical,
                                 stage.optimizer,
@@ -198,8 +198,6 @@ function _build_simulation!(sim_ref::SimulationRef,
     _validate_steps(stages, steps)
     _check_chronology_ref(stages)
     dates, validation = _get_dates(stages)
-    _prepare_workspace!(sim_ref, base_name, simulation_folder)
-
     return dates, validation, _build_stages(sim_ref, stages, verbose = verbose; kwargs...)
 
 end

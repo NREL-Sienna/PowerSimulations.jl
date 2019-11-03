@@ -2,8 +2,8 @@
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
     warn_message = "The data doesn't include devices of type ThermalStandard, consider changing the device models"
     model = DeviceModel(ThermalStandard, PSI.ThermalStandardUnitCommitment)
-    op_model = OperationsProblem(TestOptModel, DCPPowerModel, c_sys5_re_only)
-    @test_logs (:warn, warn_message) construct_device!(op_model, :Thermal, model)
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re_only)
+    @test_logs (:warn, warn_message) construct_device!(op_problem, :Thermal, model)
 end
 
 ################################### Unit Commitment tests ##################################
@@ -18,27 +18,27 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalStandardUnitCommitment)
 
     @info "5-Bus testing"
-    op_model = OperationsProblem(TestOptModel, DCPPowerModel, c_sys5_uc)
-    construct_device!(op_model, :Thermal, model)
-    moi_tests(op_model, false, 480, 0, 480, 120, 120, true)
-    psi_constraint_test(op_model, uc_constraint_names)
-    psi_checkbinvar_test(op_model, bin_variable_names)
-    psi_checkobjfun_test(op_model, GAEVF)
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc)
+    construct_device!(op_problem, :Thermal, model)
+    moi_tests(op_problem, false, 480, 0, 480, 120, 120, true)
+    psi_constraint_test(op_problem, uc_constraint_names)
+    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkobjfun_test(op_problem, GAEVF)
 
-    op_model = OperationsProblem(TestOptModel, DCPPowerModel, c_sys5_uc; use_parameters = true)
-    construct_device!(op_model, :Thermal, model)
-    moi_tests(op_model, true, 480, 0, 480, 120, 120, true)
-    psi_constraint_test(op_model, uc_constraint_names)
-    psi_checkbinvar_test(op_model, bin_variable_names)
-    psi_checkobjfun_test(op_model, GAEVF)
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc; use_parameters = true)
+    construct_device!(op_problem, :Thermal, model)
+    moi_tests(op_problem, true, 480, 0, 480, 120, 120, true)
+    psi_constraint_test(op_problem, uc_constraint_names)
+    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkobjfun_test(op_problem, GAEVF)
 
     @info "14-Bus testing"
     for p in [true, false]
-        op_model = OperationsProblem(TestOptModel, DCPPowerModel, c_sys14; use_parameters = p)
-        construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 480, 0, 240, 120, 120, true)
-        psi_checkbinvar_test(op_model, bin_variable_names)
-        psi_checkobjfun_test(op_model, GQEVF)
+        op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 480, 0, 240, 120, 120, true)
+        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
@@ -53,27 +53,27 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalStandardUnitCommitment)
 
     @info "5-Bus testing"
-    op_model = OperationsProblem(TestOptModel, ACPPowerModel, c_sys5_uc)
-    construct_device!(op_model, :Thermal, model)
-    moi_tests(op_model, false, 600, 0, 600, 240, 120, true)
-    psi_constraint_test(op_model, uc_constraint_names)
-    psi_checkbinvar_test(op_model, bin_variable_names)
-    psi_checkobjfun_test(op_model, GAEVF)
+    op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc)
+    construct_device!(op_problem, :Thermal, model)
+    moi_tests(op_problem, false, 600, 0, 600, 240, 120, true)
+    psi_constraint_test(op_problem, uc_constraint_names)
+    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkobjfun_test(op_problem, GAEVF)
 
-    op_model = OperationsProblem(TestOptModel, ACPPowerModel, c_sys5_uc; use_parameters = true)
-    construct_device!(op_model, :Thermal, model)
-    moi_tests(op_model, true, 600, 0, 600, 240, 120, true)
-    psi_constraint_test(op_model, uc_constraint_names)
-    psi_checkbinvar_test(op_model, bin_variable_names)
-    psi_checkobjfun_test(op_model, GAEVF)
+    op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc; use_parameters = true)
+    construct_device!(op_problem, :Thermal, model)
+    moi_tests(op_problem, true, 600, 0, 600, 240, 120, true)
+    psi_constraint_test(op_problem, uc_constraint_names)
+    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkobjfun_test(op_problem, GAEVF)
 
     @info "14-Bus testing"
     for p in [true, false]
-        op_model = OperationsProblem(TestOptModel, ACPPowerModel, c_sys14; use_parameters = p)
-        construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 600, 0, 360, 240, 120, true)
-        psi_checkbinvar_test(op_model, bin_variable_names)
-        psi_checkobjfun_test(op_model, GQEVF)
+        op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 600, 0, 360, 240, 120, true)
+        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
@@ -85,25 +85,25 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalBasicUnitCommitment)
 
     @info "5-Bus testing"
-    op_model = OperationsProblem(TestOptModel, DCPPowerModel, c_sys5_uc)
-    construct_device!(op_model, :Thermal, model)
-    moi_tests(op_model, false, 480, 0, 240, 120, 120, true)
-    psi_checkbinvar_test(op_model, bin_variable_names)
-    psi_checkobjfun_test(op_model, GAEVF)
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc)
+    construct_device!(op_problem, :Thermal, model)
+    moi_tests(op_problem, false, 480, 0, 240, 120, 120, true)
+    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkobjfun_test(op_problem, GAEVF)
 
-    op_model = OperationsProblem(TestOptModel, DCPPowerModel, c_sys5_uc; use_parameters = true)
-    construct_device!(op_model, :Thermal, model)
-    moi_tests(op_model, true, 480, 0, 240, 120, 120, true)
-    psi_checkbinvar_test(op_model, bin_variable_names)
-    psi_checkobjfun_test(op_model, GAEVF)
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc; use_parameters = true)
+    construct_device!(op_problem, :Thermal, model)
+    moi_tests(op_problem, true, 480, 0, 240, 120, 120, true)
+    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkobjfun_test(op_problem, GAEVF)
 
     @info "14-Bus testing"
     for p in [true, false]
-        op_model = OperationsProblem(TestOptModel, DCPPowerModel, c_sys14; use_parameters = p)
-        construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 480, 0, 240, 120, 120, true)
-        psi_checkbinvar_test(op_model, bin_variable_names)
-        psi_checkobjfun_test(op_model, GQEVF)
+        op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 480, 0, 240, 120, 120, true)
+        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
@@ -114,25 +114,25 @@ end
      model = DeviceModel(PSY.ThermalStandard, PSI.ThermalBasicUnitCommitment)
 
     @info "5-Bus testing"
-    op_model = OperationsProblem(TestOptModel, ACPPowerModel, c_sys5_uc)
-    construct_device!(op_model, :Thermal, model)
-    moi_tests(op_model, false, 600, 0, 360, 240, 120, true)
-    psi_checkbinvar_test(op_model, bin_variable_names)
-    psi_checkobjfun_test(op_model, GAEVF)
+    op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc)
+    construct_device!(op_problem, :Thermal, model)
+    moi_tests(op_problem, false, 600, 0, 360, 240, 120, true)
+    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkobjfun_test(op_problem, GAEVF)
 
-    op_model = OperationsProblem(TestOptModel, ACPPowerModel, c_sys5_uc; use_parameters = true)
-    construct_device!(op_model, :Thermal, model)
-    moi_tests(op_model, true, 600, 0, 360, 240, 120, true)
-    psi_checkbinvar_test(op_model, bin_variable_names)
-    psi_checkobjfun_test(op_model, GAEVF)
+    op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc; use_parameters = true)
+    construct_device!(op_problem, :Thermal, model)
+    moi_tests(op_problem, true, 600, 0, 360, 240, 120, true)
+    psi_checkbinvar_test(op_problem, bin_variable_names)
+    psi_checkobjfun_test(op_problem, GAEVF)
 
     @info "14-Bus testing"
     for p in [true, false]
-        op_model = OperationsProblem(TestOptModel, ACPPowerModel, c_sys14; use_parameters = p)
-        construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 600, 0, 360, 240, 120, true)
-        psi_checkbinvar_test(op_model, bin_variable_names)
-        psi_checkobjfun_test(op_model, GQEVF)
+        op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 600, 0, 360, 240, 120, true)
+        psi_checkbinvar_test(op_problem, bin_variable_names)
+        psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
@@ -142,18 +142,18 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch)
     @info "5-Bus testing"
     for p in [true, false]
-        op_model = OperationsProblem(TestOptModel, DCPPowerModel, c_sys5; use_parameters = p)
-        construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 120, 120, 0, 0, 0, false)
-        psi_checkobjfun_test(op_model, GAEVF)
+        op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 120, 120, 0, 0, 0, false)
+        psi_checkobjfun_test(op_problem, GAEVF)
     end
 
     @info "14-Bus testing"
     for p in [true, false]
-        op_model = OperationsProblem(TestOptModel, DCPPowerModel, c_sys14; use_parameters = p)
-        construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 120, 120, 0, 0, 0, false)
-        psi_checkobjfun_test(op_model, GQEVF)
+        op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 120, 120, 0, 0, 0, false)
+        psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
@@ -162,18 +162,18 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch)
     @info "5-Bus testing"
     for p in [true, false]
-        op_model = OperationsProblem(TestOptModel, ACPPowerModel, c_sys5; use_parameters = p)
-        construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 240, 240, 0, 0, 0, false)
-        psi_checkobjfun_test(op_model, GAEVF)
+        op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 240, 240, 0, 0, 0, false)
+        psi_checkobjfun_test(op_problem, GAEVF)
     end
 
     @info "14-Bus testing"
     for p in [true, false]
-        op_model = OperationsProblem(TestOptModel, ACPPowerModel, c_sys14; use_parameters = p)
-        construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 240, 240, 0, 0, 0, false)
-        psi_checkobjfun_test(op_model, GQEVF)
+        op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 240, 240, 0, 0, 0, false)
+        psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
@@ -184,20 +184,20 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatchNoMin)
     @info "5-Bus testing"
     for p in [true, false]
-        op_model = OperationsProblem(TestOptModel, DCPPowerModel, c_sys5; use_parameters = p)
-        construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 120, 120, 0, 0, 0, false)
-        moi_lbvalue_test(op_model, :activerange_ThermalStandard, 0.0)
-        psi_checkobjfun_test(op_model, GAEVF)
+        op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 120, 120, 0, 0, 0, false)
+        moi_lbvalue_test(op_problem, :activerange_ThermalStandard, 0.0)
+        psi_checkobjfun_test(op_problem, GAEVF)
     end
 
     @info "14-Bus testing"
     for p in [true, false]
-        op_model = OperationsProblem(TestOptModel, DCPPowerModel, c_sys14; use_parameters = p)
-        construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 120, 120, 0, 0, 0, false)
-        moi_lbvalue_test(op_model, :activerange_ThermalStandard, 0.0)
-        psi_checkobjfun_test(op_model, GQEVF)
+        op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 120, 120, 0, 0, 0, false)
+        moi_lbvalue_test(op_problem, :activerange_ThermalStandard, 0.0)
+        psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
@@ -206,20 +206,20 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatchNoMin)
     @info "5-Bus testing"
     for p in [true, false]
-        op_model = OperationsProblem(TestOptModel, ACPPowerModel, c_sys5; use_parameters = p)
-        construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 240, 240, 0, 0, 0, false)
-        moi_lbvalue_test(op_model, :activerange_ThermalStandard, 0.0)
-        psi_checkobjfun_test(op_model, GAEVF)
+        op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 240, 240, 0, 0, 0, false)
+        moi_lbvalue_test(op_problem, :activerange_ThermalStandard, 0.0)
+        psi_checkobjfun_test(op_problem, GAEVF)
     end
 
     @info "14-Bus testing"
     for p in [true, false]
-        op_model = OperationsProblem(TestOptModel, ACPPowerModel, c_sys14; use_parameters = p)
-        construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 240, 240, 0, 0, 0, false)
-        moi_lbvalue_test(op_model, :activerange_ThermalStandard, 0.0)
-        psi_checkobjfun_test(op_model, GQEVF)
+        op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 240, 240, 0, 0, 0, false)
+        moi_lbvalue_test(op_problem, :activerange_ThermalStandard, 0.0)
+        psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
@@ -230,19 +230,19 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalRampLimited)
     @info "5-Bus testing"
     for p in [true, false]
-        op_model = OperationsProblem(TestOptModel, DCPPowerModel, c_sys5_uc; use_parameters = p)
-        construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 120, 120, 96, 0, 0, false)
-        psi_constraint_test(op_model, constraint_names)
-        psi_checkobjfun_test(op_model, GAEVF)
+        op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 120, 120, 96, 0, 0, false)
+        psi_constraint_test(op_problem, constraint_names)
+        psi_checkobjfun_test(op_problem, GAEVF)
     end
 
     @info "14-Bus testing"
     for p in [true, false]
-        op_model = OperationsProblem(TestOptModel, DCPPowerModel, c_sys14; use_parameters = p)
-        construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 120, 120, 0, 0, 0, false)
-        psi_checkobjfun_test(op_model, GQEVF)
+        op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 120, 120, 0, 0, 0, false)
+        psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
@@ -252,19 +252,19 @@ end
     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalRampLimited)
     @info "5-Bus testing"
     for p in [true, false]
-        op_model = OperationsProblem(TestOptModel, ACPPowerModel, c_sys5_uc; use_parameters = p)
-        construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 240, 240, 96, 0, 0, false)
-        psi_constraint_test(op_model, constraint_names)
-        psi_checkobjfun_test(op_model, GAEVF)
+        op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 240, 240, 96, 0, 0, false)
+        psi_constraint_test(op_problem, constraint_names)
+        psi_checkobjfun_test(op_problem, GAEVF)
     end
 
     @info "14-Bus testing"
     for p in [true, false]
-        op_model = OperationsProblem(TestOptModel, ACPPowerModel, c_sys14; use_parameters = p)
-        construct_device!(op_model, :Thermal, model)
-        moi_tests(op_model, p, 240, 240, 0, 0, 0, false)
-        psi_checkobjfun_test(op_model, GQEVF)
+        op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 240, 240, 0, 0, 0, false)
+        psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
 
@@ -304,8 +304,8 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     add_component!(ramp_test_sys, gen_ramp[2])
     add_forecast!(ramp_test_sys, load, load_forecast_ramp)
 
-    model_ref = FormulationTemplate(CopperPlatePowerModel, ED_devices, branches, services)
-    ED = OperationsProblem(TestOptModel, model_ref,
+    template = FormulationTemplate(CopperPlatePowerModel, ED_devices, branches, services)
+    ED = OperationsProblem(TestOpProblem, template,
                         ramp_test_sys; optimizer = Cbc_optimizer,
                         use_parameters = true)
     psi_checksolve_test(ED, [MOI.OPTIMAL], 11191.00)
@@ -352,8 +352,8 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     init_cond[PSI.ICKey(PSI.TimeDurationOFF,typeof(alta))] = build_init(gens_dur, down_time)
 
 
-    model_ref = FormulationTemplate(CopperPlatePowerModel, UC_devices, branches, services)
-    UC = OperationsProblem(TestOptModel, model_ref,
+    template = FormulationTemplate(CopperPlatePowerModel, UC_devices, branches, services)
+    UC = OperationsProblem(TestOpProblem, template,
                         duration_test_sys; optimizer = Cbc_optimizer,
                         use_parameters = true, initial_conditions = init_cond)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
@@ -391,8 +391,8 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     add_forecast!(cost_test_sys, load, load_forecast_cost)
 
 
-    model_ref = FormulationTemplate(CopperPlatePowerModel, UC_devices, branches, services)
-    UC = OperationsProblem(TestOptModel, model_ref,
+    template = FormulationTemplate(CopperPlatePowerModel, UC_devices, branches, services)
+    UC = OperationsProblem(TestOpProblem, template,
                         cost_test_sys; optimizer = Cbc_optimizer,
                         use_parameters = true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919354838)
@@ -429,8 +429,8 @@ end
     add_component!(cost_test_sos_sys, gens_cost_sos[2])
     add_forecast!(cost_test_sos_sys, load, load_forecast_cost_sos)
 
-    model_ref = FormulationTemplate(CopperPlatePowerModel, UC_devices, branches, services)
-    UC = OperationsProblem(TestOptModel, model_ref,
+    template = FormulationTemplate(CopperPlatePowerModel, UC_devices, branches, services)
+    UC = OperationsProblem(TestOpProblem, template,
                         cost_test_sos_sys; optimizer = Cbc_optimizer,
                         use_parameters = true)
     psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919,10.0)

@@ -67,6 +67,7 @@ export DeviceEnergy
 # cache_models
 export TimeStatusChange
 
+
 #operation_models
 #export UnitCommitment
 #export EconomicDispatch
@@ -77,20 +78,20 @@ export TimeStatusChange
 export construct_device!
 export construct_network!
 ## Op Model Exports
-export solve_op_model!
+export solve_op_problem!
 export get_initial_conditions
-export set_transmission_ref!
-export set_devices_ref!
-export set_branches_ref!
-export set_services_ref!
+export set_transmission_template!
+export set_devices_template!
+export set_branches_template!
+export set_services_template!
 export set_device_model!
 export set_branch_model!
 export set_device_model!
 ## Sim Model Exports
-export run_sim_model!
+export run_simulation!
 ## Utils Exports
-export write_op_model
-export write_model_results
+export write_op_problem
+export write_results
 export load_operation_results
 export get_all_constraint_index
 export get_all_var_index
@@ -130,6 +131,7 @@ import TimeSeries
 import MathOptFormat
 import DataFrames
 import Feather
+import JSON
 
 include("core/definitions.jl")
 
@@ -191,8 +193,11 @@ include("network_models/network_constructor.jl")
 #Services constructors
 include("service_models/services_constructor.jl")
 
+# Commented out until properly implemented
 #Operational Model Constructors
-#include("operation_problems/operation_problems.jl")
+#include("operation_templates/economic_dispatch.jl")
+#include("operation_templates/unit_commitment.jl")
+#include("operation_templates/opf.jl")
 
 #Simulations Model Files
 include("simulation/stage_update.jl")
