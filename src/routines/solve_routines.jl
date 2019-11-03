@@ -6,14 +6,14 @@ outputs results of type OperationsProblemResult: objective value, time log,
 a dictionary of variables and their dataframe of results, and a time stamp.
 
 # Arguments
--`op_model::OperationModel = op_model`: operation model 
+-`op_problem::OperationModel = op_problem`: operation model
 
 # Examples
 ```julia
 results = solve_op_problem!(OpModel)
 ```
 # Accepted Key Words
--`save_path::String`: If a file path is provided the results 
+-`save_path::String`: If a file path is provided the results
 automatically get written to feather files
 -`optimizer::OptimizerFactory`: The optimizer that is used to solve the model
 """
@@ -42,13 +42,13 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
 
     end
 
-    vars_result = get_model_result(op_model)
-    optimizer_log = get_optimizer_log(op_model)
-    time_stamp = get_time_stamps(op_model)
+    vars_result = get_model_result(op_problem)
+    optimizer_log = get_optimizer_log(op_problem)
+    time_stamp = get_time_stamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
-    obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_model.canonical.JuMPmodel))
+    obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.canonical.JuMPmodel))
     merge!(optimizer_log, timed_log)
-    
+
     results = make_results(vars_result, obj_value, optimizer_log, time_stamp)
 
     !isnothing(save_path) && write_results(results, save_path)
@@ -133,11 +133,9 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
             @assert stage.executions == stage.execution_count
             stage.execution_count = 0 # reset stage execution_count
         end
-        
+
     end
     date_run = convert(String,last(split(dirname(sim.ref.raw),"/")))
     ref = make_references(sim, date_run)
     return reference
 end
-
-

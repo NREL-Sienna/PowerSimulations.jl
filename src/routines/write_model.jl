@@ -120,8 +120,8 @@ function write_data(canonical::Canonical, save_path::AbstractString, dual_con::V
     return
 end
 
-function write_data(op_model::OperationsProblem, save_path::AbstractString; kwargs...)
-    _write_data(op_model.canonical, save_path; kwargs...)
+function write_data(op_problem::OperationsProblem, save_path::AbstractString; kwargs...)
+    _write_data(op_problem.canonical, save_path; kwargs...)
     return
 end
 

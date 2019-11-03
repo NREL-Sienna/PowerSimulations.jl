@@ -12,7 +12,7 @@ makedocs(
     authors = "Jose Daniel Lara, Clayton Barrows and Dheepak Krishnamurthy",
     pages = Any[ "Introduction" => "index.md",
                  #"Quick Start Guide" => "qs_guide.md",
-                 "Operation Model" => "man/op_model.md",
+                 "Operation Model" => "man/op_problem.md",
                  "API" => Any["PowerSimulations" => "api/PowerSimulations.md"]
     ],
 
