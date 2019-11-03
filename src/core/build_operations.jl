@@ -4,7 +4,7 @@ function build_op_problem!(op_problem::OperationsProblem{M}; kwargs...) where M<
     return
 end
 
-function _build!(canonical::Canonical, ref::FormulationTemplate, sys::PSY.System; kwargs...)
+function _build!(canonical::Canonical, ref::OperationsTemplate, sys::PSY.System; kwargs...)
 
     verbose = get(kwargs, :verbose, true)
     transmission = ref.transmission

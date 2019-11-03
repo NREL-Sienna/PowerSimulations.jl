@@ -25,7 +25,7 @@ end
 """
     Base.show(io::IO, ::MIME"text/plain", op_problem::OperationsProblem)
 
-This function goes through the fields in OperationsProblem and then in FormulationTemplate,
+This function goes through the fields in OperationsProblem and then in OperationsTemplate,
 if the field contains a Device model dictionary, it calls organize_device_model() &
 prints the data by field, key, value. If the field is not a Device model dictionary,
 and a value exists for that field it prints the value.
@@ -37,7 +37,7 @@ function Base.show(io::IO, ::MIME"text/plain", op_problem::OperationsProblem)
     println(io, "\nOperations Problem")
     println(io, "===============\n")
 
-    for field in fieldnames(FormulationTemplate)
+    for field in fieldnames(OperationsTemplate)
 
         val = getfield(op_problem.template, Symbol(field))
 

@@ -7,7 +7,7 @@ module PowerSimulations
 export Stage
 export Simulation
 export OperationsProblem
-export FormulationTemplate
+export OperationsTemplate
 export InitialCondition
 
 #Network Relevant Exports
@@ -80,7 +80,7 @@ export construct_network!
 ## Op Model Exports
 export solve_op_problem!
 export get_initial_conditions
-export set_transmission_template!
+export set_transmission_model!
 export set_devices_template!
 export set_branches_template!
 export set_services_template!

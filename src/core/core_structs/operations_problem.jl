@@ -2,7 +2,7 @@ abstract type AbstractOperationsProblem end
 
 struct DefaultOpProblem<:AbstractOperationsProblem end
 
-mutable struct FormulationTemplate
+mutable struct OperationsTemplate
     transmission::Type{<:PM.AbstractPowerModel}
     devices::Dict{Symbol, DeviceModel}
     branches::Dict{Symbol, DeviceModel}
@@ -10,7 +10,7 @@ mutable struct FormulationTemplate
 end
 
 """
-    FormulationTemplate(::Type{T}) where {T<:PM.AbstractPowerFormulation}
+    OperationsTemplate(::Type{T}) where {T<:PM.AbstractPowerFormulation}
 
 Creates a model reference of the Power Formulation, devices, branches, and services.
 
@@ -22,12 +22,12 @@ Creates a model reference of the Power Formulation, devices, branches, and servi
 
 # Example
 ```julia
-template= FormulationTemplate(CopperPlatePowerModel, devices, branches, services)
+template= OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
 ```
 """
-function FormulationTemplate(::Type{T}) where {T<:PM.AbstractPowerModel}
+function OperationsTemplate(::Type{T}) where {T<:PM.AbstractPowerModel}
 
-    return  FormulationTemplate(T,
+    return  OperationsTemplate(T,
                            Dict{Symbol, DeviceModel}(),
                            Dict{Symbol, DeviceModel}(),
                            Dict{Symbol, ServiceModel}())
@@ -35,14 +35,14 @@ function FormulationTemplate(::Type{T}) where {T<:PM.AbstractPowerModel}
 end
 
 mutable struct OperationsProblem{M<:AbstractOperationsProblem}
-    template::FormulationTemplate
+    template::OperationsTemplate
     sys::PSY.System
     canonical::Canonical
 end
 
 """
     OperationsProblem(::Type{M},
-    template::FormulationTemplate,
+    template::OperationsTemplate,
     sys::PSY.System;
     optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
     kwargs...) where {M<:AbstractOperationsProblem,
@@ -53,7 +53,7 @@ This builds the optimization model and populates the operation model
 # Arguments
 -`::Type{M} where {M<:AbstractOperationsProblem, T<:PM.AbstractPowerFormulation} = TestOpProblem`:
 The abstract operation model type
--`template::FormulationTemplate`: The model reference made up of transmission, devices,
+-`template::OperationsTemplate`: The model reference made up of transmission, devices,
                                           branches, and services.
 -`sys::PSY.System`: the system created using Power Systems
 
@@ -63,7 +63,7 @@ Systems system, and optimization model.
 
 # Example
 ```julia
-template= FormulationTemplate(CopperPlatePowerModel, devices, branches, services)
+template= OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
 OpModel = OperationsProblem(TestOpProblem, template, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
 ```
 
@@ -79,7 +79,7 @@ if false it runs for one time step
 -`initial_time::Dates.DateTime = PSY.get_forecasts_initial_time(sys)`: initial time of forecast
 """
 function OperationsProblem(::Type{M},
-                        template::FormulationTemplate,
+                        template::OperationsTemplate,
                         sys::PSY.System;
                         optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
                         kwargs...) where {M<:AbstractOperationsProblem}
@@ -114,7 +114,7 @@ Systems system, and optimization model.
 
 # Example
 ```julia
-template= FormulationTemplate(CopperPlatePowerModel, devices, branches, services)
+template= OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
 OpModel = OperationsProblem(TestOpProblem, template, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
 ```
 
@@ -138,7 +138,7 @@ function OperationsProblem(::Type{M},
                                           T<:PM.AbstractPowerModel}
 
     optimizer = get(kwargs, :optimizer, nothing)
-    return OperationsProblem{M}(FormulationTemplate(T),
+    return OperationsProblem{M}(OperationsTemplate(T),
                           sys,
                           Canonical(T, sys, optimizer; kwargs...))
 
@@ -165,7 +165,7 @@ Systems system, and optimization model.
 
 # Example
 ```julia
-template= FormulationTemplate(CopperPlatePowerModel, devices, branches, services)
+template= OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
 OpModel = OperationsProblem(TestOpProblem, template, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
 ```
 
@@ -197,7 +197,7 @@ get_branches_ref(op_problem::OperationsProblem) = op_problem.template.branches
 get_services_ref(op_problem::OperationsProblem) = op_problem.template.services
 get_system(op_problem::OperationsProblem) = op_problem.sys
 
-function set_transmission_template!(op_problem::OperationsProblem{M},
+function set_transmission_model!(op_problem::OperationsProblem{M},
                                transmission::Type{T}; kwargs...) where {T<:PM.AbstractPowerModel,
                                                                         M<:AbstractOperationsProblem}
 

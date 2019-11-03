@@ -3,7 +3,7 @@ abstract type AbstractStage end
 
 mutable struct _Stage{M<:AbstractOperationsProblem} <: AbstractStage
     key::Int64
-    reference::FormulationTemplate
+    reference::OperationsTemplate
     op_problem::Type{M}
     sys::PSY.System
     canonical::Canonical
@@ -15,7 +15,7 @@ mutable struct _Stage{M<:AbstractOperationsProblem} <: AbstractStage
     cache::Dict{Type{<:AbstractCache}, AbstractCache}
 
     function _Stage(key::Int64,
-                    reference::FormulationTemplate,
+                    reference::OperationsTemplate,
                     op_problem::Type{M},
                     sys::PSY.System,
                     canonical::Canonical,
@@ -59,7 +59,7 @@ end
 
 mutable struct Stage <: AbstractStage
     op_problem::Type{<:AbstractOperationsProblem}
-    model::FormulationTemplate
+    model::OperationsTemplate
     execution_count::Int64
     sys::PSY.System
     optimizer::JuMP.OptimizerFactory
@@ -67,7 +67,7 @@ mutable struct Stage <: AbstractStage
     cache::Vector{<:AbstractCache}
 
     function Stage(::Type{M},
-                   model::FormulationTemplate,
+                   model::OperationsTemplate,
                    execution_count::Int64,
                    sys::PSY.System,
                    optimizer::JuMP.OptimizerFactory,
@@ -86,7 +86,7 @@ mutable struct Stage <: AbstractStage
 end
 
 function Stage(::Type{M},
-                model::FormulationTemplate,
+                model::OperationsTemplate,
                 execution_count::Int64,
                 sys::PSY.System,
                 optimizer::JuMP.OptimizerFactory,
@@ -98,7 +98,7 @@ function Stage(::Type{M},
 
 end
 
-function Stage(model::FormulationTemplate,
+function Stage(model::OperationsTemplate,
                execution_count::Int64,
                sys::PSY.System,
                optimizer::JuMP.OptimizerFactory,

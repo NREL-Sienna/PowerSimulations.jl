@@ -5,7 +5,7 @@ branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine)
                                      :TT => DeviceModel(PSY.TapTransformer , PSI.StaticTransformer))
 services = Dict{Symbol, PSI.ServiceModel}()
 @testset "Operation Model kwargs with CopperPlatePowerModel base" begin
-    template = FormulationTemplate(CopperPlatePowerModel, devices, branches, services);
+    template = OperationsTemplate(CopperPlatePowerModel, devices, branches, services);
     op_problem = OperationsProblem(TestOpProblem, template,
                                             c_sys5;
                                             optimizer = GLPK_optimizer,
@@ -103,7 +103,7 @@ end
             devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, thermal),
                                                 :Loads =>       DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
             branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine))
-            template = FormulationTemplate(net, devices, branches, services);
+            template = OperationsTemplate(net, devices, branches, services);
             op_problem = OperationsProblem(TestOpProblem,
                                       template,
                                       system; PTDF = PTDF5, use_parameters = p);

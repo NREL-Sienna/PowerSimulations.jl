@@ -304,7 +304,7 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     add_component!(ramp_test_sys, gen_ramp[2])
     add_forecast!(ramp_test_sys, load, load_forecast_ramp)
 
-    template = FormulationTemplate(CopperPlatePowerModel, ED_devices, branches, services)
+    template = OperationsTemplate(CopperPlatePowerModel, ED_devices, branches, services)
     ED = OperationsProblem(TestOpProblem, template,
                         ramp_test_sys; optimizer = Cbc_optimizer,
                         use_parameters = true)
@@ -352,7 +352,7 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     init_cond[PSI.ICKey(PSI.TimeDurationOFF,typeof(alta))] = build_init(gens_dur, down_time)
 
 
-    template = FormulationTemplate(CopperPlatePowerModel, UC_devices, branches, services)
+    template = OperationsTemplate(CopperPlatePowerModel, UC_devices, branches, services)
     UC = OperationsProblem(TestOpProblem, template,
                         duration_test_sys; optimizer = Cbc_optimizer,
                         use_parameters = true, initial_conditions = init_cond)
@@ -391,7 +391,7 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     add_forecast!(cost_test_sys, load, load_forecast_cost)
 
 
-    template = FormulationTemplate(CopperPlatePowerModel, UC_devices, branches, services)
+    template = OperationsTemplate(CopperPlatePowerModel, UC_devices, branches, services)
     UC = OperationsProblem(TestOpProblem, template,
                         cost_test_sys; optimizer = Cbc_optimizer,
                         use_parameters = true)
@@ -429,7 +429,7 @@ end
     add_component!(cost_test_sos_sys, gens_cost_sos[2])
     add_forecast!(cost_test_sos_sys, load, load_forecast_cost_sos)
 
-    template = FormulationTemplate(CopperPlatePowerModel, UC_devices, branches, services)
+    template = OperationsTemplate(CopperPlatePowerModel, UC_devices, branches, services)
     UC = OperationsProblem(TestOpProblem, template,
                         cost_test_sos_sys; optimizer = Cbc_optimizer,
                         use_parameters = true)

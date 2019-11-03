@@ -12,7 +12,7 @@ devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStanda
                                     :ILoads =>  DeviceModel(PSY.InterruptibleLoad, PSI.StaticPowerLoad))
 
 
-template_uc= FormulationTemplate(CopperPlatePowerModel, devices, branches, services);
+template_uc= OperationsTemplate(CopperPlatePowerModel, devices, branches, services);
 
 ## ED Model Ref
 branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine),
@@ -27,4 +27,4 @@ devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStanda
                                     :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad),
                                     :ILoads =>  DeviceModel(PSY.InterruptibleLoad, PSI.InterruptiblePowerLoad,))
 
-template_ed= FormulationTemplate(CopperPlatePowerModel, devices, branches, services);
+template_ed= OperationsTemplate(CopperPlatePowerModel, devices, branches, services);
