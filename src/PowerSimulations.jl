@@ -69,6 +69,7 @@ export TimeStatusChange
 
 
 #operation_models
+export GenericOpProblem
 #export UnitCommitment
 #export EconomicDispatch
 #export OptimalPowerFlow
@@ -88,7 +89,7 @@ export set_device_model!
 export set_branch_model!
 export set_device_model!
 ## Sim Model Exports
-export run_simulation!
+export execute!
 ## Utils Exports
 export write_op_problem
 export write_results

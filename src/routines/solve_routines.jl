@@ -57,7 +57,7 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
 
 end
 
-function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::String;kwargs...)
+function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::String; kwargs...)
 
     if stage.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
         error("No Optimizer has been defined, can't solve the operational problem stage with key $(stage.key)")
@@ -70,7 +70,8 @@ function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::Str
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("Stage $(stage.key) status is $(model_status)")
     end
-    if duals in keys(kwargs) && !isnothing(get_constraints(stage.canonical))
+    retrieve_duals = :duals in keys(kwargs)
+    if retrieve_duals && !isnothing(get_constraints(stage.canonical))
         _export_model_result(stage, start_time, results_path, kwargs[:duals])
     else
         _export_model_result(stage, start_time, results_path)
@@ -81,7 +82,7 @@ function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::Str
 end
 
 """
-    run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
+    execute!(sim::Simulation; verbose::Bool = false, kwargs...)
 
 Solves the simulation model for sequential Simulations
 and populates a nested folder structure created in Simulation()
@@ -95,15 +96,16 @@ each stage and step.
 ```julia
 sim = Simulation("test", 7, stages, "/Users/lhanig/Downloads/";
 verbose = true, system_to_file = false)
-run_simulation!(sim::Simulation; verbose::Bool = false, kwargs...)
+execute!!(sim::Simulation; verbose::Bool = false, kwargs...)
 ```
 
 # Accepted Key Words
 `dual_constraints::Vector{Symbol}`: if dual variables are desired in the
 results, include a vector of the variable names to be included
 """
-function run_sim_model!(sim::Simulation, base_name::String, simulation_folder::String; verbose::Bool = false, kwargs...)
-    
+
+function execute!(sim::Simulation, base_name::String, simulation_folder::String; verbose::Bool = false, kwargs...)
+    _prepare_workspace!(sim.ref, sim.base_name, sim.simulation_folder)
     if sim.ref.reset
         sim.ref.reset = false
     elseif sim.ref.reset == false
@@ -138,6 +140,6 @@ function run_sim_model!(sim::Simulation, base_name::String, simulation_folder::S
 
     end
     date_run = convert(String,last(split(dirname(sim.ref.raw),"/")))
-    ref = make_references(sim, date_run)
-    return reference
+    #ref = make_references(sim, date_run)
+    return #reference
 end

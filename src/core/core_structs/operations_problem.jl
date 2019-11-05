@@ -1,6 +1,6 @@
 abstract type AbstractOperationsProblem end
 
-struct DefaultOpProblem<:AbstractOperationsProblem end
+struct GenericOpProblem<:AbstractOperationsProblem end
 
 mutable struct OperationsTemplate
     transmission::Type{<:PM.AbstractPowerModel}
@@ -185,7 +185,7 @@ function OperationsProblem(::Type{T},
                         sys::PSY.System;
                         kwargs...) where {T<:PM.AbstractPowerModel}
 
-    return OperationsProblem(DefaultOpProblem,
+    return OperationsProblem(GenericOpProblem,
                          T,
                          sys; kwargs...)
 
