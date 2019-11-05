@@ -36,6 +36,8 @@ mutable struct Simulation
     valid_timeseries::Bool
     daterange::NTuple{2, Dates.DateTime} #Inital Time of the first forecast and Inital Time of the last forecast
     ref::SimulationRef
+    simulation_folder::String
+    base_name::String
 
 
     function Simulation(base_name::String,
@@ -44,21 +46,18 @@ mutable struct Simulation
                         simulation_folder::String;
                         verbose::Bool = false, kwargs...)
 
-
     sim_ref = _initialize_sim_ref(steps, keys(stages))
-
     dates, validation, stages_vector = _build_simulation!(sim_ref,
-                                                        base_name,
-                                                        steps,
-                                                        stages,
-                                                        simulation_folder;
-                                                        verbose = verbose, kwargs...)
-
+                                                          steps,
+                                                          stages;
+                                                          verbose = verbose, kwargs...)
     new(steps,
         stages_vector,
         validation,
         dates,
-        sim_ref)
+        sim_ref,
+        simulation_folder,
+        base_name)
 
     end
 

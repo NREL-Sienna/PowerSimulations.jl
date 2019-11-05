@@ -1,16 +1,16 @@
-construct_device!(canonical::CanonicalModel, sys::PSY.System,
+construct_device!(canonical::Canonical, sys::PSY.System,
                   model::DeviceModel{B, Br},
                   ::Type{CopperPlatePowerModel};
                   kwargs...) where {B<:PSY.DCBranch,
                                     Br<:AbstractBranchFormulation} = nothing
 
-construct_device!(canonical::CanonicalModel, sys::PSY.System,
+construct_device!(canonical::Canonical, sys::PSY.System,
                   model::DeviceModel{B, Br},
                   ::Type{CopperPlatePowerModel};
                   kwargs...) where {B<:PSY.ACBranch,
                                     Br<:AbstractBranchFormulation} = nothing
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{B, Br},
                            ::Type{S};
                            kwargs...) where {B<:PSY.Branch,
@@ -33,7 +33,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
                            ::Type{S};
                            kwargs...) where {S<:PM.AbstractPowerModel}
@@ -65,7 +65,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
- construct_device!(canonical::CanonicalModel, sys::PSY.System,
+ construct_device!(canonical::Canonical, sys::PSY.System,
                    model::DeviceModel{B, Br},
                    ::Type{S};
                    kwargs...) where {B<:PSY.Branch,
@@ -73,7 +73,7 @@ end
                                                Type{StaticTransformerUnbounded}},
                                      S<:PM.AbstractPowerModel} = nothing
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{B, Br},
                            ::Type{S};
                            kwargs...) where {Br<:AbstractBranchFormulation,

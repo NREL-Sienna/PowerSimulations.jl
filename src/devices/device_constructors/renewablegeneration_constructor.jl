@@ -1,4 +1,4 @@
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{R, D},
                            ::Type{S};
                            kwargs...) where {R<:PSY.RenewableGen,
@@ -34,7 +34,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{R, D},
                            ::Type{S};
                            kwargs...) where {R<:PSY.RenewableGen,
@@ -65,7 +65,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{R, RenewableFixed},
                            system_formulation::Type{S};
                            kwargs...) where {R<:PSY.RenewableGen,
@@ -86,7 +86,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{PSY.RenewableFix, D},
                            system_formulation::Type{S};
                            kwargs...) where {D<:AbstractRenewableDispatchFormulation,
@@ -105,7 +105,7 @@ function construct_device!(canonical::CanonicalModel, sys::PSY.System,
 end
 
 
-function construct_device!(canonical::CanonicalModel, sys::PSY.System,
+function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{PSY.RenewableFix, RenewableFixed},
                            system_formulation::Type{S};
                            kwargs...) where {S<:PM.AbstractPowerModel}

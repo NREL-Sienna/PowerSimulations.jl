@@ -6,8 +6,8 @@ module PowerSimulations
 # Base Models
 export Stage
 export Simulation
-export OperationModel
-export ModelReference
+export OperationsProblem
+export OperationsTemplate
 export InitialCondition
 
 #Network Relevant Exports
@@ -67,7 +67,9 @@ export DeviceEnergy
 # cache_models
 export TimeStatusChange
 
+
 #operation_models
+export GenericOpProblem
 #export UnitCommitment
 #export EconomicDispatch
 #export OptimalPowerFlow
@@ -77,21 +79,25 @@ export TimeStatusChange
 export construct_device!
 export construct_network!
 ## Op Model Exports
-export solve_op_model!
+export solve_op_problem!
 export get_initial_conditions
-export set_transmission_ref!
-export set_devices_ref!
-export set_branches_ref!
-export set_services_ref!
+export set_transmission_model!
+export set_devices_template!
+export set_branches_template!
+export set_services_template!
 export set_device_model!
 export set_branch_model!
 export set_device_model!
 ## Sim Model Exports
+<<<<<<< HEAD
 export run_sim_model!
 export make_references
+=======
+export execute!
+>>>>>>> e0b5f7c09d47bff63b2c669629061736d15bbdc4
 ## Utils Exports
-export write_op_model
-export write_model_results
+export write_op_problem
+export write_results
 export load_operation_results
 export load_simulation_results
 export get_all_constraint_index
@@ -107,9 +113,13 @@ export get_stacked_aggregation_data
 export bar_plot
 export stack_plot
 export report
+<<<<<<< HEAD
 export make_fuel_dictionary
 export fuel_plot
 
+=======
+export load_simulation_results
+>>>>>>> e0b5f7c09d47bff63b2c669629061736d15bbdc4
 
 #################################################################################
 # Imports
@@ -135,7 +145,11 @@ import TimeSeries
 import MathOptFormat
 import DataFrames
 import Feather
+<<<<<<< HEAD
 import Colors
+=======
+import JSON
+>>>>>>> e0b5f7c09d47bff63b2c669629061736d15bbdc4
 
 include("core/definitions.jl")
 
@@ -152,23 +166,23 @@ include("service_models/services.jl")
 
 #Core Models and constructors
 include("core/core_structs/aux_structs.jl")
-include("core/core_structs/cache_models.jl")
-include("core/core_structs/feedforward_model.jl")
+include("core/core_structs/cache.jl")
+include("core/core_structs/feedforward.jl")
 include("core/core_structs/device_model.jl")
 include("core/core_structs/initial_conditions.jl")
 include("core/core_structs/canonical.jl")
 include("core/core_structs/service_model.jl")
-include("core/core_structs/operation_model.jl")
+include("core/core_structs/operations_problem.jl")
 include("core/core_structs/chronology.jl")
 include("core/core_structs/simulations_stages.jl")
-include("core/core_structs/simulation_model.jl")
-include("core/core_structs/results_model.jl")
+include("core/core_structs/simulation.jl")
+include("core/core_structs/results.jl")
 include("core/build_cache.jl")
 include("core/build_operations.jl")
 include("core/build_simulations.jl")
 
 #FeedForward Model Files
-include("simulation_models/feedforward_models.jl")
+include("simulation/feedforward_affects.jl")
 
 #Device Modeling components
 include("devices/device_models/common.jl")
@@ -197,11 +211,14 @@ include("network_models/network_constructor.jl")
 #Services constructors
 include("service_models/services_constructor.jl")
 
+# Commented out until properly implemented
 #Operational Model Constructors
-include("operation_models/operation_models.jl")
+#include("operation_templates/economic_dispatch.jl")
+#include("operation_templates/unit_commitment.jl")
+#include("operation_templates/opf.jl")
 
 #Simulations Model Files
-include("simulation_models/stage_update.jl")
+include("simulation/stage_update.jl")
 
 #Routines
 include("routines/make_initial_conditions.jl")
@@ -209,14 +226,17 @@ include("routines/get_results.jl")
 include("routines/solve_routines.jl")
 include("routines/write_model.jl")
 
-
 #Utils
 include("utils/optimization_debugging.jl")
 include("utils/printing.jl")
 include("utils/plot_fuel_results.jl")
 include("utils/plot_results.jl")
 include("utils/plot_recipes.jl")
+<<<<<<< HEAD
 include("utils/call_plots.jl")
+=======
+include("utils/aggregation.jl")
+>>>>>>> e0b5f7c09d47bff63b2c669629061736d15bbdc4
 
 #Initialization
 

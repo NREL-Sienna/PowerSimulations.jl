@@ -4,12 +4,17 @@ function parameter_update!(param_reference::UpdateRef{T},
                            stage_number::Int64,
                            sim::Simulation) where T <: PSY.Component
 
-    forecasts = PSY.get_component_forecasts(T, sim.stages[stage_number].sys,
-                                               sim.ref.date_ref[stage_number])
-    for forecast in forecasts
-        device = PSY.get_forecast_component_name(forecast)
-        for (ix, val) in enumerate(param_array[device,:])
-            value = PSY.get_forecast_value(forecast, ix)
+    devices = PSY.get_components(T, sim.stages[stage_number].sys)
+    initial_forecast_time = sim.ref.date_ref[stage_number]
+
+    for d in devices
+        ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
+                                            d,
+                                            initial_forecast_time,
+                                            "$(param_reference.access_ref)")))
+        device_name = PSY.get_name(d)
+        for (ix, val) in enumerate(param_array[device_name,:])
+            value = ts_vector[ix]
             JuMP.fix(val, value)
         end
     end
@@ -103,7 +108,7 @@ function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationOFF, PS
 
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
-    var_status = var_value > eps() ? 1.0 : 0.0
+    var_status = isapprox(var_value, 0.0, atol = 1e-4) ? 0.0 : 1.0
     @assert abs(last_status - var_status) < eps()
 
     if last_status >= 1.0
@@ -125,7 +130,7 @@ function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationON, PSD
 
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
-    var_status = var_value > eps() ? 1.0 : 0.0
+    var_status = isapprox(var_value, 0.0, atol = 1e-4) ? 0.0 : 1.0
     @assert abs(last_status - var_status) < eps()
 
     if last_status >= 1.0
@@ -142,7 +147,7 @@ function _calculate_ic_quantity(initial_condition_key::ICKey{DeviceStatus, PSD},
                                 ic::InitialCondition,
                                 var_value::Float64,
                                 cache::Union{Nothing,AbstractCache}) where PSD <: PSY.Device
-    return var_value > eps() ? 1.0 : 0.0
+    return isapprox(var_value, 0.0, atol = 1e-4) ? 1.0 : 0.0
 end
 
 function _calculate_ic_quantity(initial_condition_key::ICKey{DevicePower, PSD},
@@ -270,10 +275,9 @@ function intial_condition_update!(initial_condition_key::ICKey,
 
 end
 
-function update_stage!(stage::_Stage{M}, step::Int64, sim::Simulation) where M<:AbstractOperationModel
+function update_stage!(stage::_Stage{M}, step::Int64, sim::Simulation) where M<:AbstractOperationsProblem
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && stage.key == 1 && stage.execution_count == 0) && return
-
     for (k, v) in stage.canonical.parameters
         parameter_update!(k, v, stage.key, sim)
     end

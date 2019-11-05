@@ -1,11 +1,9 @@
-function include_parameters(canonical::CanonicalModel,
+function include_parameters(canonical::Canonical,
                             data::Matrix,
                             param_reference::UpdateRef,
                             axs...)
 
-    _add_param_container!(canonical, param_reference, axs...)
-    param = par(canonical, param_reference)
-
+    param = _add_param_container!(canonical, param_reference, axs...)
     Cidx = CartesianIndices(length.(axs))
 
     for idx in Cidx
@@ -16,17 +14,16 @@ function include_parameters(canonical::CanonicalModel,
 
 end
 
-function include_parameters(canonical::CanonicalModel,
+function include_parameters(canonical::Canonical,
                             ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                             param_reference::UpdateRef,
-                            expression::Symbol,
+                            expression_name::Symbol,
                             multiplier::Float64 = 1.0)
 
 
     time_steps = model_time_steps(canonical)
-    _add_param_container!(canonical, param_reference, (r[1] for r in ts_data), time_steps)
-    param = par(canonical, param_reference)
-    expr = exp(canonical, expression)
+    param = _add_param_container!(canonical, param_reference, (r[1] for r in ts_data), time_steps)
+    expr = get_expression(canonical, expression_name)
 
     for t in time_steps, r in ts_data
         param[r[1], t] = PJ.add_parameter(canonical.JuMPmodel, r[4][t]);

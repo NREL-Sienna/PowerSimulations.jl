@@ -3,7 +3,7 @@ function _prepare_workspace!(ref::SimulationRef, base_name::AbstractString, fold
     !isdir(folder) && error("Specified folder is not valid")
     global_path = joinpath(folder, "$(base_name)")
     !isdir(global_path) && mkpath(global_path)
-    _sim_path = replace_chars("$(round(Dates.now(),Dates.Minute))-$(base_name)", ":", "-")
+    _sim_path = replace_chars("$(round(Dates.now(),Dates.Minute))", ":", "-")
     simulation_path = joinpath(global_path, _sim_path)
     raw_ouput = joinpath(simulation_path, "raw_output")
     mkpath(raw_ouput)
@@ -77,27 +77,26 @@ function _build_stages(sim_ref::SimulationRef,
     mod_stages = Vector{_Stage}(undef, length(stages))
     for (key, stage) in stages
         verbose && @info("Building Stage $(key)")
-        canonical = CanonicalModel(stage.model.transmission,
+        canonical = Canonical(stage.model.transmission,
                                    stage.sys,
                                    stage.optimizer;
-                                   parameters = true)
+                                   use_parameters = true)
         mod_stages[key] = _Stage(key,
                                 stage.model,
-                                stage.op_model,
+                                stage.op_problem,
                                 stage.sys,
                                 canonical,
                                 stage.optimizer,
                                 stage.execution_count,
                                 stage.chronology_ref,
                                 stage.cache)
-        _build_canonical!(mod_stages[key].canonical,
-                          stage.model,
-                          stage.sys;
-                          parameters = true,
-                          kwargs...)
+        _build!(mod_stages[key].canonical,
+                stage.model,
+                stage.sys;
+                kwargs...)
         stage_path = joinpath(sim_ref.models,"stage_$(key)_model")
         mkpath(stage_path)
-        _write_canonical_model(canonical, joinpath(stage_path, "optimization_model.json"))
+        _write_canonical(canonical, joinpath(stage_path, "optimization_model.json"))
         system_to_file && IS.to_json(stage.sys, joinpath(stage_path ,"sys_data.json"))
         _populate_cache!(mod_stages[key])
         sim_ref.date_ref[key] = PSY.get_forecast_initial_times(stage.sys)[1]
@@ -113,7 +112,7 @@ function _feedforward_rule_check(::Type{T},
                               stage_number_to::Int64,
                               to_stage::Stage,) where T <: Chronology
 
-    error("feedforward Model $(T) not implemented")
+    error("Feedforward Model $(T) not implemented")
 
     return
 
@@ -133,7 +132,7 @@ function _feedforward_rule_check(synch::Synchronize,
     to_stage_count = get_execution_count(to_stage)
     to_stage_synch = synch.to_steps
     from_stage_synch = synch.from_steps
-    
+
     if from_stage_synch > from_stage_horizon
         error("The lookahead length $(from_stage_horizon) in stage is insufficient to synchronize with $(from_stage_synch) feedforward steps")
     end
@@ -188,18 +187,13 @@ function _check_chronology_ref(stages::Dict{Int64, Stage})
 end
 
 function _build_simulation!(sim_ref::SimulationRef,
-                          base_name::String,
-                          steps::Int64,
-                          stages::Dict{Int64, Stage},
-                          simulation_folder::String;
-                          verbose::Bool = false, kwargs...)
-
+                            steps::Int64,
+                            stages::Dict{Int64, Stage};
+                            verbose::Bool = false, kwargs...)
 
     _validate_steps(stages, steps)
     _check_chronology_ref(stages)
     dates, validation = _get_dates(stages)
-    _prepare_workspace!(sim_ref, base_name, simulation_folder)
-
     return dates, validation, _build_stages(sim_ref, stages, verbose = verbose; kwargs...)
 
 end

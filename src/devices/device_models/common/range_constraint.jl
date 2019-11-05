@@ -1,5 +1,5 @@
 @doc raw"""
-    device_range(canonical::CanonicalModel,
+    device_range(canonical::Canonical,
                         range_data::Vector{NamedMinMax},
                         cons_name::Symbol,
                         var_name::Symbol)
@@ -24,21 +24,20 @@ where r in range_data.
 `` r^{min} \leq x \leq r^{max}, \text{ otherwise } ``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * range_data::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 """
-function device_range(canonical::CanonicalModel,
+function device_range(canonical::Canonical,
                     range_data::Vector{NamedMinMax},
                     cons_name::Symbol,
                     var_name::Symbol)
 
     time_steps = model_time_steps(canonical)
-    variable = var(canonical, var_name)
+    variable = get_variable(canonical, var_name)
     set_name = (r[1] for r in range_data)
-    _add_cons_container!(canonical, cons_name, set_name, time_steps)
-    constraint = con(canonical, cons_name)
+    constraint = _add_cons_container!(canonical, cons_name, set_name, time_steps)
 
     for r in range_data
           if abs(r[2].min - r[2].max) <= eps()
@@ -58,7 +57,7 @@ function device_range(canonical::CanonicalModel,
 end
 
 @doc raw"""
-    device_semicontinuousrange(canonical::CanonicalModel,
+    device_semicontinuousrange(canonical::Canonical,
                                     scrange_data::Vector{NamedMinMax},
                                     cons_name::Symbol,
                                     var_name::Symbol,
@@ -88,13 +87,13 @@ where r in range_data.
 `` r^{min} x^{bin} \leq x^{cts} \leq r^{max} x^{bin}, \text{ otherwise } ``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * scrange_data::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 * binvar_name::Symbol : the name of the binary variable
 """
-function device_semicontinuousrange(canonical::CanonicalModel,
+function device_semicontinuousrange(canonical::Canonical,
                                     scrange_data::Vector{NamedMinMax},
                                     cons_name::Symbol,
                                     var_name::Symbol,
@@ -104,17 +103,15 @@ function device_semicontinuousrange(canonical::CanonicalModel,
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
 
-    varcts = var(canonical, var_name)
-    varbin = var(canonical, binvar_name)
+    varcts = get_variable(canonical, var_name)
+    varbin = get_variable(canonical, binvar_name)
 
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
 
     set_name = (r[1] for r in scrange_data)
-    _add_cons_container!(canonical, ub_name, set_name, time_steps)
-    _add_cons_container!(canonical, lb_name, set_name, time_steps)
-    con_ub = con(canonical, ub_name)
-    con_lb = con(canonical, lb_name)
+    con_ub = _add_cons_container!(canonical, ub_name, set_name, time_steps)
+    con_lb = _add_cons_container!(canonical, lb_name, set_name, time_steps)
 
     for t in time_steps, r in scrange_data
 
@@ -142,7 +139,7 @@ function device_semicontinuousrange(canonical::CanonicalModel,
 end
 
 @doc raw"""
-    reserve_device_semicontinuousrange(canonical::CanonicalModel,
+    reserve_device_semicontinuousrange(canonical::Canonical,
                                     scrange_data::Vector{NamedMinMax},
                                     cons_name::Symbol,
                                     var_name::Symbol,
@@ -172,13 +169,13 @@ where r in range_data.
 `` r^{min} (1 - x^{bin} ) \leq x^{cts} \leq r^{max} (1 - x^{bin} ), \text{ otherwise } ``
 
 # Arguments
-* canonical::CanonicalModel : the canonical model built in PowerSimulations
+* canonical::Canonical : the canonical model built in PowerSimulations
 * scrange_data::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 * binvar_name::Symbol : the name of the binary variable
 """
-function reserve_device_semicontinuousrange(canonical::CanonicalModel,
+function reserve_device_semicontinuousrange(canonical::Canonical,
                                             scrange_data::Vector{NamedMinMax},
                                             cons_name::Symbol,
                                             var_name::Symbol,
@@ -188,17 +185,15 @@ function reserve_device_semicontinuousrange(canonical::CanonicalModel,
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
 
-    varcts = var(canonical, var_name)
-    varbin = var(canonical, binvar_name)
+    varcts = get_variable(canonical, var_name)
+    varbin = get_variable(canonical, binvar_name)
 
     # MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     # In the future this can be updated
 
     set_name = (r[1] for r in scrange_data)
-    _add_cons_container!(canonical, ub_name, set_name, time_steps)
-    _add_cons_container!(canonical, lb_name, set_name, time_steps)
-    con_ub = con(canonical, ub_name)
-    con_lb = con(canonical, lb_name)
+    con_ub = _add_cons_container!(canonical, ub_name, set_name, time_steps)
+    con_lb = _add_cons_container!(canonical, lb_name, set_name, time_steps)
 
     for t in time_steps, r in scrange_data
 

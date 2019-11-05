@@ -6,14 +6,14 @@ This is to make it easier to calculate when the previous model doesn't
 contain binaries. For instance, looking back on an ED model to find the
 IC of the UC model
 """
-function status_init(canonical::CanonicalModel,
+function status_init(canonical::Canonical,
                      devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
 
     key = ICKey(DeviceStatus, PSD)
     parameters = model_has_parameters(canonical)
     length_devices = length(devices)
-    ini_conds = get_ini_cond(canonical, key)
+    ini_conds = get_initial_conditions(canonical, key)
     # Improve here
     ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
 
@@ -46,13 +46,13 @@ function status_init(canonical::CanonicalModel,
 
 end
 
-function output_init(canonical::CanonicalModel,
+function output_init(canonical::Canonical,
                     devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
     key = ICKey(DevicePower, PSD)
     parameters = model_has_parameters(canonical)
     length_devices = length(devices)
-    ini_conds = get_ini_cond(canonical, key)
+    ini_conds = get_initial_conditions(canonical, key)
     # Improve this
     ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
 
@@ -87,7 +87,7 @@ function output_init(canonical::CanonicalModel,
 
 end
 
-function duration_init(canonical::CanonicalModel,
+function duration_init(canonical::Canonical,
                         devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
 
     keys = [ICKey(TimeDurationON, PSD), ICKey(TimeDurationOFF, PSD)]
@@ -96,7 +96,7 @@ function duration_init(canonical::CanonicalModel,
     ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
 
     for (ik, key) in enumerate(keys)
-        ini_conds = get_ini_cond(canonical, key)
+        ini_conds = get_initial_conditions(canonical, key)
 
         if isempty(ini_conds)
             @info("Setting $(key.quantity) initial_condition of all devices $(PSD) based on system data")
@@ -142,13 +142,13 @@ end
 
 ######################### Initialize Functions for Storage #################################
 
-function storage_energy_init(canonical::CanonicalModel,
+function storage_energy_init(canonical::Canonical,
                              devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.Storage}
 
     key = ICKey(DeviceEnergy, PSD)
     parameters = model_has_parameters(canonical)
     length_devices = length(devices)
-    ini_conds = get_ini_cond(canonical, key)
+    ini_conds = get_initial_conditions(canonical, key)
     ref_key = parameters ? Symbol("E_$(PSD)") : :energy
 
     if isempty(ini_conds)

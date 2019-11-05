@@ -6,15 +6,15 @@ branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine)
 services = Dict{Symbol, PSI.ServiceModel}()
 
 @testset "Solving ED with CopperPlate" begin
-    model_ref = ModelReference(CopperPlatePowerModel, devices, branches, services);
+    template = OperationsTemplate(CopperPlatePowerModel, devices, branches, services);
     parameters_value = [true, false]
     systems = [c_sys5, c_sys14]
     test_results = Dict{PSY.System, Float64}(c_sys5 => 240000.0,
                                              c_sys14 => 142000.0)
     for sys in systems, p in parameters_value
         @info("Testing solve ED with CopperPlatePowerModel network")
-        @testset "ED CopperPlatePowerModel model parameters = $(p)" begin
-        ED = OperationModel(TestOptModel, model_ref, sys; optimizer = OSQP_optimizer, parameters = p)
+        @testset "ED CopperPlatePowerModel model use_parameters = $(p)" begin
+        ED = OperationsProblem(TestOpProblem, template, sys; optimizer = OSQP_optimizer, use_parameters = p)
         psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[sys], 10000)
 
         end
@@ -22,7 +22,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
 end
 
 @testset "Solving ED with PTDF Models" begin
-    model_ref = ModelReference(StandardPTDFModel, devices, branches, services);
+    template = OperationsTemplate(StandardPTDFModel, devices, branches, services);
     parameters_value = [true, false]
     systems = [c_sys5, c_sys14, c_sys14_dc]
     PTDF_ref = Dict{PSY.System, PSY.PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc)
@@ -32,8 +32,8 @@ end
 
     for sys in systems, p in parameters_value
         @info("Testing solve ED with StandardPTDFModel network")
-        @testset "ED StandardPTDFModel model parameters = $(p)" begin
-        ED = OperationModel(TestOptModel, model_ref, sys; PTDF = PTDF_ref[sys], optimizer = OSQP_optimizer, parameters = p)
+        @testset "ED StandardPTDFModel model use_parameters = $(p)" begin
+        ED = OperationsProblem(TestOpProblem, template, sys; PTDF = PTDF_ref[sys], optimizer = OSQP_optimizer, use_parameters = p)
         psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[sys], 10000)
         end
     end
@@ -50,9 +50,9 @@ end
 
     for  net in networks, p in parameters_value, sys in systems
         @info("Testing solve ED with $(net) network")
-        @testset "ED model $(net) and parameters = $(p)" begin
-        model_ref = ModelReference(net, devices, branches, services);
-        ED = OperationModel(TestOptModel, model_ref, sys; optimizer = ipopt_optimizer, parameters = p);
+        @testset "ED model $(net) and use_parameters = $(p)" begin
+        template = OperationsTemplate(net, devices, branches, services);
+        ED = OperationsProblem(TestOpProblem, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
         #The tolerance range here is large because NFA has a much lower objective value
         psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_results[sys], 35000)
         end
@@ -71,9 +71,9 @@ end
 
     for  net in networks, p in parameters_value, sys in systems
         @info("Testing solve ED with $(net) network")
-        @testset "ED model $(net) and parameters = $(p)" begin
-        model_ref = ModelReference(net, devices, branches, services);
-        ED = OperationModel(TestOptModel, model_ref, sys; optimizer = ipopt_optimizer, parameters = p);
+        @testset "ED model $(net) and use_parameters = $(p)" begin
+        template = OperationsTemplate(net, devices, branches, services);
+        ED = OperationsProblem(TestOpProblem, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
         #The tolerance range here is large because NFA has a much lower objective value
         psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_results[sys], 10000)
 
@@ -94,9 +94,9 @@ end
 
     for  net in networks, p in parameters_value, sys in systems
         @info("Testing solve ED with $(net) network")
-        @testset "ED model $(net) and parameters = $(p)" begin
-        model_ref = ModelReference(net, devices, branches, services);
-        ED = OperationModel(TestOptModel, model_ref, sys; optimizer = ipopt_optimizer, parameters = p);
+        @testset "ED model $(net) and use_parameters = $(p)" begin
+        template = OperationsTemplate(net, devices, branches, services);
+        ED = OperationsProblem(TestOpProblem, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
         #The tolerance range here is large because Relaxations have a lower objective value
         psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_results[sys], 25000)
 
@@ -118,9 +118,9 @@ end
 
     for  net in networks, p in parameters_value, sys in systems
         @info("Testing solve ED with $(net) network")
-        @testset "ED model $(net) and parameters = $(p)" begin
-        model_ref = ModelReference(net, devices, branches, services);
-        ED = OperationModel(TestOptModel, model_ref, sys; optimizer = ipopt_optimizer, parameters = p);
+        @testset "ED model $(net) and use_parameters = $(p)" begin
+        template = OperationsTemplate(net, devices, branches, services);
+        ED = OperationsProblem(TestOpProblem, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
         psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_results[sys], 10000)
         end
     end
@@ -140,9 +140,9 @@ end
 
     for  net in networks, p in parameters_value, sys in systems
         @info("Testing solve UC with $(net) network")
-        @testset "UC model $(net) and parameters = $(p)" begin
-        model_ref= ModelReference(net, devices, branches, services);
-        UC = OperationModel(TestOptModel, model_ref, sys; PTDF = PTDF_ref[sys], optimizer = GLPK_optimizer, parameters = p)
+        @testset "UC model $(net) and use_parameters = $(p)" begin
+        template= OperationsTemplate(net, devices, branches, services);
+        UC = OperationsProblem(TestOpProblem, template, sys; PTDF = PTDF_ref[sys], optimizer = GLPK_optimizer, use_parameters = p)
         psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
         end
     end

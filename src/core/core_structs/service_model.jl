@@ -8,7 +8,7 @@ end
 
 
 
-function construct_service!(canonical::CanonicalModel,
+function construct_service!(canonical::Canonical,
                            service_model::ServiceModel,
                            system_formulation::Type{S},
                            sys::PSY.System;

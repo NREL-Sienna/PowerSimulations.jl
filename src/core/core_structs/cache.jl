@@ -10,7 +10,7 @@ end
 
 function TimeStatusChange(parameter::Symbol)
     value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, 1)
-    return TimeStatusChange(value_array, UpdateRef{Parameter}(parameter))
+    return TimeStatusChange(value_array, UpdateRef{PJ.ParameterRef}(parameter))
 end
 
 cache_value(cache::AbstractCache, key) = cache.value[key]

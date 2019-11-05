@@ -1,31 +1,23 @@
 function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory},
                               parameters::Bool,
                               JuMPmodel::Union{JuMP.AbstractModel,Nothing})
-
     if isa(optimizer, Nothing)
         @info("The optimization model has no optimizer attached")
     end
-
-    if !isnothing(JuMPmodel) && parameters
-
-        if !haskey(JuMPmodel.ext, :params)
-            @info("Model doesn't have Parameters enabled. Parameters will be enabled")
+    if !isnothing(JuMPmodel)
+        if parameters
+            if !haskey(JuMPmodel.ext, :params)
+                @info("Model doesn't have Parameters enabled. Parameters will be enabled")
+            end
+            PJ.enable_parameters(JuMPmodel)
         end
-
-        PJ.enable_parameters(JuMPmodel)
-
         return JuMPmodel
-
     end
-
     JuMPmodel = JuMP.Model(optimizer)
-
     if parameters
         PJ.enable_parameters(JuMPmodel)
     end
-
     return JuMPmodel
-
 end
 
 function _make_container_array(V::DataType, parameters::Bool, ax...)
@@ -76,19 +68,18 @@ function _canonical_init(bus_numbers::Vector{Int64},
                         transmission::Type{S},
                         time_steps::UnitRange{Int64},
                         resolution::Dates.Period,
-                        forecast::Bool,
+                        use_forecast_data::Bool,
                         initial_time::Dates.DateTime,
-                        parameters::Bool,
+                        make_parameters_container::Bool,
                         ini_con::DICKDA) where {S<:PM.AbstractPowerModel}
 
     V = JuMP.variable_type(jump_model)
 
-    canonical = CanonicalModel(jump_model,
+    canonical = Canonical(jump_model,
                               optimizer,
-                              parameters,
                               time_steps,
                               resolution,
-                              forecast,
+                              use_forecast_data,
                               initial_time,
                               DSDA(),
                               DSDA(),
@@ -97,8 +88,8 @@ function _canonical_init(bus_numbers::Vector{Int64},
                                                      V,
                                                      bus_numbers,
                                                      time_steps,
-                                                     parameters),
-                              parameters ? DRDA() : nothing,
+                                                     make_parameters_container),
+                              make_parameters_container ? DRDA() : nothing,
                               ini_con,
                               nothing);
 
@@ -106,13 +97,12 @@ function _canonical_init(bus_numbers::Vector{Int64},
 
 end
 
-mutable struct CanonicalModel
+mutable struct Canonical
     JuMPmodel::JuMP.AbstractModel
     optimizer_factory::Union{Nothing, JuMP.OptimizerFactory}
-    parametrized::Bool
     time_steps::UnitRange{Int64}
     resolution::Dates.Period
-    forecast::Bool
+    use_forecast_data::Bool
     initial_time::Dates.DateTime
     variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
@@ -120,32 +110,27 @@ mutable struct CanonicalModel
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}}
     initial_conditions::DICKDA
-    pm_model::Union{Nothing, PM.AbstractPowerModel}
+    pm::Union{Nothing, PM.AbstractPowerModel}
 
-    function CanonicalModel(JuMPmodel::JuMP.AbstractModel,
-                            optimizer_factory::Union{Nothing, JuMP.OptimizerFactory},
-                            parametrized::Bool,
-                            time_steps::UnitRange{Int64},
-                            resolution::Dates.Period,
-                            forecast::Bool,
-                            initial_time::Dates.DateTime,
-                            variables::Dict{Symbol, JuMP.Containers.DenseAxisArray},
-                            constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray},
-                            cost_function::JuMP.AbstractJuMPScalar,
-                            expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray},
-                            parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}},
-                            initial_conditions::DICKDA,
-                            pm_model::Union{Nothing, PM.AbstractPowerModel})
-
-        #prevents having empty parameters and parametrized canonical model
-        @assert isnothing(parameters) == !parametrized
+    function Canonical(JuMPmodel::JuMP.AbstractModel,
+                       optimizer_factory::Union{Nothing, JuMP.OptimizerFactory},
+                       time_steps::UnitRange{Int64},
+                       resolution::Dates.Period,
+                       use_forecast_data::Bool,
+                       initial_time::Dates.DateTime,
+                       variables::Dict{Symbol, JuMP.Containers.DenseAxisArray},
+                       constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray},
+                       cost_function::JuMP.AbstractJuMPScalar,
+                       expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray},
+                       parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}},
+                       initial_conditions::DICKDA,
+                       pm::Union{Nothing, PM.AbstractPowerModel})
 
         new(JuMPmodel,
             optimizer_factory,
-            parametrized,
             time_steps,
             resolution,
-            forecast,
+            use_forecast_data,
             initial_time,
             variables,
             constraints,
@@ -153,28 +138,32 @@ mutable struct CanonicalModel
             expressions,
             parameters,
             initial_conditions,
-            pm_model)
+            pm)
 
     end
 
 end
 
-function CanonicalModel(::Type{T},
-                        sys::PSY.System,
-                        optimizer::Union{Nothing,JuMP.OptimizerFactory};
-                        kwargs...) where {T<:PM.AbstractPowerModel}
+function Canonical(::Type{T},
+                   sys::PSY.System,
+                   optimizer::Union{Nothing,JuMP.OptimizerFactory};
+                   kwargs...) where {T<:PM.AbstractPowerModel}
 
     PSY.check_forecast_consistency(sys)
     user_defined_model = get(kwargs, :JuMPmodel, nothing)
     ini_con = get(kwargs, :initial_conditions, DICKDA())
-    parameters = get(kwargs, :parameters, false)
-    forecast = get(kwargs, :forecast, true)
-    jump_model = _pass_abstract_jump(optimizer, parameters, user_defined_model)
+    make_parameters_container = get(kwargs, :use_parameters, false)
+    use_forecast_data = get(kwargs, :use_forecast_data, true)
+    jump_model = _pass_abstract_jump(optimizer, make_parameters_container, user_defined_model)
     initial_time = get(kwargs, :initial_time, PSY.get_forecasts_initial_time(sys))
 
-    if forecast
-        horizon = PSY.get_forecasts_horizon(sys)
+    if use_forecast_data
+        horizon = get(kwargs, :horizon, PSY.get_forecasts_horizon(sys))
         time_steps = 1:horizon
+        if length(time_steps) > 100
+            @warn("The number of time steps in the model is over 100. This will result in
+                  large multiperiod optimization problem")
+        end
         resolution = PSY.get_forecasts_resolution(sys)
     else
         resolution = PSY.get_forecasts_resolution(sys)
@@ -189,14 +178,14 @@ function CanonicalModel(::Type{T},
                            T,
                            time_steps,
                            resolution,
-                           forecast,
+                           use_forecast_data,
                            initial_time,
-                           parameters,
+                           make_parameters_container,
                            ini_con)
 
 end
 
-function InitialCondition(canonical::CanonicalModel,
+function InitialCondition(canonical::Canonical,
                           device::T,
                           access_ref::Symbol,
                           value::Float64,
@@ -218,17 +207,17 @@ function InitialCondition(canonical::CanonicalModel,
 
 end
 
-function get_ini_cond(canonical::CanonicalModel, key::ICKey)
+function get_initial_conditions(canonical::Canonical, key::ICKey)
     return get(canonical.initial_conditions, key, Vector{InitialCondition}())
 end
 
 # Var_ref
-function get_value(canonical::CanonicalModel, ref::UpdateRef{JuMP.VariableRef})
-    return var(canonical, ref.access_ref)
+function get_value(canonical::Canonical, ref::UpdateRef{JuMP.VariableRef})
+    return get_variable(canonical, ref.access_ref)
 end
 
 # param_ref
-function get_value(canonical::CanonicalModel, ref::UpdateRef{PJ.ParameterRef})
+function get_value(canonical::Canonical, ref::UpdateRef{PJ.ParameterRef})
     for (k, v) in canonical.parameters
         if k.access_ref == ref.access_ref
             return v
@@ -237,17 +226,17 @@ function get_value(canonical::CanonicalModel, ref::UpdateRef{PJ.ParameterRef})
     return
 end
 
-_variable_type(cm::CanonicalModel) = JuMP.variable_type(cm.JuMPmodel)
-model_time_steps(canonical::CanonicalModel) = canonical.time_steps
-model_resolution(canonical::CanonicalModel) = canonical.resolution
-model_has_parameters(canonical::CanonicalModel) = canonical.parametrized
-model_uses_forecasts(canonical::CanonicalModel) = canonical.forecast
-model_initial_time(canonical::CanonicalModel) = canonical.initial_time
+_variable_type(cm::Canonical) = JuMP.variable_type(cm.JuMPmodel)
+model_time_steps(canonical::Canonical) = canonical.time_steps
+model_resolution(canonical::Canonical) = canonical.resolution
+model_has_parameters(canonical::Canonical) = !isnothing(canonical.parameters)
+model_uses_forecasts(canonical::Canonical) = canonical.use_forecast_data
+model_initial_time(canonical::Canonical) = canonical.initial_time
 #Internal Variables, Constraints and Parameters accessors
-vars(canonical::CanonicalModel) = canonical.variables
-cons(canonical::CanonicalModel) = canonical.constraints
-var(canonical::CanonicalModel, name::Symbol) = canonical.variables[name]
-con(canonical::CanonicalModel, name::Symbol) = canonical.constraints[name]
-par(canonical::CanonicalModel, param_reference::UpdateRef) = canonical.parameters[param_reference]
-exp(canonical::CanonicalModel, name::Symbol) = canonical.expressions[name]
-get_initial_conditions(canonical::CanonicalModel) = canonical.initial_conditions
+get_variables(canonical::Canonical) = canonical.variables
+get_constraints(canonical::Canonical) = canonical.constraints
+get_variable(canonical::Canonical, name::Symbol) = canonical.variables[name]
+get_constraint(canonical::Canonical, name::Symbol) = canonical.constraints[name]
+get_parameters(canonical::Canonical, param_reference::UpdateRef) = canonical.parameters[param_reference]
+get_expression(canonical::Canonical, name::Symbol) = canonical.expressions[name]
+get_initial_conditions(canonical::Canonical) = canonical.initial_conditions
