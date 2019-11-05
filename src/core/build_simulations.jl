@@ -80,7 +80,7 @@ function _build_stages(sim_ref::SimulationRef,
         canonical = Canonical(stage.model.transmission,
                                    stage.sys,
                                    stage.optimizer;
-                                   parameters = true)
+                                   use_parameters = true)
         mod_stages[key] = _Stage(key,
                                 stage.model,
                                 stage.op_problem,
@@ -91,10 +91,9 @@ function _build_stages(sim_ref::SimulationRef,
                                 stage.chronology_ref,
                                 stage.cache)
         _build!(mod_stages[key].canonical,
-                          stage.model,
-                          stage.sys;
-                          parameters = true,
-                          kwargs...)
+                stage.model,
+                stage.sys;
+                kwargs...)
         stage_path = joinpath(sim_ref.models,"stage_$(key)_model")
         mkpath(stage_path)
         _write_canonical(canonical, joinpath(stage_path, "optimization_model.json"))
@@ -188,12 +187,9 @@ function _check_chronology_ref(stages::Dict{Int64, Stage})
 end
 
 function _build_simulation!(sim_ref::SimulationRef,
-                          base_name::String,
-                          steps::Int64,
-                          stages::Dict{Int64, Stage},
-                          simulation_folder::String;
-                          verbose::Bool = false, kwargs...)
-
+                            steps::Int64,
+                            stages::Dict{Int64, Stage};
+                            verbose::Bool = false, kwargs...)
 
     _validate_steps(stages, steps)
     _check_chronology_ref(stages)

@@ -57,7 +57,7 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
 
 end
 
-function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::String;kwargs...)
+function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::String; kwargs...)
 
     if stage.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
         error("No Optimizer has been defined, can't solve the operational problem stage with key $(stage.key)")
@@ -70,7 +70,8 @@ function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::Str
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("Stage $(stage.key) status is $(model_status)")
     end
-    if duals in keys(kwargs) && !isnothing(get_constraints(stage.canonical))
+    retrieve_duals = :duals in keys(kwargs)
+    if retrieve_duals && !isnothing(get_constraints(stage.canonical))
         _export_model_result(stage, start_time, results_path, kwargs[:duals])
     else
         _export_model_result(stage, start_time, results_path)
@@ -103,7 +104,7 @@ execute!!(sim::Simulation; verbose::Bool = false, kwargs...)
 results, include a vector of the variable names to be included
 """
 function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
-    _prepare_workspace!(sim_ref, base_name, simulation_folder)
+    _prepare_workspace!(sim.ref, sim.base_name, sim.simulation_folder)
     if sim.ref.reset
         sim.ref.reset = false
     elseif sim.ref.reset == false

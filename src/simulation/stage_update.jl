@@ -278,7 +278,6 @@ end
 function update_stage!(stage::_Stage{M}, step::Int64, sim::Simulation) where M<:AbstractOperationsProblem
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && stage.key == 1 && stage.execution_count == 0) && return
-
     for (k, v) in stage.canonical.parameters
         parameter_update!(k, v, stage.key, sim)
     end

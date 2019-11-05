@@ -69,6 +69,7 @@ export TimeStatusChange
 
 
 #operation_models
+export GenericOpProblem
 #export UnitCommitment
 #export EconomicDispatch
 #export OptimalPowerFlow
