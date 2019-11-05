@@ -137,6 +137,6 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
 
     end
     date_run = convert(String,last(split(dirname(sim.ref.raw),"/")))
-    ref = make_references(sim, date_run)
-    return reference
+    #ref = make_references(sim, date_run)
+    return #reference
 end

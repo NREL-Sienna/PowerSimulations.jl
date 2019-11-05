@@ -285,7 +285,7 @@ that contains the specific simulation run of the date run and "-test"
 
 # Example
 ```julia
-sim = Simulation("test", 7, stages, "/Users/lhanig/Downloads/";
+sim = Simulation("test", 7, stages, "/Users/yourusername/Desktop/";
 verbose = true, system_to_file = false)
 execute!(sim::Simulation; verbose::Bool = false, kwargs...)
 references = make_references(sim, "2019-10-03T09-18-00-test")
@@ -296,7 +296,7 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
     sim.ref.date_ref[2] = sim.daterange[1]
     references = Dict()
     for (ix, stage) in enumerate(sim.stages)
-        variables = Dict()
+        variables = Dict{Symbol, Any}()
         interval = PSY.get_forecasts_interval(stage.sys)
         variable_names = collect(keys(sim.stages[ix].canonical.variables))
         if :dual_constraints in keys(kwargs) && !isnothing(get_constraints(stage.canonical))
@@ -304,7 +304,7 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
             variable_names = vcat(variable_names, dual_cons)
         end
         for name in variable_names
-            variables[variable_names[name]] = DataFrames.DataFrame(Date = Dates.DateTime[],
+            variables[name] = DataFrames.DataFrame(Date = Dates.DateTime[],
                                            Step = String[], File_Path = String[])
         end
         for s in 1:(sim.steps)
