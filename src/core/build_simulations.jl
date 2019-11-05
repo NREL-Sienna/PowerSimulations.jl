@@ -188,13 +188,9 @@ function _check_chronology_ref(stages::Dict{Int64, Stage})
 end
 
 function _build_simulation!(sim_ref::SimulationRef,
-                          base_name::String,
                           steps::Int64,
-                          stages::Dict{Int64, Stage},
-                          simulation_folder::String;
+                          stages::Dict{Int64, Stage};
                           verbose::Bool = false, kwargs...)
-
-
     _validate_steps(stages, steps)
     _check_chronology_ref(stages)
     dates, validation = _get_dates(stages)

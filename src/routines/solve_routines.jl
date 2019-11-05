@@ -102,8 +102,8 @@ run_simulation!(sim::Simulation; verbose::Bool = false, kwargs...)
 `dual_constraints::Vector{Symbol}`: if dual variables are desired in the
 results, include a vector of the variable names to be included
 """
-function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
-    _prepare_workspace!(sim_ref, base_name, simulation_folder)
+function run_sim_model!(sim::Simulation, base_name::String, simulation_folder::String; verbose::Bool = false, kwargs...)
+    
     if sim.ref.reset
         sim.ref.reset = false
     elseif sim.ref.reset == false
@@ -111,6 +111,8 @@ function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
     end
     variable_names = Dict()
     steps = get_steps(sim)
+    sim_ref = _initialize_sim_ref(steps, keys(sim.stages))
+    _prepare_workspace!(sim_ref, base_name, simulation_folder)
     for s in 1:steps
         verbose && println("Step $(s)")
         for (ix, stage) in enumerate(sim.stages)
