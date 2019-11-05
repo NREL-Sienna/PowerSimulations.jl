@@ -81,7 +81,7 @@ function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::Str
 end
 
 """
-    run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
+    execute!(sim::Simulation; verbose::Bool = false, kwargs...)
 
 Solves the simulation model for sequential Simulations
 and populates a nested folder structure created in Simulation()
@@ -95,14 +95,14 @@ each stage and step.
 ```julia
 sim = Simulation("test", 7, stages, "/Users/lhanig/Downloads/";
 verbose = true, system_to_file = false)
-run_simulation!(sim::Simulation; verbose::Bool = false, kwargs...)
+execute!!(sim::Simulation; verbose::Bool = false, kwargs...)
 ```
 
 # Accepted Key Words
 `dual_constraints::Vector{Symbol}`: if dual variables are desired in the
 results, include a vector of the variable names to be included
 """
-function run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
+function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
     _prepare_workspace!(sim_ref, base_name, simulation_folder)
     if sim.ref.reset
         sim.ref.reset = false
