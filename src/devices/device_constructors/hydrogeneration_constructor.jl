@@ -105,7 +105,7 @@ end
 function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{PSY.HydroFix, HydroFixed},
                            ::Type{S};
-                           kwargs...) where {S<:PM.AbstractActivePowerModel}
+                           kwargs...) where {S<:PM.AbstractPowerModel}
 
 
 
