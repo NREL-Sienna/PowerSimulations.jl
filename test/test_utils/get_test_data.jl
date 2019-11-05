@@ -45,16 +45,29 @@ for t in 1:2
         add_forecast!(c_sys5_re_only, r, Deterministic("rating", ren_timeseries_DA[t][ix]))
     end
 end
-#System with HydroPower Energy
-#c_sys5_hy = System(nodes5, vcat(thermal_generators5, hydro_generators5[1]), loads5, branches5, nothing, 100.0, reserve5, nothing)
-#for t in 1:2
-#    for (ix, l) in enumerate(loads5)
-#        add_forecast!(c_sys5_hy, l, Deterministic("maxactivepower", load_timeseries_DA[t][ix]))
-#    end
-#    for (ix, h) in enumerate([hydro_generators5[1]])
-#        add_forecast!(c_sys5_hy, deepcopy(h), Deterministic("rating", hydro_timeseries_DA[t][ix]))
-#    end
-#end
+
+nodes = nodes5()
+# System with HydroPower Energy
+c_sys5_hy = System(nodes, vcat(thermal_generators5(nodes), hydro_generators5(nodes)[1]), loads5(nodes), branches5(nodes), nothing, 100.0, nothing, nothing)
+for t in 1:2
+   for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy))
+       add_forecast!(c_sys5_hy, l, Deterministic("maxactivepower", load_timeseries_DA[t][ix]))
+   end
+   for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hy))
+       add_forecast!(c_sys5_hy, h, Deterministic("rating", hydro_timeseries_DA[t][ix]))
+   end
+end
+
+nodes = nodes5()
+c_sys5_hyd = System(nodes, vcat(thermal_generators5(nodes), hydro_generators5(nodes)[2]), loads5(nodes), branches5(nodes), nothing, 100.0, nothing, nothing)
+for t in 1:2
+   for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hyd))
+       add_forecast!(c_sys5_hyd, l, Deterministic("maxactivepower", load_timeseries_DA[t][ix]))
+   end
+   for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hyd))
+       add_forecast!(c_sys5_hyd, h, Deterministic("rating", hydro_timeseries_DA[t][ix]))
+   end
+end
 
 #System with Storage Device
 nodes = nodes5()
