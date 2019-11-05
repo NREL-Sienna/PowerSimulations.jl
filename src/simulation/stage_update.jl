@@ -108,7 +108,7 @@ function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationOFF, PS
 
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
-    var_status = isapprox(var_value, 0.0, atol = 1e-4) ? 1.0 : 0.0
+    var_status = isapprox(var_value, 0.0, atol = 1e-4) ? 0.0 : 1.0
     @assert abs(last_status - var_status) < eps()
 
     if last_status >= 1.0
@@ -130,7 +130,7 @@ function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationON, PSD
 
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
-    var_status = isapprox(var_value, 0.0, atol = 1e-4) ? 1.0 : 0.0
+    var_status = isapprox(var_value, 0.0, atol = 1e-4) ? 0.0 : 1.0
     @assert abs(last_status - var_status) < eps()
 
     if last_status >= 1.0
