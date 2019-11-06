@@ -20,11 +20,13 @@ function _prepare_workspace!(ref::SimulationRef, base_name::AbstractString, fold
 
 end
 
-function _validate_steps(stages::Dict{Int64, Stage}, steps::Int64)
+function _validate_steps(stages::Dict{Int64, Stage}, 
+                         steps::Int64, 
+                         stage_initial_times::Dict{Int64, Vector{Dates.DateTime}})
 
-    for (_, s) in stages
 
-        forecast_count = length(PSY.get_forecast_initial_times(s.sys))
+    for (stage_number, s) in stages
+        forecast_count = length(stage_initial_times[stage_number])
 
         if steps*s.execution_count > forecast_count #checks that there are enough time series to run
             error("The number of available time series is not enough to perform the
@@ -80,7 +82,9 @@ function _build_stages(sim_ref::SimulationRef,
         canonical = Canonical(stage.model.transmission,
                                    stage.sys,
                                    stage.optimizer;
-                                   use_parameters = true)
+                                   use_parameters = true,
+                                   initial_time = Stage.initial_time,
+                                   horizon = Stage.horizon)
         mod_stages[key] = _Stage(key,
                                 stage.model,
                                 stage.op_problem,
@@ -191,7 +195,15 @@ function _build_simulation!(sim_ref::SimulationRef,
                             stages::Dict{Int64, Stage};
                             verbose::Bool = false, kwargs...)
 
-    _validate_steps(stages, steps)
+    
+    stage_initial_times = Dict{Int64, Vector{Dates.DateTime}}()
+    for (stage_number, stage) in stages
+        PSY.check_forecast_consistency(stage.sys)
+        stage_initial_times[stage_number] = PSY.generate_initial_times(stage.sys, 
+                                                                       stage.interval, 
+                                                                       stage.horizon) # TODO: add starting point
+    end
+    _validate_steps(stages, steps, stage_initial_times)
     _check_chronology_ref(stages)
     dates, validation = _get_dates(stages)
     return dates, validation, _build_stages(sim_ref, stages, verbose = verbose; kwargs...)

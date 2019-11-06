@@ -61,6 +61,7 @@ mutable struct Stage <: AbstractStage
     op_problem::Type{<:AbstractOperationsProblem}
     model::OperationsTemplate
     initial_time::Dates.DateTime
+    horizon::Int64
     interval::Dates.Period
     execution_count::Int64
     sys::PSY.System
@@ -71,6 +72,7 @@ mutable struct Stage <: AbstractStage
     function Stage(::Type{M},
                    model::OperationsTemplate,
                    initial_time::Dates.DateTime,
+                   horizon::Int64,
                    interval::Dates.Period,
                    execution_count::Int64,
                    sys::PSY.System,
@@ -81,6 +83,7 @@ mutable struct Stage <: AbstractStage
         new(M,
             model,
             initial_time,
+            horizon,
             interval,
             execution_count,
             sys,
@@ -92,23 +95,33 @@ mutable struct Stage <: AbstractStage
 end
 
 function Stage(::Type{M},
-                model::OperationsTemplate,
-                interval::Dates.Period,
-                execution_count::Int64,
-                sys::PSY.System,
-                optimizer::JuMP.OptimizerFactory,
-                chronology_ref::Dict{Int64, <:Chronology},
-                cache::Union{Nothing, AbstractCache}=nothing;
-                kwargs...) where M<:AbstractOperationsProblem
+               model::OperationsTemplate,
+               horizon::Int64,
+               interval::Dates.Period,
+               execution_count::Int64,
+               sys::PSY.System,
+               optimizer::JuMP.OptimizerFactory,
+               chronology_ref::Dict{Int64, <:Chronology},
+               cache::Union{Nothing, AbstractCache}=nothing;
+               kwargs...) where M<:AbstractOperationsProblem
 
-    initial_time = get(kwargs, :initial_time, PSY.get_forecasts_initial_time(sys)[1])
+    initial_time = get(kwargs, :initial_time, PSY.get_forecast_initial_times(sys)[1])
     cacheinput = isnothing(cache) ? Vector{AbstractCache}() : [cache]
-    return Stage(M, model, initial_time, interval, execution_count, sys, optimizer, 
-                 chronology_ref, cacheinput)
+    return Stage(M, 
+                model,
+                initial_time,
+                horizon,
+                interval,
+                execution_count,
+                sys,
+                optimizer,
+                chronology_ref,
+                cacheinput)
 
 end
 
 function Stage(model::OperationsTemplate,
+               horizon::Int64,
                interval::Dates.Period,
                execution_count::Int64,
                sys::PSY.System,
@@ -116,10 +129,17 @@ function Stage(model::OperationsTemplate,
                chronology_ref::Dict{Int64, <:Chronology},
                cache::Union{Nothing, AbstractCache}=nothing;
                kwargs...)
-
-    initial_time = get(kwargs, :initial_time, PSY.get_forecasts_initial_time(sys)[1])
-    return Stage(GenericOpProblem, model, initial_time, interval, execution_count, sys, 
-                 optimizer, chronology_ref, cache)
+    
+    initial_time = get(kwargs, :initial_time, PSY.get_forecast_initial_times(sys)[1])
+    return Stage(GenericOpProblem,
+                model,
+                horizon,
+                interval,
+                execution_count,
+                sys,
+                optimizer,
+                chronology_ref,
+                cache; initial_time = initial_time, kwargs...)
 
 end
 
