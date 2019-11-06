@@ -6,7 +6,7 @@ struct AggregatedResults <: Results
     duals::Dict{Symbol, Any}
 end
 
-get_res_variables(result::AggregatedResults) = result.variables 
+get_res_variables(result::AggregatedResults) = result.variables
 get_cost(result::AggregatedResults) = result.total_cost
 get_log(result::AggregatedResults) = result.optimizer_log
 get_time_stamp(result::AggregatedResults) = result.time_stamp
@@ -20,8 +20,8 @@ function _count_time_overlap(stage::String,
     variable::Array,
     references::Dict{Any,Any})
     date_df = references[stage][variable[1]]
-    step_df = DataFrames.DataFrame(Date = Dates.DateTime[], 
-            Step = String[], 
+    step_df = DataFrames.DataFrame(Date = Dates.DateTime[],
+            Step = String[],
             File_Path = String[])
     for n in 1:length(step)
         step_df = vcat(step_df,date_df[date_df.Step .== step[n], :])
@@ -67,7 +67,7 @@ function _reading_references(results::Dict, duals::Array, stage::String, step::A
 
     for name in (dual)
         date_df = references[stage][name]
-        step_df = DataFrames.DataFrame(Date = Dates.DateTime[], Step = String[], File_Path = String[])       
+        step_df = DataFrames.DataFrame(Date = Dates.DateTime[], Step = String[], File_Path = String[])
         for n in 1:length(step)
             step_df = vcat(step_df,date_df[date_df.Step .== step[n], :])
         end
@@ -76,7 +76,7 @@ function _reading_references(results::Dict, duals::Array, stage::String, step::A
             file_path = step_df[ix, :File_Path]
             var = Feather.read("$file_path")
             correct_var_length = size(1:(size(var,1) - extra_time),1)
-            results[name] = vcat(results[name],var[1:correct_var_length,:]) 
+            results[name] = vcat(results[name],var[1:correct_var_length,:])
         end
     end
     return results
@@ -91,7 +91,7 @@ function _reading_references(results::Dict, dual::Array, stage::String,
             file_path = date_df[ix, :File_Path]
             var = Feather.read(file_path)
             correct_var_length = size(1:(size(var,1) - extra_time_length),1)
-            results[name] = vcat(results[name],var[1:correct_var_length,:]) 
+            results[name] = vcat(results[name],var[1:correct_var_length,:])
         end
     end
     return results
@@ -143,7 +143,7 @@ for the desired step range and variables
 -`stage::String = "stage-1"``: The stage of the results getting parsed, stage-1 or stage-2
 -`step::Array{String} = ["step-1", "step-2", "step-3"]`: the steps of the results getting parsed
 -`variable::Array{Symbol} = [:P_ThermalStandard, :P_RenewableDispatch]`: the variables to be parsed
--`references::Dict = ref`: the reference dictionary created in run_simulation
+-`references::Dict = ref`: the reference dictionary created in execute!
 or with make_references
 
 # Example
@@ -153,7 +153,7 @@ step = ["step-1","step-2", "step-3"] # has to match the date range
 variable = [:P_ThermalStandard, :P_RenewableDispatch]
 results = load_simulation_results(stage,step, variable, references)
 ```
-# Accepted Key Words 
+# Accepted Key Words
 -`write::Bool`: if true, the aggregated results get written back to the results
 file in the folder structure
 """
@@ -168,7 +168,7 @@ function load_simulation_results(stage::String,
     extra_time_length = _count_time_overlap(stage, step, variable, references)
     for l in 1:length(variable)
         date_df = references[stage][variable[l]]
-        step_df = DataFrames.DataFrame(Date = Dates.DateTime[], Step = String[], File_Path = String[])       
+        step_df = DataFrames.DataFrame(Date = Dates.DateTime[], Step = String[], File_Path = String[])
         for n in 1:length(step)
             step_df = vcat(step_df,date_df[date_df.Step .== step[n], :])
         end
@@ -177,7 +177,7 @@ function load_simulation_results(stage::String,
             file_path = step_df[ix, :File_Path]
             var = Feather.read("$file_path")
             correct_var_length = size(1:(size(var,1) - extra_time_length),1)
-            variables[(variable[l])] = vcat(variables[(variable[l])],var[1:correct_var_length,:]) 
+            variables[(variable[l])] = vcat(variables[(variable[l])],var[1:correct_var_length,:])
             if l == 1
                 time_stamp = _removing_extra_time(file_type, extra_time_length)
             end
@@ -207,7 +207,7 @@ aggregates the results over time into a struct of type OperationsProblemResults
 
 # Arguments
 -`stage::String = "stage-1"`: The stage of the results getting parsed, stage-1 or stage-2
--`references::Dict = ref`: the reference dictionary created in run_simulation
+-`references::Dict = ref`: the reference dictionary created in execute!
 or with make_references
 
 # Example
@@ -217,7 +217,7 @@ step = ["step-1","step-2", "step-3"] # has to match the date range
 variable = [:P_ThermalStandard, :P_RenewableDispatch]
 results = load_simulation_results(stage,step, variable, references)
 ```
-# Accepted Key Words 
+# Accepted Key Words
 -`write::Bool`: if true, the aggregated results get written back to the results
 file in the folder structure
 """
@@ -229,7 +229,7 @@ function load_simulation_results(stage::String, references::Dict{Any,Any}; kwarg
     variable = collect(keys(references[stage]))
     dual = _find_duals(variable)
     variable = setdiff(variable,duals)
-    
+
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
     extra_time_length = _count_time_overlap(stage,references)
     for l in 1:length(variable)
@@ -239,7 +239,7 @@ function load_simulation_results(stage::String, references::Dict{Any,Any}; kwarg
             file_path = date_df[ix, :File_Path]
             var = Feather.read(file_path)
             correct_var_length = size(1:(size(var,1) - extra_time_length),1)
-            variables[(variable[l])] = vcat(variables[(variable[l])],var[1:correct_var_length,:]) 
+            variables[(variable[l])] = vcat(variables[(variable[l])],var[1:correct_var_length,:])
             if l == 1
                 time_stamp = _removing_extra_time(file_type, extra_time_length)
             end
@@ -267,7 +267,7 @@ function _concat_string(duals::Vector{Symbol})
     duals = (String.(duals)).*"_dual"
     return duals
 end
-""" 
+"""
     make_references(sim::Simulation, date_run::String)
 
 Creates a dictionary of variables with a dictionary of stages
@@ -285,9 +285,9 @@ that contains the specific simulation run of the date run and "-test"
 
 # Example
 ```julia
-sim = Simulation("test", 7, stages, "/Users/lhanig/Downloads/"; 
+sim = Simulation("test", 7, stages, "/Users/yourusername/Desktop/";
 verbose = true, system_to_file = false)
-run_sim_model!(sim::Simulation; verbose::Bool = false, kwargs...)
+execute!(sim::Simulation; verbose::Bool = false, kwargs...)
 references = make_references(sim, "2019-10-03T09-18-00-test")
 ```
 """
@@ -296,7 +296,7 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
     sim.ref.date_ref[2] = sim.daterange[1]
     references = Dict()
     for (ix, stage) in enumerate(sim.stages)
-        variables = Dict()
+        variables = Dict{Symbol, Any}()
         interval = PSY.get_forecasts_interval(stage.sys)
         variable_names = collect(keys(sim.stages[ix].canonical.variables))
         if :dual_constraints in keys(kwargs) && !isnothing(get_constraints(stage.canonical))
@@ -304,7 +304,7 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
             variable_names = vcat(variable_names, dual_cons)
         end
         for name in variable_names
-            variables[variable_names[name]] = DataFrames.DataFrame(Date = Dates.DateTime[],
+            variables[name] = DataFrames.DataFrame(Date = Dates.DateTime[],
                                            Step = String[], File_Path = String[])
         end
         for s in 1:(sim.steps)
@@ -314,19 +314,19 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
                     full_path = joinpath(sim.ref.raw, "step-$(s)-stage-$(ix)",
                                 replace("$(sim.ref.current_time)",":","-"), "$(variable_names[name]).feather")
                     if isfile(full_path)
-                        date_df = DataFrames.DataFrame(Date = sim.ref.current_time, 
+                        date_df = DataFrames.DataFrame(Date = sim.ref.current_time,
                                                        Step = "step-$(s)", File_Path = full_path)
                         variables[variable_names[name]] = vcat(variables[variable_names[name]], date_df)
                     else
-                        println("$full_path, no such file path")        
+                        println("$full_path, no such file path")
                      end
                 end
-                sim.ref.run_count[s][ix] += 1 
+                sim.ref.run_count[s][ix] += 1
                 sim.ref.date_ref[ix] = sim.ref.date_ref[ix] + interval
             end
         end
         references["stage-$ix"] = variables
-        stage.execution_count = 0 
+        stage.execution_count = 0
     end
     return references
 end

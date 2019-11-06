@@ -164,9 +164,9 @@ function semicontinuousrange_ff(canonical::Canonical,
     axes = JuMP.axes(variable)
     set_name = axes[1]
     @assert axes[2] == time_steps
-    param =_add_param_container!(canonical, param_reference, set_name)
-    con_ub =_add_cons_container!(canonical, ub_name, set_name, time_steps)
-    con_lb =_add_cons_container!(canonical, lb_name, set_name, time_steps)
+    param = _add_param_container!(canonical, param_reference, set_name)
+    con_ub = _add_cons_container!(canonical, ub_name, set_name, time_steps)
+    con_lb = _add_cons_container!(canonical, lb_name, set_name, time_steps)
 
     for name in axes[1]
         ub_value = JuMP.upper_bound(variable[name, 1])
