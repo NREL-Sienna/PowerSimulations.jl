@@ -70,9 +70,9 @@ function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::Str
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("Stage $(stage.key) status is $(model_status)")
     end
-    retrieve_duals = :duals in keys(kwargs)
+    retrieve_duals = get(kwargs, :duals, nothing)
     if retrieve_duals && !isnothing(get_constraints(stage.canonical))
-        _export_model_result(stage, start_time, results_path, kwargs[:duals])
+        _export_model_result(stage, start_time, results_path, retrieve_duals)
     else
         _export_model_result(stage, start_time, results_path)
     end
@@ -123,11 +123,8 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
                 raw_results_path = joinpath(sim.ref.raw,"step-$(s)-stage-$(ix)",replace_chars("$(sim.ref.current_time)",":","-"))
                 mkpath(raw_results_path)
                 update_stage!(stage, s, sim)
-                if :dual_constraints in keys(kwargs) # TODO: add kwarg handling
-                    _run_stage(stage, sim.ref.current_time, raw_results_path; duals = kwargs[:dual_constraints])
-                else
-                    _run_stage(stage, sim.ref.current_time, raw_results_path)
-                end
+                dual_constraints = get(kwargs, :dual_constraints, nothing)
+                _run_stage(stage, sim.ref.current_time, raw_results_path; duals = dual_constraints)
                 sim.ref.run_count[s][ix] += 1
                 sim.ref.date_ref[ix] = sim.ref.date_ref[ix] + interval
             end
