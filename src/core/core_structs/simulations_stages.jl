@@ -105,7 +105,7 @@ function Stage(model::OperationsTemplate,
                chronology_ref::Dict{Int64, <:Chronology},
                cache::Union{Nothing, AbstractCache}=nothing)
 
-    return Stage(DefaultOpProblem, model, execution_count, sys, optimizer, chronology_ref, cache)
+    return Stage(GenericOpProblem, model, execution_count, sys, optimizer, chronology_ref, cache)
 
 end
 
