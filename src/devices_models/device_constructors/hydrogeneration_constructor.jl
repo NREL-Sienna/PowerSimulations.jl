@@ -2,7 +2,7 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{H, D},
                            ::Type{S};
                            kwargs...) where {H<:PSY.HydroGen,
-                                             D<:AbstractHydroFormulation,
+                                             D<:AbstractHydroDispatchFormulation,
                                              S<:PM.AbstractPowerModel}
 
 
@@ -119,7 +119,7 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
                            model::DeviceModel{H, D},
                            ::Type{S};
                            kwargs...) where {H<:PSY.HydroGen,
-                                             D<:AbstractHydroFormulation,
+                                             D<:AbstractHydroDispatchFormulation,
                                              S<:PM.AbstractActivePowerModel}
 
 

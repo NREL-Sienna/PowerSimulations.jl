@@ -65,6 +65,35 @@ function commitment_variables!(canonical::Canonical,
 
 end
 
+### Constraints for Thermal Generation without commitment variables ####
+"""
+This function adds the Commitment Status constraint when there are CommitmentVariables
+"""
+function commitment_constraints!(canonical::Canonical,
+                                 devices::IS.FlattenIteratorWrapper{H},
+                                 device_formulation::Type{D},
+                                 system_formulation::Type{S}) where {H<:PSY.HydroGen,
+                                                                     D<:AbstractHydroUnitCommitment,
+                                                                     S<:PM.AbstractPowerModel}
+
+    key = ICKey(DeviceStatus, H)
+
+    if !(key in keys(canonical.initial_conditions))
+        error("Initial status conditions not provided. This can lead to unwanted results")
+    end
+
+    device_commitment(canonical,
+                     canonical.initial_conditions[key],
+                     Symbol("commitment_$(H)"),
+                     (Symbol("START_$(H)"),
+                      Symbol("STOP_$(H)"),
+                      Symbol("ON_$(H)"))
+                      )
+
+    return
+
+end
+
 ####################################### Reactive Power Constraints #########################
 function reactivepower_constraints!(canonical::Canonical,
                                     devices::IS.FlattenIteratorWrapper{H},
@@ -187,13 +216,15 @@ function activepower_constraints!(canonical::Canonical,
         device_timeseries_ub_bigM(canonical,
                             ts_data_active,
                             Symbol("activerange_$(H)"),
+                            Symbol("P_$(H)"),
                             UpdateRef{H}(:rating),
-                            Symbol("P_$(H)"))
+                            Symbol("ON_$(H)"))
     else
         device_timeseries_ub_bin(canonical,
                             ts_data_active,
                             Symbol("activerange_$(H)"),
-                            Symbol("P_$(H)"))
+                            Symbol("P_$(H)"),
+                            Symbol("ON_$(H)"))
     end
 
     return
@@ -451,9 +482,24 @@ function cost_function(canonical::Canonical,
 
 end
 
+function cost_function(canonical::Canonical,
+                       devices::IS.FlattenIteratorWrapper{PSY.HydroDispatch},
+                       device_formulation::Type{D},
+                       system_formulation::Type{<:PM.AbstractPowerModel}) where D<:AbstractHydroUnitCommitment
+
+    add_to_cost(canonical,
+                devices,
+                Symbol("P_HydroDispatch"),
+                :fixed,
+                -1.0)
+
+    return
+
+end
+
 ##################################### Water/Energy Budget Constraint ############################
 function _get_budget(canonical::Canonical,
-                    devices::IS.FlattenIteratorWrapper{H})
+                    devices::IS.FlattenIteratorWrapper{H}) where H<:PSY.HydroGen
     
     initial_time = model_initial_time(canonical)
     use_forecast_data = model_uses_forecasts(canonical)
