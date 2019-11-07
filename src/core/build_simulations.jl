@@ -83,8 +83,8 @@ function _build_stages(sim_ref::SimulationRef,
                                    stage.sys,
                                    stage.optimizer;
                                    use_parameters = true,
-                                   initial_time = Stage.initial_time,
-                                   horizon = Stage.horizon)
+                                   initial_time = stage.initial_time,
+                                   horizon = stage.horizon)
         mod_stages[key] = _Stage(key,
                                 stage.model,
                                 stage.op_problem,
