@@ -2,17 +2,15 @@ abstract type AbstractHydroFormulation <: AbstractDeviceFormulation end
 
 abstract type AbstractHydroDispatchFormulation <: AbstractHydroFormulation end
 
-abstract type AbstractHydroUnitCommitment <: AbstractHydroFormulation end
-
 struct HydroFixed <: AbstractHydroFormulation end
 
 struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
 
 struct HydroDispatchSeasonalFlow <: AbstractHydroDispatchFormulation end
 
-struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
+struct HydroCommitmentRunOfRiver <: AbstractHydroFormulation end
 
-struct HydroCommitmentSeasonalFlow <: AbstractHydroUnitCommitment end
+struct HydroCommitmentSeasonalFlow <: AbstractHydroFormulation end
 
 ########################### Hydro generation variables #################################
 
@@ -73,7 +71,7 @@ function commitment_constraints!(canonical::Canonical,
                                  devices::IS.FlattenIteratorWrapper{H},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S}) where {H<:PSY.HydroGen,
-                                                                     D<:AbstractHydroUnitCommitment,
+                                                                     D<:AbstractHydroFormulation,
                                                                      S<:PM.AbstractPowerModel}
 
     key = ICKey(DeviceStatus, H)
@@ -196,7 +194,7 @@ end
 
 function activepower_constraints!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{H},
-                                device_formulation::Type{<:AbstractHydroUnitCommitment},
+                                device_formulation::Type{<:AbstractHydroFormulation},
                                 system_formulation::Type{<:PM.AbstractPowerModel}) where H<:PSY.HydroGen
 
     parameters = model_has_parameters(canonical)
@@ -204,10 +202,10 @@ function activepower_constraints!(canonical::Canonical,
 
     if !parameters && !use_forecast_data
         range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_rating(PSY.get_tech(d)))) for d in devices]
-        device_range(canonical,
-                    range_data,
-                    Symbol("activerange_$(H)"),
-                    Symbol("P_$(H)"))
+        device_semicontinuousrange(canonical,
+                                    range_data,
+                                    Symbol("activerange_$(H)"),
+                                    Symbol("P_$(H)"))
         return
     end
 
@@ -250,7 +248,7 @@ end
 ########################## Make initial Conditions for a Model #############################
 function initial_conditions!(canonical::Canonical,
                             devices::IS.FlattenIteratorWrapper{H},
-                            device_formulation::Type{<:AbstractHydroUnitCommitment}) where {H<:PSY.HydroGen}
+                            device_formulation::Type{<:AbstractHydroFormulation}) where {H<:PSY.HydroGen}
 
     status_init(canonical, devices)
     output_init(canonical, devices)
@@ -267,132 +265,6 @@ function initial_conditions!(canonical::Canonical,
                                                                 D<:AbstractHydroFormulation}
 
     output_init(canonical, devices)
-
-    return
-
-end
-
-
-########################### Ramp/Rate of Change constraints ################################
-"""
-This function adds the ramping limits of generators when there are CommitmentVariables
-"""
-function ramp_constraints!(canonical::Canonical,
-                           devices::IS.FlattenIteratorWrapper{H},
-                           device_formulation::Type{<:AbstractHydroUnitCommitment},
-                           system_formulation::Type{S}) where {H<:PSY.HydroGen,
-                                                        S<:PM.AbstractPowerModel}
-    key = ICKey(DevicePower, H)
-
-    if !(key in keys(canonical.initial_conditions))
-        error("Initial Conditions for $(H) Rate of Change Constraints not in the model")
-    end
-
-    time_steps = model_time_steps(canonical)
-    resolution = model_resolution(canonical)
-    initial_conditions = get_initial_conditions(canonical, key)
-    ini_conds, ramp_params, minmax_params = _get_data_for_rocc(initial_conditions, resolution)
-
-    if !isempty(ini_conds)
-        # Here goes the reactive power ramp limits when versions for AC and DC are added
-        device_mixedinteger_rateofchange(canonical,
-                                         (ramp_params, minmax_params),
-                                         ini_conds,
-                                         Symbol("ramp_$(H)"),
-                                        (Symbol("P_$(H)"),
-                                         Symbol("START_$(H)"),
-                                         Symbol("STOP_$(H)"))
-                                        )
-    else
-        @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
-    end
-
-    return
-
-end
-
-function ramp_constraints!(canonical::Canonical,
-                          devices::IS.FlattenIteratorWrapper{H},
-                          device_formulation::Type{D},
-                          system_formulation::Type{S}) where {H<:PSY.HydroGen,
-                                                   D<:AbstractHydroFormulation,
-                                                   S<:PM.AbstractPowerModel}
-
-    key = ICKey(DevicePower, H)
-
-    if !(key in keys(canonical.initial_conditions))
-        error("Initial Conditions for $(H) Rate of Change Constraints not in the model")
-    end
-
-    time_steps = model_time_steps(canonical)
-    resolution = model_resolution(canonical)
-    initial_conditions = get_initial_conditions(canonical, key)
-    rate_data = _get_data_for_rocc(initial_conditions, resolution)
-    ini_conds, ramp_params, minmax_params = _get_data_for_rocc(initial_conditions, resolution)
-
-    if !isempty(ini_conds)
-        # Here goes the reactive power ramp limits when versions for AC and DC are added
-        device_linear_rateofchange(canonical,
-                                  ramp_params,
-                                  ini_conds,
-                                   Symbol("ramp_$(H)"),
-                                   Symbol("P_$(H)"))
-    else
-        @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
-    end
-
-    return
-
-end
-
-########################### time duration constraints ######################################
-
-
-function time_constraints!(canonical::Canonical,
-                          devices::IS.FlattenIteratorWrapper{H},
-                          device_formulation::Type{D},
-                          system_formulation::Type{S}) where {H<:PSY.HydroGen,
-                                                   D<:AbstractHydroUnitCommitment,
-                                                   S<:PM.AbstractPowerModel}
-
-    ic_keys = [ICKey(TimeDurationON, H), ICKey(TimeDurationOFF, H)]
-    for key in ic_keys
-        if !(key in keys(canonical.initial_conditions))
-            error("Initial Conditions for $(H) Time Constraint not in the model")
-        end
-    end
-
-    parameters = model_has_parameters(canonical)
-    resolution = model_resolution(canonical)
-    initial_conditions_on  = get_initial_conditions(canonical, ic_keys[1])
-    initial_conditions_off = get_initial_conditions(canonical, ic_keys[2])
-    ini_conds, time_params = _get_data_for_tdc(initial_conditions_on,
-                                               initial_conditions_off,
-                                               resolution)
-
-    if !(isempty(ini_conds))
-       if parameters
-            device_duration_parameters(canonical,
-                                time_params,
-                                ini_conds,
-                                Symbol("duration_$(H)"),
-                                (Symbol("ON_$(H)"),
-                                Symbol("START_$(H)"),
-                                Symbol("STOP_$(H)"))
-                                      )
-        else
-            device_duration_retrospective(canonical,
-                                        time_params,
-                                        ini_conds,
-                                        Symbol("duration_$(H)"),
-                                        (Symbol("ON_$(H)"),
-                                        Symbol("START_$(H)"),
-                                        Symbol("STOP_$(H)"))
-                                        )
-        end
-    else
-        @warn "Data doesn't contain generators with time-up/down limits, consider adjusting your formulation"
-    end
 
     return
 
@@ -485,7 +357,7 @@ end
 function cost_function(canonical::Canonical,
                        devices::IS.FlattenIteratorWrapper{PSY.HydroDispatch},
                        device_formulation::Type{D},
-                       system_formulation::Type{<:PM.AbstractPowerModel}) where D<:AbstractHydroUnitCommitment
+                       system_formulation::Type{<:PM.AbstractPowerModel}) where D<:AbstractHydroFormulation
 
     add_to_cost(canonical,
                 devices,
