@@ -6,12 +6,15 @@ function parameter_update!(param_reference::UpdateRef{T},
 
     devices = PSY.get_components(T, sim.stages[stage_number].sys)
     initial_forecast_time = sim.ref.date_ref[stage_number]
+    horizon = sim.stages[stage_number].horizon
 
     for d in devices
-        ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
-                                            d,
-                                            initial_forecast_time,
-                                            "$(param_reference.access_ref)")))
+        forecast = PSY.get_forecast(PSY.Deterministic,
+                                    d,
+                                    initial_forecast_time,
+                                    "$(param_reference.access_ref)",
+                                    horizon)
+        ts_vector = TS.values(PSY.get_forecast_values(d, forecast))
         device_name = PSY.get_name(d)
         for (ix, val) in enumerate(param_array[device_name,:])
             value = ts_vector[ix]
