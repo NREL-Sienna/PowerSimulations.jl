@@ -34,10 +34,9 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
 end
 
 function construct_device!(canonical::Canonical, sys::PSY.System,
-                           model::DeviceModel{H, D},
+                           model::DeviceModel{H, HydroDispatchSeasonalFlow},
                            ::Type{S};
                            kwargs...) where {H<:PSY.HydroGen,
-                                             D<:HydroDispatchSeasonalFlow,
                                              S<:PM.AbstractPowerModel}
 
 
@@ -101,10 +100,6 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
     reactivepower_constraints!(canonical, devices, D, S)
 
     commitment_constraints!(canonical, devices, model.formulation, S)
-
-    # ramp_constraints!(canonical, devices, D, S)
-
-    # time_constraints!(canonical, devices, D, S)
 
     feedforward!(canonical, H, model.feedforward)
 
@@ -208,10 +203,6 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
     activepower_constraints!(canonical, devices, D, S)
 
     commitment_constraints!(canonical, devices, model.formulation, S)
-
-    # ramp_constraints!(canonical, devices, D, S)
-
-    # time_constraints!(canonical, devices, D, S)
 
     feedforward!(canonical, H, model.feedforward)
 
