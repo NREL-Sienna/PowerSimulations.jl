@@ -116,14 +116,14 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
         verbose && println("Step $(s)")
         for (ix, stage) in enumerate(sim.stages)
             verbose && println("Stage $(ix)")
-            interval = PSY.get_forecasts_interval(stage.sys)
+            interval = stage.interval
             for run in 1:stage.executions
                 sim.ref.current_time = sim.ref.date_ref[ix]
                 verbose && println("Simulation TimeStamp: $(sim.ref.current_time)")
                 raw_results_path = joinpath(sim.ref.raw,"step-$(s)-stage-$(ix)",replace_chars("$(sim.ref.current_time)",":","-"))
                 mkpath(raw_results_path)
                 update_stage!(stage, s, sim)
-                if :dual_constraints in keys(kwargs)
+                if :dual_constraints in keys(kwargs) # TODO: add kwarg handling
                     _run_stage(stage, sim.ref.current_time, raw_results_path; duals = kwargs[:dual_constraints])
                 else
                     _run_stage(stage, sim.ref.current_time, raw_results_path)
