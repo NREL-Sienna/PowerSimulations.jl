@@ -14,7 +14,7 @@ function parameter_update!(param_reference::UpdateRef{T},
                                     initial_forecast_time,
                                     "$(param_reference.access_ref)",
                                     horizon)
-        ts_vector = TS.values(PSY.get_forecast_values(d, forecast))
+        ts_vector = TS.values(PSY.get_data(forecast))
         device_name = PSY.get_name(d)
         for (ix, val) in enumerate(param_array[device_name,:])
             value = ts_vector[ix]
