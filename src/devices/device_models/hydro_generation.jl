@@ -2,15 +2,17 @@ abstract type AbstractHydroFormulation <: AbstractDeviceFormulation end
 
 abstract type AbstractHydroDispatchFormulation <: AbstractHydroFormulation end
 
+abstract type AbstractHydroUnitCommitment <: AbstractHydroFormulation end
+
 struct HydroFixed <: AbstractHydroFormulation end
 
 struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
 
 struct HydroDispatchSeasonalFlow <: AbstractHydroDispatchFormulation end
 
-struct HydroCommitmentRunOfRiver <: AbstractHydroFormulation end
+struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
 
-struct HydroCommitmentSeasonalFlow <: AbstractHydroFormulation end
+struct HydroCommitmentSeasonalFlow <: AbstractHydroUnitCommitment end
 
 ########################### Hydro generation variables #################################
 
@@ -71,7 +73,7 @@ function commitment_constraints!(canonical::Canonical,
                                  devices::IS.FlattenIteratorWrapper{H},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S}) where {H<:PSY.HydroGen,
-                                                                     D<:AbstractHydroFormulation,
+                                                                     D<:AbstractHydroUnitCommitment,
                                                                      S<:PM.AbstractPowerModel}
 
     key = ICKey(DeviceStatus, H)
@@ -194,7 +196,7 @@ end
 
 function activepower_constraints!(canonical::Canonical,
                                 devices::IS.FlattenIteratorWrapper{H},
-                                device_formulation::Type{<:AbstractHydroFormulation},
+                                device_formulation::Type{<:AbstractHydroUnitCommitment},
                                 system_formulation::Type{<:PM.AbstractPowerModel}) where H<:PSY.HydroGen
 
     parameters = model_has_parameters(canonical)
@@ -205,7 +207,8 @@ function activepower_constraints!(canonical::Canonical,
         device_semicontinuousrange(canonical,
                                     range_data,
                                     Symbol("activerange_$(H)"),
-                                    Symbol("P_$(H)"))
+                                    Symbol("P_$(H)"),
+                                    Symbol("ON_$(H)"))
         return
     end
 
@@ -229,26 +232,10 @@ function activepower_constraints!(canonical::Canonical,
 
 end
 
-function activepower_constraints!(canonical::Canonical,
-                                devices::IS.FlattenIteratorWrapper{H},
-                                device_formulation::Type{HydroCommitmentSeasonalFlow},
-                                system_formulation::Type{<:PM.AbstractPowerModel}) where H<:PSY.HydroGen
-
-    range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_rating(PSY.get_tech(d)))) for d in devices]
-    device_semicontinuousrange(canonical,
-                                range_data,
-                                Symbol("activerange_$(H)"),
-                                Symbol("P_$(H)"),
-                                Symbol("ON_$(H)"))
-
-    return
-
-end
-
 ########################## Make initial Conditions for a Model #############################
 function initial_conditions!(canonical::Canonical,
                             devices::IS.FlattenIteratorWrapper{H},
-                            device_formulation::Type{<:AbstractHydroFormulation}) where {H<:PSY.HydroGen}
+                            device_formulation::Type{<:AbstractHydroUnitCommitment}) where {H<:PSY.HydroGen}
 
     status_init(canonical, devices)
     output_init(canonical, devices)
@@ -262,7 +249,7 @@ end
 function initial_conditions!(canonical::Canonical,
                             devices::IS.FlattenIteratorWrapper{H},
                             device_formulation::Type{D}) where {H<:PSY.HydroGen,
-                                                                D<:AbstractHydroFormulation}
+                                                                D<:AbstractHydroDispatchFormulation}
 
     output_init(canonical, devices)
 
@@ -339,21 +326,6 @@ function nodal_expression!(canonical::Canonical,
 end
 
 ##################################### Hydro generation cost ############################
-function cost_function(canonical::Canonical,
-                       devices::IS.FlattenIteratorWrapper{PSY.HydroDispatch},
-                       device_formulation::Type{D},
-                       system_formulation::Type{<:PM.AbstractPowerModel}) where D<:AbstractHydroDispatchFormulation
-
-    add_to_cost(canonical,
-                devices,
-                Symbol("P_HydroDispatch"),
-                :fixed,
-                -1.0)
-
-    return
-
-end
-
 function cost_function(canonical::Canonical,
                        devices::IS.FlattenIteratorWrapper{PSY.HydroDispatch},
                        device_formulation::Type{D},
