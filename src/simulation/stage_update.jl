@@ -6,8 +6,7 @@ function parameter_update!(param_reference::UpdateRef{T},
 
     devices = PSY.get_components(T, sim.stages[stage_number].sys)
     initial_forecast_time = sim.ref.date_ref[stage_number]
-    horizon = sim.stages[stage_number].horizon
-
+    horizon = length(model_time_steps(sim.stages[stage_number].canonical))
     for d in devices
         forecast = PSY.get_forecast(PSY.Deterministic,
                                     d,

@@ -92,6 +92,7 @@ function _build_stages(sim_ref::SimulationRef,
                                 canonical,
                                 stage.optimizer,
                                 stage.execution_count,
+                                stage.interval,
                                 stage.chronology_ref,
                                 stage.cache)
         _build!(mod_stages[key].canonical,

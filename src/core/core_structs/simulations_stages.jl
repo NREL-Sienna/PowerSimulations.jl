@@ -10,6 +10,7 @@ mutable struct _Stage{M<:AbstractOperationsProblem} <: AbstractStage
     optimizer::JuMP.OptimizerFactory
     executions::Int64
     execution_count::Int64
+    interval::Dates.Period
     chronology_ref::Dict{Int64, <:Chronology}
     ini_cond_chron::Union{<:Chronology, Nothing}
     cache::Dict{Type{<:AbstractCache}, AbstractCache}
@@ -21,6 +22,7 @@ mutable struct _Stage{M<:AbstractOperationsProblem} <: AbstractStage
                     canonical::Canonical,
                     optimizer::JuMP.OptimizerFactory,
                     executions::Int64,
+                    interval::Dates.Period,
                     chronology_ref::Dict{Int64, <:Chronology},
                     cache::Vector{<:AbstractCache}) where M <: AbstractOperationsProblem
 
@@ -47,6 +49,7 @@ mutable struct _Stage{M<:AbstractOperationsProblem} <: AbstractStage
            optimizer,
            executions,
            0,
+           interval,
            chronology_ref,
            ini_cond_chron,
            cache_dict)
