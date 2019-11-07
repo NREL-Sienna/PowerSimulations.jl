@@ -111,10 +111,12 @@ function _get_time_series(canonical::Canonical,
         pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
         active_power = use_forecast_data ? PSY.get_rating(tech) : PSY.get_activepower(device)
         if use_forecast_data
-            ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
-                                                                device,
-                                                                initial_time,
-                                                                "rating")))
+            forecast = PSY.get_forecast(PSY.Deterministic,
+                                        device,
+                                        initial_time,
+                                        "get_rating",
+                                        length(time_steps))
+            ts_vector = TS.values(PSY.get_data(forecast))
         else
             ts_vector = ones(time_steps[end])
         end
@@ -149,7 +151,7 @@ function activepower_constraints!(canonical::Canonical,
         device_timeseries_param_ub(canonical,
                             ts_data_active,
                             Symbol("activerange_$(R)"),
-                            UpdateRef{R}(:rating),
+                            UpdateRef{R}("get_rating"),
                             Symbol("P_$(R)"))
     else
         device_timeseries_ub(canonical,
@@ -173,11 +175,11 @@ function nodal_expression!(canonical::Canonical,
     if parameters
         include_parameters(canonical,
                            ts_data_active,
-                           UpdateRef{R}(:rating),
+                           UpdateRef{R}("get_rating"),
                            :nodal_balance_active)
         include_parameters(canonical,
                            ts_data_reactive,
-                           UpdateRef{R}(:rating),
+                           UpdateRef{R}("get_rating"),
                            :nodal_balance_reactive)
         return
     end
@@ -211,7 +213,7 @@ function nodal_expression!(canonical::Canonical,
     if parameters
         include_parameters(canonical,
                            ts_data_active,
-                           UpdateRef{R}(:rating),
+                           UpdateRef{R}("get_rating"),
                            :nodal_balance_active)
         return
     end
