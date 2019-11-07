@@ -104,7 +104,7 @@ execute!!(sim::Simulation; verbose::Bool = false, kwargs...)
 results, include a vector of the variable names to be included
 """
 
-function execute!(sim::Simulation, base_name::String, simulation_folder::String; verbose::Bool = false, kwargs...)
+function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
     _prepare_workspace!(sim.ref, sim.base_name, sim.simulation_folder)
     if sim.ref.reset
         sim.ref.reset = false
@@ -113,8 +113,6 @@ function execute!(sim::Simulation, base_name::String, simulation_folder::String;
     end
     variable_names = Dict()
     steps = get_steps(sim)
-    sim_ref = _initialize_sim_ref(steps, keys(sim.stages))
-    _prepare_workspace!(sim_ref, base_name, simulation_folder)
     for s in 1:steps
         verbose && println("Step $(s)")
         for (ix, stage) in enumerate(sim.stages)
@@ -140,6 +138,6 @@ function execute!(sim::Simulation, base_name::String, simulation_folder::String;
 
     end
     date_run = convert(String,last(split(dirname(sim.ref.raw),"/")))
-    #ref = make_references(sim, date_run)
-    return #reference
+    ref = make_references(sim, date_run)
+    return ref
 end
