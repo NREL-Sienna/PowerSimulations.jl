@@ -163,15 +163,15 @@ function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
 end
 
 """ Exports Operational Model Results to a path"""
-function write_model_results(results::Results, save_path::String)
+function write_model_results(results::Results, save_path::String; kwargs...)
     if !isdir(save_path)
         error("Specified path is not valid. Run write_results to save results.")
     end
     new_folder_path = replace_chars("$save_path/$(round(Dates.now(),Dates.Minute))", ":", "-")
     folder_path = mkdir(new_folder_path)
-    write_data(results.variables, folder_path)
+    write_data(results.variables, folder_path; kwargs...)
     _write_optimizer_log(results.optimizer_log, folder_path)
-    write_data(results.time_stamp, folder_path, "time_stamp")
+    write_data(results.time_stamp, folder_path, "time_stamp"; kwargs...)
     println("Files written to $folder_path folder.")
     return
 end

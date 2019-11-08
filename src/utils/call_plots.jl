@@ -6,14 +6,14 @@ and assigns each fuel type a specific color.
 
 # Arguments
 
-`res::OperationModelResults= results`: results to be plotted
+`res::OperationsProblemResults= results`: results to be plotted
 `generator_dict::Dict = generator_dict`: the dictionary of fuel type and an array
  of the generators per fuel type
 
 # Example
 
 ```julia
-res = solve_op_model!(OpModel)
+res = solve_op_problem!(OpProblem)
 generator_dict = make_fuel_dictionary(sys, res)
 fuel_plot(res, generator_dict)
 ```
@@ -23,7 +23,7 @@ plot attributes, such as seriescolor = [:red :blue :orange]
 will override the default series color
 """
 
-function fuel_plot(res::PSI.OperationModelResults, generator_dict::Dict; kwargs...)
+function fuel_plot(res::PSI.OperationsProblemResults, generator_dict::Dict; kwargs...)
 
     color_range = [Colors.RGBA(0.7,0.1,0.1,0.95), # maroon
     Colors.RGBA(0,0,0,0.8), :lightblue, # Dark gray
@@ -62,18 +62,18 @@ end
   
   
 """
-   bar_plot(OperationModelResults)
+   bar_plot(OperationsProblemResults)
   
 This function plots a bar plot for the generators in each variable within
 the results variables dictionary, and makes a bar plot for all of the variables.
 
 # Arguments
--`res::OperationModelResults= results`: results to be plotted
+-`res::OperationsProblemResults= results`: results to be plotted
 
 # Example
 
 ```julia
-results = solve_op_model!(OpModel)
+results = solve_op_problem!(OpProblem)
 bar_plot(results)
 ```
 
@@ -81,8 +81,13 @@ bar_plot(results)
 plot attributes, such as seriescolor = [:red :blue :orange]
 will override the default series color
 """
+function bar_plot(res::AggregatedResults; kwargs...)
+  results = OperationsProblemResults(res.variables, res.total_cost, 
+  res.optimizer_log, res.time_stamp)
+  bar_plot(res; kwargs...)
+end
 
-function bar_plot(res::OperationModelResults; kwargs...)
+function bar_plot(res::OperationsProblemResults; kwargs...)
 
   default = hcat([Colors.RGBA(0.7,0.1,0.1,0.95)], # maroon
             [Colors.RGBA(0,0,0,0.8)], [:lightblue], # Dark gray
@@ -112,7 +117,7 @@ function bar_plot(res::OperationModelResults; kwargs...)
 end
 
 """
-     stack_plot(OperationModelResults)
+     stack_plot(OperationsProblemResults)
 
 This function plots a stack plot for the generators in each variable within
 the results variables dictionary, and makes a stack plot for all of the variables.
@@ -120,7 +125,7 @@ the results variables dictionary, and makes a stack plot for all of the variable
 # Examples
 
 ```julia
-results = solve_op_model!(OpModel)
+results = solve_op_problem!(OpProblem)
 stack_plot(results)
 ```
 
@@ -128,8 +133,13 @@ stack_plot(results)
 plot attributes, such as seriescolor = [:red :blue :orange]
 will override the default series color
 """
+function stack_plot(res::AggregatedResults; kwargs...)
+  results = OperationsProblemResults(res.variables, res.total_cost, 
+  res.optimizer_log, res.time_stamp)
+  stack_plot(res; kwargs...)
+end
 
-function stack_plot(res::OperationModelResults; kwargs...)
+function stack_plot(res::OperationsProblemResults; kwargs...)
   
   default = hcat([Colors.RGBA(0.7,0.1,0.1,0.95)], # maroon
   [Colors.RGBA(0,0,0,0.8)], [:lightblue], # Dark gray
