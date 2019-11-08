@@ -71,7 +71,7 @@ function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::Str
         error("Stage $(stage.key) status is $(model_status)")
     end
     retrieve_duals = get(kwargs, :duals, nothing)
-    if retrieve_duals && !isnothing(get_constraints(stage.canonical))
+    if !isnothing(retrieve_duals) && !isnothing(get_constraints(stage.canonical))
         _export_model_result(stage, start_time, results_path, retrieve_duals)
     else
         _export_model_result(stage, start_time, results_path)
