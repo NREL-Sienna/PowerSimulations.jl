@@ -121,17 +121,3 @@ function _add_to_expression!(expression_array::T,
 
 end
 
-function _get_expr(expr::T, 
-                        ix::Union{Int64,String},
-                        ij::Union{Int64,String},
-                        default::Float64 =0.0) where T
-
-    if isnothing(expr)
-        return default
-    elseif isassigned(expr)
-        return default
-    else
-        return sum(expr[ix,ij])
-    end
-        
-end

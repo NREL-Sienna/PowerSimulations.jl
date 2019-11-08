@@ -3,16 +3,63 @@
 """
 This function add the variables for reserves to the model
 """
-function activereserve_variables!(canonical_model::CanonicalModel,
-                                service::S) where { S<:PSY.Service}
+function activereserve_variables!(canonical_model::Canonical,
+                                  S::SR,
+                                  devices::Vector{T}) where {SR<:PSY.Service, T<:PSY.ThermalGen}
 
-    devices = PSY.get_contributingdevices(service)
-    expression = Symbol(service.name,"_","balance")
     add_variable(canonical_model,
                  devices,
-                 Symbol("R_$(service.name)"),
-                 false,
-                 expression;
+                 Symbol("R_$(PSY.get_name(S))_$(T)"),
+                 false;
+                 ub_value = d -> d.tech.activepowerlimits.max,
+                 lb_value = d -> 0 )
+
+end
+
+"""
+This function add the variables for reserves to the model
+"""
+function activereserve_variables!(canonical_model::Canonical,
+                                  service::S,
+                                  devices::Vector{H}) where {S<:PSY.Service, H<:PSY.HydroGen}
+
+    add_variable(canonical_model,
+                 devices,
+                 Symbol("R_$(PSY.get_name(S))_$(H)"),
+                 false;
+                 ub_value = d -> d.tech.activepowerlimits.max,
+                 lb_value = d -> 0 )
+
+end
+
+"""
+This function add the variables for reserves to the model
+"""
+function activereserve_variables!(canonical_model::Canonical,
+                                  service::S,
+                                  devices::Vector{R}) where {S<:PSY.Service, R<:PSY.RenewableGen}
+
+    add_variable(canonical_model,
+                 devices,
+                 Symbol("R_$(PSY.get_name(S))_$(R)"),
+                 false;
+                 ub_value = d -> d.tech.activepowerlimits.max,
+                 lb_value = d -> 0 )
+
+end
+
+"""
+This function add the variables for reserves to the model
+"""
+function activereserve_variables!(canonical_model::Canonical,
+                                  service::S,
+                                  devices::Vector{ST}) where {S<:PSY.Service,
+                                                            ST<:PSY.Storage}
+
+    add_variable(canonical_model,
+                 devices,
+                 Symbol("R_$(PSY.get_name(S))_$(ST)"),
+                 false;
                  ub_value = d -> d.tech.activepowerlimits.max,
                  lb_value = d -> 0 )
 
@@ -21,50 +68,92 @@ end
 ########################### Active Reserve constraints ################################
 
 """
-This function adds the active power limits of generators when there are CommitmentVariables
+This function adds the reserve variable to active power limits constraint for ThermalGen devices
 """
 
-function activereserve_constraints!(canonical_model::CanonicalModel,
-                                    service::S,
-                                    formulations::Type{F}) where {S<:PSY.Service,
-                                                            F<:AbstractServiceFormulation}
+function activereserve_constraints!(canonical_model::Canonical,
+                                    devices::Vector{T},
+                                    S::SR,
+                                    formulation::Type{F}) where {T<:PSY.ThermalGen,
+                                                                SR<:PSY.Service,
+                                                                F<:AbstractServiceFormulation}
     
-    name = Symbol("activerange")
-    devices = PSY.get_contributingdevices(service)
+    name = Symbol("service_$(T)")
     expression = exp(canonical_model, name)
-    if isnothing(expression)
-        @error("Failed to find Constraint expression for ActiveRange Constraint")
-    end
-    device_range_expression!(canonical_model,
-                        devices,
-                        name,
-                        Symbol("R_$(service.name)")
-                        )
+    add_to_service_expression!(canonical_model,
+                            devices,
+                            name,
+                            Symbol("R_$(PSY.get_name(S))_$(T)")
+                            )
 
     return
 
 end
 
-########################### Ramp/Rate of Change constraints ################################
-
 """
-This function adds the ramping limits of generators when there are CommitmentVariables
+This function adds the reserve variable to active power limits constraint for HydroGen devices
 """
-function reserve_ramp_constraints!(canonical_model::CanonicalModel,
-                                    service::S,
-                                    formulations::Type{F}) where {S<:PSY.Service,
-                                                            F<:AbstractServiceFormulation}
 
-    name = Symbol("ramp_up")
-    devices = PSY.get_contributingdevices(service)
+function activereserve_constraints!(canonical_model::Canonical,
+                                    devices::Vector{H},
+                                    S::SR,
+                                    formulation::Type{F}) where {H<:PSY.HydroGen,
+                                                                SR<:PSY.Service,
+                                                                F<:AbstractServiceFormulation}
+    
+    name = Symbol("service_$(H)")
     expression = exp(canonical_model, name)
-    if isnothing(expression)
-        @error("Failed to find Constraint expression for ActiveRange Constraint")
-    end
-    device_rateofchange!(canonical_model,
-                        devices,
-                        name,
-                        Symbol("R_$(service.name)"))
+    add_to_service_expression!(canonical_model,
+                            devices,
+                            name,
+                            Symbol("R_$(PSY.get_name(S))_$(H)")
+                            )
+
+    return
+
+end
+
+"""
+This function adds the reserve variable to active power limits constraint for RenewableGen devices
+"""
+
+function activereserve_constraints!(canonical_model::Canonical,
+                                    devices::Vector{R},
+                                    S::SR,
+                                    formulation::Type{F}) where {R<:PSY.RenewableGen,
+                                                                SR<:PSY.Service,
+                                                                F<:AbstractServiceFormulation}
+    
+    name = Symbol("service_$(R)")
+    expression = exp(canonical_model, name)
+    add_to_service_expression!(canonical_model,
+                            devices,
+                            name,
+                            Symbol("R_$(PSY.get_name(S))_$(R)")
+                            )
+
+    return
+
+end
+
+"""
+This function adds the reserve variable to active power limits constraint for Storage devices
+"""
+
+function activereserve_constraints!(canonical_model::Canonical,
+                                    devices::Vector{ST},
+                                    S::SR,
+                                    formulation::Type{F}) where {ST<:PSY.Storage,
+                                                                SR<:PSY.Service,
+                                                                F<:AbstractServiceFormulation}
+    
+    name = Symbol("service_$(ST)")
+    expression = exp(canonical_model, name)
+    add_to_service_expression!(canonical_model,
+                            devices,
+                            name,
+                            Symbol("R_$(PSY.get_name(S))_$(ST)")
+                            )
 
     return
 
@@ -72,17 +161,16 @@ end
 
 ################################## Time Series Constraints ###################################
 
-function _get_time_series(canonical::CanonicalModel,
+function _get_time_series(canonical::Canonical,
                           service::L) where L<:PSY.Service
 
     initial_time = model_initial_time(canonical)
     forecast = model_uses_forecasts(canonical)
     time_steps = model_time_steps(canonical)
-    ts_data = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, 1)
+    ts_data = Vector{Tuple{String, Float64, Vector{Float64}}}(undef, 1)
 
     name = PSY.get_name(service)
     requirement = forecast ? PSY.get_requirement(service) : 0.0
-    bus_number = PSY.get_number(PSY.get_bus(collect(PSY.get_contributingdevices(service))[1]))
     if forecast
         ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
                                                             service,
@@ -91,37 +179,10 @@ function _get_time_series(canonical::CanonicalModel,
     else
         ts_vector = ones(time_steps[end])
     end
-    ts_data[1] = (name, bus_number, requirement, ts_vector)
+    ts_data[1] = (name, requirement, ts_vector)
 
     return ts_data
 
-end
-
-function balance_expression!(canonical::CanonicalModel,
-                           service::L,
-                           system_formulation::Type{<:PM.AbstractActivePowerModel}) where L<:PSY.Service
-
-
-    parameters = model_has_parameters(canonical)
-    ts_data = _get_time_series(canonical, service)
-
-    if parameters
-        include_parameters(canonical,
-                        ts_data,
-                        UpdateRef{L}(:requirement),
-                        Symbol(service.name,"_","balance"),
-                        -1.0)
-        return
-    end
-
-    for t in model_time_steps(canonical), device_value in ts_data
-        _add_to_expression!(canonical.expressions[Symbol(service.name,"_","balance")],
-                            device_value[2],
-                            t,
-                            -device_value[3]*device_value[4][t])
-    end
-
-    return
 end
 
 ################################## Reserve Balance Constraint ###################################
@@ -130,20 +191,56 @@ end
 This function adds the active power limits of generators when there are CommitmentVariables
 """
 
-function service_balance(canonical_model::CanonicalModel, service::S) where {S<:PSY.Service}
+function service_balance_constraint!(canonical::Canonical, S::SR) where {SR<:PSY.Service}
 
-    time_steps = model_time_steps(canonical_model)
-    name = Symbol(service.name,"_","balance")
-    expression = PSI.exp(canonical_model, name)
-    canonical_model.constraints[name] = JuMPConstraintArray(undef, time_steps)
-    _remove_undef!(expression)
+    time_steps = model_time_steps(canonical)
+    parameters = model_has_parameters(canonical)
+    V = JuMP.variable_type(canonical.JuMPmodel)
+    ts_data = _get_time_series(canonical, S)
 
-    for t in time_steps
-        canonical_model.constraints[name][t] = JuMP.@constraint(canonical_model.JuMPmodel, sum(expression.data[1:end, t]) >= 0)
+    name = Symbol(PSY.get_name(S),"_","balance")
+    constraint = _add_cons_container!(canonical, name, time_steps)
+
+    expr = zero(JuMP.GenericAffExpr{Float64, V})
+
+    for (T,devices) in _get_devices_bytype(PSY.get_contributingdevices(S))
+        expr = expr + sum(var(canonical,Symbol("R_$(PSY.get_name(S))_$(T)")))
+    end
+    if parameters
+        param = _add_param_container!(canonical, UpdateRef{L}(:requirement), time_steps)
+        for t in time_steps
+            param[t] = PJ.add_parameter(canonical.JuMPmodel, ts_data[3][t])
+            constraint[t] = JuMP.@constraint(canonical.JuMPmodel, sum(expr) >= param[t]*ts_data[2])
+        end
+    else
+        for t in time_steps
+            constraint[t] = JuMP.@constraint(canonical.JuMPmodel, sum(expr) >= ts_data[2]*ts_data[3][t])
+        end
+    end
+    return
+
+end
+
+################################## Utils ###################################
+
+function add_to_service_expression!(canonical::Canonical,
+                    devices::Vector{T},
+                    exp_name::Symbol,
+                    var_name::Symbol) where {T<:PSY.Component}
+
+    time_steps = model_time_steps(canonical)
+    var = PSI.var(canonical, var_name)
+    expression_cont = exp(canonical, exp_name)
+    for t in time_steps , d in devices
+        name = PSY.get_name(d)
+        if isassigned(expression_cont, name, t)
+            JuMP.add_to_expression!(expression_cont[name, t], 1.0, var[name, t])
+        else
+            expression_cont[name, t] = zero(eltype(expression_cont)) + 1.0*var[name, t];
+        end
     end
 
     return
-
 end
 
 #=

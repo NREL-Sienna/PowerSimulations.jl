@@ -1,4 +1,4 @@
-function construct_service!(canonical::CanonicalModel,sys::PSY.System,
+function construct_service!(canonical::Canonical,sys::PSY.System,
                             model::ServiceModel{S, Sr},
                             ::Type{T};
                             kwargs...) where {S<:PSY.Service,
@@ -7,58 +7,44 @@ function construct_service!(canonical::CanonicalModel,sys::PSY.System,
 
 
     services = PSY.get_components(S, sys)
-    _add_nodal_expressions!(canonical,services,sys)
-    _add_device_expression!(canonical, Symbol("activerange"), sys)
-    _add_device_expression!(canonical, Symbol("ramp_up"), sys)
+    _add_nodal_expressions(canonical,services,sys)
     for service in services
-        
-        #Variables
-        activereserve_variables!(canonical, service)
+        for (type_device,devices) in _get_devices_bytype(PSY.get_contributingdevices(service))
+            #Variables
+            activereserve_variables!(canonical, service, devices)
 
-        #Constraints
-        activereserve_constraints!(canonical, service, Sr)
+            #Constraints
+            activereserve_constraints!(canonical, service, devices, Sr)
 
-        reserve_ramp_constraints!(canonical,  service, Sr)
-
-        #TODO: bulid the balance constraints elsewhere
-        balance_expression!(canonical,service, T)
-        service_balance(canonical,service)
+        end
+        service_balance_constraint!(canonical,service)
     end
     return
 
 end
 
-function _add_nodal_expressions!(canonical_model::CanonicalModel,
-                                services::IS.FlattenIteratorWrapper{S},
-                                sys::PSY.System) where {S<:PSY.Service}
+function _get_devices_bytype(devices::IS.FlattenIteratorWrapper{T}) where {T<:PSY.ThermalGen}
 
-    V = JuMP.variable_type(canonical_model.JuMPmodel)
-    parameters = model_has_parameters(canonical_model)
-    time_steps = model_time_steps(canonical_model)
-    bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
-    for serv in services
-        name = Symbol(serv.name,"_","balance")
-        add_expression(canonical_model,
-                    name, 
-                    _make_container_array(V, parameters, bus_numbers, time_steps))
+    dict = Dict{DataType,Vector}()
+    device_type_pairs = [(typeof(d),d) for d in devices]
+    for d in devices
+        push!(dict[typeof(d)],d)
     end
-    return 
+    return  [(k,v) for (k,v) in dict]
 end
 
-function _add_device_expression!(canonical_model::CanonicalModel,
-                                name ::Symbol,
-                                sys::PSY.System) 
-    
-    expr = exp(canonical_model,name)
-    if isnothing(expr)
-        V = JuMP.variable_type(canonical_model.JuMPmodel)
-        generators = [PSY.get_name(g) for g in PSY.get_components(PSY.Generator,sys)]
-        parameters = model_has_parameters(canonical_model)
-        time_steps = model_time_steps(canonical_model)
+function _add_nodal_expressions!(canonical::Canonical,
+                                S::IS.FlattenIteratorWrapper{SR},
+                                sys::PSY.System) where {SR<:PSY.Service}
 
-        add_expression(canonical_model,
+    V = JuMP.variable_type(canonical.JuMPmodel)
+    parameters = model_has_parameters(canonical)
+    time_steps = model_time_steps(canonical)
+    for service in S
+        name = Symbol(PSY.get_name(service),"_","balance")
+        add_expression(canonical,
                     name, 
-                    _make_container_array(V, parameters, generators, time_steps))
+                    _make_container_array(V, parameters, time_steps))
     end
     return 
 end

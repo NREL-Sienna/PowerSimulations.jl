@@ -32,6 +32,44 @@ function _make_container_array(V::DataType, parameters::Bool, ax...)
 
 end
 
+function _make_service_expression(dict::Dict{Base.UUID,T},
+                                expr_dict::Dict{Symbol, JuMP.Containers.DenseAxisArray},
+                                V::DataType,
+                                time_steps::UnitRange{Int64},
+                                parameters::Bool)
+
+    device_names = sort([PSY.get_name(d) for d in values(dict)])
+    expr_dict[Symbol("service_$(T)"] = _make_container_array(V,
+                                                            parameters,
+                                                            device_names,
+                                                            time_steps)
+    return expr_dict
+end
+
+function _make_expressions_dict(transmission::Type{S},
+                                service_map::ServiceMap,
+                                V::DataType,
+                                bus_numbers::Vector{Int64},
+                                time_steps::UnitRange{Int64},
+                                parameters::Bool) where {S<:PM.AbstractPowerModel}
+    
+    expr_dict = _make_expressions_dict(transmission,
+                                        V,
+                                        service_map,
+                                        bus_numbers,
+                                        time_steps,
+                                        parameters)
+
+    for f in get_fields(service_map)
+        expr_dict = _make_service_expression(f,
+                                            expr_dict,
+                                            V,
+                                            time_steps,
+                                            parameters)
+    end
+    return expr_dict
+end
+
 function _make_expressions_dict(transmission::Type{S},
                                 V::DataType,
                                 bus_numbers::Vector{Int64},
@@ -71,7 +109,8 @@ function _canonical_init(bus_numbers::Vector{Int64},
                         use_forecast_data::Bool,
                         initial_time::Dates.DateTime,
                         make_parameters_container::Bool,
-                        ini_con::DICKDA) where {S<:PM.AbstractPowerModel}
+                        ini_con::DICKDA,
+                        service_map::ServiceMap) where {S<:PM.AbstractPowerModel}
 
     V = JuMP.variable_type(jump_model)
 
@@ -86,6 +125,7 @@ function _canonical_init(bus_numbers::Vector{Int64},
                               zero(JuMP.GenericAffExpr{Float64, V}),
                               _make_expressions_dict(transmission,
                                                      V,
+                                                     service_map,
                                                      bus_numbers,
                                                      time_steps,
                                                      make_parameters_container),
@@ -144,10 +184,10 @@ mutable struct Canonical
 
 end
 
-function Canonical(::Type{T},
+function Canonical(template::OperationsTemplate,
                    sys::PSY.System,
                    optimizer::Union{Nothing,JuMP.OptimizerFactory};
-                   kwargs...) where {T<:PM.AbstractPowerModel}
+                   kwargs...) 
 
     PSY.check_forecast_consistency(sys)
     user_defined_model = get(kwargs, :JuMPmodel, nothing)
@@ -172,17 +212,35 @@ function Canonical(::Type{T},
 
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
 
+    if !isempty(template.services)
+        service_map = build_uuid_map(sys)
+    else 
+        service_map = ServiceMap()
+    end
+
     return _canonical_init(bus_numbers,
                            jump_model,
                            optimizer,
-                           T,
+                           template.transmission,
                            time_steps,
                            resolution,
                            use_forecast_data,
                            initial_time,
                            make_parameters_container,
-                           ini_con)
+                           ini_con,
+                           service_map)
 
+end
+
+function build_uuid_map(sys::PSY.System)
+
+    map = ServiceMap()
+    for s in PSY.get_components(PSY.Service,sys)
+        for d in PSY.get_contributingdevices(s)
+            add_device(map,d)
+        end
+    end
+    return map
 end
 
 function InitialCondition(canonical::Canonical,
@@ -226,24 +284,24 @@ function get_value(canonical::Canonical, ref::UpdateRef{PJ.ParameterRef})
     return
 end
 
-_variable_type(cm::CanonicalModel) = JuMP.variable_type(cm.JuMPmodel)
-model_time_steps(canonical::CanonicalModel) = canonical.time_steps
-model_resolution(canonical::CanonicalModel) = canonical.resolution
-model_has_parameters(canonical::CanonicalModel) = canonical.parametrized
-model_uses_forecasts(canonical::CanonicalModel) = canonical.use_forecast_data
-model_initial_time(canonical::CanonicalModel) = canonical.initial_time
-add_expression(canonical::CanonicalModel,
+_variable_type(cm::Canonical) = JuMP.variable_type(cm.JuMPmodel)
+model_time_steps(canonical::Canonical) = canonical.time_steps
+model_resolution(canonical::Canonical) = canonical.resolution
+model_has_parameters(canonical::Canonical) = canonical.parametrized
+model_uses_forecasts(canonical::Canonical) = canonical.use_forecast_data
+model_initial_time(canonical::Canonical) = canonical.initial_time
+add_expression(canonical::Canonical,
                 name::Symbol, 
                 cont::JuMP.Containers.DenseAxisArray) = push!(canonical.expressions, (name=>cont))
 #Internal Variables, Constraints and Parameters accessors
-vars(canonical::CanonicalModel) = canonical.variables
-cons(canonical::CanonicalModel) = canonical.constraints
-var(canonical::CanonicalModel, name::Symbol) = get(canonical.variables, name, 
+vars(canonical::Canonical) = canonical.variables
+cons(canonical::Canonical) = canonical.constraints
+var(canonical::Canonical, name::Symbol) = get(canonical.variables, name, 
                             @error("No Variable container exist with name =$(name) in Canonical model."))
-con(canonical::CanonicalModel, name::Symbol) = get(canonical.constraints, name,
+con(canonical::Canonical, name::Symbol) = get(canonical.constraints, name,
                             @error("No Constraint exist with name =$(name) in Canonical model."))
-par(canonical::CanonicalModel, param_reference::UpdateRef) = get(canonical.parameters, param_reference,
+par(canonical::Canonical, param_reference::UpdateRef) = get(canonical.parameters, param_reference,
                             @error("No Update reference found in Canonical model that matches $(param_reference)."))
-exp(canonical::CanonicalModel, name::Symbol) = get(canonical.expressions, name,
+exp(canonical::Canonical, name::Symbol) = get(canonical.expressions, name,
                             @error("No Expression container exist with name =$(name) in Canonical model."))
-get_initial_conditions(canonical::CanonicalModel) = canonical.initial_conditions
+get_initial_conditions(canonical::Canonical) = canonical.initial_conditions

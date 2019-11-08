@@ -86,7 +86,7 @@ function OperationsProblem(::Type{M},
 
     op_problem = OperationsProblem{M}(template,
                           sys,
-                          Canonical(template.transmission, sys, optimizer; kwargs...))
+                          Canonical(template, sys, optimizer; kwargs...))
 
     build_op_problem!(op_problem; kwargs...)
 
@@ -140,7 +140,7 @@ function OperationsProblem(::Type{M},
     optimizer = get(kwargs, :optimizer, nothing)
     return OperationsProblem{M}(OperationsTemplate(T),
                           sys,
-                          Canonical(T, sys, optimizer; kwargs...))
+                          Canonical(OperationsTemplate(T), sys, optimizer; kwargs...))
 
 end
 """
