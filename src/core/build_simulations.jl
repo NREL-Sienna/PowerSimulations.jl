@@ -203,7 +203,7 @@ function _build_simulation!(sim_ref::SimulationRef,
         if PSY.are_forecasts_contiguous(stage.sys)
             stage_initial_times[stage_number] = PSY.generate_initial_times(stage.sys, 
                                                                         stage.interval, 
-                                                                        stage.horizon,)
+                                                                        stage.horizon;
                                                                         initial_time = stage.initial_time)
         else
             stage_initial_times[stage_number] = get_forecast_initial_times(stage.sys)
