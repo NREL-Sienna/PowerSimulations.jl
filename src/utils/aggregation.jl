@@ -195,8 +195,7 @@ function load_simulation_results(stage::String,
         results = make_results(variables, obj_value, optimizer, time_stamp)
     end
     if (:write in keys(kwargs))
-        file_type = get(kwargs, :file_type, Feather)
-        write_model_results(results, normpath("$file_path/../../../../"),"results";; file_type = file_type)
+        write_model_results(results, normpath("$file_path/../../../../"),"results")
     end
     return results
 end
