@@ -200,9 +200,14 @@ function _build_simulation!(sim_ref::SimulationRef,
     stage_initial_times = Dict{Int64, Vector{Dates.DateTime}}()
     for (stage_number, stage) in stages
         PSY.check_forecast_consistency(stage.sys)
-        stage_initial_times[stage_number] = PSY.generate_initial_times(stage.sys, 
-                                                                       stage.interval, 
-                                                                       stage.horizon) # TODO: add starting point
+        if PSY.are_forecasts_contiguous(sys)
+            stage_initial_times[stage_number] = PSY.generate_initial_times(stage.sys, 
+                                                                        stage.interval, 
+                                                                        stage.horizon,
+                                                                        stage.initial_time)
+        else
+            stage_initial_times[stage_number] = get_forecast_initial_times(sys)
+        end
     end
     _validate_steps(stages, steps, stage_initial_times)
     _check_chronology_ref(stages)
