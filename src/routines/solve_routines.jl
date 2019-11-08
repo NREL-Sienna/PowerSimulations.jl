@@ -103,6 +103,7 @@ execute!!(sim::Simulation; verbose::Bool = false, kwargs...)
 `dual_constraints::Vector{Symbol}`: if dual variables are desired in the
 results, include a vector of the variable names to be included
 """
+
 function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
     _prepare_workspace!(sim.ref, sim.base_name, sim.simulation_folder)
     if sim.ref.reset
@@ -138,8 +139,8 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
 
     end
     date_run = convert(String,last(split(dirname(sim.ref.raw),"/")))
-    #ref = make_references(sim, date_run)
-    return #reference
+    ref = make_references(sim, date_run)
+    return ref
 end
 """ 
     make_references(sim::Simulation, date_run::String)

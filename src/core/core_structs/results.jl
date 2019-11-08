@@ -10,18 +10,18 @@ end
 
 get_duals(result::OperationsProblemResults) = nothing
 
-function make_results(variables::Dict{Symbol, DataFrames.DataFrame},
+function make_results(variables::Dict,
                       total_cost::Dict,
                       optimizer_log::Dict,
                       time_stamp::DataFrames.DataFrame)
     return OperationsProblemResults(variables, total_cost, optimizer_log, time_stamp)
 end
 
-function make_results(variables::Dict{Symbol, DataFrames.DataFrame},
+function make_results(variables::Dict,
                       total_cost::Dict,
                       optimizer_log::Dict,
                       time_stamp::DataFrames.DataFrame,
-                      duals::Dict{Symbol, Any})
+                      duals::Dict)
     return AggregatedResults(variables, total_cost, optimizer_log, time_stamp, duals)
 end
 function get_variable(res_model::OperationsProblemResults, key::Symbol)
