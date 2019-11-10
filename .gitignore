@@ -6,5 +6,6 @@
 *.ipynb_checkpoints
 docs/build/
 docs/site/
+.vscode
 
 Manifest.toml
