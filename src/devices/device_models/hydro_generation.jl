@@ -394,7 +394,7 @@ function budget_constraints!(canonical::Canonical,
 end
 
 function device_budget_param_ub(canonical::Canonical,
-                            budget_data::Vector{Tuple{String, Int64, Float64, Float64}},
+                            budget_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                             cons_name::Symbol,
                             param_reference::UpdateRef,
                             var_name::Symbol)
@@ -402,16 +402,19 @@ function device_budget_param_ub(canonical::Canonical,
     time_steps = model_time_steps(canonical)
     variable = get_variable(canonical, var_name)
     set_name = (r[1] for r in budget_data)
-    constraint = _add_cons_container!(canonical, cons_name, set_name, 1) 
-    param = _add_param_container!(canonical, param_reference, names, 1)
+    no_of_budgets = length(budget_data[1][4])
+    time_lengths = time_steps/length(budget_data[1][4])
+    time_chucks = reshape(time_steps, (time_lengths, no_of_budgets))
+    constraint = _add_cons_container!(canonical, cons_name, set_name, no_of_budgets) 
+    param = _add_param_container!(canonical, param_reference, names, no_of_budgets)
 
-    for data in budget_data
+    for data in budget_data, i in 1:no_of_budgets
         name = data[1]
-        forecast = data[4][t]
+        forecast = data[4][i]
         multiplier = data[3]
         param[name] = PJ.add_parameter(canonical.JuMPmodel, forecast)
         constraint[name] = JuMP.@constraint(canonical.JuMPmodel,
-                    sum([variable[name, t] for t in 1:time_steps]) <= multiplier*param[name])
+                    sum([variable[name, t] for t in time_chucks[:, i]]) <= multiplier*param[name])
     end
 
     return
@@ -420,21 +423,24 @@ end
 
 
 function device_budget_ub(canonical::Canonical,
-                            budget_data::Vector{Tuple{String, Int64, Float64, Float64}},
+                            budget_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                             cons_name::Symbol,
                             var_name::Symbol)
 
     time_steps = model_time_steps(canonical)
     variable = get_variable(canonical, var_name)
     set_name = (r[1] for r in budget_data)
-    constraint = _add_cons_container!(canonical, cons_name, set_name, 1) 
+    no_of_budgets = length(budget_data[1][4])
+    time_lengths = time_steps/length(budget_data[1][4])
+    time_chucks = reshape(time_steps, (time_lengths, no_of_budgets))
+    constraint = _add_cons_container!(canonical, cons_name, set_name, no_of_budgets) 
 
-    for data in budget_data
+    for data in budget_data, i in 1:no_of_budgets
         name = data[1]
-        forecast = data[4][t]
+        forecast = data[4][i]
         multiplier = data[3]
         constraint[name] = JuMP.@constraint(canonical.JuMPmodel,
-                    sum([variable[name, t] for t in 1:time_steps]) <= multiplier*forecast)
+                    sum([variable[name, t] for t in time_chucks[:, i]]) <= multiplier*forecast)
     end
 
     return
