@@ -70,9 +70,9 @@ function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::Str
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("Stage $(stage.key) status is $(model_status)")
     end
-    retrieve_duals = :duals in keys(kwargs)
-    if retrieve_duals && !isnothing(get_constraints(stage.canonical))
-        _export_model_result(stage, start_time, results_path, kwargs[:duals])
+    retrieve_duals = get(kwargs, :duals, nothing)
+    if !isnothing(retrieve_duals) && !isnothing(get_constraints(stage.canonical))
+        _export_model_result(stage, start_time, results_path, retrieve_duals)
     else
         _export_model_result(stage, start_time, results_path)
     end
@@ -103,6 +103,7 @@ execute!!(sim::Simulation; verbose::Bool = false, kwargs...)
 `dual_constraints::Vector{Symbol}`: if dual variables are desired in the
 results, include a vector of the variable names to be included
 """
+
 function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
     _prepare_workspace!(sim.ref, sim.base_name, sim.simulation_folder)
     if sim.ref.reset
@@ -116,18 +117,15 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
         verbose && println("Step $(s)")
         for (ix, stage) in enumerate(sim.stages)
             verbose && println("Stage $(ix)")
-            interval = PSY.get_forecasts_interval(stage.sys)
+            interval = stage.interval
             for run in 1:stage.executions
                 sim.ref.current_time = sim.ref.date_ref[ix]
                 verbose && println("Simulation TimeStamp: $(sim.ref.current_time)")
                 raw_results_path = joinpath(sim.ref.raw,"step-$(s)-stage-$(ix)",replace_chars("$(sim.ref.current_time)",":","-"))
                 mkpath(raw_results_path)
                 update_stage!(stage, s, sim)
-                if :dual_constraints in keys(kwargs)
-                    _run_stage(stage, sim.ref.current_time, raw_results_path; duals = kwargs[:dual_constraints])
-                else
-                    _run_stage(stage, sim.ref.current_time, raw_results_path)
-                end
+                dual_constraints = get(kwargs, :dual_constraints, nothing)
+                _run_stage(stage, sim.ref.current_time, raw_results_path; duals = dual_constraints)
                 sim.ref.run_count[s][ix] += 1
                 sim.ref.date_ref[ix] = sim.ref.date_ref[ix] + interval
             end
@@ -137,6 +135,6 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
 
     end
     date_run = convert(String,last(split(dirname(sim.ref.raw),"/")))
-    #ref = make_references(sim, date_run)
-    return #reference
+    ref = make_references(sim, date_run)
+    return ref
 end

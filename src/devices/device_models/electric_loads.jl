@@ -92,10 +92,12 @@ function _get_time_series(canonical::Canonical,
         active_power = use_forecast_data ? PSY.get_maxactivepower(device) : PSY.get_activepower(device)
         reactive_power = use_forecast_data ? PSY.get_maxreactivepower(device) : PSY.get_reactivepower(device)
         if use_forecast_data
-            ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
-                                                                device,
-                                                                initial_time,
-                                                                "maxactivepower")))
+            forecast = PSY.get_forecast(PSY.Deterministic,
+                                        device,
+                                        initial_time,
+                                        "get_maxactivepower",
+                                        length(time_steps))
+            ts_vector = TS.values(PSY.get_data(forecast))
         else
             ts_vector = ones(time_steps[end])
         end
@@ -129,7 +131,7 @@ function activepower_constraints!(canonical::Canonical,
         device_timeseries_param_ub(canonical,
                                    ts_data_active,
                                    Symbol("active_$(L)"),
-                                   UpdateRef{L}(:maxactivepower),
+                                   UpdateRef{L}("get_maxactivepower"),
                                    Symbol("P_$(L)"))
     else
         device_timeseries_ub(canonical,
@@ -165,7 +167,7 @@ function activepower_constraints!(canonical::Canonical,
                                  ts_data_active,
                                  Symbol("active_$(L)"),
                                  Symbol("P_$(L)"),
-                                 UpdateRef{L}(:maxactivepower),
+                                 UpdateRef{L}("get_maxactivepower"),
                                  Symbol("ON_$(L)"))
     else
         device_timeseries_ub_bin(canonical,
@@ -192,12 +194,12 @@ function nodal_expression!(canonical::Canonical,
     if parameters
         include_parameters(canonical,
                         ts_data_active,
-                        UpdateRef{L}(:maxactivepower),
+                        UpdateRef{L}("get_maxactivepower"),
                         :nodal_balance_active,
                         -1.0)
         include_parameters(canonical,
                         ts_data_reactive,
-                        UpdateRef{L}(:maxactivepower),
+                        UpdateRef{L}("get_maxactivepower"),
                         :nodal_balance_reactive,
                         -1.0)
         return
@@ -234,7 +236,7 @@ function nodal_expression!(canonical::Canonical,
     if parameters
         include_parameters(canonical,
                         ts_data_active,
-                        UpdateRef{L}(:maxactivepower),
+                        UpdateRef{L}("get_maxactivepower"),
                         :nodal_balance_active,
                         -1.0)
         return
