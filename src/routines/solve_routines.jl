@@ -6,16 +6,16 @@ outputs results of type OperationsProblemResult: objective value, time log,
 a dictionary of variables and their dataframe of results, and a time stamp.
 
 # Arguments
--`op_problem::OperationModel = op_problem`: operation model
+- `op_problem::OperationModel = op_problem`: operation model
 
 # Examples
 ```julia
 results = solve_op_problem!(OpModel)
 ```
 # Accepted Key Words
--`save_path::String`: If a file path is provided the results
+- `save_path::String`: If a file path is provided the results
 automatically get written to feather files
--`optimizer::OptimizerFactory`: The optimizer that is used to solve the model
+- `optimizer::OptimizerFactory`: The optimizer that is used to solve the model
 """
 function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
 
@@ -100,7 +100,7 @@ execute!!(sim::Simulation; verbose::Bool = false, kwargs...)
 ```
 
 # Accepted Key Words
-`dual_constraints::Vector{Symbol}`: if dual variables are desired in the
+- `dual_constraints::Vector{Symbol}`: if dual variables are desired in the
 results, include a vector of the variable names to be included
 """
 
@@ -123,6 +123,7 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
                 verbose && println("Simulation TimeStamp: $(sim.ref.current_time)")
                 raw_results_path = joinpath(sim.ref.raw,"step-$(s)-stage-$(ix)",replace_chars("$(sim.ref.current_time)",":","-"))
                 mkpath(raw_results_path)
+    
                 update_stage!(stage, s, sim)
                 dual_constraints = get(kwargs, :dual_constraints, nothing)
                 _run_stage(stage, sim.ref.current_time, raw_results_path; duals = dual_constraints)

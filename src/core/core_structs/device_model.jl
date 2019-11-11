@@ -37,8 +37,8 @@ abstract device formulation and returns  Power System Device and the
 abstract device formulation if the power system device is a concrete type.
 
 # Arguments
--`::Type{D}`: Power System Device
--`::Type{B}`: Abstract Device Formulation
+- `::Type{D}`: Power System Device
+- `::Type{B}`: Abstract Device Formulation
 
 # Outputs
 `DeviceModel(D, B, nothing)`: D::PSY.Device, B::AbstractDeviceFormulation

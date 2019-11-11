@@ -114,11 +114,9 @@ function get_bar_gen_data(res::OperationsProblemResults)
 
    time_range = res.time_stamp[!,:Range]
    key_name = collect(keys(res.variables))
-
    variable = res.variables[Symbol(key_name[1])]
    data_matrix = sum(convert(Matrix, variable), dims = 2)
    legend = string.(key_name)
-
 
     for i in 1:length(key_name)
        if i !== 1
@@ -139,10 +137,10 @@ sorts the generators in each variable, and outputs the sorted
 results. The generic function sorts the generators alphabetically.
 
 # Arguments
--`results::OperationsProblemResults`: the results of the simulation
+- `results::OperationsProblemResults`: the results of the simulation
 
 # Accepted Key Words
--`Variables` to choose which variables to be sorted.
+- `Variables` to choose which variables to be sorted.
 
 #Examples
 ```julia

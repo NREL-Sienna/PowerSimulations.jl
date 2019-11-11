@@ -89,11 +89,13 @@ export set_device_model!
 export set_branch_model!
 export set_device_model!
 ## Sim Model Exports
+export make_references
 export execute!
 ## Utils Exports
 export write_op_problem
 export write_results
 export load_operation_results
+export load_simulation_results
 export get_all_constraint_index
 export get_all_var_index
 export get_con_index
@@ -103,9 +105,13 @@ export sort_data
 export get_stacked_plot_data
 export get_bar_plot_data
 export get_stacked_generation_data
+export get_stacked_aggregation_data
 export bar_plot
 export stack_plot
 export report
+export make_fuel_dictionary
+export fuel_plot
+
 export load_simulation_results
 
 #################################################################################
@@ -132,7 +138,9 @@ import TimeSeries
 import MathOptFormat
 import DataFrames
 import Feather
+import Colors
 import JSON
+import CSV
 
 include("core/definitions.jl")
 
@@ -212,9 +220,11 @@ include("routines/write_model.jl")
 #Utils
 include("utils/optimization_debugging.jl")
 include("utils/printing.jl")
+include("utils/plot_fuel_results.jl")
 include("utils/plot_results.jl")
 include("utils/plot_recipes.jl")
 include("utils/aggregation.jl")
+include("utils/call_plots.jl")
 
 #Initialization
 

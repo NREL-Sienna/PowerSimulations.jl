@@ -98,9 +98,9 @@ function _reading_references(results::Dict, dual::Array, stage::String,
 end
 
 function _removing_extra_time(file_path::String, extra_time_length::Number)
-    time_stamp = []
+    time_stamp = DataFrames.DataFrame()
     time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
-    temp_time_stamp = DataFrames.DataFrame(Feather.read("$time_file_path"))
+    temp_time_stamp = Feather.read("$time_file_path")
     non_overlap = size((1:size(temp_time_stamp, 1) - extra_time_length - 1),1)
     time_stamp = vcat(time_stamp,temp_time_stamp[(1:non_overlap),:])
     return time_stamp
@@ -141,10 +141,10 @@ aggregates the results over time into a struct of type OperationsProblemResults
 for the desired step range and variables
 
 # Arguments
--`stage::String = "stage-1"``: The stage of the results getting parsed, stage-1 or stage-2
--`step::Array{String} = ["step-1", "step-2", "step-3"]`: the steps of the results getting parsed
--`variable::Array{Symbol} = [:P_ThermalStandard, :P_RenewableDispatch]`: the variables to be parsed
--`references::Dict = ref`: the reference dictionary created in execute!
+- `stage::String = "stage-1"``: The stage of the results getting parsed, stage-1 or stage-2
+- `step::Array{String} = ["step-1", "step-2", "step-3"]`: the steps of the results getting parsed
+- `variable::Array{Symbol} = [:P_ThermalStandard, :P_RenewableDispatch]`: the variables to be parsed
+- `references::Dict = ref`: the reference dictionary created in execute!
 or with make_references
 
 # Example
@@ -155,8 +155,10 @@ variable = [:P_ThermalStandard, :P_RenewableDispatch]
 results = load_simulation_results(stage,step, variable, references)
 ```
 # Accepted Key Words
--`write::Bool`: if true, the aggregated results get written back to the results
+- `write::Bool`: if true, the aggregated results get written back to the results
 file in the folder structure
+- `file_type::String = CSV`: default filetype is Feather, but this key word can be used to make it CSV.
+if a different file type is desired the code will have to be changed to accept it.
 """
 function load_simulation_results(stage::String,
          step::Array,
@@ -164,8 +166,8 @@ function load_simulation_results(stage::String,
          references::Dict{Any,Any}; kwargs...)
     variables = Dict()
     duals = Dict()
-    dual = _find_duals(collect(keys(references[stage])))
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
+    dual = _find_duals(collect(keys(references[stage])))
     extra_time_length = _count_time_overlap(stage, step, variable, references)
     for l in 1:length(variable)
         date_df = references[stage][variable[l]]
@@ -180,14 +182,13 @@ function load_simulation_results(stage::String,
             correct_var_length = size(1:(size(var,1) - extra_time_length),1)
             variables[(variable[l])] = vcat(variables[(variable[l])],var[1:correct_var_length,:])
             if l == 1
-                time_stamp = DataFrames.DataFrame(Range = _removing_extra_time(file_path, extra_time_length))
+                time_stamp = vcat(time_stamp, _removing_extra_time(file_path, extra_time_length))
             end
         end
     end
     file_path = references[stage][variable[1]][1,:File_Path]
     optimizer = optimizer = JSON.parse(open(joinpath(dirname(file_path), "optimizer_log.json")))
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
-
     if !isempty(dual)
         duals = _reading_references(duals, dual, stage, step, references, extra_time_length)
         results = make_results(variables, obj_value, optimizer, time_stamp, duals)
@@ -195,7 +196,8 @@ function load_simulation_results(stage::String,
         results = make_results(variables, obj_value, optimizer, time_stamp)
     end
     if (:write in keys(kwargs))
-        write_model_results(results, normpath("$file_path/../../../../"),"results")
+        file_type = get(kwargs, :file_type, Feather)
+        write_model_results(results, normpath("$file_path/../../../../"),"results"; file_type = file_type)
     end
     return results
 end
@@ -207,8 +209,8 @@ This function goes through the reference table of file paths and
 aggregates the results over time into a struct of type OperationsProblemResults
 
 # Arguments
--`stage::String = "stage-1"`: The stage of the results getting parsed, stage-1 or stage-2
--`references::Dict = ref`: the reference dictionary created in execute!
+- `stage::String = "stage-1"`: The stage of the results getting parsed, stage-1 or stage-2
+- `references::Dict = ref`: the reference dictionary created in execute!
 or with make_references
 
 # Example
@@ -219,8 +221,10 @@ variable = [:P_ThermalStandard, :P_RenewableDispatch]
 results = load_simulation_results(stage,step, variable, references)
 ```
 # Accepted Key Words
--`write::Bool`: if true, the aggregated results get written back to the results
+- `write::Bool`: if true, the aggregated results get written back to the results
 file in the folder structure
+- `file_type::String = CSV`: default filetype is Feather, but this key word can be used to make it CSV.
+if a different file type is desired the code will have to be changed to accept it.
 """
 
 function load_simulation_results(stage::String, references::Dict{Any,Any}; kwargs...)
@@ -230,7 +234,6 @@ function load_simulation_results(stage::String, references::Dict{Any,Any}; kwarg
     variable = (collect(keys(references[stage])))
     dual = _find_duals(variable)
     variable = setdiff(variable,duals)
-
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
     extra_time_length = _count_time_overlap(stage,references)
     for l in 1:length(variable)
@@ -242,16 +245,14 @@ function load_simulation_results(stage::String, references::Dict{Any,Any}; kwarg
             correct_var_length = size(1:(size(var,1) - extra_time_length),1)
             variables[(variable[l])] = vcat(variables[(variable[l])],var[1:correct_var_length,:])
             if l == 1
-                time_stamp = DataFrames.DataFrame(Range = _removing_extra_time(file_path, extra_time_length))
+                time_stamp = vcat(time_stamp, _removing_extra_time(file_path, extra_time_length))
             end
         end
     end
-
     file_path = references[stage][variable[1]][1,:File_Path]
     optimizer = optimizer = JSON.parse(open(joinpath(dirname(file_path), "optimizer_log.json")))
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
-
-    if !isnothing(dual)
+    if !isempty(dual)
         duals = _reading_references(duals, dual, stage, references, extra_time_length)
         results = make_results(variables, obj_value, optimizer, time_stamp, duals)
     else
@@ -269,7 +270,7 @@ function _concat_string(duals::Vector{Symbol})
     return duals
 end
 """
-    make_references(sim::Simulation, date_run::String)
+    make_references(sim::Simulation, date_run::String; kwargs...)
 
 Creates a dictionary of variables with a dictionary of stages
 that contains dataframes of date/step/and desired file path
@@ -280,8 +281,8 @@ and stage type.
 or else, the folder structure will not yet be populated with results
 
 # Arguments
--`sim::Simulation = sim`: simulation object created by Simulation()
--`date_run::String = "2019-10-03T09-18-00"``: the name of the file created
+- `sim::Simulation = sim`: simulation object created by Simulation()
+- `date_run::String = "2019-10-03T09-18-00"``: the name of the file created
 that contains the specific simulation run of the date run and "-test"
 
 # Example
@@ -291,6 +292,9 @@ verbose = true, system_to_file = false)
 execute!(sim::Simulation; verbose::Bool = false, kwargs...)
 references = make_references(sim, "2019-10-03T09-18-00-test")
 ```
+
+# Accepted Key Words
+- `dual_constraints::Vector{Symbol}`: name of dual constraints to be added to results
 """
 function make_references(sim::Simulation, date_run::String; kwargs...)
     sim.ref.date_ref[1] = sim.daterange[1]
