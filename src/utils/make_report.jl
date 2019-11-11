@@ -26,9 +26,6 @@ report(results, out_path; jmd = jmd)
 jmd has a default of ".../pwd()/report_design/report_design.jmd"
 
 """
-
-
-
 function report(res::Results,out_path::String; kwargs...)
 
     doctype = get(kwargs, :doctype, "md2pdf")
