@@ -296,7 +296,7 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
                 ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75)
             )];
     ramp_load = [ 0.9, 1.1, 2.485, 2.175, 0.9];
-    load_forecast_ramp = Deterministic("maxactivepower", TimeArray(DA_ramp, ramp_load))
+    load_forecast_ramp = Deterministic("get_maxactivepower", TimeArray(DA_ramp, ramp_load))
     ramp_test_sys = PSY.System(100.0)
     add_component!(ramp_test_sys, node)
     add_component!(ramp_test_sys, load)
@@ -333,7 +333,7 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
             )];
 
     duration_load = [0.3, 0.6, 0.8, 0.7, 1.7, 0.9, 0.7]
-    load_forecast_dur = Deterministic("maxactivepower", TimeArray(DA_dur, duration_load))
+    load_forecast_dur = Deterministic("get_maxactivepower", TimeArray(DA_dur, duration_load))
     duration_test_sys = PSY.System(100.0)
     add_component!(duration_test_sys, node)
     add_component!(duration_test_sys, load)
@@ -382,7 +382,7 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
                         Hour(1):
                         DateTime("1/1/2024  1:00:00", "d/m/y  H:M:S"))
     cost_load = [1.3,2.1];
-    load_forecast_cost = Deterministic("maxactivepower", TimeArray(DA_cost, cost_load))
+    load_forecast_cost = Deterministic("get_maxactivepower", TimeArray(DA_cost, cost_load))
     cost_test_sys = PSY.System(100.0)
     add_component!(cost_test_sys, node)
     add_component!(cost_test_sys, load)
@@ -421,7 +421,7 @@ end
                         Hour(1):
                         DateTime("1/1/2024  1:00:00", "d/m/y  H:M:S"))
     cost_sos_load = [1.3,2.1];
-    load_forecast_cost_sos  = Deterministic("maxactivepower", TimeArray(DA_cost_sos, cost_sos_load))
+    load_forecast_cost_sos  = Deterministic("get_maxactivepower", TimeArray(DA_cost_sos, cost_sos_load))
     cost_test_sos_sys = PSY.System(100.0)
     add_component!(cost_test_sos_sys, node)
     add_component!(cost_test_sos_sys, load)
