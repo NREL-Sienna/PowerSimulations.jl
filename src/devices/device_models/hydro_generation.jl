@@ -404,7 +404,7 @@ function device_budget_param_ub(canonical::Canonical,
     set_name = (r[1] for r in budget_data)
     no_of_budgets = length(budget_data[1][4])
     time_lengths = time_steps/length(budget_data[1][4])
-    time_chucks = reshape(time_steps, (time_lengths, no_of_budgets))
+    time_chunks = reshape(time_steps, (time_lengths, no_of_budgets))
     constraint = _add_cons_container!(canonical, cons_name, set_name, no_of_budgets) 
     param = _add_param_container!(canonical, param_reference, names, no_of_budgets)
 
@@ -414,7 +414,7 @@ function device_budget_param_ub(canonical::Canonical,
         multiplier = data[3]
         param[name] = PJ.add_parameter(canonical.JuMPmodel, forecast)
         constraint[name] = JuMP.@constraint(canonical.JuMPmodel,
-                    sum([variable[name, t] for t in time_chucks[:, i]]) <= multiplier*param[name])
+                    sum([variable[name, t] for t in time_chunks[:, i]]) <= multiplier*param[name])
     end
 
     return
@@ -432,7 +432,7 @@ function device_budget_ub(canonical::Canonical,
     set_name = (r[1] for r in budget_data)
     no_of_budgets = length(budget_data[1][4])
     time_lengths = time_steps/length(budget_data[1][4])
-    time_chucks = reshape(time_steps, (time_lengths, no_of_budgets))
+    time_chunks = reshape(time_steps, (time_lengths, no_of_budgets))
     constraint = _add_cons_container!(canonical, cons_name, set_name, no_of_budgets) 
 
     for data in budget_data, i in 1:no_of_budgets
@@ -440,7 +440,7 @@ function device_budget_ub(canonical::Canonical,
         forecast = data[4][i]
         multiplier = data[3]
         constraint[name] = JuMP.@constraint(canonical.JuMPmodel,
-                    sum([variable[name, t] for t in time_chucks[:, i]]) <= multiplier*forecast)
+                    sum([variable[name, t] for t in time_chunks[:, i]]) <= multiplier*forecast)
     end
 
     return

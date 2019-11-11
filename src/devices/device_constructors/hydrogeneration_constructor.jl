@@ -54,16 +54,16 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
     reactivepower_variables!(canonical, devices);
 
     #Constraints
-    activepower_constraints!(canonical, devices, D, S)
+    activepower_constraints!(canonical, devices, HydroDispatchSeasonalFlow, S)
 
-    reactivepower_constraints!(canonical, devices, D, S)
+    reactivepower_constraints!(canonical, devices, HydroDispatchSeasonalFlow, S)
 
-    budget_constraints!(canonical, devices, D, S)
+    budget_constraints!(canonical, devices, HydroDispatchSeasonalFlow, S)
 
     feedforward!(canonical, H, model.feedforward)
 
     #Cost Function
-    cost_function(canonical, devices, D, S)
+    cost_function(canonical, devices, HydroDispatchSeasonalFlow, S)
 
     return
 
@@ -142,10 +142,9 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
 end
 
 function construct_device!(canonical::Canonical, sys::PSY.System,
-                           model::DeviceModel{H, D},
+                           model::DeviceModel{H, HydroDispatchSeasonalFlow},
                            ::Type{S};
                            kwargs...) where {H<:PSY.HydroGen,
-                                             D<:HydroDispatchSeasonalFlow,
                                              S<:PM.AbstractActivePowerModel}
 
 
@@ -161,14 +160,14 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
     activepower_variables!(canonical, devices);
 
     #Constraints
-    activepower_constraints!(canonical, devices, D, S)
+    activepower_constraints!(canonical, devices, HydroDispatchSeasonalFlow, S)
 
-    budget_constraints!(canonical, devices, D, S)
+    budget_constraints!(canonical, devices, HydroDispatchSeasonalFlow, S)
 
     feedforward!(canonical, H, model.feedforward)
 
     #Cost Function
-    cost_function(canonical, devices, D, S)
+    cost_function(canonical, devices, HydroDispatchSeasonalFlow, S)
 
     return
 
