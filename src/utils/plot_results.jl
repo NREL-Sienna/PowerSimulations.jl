@@ -137,10 +137,10 @@ sorts the generators in each variable, and outputs the sorted
 results. The generic function sorts the generators alphabetically.
 
 # Arguments
--`results::OperationsProblemResults`: the results of the simulation
+- `results::OperationsProblemResults`: the results of the simulation
 
 # Accepted Key Words
--`Variables` to choose which variables to be sorted.
+- `Variables` to choose which variables to be sorted.
 
 #Examples
 ```julia

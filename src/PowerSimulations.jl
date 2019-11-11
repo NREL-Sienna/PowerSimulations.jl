@@ -89,12 +89,8 @@ export set_device_model!
 export set_branch_model!
 export set_device_model!
 ## Sim Model Exports
-<<<<<<< HEAD
-export run_sim_model!
 export make_references
-=======
 export execute!
->>>>>>> e0b5f7c09d47bff63b2c669629061736d15bbdc4
 ## Utils Exports
 export write_op_problem
 export write_results
@@ -113,13 +109,10 @@ export get_stacked_aggregation_data
 export bar_plot
 export stack_plot
 export report
-<<<<<<< HEAD
 export make_fuel_dictionary
 export fuel_plot
 
-=======
 export load_simulation_results
->>>>>>> e0b5f7c09d47bff63b2c669629061736d15bbdc4
 
 #################################################################################
 # Imports
@@ -145,11 +138,9 @@ import TimeSeries
 import MathOptFormat
 import DataFrames
 import Feather
-<<<<<<< HEAD
 import Colors
-=======
 import JSON
->>>>>>> e0b5f7c09d47bff63b2c669629061736d15bbdc4
+import CSV
 
 include("core/definitions.jl")
 
@@ -232,11 +223,8 @@ include("utils/printing.jl")
 include("utils/plot_fuel_results.jl")
 include("utils/plot_results.jl")
 include("utils/plot_recipes.jl")
-<<<<<<< HEAD
-include("utils/call_plots.jl")
-=======
 include("utils/aggregation.jl")
->>>>>>> e0b5f7c09d47bff63b2c669629061736d15bbdc4
+include("utils/call_plots.jl")
 
 #Initialization
 

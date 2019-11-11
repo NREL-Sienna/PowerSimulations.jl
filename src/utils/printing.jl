@@ -56,7 +56,7 @@ function Base.show(io::IO, ::MIME"text/plain", op_problem::OperationsProblem)
 end
 
 
-=#
+
 
 function Base.show(io::IO, op_problem::Canonical)
     println(io, "Canonical()")
@@ -69,8 +69,8 @@ end
 function Base.show(io::IO, results::OperationsProblemResults)
     println(io, "Results Model")
  end
+=#
 #=
-
 function Base.show(io::IO, res_model::OperationModelResults)
     println(io, "\nResults Model")
     println(io, "===============\n")
@@ -96,13 +96,13 @@ function Base.show(io::IO, res_model::OperationModelResults)
 
 =#
 
-function Base.show(io::IO, results::OperationsProblemResults)
+function Base.show(io::IO, results::Results)
     println(io, "\nResults")
     println(io, "===============\n")
 
     for (k, v) in results.variables
         time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
-        if size(time,2) == size(v,2)
+        if size(time,1) == size(v,1)
             var = hcat(time, v)
         else
             var = v
@@ -127,4 +127,4 @@ function Base.show(io::IO, results::OperationsProblemResults)
     println(io, "Stage()")
  end
 
- =#
+ 

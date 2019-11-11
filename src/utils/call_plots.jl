@@ -68,7 +68,7 @@ This function plots a bar plot for the generators in each variable within
 the results variables dictionary, and makes a bar plot for all of the variables.
 
 # Arguments
--`res::OperationsProblemResults= results`: results to be plotted
+- `res::OperationsProblemResults= results`: results to be plotted
 
 # Example
 
@@ -81,10 +81,10 @@ bar_plot(results)
 plot attributes, such as seriescolor = [:red :blue :orange]
 will override the default series color
 """
-function bar_plot(res::AggregatedResults; kwargs...)
+function bar_plot(res::PSI.AggregatedResults; kwargs...)
   results = OperationsProblemResults(res.variables, res.total_cost, 
   res.optimizer_log, res.time_stamp)
-  bar_plot(res; kwargs...)
+  bar_plot(results; kwargs...)
 end
 
 function bar_plot(res::OperationsProblemResults; kwargs...)
@@ -133,10 +133,10 @@ stack_plot(results)
 plot attributes, such as seriescolor = [:red :blue :orange]
 will override the default series color
 """
-function stack_plot(res::AggregatedResults; kwargs...)
+function stack_plot(res::PSI.AggregatedResults; kwargs...)
   results = OperationsProblemResults(res.variables, res.total_cost, 
   res.optimizer_log, res.time_stamp)
-  stack_plot(res; kwargs...)
+  stack_plot(results; kwargs...)
 end
 
 function stack_plot(res::OperationsProblemResults; kwargs...)

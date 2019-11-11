@@ -1,4 +1,4 @@
-function _get_iterator(sys::PSY.System, res::OperationModelResults)
+function _get_iterator(sys::PSY.System, res::OperationsProblemResults)
 
     iterator = []
     for (k,v) in res.variables
@@ -32,14 +32,14 @@ end
 
 This function makes a dictionary of fuel type and the generators associated.
 # Example
-results = solve_op_model!(OpModel)
+results = solve_op_problem!(OpProblem)
 generator_dict = make_fuel_dictionary(c_sys5_re, results)
 
 kwargs: :category_dict = dictionary{String, NamedTuple} if a different 
 type of stacking is desired.
 
 """
-function make_fuel_dictionary(sys::PSY.System, res::OperationModelResults; kwargs...)
+function make_fuel_dictionary(sys::PSY.System, res::OperationsProblemResults; kwargs...)
 
     category_dict = Dict()
     category_dict["Solar"] = NamedTuple{(:primemover, :fuel)},(PSY.PVe, nothing)
@@ -75,7 +75,7 @@ function make_fuel_dictionary(sys::PSY.System, res::OperationModelResults; kwarg
     return generator_dict
 end
 
-function _aggregate_data(res::PSI.OperationModelResults, generator_dict::Dict)
+function _aggregate_data(res::PSI.OperationsProblemResults, generator_dict::Dict)
 
    
     All_var = DataFrames.DataFrame()
@@ -115,7 +115,7 @@ generator_dict = make_fuel_dictionary(res, c_sys5_re)
 fuel_plot(res, generator_dict)
 
 """
-function get_stacked_aggregation_data(res::OperationModelResults, generator_dict::Dict)
+function get_stacked_aggregation_data(res::OperationsProblemResults, generator_dict::Dict)
     order = (["Nuclear", "Coal", "Hydro", "Gas_CC",
     "Gas_CT", "Storage", "Oil_ST", "Oil_CT",
     "Sync_Cond", "Wind", "Solar", "CSP", "curtailment"])
@@ -145,7 +145,7 @@ function get_stacked_aggregation_data(res::OperationModelResults, generator_dict
     
     return PowerSimulations.StackedGeneration(time_range, data_matrix, legend)
 end
-function get_bar_aggregation_data(res::PSI.OperationModelResults, generator_dict::Dict)
+function get_bar_aggregation_data(res::PSI.OperationsProblemResults, generator_dict::Dict)
 
     order = (["Nuclear", "Coal", "Hydro", "Gas_CC",
     "Gas_CT", "Storage", "Oil_ST", "Oil_CT",

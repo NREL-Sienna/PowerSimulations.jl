@@ -5,8 +5,8 @@ Receives the variables dictionary from the operation model results and writes ea
 to a file. The default file type is feather.
 
 # Arguments
--`vars_results::Dict{Symbol, DataFrames.DataFrame} = res.variables`: dictionary of DataFrames
--`save_path::AbstractString`: the file path that the variable files should be written to populate.
+- `vars_results::Dict{Symbol, DataFrames.DataFrame} = res.variables`: dictionary of DataFrames
+- `save_path::AbstractString`: the file path that the variable files should be written to populate.
 
 # Example
 ```julia
@@ -14,7 +14,7 @@ res = solve_op_problem!(op_problem)
 write_data(res.variables, "Users/downloads")
 ```
 # Accepted Key Words
--`file_type::String = CSV`: default filetype is Feather, but this key word can be used to make it CSV.
+- `file_type::String = CSV`: default filetype is Feather, but this key word can be used to make it CSV.
 if a different file type is desired the code will have to be changed to accept it.
 
 """
@@ -40,7 +40,7 @@ function write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, time::Data
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
         for (k,v) in vars_results
-            if size(time,2) == size(v,2)
+            if size(time,1) == size(v,1)
                 var = hcat(time, v)
             else
                 var = v
@@ -176,13 +176,24 @@ function write_model_results(results::Results, save_path::String; kwargs...)
     return
 end
 """ Exports Simulation Model Results to a path"""
-function write_model_results(res::Results, path::String, results::String; kwargs...)
+function write_model_results(res::AggregatedResults, path::String, results::String; kwargs...)
     if !isdir(path)
         error("Specified path is not valid. Run write_results to save results.")
     end
     folder_path = joinpath(path,results)
     write_data(res.variables, res.time_stamp, folder_path; kwargs...)
     write_data(res.duals, folder_path; kwargs...)
+    _write_optimizer_log(res.optimizer_log, folder_path)
+    write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
+    println("Files written to $folder_path folder.")
+    return
+end
+function write_model_results(res::OperationsProblemResults, path::String, results::String; kwargs...)
+    if !isdir(path)
+        error("Specified path is not valid. Run write_results to save results.")
+    end
+    folder_path = joinpath(path,results)
+    write_data(res.variables, res.time_stamp, folder_path; kwargs...)
     _write_optimizer_log(res.optimizer_log, folder_path)
     write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
     println("Files written to $folder_path folder.")
