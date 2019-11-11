@@ -1,11 +1,6 @@
-abstract type AbstractReservesFormulation<:AbstractServiceFormulation end
+abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
 
-abstract type AbstractRegulationReserveFormulation<:AbstractReservesFormulation end
-
-struct RampLimitedReserve<:AbstractReservesFormulation end
-
-struct LoadProportionalReserve<:AbstractReservesFormulation end
-
+struct SpinningReserve <: AbstractReservesFormulation end
 
 ########################### Reserve constraints ######################################
 
