@@ -63,8 +63,8 @@ Systems system, and optimization model.
 
 # Example
 ```julia
-template= OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationsProblem(TestOpProblem, template, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
+template = OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
+OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
 ```
 
 # Accepted Key Words
@@ -106,7 +106,7 @@ the optimization model and populates the operation model struct.
 # Arguments
 - `op_problem::Type{M} = where {M<:AbstractOperationsProblem`: Defines the type of the operation model
 - `::Type{T} where T<:PM.AbstractPowerFormulation`: The power formulation used for model ref & optimization model
-- `sys::PSY.System = c_sys5`: the system created in Power Systems
+- `sys::PSY.System = system`: the system created in Power Systems
 
 # Output
 - `op_problem::OperationsProblem`: The operation model contains the model type, model, Power
@@ -114,8 +114,8 @@ Systems system, and optimization model.
 
 # Example
 ```julia
-template= OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationsProblem(TestOpProblem, template, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
+template = OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
+OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
 ```
 
 
@@ -166,7 +166,7 @@ Systems system, and optimization model.
 # Example
 ```julia
 template= OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationsProblem(TestOpProblem, template, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
+OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
 ```
 
 # Accepted Key Words
