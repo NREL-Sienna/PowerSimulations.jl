@@ -85,14 +85,14 @@ function load_operation_results(folder_path::AbstractString)
 
     for name in variable_list
         variable_name = splitext([name])[1]
-        file_path = joinpath(folder_path,[name])
+        file_path = joinpath(folder_path, [name])
         variables[Symbol(variable_name)] = Feather.read(file_path) 
         if !isnothing(variables[Symbol(variable_name)][!,:Range])
             delete!(variables[Symbol(variable_name)], :Range)
         end
     end
     optimizer = JSON.parse(open(joinpath(folder_path, "optimizer_log.json")))
-    time_stamp = Feather.read(joinpath(folder_path,"time_stamp.feather"))
+    time_stamp = Feather.read(joinpath(folder_path, "time_stamp.feather"))
     time_stamp = shorten_time_stamp(time_stamp)
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     results = make_results(variables, obj_value, optimizer, time_stamp)
@@ -122,7 +122,7 @@ function load_operation_results(folder_path::AbstractString, file_type)
         end
     end
     optimizer = JSON.parse(open(joinpath(folder_path, "optimizer_log.json")))
-    time_stamp = file_type.read(joinpath(folder_path,"time_stamp.$(lowercase("$file_type"))"))
+    time_stamp = file_type.read(joinpath(folder_path, "time_stamp.$(lowercase("$file_type"))"))
     time_stamp = shorten_time_stamp(time_stamp)
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     results = make_results(variables, obj_value, optimizer, time_stamp)

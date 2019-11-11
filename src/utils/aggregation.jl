@@ -155,10 +155,8 @@ variable = [:P_ThermalStandard, :P_RenewableDispatch]
 results = load_simulation_results(stage,step, variable, references)
 ```
 # Accepted Key Words
-- `write::Bool`: if true, the aggregated results get written back to the results
-file in the folder structure
-- `file_type::String = CSV`: default filetype is Feather, but this key word can be used to make it CSV.
-if a different file type is desired the code will have to be changed to accept it.
+- `write::Bool`: if true, the aggregated results get written back to the results file in the folder structure
+- `file_type::String = CSV`: default filetype is Feather, but this key word can be used to make it CSV. If a different file type is desired the code will have to be changed to accept it.
 """
 function load_simulation_results(stage::String,
          step::Array,
@@ -221,10 +219,8 @@ variable = [:P_ThermalStandard, :P_RenewableDispatch]
 results = load_simulation_results(stage,step, variable, references)
 ```
 # Accepted Key Words
-- `write::Bool`: if true, the aggregated results get written back to the results
-file in the folder structure
-- `file_type::String = CSV`: default filetype is Feather, but this key word can be used to make it CSV.
-if a different file type is desired the code will have to be changed to accept it.
+- `write::Bool`: if true, the aggregated results get written back to the results file in the folder structure
+- `file_type::String = CSV`: default filetype is Feather, but this key word can be used to make it CSV. If a different file type is desired the code will have to be changed to accept it.
 """
 
 function load_simulation_results(stage::String, references::Dict{Any,Any}; kwargs...)

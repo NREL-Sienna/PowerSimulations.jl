@@ -121,7 +121,7 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
             for run in 1:stage.executions
                 sim.ref.current_time = sim.ref.date_ref[ix]
                 verbose && println("Simulation TimeStamp: $(sim.ref.current_time)")
-                raw_results_path = joinpath(sim.ref.raw,"step-$(s)-stage-$(ix)",replace_chars("$(sim.ref.current_time)",":","-"))
+                raw_results_path = joinpath(sim.ref.raw, "step-$(s)-stage-$(ix)",replace_chars("$(sim.ref.current_time)",":","-"))
                 mkpath(raw_results_path)
     
                 update_stage!(stage, s, sim)
