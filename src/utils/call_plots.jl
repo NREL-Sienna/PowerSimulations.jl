@@ -81,41 +81,34 @@ bar_plot(results)
 plot attributes, such as seriescolor = [:red :blue :orange]
 will override the default series color
 """
-function bar_plot(res::PSI.AggregatedResults; kwargs...)
-  results = OperationsProblemResults(res.variables, res.total_cost, 
-  res.optimizer_log, res.time_stamp)
-  bar_plot(results; kwargs...)
-end
 
 function bar_plot(res::OperationsProblemResults; kwargs...)
-
-  default = hcat([Colors.RGBA(0.7,0.1,0.1,0.95)], # maroon
-            [Colors.RGBA(0,0,0,0.8)], [:lightblue], # Dark gray
-            [Colors.RGBA(0.33,0.42,0.18,0.9)], [:pink], # olive green
-            [Colors.RGBA(0.93,0.46,0,1)], [Colors.RGBA(0.56,0.28,0.54,1)], # orange, orchid
-            [Colors.RGBA(0.9,0.5,0.6,0.80)],  # dark pink
-            [Colors.RGBA(1, 1, 0.5, 0.6)], # light yellow
-            [Colors.RGBA(0.27, 0.5, 0.7, 0.9)], # steel blue
-            [Colors.RGBA(1, 0.757, 0.15, 01)], # canary yellow
-            [Colors.RGBA(0.8, 0.6, 0.3, 1)], [:red]) # khaki
-
-  seriescolor = get(kwargs, :seriescolor, default)
-  key_name = string.(collect(keys(res.variables)))
-
-  for i in 1:length(key_name)
-
-    variable_bar = get_bar_plot_data(res, key_name[i])
-    p = RecipesBase.plot(variable_bar, key_name[i]; seriescolor = seriescolor)
-    display(p)
-
-  end
-
-  bar_gen = get_bar_gen_data(res)
-  p2 = RecipesBase.plot(bar_gen; seriescolor = seriescolor)
-  display(p2)
-
+    default = hcat([Colors.RGBA(0.7,0.1,0.1,0.95)], # maroon
+              [Colors.RGBA(0,0,0,0.8)], [:lightblue], # Dark gray
+              [Colors.RGBA(0.33,0.42,0.18,0.9)], [:pink], # olive green
+              [Colors.RGBA(0.93,0.46,0,1)], [Colors.RGBA(0.56,0.28,0.54,1)], # orange, orchid
+              [Colors.RGBA(0.9,0.5,0.6,0.80)],  # dark pink
+              [Colors.RGBA(1, 1, 0.5, 0.6)], # light yellow
+              [Colors.RGBA(0.27, 0.5, 0.7, 0.9)], # steel blue
+              [Colors.RGBA(1, 0.757, 0.15, 01)], # canary yellow
+              [Colors.RGBA(0.8, 0.6, 0.3, 1)], [:red]) # khaki
+    seriescolor = get(kwargs, :seriescolor, default)
+    key_name = string.(collect(keys(res.variables)))
+    for i in 1:length(key_name)
+        variable_bar = get_bar_plot_data(res, key_name[i])
+        p = RecipesBase.plot(variable_bar, key_name[i]; seriescolor = seriescolor)
+        display(p)
+    end
+    bar_gen = get_bar_gen_data(res)
+    p2 = RecipesBase.plot(bar_gen; seriescolor = seriescolor)
+    display(p2)
 end
 
+function bar_plot(res::AggregatedResults; kwargs...)
+    results = OperationsProblemResults(res.variables, res.total_cost, 
+    res.optimizer_log, res.time_stamp)
+    bar_plot(results; kwargs...)
+end
 """
      stack_plot(OperationsProblemResults)
 
@@ -133,36 +126,31 @@ stack_plot(results)
 plot attributes, such as seriescolor = [:red :blue :orange]
 will override the default series color
 """
+
+function stack_plot(res::OperationsProblemResults; kwargs...)
+    default = hcat([Colors.RGBA(0.7,0.1,0.1,0.95)], # maroon
+    [Colors.RGBA(0,0,0,0.8)], [:lightblue], # Dark gray
+    [Colors.RGBA(0.33,0.42,0.18,0.9)], [:pink], # olive green
+    [Colors.RGBA(0.93,0.46,0,1)], [Colors.RGBA(0.56,0.28,0.54,1)], # orange, orchid
+    [Colors.RGBA(0.9,0.5,0.6,0.80)],  # dark pink
+    [Colors.RGBA(1, 1, 0.5, 0.6)], # light yellow
+    [Colors.RGBA(0.27, 0.5, 0.7, 0.9)], # steel blue
+    [Colors.RGBA(1, 0.757, 0.15, 01)], # canary yellow
+    [Colors.RGBA(0.8, 0.6, 0.3, 1)], [:red]) # khaki
+    seriescolor = get(kwargs, :seriescolor, default)  
+    key_name = string.(collect(keys(res.variables)))
+    for i in 1:length(key_name)
+        variable_stack = get_stacked_plot_data(res, key_name[i])
+        p3 = RecipesBase.plot(variable_stack, key_name[i]; seriescolor = seriescolor)
+        display(p3)
+    end
+    stacked_gen = get_stacked_generation_data(res)
+    p4 = RecipesBase.plot(stacked_gen; seriescolor = seriescolor)
+    display(p4)
+end
+
 function stack_plot(res::PSI.AggregatedResults; kwargs...)
   results = OperationsProblemResults(res.variables, res.total_cost, 
   res.optimizer_log, res.time_stamp)
   stack_plot(results; kwargs...)
-end
-
-function stack_plot(res::OperationsProblemResults; kwargs...)
-  
-  default = hcat([Colors.RGBA(0.7,0.1,0.1,0.95)], # maroon
-  [Colors.RGBA(0,0,0,0.8)], [:lightblue], # Dark gray
-  [Colors.RGBA(0.33,0.42,0.18,0.9)], [:pink], # olive green
-  [Colors.RGBA(0.93,0.46,0,1)], [Colors.RGBA(0.56,0.28,0.54,1)], # orange, orchid
-  [Colors.RGBA(0.9,0.5,0.6,0.80)],  # dark pink
-  [Colors.RGBA(1, 1, 0.5, 0.6)], # light yellow
-  [Colors.RGBA(0.27, 0.5, 0.7, 0.9)], # steel blue
-  [Colors.RGBA(1, 0.757, 0.15, 01)], # canary yellow
-  [Colors.RGBA(0.8, 0.6, 0.3, 1)], [:red]) # khaki
-  seriescolor = get(kwargs, :seriescolor, default)  
-  key_name = string.(collect(keys(res.variables)))
-
-  for i in 1:length(key_name)
-
-    variable_stack = get_stacked_plot_data(res, key_name[i])
-    p3 = RecipesBase.plot(variable_stack, key_name[i]; seriescolor = seriescolor)
-    display(p3)
-
-  end
-
-  stacked_gen = get_stacked_generation_data(res)
-  p4 = RecipesBase.plot(stacked_gen; seriescolor = seriescolor)
-  display(p4)
-
 end

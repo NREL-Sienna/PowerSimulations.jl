@@ -100,7 +100,7 @@ execute!!(sim::Simulation; verbose::Bool = false, kwargs...)
 ```
 
 # Accepted Key Words
-`dual_constraints::Vector{Symbol}`: if dual variables are desired in the
+- `dual_constraints::Vector{Symbol}`: if dual variables are desired in the
 results, include a vector of the variable names to be included
 """
 

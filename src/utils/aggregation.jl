@@ -157,6 +157,8 @@ results = load_simulation_results(stage,step, variable, references)
 # Accepted Key Words
 - `write::Bool`: if true, the aggregated results get written back to the results
 file in the folder structure
+- `file_type::String = CSV`: default filetype is Feather, but this key word can be used to make it CSV.
+if a different file type is desired the code will have to be changed to accept it.
 """
 function load_simulation_results(stage::String,
          step::Array,
@@ -221,6 +223,8 @@ results = load_simulation_results(stage,step, variable, references)
 # Accepted Key Words
 - `write::Bool`: if true, the aggregated results get written back to the results
 file in the folder structure
+- `file_type::String = CSV`: default filetype is Feather, but this key word can be used to make it CSV.
+if a different file type is desired the code will have to be changed to accept it.
 """
 
 function load_simulation_results(stage::String, references::Dict{Any,Any}; kwargs...)
@@ -266,7 +270,7 @@ function _concat_string(duals::Vector{Symbol})
     return duals
 end
 """
-    make_references(sim::Simulation, date_run::String)
+    make_references(sim::Simulation, date_run::String; kwargs...)
 
 Creates a dictionary of variables with a dictionary of stages
 that contains dataframes of date/step/and desired file path
@@ -288,6 +292,9 @@ verbose = true, system_to_file = false)
 execute!(sim::Simulation; verbose::Bool = false, kwargs...)
 references = make_references(sim, "2019-10-03T09-18-00-test")
 ```
+
+# Accepted Key Words
+- `dual_constraints::Vector{Symbol}`: name of dual constraints to be added to results
 """
 function make_references(sim::Simulation, date_run::String; kwargs...)
     sim.ref.date_ref[1] = sim.daterange[1]
