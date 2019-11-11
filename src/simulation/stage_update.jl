@@ -1,17 +1,23 @@
 #########################TimeSeries Data Updating###########################################
+function get_simulation_time(sim::Simulation, stage_number::Int64)
+    return sim.ref.date_ref[stage_number]
+end
+
 function parameter_update!(param_reference::UpdateRef{T},
                            param_array::JuMPParamArray,
                            stage_number::Int64,
                            sim::Simulation) where T <: PSY.Component
 
     devices = PSY.get_components(T, sim.stages[stage_number].sys)
-    initial_forecast_time = sim.ref.date_ref[stage_number]
-
+    initial_forecast_time = get_simulation_time(sim, stage_number)
+    horizon = length(model_time_steps(sim.stages[stage_number].canonical))
     for d in devices
-        ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
-                                            d,
-                                            initial_forecast_time,
-                                            "$(param_reference.access_ref)")))
+        forecast = PSY.get_forecast(PSY.Deterministic,
+                                    d,
+                                    initial_forecast_time,
+                                    "$(param_reference.access_ref)",
+                                    horizon)
+        ts_vector = TS.values(PSY.get_data(forecast))
         device_name = PSY.get_name(d)
         for (ix, val) in enumerate(param_array[device_name,:])
             value = ts_vector[ix]

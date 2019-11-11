@@ -70,9 +70,9 @@ function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::Str
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("Stage $(stage.key) status is $(model_status)")
     end
-    retrieve_duals = :duals in keys(kwargs)
-    if retrieve_duals && !isnothing(get_constraints(stage.canonical))
-        _export_model_result(stage, start_time, results_path, kwargs[:duals])
+    retrieve_duals = get(kwargs, :duals, nothing)
+    if !isnothing(retrieve_duals) && !isnothing(get_constraints(stage.canonical))
+        _export_model_result(stage, start_time, results_path, retrieve_duals)
     else
         _export_model_result(stage, start_time, results_path)
     end
@@ -117,7 +117,7 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
         verbose && println("Step $(s)")
         for (ix, stage) in enumerate(sim.stages)
             verbose && println("Stage $(ix)")
-            interval = PSY.get_forecasts_interval(stage.sys)
+            interval = stage.interval
             for run in 1:stage.executions
                 sim.ref.current_time = sim.ref.date_ref[ix]
                 verbose && println("Simulation TimeStamp: $(sim.ref.current_time)")
@@ -125,11 +125,8 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
                 mkpath(raw_results_path)
     
                 update_stage!(stage, s, sim)
-                if :dual_constraints in keys(kwargs)
-                    _run_stage(stage, sim.ref.current_time, raw_results_path; duals = kwargs[:dual_constraints])
-                else
-                    _run_stage(stage, sim.ref.current_time, raw_results_path)
-                end
+                dual_constraints = get(kwargs, :dual_constraints, nothing)
+                _run_stage(stage, sim.ref.current_time, raw_results_path; duals = dual_constraints)
                 sim.ref.run_count[s][ix] += 1
                 sim.ref.date_ref[ix] = sim.ref.date_ref[ix] + interval
             end
