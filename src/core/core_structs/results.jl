@@ -77,7 +77,7 @@ results = load_operation_results("/Users/test/2019-10-03T09-18-00")
 function load_operation_results(folder_path::AbstractString)
 
     if isfile(folder_path)
-        @error("not a folder path")
+        error("not a folder path")
     end
     files_in_folder = collect(readdir(folder_path))
     variable_list = setdiff(files_in_folder, ["time_stamp.feather", "optimizer_log.json"])
@@ -107,7 +107,7 @@ end
 function load_operation_results(folder_path::AbstractString, file_type)
 
     if isfile(folder_path)
-        @error("not a folder path")
+        error("not a folder path")
     end
     files_in_folder = collect(readdir(folder_path))
     variable_list = setdiff(files_in_folder, ["time_stamp.$(lowercase("$file_type"))", "optimizer_log.json"])
