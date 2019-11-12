@@ -131,6 +131,10 @@ for t in 1:2
         add_forecast!(c_sys5_uc, l, Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]))
     end
 end
+reserve_uc = reserve5(get_components(ThermalStandard, c_sys5_uc))
+add_component!(c_sys5_uc, reserve_uc[1])
+add_forecast!(c_sys5_uc, reserve_uc[1], Deterministic("get_requirement", Reserve_ts[1][1]))
+add_forecast!(c_sys5_uc, reserve_uc[1], Deterministic("get_requirement", Reserve_ts[2][1]))
 
 function build_init(gens, data)
     init = Vector{InitialCondition}(undef, length(collect(gens)))
