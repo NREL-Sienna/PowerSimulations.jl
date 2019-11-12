@@ -215,16 +215,17 @@ include("simulation/stage_update.jl")
 include("routines/make_initial_conditions.jl")
 include("routines/get_results.jl")
 include("routines/solve_routines.jl")
-include("routines/write_model.jl")
 
 #Utils
 include("utils/optimization_debugging.jl")
 include("utils/printing.jl")
-include("utils/plot_fuel_results.jl")
 include("utils/plot_results.jl")
 include("utils/plot_recipes.jl")
 include("utils/aggregation.jl")
 include("utils/call_plots.jl")
+
+#Routines
+include("routines/write_results.jl")
 
 #Initialization
 

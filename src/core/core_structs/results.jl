@@ -128,8 +128,3 @@ function load_operation_results(folder_path::AbstractString, file_type)
     results = make_results(variables, obj_value, optimizer, time_stamp)
     return results
 end
-
-function shorten_time_stamp(time::DataFrames.DataFrame)
-    time = time[1:(size(time,1)-1),:]
-    return time
-end
