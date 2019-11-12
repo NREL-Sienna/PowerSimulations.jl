@@ -1,21 +1,28 @@
 function construct_services!(canonical::Canonical,
                              sys::PSY.System,
-                             services_template;
+                             services_template::Dict{Symbol,ServiceModel};
                              kwargs...)
 
-    services = PSY.get_components(S, sys)
-    _add_nodal_expressions(canonical, services, sys)
-    for service in services
-        for (type_device,devices) in _get_devices_bytype(PSY.get_contributingdevices(service))
-            #Variables
-            activereserve_variables!(canonical, service, devices)
+    isempty(services_template) && return
 
-            #Constraints
-            activereserve_constraints!(canonical, service, devices, Sr)
+    for Sr in values(services_template)
 
+        services = PSY.get_components(Sr, sys)
+        _add_nodal_expressions(canonical, services, sys)
+        for service in services
+            for (type_device,devices) in _get_devices_bytype(PSY.get_contributingdevices(service))
+                #Variables
+                activereserve_variables!(canonical, service, devices)
+
+                #Constraints
+                activereserve_constraints!(canonical, service, devices, Sr)
+
+            end
+            service_balance_constraint!(canonical,service)
         end
-        service_balance_constraint!(canonical,service)
+
     end
+
     return
 
 end
