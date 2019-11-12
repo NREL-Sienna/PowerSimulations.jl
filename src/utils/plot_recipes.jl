@@ -24,17 +24,17 @@ RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String)
 
     time = convert.(Dates.DateTime,results.time_range)
     n = length(time)
+    time_interval = Dates.Hour(convert(Dates.DateTime,time[n])- convert(Dates.DateTime,time[n-1]))*n
     data = results.data_matrix
     z = cumsum(data, dims = 2)
     # Plot attributes
     grid := false
     title := variable
     label := results.labels
-    legend := :topleft
-    time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))
+    legend := :outerright
     xlabel := "$time_interval"
     ylabel := "Generation (MW)"
-    xtick := time[1]:Dates.Hour(12):time[n]
+    xtick := time[1]:time_interval:time[n]+Dates.Hour(1)
     #create filled polygon
     sy = vcat(z[:,1],zeros(n))
     sx = [time[1:n]; reverse(time[1:n])]
@@ -55,17 +55,17 @@ RecipesBase.@recipe function StackedGeneration(res::StackedGeneration)
 
     time = convert.(Dates.DateTime,res.time_range)
     n = length(time)
+    time_interval = Dates.Hour(convert(Dates.DateTime,time[n])- convert(Dates.DateTime,time[n-1]))*n
     data = res.data_matrix
     z = cumsum(data, dims = 2)
     # Plot Attributes
     grid := false
     title := "Generation Type"
     label := res.labels
-    legend := :bottomright
-    time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))
+    legend := :outerright
     xlabel := "$time_interval"
     ylabel := "Generation (MW)"
-    xtick := time[1]:Dates.Hour(12):time[n]
+    xtick := time[1]:time_interval:time[n]+Dates.Hour(1)
     # Create filled polygon
     sy = vcat(z[:,1],zeros(n))
     sx = [time[1:n]; reverse(time[1:n])]
@@ -87,6 +87,7 @@ RecipesBase.@recipe function BarPlot(res::BarPlot, variable::String)
 
   time = convert.(Dates.DateTime,res.time_range)
   n = length(time)
+  time_interval = Dates.Hour(convert(Dates.DateTime,time[n])- convert(Dates.DateTime,time[n-1]))*n
   data_point = res.bar_data
   data = [data_point; data_point]
   z = cumsum(data, dims = 2)
@@ -95,8 +96,8 @@ RecipesBase.@recipe function BarPlot(res::BarPlot, variable::String)
   title := variable
   seriestype := :shape
   label := res.labels
+  legend := :outerright
   start_time = time[1]
-  time_interval = Dates.Hour(convert(Dates.DateTime,time[n])-convert(Dates.DateTime,time[1]))
   xlabel := "$time_interval, $start_time"
   ylabel := "Generation(MW)"
   xlims := (1, 8)
@@ -123,6 +124,9 @@ RecipesBase.@recipe function BarGen(res::BarGeneration)
     title := "Generation Type"
     seriestype := :shape
     label := res.labels
+    xlabel := "$time_interval, $start_time"
+    ylabel := "Generation(MW)"
+    legend := :outerright
     start_time = time[1]
     xticks := false
     xlims := (1, 8)

@@ -77,7 +77,7 @@ results = load_operation_results("/Users/test/2019-10-03T09-18-00")
 function load_operation_results(folder_path::AbstractString)
 
     if isfile(folder_path)
-        error("not a folder path")
+        error("Not a folder path.")
     end
     files_in_folder = collect(readdir(folder_path))
     variable_list = setdiff(files_in_folder, ["time_stamp.feather", "optimizer_log.json"])
@@ -93,21 +93,18 @@ function load_operation_results(folder_path::AbstractString)
     end
     optimizer = JSON.parse(open(joinpath(folder_path, "optimizer_log.json")))
     time_stamp = Feather.read(joinpath(folder_path, "time_stamp.feather"))
-    time_stamp = shorten_time_stamp(time_stamp)
+    if size(time_stamp,1) > find_var_length(variables, variable_list)
+        time_stamp = shorten_time_stamp(time_stamp)
+    end
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     results = make_results(variables, obj_value, optimizer, time_stamp)
     return results
 end
 
-function shorten_time_stamp(time::DataFrames.DataFrame)
-    time = time[1:(size(time,1)-1),:]
-    return time
-end
-
 function load_operation_results(folder_path::AbstractString, file_type)
 
     if isfile(folder_path)
-        error("not a folder path")
+        error("Not a folder path.")
     end
     files_in_folder = collect(readdir(folder_path))
     variable_list = setdiff(files_in_folder, ["time_stamp.$(lowercase("$file_type"))", "optimizer_log.json"])
@@ -133,4 +130,9 @@ end
 # this ensures that the time_stamp is not double shortened
 function find_var_length(variables::Dict, variable_list::Array)
     return size(variables[Symbol(splitext(variable_list[1])[1])], 1)
+end
+
+function shorten_time_stamp(time::DataFrames.DataFrame)
+    time = time[1:(size(time,1)-1),:]
+    return time
 end

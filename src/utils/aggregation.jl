@@ -331,3 +331,8 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
     end
     return references
 end
+
+function find_step_range(references::Dict, stage::String, Dates::Dates.DateTime)
+    variable = (collect(keys(references[stage])))
+    date_df = references[stage][variable[1]]
+end

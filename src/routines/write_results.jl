@@ -24,7 +24,7 @@ function write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path:
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
         for (k,v) in vars_results
-            file_path = joinpath(save_path,"$(k).$(lowercase("$file_type"))")
+            file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
             file_type.write(file_path, vars_results[k])
         end
     else
@@ -45,7 +45,7 @@ function write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, time::Data
             else
                 var = v
             end
-            file_path = joinpath(save_path,"$(k).$(lowercase("$file_type"))")
+            file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
             file_type.write(file_path, var)
         end
     else
@@ -60,7 +60,7 @@ function write_data(data::DataFrames.DataFrame, save_path::AbstractString, file_
     end
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
-        file_path = joinpath(save_path,"$(file_name).$(lowercase("$file_type"))")
+        file_path = joinpath(save_path, "$(file_name).$(lowercase("$file_type"))")
         file_type.write(file_path, data)
     else
         error("unsupported file type: $file_type")
@@ -79,7 +79,7 @@ function _write_data(canonical::Canonical, save_path::AbstractString; kwargs...)
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
         for (k, v) in get_variables(canonical)
-            file_path = joinpath(save_path,"$(k).$(lowercase("$file_type"))")
+            file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
             file_type.write(file_path, _result_dataframe_variables(v))
         end
     else
@@ -93,7 +93,7 @@ function write_data(canonical::Canonical, save_path::AbstractString, dual_con::V
     if file_type == Feather || file_type == CSV
         duals = get_model_duals(canonical, dual_con)
         for (k, v) in duals
-            file_path = joinpath(save_path,"$(k)_dual.$(lowercase("$file_type"))")
+            file_path = joinpath(save_path, "$(k)_dual.$(lowercase("$file_type"))")
             file_type.write(file_path, _result_dataframe_vars(v))
         end
     else
@@ -185,7 +185,7 @@ function write_results(res::AggregatedResults, path::String, results_folder::Str
     if !isdir(path)
         error("Specified path is not valid. Run write_results to save results.")
     end
-    folder_path = joinpath(path,results_folder)
+    folder_path = joinpath(path, results_folder)
     write_data(res.variables, res.time_stamp, folder_path; kwargs...)
     write_data(res.duals, folder_path; kwargs...)
     _write_optimizer_log(res.optimizer_log, folder_path)
@@ -212,7 +212,7 @@ function write_results(res::OperationsProblemResults, path::String, results_fold
     if !isdir(path)
         error("Specified path is not valid. Run write_results to save results.")
     end
-    folder_path = joinpath(path,results_folder)
+    folder_path = joinpath(path, results_folder)
     write_data(res.variables, res.time_stamp, folder_path; kwargs...)
     _write_optimizer_log(res.optimizer_log, folder_path)
     write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
