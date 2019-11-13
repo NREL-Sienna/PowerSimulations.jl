@@ -1,8 +1,6 @@
 abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
 
-struct SpinningReserve <: AbstractReservesFormulation end
-
-struct RampLimitedSpinningReserve <: AbstractReservesFormulation end
+struct RangeUpwardReserve <: AbstractReservesFormulation end
 
 ########################### Reserve constraints ######################################
 

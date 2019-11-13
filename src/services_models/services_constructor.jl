@@ -5,14 +5,11 @@ function construct_services!(canonical::Canonical,
 
     isempty(services_template) && return
 
-    for Sr in values(services_template)
-
-        services = PSY.get_components(Sr, sys)
-        _add_nodal_expressions(canonical, services, sys)
+    for service_model in values(services_template)
+        services = PSY.get_components(service_model.service_type, sys)
         for service in services
             for (type_device,devices) in _get_devices_bytype(PSY.get_contributingdevices(service))
-                #Variables
-                activereserve_variables!(canonical, service, devices)
+
 
                 #Constraints
                 activereserve_constraints!(canonical, service, devices, Sr)
@@ -21,11 +18,32 @@ function construct_services!(canonical::Canonical,
             service_balance_constraint!(canonical,service)
         end
 
+
+
     end
 
     return
 
 end
+
+
+function construct_device!(canonical::Canonical, sys::PSY.System,
+                           model::ServiceModel{SR, RangeUpwardReserve},
+                           kwargs...) where {SR<:PSY.Service}
+
+        #Variables
+        activereserve_variables!(canonical, service, devices)
+
+        #Constraints
+        activereserve_expressions!(canonical, service, devices, Sr)
+
+        service_balance_constraint!(canonical,service)
+
+
+end
+
+
+
 
 function _get_devices_bytype(devices::IS.FlattenIteratorWrapper{T}) where {T<:PSY.ThermalGen}
 
