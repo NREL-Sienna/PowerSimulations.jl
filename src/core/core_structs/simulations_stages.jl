@@ -10,6 +10,7 @@ mutable struct _Stage{M<:AbstractOperationsProblem} <: AbstractStage
     optimizer::JuMP.OptimizerFactory
     executions::Int64
     execution_count::Int64
+    interval::Dates.Period
     chronology_ref::Dict{Int64, <:Chronology}
     ini_cond_chron::Union{<:Chronology, Nothing}
     cache::Dict{Type{<:AbstractCache}, AbstractCache}
@@ -21,6 +22,7 @@ mutable struct _Stage{M<:AbstractOperationsProblem} <: AbstractStage
                     canonical::Canonical,
                     optimizer::JuMP.OptimizerFactory,
                     executions::Int64,
+                    interval::Dates.Period,
                     chronology_ref::Dict{Int64, <:Chronology},
                     cache::Vector{<:AbstractCache}) where M <: AbstractOperationsProblem
 
@@ -47,6 +49,7 @@ mutable struct _Stage{M<:AbstractOperationsProblem} <: AbstractStage
            optimizer,
            executions,
            0,
+           interval,
            chronology_ref,
            ini_cond_chron,
            cache_dict)
@@ -60,6 +63,9 @@ end
 mutable struct Stage <: AbstractStage
     op_problem::Type{<:AbstractOperationsProblem}
     model::OperationsTemplate
+    initial_time::Dates.DateTime
+    horizon::Int64
+    interval::Dates.Period
     execution_count::Int64
     sys::PSY.System
     optimizer::JuMP.OptimizerFactory
@@ -68,6 +74,9 @@ mutable struct Stage <: AbstractStage
 
     function Stage(::Type{M},
                    model::OperationsTemplate,
+                   initial_time::Dates.DateTime,
+                   horizon::Int64,
+                   interval::Dates.Period,
                    execution_count::Int64,
                    sys::PSY.System,
                    optimizer::JuMP.OptimizerFactory,
@@ -76,6 +85,9 @@ mutable struct Stage <: AbstractStage
 
         new(M,
             model,
+            initial_time,
+            horizon,
+            interval,
             execution_count,
             sys,
             optimizer,
@@ -86,26 +98,51 @@ mutable struct Stage <: AbstractStage
 end
 
 function Stage(::Type{M},
-                model::OperationsTemplate,
-                execution_count::Int64,
-                sys::PSY.System,
-                optimizer::JuMP.OptimizerFactory,
-                chronology_ref::Dict{Int64, <:Chronology},
-                cache::Union{Nothing, AbstractCache}=nothing) where M<:AbstractOperationsProblem
-
-    cacheinput = isnothing(cache) ? Vector{AbstractCache}() : [cache]
-    return Stage(M, model, execution_count, sys, optimizer, chronology_ref, cacheinput)
-
-end
-
-function Stage(model::OperationsTemplate,
+               model::OperationsTemplate,
+               horizon::Int64,
+               interval::Dates.Period,
                execution_count::Int64,
                sys::PSY.System,
                optimizer::JuMP.OptimizerFactory,
                chronology_ref::Dict{Int64, <:Chronology},
-               cache::Union{Nothing, AbstractCache}=nothing)
+               cache::Union{Nothing, AbstractCache}=nothing;
+               kwargs...) where M<:AbstractOperationsProblem
 
-    return Stage(GenericOpProblem, model, execution_count, sys, optimizer, chronology_ref, cache)
+    initial_time = get(kwargs, :initial_time, PSY.get_forecast_initial_times(sys)[1])
+    cacheinput = isnothing(cache) ? Vector{AbstractCache}() : [cache]
+    return Stage(M, 
+                model,
+                initial_time,
+                horizon,
+                interval,
+                execution_count,
+                sys,
+                optimizer,
+                chronology_ref,
+                cacheinput)
+
+end
+
+function Stage(model::OperationsTemplate,
+               horizon::Int64,
+               interval::Dates.Period,
+               execution_count::Int64,
+               sys::PSY.System,
+               optimizer::JuMP.OptimizerFactory,
+               chronology_ref::Dict{Int64, <:Chronology},
+               cache::Union{Nothing, AbstractCache}=nothing;
+               kwargs...)
+    
+    initial_time = get(kwargs, :initial_time, PSY.get_forecast_initial_times(sys)[1])
+    return Stage(GenericOpProblem,
+                model,
+                horizon,
+                interval,
+                execution_count,
+                sys,
+                optimizer,
+                chronology_ref,
+                cache; initial_time = initial_time, kwargs...)
 
 end
 

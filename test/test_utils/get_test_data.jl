@@ -10,14 +10,14 @@ nodes = nodes5()
 c_sys5 = System(nodes, thermal_generators5(nodes), loads5(nodes), branches5(nodes), nothing, 100.0, nothing, nothing)
 for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5))
-        add_forecast!(c_sys5, l, Deterministic("maxactivepower", load_timeseries_DA[t][ix]))
+        add_forecast!(c_sys5, l, Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]))
     end
 end
 
 nodes = nodes14()
 c_sys14 = System(nodes, thermal_generators14(nodes), loads14(nodes), branches14(nodes), nothing, 100.0, nothing, nothing)
 for (ix, l) in enumerate(get_components(PowerLoad, c_sys14))
-    add_forecast!(c_sys14, l, Deterministic("maxactivepower", timeseries_DA14[ix]))
+    add_forecast!(c_sys14, l, Deterministic("get_maxactivepower", timeseries_DA14[ix]))
 end
 
 PTDF5 = PTDF(c_sys5);
@@ -28,10 +28,10 @@ nodes = nodes5()
 c_sys5_re = System(nodes, vcat(thermal_generators5(nodes), renewable_generators5(nodes)), loads5(nodes), branches5(nodes), nothing, 100.0, nothing, nothing)
 for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_re))
-        add_forecast!(c_sys5_re, l, Deterministic("maxactivepower", load_timeseries_DA[t][ix]))
+        add_forecast!(c_sys5_re, l, Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]))
     end
     for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_re))
-        add_forecast!(c_sys5_re, r, Deterministic("rating", ren_timeseries_DA[t][ix]))
+        add_forecast!(c_sys5_re, r, Deterministic("get_rating", ren_timeseries_DA[t][ix]))
     end
 end
 
@@ -39,10 +39,10 @@ nodes = nodes5()
 c_sys5_re_only = System(nodes, renewable_generators5(nodes), loads5(nodes), branches5(nodes), nothing, 100.0, nothing, nothing)
 for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_re_only))
-        add_forecast!(c_sys5_re_only, l, Deterministic("maxactivepower", load_timeseries_DA[t][ix]))
+        add_forecast!(c_sys5_re_only, l, Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]))
     end
     for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_re_only))
-        add_forecast!(c_sys5_re_only, r, Deterministic("rating", ren_timeseries_DA[t][ix]))
+        add_forecast!(c_sys5_re_only, r, Deterministic("get_rating", ren_timeseries_DA[t][ix]))
     end
 end
 
@@ -69,12 +69,13 @@ for t in 1:2
    end
 end
 
+
 #System with Storage Device
 nodes = nodes5()
 c_sys5_bat = System(nodes, thermal_generators5(nodes), loads5(nodes), branches5(nodes), battery5(nodes), 100.0, nothing, nothing)
 for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_bat))
-        add_forecast!(c_sys5_bat, l, Deterministic("maxactivepower", load_timeseries_DA[t][ix]))
+        add_forecast!(c_sys5_bat, l, Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]))
     end
 end
 
@@ -83,10 +84,10 @@ nodes = nodes5()
 c_sys5_il = System(nodes, thermal_generators5(nodes), vcat(loads5(nodes), interruptible(nodes)), branches5(nodes), nothing, 100.0, nothing, nothing)
 for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_il))
-        add_forecast!(c_sys5_il, l, Deterministic("maxactivepower", load_timeseries_DA[t][ix]))
+        add_forecast!(c_sys5_il, l, Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]))
     end
     for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_il))
-        add_forecast!(c_sys5_il, i, Deterministic("maxactivepower", Iload_timeseries_DA[t][ix]))
+        add_forecast!(c_sys5_il, i, Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]))
     end
 end
 
@@ -95,17 +96,17 @@ nodes = nodes5()
 c_sys5_dc = System(nodes, vcat(thermal_generators5(nodes), renewable_generators5(nodes)), loads5(nodes), branches5_dc(nodes), nothing, 100.0, nothing, nothing)
 for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_dc))
-        add_forecast!(c_sys5_dc, l, Deterministic("maxactivepower", load_timeseries_DA[t][ix]))
+        add_forecast!(c_sys5_dc, l, Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]))
     end
     for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_dc))
-        add_forecast!(c_sys5_dc, r, Deterministic("rating", ren_timeseries_DA[t][ix]))
+        add_forecast!(c_sys5_dc, r, Deterministic("get_rating", ren_timeseries_DA[t][ix]))
     end
 end
 
 nodes = nodes14()
 c_sys14_dc = System(nodes, thermal_generators14(nodes), loads14(nodes), branches14_dc(nodes), nothing, 100.0, nothing, nothing)
 for (ix, l) in enumerate(get_components(PowerLoad, c_sys14_dc))
-    add_forecast!(c_sys14_dc, l, Deterministic("maxactivepower", timeseries_DA14[ix]))
+    add_forecast!(c_sys14_dc, l, Deterministic("get_maxactivepower", timeseries_DA14[ix]))
 end
 
 PTDF5_dc = PTDF(c_sys5_dc);
@@ -141,7 +142,7 @@ nodes = nodes5()
 c_sys5_uc = System(nodes, thermal_generators5_uc_testing(nodes), loads5(nodes), branches5(nodes), nothing, 100.0, nothing, nothing);
 for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_uc))
-        add_forecast!(c_sys5_uc, l, Deterministic("maxactivepower", load_timeseries_DA[t][ix]))
+        add_forecast!(c_sys5_uc, l, Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]))
     end
 end
 
