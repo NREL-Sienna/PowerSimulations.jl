@@ -111,7 +111,6 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
     elseif sim.ref.reset == false
         error("Reset the simulation")
     end
-    variable_names = Dict()
     steps = get_steps(sim)
     for s in 1:steps
         verbose && println("Step $(s)")
@@ -123,7 +122,6 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
                 verbose && println("Simulation TimeStamp: $(sim.ref.current_time)")
                 raw_results_path = joinpath(sim.ref.raw, "step-$(s)-stage-$(ix)",replace_chars("$(sim.ref.current_time)",":","-"))
                 mkpath(raw_results_path)
-    
                 update_stage!(stage, s, sim)
                 dual_constraints = get(kwargs, :dual_constraints, nothing)
                 _run_stage(stage, sim.ref.current_time, raw_results_path; duals = dual_constraints)

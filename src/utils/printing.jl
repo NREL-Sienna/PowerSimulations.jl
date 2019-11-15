@@ -78,7 +78,7 @@ function Base.show(io::IO, results::OperationsProblemResults)
 
     for (k, v) in results.variables
         time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
-        if size(time,2) == size(v,2)
+        if size(time,1) == size(v,1)
             var = hcat(time, v)
         else
             var = v
@@ -87,7 +87,6 @@ function Base.show(io::IO, results::OperationsProblemResults)
         println(io, "==================")
         println(io, "$(var)\n")
     end
-
     println(io, "Optimizer Log")
     println(io, "-------------")
     for (k, v) in results.optimizer_log

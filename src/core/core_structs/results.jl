@@ -82,13 +82,12 @@ function load_operation_results(folder_path::AbstractString)
     files_in_folder = collect(readdir(folder_path))
     variable_list = setdiff(files_in_folder, ["time_stamp.feather", "optimizer_log.json"])
     variables = Dict{Symbol, DataFrames.DataFrame}()
-
     for name in variable_list
         variable_name = splitext(name)[1]
         file_path = joinpath(folder_path, name)
         variables[Symbol(variable_name)] = Feather.read(file_path) 
         if !isnothing(variables[Symbol(variable_name)][!,:Range])
-            delete!(variables[Symbol(variable_name)], :Range)
+            DataFrames.select!(variables[Symbol(variable_name)], DataFrames.Not(:Range))
         end
     end
     optimizer = JSON.parse(open(joinpath(folder_path, "optimizer_log.json")))
@@ -109,13 +108,12 @@ function load_operation_results(folder_path::AbstractString, file_type)
     files_in_folder = collect(readdir(folder_path))
     variable_list = setdiff(files_in_folder, ["time_stamp.$(lowercase("$file_type"))", "optimizer_log.json"])
     variables = Dict{Symbol, DataFrames.DataFrame}()
-
     for name in variable_list
         variable_name = splitext(name)[1]
         file_path = joinpath(folder_path,name)
         variables[Symbol(variable_name)] = file_type.read(file_path) 
         if !isnothing(variables[Symbol(variable_name)][!,:Range])
-            delete!(variables[Symbol(variable_name)], :Range)
+            DataFrames.select!(variables[Symbol(variable_name)], DataFrames.Not(:Range))
         end
     end
     optimizer = JSON.parse(open(joinpath(folder_path, "optimizer_log.json")))

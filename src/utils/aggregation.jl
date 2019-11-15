@@ -102,7 +102,7 @@ function _removing_extra_time(file_path::String, extra_time_length::Number)
     time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
     temp_time_stamp = Feather.read("$time_file_path")
     non_overlap = size((1:size(temp_time_stamp, 1) - extra_time_length - 1),1)
-    time_stamp = vcat(time_stamp,temp_time_stamp[(1:non_overlap),:])
+    time_stamp = (vcat(time_stamp,temp_time_stamp[(1:non_overlap),:]))
     return time_stamp
 end
 
@@ -184,6 +184,7 @@ function load_simulation_results(stage::String,
             end
         end
     end
+    time_stamp[!,:Range] = convert(Array{Dates.DateTime}, time_stamp[!,:Range])
     file_path = references[stage][variable[1]][1,:File_Path]
     optimizer = optimizer = JSON.parse(open(joinpath(dirname(file_path), "optimizer_log.json")))
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
@@ -193,9 +194,10 @@ function load_simulation_results(stage::String,
     else
         results = make_results(variables, obj_value, optimizer, time_stamp)
     end
-    if (:write in keys(kwargs))
-        file_type = get(kwargs, :file_type, Feather)
-        write_model_results(results, normpath("$file_path/../../../../"),"results"; file_type = file_type)
+    file_type = get(kwargs, :file_type, Feather)
+    write = get(kwargs, :write, false)
+    if write == true || :file_type in keys(kwargs)
+        write_results(results, normpath("$file_path/../../../../"),"results"; file_type = file_type)
     end
     return results
 end
@@ -245,6 +247,7 @@ function load_simulation_results(stage::String, references::Dict{Any,Any}; kwarg
             end
         end
     end
+    time_stamp[!,:Range] = convert(Array{Dates.DateTime}, time_stamp[!,:Range])
     file_path = references[stage][variable[1]][1,:File_Path]
     optimizer = optimizer = JSON.parse(open(joinpath(dirname(file_path), "optimizer_log.json")))
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
@@ -254,9 +257,10 @@ function load_simulation_results(stage::String, references::Dict{Any,Any}; kwarg
     else
         results = make_results(variables, obj_value, optimizer, time_stamp)
     end
-    if (:write in keys(kwargs)) == true
-        file_type = get(kwargs, :file_type, Feather)
-        write_model_results(results, normpath("$file_path/../../../../"),"results"; file_type = file_type)
+    file_type = get(kwargs, :file_type, Feather)
+    write = get(kwargs, :write, false)
+    if write == true || (:file_type) in keys(kwargs)
+        write_results(results, normpath("$file_path/../../../../"),"results"; file_type = file_type)
     end
     return results
 end
@@ -295,10 +299,11 @@ references = make_references(sim, "2019-10-03T09-18-00-test")
 function make_references(sim::Simulation, date_run::String; kwargs...)
     sim.ref.date_ref[1] = sim.daterange[1]
     sim.ref.date_ref[2] = sim.daterange[1]
+    println("$(sim.daterange[1])")
     references = Dict()
     for (ix, stage) in enumerate(sim.stages)
         variables = Dict{Symbol, Any}()
-        interval = PSY.get_forecasts_interval(stage.sys)
+        interval = stage.interval
         variable_names = (collect(keys(sim.stages[ix].canonical.variables)))
         if :dual_constraints in keys(kwargs) && !isnothing(get_constraints(stage.canonical))
             dual_cons = _concat_string(kwargs[:dual_constraint])
@@ -332,7 +337,10 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
     return references
 end
 
-function find_step_range(references::Dict, stage::String, Dates::Dates.DateTime)
+function find_step_range(references::Dict, stage::String, Dates::StepRange{Dates.DateTime,Any})
     variable = (collect(keys(references[stage])))
     date_df = references[stage][variable[1]]
+    steps = date_df[findall(in(Dates), date_df.Date), :].Step
+    unique!(steps)
+    return steps
 end

@@ -39,6 +39,7 @@ end
 function write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, time::DataFrames.DataFrame, save_path::AbstractString; kwargs...)
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
+        var = DataFrames.DataFrame()
         for (k,v) in vars_results
             if size(time,1) == size(v,1)
                 var = hcat(time, v)
@@ -46,6 +47,7 @@ function write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, time::Data
                 var = v
             end
             file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
+            println("$k, $file_path")
             file_type.write(file_path, var)
         end
     else
