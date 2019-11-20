@@ -55,7 +55,7 @@ end
 @testset "Operation Models" begin
     include("test_operation_model_constructor.jl")
     include("test_operation_model_solve.jl")
-    include("test_operation_model_modifications.jl")
+    !Sys.iswindows() && include("test_operation_model_modifications.jl")
 end
 
 @testset "Simulation Models" begin
