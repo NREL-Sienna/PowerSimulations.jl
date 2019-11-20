@@ -340,7 +340,7 @@ function add_pm_var_refs!(canonical::Canonical,
 
     for (pm_v, ps_v) in pm_var_map[PSY.Bus]
         if pm_v in pm_var_names
-            canonical.variables[ps_v] = PSI._container_spec(canonical.JuMPmodel,
+            canonical.variables[ps_v] = _container_spec(canonical.JuMPmodel,
                                                         (PSY.get_name(b) for b in values(bus_dict)),
                                                         time_steps)
             for t in time_steps, (pm_bus, bus) in bus_dict
@@ -370,7 +370,7 @@ function add_pm_var_refs!(canonical::Canonical,
                 for dir in fieldnames(typeof(ps_v))
                     isnothing(getfield(ps_v,dir)) && continue
                     var_name = Symbol("$(getfield(ps_v,dir))_$(d_type)")
-                    canonical.variables[var_name] = PSI._container_spec(canonical.JuMPmodel,
+                    canonical.variables[var_name] = _container_spec(canonical.JuMPmodel,
                                                                         (PSY.get_name(d[2]) for d in devices),
                                                                         time_steps)
                     for t in time_steps, (pm_d, d) in devices

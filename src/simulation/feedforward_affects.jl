@@ -34,7 +34,7 @@ function ub_ff(canonical::Canonical,
 
     @assert axes[2] == time_steps
     param_ub =_add_param_container!(canonical, param_reference, set_name)
-    con_ub =_add_cons_container!(canonical, ub_name, set_name, time_steps)
+    con_ub =add_cons_container!(canonical, ub_name, set_name, time_steps)
 
     for name in axes[1]
         value = JuMP.upper_bound(variable[name, 1])
@@ -94,8 +94,8 @@ function range_ff(canonical::Canonical,
     param_ub =_add_param_container!(canonical, param_reference[2], set_name)
 
     #Create containers for the parameters
-    con_lb =_add_cons_container!(canonical, lb_name, set_name, time_steps)
-    con_ub =_add_cons_container!(canonical, ub_name, set_name, time_steps)
+    con_lb =add_cons_container!(canonical, lb_name, set_name, time_steps)
+    con_ub =add_cons_container!(canonical, ub_name, set_name, time_steps)
 
     for name in axes[1]
         param_lb[name] = PJ.add_parameter(canonical.JuMPmodel,
@@ -165,8 +165,8 @@ function semicontinuousrange_ff(canonical::Canonical,
     set_name = axes[1]
     @assert axes[2] == time_steps
     param = _add_param_container!(canonical, param_reference, set_name)
-    con_ub = _add_cons_container!(canonical, ub_name, set_name, time_steps)
-    con_lb = _add_cons_container!(canonical, lb_name, set_name, time_steps)
+    con_ub = add_cons_container!(canonical, ub_name, set_name, time_steps)
+    con_lb = add_cons_container!(canonical, lb_name, set_name, time_steps)
 
     for name in axes[1]
         ub_value = JuMP.upper_bound(variable[name, 1])

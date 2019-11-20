@@ -21,6 +21,7 @@ const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
 const PGAE{V} = PJ.ParametrizedGenericAffExpr{Float64, V} where V<:JuMP.AbstractVariableRef
 const GAE{V} = JuMP.GenericAffExpr{Float64, V} where V<:JuMP.AbstractVariableRef
 const JuMPAffineExpressionArray = Matrix{GAE{V}} where V<:JuMP.AbstractVariableRef
+const JuMPAffineExpressionVector = Vector{GAE{V}} where V<:JuMP.AbstractVariableRef
 const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 const DSDA = Dict{Symbol, JuMP.Containers.DenseAxisArray}

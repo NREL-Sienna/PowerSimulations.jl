@@ -37,7 +37,6 @@ function _make_expressions_dict(transmission::Type{S},
                                 bus_numbers::Vector{Int64},
                                 time_steps::UnitRange{Int64},
                                 parameters::Bool) where {S<:PM.AbstractPowerModel}
-
     return DSDA(:nodal_balance_active =>  _make_container_array(V,
                                                                 parameters,
                                                                 bus_numbers,
@@ -46,7 +45,6 @@ function _make_expressions_dict(transmission::Type{S},
                                                                  parameters,
                                                                  bus_numbers,
                                                                  time_steps))
-
 end
 
 function _make_expressions_dict(transmission::Type{S},
@@ -54,7 +52,6 @@ function _make_expressions_dict(transmission::Type{S},
                                 bus_numbers::Vector{Int64},
                                 time_steps::UnitRange{Int64},
                                 parameters::Bool) where {S<:PM.AbstractActivePowerModel}
-
     return DSDA(:nodal_balance_active =>  _make_container_array(V,
                                                                 parameters,
                                                                 bus_numbers,
@@ -72,9 +69,7 @@ function _canonical_init(bus_numbers::Vector{Int64},
                         initial_time::Dates.DateTime,
                         make_parameters_container::Bool,
                         ini_con::DICKDA) where {S<:PM.AbstractPowerModel}
-
     V = JuMP.variable_type(jump_model)
-
     canonical = Canonical(jump_model,
                               optimizer,
                               time_steps,
@@ -92,9 +87,7 @@ function _canonical_init(bus_numbers::Vector{Int64},
                               make_parameters_container ? DRDA() : nothing,
                               ini_con,
                               nothing);
-
     return canonical
-
 end
 
 mutable struct Canonical
@@ -107,7 +100,7 @@ mutable struct Canonical
     variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     cost_function::JuMP.AbstractJuMPScalar
-    expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
+    expressions::Dict{Symbol, Any}
     parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}}
     initial_conditions::DICKDA
     pm::Union{Nothing, PM.AbstractPowerModel}
@@ -139,16 +132,13 @@ mutable struct Canonical
             parameters,
             initial_conditions,
             pm)
-
     end
-
 end
 
 function Canonical(::Type{T},
                    sys::PSY.System,
                    optimizer::Union{Nothing,JuMP.OptimizerFactory};
                    kwargs...) where {T<:PM.AbstractPowerModel}
-
     PSY.check_forecast_consistency(sys)
     user_defined_model = get(kwargs, :JuMPmodel, nothing)
     ini_con = get(kwargs, :initial_conditions, DICKDA())
@@ -169,9 +159,7 @@ function Canonical(::Type{T},
         resolution = PSY.get_forecasts_resolution(sys)
         time_steps = 1:1
     end
-
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
-
     return _canonical_init(bus_numbers,
                            jump_model,
                            optimizer,
@@ -182,7 +170,6 @@ function Canonical(::Type{T},
                            initial_time,
                            make_parameters_container,
                            ini_con)
-
 end
 
 function InitialCondition(canonical::Canonical,
@@ -190,7 +177,6 @@ function InitialCondition(canonical::Canonical,
                           access_ref::Symbol,
                           value::Float64,
                           cache::Union{Nothing, Type{<:AbstractCache}}=nothing) where T <: PSY.Device
-
     if model_has_parameters(canonical)
         return InitialCondition(device,
                                 UpdateRef{JuMP.VariableRef}(access_ref),
@@ -204,19 +190,16 @@ function InitialCondition(canonical::Canonical,
                                 value,
                                 cache)
     end
-
 end
 
 function get_initial_conditions(canonical::Canonical, key::ICKey)
     return get(canonical.initial_conditions, key, Vector{InitialCondition}())
 end
 
-# Var_ref
 function get_value(canonical::Canonical, ref::UpdateRef{JuMP.VariableRef})
     return get_variable(canonical, ref.access_ref)
 end
 
-# param_ref
 function get_value(canonical::Canonical, ref::UpdateRef{PJ.ParameterRef})
     for (k, v) in canonical.parameters
         if k.access_ref == ref.access_ref
@@ -238,5 +221,8 @@ get_constraints(canonical::Canonical) = canonical.constraints
 get_variable(canonical::Canonical, name::Symbol) = canonical.variables[name]
 get_constraint(canonical::Canonical, name::Symbol) = canonical.constraints[name]
 get_parameters(canonical::Canonical, param_reference::UpdateRef) = canonical.parameters[param_reference]
-get_expression(canonical::Canonical, name::Symbol) = canonical.expressions[name]
 get_initial_conditions(canonical::Canonical) = canonical.initial_conditions
+get_expression(canonical::Canonical, name::Symbol) = canonical.expressions[name]
+function get_expression!(canonical::Canonical, name::Symbol, container)
+    return get!(canonical.expressions, name, container)
+end

@@ -60,8 +60,8 @@ function device_duration_retrospective(canonical::Canonical,
     name_down = _middle_rename(cons_name, "_", "dn")
 
     set_names = (device_name(ic) for ic in initial_duration[:, 1])
-    con_up =_add_cons_container!(canonical, name_up, set_names, time_steps)
-    con_down =_add_cons_container!(canonical, name_down, set_names, time_steps)
+    con_up =add_cons_container!(canonical, name_up, set_names, time_steps)
+    con_down =add_cons_container!(canonical, name_down, set_names, time_steps)
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
@@ -158,8 +158,8 @@ function device_duration_look_ahead(canonical::Canonical,
     name_down = _middle_rename(cons_name, "_", "dn")
 
     set_names = (device_name(ic) for ic in initial_duration[:, 1])
-    con_up = _add_cons_container!(canonical, name_up, set_names, time_steps)
-    con_down = _add_cons_container!(canonical, name_down, set_names, time_steps)
+    con_up = add_cons_container!(canonical, name_up, set_names, time_steps)
+    con_down = add_cons_container!(canonical, name_down, set_names, time_steps)
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
@@ -264,8 +264,8 @@ function device_duration_parameters(canonical::Canonical,
     name_down = _middle_rename(cons_name, "_", "dn")
 
     set_names = (device_name(ic) for ic in initial_duration[:, 1])
-    con_up = _add_cons_container!(canonical, name_up, set_names, time_steps)
-    con_down =_add_cons_container!(canonical, name_down, set_names, time_steps)
+    con_up = add_cons_container!(canonical, name_up, set_names, time_steps)
+    con_down =add_cons_container!(canonical, name_down, set_names, time_steps)
 
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
