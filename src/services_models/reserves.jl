@@ -83,7 +83,7 @@ function add_to_service_expression!(canonical::Canonical,
 end
 
 function add_device_constraints!(canonical::Canonical,
-                                 sys::System,
+                                 sys::PSY.System,
                                  expression_list::Vector{Symbol})
     for service_expression in expression_list
         expression_dictionary = get_expression(canonical, service_expression)
