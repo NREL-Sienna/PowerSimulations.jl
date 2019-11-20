@@ -47,7 +47,7 @@ function add_variable(canonical::Canonical,
                                           IS.FlattenIteratorWrapper{<:PSY.Device}}}
 
     time_steps = model_time_steps(canonical)
-    variable = _add_var_container!(canonical, var_name, (PSY.get_name(d) for d in devices), time_steps)
+    variable = add_var_container!(canonical, var_name, (PSY.get_name(d) for d in devices), time_steps)
     jvar_name = _remove_underscore(var_name)
 
     lb_f = get(kwargs, :lb_value, nothing)

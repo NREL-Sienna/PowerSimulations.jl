@@ -49,7 +49,7 @@ function energy_balance(canonical::Canonical,
     varout = get_variable(canonical, var_names[2])
     varenergy = get_variable(canonical, var_names[3])
 
-    constraint = _add_cons_container!(canonical, cons_name, name_index, time_steps)
+    constraint = add_cons_container!(canonical, cons_name, name_index, time_steps)
 
     for (ix, name) in enumerate(name_index)
         eff_in = efficiency_data[2][ix].in

@@ -2,71 +2,28 @@ function construct_services!(canonical::Canonical,
                              sys::PSY.System,
                              services_template::Dict{Symbol,ServiceModel};
                              kwargs...)
-
     isempty(services_template) && return
-
+    expression_list = Vector{Symbol}()
     for service_model in values(services_template)
         services = PSY.get_components(service_model.service_type, sys)
         for service in services
-            for (type_device,devices) in _get_devices_bytype(PSY.get_contributingdevices(service))
-
-
-                #Constraints
-                activereserve_constraints!(canonical, service, devices, Sr)
-
-            end
-            service_balance_constraint!(canonical,service)
+            add_service!(canonical, service, service_model, expression_list; kwargs...)
         end
-
-
-
     end
-
+    # post constraints in expression dict
     return
-
 end
 
-
-function construct_device!(canonical::Canonical, sys::PSY.System,
-                           model::ServiceModel{SR, RangeUpwardReserve},
-                           kwargs...) where {SR<:PSY.Service}
-
+function add_service!(canonical::Canonical, service::SR,
+                      model::ServiceModel{SR, RangeUpwardReserve},
+                      expression_list::Vector{Symbol};
+                      kwargs...) where {SR<:PSY.Reserve}
+        devices = PSY.get_contributingdevices(service)
         #Variables
-        activereserve_variables!(canonical, service, devices)
-
-        #Constraints
-        activereserve_expressions!(canonical, service, devices, Sr)
-
-        service_balance_constraint!(canonical,service)
-
-
-end
-
-
-
-
-function _get_devices_bytype(devices::IS.FlattenIteratorWrapper{T}) where {T<:PSY.ThermalGen}
-
-    dict = Dict{DataType,Vector}()
-    device_type_pairs = [(typeof(d),d) for d in devices]
-    for d in devices
-        push!(dict[typeof(d)], d)
-    end
-    return  [(k, v) for (k, v) in dict]
-end
-
-function _add_nodal_expressions!(canonical::Canonical,
-                                S::IS.FlattenIteratorWrapper{SR},
-                                sys::PSY.System) where {SR<:PSY.Service}
-
-    V = JuMP.variable_type(canonical.JuMPmodel)
-    parameters = model_has_parameters(canonical)
-    time_steps = model_time_steps(canonical)
-    for service in S
-        name = Symbol(PSY.get_name(service),"_","balance")
-        add_expression(canonical,
-                    name,
-                    _make_container_array(V, parameters, time_steps))
-    end
+        activeservice_variables!(canonical, service, devices)
+        #requirement constraint Constraints
+        service_requirement_constraint!(canonical, service)
+        # add to
+        add_to_service_expression!(canonical, model, service, expression_list)
     return
 end

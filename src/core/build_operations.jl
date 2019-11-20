@@ -5,10 +5,8 @@ function build_op_problem!(op_problem::OperationsProblem{M}; kwargs...) where M<
 end
 
 function _build!(canonical::Canonical, template::OperationsTemplate, sys::PSY.System; kwargs...)
-
     verbose = get(kwargs, :verbose, true)
     transmission = template.transmission
-
     # Build Injection devices
     for device_model in values(template.devices)
         verbose && @info "Building $(device_model.device_type) with $(device_model.formulation) formulation"
@@ -30,9 +28,7 @@ function _build!(canonical::Canonical, template::OperationsTemplate, sys::PSY.Sy
 
     # Objective Function
     verbose && @info "Building Objective"
-    JuMP.@objective(canonical.JuMPmodel,
-                    MOI.MIN_SENSE,
-                    canonical.cost_function)
+    JuMP.@objective(canonical.JuMPmodel, MOI.MIN_SENSE, canonical.cost_function)
 
     return
 

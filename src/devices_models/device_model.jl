@@ -46,10 +46,10 @@ abstract device formulation if the power system device is a concrete type.
 # Example
 ```julia
 branches = Dict{Symbol, DeviceModel}
-    (:L => DeviceModel(PSY.Line, PSI.StaticLine),
-    :T => DeviceModel(PSY.Transformer2W, PSI.StaticTransformer),
-    :TT => DeviceModel(PSY.TapTransformer , PSI.StaticTransformer),
-    :dc_line => DeviceModel(PSY.HVDCLine, PSI.HVDCDispatch))
+    (:L => DeviceModel(PSY.Line, StaticLine),
+    :T => DeviceModel(PSY.Transformer2W, StaticTransformer),
+    :TT => DeviceModel(PSY.TapTransformer , StaticTransformer),
+    :dc_line => DeviceModel(PSY.HVDCLine, HVDCDispatch))
 ```
 """
 function DeviceModel(::Type{D},

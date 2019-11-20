@@ -23,7 +23,7 @@ function flow_variables!(canonical::Canonical,
 
     time_steps = model_time_steps(canonical)
     var_name = Symbol("Fp_$(B)")
-    canonical.variables[var_name] = PSI._container_spec(canonical.JuMPmodel,
+    canonical.variables[var_name] = _container_spec(canonical.JuMPmodel,
                                                   (PSY.get_name(d) for d in devices),
                                                    time_steps)
 

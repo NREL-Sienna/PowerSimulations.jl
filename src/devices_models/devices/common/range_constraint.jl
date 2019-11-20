@@ -37,7 +37,7 @@ function device_range(canonical::Canonical,
     time_steps = model_time_steps(canonical)
     variable = get_variable(canonical, var_name)
     set_name = (r[1] for r in range_data)
-    constraint = _add_cons_container!(canonical, cons_name, set_name, time_steps)
+    constraint = add_cons_container!(canonical, cons_name, set_name, time_steps)
 
     for r in range_data
           if abs(r[2].min - r[2].max) <= eps()
@@ -110,8 +110,8 @@ function device_semicontinuousrange(canonical::Canonical,
     #In the future this can be updated
 
     set_name = (r[1] for r in scrange_data)
-    con_ub = _add_cons_container!(canonical, ub_name, set_name, time_steps)
-    con_lb = _add_cons_container!(canonical, lb_name, set_name, time_steps)
+    con_ub = add_cons_container!(canonical, ub_name, set_name, time_steps)
+    con_lb = add_cons_container!(canonical, lb_name, set_name, time_steps)
 
     for t in time_steps, r in scrange_data
 
@@ -192,8 +192,8 @@ function reserve_device_semicontinuousrange(canonical::Canonical,
     # In the future this can be updated
 
     set_name = (r[1] for r in scrange_data)
-    con_ub = _add_cons_container!(canonical, ub_name, set_name, time_steps)
-    con_lb = _add_cons_container!(canonical, lb_name, set_name, time_steps)
+    con_ub = add_cons_container!(canonical, ub_name, set_name, time_steps)
+    con_lb = add_cons_container!(canonical, lb_name, set_name, time_steps)
 
     for t in time_steps, r in scrange_data
 
