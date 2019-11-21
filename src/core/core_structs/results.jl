@@ -82,7 +82,7 @@ function load_operation_results(folder_path::AbstractString)
     end
     optimizer = JSON.parse(open(joinpath(folder_path, "optimizer_log.json")))
     time_stamp = Feather.read(joinpath(folder_path, "time_stamp.feather"))
-    if size(time_stamp,1) > find_var_length(variables, variable_list)
+    if size(time_stamp, 1) > find_var_length(variables, variable_list)
         time_stamp = shorten_time_stamp(time_stamp)
     end
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
@@ -101,6 +101,6 @@ function find_var_length(variables::Dict, variable_list::Array)
 end
 
 function shorten_time_stamp(time::DataFrames.DataFrame)
-    time = time[1:(size(time,1)-1),:]
+    time = time[1:(size(time, 1)-1),:]
     return time
 end

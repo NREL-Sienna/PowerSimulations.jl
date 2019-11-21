@@ -93,6 +93,7 @@ export make_references
 export execute!
 ## Utils Exports
 export sim_results_container
+export get_sim_resolution
 export write_op_problem
 export write_results
 export load_operation_results
@@ -152,18 +153,15 @@ JuMP.Model(optimizer::Nothing; kwargs...) = JuMP.Model(kwargs...)
 ################################################################################
 # Includes
 
-#Abstract Models
-include("network_models/networks.jl")
-include("service_models/services.jl")
-
-#Core Models and constructors
+#Models and constructors
 include("core/core_structs/aux_structs.jl")
 include("core/core_structs/cache.jl")
 include("core/core_structs/feedforward.jl")
-include("core/core_structs/device_model.jl")
+include("devices_models/device_model.jl")
+include("network_models/networks.jl")
+include("services_models/services_model.jl")
 include("core/core_structs/initial_conditions.jl")
 include("core/core_structs/canonical.jl")
-include("core/core_structs/service_model.jl")
 include("core/core_structs/operations_problem.jl")
 include("core/core_structs/chronology.jl")
 include("core/core_structs/simulations_stages.jl")
@@ -177,14 +175,14 @@ include("core/build_simulations.jl")
 include("simulation/feedforward_affects.jl")
 
 #Device Modeling components
-include("devices/device_models/common.jl")
-include("devices/device_models/renewable_generation.jl")
-include("devices/device_models/thermal_generation.jl")
-include("devices/device_models/electric_loads.jl")
-include("devices/device_models/AC_branches.jl")
-include("devices/device_models/DC_branches.jl")
-include("devices/device_models/storage.jl")
-include("devices/device_models/hydro_generation.jl")
+include("devices_models/devices/common.jl")
+include("devices_models/devices/renewable_generation.jl")
+include("devices_models/devices/thermal_generation.jl")
+include("devices_models/devices/electric_loads.jl")
+include("devices_models/devices/AC_branches.jl")
+include("devices_models/devices/DC_branches.jl")
+include("devices_models/devices/storage.jl")
+include("devices_models/devices/hydro_generation.jl")
 
 #Network models
 include("network_models/copperplate_model.jl")
@@ -192,16 +190,21 @@ include("network_models/powermodels_interface.jl")
 include("network_models/ptdf_model.jl")
 
 #Device constructors
-include("devices/device_constructors/device_constructors.jl")
+include("devices_models/device_constructors/common/constructor_validations.jl")
+include("devices_models/device_constructors/common/device_constructor_utils.jl")
+include("devices_models/device_constructors/thermalgeneration_constructor.jl")
+include("devices_models/device_constructors/hydrogeneration_constructor.jl")
+include("devices_models/device_constructors/branch_constructor.jl")
+include("devices_models/device_constructors/renewablegeneration_constructor.jl")
+include("devices_models/device_constructors/load_constructor.jl")
+include("devices_models/device_constructors/storage_constructor.jl")
 
 #Network constructors
 include("network_models/network_constructor.jl")
 
 #Services Models
-#include("service_models/reserves.jl")
-
-#Services constructors
-include("service_models/services_constructor.jl")
+include("services_models/reserves.jl")
+include("services_models/services_constructor.jl")
 
 # Commented out until properly implemented
 #Operational Model Constructors
@@ -219,10 +222,7 @@ include("routines/solve_routines.jl")
 
 #Utils
 include("utils/optimization_debugging.jl")
-include("utils/plot_results.jl")
-include("utils/plot_recipes.jl")
-include("utils/aggregation.jl")
-include("utils/call_plots.jl")
+include("utils/aggregated_results.jl")
 include("utils/check_results.jl")
 include("utils/simulation_results_container.jl")
 include("utils/printing.jl")
@@ -230,7 +230,6 @@ include("utils/printing.jl")
 include("routines/write_results.jl")
 
 #Initialization
-
 function __init__()
    Requires.@require Weave = "44d3d7a6-8a23-5bf8-98c5-b353f8df5ec9" include("utils/make_report.jl")
 end
