@@ -183,7 +183,7 @@ or with make_references
 stage = "stage-1"
 step = ["step-1", "step-2", "step-3"] # has to match the date range
 variable = [:P_ThermalStandard, :P_RenewableDispatch]
-results = load_simulation_results(stage,step, variable, references)
+results = load_simulation_results(stage, step, variable, sim_results_container)
 ```
 # Accepted Key Words
 - `write::Bool`: if true, the aggregated results get written back to the results file in the folder structure

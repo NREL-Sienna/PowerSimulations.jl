@@ -23,57 +23,6 @@ function _make_results(variables::Dict,
     return AggregatedResults(variables, total_cost, optimizer_log, time_stamp, check_sum, duals)
 end
 
-# This function returns the length of time_stamp for each step
-# that is unique to that step and not overlapping with the next time step.
-#=
-function _count_time_overlap(stage::String,
-    step::Array,
-    variable::Array,
-    references::Dict{Any, Any})
-    date_df = references[stage][variable[1]]
-    step_df = DataFrames.DataFrame(Date = Dates.DateTime[],
-            Step = String[],
-            File_Path = String[])
-    for n in 1:length(step)
-        step_df = vcat(step_df, date_df[date_df.Step .== step[n], :])
-    end
-    ref = DataFrames.DataFrame()
-    for (ix,time) in enumerate(step_df.Date)
-        file_path =  step_df[ix, :File_Path]
-        time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
-        time_stamp = DataFrames.DataFrame(Feather.read("$time_file_path"))
-        time_stamp = shorten_time_stamp(time_stamp)
-        append!(ref,time_stamp)
-    end
-    if size(unique(ref),2) == size(ref,2)
-        extra_time_length = 0
-    else
-        extra_time_length = size(unique(ref),1)./(length(step)+1)
-    end
-    return extra_time_length
-end
-=#
-# This is the count_time_overlap for if all results for a stage are desired
-#=
-function _count_time_overlap(stage::String, references::Dict{Any, Any})
-    variable = collect(keys(references[stage]))
-    date_df = references[stage][variable[1]]
-    ref = DataFrames.DataFrame()
-    for (ix,time) in enumerate(date_df.Date)
-        file_path =  date_df[ix, :File_Path]
-        time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
-        time_stamp = DataFrames.DataFrame(Feather.read("$time_file_path"))
-        time_stamp = shorten_time_stamp(time_stamp)
-        append!(ref,time_stamp)
-    end
-    if size(unique(ref),2) == size(ref,2)
-    extra_time_length = 0
-    else
-    extra_time_length = size(unique(ref),1)./(length(step)+1)
-    end
-    return extra_time_length
-end
-=#
 # internal function to parse through the reference dictionary and grab the file paths
 function _reading_references(results::Dict, duals::Array, stage::String, step::Array,
                              references::Dict, extra_time::Int64)
