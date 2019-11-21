@@ -1,9 +1,9 @@
 function _prepare_workspace!(ref::SimulationRef, base_name::AbstractString, folder::AbstractString)
 
-    !isdir(folder) && error("Specified folder is not valid")
+    !isdir(folder) && throw(ArgumentError("Specified folder is not valid"))
     global_path = joinpath(folder, "$(base_name)")
     !isdir(global_path) && mkpath(global_path)
-    _sim_path = replace_chars("$(round(Dates.now(),Dates.Minute))", ":", "-")
+    _sim_path = replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-")
     simulation_path = joinpath(global_path, _sim_path)
     raw_ouput = joinpath(simulation_path, "raw_output")
     mkpath(raw_ouput)
@@ -49,7 +49,7 @@ function _get_dates(stages::Dict{Int64, Stage})
         initial_times = PSY.get_forecast_initial_times(stages[i].sys)
         i == 1 && (range[1] = initial_times[1])
         interval = PSY.get_forecasts_interval(stages[i].sys)
-        for (ix,element) in enumerate(initial_times[1:end-1])
+        for (ix, element) in enumerate(initial_times[1:end-1])
             if !(element + interval == initial_times[ix+1])
                 error("The sequence of forecasts is invalid")
             end
@@ -99,10 +99,10 @@ function _build_stages(sim_ref::SimulationRef,
                 stage.model,
                 stage.sys;
                 kwargs...)
-        stage_path = joinpath(sim_ref.models,"stage_$(key)_model")
+        stage_path = joinpath(sim_ref.models, "stage_$(key)_model")
         mkpath(stage_path)
         _write_canonical(canonical, joinpath(stage_path, "optimization_model.json"))
-        system_to_file && IS.to_json(stage.sys, joinpath(stage_path ,"sys_data.json"))
+        system_to_file && IS.to_json(stage.sys, joinpath(stage_path , "sys_data.json"))
         _populate_cache!(mod_stages[key])
         sim_ref.date_ref[key] = PSY.get_forecast_initial_times(stage.sys)[1]
     end

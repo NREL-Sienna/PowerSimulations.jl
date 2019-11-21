@@ -107,7 +107,7 @@ end
 function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationOFF, PSD},
                                 ic::InitialCondition,
                                 var_value::Float64,
-                                cache::Union{Nothing,AbstractCache}) where PSD <: PSY.Device
+                                cache::Union{Nothing, AbstractCache}) where PSD <: PSY.Device
 
     name = device_name(ic)
     time_cache = cache_value(cache, name)
@@ -129,7 +129,7 @@ end
 function _calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationON, PSD},
                                 ic::InitialCondition,
                                 var_value::Float64,
-                                cache::Union{Nothing,AbstractCache}) where PSD <: PSY.Device
+                                cache::Union{Nothing, AbstractCache}) where PSD <: PSY.Device
 
     name = device_name(ic)
     time_cache = cache_value(cache, name)
@@ -152,14 +152,14 @@ end
 function _calculate_ic_quantity(initial_condition_key::ICKey{DeviceStatus, PSD},
                                 ic::InitialCondition,
                                 var_value::Float64,
-                                cache::Union{Nothing,AbstractCache}) where PSD <: PSY.Device
+                                cache::Union{Nothing, AbstractCache}) where PSD <: PSY.Device
     return isapprox(var_value, 0.0, atol = 1e-4) ? 1.0 : 0.0
 end
 
 function _calculate_ic_quantity(initial_condition_key::ICKey{DevicePower, PSD},
                                ic::InitialCondition,
                                var_value::Float64,
-                               cache::Union{Nothing,AbstractCache}) where PSD <: PSY.ThermalGen
+                               cache::Union{Nothing, AbstractCache}) where PSD <: PSY.ThermalGen
 
 
     if isnothing(cache)
