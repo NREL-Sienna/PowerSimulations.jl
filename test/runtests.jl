@@ -60,4 +60,6 @@ end
 
 @testset "Simulation Models" begin
     #include("test_simulation_models.jl")
+    include("test_load_simulation.jl")
+    include("test_chronology.jl")
 end

@@ -4,7 +4,7 @@ struct SimulationResultsContainer
     chronologies::Dict
 end
 
-function get_resolution(stage::_Stage)
+function get_sim_resolution(stage::_Stage)
     resolution = stage.sys.data.forecast_metadata.resolution
     return resolution
 end
@@ -15,7 +15,7 @@ function sim_results_container(sim::Simulation)
     chronologies = Dict()
     for (ix, stage) in enumerate(sim.stages)
         interval = convert(Dates.Minute,stage.interval)
-        resolution = convert(Dates.Minute,get_resolution(stage))
+        resolution = convert(Dates.Minute,get_sim_resolution(stage))
         chronologies["stage-$ix"] = convert(Int64,(interval/resolution))
     end
     sim_results = SimulationResultsContainer(ref, sim.ref.results, chronologies)
@@ -144,7 +144,7 @@ function load_simulation_results(stage::String,
             var = Feather.read("$file_path")
             variables[(variable[l])] = vcat(variables[(variable[l])],var[1:time_length,:])
             if l == 1
-                time_stamp = vcat(time_stamp, _removing_extra_time(file_path, time_length))
+                time_stamp = vcat(time_stamp, _reading_time(file_path, time_length))
             end
         end
     end
@@ -207,7 +207,7 @@ function load_simulation_results(stage::String, sim_results_container::Simulatio
             var = Feather.read(file_path)
             variables[(variable[l])] = vcat(variables[(variable[l])],var[1:time_length,:])
             if l == 1
-                time_stamp = vcat(time_stamp, _removing_extra_time(file_path, time_length))
+                time_stamp = vcat(time_stamp, _reading_time(file_path, time_length))
             end
         end
     end

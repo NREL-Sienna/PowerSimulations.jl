@@ -88,7 +88,7 @@ function _reading_references(results::Dict, duals::Array, stage::String, step::A
         for (ix,time) in enumerate(step_df.Date)
             file_path = step_df[ix, :File_Path]
             var = Feather.read("$file_path")
-            correct_var_length = size(1:(size(var,1) - extra_time),1)
+            correct_var_length = size(1:(size(var, 1) - extra_time), 1)
             results[name] = vcat(results[name],var[1:correct_var_length,:])
         end
     end
@@ -103,18 +103,17 @@ function _reading_references(results::Dict, dual::Array, stage::String,
         for (ix,time) in enumerate(date_df.Date)
             file_path = date_df[ix, :File_Path]
             var = Feather.read(file_path)
-            correct_var_length = size(1:(size(var,1) - extra_time_length),1)
+            correct_var_length = size(1:(size(var, 1) - extra_time_length), 1)
             results[name] = vcat(results[name],var[1:correct_var_length,:])
         end
     end
     return results
 end
 # internal function to remove the overlapping results and only use the most recent
-function _removing_extra_time(file_path::String, time_length::Number)
-    time_stamp = DataFrames.DataFrame()
+function _reading_time(file_path::String, time_length::Number)
     time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
     temp_time_stamp = Feather.read("$time_file_path")
-    time_stamp = vcat(time_stamp,temp_time_stamp[(1:time_length),:])
+    time_stamp = temp_time_stamp[(1:time_length),:]
     return time_stamp
 end
 
@@ -128,7 +127,7 @@ function columnsum(variable::DataFrames.DataFrame)
     shortvar = DataFrames.DataFrame()
     varnames = collect(names(variable))
     eachsum = (sum.(eachrow(variable)))
-    for i in 1: size(variable,1)
+    for i in 1: size(variable, 1)
         df = DataFrames.DataFrame(Symbol(varnames[i]) => eachsum[i])
         shortvar = hcat(shortvar, df)
     end
