@@ -89,24 +89,32 @@ export set_device_model!
 export set_branch_model!
 export set_device_model!
 ## Sim Model Exports
+export make_references
 export execute!
 ## Utils Exports
+export sim_results_container
+export get_sim_resolution
 export write_op_problem
 export write_results
 export load_operation_results
+export load_simulation_results
+export write_to_CSV
 export get_all_constraint_index
 export get_all_var_index
 export get_con_index
 export get_var_index
+
 # Plotting Utils
 export sort_data
 export get_stacked_plot_data
 export get_bar_plot_data
 export get_stacked_generation_data
+export get_stacked_aggregation_data
 export bar_plot
 export stack_plot
 export report
-export load_simulation_results
+export make_fuel_dictionary
+export fuel_plot
 
 #################################################################################
 # Imports
@@ -132,7 +140,9 @@ import TimeSeries
 import MathOptFormat
 import DataFrames
 import Feather
+import Colors
 import JSON
+import CSV
 
 include("core/definitions.jl")
 
@@ -209,17 +219,17 @@ include("simulation/stage_update.jl")
 include("routines/make_initial_conditions.jl")
 include("routines/get_results.jl")
 include("routines/solve_routines.jl")
-include("routines/write_model.jl")
 
 #Utils
 include("utils/optimization_debugging.jl")
+include("utils/aggregated_results.jl")
+include("utils/check_results.jl")
+include("utils/simulation_results_container.jl")
 include("utils/printing.jl")
-include("utils/plot_results.jl")
-include("utils/plot_recipes.jl")
-include("utils/aggregation.jl")
+#Routines
+include("routines/write_results.jl")
 
 #Initialization
-
 function __init__()
    Requires.@require Weave = "44d3d7a6-8a23-5bf8-98c5-b353f8df5ec9" include("utils/make_report.jl")
 end
