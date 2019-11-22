@@ -15,14 +15,14 @@ end
 Creates a model reference of the Power Formulation, devices, branches, and services.
 
 # Arguments
--`model::Type{T<:PM.AbstractPowerFormulation}`:
--`devices::Dict{Symbol, DeviceModel}`: device dictionary
--`branches::Dict{Symbol, BranchModel}`: branch dictionary
--`services::Dict{Symbol, ServiceModel}`: service dictionary
+- `model::Type{T<:PM.AbstractPowerFormulation}`:
+- `devices::Dict{Symbol, DeviceModel}`: device dictionary
+- `branches::Dict{Symbol, BranchModel}`: branch dictionary
+- `services::Dict{Symbol, ServiceModel}`: service dictionary
 
 # Example
 ```julia
-template= OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
+template = OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
 ```
 """
 function OperationsTemplate(::Type{T}) where {T<:PM.AbstractPowerModel}
@@ -51,32 +51,32 @@ end
 This builds the optimization model and populates the operation model
 
 # Arguments
--`::Type{M} where {M<:AbstractOperationsProblem, T<:PM.AbstractPowerFormulation} = TestOpProblem`:
+- `::Type{M} where {M<:AbstractOperationsProblem, T<:PM.AbstractPowerFormulation} = TestOpProblem`:
 The abstract operation model type
--`template::OperationsTemplate`: The model reference made up of transmission, devices,
+- `template::OperationsTemplate`: The model reference made up of transmission, devices,
                                           branches, and services.
--`sys::PSY.System`: the system created using Power Systems
+- `sys::PSY.System`: the system created using Power Systems
 
 # Output
--`op_problem::OperationsProblem`: The operation model contains the model type, model, Power
+- `op_problem::OperationsProblem`: The operation model contains the model type, model, Power
 Systems system, and optimization model.
 
 # Example
 ```julia
-template= OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationsProblem(TestOpProblem, template, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
+template = OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
+OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
 ```
 
 # Accepted Key Words
--`verbose::Bool = true`: verbose default is true
--`PTDF::PTDF = PTDF`: Passes the PTDF matrix into the optimization model
--`optimizer::union{Nothing,JuMP.OptimizerFactory} = GLPK_optimizer`: The optimizer gets passed
+- `verbose::Bool`: verbose default is true
+- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
+- `optimizer::union{Nothing, JuMP.OptimizerFactory} = GLPK_optimizer`: The optimizer gets passed
 into the optimization model the default is nothing.
--`initial_conditions::DICKDA = DICKDA()`: default of Dict{ICKey, Array{InitialCondition}}
--`parameters::Bool = false`: enable JuMP parameters
--`use_forecast_data::Bool = true`: if true, forecast collects the time steps in Power Systems,
+- `initial_conditions::DICKDA`: default of Dict{ICKey, Array{InitialCondition}}
+- `parameters::Bool`: enable JuMP parameters
+- `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
--`initial_time::Dates.DateTime = PSY.get_forecasts_initial_time(sys)`: initial time of forecast
+- `initial_time::Dates.DateTime`: initial time of forecast
 """
 function OperationsProblem(::Type{M},
                         template::OperationsTemplate,
@@ -104,31 +104,31 @@ This uses the Abstract Power Formulation to build the model reference and
 the optimization model and populates the operation model struct.
 
 # Arguments
--`op_problem::Type{M} = where {M<:AbstractOperationsProblem`: Defines the type of the operation model
--`::Type{T} where T<:PM.AbstractPowerFormulation`: The power formulation used for model ref & optimization model
--`sys::PSY.System = c_sys5`: the system created in Power Systems
+- `op_problem::Type{M} = where {M<:AbstractOperationsProblem`: Defines the type of the operation model
+- `::Type{T} where T<:PM.AbstractPowerFormulation`: The power formulation used for model ref & optimization model
+- `sys::PSY.System`: the system created in Power Systems
 
 # Output
--`op_problem::OperationsProblem`: The operation model contains the model type, model, Power
+- `op_problem::OperationsProblem`: The operation model contains the model type, model, Power
 Systems system, and optimization model.
 
 # Example
 ```julia
-template= OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationsProblem(TestOpProblem, template, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
+template = OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
+OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
 ```
 
 
 # Accepted Key Words
--`verbose::Bool = true`: verbose default is true
--`PTDF::PTDF = PTDF`: Passes the PTDF matrix into the optimization model
--`optimizer::union{Nothing,JuMP.OptimizerFactory}`: The optimizer gets passed
+- `verbose::Bool`: verbose default is true
+- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
+- `optimizer::union{Nothing, JuMP.OptimizerFactory}`: The optimizer gets passed
 into the optimization model the default is nothing.
--`initial_conditions::DICKDA = DICKDA()`: default of Dict{ICKey, Array{InitialCondition}}
--`parameters::Bool = false`: enable JuMP parameters
--`use_forecast_data::Bool = true`: if true, forecast collects the time steps in Power Systems,
+- `initial_conditions::DICKDA`: default of Dict{ICKey, Array{InitialCondition}}
+- `parameters::Bool`: enable JuMP parameters
+- `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
--`initial_time::Dates.DateTime = PSY.get_forecasts_initial_time(sys)`: initial time of forecast
+- `initial_time::Dates.DateTime`: initial time of forecast
 
 """
 function OperationsProblem(::Type{M},
@@ -155,30 +155,30 @@ the optimization model and populates the operation model struct.
 ***Note:*** the abstract operation model is set to the default operation model
 
 # Arguments
--`op_problem::Type{M}`: Defines the type of the operation model
--`::Type{T} where T<:PM.AbstractPowerFormulation`: The power formulation used for model ref & optimization model
--`sys::PSY.System`: the system created in Power Systems
+- `op_problem::Type{M}`: Defines the type of the operation model
+- `::Type{T} where T<:PM.AbstractPowerFormulation`: The power formulation used for model ref & optimization model
+- `sys::PSY.System`: the system created in Power Systems
 
 # Output
--`op_problem::OperationsProblem`: The operation model contains the model type, model, Power
+- `op_problem::OperationsProblem`: The operation model contains the model type, model, Power
 Systems system, and optimization model.
 
 # Example
 ```julia
-template= OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationsProblem(TestOpProblem, template, c_sys5_re; PTDF = PTDF5, optimizer = GLPK_optimizer)
+template = OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
+OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
 ```
 
 # Accepted Key Words
--`verbose::Bool = true`: verbose default is true
--`PTDF::PTDF = PTDF`: Passes the PTDF matrix into the optimization model
--`optimizer::union{Nothing,JuMP.OptimizerFactory}`: The optimizer gets passed
+- `verbose::Bool`: verbose default is true
+- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
+- `optimizer::union{Nothing, JuMP.OptimizerFactory}`: The optimizer gets passed
 into the optimization model the default is nothing.
--`initial_conditions::DICKDA = DICKDA()`: default of Dict{ICKey, Array{InitialCondition}}
--`parameters::Bool = false`: enable JuMP parameters
--`use_forecast_data::Bool = true`: if true, forecast collects the time steps in Power Systems,
+- `initial_conditions::DICKDA`: default of Dict{ICKey, Array{InitialCondition}}
+- `parameters::Bool`: enable JuMP parameters
+- `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
--`initial_time::Dates.DateTime`: initial time of forecast
+- `initial_time::Dates.DateTime`: initial time of forecast
 
 """
 function OperationsProblem(::Type{T},
