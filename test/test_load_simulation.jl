@@ -1,23 +1,9 @@
-using Pkg
-using Revise
-using PowerSystems
 const PSY = PowerSystems
-using Ipopt
-using GLPK
-using Dates
-using DataFrames
-using ParameterJuMP
-using JuMP
-using Test
 const PJ = ParameterJuMP
-import PowerModels
 const PM = PowerModels
 ipopt_optimizer = with_optimizer(Ipopt.Optimizer, print_level = 4)
 GLPK_optimizer = with_optimizer(GLPK.Optimizer, msg_lev = GLPK.MSG_ALL)
-using PowerSimulations
 const PSI = PowerSimulations
-using Random
-Random.seed!(232)
 
 base_dir = string(dirname(dirname(pathof(PowerSimulations))))
 DATA_DIR = joinpath(base_dir, "test/test_data")
