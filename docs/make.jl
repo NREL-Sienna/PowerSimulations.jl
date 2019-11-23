@@ -3,10 +3,7 @@ using PowerSimulations
 
 makedocs(
     sitename = "PowerSimulations.jl",
-    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true",
-    assets = [
-        "assets/logo.png"
-    ]),
+    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
     modules = [PowerSimulations],
     strict = true,
     authors = "Jose Daniel Lara, Clayton Barrows and Dheepak Krishnamurthy",
