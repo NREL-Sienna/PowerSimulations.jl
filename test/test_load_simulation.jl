@@ -1,9 +1,5 @@
-const PSY = PowerSystems
-const PJ = ParameterJuMP
-const PM = PowerModels
 ipopt_optimizer = with_optimizer(Ipopt.Optimizer, print_level = 4)
 GLPK_optimizer = with_optimizer(GLPK.Optimizer, msg_lev = GLPK.MSG_ALL)
-const PSI = PowerSimulations
 
 base_dir = string(dirname(dirname(pathof(PowerSimulations))))
 DATA_DIR = joinpath(base_dir, "test/test_data")
@@ -43,8 +39,7 @@ for t in 1:2
         add_forecast!(c_sys5_uc, i, Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]))
     end
 end
-using TimeSeries
-using Dates
+
 c_sys5_ed = System(nodes, vcat(thermal_generators5_uc_testing(nodes), renewable_generators5(nodes)), vcat(loads5(nodes), interruptible(nodes)), branches5(nodes), nothing, 100.0, nothing, nothing);
 
 RealTime = collect(DateTime("1/1/2024 0:00:00", "d/m/y H:M:S"):Minute(5):DateTime("1/1/2024 23:55:00", "d/m/y H:M:S"))
