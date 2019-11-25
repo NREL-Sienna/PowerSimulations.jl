@@ -24,8 +24,8 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [compat]
-Colors = "~0.9"
 CSV = "=0.5.13"
+Colors = "~0.9"
 DataFrames = "~0.19.3"
 Feather = ">= v0.5.3"
 InfrastructureSystems = "~0.4"
