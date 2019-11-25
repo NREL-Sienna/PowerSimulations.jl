@@ -1,16 +1,16 @@
-construct_device!(canonical::Canonical, sys::PSY.System,
+construct_device!(psi_container::PSIContainer, sys::PSY.System,
                   model::DeviceModel{B, Br},
                   ::Type{CopperPlatePowerModel};
                   kwargs...) where {B<:PSY.DCBranch,
                                     Br<:AbstractBranchFormulation} = nothing
 
-construct_device!(canonical::Canonical, sys::PSY.System,
+construct_device!(psi_container::PSIContainer, sys::PSY.System,
                   model::DeviceModel{B, Br},
                   ::Type{CopperPlatePowerModel};
                   kwargs...) where {B<:PSY.ACBranch,
                                     Br<:AbstractBranchFormulation} = nothing
 
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{B, Br},
                            ::Type{S};
                            kwargs...) where {B<:PSY.Branch,
@@ -25,15 +25,15 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
         return
     end
 
-    branch_rate_bounds!(canonical, devices, Br, S)
+    branch_rate_bounds!(psi_container, devices, Br, S)
 
-    branch_rate_constraint!(canonical, devices, Br, S)
+    branch_rate_constraint!(psi_container, devices, Br, S)
 
     return
 
 end
 
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
                            ::Type{S};
                            kwargs...) where {S<:PM.AbstractPowerModel}
@@ -46,17 +46,17 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
         return
     end
 
-    branch_rate_bounds!(canonical,
+    branch_rate_bounds!(psi_container,
                         devices,
                         model.formulation,
                         S)
 
-    branch_rate_constraint!(canonical,
+    branch_rate_constraint!(psi_container,
                         devices,
                         model.formulation,
                         S)
 
-    branch_flow_constraint!(canonical,
+    branch_flow_constraint!(psi_container,
                         devices,
                         model.formulation,
                         S)
@@ -65,7 +65,7 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
 
 end
 
- construct_device!(canonical::Canonical, sys::PSY.System,
+ construct_device!(psi_container::PSIContainer, sys::PSY.System,
                    model::DeviceModel{B, Br},
                    ::Type{S};
                    kwargs...) where {B<:PSY.Branch,
@@ -73,7 +73,7 @@ end
                                                Type{StaticTransformerUnbounded}},
                                      S<:PM.AbstractPowerModel} = nothing
 
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{B, Br},
                            ::Type{S};
                            kwargs...) where {Br<:AbstractBranchFormulation,
@@ -88,7 +88,7 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
         return
     end
 
-    branch_rate_constraint!(canonical, devices, Br, S)
+    branch_rate_constraint!(psi_container, devices, Br, S)
 
     return
 

@@ -1,7 +1,6 @@
 # Internal functions to create the variable DataFrame
 
 function _result_dataframe_variables(variable::JuMP.Containers.DenseAxisArray)
-
     if length(axes(variable)) == 1
         result = Vector{Float64}(undef, length(first(variable.axes)))
 
@@ -44,10 +43,10 @@ function _result_dataframe_variables(variable::JuMP.Containers.DenseAxisArray)
 
     else
         error("Dimension Number $(length(axes(variable))) not Supported")
-
     end
 
 end
+
 function _result_dataframe_duals(constraint::JuMP.Containers.DenseAxisArray)
     if length(axes(constraint)) == 1
         result = Vector{Float64}(undef, length(first(constraint.axes)))
@@ -73,65 +72,39 @@ function _result_dataframe_duals(constraint::JuMP.Containers.DenseAxisArray)
         error("Dimension Number $(length(axes(constraint))) not Supported")
     end
 end
-#=
-function _result_dataframe_duals(constraint::JuMP.Containers.DenseAxisArray)
-
-    result = Array{Float64, length(constraint.axes)}(undef, length(constraint.axes[1]))
-    names = Array{Symbol, 1}(undef, length(constraint.axes[1]))
-
-    for (ix, name) in enumerate(constraint.axes[1])
-        try result[ix] = JuMP.dual(constraint[name])
-        catch
-            result[ix] = NaN
-        end
-    end
-
-    return DataFrames.DataFrame(Price = result)
-
-end
-=#
-# Function to write results dataframes and variables to a dictionary
 
 function get_model_result(op_m::OperationsProblem)
-
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
 
-    for (k, v) in get_variables(op_m.canonical)
+    for (k, v) in get_variables(op_m.psi_container)
         results_dict[k] = _result_dataframe_variables(v)
     end
-
     return results_dict
-
 end
 
 function get_model_duals(op_m::OperationsProblem, cons::Vector{Symbol})
-
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
 
     for c in cons
-        v = get_constraint(op_m.canonical, c)
+        v = get_constraint(op_m.psi_container, c)
         results_dict[c] = _result_dataframe_duals(v)
     end
-
     return results_dict
-
 end
 
 # Function to create a dictionary for the optimizer log of the simulation
 
 function get_optimizer_log(op_m::OperationsProblem)
-
-    canonical = op_m.canonical
-
+    psi_container = op_m.psi_container
     optimizer_log = Dict{Symbol, Any}()
+    optimizer_log[:obj_value] = JuMP.objective_value(psi_container.JuMPmodel)
+    optimizer_log[:termination_status] = JuMP.termination_status(psi_container.JuMPmodel)
+    optimizer_log[:primal_status] = JuMP.primal_status(psi_container.JuMPmodel)
+    optimizer_log[:dual_status] = JuMP.dual_status(psi_container.JuMPmodel)
+    optimizer_log[:solver] =  JuMP.solver_name(psi_container.JuMPmodel)
 
-    optimizer_log[:obj_value] = JuMP.objective_value(canonical.JuMPmodel)
-    optimizer_log[:termination_status] = JuMP.termination_status(canonical.JuMPmodel)
-    optimizer_log[:primal_status] = JuMP.primal_status(canonical.JuMPmodel)
-    optimizer_log[:dual_status] = JuMP.dual_status(canonical.JuMPmodel)
-    optimizer_log[:solver] =  JuMP.solver_name(canonical.JuMPmodel)
     try
-        optimizer_log[:solve_time] = MOI.get(canonical.JuMPmodel, MOI.SolveTime())
+        optimizer_log[:solve_time] = MOI.get(psi_container.JuMPmodel, MOI.SolveTime())
     catch
         @warn("SolveTime() property not supported by $(optimizer_log[:solver])")
         optimizer_log[:solve_time] = "Not Supported by $(optimizer_log[:solver])"
@@ -142,7 +115,6 @@ end
 # Function to create a dictionary for the time series of the simulation
 
 function get_time_stamps(op_problem::OperationsProblem)
-
     initial_time = PSY.get_forecasts_initial_time(op_problem.sys)
     interval = PSY.get_forecasts_resolution(op_problem.sys)
     horizon = PSY.get_forecasts_horizon(op_problem.sys)
@@ -153,7 +125,6 @@ function get_time_stamps(op_problem::OperationsProblem)
 end
 
 function get_time_stamps(stage::_Stage, start_time::Dates.DateTime)
-
     interval = PSY.get_forecasts_resolution(stage.sys)
     horizon = PSY.get_forecasts_horizon(stage.sys)
     range = collect(start_time:interval:start_time+ interval.*horizon)

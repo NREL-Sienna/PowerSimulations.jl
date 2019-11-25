@@ -1,4 +1,4 @@
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{R, D},
                            ::Type{S};
                            kwargs...) where {R<:PSY.RenewableGen,
@@ -16,25 +16,25 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables!(canonical, devices);
+    activepower_variables!(psi_container, devices);
 
-    reactivepower_variables!(canonical, devices);
+    reactivepower_variables!(psi_container, devices);
 
     #Constraints
-    activepower_constraints!(canonical, devices, D, S)
+    activepower_constraints!(psi_container, devices, D, S)
 
-    reactivepower_constraints!(canonical, devices, D, S)
+    reactivepower_constraints!(psi_container, devices, D, S)
 
-    feedforward!(canonical, R, model.feedforward)
+    feedforward!(psi_container, R, model.feedforward)
 
     #Cost Function
-    cost_function(canonical, devices, D, S)
+    cost_function(psi_container, devices, D, S)
 
     return
 
 end
 
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{R, D},
                            ::Type{S};
                            kwargs...) where {R<:PSY.RenewableGen,
@@ -51,21 +51,21 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables!(canonical, devices)
+    activepower_variables!(psi_container, devices)
 
     #Constraints
-    activepower_constraints!(canonical, devices, D, S)
+    activepower_constraints!(psi_container, devices, D, S)
 
-    feedforward!(canonical, R, model.feedforward)
+    feedforward!(psi_container, R, model.feedforward)
 
     #Cost Function
-    cost_function(canonical, devices, D, S)
+    cost_function(psi_container, devices, D, S)
 
     return
 
 end
 
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{R, RenewableFixed},
                            system_formulation::Type{S};
                            kwargs...) where {R<:PSY.RenewableGen,
@@ -80,13 +80,13 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
         return
     end
 
-    nodal_expression!(canonical, devices, system_formulation)
+    nodal_expression!(psi_container, devices, system_formulation)
 
     return
 
 end
 
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{PSY.RenewableFix, D},
                            system_formulation::Type{S};
                            kwargs...) where {D<:AbstractRenewableDispatchFormulation,
@@ -94,7 +94,7 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
 
     @warn("The Formulation $(D) only applies to FormulationControllable Renewable Resources, \n Consider Changing the Device Formulation to RenewableFixed")
 
-    construct_device!(canonical,
+    construct_device!(psi_container,
                       sys,
                       DeviceModel(PSY.RenewableFix,RenewableFixed),
                       system_formulation;
@@ -105,7 +105,7 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
 end
 
 
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{PSY.RenewableFix, RenewableFixed},
                            system_formulation::Type{S};
                            kwargs...) where {S<:PM.AbstractPowerModel}
@@ -119,7 +119,7 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
         return
     end
 
-    nodal_expression!(canonical, devices, system_formulation)
+    nodal_expression!(psi_container, devices, system_formulation)
 
     return
 

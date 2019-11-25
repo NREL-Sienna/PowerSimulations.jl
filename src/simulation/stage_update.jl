@@ -10,7 +10,7 @@ function parameter_update!(param_reference::UpdateRef{T},
 
     devices = PSY.get_components(T, sim.stages[stage_number].sys)
     initial_forecast_time = get_simulation_time(sim, stage_number)
-    horizon = length(model_time_steps(sim.stages[stage_number].canonical))
+    horizon = length(model_time_steps(sim.stages[stage_number].psi_container))
     for d in devices
         forecast = PSY.get_forecast(PSY.Deterministic,
                                     d,
@@ -36,7 +36,7 @@ function _get_stage_variable(chron::Type{RecedingHorizon},
                            var_ref::UpdateRef,
                            to_stage_execution_count::Int64)
 
-    variable = get_value(from_stage.canonical, var_ref)
+    variable = get_value(from_stage.psi_container, var_ref)
     step = axes(variable)[2][1]
     return JuMP.value(variable[device_name, step])
 end
@@ -47,7 +47,7 @@ function _get_stage_variable(chron::Type{Sequential},
                              var_ref::UpdateRef,
                              to_stage_execution_count::Int64)
 
-    variable = get_value(from_stage.canonical, var_ref)
+    variable = get_value(from_stage.psi_container, var_ref)
     step = axes(variable)[2][end]
     return JuMP.value(variable[device_name, step])
 end
@@ -58,14 +58,14 @@ function _get_stage_variable(chron::Type{Synchronize},
                             var_ref::UpdateRef,
                             to_stage_execution_count::Int64)
 
-    variable = get_value(from_stage.canonical, var_ref)
+    variable = get_value(from_stage.psi_container, var_ref)
     step = axes(variable)[2][to_stage_execution_count + 1]
     return JuMP.value(variable[device_name, step])
 end
 
 ################################Cache Update################################################
 function _update_cache!(c::TimeStatusChange, stage::_Stage)
-    parameter = get_value(stage.canonical, c.ref)
+    parameter = get_value(stage.psi_container, c.ref)
 
     for name in parameter.axes[1]
         param_status = PJ.value(parameter[name])
@@ -85,7 +85,7 @@ function feedforward_update(synch::Chron,
                             param_reference::UpdateRef{JuMP.VariableRef},
                             param_array::JuMPParamArray,
                             to_stage::_Stage,
-                            from_stage::_Stage) where Chron <: Chronology
+                            from_stage::_Stage) where Chron <: AbstractChronology
 
 
     !(to_stage.execution_count % synch.to_steps == 0) && return
@@ -188,7 +188,7 @@ function _initial_condition_update!(initial_condition_key::ICKey,
                                     synch::Chron,
                                     ini_cond_vector::Vector{InitialCondition},
                                     to_stage::_Stage,
-                                    from_stage::_Stage) where Chron <: Chronology
+                                    from_stage::_Stage) where Chron <: AbstractChronology
 
     to_stage_execution_count = to_stage.execution_count
     for ic in ini_cond_vector
@@ -284,14 +284,14 @@ end
 function update_stage!(stage::_Stage{M}, step::Int64, sim::Simulation) where M<:AbstractOperationsProblem
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && stage.key == 1 && stage.execution_count == 0) && return
-    for (k, v) in stage.canonical.parameters
+    for (k, v) in stage.psi_container.parameters
         parameter_update!(k, v, stage.key, sim)
     end
 
     cache_update!(stage)
 
     # Set initial conditions of the stage I am about to run.
-    for (k, v) in stage.canonical.initial_conditions
+    for (k, v) in stage.psi_container.initial_conditions
         intial_condition_update!(k, v, stage.key, step, sim)
     end
 

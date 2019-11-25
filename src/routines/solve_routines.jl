@@ -18,28 +18,21 @@ automatically get written to feather files
 - `optimizer::OptimizerFactory`: The optimizer that is used to solve the model
 """
 function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
-
     timed_log = Dict{Symbol, Any}()
-
     save_path = get(kwargs, :save_path, nothing)
 
-    if op_problem.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
-
+    if op_problem.psi_container.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
         if !(:optimizer in keys(kwargs))
             error("No Optimizer has been defined, can't solve the operational problem")
         end
-
         _, timed_log[:timed_solve_time],
         timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.canonical.JuMPmodel,
+        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.psi_container.JuMPmodel,
                                                         kwargs[:optimizer])
-
     else
-
         _, timed_log[:timed_solve_time],
         timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.canonical.JuMPmodel)
-
+        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.psi_container.JuMPmodel)
     end
 
     vars_result = get_model_result(op_problem)
@@ -47,37 +40,33 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
     optimizer_log = get_optimizer_log(op_problem)
     time_stamp = get_time_stamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
-    obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.canonical.JuMPmodel))
+    obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel))
     merge!(optimizer_log, timed_log)
-
     results = _make_results(vars_result, obj_value, optimizer_log, time_stamp, check_sum)
-
     !isnothing(save_path) && write_results(results, save_path)
 
      return results
-
 end
 
 function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::String; kwargs...)
-
-    if stage.canonical.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
+    if stage.psi_container.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
         error("No Optimizer has been defined, can't solve the operational problem stage with key $(stage.key)")
     end
     timed_log = Dict{Symbol, Any}()
     _, timed_log[:timed_solve_time],
     timed_log[:solve_bytes_alloc],
-    timed_log[:sec_in_gc] = @timed JuMP.optimize!(stage.canonical.JuMPmodel)
-    model_status = JuMP.primal_status(stage.canonical.JuMPmodel)
+    timed_log[:sec_in_gc] = @timed JuMP.optimize!(stage.psi_container.JuMPmodel)
+    model_status = JuMP.primal_status(stage.psi_container.JuMPmodel)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("Stage $(stage.key) status is $(model_status)")
     end
     retrieve_duals = get(kwargs, :duals, nothing)
-    if !isnothing(retrieve_duals) && !isnothing(get_constraints(stage.canonical))
+    if !isnothing(retrieve_duals) && !isnothing(get_constraints(stage.psi_container))
         _export_model_result(stage, start_time, results_path, retrieve_duals)
     else
         _export_model_result(stage, start_time, results_path)
     end
-    _export_optimizer_log(timed_log, stage.canonical, results_path)
+    _export_optimizer_log(timed_log, stage.psi_container, results_path)
     stage.execution_count += 1
     return
 end

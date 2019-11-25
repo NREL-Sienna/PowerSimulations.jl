@@ -7,7 +7,7 @@ module PowerSimulations
 export Stage
 export Simulation
 export OperationsProblem
-export OperationsTemplate
+export OperationsProblemTemplate
 export InitialCondition
 
 #Network Relevant Exports
@@ -161,7 +161,7 @@ include("devices_models/device_model.jl")
 include("network_models/networks.jl")
 include("services_models/services_model.jl")
 include("core/core_structs/initial_conditions.jl")
-include("core/core_structs/canonical.jl")
+include("core/core_structs/psi_container.jl")
 include("core/core_structs/operations_problem.jl")
 include("core/core_structs/chronology.jl")
 include("core/core_structs/simulations_stages.jl")

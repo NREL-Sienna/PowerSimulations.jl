@@ -170,7 +170,7 @@ end
         construct_device!(ps_model, :Load, load_model);
         construct_network!(ps_model, network);
         construct_device!(ps_model, :Line, line_model);
-        @test !isnothing(ps_model.canonical.pm)
+        @test !isnothing(ps_model.psi_container.pm)
     end
 
 end
@@ -187,7 +187,7 @@ end
         construct_network!(ps_model, network);
         construct_device!(ps_model, :Line, line_model);
         construct_device!(ps_model, :DCLine, dc_line);
-        @test !isnothing(ps_model.canonical.pm)
+        @test !isnothing(ps_model.psi_container.pm)
     end
 
 end
@@ -207,7 +207,7 @@ end
         construct_network!(ps_model, network);
         construct_device!(ps_model, :Line, line_model);
         construct_device!(ps_model, :DCLine, dc_line);
-        @test !isnothing(ps_model.canonical.pm)
+        @test !isnothing(ps_model.psi_container.pm)
     end
 
 end

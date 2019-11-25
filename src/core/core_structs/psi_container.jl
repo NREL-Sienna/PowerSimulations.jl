@@ -21,15 +21,12 @@ function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory},
 end
 
 function _make_container_array(V::DataType, parameters::Bool, ax...)
-
     if parameters
         return JuMP.Containers.DenseAxisArray{PGAE{V}}(undef, ax...)
     else
         return JuMP.Containers.DenseAxisArray{GAE{V}}(undef, ax...)
     end
-
     return
-
 end
 
 function _make_expressions_dict(transmission::Type{S},
@@ -37,7 +34,6 @@ function _make_expressions_dict(transmission::Type{S},
                                 bus_numbers::Vector{Int64},
                                 time_steps::UnitRange{Int64},
                                 parameters::Bool) where {S<:PM.AbstractPowerModel}
-
     return DSDA(:nodal_balance_active =>  _make_container_array(V,
                                                                 parameters,
                                                                 bus_numbers,
@@ -46,7 +42,6 @@ function _make_expressions_dict(transmission::Type{S},
                                                                  parameters,
                                                                  bus_numbers,
                                                                  time_steps))
-
 end
 
 function _make_expressions_dict(transmission::Type{S},
@@ -54,7 +49,6 @@ function _make_expressions_dict(transmission::Type{S},
                                 bus_numbers::Vector{Int64},
                                 time_steps::UnitRange{Int64},
                                 parameters::Bool) where {S<:PM.AbstractActivePowerModel}
-
     return DSDA(:nodal_balance_active =>  _make_container_array(V,
                                                                 parameters,
                                                                 bus_numbers,
@@ -62,7 +56,7 @@ function _make_expressions_dict(transmission::Type{S},
 end
 
 
-function _canonical_init(bus_numbers::Vector{Int64},
+function _psi_container_init(bus_numbers::Vector{Int64},
                         jump_model::JuMP.AbstractModel,
                         optimizer::Union{Nothing, JuMP.OptimizerFactory},
                         transmission::Type{S},
@@ -72,10 +66,8 @@ function _canonical_init(bus_numbers::Vector{Int64},
                         initial_time::Dates.DateTime,
                         make_parameters_container::Bool,
                         ini_con::DICKDA) where {S<:PM.AbstractPowerModel}
-
     V = JuMP.variable_type(jump_model)
-
-    canonical = Canonical(jump_model,
+    psi_container = PSIContainer(jump_model,
                               optimizer,
                               time_steps,
                               resolution,
@@ -91,13 +83,11 @@ function _canonical_init(bus_numbers::Vector{Int64},
                                                      make_parameters_container),
                               make_parameters_container ? DRDA() : nothing,
                               ini_con,
-                              nothing);
-
-    return canonical
-
+                              nothing)
+    return psi_container
 end
 
-mutable struct Canonical
+mutable struct PSIContainer
     JuMPmodel::JuMP.AbstractModel
     optimizer_factory::Union{Nothing, JuMP.OptimizerFactory}
     time_steps::UnitRange{Int64}
@@ -112,7 +102,7 @@ mutable struct Canonical
     initial_conditions::DICKDA
     pm::Union{Nothing, PM.AbstractPowerModel}
 
-    function Canonical(JuMPmodel::JuMP.AbstractModel,
+    function PSIContainer(JuMPmodel::JuMP.AbstractModel,
                        optimizer_factory::Union{Nothing, JuMP.OptimizerFactory},
                        time_steps::UnitRange{Int64},
                        resolution::Dates.Period,
@@ -139,16 +129,13 @@ mutable struct Canonical
             parameters,
             initial_conditions,
             pm)
-
     end
-
 end
 
-function Canonical(::Type{T},
+function PSIContainer(::Type{T},
                    sys::PSY.System,
                    optimizer::Union{Nothing, JuMP.OptimizerFactory};
                    kwargs...) where {T<:PM.AbstractPowerModel}
-
     PSY.check_forecast_consistency(sys)
     user_defined_model = get(kwargs, :JuMPmodel, nothing)
     ini_con = get(kwargs, :initial_conditions, DICKDA())
@@ -172,7 +159,7 @@ function Canonical(::Type{T},
 
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
 
-    return _canonical_init(bus_numbers,
+    return _psi_container_init(bus_numbers,
                            jump_model,
                            optimizer,
                            T,
@@ -185,16 +172,15 @@ function Canonical(::Type{T},
 
 end
 
-function InitialCondition(canonical::Canonical,
+function InitialCondition(psi_container::PSIContainer,
                           device::T,
                           access_ref::Symbol,
                           value::Float64,
                           cache::Union{Nothing, Type{<:AbstractCache}}=nothing) where T <: PSY.Device
-
-    if model_has_parameters(canonical)
+    if model_has_parameters(psi_container)
         return InitialCondition(device,
                                 UpdateRef{JuMP.VariableRef}(access_ref),
-                                PJ.add_parameter(canonical.JuMPmodel, value),
+                                PJ.add_parameter(psi_container.JuMPmodel, value),
                                 cache)
     else
         !hasfield(T, access_ref) && error("Device of of type $(T) doesn't contain
@@ -207,18 +193,18 @@ function InitialCondition(canonical::Canonical,
 
 end
 
-function get_initial_conditions(canonical::Canonical, key::ICKey)
-    return get(canonical.initial_conditions, key, Vector{InitialCondition}())
+function get_initial_conditions(psi_container::PSIContainer, key::ICKey)
+    return get(psi_container.initial_conditions, key, Vector{InitialCondition}())
 end
 
 # Var_ref
-function get_value(canonical::Canonical, ref::UpdateRef{JuMP.VariableRef})
-    return get_variable(canonical, ref.access_ref)
+function get_value(psi_container::PSIContainer, ref::UpdateRef{JuMP.VariableRef})
+    return get_variable(psi_container, ref.access_ref)
 end
 
 # param_ref
-function get_value(canonical::Canonical, ref::UpdateRef{PJ.ParameterRef})
-    for (k, v) in canonical.parameters
+function get_value(psi_container::PSIContainer, ref::UpdateRef{PJ.ParameterRef})
+    for (k, v) in psi_container.parameters
         if k.access_ref == ref.access_ref
             return v
         end
@@ -226,17 +212,17 @@ function get_value(canonical::Canonical, ref::UpdateRef{PJ.ParameterRef})
     return
 end
 
-_variable_type(cm::Canonical) = JuMP.variable_type(cm.JuMPmodel)
-model_time_steps(canonical::Canonical) = canonical.time_steps
-model_resolution(canonical::Canonical) = canonical.resolution
-model_has_parameters(canonical::Canonical) = !isnothing(canonical.parameters)
-model_uses_forecasts(canonical::Canonical) = canonical.use_forecast_data
-model_initial_time(canonical::Canonical) = canonical.initial_time
+_variable_type(cm::PSIContainer) = JuMP.variable_type(cm.JuMPmodel)
+model_time_steps(psi_container::PSIContainer) = psi_container.time_steps
+model_resolution(psi_container::PSIContainer) = psi_container.resolution
+model_has_parameters(psi_container::PSIContainer) = !isnothing(psi_container.parameters)
+model_uses_forecasts(psi_container::PSIContainer) = psi_container.use_forecast_data
+model_initial_time(psi_container::PSIContainer) = psi_container.initial_time
 #Internal Variables, Constraints and Parameters accessors
-get_variables(canonical::Canonical) = canonical.variables
-get_constraints(canonical::Canonical) = canonical.constraints
-get_variable(canonical::Canonical, name::Symbol) = canonical.variables[name]
-get_constraint(canonical::Canonical, name::Symbol) = canonical.constraints[name]
-get_parameters(canonical::Canonical, param_reference::UpdateRef) = canonical.parameters[param_reference]
-get_expression(canonical::Canonical, name::Symbol) = canonical.expressions[name]
-get_initial_conditions(canonical::Canonical) = canonical.initial_conditions
+get_variables(psi_container::PSIContainer) = psi_container.variables
+get_constraints(psi_container::PSIContainer) = psi_container.constraints
+get_variable(psi_container::PSIContainer, name::Symbol) = psi_container.variables[name]
+get_constraint(psi_container::PSIContainer, name::Symbol) = psi_container.constraints[name]
+get_parameters(psi_container::PSIContainer, param_reference::UpdateRef) = psi_container.parameters[param_reference]
+get_expression(psi_container::PSIContainer, name::Symbol) = psi_container.expressions[name]
+get_initial_conditions(psi_container::PSIContainer) = psi_container.initial_conditions

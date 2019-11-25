@@ -13,12 +13,12 @@ mutable struct DeviceModel{D<:PSY.Device,
                            B<:AbstractDeviceFormulation}
     device_type::Type{D}
     formulation::Type{B}
-    feedforward::Union{Nothing, AbstractFeedForwardAffect}
+    feedforward::Union{Nothing, AbstractAffectFeedForward}
 
     function DeviceModel(::Type{D},
                     ::Type{B},
-                    feedforward::Union{Nothing, AbstractFeedForwardAffect}) where {D<:PSY.Device,
-                                                            B<:AbstractDeviceFormulation}
+                    feedforward::Union{Nothing, AbstractAffectFeedForward}) where {D<:PSY.Device,
+                                                                                   B<:AbstractDeviceFormulation}
 
     _validate_device_formulation(D)
     _validate_device_formulation(B)

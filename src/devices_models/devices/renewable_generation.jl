@@ -5,9 +5,9 @@ struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
 struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
 ########################### renewable generation variables #################################
-function activepower_variables!(canonical::Canonical,
+function activepower_variables!(psi_container::PSIContainer,
                                devices::IS.FlattenIteratorWrapper{R}) where R<:PSY.RenewableGen
-    add_variable(canonical,
+    add_variable(psi_container,
                  devices,
                  Symbol("P_$(R)"),
                  false,
@@ -17,9 +17,9 @@ function activepower_variables!(canonical::Canonical,
     return
 end
 
-function reactivepower_variables!(canonical::Canonical,
+function reactivepower_variables!(psi_container::PSIContainer,
                                  devices::IS.FlattenIteratorWrapper{R}) where R<:PSY.RenewableGen
-    add_variable(canonical,
+    add_variable(psi_container,
                  devices,
                  Symbol("Q_$(R)"),
                  false,
@@ -28,7 +28,7 @@ function reactivepower_variables!(canonical::Canonical,
 end
 
 ####################################### Reactive Power Constraints #########################
-function reactivepower_constraints!(canonical::Canonical,
+function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableFullDispatch},
                                     system_formulation::Type{<:PM.AbstractPowerModel}) where R<:PSY.RenewableGen
@@ -44,40 +44,40 @@ function reactivepower_constraints!(canonical::Canonical,
             range_data[ix] = (name, PSY.get_reactivepowerlimits(tech))
         end
     end
-    device_range(canonical,
+    device_range(psi_container,
                 range_data,
                 Symbol("reactiverange_$(R)"),
                 Symbol("Q_$(R)"))
     return
 end
 
-function reactivepower_constraints!(canonical::Canonical,
+function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableConstantPowerFactor},
                                     system_formulation::Type{<:PM.AbstractPowerModel}) where R<:PSY.RenewableGen
     names = (PSY.get_name(d) for d in devices)
-    time_steps = model_time_steps(canonical)
+    time_steps = model_time_steps(psi_container)
     p_variable_name = Symbol("P_$(R)")
     q_variable_name = Symbol("Q_$(R)")
     constraint_name = Symbol("reactiverange_$(R)")
-    canonical.constraints[constraint_name] = JuMPConstraintArray(undef, names, time_steps)
+    psi_container.constraints[constraint_name] = JuMPConstraintArray(undef, names, time_steps)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(d))))
-        canonical.constraints[constraint_name][name, t] = JuMP.@constraint(canonical.JuMPmodel,
-                                canonical.variables[q_variable_name][name, t] ==
-                                canonical.variables[p_variable_name][name, t] * pf)
+        psi_container.constraints[constraint_name][name, t] = JuMP.@constraint(psi_container.JuMPmodel,
+                                psi_container.variables[q_variable_name][name, t] ==
+                                psi_container.variables[p_variable_name][name, t] * pf)
     end
     return
 end
 
 ######################## output constraints without Time Series ############################
-function _get_time_series(canonical::Canonical,
+function _get_time_series(psi_container::PSIContainer,
                           devices::IS.FlattenIteratorWrapper{<:PSY.RenewableGen})
-    initial_time = model_initial_time(canonical)
-    use_forecast_data = model_uses_forecasts(canonical)
-    parameters = model_has_parameters(canonical)
-    time_steps = model_time_steps(canonical)
+    initial_time = model_initial_time(psi_container)
+    use_forecast_data = model_uses_forecasts(psi_container)
+    parameters = model_has_parameters(psi_container)
+    time_steps = model_time_steps(psi_container)
     device_total = length(devices)
     ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, device_total)
     ts_data_reactive = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, device_total)
@@ -103,29 +103,29 @@ function _get_time_series(canonical::Canonical,
     return ts_data_active, ts_data_reactive
 end
 
-function activepower_constraints!(canonical::Canonical,
+function activepower_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{R},
                                 device_formulation::Type{<:AbstractRenewableDispatchFormulation},
                                 system_formulation::Type{<:PM.AbstractPowerModel}) where R<:PSY.RenewableGen
-    parameters = model_has_parameters(canonical)
-    use_forecast_data = model_uses_forecasts(canonical)
+    parameters = model_has_parameters(psi_container)
+    use_forecast_data = model_uses_forecasts(psi_container)
     if !parameters && !use_forecast_data
         range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_rating(PSY.get_tech(d)))) for d in devices]
-        device_range(canonical,
+        device_range(psi_container,
                     range_data,
                     Symbol("activerange_$(R)"),
                     Symbol("P_$(R)"))
         return
     end
-    ts_data_active, _ = _get_time_series(canonical, devices)
+    ts_data_active, _ = _get_time_series(psi_container, devices)
     if parameters
-        device_timeseries_param_ub(canonical,
+        device_timeseries_param_ub(psi_container,
                             ts_data_active,
                             Symbol("activerange_$(R)"),
                             UpdateRef{R}("get_rating"),
                             Symbol("P_$(R)"))
     else
-        device_timeseries_ub(canonical,
+        device_timeseries_ub(psi_container,
                             ts_data_active,
                             Symbol("activerange_$(R)"),
                             Symbol("P_$(R)"))
@@ -134,31 +134,31 @@ function activepower_constraints!(canonical::Canonical,
 end
 
 ########################## Addition of to the nodal balances ###############################
-function nodal_expression!(canonical::Canonical,
+function nodal_expression!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{R},
                            system_formulation::Type{<:PM.AbstractPowerModel}) where R<:PSY.RenewableGen
-    parameters = model_has_parameters(canonical)
-    ts_data_active, ts_data_reactive = _get_time_series(canonical, devices)
+    parameters = model_has_parameters(psi_container)
+    ts_data_active, ts_data_reactive = _get_time_series(psi_container, devices)
     if parameters
-        include_parameters(canonical,
+        include_parameters(psi_container,
                            ts_data_active,
                            UpdateRef{R}("get_rating"),
                            :nodal_balance_active)
-        include_parameters(canonical,
+        include_parameters(psi_container,
                            ts_data_reactive,
                            UpdateRef{R}("get_rating"),
                            :nodal_balance_reactive)
         return
     end
-    for t in model_time_steps(canonical)
+    for t in model_time_steps(psi_container)
         for device_value in ts_data_active
-            _add_to_expression!(canonical.expressions[:nodal_balance_active],
+            _add_to_expression!(psi_container.expressions[:nodal_balance_active],
                             device_value[2],
                             t,
                             device_value[3]*device_value[4][t])
         end
         for device_value in ts_data_reactive
-            _add_to_expression!(canonical.expressions[:nodal_balance_reactive],
+            _add_to_expression!(psi_container.expressions[:nodal_balance_reactive],
                             device_value[2],
                             t,
                             device_value[3]*device_value[4][t])
@@ -167,21 +167,21 @@ function nodal_expression!(canonical::Canonical,
     return
 end
 
-function nodal_expression!(canonical::Canonical,
+function nodal_expression!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{R},
                            system_formulation::Type{<:PM.AbstractActivePowerModel}) where R<:PSY.RenewableGen
-    parameters = model_has_parameters(canonical)
-    ts_data_active, ts_data_reactive = _get_time_series(canonical, devices)
+    parameters = model_has_parameters(psi_container)
+    ts_data_active, ts_data_reactive = _get_time_series(psi_container, devices)
     if parameters
-        include_parameters(canonical,
+        include_parameters(psi_container,
                            ts_data_active,
                            UpdateRef{R}("get_rating"),
                            :nodal_balance_active)
         return
     end
-    for t in model_time_steps(canonical)
+    for t in model_time_steps(psi_container)
         for device_value in ts_data_active
-            _add_to_expression!(canonical.expressions[:nodal_balance_active],
+            _add_to_expression!(psi_container.expressions[:nodal_balance_active],
                             device_value[2],
                             t,
                             device_value[3]*device_value[4][t])
@@ -191,11 +191,11 @@ function nodal_expression!(canonical::Canonical,
 end
 
 ##################################### renewable generation cost ############################
-function cost_function(canonical::Canonical,
+function cost_function(psi_container::PSIContainer,
                        devices::IS.FlattenIteratorWrapper{PSY.RenewableDispatch},
                        device_formulation::Type{D},
                        system_formulation::Type{<:PM.AbstractPowerModel}) where D<:AbstractRenewableDispatchFormulation
-    add_to_cost(canonical,
+    add_to_cost(psi_container,
                 devices,
                 Symbol("P_RenewableDispatch"),
                 :fixed,

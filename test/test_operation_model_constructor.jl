@@ -5,14 +5,14 @@ branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine)
                                      :TT => DeviceModel(PSY.TapTransformer , PSI.StaticTransformer))
 services = Dict{Symbol, PSI.ServiceModel}()
 @testset "Operation Model kwargs with CopperPlatePowerModel base" begin
-    template = OperationsTemplate(CopperPlatePowerModel, devices, branches, services);
+    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
     op_problem = OperationsProblem(TestOpProblem, template,
                                             c_sys5;
                                             optimizer = GLPK_optimizer,
                                            use_parameters = true)
     moi_tests(op_problem, true, 120, 120, 0, 0, 24, false)
 #=
-  j_model = op_problem.canonical.JuMPmodel
+  j_model = op_problem.psi_container.JuMPmodel
     @test (:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 120
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 120
@@ -27,7 +27,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
                                             optimizer = OSQP_optimizer)
     moi_tests(op_problem, false, 120, 120, 0, 0, 24, false)
     #=
-    j_model = op_problem.canonical.JuMPmodel
+    j_model = op_problem.psi_container.JuMPmodel
     @test !(:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 120
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 120
@@ -43,7 +43,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
                                             optimizer = GLPK_optimizer)
     moi_tests(op_problem, false, 5, 5, 0, 0, 1, false)
     #=
-    j_model = op_problem.canonical.JuMPmodel
+    j_model = op_problem.psi_container.JuMPmodel
     @test !(:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 5
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 5
@@ -61,7 +61,7 @@ services = Dict{Symbol, PSI.ServiceModel}()
                                             optimizer = GLPK_optimizer)
     moi_tests(op_problem, false, 5, 5, 0, 0, 1, false)
     #=
-    j_model = op_problem.canonical.JuMPmodel
+    j_model = op_problem.psi_container.JuMPmodel
     @test !(:params in keys(j_model.ext))
     @test JuMP.num_variables(j_model) == 5
     @test JuMP.num_constraints(j_model, JuMP.GenericAffExpr{Float64, VariableRef}, MOI.Interval{Float64}) == 5
@@ -103,12 +103,12 @@ end
             devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, thermal),
                                                 :Loads =>       DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
             branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine))
-            template = OperationsTemplate(net, devices, branches, services);
+            template = OperationsProblemTemplate(net, devices, branches, services);
             op_problem = OperationsProblem(TestOpProblem,
                                       template,
                                       system; PTDF = PTDF5, use_parameters = p);
-        @test :nodal_balance_active in keys(op_problem.canonical.expressions)
-        @test (:params in keys(op_problem.canonical.JuMPmodel.ext)) == p
+        @test :nodal_balance_active in keys(op_problem.psi_container.expressions)
+        @test (:params in keys(op_problem.psi_container.JuMPmodel.ext)) == p
         end
 
 
