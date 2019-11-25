@@ -1,5 +1,4 @@
 function _prepare_workspace!(ref::SimulationRef, base_name::AbstractString, folder::AbstractString)
-
     !isdir(folder) && throw(ArgumentError("Specified folder is not valid"))
     global_path = joinpath(folder, "$(base_name)")
     !isdir(global_path) && mkpath(global_path)
@@ -17,14 +16,11 @@ function _prepare_workspace!(ref::SimulationRef, base_name::AbstractString, fold
     ref.results = results_path
 
     return
-
 end
 
 function _validate_steps(stages::Dict{Int64, Stage},
                          steps::Int64,
                          stage_initial_times::Dict{Int64, Vector{Dates.DateTime}})
-
-
     for (stage_number, s) in stages
         forecast_count = length(stage_initial_times[stage_number])
 
@@ -34,9 +30,7 @@ function _validate_steps(stages::Dict{Int64, Stage},
         end
 
     end
-
     return
-
 end
 
 function _get_dates(stages::Dict{Int64, Stage})
@@ -58,11 +52,9 @@ function _get_dates(stages::Dict{Int64, Stage})
     end
 
     return Tuple(range), true
-
 end
 
 function _populate_cache!(stage::_Stage)
-
     for (k, cache) in stage.cache
         build_cache!(cache, stage.psi_container)
     end
@@ -74,7 +66,6 @@ function _build_stages(sim_ref::SimulationRef,
                        stages::Dict{Int64, Stage},
                        verbose::Bool = true;
                        kwargs...)
-
     system_to_file = get(kwargs, :system_to_file, true)
     mod_stages = Vector{_Stage}(undef, length(stages))
     for (key, stage) in stages
@@ -108,7 +99,6 @@ function _build_stages(sim_ref::SimulationRef,
     end
 
     return mod_stages
-
 end
 
 function _feedforward_rule_check(::Type{T},
@@ -116,11 +106,8 @@ function _feedforward_rule_check(::Type{T},
                               from_stage::Stage,
                               stage_number_to::Int64,
                               to_stage::Stage,) where T <: AbstractChronology
-
     error("Feedforward Model $(T) not implemented")
-
     return
-
 end
 
 
@@ -129,10 +116,8 @@ function _feedforward_rule_check(synch::Synchronize,
                                  from_stage::Stage,
                                  stage_number_to::Int64,
                                  to_stage::Stage)
-
     #Don't check for same Stage.
     stage_number_from == stage_number_to && return
-
     from_stage_horizon = PSY.get_forecasts_horizon(from_stage.sys)
     to_stage_count = get_execution_count(to_stage)
     to_stage_synch = synch.to_steps
@@ -155,48 +140,34 @@ function _feedforward_rule_check(synch::Synchronize,
     end
 
     return
-
 end
 
-function _feedforward_rule_check(sync::Sequential,
-                              stage_number_from::Int64,
-                              from_stage::Stage,
-                              stage_number_to::Int64,
-                              to_stage::Stage)
+_feedforward_rule_check(sync::Sequential,
+                        stage_number_from::Int64,
+                        from_stage::Stage,
+                        stage_number_to::Int64,
+                        to_stage::Stage) = nothing
 
-    return
-
-end
-
-function _feedforward_rule_check(sync::RecedingHorizon,
-                                stage_number_from::Int64,
-                                from_stage::Stage,
-                                stage_number_to::Int64,
-                                to_stage::Stage)
-
-    return
-
-end
+ _feedforward_rule_check(sync::RecedingHorizon,
+                         stage_number_from::Int64,
+                         from_stage::Stage,
+                         stage_number_to::Int64,
+                         to_stage::Stage) = nothing
 
 function _check_chronology_ref(stages::Dict{Int64, Stage})
-
     for (stage_number,stage) in stages
         for (key, chron) in stage.chronology_ref
             key < 1 && continue
             _feedforward_rule_check(chron, key, stages[key], stage_number, stage)
         end
     end
-
     return
-
 end
 
 function _build_simulation!(sim_ref::SimulationRef,
                             steps::Int64,
                             stages::Dict{Int64, Stage};
                             verbose::Bool = false, kwargs...)
-
-
     stage_initial_times = Dict{Int64, Vector{Dates.DateTime}}()
     for (stage_number, stage) in stages
         PSY.check_forecast_consistency(stage.sys)
@@ -213,5 +184,4 @@ function _build_simulation!(sim_ref::SimulationRef,
     _check_chronology_ref(stages)
     dates, validation = _get_dates(stages)
     return dates, validation, _build_stages(sim_ref, stages, verbose = verbose; kwargs...)
-
 end
