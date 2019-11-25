@@ -143,7 +143,47 @@ for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_uc))
         add_forecast!(c_sys5_uc, l, Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]))
     end
+    for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_uc))
+        add_forecast!(c_sys5_uc, r, Deterministic("get_rating", ren_timeseries_DA[t][ix]))
+    end
+    for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_uc))
+        add_forecast!(c_sys5_uc, i, Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]))
+    end
 end
+
+c_sys5_ed = System(nodes, vcat(thermal_generators5_uc_testing(nodes), renewable_generators5(nodes)), vcat(loads5(nodes), interruptible(nodes)), branches5(nodes), nothing, 100.0, nothing, nothing);
+
+for t in 1:2 # loop over days
+    for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_ed))
+        ta = load_timeseries_DA[t][ix]
+        for i in 1:length(ta) # loop over hours
+            ini_time = timestamp(ta[i]) #get the hour
+            data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
+            add_forecast!(c_sys5_ed, l, Deterministic("get_maxactivepower", data))
+        end
+    end
+end
+for t in 1:2
+    for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_ed))
+        ta = load_timeseries_DA[t][ix]
+        for i in 1:length(ta) # loop over hours
+            ini_time = timestamp(ta[i]) #get the hour
+            data = when(load_timeseries_RT[t][ix], hour,hour(ini_time[1])) # get the subset ts for that hour
+            add_forecast!(c_sys5_ed, l, Deterministic("get_rating", data))
+        end
+    end
+end
+for t in 1:2
+    for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_ed))
+        ta = load_timeseries_DA[t][ix]
+        for i in 1:length(ta) # loop over hours
+            ini_time = timestamp(ta[i]) #get the hour
+            data = when(load_timeseries_RT[t][ix], hour,hour(ini_time[1])) # get the subset ts for that hour
+            add_forecast!(c_sys5_ed, l, Deterministic("get_maxactivepower", data))
+        end
+    end
+end
+
 #reserve_uc = reserve5(get_components(ThermalStandard, c_sys5_uc))
 #add_component!(c_sys5_uc, reserve_uc[1])
 #add_forecast!(c_sys5_uc, reserve_uc[1], Deterministic("get_requirement", Reserve_ts[1][1]))
