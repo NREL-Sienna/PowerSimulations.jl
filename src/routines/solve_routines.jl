@@ -43,7 +43,7 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
     end
 
     vars_result = get_model_result(op_problem)
-    check_sum = _sum_variable_results(vars_results)
+    check_sum = _sum_variable_results(vars_result)
     optimizer_log = get_optimizer_log(op_problem)
     time_stamp = get_time_stamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)

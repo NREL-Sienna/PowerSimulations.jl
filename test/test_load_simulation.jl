@@ -1,32 +1,3 @@
-ipopt_optimizer = with_optimizer(Ipopt.Optimizer, print_level = 4)
-GLPK_optimizer = with_optimizer(GLPK.Optimizer, msg_lev = GLPK.MSG_ALL)
-
-base_dir = string(dirname(dirname(pathof(PowerSimulations))))
-DATA_DIR = joinpath(base_dir, "test/test_data")
-include(joinpath(DATA_DIR, "data_5bus_pu.jl"))
-include(joinpath(DATA_DIR, "data_14bus_pu.jl"))
-
-branches = Dict{Symbol, DeviceModel}()
-services = Dict{Symbol, PSI.ServiceModel}()
-devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalBasicUnitCommitment),
-                                    :Ren => DeviceModel(PSY.RenewableDispatch, PSI.RenewableFixed),
-                                    :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad),
-                                    :ILoads =>  DeviceModel(PSY.InterruptibleLoad, PSI.StaticPowerLoad),
-                                    )       
-template_uc= OperationsTemplate(CopperPlatePowerModel, devices, branches, services);
-
-## ED Model Ref
-branches = Dict{Symbol, DeviceModel}()
-services = Dict{Symbol, PSI.ServiceModel}()
-devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatchNoMin, SemiContinuousFF(:P, :ON)),
-                                    :Ren => DeviceModel(PSY.RenewableDispatch, PSI.RenewableFullDispatch),
-                                    :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad),
-                                    :ILoads =>  DeviceModel(PSY.InterruptibleLoad, PSI.DispatchablePowerLoad),
-                                    )       
-template_ed= OperationsTemplate(CopperPlatePowerModel, devices, branches, services);
-
-GLPK_optimizer = with_optimizer(GLPK.Optimizer)
-
 stages = Dict(1 => Stage(template_uc, 24, Hour(24), 1, c_sys5_uc, GLPK_optimizer,  Dict(0 => Sequential())),
               2 => Stage(template_ed, 12, Minute(5), 24, c_sys5_ed, GLPK_optimizer, Dict(1 => Synchronize(24,1), 0 => Sequential()), TimeStatusChange(:ON_ThermalStandard)))
 
@@ -100,3 +71,5 @@ end
         @test results.variables == res.variables
     end
 end
+
+rm(file_path, recursive=true)

@@ -42,7 +42,7 @@ if !Sys.iswindows()
         include("test_renewable_generation_constructors.jl")
         include("test_load_constructors.jl")
         include("test_storage_constructors.jl")
-        #include("test_hydro_generation_constructors.jl")
+        include("test_hydro_generation_constructors.jl")
     end
 
     @testset "Network Constructors" begin
@@ -62,7 +62,7 @@ end
 end
 
 @testset "Simulation Models" begin
-    #include("test_simulation_models.jl")
+    include("test_simulation_models.jl")
     include("test_load_simulation.jl")
     include("test_chronology.jl")
 end
