@@ -6,16 +6,16 @@ outputs results of type OperationsProblemResult: objective value, time log,
 a dictionary of variables and their dataframe of results, and a time stamp.
 
 # Arguments
--`op_problem::OperationModel = op_problem`: operation model
+- `op_problem::OperationModel = op_problem`: operation model
 
 # Examples
 ```julia
 results = solve_op_problem!(OpModel)
 ```
 # Accepted Key Words
--`save_path::String`: If a file path is provided the results
+- `save_path::String`: If a file path is provided the results
 automatically get written to feather files
--`optimizer::OptimizerFactory`: The optimizer that is used to solve the model
+- `optimizer::OptimizerFactory`: The optimizer that is used to solve the model
 """
 function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
 
@@ -43,13 +43,14 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
     end
 
     vars_result = get_model_result(op_problem)
+    check_sum = _sum_variable_results(vars_result)
     optimizer_log = get_optimizer_log(op_problem)
     time_stamp = get_time_stamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
     obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.canonical.JuMPmodel))
     merge!(optimizer_log, timed_log)
 
-    results = make_results(vars_result, obj_value, optimizer_log, time_stamp)
+    results = _make_results(vars_result, obj_value, optimizer_log, time_stamp, check_sum)
 
     !isnothing(save_path) && write_results(results, save_path)
 
@@ -100,7 +101,7 @@ execute!!(sim::Simulation; verbose::Bool = false, kwargs...)
 ```
 
 # Accepted Key Words
-`dual_constraints::Vector{Symbol}`: if dual variables are desired in the
+- `dual_constraints::Vector{Symbol}`: if dual variables are desired in the
 results, include a vector of the variable names to be included
 """
 
@@ -111,7 +112,6 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
     elseif sim.ref.reset == false
         error("Reset the simulation")
     end
-    variable_names = Dict()
     steps = get_steps(sim)
     for s in 1:steps
         verbose && println("Step $(s)")
@@ -121,7 +121,7 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
             for run in 1:stage.executions
                 sim.ref.current_time = sim.ref.date_ref[ix]
                 verbose && println("Simulation TimeStamp: $(sim.ref.current_time)")
-                raw_results_path = joinpath(sim.ref.raw,"step-$(s)-stage-$(ix)",replace_chars("$(sim.ref.current_time)",":","-"))
+                raw_results_path = joinpath(sim.ref.raw, "step-$(s)-stage-$(ix)", replace_chars("$(sim.ref.current_time)", ":", "-"))
                 mkpath(raw_results_path)
                 update_stage!(stage, s, sim)
                 dual_constraints = get(kwargs, :dual_constraints, nothing)
@@ -134,7 +134,6 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
         end
 
     end
-    date_run = convert(String,last(split(dirname(sim.ref.raw),"/")))
-    ref = make_references(sim, date_run)
-    return ref
+    sim_results = sim_results_container(sim)
+    return sim_results
 end

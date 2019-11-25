@@ -4,7 +4,7 @@ function Base.show(io::IO, op_problem::OperationsProblem)
 end
 =#
 
-function _organize_device_model(val::Dict{Symbol,DeviceModel}, field::Symbol, io::IO)
+function _organize_device_model(val::Dict{Symbol, DeviceModel}, field::Symbol, io::IO)
 
     println(io, "  $(field): ")
     for (i, ix) in val
@@ -41,7 +41,7 @@ function Base.show(io::IO, ::MIME"text/plain", op_problem::OperationsProblem)
 
         val = getfield(op_problem.template, Symbol(field))
 
-        if typeof(val) == Dict{Symbol,DeviceModel}
+        if typeof(val) == Dict{Symbol, DeviceModel}
 
             _organize_device_model(val, field, io)
 
@@ -72,13 +72,13 @@ function Base.show(io::IO, results::OperationsProblemResults)
 
 =#
 
-function Base.show(io::IO, results::OperationsProblemResults)
+function Base.show(io::IO, ::MIME"text/plain", results::Results)
     println(io, "\nResults")
     println(io, "===============\n")
 
     for (k, v) in results.variables
         time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
-        if size(time,2) == size(v,2)
+        if size(time, 1) == size(v, 1)
             var = hcat(time, v)
         else
             var = v
@@ -87,7 +87,6 @@ function Base.show(io::IO, results::OperationsProblemResults)
         println(io, "==================")
         println(io, "$(var)\n")
     end
-
     println(io, "Optimizer Log")
     println(io, "-------------")
     for (k, v) in results.optimizer_log
@@ -97,8 +96,45 @@ function Base.show(io::IO, results::OperationsProblemResults)
     for (k, v) in results.total_cost
         println(io, "Total Cost: $(k) = $(v)")
     end
+    if :check_sum in fieldnames(typeof(results))
+        println(io, "check sum: $(results.check_sum[1])\n")
+    end
+ end
+
+ function Base.show(io::IO, ::MIME"text/html", results::PSI.Results)
+
+    println(io, "<h1>Results</h1>")
+    for (k, v) in results.variables
+        time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
+        if size(time, 1) == size(v, 1)
+            var = hcat(time, v)
+        else
+            var = v
+        end
+        println(io, "<b>$(k)</b>")
+        show(io, MIME"text/html"(), var)
+    end
+    println(io, "<p><b>Optimizer Log</b></p>")
+    for (k, v) in results.optimizer_log
+        println(io, "<p>        $(k) = $(v)</p>")
+    end
+    println(io, "\n")
+    for (k, v) in results.total_cost
+        println(io, "<p><b>Total Cost: $(v)<b/></p>")
+    end
+    if :check_sum in fieldnames(typeof(results))
+        println(io, "<p><b>check sum: $(results.check_sum[1])</b></p>")
+    end
  end
 
  function Base.show(io::IO, stage::Stage)
     println(io, "Stage()")
+ end
+
+ function Base.show(io::IO, ::MIME"text/html", services::Dict{Symbol, PSI.ServiceModel})
+    println(io, "<h1>Services</h1>")
+    for (k, v) in services
+        println(io, "<p><b>$(k)</b></p>")
+        println(io, "<p>$(v)</p>")
+    end
  end

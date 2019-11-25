@@ -1,6 +1,7 @@
 using PowerSimulations
 using PowerSystems
 using PowerModels
+using DataFrames
 using Dates
 using JuMP
 using Test
@@ -8,6 +9,8 @@ using Ipopt
 using GLPK
 using Cbc
 using OSQP
+using TimeSeries
+using ParameterJuMP
 
 import PowerSystems.UtilsData: TestData
 download(TestData; branch = "master")
@@ -15,7 +18,7 @@ download(TestData; branch = "master")
 const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
-
+const PJ = ParameterJuMP
 abstract type TestOpProblem<:PSI.AbstractOperationsProblem end
 
 ipopt_optimizer = JuMP.with_optimizer(Ipopt.Optimizer, print_level = 0)
@@ -59,5 +62,7 @@ end
 end
 
 @testset "Simulation Models" begin
-    #include("test_simulation_models.jl")
+    include("test_simulation_models.jl")
+    include("test_load_simulation.jl")
+    include("test_chronology.jl")
 end

@@ -218,21 +218,32 @@ loads5(nodes5) = [ PowerLoad("Bus2", true, nodes5[2], PowerSystems.ConstantPower
 
 interruptible(nodes5) = [InterruptibleLoad("IloadBus4", true, nodes5[4], PowerSystems.ConstantPower, 0.10, 0.0,  0.10, 0.0, TwoPartCost(150.0, 2400.0))]
 
-reserve5(thermal_generators5) = [StaticReserve("Reserve1", thermal_generators5, 0.6, maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5])),
-StaticReserve("Reserve2", [collect(thermal_generators5)[end]], 0.6, maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5]))]
+#reserve5(thermal_generators5) = [StaticReserve("Reserve1", thermal_generators5, 0.6, maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5])),
+#StaticReserve("Reserve2", [collect(thermal_generators5)[end]], 0.6, maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5]))]
 
 Reserve_ts = [[TimeArray(DayAhead, rand(24))],
               [TimeArray(DayAhead+Day(1), rand(24))]]
 
-Iload_timeseries_DA = [[TimeArray(DayAhead, loadbus4_ts_DA)],
-                      [TimeArray(DayAhead+Day(1), loadbus4_ts_DA + 0.1*rand(24))]]
+hydro_timeseries_DA = [[TimeSeries.TimeArray(DayAhead,wind_ts_DA)],
+                     [TimeSeries.TimeArray(DayAhead + Day(1), rand(24)*0.1 + wind_ts_DA)]]
 
-load_timeseries_DA = [[TimeArray(DayAhead, loadbus2_ts_DA),
-                     TimeArray(DayAhead, loadbus3_ts_DA),
-                     TimeArray(DayAhead, loadbus4_ts_DA)],
-                    [TimeArray(DayAhead+Day(1), rand(24)*0.1 + loadbus2_ts_DA),
-                     TimeArray(DayAhead+Day(1), rand(24)*0.1 + loadbus3_ts_DA),
-                     TimeArray(DayAhead+Day(1), rand(24)*0.1 + loadbus4_ts_DA)]]
+
+RealTime = collect(DateTime("1/1/2024 0:00:00", "d/m/y H:M:S"):Minute(5):DateTime("1/1/2024 23:55:00", "d/m/y H:M:S"))
+
+load_timeseries_RT = [[TimeArray(RealTime, repeat(loadbus2_ts_DA,inner=12)),
+                     TimeArray(RealTime, repeat(loadbus3_ts_DA,inner=12)),
+                     TimeArray(RealTime, repeat(loadbus4_ts_DA,inner=12))],
+                    [TimeArray(RealTime+Day(1), rand(288)*0.1 + repeat(loadbus2_ts_DA,inner=12)),
+                     TimeArray(RealTime+Day(1), rand(288)*0.1 + repeat(loadbus3_ts_DA,inner=12)),
+                     TimeArray(RealTime+Day(1), rand(288)*0.1 + repeat(loadbus4_ts_DA,inner=12))]]
+
+load_timeseries_DA = [[TimeSeries.TimeArray(DayAhead,loadbus2_ts_DA),
+                    TimeSeries.TimeArray(DayAhead,loadbus3_ts_DA),
+                    TimeSeries.TimeArray(DayAhead,loadbus4_ts_DA)],
+                   [TimeSeries.TimeArray(DayAhead + Day(1), rand(24)*0.1 + loadbus2_ts_DA),
+                    TimeSeries.TimeArray(DayAhead + Day(1), rand(24)*0.1 + loadbus3_ts_DA),
+                    TimeSeries.TimeArray(DayAhead + Day(1), rand(24)*0.1 + loadbus4_ts_DA)
+                  ]];
 
 ren_timeseries_DA = [[TimeSeries.TimeArray(DayAhead,solar_ts_DA),
                     TimeSeries.TimeArray(DayAhead,wind_ts_DA),
@@ -242,5 +253,5 @@ ren_timeseries_DA = [[TimeSeries.TimeArray(DayAhead,solar_ts_DA),
                     TimeSeries.TimeArray(DayAhead + Day(1), rand(24)*0.1 + wind_ts_DA)
                   ]];
 
-hydro_timeseries_DA = [[TimeSeries.TimeArray(DayAhead,wind_ts_DA)],
-                     [TimeSeries.TimeArray(DayAhead + Day(1), rand(24)*0.1 + wind_ts_DA)]]
+Iload_timeseries_DA = [[TimeArray(DayAhead, loadbus4_ts_DA)],
+                      [TimeArray(DayAhead+Day(1), loadbus4_ts_DA + 0.1*rand(24))]]
