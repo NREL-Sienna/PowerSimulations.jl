@@ -25,7 +25,7 @@ TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [compat]
 Colors = "~0.9"
-CSV = "=0.5.18"
+CSV = "=0.5.13"
 DataFrames = "~0.19.3"
 Feather = ">= v0.5.3"
 InfrastructureSystems = "~0.4"
