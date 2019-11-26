@@ -163,7 +163,7 @@ end
 end
 
 @testset " Hydro Tests" begin
-    ps_model = PSI._canonical_init(length(sys5b.buses), nothing, PM.AbstractPowerModel, sys5b.time_periods)
+    ps_model = PSI._psi_container_init(length(sys5b.buses), nothing, PM.AbstractPowerModel, sys5b.time_periods)
     PSI.activepower_variables(ps_model, generators_hg, 1:24)
     PSI.commitment_variables(ps_model, generators_hg, 1:24);
     PSI.activepower_constraints(ps_model, generators_hg, PSI.HydroCommitmentRunOfRiver, DCPPowerModel, 1:24)

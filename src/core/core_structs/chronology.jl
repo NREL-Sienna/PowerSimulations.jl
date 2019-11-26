@@ -1,10 +1,10 @@
-abstract type Chronology end
+abstract type AbstractChronology end
 
-struct Synchronize <: Chronology
+struct Synchronize <: AbstractChronology
     from_horizon::Int64 #number of time periods to grab data from
     to_steps::Int64 #number of times to run using the same data
 end
 
-struct RecedingHorizon <: Chronology end
+struct RecedingHorizon <: AbstractChronology end
 
-struct Sequential <: Chronology end
+struct Sequential <: AbstractChronology end

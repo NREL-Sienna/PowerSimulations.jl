@@ -1,4 +1,4 @@
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{H, D},
                            ::Type{S};
                            kwargs...) where {H<:PSY.HydroGen,
@@ -15,25 +15,25 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables!(canonical, devices);
+    activepower_variables!(psi_container, devices);
 
-    reactivepower_variables!(canonical, devices);
+    reactivepower_variables!(psi_container, devices);
 
     #Constraints
-    activepower_constraints!(canonical, devices, D, S)
+    activepower_constraints!(psi_container, devices, D, S)
 
-    reactivepower_constraints!(canonical, devices, D, S)
+    reactivepower_constraints!(psi_container, devices, D, S)
 
-    feedforward!(canonical, H, model.feedforward)
+    feedforward!(psi_container, H, model.feedforward)
 
     #Cost Function
-    cost_function(canonical, devices, D, S)
+    cost_function(psi_container, devices, D, S)
 
     return
 
 end
 
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{H, HydroDispatchSeasonalFlow},
                            ::Type{S};
                            kwargs...) where {H<:PSY.HydroGen,
@@ -49,28 +49,28 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables!(canonical, devices);
+    activepower_variables!(psi_container, devices);
 
-    reactivepower_variables!(canonical, devices);
+    reactivepower_variables!(psi_container, devices);
 
     #Constraints
-    activepower_constraints!(canonical, devices, HydroDispatchSeasonalFlow, S)
+    activepower_constraints!(psi_container, devices, HydroDispatchSeasonalFlow, S)
 
-    reactivepower_constraints!(canonical, devices, HydroDispatchSeasonalFlow, S)
+    reactivepower_constraints!(psi_container, devices, HydroDispatchSeasonalFlow, S)
 
-    budget_constraints!(canonical, devices, HydroDispatchSeasonalFlow, S)
+    budget_constraints!(psi_container, devices, HydroDispatchSeasonalFlow, S)
 
-    feedforward!(canonical, H, model.feedforward)
+    feedforward!(psi_container, H, model.feedforward)
 
     #Cost Function
-    cost_function(canonical, devices, HydroDispatchSeasonalFlow, S)
+    cost_function(psi_container, devices, HydroDispatchSeasonalFlow, S)
 
     return
 
 end
 
 
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{H, D},
                            ::Type{S};
                            kwargs...) where {H<:PSY.HydroGen,
@@ -87,30 +87,30 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables!(canonical, devices);
+    activepower_variables!(psi_container, devices);
 
-    reactivepower_variables!(canonical, devices);
+    reactivepower_variables!(psi_container, devices);
 
     #Initial Conditions
-    initial_conditions!(canonical, devices, model.formulation)
+    initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(canonical, devices, D, S)
+    activepower_constraints!(psi_container, devices, D, S)
 
-    reactivepower_constraints!(canonical, devices, D, S)
+    reactivepower_constraints!(psi_container, devices, D, S)
 
-    commitment_constraints!(canonical, devices, model.formulation, S)
+    commitment_constraints!(psi_container, devices, model.formulation, S)
 
-    feedforward!(canonical, H, model.feedforward)
+    feedforward!(psi_container, H, model.feedforward)
 
     #Cost Function
-    cost_function(canonical, devices, D, S)
+    cost_function(psi_container, devices, D, S)
 
     return
 
 end
 
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{H, D},
                            ::Type{S};
                            kwargs...) where {H<:PSY.HydroGen,
@@ -127,21 +127,21 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables!(canonical, devices);
+    activepower_variables!(psi_container, devices);
 
     #Constraints
-    activepower_constraints!(canonical, devices, D, S)
+    activepower_constraints!(psi_container, devices, D, S)
 
-    feedforward!(canonical, H, model.feedforward)
+    feedforward!(psi_container, H, model.feedforward)
 
     #Cost Function
-    cost_function(canonical, devices, D, S)
+    cost_function(psi_container, devices, D, S)
 
     return
 
 end
 
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{H, HydroDispatchSeasonalFlow},
                            ::Type{S};
                            kwargs...) where {H<:PSY.HydroGen,
@@ -157,24 +157,24 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables!(canonical, devices);
+    activepower_variables!(psi_container, devices);
 
     #Constraints
-    activepower_constraints!(canonical, devices, HydroDispatchSeasonalFlow, S)
+    activepower_constraints!(psi_container, devices, HydroDispatchSeasonalFlow, S)
 
-    budget_constraints!(canonical, devices, HydroDispatchSeasonalFlow, S)
+    budget_constraints!(psi_container, devices, HydroDispatchSeasonalFlow, S)
 
-    feedforward!(canonical, H, model.feedforward)
+    feedforward!(psi_container, H, model.feedforward)
 
     #Cost Function
-    cost_function(canonical, devices, HydroDispatchSeasonalFlow, S)
+    cost_function(psi_container, devices, HydroDispatchSeasonalFlow, S)
 
     return
 
 end
 
 
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{H, D},
                            ::Type{S};
                            kwargs...) where {H<:PSY.HydroGen,
@@ -191,29 +191,29 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables!(canonical, devices);
+    activepower_variables!(psi_container, devices);
 
-    commitment_variables!(canonical, devices)
+    commitment_variables!(psi_container, devices)
 
     #Initial Conditions
-    initial_conditions!(canonical, devices, model.formulation)
+    initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(canonical, devices, D, S)
+    activepower_constraints!(psi_container, devices, D, S)
 
-    commitment_constraints!(canonical, devices, model.formulation, S)
+    commitment_constraints!(psi_container, devices, model.formulation, S)
 
-    feedforward!(canonical, H, model.feedforward)
+    feedforward!(psi_container, H, model.feedforward)
 
     #Cost Function
-    cost_function(canonical, devices, D, S)
+    cost_function(psi_container, devices, D, S)
 
     return
 
 end
 
 
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{H, HydroFixed},
                            ::Type{S};
                            kwargs...) where {H<:PSY.HydroGen,
@@ -228,13 +228,13 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
         return
     end
 
-    nodal_expression!(canonical, devices, S)
+    nodal_expression!(psi_container, devices, S)
 
     return
 
 end
 
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{PSY.HydroFix, D},
                            ::Type{S};
                            kwargs...) where {D<:AbstractHydroFormulation,
@@ -243,7 +243,7 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
     @warn("The Formulation $(D) only applies to Dispatchable Hydro, *
                Consider Changing the Device Formulation to HydroFixed")
 
-    construct_device!(canonical,
+    construct_device!(psi_container,
                       DeviceModel(PSY.HydroFix, HydroFixed),
                       S;
                       kwargs...)
@@ -251,7 +251,7 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
 
 end
 
-function construct_device!(canonical::Canonical, sys::PSY.System,
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{PSY.HydroFix, HydroFixed},
                            ::Type{S};
                            kwargs...) where {S<:PM.AbstractPowerModel}
@@ -265,7 +265,7 @@ function construct_device!(canonical::Canonical, sys::PSY.System,
         return
     end
 
-    nodal_expression!(canonical, devices, S)
+    nodal_expression!(psi_container, devices, S)
 
     return
 

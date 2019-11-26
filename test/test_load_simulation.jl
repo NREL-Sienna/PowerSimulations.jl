@@ -30,7 +30,7 @@ end
             rm("$(sim_results.results_folder)/$f")
         end
         res = load_simulation_results(s, sim_results; write = true)
-        variable_list = String.(collect(keys(sim.stages[ix].canonical.variables)))
+        variable_list = String.(collect(keys(sim.stages[ix].psi_container.variables)))
         variable_list = [variable_list; "optimizer_log"; "time_stamp"; "check_sum"]
         file_list = collect(readdir(sim_results.results_folder))
         for name in file_list
@@ -65,7 +65,7 @@ end
 
 @testset "testing load simulation results functionality stage 2" begin
     for (ix,s) in enumerate(stages)
-        variable = (collect(keys(sim.stages[ix].canonical.variables)))
+        variable = (collect(keys(sim.stages[ix].psi_container.variables)))
         results = load_simulation_results(s, sim_results)
         res = load_simulation_results(s, step, variable, sim_results)
         @test results.variables == res.variables

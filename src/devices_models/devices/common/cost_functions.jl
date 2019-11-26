@@ -1,11 +1,11 @@
 @doc raw"""
-    ps_cost(canonical::Canonical,
+    ps_cost(psi_container::PSIContainer,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::Float64,
                 dt::Float64,
                 sign::Float64) where {JV <: JuMP.AbstractVariableRef}
 
-Returns linear cost terms for sum of variables with common factor to be used for cost expression for canonical model.
+Returns linear cost terms for sum of variables with common factor to be used for cost expression for psi_container model.
 
 # Equation
 
@@ -21,13 +21,13 @@ Returns:
 
 # Arguments
 
-* canonical::Canonical : the canonical model built in PowerSimulations
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::Float64 : cost to be associated with variable
 * dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
 """
-function ps_cost(canonical::Canonical,
+function ps_cost(psi_container::PSIContainer,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::Float64,
                 dt::Float64,
@@ -40,45 +40,45 @@ function ps_cost(canonical::Canonical,
 end
 
 @doc raw"""
-    ps_cost(canonical::Canonical,
+    ps_cost(psi_container::PSIContainer,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::PSY.VariableCost{Float64},
                 dt::Float64,
                 sign::Float64) where {JV <: JuMP.AbstractVariableRef}
 
-Returns linear cost terms for sum of variables with common factor to be used for cost expression for canonical model.
+Returns linear cost terms for sum of variables with common factor to be used for cost expression for psi_container model.
 Does this by calling ```ps_cost``` that has Float64 cost component input.
 
 Returns:
 
-``` ps_cost(canonical, variable, PSY.get_cost(cost_component), dt, sign) ```
+``` ps_cost(psi_container, variable, PSY.get_cost(cost_component), dt, sign) ```
 
 # Arguments
 
-* canonical::Canonical : the canonical model built in PowerSimulations
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{Float64} : container for cost to be associated with variable
 * dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
 """
-function ps_cost(canonical::Canonical,
+function ps_cost(psi_container::PSIContainer,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::PSY.VariableCost{Float64},
                 dt::Float64,
                 sign::Float64) where {JV<:JuMP.AbstractVariableRef}
 
-    return  ps_cost(canonical, variable, PSY.get_cost(cost_component), dt, sign)
+    return  ps_cost(psi_container, variable, PSY.get_cost(cost_component), dt, sign)
 
 end
 
 @doc raw"""
-    ps_cost(canonical::Canonical,
+    ps_cost(psi_container::PSIContainer,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::PSY.VariableCost{NTuple{2, Float64}}
                 dt::Float64,
                 sign::Float64) where {JV <: JuMP.AbstractVariableRef}
 
-Returns quadratic cost terms for sum of variables with common factor to be used for cost expression for canonical model.
+Returns quadratic cost terms for sum of variables with common factor to be used for cost expression for psi_container model.
 
 # Equation
 
@@ -90,18 +90,18 @@ Returns quadratic cost terms for sum of variables with common factor to be used 
 
 for quadratic factor large enough. Otherwise
 
-``` return ps_cost(canonical, variable, cost_component[2], dt, 1.0) ```
+``` return ps_cost(psi_container, variable, cost_component[2], dt, 1.0) ```
 
 Returns ```gen_cost```
 
 # Arguments
 
-* canonical::Canonical : the canonical model built in PowerSimulations
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 * sign::Float64 : positive or negative sign to be associated cost term
 """
-function ps_cost(canonical::Canonical,
+function ps_cost(psi_container::PSIContainer,
                  variable::JuMP.Containers.DenseAxisArray{JV},
                  cost_component::PSY.VariableCost{NTuple{2, Float64}},
                  dt::Float64,
@@ -111,7 +111,7 @@ function ps_cost(canonical::Canonical,
         gen_cost = sum(variable.^2)*cost_component[1] + sum(variable)*cost_component[2]
         return sign*gen_cost*dt
     else
-        return ps_cost(canonical, variable, cost_component[2], dt, 1.0)
+        return ps_cost(psi_container, variable, cost_component[2], dt, 1.0)
     end
 
 end
@@ -144,11 +144,11 @@ end
 
 
 @doc raw"""
-    _pwlgencost_sos(canonical::Canonical,
+    _pwlgencost_sos(psi_container::PSIContainer,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::PSY.VariableCost{NTuple{2, Float64}}) where {JV <: JuMP.AbstractVariableRef}
 
-Returns piecewise cost expression using SOS Type-2 implementation for canonical model.
+Returns piecewise cost expression using SOS Type-2 implementation for psi_container model.
 
 # Equations
 
@@ -166,26 +166,26 @@ Returns ```gen_cost```
 
 # Arguments
 
-* canonical::Canonical : the canonical model built in PowerSimulations
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 """
-function _pwlgencost_sos(canonical::Canonical,
+function _pwlgencost_sos(psi_container::PSIContainer,
         variable::JV,
         cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
-    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical)}()
-    pwlvars = JuMP.@variable(canonical.JuMPmodel, [i = 1:length(cost_component)],
+    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
+    pwlvars = JuMP.@variable(psi_container.JuMPmodel, [i = 1:length(cost_component)],
                             base_name = "{$(variable)}_{sos}",
                             start = 0.0, lower_bound = 0.0, upper_bound = 1.0)
 
-    JuMP.@constraint(canonical.JuMPmodel, sum(pwlvars)  == 1.0)
-    JuMP.@constraint(canonical.JuMPmodel, pwlvars in MOI.SOS2(collect(1:length(pwlvars))))
+    JuMP.@constraint(psi_container.JuMPmodel, sum(pwlvars)  == 1.0)
+    JuMP.@constraint(psi_container.JuMPmodel, pwlvars in MOI.SOS2(collect(1:length(pwlvars))))
     for (ix, var) in enumerate(pwlvars)
         JuMP.add_to_expression!(gen_cost, cost_component[ix][1] * var)
     end
 
-    JuMP.@constraint(canonical.JuMPmodel, variable ==
+    JuMP.@constraint(psi_container.JuMPmodel, variable ==
                         sum([var*cost_component[ix][2] for (ix, var) in enumerate(pwlvars) ]) )
 
     return gen_cost
@@ -193,11 +193,11 @@ function _pwlgencost_sos(canonical::Canonical,
 end
 
 @doc raw"""
-    _pwlgencost_sos(canonical::Canonical,
+    _pwlgencost_sos(psi_container::PSIContainer,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::PSY.VariableCost{NTuple{2, Float64}}) where {JV <: JuMP.AbstractVariableRef}
 
-Returns piecewise cost expression using linear implementation for canonical model.
+Returns piecewise cost expression using linear implementation for psi_container model.
 
 # Equations
 
@@ -218,17 +218,17 @@ Returns ```gen_cost```
 
 # Arguments
 
-* canonical::Canonical : the canonical model built in PowerSimulations
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 """
-function _pwlgencost_linear(canonical::Canonical,
+function _pwlgencost_linear(psi_container::PSIContainer,
         variable::JV,
         cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
-    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical)}()
+    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
     upperbound(i) = (i == 1 ? cost_component[i][2] : (cost_component[i][2] - cost_component[i-1][2]))
-    pwlvars = JuMP.@variable(canonical.JuMPmodel, [i = 1:length(cost_component)],
+    pwlvars = JuMP.@variable(psi_container.JuMPmodel, [i = 1:length(cost_component)],
                             base_name = "{$(variable)}_{pwl}", start = 0.0,
                             lower_bound = 0.0, upper_bound = upperbound(i))
 
@@ -241,7 +241,7 @@ function _pwlgencost_linear(canonical::Canonical,
         end
     end
 
-    c = JuMP.@constraint(canonical.JuMPmodel, variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars) ]) )
+    c = JuMP.@constraint(psi_container.JuMPmodel, variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars) ]) )
 
     return gen_cost
 
@@ -256,11 +256,11 @@ Returns ```gen_cost```
 
 # Arguments
 
-* canonical::Canonical : the canonical model built in PowerSimulations
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 """
-function _pwl_cost(canonical::Canonical,
+function _pwl_cost(psi_container::PSIContainer,
                     variable::JV,
                     cost_component::Vector{NTuple{2, Float64}}) where {JV<:JuMP.AbstractVariableRef}
 
@@ -271,15 +271,15 @@ function _pwl_cost(canonical::Canonical,
         @warn("The cost function provided for $(variable) device is not compatible with a linear PWL cost function.
         An SOS-2 formulation will be added to the model.
         This will result in additional binary variables added to the model.")
-        gen_cost = _pwlgencost_sos(canonical, variable, cost_component)
+        gen_cost = _pwlgencost_sos(psi_container, variable, cost_component)
     else
-        gen_cost = _pwlgencost_linear(canonical, variable, cost_component)
+        gen_cost = _pwlgencost_linear(psi_container, variable, cost_component)
     end
     return gen_cost
 end
 
 @doc raw"""
-    ps_cost(canonical::Canonical,
+    ps_cost(psi_container::PSIContainer,
                  variable::JuMP.Containers.DenseAxisArray{JV},
                  cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
                  dt::Float64,
@@ -303,22 +303,22 @@ where ``c_v`` is given by
 
 # Arguments
 
-* canonical::Canonical : the canonical model built in PowerSimulations
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}}
 * dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
 """
-function ps_cost(canonical::Canonical,
+function ps_cost(psi_container::PSIContainer,
                  variable::JuMP.Containers.DenseAxisArray{JV},
                  cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
                  dt::Float64,
                  sign::Float64) where {JV<:JuMP.AbstractVariableRef}
 
-    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(canonical)}()
+    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
     cost_array = cost_component.cost
     for var in variable
-        c = _pwl_cost(canonical, var, cost_array)
+        c = _pwl_cost(psi_container, var, cost_array)
         JuMP.add_to_expression!(gen_cost, c)
     end
 
@@ -327,7 +327,7 @@ function ps_cost(canonical::Canonical,
 end
 
 @doc raw"""
-    add_to_cost(canonical::Canonical,
+    add_to_cost(psi_container::PSIContainer,
                      devices::D,
                      var_name::Symbol,
                      cost_symbol::Symbol,
@@ -339,12 +339,12 @@ Adds cost expression for each device using appropriate call to ```ps_cost```.
 
 for d in devices
 
-```    cost_expression = ps_cost(canonical,
+```    cost_expression = ps_cost(psi_container,
                               variable[PSY.get_name(d), :],
                               getfield(PSY.get_op_cost(d), cost_symbol),
                               dt,
                               sign) ```
-``` canonical.cost_function += cost_expression ```
+``` psi_container.cost_function += cost_expression ```
 
 # LaTeX
 
@@ -352,34 +352,34 @@ for d in devices
 
 # Arguments
 
-* canonical::Canonical : the canonical model built in PowerSimulations
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * devices::D : set of devices
 * var_name::Symbol : name of variable
 * cost_symbol::Symbol : symbol associated with costx
 """
-function add_to_cost(canonical::Canonical,
+function add_to_cost(psi_container::PSIContainer,
                      devices::D,
                      var_name::Symbol,
                      cost_symbol::Symbol,
                      sign::Float64 = 1.0) where {D<:IS.FlattenIteratorWrapper{<:PSY.Device}}
 
-    resolution = model_resolution(canonical)
+    resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Minute(resolution))/60
-    variable = get_variable(canonical, var_name)
+    variable = get_variable(psi_container, var_name)
 
     for d in devices
         cost_component = getfield(PSY.get_op_cost(d), cost_symbol)
-        cost_expression = ps_cost(canonical,
+        cost_expression = ps_cost(psi_container,
                                   variable[PSY.get_name(d), :],
                                   cost_component,
                                   dt,
                                   sign)
         T_ce = typeof(cost_expression)
-        T_cf = typeof(canonical.cost_function)
+        T_cf = typeof(psi_container.cost_function)
         if  T_cf<:JuMP.GenericAffExpr && T_ce<:JuMP.GenericQuadExpr
-            canonical.cost_function += cost_expression
+            psi_container.cost_function += cost_expression
         else
-            JuMP.add_to_expression!(canonical.cost_function, cost_expression)
+            JuMP.add_to_expression!(psi_container.cost_function, cost_expression)
         end
     end
 

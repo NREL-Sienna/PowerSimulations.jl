@@ -9,7 +9,6 @@ mutable struct SimulationRef
 end
 
 function _initialize_sim_ref(steps::Int64, stages_keys::Base.KeySet)
-
     count_dict = Dict{Int64, Dict{Int64, Int64}}()
 
     for s in 1:steps
@@ -19,7 +18,8 @@ function _initialize_sim_ref(steps::Int64, stages_keys::Base.KeySet)
         end
     end
 
-    return sim_ref = SimulationRef("init",
+    return sim_ref = SimulationRef(
+                                  "init",
                                    "init",
                                    "init",
                                    count_dict,
@@ -27,7 +27,6 @@ function _initialize_sim_ref(steps::Int64, stages_keys::Base.KeySet)
                                    Dates.now(),
                                    true
                                    )
-
 end
 
 mutable struct Simulation
@@ -39,7 +38,6 @@ mutable struct Simulation
     simulation_folder::String
     base_name::String
 
-
     function Simulation(base_name::String,
                         steps::Int64,
                         stages::Dict{Int64, Stage},
@@ -47,23 +45,24 @@ mutable struct Simulation
                         verbose::Bool = false, kwargs...)
 
     sim_ref = _initialize_sim_ref(steps, keys(stages))
-    dates, validation, stages_vector = _build_simulation!(sim_ref,
+    dates, validation, stages_vector = _build_simulation!(
+                                                          sim_ref,
                                                           steps,
                                                           stages;
-                                                          verbose = verbose, kwargs...)
-    new(steps,
+                                                          verbose = verbose, kwargs...
+                                                          )
+    new(
+        steps,
         stages_vector,
         validation,
         dates,
         sim_ref,
         simulation_folder,
-        base_name)
-
+        base_name
+        )
     end
-
 end
 
 ################# accessor functions ####################
-
 get_steps(s::Simulation) = s.steps
 get_daterange(s::Simulation) = s.daterange

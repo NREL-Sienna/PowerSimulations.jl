@@ -2,7 +2,7 @@ abstract type AbstractOperationsProblem end
 
 struct GenericOpProblem<:AbstractOperationsProblem end
 
-mutable struct OperationsTemplate
+mutable struct OperationsProblemTemplate
     transmission::Type{<:PM.AbstractPowerModel}
     devices::Dict{Symbol, DeviceModel}
     branches::Dict{Symbol, DeviceModel}
@@ -10,7 +10,7 @@ mutable struct OperationsTemplate
 end
 
 """
-    OperationsTemplate(::Type{T}) where {T<:PM.AbstractPowerFormulation}
+    OperationsProblemTemplate(::Type{T}) where {T<:PM.AbstractPowerFormulation}
 
 Creates a model reference of the Power Formulation, devices, branches, and services.
 
@@ -22,12 +22,12 @@ Creates a model reference of the Power Formulation, devices, branches, and servi
 
 # Example
 ```julia
-template = OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
+template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 ```
 """
-function OperationsTemplate(::Type{T}) where {T<:PM.AbstractPowerModel}
+function OperationsProblemTemplate(::Type{T}) where {T<:PM.AbstractPowerModel}
 
-    return  OperationsTemplate(T,
+    return  OperationsProblemTemplate(T,
                            Dict{Symbol, DeviceModel}(),
                            Dict{Symbol, DeviceModel}(),
                            Dict{Symbol, ServiceModel}())
@@ -35,14 +35,14 @@ function OperationsTemplate(::Type{T}) where {T<:PM.AbstractPowerModel}
 end
 
 mutable struct OperationsProblem{M<:AbstractOperationsProblem}
-    template::OperationsTemplate
+    template::OperationsProblemTemplate
     sys::PSY.System
-    canonical::Canonical
+    psi_container::PSIContainer
 end
 
 """
     OperationsProblem(::Type{M},
-    template::OperationsTemplate,
+    template::OperationsProblemTemplate,
     sys::PSY.System;
     optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
     kwargs...) where {M<:AbstractOperationsProblem,
@@ -53,7 +53,7 @@ This builds the optimization model and populates the operation model
 # Arguments
 - `::Type{M} where {M<:AbstractOperationsProblem, T<:PM.AbstractPowerFormulation} = TestOpProblem`:
 The abstract operation model type
-- `template::OperationsTemplate`: The model reference made up of transmission, devices,
+- `template::OperationsProblemTemplate`: The model reference made up of transmission, devices,
                                           branches, and services.
 - `sys::PSY.System`: the system created using Power Systems
 
@@ -63,7 +63,7 @@ Systems system, and optimization model.
 
 # Example
 ```julia
-template = OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
+template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
 ```
 
@@ -79,14 +79,14 @@ if false it runs for one time step
 - `initial_time::Dates.DateTime`: initial time of forecast
 """
 function OperationsProblem(::Type{M},
-                        template::OperationsTemplate,
+                        template::OperationsProblemTemplate,
                         sys::PSY.System;
                         optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
                         kwargs...) where {M<:AbstractOperationsProblem}
 
     op_problem = OperationsProblem{M}(template,
                           sys,
-                          Canonical(template.transmission, sys, optimizer; kwargs...))
+                          PSIContainer(template.transmission, sys, optimizer; kwargs...))
 
     build_op_problem!(op_problem; kwargs...)
 
@@ -114,7 +114,7 @@ Systems system, and optimization model.
 
 # Example
 ```julia
-template = OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
+template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
 ```
 
@@ -138,9 +138,9 @@ function OperationsProblem(::Type{M},
                                           T<:PM.AbstractPowerModel}
 
     optimizer = get(kwargs, :optimizer, nothing)
-    return OperationsProblem{M}(OperationsTemplate(T),
+    return OperationsProblem{M}(OperationsProblemTemplate(T),
                           sys,
-                          Canonical(T, sys, optimizer; kwargs...))
+                          PSIContainer(T, sys, optimizer; kwargs...))
 
 end
 """
@@ -165,7 +165,7 @@ Systems system, and optimization model.
 
 # Example
 ```julia
-template = OperationsTemplate(CopperPlatePowerModel, devices, branches, services)
+template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
 ```
 
@@ -201,11 +201,11 @@ function set_transmission_model!(op_problem::OperationsProblem{M},
                                transmission::Type{T}; kwargs...) where {T<:PM.AbstractPowerModel,
                                                                         M<:AbstractOperationsProblem}
 
-    # Reset the canonical
+    # Reset the psi_container
     op_problem.template.transmission = transmission
-    op_problem.canonical = Canonical(transmission,
+    op_problem.psi_container = PSIContainer(transmission,
                                         op_problem.sys,
-                                        op_problem.canonical.optimizer_factory; kwargs...)
+                                        op_problem.psi_container.optimizer_factory; kwargs...)
 
     build_op_problem!(op_problem; kwargs...)
 
@@ -215,11 +215,11 @@ end
 function set_devices_template!(op_problem::OperationsProblem{M},
                           devices::Dict{Symbol, DeviceModel}; kwargs...) where M<:AbstractOperationsProblem
 
-    # Reset the canonical
+    # Reset the psi_container
     op_problem.template.devices = devices
-    op_problem.canonical = Canonical(op_problem.template.transmission,
+    op_problem.psi_container = PSIContainer(op_problem.template.transmission,
                                         op_problem.sys,
-                                        op_problem.canonical.optimizer_factory; kwargs...)
+                                        op_problem.psi_container.optimizer_factory; kwargs...)
 
     build_op_problem!(op_problem; kwargs...)
 
@@ -229,11 +229,11 @@ end
 function set_branches_template!(op_problem::OperationsProblem{M},
                            branches::Dict{Symbol, DeviceModel}; kwargs...) where M<:AbstractOperationsProblem
 
-    # Reset the canonical
+    # Reset the psi_container
     op_problem.template.branches = branches
-    op_problem.canonical = Canonical(op_problem.template.transmission,
+    op_problem.psi_container = PSIContainer(op_problem.template.transmission,
                                         op_problem.sys,
-                                        op_problem.canonical.optimizer_factory; kwargs...)
+                                        op_problem.psi_container.optimizer_factory; kwargs...)
 
     build_op_problem!(op_problem; kwargs...)
 
@@ -243,11 +243,11 @@ end
 function set_services_template!(op_problem::OperationsProblem{M},
                            services::Dict{Symbol, DeviceModel}; kwargs...) where M<:AbstractOperationsProblem
 
-    # Reset the canonical
+    # Reset the psi_container
     op_problem.template.services = services
-    op_problem.canonical = Canonical(op_problem.template.transmission,
+    op_problem.psi_container = PSIContainer(op_problem.template.transmission,
                                         op_problem.sys,
-                                        op_problem.canonical.optimizer_factory; kwargs...)
+                                        op_problem.psi_container.optimizer_factory; kwargs...)
 
     build_op_problem!(op_problem; kwargs...)
 
@@ -256,15 +256,15 @@ end
 
 function set_device_model!(op_problem::OperationsProblem{M},
                            name::Symbol,
-                           device::DeviceModel{D, B}; kwargs...) where {D<:PSY.Injection,
+                           device::DeviceModel{D, B}; kwargs...) where {D<:PSY.StaticInjection,
                                                                         B<:AbstractDeviceFormulation,
                                                                         M<:AbstractOperationsProblem}
 
     if haskey(op_problem.template.devices, name)
         op_problem.template.devices[name] = device
-        op_problem.canonical = Canonical(op_problem.template.transmission,
+        op_problem.psi_container = PSIContainer(op_problem.template.transmission,
                                             op_problem.sys,
-                                            op_problem.canonical.optimizer_factory; kwargs...)
+                                            op_problem.psi_container.optimizer_factory; kwargs...)
         build_op_problem!(op_problem; kwargs...)
     else
         error("Device Model with name $(name) doesn't exist in the model")
@@ -282,9 +282,9 @@ function set_branch_model!(op_problem::OperationsProblem{M},
 
     if haskey(op_problem.template.branches, name)
         op_problem.template.branches[name] = branch
-        op_problem.canonical = Canonical(op_problem.template.transmission,
+        op_problem.psi_container = PSIContainer(op_problem.template.transmission,
                                             op_problem.sys,
-                                            op_problem.canonical.optimizer_factory; kwargs...)
+                                            op_problem.psi_container.optimizer_factory; kwargs...)
         build_op_problem!(op_problem; kwargs...)
     else
         error("Branch Model with name $(name) doesn't exist in the model")
@@ -300,9 +300,9 @@ function set_services_model!(op_problem::OperationsProblem{M},
 
     if haskey(op_problem.template.devices, name)
         op_problem.template.services[name] = service
-        op_problem.canonical = Canonical(op_problem.template.transmission,
+        op_problem.psi_container = PSIContainer(op_problem.template.transmission,
                                             op_problem.sys,
-                                            op_problem.canonical.optimizer_factory; kwargs...)
+                                            op_problem.psi_container.optimizer_factory; kwargs...)
         build_op_problem!(op_problem; kwargs...)
     else
         error("Branch Model with name $(name) doesn't exist in the model")
@@ -324,15 +324,15 @@ function construct_device!(op_problem::OperationsProblem,
     devices_ref = get_devices_ref(op_problem)
     devices_ref[name] = device_model
 
-    construct_device!(op_problem.canonical,
+    construct_device!(op_problem.psi_container,
                       get_system(op_problem),
                       device_model,
                       get_transmission_ref(op_problem);
                       kwargs...)
 
-    JuMP.@objective(op_problem.canonical.JuMPmodel,
+    JuMP.@objective(op_problem.psi_container.JuMPmodel,
                     MOI.MIN_SENSE,
-                    op_problem.canonical.cost_function)
+                    op_problem.psi_container.cost_function)
 
     return
 
@@ -350,23 +350,23 @@ function construct_network!(op_problem::OperationsProblem,
                             system_formulation::Type{T};
                             kwargs...) where {T<:PM.AbstractPowerModel}
 
-    construct_network!(op_problem.canonical, get_system(op_problem), T; kwargs...)
+    construct_network!(op_problem.psi_container, get_system(op_problem), T; kwargs...)
 
     return
 end
 
 
 function get_initial_conditions(op_problem::OperationsProblem)
-    return op_problem.canonical.initial_conditions
+    return op_problem.psi_container.initial_conditions
 end
 
 function get_initial_conditions(op_problem::OperationsProblem,
                                 ic::InitialConditionQuantity,
                                 device::PSY.Device)
 
-    canonical = op_problem.canonical
+    psi_container = op_problem.psi_container
     key = ICKey(ic, device)
 
-    return get_initial_conditions(canonical, key)
+    return get_initial_conditions(psi_container, key)
 
 end

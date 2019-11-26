@@ -47,10 +47,10 @@ function _write_optimizer_log(optimizer_log::Dict, save_path::AbstractString)
 
 end
 
-function _write_data(canonical::Canonical, save_path::AbstractString; kwargs...)
+function _write_data(psi_container::PSIContainer, save_path::AbstractString; kwargs...)
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
-        for (k, v) in get_variables(canonical)
+        for (k, v) in get_variables(psi_container)
             file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
             file_type.write(file_path, _result_dataframe_variables(v))
         end
@@ -58,10 +58,10 @@ function _write_data(canonical::Canonical, save_path::AbstractString; kwargs...)
     return
 end
 
-function _write_data(canonical::Canonical, save_path::AbstractString, dual_con::Vector{Symbol}; kwargs...)
+function _write_data(psi_container::PSIContainer, save_path::AbstractString, dual_con::Vector{Symbol}; kwargs...)
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
-        duals = get_model_duals(canonical, dual_con)
+        duals = get_model_duals(psi_container, dual_con)
         for (k, v) in duals
             file_path = joinpath(save_path, "$(k)_dual.$(lowercase("$file_type"))")
             file_type.write(file_path, _result_dataframe_vars(v))
@@ -71,12 +71,12 @@ function _write_data(canonical::Canonical, save_path::AbstractString, dual_con::
 end
 
 function _write_data(op_problem::OperationsProblem, save_path::AbstractString; kwargs...)
-    _write_data(op_problem.canonical, save_path; kwargs...)
+    _write_data(op_problem.psi_container, save_path; kwargs...)
     return
 end
 
 function _write_data(stage::_Stage, save_path::AbstractString; kwargs...)
-    _write_data(stage.canonical, save_path; kwargs...)
+    _write_data(stage.psi_container, save_path; kwargs...)
     return
 end
 
@@ -95,15 +95,15 @@ function _export_model_result(stage::_Stage, start_time::Dates.DateTime, save_pa
 end
 
 function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
-                               canonical::Canonical,
+                               psi_container::PSIContainer,
                                path::String)
 
-    optimizer_log[:obj_value] = JuMP.objective_value(canonical.JuMPmodel)
-    optimizer_log[:termination_status] = Int(JuMP.termination_status(canonical.JuMPmodel))
-    optimizer_log[:primal_status] = Int(JuMP.primal_status(canonical.JuMPmodel))
-    optimizer_log[:dual_status] = Int(JuMP.dual_status(canonical.JuMPmodel))
+    optimizer_log[:obj_value] = JuMP.objective_value(psi_container.JuMPmodel)
+    optimizer_log[:termination_status] = Int(JuMP.termination_status(psi_container.JuMPmodel))
+    optimizer_log[:primal_status] = Int(JuMP.primal_status(psi_container.JuMPmodel))
+    optimizer_log[:dual_status] = Int(JuMP.dual_status(psi_container.JuMPmodel))
     try
-        optimizer_log[:solve_time] = MOI.get(canonical.JuMPmodel, MOI.SolveTime())
+        optimizer_log[:solve_time] = MOI.get(psi_container.JuMPmodel, MOI.SolveTime())
     catch
         @warn("SolveTime() property not supported by the Solver")
         optimizer_log[:solve_time] = NaN #"Not Supported by solver"
@@ -112,7 +112,7 @@ function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
     return
 end
 
-""" 
+"""
     write_model_results(results::Results, save_path::String)
 
 Exports Operational Problem Results to a path
@@ -138,7 +138,7 @@ function write_results(results::Results, save_path::String; kwargs...)
     return
 end
 
-""" 
+"""
     write_model_results(results::AggregatedResults, save_path::String, results_folder::String)
 
 Exports Simulation Results to the path where they come from in the results folder
@@ -164,7 +164,7 @@ function write_results(res::AggregatedResults, folder_path::String, results_fold
     return
 end
 
-""" 
+"""
     write_model_results(results::OperationsProblemResults, save_path::String, results_folder::String)
 
 Exports Simulations Results to the path where they come from in the results folder
@@ -192,14 +192,14 @@ end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
 function write_op_problem(op_problem::OperationsProblem, save_path::String)
-    _write_canonical(op_problem.canonical, save_path)
+    _write_psi_container(op_problem.psi_container, save_path)
     return
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
-function _write_canonical(canonical::Canonical, save_path::String)
+function _write_psi_container(psi_container::PSIContainer, save_path::String)
     MOF_model = MOPFM()
-    MOI.copy_to(MOF_model, JuMP.backend(canonical.JuMPmodel))
+    MOI.copy_to(MOF_model, JuMP.backend(psi_container.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)
     return
 end
