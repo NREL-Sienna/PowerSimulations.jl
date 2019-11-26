@@ -14,7 +14,6 @@ function construct_services!(psi_container::PSIContainer,
             add_service!(psi_container, value.service, service_model, value.contributing_devices; kwargs...)
         end
     end
-    # post constraints in expression dict
     return
 end
 
