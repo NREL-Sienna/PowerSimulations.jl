@@ -81,17 +81,3 @@ function add_to_service_expression!(psi_container::PSIContainer,
     end
     return
 end
-
-function add_device_constraints!(psi_container::PSIContainer,
-                                 sys::PSY.System,
-                                 expression_list::Vector{Symbol})
-    for service_expression in expression_list
-        expression_dictionary = get_expression(psi_container, service_expression)
-        for (k, v) in expression_dictionary
-            device = get_component(k.device_type, sys, k.name)
-            service_constraints(device, v, )
-        end
-    end
-    return
-end
-=#
