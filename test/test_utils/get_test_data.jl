@@ -187,9 +187,8 @@ end
 reserve_uc = reserve5(get_components(ThermalStandard, c_sys5_uc))
 add_service!(c_sys5_uc, reserve_uc[1], get_components(ThermalStandard, c_sys5_uc))
 add_service!(c_sys5_uc, reserve_uc[2], [collect(get_components(ThermalStandard, c_sys5_uc))[end]])
-for (ix, serv) in enumerate(get_components(StaticReserve, c_sys5_uc))
-    add_forecast!(c_sys5_uc, serv, Deterministic("get_requirement", Reserve_ts[ix][1]))
-    add_forecast!(c_sys5_uc, serv, Deterministic("get_requirement", Reserve_ts[ix][1]))
+for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_uc))
+    add_forecast!(c_sys5_uc, serv, Deterministic("get_requirement", Reserve_ts[t]))
 end
 
 function build_init(gens, data)

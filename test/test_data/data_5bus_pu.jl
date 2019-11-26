@@ -223,8 +223,8 @@ VariableReserve("Reserve1", 0.6, maximum([gen.tech.activepowerlimits[:max] for g
 VariableReserve("Reserve2", 0.6, maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5]))
 ]
 
-Reserve_ts = [[TimeArray(DayAhead, rand(24))],
-              [TimeArray(DayAhead+Day(1), rand(24))]]
+Reserve_ts = [TimeArray(DayAhead, rand(24)),
+              TimeArray(DayAhead+Day(1), rand(24))]
 
 hydro_timeseries_DA = [[TimeSeries.TimeArray(DayAhead,wind_ts_DA)],
                      [TimeSeries.TimeArray(DayAhead + Day(1), rand(24)*0.1 + wind_ts_DA)]]
