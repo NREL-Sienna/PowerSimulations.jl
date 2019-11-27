@@ -145,7 +145,7 @@ function activepower_constraints!(psi_container::PSIContainer,
     end
 
     device_range(psi_container,
-                DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub),
+                DeviceRange(names, limit_values, additional_terms_ub, additional_terms_lb),
                 Symbol("activerange_$(T)"),
                 Symbol("P_$(T)")
                 )
