@@ -93,7 +93,7 @@ Adds a bounds to a variable in the optimization model.
 
 # LaTeX
 
-``  x^{device}_t >= bound^{min} \forall t ``
+``  x^{device}_t >= bound^{min;} \forall t ``
 
 ``  x^{device}_t <= bound^{max} \forall t ``
 
