@@ -148,23 +148,22 @@ end
 """
     check_file_integrity(path::String)
 
-Checks the incription for each file made with the file is written with the new incription to verify the file hasn't been tampered with since written
+Checks the hash value for each file made with the file is written with the new hash_value to verify the file hasn't been tampered with since written
 
 # Arguments
 - `path::String`: this is the folder path that contains the results and the check.sha256 file
 """
 function check_file_integrity(path::String)
     file_path = joinpath(path, "check.sha256")
-    text = []
-    open(file_path, "r") do io
-        text = vcat(text,readlines(io))
+    text = open(file_path, "r") do io
+        return readlines(io)
     end
     for line in text
-        incription, file_name = split(line)
-        if String(incription) !== String(bytes2hex(SHA.sha256(open(file_name))))
-            throw(IS.DataFormatError("The incription in the written files does not match the read files, results may have been tampered."))
+        hash_value, file_name = split(line)
+        if String(hash_value) !== String(bytes2hex(SHA.sha256(open(file_name))))
+            throw(IS.DataFormatError("The hash value in the written files does not match the read files, results may have been tampered."))
         else
-            @info("File incriptions matched.")
+            @info("File hash values matched.")
         end
     end
 end

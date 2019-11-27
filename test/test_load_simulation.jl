@@ -65,7 +65,7 @@ function test_load_simulation()
             for f in files
                 rm("$(sim_results.results_folder)/$f")
             end
-            variable_list = (collect(keys(sim.stages[ix].psi_container.variables)))
+            variable_list = collect(keys(sim.stages[ix].psi_container.variables))
             res = load_simulation_results(sim_results, ix; write = true)
             file_path = joinpath(sim_results.results_folder,"$(variable_list[1]).feather")
             rm(file_path)
@@ -78,8 +78,8 @@ function test_load_simulation()
             for f in files
                 rm("$(sim_results.results_folder)/$f")
             end
-            variable_list = (collect(keys(sim.stages[ix].psi_container.variables)))
-            check_file_path = (sim_results.ref["stage-$ix"][(variable_list[1])][1,3])
+            variable_list = collect(keys(sim.stages[ix].psi_container.variables))
+            check_file_path = sim_results.ref["stage-$ix"][(variable_list[1])][1,3]
             rm(check_file_path)
             time_length = sim_results.chronologies["stage-$ix"]
             fake_df = DataFrames.DataFrame(:A => Array(1:time_length))
