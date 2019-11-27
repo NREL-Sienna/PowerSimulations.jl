@@ -7,8 +7,8 @@ struct ThermalStandardUnitCommitment <: AbstractThermalUnitCommitment end
 struct ThermalDispatch <: AbstractThermalDispatchFormulation end
 struct ThermalRampLimited <: AbstractThermalDispatchFormulation end
 struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
-########################### Active Dispatch Variables ######################################
 
+########################### Active Dispatch Variables ######################################
 """
 This function add the variables for power generation output to the model
 """
@@ -129,7 +129,7 @@ function activepower_constraints!(psi_container::PSIContainer,
                                   devices::IS.FlattenIteratorWrapper{T},
                                   device_formulation::Type{ThermalDispatchNoMin},
                                   system_formulation::Type{<:PM.AbstractPowerModel},
-                                 feed_forward::Nothing) where T<:PSY.ThermalGen
+                                  feed_forward::Nothing) where T<:PSY.ThermalGen
     names = Vector{String}(undef, length(devices))
     limit_values = Vector{MinMax}(undef, length(devices))
     additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
@@ -177,11 +177,9 @@ This function adds the reactive  power limits of generators when there are Commi
 """
 function reactivepower_constraints!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{T},
-                                   device_formulation::Type{D},
-                                   system_formulation::Type{S},
-                                   feed_forward::Nothing) where {T<:PSY.ThermalGen,
-                                                                       D<:AbstractThermalDispatchFormulation,
-                                                                       S<:PM.AbstractPowerModel}
+                                   device_formulation::Type{<:AbstractThermalDispatchFormulation},
+                                   system_formulation::Type{<:PM.AbstractPowerModel},
+                                   feed_forward::Nothing) where T<:PSY.ThermalGen
     names = Vector{String}(undef, length(devices))
     limit_values = Vector{MinMax}(undef, length(devices))
     for (ix, d) in enumerate(devices)
@@ -201,11 +199,9 @@ This function adds the reactive power limits of generators when there Commitment
 """
 function reactivepower_constraints!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{T},
-                                   device_formulation::Type{D},
-                                   system_formulation::Type{S},
-                                   feed_forward::Nothing) where {T<:PSY.ThermalGen,
-                                                                        D<:AbstractThermalFormulation,
-                                                                        S<:PM.AbstractPowerModel}
+                                   device_formulation::Type{<:AbstractThermalFormulation},
+                                   system_formulation::Type{<:PM.AbstractPowerModel},
+                                   feed_forward::Nothing) where T<:PSY.ThermalGen
     names = Vector{String}(undef, length(devices))
     limit_values = Vector{MinMax}(undef, length(devices))
     additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
@@ -480,12 +476,10 @@ end
 ########################### Cost Function Calls#############################################
 function cost_function(psi_container::PSIContainer,
                        devices::IS.FlattenIteratorWrapper{T},
-                       ::Type{D},
-                       ::Type{S},
-                       feed_forward::Nothing) where {T<:PSY.ThermalGen,
-                                         D<:AbstractThermalDispatchFormulation,
-                                         S<:PM.AbstractPowerModel}
-    add_to_cost(psi_container,
+                       ::Type{<:AbstractThermalDispatchFormulation},
+                       ::Type{<:PM.AbstractPowerModel},
+                       feed_forward::Nothing) where T<:PSY.ThermalGen
+    add_to_cost(canonical,
                 devices,
                 Symbol("P_$(T)"),
                 :variable)
@@ -494,11 +488,9 @@ end
 
 function cost_function(psi_container::PSIContainer,
                        devices::IS.FlattenIteratorWrapper{T},
-                       ::Type{D},
-                       ::Type{S},
-                       feed_forward::Nothing) where {T<:PSY.ThermalGen,
-                                         D<:AbstractThermalFormulation,
-                                         S<:PM.AbstractPowerModel}
+                       ::Type{<:AbstractThermalFormulation},
+                       ::Type{<:PM.AbstractPowerModel},
+                       feed_forward::Nothing) where T<:PSY.ThermalGen
     #Variable Cost component
     add_to_cost(psi_container, devices, Symbol("P_$(T)"), :variable)
     #Commitment Cost Components
