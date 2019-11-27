@@ -1,3 +1,4 @@
+""" Data Container to construct range constraints"""
 struct DeviceRange
     names::Vector{String}
     values::Vector{MinMax}
@@ -109,12 +110,9 @@ function device_semicontinuousrange(psi_container::PSIContainer,
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
-
     time_steps = model_time_steps(psi_container)
-
     varcts = get_variable(psi_container, var_name)
     varbin = get_variable(psi_container, binvar_name)
-
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
@@ -125,6 +123,9 @@ function device_semicontinuousrange(psi_container::PSIContainer,
     for (ix, name) in enumerate(sc_range_data.names)
         limits = sc_range_data.values[ix]
         for t in time_steps
+            if JuMP.has_lower_bound(varcts[name, t])
+                JuMP.set_lower_bound(varcts[name, t], 0.0)
+            end
             expression_ub = varcts[name, t]
             expression_lb = varcts[name, t]
             con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= limits.max*varbin[name, t])
