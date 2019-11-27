@@ -276,7 +276,7 @@ ED_devices = Dict{Symbol, DeviceModel}(:Generators => PSI.DeviceModel(PSY.Therma
 UC_devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalStandardUnitCommitment),
                                         :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
 # Testing Ramping Constraint
-@testset "Solving UC with CopperPlate for testing Ramping Constraints" begin
+@testset "Solving ED with CopperPlate for testing Ramping Constraints" begin
 node = Bus(1,"nodeA", "PV", 0, 1.0, (min = 0.9, max=1.05), 230)
 load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     DA_ramp = collect(DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):
@@ -355,7 +355,7 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     UC = OperationsProblem(TestOpProblem, template,
                         duration_test_sys; optimizer = Cbc_optimizer,
                         use_parameters = true, initial_conditions = init_cond)
-    # psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
+    psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
     moi_tests(UC, true, 56, 0, 56, 14, 21, true)
 end
 
