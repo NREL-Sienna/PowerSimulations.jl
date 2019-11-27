@@ -38,11 +38,10 @@ mutable struct DeviceModel{D<:PSY.Device,
     feedforward::Union{Nothing, AbstractAffectFeedForward}
 
     function DeviceModel(::Type{D},
-                    ::Type{B}) where {D<:PSY.Device, B<:AbstractDeviceFormulation}
-
+                         ::Type{B},
+                         FF=nothing) where {D<:PSY.Device, B<:AbstractDeviceFormulation}
     _validate_device_formulation(D)
     _validate_device_formulation(B)
-
-    new{D, B}(D, B, nothing)
+    new{D, B}(D, B, FF)
     end
 end
