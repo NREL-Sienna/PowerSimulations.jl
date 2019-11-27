@@ -98,17 +98,36 @@ function active_power_constraints!(psi_container::PSIContainer,
                                    ::Type{BookKeepingwReservation},
                                    ::Type{S}) where {St<:PSY.Storage,
                                                      S<:PM.AbstractPowerModel}
-    range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
-    range_data_out = [(PSY.get_name(s), PSY.get_outputactivepowerlimits(s)) for s in devices]
+    names = Vector{String}(undef, length(devices))
+    limit_values_in = Vector{MinMax}(undef, length(devices))
+    limit_values_out = Vector{MinMax}(undef, length(devices))
+    additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
+    additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
+
+    for (ix, d) in enumerate(devices)
+        limit_values_in[ix] = PSY.get_inputactivepowerlimits(d)
+        limit_values_out[ix] = PSY.get_outputactivepowerlimits(d)
+        names[ix] = PSY.get_name(d)
+        services_ub = Vector{Symbol}()
+        services_lb = Vector{Symbol}()
+        for service in PSY.get_services(d)
+            SR = typeof(service)
+            push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
+        end
+        additional_terms_ub[ix] = services_ub
+        additional_terms_lb[ix] = services_lb
+    end                                              
+    #range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
+    #range_data_out = [(PSY.get_name(s), PSY.get_outputactivepowerlimits(s)) for s in devices]
 
     reserve_device_semicontinuousrange(psi_container,
-                                       range_data_in,
+                                       DeviceRange(names, limit_values_in, Vector{Vector{Symbol}}(), additional_terms_lb),
                                        Symbol("inputpower_range_$(St)"),
                                        Symbol("Pin_$(St)"),
                                        Symbol("R_$(St)"))
 
     reserve_device_semicontinuousrange(psi_container,
-                                       range_data_out,
+                                       DeviceRange(names, limit_values_out, Vector{Vector{Symbol}}(), additional_terms_lb),
                                        Symbol("outputpower_range_$(St)"),
                                        Symbol("Pout_$(St)"),
                                        Symbol("R_$(St)"))
