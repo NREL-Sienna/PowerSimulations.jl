@@ -85,11 +85,11 @@ function _export_model_result(stage::_Stage, start_time::Dates.DateTime, save_pa
     _write_data(stage, save_path)
     _write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
     files = collect(readdir(save_path))
-    io = open(joinpath(save_path, "check.sha256"), "w")
-    for file in files
-        incription = write(io, "$(bytes2hex(SHA.sha256(open(joinpath(save_path,file)))))    $(joinpath(save_path,file))\n")
+    open(joinpath(save_path, "check.sha256"), "w") do io
+        for file in files
+            incription = write(io, "$(bytes2hex(SHA.sha256(open(joinpath(save_path,file)))))    $(joinpath(save_path,file))\n")
+        end
     end
-    close(io)
     return
 end
 
@@ -98,11 +98,11 @@ function _export_model_result(stage::_Stage, start_time::Dates.DateTime, save_pa
     _write_data(stage, save_path, dual_con)
     _write_data(get_time_stamp(stage, start_time), save_path, "time_stamp")
     files = collect(readdir(save_path))
-    io = open(joinpath(save_path, "check.sha256"), "w")
-    for file in files
-        incription = write(io, "$(bytes2hex(SHA.sha256(open(joinpath(save_path,file)))))    $(joinpath(save_path,file))\n")
+    open(joinpath(save_path, "check.sha256"), "w") do io
+        for file in files
+            incription = write(io, "$(bytes2hex(SHA.sha256(open(joinpath(save_path,file)))))    $(joinpath(save_path,file))\n")
+        end
     end
-    close(io)
     return
 end
 
@@ -147,11 +147,11 @@ function write_results(results::Results, save_path::String; kwargs...)
     _write_data(results.time_stamp, folder_path, "time_stamp"; kwargs...)
     _write_results_sum(results, folder_path)
     files = collect(readdir(folder_path))
-    io = open(joinpath(folder_path, "check.sha256"), "w")
-    for file in files
-        incription = write(io, "$(bytes2hex(SHA.sha256(open(joinpath(folder_path,file)))))    $(joinpath(folder_path,file))\n")
+    open(joinpath(folder_path, "check.sha256"), "w") do io
+        for file in files
+            incription = write(io, "$(bytes2hex(SHA.sha256(open(joinpath(folder_path,file)))))    $(joinpath(folder_path,file))\n")
+        end
     end
-    close(io)
     @info("Files written to $folder_path folder.")
     return
 end
@@ -178,11 +178,11 @@ function write_results(res::DualResults, folder_path::String, results_folder::St
     _write_optimizer_log(res.optimizer_log, folder_path)
     _write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
     files = collect(readdir(folder_path))
-    io = open(joinpath(folder_path, "check.sha256"), "w")
-    for file in files
-        incription = write(io, "$(bytes2hex(SHA.sha256(open(joinpath(folder_path,file)))))    $(joinpath(folder_path,file))\n")
+    open(joinpath(folder_path, "check.sha256"), "w") do io
+        for file in files
+            incription = write(io, "$(bytes2hex(SHA.sha256(open(joinpath(folder_path,file)))))    $(joinpath(folder_path,file))\n")
+        end
     end
-    close(io)
     @info("Files written to $folder_path folder.")
     return
 end
@@ -209,11 +209,11 @@ function write_results(res::SimulationResults, folder_path::String, results_fold
     _write_optimizer_log(res.optimizer_log, folder_path)
     _write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
     files = collect(readdir(folder_path))
-    io = open(joinpath(folder_path, "check.sha256"), "w")
-    for file in files
-        incription = write(io, "$(bytes2hex(SHA.sha256(open(joinpath(folder_path,file)))))    $(joinpath(folder_path,file))\n")
+    open(joinpath(folder_path, "check.sha256"), "w") do io
+        for file in files
+            incription = write(io, "$(bytes2hex(SHA.sha256(open(joinpath(folder_path,file)))))    $(joinpath(folder_path,file))\n")
+        end
     end
-    close(io)
     @info("Files written to $folder_path folder.")
     return
 end

@@ -155,9 +155,10 @@ Checks the incription for each file made with the file is written with the new i
 """
 function check_file_integrity(path::String)
     file_path = joinpath(path, "check.sha256")
-    io = open(file_path, "r")
-    text = readlines(io)
-    close(io)
+    text = []
+    open(file_path, "r") do io
+        text = vcat(text,readlines(io))
+    end
     for line in text
         incription, file_name = split(line)
         if String(incription) !== String(bytes2hex(SHA.sha256(open(file_name))))
