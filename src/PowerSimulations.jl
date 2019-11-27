@@ -37,6 +37,10 @@ export RenewableFullDispatch
 export RenewableConstantPowerFactor
 ######## Hydro Formulations ########
 export HydroFixed
+export HydroDispatchRunOfRiver
+export HydroDispatchSeasonalFlow
+export HydroCommitmentRunOfRiver
+export HydroCommitmentSeasonalFlow
 ######## Renewable Formulations ########
 export BookKeeping
 export BookKeepingwReservation
