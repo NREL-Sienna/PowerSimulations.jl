@@ -96,9 +96,6 @@ function Base.show(io::IO, ::MIME"text/plain", results::Results)
     for (k, v) in results.total_cost
         println(io, "Total Cost: $(k) = $(v)")
     end
-    if :check_sum in fieldnames(typeof(results))
-        println(io, "check sum: $(results.check_sum[1])\n")
-    end
  end
 
  function Base.show(io::IO, ::MIME"text/html", results::PSI.Results)
@@ -122,9 +119,6 @@ function Base.show(io::IO, ::MIME"text/plain", results::Results)
     for (k, v) in results.total_cost
         println(io, "<p><b>Total Cost: $(v)<b/></p>")
     end
-    if :check_sum in fieldnames(typeof(results))
-        println(io, "<p><b>check sum: $(results.check_sum[1])</b></p>")
-    end
  end
 
  function Base.show(io::IO, stage::Stage)
@@ -136,5 +130,21 @@ function Base.show(io::IO, ::MIME"text/plain", results::Results)
     for (k, v) in services
         println(io, "<p><b>$(k)</b></p>")
         println(io, "<p>$(v)</p>")
+    end
+ end
+
+ function Base.show(io::IO, ::MIME"text/html", sim_results::SimulationResultsReference)
+    println(io, "<h1>Simulation Results Reference</h1>")
+    println(io, "<p><b>Results Folder:</b> $(sim_results.results_folder)</p>")
+    println(io, "<h2>Reference Tables</h2>")
+    for (k, v) in sim_results.ref
+        println(io, "<p><b>$(k)</b></p>")
+        for (i, x) in v
+            println(io, "<p>$(i): dataframe size $(size(x))</p>")
+        end
+    end
+    for (k, v) in sim_results.chronologies
+        println(io, "<p><b>$(k)</b></p>")
+        println(io, "<p>time length: $(v)</p>")
     end
  end

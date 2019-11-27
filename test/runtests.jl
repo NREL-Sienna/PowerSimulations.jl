@@ -1,8 +1,10 @@
 using PowerSimulations
 using PowerSystems
 using PowerModels
+using InfrastructureSystems
 using DataFrames
 using Dates
+using Feather
 using JuMP
 using Test
 using Ipopt
@@ -19,6 +21,7 @@ const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
 const PJ = ParameterJuMP
+const IS = InfrastructureSystems
 abstract type TestOpProblem<:PSI.AbstractOperationsProblem end
 
 ipopt_optimizer = JuMP.with_optimizer(Ipopt.Optimizer, print_level = 0)

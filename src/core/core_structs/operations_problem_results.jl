@@ -31,7 +31,7 @@ function _make_results(variables::Dict,
                       time_stamp::Array,
                       duals::Dict)
     time_stamp = DataFrames.DataFrame(Range = time_stamp)
-    return AggregatedResults(variables, total_cost, optimizer_log, time_stamp, duals)
+    return DualResults(variables, total_cost, optimizer_log, time_stamp, duals)
 end
 function get_variable(res_model::OperationsProblemResults, key::Symbol)
         try
@@ -73,7 +73,7 @@ function load_operation_results(folder_path::AbstractString)
         throw(ArgumentError("Not a folder path."))
     end
     files_in_folder = collect(readdir(folder_path))
-    variable_list = setdiff(files_in_folder, ["time_stamp.feather", "optimizer_log.json", "check_sum.json"])
+    variable_list = setdiff(files_in_folder, ["time_stamp.feather", "optimizer_log.json", "check.sha256"])
     variables = Dict{Symbol, DataFrames.DataFrame}()
     for name in variable_list
         variable_name = splitext(name)[1]
@@ -86,12 +86,8 @@ function load_operation_results(folder_path::AbstractString)
         time_stamp = shorten_time_stamp(time_stamp)
     end
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
-    if any(x -> x == "check_sum.json", files_in_folder)
-        check_sum = JSON.parse(open(joinpath(folder_path, "check_sum.json")))
-        results = _make_results(variables, obj_value, optimizer, time_stamp, check_sum)
-    else
-        results = _make_results(variables, obj_value, optimizer, time_stamp)
-    end
+    check_file_integrity(folder_path)
+    results = _make_results(variables, obj_value, optimizer, time_stamp)
     return results
 end
 

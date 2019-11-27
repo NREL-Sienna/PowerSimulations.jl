@@ -17,8 +17,6 @@ devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStanda
                                     )
 template_ed= OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 
-GLPK_optimizer = with_optimizer(GLPK.Optimizer)
-
 #=
 ## UC Model Ref
 branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine),

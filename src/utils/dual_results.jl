@@ -1,26 +1,24 @@
-struct AggregatedResults <: Results
+struct DualResults <: Results
     variables::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
-    check_sum::Array
     duals::Dict{Symbol, Any}
 end
 
-get_res_variables(result::AggregatedResults) = result.variables
-get_cost(result::AggregatedResults) = result.total_cost
-get_log(result::AggregatedResults) = result.optimizer_log
-get_time_stamp(result::AggregatedResults) = result.time_stamp
-get_duals(result::AggregatedResults) = result.duals
-get_variables(result::AggregatedResults) = result.dual_variables
+get_res_variables(result::DualResults) = result.variables
+get_cost(result::DualResults) = result.total_cost
+get_log(result::DualResults) = result.optimizer_log
+get_time_stamp(result::DualResults) = result.time_stamp
+get_duals(result::DualResults) = result.duals
+get_variables(result::DualResults) = result.dual_variables
 """This function creates the correct results struct for the context"""
 function _make_results(variables::Dict,
                       total_cost::Dict,
                       optimizer_log::Dict,
                       time_stamp::DataFrames.DataFrame,
-                      check_sum::Array,
                       duals::Dict)
-    return AggregatedResults(variables, total_cost, optimizer_log, time_stamp, check_sum, duals)
+    return DualResults(variables, total_cost, optimizer_log, time_stamp, duals)
 end
 
 # internal function to parse through the reference dictionary and grab the file paths
