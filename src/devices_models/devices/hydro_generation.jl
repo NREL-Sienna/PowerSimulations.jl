@@ -73,7 +73,7 @@ function commitment_constraints!(psi_container::PSIContainer,
                                  devices::IS.FlattenIteratorWrapper{H},
                                  device_formulation::Type{D},
                                  system_formulation::Type{S},
-                                 feed_forward::Nothing) where {H<:PSY.HydroGen,
+                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {H<:PSY.HydroGen,
                                                                      D<:AbstractHydroUnitCommitment,
                                                                      S<:PM.AbstractPowerModel}
 
@@ -100,7 +100,7 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{H},
                                     device_formulation::Type{AbstractHydroDispatchFormulation},
                                     system_formulation::Type{<:PM.AbstractPowerModel},
-                                    feed_forward::Nothing) where H<:PSY.HydroGen
+                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
     names = Vector{String}(undef, length(devices))
     limit_values = Vector{MinMax}(undef, length(devices))
     for (ix, d) in enumerate(devices)
@@ -155,7 +155,7 @@ function activepower_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{H},
                                 device_formulation::Type{<:AbstractHydroDispatchFormulation},
                                 system_formulation::Type{<:PM.AbstractPowerModel},
-                                feed_forward::Nothing) where H<:PSY.HydroGen
+                                feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
 
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
@@ -197,7 +197,7 @@ function activepower_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{H},
                                 device_formulation::Type{<:AbstractHydroUnitCommitment},
                                 system_formulation::Type{<:PM.AbstractPowerModel},
-                                feed_forward::Nothing) where H<:PSY.HydroGen
+                                feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
 
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
@@ -393,7 +393,7 @@ function budget_constraints!(psi_container::PSIContainer,
                     devices::IS.FlattenIteratorWrapper{H},
                     device_formulation::Type{<:AbstractHydroDispatchFormulation},
                     system_formulation::Type{<:PM.AbstractPowerModel},
-                    feed_forward::Nothing) where H<:PSY.HydroGen
+                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
 
     parameters = model_has_parameters(psi_container)
     budget_data  = _get_budget(psi_container, devices)

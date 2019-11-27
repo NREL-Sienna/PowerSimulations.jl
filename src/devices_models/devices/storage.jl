@@ -60,7 +60,7 @@ function active_power_constraints!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{St},
                                    ::Type{BookKeeping},
                                    ::Type{S},
-                                   feed_forward::Nothing) where {St<:PSY.Storage,
+                                   feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                      S<:PM.AbstractPowerModel}
     names = Vector{String}(undef, length(devices))
     limit_values_in = Vector{MinMax}(undef, length(devices))
@@ -98,7 +98,7 @@ function active_power_constraints!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{St},
                                    ::Type{BookKeepingwReservation},
                                    ::Type{S},
-                                   feed_forward::Nothing) where {St<:PSY.Storage,
+                                   feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                      S<:PM.AbstractPowerModel}
     names = Vector{String}(undef, length(devices))
     limit_values_in = Vector{MinMax}(undef, length(devices))
@@ -118,7 +118,7 @@ function active_power_constraints!(psi_container::PSIContainer,
         end
         additional_terms_ub[ix] = services_ub
         additional_terms_lb[ix] = services_lb
-    end                                              
+    end
     reserve_device_semicontinuousrange(psi_container,
                                        DeviceRange(names, limit_values_in, Vector{Vector{Symbol}}(), additional_terms_lb),
                                        Symbol("inputpower_range_$(St)"),
@@ -141,7 +141,7 @@ function reactive_power_constraints!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{St},
                                    ::Type{D},
                                    ::Type{S},
-                                   feed_forward::Nothing) where {St<:PSY.Storage,
+                                   feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                      D<:AbstractStorageFormulation,
                                                      S<:PM.AbstractPowerModel}
     names = Vector{String}(undef, length(devices))
@@ -173,7 +173,7 @@ function energy_capacity_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{St},
                                     ::Type{D},
                                     ::Type{S},
-                                    feed_forward::Nothing) where {St<:PSY.Storage,
+                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                                         D<:AbstractStorageFormulation,
                                                                         S<:PM.AbstractPowerModel}
     names = Vector{String}(undef, length(devices))
@@ -228,7 +228,7 @@ function energy_balance_constraint!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{St},
                                    ::Type{D},
                                    ::Type{S},
-                                   feed_forward::Nothing) where {St<:PSY.Storage,
+                                   feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                             D<:AbstractStorageFormulation,
                                                             S<:PM.AbstractPowerModel}
     key = ICKey(DeviceEnergy, St)

@@ -32,7 +32,7 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableFullDispatch},
                                     system_formulation::Type{<:PM.AbstractPowerModel},
-                                    feed_forward::Nothing) where R<:PSY.RenewableGen
+                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
     names = Vector{String}(undef, length(devices))
     limit_values = Vector{MinMax}(undef, length(devices))
     for (ix, d) in enumerate(devices)
@@ -56,7 +56,7 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableConstantPowerFactor},
                                     system_formulation::Type{<:PM.AbstractPowerModel},
-                                    feed_forward::Nothing) where R<:PSY.RenewableGen
+                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
     names = (PSY.get_name(d) for d in devices)
     time_steps = model_time_steps(psi_container)
     p_variable_name = Symbol("P_$(R)")
@@ -109,7 +109,7 @@ function activepower_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{R},
                                 device_formulation::Type{<:AbstractRenewableDispatchFormulation},
                                 system_formulation::Type{<:PM.AbstractPowerModel},
-                                feed_forward::Nothing) where R<:PSY.RenewableGen
+                                feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     if !parameters && !use_forecast_data

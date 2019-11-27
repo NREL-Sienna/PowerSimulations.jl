@@ -131,7 +131,7 @@ function branch_rate_constraint!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 ::Type{D},
                                 ::Type{S},
-                                feed_forward::Nothing) where {B<:PSY.ACBranch,
+                                feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {B<:PSY.ACBranch,
                                                   D<:AbstractBranchFormulation,
                                                   S<:PM.AbstractDCPModel}
     names = Vector{String}(undef, length(devices))
@@ -163,7 +163,7 @@ function branch_rate_constraint!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 ::Type{<:AbstractBranchFormulation},
                                 ::Type{<:PM.AbstractActivePowerModel},
-                                feed_forward::Nothing) where B<:PSY.ACBranch
+                                feed_forward::Union{Nothing, AbstractAffectFeedForward}) where B<:PSY.ACBranch
     names = Vector{String}(undef, length(devices))
     limit_values = Vector{MinMax}(undef, length(devices))
     additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
@@ -199,7 +199,7 @@ function branch_rate_constraint!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 ::Type{<:AbstractBranchFormulation},
                                 ::Type{<:PM.AbstractPowerModel},
-                                feed_forward::Nothing) where B<:PSY.ACBranch
+                                feed_forward::Union{Nothing, AbstractAffectFeedForward}) where B<:PSY.ACBranch
     range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
     rating_constraint!(psi_container,
@@ -221,7 +221,7 @@ function branch_flow_constraint!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
                                 ::Type{FlowMonitoredLine},
                                 ::Union{Type{PM.DCPPowerModel}, Type{StandardPTDFModel}},
-                                feed_forward::Nothing)
+                                feed_forward::Union{Nothing, AbstractAffectFeedForward})
 
 
     flow_range_data = [(PSY.get_name(h), PSY.get_flowlimits(h)) for h in devices]
@@ -241,7 +241,7 @@ function branch_flow_constraint!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
                                 ::Type{FlowMonitoredLine},
                                 ::Type{<:PM.AbstractPowerModel},
-                                feed_forward::Nothing)
+                                feed_forward::Union{Nothing, AbstractAffectFeedForward})
     names = Vector{String}(undef, length(devices))
     limit_values_FT = Vector{MinMax}(undef, length(devices))
     limit_values_TF = Vector{MinMax}(undef, length(devices))
