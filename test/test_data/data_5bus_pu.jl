@@ -237,6 +237,16 @@ load_timeseries_RT = [[TimeArray(RealTime, repeat(loadbus2_ts_DA,inner=12)),
                      TimeArray(RealTime+Day(1), rand(288)*0.1 + repeat(loadbus3_ts_DA,inner=12)),
                      TimeArray(RealTime+Day(1), rand(288)*0.1 + repeat(loadbus4_ts_DA,inner=12))]]
 
+ren_timeseries_RT = [[TimeArray(RealTime, repeat(solar_ts_DA,inner=12)),
+                     TimeArray(RealTime, repeat(wind_ts_DA,inner=12)),
+                     TimeArray(RealTime, repeat(wind_ts_DA,inner=12))],
+                    [TimeArray(RealTime+Day(1), rand(288)*0.1 + repeat(solar_ts_DA,inner=12)),
+                     TimeArray(RealTime+Day(1), rand(288)*0.1 + repeat(wind_ts_DA,inner=12)),
+                     TimeArray(RealTime+Day(1), rand(288)*0.1 + repeat(wind_ts_DA,inner=12))]]
+
+Iload_timeseries_RT = [[TimeArray(RealTime, repeat(loadbus4_ts_DA,inner=12))],
+                      [TimeArray(RealTime+Day(1), rand(288)*0.1 + repeat(loadbus4_ts_DA,inner=12))]]
+
 load_timeseries_DA = [[TimeSeries.TimeArray(DayAhead,loadbus2_ts_DA),
                     TimeSeries.TimeArray(DayAhead,loadbus3_ts_DA),
                     TimeSeries.TimeArray(DayAhead,loadbus4_ts_DA)],

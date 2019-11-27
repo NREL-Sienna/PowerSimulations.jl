@@ -8,7 +8,6 @@ function _write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path
             file_type.write(file_path, vars_results[k])
         end
     end
-    return
 end
 
 # writing a dictionary of dataframes to files and appending the time
@@ -25,7 +24,6 @@ function _write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, time::Dat
         file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
         file_type.write(file_path, var)
     end
-    return
 end
 
 function _write_data(data::DataFrames.DataFrame, save_path::AbstractString, file_name::String; kwargs...)
@@ -52,7 +50,8 @@ function _write_data(psi_container::PSIContainer, save_path::AbstractString; kwa
     if file_type == Feather || file_type == CSV
         for (k, v) in get_variables(psi_container)
             file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
-            file_type.write(file_path, _result_dataframe_variables(v))
+            variable = _result_dataframe_variables(v)
+            file_type.write(file_path, variable)
         end
     end
     return
@@ -64,7 +63,8 @@ function _write_data(psi_container::PSIContainer, save_path::AbstractString, dua
         duals = get_model_duals(psi_container, dual_con)
         for (k, v) in duals
             file_path = joinpath(save_path, "$(k)_dual.$(lowercase("$file_type"))")
-            file_type.write(file_path, _result_dataframe_vars(v))
+            variable = _result_dataframe_variables(v)
+            file_type.write(file_path, variable)
         end
     end
     return
@@ -84,6 +84,8 @@ end
 function _export_model_result(stage::_Stage, start_time::Dates.DateTime, save_path::String)
     _write_data(stage, save_path)
     _write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
+    files = collect(readdir(save_path))
+    compute_file_hash(save_path, files)
     return
 end
 
@@ -91,6 +93,8 @@ function _export_model_result(stage::_Stage, start_time::Dates.DateTime, save_pa
     _write_data(stage, save_path)
     _write_data(stage, save_path, dual_con)
     _write_data(get_time_stamp(stage, start_time), save_path, "time_stamp")
+    files = collect(readdir(save_path))
+    compute_file_hash(save_path, files)
     return
 end
 
@@ -134,12 +138,14 @@ function write_results(results::Results, save_path::String; kwargs...)
     _write_optimizer_log(results.optimizer_log, folder_path)
     _write_data(results.time_stamp, folder_path, "time_stamp"; kwargs...)
     _write_results_sum(results, folder_path)
+    files = collect(readdir(folder_path))
+    compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
     return
 end
 
-"""
-    write_model_results(results::AggregatedResults, save_path::String, results_folder::String)
+""" 
+    write_model_results(results::DualResults, save_path::String, results_folder::String)
 
 Exports Simulation Results to the path where they come from in the results folder
 
@@ -151,7 +157,7 @@ Exports Simulation Results to the path where they come from in the results folde
 # Accepted Key Words
 - `file_type = CSV`: only CSV and featherfile are accepted
 """
-function write_results(res::AggregatedResults, folder_path::String, results_folder::String; kwargs...)
+function write_results(res::DualResults, folder_path::String, results_folder::String; kwargs...)
     if !isdir(folder_path)
         throw(ArgumentError("Specified path is not valid. Run write_results to save results."))
     end
@@ -159,7 +165,8 @@ function write_results(res::AggregatedResults, folder_path::String, results_fold
     _write_data(res.duals, folder_path; kwargs...)
     _write_optimizer_log(res.optimizer_log, folder_path)
     _write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
-    _write_results_sum(res, folder_path)
+    files = collect(readdir(folder_path))
+    compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
     return
 end
@@ -178,18 +185,25 @@ Exports Simulations Results to the path where they come from in the results fold
 - `file_type = CSV`: only CSV and featherfile are accepted
 """
 
-function write_results(res::CheckResults, folder_path::String, results_folder::String; kwargs...)
+function write_results(res::SimulationResults, folder_path::String, results_folder::String; kwargs...)
     if !isdir(folder_path)
         throw(ArgumentError("Specified path is not valid. Run write_results to save results."))
     end
     _write_data(res.variables, res.time_stamp, folder_path; kwargs...)
     _write_optimizer_log(res.optimizer_log, folder_path)
     _write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
-    _write_results_sum(res, folder_path)
+    files = collect(readdir(folder_path))
+    compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
     return
 end
-
+function compute_file_hash(path::String, files::Array)
+    open(joinpath(path, "check.sha256"), "w") do io
+        for file in files
+            hash_value = write(io, "$(bytes2hex(SHA.sha256(open(joinpath(path, file)))))    $(joinpath(path, file))\n")
+        end
+    end
+end
 """ Exports the OpModel JuMP object in MathOptFormat"""
 function write_op_problem(op_problem::OperationsProblem, save_path::String)
     _write_psi_container(op_problem.psi_container, save_path)
@@ -203,21 +217,16 @@ function _write_psi_container(psi_container::PSIContainer, save_path::String)
     MOI.write_to_file(MOF_model, save_path)
     return
 end
-# sums the variable generation and writes the value to a JSON to verify
-# the results were not tampered with
-function _write_results_sum(results::Results, path::String)
-    check_sum = _sum_variable_results(results)
-    JSON.write(joinpath(path, "check_sum.json"), JSON.json(check_sum))
-end
+
 # writes the results to CSV files in a folder path, but they can't be read back
 function write_to_CSV(results::OperationsProblemResults, folder_path::String)
     write_results(results, folder_path, "results"; file_type = CSV)
 end
 # writes the results to CSV files in a folder path, but they can't be read back
-function write_to_CSV(results::AggregatedResults, folder_path::String)
+function write_to_CSV(results::DualResults, folder_path::String)
     write_results(results, folder_path, "results"; file_type = CSV)
 end
 # writes the results to CSV files in a folder path, but they can't be read back
-function write_to_CSV(results::CheckResults, folder_path::String)
+function write_to_CSV(results::SimulationResults, folder_path::String)
     write_results(results, folder_path, "results"; file_type = CSV)
 end

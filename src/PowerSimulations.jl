@@ -92,10 +92,11 @@ export set_device_model!
 export make_references
 export execute!
 ## Utils Exports
-export sim_results_container
+export SimulationResultsReference
 export get_sim_resolution
 export write_op_problem
 export write_results
+export check_file_integrity
 export load_operation_results
 export load_simulation_results
 export write_to_CSV
@@ -143,6 +144,7 @@ import Feather
 import Colors
 import JSON
 import CSV
+import SHA
 
 include("core/definitions.jl")
 
@@ -166,7 +168,7 @@ include("core/core_structs/operations_problem.jl")
 include("core/core_structs/chronology.jl")
 include("core/core_structs/simulations_stages.jl")
 include("core/core_structs/simulation.jl")
-include("core/core_structs/results.jl")
+include("core/core_structs/operations_problem_results.jl")
 include("core/build_cache.jl")
 include("core/build_operations.jl")
 include("core/build_simulations.jl")
@@ -222,9 +224,9 @@ include("routines/solve_routines.jl")
 
 #Utils
 include("utils/optimization_debugging.jl")
-include("utils/aggregated_results.jl")
-include("utils/check_results.jl")
-include("utils/simulation_results_container.jl")
+include("utils/dual_results.jl")
+include("utils/simulation_results_reference.jl")
+include("utils/simulation_results.jl")
 include("utils/printing.jl")
 #Routines
 include("routines/write_results.jl")

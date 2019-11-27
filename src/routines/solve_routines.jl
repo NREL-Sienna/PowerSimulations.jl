@@ -36,13 +36,13 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
     end
 
     vars_result = get_model_result(op_problem)
-    check_sum = _sum_variable_results(vars_result)
     optimizer_log = get_optimizer_log(op_problem)
     time_stamp = get_time_stamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
     obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel))
     merge!(optimizer_log, timed_log)
-    results = _make_results(vars_result, obj_value, optimizer_log, time_stamp, check_sum)
+    results = SimulationResults(vars_result, obj_value, optimizer_log, time_stamp)
+
     !isnothing(save_path) && write_results(results, save_path)
 
      return results
@@ -123,6 +123,6 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
         end
 
     end
-    sim_results = sim_results_container(sim)
+    sim_results = SimulationResultsReference(sim)
     return sim_results
 end
