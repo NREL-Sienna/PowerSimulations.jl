@@ -49,7 +49,6 @@ function device_duration_retrospective(psi_container::PSIContainer,
                                         initial_duration::Matrix{InitialCondition},
                                         cons_name::Symbol,
                                         var_names::Tuple{Symbol, Symbol, Symbol})
-
     time_steps = model_time_steps(psi_container)
 
     varon = get_variable(psi_container, var_names[1])
@@ -147,9 +146,7 @@ function device_duration_look_ahead(psi_container::PSIContainer,
                              initial_duration::Matrix{InitialCondition},
                              cons_name::Symbol,
                              var_names::Tuple{Symbol, Symbol, Symbol})
-
     time_steps = model_time_steps(psi_container)
-
     varon = get_variable(psi_container, var_names[1])
     varstart = get_variable(psi_container, var_names[2])
     varstop = get_variable(psi_container, var_names[3])
@@ -196,7 +193,6 @@ function device_duration_look_ahead(psi_container::PSIContainer,
     end
 
     return
-
 end
 
 
@@ -253,7 +249,6 @@ function device_duration_parameters(psi_container::PSIContainer,
                                initial_duration::Matrix{InitialCondition},
                                cons_name::Symbol,
                                var_names::Tuple{Symbol, Symbol, Symbol})
-
     time_steps = model_time_steps(psi_container)
 
     varon = get_variable(psi_container, var_names[1])

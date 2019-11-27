@@ -42,7 +42,6 @@ function device_commitment(psi_container::PSIContainer,
                         initial_conditions::Vector{InitialCondition},
                         cons_name::Symbol,
                         var_names::Tuple{Symbol, Symbol, Symbol})
-
     time_steps = model_time_steps(psi_container)
     varstart = get_variable(psi_container, var_names[1])
     varstop = get_variable(psi_container, var_names[2])

@@ -27,7 +27,6 @@ function _middle_rename(original::Symbol, split_char::String, addition::String)
 end
 
 function _remove_underscore(original::Symbol)
-
     if !occursin("_", String(original))
         return original
     end

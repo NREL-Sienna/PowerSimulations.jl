@@ -31,7 +31,6 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            kwargs...) where {R<:PSY.RenewableGen,
                                              D<:AbstractRenewableDispatchFormulation,
                                              S<:PM.AbstractActivePowerModel}
-
     devices = PSY.get_components(R, sys)
 
     if validate_available_devices(devices, R)
@@ -43,7 +42,6 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
 
     #Constraints
     activepower_constraints!(psi_container, devices, D, S, model.feedforward)
-
     feedforward!(psi_container, R, model.feedforward)
 
     #Cost Function
@@ -57,7 +55,6 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            system_formulation::Type{S};
                            kwargs...) where {R<:PSY.RenewableGen,
                                              S<:PM.AbstractPowerModel}
-
     devices = PSY.get_components(R, sys)
 
     if validate_available_devices(devices, R)

@@ -45,7 +45,6 @@ function add_variable(psi_container::PSIContainer,
                       expression_name::Union{Nothing,Symbol}=nothing,
                       sign::Float64=1.0; kwargs...) where {D<:Union{Vector{<:PSY.Device},
                                           IS.FlattenIteratorWrapper{<:PSY.Device}}}
-
     time_steps = model_time_steps(psi_container)
     variable = add_var_container!(psi_container, var_name, (PSY.get_name(d) for d in devices), time_steps)
     jvar_name = _remove_underscore(var_name)
@@ -106,7 +105,6 @@ Adds a bounds to a variable in the optimization model.
 function set_variable_bounds(psi_container::PSIContainer,
                             bounds::DeviceRange,
                             var_name::Symbol)
-
     for t in model_time_steps(psi_container), (ix, name) in enumerate(bounds.names)
         bound = bounds.values[ix]
         var = psi_container.variables[var_name][name, t]

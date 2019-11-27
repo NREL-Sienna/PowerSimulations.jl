@@ -24,7 +24,6 @@ function device_timeseries_ub(psi_container::PSIContainer,
                               ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                               cons_name::Symbol,
                               var_name::Symbol)
-
     time_steps = model_time_steps(psi_container)
     names = (v[1] for v in ts_data)
     constraint = add_cons_container!(psi_container, cons_name, names, time_steps)
@@ -40,7 +39,6 @@ function device_timeseries_ub(psi_container::PSIContainer,
     end
 
     return
-
 end
 
 @doc raw"""
@@ -71,7 +69,6 @@ function device_timeseries_lb(psi_container::PSIContainer,
                               ts_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                               cons_name::Symbol,
                               var_name::Symbol)
-
     time_steps = model_time_steps(psi_container)
     names = (v[1] for v in ts_data)
     constraint =add_cons_container!(psi_container, cons_name, names, time_steps)
@@ -87,7 +84,6 @@ function device_timeseries_lb(psi_container::PSIContainer,
     end
 
     return
-
 end
 
 #NOTE: there is a floating, unnamed lower bound constraint in this function. This may need to be changed.
@@ -121,7 +117,6 @@ function device_timeseries_param_ub(psi_container::PSIContainer,
                                     cons_name::Symbol,
                                     param_reference::UpdateRef,
                                     var_name::Symbol)
-
     time_steps = model_time_steps(psi_container)
     ub_name = _middle_rename(cons_name, "_", "ub")
     variable = get_variable(psi_container, var_name)
@@ -139,7 +134,6 @@ function device_timeseries_param_ub(psi_container::PSIContainer,
     end
 
     return
-
 end
 
 @doc raw"""
@@ -172,7 +166,6 @@ function device_timeseries_param_lb(psi_container::PSIContainer,
                                     cons_name::Symbol,
                                     param_reference::UpdateRef,
                                     var_name::Symbol)
-
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, var_name)
     lb_name = _middle_rename(cons_name, "_", "lb")
@@ -285,7 +278,6 @@ function device_timeseries_ub_bigM(psi_container::PSIContainer,
                                     param_reference::UpdateRef,
                                     binvar_name::Symbol,
                                     M_value::Float64 = 1e6)
-
     time_steps = model_time_steps(psi_container)
     ub_name = _middle_rename(cons_name, "_", "ub")
     key_status = _middle_rename(cons_name, "_", "status")
@@ -307,5 +299,4 @@ function device_timeseries_ub_bigM(psi_container::PSIContainer,
     end
 
     return
-
 end
