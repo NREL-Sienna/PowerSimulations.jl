@@ -24,43 +24,31 @@ function moi_tests(op_problem::OperationsProblem,
 end
 
 function psi_constraint_test(op_problem::OperationsProblem, constraint_names::Vector{Symbol})
-
     for con in constraint_names
         @test !isnothing(get(op_problem.psi_container.constraints, con, nothing))
     end
-
     return
-
 end
 
 function psi_checkbinvar_test(op_problem::OperationsProblem, bin_variable_names::Vector{Symbol})
-
     for variable in bin_variable_names
         for v in op_problem.psi_container.variables[variable]
             @test JuMP.is_binary(v)
         end
     end
-
     return
-
 end
 
 function psi_checkobjfun_test(op_problem::OperationsProblem, exp_type)
-
     @test JuMP.objective_function_type(op_problem.psi_container.JuMPmodel) == exp_type
-
     return
-
 end
 
 function moi_lbvalue_test(op_problem::OperationsProblem, con_name::Symbol, value::Number)
-
     for con in op_problem.psi_container.constraints[con_name]
         @test JuMP.constraint_object(con).set.lower == value
     end
-
     return
-
 end
 
 function psi_checksolve_test(op_problem::OperationsProblem, status)
