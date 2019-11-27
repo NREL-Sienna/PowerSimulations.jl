@@ -12,7 +12,7 @@ end
     model = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_bat)
     construct_device!(op_problem, :Storage, model)
-    moi_tests(op_problem, false, 72, 72, 0, 0, 24, false)
+    moi_tests(op_problem, false, 72, 0, 72, 72, 24, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -20,7 +20,7 @@ end
     model = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
     op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_bat)
     construct_device!(op_problem, :Storage, model)
-    moi_tests(op_problem, false, 96, 96, 0, 0, 24, false)
+    moi_tests(op_problem, false, 96, 0, 96, 96, 24, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -28,7 +28,7 @@ end
     model = DeviceModel(PSY.GenericBattery, PSI.BookKeepingwReservation)
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_bat)
     construct_device!(op_problem, :Storage, model)
-    moi_tests(op_problem, false, 96, 24, 48, 48, 24, true)
+    moi_tests(op_problem, false, 96, 0, 72, 72, 24, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
@@ -36,6 +36,6 @@ end
     model = DeviceModel(PSY.GenericBattery, PSI.BookKeepingwReservation)
     op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_bat)
     construct_device!(op_problem, :Storage, model)
-    moi_tests(op_problem, false, 120, 48, 48, 48, 24, true)
+    moi_tests(op_problem, false, 120, 0, 96, 96, 24, true)
     psi_checkobjfun_test(op_problem, GAEVF)
 end
