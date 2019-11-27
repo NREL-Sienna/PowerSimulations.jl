@@ -162,7 +162,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     #Constraints
     activepower_constraints!(psi_container, devices, ThermalRampLimited, S, model.feedforward)
     reactivepower_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
-    ramp_constraints!(psi_container, devices, model.formulation, S model.feedforward)
+    ramp_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
     feedforward!(psi_container, T, model.feedforward)
 
     #Cost Function
