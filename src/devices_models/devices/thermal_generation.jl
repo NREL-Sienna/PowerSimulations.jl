@@ -98,7 +98,25 @@ function activepower_constraints!(psi_container::PSIContainer,
                                  system_formulation::Type{S}) where {T<:PSY.ThermalGen,
                                                                       D<:AbstractThermalFormulation,
                                                                       S<:PM.AbstractPowerModel}
-    range_data = [(PSY.get_name(g),  PSY.get_activepowerlimits(PSY.get_tech(g))) for g in devices]
+
+    names = Vector{String}(undef, length(devices))
+    limit_values = Vector{MinMax}(undef, length(devices))
+    additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
+    additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
+    range_data = DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub)
+   # [(PSY.get_name(g),  PSY.get_activepowerlimits(PSY.get_tech(g))) for g in devices]
+    for (ix, d) in enumerate(devices)
+        limit_values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
+        names[ix] = PSY.get_name(d)
+        services_ub = Vector{Symbol}()
+        services_lb = Vector{Symbol}()
+        for service in PSY.get_services(d)
+            SR = typeof(service)
+            push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
+        end
+        additional_terms_ub[ix] = services_ub
+        additional_terms_lb[ix] = services_lb
+    end
     device_semicontinuousrange(psi_container,
                                range_data,
                                Symbol("activerange_$(T)"),
@@ -184,7 +202,24 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                    system_formulation::Type{S}) where {T<:PSY.ThermalGen,
                                                                         D<:AbstractThermalFormulation,
                                                                         S<:PM.AbstractPowerModel}
-    range_data = [(PSY.get_name(g),  PSY.get_reactivepowerlimits(PSY.get_tech(g))) for g in devices]
+    names = Vector{String}(undef, length(devices))
+    limit_values = Vector{MinMax}(undef, length(devices))
+    additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
+    additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
+    range_data = DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub)
+    # range_data = [(PSY.get_name(g),  PSY.get_reactivepowerlimits(PSY.get_tech(g))) for g in devices]
+    for (ix, d) in enumerate(devices)
+        limit_values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
+        names[ix] = PSY.get_name(d)
+        services_ub = Vector{Symbol}()
+        services_lb = Vector{Symbol}()
+        for service in PSY.get_services(d)
+            SR = typeof(service)
+            push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
+        end
+        additional_terms_ub[ix] = services_ub
+        additional_terms_lb[ix] = services_lb
+    end
     device_semicontinuousrange(psi_container,
                                range_data,
                                Symbol("reactiverange_$(T)"),

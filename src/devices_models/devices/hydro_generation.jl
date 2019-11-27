@@ -199,7 +199,25 @@ function activepower_constraints!(psi_container::PSIContainer,
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !parameters && !use_forecast_data
-        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_rating(PSY.get_tech(d)))) for d in devices]
+
+        names = Vector{String}(undef, length(devices))
+        limit_values = Vector{MinMax}(undef, length(devices))
+        additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
+        additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
+        range_data = DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub)
+        #range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_rating(PSY.get_tech(d)))) for d in devices]
+        for (ix, d) in enumerate(devices)
+            limit_values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
+            names[ix] = PSY.get_name(d)
+            services_ub = Vector{Symbol}()
+            services_lb = Vector{Symbol}()
+            for service in PSY.get_services(d)
+                SR = typeof(service)
+                push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
+            end
+            additional_terms_ub[ix] = services_ub
+            additional_terms_lb[ix] = services_lb
+        end
         device_semicontinuousrange(psi_container,
                                     range_data,
                                     Symbol("activerange_$(H)"),
