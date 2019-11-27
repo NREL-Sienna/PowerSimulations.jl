@@ -80,7 +80,7 @@ function load_operation_results(folder_path::AbstractString)
         file_path = joinpath(folder_path, name)
         variables[Symbol(variable_name)] = Feather.read(file_path) 
     end
-    optimizer = JSON.parse(open(joinpath(folder_path, "optimizer_log.json")))
+    optimizer = read_json(joinpath(folder_path, "optimizer_log.json"))
     time_stamp = Feather.read(joinpath(folder_path, "time_stamp.feather"))
     if size(time_stamp, 1) > find_var_length(variables, variable_list)
         time_stamp = shorten_time_stamp(time_stamp)

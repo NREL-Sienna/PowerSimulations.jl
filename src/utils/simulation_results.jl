@@ -67,7 +67,7 @@ function load_simulation_results(SimulationResultsReference::SimulationResultsRe
     end
     time_stamp[!,:Range] = convert(Array{Dates.DateTime}, time_stamp[!,:Range])
     file_path = dirname(references[stage][variable[1]][1,:File_Path])
-    optimizer = JSON.parse(open(joinpath(file_path, "optimizer_log.json")))
+    optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     if !isempty(dual)
         duals = _reading_references(duals, dual, stage, step, references, extra_time_length)
@@ -130,7 +130,7 @@ function load_simulation_results(SimulationResultsReference::SimulationResultsRe
     end
     time_stamp[!,:Range] = convert(Array{Dates.DateTime}, time_stamp[!,:Range])
     file_path = dirname(references[stage][variable[1]][1,:File_Path])
-    optimizer = JSON.parse(open(joinpath(file_path, "optimizer_log.json")))
+    optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     if !isempty(dual)
         duals = _reading_references(duals, dual, stage, references, extra_time_length)
@@ -158,13 +158,22 @@ function check_file_integrity(path::String)
     text = open(file_path, "r") do io
         return readlines(io)
     end
+
+    matched = true
     for line in text
-        hash_value, file_name = split(line)
-        if String(hash_value) !== String(bytes2hex(SHA.sha256(open(file_name))))
-            throw(IS.DataFormatError("The hash value in the written files does not match the read files, results may have been tampered."))
+        expected_hash, file_name = split(line)
+        actual_hash = compute_sha256(file_name)
+        if expected_hash != actual_hash
+            @error "hash mismatch for file" file_name expected_hash actual_hash
+            matched = false
         else
-            @info("File hash values matched.")
+            @info "File hash values matched." file_name
         end
     end
-end
 
+    if !matched
+        throw(IS.DataFormatError(
+            "The hash value in the written files does not match the read files, results may have been tampered."
+        ))
+    end
+end
