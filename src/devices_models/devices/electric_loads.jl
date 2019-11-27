@@ -113,14 +113,19 @@ function activepower_constraints!(psi_container::PSIContainer,
                                  devices::IS.FlattenIteratorWrapper{L},
                                  device_formulation::Type{DispatchablePowerLoad},
                                  system_formulation::Type{<:PM.AbstractPowerModel}) where L<:PSY.ElectricLoad
-
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !parameters && !use_forecast_data
-        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_activepower(d))) for d in devices]
+        names = Vector{String}(undef, length(devices))
+        limit_values = Vector{MinMax}(undef, length(devices))
+        for (ix, d) in enumerate(devices)
+            ub_value = PSY.get_activepower(d)
+            limit_values[ix] = (min=0.0, max=ub_value)
+            names[ix] = PSY.get_name(d)
+        end
         device_range(psi_container,
-                    range_data,
+        DeviceRange(names, limit_values, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
                     Symbol("activerange_$(L)"),
                     Symbol("P_$(L)"))
         return
@@ -139,7 +144,6 @@ function activepower_constraints!(psi_container::PSIContainer,
                             Symbol("active_$(L)"),
                             Symbol("P_$(L)"))
     end
-
     return
 
 end
@@ -153,9 +157,16 @@ function activepower_constraints!(psi_container::PSIContainer,
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !parameters && !use_forecast_data
-        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_activepower(d))) for d in devices]
+        names = Vector{String}(undef, length(devices))
+        limit_values = Vector{MinMax}(undef, length(devices))
+        for (ix, d) in enumerate(devices)
+            ub_value = PSY.get_activepower(d)
+            limit_values[ix] = (min=0.0, max=ub_value)
+            names[ix] = PSY.get_name(d)
+        end
+
         device_range(psi_container,
-                    range_data,
+        DeviceRange(names, limit_values, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
                     Symbol("activerange_$(L)"),
                     Symbol("P_$(L)"))
         return

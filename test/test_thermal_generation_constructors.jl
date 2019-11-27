@@ -144,7 +144,7 @@ end
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 120, 120, 0, 0, 0, false)
+        moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
@@ -152,7 +152,7 @@ end
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 120, 120, 0, 0, 0, false)
+        moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
@@ -164,7 +164,7 @@ end
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 240, 240, 0, 0, 0, false)
+        moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
@@ -172,7 +172,7 @@ end
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 240, 240, 0, 0, 0, false)
+        moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
@@ -186,8 +186,8 @@ end
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 120, 120, 0, 0, 0, false)
-        moi_lbvalue_test(op_problem, :activerange_ThermalStandard, 0.0)
+        moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
+        moi_lbvalue_test(op_problem, :activerange_lb_ThermalStandard, 0.0)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
@@ -195,8 +195,8 @@ end
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 120, 120, 0, 0, 0, false)
-        moi_lbvalue_test(op_problem, :activerange_ThermalStandard, 0.0)
+        moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
+        moi_lbvalue_test(op_problem, :activerange_lb_ThermalStandard, 0.0)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
@@ -208,8 +208,8 @@ end
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 240, 240, 0, 0, 0, false)
-        moi_lbvalue_test(op_problem, :activerange_ThermalStandard, 0.0)
+        moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
+        moi_lbvalue_test(op_problem, :activerange_lb_ThermalStandard, 0.0)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
@@ -217,8 +217,8 @@ end
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 240, 240, 0, 0, 0, false)
-        moi_lbvalue_test(op_problem, :activerange_ThermalStandard, 0.0)
+        moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
+        moi_lbvalue_test(op_problem, :activerange_lb_ThermalStandard, 0.0)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
@@ -232,7 +232,7 @@ end
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 120, 120, 96, 0, 0, false)
+        moi_tests(op_problem, p, 120, 0, 216, 120, 0, false)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -241,11 +241,10 @@ end
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 120, 120, 0, 0, 0, false)
+        moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
-
 
 @testset "Thermal Ramp Limited Dispatch With AC - PF" begin
     constraint_names = [:ramp_up_ThermalStandard, :ramp_dn_ThermalStandard]
@@ -254,7 +253,7 @@ end
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 240, 240, 96, 0, 0, false)
+        moi_tests(op_problem, p, 240, 0, 336, 240, 0, false)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
@@ -263,7 +262,7 @@ end
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 240, 240, 0, 0, 0, false)
+        moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
@@ -309,7 +308,7 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
                         ramp_test_sys; optimizer = Cbc_optimizer,
                         use_parameters = true)
     psi_checksolve_test(ED, [MOI.OPTIMAL], 11191.00)
-    moi_tests(ED, true, 10, 10, 10, 0, 5, false)
+    moi_tests(ED, true, 10, 0, 20, 10, 5, false)
 end
 
 # Testing Duration Constraints
