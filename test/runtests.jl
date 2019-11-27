@@ -49,7 +49,7 @@ if !Sys.iswindows()
     end
 
     @testset "Network Constructors" begin
-        include("test_network_constructors.jl")
+        #include("test_network_constructors.jl")
     end
 
     @testset "Services Constructors" begin
@@ -59,13 +59,13 @@ if !Sys.iswindows()
 end
 
 @testset "Operation Models" begin
-    !Sys.iswindows() && include("test_operation_model_constructor.jl")
-    include("test_operation_model_solve.jl")
-    include("test_operation_model_modifications.jl")
+    #!Sys.iswindows() && include("test_operation_model_constructor.jl")
+    #include("test_operation_model_solve.jl")
+    #include("test_operation_model_modifications.jl")
 end
 
 @testset "Simulation Models" begin
-    include("test_simulation_models.jl")
-    include("test_load_simulation.jl")
-    include("test_chronology.jl")
+    #include("test_simulation_models.jl")
+    #include("test_load_simulation.jl")
+    #include("test_chronology.jl")
 end

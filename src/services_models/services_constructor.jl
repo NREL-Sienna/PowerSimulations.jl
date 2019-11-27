@@ -1,10 +1,10 @@
-function _filter_service_mapping(::Type{SR}, map) where SR<:PSY.Reserve
+function _filter_service_mapping(::Type{SR}, map) where SR<:PSY.Service
     return filter(p->isequal(p.first.type, SR), map)
 end
 
 function construct_services!(psi_container::PSIContainer,
                              sys::PSY.System,
-                             services_template::Dict{Symbol,ServiceModel};
+                             services_template::Dict{Symbol, ServiceModel};
                              kwargs...)
     isempty(services_template) && return
     services_mapping = PSY.get_contributing_device_mapping(sys)
@@ -21,11 +21,9 @@ function add_service!(psi_container::PSIContainer, service::SR,
                       model::ServiceModel{SR, RangeUpwardReserve},
                       contributing_devices::Vector{PSY.Device};
                       kwargs...) where SR<:PSY.Reserve
-        #Variables
-        activeservice_variables!(psi_container, service, contributing_devices)
-        #requirement constraint Constraints
-        service_requirement_constraint!(psi_container, service)
-        # add to
-        #add_to_service_expression!(psi_container, model, service, expression_list)
+    #Variables
+    activeservice_variables!(psi_container, service, contributing_devices)
+    #requirement constraint Constraints
+    service_requirement_constraint!(psi_container, service)
     return
 end

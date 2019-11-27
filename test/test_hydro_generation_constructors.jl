@@ -62,7 +62,7 @@ end
     # No Forecast - No Parameters Testing
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd; use_forecast_data = false)
     construct_device!(op_problem, :Hydro, model);
-    moi_tests(op_problem, false, 1, 1, 0, 0, 0, false)
+    moi_tests(op_problem, false, 1, 0, 1, 1, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
 end

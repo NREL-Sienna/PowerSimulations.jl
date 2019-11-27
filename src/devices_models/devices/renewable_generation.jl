@@ -32,20 +32,20 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableFullDispatch},
                                     system_formulation::Type{<:PM.AbstractPowerModel}) where R<:PSY.RenewableGen
-    range_data = Vector{NamedMinMax}(undef, length(devices))
+    names = Vector{String}(undef, length(devices))
+    limit_values = Vector{MinMax}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         tech = PSY.get_tech(d)
-        name = PSY.get_name(d)
+        names[ix] = PSY.get_name(d)
         if isnothing(PSY.get_reactivepowerlimits(tech))
-            limits = (min = 0.0, max = 0.0)
-            range_data[ix] = (PSY.get_name(d), limits)
-            @warn("Reactive Power Limits of $(name) are nothing. Q_$(name) is set to 0.0")
+            limit_values[ix] = (min = 0.0, max = 0.0)
+            @warn("Reactive Power Limits of $(names[ix]) are nothing. Q_$(names[ix]) is set to 0.0")
         else
-            range_data[ix] = (name, PSY.get_reactivepowerlimits(tech))
+            limit_values[ix] = PSY.get_reactivepowerlimits(tech)
         end
     end
     device_range(psi_container,
-                range_data,
+    DeviceRange(names, limit_values, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
                 Symbol("reactiverange_$(R)"),
                 Symbol("Q_$(R)"))
     return
@@ -110,9 +110,15 @@ function activepower_constraints!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     if !parameters && !use_forecast_data
-        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_rating(PSY.get_tech(d)))) for d in devices]
+        names = Vector{String}(undef, length(devices))
+        limit_values = Vector{MinMax}(undef, length(devices))
+        for (ix, d) in enumerate(devices)
+            ub_value = PSY.get_activepower(d)
+            limit_values[ix] = (min=0.0, max=ub_value)
+            names[ix] = PSY.get_name(d)
+        end
         device_range(psi_container,
-                    range_data,
+        DeviceRange(names, limit_values, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
                     Symbol("activerange_$(R)"),
                     Symbol("P_$(R)"))
         return

@@ -27,7 +27,7 @@ end
     # No Forecast - No Parameters Testing
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re; use_forecast_data = false)
     construct_device!(op_problem, :Renewable, model)
-    moi_tests(op_problem, false, 3, 3, 0, 0, 0, false)
+    moi_tests(op_problem, false, 3, 0, 3, 3, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast Testing
@@ -43,10 +43,10 @@ end
         op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_re; use_parameters = p)
         construct_device!(op_problem, :Renewable, model)
         if p
-            moi_tests(op_problem, p, 144, 24, 72, 0, 48, false)
+            moi_tests(op_problem, p, 144, 0, 144, 72, 0, false)
             psi_checkobjfun_test(op_problem, GAEVF)
         else
-            moi_tests(op_problem, p, 144, 24, 72, 0, 48, false)
+            moi_tests(op_problem, p, 144, 0, 144, 72, 0, false)
 
             psi_checkobjfun_test(op_problem, GAEVF)
         end
@@ -56,10 +56,10 @@ end
         op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_re; use_forecast_data = false, use_parameters = p)
         construct_device!(op_problem, :Renewable, model)
         if p
-            moi_tests(op_problem, p, 6, 1, 3, 0, 2, false)
+            moi_tests(op_problem, p, 6, 0, 6, 3, 0, false)
             psi_checkobjfun_test(op_problem, GAEVF)
         else
-            moi_tests(op_problem, p, 6, 4, 0, 0, 2, false)
+            moi_tests(op_problem, p, 6, 0, 6, 6, 0, false)
 
             psi_checkobjfun_test(op_problem, GAEVF)
         end
@@ -85,7 +85,7 @@ end
     # No Forecast - No Parameters Testing
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re; use_forecast_data = false)
     construct_device!(op_problem, :Renewable, model)
-    moi_tests(op_problem, false, 3, 3, 0, 0, 0, false)
+    moi_tests(op_problem, false, 3, 0, 3, 3, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast Testing
@@ -117,7 +117,7 @@ end
             moi_tests(op_problem, p, 6, 0, 3, 0, 3, false)
             psi_checkobjfun_test(op_problem, GAEVF)
         else
-            moi_tests(op_problem, p, 6, 3, 0, 0, 3, false)
+            moi_tests(op_problem, p, 6, 0, 3, 3, 3, false)
 
             psi_checkobjfun_test(op_problem, GAEVF)
         end
