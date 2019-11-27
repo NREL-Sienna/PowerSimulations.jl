@@ -31,7 +31,7 @@ end
 function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
                            ::Type{S};
-                           kwargs...) where {S<:PM.AbstractPowerModel}
+                           kwargs...) where S<:PM.AbstractPowerModel
     devices = PSY.get_components(PSY.MonitoredLine, sys)
 
     if validate_available_devices(devices, PSY.MonitoredLine)
@@ -63,9 +63,11 @@ end
                    ::Type{<:PM.AbstractPowerModel}) = nothing
 
 function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{B, <:AbstractBranchFormulation},
-                           ::Type{<:PM.AbstractPowerModel};
-                           kwargs...) where B<:PSY.DCBranch
+                           model::DeviceModel{B, Br},
+                           ::Type{S};
+                           kwargs...) where {B<:PSY.DCBranch,
+                                             Br<:AbstractBranchFormulation,
+                                             S<:PM.AbstractPowerModel}
     devices = PSY.get_components(B, sys)
 
     if validate_available_devices(devices, B)
