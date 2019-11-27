@@ -59,7 +59,8 @@ end
 function active_power_constraints!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{St},
                                    ::Type{BookKeeping},
-                                   ::Type{S}) where {St<:PSY.Storage,
+                                   ::Type{S},
+                                   feed_forward::Nothing) where {St<:PSY.Storage,
                                                      S<:PM.AbstractPowerModel}
     names = Vector{String}(undef, length(devices))
     limit_values_in = Vector{MinMax}(undef, length(devices))
@@ -96,7 +97,8 @@ end
 function active_power_constraints!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{St},
                                    ::Type{BookKeepingwReservation},
-                                   ::Type{S}) where {St<:PSY.Storage,
+                                   ::Type{S},
+                                   feed_forward::Nothing) where {St<:PSY.Storage,
                                                      S<:PM.AbstractPowerModel}
     names = Vector{String}(undef, length(devices))
     limit_values_in = Vector{MinMax}(undef, length(devices))
@@ -117,9 +119,6 @@ function active_power_constraints!(psi_container::PSIContainer,
         additional_terms_ub[ix] = services_ub
         additional_terms_lb[ix] = services_lb
     end                                              
-    #range_data_in = [(PSY.get_name(s), PSY.get_inputactivepowerlimits(s)) for s in devices]
-    #range_data_out = [(PSY.get_name(s), PSY.get_outputactivepowerlimits(s)) for s in devices]
-
     reserve_device_semicontinuousrange(psi_container,
                                        DeviceRange(names, limit_values_in, Vector{Vector{Symbol}}(), additional_terms_lb),
                                        Symbol("inputpower_range_$(St)"),
@@ -141,7 +140,8 @@ This function adds the reactive  power limits of generators when there are Commi
 function reactive_power_constraints!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{St},
                                    ::Type{D},
-                                   ::Type{S}) where {St<:PSY.Storage,
+                                   ::Type{S},
+                                   feed_forward::Nothing) where {St<:PSY.Storage,
                                                      D<:AbstractStorageFormulation,
                                                      S<:PM.AbstractPowerModel}
     names = Vector{String}(undef, length(devices))
@@ -172,7 +172,8 @@ end
 function energy_capacity_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{St},
                                     ::Type{D},
-                                    ::Type{S}) where {St<:PSY.Storage,
+                                    ::Type{S},
+                                    feed_forward::Nothing) where {St<:PSY.Storage,
                                                                         D<:AbstractStorageFormulation,
                                                                         S<:PM.AbstractPowerModel}
     names = Vector{String}(undef, length(devices))
@@ -201,7 +202,7 @@ function energy_capacity_constraints!(psi_container::PSIContainer,
     end
 
     device_range(psi_container,
-                 DeviceRange(names, limit_values, additional_terms_ub, additional_terms_lb),
+                  DeviceRange(names, limit_values, additional_terms_ub, additional_terms_lb),
                  Symbol("energy_capacity_$(St)"),
                  Symbol("E_$(St)"))
     return
@@ -226,7 +227,8 @@ end
 function energy_balance_constraint!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{St},
                                    ::Type{D},
-                                   ::Type{S}) where {St<:PSY.Storage,
+                                   ::Type{S},
+                                   feed_forward::Nothing) where {St<:PSY.Storage,
                                                             D<:AbstractStorageFormulation,
                                                             S<:PM.AbstractPowerModel}
     key = ICKey(DeviceEnergy, St)
