@@ -283,13 +283,13 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
                         Hour(1):
                         DateTime("1/1/2024  4:00:00", "d/m/y  H:M:S"))
     gen_ramp = [ThermalStandard("Alta", true, node,0.20, 0.010,
-            TechThermal(0.5,PSY.PrimeMovers(6),ThermalFuels(6),
+            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
                             (min=0.0, max=0.40), nothing,
                             nothing, nothing),
             ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0)
             ),
             ThermalStandard("Park City", true, node,0.70,0.20,
-                TechThermal(2.0,PSY.PrimeMovers(6),ThermalFuels(6),
+                TechThermal(2.0,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
                             (min=0.7, max=2.20), nothing,
                             (up = 0.010625, down= 0.010625),nothing),
                 ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75)
@@ -319,13 +319,13 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
                         Hour(1):
                         DateTime("1/1/2024  6:00:00", "d/m/y  H:M:S"))
     gens_dur = [ThermalStandard("Alta", true, node,0.40, 0.010,
-            TechThermal(0.5,PSY.PrimeMovers(6),ThermalFuels(6),
+            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
                             (min=0.3, max=0.9), nothing,
                             nothing, (up=4, down=2)),
             ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0)
             ),
             ThermalStandard("Park City", true, node,1.70,0.20,
-                TechThermal(2.2125,PSY.PrimeMovers(6),ThermalFuels(6),
+                TechThermal(2.2125,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
                                 (min=0.7, max=2.2), nothing,
                                 nothing, (up=6, down=4)),
                 ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75)
@@ -364,14 +364,14 @@ end
 node = Bus(1,"nodeA", "PV", 0, 1.0, (min = 0.9, max=1.05), 230)
 load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     gens_cost = [ThermalStandard("Alta", true, node,0.52, 0.010,
-            TechThermal(0.5,PSY.PrimeMovers(6),ThermalFuels(6),
+            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
                             (min = 0.22, max = 0.55), nothing,
                             nothing, nothing),
             ThreePartCost([ (589.99, 0.220),(884.99, 0.33)
                     ,(1210.04, 0.44),(1543.44, 0.55)],532.44, 5665.23, 0.0)
             ),
             ThermalStandard("Park City", true, node,0.62,0.20,
-                TechThermal(2.2125,PSY.PrimeMovers(6),ThermalFuels(6),
+                TechThermal(2.2125,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
                             (min = 0.62, max = 1.55), nothing,
                             nothing, nothing),
                 ThreePartCost([   (1264.80, 0.62),(1897.20, 0.93),
@@ -403,14 +403,14 @@ end
     node = Bus(1,"nodeA", "PV", 0, 1.0, (min = 0.9, max=1.05), 230)
     load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     gens_cost_sos = [ThermalStandard("Alta", true, node,0.52, 0.010,
-            TechThermal(0.5,PSY.PrimeMovers(6),ThermalFuels(6),
+            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
                             (min = 0.22, max = 0.55), nothing,
                             nothing, nothing),
             ThreePartCost([ (1122.43, 0.22),(1417.43, 0.33),
                     (1742.48, 0.44),(2075.88, 0.55) ],0.0, 5665.23, 0.0)
             ),
             ThermalStandard("Park City", true, node,0.62,0.20,
-                TechThermal(2.2125,PSY.PrimeMovers(6),ThermalFuels(6),
+                TechThermal(2.2125,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
                             (min = 0.62, max = 1.55), nothing,
                             nothing, nothing),
                 ThreePartCost([ (1500.19, 0.62),(2132.59, 0.929),
