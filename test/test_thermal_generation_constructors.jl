@@ -345,10 +345,10 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     down_time = [0.0,3.0]
 
     alta = gens_dur[1]
-    init_cond = DICKDA()
-    init_cond[ICKey(DeviceStatus,typeof(alta))] = build_init(gens_dur, status)
-    init_cond[ICKey(TimeDurationON,typeof(alta))] = build_init(gens_dur, up_time)
-    init_cond[ICKey(TimeDurationOFF,typeof(alta))] = build_init(gens_dur, down_time)
+    init_cond = PSI.DICKDA()
+    init_cond[PSI.ICKey(DeviceStatus, typeof(alta))] = build_init(gens_dur, status)
+    init_cond[PSI.ICKey(TimeDurationON, typeof(alta))] = build_init(gens_dur, up_time)
+    init_cond[PSI.ICKey(TimeDurationOFF, typeof(alta))] = build_init(gens_dur, down_time)
 
 
     template = OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
