@@ -31,8 +31,6 @@ function flow_variables!(psi_container::PSIContainer,
                 devices,
                 var_name,
                 false)
-                #ub_value = d -> PSY.get_rate(d), # Add flow bounds in rate constraints
-                #lb_value = d -> -1.0*PSY.get_rate(d))
     return
 end
 
@@ -88,8 +86,8 @@ function branch_rate_constraint!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 ::Type{D},
                                 ::Type{S}) where {B<:PSY.ACBranch,
-                                                                    D<:AbstractBranchFormulation,
-                                                                    S<:PM.AbstractDCPModel}
+                                                  D<:AbstractBranchFormulation,
+                                                  S<:PM.AbstractDCPModel}
     names = Vector{String}(undef, length(devices))
     limit_values = Vector{MinMax}(undef, length(devices))
     additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
