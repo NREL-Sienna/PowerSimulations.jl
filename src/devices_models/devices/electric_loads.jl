@@ -49,7 +49,8 @@ Reactive Power Constraints on Loads Assume Constant PowerFactor
 function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{L},
                                     ::Type{<:AbstractControllablePowerLoadFormulation},
-                                    ::Type{<:PM.AbstractPowerModel}) where L<:PSY.ElectricLoad
+                                    ::Type{<:PM.AbstractPowerModel},
+                                    feed_forward::Nothing) where L<:PSY.ElectricLoad
     time_steps = model_time_steps(psi_container)
     key = Symbol("reactive_$(L)")
     psi_container.constraints[key] = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
@@ -100,7 +101,8 @@ end
 function activepower_constraints!(psi_container::PSIContainer,
                                  devices::IS.FlattenIteratorWrapper{L},
                                  ::Type{DispatchablePowerLoad},
-                                 ::Type{<:PM.AbstractPowerModel}) where L<:PSY.ElectricLoad
+                                 ::Type{<:PM.AbstractPowerModel},
+                                 feed_forward::Nothing) where L<:PSY.ElectricLoad
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
@@ -138,7 +140,8 @@ end
 function activepower_constraints!(psi_container::PSIContainer,
                                   devices::IS.FlattenIteratorWrapper{L},
                                   ::Type{InterruptiblePowerLoad},
-                                  ::Type{<:PM.AbstractPowerModel}) where L<:PSY.ElectricLoad
+                                  ::Type{<:PM.AbstractPowerModel},
+                                  feed_forward::Nothing) where L<:PSY.ElectricLoad
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 

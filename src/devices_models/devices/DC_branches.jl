@@ -58,7 +58,8 @@ end
 function branch_rate_constraint!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
-                                system_formulation::Type{S}) where {B<:PSY.DCBranch,
+                                system_formulation::Type{S},
+                                feed_forward::Nothing) where {B<:PSY.DCBranch,
                                                                     D<:AbstractDCLineFormulation,
                                                                     S<:PM.AbstractDCPModel}
 
@@ -80,7 +81,8 @@ end
 function branch_rate_constraint!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{HVDCLossless},
-                                system_formulation::Type{S}) where {B<:PSY.DCBranch,
+                                system_formulation::Type{S},
+                                feed_forward::Nothing) where {B<:PSY.DCBranch,
                                                                     S<:PM.AbstractActivePowerModel}
 
     for dir in ("FT", "TF")
@@ -104,7 +106,8 @@ end
 function branch_rate_constraint!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{HVDCLossless},
-                                system_formulation::Type{S}) where {B<:PSY.DCBranch,
+                                system_formulation::Type{S},
+                                feed_forward::Nothing) where {B<:PSY.DCBranch,
                                                                     S<:PM.AbstractPowerModel}
 
     for dir in ("FT", "TF")
@@ -128,7 +131,8 @@ end
 function branch_rate_constraint!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
-                                system_formulation::Type{S}) where {B<:PSY.DCBranch,
+                                system_formulation::Type{S},
+                                feed_forward::Nothing) where {B<:PSY.DCBranch,
                                                                     D<:AbstractDCLineFormulation,
                                                                     S<:PM.AbstractActivePowerModel}
 
@@ -159,7 +163,8 @@ end
 function branch_rate_constraint!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 device_formulation::Type{D},
-                                system_formulation::Type{S}) where {B<:PSY.DCBranch,
+                                system_formulation::Type{S},
+                                feed_forward::Nothing) where {B<:PSY.DCBranch,
                                                                     D<:AbstractDCLineFormulation,
                                                                     S<:PM.AbstractPowerModel}
 

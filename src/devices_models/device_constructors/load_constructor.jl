@@ -21,9 +21,9 @@ function construct_device!(psi_container::PSIContainer,
     reactivepower_variables!(psi_container, devices)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, D, S)
+    activepower_constraints!(psi_container, devices, D, S, model.feedforward)
 
-    reactivepower_constraints!(psi_container, devices, D, S)
+    reactivepower_constraints!(psi_container, devices, D, S, model.feedforward)
 
     feedforward!(psi_container, L, model.feedforward)
 
@@ -55,7 +55,7 @@ function construct_device!(psi_container::PSIContainer,
     activepower_variables!(psi_container, devices)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, D, S)
+    activepower_constraints!(psi_container, devices, D, S, model.feedforward)
 
     feedforward!(psi_container, L, model.feedforward)
 
@@ -90,9 +90,9 @@ function construct_device!(psi_container::PSIContainer,
     commitment_variables!(psi_container, devices)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model.formulation, S)
+    activepower_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
 
-    reactivepower_constraints!(psi_container, devices, model.formulation, S)
+    reactivepower_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
 
     feedforward!(psi_container, L, model.feedforward)
 
@@ -125,7 +125,7 @@ function construct_device!(psi_container::PSIContainer,
     commitment_variables!(psi_container, devices)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model.formulation, S)
+    activepower_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
 
     feedforward!(psi_container, L, model.feedforward)
 
