@@ -1,7 +1,7 @@
 @testset "Storage data misspecification" begin
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
     warn_message = "The data doesn't include devices of type GenericBattery, consider changing the device models"
-    model = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
+    model = DeviceModel(GenericBattery, BookKeeping)
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5)
     @test_logs (:warn, warn_message) construct_device!(op_problem, :Storage, model)
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14)
@@ -9,7 +9,7 @@
 end
 
 @testset "Storage Basic Storage With DC - PF" begin
-    model = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
+    model = DeviceModel(GenericBattery, BookKeeping)
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_bat)
     construct_device!(op_problem, :Storage, model)
     moi_tests(op_problem, false, 72, 0, 72, 72, 24, false)
@@ -17,7 +17,7 @@ end
 end
 
 @testset "Storage Basic Storage With AC - PF" begin
-    model = DeviceModel(PSY.GenericBattery, PSI.BookKeeping)
+    model = DeviceModel(GenericBattery, BookKeeping)
     op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_bat)
     construct_device!(op_problem, :Storage, model)
     moi_tests(op_problem, false, 96, 0, 96, 96, 24, false)
@@ -25,7 +25,7 @@ end
 end
 
 @testset "Storage with Reservation DC - PF" begin
-    model = DeviceModel(PSY.GenericBattery, PSI.BookKeepingwReservation)
+    model = DeviceModel(GenericBattery, BookKeepingwReservation)
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_bat)
     construct_device!(op_problem, :Storage, model)
     moi_tests(op_problem, false, 96, 0, 72, 72, 24, true)
@@ -33,7 +33,7 @@ end
 end
 
 @testset "Storage with Reservation With AC - PF" begin
-    model = DeviceModel(PSY.GenericBattery, PSI.BookKeepingwReservation)
+    model = DeviceModel(GenericBattery, BookKeepingwReservation)
     op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_bat)
     construct_device!(op_problem, :Storage, model)
     moi_tests(op_problem, false, 120, 0, 96, 96, 24, true)

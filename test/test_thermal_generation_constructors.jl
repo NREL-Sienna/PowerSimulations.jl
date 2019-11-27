@@ -1,7 +1,7 @@
 @testset "ThermalGen data misspecification" begin
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
     warn_message = "The data doesn't include devices of type ThermalStandard, consider changing the device models"
-    model = DeviceModel(ThermalStandard, PSI.ThermalStandardUnitCommitment)
+    model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re_only)
     @test_logs (:warn, warn_message) construct_device!(op_problem, :Thermal, model)
 end
@@ -15,7 +15,7 @@ end
                            :ramp_dn_ThermalStandard,
                            :duration_up_ThermalStandard,
                            :duration_dn_ThermalStandard]
-    model = DeviceModel(PSY.ThermalStandard, PSI.ThermalStandardUnitCommitment)
+    model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
     @info "5-Bus testing"
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc)
@@ -50,7 +50,7 @@ end
                            :ramp_dn_ThermalStandard,
                            :duration_up_ThermalStandard,
                            :duration_dn_ThermalStandard]
-    model = DeviceModel(PSY.ThermalStandard, PSI.ThermalStandardUnitCommitment)
+    model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
     @info "5-Bus testing"
     op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc)
@@ -82,7 +82,7 @@ end
     bin_variable_names = [:ON_ThermalStandard,
                           :START_ThermalStandard,
                           :STOP_ThermalStandard]
-    model = DeviceModel(PSY.ThermalStandard, PSI.ThermalBasicUnitCommitment)
+    model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
     @info "5-Bus testing"
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc)
@@ -111,7 +111,7 @@ end
     bin_variable_names = [:ON_ThermalStandard,
                           :START_ThermalStandard,
                           :STOP_ThermalStandard]
-     model = DeviceModel(PSY.ThermalStandard, PSI.ThermalBasicUnitCommitment)
+     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
     @info "5-Bus testing"
     op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc)
@@ -139,7 +139,7 @@ end
 
 ################################### Basic Dispatch tests ###################################
 @testset "Thermal Dispatch With DC - PF" begin
-    model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch)
+    model = DeviceModel(ThermalStandard, ThermalDispatch)
     @info "5-Bus testing"
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
@@ -159,7 +159,7 @@ end
 
 
 @testset "Thermal Dispatch With AC - PF" begin
-    model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch)
+    model = DeviceModel(ThermalStandard, ThermalDispatch)
     @info "5-Bus testing"
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
@@ -181,7 +181,7 @@ end
 ################################### No Minimum Dispatch tests ##############################
 
 @testset "Thermal Dispatch NoMin With DC - PF" begin
-    model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatchNoMin)
+    model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
     @info "5-Bus testing"
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
@@ -203,7 +203,7 @@ end
 
 
 @testset "Thermal Dispatch NoMin With AC - PF" begin
-    model = DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatchNoMin)
+    model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
     @info "5-Bus testing"
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
@@ -227,7 +227,7 @@ end
 ################################### Ramp Limited Testing ##################################
 @testset "Thermal Ramp Limited Dispatch With DC - PF" begin
     constraint_names = [:ramp_up_ThermalStandard, :ramp_dn_ThermalStandard]
-    model = DeviceModel(PSY.ThermalStandard, PSI.ThermalRampLimited)
+    model = DeviceModel(ThermalStandard, ThermalRampLimited)
     @info "5-Bus testing"
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc; use_parameters = p)
@@ -248,7 +248,7 @@ end
 
 @testset "Thermal Ramp Limited Dispatch With AC - PF" begin
     constraint_names = [:ramp_up_ThermalStandard, :ramp_dn_ThermalStandard]
-    model = DeviceModel(PSY.ThermalStandard, PSI.ThermalRampLimited)
+    model = DeviceModel(ThermalStandard, ThermalRampLimited)
     @info "5-Bus testing"
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc; use_parameters = p)
@@ -269,12 +269,12 @@ end
 
 
 ############################# UC validation tests ##########################################
-branches = Dict{Symbol, PSI.DeviceModel}()
-services = Dict{Symbol, PSI.ServiceModel}()
-ED_devices = Dict{Symbol, DeviceModel}(:Generators => PSI.DeviceModel(PSY.ThermalStandard, PSI.ThermalRampLimited),
-                                        :Loads =>  PSI.DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
-UC_devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalStandardUnitCommitment),
-                                        :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
+branches = Dict{Symbol, DeviceModel}()
+services = Dict{Symbol, ServiceModel}()
+ED_devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(ThermalStandard, ThermalRampLimited),
+                                        :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad))
+UC_devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
+                                        :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad))
 # Testing Ramping Constraint
 @testset "Solving ED with CopperPlate for testing Ramping Constraints" begin
 node = Bus(1,"nodeA", "PV", 0, 1.0, (min = 0.9, max=1.05), 230)
@@ -283,20 +283,20 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
                         Hour(1):
                         DateTime("1/1/2024  4:00:00", "d/m/y  H:M:S"))
     gen_ramp = [ThermalStandard("Alta", true, node,0.20, 0.010,
-            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
+            TechThermal(0.5,PSY.PrimeMovers(6),ThermalFuels(6),
                             (min=0.0, max=0.40), nothing,
                             nothing, nothing),
             ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0)
             ),
             ThermalStandard("Park City", true, node,0.70,0.20,
-                TechThermal(2.0,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
+                TechThermal(2.0,PSY.PrimeMovers(6),ThermalFuels(6),
                             (min=0.7, max=2.20), nothing,
                             (up = 0.010625, down= 0.010625),nothing),
                 ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75)
             )];
     ramp_load = [ 0.9, 1.1, 2.485, 2.175, 0.9];
     load_forecast_ramp = Deterministic("get_maxactivepower", TimeArray(DA_ramp, ramp_load))
-    ramp_test_sys = PSY.System(100.0)
+    ramp_test_sys = System(100.0)
     add_component!(ramp_test_sys, node)
     add_component!(ramp_test_sys, load)
     add_component!(ramp_test_sys, gen_ramp[1])
@@ -319,13 +319,13 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
                         Hour(1):
                         DateTime("1/1/2024  6:00:00", "d/m/y  H:M:S"))
     gens_dur = [ThermalStandard("Alta", true, node,0.40, 0.010,
-            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
+            TechThermal(0.5,PSY.PrimeMovers(6),ThermalFuels(6),
                             (min=0.3, max=0.9), nothing,
                             nothing, (up=4, down=2)),
             ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0)
             ),
             ThermalStandard("Park City", true, node,1.70,0.20,
-                TechThermal(2.2125,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
+                TechThermal(2.2125,PSY.PrimeMovers(6),ThermalFuels(6),
                                 (min=0.7, max=2.2), nothing,
                                 nothing, (up=6, down=4)),
                 ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75)
@@ -333,7 +333,7 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
 
     duration_load = [0.3, 0.6, 0.8, 0.7, 1.7, 0.9, 0.7]
     load_forecast_dur = Deterministic("get_maxactivepower", TimeArray(DA_dur, duration_load))
-    duration_test_sys = PSY.System(100.0)
+    duration_test_sys = System(100.0)
     add_component!(duration_test_sys, node)
     add_component!(duration_test_sys, load)
     add_component!(duration_test_sys, gens_dur[1])
@@ -345,10 +345,10 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     down_time = [0.0,3.0]
 
     alta = gens_dur[1]
-    init_cond = PSI.DICKDA()
-    init_cond[PSI.ICKey(PSI.DeviceStatus,typeof(alta))] = build_init(gens_dur, status)
-    init_cond[PSI.ICKey(PSI.TimeDurationON,typeof(alta))] = build_init(gens_dur, up_time)
-    init_cond[PSI.ICKey(PSI.TimeDurationOFF,typeof(alta))] = build_init(gens_dur, down_time)
+    init_cond = DICKDA()
+    init_cond[ICKey(DeviceStatus,typeof(alta))] = build_init(gens_dur, status)
+    init_cond[ICKey(TimeDurationON,typeof(alta))] = build_init(gens_dur, up_time)
+    init_cond[ICKey(TimeDurationOFF,typeof(alta))] = build_init(gens_dur, down_time)
 
 
     template = OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
@@ -364,14 +364,14 @@ end
 node = Bus(1,"nodeA", "PV", 0, 1.0, (min = 0.9, max=1.05), 230)
 load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     gens_cost = [ThermalStandard("Alta", true, node,0.52, 0.010,
-            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
+            TechThermal(0.5,PSY.PrimeMovers(6),ThermalFuels(6),
                             (min = 0.22, max = 0.55), nothing,
                             nothing, nothing),
             ThreePartCost([ (589.99, 0.220),(884.99, 0.33)
                     ,(1210.04, 0.44),(1543.44, 0.55)],532.44, 5665.23, 0.0)
             ),
             ThermalStandard("Park City", true, node,0.62,0.20,
-                TechThermal(2.2125,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
+                TechThermal(2.2125,PSY.PrimeMovers(6),ThermalFuels(6),
                             (min = 0.62, max = 1.55), nothing,
                             nothing, nothing),
                 ThreePartCost([   (1264.80, 0.62),(1897.20, 0.93),
@@ -382,7 +382,7 @@ load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
                         DateTime("1/1/2024  1:00:00", "d/m/y  H:M:S"))
     cost_load = [1.3,2.1];
     load_forecast_cost = Deterministic("get_maxactivepower", TimeArray(DA_cost, cost_load))
-    cost_test_sys = PSY.System(100.0)
+    cost_test_sys = System(100.0)
     add_component!(cost_test_sys, node)
     add_component!(cost_test_sys, load)
     add_component!(cost_test_sys, gens_cost[1])
@@ -403,14 +403,14 @@ end
     node = Bus(1,"nodeA", "PV", 0, 1.0, (min = 0.9, max=1.05), 230)
     load = PowerLoad("Bus1", true, node,nothing, 0.4, 0.9861, 1.0, 2.0)
     gens_cost_sos = [ThermalStandard("Alta", true, node,0.52, 0.010,
-            TechThermal(0.5,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
+            TechThermal(0.5,PSY.PrimeMovers(6),ThermalFuels(6),
                             (min = 0.22, max = 0.55), nothing,
                             nothing, nothing),
             ThreePartCost([ (1122.43, 0.22),(1417.43, 0.33),
                     (1742.48, 0.44),(2075.88, 0.55) ],0.0, 5665.23, 0.0)
             ),
             ThermalStandard("Park City", true, node,0.62,0.20,
-                TechThermal(2.2125,PSY.PrimeMovers(6),PSY.ThermalFuels(6),
+                TechThermal(2.2125,PSY.PrimeMovers(6),ThermalFuels(6),
                             (min = 0.62, max = 1.55), nothing,
                             nothing, nothing),
                 ThreePartCost([ (1500.19, 0.62),(2132.59, 0.929),
@@ -421,7 +421,7 @@ end
                         DateTime("1/1/2024  1:00:00", "d/m/y  H:M:S"))
     cost_sos_load = [1.3,2.1];
     load_forecast_cost_sos  = Deterministic("get_maxactivepower", TimeArray(DA_cost_sos, cost_sos_load))
-    cost_test_sos_sys = PSY.System(100.0)
+    cost_test_sos_sys = System(100.0)
     add_component!(cost_test_sos_sys, node)
     add_component!(cost_test_sos_sys, load)
     add_component!(cost_test_sos_sys, gens_cost_sos[1])

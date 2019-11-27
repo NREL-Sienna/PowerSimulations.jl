@@ -1,9 +1,9 @@
-devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch),
-                                    :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
-branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine),
-                                     :T => DeviceModel(PSY.Transformer2W, PSI.StaticTransformer),
-                                     :TT => DeviceModel(PSY.TapTransformer , PSI.StaticTransformer))
-services = Dict{Symbol, PSI.ServiceModel}()
+devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+                                    :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad))
+branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine),
+                                     :T => DeviceModel(Transformer2W, StaticTransformer),
+                                     :TT => DeviceModel(TapTransformer , StaticTransformer))
+services = Dict{Symbol, ServiceModel}()
 @testset "Operation Model kwargs with CopperPlatePowerModel base" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
     op_problem = OperationsProblem(TestOpProblem, template,
@@ -30,8 +30,8 @@ end
 
 
 @testset "Operation Model Constructors with Parameters" begin
-    networks = [PSI.CopperPlatePowerModel,
-                PSI.StandardPTDFModel,
+    networks = [CopperPlatePowerModel,
+                StandardPTDFModel,
                 DCPPowerModel,
                 NFAPowerModel,
                 ACPPowerModel,
@@ -43,10 +43,10 @@ end
                 QCRMPowerModel,
                 QCLSPowerModel];
 
-    thermal_gens = [PSI.ThermalStandardUnitCommitment,
-                    PSI.ThermalDispatch,
-                    PSI.ThermalRampLimited,
-                    PSI.ThermalDispatchNoMin];
+    thermal_gens = [ThermalStandardUnitCommitment,
+                    ThermalDispatch,
+                    ThermalRampLimited,
+                    ThermalDispatchNoMin];
 
         systems = [c_sys5,
                    c_sys5_re,
@@ -54,10 +54,10 @@ end
 
     for net in networks, thermal in thermal_gens, system in systems, p in [true, false]
         @testset "Operation Model $(net) - $(thermal) - $(system)" begin
-            thermal_model = DeviceModel(PSY.ThermalStandard, thermal)
-            devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, thermal),
-                                                :Loads =>       DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
-            branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine))
+            thermal_model = DeviceModel(ThermalStandard, thermal)
+            devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(ThermalStandard, thermal),
+                                                :Loads =>       DeviceModel(PowerLoad, StaticPowerLoad))
+            branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
             template = OperationsProblemTemplate(net, devices, branches, services);
             op_problem = OperationsProblem(TestOpProblem,
                                       template,
