@@ -1,19 +1,13 @@
 #Generic Branch Models
 abstract type AbstractBranchFormulation <: AbstractDeviceFormulation end
-
 #Abstract Line Models
-
 abstract type AbstractLineFormulation <: AbstractBranchFormulation end
-
 struct StaticLine <: AbstractLineFormulation end
 struct StaticLineUnbounded <: AbstractLineFormulation end
-
 struct FlowMonitoredLine <: AbstractLineFormulation end
 
 #Abstract Transformer Models
-
 abstract type AbstractTransformerFormulation <: AbstractBranchFormulation end
-
 struct StaticTransformer <: AbstractTransformerFormulation end
 struct StaticTransformerUnbounded <: AbstractTransformerFormulation end
 
@@ -24,19 +18,13 @@ struct PhaseControl <: AbstractTransformerFormulation end
 #################################### Branch Variables ##################################################
 # Because of the way we integrate with PowerModels, most of the time PowerSimulations will create variables
 # for the branch flows either in AC or DC.
-function flow_variables!(psi_container::PSIContainer,
-                        system_formulation::Type{S},
-                        devices::IS.FlattenIteratorWrapper{B}) where {B<:PSY.ACBranch,
-                                                             S<:PM.AbstractPowerModel}
-    return
-
-end
+flow_variables!(psi_container::PSIContainer,
+                ::Type{<:PM.AbstractPowerModel},
+                ::IS.FlattenIteratorWrapper{<:PSY.ACBranch}) = nothing
 
 function flow_variables!(psi_container::PSIContainer,
-                        system_formulation::Type{S},
-                        devices::IS.FlattenIteratorWrapper{B}) where {B<:PSY.ACBranch,
-                                                                      S<:StandardPTDFModel}
-
+                        ::Type{<:StandardPTDFModel},
+                        devices::IS.FlattenIteratorWrapper{B}) where B<:PSY.ACBranch
     var_name = Symbol("Fp_$(B)")
 
     add_variable(psi_container,
@@ -45,36 +33,26 @@ function flow_variables!(psi_container::PSIContainer,
                 false)
                 #ub_value = d -> PSY.get_rate(d), # Add flow bounds in rate constraints
                 #lb_value = d -> -1.0*PSY.get_rate(d))
-
     return
-
 end
 
 #################################### Flow Variable Bounds ##################################################
 function branch_rate_bounds!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
-                                device_formulation::Type{D},
-                                system_formulation::Type{S}) where {B<:PSY.ACBranch,
-                                                                    D<:AbstractBranchFormulation,
-                                                                    S<:PM.AbstractDCPModel}
-
+                                ::Type{<:AbstractBranchFormulation},
+                                ::Type{<:PM.AbstractDCPModel}) where {B<:PSY.ACBranch}
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
 
     set_variable_bounds(psi_container,
                         range_data,
                         Symbol("Fp_$(B)"))
-
     return
-
 end
 
 function branch_rate_bounds!(psi_container::PSIContainer,
-                                devices::IS.FlattenIteratorWrapper{B},
-                                device_formulation::Type{D},
-                                system_formulation::Type{S}) where {B<:PSY.ACBranch,
-                                                                    D<:AbstractBranchFormulation,
-                                                                    S<:PM.AbstractActivePowerModel}
-
+                            devices::IS.FlattenIteratorWrapper{B},
+                            ::Type{<:AbstractBranchFormulation},
+                            ::Type{<:PM.AbstractActivePowerModel}) where B<:PSY.ACBranch
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
 
     set_variable_bounds(psi_container,
@@ -84,18 +62,15 @@ function branch_rate_bounds!(psi_container::PSIContainer,
     set_variable_bounds(psi_container,
                         range_data,
                         Symbol("FpTF_$(B)"))
-
     return
-
 end
 
 function branch_rate_bounds!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
-                                device_formulation::Type{D},
-                                system_formulation::Type{S}) where {B<:PSY.ACBranch,
+                                ::Type{D},
+                                ::Type{S}) where {B<:PSY.ACBranch,
                                                                     D<:AbstractBranchFormulation,
                                                                     S<:PM.AbstractPowerModel}
-
     range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
 
     set_variable_bounds(psi_container,
@@ -105,61 +80,80 @@ function branch_rate_bounds!(psi_container::PSIContainer,
     set_variable_bounds(psi_container,
                         range_data,
                         Symbol("FpTF_$(B)"))
-
     return
-
 end
 
 #################################### Rate Limits Constraints ##################################################
 function branch_rate_constraint!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
-                                device_formulation::Type{D},
-                                system_formulation::Type{S}) where {B<:PSY.ACBranch,
+                                ::Type{D},
+                                ::Type{S}) where {B<:PSY.ACBranch,
                                                                     D<:AbstractBranchFormulation,
                                                                     S<:PM.AbstractDCPModel}
+    names = Vector{String}(undef, length(devices))
+    limit_values = Vector{MinMax}(undef, length(devices))
+    additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
+    additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
 
-    range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
+    for (ix, d) in enumerate(devices)
+        limit_values[ix] = (min = -1*PSY.get_rate(d), max = PSY.get_rate(d))
+        names[ix] = PSY.get_name(d)
+        services_ub = Vector{Symbol}()
+        services_lb = Vector{Symbol}()
+        for service in PSY.get_services(d)
+            SR = typeof(service)
+            push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
+        end
+        additional_terms_ub[ix] = services_ub
+        additional_terms_lb[ix] = services_lb
+    end
 
     device_range(psi_container,
-                range_data,
-                Symbol("RateLimit_$(B)"),
-                Symbol("Fp_$(B)"))
-
+                 DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub),
+                 Symbol("RateLimit_$(B)"),
+                 Symbol("Fp_$(B)"))
     return
-
 end
 
 function branch_rate_constraint!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
-                                device_formulation::Type{D},
-                                system_formulation::Type{S}) where {B<:PSY.ACBranch,
-                                                                    D<:AbstractBranchFormulation,
-                                                                    S<:PM.AbstractActivePowerModel}
+                                ::Type{<:AbstractBranchFormulation},
+                                ::Type{<:PM.AbstractActivePowerModel}) where B<:PSY.ACBranch
+    names = Vector{String}(undef, length(devices))
+    limit_values = Vector{MinMax}(undef, length(devices))
+    additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
+    additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
 
-    range_data = [(PSY.get_name(h), (min = -1*PSY.get_rate(h), max = PSY.get_rate(h))) for h in devices]
+    for (ix, d) in enumerate(devices)
+        limit_values[ix] = (min = -1*PSY.get_rate(d), max = PSY.get_rate(d))
+        names[ix] = PSY.get_name(d)
+        services_ub = Vector{Symbol}()
+        services_lb = Vector{Symbol}()
+        for service in PSY.get_services(d)
+            SR = typeof(service)
+            push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
+        end
+        additional_terms_ub[ix] = services_ub
+        additional_terms_lb[ix] = services_lb
+    end
 
     device_range(psi_container,
-                range_data,
-                Symbol("RateLimitFT_$(B)"),
-                Symbol("FpFT_$(B)"))
+                 DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub),
+                 Symbol("RateLimitFT_$(B)"),
+                 Symbol("FpFT_$(B)"))
 
     device_range(psi_container,
-                range_data,
-                Symbol("RateLimitTF_$(B)"),
-                Symbol("FpTF_$(B)"))
-
+                 DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub),
+                 Symbol("RateLimitTF_$(B)"),
+                 Symbol("FpTF_$(B)"))
     return
-
 end
 
 
 function branch_rate_constraint!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
-                                device_formulation::Type{D},
-                                system_formulation::Type{S}) where {B<:PSY.ACBranch,
-                                                                    D<:AbstractBranchFormulation,
-                                                                    S<:PM.AbstractPowerModel}
-
+                                ::Type{<:AbstractBranchFormulation},
+                                ::Type{<:PM.AbstractPowerModel}) where B<:PSY.ACBranch
     range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
     rating_constraint!(psi_container,
@@ -177,11 +171,10 @@ function branch_rate_constraint!(psi_container::PSIContainer,
 end
 
 #################################### Flow Limits Constraints ##################################################
-
 function branch_flow_constraint!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
-                                device_formulation::Type{FlowMonitoredLine},
-                                system_formulation::Union{Type{PM.DCPPowerModel}, Type{StandardPTDFModel}})
+                                ::Type{FlowMonitoredLine},
+                                ::Union{Type{PM.DCPPowerModel}, Type{StandardPTDFModel}})
 
 
     flow_range_data = [(PSY.get_name(h), PSY.get_flowlimits(h)) for h in devices]
@@ -199,23 +192,26 @@ end
 
 function branch_flow_constraint!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
-                                device_formulation::Type{FlowMonitoredLine},
-                                system_formulation::Type{S}) where {S<:PM.AbstractPowerModel}
+                                ::Type{FlowMonitoredLine},
+                                ::Type{<:PM.AbstractPowerModel})
+    names = Vector{String}(undef, length(devices))
+    limit_values_FT = Vector{MinMax}(undef, length(devices))
+    limit_values_TF = Vector{MinMax}(undef, length(devices))
 
-    FTflow_range_data = [(PSY.get_name(h), PSY.get_flowlimits(h)) for h in devices]
-    TFflow_range_data = [(PSY.get_name(h), (min = PSY.get_flowlimits(h).max, max = PSY.get_flowlimits(h).min)) for h in devices]
+    for (ix, d) in enumerate(devices)
+        limit_values_FT[ix] = PSY.get_flowlimits(d)
+        limit_values_TFt[ix] = (min = PSY.get_flowlimits(d).max, max = PSY.get_flowlimits(d).min)
+        names[ix] = PSY.get_name(d)
+    end
 
     device_range(psi_container,
-                FTflow_range_data,
-                Symbol("FlowLimitFT_$(B)"),
-                Symbol("FpFT_$(B)"))
+                 DeviceRange(names, limit_values_out, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
+                 Symbol("FlowLimitFT_$(B)"),
+                 Symbol("FpFT_$(B)"))
 
     device_range(psi_container,
-                TFflow_range_data,
-                Symbol("FlowLimitTF_$(B)"),
-                Symbol("FpTF_$(B)"))
-
-
+                 DeviceRange(names, limit_values_in, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
+                 Symbol("FlowLimitTF_$(B)"),
+                 Symbol("FpTF_$(B)"))
     return
-
 end

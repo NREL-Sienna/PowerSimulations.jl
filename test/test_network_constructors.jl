@@ -9,9 +9,9 @@ dc_line = DeviceModel(PSY.HVDCLine, PSI.HVDCDispatch)
     network = CopperPlatePowerModel
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [120, 120, 0, 0, 24],
-                                                   c_sys14 => [120, 120, 0, 0, 24],
-                                                   c_sys14_dc => [120, 120, 0, 0, 24])
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [120, 0, 120, 120, 24],
+                                                   c_sys14 => [120, 0, 120, 120, 24],
+                                                   c_sys14_dc => [120, 0, 120, 120, 24])
     constraint_names = [:CopperPlateBalance]
     objfuncs = [GAEVF, GQEVF, GQEVF]
 
@@ -43,9 +43,9 @@ end
     constraint_names = [:RateLimit_Line, :nodal_balance, :network_flow]
     parameters = [true, false]
     PTDF_ref = Dict{PSY.System, PSY.PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc);
-    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [264, 264, 0, 0, 264],
-                                                    c_sys14 => [600, 600, 0, 0, 816],
-                                                    c_sys14_dc => [600, 600, 0, 0, 768])
+    test_results = Dict{PSY.System, Vector{Int64}}(c_sys5 => [264, 0, 264, 264, 264],
+                                                    c_sys14 => [600, 0, 600, 600, 816],
+                                                    c_sys14_dc => [600, 0, 600, 600, 768])
 
     for (ix, sys) in enumerate(systems), p in parameters
         ps_model = OperationsProblem(TestOpProblem, network, sys; optimizer = OSQP_optimizer, use_parameters = p)
