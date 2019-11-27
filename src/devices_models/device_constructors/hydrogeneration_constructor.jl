@@ -20,9 +20,9 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     reactivepower_variables!(psi_container, devices);
 
     #Constraints
-    activepower_constraints!(psi_container, devices, D, S)
+    activepower_constraints!(psi_container, devices, D, S, model.feedforward)
 
-    reactivepower_constraints!(psi_container, devices, D, S)
+    reactivepower_constraints!(psi_container, devices, D, S, model.feedforward)
 
     feedforward!(psi_container, H, model.feedforward)
 
@@ -54,11 +54,11 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     reactivepower_variables!(psi_container, devices);
 
     #Constraints
-    activepower_constraints!(psi_container, devices, HydroDispatchSeasonalFlow, S)
+    activepower_constraints!(psi_container, devices, HydroDispatchSeasonalFlow, S, model.feedforward)
 
-    reactivepower_constraints!(psi_container, devices, HydroDispatchSeasonalFlow, S)
+    reactivepower_constraints!(psi_container, devices, HydroDispatchSeasonalFlow, S, model.feedforward)
 
-    budget_constraints!(psi_container, devices, HydroDispatchSeasonalFlow, S)
+    budget_constraints!(psi_container, devices, HydroDispatchSeasonalFlow, S, model.feedforward)
 
     feedforward!(psi_container, H, model.feedforward)
 
@@ -95,11 +95,11 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, D, S)
+    activepower_constraints!(psi_container, devices, D, S, model.feedforward)
 
-    reactivepower_constraints!(psi_container, devices, D, S)
+    reactivepower_constraints!(psi_container, devices, D, S, model.feedforward)
 
-    commitment_constraints!(psi_container, devices, model.formulation, S)
+    commitment_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
 
     feedforward!(psi_container, H, model.feedforward)
 
@@ -130,7 +130,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     activepower_variables!(psi_container, devices);
 
     #Constraints
-    activepower_constraints!(psi_container, devices, D, S)
+    activepower_constraints!(psi_container, devices, D, S, model.feedforward)
 
     feedforward!(psi_container, H, model.feedforward)
 
@@ -160,9 +160,9 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     activepower_variables!(psi_container, devices);
 
     #Constraints
-    activepower_constraints!(psi_container, devices, HydroDispatchSeasonalFlow, S)
+    activepower_constraints!(psi_container, devices, HydroDispatchSeasonalFlow, S, model.feedforward)
 
-    budget_constraints!(psi_container, devices, HydroDispatchSeasonalFlow, S)
+    budget_constraints!(psi_container, devices, HydroDispatchSeasonalFlow, S, model.feedforward)
 
     feedforward!(psi_container, H, model.feedforward)
 
@@ -199,9 +199,9 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, D, S)
+    activepower_constraints!(psi_container, devices, D, S, model.feedforward)
 
-    commitment_constraints!(psi_container, devices, model.formulation, S)
+    commitment_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
 
     feedforward!(psi_container, H, model.feedforward)
 

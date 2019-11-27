@@ -104,7 +104,6 @@ function activepower_constraints!(psi_container::PSIContainer,
     additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
     additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
     range_data = DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub)
-   # [(PSY.get_name(g),  PSY.get_activepowerlimits(PSY.get_tech(g))) for g in devices]
     for (ix, d) in enumerate(devices)
         limit_values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
         names[ix] = PSY.get_name(d)
@@ -207,7 +206,6 @@ function reactivepower_constraints!(psi_container::PSIContainer,
     additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
     additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
     range_data = DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub)
-    # range_data = [(PSY.get_name(g),  PSY.get_reactivepowerlimits(PSY.get_tech(g))) for g in devices]
     for (ix, d) in enumerate(devices)
         limit_values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
         names[ix] = PSY.get_name(d)

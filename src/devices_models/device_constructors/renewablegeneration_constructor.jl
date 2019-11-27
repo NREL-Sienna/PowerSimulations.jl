@@ -21,9 +21,9 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     reactivepower_variables!(psi_container, devices);
 
     #Constraints
-    activepower_constraints!(psi_container, devices, D, S)
+    activepower_constraints!(psi_container, devices, D, S, model.feedforward)
 
-    reactivepower_constraints!(psi_container, devices, D, S)
+    reactivepower_constraints!(psi_container, devices, D, S, model.feedforward)
 
     feedforward!(psi_container, R, model.feedforward)
 
@@ -54,7 +54,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     activepower_variables!(psi_container, devices)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, D, S)
+    activepower_constraints!(psi_container, devices, D, S, model.feedforward)
 
     feedforward!(psi_container, R, model.feedforward)
 
