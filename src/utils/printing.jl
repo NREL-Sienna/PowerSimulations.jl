@@ -31,15 +31,18 @@ and a value exists for that field it prints the value.
 
 
 """
-function Base.show(io::IO, ::MIME"text/plain", op_problem::OperationsProblem)
-    println(io, "\nOperations Problem")
-    println(io, "===============\n")
+function Base.show(io::IO, m::MIME"text/plain", op_problem::OperationsProblem)
+    show(io, m, op_problem.template)
+end
+
+function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTemplate)
+    println(io, "\nOperations Problem Specification")
+    println(io, "============================================\n")
 
     for field in fieldnames(OperationsProblemTemplate)
-
-        val = getfield(op_problem.template, Symbol(field))
-
+        val = getfield(template, Symbol(field))
         if typeof(val) <: Dict{Symbol, <:Union{DeviceModel, ServiceModel}}
+            println(io, "============================================")
             _organize_model(val, field, io)
         else
             if !isnothing(val)
@@ -49,10 +52,8 @@ function Base.show(io::IO, ::MIME"text/plain", op_problem::OperationsProblem)
             end
         end
     end
+    println(io, "============================================")
 end
-
-
-
 
 function Base.show(io::IO, op_problem::PSIContainer)
     println(io, "PSIContainer()")
