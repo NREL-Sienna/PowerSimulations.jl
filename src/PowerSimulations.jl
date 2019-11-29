@@ -159,6 +159,8 @@ JuMP.Model(optimizer::Nothing; kwargs...) = JuMP.Model(kwargs...)
 ################################################################################
 # Includes
 
+include("utils/utils.jl")
+
 #Models and constructors
 include("core/core_structs/aux_structs.jl")
 include("core/core_structs/cache.jl")
