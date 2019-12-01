@@ -36,12 +36,13 @@ mutable struct DeviceModel{D<:PSY.Device,
     device_type::Type{D}
     formulation::Type{B}
     feedforward::Union{Nothing, AbstractAffectFeedForward}
+    services::Vector{ServiceModel}
 
     function DeviceModel(::Type{D},
                          ::Type{B},
                          FF=nothing) where {D<:PSY.Device, B<:AbstractDeviceFormulation}
     _validate_device_formulation(D)
     _validate_device_formulation(B)
-    new{D, B}(D, B, FF)
+    new{D, B}(D, B, FF, Vector{ServiceModel}())
     end
 end
