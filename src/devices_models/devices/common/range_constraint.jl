@@ -6,6 +6,14 @@ struct DeviceRange
     additional_terms_lb::Vector{Vector{Symbol}}
 end
 
+function DeviceRange(count::Int64)
+    names = Vector{String}(undef, count)
+    limit_values = Vector{MinMax}(undef, count)
+    additional_terms_ub = Vector{Vector{Symbol}}(undef, count)
+    additional_terms_lb = Vector{Vector{Symbol}}(undef, count)
+return DeviceRange(names, limit_values, additional_terms_ub, additional_terms_lb)
+end
+
 @doc raw"""
     device_range(psi_container::PSIContainer,
                  range_data::DeviceRange,

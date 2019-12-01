@@ -55,15 +55,55 @@ function commitment_variables!(psi_container::PSIContainer,
     return
 end
 
+function _include_service!(constraint_data::DeviceRange,
+                           index::Int64,
+                           services::Vector{PSY.VariableReserve{PSY.ReserveUp}},
+                           ::ServiceModel{PSY.VariableReserve{PSY.ReserveUp}, <:AbstractReservesFormulation})
+        services_ub = Vector{Symbol}(undef, length(services))
+        for service in services
+            SR = typeof(service) #To be removed later and subtitute with argument
+            push!(services_ub, Symbol("$(PSY.get_name(service))_$SR"))
+        end
+        constraint_data.additional_terms_ub[index] = services_ub
+    return
+end
+
+function _include_service!(constraint_data::DeviceRange,
+                           index::Int64,
+                           services::Vector{PSY.VariableReserve{PSY.ReserveDown}},
+                           ::ServiceModel{PSY.VariableReserve{PSY.ReserveDown}, <:AbstractReservesFormulation})
+        services_lb = Vector{Symbol}(undef, length(services))
+        for service in services
+            SR = typeof(service) #To be removed later and subtitute with argument
+            push!(services_lb, Symbol("$(PSY.get_name(service))_$SR"))
+        end
+        constraint_data.additional_terms_lb[index] = services_lb
+    return
+end
+
+function _device_services(constraint_data::DeviceRange,
+                          index::Int64,
+                          device::PSY.ThermalGen,
+                          model::DeviceModel)
+    for service_model in get_services(model)
+        if PSY.has_service(device, service_model.service_type)
+            services = [s for s in PSY.get_services(device) if isa(s, service_model.service_type)]
+            @assert !isempty(services)
+            _include_service!(constraint_data, index, services, service_model)
+        end
+    end
+    return
+end
+
 activepower_constraints!(psi_container::PSIContainer,
                         devices::IS.FlattenIteratorWrapper{<:PSY.ThermalGen},
-                        ::Type{<:AbstractThermalFormulation},
+                        model::DeviceModel{<:PSY.ThermalGen, <:AbstractThermalFormulation},
                         ::Type{<:PM.AbstractPowerModel},
                         feed_forward::SemiContinuousFF) = nothing
 
 activepower_constraints!(psi_container::PSIContainer,
                         devices::IS.FlattenIteratorWrapper{<:PSY.ThermalGen},
-                        ::Type{ThermalDispatchNoMin},
+                        model::DeviceModel{<:PSY.ThermalGen, ThermalDispatchNoMin},
                         ::Type{<:PM.AbstractPowerModel},
                         feed_forward::SemiContinuousFF) = nothing
 
@@ -72,29 +112,17 @@ This function adds the active power limits of generators when there are no Commi
 """
 function activepower_constraints!(psi_container::PSIContainer,
                                  devices::IS.FlattenIteratorWrapper{T},
-                                 ::Type{<:AbstractThermalDispatchFormulation},
+                                 model::DeviceModel{T, <:AbstractThermalDispatchFormulation},
                                  ::Type{<:PM.AbstractPowerModel},
                                  feed_forward::Union{Nothing, AbstractAffectFeedForward}) where T<:PSY.ThermalGen
-    names = Vector{String}(undef, length(devices))
-    limit_values = Vector{MinMax}(undef, length(devices))
-    additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
-    additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
-
+    constraint_data = DeviceRange(length(devices))
     for (ix, d) in enumerate(devices)
-        limit_values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
-        names[ix] = PSY.get_name(d)
-        services_ub = Vector{Symbol}()
-        services_lb = Vector{Symbol}()
-        for service in PSY.get_services(d)
-            SR = typeof(service)
-            push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
-        end
-        additional_terms_ub[ix] = services_ub
-        additional_terms_lb[ix] = services_lb
+        constraint_data.values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
+        constraint_data.names[ix] = PSY.get_name(d)
+        _device_services(constraint_data, ix, d, model)
     end
-
     device_range(psi_container,
-                 DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub),
+                 constraint_data,
                  Symbol("activerange_$(T)"),
                  Symbol("P_$(T)"))
     return
@@ -105,28 +133,17 @@ This function adds the active power limits of generators when there are Commitme
 """
 function activepower_constraints!(psi_container::PSIContainer,
                                  devices::IS.FlattenIteratorWrapper{T},
-                                 ::Type{<:AbstractThermalFormulation},
+                                 model::DeviceModel{T, <:AbstractThermalFormulation},
                                  ::Type{<:PM.AbstractPowerModel},
                                  feed_forward::Union{Nothing, AbstractAffectFeedForward}) where T<:PSY.ThermalGen
-    names = Vector{String}(undef, length(devices))
-    limit_values = Vector{MinMax}(undef, length(devices))
-    additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
-    additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
-    range_data = DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub)
+    constraint_data = DeviceRange(length(devices))
     for (ix, d) in enumerate(devices)
-        limit_values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
-        names[ix] = PSY.get_name(d)
-        services_ub = Vector{Symbol}()
-        services_lb = Vector{Symbol}()
-        for service in PSY.get_services(d)
-            SR = typeof(service)
-            push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
-        end
-        additional_terms_ub[ix] = services_ub
-        additional_terms_lb[ix] = services_lb
+        constraint_data.values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
+        constraint_data.names[ix] = PSY.get_name(d)
+        _device_services(constraint_data, ix, d, model)
     end
     device_semicontinuousrange(psi_container,
-                               range_data,
+                               constraint_data,
                                Symbol("activerange_$(T)"),
                                Symbol("P_$(T)"),
                                Symbol("ON_$(T)"))
@@ -139,26 +156,15 @@ This function adds the active power limits of generators when there are
 """
 function activepower_constraints!(psi_container::PSIContainer,
                                   devices::IS.FlattenIteratorWrapper{T},
-                                  ::Type{ThermalDispatchNoMin},
+                                  model::DeviceModel{T, ThermalDispatchNoMin},
                                   ::Type{<:PM.AbstractPowerModel},
                                   feed_forward::Union{Nothing, AbstractAffectFeedForward}) where T<:PSY.ThermalGen
-    names = Vector{String}(undef, length(devices))
-    limit_values = Vector{MinMax}(undef, length(devices))
-    additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
-    additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
-
+    constraint_data = DeviceRange(length(devices))
     for (ix, d) in enumerate(devices)
         ub_value = PSY.get_activepowerlimits(PSY.get_tech(d)).max
-        limit_values[ix] = (min=0.0, max=ub_value)
-        names[ix] = PSY.get_name(d)
-        services_ub = Vector{Symbol}()
-        services_lb = Vector{Symbol}()
-        for service in PSY.get_services(d)
-            SR = typeof(service)
-            push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
-        end
-        additional_terms_ub[ix] = services_ub
-        additional_terms_lb[ix] = services_lb
+        constraint_data.values[ix] = (min=0.0, max=ub_value)
+        constraint_data.names[ix] = PSY.get_name(d)
+        _device_services(constraint_data, ix, d, model)
     end
 
     var_key = Symbol("P_$(T)")
@@ -171,10 +177,10 @@ function activepower_constraints!(psi_container::PSIContainer,
     end
 
     device_range(psi_container,
-                DeviceRange(names, limit_values, additional_terms_ub, additional_terms_lb),
-                Symbol("activerange_$(T)"),
-                Symbol("P_$(T)")
-                )
+                 constraint_data,
+                 Symbol("activerange_$(T)"),
+                 Symbol("P_$(T)")
+                 )
     return
 end
 
@@ -186,15 +192,15 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                    ::Type{<:AbstractThermalDispatchFormulation},
                                    ::Type{<:PM.AbstractPowerModel},
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where T<:PSY.ThermalGen
-    names = Vector{String}(undef, length(devices))
-    limit_values = Vector{MinMax}(undef, length(devices))
+    constraint_data = DeviceRange(length(devices))
     for (ix, d) in enumerate(devices)
-        limit_values[ix] = PSY.get_reactivepowerlimits(PSY.get_tech(d))
-        names[ix] = PSY.get_name(d)
+        constraint_data.values[ix] = PSY.get_reactivepowerlimits(PSY.get_tech(d))
+        constraint_data.names[ix] = PSY.get_name(d)
+        #_device_services(constraint_data, ix, d, model)
+        # Uncomment when we implement reactive power services
     end
-
     device_range(psi_container,
-                 DeviceRange(names, limit_values, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
+                 constraint_data,
                  Symbol("reactiverange_$(T)"),
                  Symbol("Q_$(T)"))
     return
@@ -208,25 +214,15 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                    ::Type{<:AbstractThermalFormulation},
                                    ::Type{<:PM.AbstractPowerModel},
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where T<:PSY.ThermalGen
-    names = Vector{String}(undef, length(devices))
-    limit_values = Vector{MinMax}(undef, length(devices))
-    additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
-    additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
-    range_data = DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub)
+    constraint_data = DeviceRange(length(devices))
     for (ix, d) in enumerate(devices)
-        limit_values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
-        names[ix] = PSY.get_name(d)
-        services_ub = Vector{Symbol}()
-        services_lb = Vector{Symbol}()
-        for service in PSY.get_services(d)
-            SR = typeof(service)
-            push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
-        end
-        additional_terms_ub[ix] = services_ub
-        additional_terms_lb[ix] = services_lb
+        constraint_data.values[ix] = PSY.get_reactivepowerlimits(PSY.get_tech(d))
+        constraint_data.names[ix] = PSY.get_name(d)
+        #_device_services(constraint_data, ix, d, model)
+        # Uncomment when we implement reactive power services
     end
     device_semicontinuousrange(psi_container,
-                               range_data,
+                               constraint_data,
                                Symbol("reactiverange_$(T)"),
                                Symbol("Q_$(T)"),
                                Symbol("ON_$(T)"))

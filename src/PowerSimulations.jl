@@ -181,6 +181,10 @@ include("core/build_cache.jl")
 include("core/build_operations.jl")
 include("core/build_simulations.jl")
 
+#Services Models
+include("services_models/reserves.jl")
+include("services_models/services_constructor.jl")
+
 #FeedForward Model Files
 include("simulation/feedforward_affects.jl")
 
@@ -211,10 +215,6 @@ include("devices_models/device_constructors/storage_constructor.jl")
 
 #Network constructors
 include("network_models/network_constructor.jl")
-
-#Services Models
-include("services_models/reserves.jl")
-include("services_models/services_constructor.jl")
 
 # Commented out until properly implemented
 #Operational Model Constructors

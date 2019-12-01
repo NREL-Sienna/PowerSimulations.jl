@@ -46,3 +46,6 @@ mutable struct DeviceModel{D<:PSY.Device,
     new{D, B}(D, B, FF, Vector{ServiceModel}())
     end
 end
+
+get_feedforward(m::DeviceModel) = m.feedforward
+get_services(m::DeviceModel) = m.services

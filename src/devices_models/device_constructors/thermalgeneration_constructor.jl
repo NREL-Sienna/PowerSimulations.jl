@@ -22,7 +22,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, D)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, D, S, model.feedforward)
+    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
     reactivepower_constraints!(psi_container, devices, D, S, model.feedforward)
     commitment_constraints!(psi_container, devices, D, S, model.feedforward)
     ramp_constraints!(psi_container, devices, D, S, model.feedforward)
@@ -59,7 +59,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, D)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, D, S, model.feedforward)
+    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
     commitment_constraints!(psi_container, devices, D, S, model.feedforward)
     ramp_constraints!(psi_container, devices, D, S, model.feedforward)
     time_constraints!(psi_container, devices, D, S, model.feedforward)
@@ -94,7 +94,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
+    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
     reactivepower_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
     commitment_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
     feedforward!(psi_container, T, model.feedforward)
@@ -128,7 +128,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
+    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
     commitment_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
     feedforward!(psi_container, T, model.feedforward)
 
@@ -160,7 +160,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, ThermalRampLimited, S, model.feedforward)
+    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
     reactivepower_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
     ramp_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
     feedforward!(psi_container, T, model.feedforward)
@@ -193,7 +193,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, ThermalRampLimited, S, model.feedforward)
+    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
     ramp_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
     feedforward!(psi_container, T, model.feedforward)
 
@@ -224,7 +224,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     #Initial Conditions
 
     #Constraints
-    activepower_constraints!(psi_container, devices, D, S, model.feedforward)
+    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
     reactivepower_constraints!(psi_container, devices, D, S, model.feedforward)
     feedforward!(psi_container, T, model.feedforward)
 
@@ -252,7 +252,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     #Initial Conditions
 
     #Constraints
-    activepower_constraints!(psi_container, devices, D, S, model.feedforward)
+    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
     feedforward!(psi_container, T, model.feedforward)
 
     #Cost Function

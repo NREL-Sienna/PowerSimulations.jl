@@ -9,7 +9,7 @@ function activeservice_variables!(psi_container::PSIContainer,
                                   devices::Vector{<:PSY.Device}) where SR<:PSY.Reserve
     add_variable(psi_container,
                  devices,
-                 Symbol("R$(PSY.get_name(service))_$SR"),
+                 Symbol("$(PSY.get_name(service))_$SR"),
                  false;
                  ub_value = d -> d.tech.activepowerlimits.max,
                  lb_value = d -> 0 )
@@ -25,7 +25,7 @@ function service_requirement_constraint!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
     forecast = model_uses_forecasts(psi_container)
     initial_time = model_initial_time(psi_container)
-    reserve_variable = get_variable(psi_container, Symbol("R$(PSY.get_name(service))_$SR"))
+    reserve_variable = get_variable(psi_container, Symbol("$(PSY.get_name(service))_$SR"))
     constraint_name = Symbol(PSY.get_name(service), "_requirement_$SR")
     constraint = add_cons_container!(psi_container, constraint_name, time_steps)
     requirement = PSY.get_requirement(service)
