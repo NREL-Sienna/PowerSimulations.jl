@@ -60,9 +60,9 @@ function _include_service!(constraint_data::DeviceRange,
                            services::Vector{PSY.VariableReserve{PSY.ReserveUp}},
                            ::ServiceModel{PSY.VariableReserve{PSY.ReserveUp}, <:AbstractReservesFormulation})
         services_ub = Vector{Symbol}(undef, length(services))
-        for service in services
+        for (ix, service) in enumerate(services)
             SR = typeof(service) #To be removed later and subtitute with argument
-            push!(services_ub, Symbol("$(PSY.get_name(service))_$SR"))
+            services_ub[ix] = Symbol("$(PSY.get_name(service))_$SR")
         end
         constraint_data.additional_terms_ub[index] = services_ub
     return
@@ -73,9 +73,9 @@ function _include_service!(constraint_data::DeviceRange,
                            services::Vector{PSY.VariableReserve{PSY.ReserveDown}},
                            ::ServiceModel{PSY.VariableReserve{PSY.ReserveDown}, <:AbstractReservesFormulation})
         services_lb = Vector{Symbol}(undef, length(services))
-        for service in services
+        for (ix, service) in enumerate(services)
             SR = typeof(service) #To be removed later and subtitute with argument
-            push!(services_lb, Symbol("$(PSY.get_name(service))_$SR"))
+            services_ub[ix] = Symbol("$(PSY.get_name(service))_$SR")
         end
         constraint_data.additional_terms_lb[index] = services_lb
     return
