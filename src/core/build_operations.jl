@@ -9,7 +9,7 @@ function _build!(psi_container::PSIContainer, template::OperationsProblemTemplat
     transmission = template.transmission
 
     #Build Services
-    construct_services!(psi_container, sys, template.services; kwargs...)
+    construct_services!(psi_container, sys, template.services, template.devices; kwargs...)
 
     # Build Injection devices
     for device_model in values(template.devices)

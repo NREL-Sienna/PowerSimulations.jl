@@ -1,5 +1,5 @@
 abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
-struct RangeUpwardReserve <: AbstractReservesFormulation end
+struct RangeReserve <: AbstractReservesFormulation end
 ############################### Reserve Variables` #########################################
 """
 This function add the variables for reserves to the model
@@ -53,32 +53,17 @@ function service_requirement_constraint!(psi_container::PSIContainer,
     return
 end
 
-#= This function can also be generalized.
-function add_to_service_expression!(psi_container::PSIContainer,
-                                    model::ServiceModel{SR, RangeUpwardReserve},
-                                    service::SR,
-                                    expression_list::Vector{Symbol}) where {SR<:PSY.Reserve}
-    # Container
-    time_steps = model_time_steps(psi_container)
-    devices = PSY.get_contributingdevices(service)
-    var_type = JuMP.variable_type(psi_container.JuMPmodel)
-    expression = :upward_reserve
-    expression ∉ expression_list && push!(expression, expression_list)
-    expression_dict = get_expression!(psi_container,
-                                      expression,
-                                      Dict{ServiceExpressionKey, Array{GAE{var_type}}}())
-    reserve_variable = get_variable(psi_container, Symbol("R$(PSY.get_name(service))_$SR"))
-    #fill container
-    for d in devices
-        T = typeof(d)
-        name = PSY.get_name(d)
-        expressions = get!(expression_dict,
-                           ServiceExpressionKey(name, T),
-                           get_variable(psi_container, Symbol("P_$(T)"))[name, :].data)
-        for t in time_steps
-            expressions[t] = JuMP.add_to_expression!(expressions[t], reserve_variable[name, t])
+function device_model_modify!(devices_template::Dict{Symbol, DeviceModel},
+                              service_model::ServiceModel{<:PSY.Reserve, RangeReserve},
+                              contributing_devices::Vector{<:PSY.Device})
+    device_types = unique(typeof.(contributing_devices))
+    for dt in device_types
+        for (k, v) in devices_template
+            v.device_type != dt && continue
+            service_model in v.services && continue
+            push!(v.services, service_model)
         end
     end
+
     return
 end
-=#

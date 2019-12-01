@@ -10,7 +10,7 @@ function _organize_model(val::Dict{Symbol, T}, field::Symbol, io::IO) where T <:
 
         println(io, "      $(i):")
         for inner_field in fieldnames(T)
-
+            inner_field == :services && continue
             value = getfield(val[i], Symbol(inner_field))
 
             if !isnothing(value)

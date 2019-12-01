@@ -19,6 +19,7 @@ export CopperPlatePowerModel
 export DeviceModel
 ######## Service Models ########
 export ServiceModel
+export RangeReserve
 ######## Branch Models ########
 export StaticLine
 export StaticTransformer
@@ -166,9 +167,9 @@ include("utils/utils.jl")
 include("core/core_structs/aux_structs.jl")
 include("core/core_structs/cache.jl")
 include("core/core_structs/feedforward.jl")
+include("services_models/services_model.jl")
 include("devices_models/device_model.jl")
 include("network_models/networks.jl")
-include("services_models/services_model.jl")
 include("core/core_structs/initial_conditions.jl")
 include("core/core_structs/psi_container.jl")
 include("core/core_structs/operations_problem.jl")
