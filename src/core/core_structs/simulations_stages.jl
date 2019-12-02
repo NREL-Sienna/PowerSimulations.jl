@@ -1,24 +1,22 @@
 ######## Internal Simulation Object Structs ########
 mutable struct StageInternal
+    number::Int64
     execution_count::Int64
     psi_container::PSIContainer
 end
 
 mutable struct Stage{M<:AbstractOperationsProblem}
-    number::Int64
     template::OperationsProblemTemplate
     sys::PSY.System
     optimizer::JuMP.OptimizerFactory
     internal::Union{Nothing, StageInternal}
 
-    function Stage(number::Int64,
-                   ::Type{M},
+    function Stage(::Type{M},
                    template::OperationsProblemTemplate,
                    sys::PSY.System,
                    optimizer::JuMP.OptimizerFactory) where M<:AbstractOperationsProblem
 
-    new{M}(number,
-           template,
+    new{M}(template,
            sys,
            optimizer,
            nothing)
@@ -27,10 +25,9 @@ mutable struct Stage{M<:AbstractOperationsProblem}
 
 end
 
-function Stage(number::Int64,
-                template::OperationsProblemTemplate,
-                sys::PSY.System,
-                optimizer::JuMP.OptimizerFactory) where M<:AbstractOperationsProblem
+function Stage(template::OperationsProblemTemplate,
+               sys::PSY.System,
+               optimizer::JuMP.OptimizerFactory) where M<:AbstractOperationsProblem
     return Stage(number, GenericOpProblem, sys, optimizer)
 end
 

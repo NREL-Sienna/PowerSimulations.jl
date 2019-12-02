@@ -43,6 +43,7 @@ mutable struct Simulation
     ref::SimulationRef
     simulation_folder::String
     base_name::String
+    compiled_status::Bool
 
     function Simulation(base_name::String,
                         steps::Int64,
@@ -50,17 +51,16 @@ mutable struct Simulation
                         simulation_folder::String;
                         verbose::Bool = false, kwargs...)
 
-    raw_dir, models_dir, results_dir = _prepare_workspace(base_name, simulation_folder)
-    sim_ref = SimulationRef(raw_dir, models_dir, results_dir, steps, keys(stages))
-    dates, validation, stages_vector = _build_simulation!(
-                                                          sim_ref,
-                                                          steps,
-                                                          stages;
-                                                          verbose = verbose, kwargs...
-                                                          )
-    @assert sim_ref.raw != "init"
-    @assert sim_ref.models != "init"
-    @assert sim_ref.results != "init"
+    sim_ref = _initialize_sim_ref(steps, keys(stages))
+    #dates, validation, stages_vector = _build_simulation!(
+    #                                                      sim_ref,
+    #                                                      steps,
+    #                                                      stages;
+    #                                                      verbose = verbose, kwargs...
+    #                                                      )
+    #@assert sim_ref.raw != "init"
+    #@assert sim_ref.models != "init"
+    #@assert sim_ref.results != "init"
 
     new(
         steps,
@@ -69,10 +69,20 @@ mutable struct Simulation
         dates,
         sim_ref,
         simulation_folder,
-        base_name
+        base_name,
+        false
         )
     end
 end
+
+function Simulation(base_name::String,
+                    steps::Int64,
+                    simulation_folder::String;
+                    verbose::Bool = false, kwargs...)
+    return Simulation(base_name, steps::Int64, Dict{Int64, Stage}(),
+                      simulation_folder; verbose=verbose, kwargs...)
+end
+
 
 ################# accessor functions ####################
 get_steps(s::Simulation) = s.steps
