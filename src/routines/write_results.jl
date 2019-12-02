@@ -75,13 +75,13 @@ function _write_data(op_problem::OperationsProblem, save_path::AbstractString; k
     return
 end
 
-function _write_data(stage::_Stage, save_path::AbstractString; kwargs...)
+function _write_data(stage::Stage, save_path::AbstractString; kwargs...)
     _write_data(stage.psi_container, save_path; kwargs...)
     return
 end
 
 # These functions are writing directly to the feather file and skipping printing to memory.
-function _export_model_result(stage::_Stage, start_time::Dates.DateTime, save_path::String)
+function _export_model_result(stage::Stage, start_time::Dates.DateTime, save_path::String)
     _write_data(stage, save_path)
     _write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
     files = collect(readdir(save_path))
@@ -89,7 +89,7 @@ function _export_model_result(stage::_Stage, start_time::Dates.DateTime, save_pa
     return
 end
 
-function _export_model_result(stage::_Stage, start_time::Dates.DateTime, save_path::String, dual_con::Vector{Symbol})
+function _export_model_result(stage::Stage, start_time::Dates.DateTime, save_path::String, dual_con::Vector{Symbol})
     _write_data(stage, save_path)
     _write_data(stage, save_path, dual_con)
     _write_data(get_time_stamp(stage, start_time), save_path, "time_stamp")
@@ -144,7 +144,7 @@ function write_results(results::Results, save_path::String; kwargs...)
     return
 end
 
-""" 
+"""
     write_model_results(results::DualResults, save_path::String, results_folder::String)
 
 Exports Simulation Results to the path where they come from in the results folder

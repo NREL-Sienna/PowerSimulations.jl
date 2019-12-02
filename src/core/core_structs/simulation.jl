@@ -31,7 +31,7 @@ end
 
 mutable struct Simulation
     steps::Int64
-    stages::Vector{_Stage}
+    stages::Vector{Stage}
     valid_timeseries::Bool
     daterange::NTuple{2, Dates.DateTime} #Inital Time of the first forecast and Inital Time of the last forecast
     ref::SimulationRef
