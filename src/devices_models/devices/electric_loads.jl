@@ -107,17 +107,16 @@ function activepower_constraints!(psi_container::PSIContainer,
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !parameters && !use_forecast_data
-        names = Vector{String}(undef, length(devices))
-        limit_values = Vector{MinMax}(undef, length(devices))
+        constraint_data = DeviceRange(length(devices))
         for (ix, d) in enumerate(devices)
             ub_value = PSY.get_activepower(d)
-            limit_values[ix] = (min=0.0, max=ub_value)
-            names[ix] = PSY.get_name(d)
+            constraint_data.values[ix] = (min=0.0, max=ub_value)
+            constraint_data.names[ix] = PSY.get_name(d)
         end
         device_range(psi_container,
-        DeviceRange(names, limit_values, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
-                    Symbol("activerange_$(L)"),
-                    Symbol("P_$(L)"))
+                     constraint_data,
+                     Symbol("activerange_$(L)"),
+                     Symbol("P_$(L)"))
         return
     end
 
@@ -146,16 +145,14 @@ function activepower_constraints!(psi_container::PSIContainer,
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !parameters && !use_forecast_data
-        names = Vector{String}(undef, length(devices))
-        limit_values = Vector{MinMax}(undef, length(devices))
+        constraint_data = DeviceRange(length(devices))
         for (ix, d) in enumerate(devices)
             ub_value = PSY.get_activepower(d)
-            limit_values[ix] = (min=0.0, max=ub_value)
-            names[ix] = PSY.get_name(d)
+            constraint_data.values[ix] = (min=0.0, max=ub_value)
+            constraint_data.names[ix] = PSY.get_name(d)
         end
-
         device_range(psi_container,
-        DeviceRange(names, limit_values, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
+                    constraint_data,
                     Symbol("activerange_$(L)"),
                     Symbol("P_$(L)"))
         return
