@@ -14,7 +14,6 @@ using Cbc
 using OSQP
 using TimeSeries
 using ParameterJuMP
-using Compat: Test
 using TestSetExtensions
 
 import PowerSystems.UtilsData: TestData
