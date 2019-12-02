@@ -15,7 +15,7 @@ struct SimulationResultsReference
     end
 end
 
-function get_sim_resolution(stage::_Stage)
+function get_sim_resolution(stage::Stage)
     resolution = stage.sys.data.forecast_metadata.resolution
     return resolution
 end

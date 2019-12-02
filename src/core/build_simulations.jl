@@ -34,7 +34,7 @@ function _get_dates(stages::Dict{Int64, Stage})
     return Tuple(range), true
 end
 
-function _populate_cache!(stage::_Stage)
+function _populate_cache!(stage::Stage)
     for (k, cache) in stage.cache
         build_cache!(cache, stage.psi_container)
     end
@@ -47,7 +47,7 @@ function _build_stages(sim_ref::SimulationRef,
                        verbose::Bool = true;
                        kwargs...)
     system_to_file = get(kwargs, :system_to_file, true)
-    mod_stages = Vector{_Stage}(undef, length(stages))
+    mod_stages = Vector{Stage}(undef, length(stages))
     for (key, stage) in stages
         verbose && @info("Building Stage $(key)")
         psi_container = PSIContainer(stage.model.transmission,
@@ -56,7 +56,7 @@ function _build_stages(sim_ref::SimulationRef,
                                    use_parameters = true,
                                    initial_time = stage.initial_time,
                                    horizon = stage.horizon)
-        mod_stages[key] = _Stage(key,
+        mod_stages[key] = Stage(key,
                                 stage.model,
                                 stage.op_problem,
                                 stage.sys,
@@ -122,7 +122,7 @@ function _feedforward_rule_check(synch::Synchronize,
     return
 end
 
-_feedforward_rule_check(sync::Sequential,
+_feedforward_rule_check(sync::Consecutive,
                         stage_number_from::Int64,
                         from_stage::Stage,
                         stage_number_to::Int64,
