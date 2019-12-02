@@ -33,20 +33,19 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                     device_formulation::Type{RenewableFullDispatch},
                                     system_formulation::Type{<:PM.AbstractPowerModel},
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
-    names = Vector{String}(undef, length(devices))
-    limit_values = Vector{MinMax}(undef, length(devices))
+    constraint_data = DeviceRange(length(devices))
     for (ix, d) in enumerate(devices)
         tech = PSY.get_tech(d)
-        names[ix] = PSY.get_name(d)
+        constraint_data.names[ix] = PSY.get_name(d)
         if isnothing(PSY.get_reactivepowerlimits(tech))
-            limit_values[ix] = (min = 0.0, max = 0.0)
-            @warn("Reactive Power Limits of $(names[ix]) are nothing. Q_$(names[ix]) is set to 0.0")
+            constraint_data.values[ix] = (min = 0.0, max = 0.0)
+            @warn("Reactive Power Limits of $(constraint_data.names[ix]) are nothing. Q_$(constraint_data.names[ix]) is set to 0.0")
         else
-            limit_values[ix] = PSY.get_reactivepowerlimits(tech)
+            constraint_data.values[ix] = PSY.get_reactivepowerlimits(tech)
         end
     end
     device_range(psi_container,
-    DeviceRange(names, limit_values, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
+                constraint_data,
                 Symbol("reactiverange_$(R)"),
                 Symbol("Q_$(R)"))
     return
@@ -113,15 +112,14 @@ function activepower_constraints!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     if !parameters && !use_forecast_data
-        names = Vector{String}(undef, length(devices))
-        limit_values = Vector{MinMax}(undef, length(devices))
+        constraint_data = DeviceRange(length(devices))
         for (ix, d) in enumerate(devices)
             ub_value = PSY.get_activepower(d)
-            limit_values[ix] = (min=0.0, max=ub_value)
-            names[ix] = PSY.get_name(d)
+            constraint_data.values[ix] = (min=0.0, max=ub_value)
+            constraint_data.names[ix] = PSY.get_name(d)
         end
         device_range(psi_container,
-        DeviceRange(names, limit_values, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
+                    constraint_data,
                     Symbol("activerange_$(R)"),
                     Symbol("P_$(R)"))
         return

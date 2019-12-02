@@ -85,15 +85,16 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                     device_formulation::Type{AbstractHydroDispatchFormulation},
                                     system_formulation::Type{<:PM.AbstractPowerModel},
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
-    names = Vector{String}(undef, length(devices))
-    limit_values = Vector{MinMax}(undef, length(devices))
+    constraint_data = DeviceRange(length(devices))
     for (ix, d) in enumerate(devices)
-        limit_values[ix] = PSY.get_reactivepowerlimits(PSY.get_tech(d))
-        names[ix] = PSY.get_name(d)
+        constraint_data.values[ix] = PSY.get_reactivepowerlimits(PSY.get_tech(d))
+        constraint_data.names[ix] = PSY.get_name(d)
+        #_device_services(constraint_data, ix, d, model)
+        # Uncomment when we implement reactive power services
     end
 
     device_range(psi_container,
-                 DeviceRange(names, limit_values, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
+                 constraint_data,
                  Symbol("reactiverange_$(H)"),
                  Symbol("Q_$(H)"))
     return
@@ -142,17 +143,16 @@ function activepower_constraints!(psi_container::PSIContainer,
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !parameters && !use_forecast_data
-        names = Vector{String}(undef, length(devices))
-        limit_values = Vector{MinMax}(undef, length(devices))
+        constraint_data = DeviceRange(length(devices))
         for (ix, d) in enumerate(devices)
             ub_value = PSY.get_activepower(d)
-            limit_values[ix] = (min=0.0, max=ub_value)
-            names[ix] = PSY.get_name(d)
+            constraint_data.values[ix] = (min=0.0, max=ub_value)
+            constraint_data.names[ix] = PSY.get_name(d)
         end
         device_range(psi_container,
-        DeviceRange(names, limit_values, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
-                    Symbol("activerange_$(H)"),
-                    Symbol("P_$(H)"))
+                     constraint_data,
+                     Symbol("activerange_$(H)"),
+                     Symbol("P_$(H)"))
         return
     end
 
@@ -182,26 +182,14 @@ function activepower_constraints!(psi_container::PSIContainer,
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !parameters && !use_forecast_data
-
-        names = Vector{String}(undef, length(devices))
-        limit_values = Vector{MinMax}(undef, length(devices))
-        additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
-        additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
-        range_data = DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub)
+        constraint_data = DeviceRange(length(devices))
         for (ix, d) in enumerate(devices)
-            limit_values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
-            names[ix] = PSY.get_name(d)
-            services_ub = Vector{Symbol}()
-            services_lb = Vector{Symbol}()
-            for service in PSY.get_services(d)
-                SR = typeof(service)
-                push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
-            end
-            additional_terms_ub[ix] = services_ub
-            additional_terms_lb[ix] = services_lb
+            constraint_data.values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
+            constraint_data.names[ix] = PSY.get_name(d)
+            #_device_services(constraint_data, ix, d, model)
         end
         device_semicontinuousrange(psi_container,
-                                    range_data,
+                                    constraint_data,
                                     Symbol("activerange_$(H)"),
                                     Symbol("P_$(H)"),
                                     Symbol("ON_$(H)"))

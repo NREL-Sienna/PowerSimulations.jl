@@ -55,32 +55,6 @@ function commitment_variables!(psi_container::PSIContainer,
     return
 end
 
-function _include_service!(constraint_data::DeviceRange,
-                           index::Int64,
-                           services::Vector{PSY.VariableReserve{PSY.ReserveUp}},
-                           ::ServiceModel{PSY.VariableReserve{PSY.ReserveUp}, <:AbstractReservesFormulation})
-        services_ub = Vector{Symbol}(undef, length(services))
-        for (ix, service) in enumerate(services)
-            SR = typeof(service) #To be removed later and subtitute with argument
-            services_ub[ix] = Symbol("$(PSY.get_name(service))_$SR")
-        end
-        constraint_data.additional_terms_ub[index] = services_ub
-    return
-end
-
-function _include_service!(constraint_data::DeviceRange,
-                           index::Int64,
-                           services::Vector{PSY.VariableReserve{PSY.ReserveDown}},
-                           ::ServiceModel{PSY.VariableReserve{PSY.ReserveDown}, <:AbstractReservesFormulation})
-        services_lb = Vector{Symbol}(undef, length(services))
-        for (ix, service) in enumerate(services)
-            SR = typeof(service) #To be removed later and subtitute with argument
-            services_ub[ix] = Symbol("$(PSY.get_name(service))_$SR")
-        end
-        constraint_data.additional_terms_lb[index] = services_lb
-    return
-end
-
 function _device_services(constraint_data::DeviceRange,
                           index::Int64,
                           device::PSY.ThermalGen,
@@ -89,7 +63,7 @@ function _device_services(constraint_data::DeviceRange,
         if PSY.has_service(device, service_model.service_type)
             services = [s for s in PSY.get_services(device) if isa(s, service_model.service_type)]
             @assert !isempty(services)
-            _include_service!(constraint_data, index, services, service_model)
+            include_service!(constraint_data, index, services, service_model)
         end
     end
     return
@@ -245,8 +219,8 @@ function commitment_constraints!(psi_container::PSIContainer,
         error("Initial status conditions not provided. This can lead to unwanted results")
     end
     device_commitment(psi_container,
-                     psi_container.initial_conditions[key],
-                     Symbol("commitment_$(T)"),
+                      psi_container.initial_conditions[key],
+                      Symbol("commitment_$(T)"),
                      (Symbol("START_$(T)"),
                       Symbol("STOP_$(T)"),
                       Symbol("ON_$(T)"))

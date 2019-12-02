@@ -67,3 +67,29 @@ function device_model_modify!(devices_template::Dict{Symbol, DeviceModel},
 
     return
 end
+
+function include_service!(constraint_data::DeviceRange,
+                           index::Int64,
+                           services::Vector{PSY.VariableReserve{PSY.ReserveUp}},
+                           ::ServiceModel{PSY.VariableReserve{PSY.ReserveUp}, <:AbstractReservesFormulation})
+        services_ub = Vector{Symbol}(undef, length(services))
+        for (ix, service) in enumerate(services)
+            SR = typeof(service) #To be removed later and subtitute with argument
+            services_ub[ix] = Symbol("$(PSY.get_name(service))_$SR")
+        end
+        constraint_data.additional_terms_ub[index] = services_ub
+    return
+end
+
+function include_service!(constraint_data::DeviceRange,
+                           index::Int64,
+                           services::Vector{PSY.VariableReserve{PSY.ReserveDown}},
+                           ::ServiceModel{PSY.VariableReserve{PSY.ReserveDown}, <:AbstractReservesFormulation})
+        services_lb = Vector{Symbol}(undef, length(services))
+        for (ix, service) in enumerate(services)
+            SR = typeof(service) #To be removed later and subtitute with argument
+            services_ub[ix] = Symbol("$(PSY.get_name(service))_$SR")
+        end
+        constraint_data.additional_terms_lb[index] = services_lb
+    return
+end

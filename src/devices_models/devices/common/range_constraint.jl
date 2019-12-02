@@ -1,19 +1,3 @@
-""" Data Container to construct range constraints"""
-struct DeviceRange
-    names::Vector{String}
-    values::Vector{MinMax}
-    additional_terms_ub::Vector{Vector{Symbol}}
-    additional_terms_lb::Vector{Vector{Symbol}}
-end
-
-function DeviceRange(count::Int64)
-    names = Vector{String}(undef, count)
-    limit_values = Vector{MinMax}(undef, count)
-    additional_terms_ub = fill(Vector{Symbol}(), count)
-    additional_terms_lb = fill(Vector{Symbol}(), count)
-    return DeviceRange(names, limit_values, additional_terms_ub, additional_terms_lb)
-end
-
 @doc raw"""
     device_range(psi_container::PSIContainer,
                  range_data::DeviceRange,
@@ -49,7 +33,6 @@ function device_range(psi_container::PSIContainer,
                       range_data::DeviceRange,
                       cons_name::Symbol,
                       var_name::Symbol)
-    @show range_data
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, var_name)
     ub_name = _middle_rename(cons_name, "_", "ub")
@@ -78,7 +61,7 @@ end
 
 @doc raw"""
     device_semicontinuousrange(psi_container::PSIContainer,
-                                    sc_range_data::DeviceRange,
+                                    range_data::DeviceRange,
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
@@ -98,7 +81,7 @@ Otherwise:
 
 ``` varcts[name, t] >= limits.min*varbin[name, t] ```
 
-where limits in sc_range_data.
+where limits in range_data.
 
 # LaTeX
 
@@ -108,13 +91,13 @@ where limits in sc_range_data.
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* sc_range_data::DeviceRange : contains names and vector of min/max
+* range_data::DeviceRange : contains names and vector of min/max
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 * binvar_name::Symbol : the name of the binary variable
 """
 function device_semicontinuousrange(psi_container::PSIContainer,
-                                    sc_range_data::DeviceRange,
+                                    range_data::DeviceRange,
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
@@ -125,11 +108,11 @@ function device_semicontinuousrange(psi_container::PSIContainer,
     lb_name = _middle_rename(cons_name, "_", "lb")
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
-    con_ub = add_cons_container!(psi_container, ub_name, sc_range_data.names, time_steps)
-    con_lb = add_cons_container!(psi_container, lb_name, sc_range_data.names, time_steps)
+    con_ub = add_cons_container!(psi_container, ub_name, range_data.names, time_steps)
+    con_lb = add_cons_container!(psi_container, lb_name, range_data.names, time_steps)
 
-    for (ix, name) in enumerate(sc_range_data.names)
-        limits = sc_range_data.values[ix]
+    for (ix, name) in enumerate(range_data.names)
+        limits = range_data.values[ix]
         for t in time_steps
             if JuMP.has_lower_bound(varcts[name, t])
                 JuMP.set_lower_bound(varcts[name, t], 0.0)
@@ -152,7 +135,7 @@ end
 
 @doc raw"""
     reserve_device_semicontinuousrange(psi_container::PSIContainer,
-                                    sc_range_data::DeviceRange,
+                                    range_data::DeviceRange,
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
@@ -182,14 +165,14 @@ where limits in range_data.
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* sc_range_data::DeviceRange : contains names and vector of min/max
+* range_data::DeviceRange : contains names and vector of min/max
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 * binvar_name::Symbol : the name of the binary variable
 """
 #This function looks suspicious and repetittive. Needs verification
 function reserve_device_semicontinuousrange(psi_container::PSIContainer,
-                                            sc_range_data::DeviceRange,
+                                            range_data::DeviceRange,
                                             cons_name::Symbol,
                                             var_name::Symbol,
                                             binvar_name::Symbol)
@@ -202,11 +185,11 @@ function reserve_device_semicontinuousrange(psi_container::PSIContainer,
     lb_name = _middle_rename(cons_name, "_", "lb")
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
-    con_ub = add_cons_container!(psi_container, ub_name, sc_range_data.names, time_steps)
-    con_lb = add_cons_container!(psi_container, lb_name, sc_range_data.names, time_steps)
+    con_ub = add_cons_container!(psi_container, ub_name, range_data.names, time_steps)
+    con_lb = add_cons_container!(psi_container, lb_name, range_data.names, time_steps)
 
-    for (ix, name) in enumerate(sc_range_data.names)
-        limits = sc_range_data.values[ix]
+    for (ix, name) in enumerate(range_data.names)
+        limits = range_data.values[ix]
         for t in time_steps
             if JuMP.has_lower_bound(varcts[name, t])
                 JuMP.set_lower_bound(varcts[name, t], 0.0)
