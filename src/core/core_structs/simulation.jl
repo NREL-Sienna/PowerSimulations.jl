@@ -58,6 +58,10 @@ mutable struct Simulation
                                                           stages;
                                                           verbose = verbose, kwargs...
                                                           )
+    @assert sim_ref.raw != "init"
+    @assert sim_ref.models != "init"
+    @assert sim_ref.results != "init"
+
     new(
         steps,
         stages_vector,
