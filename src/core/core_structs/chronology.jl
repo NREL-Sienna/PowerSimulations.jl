@@ -5,6 +5,10 @@ struct Synchronize <: AbstractChronology
     to_steps::Int64 #number of times to run using the same data
 end
 
-struct RecedingHorizon <: AbstractChronology end
+struct RecedingHorizon <: AbstractChronology
+    step::Int64
+end
 
-struct Sequential <: AbstractChronology end
+RecedingHorizon() = RecedingHorizon(1)
+
+struct Consecutive <: AbstractChronology end
