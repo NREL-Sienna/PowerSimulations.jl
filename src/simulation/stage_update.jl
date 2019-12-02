@@ -31,7 +31,7 @@ end
 
 # This makes the choice in which variable to get from the results.
 function _get_stage_variable(chron::Type{RecedingHorizon},
-                           from_stage::_Stage,
+                           from_stage::Stage,
                            device_name::String,
                            var_ref::UpdateRef,
                            to_stage_execution_count::Int64)
@@ -41,8 +41,8 @@ function _get_stage_variable(chron::Type{RecedingHorizon},
     return JuMP.value(variable[device_name, step])
 end
 
-function _get_stage_variable(chron::Type{Sequential},
-                             from_stage::_Stage,
+function _get_stage_variable(chron::Type{Consecutive},
+                             from_stage::Stage,
                              device_name::String,
                              var_ref::UpdateRef,
                              to_stage_execution_count::Int64)
@@ -53,7 +53,7 @@ function _get_stage_variable(chron::Type{Sequential},
 end
 
 function _get_stage_variable(chron::Type{Synchronize},
-                            from_stage::_Stage,
+                            from_stage::Stage,
                             device_name::String,
                             var_ref::UpdateRef,
                             to_stage_execution_count::Int64)
@@ -64,7 +64,7 @@ function _get_stage_variable(chron::Type{Synchronize},
 end
 
 ################################Cache Update################################################
-function _update_cache!(c::TimeStatusChange, stage::_Stage)
+function _update_cache!(c::TimeStatusChange, stage::Stage)
     parameter = get_value(stage.psi_container, c.ref)
 
     for name in parameter.axes[1]
@@ -84,8 +84,8 @@ end
 function feedforward_update(synch::Chron,
                             param_reference::UpdateRef{JuMP.VariableRef},
                             param_array::JuMPParamArray,
-                            to_stage::_Stage,
-                            from_stage::_Stage) where Chron <: AbstractChronology
+                            to_stage::Stage,
+                            from_stage::Stage) where Chron <: AbstractChronology
 
 
     !(to_stage.execution_count % synch.to_steps == 0) && return
@@ -187,8 +187,8 @@ end
 function _initial_condition_update!(initial_condition_key::ICKey,
                                     synch::Chron,
                                     ini_cond_vector::Vector{InitialCondition},
-                                    to_stage::_Stage,
-                                    from_stage::_Stage) where Chron <: AbstractChronology
+                                    to_stage::Stage,
+                                    from_stage::Stage) where Chron <: AbstractChronology
 
     to_stage_execution_count = to_stage.execution_count
     for ic in ini_cond_vector
@@ -207,14 +207,14 @@ end
 function _initial_condition_update!(initial_condition_key::ICKey,
                                     ::Nothing,
                                     ini_cond_vector::Vector{InitialCondition},
-                                    to_stage::_Stage,
-                                    from_stage::_Stage)
+                                    to_stage::Stage,
+                                    from_stage::Stage)
         # Meant to do nothing
     return
 end
 
 #############################Interfacing Functions##########################################
-function cache_update!(stage::_Stage)
+function cache_update!(stage::Stage)
 
     for (_, cache) in stage.cache
         _update_cache!(cache, stage)
@@ -281,7 +281,7 @@ function intial_condition_update!(initial_condition_key::ICKey,
 
 end
 
-function update_stage!(stage::_Stage{M}, step::Int64, sim::Simulation) where M<:AbstractOperationsProblem
+function update_stage!(stage::Stage{M}, step::Int64, sim::Simulation) where M<:AbstractOperationsProblem
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && stage.key == 1 && stage.execution_count == 0) && return
     for (k, v) in stage.psi_container.parameters

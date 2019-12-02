@@ -5,8 +5,8 @@ else
 end
 
 function test_load_simulation()
-    stages = Dict(1 => Stage(template_uc, 24, Hour(24), 1, c_sys5_uc, GLPK_optimizer,  Dict(0 => Sequential())),
-                2 => Stage(template_ed, 12, Minute(5), 24, c_sys5_ed, GLPK_optimizer, Dict(1 => Synchronize(24,1), 0 => Sequential()), TimeStatusChange(:ON_ThermalStandard)))
+    stages = Dict(1 => Stage(template_uc, 24, Hour(24), 1, c_sys5_uc, GLPK_optimizer,  Dict(0 => Consecutive())),
+                2 => Stage(template_ed, 12, Minute(5), 24, c_sys5_ed, GLPK_optimizer, Dict(1 => Synchronize(24,1), 0 => Consecutive()), TimeStatusChange(:ON_ThermalStandard)))
 
     sim = Simulation("test", 2, stages, file_path; verbose = true)
     sim_results = execute!(sim)

@@ -48,7 +48,7 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
      return results
 end
 
-function _run_stage(stage::_Stage, start_time::Dates.DateTime, results_path::String; kwargs...)
+function _run_stage(stage::Stage, start_time::Dates.DateTime, results_path::String; kwargs...)
     if stage.psi_container.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
         error("No Optimizer has been defined, can't solve the operational problem stage with key $(stage.key)")
     end
