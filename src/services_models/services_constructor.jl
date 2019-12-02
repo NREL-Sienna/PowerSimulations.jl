@@ -29,10 +29,10 @@ function add_service!(psi_container::PSIContainer, service::SR,
                       kwargs...) where SR<:PSY.Reserve
     #Variables
     activeservice_variables!(psi_container, service, contributing_devices)
-    #requirement constraint Constraints
+    # Constraints
     service_requirement_constraint!(psi_container, service)
-    # Modify Device Model
-    device_model_modify!(devices_template,
+
+    modify_device_model!(devices_template,
                          model,
                          contributing_devices)
 

@@ -8,6 +8,7 @@ function _build!(psi_container::PSIContainer, template::OperationsProblemTemplat
     verbose = get(kwargs, :verbose, true)
     transmission = template.transmission
 
+    # Order is required
     #Build Services
     construct_services!(psi_container, sys, template.services, template.devices; kwargs...)
 

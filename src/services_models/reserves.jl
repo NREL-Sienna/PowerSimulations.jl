@@ -53,15 +53,16 @@ function service_requirement_constraint!(psi_container::PSIContainer,
     return
 end
 
-function device_model_modify!(devices_template::Dict{Symbol, DeviceModel},
+function modify_device_model!(devices_template::Dict{Symbol, DeviceModel},
                               service_model::ServiceModel{<:PSY.Reserve, RangeReserve},
                               contributing_devices::Vector{<:PSY.Device})
     device_types = unique(typeof.(contributing_devices))
     for dt in device_types
-        for (k, v) in devices_template
-            v.device_type != dt && continue
-            service_model in v.services && continue
-            push!(v.services, service_model)
+        for (device_model_name, device_model) in devices_template
+            # add message here when it exists
+            device_model.device_type != dt && continue
+            service_model in device_model.services && continue
+            push!(device_model.services, service_model)
         end
     end
 
@@ -86,7 +87,7 @@ function include_service!(constraint_data::DeviceRange,
                           ::ServiceModel{SR, <:AbstractReservesFormulation}) where SR <: PSY.Reserve{PSY.ReserveDown}
         services_lb = Vector{Symbol}(undef, length(services))
         for (ix, service) in enumerate(services)
-            services_ub[ix] = Symbol("$(PSY.get_name(service))_$SR")
+            services_lb[ix] = Symbol("$(PSY.get_name(service))_$SR")
         end
         constraint_data.additional_terms_lb[index] = services_lb
     return
