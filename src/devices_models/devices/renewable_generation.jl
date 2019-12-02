@@ -31,21 +31,21 @@ end
 function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableFullDispatch},
-                                    system_formulation::Type{<:PM.AbstractPowerModel}) where R<:PSY.RenewableGen
-    range_data = Vector{NamedMinMax}(undef, length(devices))
+                                    system_formulation::Type{<:PM.AbstractPowerModel},
+                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
+    constraint_data = DeviceRange(length(devices))
     for (ix, d) in enumerate(devices)
         tech = PSY.get_tech(d)
-        name = PSY.get_name(d)
+        constraint_data.names[ix] = PSY.get_name(d)
         if isnothing(PSY.get_reactivepowerlimits(tech))
-            limits = (min = 0.0, max = 0.0)
-            range_data[ix] = (PSY.get_name(d), limits)
-            @warn("Reactive Power Limits of $(name) are nothing. Q_$(name) is set to 0.0")
+            constraint_data.values[ix] = (min = 0.0, max = 0.0)
+            @warn("Reactive Power Limits of $(constraint_data.names[ix]) are nothing. Q_$(constraint_data.names[ix]) is set to 0.0")
         else
-            range_data[ix] = (name, PSY.get_reactivepowerlimits(tech))
+            constraint_data.values[ix] = PSY.get_reactivepowerlimits(tech)
         end
     end
     device_range(psi_container,
-                range_data,
+                constraint_data,
                 Symbol("reactiverange_$(R)"),
                 Symbol("Q_$(R)"))
     return
@@ -54,7 +54,8 @@ end
 function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{R},
                                     device_formulation::Type{RenewableConstantPowerFactor},
-                                    system_formulation::Type{<:PM.AbstractPowerModel}) where R<:PSY.RenewableGen
+                                    system_formulation::Type{<:PM.AbstractPowerModel},
+                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
     names = (PSY.get_name(d) for d in devices)
     time_steps = model_time_steps(psi_container)
     p_variable_name = Symbol("P_$(R)")
@@ -106,13 +107,19 @@ end
 function activepower_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{R},
                                 device_formulation::Type{<:AbstractRenewableDispatchFormulation},
-                                system_formulation::Type{<:PM.AbstractPowerModel}) where R<:PSY.RenewableGen
+                                system_formulation::Type{<:PM.AbstractPowerModel},
+                                feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     if !parameters && !use_forecast_data
-        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_rating(PSY.get_tech(d)))) for d in devices]
+        constraint_data = DeviceRange(length(devices))
+        for (ix, d) in enumerate(devices)
+            ub_value = PSY.get_activepower(d)
+            constraint_data.values[ix] = (min=0.0, max=ub_value)
+            constraint_data.names[ix] = PSY.get_name(d)
+        end
         device_range(psi_container,
-                    range_data,
+                    constraint_data,
                     Symbol("activerange_$(R)"),
                     Symbol("P_$(R)"))
         return

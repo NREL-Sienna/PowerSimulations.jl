@@ -1,24 +1,15 @@
 abstract type AbstractHydroFormulation <: AbstractDeviceFormulation end
-
 abstract type AbstractHydroDispatchFormulation <: AbstractHydroFormulation end
-
 abstract type AbstractHydroUnitCommitment <: AbstractHydroFormulation end
-
 struct HydroFixed <: AbstractHydroFormulation end
-
 struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
-
 struct HydroDispatchSeasonalFlow <: AbstractHydroDispatchFormulation end
-
 struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
-
 struct HydroCommitmentSeasonalFlow <: AbstractHydroUnitCommitment end
 
 ########################### Hydro generation variables #################################
-
 function activepower_variables!(psi_container::PSIContainer,
                                devices::IS.FlattenIteratorWrapper{H}) where H<:PSY.HydroGen
-
     add_variable(psi_container,
                  devices,
                  Symbol("P_$(H)"),
@@ -29,12 +20,10 @@ function activepower_variables!(psi_container::PSIContainer,
                  init_value = d -> PSY.get_activepower(PSY.get_tech(d)))
 
     return
-
 end
 
 function reactivepower_variables!(psi_container::PSIContainer,
                                  devices::IS.FlattenIteratorWrapper{H}) where H<:PSY.HydroGen
-
     add_variable(psi_container,
                  devices,
                  Symbol("Q_$(H)"),
@@ -45,7 +34,6 @@ function reactivepower_variables!(psi_container::PSIContainer,
                  init_value = d -> d.tech.reactivepower)
 
     return
-
 end
 
 """
@@ -53,7 +41,6 @@ This function add the variables for power generation commitment to the model
 """
 function commitment_variables!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{H}) where {H<:PSY.HydroGen}
-
     time_steps = model_time_steps(psi_container)
     var_names = [Symbol("ON_$(H)"), Symbol("START_$(H)"), Symbol("STOP_$(H)")]
 
@@ -62,7 +49,6 @@ function commitment_variables!(psi_container::PSIContainer,
     end
 
     return
-
 end
 
 ### Constraints for Thermal Generation without commitment variables ####
@@ -72,10 +58,10 @@ This function adds the Commitment Status constraint when there are CommitmentVar
 function commitment_constraints!(psi_container::PSIContainer,
                                  devices::IS.FlattenIteratorWrapper{H},
                                  device_formulation::Type{D},
-                                 system_formulation::Type{S}) where {H<:PSY.HydroGen,
+                                 system_formulation::Type{S},
+                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {H<:PSY.HydroGen,
                                                                      D<:AbstractHydroUnitCommitment,
                                                                      S<:PM.AbstractPowerModel}
-
     key = ICKey(DeviceStatus, H)
 
     if !(key in keys(psi_container.initial_conditions))
@@ -91,43 +77,33 @@ function commitment_constraints!(psi_container::PSIContainer,
                       )
 
     return
-
 end
 
 ####################################### Reactive Power Constraints #########################
 function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{H},
                                     device_formulation::Type{AbstractHydroDispatchFormulation},
-                                    system_formulation::Type{<:PM.AbstractPowerModel}) where H<:PSY.HydroGen
-
-    range_data = Vector{NamedMinMax}(undef, length(devices))
-
+                                    system_formulation::Type{<:PM.AbstractPowerModel},
+                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
+    constraint_data = DeviceRange(length(devices))
     for (ix, d) in enumerate(devices)
-        tech = PSY.get_tech(d)
-        name = PSY.get_name(d)
-        if isnothing(PSY.get_reactivepowerlimits(tech))
-            limits = (min = 0.0, max = 0.0)
-            range_data[ix] = (PSY.get_name(d), limits)
-            @warn("Reactive Power Limits of $(name) are nothing. Q_$(name) is set to 0.0")
-        else
-            range_data[ix] = (name, PSY.get_reactivepowerlimits(tech))
-        end
+        constraint_data.values[ix] = PSY.get_reactivepowerlimits(PSY.get_tech(d))
+        constraint_data.names[ix] = PSY.get_name(d)
+        #_device_services(constraint_data, ix, d, model)
+        # Uncomment when we implement reactive power services
     end
 
     device_range(psi_container,
-                range_data,
-                Symbol("reactiverange_$(H)"),
-                Symbol("Q_$(H)"))
-
+                 constraint_data,
+                 Symbol("reactiverange_$(H)"),
+                 Symbol("Q_$(H)"))
     return
-
 end
 
 
 ######################## output constraints without Time Series ############################
 function _get_time_series(psi_container::PSIContainer,
                           devices::IS.FlattenIteratorWrapper{<:PSY.HydroGen})
-
     initial_time = model_initial_time(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     parameters = model_has_parameters(psi_container)
@@ -155,24 +131,28 @@ function _get_time_series(psi_container::PSIContainer,
     end
 
     return ts_data_active, ts_data_reactive
-
 end
 
 
 function activepower_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{H},
                                 device_formulation::Type{<:AbstractHydroDispatchFormulation},
-                                system_formulation::Type{<:PM.AbstractPowerModel}) where H<:PSY.HydroGen
-
+                                system_formulation::Type{<:PM.AbstractPowerModel},
+                                feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !parameters && !use_forecast_data
-        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_rating(PSY.get_tech(d)))) for d in devices]
+        constraint_data = DeviceRange(length(devices))
+        for (ix, d) in enumerate(devices)
+            ub_value = PSY.get_activepower(d)
+            constraint_data.values[ix] = (min=0.0, max=ub_value)
+            constraint_data.names[ix] = PSY.get_name(d)
+        end
         device_range(psi_container,
-                    range_data,
-                    Symbol("activerange_$(H)"),
-                    Symbol("P_$(H)"))
+                     constraint_data,
+                     Symbol("activerange_$(H)"),
+                     Symbol("P_$(H)"))
         return
     end
 
@@ -191,21 +171,25 @@ function activepower_constraints!(psi_container::PSIContainer,
     end
 
     return
-
 end
 
 function activepower_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{H},
                                 device_formulation::Type{<:AbstractHydroUnitCommitment},
-                                system_formulation::Type{<:PM.AbstractPowerModel}) where H<:PSY.HydroGen
-
+                                system_formulation::Type{<:PM.AbstractPowerModel},
+                                feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !parameters && !use_forecast_data
-        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_rating(PSY.get_tech(d)))) for d in devices]
+        constraint_data = DeviceRange(length(devices))
+        for (ix, d) in enumerate(devices)
+            constraint_data.values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
+            constraint_data.names[ix] = PSY.get_name(d)
+            #_device_services(constraint_data, ix, d, model)
+        end
         device_semicontinuousrange(psi_container,
-                                    range_data,
+                                    constraint_data,
                                     Symbol("activerange_$(H)"),
                                     Symbol("P_$(H)"),
                                     Symbol("ON_$(H)"))
@@ -229,20 +213,17 @@ function activepower_constraints!(psi_container::PSIContainer,
     end
 
     return
-
 end
 
 ########################## Make initial Conditions for a Model #############################
 function initial_conditions!(psi_container::PSIContainer,
                             devices::IS.FlattenIteratorWrapper{H},
                             device_formulation::Type{<:AbstractHydroUnitCommitment}) where {H<:PSY.HydroGen}
-
     status_init(psi_container, devices)
     output_init(psi_container, devices)
     duration_init(psi_container, devices)
 
     return
-
 end
 
 
@@ -250,11 +231,9 @@ function initial_conditions!(psi_container::PSIContainer,
                             devices::IS.FlattenIteratorWrapper{H},
                             device_formulation::Type{D}) where {H<:PSY.HydroGen,
                                                                 D<:AbstractHydroDispatchFormulation}
-
     output_init(psi_container, devices)
 
     return
-
 end
 
 
@@ -262,7 +241,6 @@ end
 function nodal_expression!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{H},
                            system_formulation::Type{<:PM.AbstractPowerModel}) where H<:PSY.HydroGen
-
     parameters = model_has_parameters(psi_container)
     ts_data_active, ts_data_reactive = _get_time_series(psi_container, devices)
 
@@ -294,13 +272,11 @@ function nodal_expression!(psi_container::PSIContainer,
     end
 
     return
-
 end
 
 function nodal_expression!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{H},
                            system_formulation::Type{<:PM.AbstractActivePowerModel}) where H<:PSY.HydroGen
-
     parameters = model_has_parameters(psi_container)
     ts_data_active, _  = _get_time_series(psi_container, devices)
 
@@ -322,7 +298,6 @@ function nodal_expression!(psi_container::PSIContainer,
     end
 
     return
-
 end
 
 ##################################### Hydro generation cost ############################
@@ -330,7 +305,6 @@ function cost_function(psi_container::PSIContainer,
                        devices::IS.FlattenIteratorWrapper{PSY.HydroDispatch},
                        device_formulation::Type{D},
                        system_formulation::Type{<:PM.AbstractPowerModel}) where D<:AbstractHydroFormulation
-
     add_to_cost(psi_container,
                 devices,
                 Symbol("P_HydroDispatch"),
@@ -338,13 +312,11 @@ function cost_function(psi_container::PSIContainer,
                 -1.0)
 
     return
-
 end
 
 ##################################### Water/Energy Budget Constraint ############################
 function _get_budget(psi_container::PSIContainer,
                     devices::IS.FlattenIteratorWrapper{H}) where H<:PSY.HydroGen
-
     initial_time = model_initial_time(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     parameters = model_has_parameters(psi_container)
@@ -375,8 +347,8 @@ end
 function budget_constraints!(psi_container::PSIContainer,
                     devices::IS.FlattenIteratorWrapper{H},
                     device_formulation::Type{<:AbstractHydroDispatchFormulation},
-                    system_formulation::Type{<:PM.AbstractPowerModel}) where H<:PSY.HydroGen
-
+                    system_formulation::Type{<:PM.AbstractPowerModel},
+                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
     parameters = model_has_parameters(psi_container)
     budget_data  = _get_budget(psi_container, devices)
     if parameters
@@ -398,7 +370,6 @@ function device_budget_param_ub(psi_container::PSIContainer,
                             cons_name::Symbol,
                             param_reference::UpdateRef,
                             var_name::Symbol)
-
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, var_name)
     set_name = (r[1] for r in budget_data)
@@ -418,7 +389,6 @@ function device_budget_param_ub(psi_container::PSIContainer,
     end
 
     return
-
 end
 
 
@@ -426,7 +396,6 @@ function device_budget_ub(psi_container::PSIContainer,
                             budget_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
                             cons_name::Symbol,
                             var_name::Symbol)
-
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, var_name)
     set_name = (r[1] for r in budget_data)
@@ -444,5 +413,4 @@ function device_budget_ub(psi_container::PSIContainer,
     end
 
     return
-
 end

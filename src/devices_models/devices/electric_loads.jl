@@ -1,16 +1,12 @@
 abstract type AbstractLoadFormulation <: AbstractDeviceFormulation end
-
 abstract type AbstractControllablePowerLoadFormulation <: AbstractLoadFormulation end
-
 struct StaticPowerLoad <: AbstractLoadFormulation end
-
 struct InterruptiblePowerLoad <: AbstractControllablePowerLoadFormulation end
-
 struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
 
 ########################### dispatchable load variables ####################################
 function activepower_variables!(psi_container::PSIContainer,
-                               devices::IS.FlattenIteratorWrapper{L}) where L<:PSY.ElectricLoad
+                                devices::IS.FlattenIteratorWrapper{L}) where L<:PSY.ElectricLoad
     add_variable(psi_container,
                  devices,
                  Symbol("P_$(L)"),
@@ -18,14 +14,12 @@ function activepower_variables!(psi_container::PSIContainer,
                  :nodal_balance_active, -1.0;
                  ub_value = x -> PSY.get_maxactivepower(x),
                  lb_value = x -> 0.0)
-
     return
-
 end
 
 
 function reactivepower_variables!(psi_container::PSIContainer,
-                                 devices::IS.FlattenIteratorWrapper{L}) where L<:PSY.ElectricLoad
+                                  devices::IS.FlattenIteratorWrapper{L}) where L<:PSY.ElectricLoad
     add_variable(psi_container,
                  devices,
                  Symbol("Q_$(L)"),
@@ -33,13 +27,11 @@ function reactivepower_variables!(psi_container::PSIContainer,
                  :nodal_balance_reactive, -1.0;
                  ub_value = x -> PSY.get_maxreactivepower(x),
                  lb_value = x -> 0.0)
-
     return
-
 end
 
 function commitment_variables!(psi_container::PSIContainer,
-                              devices::IS.FlattenIteratorWrapper{L}) where L<:PSY.ElectricLoad
+                               devices::IS.FlattenIteratorWrapper{L}) where L<:PSY.ElectricLoad
 
     add_variable(psi_container,
                  devices,
@@ -55,10 +47,10 @@ end
 Reactive Power Constraints on Loads Assume Constant PowerFactor
 """
 function reactivepower_constraints!(psi_container::PSIContainer,
-                                   devices::IS.FlattenIteratorWrapper{L},
-                                   device_formulation::Type{<:AbstractControllablePowerLoadFormulation},
-                                   system_formulation::Type{<:PM.AbstractPowerModel}) where L<:PSY.ElectricLoad
-
+                                    devices::IS.FlattenIteratorWrapper{L},
+                                    ::Type{<:AbstractControllablePowerLoadFormulation},
+                                    ::Type{<:PM.AbstractPowerModel},
+                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where L<:PSY.ElectricLoad
     time_steps = model_time_steps(psi_container)
     key = Symbol("reactive_$(L)")
     psi_container.constraints[key] = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
@@ -69,16 +61,13 @@ function reactivepower_constraints!(psi_container::PSIContainer,
         psi_container.constraints[key][PSY.get_name(d), t] = JuMP.@constraint(psi_container.JuMPmodel,
                         psi_container.variables[Symbol("Q_$(L)")][name, t] == psi_container.variables[Symbol("P_$(L)")][name, t]*pf)
     end
-
     return
-
 end
 
 
 ######################## output constraints without Time Series ############################
 function _get_time_series(psi_container::PSIContainer,
                           devices::IS.FlattenIteratorWrapper{<:PSY.ElectricLoad})
-
     initial_time = model_initial_time(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     time_steps = model_time_steps(psi_container)
@@ -111,18 +100,23 @@ end
 
 function activepower_constraints!(psi_container::PSIContainer,
                                  devices::IS.FlattenIteratorWrapper{L},
-                                 device_formulation::Type{DispatchablePowerLoad},
-                                 system_formulation::Type{<:PM.AbstractPowerModel}) where L<:PSY.ElectricLoad
-
+                                 ::Type{DispatchablePowerLoad},
+                                 ::Type{<:PM.AbstractPowerModel},
+                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where L<:PSY.ElectricLoad
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !parameters && !use_forecast_data
-        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_activepower(d))) for d in devices]
+        constraint_data = DeviceRange(length(devices))
+        for (ix, d) in enumerate(devices)
+            ub_value = PSY.get_activepower(d)
+            constraint_data.values[ix] = (min=0.0, max=ub_value)
+            constraint_data.names[ix] = PSY.get_name(d)
+        end
         device_range(psi_container,
-                    range_data,
-                    Symbol("activerange_$(L)"),
-                    Symbol("P_$(L)"))
+                     constraint_data,
+                     Symbol("activerange_$(L)"),
+                     Symbol("P_$(L)"))
         return
     end
 
@@ -139,23 +133,26 @@ function activepower_constraints!(psi_container::PSIContainer,
                             Symbol("active_$(L)"),
                             Symbol("P_$(L)"))
     end
-
     return
-
 end
 
 function activepower_constraints!(psi_container::PSIContainer,
-                                 devices::IS.FlattenIteratorWrapper{L},
-                                 device_formulation::Type{InterruptiblePowerLoad},
-                                 system_formulation::Type{<:PM.AbstractPowerModel}) where L<:PSY.ElectricLoad
-
+                                  devices::IS.FlattenIteratorWrapper{L},
+                                  ::Type{InterruptiblePowerLoad},
+                                  ::Type{<:PM.AbstractPowerModel},
+                                  feed_forward::Union{Nothing, AbstractAffectFeedForward}) where L<:PSY.ElectricLoad
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !parameters && !use_forecast_data
-        range_data = [(PSY.get_name(d), (min = 0.0, max = PSY.get_activepower(d))) for d in devices]
+        constraint_data = DeviceRange(length(devices))
+        for (ix, d) in enumerate(devices)
+            ub_value = PSY.get_activepower(d)
+            constraint_data.values[ix] = (min=0.0, max=ub_value)
+            constraint_data.names[ix] = PSY.get_name(d)
+        end
         device_range(psi_container,
-                    range_data,
+                    constraint_data,
                     Symbol("activerange_$(L)"),
                     Symbol("P_$(L)"))
         return
@@ -176,18 +173,14 @@ function activepower_constraints!(psi_container::PSIContainer,
                                 Symbol("P_$(L)"),
                                 Symbol("ON_$(L)"))
     end
-
     return
-
 end
 
 
 ########################## Addition of to the nodal balances ###############################
 function nodal_expression!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{L},
-                           system_formulation::Type{<:PM.AbstractPowerModel}) where L<:PSY.ElectricLoad
-
-
+                           ::Type{<:PM.AbstractPowerModel}) where L<:PSY.ElectricLoad
     ts_data_active, ts_data_reactive = _get_time_series(psi_container, devices)
     parameters = model_has_parameters(psi_container)
 
@@ -227,9 +220,7 @@ end
 
 function nodal_expression!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{L},
-                           system_formulation::Type{<:PM.AbstractActivePowerModel}) where L<:PSY.ElectricLoad
-
-
+                           ::Type{<:PM.AbstractActivePowerModel}) where L<:PSY.ElectricLoad
     parameters = model_has_parameters(psi_container)
     ts_data_active, _ = _get_time_series(psi_container, devices)
 
@@ -255,30 +246,24 @@ end
 ############################## FormulationControllable Load Cost ###########################
 function cost_function(psi_container::PSIContainer,
                        devices::IS.FlattenIteratorWrapper{L},
-                       device_formulation::Type{DispatchablePowerLoad},
-                       system_formulation::Type{<:PM.AbstractPowerModel}) where L<:PSY.ControllableLoad
-
+                       ::Type{DispatchablePowerLoad},
+                       ::Type{<:PM.AbstractPowerModel}) where L<:PSY.ControllableLoad
     add_to_cost(psi_container,
                 devices,
                 Symbol("P_$(L)"),
                 :variable,
                 -1.0)
-
     return
-
 end
 
 function cost_function(psi_container::PSIContainer,
                        devices::IS.FlattenIteratorWrapper{L},
-                       device_formulation::Type{InterruptiblePowerLoad},
-                       system_formulation::Type{<:PM.AbstractPowerModel}) where L<:PSY.ControllableLoad
-
+                       ::Type{InterruptiblePowerLoad},
+                       ::Type{<:PM.AbstractPowerModel}) where L<:PSY.ControllableLoad
     add_to_cost(psi_container,
                 devices,
                 Symbol("ON_$(L)"),
                 :fixed,
                 -1.0)
-
     return
-
 end

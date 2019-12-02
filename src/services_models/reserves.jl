@@ -1,5 +1,5 @@
 abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
-struct RangeUpwardReserve <: AbstractReservesFormulation end
+struct RangeReserve <: AbstractReservesFormulation end
 ############################### Reserve Variables` #########################################
 """
 This function add the variables for reserves to the model
@@ -9,7 +9,7 @@ function activeservice_variables!(psi_container::PSIContainer,
                                   devices::Vector{<:PSY.Device}) where SR<:PSY.Reserve
     add_variable(psi_container,
                  devices,
-                 Symbol("R$(PSY.get_name(service))_$SR"),
+                 Symbol("$(PSY.get_name(service))_$SR"),
                  false;
                  ub_value = d -> d.tech.activepowerlimits.max,
                  lb_value = d -> 0 )
@@ -25,7 +25,7 @@ function service_requirement_constraint!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
     forecast = model_uses_forecasts(psi_container)
     initial_time = model_initial_time(psi_container)
-    reserve_variable = get_variable(psi_container, Symbol("R$(PSY.get_name(service))_$SR"))
+    reserve_variable = get_variable(psi_container, Symbol("$(PSY.get_name(service))_$SR"))
     constraint_name = Symbol(PSY.get_name(service), "_requirement_$SR")
     constraint = add_cons_container!(psi_container, constraint_name, time_steps)
     requirement = PSY.get_requirement(service)
@@ -53,44 +53,43 @@ function service_requirement_constraint!(psi_container::PSIContainer,
     return
 end
 
-# This function can also be generalized.
-function add_to_service_expression!(psi_container::PSIContainer,
-                                    model::ServiceModel{SR, RangeUpwardReserve},
-                                    service::SR,
-                                    expression_list::Vector{Symbol}) where {SR<:PSY.Reserve}
-    # Container
-    time_steps = model_time_steps(psi_container)
-    devices = PSY.get_contributingdevices(service)
-    var_type = JuMP.variable_type(psi_container.JuMPmodel)
-    expression = :upward_reserve
-    expression ∉ expression_list && push!(expression, expression_list)
-    expression_dict = get_expression!(psi_container,
-                                      expression,
-                                      Dict{ServiceExpressionKey, Array{GAE{var_type}}}())
-    reserve_variable = get_variable(psi_container, Symbol("R$(PSY.get_name(service))_$SR"))
-    #fill container
-    for d in devices
-        T = typeof(d)
-        name = PSY.get_name(d)
-        expressions = get!(expression_dict,
-                           ServiceExpressionKey(name, T),
-                           get_variable(psi_container, Symbol("P_$(T)"))[name, :].data)
-        for t in time_steps
-            expressions[t] = JuMP.add_to_expression!(expressions[t], reserve_variable[name, t])
+function device_model_modify!(devices_template::Dict{Symbol, DeviceModel},
+                              service_model::ServiceModel{<:PSY.Reserve, RangeReserve},
+                              contributing_devices::Vector{<:PSY.Device})
+    device_types = unique(typeof.(contributing_devices))
+    for dt in device_types
+        for (k, v) in devices_template
+            v.device_type != dt && continue
+            service_model in v.services && continue
+            push!(v.services, service_model)
         end
     end
+
     return
 end
 
-function add_device_constraints!(psi_container::PSIContainer,
-                                 sys::PSY.System,
-                                 expression_list::Vector{Symbol})
-    for service_expression in expression_list
-        expression_dictionary = get_expression(psi_container, service_expression)
-        for (k, v) in expression_dictionary
-            device = get_component(k.device_type, sys, k.name)
-            service_constraints(device, v, )
+function include_service!(constraint_data::DeviceRange,
+                           index::Int64,
+                           services::Vector{PSY.VariableReserve{PSY.ReserveUp}},
+                           ::ServiceModel{PSY.VariableReserve{PSY.ReserveUp}, <:AbstractReservesFormulation})
+        services_ub = Vector{Symbol}(undef, length(services))
+        for (ix, service) in enumerate(services)
+            SR = typeof(service) #To be removed later and subtitute with argument
+            services_ub[ix] = Symbol("$(PSY.get_name(service))_$SR")
         end
-    end
+        constraint_data.additional_terms_ub[index] = services_ub
+    return
+end
+
+function include_service!(constraint_data::DeviceRange,
+                           index::Int64,
+                           services::Vector{PSY.VariableReserve{PSY.ReserveDown}},
+                           ::ServiceModel{PSY.VariableReserve{PSY.ReserveDown}, <:AbstractReservesFormulation})
+        services_lb = Vector{Symbol}(undef, length(services))
+        for (ix, service) in enumerate(services)
+            SR = typeof(service) #To be removed later and subtitute with argument
+            services_ub[ix] = Symbol("$(PSY.get_name(service))_$SR")
+        end
+        constraint_data.additional_terms_lb[index] = services_lb
     return
 end

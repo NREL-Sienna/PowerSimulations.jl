@@ -1,3 +1,4 @@
+isdefined(Base, :__precompile__) && __precompile__()
 module PowerSimulations
 
 #################################################################################
@@ -18,6 +19,7 @@ export CopperPlatePowerModel
 export DeviceModel
 ######## Service Models ########
 export ServiceModel
+export RangeReserve
 ######## Branch Models ########
 export StaticLine
 export StaticTransformer
@@ -37,6 +39,10 @@ export RenewableFullDispatch
 export RenewableConstantPowerFactor
 ######## Hydro Formulations ########
 export HydroFixed
+export HydroDispatchRunOfRiver
+export HydroDispatchSeasonalFlow
+export HydroCommitmentRunOfRiver
+export HydroCommitmentSeasonalFlow
 ######## Renewable Formulations ########
 export BookKeeping
 export BookKeepingwReservation
@@ -155,13 +161,16 @@ JuMP.Model(optimizer::Nothing; kwargs...) = JuMP.Model(kwargs...)
 ################################################################################
 # Includes
 
+include("utils/utils.jl")
+
 #Models and constructors
+include("devices_models/devices/common/constraints_structs.jl")
 include("core/core_structs/aux_structs.jl")
 include("core/core_structs/cache.jl")
 include("core/core_structs/feedforward.jl")
+include("services_models/services_model.jl")
 include("devices_models/device_model.jl")
 include("network_models/networks.jl")
-include("services_models/services_model.jl")
 include("core/core_structs/initial_conditions.jl")
 include("core/core_structs/psi_container.jl")
 include("core/core_structs/operations_problem.jl")
@@ -172,6 +181,10 @@ include("core/core_structs/operations_problem_results.jl")
 include("core/build_cache.jl")
 include("core/build_operations.jl")
 include("core/build_simulations.jl")
+
+#Services Models
+include("services_models/reserves.jl")
+include("services_models/services_constructor.jl")
 
 #FeedForward Model Files
 include("simulation/feedforward_affects.jl")
@@ -203,10 +216,6 @@ include("devices_models/device_constructors/storage_constructor.jl")
 
 #Network constructors
 include("network_models/network_constructor.jl")
-
-#Services Models
-include("services_models/reserves.jl")
-include("services_models/services_constructor.jl")
 
 # Commented out until properly implemented
 #Operational Model Constructors

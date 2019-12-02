@@ -39,7 +39,6 @@ function energy_balance(psi_container::PSIContainer,
                         efficiency_data::Tuple{Vector{String}, Vector{InOut}},
                         cons_name::Symbol,
                         var_names::Tuple{Symbol, Symbol, Symbol})
-
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution))/60
@@ -71,5 +70,4 @@ function energy_balance(psi_container::PSIContainer,
     end
 
     return
-
 end

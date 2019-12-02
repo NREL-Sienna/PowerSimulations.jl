@@ -41,5 +41,4 @@ function rating_constraint!(psi_container::PSIContainer,
     end
 
     return
-
 end

@@ -45,7 +45,6 @@ function add_variable(psi_container::PSIContainer,
                       expression_name::Union{Nothing,Symbol}=nothing,
                       sign::Float64=1.0; kwargs...) where {D<:Union{Vector{<:PSY.Device},
                                           IS.FlattenIteratorWrapper{<:PSY.Device}}}
-
     time_steps = model_time_steps(psi_container)
     variable = add_var_container!(psi_container, var_name, (PSY.get_name(d) for d in devices), time_steps)
     jvar_name = _remove_underscore(var_name)
@@ -81,7 +80,7 @@ end
 
 @doc raw"""
     set_variable_bounds(psi_container::PSIContainer,
-                            bounds::Vector{NamedMinMax},
+                            bounds::DeviceRange,
                             var_name::Symbol)
 
 Adds a bounds to a variable in the optimization model.
@@ -93,21 +92,21 @@ Adds a bounds to a variable in the optimization model.
 
 # LaTeX
 
-``  x^{device}_t >= bound^{min} \forall t ``
+``  x^{device}_t >= bound^{min;} \forall t ``
 
 ``  x^{device}_t <= bound^{max} \forall t ``
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* bounds::Vector{NamedMinMax} : contains name of device (1) and its min/max (2)
+* bounds::DeviceRange : contains names and vector of min / max
 * var_name::Symbol : Base Name for the variable
 
 """
 function set_variable_bounds(psi_container::PSIContainer,
-                            bounds::Vector{NamedMinMax},
+                            bounds::DeviceRange,
                             var_name::Symbol)
-
-    for t in model_time_steps(psi_container), (name, bound) in bounds
+    for t in model_time_steps(psi_container), (ix, name) in enumerate(bounds.names)
+        bound = bounds.values[ix]
         var = psi_container.variables[var_name][name, t]
         JuMP.set_upper_bound(var, bound.max)
         JuMP.set_lower_bound(var, bound.min)

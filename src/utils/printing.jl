@@ -4,14 +4,13 @@ function Base.show(io::IO, op_problem::OperationsProblem)
 end
 =#
 
-function _organize_device_model(val::Dict{Symbol, DeviceModel}, field::Symbol, io::IO)
-
+function _organize_model(val::Dict{Symbol, T}, field::Symbol, io::IO) where T <: Union{DeviceModel, ServiceModel}
     println(io, "  $(field): ")
     for (i, ix) in val
 
         println(io, "      $(i):")
-        for inner_field in fieldnames(DeviceModel)
-
+        for inner_field in fieldnames(T)
+            inner_field == :services && continue
             value = getfield(val[i], Symbol(inner_field))
 
             if !isnothing(value)
@@ -32,19 +31,19 @@ and a value exists for that field it prints the value.
 
 
 """
-function Base.show(io::IO, ::MIME"text/plain", op_problem::OperationsProblem)
+function Base.show(io::IO, m::MIME"text/plain", op_problem::OperationsProblem)
+    show(io, m, op_problem.template)
+end
 
-    println(io, "\nOperations Problem")
-    println(io, "===============\n")
+function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTemplate)
+    println(io, "\nOperations Problem Specification")
+    println(io, "============================================\n")
 
     for field in fieldnames(OperationsProblemTemplate)
-
-        val = getfield(op_problem.template, Symbol(field))
-
-        if typeof(val) == Dict{Symbol, DeviceModel}
-
-            _organize_device_model(val, field, io)
-
+        val = getfield(template, Symbol(field))
+        if typeof(val) <: Dict{Symbol, <:Union{DeviceModel, ServiceModel}}
+            println(io, "============================================")
+            _organize_model(val, field, io)
         else
             if !isnothing(val)
                 println(io, "  $(field):  $(val)")
@@ -53,10 +52,8 @@ function Base.show(io::IO, ::MIME"text/plain", op_problem::OperationsProblem)
             end
         end
     end
+    println(io, "============================================")
 end
-
-
-
 
 function Base.show(io::IO, op_problem::PSIContainer)
     println(io, "PSIContainer()")
@@ -99,7 +96,6 @@ function Base.show(io::IO, ::MIME"text/plain", results::Results)
  end
 
  function Base.show(io::IO, ::MIME"text/html", results::PSI.Results)
-
     println(io, "<h1>Results</h1>")
     for (k, v) in results.variables
         time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])

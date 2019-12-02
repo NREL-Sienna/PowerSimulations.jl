@@ -1,15 +1,15 @@
-devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalDispatch),
-                                    :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
-branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(PSY.Line, PSI.StaticLine),
-                                     :T => DeviceModel(PSY.Transformer2W, PSI.StaticTransformer),
-                                     :TT => DeviceModel(PSY.TapTransformer , PSI.StaticTransformer))
-services = Dict{Symbol, PSI.ServiceModel}()
+devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+                                    :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad))
+branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine),
+                                     :T => DeviceModel(Transformer2W, StaticTransformer),
+                                     :TT => DeviceModel(TapTransformer , StaticTransformer))
+services = Dict{Symbol, ServiceModel}()
 
 @testset "Solving ED with CopperPlate" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
     parameters_value = [true, false]
     systems = [c_sys5, c_sys14]
-    test_results = Dict{PSY.System, Float64}(c_sys5 => 240000.0,
+    test_results = Dict{System, Float64}(c_sys5 => 240000.0,
                                              c_sys14 => 142000.0)
     for sys in systems, p in parameters_value
         @info("Testing solve ED with CopperPlatePowerModel network")
@@ -25,8 +25,8 @@ end
     template = OperationsProblemTemplate(StandardPTDFModel, devices, branches, services);
     parameters_value = [true, false]
     systems = [c_sys5, c_sys14, c_sys14_dc]
-    PTDF_ref = Dict{PSY.System, PSY.PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc)
-    test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,
+    PTDF_ref = Dict{System, PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc)
+    test_results = Dict{System, Float64}(c_sys5 => 340000.0,
                                              c_sys14 => 142000.0,
                                              c_sys14_dc => 142000.0)
 
@@ -44,7 +44,7 @@ end
     parameters_value = [true, false]
     networks = [DCPPowerModel,
                 NFAPowerModel]
-    test_results = Dict{PSY.System, Float64}(c_sys5 => 330000.0,
+    test_results = Dict{System, Float64}(c_sys5 => 330000.0,
                                              c_sys14 => 142000.0,
                                              c_sys14_dc => 142000.0)
 
@@ -65,7 +65,7 @@ end
     parameters_value = [true, false]
     networks = [DCPLLPowerModel,
                 LPACCPowerModel]
-    test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,
+    test_results = Dict{System, Float64}(c_sys5 => 340000.0,
                                              c_sys14 => 142000.0,
                                              c_sys14_dc => 142000.0)
 
@@ -89,7 +89,7 @@ end
     networks = [SOCWRPowerModel,
                  QCRMPowerModel,
                  QCLSPowerModel,]
-    test_results = Dict{PSY.System, Float64}(c_sys5 => 320000.0,
+    test_results = Dict{System, Float64}(c_sys5 => 320000.0,
                                              c_sys14 => 142000.0)
 
     for  net in networks, p in parameters_value, sys in systems
@@ -112,7 +112,7 @@ end
     networks = [ACPPowerModel,
                 #ACRPowerModel,
                 ACTPowerModel]
-    test_results = Dict{PSY.System, Float64}(c_sys5 => 340000.0,
+    test_results = Dict{System, Float64}(c_sys5 => 340000.0,
                                              c_sys14 => 142000.0,
                                              c_sys14_dc => 142000.0)
 
@@ -128,15 +128,15 @@ end
 end
 
 @testset "Solving UC Linear Networks" begin
-    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(PSY.ThermalStandard, PSI.ThermalStandardUnitCommitment),
-                                        :Loads =>  DeviceModel(PSY.PowerLoad, PSI.StaticPowerLoad))
+    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
+                                        :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad))
     parameters_value = [true, false]
     systems = [c_sys5, c_sys5_dc]
     networks = [DCPPowerModel,
                 NFAPowerModel,
                 StandardPTDFModel,
                 CopperPlatePowerModel]
-    PTDF_ref = Dict{PSY.System, PSY.PTDF}(c_sys5 => PTDF5, c_sys5_dc => PTDF5_dc)
+    PTDF_ref = Dict{System, PTDF}(c_sys5 => PTDF5, c_sys5_dc => PTDF5_dc)
 
     for  net in networks, p in parameters_value, sys in systems
         @info("Testing solve UC with $(net) network")

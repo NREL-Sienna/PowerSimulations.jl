@@ -139,7 +139,6 @@ function get_branch_to_pm(ix::Int64, branch::PSY.HVDCLine)
 end
 
 function get_branches_to_pm(sys::PSY.System)
-
         PM_ac_branches = Dict{String, Any}()
         PM_dc_branches = Dict{String, Any}()
         PMmap_ac = Dict{NamedTuple{(:from_to,:to_from),
@@ -231,5 +230,4 @@ function pass_to_pm(sys::PSY.System, time_periods::Int64)
     PM_map = PMmap(PMmap_buses, PMmap_ac, PMmap_dc)
 
     return PM_translation, PM_map
-
 end

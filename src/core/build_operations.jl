@@ -7,6 +7,10 @@ end
 function _build!(psi_container::PSIContainer, template::OperationsProblemTemplate, sys::PSY.System; kwargs...)
     verbose = get(kwargs, :verbose, true)
     transmission = template.transmission
+
+    #Build Services
+    construct_services!(psi_container, sys, template.services, template.devices; kwargs...)
+
     # Build Injection devices
     for device_model in values(template.devices)
         verbose && @info "Building $(device_model.device_type) with $(device_model.formulation) formulation"
@@ -23,13 +27,9 @@ function _build!(psi_container::PSIContainer, template::OperationsProblemTemplat
         construct_device!(psi_container, sys, branch_model, transmission; kwargs...)
     end
 
-    #Build Services
-    construct_services!(psi_container, sys, template.services; kwargs...)
-
     # Objective Function
     verbose && @info "Building Objective"
     JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
 
     return
-
 end

@@ -197,13 +197,17 @@ function write_results(res::SimulationResults, folder_path::String, results_fold
     @info("Files written to $folder_path folder.")
     return
 end
+
 function compute_file_hash(path::String, files::Array)
     open(joinpath(path, "check.sha256"), "w") do io
         for file in files
-            hash_value = write(io, "$(bytes2hex(SHA.sha256(open(joinpath(path, file)))))    $(joinpath(path, file))\n")
+            file_path = joinpath(path, file)
+            hash_value = compute_sha256(file_path)
+            write(io, "$hash_value    $file_path\n")
         end
     end
 end
+
 """ Exports the OpModel JuMP object in MathOptFormat"""
 function write_op_problem(op_problem::OperationsProblem, save_path::String)
     _write_psi_container(op_problem.psi_container, save_path)

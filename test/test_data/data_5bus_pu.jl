@@ -218,11 +218,13 @@ loads5(nodes5) = [ PowerLoad("Bus2", true, nodes5[2], PowerSystems.ConstantPower
 
 interruptible(nodes5) = [InterruptibleLoad("IloadBus4", true, nodes5[4], PowerSystems.ConstantPower, 0.10, 0.0,  0.10, 0.0, TwoPartCost(150.0, 2400.0))]
 
-#reserve5(thermal_generators5) = [StaticReserve("Reserve1", thermal_generators5, 0.6, maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5])),
-#StaticReserve("Reserve2", [collect(thermal_generators5)[end]], 0.6, maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5]))]
+reserve5(thermal_generators5) = [
+VariableReserve{ReserveUp}("Reserve1", 0.6, maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5])),
+VariableReserve{ReserveUp}("Reserve2", 0.6, maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5]))
+]
 
-Reserve_ts = [[TimeArray(DayAhead, rand(24))],
-              [TimeArray(DayAhead+Day(1), rand(24))]]
+Reserve_ts = [TimeArray(DayAhead, rand(24)),
+              TimeArray(DayAhead+Day(1), rand(24))]
 
 hydro_timeseries_DA = [[TimeSeries.TimeArray(DayAhead,wind_ts_DA)],
                      [TimeSeries.TimeArray(DayAhead + Day(1), rand(24)*0.1 + wind_ts_DA)]]

@@ -38,7 +38,6 @@ function device_linear_rateofchange(psi_container::PSIContainer,
                                     initial_conditions::Vector{InitialCondition},
                                     cons_name::Symbol,
                                     var_name::Symbol)
-
     time_steps = model_time_steps(psi_container)
     up_name = _middle_rename(cons_name, "_", "up")
     down_name = _middle_rename(cons_name, "_", "dn")
@@ -64,7 +63,6 @@ function device_linear_rateofchange(psi_container::PSIContainer,
     end
 
     return
-
 end
 
 @doc raw"""
@@ -112,7 +110,6 @@ function device_mixedinteger_rateofchange(psi_container::PSIContainer,
                                           initial_conditions::Vector{InitialCondition},
                                           cons_name::Symbol,
                                           var_names::Tuple{Symbol, Symbol, Symbol})
-
     time_steps = model_time_steps(psi_container)
     up_name = _middle_rename(cons_name, "_", "up")
     down_name = _middle_rename(cons_name, "_", "dn")
@@ -142,5 +139,4 @@ function device_mixedinteger_rateofchange(psi_container::PSIContainer,
     end
 
     return
-
 end

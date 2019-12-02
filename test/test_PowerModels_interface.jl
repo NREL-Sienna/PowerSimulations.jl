@@ -33,14 +33,3 @@ end
     pm = PowerSimulations.build_nip_model(case5_dc_data, DCPPowerModel)
     JuMP.num_variables(pm.model) == 48
 end
-#=
-@testset "PM integration into PS" begin
-    PM_dict5 = PowerSimulations.pass_to_pm(c_sys5, 24)
-    PM_object5 = PowerSimulations.build_nip_model(PM_dict5, DCAngleModel);
-    @test JuMP.num_variables(PM_object5.model) == 384
-
-    PM_dict_rts = PowerSimulations.pass_to_pm(c_rts, 24)
-    PM_object_rts = PowerSimulations.build_nip_model(PM_dict_rts, DCAngleModel);
-    @test JuMP.num_variables(PM_object_rts.model) == 6432
-end
-=#
