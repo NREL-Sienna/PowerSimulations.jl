@@ -1,36 +1,43 @@
 abstract type AbstractAffectFeedForward end
 
 struct UpperBoundFF <: AbstractAffectFeedForward
-    vars_prefix::Vector{Symbol}
+    name::Symbol
+    variable_from_stage::Symbol
+    affected_variables::Vector{Symbol}
     cache::Union{Nothing, Type{<:AbstractCache}}
 end
 
-UpperBoundFF(var::Symbol,
-             cache::Union{Nothing, Type{<:AbstractCache}}=nothing) = UpperBoundFF([var], cache)
+function UpperBoundFF(name, ;variable_from_stage, affected_variables)
+    return UpperBoundFF(name, variable, affected_variables, nothing)
+end
 
-get_vars_prefix(p::UpperBoundFF) = p.vars_prefix
+get_variable_from_stage(p::UpperBoundFF) = p.binary_from_stage
 
 struct RangeFF <: AbstractAffectFeedForward
-    lb_vars_prefix::Vector{Symbol}
-    ub_vars_prefix::Vector{Symbol}
+    name::Symbol
+    variable_from_stage_ub::Symbol
+    variable_from_stage_lb::Symbol
+    affected_variables::Vector{Symbol}
     cache::Union{Nothing, Type{<:AbstractCache}}
 end
 
-RangeFF(var_lb::Symbol,
-        var_ub::Symbol,
-        cache::Union{Nothing, Type{<:AbstractCache}}=nothing) = RangeFF([var_lb], [var_ub], cache)
+function RangeFF(name ;variable_from_stage_ub, affected_variables_lb, affected_variables)
+    return RangeFF(name, binary_from_stage, affected_variables, nothing)
+end
 
-get_vars_prefix(p::RangeFF) = (p.lb_var_prefix, p.lb_var_prefix)
+get_bounds_from_stage(p::RangeFF) = (p.variable_from_stage_lb, p.variable_from_stage_lb)
 
 struct SemiContinuousFF <: AbstractAffectFeedForward
-    vars_prefix::Vector{Symbol}
-    bin_prefix::Symbol
+    name::Symbol
+    binary_from_stage::Symbol
+    affected_variables::Vector{Symbol}
     cache::Union{Nothing, Type{<:AbstractCache}}
 end
 
-SemiContinuousFF(var::Symbol,
-    bin_var::Symbol,
-    cache::Union{Nothing, Type{<:AbstractCache}}=nothing) = SemiContinuousFF([var], bin_var, cache)
+function SemiContinuousFF(name ;binary_from_stage, affected_variables)
+    return SemiContinuousFF(name, binary_from_stage, affected_variables, nothing)
+end
 
-get_bin_prefix(p::SemiContinuousFF) = p.bin_prefix
-get_vars_prefix(p::SemiContinuousFF) = p.vars_prefix
+get_binary_from_stage(p::SemiContinuousFF) = p.binary_from_stage
+
+get_affected_variables(p::AbstractAffectFeedForward) = p.affected_variables
