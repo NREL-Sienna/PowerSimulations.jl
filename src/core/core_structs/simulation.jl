@@ -43,18 +43,6 @@ mutable struct Simulation
                         stages=Dict{Int64, Stage{AbstractOperationsProblem}}(),
                         simulation_folder::String,
                         verbose::Bool = false, kwargs...)
-
-    #sim_ref = _initialize_sim_ref(steps, keys(stages))
-    #dates, validation, stages_vector = _build_simulation!(
-    #                                                      sim_ref,
-    #                                                      steps,
-    #                                                      stages;
-    #                                                      verbose = verbose, kwargs...
-    #                                                      )
-    #@assert sim_ref.raw != "init"
-    #@assert sim_ref.models != "init"
-    #@assert sim_ref.results != "init"
-
     new(
         steps,
         stages,
