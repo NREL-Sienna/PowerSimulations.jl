@@ -1,14 +1,20 @@
 mutable struct SimulationRef
-    raw::String
-    models::String
-    results::String
+    raw_dir::String
+    models_dir::String
+    results_dir::String
     run_count::Dict{Int64, Dict{Int64, Int64}}
     date_ref::Dict{Int64, Dates.DateTime}
     current_time::Dates.DateTime
     reset::Bool
 end
 
-function _initialize_sim_ref(steps::Int64, stages_keys::Base.KeySet)
+function SimulationRef(
+    raw_dir::AbstractString,
+    models_dir::AbstractString,
+    results_dir::AbstractString,
+    steps::Int64,
+    stages_keys::Base.KeySet,
+)
     count_dict = Dict{Int64, Dict{Int64, Int64}}()
 
     for s in 1:steps
@@ -18,15 +24,15 @@ function _initialize_sim_ref(steps::Int64, stages_keys::Base.KeySet)
         end
     end
 
-    return sim_ref = SimulationRef(
-                                  "init",
-                                   "init",
-                                   "init",
-                                   count_dict,
-                                   Dict{Int64, Dates.DateTime}(),
-                                   Dates.now(),
-                                   true
-                                   )
+    return SimulationRef(
+        raw_dir,
+        models_dir,
+        results_dir,
+        count_dict,
+        Dict{Int64, Dates.DateTime}(),
+        Dates.now(),
+        true,
+    )
 end
 
 mutable struct Simulation
@@ -44,7 +50,8 @@ mutable struct Simulation
                         simulation_folder::String;
                         verbose::Bool = false, kwargs...)
 
-    sim_ref = _initialize_sim_ref(steps, keys(stages))
+    raw_dir, models_dir, results_dir = _prepare_workspace(base_name, simulation_folder)
+    sim_ref = SimulationRef(raw_dir, models_dir, results_dir, steps, keys(stages))
     dates, validation, stages_vector = _build_simulation!(
                                                           sim_ref,
                                                           steps,
@@ -66,3 +73,19 @@ end
 ################# accessor functions ####################
 get_steps(s::Simulation) = s.steps
 get_daterange(s::Simulation) = s.daterange
+
+function _prepare_workspace(base_name::AbstractString, folder::AbstractString)
+    !isdir(folder) && throw(ArgumentError("Specified folder is not valid"))
+    global_path = joinpath(folder, "$(base_name)")
+    !isdir(global_path) && mkpath(global_path)
+    _sim_path = replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-")
+    simulation_path = joinpath(global_path, _sim_path)
+    raw_output = joinpath(simulation_path, "raw_output")
+    mkpath(raw_output)
+    models_json_ouput = joinpath(simulation_path, "models_json")
+    mkpath(models_json_ouput)
+    results_path = joinpath(simulation_path, "results")
+    mkpath(results_path)
+
+    return raw_output, models_json_ouput, results_path
+end
