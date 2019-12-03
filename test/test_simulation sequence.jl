@@ -30,4 +30,13 @@ sequence = SimulationSequence(stage_order = Dict(1 => "UC", 2 => "ED")
           @test !isempty(getfield(sequence, field))
     end
 
+    sim = Simulation(name = "test",
+                 steps = 2,
+                 stages = stages_definition,
+                 stages_sequence = sequence,
+                 simulation_folder= "/Users/jdlara/Desktop/",
+                 verbose = true)
+
+    @test isa(sim.sequence, SimulationSequence)
+
 end

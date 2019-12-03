@@ -39,7 +39,7 @@ end
 mutable struct Simulation
     steps::Int64
     stages::Dict{String, Stage{<:AbstractOperationsProblem}}
-    #ref::SimulationRef
+    sequence::Union{Nothing, SimulationSequence}
     simulation_folder::String
     name::String
     compiled_status::Bool
@@ -47,11 +47,13 @@ mutable struct Simulation
     function Simulation(;name::String,
                         steps::Int64,
                         stages=Dict{Int64, Stage{AbstractOperationsProblem}}(),
+                        stages_sequence=nothing,
                         simulation_folder::String,
                         verbose::Bool = false, kwargs...)
     new(
         steps,
         stages,
+        stages_sequence,
         simulation_folder,
         name,
         false
