@@ -88,7 +88,7 @@ function activepower_constraints!(psi_container::PSIContainer,
                                  devices::IS.FlattenIteratorWrapper{T},
                                  model::DeviceModel{T, <:AbstractThermalDispatchFormulation},
                                  ::Type{<:PM.AbstractPowerModel},
-                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where T<:PSY.ThermalGen
+                                 feed_forward::Nothing) where T<:PSY.ThermalGen
     constraint_data = DeviceRange(length(devices))
     for (ix, d) in enumerate(devices)
         constraint_data.values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
@@ -109,7 +109,7 @@ function activepower_constraints!(psi_container::PSIContainer,
                                  devices::IS.FlattenIteratorWrapper{T},
                                  model::DeviceModel{T, <:AbstractThermalFormulation},
                                  ::Type{<:PM.AbstractPowerModel},
-                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where T<:PSY.ThermalGen
+                                 feed_forward::Nothing) where T<:PSY.ThermalGen
     constraint_data = DeviceRange(length(devices))
     for (ix, d) in enumerate(devices)
         constraint_data.values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
@@ -132,7 +132,7 @@ function activepower_constraints!(psi_container::PSIContainer,
                                   devices::IS.FlattenIteratorWrapper{T},
                                   model::DeviceModel{T, ThermalDispatchNoMin},
                                   ::Type{<:PM.AbstractPowerModel},
-                                  feed_forward::Union{Nothing, AbstractAffectFeedForward}) where T<:PSY.ThermalGen
+                                  feed_forward::Nothing) where T<:PSY.ThermalGen
     constraint_data = DeviceRange(length(devices))
     for (ix, d) in enumerate(devices)
         ub_value = PSY.get_activepowerlimits(PSY.get_tech(d)).max
