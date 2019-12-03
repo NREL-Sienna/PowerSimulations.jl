@@ -1,19 +1,20 @@
 mutable struct SimulationSequence
     initial_time::Dates.DateTime
-    horizons::Dict{Int64, Int64}
-    intervals::Dict{Int64, <:Dates.TimePeriod}
-    feed_forward_chronologies::Dict{Pair{Int64,Int64}, <:AbstractChronology}
-    feedforward::Dict{Tuple{Symbol, Int64}, <:AbstractAffectFeedForward}
-    ini_cond_chronology::Union{Dict{Int64, <:AbstractChronology}, Nothing}
-    cache::Dict{Int64, Vector{<:AbstractCache}}
+    horizons::Dict{String, Int64}
+    intervals::Dict{String, <:Dates.TimePeriod}
+    feed_forward_chronologies::Dict{Pair{String, String}, <:AbstractChronology}
+    feedforward::Dict{Tuple{String, Symbol}, <:AbstractAffectFeedForward}
+    ini_cond_chronology::Dict{String, <:AbstractChronology}
+    cache::Dict{String, Vector{<:AbstractCache}}
 
     function SimulationSequence(;initial_time::Dates.DateTime = Dates.DateTime(2010, 1, 1),
-                                 horizons::Dict{Int64, Int64},
-                                 intervals::Dict{Int64, <:Dates.TimePeriod},
-                                 feed_forward_chronologies::Dict{Pair{Int64,Int64}, <:AbstractChronology} = Dict(),
-                                 feedforward::Dict{Tuple{Symbol, Int64}, <:AbstractAffectFeedForward} = Dict(),
-                                 ini_cond_chronology::Dict{Int64, <:AbstractChronology} = Dict(),
-                                 cache::Dict{Int64, <:Vector{<:AbstractCache}} = Dict())
+                                 horizons::Dict{String, Int64},
+                                 intervals::Dict{String, <:Dates.TimePeriod},
+                                 stage_order::Dict{Int64, String},
+                                 feed_forward_chronologies::Dict{Pair{String, String}, <:AbstractChronology} = Dict(),
+                                 feedforward::Dict{Tuple{String, Symbol}, <:AbstractAffectFeedForward} = Dict(),
+                                 ini_cond_chronology::Dict{String, <:AbstractChronology} = Dict(),
+                                 cache::Dict{String, <:Vector{<:AbstractCache}} = Dict())
         new(
             initial_time,
             horizons,

@@ -38,7 +38,7 @@ end
 
 mutable struct Simulation
     steps::Int64
-    stages::Dict{Int64, Stage{<:AbstractOperationsProblem}}
+    stages::Dict{String, Stage{<:AbstractOperationsProblem}}
     #ref::SimulationRef
     simulation_folder::String
     name::String
