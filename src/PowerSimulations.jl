@@ -10,6 +10,7 @@ export Simulation
 export OperationsProblem
 export OperationsProblemTemplate
 export InitialCondition
+export SimulationSequence
 
 #Network Relevant Exports
 export StandardPTDFModel
@@ -176,6 +177,7 @@ include("core/core_structs/psi_container.jl")
 include("core/core_structs/operations_problem.jl")
 include("core/core_structs/chronology.jl")
 include("core/core_structs/simulations_stages.jl")
+include("core/core_structs/simulation_sequence.jl")
 include("core/core_structs/simulation.jl")
 include("core/core_structs/operations_problem_results.jl")
 include("core/build_cache.jl")
