@@ -21,4 +21,23 @@ mutable struct SimulationSequence
     feedforward::Dict{Int64, Any}
     ini_cond_chronology::Union{Dict{Int64, <:AbstractChronology}, Nothing}
     cache::Dict{Int64, Vector{<:AbstractCache}}
+
+    function SimulationSequence(;initial_time::Dates.DateTime,
+                                 horizons::Dict{Int64, Int64},
+                                 intervals::Dict{Int64, Dates.Period},
+                                 chronologies::Dict{Pair{Int64,Int64}, <:AbstractChronology},
+                                 feedforward::Dict{Int64, Any},
+                                 ini_cond_chronology::Union{Dict{Int64, <:AbstractChronology}, Nothing}
+                                 cache::Dict{Int64, Vector{<:AbstractCache}})
+        new(
+            initial_time,
+            horizons,
+            intervals,
+            chronologies,
+            feedforward,
+            ini_cond_chronology,
+            cache
+        )
+
+    end
 end
