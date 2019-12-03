@@ -6,6 +6,7 @@ mutable struct SimulationRef
     date_ref::Dict{Int64, Dates.DateTime}
     current_time::Dates.DateTime
     reset::Bool
+    daterange::NTuple{2, Dates.DateTime} #Inital Time of the first forecast and Inital Time of the last forecast
 end
 
 function _initialize_sim_ref(steps::Int64, stages_keys::Base.KeySet)
@@ -31,21 +32,19 @@ end
 
 mutable struct Simulation
     steps::Int64
-    stages::Vector{Stage}
-    valid_timeseries::Bool
-    daterange::NTuple{2, Dates.DateTime} #Inital Time of the first forecast and Inital Time of the last forecast
-    ref::SimulationRef
+    stages::Dict{Int64, Stage{<:AbstractOperationsProblem}}
+    #ref::SimulationRef
     simulation_folder::String
-    base_name::String
+    name::String
     compiled_status::Bool
 
-    function Simulation(base_name::String,
+    function Simulation(;name::String,
                         steps::Int64,
-                        stages::Dict{Int64, Stage},
-                        simulation_folder::String;
+                        stages=Dict{Int64, Stage{AbstractOperationsProblem}}(),
+                        simulation_folder::String,
                         verbose::Bool = false, kwargs...)
 
-    sim_ref = _initialize_sim_ref(steps, keys(stages))
+    #sim_ref = _initialize_sim_ref(steps, keys(stages))
     #dates, validation, stages_vector = _build_simulation!(
     #                                                      sim_ref,
     #                                                      steps,
@@ -58,26 +57,14 @@ mutable struct Simulation
 
     new(
         steps,
-        stages_vector,
-        validation,
-        dates,
-        sim_ref,
+        stages,
         simulation_folder,
-        base_name,
+        name,
         false
         )
     end
 end
 
-function Simulation(base_name::String,
-                    steps::Int64,
-                    simulation_folder::String;
-                    verbose::Bool = false, kwargs...)
-    return Simulation(base_name, steps::Int64, Dict{Int64, Stage}(),
-                      simulation_folder; verbose=verbose, kwargs...)
-end
-
-
 ################# accessor functions ####################
 get_steps(s::Simulation) = s.steps
-get_daterange(s::Simulation) = s.daterange
+#get_daterange(s::Simulation) = s.daterange
