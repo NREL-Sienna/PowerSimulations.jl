@@ -3,7 +3,7 @@ mutable struct SimulationSequence
     horizons::Dict{String, Int64}
     intervals::Dict{String, <:Dates.TimePeriod}
     feed_forward_chronologies::Dict{Pair{String, String}, <:AbstractChronology}
-    feedforward::Dict{Tuple{String, Symbol}, <:AbstractAffectFeedForward}
+    feed_forward::Dict{Tuple{String, Symbol}, <:AbstractAffectFeedForward}
     ini_cond_chronology::Dict{String, <:AbstractChronology}
     cache::Dict{String, Vector{<:AbstractCache}}
 
@@ -12,7 +12,7 @@ mutable struct SimulationSequence
                                  intervals::Dict{String, <:Dates.TimePeriod},
                                  stage_order::Dict{Int64, String},
                                  feed_forward_chronologies::Dict{Pair{String, String}, <:AbstractChronology} = Dict(),
-                                 feedforward::Dict{Tuple{String, Symbol}, <:AbstractAffectFeedForward} = Dict(),
+                                 feed_forward::Dict{Tuple{String, Symbol}, <:AbstractAffectFeedForward} = Dict(),
                                  ini_cond_chronology::Dict{String, <:AbstractChronology} = Dict(),
                                  cache::Dict{String, <:Vector{<:AbstractCache}} = Dict())
         new(
@@ -20,7 +20,7 @@ mutable struct SimulationSequence
             horizons,
             intervals,
             feed_forward_chronologies,
-            feedforward,
+            feed_forward,
             ini_cond_chronology,
             cache)
 

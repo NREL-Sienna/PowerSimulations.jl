@@ -35,7 +35,7 @@ mutable struct DeviceModel{D<:PSY.Device,
                            B<:AbstractDeviceFormulation}
     device_type::Type{D}
     formulation::Type{B}
-    feedforward::Union{Nothing, AbstractAffectFeedForward}
+    feed_forward::Union{Nothing, AbstractAffectFeedForward}
     services::Vector{ServiceModel}
 
     function DeviceModel(::Type{D},
@@ -47,5 +47,5 @@ mutable struct DeviceModel{D<:PSY.Device,
     end
 end
 
-get_feedforward(m::DeviceModel) = m.feedforward
+get_feed_forward(m::DeviceModel) = m.feed_forward
 get_services(m::DeviceModel) = m.services

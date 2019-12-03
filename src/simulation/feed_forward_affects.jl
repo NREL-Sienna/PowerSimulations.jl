@@ -4,7 +4,7 @@
               param_reference::UpdateRef,
               var_name::Symbol)
 
-Constructs a parametrized upper bound constraint to implement feedforward from other models.
+Constructs a parametrized upper bound constraint to implement feed_forward from other models.
 The Parameters are initialized using the uppper boundary values of the provided variables.
 
 # Constraints
@@ -55,7 +55,7 @@ end
                         param_reference::NTuple{2, UpdateRef},
                         var_name::Symbol)
 
-Constructs min/max range parametrized constraint from device variable to include feedforward.
+Constructs min/max range parametrized constraint from device variable to include feed_forward.
 
 # Constraints
 
@@ -193,13 +193,13 @@ end
 
 ########################## FeedForward Constraints #########################################
 
-function feedforward!(psi_container::PSIContainer,
+function feed_forward!(psi_container::PSIContainer,
                      device_type::Type{T},
                      ff_model::Nothing) where {T<:PSY.Component}
     return
 end
 
-function feedforward!(psi_container::PSIContainer,
+function feed_forward!(psi_container::PSIContainer,
                      device_type::Type{I},
                      ff_model::UpperBoundFF) where {I<:PSY.StaticInjection}
 
@@ -216,7 +216,7 @@ function feedforward!(psi_container::PSIContainer,
 
 end
 
-function feedforward!(psi_container::PSIContainer,
+function feed_forward!(psi_container::PSIContainer,
                      device_type::Type{I},
                      ff_model::SemiContinuousFF) where {I<:PSY.StaticInjection}
 

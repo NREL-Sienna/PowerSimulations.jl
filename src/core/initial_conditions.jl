@@ -1,4 +1,3 @@
-abstract type InitialConditionQuantity end
 struct DevicePower <: InitialConditionQuantity end
 struct DeviceStatus <: InitialConditionQuantity end
 struct TimeDurationON <: InitialConditionQuantity end

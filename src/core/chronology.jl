@@ -1,5 +1,3 @@
-abstract type AbstractChronology end
-
 struct Consecutive <: AbstractChronology end
 
 struct Synchronize <: AbstractChronology

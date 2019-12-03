@@ -81,7 +81,7 @@ function _update_cache!(c::TimeStatusChange, stage::Stage)
 end
 
 #########################FeedForward Variables Updating#####################################
-function feedforward_update(synch::Chron,
+function feed_forward_update(synch::Chron,
                             param_reference::UpdateRef{JuMP.VariableRef},
                             param_array::JuMPParamArray,
                             to_stage::Stage,
@@ -233,7 +233,7 @@ function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
     chronology_ref = sim.stages[stage_number].chronology_ref
     current_stage = sim.stages[stage_number]
     for (k, ref) in chronology_ref
-        feedforward_update(ref, param_reference, param_array, current_stage, sim.stages[k])
+        feed_forward_update(ref, param_reference, param_array, current_stage, sim.stages[k])
     end
 
     return

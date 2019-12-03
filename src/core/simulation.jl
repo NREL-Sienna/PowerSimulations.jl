@@ -1,3 +1,70 @@
+mutable struct SimulationInternal
+    raw_dir::String
+    models_dir::String
+    results_dir::String
+    run_count::Dict{Int64, Dict{Int64, Int64}}
+    date_ref::Dict{Int64, Dates.DateTime}
+    date_range::NTuple{2, Dates.DateTime} #Inital Time of the first forecast and Inital Time of the last forecast
+    current_time::Dates.DateTime
+    reset::Bool
+    compiled_status::Bool
+end
+
+function SimulationInternal(raw_dir::AbstractString,
+                             models_dir::AbstractString,
+                             results_dir::AbstractString,
+                             steps::Int64,
+                             stages_keys::Base.KeySet)
+    count_dict = Dict{Int64, Dict{Int64, Int64}}()
+
+    for s in 1:steps
+        count_dict[s] = Dict{Int64, Int64}()
+        for st in stages_keys
+            count_dict[s][st] = 0
+        end
+    end
+
+    return SimulationInternal(
+        raw_dir,
+        models_dir,
+        results_dir,
+        count_dict,
+        Dict{Int64, Dates.DateTime}(),
+        (Dates.now(), Dates.now())
+        Dates.now(),
+        true,
+        false
+    )
+end
+
+mutable struct Simulation
+    steps::Int64
+    stages::Dict{String, Stage{<:AbstractOperationsProblem}}
+    sequence::Union{Nothing, SimulationSequence}
+    simulation_folder::String
+    name::String
+    interal::Union{Nothing, SimulationInternal}
+
+    function Simulation(;name::String,
+                        steps::Int64,
+                        stages=Dict{String, Stage{AbstractOperationsProblem}}(),
+                        stages_sequence=nothing,
+                        simulation_folder::String,
+                        verbose::Bool = false, kwargs...)
+    new(
+        steps,
+        stages,
+        stages_sequence,
+        simulation_folder,
+        name,
+        nothing)
+    end
+end
+
+################# accessor functions ####################
+get_steps(s::Simulation) = s.steps
+get_date_range(s::Simulation) = s.date_range
+
 function _validate_steps(stages::Dict{Int64, Stage},
                          steps::Int64,
                          stage_initial_times::Dict{Int64, Vector{Dates.DateTime}})
@@ -42,7 +109,7 @@ function _populate_cache!(stage::Stage)
     return
 end
 
-function _build_stages(sim_ref::SimulationRef,
+function _build_stages(sim_ref::SimulationInternal,
                        stages::Dict{Int64, Stage},
                        verbose::Bool = true;
                        kwargs...)
@@ -81,7 +148,7 @@ function _build_stages(sim_ref::SimulationRef,
     return mod_stages
 end
 
-function _feedforward_rule_check(::Type{T},
+function _feed_forward_rule_check(::Type{T},
                               stage_number_from::Int64,
                               from_stage::Stage,
                               stage_number_to::Int64,
@@ -90,66 +157,39 @@ function _feedforward_rule_check(::Type{T},
     return
 end
 
-
-function _feedforward_rule_check(synch::Synchronize,
-                                 stage_number_from::Int64,
-                                 from_stage::Stage,
-                                 stage_number_to::Int64,
-                                 to_stage::Stage)
-    #Don't check for same Stage.
-    stage_number_from == stage_number_to && return
-    from_stage_horizon = PSY.get_forecasts_horizon(from_stage.sys)
-    to_stage_count = get_execution_count(to_stage)
-    to_stage_synch = synch.to_steps
-    from_stage_synch = synch.from_horizon
-
-    if from_stage_synch > from_stage_horizon
-        error("The lookahead length $(from_stage_horizon) in stage is insufficient to synchronize with $(from_stage_synch) feedforward steps")
-    end
-
-    if to_stage_synch*from_stage_synch != to_stage_count
-        error("The execution total in stage is inconsistent with a chronology
-                of $(from_stage_synch) feedforward steps and $(to_stage_synch) runs. The expected
-                number of executions is $(to_stage_synch*from_stage_synch)")
-    end
-
-    if (from_stage_horizon % from_stage_synch) != 0
-        error("The number of feedforward steps $(from_stage_horizon) in stage
-               needs to be a mutiple of the horizon length $(from_stage_horizon)
-               of stage to use Synchronize with parameters ($(from_stage_synch), $(to_stage_synch))")
-    end
-
-    return
-end
-
-_feedforward_rule_check(sync::Consecutive,
-                        stage_number_from::Int64,
-                        from_stage::Stage,
-                        stage_number_to::Int64,
-                        to_stage::Stage) = nothing
-
- _feedforward_rule_check(sync::RecedingHorizon,
-                         stage_number_from::Int64,
-                         from_stage::Stage,
-                         stage_number_to::Int64,
-                         to_stage::Stage) = nothing
-
 function _check_chronology_ref(stages::Dict{Int64, Stage})
     for (stage_number,stage) in stages
         for (key, chron) in stage.chronology_ref
             key < 1 && continue
-            _feedforward_rule_check(chron, key, stages[key], stage_number, stage)
+            _feed_forward_rule_check(chron, key, stages[key], stage_number, stage)
         end
     end
     return
 end
 
-function _build_simulation!(sim_ref::SimulationRef,
-                            steps::Int64,
-                            stages::Dict{Int64, Stage};
-                            verbose::Bool = false, kwargs...)
+function _prepare_workspace(base_name::AbstractString, folder::AbstractString)
+    !isdir(folder) && throw(ArgumentError("Specified folder is not valid"))
+    global_path = joinpath(folder, "$(base_name)")
+    !isdir(global_path) && mkpath(global_path)
+    _sim_path = replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-")
+    simulation_path = joinpath(global_path, _sim_path)
+    raw_output = joinpath(simulation_path, "raw_output")
+    mkpath(raw_output)
+    models_json_ouput = joinpath(simulation_path, "models_json")
+    mkpath(models_json_ouput)
+    results_path = joinpath(simulation_path, "results")
+    mkpath(results_path)
+
+    return raw_output, models_json_ouput, results_path
+end
+
+function build!(sim::Simulation; verbose::Bool = false, kwargs...)
+    raw_dir, models_dir, results_dir = _prepare_workspace(sim.base_name, sim.simulation_folder)
+    internal = SimulationInternal(raw_dir, models_dir, results_dir, steps, keys(sim.stages_sequence))
     stage_initial_times = Dict{Int64, Vector{Dates.DateTime}}()
-    for (stage_number, stage) in stages
+    for (stage_number, stage_name) in stages_sequence
+        stage = get(stages, stage_name, nothing)
+        isnothing(stage) && throw(ArgumentError("Stage $(stage_name) not found in the stages definitions"))
         PSY.check_forecast_consistency(stage.sys)
         if PSY.are_forecasts_contiguous(stage.sys)
             stage_initial_times[stage_number] = PSY.generate_initial_times(stage.sys,
@@ -160,8 +200,9 @@ function _build_simulation!(sim_ref::SimulationRef,
             stage_initial_times[stage_number] = get_forecast_initial_times(stage.sys)
         end
     end
-    _validate_steps(stages, steps, stage_initial_times)
-    _check_chronology_ref(stages)
-    dates, validation = _get_dates(stages)
-    return dates, validation, _build_stages(sim_ref, stages, verbose = verbose; kwargs...)
+    #_validate_steps(stages, steps, stage_initial_times)
+    #_check_chronology_ref(stages)
+    #dates, validation = _get_dates(stages)
+    #_build_stages(sim_ref, stages, verbose = verbose; kwargs...)
+    return
 end

@@ -1,5 +1,3 @@
-abstract type Results end
-
 get_results(result::Results) = nothing
 struct OperationsProblemResults <: Results
     variables::Dict{Symbol, DataFrames.DataFrame}
@@ -78,7 +76,7 @@ function load_operation_results(folder_path::AbstractString)
     for name in variable_list
         variable_name = splitext(name)[1]
         file_path = joinpath(folder_path, name)
-        variables[Symbol(variable_name)] = Feather.read(file_path) 
+        variables[Symbol(variable_name)] = Feather.read(file_path)
     end
     optimizer = read_json(joinpath(folder_path, "optimizer_log.json"))
     time_stamp = Feather.read(joinpath(folder_path, "time_stamp.feather"))

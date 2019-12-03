@@ -54,12 +54,12 @@ export ThermalDispatch
 export ThermalRampLimited
 export ThermalDispatchNoMin
 
-# feedforward sequences
+# feed_forward sequences
 export RecedingHorizon
 export Synchronize
 export Consecutive
 
-# feedforward models
+# feed_forward models
 export UpperBoundFF
 export SemiContinuousFF
 export RangeFF
@@ -96,8 +96,9 @@ export set_device_model!
 export set_branch_model!
 export set_device_model!
 ## Sim Model Exports
-export make_references
+export build!
 export execute!
+export make_references
 ## Utils Exports
 export SimulationResultsReference
 export get_sim_resolution
@@ -165,31 +166,29 @@ JuMP.Model(optimizer::Nothing; kwargs...) = JuMP.Model(kwargs...)
 include("utils/utils.jl")
 
 #Models and constructors
+include("core/abstract_types.jl")
 include("devices_models/devices/common/constraints_structs.jl")
-include("core/core_structs/aux_structs.jl")
-include("core/core_structs/cache.jl")
-include("core/core_structs/feedforward.jl")
+include("core/aux_structs.jl")
+include("core/chronology.jl")
 include("services_models/services_model.jl")
 include("devices_models/device_model.jl")
 include("network_models/networks.jl")
-include("core/core_structs/initial_conditions.jl")
-include("core/core_structs/psi_container.jl")
-include("core/core_structs/operations_problem.jl")
-include("core/core_structs/chronology.jl")
-include("core/core_structs/simulations_stages.jl")
-include("core/core_structs/simulation_sequence.jl")
-include("core/core_structs/simulation.jl")
-include("core/core_structs/operations_problem_results.jl")
-include("core/build_cache.jl")
-include("core/build_operations.jl")
-include("core/build_simulations.jl")
+include("core/initial_conditions.jl")
+include("core/psi_container.jl")
+include("core/operations_problem.jl")
+include("core/simulation_stages.jl")
+include("core/cache.jl")
+include("core/feed_forward.jl")
+include("core/simulation_sequence.jl")
+include("core/simulation.jl")
+include("core/operations_problem_results.jl")
 
 #Services Models
 include("services_models/reserves.jl")
 include("services_models/services_constructor.jl")
 
 #FeedForward Model Files
-include("simulation/feedforward_affects.jl")
+include("simulation/feed_forward_affects.jl")
 
 #Device Modeling components
 include("devices_models/devices/common.jl")
