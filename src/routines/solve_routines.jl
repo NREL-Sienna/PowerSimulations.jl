@@ -95,7 +95,6 @@ results, include a vector of the variable names to be included
 """
 
 function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
-    _prepare_workspace!(sim.ref, sim.base_name, sim.simulation_folder)
     if sim.ref.reset
         sim.ref.reset = false
     elseif sim.ref.reset == false
@@ -110,7 +109,7 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
             for run in 1:stage.executions
                 sim.ref.current_time = sim.ref.date_ref[ix]
                 verbose && println("Simulation TimeStamp: $(sim.ref.current_time)")
-                raw_results_path = joinpath(sim.ref.raw, "step-$(s)-stage-$(ix)", replace_chars("$(sim.ref.current_time)", ":", "-"))
+                raw_results_path = joinpath(sim.ref.raw_dir, "step-$(s)-stage-$(ix)", replace_chars("$(sim.ref.current_time)", ":", "-"))
                 mkpath(raw_results_path)
                 update_stage!(stage, s, sim)
                 dual_constraints = get(kwargs, :dual_constraints, nothing)

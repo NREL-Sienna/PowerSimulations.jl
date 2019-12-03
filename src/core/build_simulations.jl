@@ -1,23 +1,3 @@
-function _prepare_workspace!(ref::SimulationRef, base_name::AbstractString, folder::AbstractString)
-    !isdir(folder) && throw(ArgumentError("Specified folder is not valid"))
-    global_path = joinpath(folder, "$(base_name)")
-    !isdir(global_path) && mkpath(global_path)
-    _sim_path = replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-")
-    simulation_path = joinpath(global_path, _sim_path)
-    raw_ouput = joinpath(simulation_path, "raw_output")
-    mkpath(raw_ouput)
-    models_json_ouput = joinpath(simulation_path, "models_json")
-    mkpath(models_json_ouput)
-    results_path = joinpath(simulation_path, "results")
-    mkpath(results_path)
-
-    ref.raw = raw_ouput
-    ref.models = models_json_ouput
-    ref.results = results_path
-
-    return
-end
-
 function _validate_steps(stages::Dict{Int64, Stage},
                          steps::Int64,
                          stage_initial_times::Dict{Int64, Vector{Dates.DateTime}})
@@ -90,7 +70,7 @@ function _build_stages(sim_ref::SimulationRef,
                 stage.model,
                 stage.sys;
                 kwargs...)
-        stage_path = joinpath(sim_ref.models, "stage_$(key)_model")
+        stage_path = joinpath(sim_ref.models_dir, "stage_$(key)_model")
         mkpath(stage_path)
         _write_psi_container(psi_container, joinpath(stage_path, "optimization_model.json"))
         system_to_file && PSY.to_json(stage.sys, joinpath(stage_path , "sys_data.json"))

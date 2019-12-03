@@ -3,7 +3,7 @@ struct SimulationResultsReference
     results_folder::String
     chronologies::Dict
     function SimulationResultsReference(sim::Simulation)
-        date_run = convert(String, last(split(dirname(sim.ref.raw), "/")))
+        date_run = convert(String, last(split(dirname(sim.ref.raw_dir), "/")))
         ref = make_references(sim, date_run)
         chronologies = Dict()
         for (ix, stage) in enumerate(sim.stages)
@@ -11,7 +11,7 @@ struct SimulationResultsReference
             resolution = convert(Dates.Minute,get_sim_resolution(stage))
             chronologies["stage-$ix"] = convert(Int64,(interval/resolution))
         end
-        new(ref, sim.ref.results, chronologies)
+        new(ref, sim.ref.results_dir, chronologies)
     end
 end
 
@@ -67,7 +67,7 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
             for run in 1:stage.executions
                 sim.ref.current_time = sim.ref.date_ref[ix]
                 for name in variable_names
-                    full_path = joinpath(sim.ref.raw, "step-$(s)-stage-$(ix)",
+                    full_path = joinpath(sim.ref.raw_dir, "step-$(s)-stage-$(ix)",
                                 replace_chars("$(sim.ref.current_time)", ":", "-"), "$(name).feather")
                     if isfile(full_path)
                         date_df = DataFrames.DataFrame(Date = sim.ref.current_time,
