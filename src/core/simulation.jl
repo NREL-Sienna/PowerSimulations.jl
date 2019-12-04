@@ -2,6 +2,7 @@ mutable struct SimulationInternal
     raw_dir::String
     models_dir::String
     results_dir::String
+    stages_count::Int64
     run_count::Dict{Int64, Dict{Int64, Int64}}
     date_ref::Dict{Int64, Dates.DateTime}
     date_range::NTuple{2, Dates.DateTime} #Inital Time of the first forecast and Inital Time of the last forecast
@@ -28,6 +29,7 @@ function SimulationInternal(raw_dir::AbstractString,
         raw_dir,
         models_dir,
         results_dir,
+        length(stages_keys),
         count_dict,
         Dict{Int64, Dates.DateTime}(),
         (Dates.now(), Dates.now()),
@@ -67,6 +69,13 @@ end
 ################# accessor functions ####################
 get_steps(s::Simulation) = s.steps
 get_date_range(s::Simulation) = s.internal.date_range
+get_stage(s::Simulation, name::String) = get(s.stages, name, nothing)
+get_stage(s::Simulation, number::Int64) = get(s.stages, s.sequence.order[number], nothing)
+get_last_stage(s::Simulation) = get_stage(s, s.internal.stages_count)
+function get_simulation_time(s::Simulation, stage_number::Int64)
+    return s.internal.date_ref[stage_number]
+end
+
 
 function _check_chronologies(sim::Simulation)
     for (key, chron) in sim.sequence.feed_forward_chronologies
@@ -194,7 +203,7 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
         stage = get(sim.stages, stage_name, nothing)
         stage_interval = sim.sequence.intervals[stage_name]
         executions = Int(sim.step_resolution/stage_interval)
-        stage.internal = StageInternal(stage_number, executions, nothing)
+        stage.internal = StageInternal(stage_number, executions, 0, nothing)
         isnothing(stage) && throw(ArgumentError("Stage $(stage_name) not found in the stages definitions"))
         PSY.check_forecast_consistency(stage.sys)
         # Check this is actually necessary
@@ -210,5 +219,6 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
     end
     _check_steps(sim, stage_initial_times)
     _build_stages!(sim, verbose = verbose; kwargs...)
+    sim.internal.compiled_status = true
     return
 end
