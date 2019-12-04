@@ -49,25 +49,23 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
 end
 
 function _run_stage(stage::Stage, start_time::Dates.DateTime, results_path::String; kwargs...)
-    if stage.psi_container.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
-        error("No Optimizer has been defined, can't solve the operational problem stage $(stage.internal.number)")
-    end
+    @assert stage.internal.psi_container.JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
     timed_log = Dict{Symbol, Any}()
     _, timed_log[:timed_solve_time],
     timed_log[:solve_bytes_alloc],
-    timed_log[:sec_in_gc] = @timed JuMP.optimize!(stage.psi_container.JuMPmodel)
-    model_status = JuMP.primal_status(stage.psi_container.JuMPmodel)
+    timed_log[:sec_in_gc] = @timed JuMP.optimize!(stage.internal.psi_container.JuMPmodel)
+    model_status = JuMP.primal_status(stage.internal.psi_container.JuMPmodel)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("Stage $(stage.internal.number) status is $(model_status)")
     end
     retrieve_duals = get(kwargs, :duals, nothing)
-    if !isnothing(retrieve_duals) && !isnothing(get_constraints(stage.psi_container))
+    if !isnothing(retrieve_duals) && !isnothing(get_constraints(stage.internal.psi_container))
         _export_model_result(stage, start_time, results_path, retrieve_duals)
     else
         _export_model_result(stage, start_time, results_path)
     end
-    _export_optimizer_log(timed_log, stage.psi_container, results_path)
-    stage.execution_count += 1
+    _export_optimizer_log(timed_log, stage.internal.psi_container, results_path)
+    stage.internal.execution_count += 1
     return
 end
 
