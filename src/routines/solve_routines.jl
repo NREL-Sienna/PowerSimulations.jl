@@ -104,7 +104,8 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
     steps = get_steps(sim)
     for s in 1:steps
         verbose && println("Step $(s)")
-        for (stage_number, stage_name) in sim.sequence.order
+        for stage_number in 1:sim.internal.stages_count
+            stage_name = sim.sequence.order[stage_number]
             stage = get(sim.stages, stage_name, nothing)
             verbose && println("Stage $(stage_number)-$(stage_name)")
             stage_interval = sim.sequence.intervals[stage_name]
@@ -117,10 +118,10 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
                 dual_constraints = get(kwargs, :dual_constraints, nothing)
                 _run_stage(stage, sim.internal.current_time, raw_results_path; duals = dual_constraints)
                 sim.internal.run_count[s][stage_number] += 1
-                sim.internal.date_ref[stage_number] = sim.internal.date_ref[stage_number] + interval
+                sim.internal.date_ref[stage_number] = sim.internal.date_ref[stage_number] + stage_interval
             end
-            @assert stage.executions == stage.execution_count
-            stage.execution_count = 0 # reset stage execution_count
+            @assert stage.internal.executions == stage.internal.execution_count
+            stage.internal.execution_count = 0 # reset stage execution_count
         end
 
     end

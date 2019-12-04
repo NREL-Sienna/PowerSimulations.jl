@@ -55,7 +55,7 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
         variables = Dict{Symbol, Any}()
         interval = stage.interval
         variable_names = (collect(keys(sim.stages[ix].psi_container.variables)))
-        if :dual_constraints in keys(kwargs) && !isnothing(get_constraints(stage.psi_container))
+        if :dual_constraints in keys(kwargs) && !isnothing(get_constraints(stage.internal.psi_container))
             dual_cons = _concat_string(kwargs[:dual_constraint])
             variable_names = vcat(variable_names, dual_cons)
         end

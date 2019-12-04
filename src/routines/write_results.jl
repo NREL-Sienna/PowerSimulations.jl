@@ -76,7 +76,7 @@ function _write_data(op_problem::OperationsProblem, save_path::AbstractString; k
 end
 
 function _write_data(stage::Stage, save_path::AbstractString; kwargs...)
-    _write_data(stage.psi_container, save_path; kwargs...)
+    _write_data(stage.internal.psi_container, save_path; kwargs...)
     return
 end
 
