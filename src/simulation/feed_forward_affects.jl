@@ -220,9 +220,9 @@ function feed_forward!(psi_container::PSIContainer,
                      device_type::Type{I},
                      ff_model::SemiContinuousFF) where {I<:PSY.StaticInjection}
 
-    bin_var = Symbol(get_bin_prefix(ff_model), "_$(I)")
+    bin_var = Symbol(get_binary_from_stage(ff_model), "_$(I)")
     parameter_ref = UpdateRef{JuMP.VariableRef}(bin_var)
-    for prefix in get_vars_prefix(ff_model)
+    for prefix in get_affected_variables(ff_model)
         var_name = Symbol(prefix, "_$(I)")
         semicontinuousrange_ff(psi_container,
                                Symbol("FFbin_$(I)"),

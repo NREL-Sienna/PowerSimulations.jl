@@ -15,7 +15,7 @@ struct RecedingHorizon <: AbstractChronology
     end
 end
 
-function validate_chronology(synch::Synchronize,
+function check_chronology(synch::Synchronize,
                              stages::Pair,
                              horizons::Dict{String, Int64})
     from_stage_horizon = horizons[stages.first]
@@ -35,11 +35,11 @@ function validate_chronology(synch::Synchronize,
     return
 end
 
-validate_chronology(sync::Consecutive, stages::Pair, horizons::Dict{String, Int64}) = nothing
+check_chronology(sync::Consecutive, stages::Pair, horizons::Dict{String, Int64}) = nothing
 
-validate_chronology(sync::RecedingHorizon, stages::Pair, horizons::Dict{String, Int64}) = nothing
+check_chronology(sync::RecedingHorizon, stages::Pair, horizons::Dict{String, Int64}) = nothing
 
-function validate_chronology(::T, stages::Pair, horizons::Dict{String, Int64}) where T <: AbstractChronology
+function check_chronology(::T, stages::Pair, horizons::Dict{String, Int64}) where T <: AbstractChronology
     error("Feedforward Model $(T) not implemented")
     return
 end

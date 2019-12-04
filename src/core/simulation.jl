@@ -68,9 +68,9 @@ end
 get_steps(s::Simulation) = s.steps
 get_date_range(s::Simulation) = s.internal.date_range
 
-function _validate_chronologies(sim::Simulation)
+function _check_chronologies(sim::Simulation)
     for (key, chron) in sim.sequence.feed_forward_chronologies
-        validate_chronology(chron, key, sim.sequence.horizons)
+        check_chronology(chron, key, sim.sequence.horizons)
     end
     return
 end
@@ -91,7 +91,7 @@ function _prepare_workspace(base_name::AbstractString, folder::AbstractString)
     return raw_output, models_json_ouput, results_path
 end
 
-function _validate_dates(sim::Simulation)
+function _check_dates!(sim::Simulation)
     k = keys(sim.sequence.order)
     k_size = length(k)
     range = Vector{Dates.DateTime}(undef, 2)
@@ -115,10 +115,20 @@ function _validate_dates(sim::Simulation)
     return
 end
 
-function _attach_feedforward()
+function _attach_feed_forward!(sim::Simulation, stage_name::String)
+    stage = get(sim.stages, stage_name, nothing)
+    feed_forward = filter(p->(p.first[1] == stage_name), sim.sequence.feed_forward)
+    for (key, ff) in feed_forward
+        #key[1] = Stage name, key[2] = template field name, key[3] = device model key
+        field_dict = getfield(stage.template, key[2])
+        device_model = get(field_dict, key[3], nothing)
+        isnothing(device_model) && throw(ArgumentError("Device model $(key[3]) not found in stage $(stage_name)"))
+        device_model.feed_forward = ff
+    end
+    return
 end
 
-function _validate_steps(sim::Simulation, stage_initial_times::Dict{Int64, Vector{Dates.DateTime}})
+function _check_steps(sim::Simulation, stage_initial_times::Dict{Int64, Vector{Dates.DateTime}})
     for (stage_number, stage_name) in sim.sequence.order
         forecast_count = length(stage_initial_times[stage_number])
         stage = get(sim.stages, stage_name, nothing)
@@ -141,12 +151,12 @@ function _populate_caches!(sim::Simulation, stage_name::String)
     return
 end
 
-function _build_stages(sim::Simulation, verbose::Bool = true; kwargs...)
+function _build_stages!(sim::Simulation, verbose::Bool = true; kwargs...)
     system_to_file = get(kwargs, :system_to_file, true)
     for (stage_number, stage_name) in sim.sequence.order
         verbose && @info("Building Stage $(stage_number)-$(stage_name)")
         horizon = sim.sequence.horizons[stage_name]
-        stage = sim.stages[stage_name]
+        stage = get(sim.stages, stage_name, nothing)
         stage.internal.psi_container = PSIContainer(stage.template.transmission,
                                                     stage.sys,
                                                     stage.optimizer;
@@ -170,10 +180,10 @@ function _build_stages(sim::Simulation, verbose::Bool = true; kwargs...)
 end
 
 function build!(sim::Simulation; verbose::Bool = false, kwargs...)
-    _validate_chronologies(sim)
+    _check_chronologies(sim)
     raw_dir, models_dir, results_dir = _prepare_workspace(sim.name, sim.simulation_folder)
     sim.internal = SimulationInternal(raw_dir, models_dir, results_dir, sim.steps, keys(sim.sequence.order))
-    _validate_dates(sim)
+    _check_dates!(sim)
     stage_initial_times = Dict{Int64, Vector{Dates.DateTime}}()
     if sim.sequence.initial_time == Dates.DateTime(0)
         sim.sequence.initial_time = PSY.get_forecast_initial_times(sim.stages[sim.sequence.order[1]].sys)[1]
@@ -196,9 +206,9 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
         else
             stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage.sys)
         end
-        _attach_feedforward()
+        _attach_feed_forward!(sim, stage_name)
     end
-    _validate_steps(sim, stage_initial_times)
-    _build_stages(sim, verbose = verbose; kwargs...)
+    _check_steps(sim, stage_initial_times)
+    _build_stages!(sim, verbose = verbose; kwargs...)
     return
 end
