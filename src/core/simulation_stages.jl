@@ -47,7 +47,7 @@ get_template(s::Stage) = s.template
 get_number(s::Stage) = s.internal.number
 
 # This makes the choice in which variable to get from the results.
-function get_stage_variable(chron::Type{RecedingHorizon},
+function get_stage_variable(::Type{RecedingHorizon},
                            from_stage::Stage,
                            device_name::String,
                            var_ref::UpdateRef,
@@ -57,7 +57,7 @@ function get_stage_variable(chron::Type{RecedingHorizon},
     return JuMP.value(variable[device_name, step])
 end
 
-function get_stage_variable(chron::Type{Consecutive},
+function get_stage_variable(::Type{Consecutive},
                              from_stage::Stage,
                              device_name::String,
                              var_ref::UpdateRef,
@@ -67,7 +67,7 @@ function get_stage_variable(chron::Type{Consecutive},
     return JuMP.value(variable[device_name, step])
 end
 
-function get_stage_variable(chron::Type{Synchronize},
+function get_stage_variable(::Type{Synchronize},
                             from_stage::Stage,
                             device_name::String,
                             var_ref::UpdateRef,
