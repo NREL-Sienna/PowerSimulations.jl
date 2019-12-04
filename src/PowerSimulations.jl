@@ -187,9 +187,6 @@ include("core/operations_problem_results.jl")
 include("services_models/reserves.jl")
 include("services_models/services_constructor.jl")
 
-#FeedForward Model Files
-include("simulation/feed_forward_affects.jl")
-
 #Device Modeling components
 include("devices_models/devices/common.jl")
 include("devices_models/devices/renewable_generation.jl")
@@ -224,13 +221,12 @@ include("network_models/network_constructor.jl")
 #include("operation_templates/unit_commitment.jl")
 #include("operation_templates/opf.jl")
 
-#Simulations Model Files
-include("simulation/stage_update.jl")
-
 #Routines
 include("routines/make_initial_conditions.jl")
 include("routines/get_results.jl")
+include("routines/stage_update.jl")
 include("routines/solve_routines.jl")
+
 
 #Utils
 include("utils/optimization_debugging.jl")
