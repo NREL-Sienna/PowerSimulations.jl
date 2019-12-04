@@ -2,7 +2,7 @@
 mutable struct StageInternal
     number::Int64
     execution_count::Int64
-    psi_container::PSIContainer
+    psi_container::Union{Nothing, PSIContainer}
 end
 
 mutable struct Stage{M<:AbstractOperationsProblem}
