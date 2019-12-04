@@ -6,7 +6,7 @@ function parameter_update!(param_reference::UpdateRef{T},
     devices = PSY.get_components(T, stage.sys)
     initial_forecast_time = get_simulation_time(sim, stage_number)
     horizon = length(model_time_steps(stage.internal.psi_container))
-    param_array = get_parameters(stage.interal.psi_container, param_reference)
+    param_array = get_parameters(stage.internal.psi_container, param_reference)
     for d in devices
         forecast = PSY.get_forecast(PSY.Deterministic,
                                     d,
@@ -29,7 +29,7 @@ function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
                            stage_number::Int64,
                            sim::Simulation)
     stage = get_stage(sim, stage_number)
-    param_array = get_parameters(stage.interal.psi_container, param_reference)
+    param_array = get_parameters(stage.internal.psi_container, param_reference)
     chronology_ref = get_stage(sim, stage_number).chronology_ref
     current_stage = get_stage(sim, stage_number)
     for (k, ref) in chronology_ref
