@@ -30,7 +30,7 @@ function SimulationInternal(raw_dir::AbstractString,
         results_dir,
         count_dict,
         Dict{Int64, Dates.DateTime}(),
-        (Dates.now(), Dates.now())
+        (Dates.now(), Dates.now()),
         Dates.now(),
         true,
         false
@@ -39,6 +39,7 @@ end
 
 mutable struct Simulation
     steps::Int64
+    step_resolution::Dates.TimePeriod
     stages::Dict{String, Stage{<:AbstractOperationsProblem}}
     sequence::Union{Nothing, SimulationSequence}
     simulation_folder::String
@@ -47,12 +48,14 @@ mutable struct Simulation
 
     function Simulation(;name::String,
                         steps::Int64,
+                        step_resolution::Dates.TimePeriod,
                         stages=Dict{String, Stage{AbstractOperationsProblem}}(),
                         stages_sequence=nothing,
                         simulation_folder::String,
                         verbose::Bool = false, kwargs...)
     new(
         steps,
+        step_resolution,
         stages,
         stages_sequence,
         simulation_folder,
@@ -65,23 +68,27 @@ end
 get_steps(s::Simulation) = s.steps
 get_date_range(s::Simulation) = s.date_range
 
-function _validate_steps(stages::Dict{Int64, Stage},
-                         steps::Int64,
-                         stage_initial_times::Dict{Int64, Vector{Dates.DateTime}})
-    for (stage_number, s) in stages
+function _validate_steps(sim::Simulation, stage_initial_times::Dict{Int64, Vector{Dates.DateTime}})
+    for (stage_number, stage_name) in sim.sequence.order
         forecast_count = length(stage_initial_times[stage_number])
-
-        if steps*s.execution_count > forecast_count #checks that there are enough time series to run
+        stage = get(sim.stages, stage_name, nothing)
+        if steps*stage.internal.execution_count > forecast_count
             error("The number of available time series is not enough to perform the
                    desired amount of simulation steps.")
         end
-
     end
     return
 end
 
-function _get_dates(stages::Dict{Int64, Stage})
-    k = keys(stages)
+function _validate_chronologies(sim::Simulation)
+    for (key, chron) in sim.sequence.feed_forward_chronologies
+        validate_chronology(chron, key, sim.sequence.horizons)
+    end
+    return
+end
+
+function _validate_dates(sim::Simulation)
+    k = keys(sim.sequence.order)
     k_size = length(k)
     range = Vector{Dates.DateTime}(undef, 2)
     @assert k_size == maximum(k)
@@ -98,7 +105,7 @@ function _get_dates(stages::Dict{Int64, Stage})
         (i == k_size && (range[end] = initial_times[end]))
     end
 
-    return Tuple(range), true
+    return Tuple(range)
 end
 
 function _populate_cache!(stage::Stage)
@@ -148,25 +155,6 @@ function _build_stages(sim_ref::SimulationInternal,
     return mod_stages
 end
 
-function _feed_forward_rule_check(::Type{T},
-                              stage_number_from::Int64,
-                              from_stage::Stage,
-                              stage_number_to::Int64,
-                              to_stage::Stage,) where T <: AbstractChronology
-    error("Feedforward Model $(T) not implemented")
-    return
-end
-
-function _check_chronology_ref(stages::Dict{Int64, Stage})
-    for (stage_number,stage) in stages
-        for (key, chron) in stage.chronology_ref
-            key < 1 && continue
-            _feed_forward_rule_check(chron, key, stages[key], stage_number, stage)
-        end
-    end
-    return
-end
-
 function _prepare_workspace(base_name::AbstractString, folder::AbstractString)
     !isdir(folder) && throw(ArgumentError("Specified folder is not valid"))
     global_path = joinpath(folder, "$(base_name)")
@@ -184,25 +172,33 @@ function _prepare_workspace(base_name::AbstractString, folder::AbstractString)
 end
 
 function build!(sim::Simulation; verbose::Bool = false, kwargs...)
-    raw_dir, models_dir, results_dir = _prepare_workspace(sim.base_name, sim.simulation_folder)
-    internal = SimulationInternal(raw_dir, models_dir, results_dir, steps, keys(sim.stages_sequence))
+    raw_dir, models_dir, results_dir = _prepare_workspace(sim.name, sim.simulation_folder)
+    internal = SimulationInternal(raw_dir, models_dir, results_dir, sim.steps, keys(sim.sequence.order))
     stage_initial_times = Dict{Int64, Vector{Dates.DateTime}}()
-    for (stage_number, stage_name) in stages_sequence
-        stage = get(stages, stage_name, nothing)
+    if sim.sequence.initial_time == Dates.DateTime(0)
+        sim.sequence.initial_time = PSY.get_forecast_initial_times(stages[sim.sequence.order[1]].sys)[1]
+        @warn("Initial time not defined as an argument, it will be infered from the data.
+               Initial Simulation Time set to $(sim.sequence.initial_time)")
+    end
+    for (stage_number, stage_name) in sim.sequence.order
+        stage = get(sim.stages, stage_name, nothing)
+        stage_interval = sim.sequence.intervals[stage_name]
+        executions = Int(sim.step_resolution/stage_interval)
+        stage.internal = StageInternal(stage_number, executions, nothing)
         isnothing(stage) && throw(ArgumentError("Stage $(stage_name) not found in the stages definitions"))
         PSY.check_forecast_consistency(stage.sys)
         if PSY.are_forecasts_contiguous(stage.sys)
             stage_initial_times[stage_number] = PSY.generate_initial_times(stage.sys,
-                                                                        stage.interval,
-                                                                        stage.horizon;
-                                                                        initial_time = stage.initial_time)
+                                                    stage_interval,
+                                                    sim.sequence.horizons[stage_name],
+                                                    initial_time = sim.sequence.initial_time)
         else
             stage_initial_times[stage_number] = get_forecast_initial_times(stage.sys)
         end
     end
-    #_validate_steps(stages, steps, stage_initial_times)
-    #_check_chronology_ref(stages)
-    #dates, validation = _get_dates(stages)
+    _validate_steps(sim, stage_initial_times)
+    _validate_chronologies(sim)
+    _validate_dates(sim)
     #_build_stages(sim_ref, stages, verbose = verbose; kwargs...)
     return
 end

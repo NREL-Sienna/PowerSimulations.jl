@@ -4,7 +4,7 @@
                                "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
       sequence = SimulationSequence(
-                        stage_order = Dict(1 => "UC", 2 => "ED")
+                        stage_order = Dict(1 => "UC", 2 => "ED"),
                         feed_forward_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 24, to_executions = 1)),
                         horizons = Dict("UC" => 48, "ED" => 12),
                         intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
@@ -19,6 +19,7 @@
 
     sim = Simulation(name = "test",
                  steps = 2,
+                 step_resolution=Hour(24),
                  stages = stages_definition,
                  stages_sequence = sequence,
                  simulation_folder= file_path,
