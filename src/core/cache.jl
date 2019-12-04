@@ -30,3 +30,20 @@ function build_cache!(cache::TimeStatusChange, psi_container::PSIContainer)
 
     return
 end
+
+################################Cache Update################################################
+function update_cache!(c::TimeStatusChange, stage::Stage)
+    parameter = get_value(stage.internal.psi_container, c.ref)
+
+    for name in parameter.axes[1]
+        param_status = PJ.value(parameter[name])
+        if c.value[name][:status] == param_status
+            c.value[name][:count] += 1.0
+        elseif c.value[name][:status] != param_status
+            c.value[name][:count] = 1.0
+            c.value[name][:status] = param_status
+        end
+    end
+
+    return
+end

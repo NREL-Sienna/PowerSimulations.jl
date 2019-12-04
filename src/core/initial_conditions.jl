@@ -33,3 +33,82 @@ end
 get_condition(ic::InitialCondition) = ic.value
 
 device_name(ini_cond::InitialCondition) = PSY.get_name(ini_cond.device)
+
+#########################Initial Condition Updating#########################################
+# TODO: Consider when more than one UC model is used for the stages that the counts need
+# to be scaled.
+function calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationOFF, PSD},
+                                ic::InitialCondition,
+                                var_value::Float64,
+                                cache::Union{Nothing, AbstractCache}) where PSD <: PSY.Device
+    name = device_name(ic)
+    time_cache = cache_value(cache, name)
+
+    current_counter = time_cache[:count]
+    last_status = time_cache[:status]
+    var_status = isapprox(var_value, 0.0, atol = 1e-4) ? 0.0 : 1.0
+    @assert abs(last_status - var_status) < eps()
+
+    if last_status >= 1.0
+        return current_counter
+    end
+
+    if last_status < 1.0
+        return 0.0
+    end
+end
+
+function calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationON, PSD},
+                                ic::InitialCondition,
+                                var_value::Float64,
+                                cache::Union{Nothing, AbstractCache}) where PSD <: PSY.Device
+    name = device_name(ic)
+    time_cache = cache_value(cache, name)
+
+    current_counter = time_cache[:count]
+    last_status = time_cache[:status]
+    var_status = isapprox(var_value, 0.0, atol = 1e-4) ? 0.0 : 1.0
+    @assert abs(last_status - var_status) < eps()
+
+    if last_status >= 1.0
+        return 0.0
+    end
+
+    if last_status < 1.0
+        return current_counter
+    end
+
+end
+
+function calculate_ic_quantity(initial_condition_key::ICKey{DeviceStatus, PSD},
+                                ic::InitialCondition,
+                                var_value::Float64,
+                                cache::Union{Nothing, AbstractCache}) where PSD <: PSY.Device
+    return isapprox(var_value, 0.0, atol = 1e-4) ? 1.0 : 0.0
+end
+
+function calculate_ic_quantity(initial_condition_key::ICKey{DevicePower, PSD},
+                               ic::InitialCondition,
+                               var_value::Float64,
+                               cache::Union{Nothing, AbstractCache}) where PSD <: PSY.ThermalGen
+    if isnothing(cache)
+        status_change_to_on = value(ic) <= eps() && var_value >= eps()
+        status_change_to_off = value(ic) >= eps() && var_value <= eps()
+    else
+        name = device_name(ic)
+        time_cache = cache_value(cache, name)
+        status_change_to_on = time_cache[:status] >= eps() && var_value <= eps()
+        status_change_to_off = time_cache[:status] <= eps() && var_value >= eps()
+    end
+
+
+    if status_change_to_on
+        return ic.device.tech.activepowerlimits.min
+    end
+
+    if status_change_to_off
+        return 0.0
+    end
+
+    return var_value
+end

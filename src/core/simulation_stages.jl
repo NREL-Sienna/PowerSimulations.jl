@@ -1,12 +1,13 @@
 ######## Internal Simulation Object Structs ########
 mutable struct StageInternal
     number::Int64
+    executions::Int64
     execution_count::Int64
     psi_container::Union{Nothing, PSIContainer}
     cache_dict::Dict{Type{<:AbstractCache}, AbstractCache}
 
-    function StageInternal(number, execution_count, psi_container)
-        new(number, execution_count, psi_container, Dict{Type{<:AbstractCache}, AbstractCache}())
+    function StageInternal(number, executions, execution_count, psi_container)
+        new(number, executions, execution_count, psi_container, Dict{Type{<:AbstractCache}, AbstractCache}())
     end
 end
 
@@ -39,3 +40,61 @@ end
 get_execution_count(s::Stage) = s.internal.execution_count
 get_sys(s::Stage) = s.sys
 get_template(s::Stage) = s.template
+get_number(s::Stage) = s.internal.number
+
+# This makes the choice in which variable to get from the results.
+function get_stage_variable(chron::Type{RecedingHorizon},
+                           from_stage::Stage,
+                           device_name::String,
+                           var_ref::UpdateRef,
+                           to_stage_execution_count::Int64)
+    variable = get_value(from_stage.internal.psi_container, var_ref)
+    step = axes(variable)[2][1]
+    return JuMP.value(variable[device_name, step])
+end
+
+function get_stage_variable(chron::Type{Consecutive},
+                             from_stage::Stage,
+                             device_name::String,
+                             var_ref::UpdateRef,
+                             to_stage_execution_count::Int64)
+    variable = get_value(from_stage.internal.psi_container, var_ref)
+    step = axes(variable)[2][end]
+    return JuMP.value(variable[device_name, step])
+end
+
+function get_stage_variable(chron::Type{Synchronize},
+                            from_stage::Stage,
+                            device_name::String,
+                            var_ref::UpdateRef,
+                            to_stage_execution_count::Int64)
+    variable = get_value(from_stage.internal.psi_container, var_ref)
+    step = axes(variable)[2][to_stage_execution_count + 1]
+    return JuMP.value(variable[device_name, step])
+end
+
+#Defined here because it requires Stage to defined
+
+initial_condition_update!(initial_condition_key::ICKey,
+                          ::Nothing,
+                          ini_cond_vector::Vector{InitialCondition},
+                          to_stage::Stage,
+                          from_stage::Stage) = nothing
+
+function initial_condition_update!(initial_condition_key::ICKey,
+                                    synch::Chron,
+                                    ini_cond_vector::Vector{InitialCondition},
+                                    to_stage::Stage,
+                                    from_stage::Stage) where Chron <: AbstractChronology
+    to_stage_execution_count = to_stage.execution_count
+    for ic in ini_cond_vector
+        name = device_name(ic)
+        update_ref = ic.update_ref
+        var_value = get_stage_variable(Chron, from_stage, name, update_ref, to_stage_execution_count)
+        cache = get(from_stage.cache, ic.cache, nothing)
+        quantity = calculate_ic_quantity(initial_condition_key, ic, var_value, cache)
+        PJ.fix(ic.value, quantity)
+    end
+
+    return
+end
