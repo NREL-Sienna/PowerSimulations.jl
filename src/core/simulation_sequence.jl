@@ -12,10 +12,10 @@ mutable struct SimulationSequence
                                  horizons::Dict{String, Int64},
                                  intervals::Dict{String, <:Dates.TimePeriod},
                                  order::Dict{Int64, String},
-                                 feed_forward_chronologies::Dict{Pair{String, String}, <:AbstractChronology} = Dict(),
-                                 feed_forward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward} = Dict(),
-                                 ini_cond_chronology::Dict{String, <:AbstractChronology} = Dict(),
-                                 cache::Dict{String, <:Vector{<:AbstractCache}} = Dict())
+                                 feed_forward_chronologies = Dict{Pair{String, String}, AbstractChronology}(),
+                                 feed_forward = Dict{Tuple{String, Symbol, Symbol}, AbstractAffectFeedForward}(),
+                                 ini_cond_chronology = Dict{String, AbstractChronology}(),
+                                 cache = Dict{String, Vector{AbstractCache}}())
         new(
             initial_time,
             horizons,
