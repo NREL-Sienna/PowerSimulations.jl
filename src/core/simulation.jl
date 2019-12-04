@@ -44,7 +44,7 @@ mutable struct Simulation
     sequence::Union{Nothing, SimulationSequence}
     simulation_folder::String
     name::String
-    interal::Union{Nothing, SimulationInternal}
+    internal::Union{Nothing, SimulationInternal}
 
     function Simulation(;name::String,
                         steps::Int64,
@@ -66,93 +66,13 @@ end
 
 ################# accessor functions ####################
 get_steps(s::Simulation) = s.steps
-get_date_range(s::Simulation) = s.date_range
-
-function _validate_steps(sim::Simulation, stage_initial_times::Dict{Int64, Vector{Dates.DateTime}})
-    for (stage_number, stage_name) in sim.sequence.order
-        forecast_count = length(stage_initial_times[stage_number])
-        stage = get(sim.stages, stage_name, nothing)
-        if steps*stage.internal.execution_count > forecast_count
-            error("The number of available time series is not enough to perform the
-                   desired amount of simulation steps.")
-        end
-    end
-    return
-end
+get_date_range(s::Simulation) = s.internal.date_range
 
 function _validate_chronologies(sim::Simulation)
     for (key, chron) in sim.sequence.feed_forward_chronologies
         validate_chronology(chron, key, sim.sequence.horizons)
     end
     return
-end
-
-function _validate_dates(sim::Simulation)
-    k = keys(sim.sequence.order)
-    k_size = length(k)
-    range = Vector{Dates.DateTime}(undef, 2)
-    @assert k_size == maximum(k)
-
-    for i in 1:k_size
-        initial_times = PSY.get_forecast_initial_times(stages[i].sys)
-        i == 1 && (range[1] = initial_times[1])
-        interval = PSY.get_forecasts_interval(stages[i].sys)
-        for (ix, element) in enumerate(initial_times[1:end-1])
-            if !(element + interval == initial_times[ix+1])
-                error("The sequence of forecasts is invalid")
-            end
-        end
-        (i == k_size && (range[end] = initial_times[end]))
-    end
-
-    return Tuple(range)
-end
-
-function _populate_cache!(stage::Stage)
-    for (k, cache) in stage.cache
-        build_cache!(cache, stage.psi_container)
-    end
-
-    return
-end
-
-function _build_stages(sim_ref::SimulationInternal,
-                       stages::Dict{Int64, Stage},
-                       verbose::Bool = true;
-                       kwargs...)
-    system_to_file = get(kwargs, :system_to_file, true)
-    mod_stages = Vector{Stage}(undef, length(stages))
-    for (key, stage) in stages
-        verbose && @info("Building Stage $(key)")
-        psi_container = PSIContainer(stage.model.transmission,
-                                   stage.sys,
-                                   stage.optimizer;
-                                   use_parameters = true,
-                                   initial_time = stage.initial_time,
-                                   horizon = stage.horizon)
-        mod_stages[key] = Stage(key,
-                                stage.model,
-                                stage.op_problem,
-                                stage.sys,
-                                psi_container,
-                                stage.optimizer,
-                                stage.execution_count,
-                                stage.interval,
-                                stage.chronology_ref,
-                                stage.cache)
-        _build!(mod_stages[key].psi_container,
-                stage.model,
-                stage.sys;
-                kwargs...)
-        stage_path = joinpath(sim_ref.models_dir, "stage_$(key)_model")
-        mkpath(stage_path)
-        _write_psi_container(psi_container, joinpath(stage_path, "optimization_model.json"))
-        system_to_file && PSY.to_json(stage.sys, joinpath(stage_path , "sys_data.json"))
-        _populate_cache!(mod_stages[key])
-        sim_ref.date_ref[key] = PSY.get_forecast_initial_times(stage.sys)[1]
-    end
-
-    return mod_stages
 end
 
 function _prepare_workspace(base_name::AbstractString, folder::AbstractString)
@@ -171,12 +91,87 @@ function _prepare_workspace(base_name::AbstractString, folder::AbstractString)
     return raw_output, models_json_ouput, results_path
 end
 
+function _validate_dates(sim::Simulation)
+    k = keys(sim.sequence.order)
+    k_size = length(k)
+    range = Vector{Dates.DateTime}(undef, 2)
+    @assert k_size == maximum(k)
+    for (stage_number, stage_name) in sim.sequence.order
+        stage_system = sim.stages[stage_name].sys
+        initial_times = PSY.get_forecast_initial_times(stage_system)
+        stage_number == 1 && (range[1] = initial_times[1])
+        interval = PSY.get_forecasts_interval(stage_system)
+        if interval != sim.sequence.intervals[stage_name]
+            error("Simulation interval and forecast interval definitions are not compatible")
+        end
+        for (ix, element) in enumerate(initial_times[1:end-1])
+            if !(element + interval == initial_times[ix+1])
+                error("The sequence of forecasts is invalid")
+            end
+        end
+        (stage_number == k_size && (range[end] = initial_times[end]))
+    end
+    sim.internal.date_range = Tuple(range)
+    return
+end
+
+function _validate_steps(sim::Simulation, stage_initial_times::Dict{Int64, Vector{Dates.DateTime}})
+    for (stage_number, stage_name) in sim.sequence.order
+        forecast_count = length(stage_initial_times[stage_number])
+        stage = get(sim.stages, stage_name, nothing)
+        if sim.steps*stage.internal.execution_count > forecast_count
+            error("The number of available time series is not enough to perform the
+                   desired amount of simulation steps.")
+        end
+    end
+    return
+end
+
+function _populate_caches!(sim::Simulation, stage_name::String)
+    caches = get(sim.sequence.cache, stage_name, nothing)
+    isnothing(caches) && return
+    for cache in caches
+        build_cache!(cache, sim.stages[stage_name].internal.psi_container)
+    end
+    return
+end
+
+function _build_stages(sim::Simulation, verbose::Bool = true; kwargs...)
+    system_to_file = get(kwargs, :system_to_file, true)
+    for (stage_number, stage_name) in sim.sequence.order
+        verbose && @info("Building Stage $(stage_number)-$(stage_name)")
+        horizon = sim.sequence.horizons[stage_name]
+        stage = sim.stages[stage_name]
+        stage.internal.psi_container = PSIContainer(stage.template.transmission,
+                                                    stage.sys,
+                                                    stage.optimizer;
+                                                    use_parameters = true,
+                                                    initial_time = sim.sequence.initial_time,
+                                                    horizon = horizon)
+        _build!(stage.internal.psi_container,
+                stage.template,
+                stage.sys;
+                kwargs...)
+        #_populate_caches!(sim, stage_name)
+        stage_path = joinpath(sim.internal.models_dir, "stage_$(stage_name)_model")
+        mkpath(stage_path)
+        _write_psi_container(stage.internal.psi_container,
+                             joinpath(stage_path, "optimization_model.json"))
+        system_to_file && PSY.to_json(stage.sys, joinpath(stage_path , "sys_data.json"))
+        sim.internal.date_ref[stage_number] = PSY.get_forecast_initial_times(stage.sys)[1]
+    end
+
+    return
+end
+
 function build!(sim::Simulation; verbose::Bool = false, kwargs...)
+    _validate_chronologies(sim)
     raw_dir, models_dir, results_dir = _prepare_workspace(sim.name, sim.simulation_folder)
-    internal = SimulationInternal(raw_dir, models_dir, results_dir, sim.steps, keys(sim.sequence.order))
+    sim.internal = SimulationInternal(raw_dir, models_dir, results_dir, sim.steps, keys(sim.sequence.order))
+    _validate_dates(sim)
     stage_initial_times = Dict{Int64, Vector{Dates.DateTime}}()
     if sim.sequence.initial_time == Dates.DateTime(0)
-        sim.sequence.initial_time = PSY.get_forecast_initial_times(stages[sim.sequence.order[1]].sys)[1]
+        sim.sequence.initial_time = PSY.get_forecast_initial_times(sim.stages[sim.sequence.order[1]].sys)[1]
         @warn("Initial time not defined as an argument, it will be infered from the data.
                Initial Simulation Time set to $(sim.sequence.initial_time)")
     end
@@ -187,18 +182,17 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
         stage.internal = StageInternal(stage_number, executions, nothing)
         isnothing(stage) && throw(ArgumentError("Stage $(stage_name) not found in the stages definitions"))
         PSY.check_forecast_consistency(stage.sys)
+        # Check this is actually necessary
         if PSY.are_forecasts_contiguous(stage.sys)
             stage_initial_times[stage_number] = PSY.generate_initial_times(stage.sys,
                                                     stage_interval,
                                                     sim.sequence.horizons[stage_name],
                                                     initial_time = sim.sequence.initial_time)
         else
-            stage_initial_times[stage_number] = get_forecast_initial_times(stage.sys)
+            stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage.sys)
         end
     end
     _validate_steps(sim, stage_initial_times)
-    _validate_chronologies(sim)
-    _validate_dates(sim)
-    #_build_stages(sim_ref, stages, verbose = verbose; kwargs...)
+    _build_stages(sim, verbose = verbose; kwargs...)
     return
 end
