@@ -50,7 +50,7 @@ end
 
 function _run_stage(stage::Stage, start_time::Dates.DateTime, results_path::String; kwargs...)
     if stage.psi_container.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
-        error("No Optimizer has been defined, can't solve the operational problem stage with key $(stage.key)")
+        error("No Optimizer has been defined, can't solve the operational problem stage $(stage.internal.number)")
     end
     timed_log = Dict{Symbol, Any}()
     _, timed_log[:timed_solve_time],
@@ -58,7 +58,7 @@ function _run_stage(stage::Stage, start_time::Dates.DateTime, results_path::Stri
     timed_log[:sec_in_gc] = @timed JuMP.optimize!(stage.psi_container.JuMPmodel)
     model_status = JuMP.primal_status(stage.psi_container.JuMPmodel)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        error("Stage $(stage.key) status is $(model_status)")
+        error("Stage $(stage.internal.number) status is $(model_status)")
     end
     retrieve_duals = get(kwargs, :duals, nothing)
     if !isnothing(retrieve_duals) && !isnothing(get_constraints(stage.psi_container))
@@ -84,7 +84,7 @@ each stage and step.
 
 # Example
 ```julia
-sim = Simulation("test", 7, stages, "/Users/lhanig/Downloads/";
+sim = Simulation("test", 7, stages, "/Users/folder";
 verbose = true, system_to_file = false)
 execute!!(sim::Simulation; verbose::Bool = false, kwargs...)
 ```
@@ -95,27 +95,31 @@ results, include a vector of the variable names to be included
 """
 
 function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
-    if sim.ref.reset
-        sim.ref.reset = false
-    elseif sim.ref.reset == false
-        error("Reset the simulation")
+    if sim.internal.reset
+        sim.internal.reset = false
+    elseif sim.internal.reset == false
+        error("Re-build the simulation")
     end
+
+    !sim.internal.compiled_status && error("Simulation not build, build the simulation to execute")
+
     steps = get_steps(sim)
     for s in 1:steps
         verbose && println("Step $(s)")
-        for (ix, stage) in enumerate(sim.stages)
-            verbose && println("Stage $(ix)")
-            interval = stage.interval
-            for run in 1:stage.executions
-                sim.ref.current_time = sim.ref.date_ref[ix]
-                verbose && println("Simulation TimeStamp: $(sim.ref.current_time)")
-                raw_results_path = joinpath(sim.ref.raw_dir, "step-$(s)-stage-$(ix)", replace_chars("$(sim.ref.current_time)", ":", "-"))
+        for (stage_number, stage_name) in sim.sequence.order
+            stage = get(sim.stages, stage_name, nothing)
+            verbose && println("Stage $(stage_number)-$(stage_name)")
+            stage_interval = sim.sequence.intervals[stage_name]
+            for run in 1:stage.internal.executions
+                sim.internal.current_time = sim.internal.date_ref[stage_number]
+                verbose && println("Simulation TimeStamp: $(sim.internal.current_time)")
+                raw_results_path = joinpath(sim.internal.raw_dir, "step-$(s)-stage-$(stage_name)", replace_chars("$(sim.internal.current_time)", ":", "-"))
                 mkpath(raw_results_path)
                 update_stage!(stage, s, sim)
                 dual_constraints = get(kwargs, :dual_constraints, nothing)
-                _run_stage(stage, sim.ref.current_time, raw_results_path; duals = dual_constraints)
-                sim.ref.run_count[s][ix] += 1
-                sim.ref.date_ref[ix] = sim.ref.date_ref[ix] + interval
+                _run_stage(stage, sim.internal.current_time, raw_results_path; duals = dual_constraints)
+                sim.internal.run_count[s][stage_number] += 1
+                sim.internal.date_ref[stage_number] = sim.internal.date_ref[stage_number] + interval
             end
             @assert stage.executions == stage.execution_count
             stage.execution_count = 0 # reset stage execution_count
