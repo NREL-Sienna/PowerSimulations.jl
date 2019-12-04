@@ -115,6 +115,9 @@ function _validate_dates(sim::Simulation)
     return
 end
 
+function _attach_feedforward()
+end
+
 function _validate_steps(sim::Simulation, stage_initial_times::Dict{Int64, Vector{Dates.DateTime}})
     for (stage_number, stage_name) in sim.sequence.order
         forecast_count = length(stage_initial_times[stage_number])
@@ -193,6 +196,7 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
         else
             stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage.sys)
         end
+        _attach_feedforward()
     end
     _validate_steps(sim, stage_initial_times)
     _build_stages(sim, verbose = verbose; kwargs...)
