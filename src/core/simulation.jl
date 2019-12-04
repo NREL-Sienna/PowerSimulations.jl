@@ -130,8 +130,10 @@ end
 function _populate_caches!(sim::Simulation, stage_name::String)
     caches = get(sim.sequence.cache, stage_name, nothing)
     isnothing(caches) && return
-    for cache in caches
-        build_cache!(cache, sim.stages[stage_name].internal.psi_container)
+    cache_dict = Dict{Type{<:AbstractCache}, AbstractCache}()
+    for c in caches
+        sim.stages[stage_name].internal.cache_dict[typeof(c)] = c
+        #build_cache!(cache, sim.stages[stage_name].internal.psi_container)
     end
     return
 end
@@ -152,12 +154,12 @@ function _build_stages(sim::Simulation, verbose::Bool = true; kwargs...)
                 stage.template,
                 stage.sys;
                 kwargs...)
-        #_populate_caches!(sim, stage_name)
+        _populate_caches!(sim, stage_name)
         stage_path = joinpath(sim.internal.models_dir, "stage_$(stage_name)_model")
         mkpath(stage_path)
         _write_psi_container(stage.internal.psi_container,
-                             joinpath(stage_path, "optimization_model.json"))
-        system_to_file && PSY.to_json(stage.sys, joinpath(stage_path , "sys_data.json"))
+                             joinpath(stage_path, "$(stage_name)_optimization_model.json"))
+        system_to_file && PSY.to_json(stage.sys, joinpath(stage_path , "$(stage_name)_sys_data.json"))
         sim.internal.date_ref[stage_number] = PSY.get_forecast_initial_times(stage.sys)[1]
     end
 

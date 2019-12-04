@@ -3,6 +3,11 @@ mutable struct StageInternal
     number::Int64
     execution_count::Int64
     psi_container::Union{Nothing, PSIContainer}
+    cache_dict::Dict{Type{<:AbstractCache}, AbstractCache}
+
+    function StageInternal(number, execution_count, psi_container)
+        new(number, execution_count, psi_container, Dict{Type{<:AbstractCache}, AbstractCache}())
+    end
 end
 
 mutable struct Stage{M<:AbstractOperationsProblem}
