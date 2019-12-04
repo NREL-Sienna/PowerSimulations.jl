@@ -30,9 +30,9 @@ function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
                            sim::Simulation)
     stage = get_stage(sim, stage_number)
     param_array = get_parameters(stage.internal.psi_container, param_reference)
-    chronology_ref = get_stage(sim, stage_number).chronology_ref
+    chronolgy_dict = get_stage(sim, stage_number).internal.chronolgy_dict
     current_stage = get_stage(sim, stage_number)
-    for (k, ref) in chronology_ref
+    for (k, ref) in chronolgy_dict
         feed_forward_update(ref, param_reference, param_array, current_stage, get_stage(sim, k))
     end
 
@@ -41,7 +41,7 @@ end
 
 #############################Interfacing Functions##########################################
 function _update_caches!(stage::Stage)
-    for (_, cache) in stage.cache
+    for cache in values(stage.internal.cache_dict)
         update_cache!(cache, stage)
     end
 
@@ -53,7 +53,7 @@ function _intial_conditions_update!(initial_condition_key::ICKey,
                                    stage_number::Int64,
                                    step::Int64,
                                    sim::Simulation)
-    chronology_ref = nothing
+    chronolgy_dict = nothing
     current_stage = get_stage(sim, stage_number)
     #checks if current stage is the first in the step and the execution is the first to
     # look backwards on the previous step
@@ -65,20 +65,20 @@ function _intial_conditions_update!(initial_condition_key::ICKey,
     # makes the update based on the last stage.
     if intra_step_update
         from_stage = get_last_stage(sim)
-        chronology_ref = get_stage(sim, stage_number).ini_cond_chron
+        chronolgy_dict = get_stage(sim, stage_number).ini_cond_chron
     # Updates the next stage in the same step
     elseif intra_stage_update
         from_stage = sim.stages[stage_number-1]
-        chronology_ref = get_stage(sim, stage_number).chronology_ref[stage_number-1]
+        chronolgy_dict = get_stage(sim, stage_number).internal.chronolgy_dict[stage_number-1]
     # Update is done on the current stage
     elseif inner_stage_update
         from_stage = current_stage
-        chronology_ref = get_stage(sim, stage_number).ini_cond_chron
+        chronolgy_dict = get_stage(sim, stage_number).ini_cond_chron
     else
         error("Condition not implemented")
     end
     initial_condition_update!(initial_condition_key,
-                               chronology_ref,
+                               chronolgy_dict,
                                ini_cond_vector,
                                current_stage,
                                from_stage)
@@ -93,7 +93,7 @@ function update_stage!(stage::Stage{M}, step::Int64, sim::Simulation) where M<:A
         parameter_update!(param_reference, get_number(stage), sim)
     end
 
-    cache_update!(stage)
+    _update_caches!(stage)
 
     # Set initial conditions of the stage I am about to run.
     for (k, v) in stage.internal.psi_container.initial_conditions

@@ -5,9 +5,13 @@ mutable struct StageInternal
     execution_count::Int64
     psi_container::Union{Nothing, PSIContainer}
     cache_dict::Dict{Type{<:AbstractCache}, AbstractCache}
-
+    # Can probably be eliminated and use getter functions from
+    # Simulation object. Need to determine if its always available in the stage update steps.
+    chronolgy_dict::Dict{Int64, <:AbstractChronology}
     function StageInternal(number, executions, execution_count, psi_container)
-        new(number, executions, execution_count, psi_container, Dict{Type{<:AbstractCache}, AbstractCache}())
+        new(number, executions, execution_count, psi_container,
+        Dict{Type{<:AbstractCache}, AbstractCache}(),
+        Dict{Int64, AbstractChronology}())
     end
 end
 
