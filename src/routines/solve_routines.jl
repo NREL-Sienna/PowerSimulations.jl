@@ -36,6 +36,10 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
     end
 
     vars_result = get_model_result(op_problem)
+    if :duals in keys(kwargs)
+        dual_result = get_model_duals(op_problem, kwargs[:duals])
+        merge!(vars_result, dual_result)
+    end
     optimizer_log = get_optimizer_log(op_problem)
     time_stamp = get_time_stamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
