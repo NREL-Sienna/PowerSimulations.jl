@@ -15,21 +15,21 @@ struct RecedingHorizon <: AbstractChronology
     end
 end
 
-function check_chronology(synch::Synchronize,
+function check_chronology(sync::Synchronize,
                              stages::Pair,
                              horizons::Dict{String, Int64})
     from_stage_horizon = horizons[stages.first]
-    to_stage_synch = synch.to_executions
-    from_stage_synch = synch.from_steps
+    to_stage_sync = sync.to_executions
+    from_stage_sync = sync.from_steps
 
-    if from_stage_synch > from_stage_horizon
-        error("The lookahead length $(from_stage_horizon) in stage is insufficient to synchronize with $(from_stage_synch) feed_forward steps")
+    if from_stage_sync > from_stage_horizon
+        error("The lookahead length $(from_stage_horizon) in stage is insufficient to syncronize with $(from_stage_sync) feed_forward steps")
     end
 
-    if (from_stage_horizon % from_stage_synch) != 0
+    if (from_stage_horizon % from_stage_sync) != 0
         error("The number of feed_forward steps $(from_stage_horizon) in stage
                needs to be a mutiple of the horizon length $(from_stage_horizon)
-               of stage to use Synchronize with parameters ($(from_stage_synch), $(to_stage_synch))")
+               of stage to use Synchronize with parameters ($(from_stage_sync), $(to_stage_sync))")
     end
 
     return

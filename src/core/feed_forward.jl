@@ -267,14 +267,14 @@ function feed_forward!(psi_container::PSIContainer,
 end
 
 #########################FeedForward Variables Updating#####################################
-function feed_forward_update(synch::Chron,
+function feed_forward_update(sync::Chron,
                             param_reference::UpdateRef{JuMP.VariableRef},
                             param_array::JuMPParamArray,
                             to_stage::Stage,
                             from_stage::Stage) where Chron <: AbstractChronology
-    !(to_get_execution_count(stage) % synch.to_steps == 0) && return
+    !(to_get_execution_count(stage) % sync.to_steps == 0) && return
 
-    var_count = to_get_execution_count(stage) ÷ synch.to_steps
+    var_count = to_get_execution_count(stage) ÷ sync.to_steps
 
     for device_name in axes(param_array)[1]
         var_value = get_stage_variable(Chron, from_stage, device_name, param_reference, var_count)

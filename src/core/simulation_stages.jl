@@ -86,7 +86,7 @@ initial_condition_update!(initial_condition_key::ICKey,
                           from_stage::Stage) = nothing
 
 function initial_condition_update!(initial_condition_key::ICKey,
-                                    synch::Chron,
+                                    sync::Chron,
                                     ini_cond_vector::Vector{InitialCondition},
                                     to_stage::Stage,
                                     from_stage::Stage) where Chron <: AbstractChronology
