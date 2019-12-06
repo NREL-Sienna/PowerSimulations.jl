@@ -1,6 +1,6 @@
-branches = Dict{Symbol, DeviceModel}()
-services = Dict{Symbol, ServiceModel}()
-devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
+branches = Dict()
+services = Dict()
+devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
                                     :Ren => DeviceModel(RenewableDispatch, RenewableFixed),
                                     :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad),
                                     :ILoads =>  DeviceModel(InterruptibleLoad, StaticPowerLoad),
@@ -8,9 +8,9 @@ devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(ThermalStandard, 
 template_uc= OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 
 ## ED Model Ref
-branches = Dict{Symbol, DeviceModel}()
-services = Dict{Symbol, ServiceModel}()
-devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(ThermalStandard, ThermalDispatchNoMin, SemiContinuousFF(:P, :ON)),
+branches = Dict()
+services = Dict()
+devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalDispatchNoMin),
                                     :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
                                     :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad),
                                     :ILoads =>  DeviceModel(InterruptibleLoad, DispatchablePowerLoad),
@@ -19,14 +19,14 @@ template_ed= OperationsProblemTemplate(CopperPlatePowerModel, devices, branches,
 
 #=
 ## UC Model Ref
-branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine),
+branches = Dict(:L => DeviceModel(Line, StaticLine),
                                      :T => DeviceModel(Transformer2W, StaticTransformer),
                                      :TT => DeviceModel(TapTransformer, StaticTransformer),
                                      :dc_line => DeviceModel(HVDCLine, HVDCDispatch))
 
-services = Dict{Symbol, ServiceModel}()
+services = Dict()
 
-devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
+devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
                                     :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
                                     :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad),
                                     :ILoads =>  DeviceModel(InterruptibleLoad, StaticPowerLoad))
@@ -35,14 +35,14 @@ devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(ThermalStandard, 
 template_uc= OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 
 ## ED Model Ref
-branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine),
+branches = Dict(:L => DeviceModel(Line, StaticLine),
                                      :T => DeviceModel(Transformer2W, StaticTransformer),
                                      :TT => DeviceModel(TapTransformer, StaticTransformer),
                                      :dc_line => DeviceModel(HVDCLine, HVDCDispatch))
 
-services = Dict{Symbol, ServiceModel}()
+services = Dict()
 
-devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(ThermalStandard, ThermalDispatch, SemiContinuousFF(:P, :ON)),
+devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalDispatch, SemiContinuousFF(:P, :ON)),
                                     :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
                                     :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad),
                                     :ILoads =>  DeviceModel(InterruptibleLoad, InterruptiblePowerLoad,))

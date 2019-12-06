@@ -1,10 +1,50 @@
+struct UpperBoundFF <: AbstractAffectFeedForward
+    variable_from_stage::Symbol
+    affected_variables::Vector{Symbol}
+    cache::Union{Nothing, Type{<:AbstractCache}}
+end
+
+function UpperBoundFF(;variable_from_stage, affected_variables)
+    return UpperBoundFF(variable, affected_variables, nothing)
+end
+
+get_variable_from_stage(p::UpperBoundFF) = p.binary_from_stage
+
+struct RangeFF <: AbstractAffectFeedForward
+    variable_from_stage_ub::Symbol
+    variable_from_stage_lb::Symbol
+    affected_variables::Vector{Symbol}
+    cache::Union{Nothing, Type{<:AbstractCache}}
+end
+
+function RangeFF(;variable_from_stage_ub, affected_variables_lb, affected_variables)
+    return RangeFF(binary_from_stage, affected_variables, nothing)
+end
+
+get_bounds_from_stage(p::RangeFF) = (p.variable_from_stage_lb, p.variable_from_stage_lb)
+
+struct SemiContinuousFF <: AbstractAffectFeedForward
+    binary_from_stage::Symbol
+    affected_variables::Vector{Symbol}
+    cache::Union{Nothing, Type{<:AbstractCache}}
+end
+
+function SemiContinuousFF(;binary_from_stage, affected_variables)
+    return SemiContinuousFF(binary_from_stage, affected_variables, nothing)
+end
+
+get_binary_from_stage(p::SemiContinuousFF) = p.binary_from_stage
+get_affected_variables(p::AbstractAffectFeedForward) = p.affected_variables
+
+####################### Feed Forward Affects ###############################################
+
 @doc raw"""
         ub_ff(psi_container::PSIContainer,
               cons_name::Symbol,
               param_reference::UpdateRef,
               var_name::Symbol)
 
-Constructs a parametrized upper bound constraint to implement feedforward from other models.
+Constructs a parametrized upper bound constraint to implement feed_forward from other models.
 The Parameters are initialized using the uppper boundary values of the provided variables.
 
 # Constraints
@@ -24,7 +64,6 @@ function ub_ff(psi_container::PSIContainer,
                cons_name::Symbol,
                param_reference::UpdateRef,
                var_name::Symbol)
-
     time_steps = model_time_steps(psi_container)
     ub_name = _middle_rename(cons_name, "_", "ub")
     variable = get_variable(psi_container, var_name)
@@ -55,7 +94,7 @@ end
                         param_reference::NTuple{2, UpdateRef},
                         var_name::Symbol)
 
-Constructs min/max range parametrized constraint from device variable to include feedforward.
+Constructs min/max range parametrized constraint from device variable to include feed_forward.
 
 # Constraints
 
@@ -79,7 +118,6 @@ function range_ff(psi_container::PSIContainer,
                   cons_name::Symbol,
                   param_reference::NTuple{2, UpdateRef},
                   var_name::Symbol)
-
     time_steps = model_time_steps(psi_container)
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
@@ -152,9 +190,6 @@ function semicontinuousrange_ff(psi_container::PSIContainer,
                                 cons_name::Symbol,
                                 param_reference::UpdateRef,
                                 var_name::Symbol)
-
-
-
     time_steps = model_time_steps(psi_container)
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
@@ -188,18 +223,17 @@ function semicontinuousrange_ff(psi_container::PSIContainer,
     end
 
     return
-
 end
 
 ########################## FeedForward Constraints #########################################
 
-function feedforward!(psi_container::PSIContainer,
+function feed_forward!(psi_container::PSIContainer,
                      device_type::Type{T},
                      ff_model::Nothing) where {T<:PSY.Component}
     return
 end
 
-function feedforward!(psi_container::PSIContainer,
+function feed_forward!(psi_container::PSIContainer,
                      device_type::Type{I},
                      ff_model::UpperBoundFF) where {I<:PSY.StaticInjection}
 
@@ -216,13 +250,12 @@ function feedforward!(psi_container::PSIContainer,
 
 end
 
-function feedforward!(psi_container::PSIContainer,
+function feed_forward!(psi_container::PSIContainer,
                      device_type::Type{I},
                      ff_model::SemiContinuousFF) where {I<:PSY.StaticInjection}
-
-    bin_var = Symbol(get_bin_prefix(ff_model), "_$(I)")
+    bin_var = Symbol(get_binary_from_stage(ff_model), "_$(I)")
     parameter_ref = UpdateRef{JuMP.VariableRef}(bin_var)
-    for prefix in get_vars_prefix(ff_model)
+    for prefix in get_affected_variables(ff_model)
         var_name = Symbol(prefix, "_$(I)")
         semicontinuousrange_ff(psi_container,
                                Symbol("FFbin_$(I)"),
@@ -231,5 +264,22 @@ function feedforward!(psi_container::PSIContainer,
     end
 
     return
+end
 
+#########################FeedForward Variables Updating#####################################
+function feed_forward_update(sync::Chron,
+                            param_reference::UpdateRef{JuMP.VariableRef},
+                            param_array::JuMPParamArray,
+                            to_stage::Stage,
+                            from_stage::Stage) where Chron <: AbstractChronology
+    !(to_get_execution_count(stage) % sync.to_steps == 0) && return
+
+    var_count = to_get_execution_count(stage) ÷ sync.to_steps
+
+    for device_name in axes(param_array)[1]
+        var_value = get_stage_variable(Chron, from_stage, device_name, param_reference, var_count)
+        PJ.fix(param_array[device_name], var_value)
+    end
+
+    return
 end

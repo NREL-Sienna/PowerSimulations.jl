@@ -124,7 +124,7 @@ function get_time_stamps(op_problem::OperationsProblem)
     return time_stamp
 end
 
-function get_time_stamps(stage::_Stage, start_time::Dates.DateTime)
+function get_time_stamps(stage::Stage, start_time::Dates.DateTime)
     interval = PSY.get_forecasts_resolution(stage.sys)
     horizon = PSY.get_forecasts_horizon(stage.sys)
     range = collect(start_time:interval:start_time+ interval.*horizon)

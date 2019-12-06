@@ -23,7 +23,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     end
 
     branch_rate_bounds!(psi_container, devices, Br, S)
-    branch_rate_constraint!(psi_container, devices, Br, S, model.feedforward)
+    branch_rate_constraint!(psi_container, devices, Br, S, model.feed_forward)
 
     return
 end
@@ -47,13 +47,13 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                         devices,
                         model.formulation,
                         S,
-                        model.feedforward)
+                        model.feed_forward)
 
     branch_flow_constraint!(psi_container,
                         devices,
                         model.formulation,
                         S,
-                        model.feedforward)
+                        model.feed_forward)
 
     return
 end
@@ -74,7 +74,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
         return
     end
 
-    branch_rate_constraint!(psi_container, devices, Br, S, model.feedforward)
+    branch_rate_constraint!(psi_container, devices, Br, S, model.feed_forward)
 
     return
 end
