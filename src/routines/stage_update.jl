@@ -53,7 +53,7 @@ function _intial_conditions_update!(initial_condition_key::ICKey,
                                    stage_number::Int64,
                                    step::Int64,
                                    sim::Simulation)
-    chronolgy_dict = nothing
+    ini_cond_chronolgy = nothing
     current_stage = get_stage(sim, stage_number)
     #checks if current stage is the first in the step and the execution is the first to
     # look backwards on the previous step
@@ -65,23 +65,23 @@ function _intial_conditions_update!(initial_condition_key::ICKey,
     # makes the update based on the last stage.
     if intra_step_update
         from_stage = get_last_stage(sim)
-        chronolgy_dict = get_stage(sim, stage_number).ini_cond_chron
-    # Updates the next stage in the same step
+        ini_cond_chronolgy = get_ini_cond_chronology(sim, stage_number)
+    # Updates the next stage in the same step. Uses the same chronology as intra_stage
     elseif intra_stage_update
         from_stage = sim.stages[stage_number-1]
-        chronolgy_dict = get_stage(sim, stage_number).internal.chronolgy_dict[stage_number-1]
+        ini_cond_chronolgy = current_stage.internal.chronolgy_dict[stage_number-1]
     # Update is done on the current stage
     elseif inner_stage_update
         from_stage = current_stage
-        chronolgy_dict = get_stage(sim, stage_number).ini_cond_chron
+        ini_cond_chronolgy = get_ini_cond_chronology(sim, stage_number)
     else
         error("Condition not implemented")
     end
     initial_condition_update!(initial_condition_key,
-                               chronolgy_dict,
-                               ini_cond_vector,
-                               current_stage,
-                               from_stage)
+                             ini_cond_chronolgy,
+                             ini_cond_vector,
+                             current_stage,
+                             from_stage)
 
     return
 end

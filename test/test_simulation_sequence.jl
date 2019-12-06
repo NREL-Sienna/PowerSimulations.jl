@@ -5,7 +5,7 @@
 
       sequence = SimulationSequence(
                         stage_order = Dict(1 => "UC", 2 => "ED"),
-                        feed_forward_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 24, to_executions = 1)),
+                        intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 24, to_executions = 1)),
                         horizons = Dict("UC" => 48, "ED" => 12),
                         intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
                         feed_forward = Dict(("ED", :devices) => SemiContinuousFF(:Generators, binary_from_stage = :ON, affected_variables = [:P])),

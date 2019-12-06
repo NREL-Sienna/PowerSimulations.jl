@@ -75,16 +75,20 @@ get_last_stage(s::Simulation) = get_stage(s, s.internal.stages_count)
 function get_simulation_time(s::Simulation, stage_number::Int64)
     return s.internal.date_ref[stage_number]
 end
+get_ini_cond_chronology(s::Simulation, number::Int64) = get(s.sequence.ini_cond_chronology, s.sequence.order[number], nothing)
+
+
+
 
 function _check_chronologies(sim::Simulation)
-    for (key, chron) in sim.sequence.feed_forward_chronologies
+    for (key, chron) in sim.sequence.intra_stage_chronologies
         check_chronology(chron, key, sim.sequence.horizons)
     end
     return
 end
 
 function _assign_chronologies(sim::Simulation)
-    for (key, chron) in sim.sequence.feed_forward_chronologies
+    for (key, chron) in sim.sequence.intra_stage_chronologies
         stage = get_stage(sim, key.second)
         from_stage_number = filter(p->(p.second == key.first), sim.sequence.order)
         isempty(from_stage_number) && throw(ArgumentError("Stage $(key.first) not specified in the order dictionary"))

@@ -90,12 +90,12 @@ function initial_condition_update!(initial_condition_key::ICKey,
                                     ini_cond_vector::Vector{InitialCondition},
                                     to_stage::Stage,
                                     from_stage::Stage) where Chron <: AbstractChronology
-    to_stage_execution_count = to_stage.execution_count
+    to_stage_execution_count = to_stage.internal.execution_count
     for ic in ini_cond_vector
         name = device_name(ic)
         update_ref = ic.update_ref
         var_value = get_stage_variable(Chron, from_stage, name, update_ref, to_stage_execution_count)
-        cache = get(from_stage.cache, ic.cache, nothing)
+        cache = get(from_stage.internal.cache_dict, ic.cache, nothing)
         quantity = calculate_ic_quantity(initial_condition_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
     end
