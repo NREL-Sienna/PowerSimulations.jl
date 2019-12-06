@@ -6,10 +6,12 @@ struct SimulationResultsReference
         date_run = convert(String, last(split(dirname(sim.internal.raw_dir), "/")))
         ref = make_references(sim, date_run)
         chronologies = Dict()
-        for (ix, stage) in enumerate(sim.stages)
-            interval = convert(Dates.Minute,stage.interval)
-            resolution = convert(Dates.Minute,get_sim_resolution(stage))
-            chronologies["stage-$ix"] = convert(Int64,(interval/resolution))
+        for (stage_number, stage_name) in sim.sequence.order
+            stage = get_stage(sim, stage_name)
+            _interval = sim.sequence.intervals[stage_name]
+            interval = convert(Dates.Minute, _interval)
+            resolution = convert(Dates.Minute, get_sim_resolution(stage))
+            chronologies["stage-$stage_number"] = convert(Int64, (interval/resolution))
         end
         new(ref, sim.internal.results_dir, chronologies)
     end
@@ -51,10 +53,10 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
     sim.internal.date_ref[1] = sim.internal.date_range[1]
     sim.internal.date_ref[2] = sim.internal.date_range[1]
     references = Dict()
-    for (ix, stage) in enumerate(sim.stages)
+    for (stage_number, stage_name) in sim.sequence.order
         variables = Dict{Symbol, Any}()
-        interval = stage.interval
-        variable_names = (collect(keys(sim.stages[ix].psi_container.variables)))
+        interval = sim.sequence.intervals[stage_name]
+        variable_names = (collect(keys(sim.stages[stage_name].internal.psi_container.variables)))
         if :dual_constraints in keys(kwargs) && !isnothing(get_constraints(stage.internal.psi_container))
             dual_cons = _concat_string(kwargs[:dual_constraint])
             variable_names = vcat(variable_names, dual_cons)
@@ -63,11 +65,12 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
             variables[name] = DataFrames.DataFrame(Date = Dates.DateTime[],
                                            Step = String[], File_Path = String[])
         end
-        for s in 1:(sim.steps)
-            for run in 1:stage.executions
-                sim.internal.current_time = sim.internal.date_ref[ix]
+        for s in 1:sim.steps
+            stage = get_stage(sim, stage_name)
+            for run in 1:stage.internal.executions
+                sim.internal.current_time = sim.internal.date_ref[stage_number]
                 for name in variable_names
-                    full_path = joinpath(sim.internal.raw_dir, "step-$(s)-stage-$(ix)",
+                    full_path = joinpath(sim.internal.raw_dir, "step-$(s)-stage-$(stage_number)",
                                 replace_chars("$(sim.internal.current_time)", ":", "-"), "$(name).feather")
                     if isfile(full_path)
                         date_df = DataFrames.DataFrame(Date = sim.internal.current_time,
@@ -77,12 +80,11 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
                         @info("$full_path, no such file path")
                      end
                 end
-                sim.internal.run_count[s][ix] += 1
-                sim.internal.date_ref[ix] = sim.internal.date_ref[ix] + interval
+                sim.internal.run_count[s][stage_number] += 1
+                sim.internal.date_ref[stage_number] = sim.internal.date_ref[stage_number] + interval
             end
         end
-        references["stage-$ix"] = variables
-        stage.execution_count = 0
+        references["stage-$stage_number"] = variables
     end
     return references
 end
