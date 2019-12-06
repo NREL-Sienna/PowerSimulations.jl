@@ -4,7 +4,7 @@ else
     file_path = (joinpath(pwd(), "testing_reading_results"))
 end
 
-function test_chronology()
+function test_simulations()
     stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
     "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
@@ -47,7 +47,7 @@ function test_chronology()
     end
 end
 try
-    test_chronology()
+    test_simulations()
 finally
     @info("removing test files")
     rm(file_path, recursive=true)
