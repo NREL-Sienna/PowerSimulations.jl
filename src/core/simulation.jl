@@ -137,7 +137,7 @@ function _attach_feed_forward!(sim::Simulation, stage_name::String)
     stage = get(sim.stages, stage_name, nothing)
     feed_forward = filter(p->(p.first[1] == stage_name), sim.sequence.feed_forward)
     for (key, ff) in feed_forward
-        #key[1] = Stage name, key[2] = template field name, key[3] = device model key
+        #Note: key[1] = Stage name, key[2] = template field name, key[3] = device model key
         field_dict = getfield(stage.template, key[2])
         device_model = get(field_dict, key[3], nothing)
         isnothing(device_model) && throw(ArgumentError("Device model $(key[3]) not found in stage $(stage_name)"))
@@ -164,7 +164,7 @@ function _populate_caches!(sim::Simulation, stage_name::String)
     cache_dict = Dict{Type{<:AbstractCache}, AbstractCache}()
     for c in caches
         sim.stages[stage_name].internal.cache_dict[typeof(c)] = c
-        #build_cache!(cache, sim.stages[stage_name].internal.psi_container)
+        build_cache!(c, sim.stages[stage_name].internal.psi_container)
     end
     return
 end

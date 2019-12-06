@@ -36,6 +36,5 @@ function add_service!(psi_container::PSIContainer, service::SR,
                          model,
                          contributing_devices)
 
-
     return
 end
