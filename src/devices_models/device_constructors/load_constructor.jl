@@ -17,11 +17,11 @@ function construct_device!(psi_container::PSIContainer,
     reactivepower_variables!(psi_container, devices)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, D, S, model.feedforward)
+    activepower_constraints!(psi_container, devices, D, S, model.feed_forward)
 
-    reactivepower_constraints!(psi_container, devices, D, S, model.feedforward)
+    reactivepower_constraints!(psi_container, devices, D, S, model.feed_forward)
 
-    feedforward!(psi_container, L, model.feedforward)
+    feed_forward!(psi_container, L, model.feed_forward)
 
     #Cost Function
     cost_function(psi_container, devices, D, S)
@@ -47,9 +47,9 @@ function construct_device!(psi_container::PSIContainer,
     activepower_variables!(psi_container, devices)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, D, S, model.feedforward)
+    activepower_constraints!(psi_container, devices, D, S, model.feed_forward)
 
-    feedforward!(psi_container, L, model.feedforward)
+    feed_forward!(psi_container, L, model.feed_forward)
 
     #Cost Function
     cost_function(psi_container, devices, D, S)
@@ -75,9 +75,9 @@ function construct_device!(psi_container::PSIContainer,
     commitment_variables!(psi_container, devices)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
-    reactivepower_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
-    feedforward!(psi_container, L, model.feedforward)
+    activepower_constraints!(psi_container, devices, model.formulation, S, model.feed_forward)
+    reactivepower_constraints!(psi_container, devices, model.formulation, S, model.feed_forward)
+    feed_forward!(psi_container, L, model.feed_forward)
 
     #Cost Function
     cost_function(psi_container, devices, model.formulation, S)
@@ -102,8 +102,8 @@ function construct_device!(psi_container::PSIContainer,
     commitment_variables!(psi_container, devices)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
-    feedforward!(psi_container, L, model.feedforward)
+    activepower_constraints!(psi_container, devices, model.formulation, S, model.feed_forward)
+    feed_forward!(psi_container, L, model.feed_forward)
 
     #Cost Function
     cost_function(psi_container, devices, model.formulation, S)

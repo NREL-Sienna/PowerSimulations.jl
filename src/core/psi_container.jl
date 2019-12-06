@@ -61,7 +61,7 @@ function _psi_container_init(bus_numbers::Vector{Int64},
                         optimizer::Union{Nothing, JuMP.OptimizerFactory},
                         transmission::Type{S},
                         time_steps::UnitRange{Int64},
-                        resolution::Dates.Period,
+                        resolution::Dates.TimePeriod,
                         use_forecast_data::Bool,
                         initial_time::Dates.DateTime,
                         make_parameters_container::Bool,
@@ -91,7 +91,7 @@ mutable struct PSIContainer
     JuMPmodel::JuMP.AbstractModel
     optimizer_factory::Union{Nothing, JuMP.OptimizerFactory}
     time_steps::UnitRange{Int64}
-    resolution::Dates.Period
+    resolution::Dates.TimePeriod
     use_forecast_data::Bool
     initial_time::Dates.DateTime
     variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
@@ -105,7 +105,7 @@ mutable struct PSIContainer
     function PSIContainer(JuMPmodel::JuMP.AbstractModel,
                        optimizer_factory::Union{Nothing, JuMP.OptimizerFactory},
                        time_steps::UnitRange{Int64},
-                       resolution::Dates.Period,
+                       resolution::Dates.TimePeriod,
                        use_forecast_data::Bool,
                        initial_time::Dates.DateTime,
                        variables::Dict{Symbol, JuMP.Containers.DenseAxisArray},

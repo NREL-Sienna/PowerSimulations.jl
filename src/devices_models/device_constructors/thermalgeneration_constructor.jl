@@ -22,15 +22,15 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, D)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
-    reactivepower_constraints!(psi_container, devices, D, S, model.feedforward)
-    commitment_constraints!(psi_container, devices, D, S, model.feedforward)
-    ramp_constraints!(psi_container, devices, D, S, model.feedforward)
-    time_constraints!(psi_container, devices, D, S, model.feedforward)
-    feedforward!(psi_container, T, model.feedforward)
+    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
+    reactivepower_constraints!(psi_container, devices, D, S, model.feed_forward)
+    commitment_constraints!(psi_container, devices, D, S, model.feed_forward)
+    ramp_constraints!(psi_container, devices, D, S, model.feed_forward)
+    time_constraints!(psi_container, devices, D, S, model.feed_forward)
+    feed_forward!(psi_container, T, model.feed_forward)
 
     #Cost Function
-    cost_function(psi_container, devices, D, S, model.feedforward)
+    cost_function(psi_container, devices, D, S, model.feed_forward)
 
     return
 end
@@ -59,14 +59,14 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, D)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
-    commitment_constraints!(psi_container, devices, D, S, model.feedforward)
-    ramp_constraints!(psi_container, devices, D, S, model.feedforward)
-    time_constraints!(psi_container, devices, D, S, model.feedforward)
-    feedforward!(psi_container, T, model.feedforward)
+    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
+    commitment_constraints!(psi_container, devices, D, S, model.feed_forward)
+    ramp_constraints!(psi_container, devices, D, S, model.feed_forward)
+    time_constraints!(psi_container, devices, D, S, model.feed_forward)
+    feed_forward!(psi_container, T, model.feed_forward)
 
     #Cost Function
-    cost_function(psi_container, devices, D, S, model.feedforward)
+    cost_function(psi_container, devices, D, S, model.feed_forward)
 
     return
 end
@@ -94,13 +94,13 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
-    reactivepower_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
-    commitment_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
-    feedforward!(psi_container, T, model.feedforward)
+    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
+    reactivepower_constraints!(psi_container, devices, model.formulation, S, model.feed_forward)
+    commitment_constraints!(psi_container, devices, model.formulation, S, model.feed_forward)
+    feed_forward!(psi_container, T, model.feed_forward)
 
     #Cost Function
-    cost_function(psi_container, devices, model.formulation, S, model.feedforward)
+    cost_function(psi_container, devices, model.formulation, S, model.feed_forward)
 
     return
 end
@@ -128,12 +128,12 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
-    commitment_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
-    feedforward!(psi_container, T, model.feedforward)
+    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
+    commitment_constraints!(psi_container, devices, model.formulation, S, model.feed_forward)
+    feed_forward!(psi_container, T, model.feed_forward)
 
     #Cost Function
-    cost_function(psi_container, devices, model.formulation, S, model.feedforward)
+    cost_function(psi_container, devices, model.formulation, S, model.feed_forward)
 
     return
 end
@@ -160,13 +160,13 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
-    reactivepower_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
-    ramp_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
-    feedforward!(psi_container, T, model.feedforward)
+    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
+    reactivepower_constraints!(psi_container, devices, model.formulation, S, model.feed_forward)
+    ramp_constraints!(psi_container, devices, model.formulation, S, model.feed_forward)
+    feed_forward!(psi_container, T, model.feed_forward)
 
     #Cost Function
-    cost_function(psi_container, devices, model.formulation, S, model.feedforward)
+    cost_function(psi_container, devices, model.formulation, S, model.feed_forward)
 
     return
 end
@@ -193,12 +193,12 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
-    ramp_constraints!(psi_container, devices, model.formulation, S, model.feedforward)
-    feedforward!(psi_container, T, model.feedforward)
+    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
+    ramp_constraints!(psi_container, devices, model.formulation, S, model.feed_forward)
+    feed_forward!(psi_container, T, model.feed_forward)
 
     #Cost Function
-    cost_function(psi_container, devices, model.formulation, S, model.feedforward)
+    cost_function(psi_container, devices, model.formulation, S, model.feed_forward)
 
     return
 end
@@ -224,12 +224,12 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     #Initial Conditions
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
-    reactivepower_constraints!(psi_container, devices, D, S, model.feedforward)
-    feedforward!(psi_container, T, model.feedforward)
+    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
+    reactivepower_constraints!(psi_container, devices, D, S, model.feed_forward)
+    feed_forward!(psi_container, T, model.feed_forward)
 
     #Cost Function
-    cost_function(psi_container, devices, D, S, model.feedforward)
+    cost_function(psi_container, devices, D, S, model.feed_forward)
 
     return
 end
@@ -252,11 +252,11 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     #Initial Conditions
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
-    feedforward!(psi_container, T, model.feedforward)
+    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
+    feed_forward!(psi_container, T, model.feed_forward)
 
     #Cost Function
-    cost_function(psi_container, devices, D, S, model.feedforward)
+    cost_function(psi_container, devices, D, S, model.feed_forward)
 
     return
 end

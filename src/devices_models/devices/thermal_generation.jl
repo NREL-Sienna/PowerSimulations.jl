@@ -252,7 +252,7 @@ end
 This function gets the data for the generators
 """
 function _get_data_for_rocc(initial_conditions::Vector{InitialCondition},
-                            resolution::Dates.Period)
+                            resolution::Dates.TimePeriod)
     if resolution > Dates.Minute(1)
         minutes_per_period = Dates.value(Dates.Minute(resolution))
     else
@@ -365,7 +365,7 @@ the fraction of hours that a single time_step represents then it is not binding.
 """
 function _get_data_for_tdc(initial_conditions_on::Vector{InitialCondition},
                            initial_conditions_off::Vector{InitialCondition},
-                           resolution::Dates.Period)
+                           resolution::Dates.TimePeriod)
 
     steps_per_hour = 60/Dates.value(Dates.Minute(resolution))
     fraction_of_hour = 1/steps_per_hour

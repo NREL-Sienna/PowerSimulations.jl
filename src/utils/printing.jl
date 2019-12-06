@@ -59,6 +59,11 @@ function Base.show(io::IO, op_problem::PSIContainer)
     println(io, "PSIContainer()")
 end
 
+function Base.show(io::IO, op_problem::SimulationSequence)
+    # Here ASCII Art
+    println(io, "SimulationSequence()")
+end
+
 function Base.show(io::IO, op_problem::Simulation)
     println(io, "Simulation()")
 end
