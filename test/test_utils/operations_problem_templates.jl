@@ -10,7 +10,7 @@ template_uc= OperationsProblemTemplate(CopperPlatePowerModel, devices, branches,
 ## ED Model Ref
 branches = Dict()
 services = Dict()
-devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalDispatchNoMin, SemiContinuousFF(:P, :ON)),
+devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalDispatchNoMin),
                                     :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
                                     :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad),
                                     :ILoads =>  DeviceModel(InterruptibleLoad, DispatchablePowerLoad),
