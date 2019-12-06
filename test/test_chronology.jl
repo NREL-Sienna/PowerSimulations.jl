@@ -5,10 +5,26 @@ else
 end
 
 function test_chronology()
-    stages = Dict(1 => Stage(template_uc, 24, Dates.Hour(24), 1, c_sys5_uc, GLPK_optimizer,  Dict(0 => Consecutive())),
-                2 => Stage(template_ed, 12, Dates.Minute(5), 24, c_sys5_ed, GLPK_optimizer, Dict(1 => Synchronize(24,1), 0 => Consecutive()), TimeStatusChange(:ON_ThermalStandard)))
+    stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
+    "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
-    sim = Simulation("test", 2, stages, file_path; verbose = true)
+    sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
+                   intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 24, to_executions = 1)),
+                   horizons = Dict("UC" => 24, "ED" => 12),
+                   intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
+                   feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
+                   cache = Dict("ED" => [TimeStatusChange(:ON_ThermalStandard)]),
+                   ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive())
+                   )
+
+        sim = Simulation(name = "test",
+                 steps = 2,
+                 step_resolution=Hour(24),
+                 stages = stages_definition,
+                 stages_sequence = sequence,
+                 simulation_folder= file_path,
+                 verbose = true)
+
     sim_results = execute!(sim)
     stage = [1, 2]
 
