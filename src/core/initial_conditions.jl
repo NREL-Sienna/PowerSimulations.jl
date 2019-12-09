@@ -84,7 +84,7 @@ function calculate_ic_quantity(initial_condition_key::ICKey{DeviceStatus, PSD},
                                 ic::InitialCondition,
                                 var_value::Float64,
                                 cache::Union{Nothing, AbstractCache}) where PSD <: PSY.Device
-    return isapprox(var_value, 0.0, atol = 1e-4) ? 1.0 : 0.0
+    return isapprox(var_value, 0.0, atol = 1e-4) ? 0.0 : 1.0
 end
 
 function calculate_ic_quantity(initial_condition_key::ICKey{DevicePower, PSD},

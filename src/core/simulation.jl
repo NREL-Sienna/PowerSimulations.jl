@@ -67,6 +67,7 @@ mutable struct Simulation
 end
 
 ################# accessor functions ####################
+get_sequence(s::Simulation) = s.sequence
 get_steps(s::Simulation) = s.steps
 get_date_range(s::Simulation) = s.internal.date_range
 get_stage(s::Simulation, name::String) = get(s.stages, name, nothing)
@@ -113,28 +114,47 @@ function _prepare_workspace(base_name::AbstractString, folder::AbstractString)
     return raw_output, models_json_ouput, results_path
 end
 
-function _check_dates!(sim::Simulation)
+function _get_simulation_initial_times!(sim::Simulation)
     k = keys(sim.sequence.order)
     k_size = length(k)
-    range = Vector{Dates.DateTime}(undef, 2)
     @assert k_size == maximum(k)
+
+    stage_initial_times = Dict{Int64, Vector{Dates.DateTime}}()
+    range = Vector{Dates.DateTime}(undef, 2)
+    
     for (stage_number, stage_name) in sim.sequence.order
         stage_system = sim.stages[stage_name].sys
-        initial_times = PSY.get_forecast_initial_times(stage_system)
-        stage_number == 1 && (range[1] = initial_times[1])
-        interval = PSY.get_forecasts_interval(stage_system)
-        if interval != sim.sequence.intervals[stage_name]
-            error("Simulation interval and forecast interval definitions are not compatible")
-        end
-        for (ix, element) in enumerate(initial_times[1:end-1])
-            if !(element + interval == initial_times[ix+1])
-                error("The sequence of forecasts is invalid")
+        if PSY.are_forecasts_contiguous(stage_system)
+            stage_initial_times[stage_number] = PSY.generate_initial_times(stage_system,
+                                                        get_interval(get_sequence(sim), stage_name),
+                                                        get_horizon(get_sequence(sim), stage_name))
+            isempty(stage_initial_times[stage_number]) ? throw(ArgumentError("Simulation interval 
+                                    and forecast interval definitions are not compatible")) : nothing ; 
+        else
+            stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage_system)
+            interval = PSY.get_forecasts_interval(stage_system)
+            if interval != get_interval(get_sequence(sim), stage_name)
+                throw(ArgumentError("Simulation interval and 
+                        forecast interval definitions are not compatible"))
+            end
+            for (ix, element) in enumerate(stage_initial_times[stage_number][1:end-1])
+                if !(element + interval == stage_initial_times[stage_number][ix+1])
+                    error("The sequence of forecasts is invalid")
+                end
             end
         end
-        (stage_number == k_size && (range[end] = initial_times[end]))
+        stage_number == 1 && (range[1] = stage_initial_times[stage_number][1])
+        (stage_number == k_size && (range[end] = stage_initial_times[stage_number][end]))
     end
     sim.internal.date_range = Tuple(range)
-    return
+
+    if isnothing(get_initial_time(get_sequence(sim)))
+        sim.sequence.initial_time = stage_initial_times[1][1]
+        @warn("Initial time not defined as an argument, it will be infered from the data.
+               Initial Simulation Time set to $get_initial_time(get_sequence(sim))")
+    end
+
+    return stage_initial_times
 end
 
 function _attach_feed_forward!(sim::Simulation, stage_name::String)
@@ -195,7 +215,13 @@ function _build_stages!(sim::Simulation, verbose::Bool = true; kwargs...)
         _write_psi_container(stage.internal.psi_container,
                              joinpath(stage_path, "$(stage_name)_optimization_model.json"))
         system_to_file && PSY.to_json(stage.sys, joinpath(stage_path , "$(stage_name)_sys_data.json"))
-        sim.internal.date_ref[stage_number] = PSY.get_forecast_initial_times(stage.sys)[1]
+        if PSY.are_forecasts_contiguous(stage.sys)
+            sim.internal.date_ref[stage_number] = PSY.generate_initial_times(stage.sys,
+                                                    get_interval(get_sequence(sim), stage_name),
+                                                    get_horizon(get_sequence(sim), stage_name))[1]
+        else
+            sim.internal.date_ref[stage_number] = PSY.get_forecast_initial_times(stage.sys)[1]
+        end
     end
 
     return
@@ -205,13 +231,7 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
     _check_chronologies(sim)
     raw_dir, models_dir, results_dir = _prepare_workspace(sim.name, sim.simulation_folder)
     sim.internal = SimulationInternal(raw_dir, models_dir, results_dir, sim.steps, keys(sim.sequence.order))
-    _check_dates!(sim)
-    stage_initial_times = Dict{Int64, Vector{Dates.DateTime}}()
-    if sim.sequence.initial_time == Dates.DateTime(0)
-        sim.sequence.initial_time = PSY.get_forecast_initial_times(sim.stages[sim.sequence.order[1]].sys)[1]
-        @warn("Initial time not defined as an argument, it will be infered from the data.
-               Initial Simulation Time set to $(sim.sequence.initial_time)")
-    end
+    stage_initial_times = _get_simulation_initial_times!(sim)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get(sim.stages, stage_name, nothing)
         stage_interval = sim.sequence.intervals[stage_name]
@@ -219,15 +239,6 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
         stage.internal = StageInternal(stage_number, executions, 0, nothing)
         isnothing(stage) && throw(ArgumentError("Stage $(stage_name) not found in the stages definitions"))
         PSY.check_forecast_consistency(stage.sys)
-        # Check this is actually necessary
-        if PSY.are_forecasts_contiguous(stage.sys)
-            stage_initial_times[stage_number] = PSY.generate_initial_times(stage.sys,
-                                                    stage_interval,
-                                                    sim.sequence.horizons[stage_name],
-                                                    initial_time = sim.sequence.initial_time)
-        else
-            stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage.sys)
-        end
         _attach_feed_forward!(sim, stage_name)
     end
     _check_steps(sim, stage_initial_times)
