@@ -93,14 +93,12 @@ results, include a vector of the variable names to be included
 """
 
 function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
+    !sim.internal.compiled_status && error("Simulation not build, build the simulation to execute")
     if sim.internal.reset
         sim.internal.reset = false
     elseif sim.internal.reset == false
         error("Re-build the simulation")
     end
-
-    !sim.internal.compiled_status && error("Simulation not build, build the simulation to execute")
-
     steps = get_steps(sim)
     for s in 1:steps
         verbose && println("Step $(s)")
