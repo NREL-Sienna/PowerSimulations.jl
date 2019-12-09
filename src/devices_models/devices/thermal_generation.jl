@@ -163,7 +163,7 @@ This function adds the reactive  power limits of generators when there are Commi
 """
 function reactivepower_constraints!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{T},
-                                   ::Type{<:AbstractThermalDispatchFormulation},
+                                   model::DeviceModel{T, <:AbstractThermalDispatchFormulation},
                                    ::Type{<:PM.AbstractPowerModel},
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where T<:PSY.ThermalGen
     constraint_data = DeviceRange(length(devices))
@@ -185,7 +185,7 @@ This function adds the reactive power limits of generators when there Commitment
 """
 function reactivepower_constraints!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{T},
-                                   ::Type{<:AbstractThermalFormulation},
+                                   model::DeviceModel{T, <:AbstractThermalFormulation},
                                    ::Type{<:PM.AbstractPowerModel},
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where T<:PSY.ThermalGen
     constraint_data = DeviceRange(length(devices))
