@@ -37,10 +37,10 @@ results = load_simulation_results(stage,step, variable, SimulationResultsReferen
 - `write::Bool`: if true, the aggregated results get written back to the results file in the folder structure
 """
 function load_simulation_results(SimulationResultsReference::SimulationResultsReference,
-                                 stage_number::Int64,
+                                 stage_name::String,
                                  step::Array,
                                  variable::Array; kwargs...)
-    stage = "stage-$stage_number"
+    stage = "stage-$stage_name"
     references = SimulationResultsReference.ref
     variables = Dict() # variable dictionary
     duals = Dict()
@@ -104,8 +104,8 @@ results = load_simulation_results(stage, step, variable, SimulationResultsRefere
 - `write::Bool`: if true, the aggregated results get written back to the results file in the folder structure
 """
 
-function load_simulation_results(SimulationResultsReference::SimulationResultsReference, stage_number::Int; kwargs...)
-    stage = "stage-$stage_number"
+function load_simulation_results(SimulationResultsReference::SimulationResultsReference, stage_name::String; kwargs...)
+    stage = "stage-$stage_name"
     references = SimulationResultsReference.ref
     variables = Dict()
     duals = Dict()
