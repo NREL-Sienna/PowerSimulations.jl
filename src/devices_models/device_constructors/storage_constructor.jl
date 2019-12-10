@@ -21,9 +21,9 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, D)
 
     #Constraints
-    active_power_constraints!(psi_container, devices, D, S, model.feed_forward)
-    reactive_power_constraints!(psi_container, devices, D, S, model.feed_forward)
-    energy_capacity_constraints!(psi_container, devices, D, S, model.feed_forward)
+    active_power_constraints!(psi_container, devices, model, S, model.feed_forward)
+    reactive_power_constraints!(psi_container, devices, model, S, model.feed_forward)
+    energy_capacity_constraints!(psi_container, devices, model, S, model.feed_forward)
     feed_forward!(psi_container, St, model.feed_forward)
 
     # Energy Balanace limits
@@ -55,8 +55,8 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, D)
 
     #Constraints
-    active_power_constraints!(psi_container, devices, D, S, model.feed_forward)
-    energy_capacity_constraints!(psi_container, devices, D, S, model.feed_forward)
+    active_power_constraints!(psi_container, devices, model, S, model.feed_forward)
+    energy_capacity_constraints!(psi_container, devices, model, S, model.feed_forward)
     feed_forward!(psi_container, St, model.feed_forward)
 
     # Energy Balanace limits
@@ -88,9 +88,9 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    active_power_constraints!(psi_container, devices, model.formulation, S, model.feed_forward)
-    reactive_power_constraints!(psi_container, devices, model.formulation, S, model.feed_forward)
-    energy_capacity_constraints!(psi_container, devices, model.formulation, S, model.feed_forward)
+    active_power_constraints!(psi_container, devices, model, S, model.feed_forward)
+    reactive_power_constraints!(psi_container, devices, model, S, model.feed_forward)
+    energy_capacity_constraints!(psi_container, devices, model, S, model.feed_forward)
     feed_forward!(psi_container, St, model.feed_forward)
 
     # Energy Balanace limits
@@ -121,8 +121,8 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    active_power_constraints!(psi_container, devices, model.formulation, S, model.feed_forward)
-    energy_capacity_constraints!(psi_container, devices, model.formulation, S, model.feed_forward)
+    active_power_constraints!(psi_container, devices, model, S, model.feed_forward)
+    energy_capacity_constraints!(psi_container, devices, model, S, model.feed_forward)
     feed_forward!(psi_container, St, model.feed_forward)
 
     # Energy Balanace limits

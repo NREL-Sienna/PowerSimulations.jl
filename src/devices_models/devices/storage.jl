@@ -71,7 +71,7 @@ end
 
 function active_power_constraints!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{St},
-                                   ::Type{BookKeeping},
+                                   model::DeviceModel{St, BookKeeping},
                                    ::Type{S},
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                      S<:PM.AbstractPowerModel}
@@ -98,7 +98,7 @@ end
 
 function active_power_constraints!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{St},
-                                   ::Type{BookKeepingwReservation},
+                                   model::DeviceModel{St, BookKeepingwReservation},
                                    ::Type{S},
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                      S<:PM.AbstractPowerModel}
@@ -130,7 +130,7 @@ This function adds the reactive  power limits of generators when there are Commi
 """
 function reactive_power_constraints!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{St},
-                                   ::Type{D},
+                                   model::DeviceModel{St, D},
                                    ::Type{S},
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                      D<:AbstractStorageFormulation,
@@ -163,7 +163,7 @@ end
 
 function energy_capacity_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{St},
-                                    ::Type{D},
+                                    model::DeviceModel{St, D},
                                     ::Type{S},
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                                         D<:AbstractStorageFormulation,
