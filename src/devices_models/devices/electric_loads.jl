@@ -48,7 +48,7 @@ Reactive Power Constraints on Loads Assume Constant PowerFactor
 """
 function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{L},
-                                    ::Type{<:AbstractControllablePowerLoadFormulation},
+                                    model::DeviceModel{L, <:AbstractControllablePowerLoadFormulation},
                                     ::Type{<:PM.AbstractPowerModel},
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where L<:PSY.ElectricLoad
     time_steps = model_time_steps(psi_container)
@@ -100,7 +100,7 @@ end
 
 function activepower_constraints!(psi_container::PSIContainer,
                                  devices::IS.FlattenIteratorWrapper{L},
-                                 ::Type{DispatchablePowerLoad},
+                                 model::DeviceModel{L, DispatchablePowerLoad},
                                  ::Type{<:PM.AbstractPowerModel},
                                  feed_forward::Union{Nothing, AbstractAffectFeedForward}) where L<:PSY.ElectricLoad
     parameters = model_has_parameters(psi_container)
@@ -138,7 +138,7 @@ end
 
 function activepower_constraints!(psi_container::PSIContainer,
                                   devices::IS.FlattenIteratorWrapper{L},
-                                  ::Type{InterruptiblePowerLoad},
+                                  model::DeviceModel{L, InterruptiblePowerLoad},
                                   ::Type{<:PM.AbstractPowerModel},
                                   feed_forward::Union{Nothing, AbstractAffectFeedForward}) where L<:PSY.ElectricLoad
     parameters = model_has_parameters(psi_container)
