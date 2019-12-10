@@ -1,5 +1,5 @@
 mutable struct SimulationSequence
-    initial_time::Dates.DateTime
+    initial_time::Union{Dates.DateTime, Nothing}
     horizons::Dict{String, Int64}
     intervals::Dict{String, <:Dates.TimePeriod}
     order::Dict{Int64, String}
@@ -8,7 +8,7 @@ mutable struct SimulationSequence
     ini_cond_chronology::Dict{String, <:AbstractChronology}
     cache::Dict{String, Vector{<:AbstractCache}}
 
-    function SimulationSequence(;initial_time::Dates.DateTime = Dates.DateTime(0),
+    function SimulationSequence(;initial_time::Union{Dates.DateTime, Nothing} = nothing,
                                  horizons::Dict{String, Int64},
                                  intervals::Dict{String, <:Dates.TimePeriod},
                                  order::Dict{Int64, String},
@@ -28,3 +28,8 @@ mutable struct SimulationSequence
 
     end
 end
+
+get_initial_time(s::SimulationSequence) = s.initial_time
+get_horizon(s::SimulationSequence, name::String) = get(s.horizons, name, nothing)
+get_interval(s::SimulationSequence, name::String) = get(s.intervals, name, nothing)
+get_order(s::SimulationSequence, number::Int64) = get(s.order, number, nothing)
