@@ -127,9 +127,9 @@ function branch_rate_bounds!(psi_container::PSIContainer,
 end
 
 #################################### Rate Limits Constraints ##################################################
-function branch_rate_constraint!(psi_container::PSIContainer,
+function branch_rate_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
-                                ::Type{D},
+                                model::DeviceModel{B, D},
                                 ::Type{S},
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {B<:PSY.ACBranch,
                                                   D<:AbstractBranchFormulation,
@@ -159,9 +159,9 @@ function branch_rate_constraint!(psi_container::PSIContainer,
     return
 end
 
-function branch_rate_constraint!(psi_container::PSIContainer,
+function branch_rate_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
-                                ::Type{<:AbstractBranchFormulation},
+                                model::DeviceModel{B, <:AbstractBranchFormulation},
                                 ::Type{<:PM.AbstractActivePowerModel},
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where B<:PSY.ACBranch
     names = Vector{String}(undef, length(devices))
@@ -195,9 +195,9 @@ function branch_rate_constraint!(psi_container::PSIContainer,
 end
 
 
-function branch_rate_constraint!(psi_container::PSIContainer,
+function branch_rate_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
-                                ::Type{<:AbstractBranchFormulation},
+                                model::DeviceModel{B, <:AbstractBranchFormulation},
                                 ::Type{<:PM.AbstractPowerModel},
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where B<:PSY.ACBranch
     range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
@@ -217,9 +217,9 @@ function branch_rate_constraint!(psi_container::PSIContainer,
 end
 
 #################################### Flow Limits Constraints ##################################################
-function branch_flow_constraint!(psi_container::PSIContainer,
+function branch_flow_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
-                                ::Type{FlowMonitoredLine},
+                                model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
                                 ::Union{Type{PM.DCPPowerModel}, Type{StandardPTDFModel}},
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward})
 
@@ -237,9 +237,9 @@ function branch_flow_constraint!(psi_container::PSIContainer,
 
 end
 
-function branch_flow_constraint!(psi_container::PSIContainer,
+function branch_flow_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
-                                ::Type{FlowMonitoredLine},
+                                model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
                                 ::Type{<:PM.AbstractPowerModel},
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward})
     names = Vector{String}(undef, length(devices))
