@@ -11,7 +11,7 @@ struct SimulationResultsReference
             _interval = sim.sequence.intervals[stage_name]
             interval = convert(Dates.Minute, _interval)
             resolution = convert(Dates.Minute, get_sim_resolution(stage))
-            chronologies["stage-$stage_number"] = convert(Int64, (interval/resolution))
+            chronologies["stage-$stage_name"] = convert(Int64, (interval/resolution))
         end
         new(ref, sim.internal.results_dir, chronologies)
     end
@@ -70,7 +70,7 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
             for run in 1:stage.internal.executions
                 sim.internal.current_time = sim.internal.date_ref[stage_number]
                 for name in variable_names
-                    full_path = joinpath(sim.internal.raw_dir, "step-$(s)-stage-$(stage_number)",
+                    full_path = joinpath(sim.internal.raw_dir, "step-$(s)-stage-$(stage_name)",
                                 replace_chars("$(sim.internal.current_time)", ":", "-"), "$(name).feather")
                     if isfile(full_path)
                         date_df = DataFrames.DataFrame(Date = sim.internal.current_time,
@@ -84,7 +84,7 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
                 sim.internal.date_ref[stage_number] = sim.internal.date_ref[stage_number] + interval
             end
         end
-        references["stage-$stage_number"] = variables
+        references["stage-$stage_name"] = variables
     end
     return references
 end
