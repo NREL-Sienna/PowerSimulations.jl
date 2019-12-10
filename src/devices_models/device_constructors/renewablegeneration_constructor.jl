@@ -15,8 +15,8 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     reactivepower_variables!(psi_container, devices);
 
     #Constraints
-    activepower_constraints!(psi_container, devices, D, S, model.feed_forward)
-    reactivepower_constraints!(psi_container, devices, D, S, model.feed_forward)
+    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
+    reactivepower_constraints!(psi_container, devices, model, S, model.feed_forward)
     feed_forward!(psi_container, R, model.feed_forward)
 
     #Cost Function
@@ -41,7 +41,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     activepower_variables!(psi_container, devices)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, D, S, model.feed_forward)
+    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
     feed_forward!(psi_container, R, model.feed_forward)
 
     #Cost Function

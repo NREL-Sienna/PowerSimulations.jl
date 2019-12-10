@@ -30,7 +30,7 @@ end
 ####################################### Reactive Power Constraints #########################
 function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{R},
-                                    device_formulation::Type{RenewableFullDispatch},
+                                    model::DeviceModel{R, RenewableFullDispatch},
                                     system_formulation::Type{<:PM.AbstractPowerModel},
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
     constraint_data = DeviceRange(length(devices))
@@ -53,7 +53,7 @@ end
 
 function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{R},
-                                    device_formulation::Type{RenewableConstantPowerFactor},
+                                    model::DeviceModel{R, RenewableConstantPowerFactor},
                                     system_formulation::Type{<:PM.AbstractPowerModel},
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
     names = (PSY.get_name(d) for d in devices)
@@ -106,7 +106,7 @@ end
 
 function activepower_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{R},
-                                device_formulation::Type{<:AbstractRenewableDispatchFormulation},
+                                model::DeviceModel{R, <:AbstractRenewableDispatchFormulation},
                                 system_formulation::Type{<:PM.AbstractPowerModel},
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
     parameters = model_has_parameters(psi_container)
