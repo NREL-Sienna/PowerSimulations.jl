@@ -92,7 +92,9 @@ function Base.show(io::IO, ::MIME"text/plain", results::Results)
     println(io, "Optimizer Log")
     println(io, "-------------")
     for (k, v) in results.optimizer_log
-        println(io, "        $(k) = $(v)")
+        if !isnothing(v)
+            println(io, "        $(k) = $(v)")
+        end
     end
     println(io, "\n")
     for (k, v) in results.total_cost
@@ -114,7 +116,9 @@ function Base.show(io::IO, ::MIME"text/plain", results::Results)
     end
     println(io, "<p><b>Optimizer Log</b></p>")
     for (k, v) in results.optimizer_log
-        println(io, "<p>        $(k) = $(v)</p>")
+        if !isnothing(v)
+            println(io, "<p>        $(k) = $(v)</p>")
+        end
     end
     println(io, "\n")
     for (k, v) in results.total_cost
