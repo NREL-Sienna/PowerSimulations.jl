@@ -25,7 +25,6 @@ function test_simulations()
                  simulation_folder= file_path,
                  verbose = true)
 
-    build!(sim)                 
     sim_results = execute!(sim)
     stage = [1, 2]
 
