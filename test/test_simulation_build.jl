@@ -13,8 +13,8 @@ sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
                    )
 
     for field in fieldnames(SimulationSequence)
-         fieldtype(SimulationSequence, field) == Dates.DateTime && continue
-          @test !isempty(getfield(sequence, field))
+        field == :initial_time && continue
+        @test !isempty(getfield(sequence, field))
     end
 
     sim = Simulation(name = "test",
