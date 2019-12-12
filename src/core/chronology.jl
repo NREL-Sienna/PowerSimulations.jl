@@ -11,7 +11,7 @@ end
 struct RecedingHorizon <: AbstractChronology
     step::Int64
     function RecedingHorizon(;from_step::Int64=1)
-        new(step)
+        new(from_step)
     end
 end
 

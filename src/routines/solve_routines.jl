@@ -102,9 +102,9 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
     elseif sim.internal.reset == false
         error("Re-build the simulation")
     end
-
-    !sim.internal.compiled_status && error("Simulation not build, build the simulation to execute")
-
+    !sim.internal.compiled_status && error("Simulation not built, build the simulation to execute")
+    sim.internal.raw_dir, sim.internal.models_dir, sim.internal.results_dir = _prepare_workspace(sim.name, sim.simulation_folder)
+    _build_stages!(sim, verbose = verbose; kwargs...)
     steps = get_steps(sim)
     for s in 1:steps
         verbose && println("Step $(s)")

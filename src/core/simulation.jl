@@ -55,6 +55,7 @@ mutable struct Simulation
                         stages_sequence=nothing,
                         simulation_folder::String,
                         verbose::Bool = false, kwargs...)
+    step_resolution = convert(Dates.Millisecond, step_resolution)
     new(
         steps,
         step_resolution,
@@ -79,7 +80,17 @@ end
 get_ini_cond_chronology(s::Simulation, number::Int64) = get(s.sequence.ini_cond_chronology, s.sequence.order[number], nothing)
 
 
-
+function _check_inputs(sim::Simulation)
+    key_names = keys(sim.sequence.horizons)
+    for key in key_names
+        resolution = get_sim_resolution(sim.stages[key])
+        horizon = sim.sequence.horizons[key]
+        interval = sim.sequence.intervals[key]
+        if resolution * horizon < interval
+            throw(ArgumentError("horizon ($(horizon*resolution)) is shorter than interval ($interval) for $key"))
+        end
+    end
+end
 
 function _check_chronologies(sim::Simulation)
     for (key, chron) in sim.sequence.intra_stage_chronologies
@@ -99,7 +110,6 @@ function _assign_chronologies(sim::Simulation)
 end
 
 function _prepare_workspace(base_name::AbstractString, folder::AbstractString)
-    !isdir(folder) && throw(ArgumentError("Specified folder is not valid"))
     global_path = joinpath(folder, "$(base_name)")
     !isdir(global_path) && mkpath(global_path)
     _sim_path = replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-")
@@ -175,8 +185,8 @@ function _check_steps(sim::Simulation, stage_initial_times::Dict{Int64, Vector{D
         forecast_count = length(stage_initial_times[stage_number])
         stage = get(sim.stages, stage_name, nothing)
         if sim.steps*stage.internal.execution_count > forecast_count
-            error("The number of available time series is not enough to perform the
-                   desired amount of simulation steps.")
+            error("The number of available time series ($(forecast_count)) is not enough to perform the
+                  desired amount of simulation steps ($(sim.steps*stage.internal.execution_count)).")
         end
     end
     return
@@ -229,7 +239,8 @@ end
 
 function build!(sim::Simulation; verbose::Bool = false, kwargs...)
     _check_chronologies(sim)
-    raw_dir, models_dir, results_dir = _prepare_workspace(sim.name, sim.simulation_folder)
+    _check_folder(sim.simulation_folder)
+    raw_dir, models_dir, results_dir = sim.simulation_folder, sim.simulation_folder, sim.simulation_folder #_prepare_workspace(sim.name, sim.simulation_folder)
     sim.internal = SimulationInternal(raw_dir, models_dir, results_dir, sim.steps, keys(sim.sequence.order))
     stage_initial_times = _get_simulation_initial_times!(sim)
     for (stage_number, stage_name) in sim.sequence.order
@@ -245,4 +256,13 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
     _build_stages!(sim, verbose = verbose; kwargs...)
     sim.internal.compiled_status = true
     return
+end
+
+function _check_folder(folder::String)
+    !isdir(folder) && throw(IS.ConflictingInputsError("Specified folder is not valid"))
+    testdir(folder) = try 
+        (p,i) = mktemp(folder) ; rm(p) ; true 
+    catch
+        throw(IS.ConflictingInputsError("Specified folder does not have write access"))
+    end
 end

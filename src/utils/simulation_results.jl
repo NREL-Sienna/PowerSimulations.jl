@@ -164,10 +164,8 @@ function check_file_integrity(path::String)
         expected_hash, file_name = split(line)
         actual_hash = compute_sha256(file_name)
         if expected_hash != actual_hash
-            @error "hash mismatch for file" file_name expected_hash actual_hash
+            @debug "hash mismatch for file" file_name expected_hash actual_hash
             matched = false
-        else
-            @info "File hash values matched." file_name
         end
     end
 
@@ -177,3 +175,14 @@ function check_file_integrity(path::String)
         ))
     end
 end
+
+function get_variable_names(sim::Simulation, stage::Any)
+     return collect(keys(sim.stages[stage].internal.psi_container.variables))
+ end
+ function get_reference(sim_results::SimulationResultsReference, stage::String, step::Int, variable::Symbol) 
+     file_paths = sim_results.ref["stage-$stage"][variable]
+     file_paths = filter(file_paths -> file_paths.Step == "step-$step", file_paths)[:, 3]
+     return file_paths
+ end
+
+  get_psi_container(sim::Simulation, stage::Any) = sim.stages[stage].internal.psi_container

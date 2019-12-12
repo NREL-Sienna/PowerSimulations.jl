@@ -112,6 +112,9 @@ export get_all_constraint_index
 export get_all_var_index
 export get_con_index
 export get_var_index
+export get_variable_names
+export get_reference
+export get_psi_container
 
 # Plotting Utils
 export sort_data

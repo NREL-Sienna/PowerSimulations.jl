@@ -11,12 +11,12 @@ sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
                    cache = Dict("ED" => [TimeStatusChange(:ON_ThermalStandard)]),
                    ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive())
                    )
-
+#=
     for field in fieldnames(SimulationSequence)
          fieldtype(SimulationSequence, field) == Dates.DateTime && continue
-          @test !isempty(getfield(sequence, field))
+          @test !isempty(getfield(SimulationSequence, field))
     end
-
+=#
     sim = Simulation(name = "test",
                  steps = 2,
                  step_resolution=Hour(24),

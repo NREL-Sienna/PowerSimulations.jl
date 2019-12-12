@@ -16,6 +16,7 @@ mutable struct SimulationSequence
                                  feed_forward = Dict{Tuple{String, Symbol, Symbol}, AbstractAffectFeedForward}(),
                                  ini_cond_chronology = Dict{String, AbstractChronology}(),
                                  cache = Dict{String, Vector{AbstractCache}}())
+        intervals = convert(Dict{String, Dates.Millisecond}, intervals)
         new(
             initial_time,
             horizons,
