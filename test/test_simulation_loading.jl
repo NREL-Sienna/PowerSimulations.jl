@@ -64,7 +64,7 @@ function test_load_simulation()
                 rm("$(sim_results.results_folder)/$f")
             end
             res = load_simulation_results(sim_results, name)
-            @test_throws ArgumentError write_results(res, "nothing", "results")
+            @test_throws IS.ConflictingInputsError write_results(res, "nothing", "results")
         end
     end
     @testset "testing load simulation results between the two methods of load simulation" begin
@@ -75,14 +75,15 @@ function test_load_simulation()
             @test results.variables == res.variables
         end
     end
+    #=
     @testset "Testing to verify raw output results correctly match aggregated for Receding Horizon" begin
         stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
-                               "UC2" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer))
+                               "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
-        sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "UC2"),
-                   intra_stage_chronologies = Dict(("UC"=>"UC2") => Synchronize(from_steps = 1, to_executions = 1)),
-                   horizons = Dict("UC" => 5, "UC2" => 5),
-                   intervals = Dict("UC" => Hour(24), "UC2" => Hour(1)),
+        sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
+                   intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 1, to_executions = 1)),
+                   horizons = Dict("UC" => 24, "ED" => 12),
+                   intervals = Dict("UC" => Hour(24), "UC" => Hour(1)),
                    feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
                    cache = Dict("ED" => [TimeStatusChange(:ON_ThermalStandard)]),
                    ini_cond_chronology = Dict("UC" => RecedingHorizon(), "ED" => RecedingHorizon())
@@ -98,17 +99,21 @@ function test_load_simulation()
         build!(sim)
         sim_results = execute!(sim)
         @show sim_results.chronologies
-        results = load_simulation_results(sim_results, "UC")
-        vars_names = [:P_ThermalStandard, :ON_ThermalStandard]
-        for name in vars_names
-            results.variables[name]
-            variable_ref = sim_results.ref["stage-UC"][name]
-            vars = results.variables[name]
-            output = vars[end-1, :]
-            raw_result = first(Feather.read(variable_ref[(size(variable_ref,1)-1), 3]))
-            @test isapprox(output, raw_result, atol = 1e-4)
+        stages = ["UC", "ED"]
+        for stage in stages
+            results = load_simulation_results(sim_results, stage)
+            vars_names = [:P_ThermalStandard, :ON_ThermalStandard]
+            for name in vars_names
+                results.variables[name]
+                variable_ref = sim_results.ref["stage-$stage"][name]
+                vars = results.variables[name]
+                output = vars[end-1, :]
+                raw_result = first(Feather.read(variable_ref[(size(variable_ref,1)-1), 3]))
+                @test isapprox(output, raw_result, atol = 1e-4)
+            end
         end
     end
+    =#
     @testset "negative test checking total sums" begin
         stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
                         "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
@@ -143,7 +148,7 @@ function test_load_simulation()
             rm(file_path)
             fake_df = DataFrames.DataFrame(:A => Array(1:10))
             Feather.write(file_path, fake_df)
-               @test_throws IS.DataFormatError check_file_integrity(dirname(file_path))
+               @test_throws IS.HashMismatchError check_file_integrity(dirname(file_path))
         end
         for name in stage_names
             variable_list = get_variable_names(sim, name)
@@ -152,7 +157,7 @@ function test_load_simulation()
             time_length = sim_results.chronologies["stage-$name"]
             fake_df = DataFrames.DataFrame(:A => Array(1:time_length))
             Feather.write(check_file_path, fake_df)
-                @test_throws IS.DataFormatError check_file_integrity(dirname(check_file_path))
+                @test_throws IS.HashMismatchError check_file_integrity(dirname(check_file_path))
         end
     end
 

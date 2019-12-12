@@ -265,7 +265,7 @@ function set_device_model!(op_problem::OperationsProblem{M},
                                             op_problem.psi_container.optimizer_factory; kwargs...)
         build_op_problem!(op_problem; kwargs...)
     else
-        error("Device Model with name $(name) doesn't exist in the model")
+        throw(IS.ConflictingInputsError("Device Model with name $(name) doesn't exist in the model"))
     end
 
     return
@@ -285,7 +285,7 @@ function set_branch_model!(op_problem::OperationsProblem{M},
                                             op_problem.psi_container.optimizer_factory; kwargs...)
         build_op_problem!(op_problem; kwargs...)
     else
-        error("Branch Model with name $(name) doesn't exist in the model")
+        throw(IS.ConflictingInputsError("Branch Model with name $(name) doesn't exist in the model"))
     end
 
     return
@@ -303,7 +303,7 @@ function set_services_model!(op_problem::OperationsProblem{M},
                                             op_problem.psi_container.optimizer_factory; kwargs...)
         build_op_problem!(op_problem; kwargs...)
     else
-        error("Branch Model with name $(name) doesn't exist in the model")
+        throw(IS.ConflictingInputsError("Branch Model with name $(name) doesn't exist in the model"))
     end
 
     return
@@ -316,7 +316,7 @@ function construct_device!(op_problem::OperationsProblem,
                            kwargs...)
 
     if haskey(op_problem.template.devices, name)
-        error("Device with model name $(name) already exists in the Opertaion Model")
+        throw(IS.ConflictingInputsError("Device with model name $(name) already exists in the Opertaion Model"))
     end
 
     devices_ref = get_devices_ref(op_problem)

@@ -87,7 +87,7 @@ function _check_inputs(sim::Simulation)
         horizon = sim.sequence.horizons[key]
         interval = sim.sequence.intervals[key]
         if resolution * horizon < interval
-            throw(ArgumentError("horizon ($(horizon*resolution)) is shorter than interval ($interval) for $key"))
+            throw(IS.ConflictingInputsError("horizon ($(horizon*resolution)) is shorter than interval ($interval) for $key"))
         end
     end
 end
@@ -103,7 +103,7 @@ function _assign_chronologies(sim::Simulation)
     for (key, chron) in sim.sequence.intra_stage_chronologies
         stage = get_stage(sim, key.second)
         from_stage_number = filter(p->(p.second == key.first), sim.sequence.order)
-        isempty(from_stage_number) && throw(ArgumentError("Stage $(key.first) not specified in the order dictionary"))
+        isempty(from_stage_number) && throw(IS.ConflictingInputsError("Stage $(key.first) not specified in the order dictionary"))
         stage.internal.chronolgy_dict[from_stage_number] = chron
     end
     return
@@ -138,18 +138,18 @@ function _get_simulation_initial_times!(sim::Simulation)
             stage_initial_times[stage_number] = PSY.generate_initial_times(stage_system,
                                                         get_interval(get_sequence(sim), stage_name),
                                                         get_horizon(get_sequence(sim), stage_name))
-            isempty(stage_initial_times[stage_number]) ? throw(ArgumentError("Simulation interval 
-                                    and forecast interval definitions are not compatible")) : nothing ; 
+            isempty(stage_initial_times[stage_number]) ? throw(IS.ConflictingInputsError("Simulation interval ($(get_interval(get_sequence(sim), stage_name))) and 
+                        forecast interval ($interval) definitions are not compatible")) : nothing ; 
         else
             stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage_system)
             interval = PSY.get_forecasts_interval(stage_system)
             if interval != get_interval(get_sequence(sim), stage_name)
-                throw(ArgumentError("Simulation interval and 
-                        forecast interval definitions are not compatible"))
+                throw(IS.ConflictingInputsError("Simulation interval ($(get_interval(get_sequence(sim), stage_name))) and 
+                        forecast interval ($interval) definitions are not compatible"))
             end
             for (ix, element) in enumerate(stage_initial_times[stage_number][1:end-1])
                 if !(element + interval == stage_initial_times[stage_number][ix+1])
-                    error("The sequence of forecasts is invalid")
+                    throw(IS.ConflictingInputsError("The sequence of forecasts is invalid"))
                 end
             end
         end
@@ -174,7 +174,7 @@ function _attach_feed_forward!(sim::Simulation, stage_name::String)
         #Note: key[1] = Stage name, key[2] = template field name, key[3] = device model key
         field_dict = getfield(stage.template, key[2])
         device_model = get(field_dict, key[3], nothing)
-        isnothing(device_model) && throw(ArgumentError("Device model $(key[3]) not found in stage $(stage_name)"))
+        isnothing(device_model) && throw(IS.ConflictingInputsError("Device model $(key[3]) not found in stage $(stage_name)"))
         device_model.feed_forward = ff
     end
     return
@@ -185,8 +185,8 @@ function _check_steps(sim::Simulation, stage_initial_times::Dict{Int64, Vector{D
         forecast_count = length(stage_initial_times[stage_number])
         stage = get(sim.stages, stage_name, nothing)
         if sim.steps*stage.internal.execution_count > forecast_count
-            error("The number of available time series ($(forecast_count)) is not enough to perform the
-                  desired amount of simulation steps ($(sim.steps*stage.internal.execution_count)).")
+            throw(IS.ConflictingInputsError("The number of available time series ($(forecast_count)) is not enough to perform the
+                  desired amount of simulation steps ($(sim.steps*stage.internal.execution_count))."))
         end
     end
     return
@@ -248,7 +248,7 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
         stage_interval = sim.sequence.intervals[stage_name]
         executions = Int(sim.step_resolution/stage_interval)
         stage.internal = StageInternal(stage_number, executions, 0, nothing)
-        isnothing(stage) && throw(ArgumentError("Stage $(stage_name) not found in the stages definitions"))
+        isnothing(stage) && throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
         PSY.check_forecast_consistency(stage.sys)
         _attach_feed_forward!(sim, stage_name)
     end

@@ -170,7 +170,7 @@ function check_file_integrity(path::String)
     end
 
     if !matched
-        throw(IS.DataFormatError(
+        throw(IS.HashMismatchError(
             "The hash value in the written files does not match the read files, results may have been tampered."
         ))
     end
