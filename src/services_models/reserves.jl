@@ -7,11 +7,19 @@ This function add the variables for reserves to the model
 function activeservice_variables!(psi_container::PSIContainer,
                                   service::SR,
                                   devices::Vector{<:PSY.Device}) where SR<:PSY.Reserve
+
+    function get_ub_val(d::D) where D <: PSY.Device
+        return d.tech.activepowerlimits.max
+    end
+    function get_ub_val(d::D) where D <: PSY.RenewableGen
+        return d.tech.rating
+    end
+    
     add_variable(psi_container,
                  devices,
                  Symbol("$(PSY.get_name(service))_$SR"),
                  false;
-                 ub_value = d -> d.tech.activepowerlimits.max,
+                 ub_value = d -> get_ub_val(d),
                  lb_value = d -> 0 )
     return
 end
@@ -90,5 +98,20 @@ function include_service!(constraint_data::DeviceRange,
             services_lb[ix] = Symbol("$(PSY.get_name(service))_$SR")
         end
         constraint_data.additional_terms_lb[index] = services_lb
+    return
+end
+
+function _device_services(constraint_data::DeviceRange,
+                          index::Int64,
+                          device::D,
+                          model::DeviceModel) where D <: PSY.Device
+    for service_model in get_services(model)
+        if PSY.has_service(device, service_model.service_type)
+            @show "adding servies for $(device.name)"
+            services = [s for s in PSY.get_services(device) if isa(s, service_model.service_type)]
+            @assert !isempty(services)
+            include_service!(constraint_data, index, services, service_model)
+        end
+    end
     return
 end
