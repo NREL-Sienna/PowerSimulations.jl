@@ -238,6 +238,7 @@ function _build_stages!(sim::Simulation, verbose::Bool = true; kwargs...)
 end
 
 function build!(sim::Simulation; verbose::Bool = false, kwargs...)
+    _check_inputs(sim)
     _check_chronologies(sim)
     _check_folder(sim.simulation_folder)
     raw_dir, models_dir, results_dir = sim.simulation_folder, sim.simulation_folder, sim.simulation_folder #_prepare_workspace(sim.name, sim.simulation_folder)
