@@ -220,7 +220,12 @@ interruptible(nodes5) = [InterruptibleLoad("IloadBus4", true, nodes5[4], PowerSy
 
 reserve5(thermal_generators5) = [
 VariableReserve{ReserveUp}("Reserve1", 0.6, maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5])),
-VariableReserve{ReserveUp}("Reserve2", 0.6, maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5]))
+VariableReserve{ReserveDown}("Reserve2", 0.6, maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5]))
+]
+
+reserve5(renewable_generators5) = [
+VariableReserve{ReserveUp}("Reserve3", 30, 100),
+VariableReserve{ReserveDown}("Reserve4", 5, 50)
 ]
 
 Reserve_ts = [TimeArray(DayAhead, rand(24)),
