@@ -49,7 +49,7 @@ function device_range(psi_container::PSIContainer,
             end
             expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in range_data.additional_terms_lb[ix]
-                JuMP.add_to_expression!(expression_lb, get_variable(psi_container, val)[name, t])
+                JuMP.add_to_expression!(expression_lb, get_variable(psi_container, val)[name, t], -1.0)
             end
             con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= limits.max)
             con_lb[name, t] = JuMP.@constraint(psi_container.JuMPmodel, expression_lb >= limits.min)
@@ -123,7 +123,7 @@ function device_semicontinuousrange(psi_container::PSIContainer,
             end
             expression_lb = JuMP.AffExpr(0.0, varcts[name, t] => 1.0)
             for val in range_data.additional_terms_lb[ix]
-                JuMP.add_to_expression!(expression_lb, get_variable(psi_container, val)[name, t])
+                JuMP.add_to_expression!(expression_lb, get_variable(psi_container, val)[name, t], -1.0)
             end
             con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= limits.max*varbin[name, t])
             con_lb[name, t] = JuMP.@constraint(psi_container.JuMPmodel, expression_lb >= limits.min*varbin[name, t])
@@ -200,7 +200,7 @@ function reserve_device_semicontinuousrange(psi_container::PSIContainer,
             end
             expression_lb = JuMP.AffExpr(0.0, varcts[name, t] => 1.0)
             for val in range_data.additional_terms_lb[ix]
-                JuMP.add_to_expression!(expression_lb, get_variable(psi_container, val)[name, t])
+                JuMP.add_to_expression!(expression_lb, get_variable(psi_container, val)[name, t], -1.0)
             end
             con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= limits.max*(1-varbin[name, t]))
             con_lb[name, t] = JuMP.@constraint(psi_container.JuMPmodel, expression_lb >= limits.min*(1-varbin[name, t]))
