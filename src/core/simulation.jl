@@ -89,9 +89,17 @@ function _check_chronologies(sim::Simulation)
 end
 
 function _assign_chronologies(sim::Simulation)
+
+    function find_val(d,value)
+        for (k,v) in d
+         v==value && return k
+        end
+        error("dict does not have value == $value")
+    end
+
     for (key, chron) in sim.sequence.intra_stage_chronologies
         stage = get_stage(sim, key.second)
-        from_stage_number = filter(p->(p.second == key.first), sim.sequence.order)
+        from_stage_number = find_val(sim.sequence.order, key.first) #collect(keys(filter(p->(p.second == key.first), sim.sequence.order)))[1] #TODO: this is fragile 
         isempty(from_stage_number) && throw(ArgumentError("Stage $(key.first) not specified in the order dictionary"))
         stage.internal.chronolgy_dict[from_stage_number] = chron
     end
@@ -243,6 +251,7 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
     end
     _check_steps(sim, stage_initial_times)
     _build_stages!(sim, verbose = verbose; kwargs...)
+    _assign_chronologies(sim)
     sim.internal.compiled_status = true
     return
 end
