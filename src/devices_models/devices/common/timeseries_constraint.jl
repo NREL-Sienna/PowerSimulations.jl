@@ -380,6 +380,7 @@ function device_timeseries_ub_bigM(psi_container::PSIContainer,
                 expression_ub - param[name, t]*multiplier <= (1 - varbin[name, t])*M_value)
             con_status[name, t] =  JuMP.@constraint(psi_container.JuMPmodel, 
                 expression_ub <= varbin[name, t]*M_value)
+        end
     end
 
     return

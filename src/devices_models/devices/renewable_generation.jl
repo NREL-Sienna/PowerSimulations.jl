@@ -125,8 +125,7 @@ function activepower_constraints!(psi_container::PSIContainer,
                     Symbol("P_$(R)"))
         return
     end
-    @show constraint_data
-    @show ts_data_active, _ = _get_time_series(psi_container, devices)
+    ts_data_active, _ = _get_time_series(psi_container, devices)
     if parameters
         device_timeseries_param_ub(psi_container,
                             ts_data_active,
