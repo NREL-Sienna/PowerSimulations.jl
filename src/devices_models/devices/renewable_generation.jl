@@ -111,29 +111,33 @@ function activepower_constraints!(psi_container::PSIContainer,
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
+    constraint_data = DeviceRange(length(devices))
+    for (ix, d) in enumerate(devices)
+        ub_value = PSY.get_activepower(d)
+        constraint_data.values[ix] = (min=0.0, max=ub_value)
+        constraint_data.names[ix] = PSY.get_name(d)
+        _device_services(constraint_data, ix, d, model)
+    end
     if !parameters && !use_forecast_data
-        constraint_data = DeviceRange(length(devices))
-        for (ix, d) in enumerate(devices)
-            ub_value = PSY.get_activepower(d)
-            constraint_data.values[ix] = (min=0.0, max=ub_value)
-            constraint_data.names[ix] = PSY.get_name(d)
-        end
         device_range(psi_container,
                     constraint_data,
                     Symbol("activerange_$(R)"),
                     Symbol("P_$(R)"))
         return
     end
-    ts_data_active, _ = _get_time_series(psi_container, devices)
+    @show constraint_data
+    @show ts_data_active, _ = _get_time_series(psi_container, devices)
     if parameters
         device_timeseries_param_ub(psi_container,
                             ts_data_active,
+                            constraint_data,
                             Symbol("activerange_$(R)"),
                             UpdateRef{R}("get_rating"),
                             Symbol("P_$(R)"))
     else
         device_timeseries_ub(psi_container,
                             ts_data_active,
+                            constraint_data,
                             Symbol("activerange_$(R)"),
                             Symbol("P_$(R)"))
     end
