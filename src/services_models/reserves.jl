@@ -8,10 +8,10 @@ function activeservice_variables!(psi_container::PSIContainer,
                                   service::SR,
                                   devices::Vector{<:PSY.Device}) where SR<:PSY.Reserve
 
-    function get_ub_val(d::D) where D <: PSY.Device
+    function get_ub_val(d::PSY.Device)
         return d.tech.activepowerlimits.max
     end
-    function get_ub_val(d::D) where D <: PSY.RenewableGen
+    function get_ub_val(d::PSY.RenewableGen)
         return d.tech.rating
     end
     
@@ -93,11 +93,12 @@ function include_service!(constraint_data::DeviceRange,
                           index::Int64,
                           services::Vector{SR},
                           ::ServiceModel{SR, <:AbstractReservesFormulation}) where SR <: PSY.Reserve{PSY.ReserveDown}
-        services_lb = Vector{Symbol}(undef, length(services))
+        services_ub = Vector{Symbol}(undef, length(services))
         for (ix, service) in enumerate(services)
-            services_lb[ix] = Symbol("$(PSY.get_name(service))_$SR")
+            services_ub[ix] = Symbol("$(PSY.get_name(service))_$SR")
         end
-        constraint_data.additional_terms_lb[index] = services_lb
+        #uses the upper bound of the (downward) service requirement to determine a constraint LB
+        constraint_data.additional_terms_lb[index] = services_ub
     return
 end
 
@@ -107,7 +108,6 @@ function _device_services(constraint_data::DeviceRange,
                           model::DeviceModel) where D <: PSY.Device
     for service_model in get_services(model)
         if PSY.has_service(device, service_model.service_type)
-            @show "adding servies for $(device.name)"
             services = [s for s in PSY.get_services(device) if isa(s, service_model.service_type)]
             @assert !isempty(services)
             include_service!(constraint_data, index, services, service_model)
