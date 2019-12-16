@@ -20,15 +20,15 @@ function check_chronology(sync::Synchronize,
     from_stage_horizon = horizons[stages.first]
     from_stage_sync = sync.from_periods
 
-    # if from_stage_sync > from_stage_horizon
-    #     error("The lookahead length $(from_stage_horizon) in stage is insufficient to syncronize with $(from_stage_sync) feed_forward steps")
-    # end
+    if from_stage_sync > from_stage_horizon
+        error("The lookahead length $(from_stage_horizon) in stage is insufficient to syncronize with $(from_stage_sync) feed_forward steps")
+    end
 
-    # if (from_stage_horizon % from_stage_sync) != 0
-    #     error("The number of feed_forward steps $(from_stage_horizon) in stage
-    #            needs to be a mutiple of the horizon length $(from_stage_horizon)
-    #            of stage to use Synchronize with parameters ($(from_stage_sync))")
-    # end
+    if (from_stage_horizon % from_stage_sync) != 0
+        error("The number of feed_forward steps $(from_stage_horizon) in stage
+               needs to be a mutiple of the horizon length $(from_stage_horizon)
+               of stage to use Synchronize with parameters ($(from_stage_sync))")
+    end
 
     return
 end
