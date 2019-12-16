@@ -28,21 +28,24 @@ end
 function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
                            stage_number::Int64,
                            sim::Simulation)
-    stage = get_stage(sim, stage_number)
-    param_array = get_parameters(stage.internal.psi_container, param_reference)
-    chronolgy_dict = get_stage(sim, stage_number).internal.chronolgy_dict
     current_stage = get_stage(sim, stage_number)
+    param_array = get_parameters(current_stage.internal.psi_container, param_reference)
+    chronolgy_dict = get_stage(sim, stage_number).internal.chronolgy_dict
+    current_stage_interval = get_interval(get_sequence(sim), sim.sequence.order[stage_number])
+    
     for (k, ref) in chronolgy_dict
-        feed_forward_update(ref, param_reference, param_array, current_stage, get_stage(sim, k))
+        feed_forward_update(ref, param_reference, param_array, 
+                            current_stage, get_stage(sim, k), 
+                            current_stage_interval)
     end
 
     return
 end
 
 #############################Interfacing Functions##########################################
-function _update_caches!(stage::Stage)
+function _update_caches!(stage::Stage{M}, interval::T) where {T <:Dates.TimePeriod, M<:AbstractOperationsProblem}
     for cache in values(stage.internal.cache_dict)
-        update_cache!(cache, stage)
+        update_cache!(cache, stage, interval)
     end
 
     return
@@ -61,7 +64,8 @@ function _intial_conditions_update!(initial_condition_key::ICKey,
     #checks if current execution is the first execution to look into the previuous stage
     intra_stage_update = (stage_number > 1 && get_execution_count(current_stage) == 0)
     #checks that the current run and stage ininital conditions is based on the current results
-    inner_stage_update = (stage_number > 1 && get_execution_count(current_stage) > 0)
+    inner_stage_update = (stage_number > 0 && get_execution_count(current_stage) > 0)
+
     # makes the update based on the last stage.
     if intra_step_update
         from_stage = get_last_stage(sim)
@@ -89,11 +93,11 @@ end
 function update_stage!(stage::Stage{M}, step::Int64, sim::Simulation) where M<:AbstractOperationsProblem
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && get_number(stage) == 1 && get_execution_count(stage) == 0) && return
+    _update_caches!(stage, get_interval(get_sequence(sim),sim.sequence.order[get_number(stage)]))
+
     for param_reference in keys(stage.internal.psi_container.parameters)
         parameter_update!(param_reference, get_number(stage), sim)
     end
-
-    _update_caches!(stage)
 
     # Set initial conditions of the stage I am about to run.
     for (k, v) in stage.internal.psi_container.initial_conditions
