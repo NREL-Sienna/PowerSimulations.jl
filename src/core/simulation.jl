@@ -41,7 +41,6 @@ end
 
 mutable struct Simulation
     steps::Int64
-    step_resolution::Dates.TimePeriod
     stages::Dict{String, Stage{<:AbstractOperationsProblem}}
     sequence::Union{Nothing, SimulationSequence}
     simulation_folder::String
@@ -50,14 +49,12 @@ mutable struct Simulation
 
     function Simulation(;name::String,
                         steps::Int64,
-                        step_resolution::Dates.TimePeriod,
                         stages=Dict{String, Stage{AbstractOperationsProblem}}(),
                         stages_sequence=nothing,
                         simulation_folder::String,
                         verbose::Bool = false, kwargs...)
     new(
         steps,
-        step_resolution,
         stages,
         stages_sequence,
         simulation_folder,
@@ -77,9 +74,29 @@ function get_simulation_time(s::Simulation, stage_number::Int64)
     return s.internal.date_ref[stage_number]
 end
 get_ini_cond_chronology(s::Simulation, number::Int64) = get(s.sequence.ini_cond_chronology, s.sequence.order[number], nothing)
+get_name(s::Simulation ,stage::Stage) = get(s.sequence.order, get_number(stage), nothing)
 
 
 
+function add_cache!(ff::F, sim::Simulation, 
+                            stage::Stage, 
+                            device_model::DeviceModel{I, D}) where {
+                                F<:AbstractAffectFeedForward,
+                                I<:PSY.StaticInjection,
+                                D<:AbstractDeviceFormulation}
+
+    cache = add_ff_cache!(ff, I)
+    sequence = get_sequence(sim)
+    stage_name = get_name(sim ,stage) 
+    if haskey(sequence.cache,stage_name)
+        cache_vector = sequence.cache[stage_name]
+    else
+        cache_vector = Vector{<:AbstractCache}()
+    end
+    push!(cache_vector,cache )
+    sequence.cache[stage_name] = cache_vector
+    return
+end
 
 function _check_chronologies(sim::Simulation)
     for (key, chron) in sim.sequence.intra_stage_chronologies
@@ -89,11 +106,19 @@ function _check_chronologies(sim::Simulation)
 end
 
 function _assign_chronologies(sim::Simulation)
+    function find_val(d,value)
+        for (k,v) in d
+            v==value && return k
+        end
+        error("dict does not have value == $value")
+    end
     for (key, chron) in sim.sequence.intra_stage_chronologies
         stage = get_stage(sim, key.second)
-        from_stage_number = filter(p->(p.second == key.first), sim.sequence.order)
+        from_stage_number = find_val(sim.sequence.order, key.first)
         isempty(from_stage_number) && throw(ArgumentError("Stage $(key.first) not specified in the order dictionary"))
-        stage.internal.chronolgy_dict[from_stage_number] = chron
+        for stage_number in from_stage_number
+            stage.internal.chronolgy_dict[stage_number] = chron
+        end
     end
     return
 end
@@ -151,7 +176,7 @@ function _get_simulation_initial_times!(sim::Simulation)
     if isnothing(get_initial_time(get_sequence(sim)))
         sim.sequence.initial_time = stage_initial_times[1][1]
         @warn("Initial time not defined as an argument, it will be infered from the data.
-               Initial Simulation Time set to $get_initial_time(get_sequence(sim))")
+               Initial Simulation Time set to $(sim.sequence.initial_time)")
     end
 
     return stage_initial_times
@@ -160,12 +185,19 @@ end
 function _attach_feed_forward!(sim::Simulation, stage_name::String)
     stage = get(sim.stages, stage_name, nothing)
     feed_forward = filter(p->(p.first[1] == stage_name), sim.sequence.feed_forward)
+    from_stage_num = get(sim.sequence.order,get_number(stage)-1,nothing)
     for (key, ff) in feed_forward
         #Note: key[1] = Stage name, key[2] = template field name, key[3] = device model key
         field_dict = getfield(stage.template, key[2])
         device_model = get(field_dict, key[3], nothing)
         isnothing(device_model) && throw(ArgumentError("Device model $(key[3]) not found in stage $(stage_name)"))
         device_model.feed_forward = ff
+        if !isnothing(from_stage_num) && get_executions(get_stage(sim, from_stage_num)) > 1
+            @info("Defined Simulation Sequence will use FeedFoward Cache")
+            from_stage = get_stage(sim, from_stage_num)
+            from_stage_device_model =  get(getfield(from_stage.template, key[2]), key[3], nothing)
+            add_cache!(ff, sim, from_stage, from_stage_device_model)
+        end
     end
     return
 end
@@ -185,10 +217,10 @@ end
 function _populate_caches!(sim::Simulation, stage_name::String)
     caches = get(sim.sequence.cache, stage_name, nothing)
     isnothing(caches) && return
-    cache_dict = Dict{Type{<:AbstractCache}, AbstractCache}()
+    cache_dict = (get_stage(sim,stage_name)).internal.cache_dict
     for c in caches
-        sim.stages[stage_name].internal.cache_dict[typeof(c)] = c
-        build_cache!(c, sim.stages[stage_name].internal.psi_container)
+        cache_dict[CacheKey(c)] = c
+        build_cache!(c, sim, stage_name)
     end
     return
 end
@@ -227,20 +259,56 @@ function _build_stages!(sim::Simulation, verbose::Bool = true; kwargs...)
     return
 end
 
+function _stage_execution_count(sim::Simulation, stage_name::String; kwargs...)
+    execution_count = 0.0
+    for (key, chron) in sim.sequence.intra_stage_chronologies
+        if key.second == stage_name 
+            to_stage_res = convert(Dates.Minute,PSY.get_forecasts_resolution(PSI.get_sys(PSI.get(sim.stages,key.second,nothing))))
+            from_stage_res = convert(Dates.Minute,PSY.get_forecasts_resolution(PSI.get_sys(PSI.get(sim.stages,key.first,nothing))))
+            to_stage_horizon = sim.sequence.horizons[key.second]
+            to_stage_interval = convert(Dates.Minute,sim.sequence.intervals[key.second])
+            _count = (chron.from_periods*from_stage_res - to_stage_horizon*to_stage_res + to_stage_interval) /to_stage_interval
+            if execution_count != 0.0
+                if _count != execution_count
+                    @error("Stage $stage_name has two conflicting execution counts $_count != $execution_count")
+                end
+            else
+                execution_count = _count
+                @info("Stage $stage_name will have $execution_count execution in each step, as Synchronize.from_periods is set to $(chron.from_periods)")
+            end
+        end
+        if key.first == stage_name 
+            resolution = convert(Dates.Minute,PSY.get_forecasts_resolution(PSI.get_sys(PSI.get(sim.stages,key.first,nothing))))
+            interval = convert(Dates.Minute,sim.sequence.intervals[key.first])
+            _count = ceil(chron.from_periods*resolution/interval)
+            if execution_count != 0.0
+                if _count != execution_count
+                    @error("Stage $stage_name has two conflicting execution counts $_count != $execution_count")
+                end
+            else
+                execution_count = _count
+                @info("Stage $stage_name will have $execution_count execution in each step, Synchronize($key).from_periods is set to $(chron.from_periods)")
+            end
+        end
+    end
+    return execution_count
+end
+
 function build!(sim::Simulation; verbose::Bool = false, kwargs...)
     _check_chronologies(sim)
     raw_dir, models_dir, results_dir = _prepare_workspace(sim.name, sim.simulation_folder)
     sim.internal = SimulationInternal(raw_dir, models_dir, results_dir, sim.steps, keys(sim.sequence.order))
     stage_initial_times = _get_simulation_initial_times!(sim)
-    for (stage_number, stage_name) in sim.sequence.order
+    for (stage_number, stage_name) in sort(sim.sequence.order)
         stage = get(sim.stages, stage_name, nothing)
         stage_interval = sim.sequence.intervals[stage_name]
-        executions = Int(sim.step_resolution/stage_interval)
+        executions = _stage_execution_count(sim, stage_name)
         stage.internal = StageInternal(stage_number, executions, 0, nothing)
         isnothing(stage) && throw(ArgumentError("Stage $(stage_name) not found in the stages definitions"))
         PSY.check_forecast_consistency(stage.sys)
         _attach_feed_forward!(sim, stage_name)
     end
+    _assign_chronologies(sim)
     _check_steps(sim, stage_initial_times)
     _build_stages!(sim, verbose = verbose; kwargs...)
     sim.internal.compiled_status = true
