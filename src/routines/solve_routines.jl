@@ -125,6 +125,7 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
                 sim.internal.date_ref[stage_number] = sim.internal.date_ref[stage_number] + stage_interval
             end
             @assert stage.internal.executions == stage.internal.execution_count
+            _update_caches!(stage, get_interval(get_sequence(sim),sim.sequence.order[get_number(stage)]))
             stage.internal.execution_count = 0 # reset stage execution_count
         end
 
