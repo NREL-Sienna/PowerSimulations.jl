@@ -1,5 +1,6 @@
 abstract type AbstractAffectFeedForward end
 abstract type AbstractCache end
+abstract type CacheQuantity end
 abstract type AbstractChronology end
 abstract type InitialConditionQuantity end
 abstract type Results end
