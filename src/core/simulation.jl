@@ -129,12 +129,12 @@ function _get_simulation_initial_times!(sim::Simulation)
     k = keys(sim.sequence.order)
     k_size = length(k)
     @assert k_size == maximum(k)
-    ## TODO where is interval defined?
     stage_initial_times = Dict{Int64, Vector{Dates.DateTime}}()
-    range = Vector{Dates.DateTime}(undef, 2)
+    time_range = Vector{Dates.DateTime}(undef, 2)
     
     for (stage_number, stage_name) in sim.sequence.order
         stage_system = sim.stages[stage_name].sys
+        interval = PSY.get_forecasts_interval(stage_system)
         horizon = get_horizon(get_sequence(sim), stage_name)
         seq_interval = get_interval(get_sequence(sim), stage_name)
         if PSY.are_forecasts_contiguous(stage_system)
@@ -156,10 +156,10 @@ function _get_simulation_initial_times!(sim::Simulation)
                 end
             end
         end
-        stage_number == 1 && (range[1] = stage_initial_times[stage_number][1])
-        (stage_number == k_size && (range[end] = stage_initial_times[stage_number][end]))
+        stage_number == 1 && (time_range[1] = stage_initial_times[stage_number][1])
+        (stage_number == k_size && (time_range[end] = stage_initial_times[stage_number][end]))
     end
-    sim.internal.date_range = Tuple(range)
+    sim.internal.date_range = Tuple(time_range)
 
     if isnothing(get_initial_time(get_sequence(sim)))
         sim.sequence.initial_time = stage_initial_times[1][1]
@@ -266,8 +266,7 @@ function _check_folder(folder::String)
     !isdir(folder) && throw(IS.ConflictingInputsError("Specified folder is not valid"))
     testdir(folder) = try 
         (p,i) = mktemp(folder) ; rm(p) ; true 
-    catch
-        e
+    catch e
         throw(IS.ConflictingInputsError("Specified folder does not have write access [$e]"))
     end
 end

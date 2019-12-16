@@ -130,7 +130,6 @@ function Base.show(io::IO, ::MIME"text/plain", results::Results)
     println(io, "Stage()")
  end
 
-# TODO test
  function Base.show(io::IO, ::MIME"text/html", services::Dict{Symbol, PSI.ServiceModel})
     println(io, "<h1>Services</h1>")
     for (k, v) in services
