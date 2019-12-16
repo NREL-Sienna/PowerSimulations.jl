@@ -33,7 +33,7 @@ function test_sequence_build(file_path::String)
 
         @test isa(sim.sequence, SimulationSequence)
     end
-        ### Negative Tests
+###################### Negative Tests ########################################
     @testset "testing if horizon is shorter than interval" begin
         sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
                     intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 24, to_executions = 1)),
@@ -95,7 +95,6 @@ function test_sequence_build(file_path::String)
                     
         @test_throws IS.ConflictingInputsError build!(sim)
     end
-    # TODO make check and error
     @testset "testing if interval is shorter than resolution" begin
         sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
                     intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 24, to_executions = 1)),
@@ -114,7 +113,7 @@ function test_sequence_build(file_path::String)
                     simulation_folder= file_path,
                     verbose = true)
                     
-        @test_throws IS.ConflictingInputsError build!(sim) #
+        @test_throws IS.ConflictingInputsError build!(sim)
     end
     @testset "chronology look ahead length is too long for horizon" begin
         sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
@@ -136,7 +135,27 @@ function test_sequence_build(file_path::String)
                     
         @test_throws IS.ConflictingInputsError build!(sim)
     end
-     @testset "too many steps for forecast" begin
+    @testset "too long of a horizon for forecast" begin
+        sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
+                    intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 24, to_executions = 1)),
+                    horizons = Dict("UC" => 72, "ED" => 12),
+                    intervals = Dict("UC" => Minute(5), "ED" => Minute(1)),
+                    feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
+                    cache = Dict("ED" => [TimeStatusChange(:ON_ThermalStandard)]),
+                    ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive())
+                    )
+
+        sim = Simulation(name = "long_horizon",
+                    steps = 2,
+                    step_resolution=Hour(24),
+                    stages = stages_definition,
+                    stages_sequence = sequence,
+                    simulation_folder= file_path,
+                    verbose = true)
+                    
+        @test_throws IS.ConflictingInputsError build!(sim)
+    end
+    @testset "too many steps for forecast" begin
         sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
                     intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 24, to_executions = 1)),
                     horizons = Dict("UC" => 24, "ED" => 12),

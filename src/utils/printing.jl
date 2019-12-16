@@ -130,27 +130,7 @@ function Base.show(io::IO, ::MIME"text/plain", results::Results)
     println(io, "Stage()")
  end
 
-function Base.show(io::IO, period::Dates.Millisecond)
-    if period % Dates.Millisecond(1000) !== Dates.Millisecond(0)
-        println(io, period) # Millisecond
-    elseif period % Dates.Millisecond(60000) !== Dates.Millisecond(0)
-        period = convert(Dates.Second, period)
-        println(io, period) # second
-    elseif period % Dates.Millisecond(3600000) !== Dates.Millisecond(0)
-        period = convert(Dates.Minute, period)
-        println(io, period) # minute
-    elseif period % Dates.Millisecond(86400000) !== Dates.Millisecond(0)
-        period = convert(Dates.Hour, period)
-        println(io, period) # hour
-    elseif period % Dates.Millisecond(604800000) !== Dates.Millisecond(0)
-        period = convert(Dates.Day, period)
-        println(io, period) # day
-    else
-        period = convert(Dates.Week, period)
-        println(io, period) # minute
-    end
-end
-
+# TODO test
  function Base.show(io::IO, ::MIME"text/html", services::Dict{Symbol, PSI.ServiceModel})
     println(io, "<h1>Services</h1>")
     for (k, v) in services

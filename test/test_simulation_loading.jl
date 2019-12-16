@@ -47,7 +47,7 @@ function test_load_simulation()
                 rm("$(sim_results.results_folder)/$f")
             end
             res = load_simulation_results(sim_results, name; write = true)
-            variable_list = String.(get_variable_names(sim, name))
+            variable_list = String.(PSI.get_variable_names(sim, name))
             variable_list = [variable_list; "optimizer_log"; "time_stamp"; "check"]
             file_list = collect(readdir(sim_results.results_folder))
             for name in file_list
@@ -69,7 +69,7 @@ function test_load_simulation()
     end
     @testset "testing load simulation results between the two methods of load simulation" begin
         for name in stage_names
-            variable = get_variable_names(sim, name)
+            variable = PSI.get_variable_names(sim, name)
             results = load_simulation_results(sim_results, name)
             res = load_simulation_results(sim_results, name, step, variable)
             @test results.variables == res.variables
@@ -142,22 +142,26 @@ function test_load_simulation()
             for f in files
                 rm("$(sim_results.results_folder)/$f")
             end
-            variable_list = get_variable_names(sim, name)
+            variable_list = PSI.get_variable_names(sim, name)
             res = load_simulation_results(sim_results, name; write = true)
             file_path = joinpath(sim_results.results_folder,"$(variable_list[1]).feather")
             rm(file_path)
             fake_df = DataFrames.DataFrame(:A => Array(1:10))
             Feather.write(file_path, fake_df)
-               @test_throws IS.HashMismatchError check_file_integrity(dirname(file_path))
+               @test_logs((:error, r"hash mismatch"), match_mode=:any,
+                    @test_throws(IS.HashMismatchError, check_file_integrity(dirname(file_path)))
+                )
         end
         for name in stage_names
-            variable_list = get_variable_names(sim, name)
-            check_file_path = get_reference(sim_results, name, 1, variable_list[1])[1]
+            variable_list = PSI.get_variable_names(sim, name)
+            check_file_path = PSI.get_reference(sim_results, name, 1, variable_list[1])[1]
             rm(check_file_path)
             time_length = sim_results.chronologies["stage-$name"]
             fake_df = DataFrames.DataFrame(:A => Array(1:time_length))
             Feather.write(check_file_path, fake_df)
-                @test_throws IS.HashMismatchError check_file_integrity(dirname(check_file_path))
+                @test_logs((:error, r"hash mismatch"), match_mode=:any,
+                    @test_throws(IS.HashMismatchError, check_file_integrity(dirname(check_file_path)))
+                )
         end
     end
 

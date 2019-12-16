@@ -118,8 +118,8 @@ function get_time_stamps(op_problem::OperationsProblem)
     initial_time = PSY.get_forecasts_initial_time(op_problem.sys)
     interval = PSY.get_forecasts_resolution(op_problem.sys)
     horizon = PSY.get_forecasts_horizon(op_problem.sys)
-    range = collect(initial_time:interval:initial_time+interval.*horizon)
-    time_stamp = DataFrames.DataFrame(Range = range[:, 1])
+    range_time = collect(initial_time:interval:initial_time+interval.*horizon)
+    time_stamp = DataFrames.DataFrame(Range = range_time[:, 1])
 
     return time_stamp
 end
@@ -127,8 +127,8 @@ end
 function get_time_stamps(stage::Stage, start_time::Dates.DateTime)
     resolution = PSY.get_forecasts_resolution(stage.sys)
     horizon = stage.internal.psi_container.time_steps[end]
-    range = collect(start_time:resolution:start_time + resolution*horizon)
-    time_stamp = DataFrames.DataFrame(Range = range[:, 1])
+    range_time = collect(start_time:resolution:start_time + resolution*horizon)
+    time_stamp = DataFrames.DataFrame(Range = range_time[:, 1])
 
     return time_stamp
 end

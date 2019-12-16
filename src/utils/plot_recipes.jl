@@ -40,7 +40,7 @@ RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String)
     sy = vcat(z[:,1],zeros(n))
     sx = [time[1:n]; reverse(time[1:n])]
      for c=1:size(z,2)
-        if c !== 1
+        if c != 1
             sy = hcat(sy,vcat(z[:,c],reverse(z[:,c-1])))
         end
     end
@@ -72,7 +72,7 @@ RecipesBase.@recipe function StackedGeneration(res::StackedGeneration)
     sy = vcat(z[:,1],zeros(n))
     sx = [time[1:n]; reverse(time[1:n])]
   for c=1:size(z,2)
-    if c !== 1
+    if c != 1
       sy = hcat(sy,vcat(z[:,c],reverse(z[:,c-1])))
     end
   end

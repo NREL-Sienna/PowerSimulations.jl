@@ -100,7 +100,7 @@ function get_stacked_generation_data(res::OperationsProblemResults; kwargs...)
     legend = string.(labels)
 
     for i in 1:length(labels)
-        if i !== 1
+        if i != 1
             variable = res.variables[Symbol(labels[i])]
             data_matrix = hcat(data_matrix, sum(convert(Matrix, variable), dims = 2))
         end
@@ -119,7 +119,7 @@ function get_bar_gen_data(res::OperationsProblemResults)
    legend = string.(key_name)
 
     for i in 1:length(key_name)
-       if i !== 1
+       if i != 1
            variable = res.variables[Symbol(key_name[i])]
            data_matrix = hcat(data_matrix, sum(convert(Matrix, variable), dims = 2))
        end

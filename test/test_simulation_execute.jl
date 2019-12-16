@@ -31,9 +31,9 @@ function test_chronology(file_path::String)
     @testset "Testing to verify time gap for Receding Horizon" begin
         names = ["UC"] # TODO why doesn't this work for ED??
         for name in names
-            variable_list = get_variable_names(sim, name)
-            reference_1 = get_reference(sim_results, name, 1, variable_list[1])[1]
-            reference_2 = get_reference(sim_results, name, 2, variable_list[1])[1]
+            variable_list = PSI.get_variable_names(sim, name)
+            reference_1 = PSI.get_reference(sim_results, name, 1, variable_list[1])[1]
+            reference_2 = PSI.get_reference(sim_results, name, 2, variable_list[1])[1]
             time_file_path_1 = joinpath(dirname(reference_1), "time_stamp.feather") #first line, file path
             time_file_path_2 = joinpath(dirname(reference_2), "time_stamp.feather")
             time_1 = convert(Dates.DateTime, Feather.read(time_file_path_1)[1,1]) # first time
@@ -62,7 +62,7 @@ function test_chronology(file_path::String)
         ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
         vars_names = [:P_ThermalStandard]
         for (ik, key) in enumerate(ic_keys)
-            initial_conditions = get_initial_conditions(get_psi_container(sim, "UC"), key)
+            initial_conditions = get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
             vars = results.variables[vars_names[ik]] # change to getter function
             for ic in initial_conditions 
                 output = vars[1,Symbol(PSI.device_name(ic))] # change to getter function
@@ -99,9 +99,9 @@ function test_chronology(file_path::String)
     @testset "Testing to verify time gap for Consecutive" begin
         names = ["UC"] # stage TODO why doesn't this work for ED??
         for name in names
-            variable_list = get_variable_names(sim, name)
-            reference_1 = get_reference(sim_results, name, 1, variable_list[1])[1]
-            reference_2 = get_reference(sim_results, name, 2, variable_list[1])[1]
+            variable_list = PSI.get_variable_names(sim, name)
+            reference_1 = PSI.get_reference(sim_results, name, 1, variable_list[1])[1]
+            reference_2 = PSI.get_reference(sim_results, name, 2, variable_list[1])[1]
             time_file_path_1 = joinpath(dirname(reference_1), "time_stamp.feather") #first line, file path
             time_file_path_2 = joinpath(dirname(reference_2), "time_stamp.feather")
             time_1 = convert(Dates.DateTime, Feather.read(time_file_path_1)[end,1]) # first time
@@ -114,8 +114,8 @@ function test_chronology(file_path::String)
         ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
         vars_names = [:P_ThermalStandard]
         for (ik,key) in enumerate(ic_keys)
-            variable_ref = get_reference(sim_results, "ED", 2, vars_names[ik])[1]
-            initial_conditions = get_initial_conditions(get_psi_container(sim, "UC"), key)
+            variable_ref = PSI.get_reference(sim_results, "ED", 1, vars_names[ik])[1]
+            initial_conditions = get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
             for ic in initial_conditions 
                 raw_result = Feather.read(variable_ref)[end,Symbol(PSI.device_name(ic))]
                 initial_cond = value(PSI.get_condition(ic))
@@ -141,25 +141,7 @@ function test_chronology(file_path::String)
     ### Synchronize
 
     ### Testing chronology of aggregation for Synchronize
-    sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 1, to_executions = 1)),
-                horizons = Dict("UC" => 24, "ED" => 12),
-                intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
-                feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
-                cache = Dict("ED" => [TimeStatusChange(:ON_ThermalStandard)]),
-                ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive())
-                )
 
-    sim = Simulation(name = "sync",
-                steps = 2,
-                step_resolution = Hour(24),
-                stages = stages_definition,
-                stages_sequence = sequence,
-                simulation_folder= file_path,
-                verbose = true)
-    build!(sim)
-
-    sim_results = execute!(sim)
     @testset "Testing to verify length of time_stamp" begin
         for name in keys(sim.stages)
             results = load_simulation_results(sim_results, name)

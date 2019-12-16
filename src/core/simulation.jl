@@ -55,7 +55,7 @@ mutable struct Simulation
                         stages_sequence=nothing,
                         simulation_folder::String,
                         verbose::Bool = false, kwargs...)
-    step_resolution = convert(Dates.Millisecond, step_resolution)
+    step_resolution = IS.time_period_conversion(step_resolution)
     new(
         steps,
         step_resolution,
@@ -86,8 +86,9 @@ function _check_inputs(sim::Simulation)
         resolution = get_sim_resolution(sim.stages[key])
         horizon = sim.sequence.horizons[key]
         interval = sim.sequence.intervals[key]
-        if resolution * horizon < interval
-            throw(IS.ConflictingInputsError("horizon ($(horizon*resolution)) is shorter than interval ($interval) for $key"))
+        horizon_time = resolution * horizon
+        if horizon_time < interval
+            throw(IS.ConflictingInputsError("horizon ($horizon_time) is shorter than interval ($interval) for $key"))
         end
     end
 end
@@ -128,23 +129,25 @@ function _get_simulation_initial_times!(sim::Simulation)
     k = keys(sim.sequence.order)
     k_size = length(k)
     @assert k_size == maximum(k)
-
+    ## TODO where is interval defined?
     stage_initial_times = Dict{Int64, Vector{Dates.DateTime}}()
     range = Vector{Dates.DateTime}(undef, 2)
     
     for (stage_number, stage_name) in sim.sequence.order
         stage_system = sim.stages[stage_name].sys
+        horizon = get_horizon(get_sequence(sim), stage_name)
+        seq_interval = get_interval(get_sequence(sim), stage_name)
         if PSY.are_forecasts_contiguous(stage_system)
-            stage_initial_times[stage_number] = PSY.generate_initial_times(stage_system,
-                                                        get_interval(get_sequence(sim), stage_name),
-                                                        get_horizon(get_sequence(sim), stage_name))
-            isempty(stage_initial_times[stage_number]) ? throw(IS.ConflictingInputsError("Simulation interval ($(get_interval(get_sequence(sim), stage_name))) and 
-                        forecast interval ($interval) definitions are not compatible")) : nothing ; 
+            stage_initial_times[stage_number] = PSY.generate_initial_times(stage_system, seq_interval, horizon)
+            if isempty(stage_initial_times[stage_number])
+                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and 
+                        forecast interval ($interval) definitions are not compatible"))
+            end
         else
             stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage_system)
             interval = PSY.get_forecasts_interval(stage_system)
-            if interval != get_interval(get_sequence(sim), stage_name)
-                throw(IS.ConflictingInputsError("Simulation interval ($(get_interval(get_sequence(sim), stage_name))) and 
+            if interval != seq_interval
+                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and 
                         forecast interval ($interval) definitions are not compatible"))
             end
             for (ix, element) in enumerate(stage_initial_times[stage_number][1:end-1])
@@ -246,7 +249,7 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
     stage_initial_times = _get_simulation_initial_times!(sim)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get(sim.stages, stage_name, nothing)
-        stage_interval = sim.sequence.intervals[stage_name]
+        stage_interval = IS.time_period_conversion(sim.sequence.intervals[stage_name])
         executions = Int(sim.step_resolution/stage_interval)
         stage.internal = StageInternal(stage_number, executions, 0, nothing)
         isnothing(stage) && throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
@@ -264,6 +267,7 @@ function _check_folder(folder::String)
     testdir(folder) = try 
         (p,i) = mktemp(folder) ; rm(p) ; true 
     catch
-        throw(IS.ConflictingInputsError("Specified folder does not have write access"))
+        e
+        throw(IS.ConflictingInputsError("Specified folder does not have write access [$e]"))
     end
 end
