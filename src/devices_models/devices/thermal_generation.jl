@@ -475,3 +475,13 @@ function cost_function(psi_container::PSIContainer,
     add_to_cost(psi_container, devices, Symbol("ON_$(T)"), :fixed)
     return
 end
+
+####################### Feed Forward Cache Automation ###############################################
+
+function add_cache!(ff::SemiContinuousFF, sim::Simulation, 
+                            stage_name::String, 
+                            device_model::DeviceModel{T, D}) where {
+                                T<:PSY.ThermalGen,
+                                D<:AbstractThermalDispatchFormulation}
+    return
+end

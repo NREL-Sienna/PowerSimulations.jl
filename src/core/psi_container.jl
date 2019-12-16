@@ -176,7 +176,7 @@ function InitialCondition(psi_container::PSIContainer,
                           device::T,
                           access_ref::Symbol,
                           value::Float64,
-                          cache::Union{Nothing, Type{<:AbstractCache}}=nothing) where T <: PSY.Device
+                          cache::Union{Nothing, CacheKey}=nothing) where T <: PSY.Device
     if model_has_parameters(psi_container)
         return InitialCondition(device,
                                 UpdateRef{JuMP.VariableRef}(access_ref),

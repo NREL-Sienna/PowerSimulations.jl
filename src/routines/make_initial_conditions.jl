@@ -58,7 +58,7 @@ function output_init(psi_container::PSIContainer,
                                                 g,
                                                 ref_key,
                                                 PSY.get_activepower(g),
-                                                TimeStatusChange)
+                                                CacheKey(TimeStatusChange(UpdateRef{PJ.ParameterRef}(Symbol("ON_$(PSD)")))))
         end
     else
         ic_devices = (ic.device for ic in ini_conds)
@@ -69,7 +69,7 @@ function output_init(psi_container::PSIContainer,
                                                 g,
                                                 ref_key,
                                                 PSY.get_activepower(g),
-                                                TimeStatusChange))
+                                                CacheKey(TimeStatusChange(UpdateRef{PJ.ParameterRef}(Symbol("ON_$(PSD)"))))))
         end
     end
 
@@ -98,7 +98,7 @@ function duration_init(psi_container::PSIContainer,
                                                     g,
                                                     ref_key,
                                                     times[ik],
-                                                    TimeStatusChange)
+                                                    CacheKey(TimeStatusChange(UpdateRef{PJ.ParameterRef}(Symbol("ON_$(PSD)")))))
             end
         else
             ic_devices = (ic.device for ic in ini_conds if !isnothing(ic.cache))
@@ -213,7 +213,7 @@ function output_init(psi_container::PSIContainer,
                                                 g,
                                                 ref_key,
                                                 PSY.get_activepower(g),
-                                                TimeStatusChange)
+                                                CacheKey(TimeStatusChange(UpdateRef{PJ.ParameterRef}(Symbol("ON_$(PSD)")))))
         end
     else
         ic_devices = (ic.device for ic in ini_conds)
@@ -224,7 +224,7 @@ function output_init(psi_container::PSIContainer,
                                                 g,
                                                 ref_key,
                                                 PSY.get_activepower(g),
-                                                TimeStatusChange))
+                                                CacheKey(TimeStatusChange(UpdateRef{PJ.ParameterRef}(Symbol("ON_$(PSD)"))))))
         end
     end
 
@@ -253,7 +253,7 @@ function duration_init(psi_container::PSIContainer,
                                                     g,
                                                     ref_key,
                                                     times[ik],
-                                                    TimeStatusChange)
+                                                    CacheKey(TimeStatusChange(UpdateRef{PJ.ParameterRef}(Symbol("ON_$(PSD)")))))
             end
         else
             ic_devices = (ic.device for ic in ini_conds if !isnothing(ic.cache))
@@ -268,7 +268,7 @@ function duration_init(psi_container::PSIContainer,
                                                   g,
                                                   ref_key,
                                                   times[ik],
-                                                  TimeStatusChange
+                                                  CacheKey(TimeStatusChange(UpdateRef{PJ.ParameterRef}(Symbol("ON_$(PSD)"))))
                                                   )
                     )
             end
