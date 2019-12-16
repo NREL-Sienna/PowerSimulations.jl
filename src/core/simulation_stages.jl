@@ -78,7 +78,7 @@ function get_stage_variable(chron::Type{Synchronize},
     if haskey(from_stage.internal.cache_dict,CacheKey(FeedForwardCache,var_ref))
         cache = from_stage.internal.cache_dict[CacheKey(FeedForwardCache,var_ref)]
         step = axes(cache.value)[2][to_stage_execution_count]
-        return cache_value(cache;device_name, step)
+        return cache_value(cache, device_name, step)
     else
         variable = get_value(from_stage.internal.psi_container, var_ref)
         step = axes(variable)[2][to_stage_execution_count]

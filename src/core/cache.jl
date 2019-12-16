@@ -42,8 +42,7 @@ end
 CacheKey(cache::TimeStatusChange) = CacheKey(InitialConditionCache, cache.ref)
 CacheKey(cache::AbstractCache) = CacheKey(FeedForwardCache, cache.ref)
 
-cache_value(cache::AbstractCache, key) = cache.value[key]
-cache_value(cache::AbstractCache; key...) = cache.value[key...]
+cache_value(cache::AbstractCache, key...) = cache.value[key...]
 
 function build_cache!(cache::TimeStatusChange, sim::Simulation, stage_name::String)
     build_cache!(cache, get_psi_container(get_stage(sim,stage_name)))
