@@ -194,9 +194,9 @@ end
 function build_init(gens, data)
     init = Vector{InitialCondition}(undef, length(collect(gens)))
     for (ix,g) in enumerate(gens)
-        init[ix] = InitialCondition(g,
+        init[ix] = PSI.InitialCondition(g,
                     PSI.UpdateRef{Device}(Symbol("P_$(typeof(g))")),
-                    data[ix],TimeStatusChange)
+                    data[ix],PSI.CacheKey(PSI.InitialConditionCache,PSI.UpdateRef{Device}(Symbol("P_$(typeof(g))"))))
     end
     return init
 end

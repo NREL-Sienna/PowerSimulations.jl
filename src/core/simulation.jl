@@ -91,7 +91,7 @@ function add_cache!(ff::F, sim::Simulation,
     if haskey(sequence.cache,stage_name)
         cache_vector = sequence.cache[stage_name]
     else
-        cache_vector = Vector{<:AbstractCache}()
+        cache_vector = Vector{AbstractCache}()
     end
     push!(cache_vector,cache )
     sequence.cache[stage_name] = cache_vector
