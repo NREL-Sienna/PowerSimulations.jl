@@ -19,8 +19,8 @@ sequence = SimulationSequence(initial_time = DateTime("2024-01-01T00:00:00"),
                    )
 
     for field in fieldnames(SimulationSequence)
-         fieldtype(SimulationSequence, field) == Union{Nothing, Dates.DateTime} && continue
-          @test !isempty(getfield(sequence, field))
+        field == :initial_time && continue
+        @test !isempty(getfield(sequence, field))
     end
 
     sim = Simulation(name = "test",

@@ -55,9 +55,17 @@ end
 function _run_stage(stage::Stage, start_time::Dates.DateTime, results_path::String; kwargs...)
     @assert stage.internal.psi_container.JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
     timed_log = Dict{Symbol, Any}()
-    _, timed_log[:timed_solve_time],
-    timed_log[:solve_bytes_alloc],
-    timed_log[:sec_in_gc] = @timed JuMP.optimize!(stage.internal.psi_container.JuMPmodel)
+
+    IS.redirect_stdout_to_log() do
+        model = stage.internal.psi_container.JuMPmodel
+        _,
+        timed_log[:timed_solve_time],
+        timed_log[:solve_bytes_alloc],
+        timed_log[:sec_in_gc] = @timed JuMP.optimize!(model)
+    end
+
+    @info "JuMP.optimize! completed" timed_log
+
     model_status = JuMP.primal_status(stage.internal.psi_container.JuMPmodel)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("Stage $(stage.internal.number) status is $(model_status)")
@@ -111,12 +119,13 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
         for stage_number in 1:sim.internal.stages_count
             stage_name = sim.sequence.order[stage_number]
             stage = get(sim.stages, stage_name, nothing)
-            verbose && println("Stage $(stage_number)-$(stage_name)")
+            @info "Stage $(stage_number)-$(stage_name)"
             stage_interval = sim.sequence.intervals[stage_name]
             for run in 1:stage.internal.executions
+                run_name = "step-$s-stage-$stage_name"
+                @info "Starting run $run_name $(sim.internal.current_time)"
                 sim.internal.current_time = sim.internal.date_ref[stage_number]
-                verbose && println("Simulation TimeStamp: $(sim.internal.current_time)")
-                raw_results_path = joinpath(sim.internal.raw_dir, "step-$(s)-stage-$(stage_name)", replace_chars("$(sim.internal.current_time)", ":", "-"))
+                raw_results_path = joinpath(sim.internal.raw_dir, run_name, replace_chars("$(sim.internal.current_time)", ":", "-"))
                 mkpath(raw_results_path)
                 update_stage!(stage, s, sim)
                 dual_constraints = get(kwargs, :dual_constraints, nothing)
