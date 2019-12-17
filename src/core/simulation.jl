@@ -76,7 +76,7 @@ end
 get_ini_cond_chronology(s::Simulation, number::Int64) = get(s.sequence.ini_cond_chronology, s.sequence.order[number], nothing)
 
 
-function _check_inputs(sim::Simulation)
+function _check_chronology_inputs(sim::Simulation)
     key_names = keys(sim.sequence.horizons)
     for key in key_names
         resolution = get_sim_resolution(sim.stages[key])
@@ -245,7 +245,7 @@ function _build_stage_paths!(sim::Simulation, verbose::Bool = true; kwargs...)
 end
 
 function build!(sim::Simulation; verbose::Bool = false, kwargs...)
-    _check_inputs(sim)
+    _check_chronology_inputs(sim)
     _check_chronologies(sim)
     _check_folder(sim.simulation_folder)
     sim.internal = SimulationInternal(sim.steps, keys(sim.sequence.order))
@@ -267,8 +267,9 @@ end
 
 function _check_folder(folder::String)
     !isdir(folder) && throw(IS.ConflictingInputsError("Specified folder is not valid"))
-    testdir(folder) = try 
-        (p,i) = mktemp(folder) ; rm(p) ; true 
+    try
+        mkdir(joinpath(folder, "fake"))
+        rm(joinpath(folder, "fake"))
     catch e
         throw(IS.ConflictingInputsError("Specified folder does not have write access [$e]"))
     end
