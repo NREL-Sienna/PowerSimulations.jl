@@ -75,8 +75,8 @@ function get_stage_variable(chron::Type{Synchronize},
                             device_name::String,
                             var_ref::UpdateRef,
                             to_stage_execution_count::Int64)
-    if haskey(from_stage.internal.cache_dict,CacheKey(FeedForwardCache,var_ref))
-        cache = from_stage.internal.cache_dict[CacheKey(FeedForwardCache,var_ref)]
+    if haskey(from_stage.internal.cache_dict,CacheKey(FeedForwardCache, var_ref))
+        cache = from_stage.internal.cache_dict[CacheKey(FeedForwardCache, var_ref)]
         step = axes(cache.value)[2][to_stage_execution_count]
         return cache_value(cache, device_name, step)
     else

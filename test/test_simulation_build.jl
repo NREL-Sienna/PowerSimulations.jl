@@ -1,5 +1,5 @@
 if !isdir(joinpath(pwd(), "test_simulation_sequence"))
-    file_path = mkdir(joinpath(pwd(), "testitest_simulation_sequenceng_build"))
+    file_path = mkdir(joinpath(pwd(), "test_simulation_sequence"))
 else
     file_path = (joinpath(pwd(), "test_simulation_sequence"))
 end

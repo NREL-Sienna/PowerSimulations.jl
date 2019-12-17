@@ -8,6 +8,4 @@ struct CacheKey{C<:CacheQuantity}
     ref::UpdateRef
 end
 
-CacheKey(::Nothing) = nothing
-
 const DRDA = Dict{UpdateRef, JuMP.Containers.DenseAxisArray}

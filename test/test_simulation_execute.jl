@@ -4,7 +4,7 @@ else
     file_path = (joinpath(pwd(), "testing_reading_results"))
 end
 
-@testset "Simulation Sequence Tests" begin
+@testset "Simulation Execution Test" begin
 
     stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
                             "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
