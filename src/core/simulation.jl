@@ -1,7 +1,7 @@
 mutable struct SimulationInternal
-    raw_dir::String
-    models_dir::String
-    results_dir::String
+    raw_dir::Union{String, Nothing}
+    models_dir::Union{String, Nothing}
+    results_dir::Union{String, Nothing}
     stages_count::Int64
     run_count::Dict{Int64, Dict{Int64, Int64}}
     date_ref::Dict{Int64, Dates.DateTime}
@@ -11,11 +11,7 @@ mutable struct SimulationInternal
     compiled_status::Bool
 end
 
-function SimulationInternal(raw_dir::AbstractString,
-                             models_dir::AbstractString,
-                             results_dir::AbstractString,
-                             steps::Int64,
-                             stages_keys::Base.KeySet)
+function SimulationInternal(steps::Int64, stages_keys::Base.KeySet)
     count_dict = Dict{Int64, Dict{Int64, Int64}}()
 
     for s in 1:steps
@@ -26,9 +22,9 @@ function SimulationInternal(raw_dir::AbstractString,
     end
 
     return SimulationInternal(
-        raw_dir,
-        models_dir,
-        results_dir,
+        nothing,
+        nothing,
+        nothing,
         length(stages_keys),
         count_dict,
         Dict{Int64, Dates.DateTime}(),
@@ -223,11 +219,7 @@ function _build_stages!(sim::Simulation, verbose::Bool = true; kwargs...)
                 stage.sys;
                 kwargs...)
         _populate_caches!(sim, stage_name)
-        stage_path = joinpath(sim.internal.models_dir, "stage_$(stage_name)_model")
-        mkpath(stage_path)
-        _write_psi_container(stage.internal.psi_container,
-                             joinpath(stage_path, "$(stage_name)_optimization_model.json"))
-        system_to_file && PSY.to_json(stage.sys, joinpath(stage_path , "$(stage_name)_sys_data.json"))
+        
         if PSY.are_forecasts_contiguous(stage.sys)
             sim.internal.date_ref[stage_number] = PSY.generate_initial_times(stage.sys,
                                                     get_interval(get_sequence(sim), stage_name),
@@ -240,12 +232,23 @@ function _build_stages!(sim::Simulation, verbose::Bool = true; kwargs...)
     return
 end
 
+function _build_stage_paths!(sim::Simulation, verbose::Bool = true; kwargs...)
+    system_to_file = get(kwargs, :system_to_file, true)
+    for (stage_number, stage_name) in sim.sequence.order
+        stage = get(sim.stages, stage_name, nothing)
+        stage_path = joinpath(sim.internal.models_dir, "stage_$(stage_name)_model")
+        mkpath(stage_path)
+        _write_psi_container(stage.internal.psi_container,
+                            joinpath(stage_path, "$(stage_name)_optimization_model.json"))
+        system_to_file && PSY.to_json(stage.sys, joinpath(stage_path , "$(stage_name)_sys_data.json"))
+    end
+end
+
 function build!(sim::Simulation; verbose::Bool = false, kwargs...)
     _check_inputs(sim)
     _check_chronologies(sim)
     _check_folder(sim.simulation_folder)
-    raw_dir, models_dir, results_dir = sim.simulation_folder, sim.simulation_folder, sim.simulation_folder #_prepare_workspace(sim.name, sim.simulation_folder)
-    sim.internal = SimulationInternal(raw_dir, models_dir, results_dir, sim.steps, keys(sim.sequence.order))
+    sim.internal = SimulationInternal(sim.steps, keys(sim.sequence.order))
     stage_initial_times = _get_simulation_initial_times!(sim)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get(sim.stages, stage_name, nothing)

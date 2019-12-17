@@ -43,6 +43,7 @@ function test_chronology(file_path::String)
             @test Dates.Hour(time_change) == Dates.Hour(interval)
         end
     end
+    ### These tests are commented out until the parameter update method is updated
 #=
     @testset "Testing to verify parameter feedforward for Receding Horizon" begin
         P_keys = [PowerSimulations.UpdateRef{PowerLoad}("get_maxactivepower")]
@@ -123,6 +124,7 @@ function test_chronology(file_path::String)
             end
         end
     end
+    ### These tests are commented out until the parameter update method is updated
 #=
     @testset "Testing to verify parameter feedforward for consecutive" begin
         P_keys = [PowerSimulations.UpdateRef{PowerLoad}("get_maxactivepower")]

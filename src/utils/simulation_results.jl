@@ -182,8 +182,7 @@ end
 
 function get_reference(sim_results::SimulationResultsReference, stage::String, step::Int, variable::Symbol) 
      file_paths = sim_results.ref["stage-$stage"][variable]
-     file_paths = filter(file_paths -> file_paths.Step == "step-$step", file_paths)[:, :File_Path]
-     return file_paths
+     return filter(file_paths -> file_paths.Step == "step-$step", file_paths)[:, :File_Path]
 end
 
 get_psi_container(sim::Simulation, stage::Any) = sim.stages[stage].internal.psi_container
