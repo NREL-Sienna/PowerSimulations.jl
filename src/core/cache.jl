@@ -45,7 +45,7 @@ CacheKey(cache::AbstractCache) = CacheKey(FeedForwardCache, cache.ref)
 cache_value(cache::AbstractCache, key...) = cache.value[key...]
 
 function build_cache!(cache::TimeStatusChange, sim::Simulation, stage_name::String)
-    build_cache!(cache, PSI.get_psi_container(get_stage(sim,stage_name)))
+    build_cache!(cache, get_psi_container(get_stage(sim,stage_name)))
 end
 
 function build_cache!(cache::TimeStatusChange, op_problem::OperationsProblem)
@@ -76,11 +76,11 @@ function build_cache!(cache::C, sequence::SimulationSequence,
                     stage::Stage) where {C<:AbstractCache}
                     
     stage_name = get_name(sequence, stage)
-    psi_container = PSI.get_psi_container(stage)
+    psi_container = get_psi_container(stage)
     axisarray = get_value(psi_container, cache.ref)
     executions = get_executions(stage) 
     devices = axes(axisarray)[1]
-    interval = IS.time_period_conversion(get_interval(sequence, stage_name))
+    interval = get_interval(sequence, stage_name)
     time_length = 1:Int(interval/PSY.get_forecasts_resolution(get_sys(stage)))*executions
     value_array = JuMP.Containers.DenseAxisArray{Float64}(undef, devices, time_length)
 
@@ -115,7 +115,7 @@ function update_cache!(c::C, stage::Stage,
                         interval::T) where {T <:Dates.TimePeriod,
                                             C<:AbstractCache}
     execution_count = get_execution_count(stage)
-    psi_container = PSI.get_psi_container(stage)
+    psi_container = get_psi_container(stage)
     axisarray = get_value(psi_container, c.ref)
     interval = IS.time_period_conversion(interval)
     time_steps = Int(interval/PSY.get_forecasts_resolution(get_sys(stage)))

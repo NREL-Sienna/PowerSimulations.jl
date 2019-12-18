@@ -281,10 +281,10 @@ function _stage_execution_count(sim::Simulation, stage_name::String; kwargs...)
     execution_count = 0.0
     for (key, chron) in sim.sequence.intra_stage_chronologies
         if key.second == stage_name 
-            to_stage_res = convert(Dates.Minute,PSY.get_forecasts_resolution(PSI.get_sys(PSI.get(sim.stages,key.second,nothing))))
-            from_stage_res = convert(Dates.Minute,PSY.get_forecasts_resolution(PSI.get_sys(PSI.get(sim.stages,key.first,nothing))))
+            to_stage_res = PSY.get_forecasts_resolution(get_sys(get(sim.stages,key.second,nothing)))
+            from_stage_res = PSY.get_forecasts_resolution(get_sys(get(sim.stages,key.first,nothing)))
             to_stage_horizon = sim.sequence.horizons[key.second]
-            to_stage_interval = convert(Dates.Minute,sim.sequence.intervals[key.second])
+            to_stage_interval = sim.sequence.intervals[key.second]
             _count = (chron.from_periods*from_stage_res - to_stage_horizon*to_stage_res + to_stage_interval) /to_stage_interval
             if execution_count != 0.0
                 if _count != execution_count
@@ -296,42 +296,7 @@ function _stage_execution_count(sim::Simulation, stage_name::String; kwargs...)
             end
         end
         if key.first == stage_name 
-            resolution = convert(Dates.Minute,PSY.get_forecasts_resolution(PSI.get_sys(PSI.get(sim.stages,key.first,nothing))))
-            interval = convert(Dates.Minute,sim.sequence.intervals[key.first])
-            _count = ceil(chron.from_periods*resolution/interval)
-            if execution_count != 0.0
-                if _count != execution_count
-                    @error("Stage $stage_name has two conflicting execution counts $_count != $execution_count")
-                end
-            else
-                execution_count = _count
-                @info("Stage $stage_name will have $execution_count execution in each step, Synchronize($key).from_periods is set to $(chron.from_periods)")
-            end
-        end
-    end
-    return execution_count
-end
-
-function _stage_execution_count(sim::Simulation, stage_name::String; kwargs...)
-    execution_count = 0.0
-    for (key, chron) in sim.sequence.intra_stage_chronologies
-        if key.second == stage_name 
-            to_stage_res = convert(Dates.Minute,PSY.get_forecasts_resolution(PSI.get_sys(PSI.get(sim.stages,key.second,nothing))))
-            from_stage_res = convert(Dates.Minute,PSY.get_forecasts_resolution(PSI.get_sys(PSI.get(sim.stages,key.first,nothing))))
-            to_stage_horizon = sim.sequence.horizons[key.second]
-            to_stage_interval = convert(Dates.Minute,sim.sequence.intervals[key.second])
-            _count = (chron.from_periods*from_stage_res - to_stage_horizon*to_stage_res + to_stage_interval) /to_stage_interval
-            if execution_count != 0.0
-                if _count != execution_count
-                    @error("Stage $stage_name has two conflicting execution counts $_count != $execution_count")
-                end
-            else
-                execution_count = _count
-                @info("Stage $stage_name will have $execution_count execution in each step, as Synchronize.from_periods is set to $(chron.from_periods)")
-            end
-        end
-        if key.first == stage_name 
-            resolution = convert(Dates.Minute,PSY.get_forecasts_resolution(PSI.get_sys(PSI.get(sim.stages,key.first,nothing))))
+            resolution = convert(Dates.Minute,PSY.get_forecasts_resolution(get_sys(get(sim.stages,key.first,nothing))))
             interval = convert(Dates.Minute,sim.sequence.intervals[key.first])
             _count = ceil(chron.from_periods*resolution/interval)
             if execution_count != 0.0
@@ -355,7 +320,7 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
     stage_initial_times = _get_simulation_initial_times!(sim)
     for (stage_number, stage_name) in sort(sim.sequence.order)
         stage = get(sim.stages, stage_name, nothing)
-        stage_interval = IS.time_period_conversion(sim.sequence.intervals[stage_name])
+        stage_interval = sim.sequence.intervals[stage_name]
         executions = _stage_execution_count(sim, stage_name)
         stage.internal = StageInternal(stage_number, executions, 0, nothing)
         isnothing(stage) && throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
