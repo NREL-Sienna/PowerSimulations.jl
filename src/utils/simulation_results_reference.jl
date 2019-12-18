@@ -10,17 +10,13 @@ struct SimulationResultsReference
             stage = get_stage(sim, stage_name)
             _interval = sim.sequence.intervals[stage_name]
             interval = convert(Dates.Minute, _interval)
-            resolution = convert(Dates.Minute, get_sim_resolution(stage))
+            resolution = convert(Dates.Minute, PSY.get_forecasts_resolution(get_sys(stage)))
             chronologies["stage-$stage_name"] = convert(Int64, (interval/resolution))
         end
         new(ref, sim.internal.results_dir, chronologies)
     end
 end
 
-function get_sim_resolution(stage::Stage)
-    resolution = stage.sys.data.forecast_metadata.resolution
-    return resolution
-end
 
 """
     make_references(sim::Simulation, date_run::String; kwargs...)

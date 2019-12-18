@@ -1,32 +1,32 @@
 struct UpperBoundFF <: AbstractAffectFeedForward
     variable_from_stage::Symbol
     affected_variables::Vector{Symbol}
-    cache::Union{Nothing, Type{<:AbstractCache}}
+    cache::Union{Nothing, CacheKey}
 end
 
 function UpperBoundFF(;variable_from_stage, affected_variables)
-    return UpperBoundFF(variable, affected_variables, nothing)
+    return UpperBoundFF(variable_from_stage, affected_variables, nothing)
 end
 
-get_variable_from_stage(p::UpperBoundFF) = p.binary_from_stage
+get_variable_from_stage(p::UpperBoundFF) = p.variable_from_stage
 
 struct RangeFF <: AbstractAffectFeedForward
     variable_from_stage_ub::Symbol
     variable_from_stage_lb::Symbol
     affected_variables::Vector{Symbol}
-    cache::Union{Nothing, Type{<:AbstractCache}}
+    cache::Union{Nothing, CacheKey}
 end
 
-function RangeFF(;variable_from_stage_ub, affected_variables_lb, affected_variables)
-    return RangeFF(binary_from_stage, affected_variables, nothing)
+function RangeFF(;variable_from_stage_ub, variable_from_stage_lb, affected_variables)
+    return RangeFF(variable_from_stage_ub, variable_from_stage_lb, affected_variables, nothing)
 end
 
-get_bounds_from_stage(p::RangeFF) = (p.variable_from_stage_lb, p.variable_from_stage_lb)
+get_bounds_from_stage(p::RangeFF) = (p.variable_from_stage_ub, p.variable_from_stage_lb)
 
 struct SemiContinuousFF <: AbstractAffectFeedForward
     binary_from_stage::Symbol
     affected_variables::Vector{Symbol}
-    cache::Union{Nothing, Type{<:AbstractCache}}
+    cache::Union{Nothing, CacheKey}
 end
 
 function SemiContinuousFF(;binary_from_stage, affected_variables)
@@ -36,6 +36,25 @@ end
 get_binary_from_stage(p::SemiContinuousFF) = p.binary_from_stage
 get_affected_variables(p::AbstractAffectFeedForward) = p.affected_variables
 
+####################### Feed Forward Cache Creation ###############################################
+function add_ff_cache!(ff_model::RangeFF, device::Type{I}) where {I<:PSY.StaticInjection}
+    prefix = get_variable_from_stage(ff_model)
+    cache_ub = DeviceLevel(UpdateRef{JuMP.VariableRef}(Symbol(prefix[1], "_$(I)")))
+    cache_lb = DeviceLevel(UpdateRef{JuMP.VariableRef}(Symbol(prefix[2], "_$(I)")))
+    return (cache_ub, cache_lb)
+end
+
+function add_ff_cache!(ff_model::UpperBoundFF, device::Type{I}) where {I<:PSY.StaticInjection}
+    prefix = get_bounds_from_stage(ff_model)
+    cache = DeviceLevel(UpdateRef{JuMP.VariableRef}(Symbol(prefix, "_$(I)")))
+    return cache
+end
+
+function add_ff_cache!(ff_model::SemiContinuousFF, device::Type{I}) where {I<:PSY.StaticInjection}
+    prefix = get_binary_from_stage(ff_model)
+    cache = DeviceCommitment(UpdateRef{JuMP.VariableRef}(Symbol(prefix, "_$(I)")))
+    return cache
+end
 ####################### Feed Forward Affects ###############################################
 
 @doc raw"""
@@ -72,7 +91,7 @@ function ub_ff(psi_container::PSIContainer,
     set_name = axes[1]
 
     @assert axes[2] == time_steps
-    param_ub = _add_param_container!(psi_container, param_reference, set_name)
+    param_ub = _add_param_container!(psi_container, param_reference, set_name, time_steps)
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
     for name in axes[1]
@@ -80,7 +99,7 @@ function ub_ff(psi_container::PSIContainer,
         param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel, value)
         for t in axes[2]
             con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                                variable[name, t] <= param_ub[name])
+                                                variable[name, t] <= param_ub[name, t])
         end
     end
 
@@ -128,23 +147,23 @@ function range_ff(psi_container::PSIContainer,
     @assert axes[2] == time_steps
 
     #Create containers for the constraints
-    param_lb =_add_param_container!(psi_container, param_reference[1], set_name)
-    param_ub =_add_param_container!(psi_container, param_reference[2], set_name)
+    param_lb =_add_param_container!(psi_container, param_reference[1], set_name, time_steps)
+    param_ub =_add_param_container!(psi_container, param_reference[2], set_name, time_steps)
 
     #Create containers for the parameters
     con_lb =add_cons_container!(psi_container, lb_name, set_name, time_steps)
     con_ub =add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
     for name in axes[1]
-        param_lb[name] = PJ.add_parameter(psi_container.JuMPmodel,
-                                          JuMP.lower_bound(variable[name, 1]))
-        param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel,
-                                          JuMP.upper_bound(variable[name, 1]))
         for t in axes[2]
+            param_lb[name] = PJ.add_parameter(psi_container.JuMPmodel,
+                                          JuMP.lower_bound(variable[name, t]))
+            param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel,
+                                          JuMP.upper_bound(variable[name, t]))
             con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                            variable[name, t] <= param_ub[name])
+                                            variable[name, t] <= param_ub[name,t])
             con_lb[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                            variable[name, t] >= param_lb[name])
+                                            variable[name, t] >= param_lb[name,t])
         end
     end
 
@@ -199,19 +218,20 @@ function semicontinuousrange_ff(psi_container::PSIContainer,
     axes = JuMP.axes(variable)
     set_name = axes[1]
     @assert axes[2] == time_steps
-    param = _add_param_container!(psi_container, param_reference, set_name)
+    param = _add_param_container!(psi_container, param_reference, set_name, time_steps)
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
     con_lb = add_cons_container!(psi_container, lb_name, set_name, time_steps)
 
     for name in axes[1]
         ub_value = JuMP.upper_bound(variable[name, 1])
         lb_value = JuMP.lower_bound(variable[name, 1])
-        param[name] = PJ.add_parameter(psi_container.JuMPmodel, 1.0)
+        
         for t in axes[2]
+            param[name,t] = PJ.add_parameter(psi_container.JuMPmodel, 1.0)
             con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                            variable[name, t] <= ub_value*param[name])
+                                            variable[name, t] <= ub_value*param[name,t])
             con_lb[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                        variable[name, t] >= lb_value*param[name])
+                                        variable[name, t] >= lb_value*param[name,t])
         end
     end
 
@@ -271,14 +291,22 @@ function feed_forward_update(sync::Chron,
                             param_reference::UpdateRef{JuMP.VariableRef},
                             param_array::JuMPParamArray,
                             to_stage::Stage,
-                            from_stage::Stage) where Chron <: AbstractChronology
-    !(to_get_execution_count(stage) % sync.to_steps == 0) && return
+                            from_stage::Stage,
+                            to_interval::T) where {Chron <: AbstractChronology,
+                                                   T<:Dates.TimePeriod}
 
-    var_count = to_get_execution_count(stage) ÷ sync.to_steps
-
-    for device_name in axes(param_array)[1]
+    execution_count = get_execution_count(to_stage) 
+    from_stage_res = PSY.get_forecasts_resolution(PSI.get_sys(from_stage))
+    to_stage_res = PSY.get_forecasts_resolution(PSI.get_sys(to_stage))
+    for device_name in axes(param_array)[1] , time in axes(param_array)[2]
+        remainder = (time*to_stage_res + (execution_count)*to_interval) % from_stage_res
+        if remainder == Dates.Millisecond(0)
+            var_count = Int((time*to_stage_res + (execution_count)*to_interval) / from_stage_res )
+        else
+            var_count = Int(ceil((time*to_stage_res + (execution_count)*to_interval) / from_stage_res))
+        end
         var_value = get_stage_variable(Chron, from_stage, device_name, param_reference, var_count)
-        PJ.fix(param_array[device_name], var_value)
+        PJ.fix(param_array[device_name,time], var_value)
     end
 
     return

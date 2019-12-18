@@ -6,10 +6,12 @@ end
 
 function test_chronology(file_path::String)
     ### Receding Horizon
+
     stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
                                "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
     sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
+                intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_periods = 24)),
                 horizons = Dict("UC" => 24, "ED" =>12),
                 intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
                 feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -19,7 +21,6 @@ function test_chronology(file_path::String)
 
     sim = Simulation(name = "receding",
                     steps = 2,
-                    step_resolution = Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
                     simulation_folder= file_path,
@@ -44,20 +45,23 @@ function test_chronology(file_path::String)
         end
     end
     ### These tests are commented out until the parameter update method is updated
-#=
+
     @testset "Testing to verify parameter feedforward for Receding Horizon" begin
         P_keys = [PowerSimulations.UpdateRef{PowerLoad}("get_maxactivepower")]
         vars_names = [:P_ThermalStandard]
         for (ik, key) in enumerate(P_keys)
             @show (ik, key)
-            variable_ref = get_reference(sim_results, "UC", 1, vars_names[ik])[1]
-            for (count, i) in enumerate(get_psi_container(sim, "ED").parameters[key]) # change to getter function
-                raw_result = Feather.read(variable_ref)[1, count]
-                @test isapprox(raw_result, PJ.value(i), atol = 1e-4)
+            variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1]
+            raw_result = Feather.read(variable_ref)
+            ic = collect(values(value.(sim.stages["ED"].internal.psi_container.parameters[key])).data)
+            for i in 1:size(ic, 1)
+                result = raw_result[end, i] # end is last result [time, device]
+                initial = ic[i, 1] # [device, time]
+                @test isapprox(initial, result)
             end
         end
     end
-=#
+
     @testset "Testing to verify initial condition feedforward for Receding Horizon" begin
         results = load_simulation_results(sim_results, "ED")
         ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
@@ -78,7 +82,7 @@ function test_chronology(file_path::String)
                                "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
     sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 1, to_executions = 1)),
+                intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_periods = 24)),
                 horizons = Dict("UC" => 24, "ED" => 12),
                 intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
                 feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -88,7 +92,6 @@ function test_chronology(file_path::String)
 
     sim = Simulation(name = "consecutive",
                 steps = 2,
-                step_resolution = Hour(24),
                 stages = stages_definition,
                 stages_sequence = sequence,
                 simulation_folder= file_path,
@@ -111,35 +114,45 @@ function test_chronology(file_path::String)
         end
     end
 
-    @testset "Testing to verify initial condition feedforward for consecutive" begin
+    @testset "Testing to verify initial condition feedforward for consecutive ED to UC" begin
         ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
         vars_names = [:P_ThermalStandard]
         for (ik,key) in enumerate(ic_keys)
-            variable_ref = PSI.get_reference(sim_results, "ED", 1, vars_names[ik])[1]
+            variable_ref = PSI.get_reference(sim_results, "ED", 1, vars_names[ik])[24]
             initial_conditions = get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
             for ic in initial_conditions 
-                raw_result = Feather.read(variable_ref)[end,Symbol(PSI.device_name(ic))]
+                raw_result = Feather.read(variable_ref)[end,Symbol(PSI.device_name(ic))] # last value of last hour
                 initial_cond = value(PSI.get_condition(ic))
-                @test isapprox(raw_result, initial_cond, atol = 1e-4)
+                @test isapprox(raw_result, initial_cond)
             end
         end
     end
     ### These tests are commented out until the parameter update method is updated
-#=
-    @testset "Testing to verify parameter feedforward for consecutive" begin
-        P_keys = [PowerSimulations.UpdateRef{PowerLoad}("get_maxactivepower")]
-        vars_names = [:P_ThermalStandard]
+#
+    sim = Simulation(name = "consecutive",
+                steps = 1,
+                stages = stages_definition,
+                stages_sequence = sequence,
+                simulation_folder= file_path,
+                verbose = true)
+    build!(sim)
+
+    sim_results = execute!(sim)
+    @testset "Testing to verify parameter feedforward for consecutive UC to ED" begin
+        P_keys = [PowerSimulations.UpdateRef{VariableRef}(:ON_ThermalStandard)]
+        vars_names = [:ON_ThermalStandard]
         for (ik, key) in enumerate(P_keys)
-            @show (ik, key)
-            variable_ref = get_reference(sim_results, "UC", 1, vars_names[ik])[1]
-            for (count, i) in enumerate(get_psi_container(sim, "ED").parameters[key]) # change to getter function
-                @show count
-                raw_result = Feather.read(variable_ref)[end, count]
-                @test isapprox(raw_result, PJ.value(i), atol = 1e-4)
+            variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1] # 1 is first step
+            ic = collect(values(value.(sim.stages["ED"].internal.psi_container.parameters[key])).data)# [device, time] 1 is first execution
+            raw_result = Feather.read(variable_ref)
+            for i in 1:size(ic,1)
+                result = raw_result[end,i] # end is last result [time, device]
+                initial = ic[i,1] # [device, time]
+                @test isapprox(initial, result)
             end
         end
     end
-    =#
+
     ### Synchronize
 
     ### Testing chronology of aggregation for Synchronize
@@ -155,7 +168,7 @@ function test_chronology(file_path::String)
         for name in keys(sim.stages)
             stage = sim.stages[name]
             results = load_simulation_results(sim_results, name)
-            resolution = convert(Dates.Minute, get_sim_resolution(stage))
+            resolution = convert(Dates.Millisecond, PSY.get_forecasts_resolution(PSI.get_sys(stage)))
             time_stamp = results.time_stamp
             length = size(time_stamp,1)
             test = results.time_stamp[1,1]:resolution:results.time_stamp[length,1]

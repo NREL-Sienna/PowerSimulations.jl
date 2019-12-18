@@ -9,7 +9,7 @@ function test_load_simulation()
                         "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
     sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                   intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 1, to_executions = 24)),
+                   intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_periods = 1)),
                    horizons = Dict("UC" => 24, "ED" => 12),
                    intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
                    feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -18,7 +18,6 @@ function test_load_simulation()
                    )
     sim = Simulation(name = "aggregation",
                  steps = 2,
-                 step_resolution=Hour(24),
                  stages = stages_definition,
                  stages_sequence = sequence,
                  simulation_folder= file_path,
@@ -75,15 +74,15 @@ function test_load_simulation()
             @test results.variables == res.variables
         end
     end
-    #=
+    
     @testset "Testing to verify raw output results correctly match aggregated for Receding Horizon" begin
         stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
                                "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
         sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                   intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 1, to_executions = 1)),
+                   intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_periods = 1)),
                    horizons = Dict("UC" => 24, "ED" => 12),
-                   intervals = Dict("UC" => Hour(24), "UC" => Hour(1)),
+                   intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
                    feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
                    cache = Dict("ED" => [TimeStatusChange(:ON_ThermalStandard)]),
                    ini_cond_chronology = Dict("UC" => RecedingHorizon(), "ED" => RecedingHorizon())
@@ -91,7 +90,6 @@ function test_load_simulation()
 
         sim = Simulation(name = "receding_results",
                  steps = 2,
-                 step_resolution = Hour(24),
                  stages = stages_definition,
                  stages_sequence = sequence,
                  simulation_folder= file_path,
@@ -102,7 +100,7 @@ function test_load_simulation()
         stages = ["UC", "ED"]
         for stage in stages
             results = load_simulation_results(sim_results, stage)
-            vars_names = [:P_ThermalStandard, :ON_ThermalStandard]
+            vars_names = [:P_ThermalStandard]
             for name in vars_names
                 results.variables[name]
                 variable_ref = sim_results.ref["stage-$stage"][name]
@@ -113,13 +111,13 @@ function test_load_simulation()
             end
         end
     end
-    =#
+    
     @testset "negative test checking total sums" begin
         stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
                         "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
         sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                   intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 1, to_executions = 24)),
+                   intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_periods = 1)),
                    horizons = Dict("UC" => 24, "ED" => 12),
                    intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
                    feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -129,7 +127,6 @@ function test_load_simulation()
 
         sim = Simulation(name = "aggregation",
                  steps = 2,
-                 step_resolution=Hour(24),
                  stages = stages_definition,
                  stages_sequence = sequence,
                  simulation_folder= file_path,

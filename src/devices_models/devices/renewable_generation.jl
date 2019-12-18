@@ -209,3 +209,14 @@ function cost_function(psi_container::PSIContainer,
                 -1.0)
     return
 end
+
+####################### Feed Forward Cache Automation ###############################################
+
+function add_cache!(ff::SemiContinuousFF, sim::Simulation, 
+                            stage_name::String, 
+                            device_model::DeviceModel{R, D}) where {
+                                R<:PSY.RenewableGen,
+                                D<:AbstractRenewableDispatchFormulation}
+
+    return
+end
