@@ -64,3 +64,17 @@ end
 end
 
 #TODO: add test for DR Reserves
+#= These capabilities aren't currently supported
+@testset "Testing Reserves from DR" begin
+    devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+                                        :Loads =>  DeviceModel(InterruptibleLoad, PSI.DispatchablePowerLoad))
+    branches = Dict{Symbol, DeviceModel}()
+    services_template = Dict{Symbol, PSI.ServiceModel}(:Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+                                                        :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve))
+    model_template = OperationsProblemTemplate(CopperPlatePowerModel , devices, branches, services_template)
+    for p in [true, false]
+        op_problem = OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters=p)
+        moi_tests(op_problem, p, 264, 0, 120, 168, 24, false)
+    end
+end
+=#

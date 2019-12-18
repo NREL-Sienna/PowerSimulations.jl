@@ -232,6 +232,11 @@ reserve5_hy(hydro_generators5) = [
                                     VariableReserve{ReserveDown}("Reserve6", 5, 50)
                                     ]
 
+reserve5_il(interruptible_loads) = [
+                                    VariableReserve{ReserveUp}("Reserve7", 30, 100),
+                                    VariableReserve{ReserveDown}("Reserve8", 5, 50)
+                                    ]
+
 Reserve_ts = [TimeArray(DayAhead, rand(24)),
               TimeArray(DayAhead+Day(1), rand(24))]
 
