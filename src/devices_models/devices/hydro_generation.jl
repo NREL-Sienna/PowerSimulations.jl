@@ -122,7 +122,7 @@ function _get_time_series(psi_container::PSIContainer,
             ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
                                                                 device,
                                                                 initial_time,
-                                                                "rating")))
+                                                                "get_rating")))
         else
             ts_vector = ones(time_steps[end])
         end
