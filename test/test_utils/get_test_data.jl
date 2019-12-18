@@ -198,6 +198,13 @@ for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_re)
     add_forecast!(c_sys5_re, serv, Deterministic("get_requirement", Reserve_ts[t]))
 end
 
+reserve_hy = reserve5_hy(get_components(HydroDispatch, c_sys5_hyd))
+add_service!(c_sys5_hyd, reserve_hy[1], get_components(HydroDispatch, c_sys5_hyd))
+add_service!(c_sys5_hyd, reserve_hy[2], [collect(get_components(HydroDispatch, c_sys5_hyd))[end]])
+for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_hyd))
+    add_forecast!(c_sys5_hyd, serv, Deterministic("get_requirement", Reserve_ts[t]))
+end
+
 function build_init(gens, data)
     init = Vector{InitialCondition}(undef, length(collect(gens)))
     for (ix,g) in enumerate(gens)
