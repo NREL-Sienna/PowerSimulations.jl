@@ -270,27 +270,33 @@ function _stage_execution_count(sim::Simulation, stage_name::String; kwargs...)
             to_stage_horizon = get_horizon(get_sequence(sim), stage_name)
             to_stage_interval = get_interval(get_sequence(sim), stage_name)
             _count = (chron.from_periods*from_stage_res - to_stage_horizon*to_stage_res + to_stage_interval) /to_stage_interval
+            @assert typeof(_count) == Int64
             if execution_count != 0.0
                 if _count != execution_count
-                    @error("Stage $stage_name has two conflicting execution counts $_count != $execution_count")
+                    throw(IS.ConflictingInputsErrors("Stage $stage_name has two conflicting 
+                                                    execution counts $_count != $execution_count"))
                 end
             else
                 execution_count = _count
-                @info("Stage $stage_name will have $execution_count execution in each step, as Synchronize.from_periods is set to $(chron.from_periods)")
+                @info("Stage $stage_name will have $execution_count execution in each step, 
+                        as Synchronize.from_periods is set to $(chron.from_periods)")
             end
         end
         if key.first == stage_name 
             resolution = PSY.get_forecasts_resolution(PSI.get_sys(
                                 get_stage(sim, stage_name)))
             interval = get_interval(get_sequence(sim), stage_name)
-            _count = ceil(chron.from_periods*resolution/interval) #TODO : Check/Dispatch on chronology  
+            _count = chron.from_periods*resolution/interval #TODO : Check/Dispatch on chronology  
+            @assert typeof(_count) == Int64
             if execution_count != 0.0
                 if _count != execution_count
-                    @error("Stage $stage_name has two conflicting execution counts $_count != $execution_count")
+                    throw(IS.ConflictingInputsErrors("Stage $stage_name has two 
+                                                    conflicting execution counts $_count != $execution_count"))
                 end
             else
                 execution_count = _count
-                @info("Stage $stage_name will have $execution_count execution in each step, Synchronize($key).from_periods is set to $(chron.from_periods)")
+                @info("Stage $stage_name will have $execution_count execution in each step, 
+                        Synchronize($key).from_periods is set to $(chron.from_periods)")
             end
         end
     end
