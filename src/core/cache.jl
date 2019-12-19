@@ -1,8 +1,8 @@
 """
 Tracks the last time status of a device changed in a simulation
 """
-struct InitialConditionCache <: CacheQuantity end
-struct FeedForwardCache <: CacheQuantity end
+struct InitialConditionCache <: CacheType end
+struct FeedForwardCache <: CacheType end
 
 mutable struct TimeStatusChange <: AbstractCache
     value::JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}
@@ -93,17 +93,17 @@ function build_cache!(cache::C, sequence::SimulationSequence,
     return
 end
 ################################Cache Update################################################
-function update_cache!(c::TimeStatusChange, stage::Stage,
+function update_cache!(cache::TimeStatusChange, stage::Stage,
                         interval::T) where {T <:Dates.TimePeriod}
-    parameter = get_value(stage.internal.psi_container, c.ref)
+    parameter = get_value(stage.internal.psi_container, cache.ref)
     for name in parameter.axes[1], time in parameter.axes[2]
         if time <= Int(interval/PSY.get_forecasts_resolution(get_sys(stage)))
             param_status = PJ.value(parameter[name, time])
-            if c.value[name][:status] == param_status
-                c.value[name][:count] += 1.0
-            elseif c.value[name][:status] != param_status
-                c.value[name][:count] = 1.0
-                c.value[name][:status] = param_status
+            if cache.value[name][:status] == param_status
+                cache.value[name][:count] += 1.0
+            elseif cache.value[name][:status] != param_status
+                cache.value[name][:count] = 1.0
+                cache.value[name][:status] = param_status
             end
         end
     end
@@ -111,16 +111,16 @@ function update_cache!(c::TimeStatusChange, stage::Stage,
     return
 end
 
-function update_cache!(c::C, stage::Stage, 
+function update_cache!(cache::C, stage::Stage, 
                         interval::T) where {T <:Dates.TimePeriod,
                                             C<:AbstractCache}
     execution_count = get_execution_count(stage)
     psi_container = get_psi_container(stage)
-    axisarray = get_value(psi_container, c.ref)
-    time_steps = Int(interval/PSY.get_forecasts_resolution(get_sys(stage)))
+    axisarray = get_value(psi_container, cache.ref)
+    time_steps = Int(interval / PSY.get_forecasts_resolution(get_sys(stage)))
     for name in axisarray.axes[1], time in axisarray.axes[2]
         if time <= time_steps
-            c.value[name,(execution_count-1)*time_steps+time] = _get_value(axisarray, c.ref, name, time)
+            cache.value[name,(execution_count-1)*time_steps+time] = _get_value(axisarray, cache.ref, name, time)
         end
     end
     return

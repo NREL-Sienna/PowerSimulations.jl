@@ -3,8 +3,8 @@ struct UpdateRef{T}
     access_ref::Union{Symbol,String}
 end
 
-struct CacheKey{C<:CacheQuantity}
-    quantity::Type{C}
+struct CacheKey{C<:CacheType}
+    type::Type{C}
     ref::UpdateRef
 end
 
