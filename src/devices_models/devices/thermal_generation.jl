@@ -216,7 +216,7 @@ function commitment_constraints!(psi_container::PSIContainer,
                                                                      S<:PM.AbstractPowerModel}
     key = ICKey(DeviceStatus, T)
     if !(key in keys(psi_container.initial_conditions))
-        error("Initial status conditions not provided. This can lead to unwanted results")
+        throw(IS.DataFormatError("Initial status conditions not provided. This can lead to unwanted results"))
     end
     device_commitment(psi_container,
                       psi_container.initial_conditions[key],

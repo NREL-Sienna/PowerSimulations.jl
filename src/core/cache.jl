@@ -97,6 +97,7 @@ function update_cache!(cache::TimeStatusChange, stage::Stage,
                         interval::T) where {T <:Dates.TimePeriod}
     parameter = get_value(stage.internal.psi_container, cache.ref)
     for name in parameter.axes[1], time in parameter.axes[2]
+        interval = IS.time_period_conversion(interval)
         if time <= Int(interval/PSY.get_forecasts_resolution(get_sys(stage)))
             param_status = PJ.value(parameter[name, time])
             if cache.value[name][:status] == param_status
@@ -116,8 +117,9 @@ function update_cache!(cache::C, stage::Stage,
                                             C<:AbstractCache}
     execution_count = get_execution_count(stage)
     psi_container = get_psi_container(stage)
-    axisarray = get_value(psi_container, cache.ref)
-    time_steps = Int(interval / PSY.get_forecasts_resolution(get_sys(stage)))
+    axisarray = get_value(psi_container, c.ref)
+    interval = IS.time_period_conversion(interval)
+    time_steps = Int(interval/PSY.get_forecasts_resolution(get_sys(stage)))
     for name in axisarray.axes[1], time in axisarray.axes[2]
         if time <= time_steps
             cache.value[name,(execution_count-1)*time_steps+time] = _get_value(axisarray, cache.ref, name, time)

@@ -66,6 +66,7 @@ function _psi_container_init(bus_numbers::Vector{Int64},
                         initial_time::Dates.DateTime,
                         make_parameters_container::Bool,
                         ini_con::DICKDA) where {S<:PM.AbstractPowerModel}
+    resolution = IS.time_period_conversion(resolution)
     V = JuMP.variable_type(jump_model)
     psi_container = PSIContainer(jump_model,
                               optimizer,
@@ -115,7 +116,7 @@ mutable struct PSIContainer
                        parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}},
                        initial_conditions::DICKDA,
                        pm::Union{Nothing, PM.AbstractPowerModel})
-
+        resolution = IS.time_period_conversion(resolution)
         new(JuMPmodel,
             optimizer_factory,
             time_steps,
