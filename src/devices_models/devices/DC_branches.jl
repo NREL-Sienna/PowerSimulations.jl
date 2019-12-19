@@ -39,9 +39,9 @@ end
 
 #################################### Flow Variable Bounds ##################################################
 #################################### Rate Limits Constraints ##################################################
-function branch_rate_constraint!(psi_container::PSIContainer,
+function branch_rate_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
-                                device_formulation::Type{<:AbstractDCLineFormulation},
+                                model::DeviceModel{B, <:AbstractDCLineFormulation},
                                 system_formulation::Type{<:PM.AbstractDCPModel},
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where B<:PSY.DCBranch
     var_name = Symbol("Fp_$(B)")
@@ -57,9 +57,9 @@ function branch_rate_constraint!(psi_container::PSIContainer,
     return
 end
 
-function branch_rate_constraint!(psi_container::PSIContainer,
+function branch_rate_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
-                                device_formulation::Type{HVDCLossless},
+                                model::DeviceModel{B, HVDCLossless},
                                 system_formulation::Type{<:PM.AbstractActivePowerModel},
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where B<:PSY.DCBranch
     for dir in ("FT", "TF")
@@ -78,9 +78,9 @@ function branch_rate_constraint!(psi_container::PSIContainer,
     return
 end
 
-function branch_rate_constraint!(psi_container::PSIContainer,
+function branch_rate_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
-                                device_formulation::Type{HVDCLossless},
+                                model::DeviceModel{B, HVDCLossless},
                                 system_formulation::Type{<:PM.AbstractPowerModel},
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where B<:PSY.DCBranch
     for dir in ("FT", "TF")
@@ -99,9 +99,9 @@ function branch_rate_constraint!(psi_container::PSIContainer,
     return
 end
 
-function branch_rate_constraint!(psi_container::PSIContainer,
+function branch_rate_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
-                                device_formulation::Type{<:AbstractDCLineFormulation},
+                                model::DeviceModel{B, <:AbstractDCLineFormulation},
                                 system_formulation::Type{<:PM.AbstractActivePowerModel},
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where B<:PSY.DCBranch
     time_steps = model_time_steps(psi_container)
@@ -125,9 +125,9 @@ function branch_rate_constraint!(psi_container::PSIContainer,
     return
 end
 
-function branch_rate_constraint!(psi_container::PSIContainer,
+function branch_rate_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
-                                device_formulation::Type{<:AbstractDCLineFormulation},
+                                model::DeviceModel{B, <:AbstractDCLineFormulation},
                                 system_formulation::Type{<:PM.AbstractPowerModel},
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where B<:PSY.DCBranch
     time_steps = model_time_steps(psi_container)

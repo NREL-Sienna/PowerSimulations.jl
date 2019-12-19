@@ -30,7 +30,7 @@ end
 ####################################### Reactive Power Constraints #########################
 function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{R},
-                                    device_formulation::Type{RenewableFullDispatch},
+                                    model::DeviceModel{R, RenewableFullDispatch},
                                     system_formulation::Type{<:PM.AbstractPowerModel},
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
     constraint_data = DeviceRange(length(devices))
@@ -53,7 +53,7 @@ end
 
 function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{R},
-                                    device_formulation::Type{RenewableConstantPowerFactor},
+                                    model::DeviceModel{R, RenewableConstantPowerFactor},
                                     system_formulation::Type{<:PM.AbstractPowerModel},
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
     names = (PSY.get_name(d) for d in devices)
@@ -106,18 +106,19 @@ end
 
 function activepower_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{R},
-                                device_formulation::Type{<:AbstractRenewableDispatchFormulation},
+                                model::DeviceModel{R, <:AbstractRenewableDispatchFormulation},
                                 system_formulation::Type{<:PM.AbstractPowerModel},
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
+    constraint_data = DeviceRange(length(devices))
+    for (ix, d) in enumerate(devices)
+        ub_value = PSY.get_activepower(d)
+        constraint_data.values[ix] = (min=0.0, max=ub_value)
+        constraint_data.names[ix] = PSY.get_name(d)
+        _device_services(constraint_data, ix, d, model)
+    end
     if !parameters && !use_forecast_data
-        constraint_data = DeviceRange(length(devices))
-        for (ix, d) in enumerate(devices)
-            ub_value = PSY.get_activepower(d)
-            constraint_data.values[ix] = (min=0.0, max=ub_value)
-            constraint_data.names[ix] = PSY.get_name(d)
-        end
         device_range(psi_container,
                     constraint_data,
                     Symbol("activerange_$(R)"),
@@ -128,12 +129,14 @@ function activepower_constraints!(psi_container::PSIContainer,
     if parameters
         device_timeseries_param_ub(psi_container,
                             ts_data_active,
+                            constraint_data,
                             Symbol("activerange_$(R)"),
                             UpdateRef{R}("get_rating"),
                             Symbol("P_$(R)"))
     else
         device_timeseries_ub(psi_container,
                             ts_data_active,
+                            constraint_data,
                             Symbol("activerange_$(R)"),
                             Symbol("P_$(R)"))
     end

@@ -55,20 +55,6 @@ function commitment_variables!(psi_container::PSIContainer,
     return
 end
 
-function _device_services(constraint_data::DeviceRange,
-                          index::Int64,
-                          device::PSY.ThermalGen,
-                          model::DeviceModel)
-    for service_model in get_services(model)
-        if PSY.has_service(device, service_model.service_type)
-            services = [s for s in PSY.get_services(device) if isa(s, service_model.service_type)]
-            @assert !isempty(services)
-            include_service!(constraint_data, index, services, service_model)
-        end
-    end
-    return
-end
-
 activepower_constraints!(psi_container::PSIContainer,
                         devices::IS.FlattenIteratorWrapper{<:PSY.ThermalGen},
                         model::DeviceModel{<:PSY.ThermalGen, <:AbstractThermalFormulation},

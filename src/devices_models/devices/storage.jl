@@ -53,25 +53,11 @@ function storage_reservation_variables!(psi_container::PSIContainer,
     return
 end
 
-function _device_services(constraint_data::DeviceRange,
-                          index::Int64,
-                          device::PSY.Storage,
-                          model::DeviceModel)
-    for service_model in get_services(model)
-        if PSY.has_service(device, service_model.service_type)
-            services = [s for s in PSY.get_services(device) if isa(s, service_model.service_type)]
-            @assert !isempty(services)
-            include_service!(constraint_data, index, services, service_model)
-        end
-    end
-    return
-end
-
 ###################################################### output power constraints#################################
 
 function active_power_constraints!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{St},
-                                   ::Type{BookKeeping},
+                                   model::DeviceModel{St, BookKeeping},
                                    ::Type{S},
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                      S<:PM.AbstractPowerModel}
@@ -98,7 +84,7 @@ end
 
 function active_power_constraints!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{St},
-                                   ::Type{BookKeepingwReservation},
+                                   model::DeviceModel{St, BookKeepingwReservation},
                                    ::Type{S},
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                      S<:PM.AbstractPowerModel}
@@ -130,7 +116,7 @@ This function adds the reactive  power limits of generators when there are Commi
 """
 function reactive_power_constraints!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{St},
-                                   ::Type{D},
+                                   model::DeviceModel{St, D},
                                    ::Type{S},
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                      D<:AbstractStorageFormulation,
@@ -163,7 +149,7 @@ end
 
 function energy_capacity_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{St},
-                                    ::Type{D},
+                                    model::DeviceModel{St, D},
                                     ::Type{S},
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                                         D<:AbstractStorageFormulation,
