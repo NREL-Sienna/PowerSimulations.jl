@@ -122,7 +122,7 @@ function _get_time_series(psi_container::PSIContainer,
             ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
                                                                 device,
                                                                 initial_time,
-                                                                "rating")))
+                                                                "get_rating")))
         else
             ts_vector = ones(time_steps[end])
         end
@@ -142,13 +142,14 @@ function activepower_constraints!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
+    constraint_data = DeviceRange(length(devices))
+    for (ix, d) in enumerate(devices)
+        ub_value = PSY.get_activepower(d)
+        constraint_data.values[ix] = (min=0.0, max=ub_value)
+        constraint_data.names[ix] = PSY.get_name(d)
+        _device_services(constraint_data, ix, d, model)
+    end
     if !parameters && !use_forecast_data
-        constraint_data = DeviceRange(length(devices))
-        for (ix, d) in enumerate(devices)
-            ub_value = PSY.get_activepower(d)
-            constraint_data.values[ix] = (min=0.0, max=ub_value)
-            constraint_data.names[ix] = PSY.get_name(d)
-        end
         device_range(psi_container,
                      constraint_data,
                      Symbol("activerange_$(H)"),
@@ -160,12 +161,14 @@ function activepower_constraints!(psi_container::PSIContainer,
     if parameters
         device_timeseries_param_ub(psi_container,
                             ts_data_active,
+                            constraint_data,
                             Symbol("activerange_$(H)"),
                             UpdateRef{H}(:rating),
                             Symbol("P_$(H)"))
     else
         device_timeseries_ub(psi_container,
                             ts_data_active,
+                            constraint_data,
                             Symbol("activerange_$(H)"),
                             Symbol("P_$(H)"))
     end
@@ -181,13 +184,13 @@ function activepower_constraints!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
+    constraint_data = DeviceRange(length(devices))
+    for (ix, d) in enumerate(devices)
+        constraint_data.values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
+        constraint_data.names[ix] = PSY.get_name(d)
+        _device_services(constraint_data, ix, d, model)
+    end
     if !parameters && !use_forecast_data
-        constraint_data = DeviceRange(length(devices))
-        for (ix, d) in enumerate(devices)
-            constraint_data.values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
-            constraint_data.names[ix] = PSY.get_name(d)
-            #_device_services(constraint_data, ix, d, model)
-        end
         device_semicontinuousrange(psi_container,
                                     constraint_data,
                                     Symbol("activerange_$(H)"),
@@ -200,6 +203,7 @@ function activepower_constraints!(psi_container::PSIContainer,
     if parameters
         device_timeseries_ub_bigM(psi_container,
                             ts_data_active,
+                            constraint_data,
                             Symbol("activerange_$(H)"),
                             Symbol("P_$(H)"),
                             UpdateRef{H}(:rating),
@@ -207,6 +211,7 @@ function activepower_constraints!(psi_container::PSIContainer,
     else
         device_timeseries_ub_bin(psi_container,
                             ts_data_active,
+                            constraint_data,
                             Symbol("activerange_$(H)"),
                             Symbol("P_$(H)"),
                             Symbol("ON_$(H)"))

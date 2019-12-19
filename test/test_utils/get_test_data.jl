@@ -51,10 +51,10 @@ nodes = nodes5()
 c_sys5_hy = System(nodes, vcat(thermal_generators5(nodes), hydro_generators5(nodes)[1]), loads5(nodes), branches5(nodes), nothing, 100.0, nothing, nothing)
 for t in 1:2
    for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy))
-       add_forecast!(c_sys5_hy, l, Deterministic("maxactivepower", load_timeseries_DA[t][ix]))
+       add_forecast!(c_sys5_hy, l, Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]))
    end
    for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hy))
-       add_forecast!(c_sys5_hy, h, Deterministic("rating", hydro_timeseries_DA[t][ix]))
+       add_forecast!(c_sys5_hy, h, Deterministic("get_rating", hydro_timeseries_DA[t][ix]))
    end
 end
 
@@ -62,10 +62,10 @@ nodes = nodes5()
 c_sys5_hyd = System(nodes, vcat(thermal_generators5(nodes), hydro_generators5(nodes)[2]), loads5(nodes), branches5(nodes), nothing, 100.0, nothing, nothing)
 for t in 1:2
    for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hyd))
-       add_forecast!(c_sys5_hyd, l, Deterministic("maxactivepower", load_timeseries_DA[t][ix]))
+       add_forecast!(c_sys5_hyd, l, Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]))
    end
    for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hyd))
-       add_forecast!(c_sys5_hyd, h, Deterministic("rating", hydro_timeseries_DA[t][ix]))
+       add_forecast!(c_sys5_hyd, h, Deterministic("get_rating", hydro_timeseries_DA[t][ix]))
    end
 end
 
@@ -196,6 +196,20 @@ add_service!(c_sys5_re, reserve_re[1], get_components(RenewableDispatch, c_sys5_
 add_service!(c_sys5_re, reserve_re[2], [collect(get_components(RenewableDispatch, c_sys5_re))[end]])
 for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_re))
     add_forecast!(c_sys5_re, serv, Deterministic("get_requirement", Reserve_ts[t]))
+end
+
+reserve_hy = reserve5_hy(get_components(HydroDispatch, c_sys5_hyd))
+add_service!(c_sys5_hyd, reserve_hy[1], get_components(HydroDispatch, c_sys5_hyd))
+add_service!(c_sys5_hyd, reserve_hy[2], [collect(get_components(HydroDispatch, c_sys5_hyd))[end]])
+for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_hyd))
+    add_forecast!(c_sys5_hyd, serv, Deterministic("get_requirement", Reserve_ts[t]))
+end
+
+reserve_il = reserve5_il(get_components(InterruptibleLoad, c_sys5_il))
+add_service!(c_sys5_il, reserve_il[1], get_components(InterruptibleLoad, c_sys5_il))
+add_service!(c_sys5_il, reserve_il[2], [collect(get_components(InterruptibleLoad, c_sys5_il))[end]])
+for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_il))
+    add_forecast!(c_sys5_il, serv, Deterministic("get_requirement", Reserve_ts[t]))
 end
 
 function build_init(gens, data)

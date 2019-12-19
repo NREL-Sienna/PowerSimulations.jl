@@ -298,7 +298,7 @@ function device_timeseries_ub_bin(psi_container::PSIContainer,
             @assert name == data[1] # ensures that ts_data and range_data have same order
             forecast = data[4][t]
             multiplier = data[3]
-            expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+            expression_ub = JuMP.AffExpr(0.0, varcts[name, t] => 1.0)
             for val in range_data.additional_terms_ub[ix]
                 JuMP.add_to_expression!(expression_ub, 
                                         get_variable(psi_container, val)[name, t])
@@ -370,7 +370,7 @@ function device_timeseries_ub_bigM(psi_container::PSIContainer,
             @assert name == data[1] # ensures that ts_data and range_data have same order
             forecast = data[4][t]
             multiplier = data[3]
-            expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+            expression_ub = JuMP.AffExpr(0.0, varcts[name, t] => 1.0)
             for val in range_data.additional_terms_ub[ix]
                 JuMP.add_to_expression!(expression_ub, 
                                         get_variable(psi_container, val)[name, t])

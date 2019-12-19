@@ -106,13 +106,13 @@ function activepower_constraints!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
+    constraint_data = DeviceRange(length(devices))
+    for (ix, d) in enumerate(devices)
+        ub_value = PSY.get_activepower(d)
+        constraint_data.values[ix] = (min=0.0, max=ub_value)
+        constraint_data.names[ix] = PSY.get_name(d)
+    end
     if !parameters && !use_forecast_data
-        constraint_data = DeviceRange(length(devices))
-        for (ix, d) in enumerate(devices)
-            ub_value = PSY.get_activepower(d)
-            constraint_data.values[ix] = (min=0.0, max=ub_value)
-            constraint_data.names[ix] = PSY.get_name(d)
-        end
         device_range(psi_container,
                      constraint_data,
                      Symbol("activerange_$(L)"),
@@ -124,12 +124,14 @@ function activepower_constraints!(psi_container::PSIContainer,
     if parameters
         device_timeseries_param_ub(psi_container,
                                    ts_data_active,
+                                   constraint_data,
                                    Symbol("active_$(L)"),
                                    UpdateRef{L}("get_maxactivepower"),
                                    Symbol("P_$(L)"))
     else
         device_timeseries_ub(psi_container,
                             ts_data_active,
+                            constraint_data,
                             Symbol("active_$(L)"),
                             Symbol("P_$(L)"))
     end
@@ -144,13 +146,13 @@ function activepower_constraints!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
+    constraint_data = DeviceRange(length(devices))
+    for (ix, d) in enumerate(devices)
+        ub_value = PSY.get_activepower(d)
+        constraint_data.values[ix] = (min=0.0, max=ub_value)
+        constraint_data.names[ix] = PSY.get_name(d)
+    end
     if !parameters && !use_forecast_data
-        constraint_data = DeviceRange(length(devices))
-        for (ix, d) in enumerate(devices)
-            ub_value = PSY.get_activepower(d)
-            constraint_data.values[ix] = (min=0.0, max=ub_value)
-            constraint_data.names[ix] = PSY.get_name(d)
-        end
         device_range(psi_container,
                     constraint_data,
                     Symbol("activerange_$(L)"),
@@ -162,6 +164,7 @@ function activepower_constraints!(psi_container::PSIContainer,
     if parameters
         device_timeseries_ub_bigM(psi_container,
                                  ts_data_active,
+                                 constraint_data,
                                  Symbol("active_$(L)"),
                                  Symbol("P_$(L)"),
                                  UpdateRef{L}("get_maxactivepower"),
@@ -169,6 +172,7 @@ function activepower_constraints!(psi_container::PSIContainer,
     else
         device_timeseries_ub_bin(psi_container,
                                 ts_data_active,
+                                constraint_data,
                                 Symbol("active_$(L)"),
                                 Symbol("P_$(L)"),
                                 Symbol("ON_$(L)"))

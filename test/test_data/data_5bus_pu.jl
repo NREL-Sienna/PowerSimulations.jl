@@ -219,14 +219,23 @@ loads5(nodes5) = [ PowerLoad("Bus2", true, nodes5[2], PowerSystems.ConstantPower
 interruptible(nodes5) = [InterruptibleLoad("IloadBus4", true, nodes5[4], PowerSystems.ConstantPower, 0.10, 0.0,  0.10, 0.0, TwoPartCost(150.0, 2400.0))]
 
 reserve5(thermal_generators5) = [
-VariableReserve{ReserveUp}("Reserve1", 0.6, maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5])),
-VariableReserve{ReserveDown}("Reserve2", 0.3, maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5]).*0.5)
-]
+                                VariableReserve{ReserveUp}("Reserve1", 0.6, maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5])),
+                                VariableReserve{ReserveDown}("Reserve2", 0.3, maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5]).*0.5)
+                                ]
 
 reserve5_re(renewable_generators5) = [
-VariableReserve{ReserveUp}("Reserve3", 30, 100),
-VariableReserve{ReserveDown}("Reserve4", 5, 50)
-]
+                                        VariableReserve{ReserveUp}("Reserve3", 30, 100),
+                                        VariableReserve{ReserveDown}("Reserve4", 5, 50)
+                                        ]
+reserve5_hy(hydro_generators5) = [
+                                    VariableReserve{ReserveUp}("Reserve5", 30, 100),
+                                    VariableReserve{ReserveDown}("Reserve6", 5, 50)
+                                    ]
+
+reserve5_il(interruptible_loads) = [
+                                    VariableReserve{ReserveUp}("Reserve7", 30, 100),
+                                    VariableReserve{ReserveDown}("Reserve8", 5, 50)
+                                    ]
 
 Reserve_ts = [TimeArray(DayAhead, rand(24)),
               TimeArray(DayAhead+Day(1), rand(24))]
