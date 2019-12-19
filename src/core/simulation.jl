@@ -1,7 +1,7 @@
 mutable struct SimulationInternal
-    raw_dir::String
-    models_dir::String
-    results_dir::String
+    raw_dir::Union{String, Nothing}
+    models_dir::Union{String, Nothing}
+    results_dir::Union{String, Nothing}
     stages_count::Int64
     run_count::Dict{Int64, Dict{Int64, Int64}}
     date_ref::Dict{Int64, Dates.DateTime}
@@ -11,11 +11,7 @@ mutable struct SimulationInternal
     compiled_status::Bool
 end
 
-function SimulationInternal(raw_dir::AbstractString,
-                             models_dir::AbstractString,
-                             results_dir::AbstractString,
-                             steps::Int64,
-                             stages_keys::Base.KeySet)
+function SimulationInternal(steps::Int64, stages_keys::Base.KeySet)
     count_dict = Dict{Int64, Dict{Int64, Int64}}()
 
     for s in 1:steps
@@ -26,9 +22,9 @@ function SimulationInternal(raw_dir::AbstractString,
     end
 
     return SimulationInternal(
-        raw_dir,
-        models_dir,
-        results_dir,
+        nothing,
+        nothing,
+        nothing,
         length(stages_keys),
         count_dict,
         Dict{Int64, Dates.DateTime}(),
@@ -53,6 +49,7 @@ mutable struct Simulation
                         stages_sequence=nothing,
                         simulation_folder::String,
                         verbose::Bool = false, kwargs...)
+    #step_resolution = IS.time_period_conversion(step_resolution)
     new(
         steps,
         stages,
@@ -77,6 +74,18 @@ get_ini_cond_chronology(s::Simulation, number::Int64) = get(s.sequence.ini_cond_
 get_name(s::Simulation, stage::Stage) = get(s.sequence.order, get_number(stage), nothing)
 
 
+function _check_sequence(sim::Simulation)
+    key_names = keys(sim.sequence.horizons)
+    for key in key_names
+        resolution = convert(Dates.Minute, PSY.get_forecasts_resolution(PSI.get_sys(sim.stages[key])))
+        horizon = sim.sequence.horizons[key]
+        interval = sim.sequence.intervals[key]
+        horizon_time = resolution * horizon
+        if horizon_time < interval
+            throw(IS.ConflictingInputsError("horizon ($horizon_time) is shorter than interval ($interval) for $key"))
+        end
+    end
+end
 
 function add_cache!(ff::F, sim::Simulation, 
                             stage::Stage, 
@@ -124,7 +133,6 @@ function _assign_chronologies(sim::Simulation)
 end
 
 function _prepare_workspace(base_name::AbstractString, folder::AbstractString)
-    !isdir(folder) && throw(ArgumentError("Specified folder is not valid"))
     global_path = joinpath(folder, "$(base_name)")
     !isdir(global_path) && mkpath(global_path)
     _sim_path = replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-")
@@ -143,35 +151,37 @@ function _get_simulation_initial_times!(sim::Simulation)
     k = keys(sim.sequence.order)
     k_size = length(k)
     @assert k_size == maximum(k)
-
     stage_initial_times = Dict{Int64, Vector{Dates.DateTime}}()
-    range = Vector{Dates.DateTime}(undef, 2)
+    time_range = Vector{Dates.DateTime}(undef, 2)
     
     for (stage_number, stage_name) in sim.sequence.order
         stage_system = sim.stages[stage_name].sys
+        interval = PSY.get_forecasts_interval(stage_system)
+        horizon = get_horizon(get_sequence(sim), stage_name)
+        seq_interval = get_interval(get_sequence(sim), stage_name)
         if PSY.are_forecasts_contiguous(stage_system)
-            stage_initial_times[stage_number] = PSY.generate_initial_times(stage_system,
-                                                        get_interval(get_sequence(sim), stage_name),
-                                                        get_horizon(get_sequence(sim), stage_name))
-            isempty(stage_initial_times[stage_number]) ? throw(ArgumentError("Simulation interval 
-                                    and forecast interval definitions are not compatible")) : nothing ; 
+            stage_initial_times[stage_number] = PSY.generate_initial_times(stage_system, seq_interval, horizon)
+            if isempty(stage_initial_times[stage_number])
+                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and 
+                        forecast interval ($interval) definitions are not compatible"))
+            end
         else
             stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage_system)
             interval = PSY.get_forecasts_interval(stage_system)
-            if interval != get_interval(get_sequence(sim), stage_name)
-                throw(ArgumentError("Simulation interval and 
-                        forecast interval definitions are not compatible"))
+            if interval != seq_interval
+                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and 
+                        forecast interval ($interval) definitions are not compatible"))
             end
             for (ix, element) in enumerate(stage_initial_times[stage_number][1:end-1])
                 if !(element + interval == stage_initial_times[stage_number][ix+1])
-                    error("The sequence of forecasts is invalid")
+                    throw(IS.ConflictingInputsError("The sequence of forecasts is invalid"))
                 end
             end
         end
-        stage_number == 1 && (range[1] = stage_initial_times[stage_number][1])
-        (stage_number == k_size && (range[end] = stage_initial_times[stage_number][end]))
+        stage_number == 1 && (time_range[1] = stage_initial_times[stage_number][1])
+        (stage_number == k_size && (time_range[end] = stage_initial_times[stage_number][end]))
     end
-    sim.internal.date_range = Tuple(range)
+    sim.internal.date_range = Tuple(time_range)
 
     if isnothing(get_initial_time(get_sequence(sim)))
         sim.sequence.initial_time = stage_initial_times[1][1]
@@ -190,7 +200,7 @@ function _attach_feed_forward!(sim::Simulation, stage_name::String)
         #Note: key[1] = Stage name, key[2] = template field name, key[3] = device model key
         field_dict = getfield(stage.template, key[2])
         device_model = get(field_dict, key[3], nothing)
-        isnothing(device_model) && throw(ArgumentError("Device model $(key[3]) not found in stage $(stage_name)"))
+        isnothing(device_model) && throw(IS.ConflictingInputsError("Device model $(key[3]) not found in stage $(stage_name)"))
         device_model.feed_forward = ff
         if !isnothing(from_stage_num) && get_executions(get_stage(sim, from_stage_num)) > 1
             @info("Defined Simulation Sequence will use FeedFoward Cache")
@@ -207,8 +217,8 @@ function _check_steps(sim::Simulation, stage_initial_times::Dict{Int64, Vector{D
         forecast_count = length(stage_initial_times[stage_number])
         stage = get(sim.stages, stage_name, nothing)
         if sim.steps*stage.internal.execution_count > forecast_count
-            error("The number of available time series is not enough to perform the
-                   desired amount of simulation steps.")
+            throw(IS.ConflictingInputsError("The number of available time series ($(forecast_count)) is not enough to perform the
+                  desired amount of simulation steps ($(sim.steps*stage.internal.execution_count))."))
         end
     end
     return
@@ -242,11 +252,7 @@ function _build_stages!(sim::Simulation, verbose::Bool = true; kwargs...)
                 stage.sys;
                 kwargs...)
         _populate_caches!(sim, stage_name)
-        stage_path = joinpath(sim.internal.models_dir, "stage_$(stage_name)_model")
-        mkpath(stage_path)
-        _write_psi_container(stage.internal.psi_container,
-                             joinpath(stage_path, "$(stage_name)_optimization_model.json"))
-        system_to_file && PSY.to_json(stage.sys, joinpath(stage_path , "$(stage_name)_sys_data.json"))
+        
         if PSY.are_forecasts_contiguous(stage.sys)
             sim.internal.date_ref[stage_number] = PSY.generate_initial_times(stage.sys,
                                                     get_interval(get_sequence(sim), stage_name),
@@ -259,13 +265,25 @@ function _build_stages!(sim::Simulation, verbose::Bool = true; kwargs...)
     return
 end
 
+function _build_stage_paths!(sim::Simulation, verbose::Bool = true; kwargs...)
+    system_to_file = get(kwargs, :system_to_file, true)
+    for (stage_number, stage_name) in sim.sequence.order
+        stage = get(sim.stages, stage_name, nothing)
+        stage_path = joinpath(sim.internal.models_dir, "stage_$(stage_name)_model")
+        mkpath(stage_path)
+        _write_psi_container(stage.internal.psi_container,
+                            joinpath(stage_path, "$(stage_name)_optimization_model.json"))
+        system_to_file && PSY.to_json(stage.sys, joinpath(stage_path , "$(stage_name)_sys_data.json"))
+    end
+end
+
 function _stage_execution_count(sim::Simulation, stage_name::String; kwargs...)
     execution_count = 0.0
     for (key, chron) in sim.sequence.intra_stage_chronologies
         if key.second == stage_name 
-            to_stage_res =PSY.get_forecasts_resolution(PSI.get_sys(
+            to_stage_res =PSY.get_forecasts_resolution(get_sys(
                                     get_stage(sim, stage_name)))
-            from_stage_res = PSY.get_forecasts_resolution(PSI.get_sys(
+            from_stage_res = PSY.get_forecasts_resolution(get_sys(
                                     get_stage(sim, key.first)))
             to_stage_horizon = get_horizon(get_sequence(sim), stage_name)
             to_stage_interval = get_interval(get_sequence(sim), stage_name)
@@ -280,7 +298,7 @@ function _stage_execution_count(sim::Simulation, stage_name::String; kwargs...)
             end
         end
         if key.first == stage_name 
-            resolution = PSY.get_forecasts_resolution(PSI.get_sys(
+            resolution = PSY.get_forecasts_resolution(get_sys(
                                 get_stage(sim, stage_name)))
             interval = get_interval(get_sequence(sim), stage_name)
             _count = ceil(chron.from_periods*resolution/interval) #TODO : Check/Dispatch on chronology  
@@ -298,16 +316,17 @@ function _stage_execution_count(sim::Simulation, stage_name::String; kwargs...)
 end
 
 function build!(sim::Simulation; verbose::Bool = false, kwargs...)
+    _check_sequence(sim)
     _check_chronologies(sim)
-    raw_dir, models_dir, results_dir = _prepare_workspace(sim.name, sim.simulation_folder)
-    sim.internal = SimulationInternal(raw_dir, models_dir, results_dir, sim.steps, keys(sim.sequence.order))
+    _check_folder(sim.simulation_folder)
+    sim.internal = SimulationInternal(sim.steps, keys(sim.sequence.order))
     stage_initial_times = _get_simulation_initial_times!(sim)
     for (stage_number, stage_name) in sort(sim.sequence.order)
         stage = get(sim.stages, stage_name, nothing)
         stage_interval = sim.sequence.intervals[stage_name]
         executions = _stage_execution_count(sim, stage_name)
         stage.internal = StageInternal(stage_number, executions, 0, nothing)
-        isnothing(stage) && throw(ArgumentError("Stage $(stage_name) not found in the stages definitions"))
+        isnothing(stage) && throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
         PSY.check_forecast_consistency(stage.sys)
         _attach_feed_forward!(sim, stage_name)
     end
@@ -316,4 +335,14 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
     _build_stages!(sim, verbose = verbose; kwargs...)
     sim.internal.compiled_status = true
     return
+end
+
+function _check_folder(folder::String)
+    !isdir(folder) && throw(IS.ConflictingInputsError("Specified folder is not valid"))
+    try
+        mkdir(joinpath(folder, "fake"))
+        rm(joinpath(folder, "fake"))
+    catch e
+        throw(IS.ConflictingInputsError("Specified folder does not have write access [$e]"))
+    end
 end

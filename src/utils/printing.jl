@@ -153,3 +153,19 @@ function Base.show(io::IO, ::MIME"text/plain", results::Results)
         println(io, "<p>time length: $(v)</p>")
     end
  end
+
+function Base.show(io::IO, ::MIME"text/plain", sim_results::SimulationResultsReference)
+    println(io, "Simulation Results Reference\n")
+    println(io, "Results Folder: $(sim_results.results_folder)\n")
+    println(io, "Reference Tables\n")
+    for (k, v) in sim_results.ref
+        println(io, "$(k)\n")
+        for (i, x) in v
+            println(io, "$(i): dataframe size $(size(x))\n")
+        end
+    end
+    for (k, v) in sim_results.chronologies
+        println(io, "$(k)\n")
+        println(io, "time length: $(v)\n")
+    end
+ end
