@@ -93,7 +93,7 @@ end
 function update_stage!(stage::Stage{M}, step::Int64, sim::Simulation) where M<:AbstractOperationsProblem
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && get_number(stage) == 1 && get_execution_count(stage) == 0) && return
-    _update_caches!(stage, get_interval(get_sequence(sim),sim.sequence.order[get_number(stage)]))
+    _update_caches!(stage, get_interval(get_sequence(sim), sim.sequence.order[get_number(stage)]))
 
     for param_reference in keys(stage.internal.psi_container.parameters)
         parameter_update!(param_reference, get_number(stage), sim)

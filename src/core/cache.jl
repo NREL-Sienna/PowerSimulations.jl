@@ -57,8 +57,9 @@ function build_cache!(cache::TimeStatusChange, psi_container::PSIContainer)
     value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, parameter.axes[1])
 
     for name in parameter.axes[1]
-        # status = PJ.value(parameter[name])
-        value_array[name] = Dict(:count => 0.0, :status => 0.0)
+        # TODO: This is a potential issue if you want to use a VariableRef
+        status = PJ.value(parameter[name, end])
+        value_array[name] = Dict(:count => 999.0, :status => status)
     end
 
     cache.value = value_array
@@ -98,7 +99,7 @@ function update_cache!(c::TimeStatusChange, stage::Stage,
     for name in parameter.axes[1], time in parameter.axes[2]
         interval = IS.time_period_conversion(interval)
         if time <= Int(interval/PSY.get_forecasts_resolution(get_sys(stage)))
-            param_status = PJ.value(parameter[name,time])
+            param_status = PJ.value(parameter[name, time])
             if c.value[name][:status] == param_status
                 c.value[name][:count] += 1.0
             elseif c.value[name][:status] != param_status
@@ -121,7 +122,7 @@ function update_cache!(c::C, stage::Stage,
     time_steps = Int(interval/PSY.get_forecasts_resolution(get_sys(stage)))
     for name in axisarray.axes[1], time in axisarray.axes[2]
         if time <= time_steps
-            c.value[name,(execution_count-1)*time_steps+time] = _get_value(axisarray, c.ref, name,time)
+            c.value[name,(execution_count-1)*time_steps+time] = _get_value(axisarray, c.ref, name, time)
         end
     end
     return

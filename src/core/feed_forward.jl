@@ -156,14 +156,14 @@ function range_ff(psi_container::PSIContainer,
 
     for name in axes[1]
         for t in axes[2]
-            param_lb[name] = PJ.add_parameter(psi_container.JuMPmodel,
+            param_lb[name, t] = PJ.add_parameter(psi_container.JuMPmodel,
                                           JuMP.lower_bound(variable[name, t]))
-            param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel,
+            param_ub[name, t] = PJ.add_parameter(psi_container.JuMPmodel,
                                           JuMP.upper_bound(variable[name, t]))
             con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                            variable[name, t] <= param_ub[name,t])
+                                            variable[name, t] <= param_ub[name, t])
             con_lb[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                            variable[name, t] >= param_lb[name,t])
+                                            variable[name, t] >= param_lb[name, t])
         end
     end
 
@@ -229,9 +229,9 @@ function semicontinuousrange_ff(psi_container::PSIContainer,
         for t in axes[2]
             param[name,t] = PJ.add_parameter(psi_container.JuMPmodel, 1.0)
             con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                            variable[name, t] <= ub_value*param[name,t])
+                                            variable[name, t] <= ub_value*param[name, t])
             con_lb[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                        variable[name, t] >= lb_value*param[name,t])
+                                        variable[name, t] >= lb_value*param[name, t])
         end
     end
 
@@ -306,7 +306,7 @@ function feed_forward_update(sync::Chron,
             var_count = Int(ceil((time*to_stage_res + (execution_count)*to_interval) / from_stage_res))
         end
         var_value = get_stage_variable(Chron, from_stage, device_name, param_reference, var_count)
-        PJ.fix(param_array[device_name,time], var_value)
+        PJ.fix(param_array[device_name, time], var_value)
     end
 
     return

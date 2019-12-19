@@ -71,7 +71,7 @@ function get_simulation_time(s::Simulation, stage_number::Int64)
     return s.internal.date_ref[stage_number]
 end
 get_ini_cond_chronology(s::Simulation, number::Int64) = get(s.sequence.ini_cond_chronology, s.sequence.order[number], nothing)
-get_name(s::Simulation ,stage::Stage) = get(s.sequence.order, get_number(stage), nothing)
+get_name(s::Simulation, stage::Stage) = get(s.sequence.order, get_number(stage), nothing)
 
 
 function _check_sequence(sim::Simulation)
@@ -96,13 +96,13 @@ function add_cache!(ff::F, sim::Simulation,
 
     cache = add_ff_cache!(ff, I)
     sequence = get_sequence(sim)
-    stage_name = get_name(sim ,stage) 
-    if haskey(sequence.cache,stage_name)
+    stage_name = get_name(sim, stage) 
+    if haskey(sequence.cache, stage_name)
         cache_vector = sequence.cache[stage_name]
     else
         cache_vector = Vector{AbstractCache}()
     end
-    push!(cache_vector,cache )
+    push!(cache_vector, cache)
     sequence.cache[stage_name] = cache_vector
     return
 end
@@ -115,8 +115,8 @@ function _check_chronologies(sim::Simulation)
 end
 
 function _assign_chronologies(sim::Simulation)
-    function find_val(d,value)
-        for (k,v) in d
+    function find_val(d, value)
+        for (k, v) in d
             v==value && return k
         end
         error("dict does not have value == $value")
@@ -194,8 +194,8 @@ end
 
 function _attach_feed_forward!(sim::Simulation, stage_name::String)
     stage = get(sim.stages, stage_name, nothing)
-    feed_forward = filter(p->(p.first[1] == stage_name), sim.sequence.feed_forward)
-    from_stage_num = get(sim.sequence.order,get_number(stage)-1,nothing)
+    feed_forward = filter(p -> (p.first[1] == stage_name), sim.sequence.feed_forward)
+    from_stage_num = get(sim.sequence.order, get_number(stage)-1, nothing)
     for (key, ff) in feed_forward
         #Note: key[1] = Stage name, key[2] = template field name, key[3] = device model key
         field_dict = getfield(stage.template, key[2])
@@ -227,7 +227,7 @@ end
 function _populate_caches!(sim::Simulation, stage_name::String)
     caches = get(sim.sequence.cache, stage_name, nothing)
     isnothing(caches) && return
-    cache_dict = (get_stage(sim,stage_name)).internal.cache_dict
+    cache_dict = (get_stage(sim, stage_name)).internal.cache_dict
     for c in caches
         cache_dict[CacheKey(c)] = c
         build_cache!(c, sim, stage_name)
@@ -281,10 +281,12 @@ function _stage_execution_count(sim::Simulation, stage_name::String; kwargs...)
     execution_count = 0.0
     for (key, chron) in sim.sequence.intra_stage_chronologies
         if key.second == stage_name 
-            to_stage_res = PSY.get_forecasts_resolution(get_sys(get(sim.stages,key.second,nothing)))
-            from_stage_res = PSY.get_forecasts_resolution(get_sys(get(sim.stages,key.first,nothing)))
-            to_stage_horizon = sim.sequence.horizons[key.second]
-            to_stage_interval = sim.sequence.intervals[key.second]
+            to_stage_res =PSY.get_forecasts_resolution(get_sys(
+                                    get_stage(sim, stage_name)))
+            from_stage_res = PSY.get_forecasts_resolution(get_sys(
+                                    get_stage(sim, key.first)))
+            to_stage_horizon = get_horizon(get_sequence(sim), stage_name)
+            to_stage_interval = get_interval(get_sequence(sim), stage_name)
             _count = (chron.from_periods*from_stage_res - to_stage_horizon*to_stage_res + to_stage_interval) /to_stage_interval
             if execution_count != 0.0
                 if _count != execution_count
@@ -296,9 +298,10 @@ function _stage_execution_count(sim::Simulation, stage_name::String; kwargs...)
             end
         end
         if key.first == stage_name 
-            resolution = convert(Dates.Minute,PSY.get_forecasts_resolution(get_sys(get(sim.stages,key.first,nothing))))
-            interval = convert(Dates.Minute,sim.sequence.intervals[key.first])
-            _count = ceil(chron.from_periods*resolution/interval)
+            resolution = PSY.get_forecasts_resolution(get_sys(
+                                get_stage(sim, stage_name)))
+            interval = get_interval(get_sequence(sim), stage_name)
+            _count = ceil(chron.from_periods*resolution/interval) #TODO : Check/Dispatch on chronology  
             if execution_count != 0.0
                 if _count != execution_count
                     @error("Stage $stage_name has two conflicting execution counts $_count != $execution_count")
