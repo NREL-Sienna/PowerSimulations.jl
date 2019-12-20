@@ -13,3 +13,19 @@ function DeviceRange(count::Int64)
     additional_terms_lb = fill(Vector{Symbol}(), count)
     return DeviceRange(names, limit_values, additional_terms_ub, additional_terms_lb)
 end
+
+struct DeviceTimeSeries
+    names::Vector{String}
+    bus_numbers::Vector{Int64}
+    multipliers::Vector{Float64}
+    ts_vectors::Vector{Vector{Float64}}
+end
+
+function DeviceTimeSeries(count::Int64)
+    names = Vector{String}(undef, count)
+    bus_numbers = Vector{Int64}(undef, count)
+    multipliers = Vector{Float64}(undef, count)
+    ts_vectors = Vector{Vector{Float64}}(undef, count)
+    return DeviceTimeSeries(names, bus_numbers, multipliers, ts_vectors)
+end
+    
