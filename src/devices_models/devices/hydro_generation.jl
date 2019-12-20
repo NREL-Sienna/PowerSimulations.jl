@@ -103,14 +103,18 @@ end
 
 ######################## output constraints without Time Series ############################
 function _get_time_series(psi_container::PSIContainer,
-                          devices::IS.FlattenIteratorWrapper{<:PSY.HydroGen})
+                          devices::IS.FlattenIteratorWrapper{<:PSY.HydroGen},
+                          model::Union{Nothing,DeviceModel} = nothing,
+                          get_constraint_values::Function = x -> nothing)
     initial_time = model_initial_time(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     parameters = model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
     device_total = length(devices)
-    ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, device_total)
-    ts_data_reactive = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, device_total)
+    ts_data_active = DeviceTimeSeries(device_total)
+    ts_data_reactive = DeviceTimeSeries(device_total)
+
+    constraint_data = DeviceRange(length(devices))
 
     for (ix, device) in enumerate(devices)
         bus_number = PSY.get_number(PSY.get_bus(device))
@@ -126,11 +130,23 @@ function _get_time_series(psi_container::PSIContainer,
         else
             ts_vector = ones(time_steps[end])
         end
-        ts_data_active[ix] = (name, bus_number, active_power, ts_vector)
-        ts_data_reactive[ix] = ts_data_active[ix] # (name, bus_number, active_power * pf, ts_vector)
+        ts_data_active.names[ix] = name
+        ts_data_active.bus_numbers[ix] = bus_number
+        ts_data_active.multipliers[ix] = active_power
+        ts_data_active.ts_vectors[ix] = ts_vector
+
+        ts_data_reactive.names[ix] = name
+        ts_data_reactive.bus_numbers[ix] = bus_number
+        ts_data_reactive.multipliers[ix] = active_power
+        ts_data_reactive.ts_vectors[ix] = ts_vector
+
+        constraint_data.values[ix] = get_constraint_values(device)
+        constraint_data.names[ix] = name
+        _device_services(constraint_data, ix, device, model)
+
     end
 
-    return ts_data_active, ts_data_reactive
+    return ts_data_active, ts_data_reactive, constraint_data
 end
 
 
@@ -142,13 +158,9 @@ function activepower_constraints!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    constraint_data = DeviceRange(length(devices))
-    for (ix, d) in enumerate(devices)
-        ub_value = PSY.get_activepower(d)
-        constraint_data.values[ix] = (min=0.0, max=ub_value)
-        constraint_data.names[ix] = PSY.get_name(d)
-        _device_services(constraint_data, ix, d, model)
-    end
+    ts_data_active, _, constraint_data = _get_time_series(psi_container, devices, model,
+                                                          x -> (min=0.0, max=PSY.get_activepower(x)))
+
     if !parameters && !use_forecast_data
         device_range(psi_container,
                      constraint_data,
@@ -157,7 +169,6 @@ function activepower_constraints!(psi_container::PSIContainer,
         return
     end
 
-    ts_data_active, _ = _get_time_series(psi_container, devices)
     if parameters
         device_timeseries_param_ub(psi_container,
                             ts_data_active,
@@ -184,12 +195,8 @@ function activepower_constraints!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    constraint_data = DeviceRange(length(devices))
-    for (ix, d) in enumerate(devices)
-        constraint_data.values[ix] = PSY.get_activepowerlimits(PSY.get_tech(d))
-        constraint_data.names[ix] = PSY.get_name(d)
-        _device_services(constraint_data, ix, d, model)
-    end
+    ts_data_active, _, constraint_data = _get_time_series(psi_container, devices, model,
+                                                          x -> (min=0.0, max=PSY.get_activepowerlimits(PSY.get_tech(x))))
     if !parameters && !use_forecast_data
         device_semicontinuousrange(psi_container,
                                     constraint_data,
@@ -199,7 +206,6 @@ function activepower_constraints!(psi_container::PSIContainer,
         return
     end
 
-    ts_data_active, _ = _get_time_series(psi_container, devices)
     if parameters
         device_timeseries_ub_bigM(psi_container,
                             ts_data_active,
@@ -247,7 +253,7 @@ function nodal_expression!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{H},
                            system_formulation::Type{<:PM.AbstractPowerModel}) where H<:PSY.HydroGen
     parameters = model_has_parameters(psi_container)
-    ts_data_active, ts_data_reactive = _get_time_series(psi_container, devices)
+    ts_data_active, ts_data_reactive, _ = _get_time_series(psi_container, devices)
 
     if parameters
         include_parameters(psi_container,
@@ -283,7 +289,7 @@ function nodal_expression!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{H},
                            system_formulation::Type{<:PM.AbstractActivePowerModel}) where H<:PSY.HydroGen
     parameters = model_has_parameters(psi_container)
-    ts_data_active, _  = _get_time_series(psi_container, devices)
+    ts_data_active, _, _  = _get_time_series(psi_container, devices)
 
     if parameters
         include_parameters(psi_container,
