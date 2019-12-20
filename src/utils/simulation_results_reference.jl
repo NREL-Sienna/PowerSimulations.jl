@@ -8,9 +8,8 @@ struct SimulationResultsReference
         chronologies = Dict()
         for (stage_number, stage_name) in sim.sequence.order
             stage = get_stage(sim, stage_name)
-            _interval = sim.sequence.intervals[stage_name]
-            interval = convert(Dates.Minute, _interval)
-            resolution = convert(Dates.Minute, PSY.get_forecasts_resolution(get_sys(stage)))
+            interval = sim.sequence.intervals[stage_name]
+            resolution = PSY.get_forecasts_resolution(get_sys(stage))
             chronologies["stage-$stage_name"] = convert(Int64, (interval/resolution))
         end
         new(ref, sim.internal.results_dir, chronologies)

@@ -50,7 +50,6 @@ function test_chronology(file_path::String)
         P_keys = [PowerSimulations.UpdateRef{PowerLoad}("get_maxactivepower")]
         vars_names = [:P_ThermalStandard]
         for (ik, key) in enumerate(P_keys)
-            @show (ik, key)
             variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1]
             raw_result = Feather.read(variable_ref)
             ic = collect(values(value.(sim.stages["ED"].internal.psi_container.parameters[key])).data)

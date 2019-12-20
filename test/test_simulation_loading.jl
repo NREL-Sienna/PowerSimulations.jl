@@ -97,7 +97,6 @@ function test_load_simulation()
                  verbose = true)
         build!(sim)
         sim_results = execute!(sim)
-        @show sim_results.chronologies
         stages = ["UC", "ED"]
         for stage in stages
             results = load_simulation_results(sim_results, stage)
