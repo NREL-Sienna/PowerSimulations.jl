@@ -291,21 +291,31 @@ function feed_forward_update(sync::Chron,
                             param_reference::UpdateRef{JuMP.VariableRef},
                             param_array::JuMPParamArray,
                             to_stage::Stage,
+                            from_stage::Stage) where Chron <: AbstractChronology
+
+    !(get_execution_count(from_stage) % sync.to_executions == 0) && return
+
+    var_count = get_execution_count(from_stage) ÷ sync.to_executions
+
+    for device_name in axes(param_array)[1]
+        var_value = get_stage_variable(Chron, from_stage, device_name, param_reference, var_count)
+        PJ.fix(param_array[device_name], var_value)
+    end
+
+    return
+end
+
+function feed_forward_update(sync::SynchronizeTimeBlocks,
+                            variable_reference::UpdateRef{JuMP.VariableRef},
+                            param_array::JuMPParamArray,
+                            to_stage::Stage,
                             from_stage::Stage,
-                            to_interval::T) where {Chron <: AbstractChronology,
-                                                   T<:Dates.TimePeriod}
+                            variable_map::Dict{Tuple{Int64,Int64},Int64}) where {T<:Dates.TimePeriod}
 
     execution_count = get_execution_count(to_stage) 
-    from_stage_res = PSY.get_forecasts_resolution(PSI.get_sys(from_stage))
-    to_stage_res = PSY.get_forecasts_resolution(PSI.get_sys(to_stage))
-    for device_name in axes(param_array)[1] , time in axes(param_array)[2]
-        remainder = (time*to_stage_res + (execution_count)*to_interval) % from_stage_res
-        if remainder == Dates.Millisecond(0)
-            var_count = Int((time*to_stage_res + (execution_count)*to_interval) / from_stage_res )
-        else
-            var_count = Int(ceil((time*to_stage_res + (execution_count)*to_interval) / from_stage_res))
-        end
-        var_value = get_stage_variable(Chron, from_stage, device_name, param_reference, var_count)
+    for device_name in axes(param_array, 1) , time in axes(param_array, 2)
+        var_count = variable_map[(execution_count+1,time)]
+        var_value = get_stage_variable(typeof(sync), from_stage, device_name, variable_reference, var_count)
         PJ.fix(param_array[device_name, time], var_value)
     end
 

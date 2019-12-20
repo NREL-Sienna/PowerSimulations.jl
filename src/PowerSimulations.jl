@@ -57,6 +57,7 @@ export ThermalDispatchNoMin
 # feed_forward sequences
 export RecedingHorizon
 export Synchronize
+export SynchronizeTimeBlocks
 export Consecutive
 
 # feed_forward models
