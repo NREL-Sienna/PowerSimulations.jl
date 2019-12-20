@@ -8,10 +8,12 @@ mutable struct StageInternal
     # Can probably be eliminated and use getter functions from
     # Simulation object. Need to determine if its always available in the stage update steps.
     chronolgy_dict::Dict{Int64, <:AbstractChronology}
+    variable_map::Union{Dict{Tuple{Int64,Int64},Int64}}
     function StageInternal(number, executions, execution_count, psi_container)
         new(number, executions, execution_count, psi_container,
         Dict{CacheKey, AbstractCache}(),
-        Dict{Int64, AbstractChronology}())
+        Dict{Int64, AbstractChronology}(),
+        Dict{Tuple{Int64,Int64},Int64}())
     end
 end
 
@@ -48,6 +50,7 @@ get_template(s::Stage) = s.template
 get_number(s::Stage) = s.internal.number
 get_psi_container(s::Stage) = s.internal.psi_container
 get_cache_dict(s::Stage, key::UpdateRef) = s.internal.cache_dict
+get_variable_map(s::Stage) = s.internal.variable_map
 
 # This makes the choice in which variable to get from the results.
 function get_stage_variable(::Type{RecedingHorizon},
@@ -70,7 +73,17 @@ function get_stage_variable(::Type{Consecutive},
     return JuMP.value(variable[device_name, step])
 end
 
-function get_stage_variable(chron::Type{Synchronize},
+function get_stage_variable(::Type{Synchronize},
+                            from_stage::Stage,
+                            device_name::String,
+                            var_ref::UpdateRef,
+                            to_stage_execution_count::Int64)
+    variable = get_value(from_stage.internal.psi_container, var_ref)
+    step = axes(variable)[2][to_stage_execution_count + 1]
+    return JuMP.value(variable[device_name, step])
+end
+
+function get_stage_variable(chron::Type{SynchronizeTimeBlocks},
                             from_stage::Stage,
                             device_name::String,
                             var_ref::UpdateRef,
@@ -85,7 +98,6 @@ function get_stage_variable(chron::Type{Synchronize},
         return JuMP.value(variable[device_name, step])
     end
 end
-
 #Defined here because it requires Stage to defined
 
 initial_condition_update!(initial_condition_key::ICKey,

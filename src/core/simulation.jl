@@ -75,14 +75,15 @@ get_name(s::Simulation, stage::Stage) = get(s.sequence.order, get_number(stage),
 
 
 function _check_sequence(sim::Simulation)
-    key_names = keys(sim.sequence.horizons)
-    for key in key_names
-        resolution = convert(Dates.Minute, PSY.get_forecasts_resolution(PSI.get_sys(sim.stages[key])))
-        horizon = sim.sequence.horizons[key]
-        interval = sim.sequence.intervals[key]
+    for (stage_number,stage_name) in sim.sequence.order
+        stage = get_stage(sim, stage_name)
+        resolution = PSY.get_forecasts_resolution(get_sys(stage))
+        horizon = get_horizon(get_sequence(sim), stage_name)
+        interval = get_interval(get_sequence(sim), stage_name)
         horizon_time = resolution * horizon
         if horizon_time < interval
-            throw(IS.ConflictingInputsError("horizon ($horizon_time) is shorter than interval ($interval) for $key"))
+            throw(IS.ConflictingInputsError("horizon ($horizon_time) is 
+                                shorter than interval ($interval) for $stage_name"))
         end
     end
 end
@@ -106,6 +107,29 @@ function add_cache!(ff::F, sim::Simulation,
     sequence.cache[stage_name] = cache_vector
     return
 end
+
+function _build_chronology_map(sim::Simulation)
+    for (stage_number,stage_name) in sim.sequence.order
+        stage_number == 1 && continue
+        stage = get_stage(sim, stage_name)
+        previous_stage = get_stage(sim, stage_number - 1)
+        executions = get_executions(stage)
+        horizon = get_horizon(get_sequence(sim), stage_name)
+        map = get_variable_map(stage)
+        interval = get_interval(get_sequence(sim), stage_name)
+        resolution = PSY.get_forecasts_resolution(get_sys(stage))
+        prev_resolution = PSY.get_forecasts_resolution(get_sys(previous_stage))
+        sub_periods = prev_resolution/resolution
+        for e in 1:executions
+            for t in 1:horizon
+                elapsed_time = ((interval / resolution) * (e-1)) + t - 1
+                map[(e, t)] = ((sub_periods + elapsed_time) - (elapsed_time % sub_periods)) / sub_periods
+            end
+        end
+    end
+    return
+end
+
 
 function _check_chronologies(sim::Simulation)
     for (key, chron) in sim.sequence.intra_stage_chronologies
@@ -287,15 +311,15 @@ function _stage_execution_count(sim::Simulation, stage_name::String; kwargs...)
                                     get_stage(sim, key.first)))
             to_stage_horizon = get_horizon(get_sequence(sim), stage_name)
             to_stage_interval = get_interval(get_sequence(sim), stage_name)
-            _count = (chron.from_periods*from_stage_res - to_stage_horizon*to_stage_res + to_stage_interval) /to_stage_interval
-            @assert typeof(_count) == Int64
+            _count = (chron.from_periods*from_stage_res 
+                    - to_stage_horizon*to_stage_res + to_stage_interval) /to_stage_interval
             if execution_count != 0.0
                 if _count != execution_count
                     throw(IS.ConflictingInputsErrors("Stage $stage_name has two conflicting 
                                                     execution counts $_count != $execution_count"))
                 end
             else
-                execution_count = _count
+                execution_count = Int64(_count)
                 @info("Stage $stage_name will have $execution_count execution in each step, 
                         as Synchronize.from_periods is set to $(chron.from_periods)")
             end
@@ -305,14 +329,13 @@ function _stage_execution_count(sim::Simulation, stage_name::String; kwargs...)
                                 get_stage(sim, stage_name)))
             interval = get_interval(get_sequence(sim), stage_name)
             _count = chron.from_periods*resolution/interval #TODO : Check/Dispatch on chronology  
-            @assert typeof(_count) == Int64
             if execution_count != 0.0
                 if _count != execution_count
                     throw(IS.ConflictingInputsErrors("Stage $stage_name has two 
                                                     conflicting execution counts $_count != $execution_count"))
                 end
             else
-                execution_count = _count
+                execution_count =Int64(_count)
                 @info("Stage $stage_name will have $execution_count execution in each step, 
                         Synchronize($key).from_periods is set to $(chron.from_periods)")
             end
@@ -337,6 +360,7 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
         _attach_feed_forward!(sim, stage_name)
     end
     _assign_chronologies(sim)
+    _build_chronology_map(sim)
     _check_steps(sim, stage_initial_times)
     _build_stages!(sim, verbose = verbose; kwargs...)
     sim.internal.compiled_status = true

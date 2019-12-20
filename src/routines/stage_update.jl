@@ -30,13 +30,14 @@ function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
                            sim::Simulation)
     current_stage = get_stage(sim, stage_number)
     param_array = get_parameters(current_stage.internal.psi_container, param_reference)
-    chronolgy_dict = get_stage(sim, stage_number).internal.chronolgy_dict
+    chronolgy_dict = current_stage.internal.chronolgy_dict
     current_stage_interval = get_interval(get_sequence(sim), sim.sequence.order[stage_number])
-    
+    map = current_stage.internal.variable_map
+
     for (k, ref) in chronolgy_dict
         feed_forward_update(ref, param_reference, param_array, 
-                            current_stage, get_stage(sim, k), 
-                            current_stage_interval)
+                            current_stage, get_stage(sim, k),
+                            map)
     end
 
     return
