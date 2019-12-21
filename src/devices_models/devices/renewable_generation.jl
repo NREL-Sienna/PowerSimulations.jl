@@ -33,16 +33,17 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                     model::DeviceModel{R, RenewableFullDispatch},
                                     system_formulation::Type{<:PM.AbstractPowerModel},
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
-    constraint_data = DeviceRange(length(devices))
+    constraint_data = Dict{String,DeviceRange}()
     for (ix, d) in enumerate(devices)
         tech = PSY.get_tech(d)
-        constraint_data.names[ix] = PSY.get_name(d)
+        name = PSY.get_name(d)
         if isnothing(PSY.get_reactivepowerlimits(tech))
-            constraint_data.values[ix] = (min = 0.0, max = 0.0)
-            @warn("Reactive Power Limits of $(constraint_data.names[ix]) are nothing. Q_$(constraint_data.names[ix]) is set to 0.0")
+            lims = (min = 0.0, max = 0.0)
+            @warn("Reactive Power Limits of $(lims) are nothing. Q_$(lims) is set to 0.0")
         else
-            constraint_data.values[ix] = PSY.get_reactivepowerlimits(tech)
+            lims = PSY.get_reactivepowerlimits(tech)
         end
+        constraint_data[name] = DeviceRange(lims, Vector{Symbol}(), Vector{Symbol}())
     end
     device_range(psi_container,
                 constraint_data,
@@ -81,11 +82,10 @@ function _get_time_series(psi_container::PSIContainer,
     use_forecast_data = model_uses_forecasts(psi_container)
     parameters = model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
-    device_total = length(devices)
-    ts_data_active = DeviceTimeSeries(device_total) #Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, device_total)
-    ts_data_reactive = DeviceTimeSeries(device_total) #Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, device_total)
 
-    constraint_data = DeviceRange(length(devices))
+    constraint_data = Dict{String, DeviceRange}()
+    active_timeseries = Dict{String, DeviceTimeSeries}()
+    reactive_timeseries = Dict{String, DeviceTimeSeries}()
 
     for (ix, device) in enumerate(devices)
         bus_number = PSY.get_number(PSY.get_bus(device))
@@ -103,22 +103,14 @@ function _get_time_series(psi_container::PSIContainer,
         else
             ts_vector = ones(time_steps[end])
         end
-        ts_data_active.names[ix] = name
-        ts_data_active.bus_numbers[ix] = bus_number
-        ts_data_active.multipliers[ix] = active_power
-        ts_data_active.ts_vectors[ix] = ts_vector
-
-        ts_data_reactive.names[ix] = name
-        ts_data_reactive.bus_numbers[ix] = bus_number
-        ts_data_reactive.multipliers[ix] = active_power * pf
-        ts_data_reactive.ts_vectors[ix] = ts_vector
-
-        constraint_data.values[ix] = get_constraint_values(device)
-        constraint_data.names[ix] = name
-        _device_services(constraint_data, ix, device, model)
-
+        active_timeseries[name] = DeviceTimeSeries(bus_number, active_power, ts_vector)
+        reactive_timeseries[name] = DeviceTimeSeries(bus_number, active_power * pf, ts_vector)
+        constraint_data[name] = DeviceRange(get_constraint_values(device), 
+                                      Vector{Symbol}(), 
+                                      Vector{Symbol}())
+        _device_services(constraint_data[name], device, model)
     end
-    return ts_data_active, ts_data_reactive, constraint_data
+    return active_timeseries, reactive_timeseries, constraint_data
 end
 
 function activepower_constraints!(psi_container::PSIContainer,
@@ -129,9 +121,10 @@ function activepower_constraints!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    ts_data_active, _, constraint_data = _get_time_series(psi_container, 
-                                                          devices, model, 
-                                                          x -> (min = 0.0, max = PSY.get_activepower(x)))
+    ts_data_active, _, constraint_data = _get_time_series(psi_container,
+                                            devices,
+                                            model,
+                                            x -> (min = 0.0, max = PSY.get_activepower(x)))
 
     if !parameters && !use_forecast_data
         device_range(psi_container,
