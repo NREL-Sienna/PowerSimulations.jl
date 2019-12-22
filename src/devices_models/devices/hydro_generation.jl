@@ -110,13 +110,12 @@ function _get_time_series(psi_container::PSIContainer,
     use_forecast_data = model_uses_forecasts(psi_container)
     parameters = model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
-    device_total = length(devices)
-    ts_data_active = DeviceTimeSeries(device_total)
-    ts_data_reactive = DeviceTimeSeries(device_total)
+    
+    constraint_data = Dict{String, DeviceRange}()
+    active_timeseries = Dict{String, DeviceTimeSeries}()
+    reactive_timeseries = Dict{String, DeviceTimeSeries}()
 
-    constraint_data = DeviceRange(length(devices))
-
-    for (ix, device) in enumerate(devices)
+    for device in devices
         bus_number = PSY.get_number(PSY.get_bus(device))
         name = PSY.get_name(device)
         tech = PSY.get_tech(device)
@@ -130,23 +129,14 @@ function _get_time_series(psi_container::PSIContainer,
         else
             ts_vector = ones(time_steps[end])
         end
-        ts_data_active.names[ix] = name
-        ts_data_active.bus_numbers[ix] = bus_number
-        ts_data_active.multipliers[ix] = active_power
-        ts_data_active.ts_vectors[ix] = ts_vector
-
-        ts_data_reactive.names[ix] = name
-        ts_data_reactive.bus_numbers[ix] = bus_number
-        ts_data_reactive.multipliers[ix] = active_power
-        ts_data_reactive.ts_vectors[ix] = ts_vector
-
-        constraint_data.values[ix] = get_constraint_values(device)
-        constraint_data.names[ix] = name
-        _device_services(constraint_data, ix, device, model)
-
+        active_timeseries[name] = DeviceTimeSeries(bus_number, active_power, ts_vector)
+        reactive_timeseries[name] = DeviceTimeSeries(bus_number, active_power, ts_vector)
+        constraint_data[name] = DeviceRange(get_constraint_values(device), 
+                                            Vector{Symbol}(), 
+                                            Vector{Symbol}())
+        _device_services(constraint_data[name], device, model)
     end
-
-    return ts_data_active, ts_data_reactive, constraint_data
+    return active_timeseries, reactive_timeseries, constraint_data
 end
 
 

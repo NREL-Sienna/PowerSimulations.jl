@@ -106,8 +106,8 @@ function _get_time_series(psi_container::PSIContainer,
         active_timeseries[name] = DeviceTimeSeries(bus_number, active_power, ts_vector)
         reactive_timeseries[name] = DeviceTimeSeries(bus_number, active_power * pf, ts_vector)
         constraint_data[name] = DeviceRange(get_constraint_values(device), 
-                                      Vector{Symbol}(), 
-                                      Vector{Symbol}())
+                                            Vector{Symbol}(), 
+                                            Vector{Symbol}())
         _device_services(constraint_data[name], device, model)
     end
     return active_timeseries, reactive_timeseries, constraint_data
