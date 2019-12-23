@@ -361,7 +361,6 @@ function device_timeseries_ub_bigM(psi_container::PSIContainer,
     param =_add_param_container!(psi_container, param_reference, names, time_steps)
 
     for (name, data) in range_data
-        @assert name = names[ix]
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, varcts[name, t] => 1.0)
             for val in data.additional_terms_ub

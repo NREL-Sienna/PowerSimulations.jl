@@ -76,8 +76,8 @@ end
 ######################## output constraints without Time Series ############################
 function _get_time_series(psi_container::PSIContainer,
                           devices::IS.FlattenIteratorWrapper{<:PSY.RenewableGen},
-                          model::Union{Nothing,DeviceModel} = nothing,
-                          get_constraint_values::Function = x -> nothing)
+                          model::Union{Nothing,DeviceModel} = DeviceModel(PSY.HydroFix, PSI.HydroFixed),
+                          get_constraint_values::Function = x -> (min = 0.0, max = 0.0))
     initial_time = model_initial_time(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     parameters = model_has_parameters(psi_container)
@@ -168,17 +168,17 @@ function nodal_expression!(psi_container::PSIContainer,
         return
     end
     for t in model_time_steps(psi_container)
-        for device_value in ts_data_active
+        for (name, device_value) in ts_data_active
             _add_to_expression!(psi_container.expressions[:nodal_balance_active],
-                            device_value[2],
+                            device_value.bus_number,
                             t,
-                            device_value[3]*device_value[4][t])
+                            device_value.multiplier * device_value.timeseries[t])
         end
-        for device_value in ts_data_reactive
+        for (name, device_value) in ts_data_reactive
             _add_to_expression!(psi_container.expressions[:nodal_balance_reactive],
-                            device_value[2],
+                            device_value.bus_number,
                             t,
-                            device_value[3]*device_value[4][t])
+                            device_value.multiplier * device_value.timeseries[t])
         end
     end
     return
@@ -197,11 +197,11 @@ function nodal_expression!(psi_container::PSIContainer,
         return
     end
     for t in model_time_steps(psi_container)
-        for device_value in ts_data_active
+        for (name, device_value) in ts_data_active
             _add_to_expression!(psi_container.expressions[:nodal_balance_active],
-                            device_value[2],
+                            device_value.bus_number,
                             t,
-                            device_value[3]*device_value[4][t])
+                            device_value.multiplier * device_value.timeseries[t])
         end
     end
     return

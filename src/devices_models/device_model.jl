@@ -49,4 +49,4 @@ mutable struct DeviceModel{D<:PSY.Device,
 end
 
 get_feed_forward(m::DeviceModel) = m.feed_forward
-get_services(m::DeviceModel) = m.services
+get_services(m::Union{DeviceModel,Nothing}) = isnothing(m) ? nothing : m.services

@@ -104,8 +104,8 @@ end
 ######################## output constraints without Time Series ############################
 function _get_time_series(psi_container::PSIContainer,
                           devices::IS.FlattenIteratorWrapper{<:PSY.HydroGen},
-                          model::Union{Nothing,DeviceModel} = nothing,
-                          get_constraint_values::Function = x -> nothing)
+                          model::DeviceModel = DeviceModel(PSY.HydroFix, HydroFixed),
+                          get_constraint_values::Function = x -> (min = 0.0, max = 0.0))
     initial_time = model_initial_time(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     parameters = model_has_parameters(psi_container)
@@ -186,7 +186,7 @@ function activepower_constraints!(psi_container::PSIContainer,
     use_forecast_data = model_uses_forecasts(psi_container)
 
     ts_data_active, _, constraint_data = _get_time_series(psi_container, devices, model,
-                                                          x -> (min=0.0, max=PSY.get_activepowerlimits(PSY.get_tech(x))))
+                                                          x -> PSY.get_activepowerlimits(PSY.get_tech(x)))
     if !parameters && !use_forecast_data
         device_semicontinuousrange(psi_container,
                                     constraint_data,
@@ -290,11 +290,11 @@ function nodal_expression!(psi_container::PSIContainer,
     end
 
     for t in model_time_steps(psi_container)
-        for device_value in ts_data_active
+        for (name, device_value) in ts_data_active
             _add_to_expression!(psi_container.expressions[:nodal_balance_active],
-                            device_value[2],
+                            device_value.bus_number,
                             t,
-                            device_value[3]*device_value[4][t])
+                            device_value.multiplier * device_value.timeseries[t])
         end
     end
 

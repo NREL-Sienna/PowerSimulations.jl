@@ -61,13 +61,16 @@ function active_power_constraints!(psi_container::PSIContainer,
                                    ::Type{S},
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                      S<:PM.AbstractPowerModel}
-    constraint_data_in = DeviceRange(length(devices))
-    constraint_data_out = DeviceRange(length(devices))
-    for (ix, d) in enumerate(devices)
-        constraint_data_in.values[ix] = PSY.get_inputactivepowerlimits(d)
-        constraint_data_out.values[ix] = PSY.get_outputactivepowerlimits(d)
-        constraint_data_in.names[ix] = constraint_data_out.names[ix] = PSY.get_name(d)
-        #_device_services(constraint_data, ix, d, model)
+    constraint_data_in = Dict{String, DeviceRange}()
+    constraint_data_out = Dict{String, DeviceRange}()
+    for d in devices
+        name = PSY.get_name(d)
+        in_lims = PSY.get_inputactivepowerlimits(d)
+        out_lims = PSY.get_outputactivepowerlimits(d)
+        constraint_data_in[name] = DeviceRange(in_lims, Vector{Symbol}(), Vector{Symbol}())
+        constraint_data_out[name] = DeviceRange(out_lims, Vector{Symbol}(), Vector{Symbol}())
+        #_device_services(constraint_data_in, d, model)
+        #_device_services(constraint_data_out, d, model)
     end
 
     device_range(psi_container,
@@ -88,13 +91,16 @@ function active_power_constraints!(psi_container::PSIContainer,
                                    ::Type{S},
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                      S<:PM.AbstractPowerModel}
-    constraint_data_in = DeviceRange(length(devices))
-    constraint_data_out = DeviceRange(length(devices))
-    for (ix, d) in enumerate(devices)
-        constraint_data_in.values[ix] = PSY.get_inputactivepowerlimits(d)
-        constraint_data_out.values[ix] = PSY.get_outputactivepowerlimits(d)
-        constraint_data_in.names[ix] = constraint_data_out.names[ix] = PSY.get_name(d)
-        #_device_services(constraint_data, ix, d, model)
+    constraint_data_in = Dict{String, DeviceRange}()
+    constraint_data_out = Dict{String, DeviceRange}()
+    for d in devices
+        name = PSY.get_name(d)
+        in_lims = PSY.get_inputactivepowerlimits(d)
+        out_lims =  PSY.get_outputactivepowerlimits(d)
+        constraint_data_in[name] = DeviceRange(in_lims, Vector{Symbol}(), Vector{Symbol}())
+        constraint_data_out[name] = DeviceRange(out_lims, Vector{Symbol}(), Vector{Symbol}())
+        #_device_services(constraint_data_in, d, model)
+        #_device_services(constraint_data_out, d, model)
     end
     reserve_device_semicontinuousrange(psi_container,
                                        constraint_data_in,
@@ -121,16 +127,17 @@ function reactive_power_constraints!(psi_container::PSIContainer,
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                      D<:AbstractStorageFormulation,
                                                      S<:PM.AbstractPowerModel}
-    constraint_data = DeviceRange(length(devices))
-    for (ix, d) in enumerate(devices)
-        constraint_data.values[ix] = PSY.get_reactivepowerlimits(d)
-        constraint_data.names[ix] = PSY.get_name(d)
-        #_device_services(constraint_data, ix, d, model)
+    constraint_data = Dict{String, DeviceRange}()
+    for d in devices
+        name = PSY.get_name(d)
+        lims = PSY.get_reactivepowerlimits(d)
+        constraint_data[name] = DeviceRange(lims, Vector{Symbol}(), Vector{Symbol}())
+        #_device_services(constraint_data, d, model)
         # Uncomment when we implement reactive power services
     end
 
     device_range(psi_container,
-                constraint_data,
+                 constraint_data,
                  Symbol("reactiverange_$(St)"),
                  Symbol("Q_$(St)"))
     return
@@ -154,11 +161,12 @@ function energy_capacity_constraints!(psi_container::PSIContainer,
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                                         D<:AbstractStorageFormulation,
                                                                         S<:PM.AbstractPowerModel}
-    constraint_data = DeviceRange(length(devices))
-    for (ix, d) in enumerate(devices)
-        constraint_data.values[ix] = PSY.get_capacity(d)
-        constraint_data.names[ix] = PSY.get_name(d)
-        #_device_services(constraint_data, ix, d, model)
+    constraint_data = Dict{String, DeviceRange}()
+    for d in devices
+        name = PSY.get_name(d)
+        lims= PSY.get_capacity(d)
+        constraint_data[name] = DeviceRange(lims, Vector{Symbol}(), Vector{Symbol}())
+        #_device_services(constraint_data, d, model)
         # Uncomment when we implement reactive power services
     end
 
