@@ -37,6 +37,7 @@ end
 
 mutable struct Simulation
     steps::Int64
+    step_resolution::Dates.TimePeriod
     stages::Dict{String, Stage{<:AbstractOperationsProblem}}
     sequence::Union{Nothing, SimulationSequence}
     simulation_folder::String
@@ -90,9 +91,10 @@ function _check_sequence(sim::Simulation)
     end
 end
 
-function add_cache!(feedforward::AbstractAffectFeedForward, sim::Simulation, 
+function add_cache!(feedforward::F, sim::Simulation, 
                             stage::Stage, 
-                            device_model::DeviceModel{T, AbstractDeviceFormulation}) where {
+                            device_model::DeviceModel{T, <:AbstractDeviceFormulation}) where {
+                                F<:AbstractAffectFeedForward,
                                 T<:PSY.StaticInjection}
 
     cache = add_feedforward_cache!(feedforward, T)
