@@ -37,21 +37,21 @@ get_binary_from_stage(p::SemiContinuousFF) = p.binary_from_stage
 get_affected_variables(p::AbstractAffectFeedForward) = p.affected_variables
 
 ####################### Feed Forward Cache Creation ###############################################
-function add_ff_cache!(ff_model::RangeFF, device::Type{I}) where {I<:PSY.StaticInjection}
-    prefix = get_variable_from_stage(ff_model)
+function add_feedforward_cache!(feedforward_model::RangeFF, device::Type{I}) where {I<:PSY.StaticInjection}
+    prefix = get_variable_from_stage(feedforward_model)
     cache_ub = DeviceLevel(UpdateRef{JuMP.VariableRef}(Symbol(prefix[1], "_$(I)")))
     cache_lb = DeviceLevel(UpdateRef{JuMP.VariableRef}(Symbol(prefix[2], "_$(I)")))
     return (cache_ub, cache_lb)
 end
 
-function add_ff_cache!(ff_model::UpperBoundFF, device::Type{I}) where {I<:PSY.StaticInjection}
-    prefix = get_bounds_from_stage(ff_model)
+function add_feedforward_cache!(feedforward_model::UpperBoundFF, device::Type{I}) where {I<:PSY.StaticInjection}
+    prefix = get_bounds_from_stage(feedforward_model)
     cache = DeviceLevel(UpdateRef{JuMP.VariableRef}(Symbol(prefix, "_$(I)")))
     return cache
 end
 
-function add_ff_cache!(ff_model::SemiContinuousFF, device::Type{I}) where {I<:PSY.StaticInjection}
-    prefix = get_binary_from_stage(ff_model)
+function add_feedforward_cache!(feedforward_model::SemiContinuousFF, device::Type{I}) where {I<:PSY.StaticInjection}
+    prefix = get_binary_from_stage(feedforward_model)
     cache = DeviceCommitment(UpdateRef{JuMP.VariableRef}(Symbol(prefix, "_$(I)")))
     return cache
 end

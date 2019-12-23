@@ -83,7 +83,7 @@ function get_stage_variable(::Type{Synchronize},
     return JuMP.value(variable[device_name, step])
 end
 
-function get_stage_variable(chron::Type{SynchronizeTimeBlocks},
+function get_stage_variable(::Type{SynchronizeTimeBlocks},
                             from_stage::Stage,
                             device_name::String,
                             var_ref::UpdateRef,

@@ -45,13 +45,15 @@ mutable struct Simulation
 
     function Simulation(;name::String,
                         steps::Int64,
+                        step_resolution::Dates.TimePeriod,
                         stages=Dict{String, Stage{AbstractOperationsProblem}}(),
                         stages_sequence=nothing,
                         simulation_folder::String,
                         verbose::Bool = false, kwargs...)
-    #step_resolution = IS.time_period_conversion(step_resolution)
+    step_resolution = IS.time_period_conversion(step_resolution)
     new(
         steps,
+        step_resolution,
         stages,
         stages_sequence,
         simulation_folder,
@@ -88,14 +90,12 @@ function _check_sequence(sim::Simulation)
     end
 end
 
-function add_cache!(ff::F, sim::Simulation, 
+function add_cache!(feedforward::AbstractAffectFeedForward, sim::Simulation, 
                             stage::Stage, 
-                            device_model::DeviceModel{I, D}) where {
-                                F<:AbstractAffectFeedForward,
-                                I<:PSY.StaticInjection,
-                                D<:AbstractDeviceFormulation}
+                            device_model::DeviceModel{T, AbstractDeviceFormulation}) where {
+                                T<:PSY.StaticInjection}
 
-    cache = add_ff_cache!(ff, I)
+    cache = add_feedforward_cache!(feedforward, T)
     sequence = get_sequence(sim)
     stage_name = get_name(sim, stage) 
     if haskey(sequence.cache, stage_name)
@@ -139,15 +139,9 @@ function _check_chronologies(sim::Simulation)
 end
 
 function _assign_chronologies(sim::Simulation)
-    function find_val(d, value)
-        for (k, v) in d
-            v==value && return k
-        end
-        error("dict does not have value == $value")
-    end
     for (key, chron) in sim.sequence.intra_stage_chronologies
         stage = get_stage(sim, key.second)
-        from_stage_number = find_val(sim.sequence.order, key.first)
+        from_stage_number = find_key_with_value(sim.sequence.order, key.first)
         isempty(from_stage_number) && throw(ArgumentError("Stage $(key.first) not specified in the order dictionary"))
         for stage_number in from_stage_number
             stage.internal.chronolgy_dict[stage_number] = chron
