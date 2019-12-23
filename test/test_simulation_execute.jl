@@ -78,7 +78,8 @@ function test_chronology(file_path::String)
         end
     end
     catch e
-        @info("Receding Horizon Test Failed with the following error")
+        println("Receding Horizon Test Failed with the following error")
+        println(e)
     end
     ### Consecutive
     stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
@@ -133,7 +134,7 @@ function test_chronology(file_path::String)
     ### These tests are commented out until the parameter update method is updated
 #
     sim = Simulation(name = "consecutive",
-                steps = 1, step_resolution = Hour(24)
+                steps = 1, step_resolution = Hour(24),
                 stages = stages_definition,
                 stages_sequence = sequence,
                 simulation_folder= file_path,

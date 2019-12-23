@@ -17,7 +17,7 @@ function test_load_simulation()
                    ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive())
                    )
     sim = Simulation(name = "aggregation",
-                 steps = 2, step_resolution =Hour(24),
+                 steps = 1, step_resolution =Hour(24),
                  stages = stages_definition,
                  stages_sequence = sequence,
                  simulation_folder= file_path,

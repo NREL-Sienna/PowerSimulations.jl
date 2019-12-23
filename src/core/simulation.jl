@@ -324,7 +324,12 @@ function _stage_execution_count(sim::Simulation, stage_name::String; kwargs...)
             resolution = PSY.get_forecasts_resolution(get_sys(
                                 get_stage(sim, stage_name)))
             interval = get_interval(get_sequence(sim), stage_name)
-            _count = chron.from_periods*resolution/interval #TODO : Check/Dispatch on chronology  
+            horizon = get_horizon(get_sequence(sim), stage_name)
+            if chron.from_periods <= horizon
+                _count = 1
+            else
+                _count = chron.from_periods*resolution/interval #TODO : Check/Dispatch on chronology  
+            end
             if execution_count != 0.0
                 if _count != execution_count
                     throw(IS.ConflictingInputsErrors("Stage $stage_name has two 
