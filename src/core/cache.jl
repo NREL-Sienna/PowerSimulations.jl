@@ -54,9 +54,10 @@ end
 
 function build_cache!(cache::TimeStatusChange, psi_container::PSIContainer)
     parameter = get_value(psi_container, cache.ref)
-    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, parameter.axes[1])
+    devices = _get_devices(parameter)
+    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, devices)
 
-    for name in parameter.axes[1]
+    for name in devices
         # TODO: This is a potential issue if you want to use a VariableRef
         status = PJ.value(parameter[name, end])
         value_array[name] = Dict(:count => 999.0, :status => status)
@@ -138,4 +139,10 @@ function _get_value(array::JuMP.Containers.DenseAxisArray{T},
                     ref::UpdateRef{JuMP.VariableRef},
                     axes...) where T
     return JuMP.value(array[axes...])
+end
+
+function _get_devices(array::JuMP.Containers.DenseAxisArray{T}) where T
+    axes = collect(axes(array))
+    devices = filter(x -> typeof(x) <: Base.Generator, axes)
+    return devices
 end
