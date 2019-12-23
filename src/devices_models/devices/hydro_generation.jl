@@ -414,13 +414,3 @@ function device_budget_ub(psi_container::PSIContainer,
 
     return
 end
-
-####################### Feed Forward Cache Automation ###############################################
-function add_cache!(ff::SemiContinuousFF, sim::Simulation, 
-                        stage_name::String, 
-                        device_model::DeviceModel{H, D}) where {
-                            H<:PSY.HydroGen,
-                            D<:AbstractHydroDispatchFormulation}
-
-    return
-end
