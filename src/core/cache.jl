@@ -81,7 +81,7 @@ function build_cache!(cache::C, sequence::SimulationSequence,
     psi_container = get_psi_container(stage)
     axisarray = get_value(psi_container, cache.ref)
     executions = get_executions(stage) 
-    devices = axes(axisarray)[1]
+    devices = axes(axisarray, 1)
     interval = get_interval(sequence, stage_name)
     time_length = 1:Int(interval/PSY.get_forecasts_resolution(get_sys(stage)))*executions
     value_array = JuMP.Containers.DenseAxisArray{Float64}(undef, devices, time_length)
@@ -97,7 +97,7 @@ end
 function update_cache!(cache::TimeStatusChange, stage::Stage,
                         interval::T) where {T <:Dates.TimePeriod}
     parameter = get_value(stage.internal.psi_container, cache.ref)
-    for name in parameter.axes[1], time in parameter.axes[2]
+    for name in axes(parameter, 1), time in axes(parameter, 2)
         interval = IS.time_period_conversion(interval)
         if time <= Int(interval/PSY.get_forecasts_resolution(get_sys(stage)))
             param_status = PJ.value(parameter[name, time])
@@ -118,10 +118,10 @@ function update_cache!(cache::C, stage::Stage,
                                             C<:AbstractCache}
     execution_count = get_execution_count(stage)
     psi_container = get_psi_container(stage)
-    axisarray = get_value(psi_container, c.ref)
+    axisarray = get_value(psi_container, cache.ref)
     interval = IS.time_period_conversion(interval)
     time_steps = Int(interval/PSY.get_forecasts_resolution(get_sys(stage)))
-    for name in axisarray.axes[1], time in axisarray.axes[2]
+    for name in axes(axisarray, 1), time in axes(axisarray, 2)
         if time <= time_steps
             cache.value[name,(execution_count-1)*time_steps+time] = _get_value(axisarray, cache.ref, name, time)
         end
@@ -142,7 +142,7 @@ function _get_value(array::JuMP.Containers.DenseAxisArray{T},
 end
 
 function _get_devices(array::JuMP.Containers.DenseAxisArray{T}) where T
-    axes = collect(axes(array))
-    devices = filter(x -> typeof(x) <: Base.Generator, axes)
+    axes_array = collect(axes(array))
+    devices = first(filter(x -> typeof(x) <: Base.Generator, axes_array))
     return devices
 end
