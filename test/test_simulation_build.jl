@@ -8,7 +8,7 @@ function test_sequence_build(file_path::String)
     @testset "Simulation Sequence Tests" begin
 
     sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                    intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_periods = 24)),
+                    intra_stage_chronologies = Dict(("UC"=>"ED") => SynchronizeTimeBlocks(from_periods = 24)),
                     horizons = Dict("UC" => 24, "ED" => 12),
                     intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
                     feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -17,7 +17,7 @@ function test_sequence_build(file_path::String)
                     )
 
         sim = Simulation(name = "test",
-                    steps = 2,
+                    steps = 2, step_resolution =Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
                     simulation_folder= file_path,
@@ -35,7 +35,7 @@ function test_sequence_build(file_path::String)
 ###################### Negative Tests ########################################
     @testset "testing if horizon is shorter than interval" begin
         sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                    intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_periods = 24)),
+                    intra_stage_chronologies = Dict(("UC"=>"ED") => SynchronizeTimeBlocks(from_periods = 24)),
                     horizons = Dict("UC" => 4, "ED" => 2),
                     intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
                     feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -44,7 +44,7 @@ function test_sequence_build(file_path::String)
                     )
 
         sim = Simulation(name = "short_horizon",
-                    steps = 2,
+                    steps = 2, step_resolution =Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
                     simulation_folder= file_path,
@@ -55,7 +55,7 @@ function test_sequence_build(file_path::String)
 
     @testset "testing if interval is wrong" begin
         sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                    intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_periods = 24)),
+                    intra_stage_chronologies = Dict(("UC"=>"ED") => SynchronizeTimeBlocks(from_periods = 24)),
                     horizons = Dict("UC" => 24, "ED" => 12),
                     intervals = Dict("UC" => Hour(2), "ED" => Hour(3)),
                     feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -64,7 +64,7 @@ function test_sequence_build(file_path::String)
                     )
 
         sim = Simulation(name = "short_interval",
-                    steps = 2,
+                    steps = 2, step_resolution =Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
                     simulation_folder= file_path,
@@ -74,7 +74,7 @@ function test_sequence_build(file_path::String)
     end
     @testset "testing if file path is not writeable" begin
         sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                    intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_periods = 24)),
+                    intra_stage_chronologies = Dict(("UC"=>"ED") => SynchronizeTimeBlocks(from_periods = 24)),
                     horizons = Dict("UC" => 24, "ED" => 12),
                     intervals = Dict("UC" => Hour(2), "ED" => Hour(3)),
                     feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -83,7 +83,7 @@ function test_sequence_build(file_path::String)
                     )
 
         sim = Simulation(name = "fake_path",
-                    steps = 2,
+                    steps = 2, step_resolution =Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
                     simulation_folder= "fake_path",
@@ -93,7 +93,7 @@ function test_sequence_build(file_path::String)
     end
     @testset "testing if interval is shorter than resolution" begin
         sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                    intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_periods = 24)),
+                    intra_stage_chronologies = Dict(("UC"=>"ED") => SynchronizeTimeBlocks(from_periods = 24)),
                     horizons = Dict("UC" => 24, "ED" => 12),
                     intervals = Dict("UC" => Minute(5), "ED" => Minute(1)),
                     feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -102,7 +102,7 @@ function test_sequence_build(file_path::String)
                     )
 
         sim = Simulation(name = "interval",
-                    steps = 2,
+                    steps = 2, step_resolution =Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
                     simulation_folder= file_path,
@@ -112,7 +112,7 @@ function test_sequence_build(file_path::String)
     end
     @testset "chronology look ahead length is too long for horizon" begin
         sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                    intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_periods = 30)),
+                    intra_stage_chronologies = Dict(("UC"=>"ED") => SynchronizeTimeBlocks(from_periods = 30)),
                     horizons = Dict("UC" => 24, "ED" => 12),
                     intervals = Dict("UC" => Minute(5), "ED" => Minute(1)),
                     feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -121,7 +121,7 @@ function test_sequence_build(file_path::String)
                     )
 
         sim = Simulation(name = "look_ahead",
-                    steps = 2,
+                    steps = 2, step_resolution =Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
                     simulation_folder= file_path,
@@ -131,7 +131,7 @@ function test_sequence_build(file_path::String)
     end
     @testset "too long of a horizon for forecast" begin
         sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                    intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_periods = 24)),
+                    intra_stage_chronologies = Dict(("UC"=>"ED") => SynchronizeTimeBlocks(from_periods = 24)),
                     horizons = Dict("UC" => 72, "ED" => 12),
                     intervals = Dict("UC" => Minute(5), "ED" => Minute(1)),
                     feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -140,7 +140,7 @@ function test_sequence_build(file_path::String)
                     )
 
         sim = Simulation(name = "long_horizon",
-                    steps = 2,
+                    steps = 2, step_resolution =Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
                     simulation_folder= file_path,
@@ -150,7 +150,7 @@ function test_sequence_build(file_path::String)
     end
     @testset "too many steps for forecast" begin
         sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                    intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_periods = 24)),
+                    intra_stage_chronologies = Dict(("UC"=>"ED") => SynchronizeTimeBlocks(from_periods = 24)),
                     horizons = Dict("UC" => 24, "ED" => 12),
                     intervals = Dict("UC" => Minute(5), "ED" => Minute(1)),
                     feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -159,7 +159,7 @@ function test_sequence_build(file_path::String)
                     )
 
         sim = Simulation(name = "steps",
-                    steps = 5,
+                    steps = 5, step_resolution =Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
                     simulation_folder= file_path,
