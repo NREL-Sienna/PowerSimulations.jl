@@ -39,25 +39,20 @@ function branch_rate_bounds!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{B},
                                 ::Type{<:AbstractBranchFormulation},
                                 ::Type{<:PM.AbstractDCPModel}) where {B<:PSY.ACBranch}
-    names = Vector{String}(undef, length(devices))
-    limit_values = Vector{MinMax}(undef, length(devices))
-    additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
-    additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
+    constraint_data = Dict{String, DeviceRange}()
 
-    for (ix, d) in enumerate(devices)
-        limit_values[ix] = (min = -1*PSY.get_rate(d), max = PSY.get_rate(d))
-        names[ix] = PSY.get_name(d)
+    for d in devices
+        limit_values = (min = -1*PSY.get_rate(d), max = PSY.get_rate(d))
+        name = PSY.get_name(d)
         services_ub = Vector{Symbol}()
-        services_lb = Vector{Symbol}()
         for service in PSY.get_services(d)
             SR = typeof(service)
             push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
         end
-        additional_terms_ub[ix] = services_ub
-        additional_terms_lb[ix] = services_lb
+        constraint_data[name] = DeviceRange(limit_values, services_ub, Vector{Symbol}())
     end
     set_variable_bounds(psi_container,
-                        DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub),
+                        constraint_data,
                         Symbol("Fp_$(B)"))
     return
 end
@@ -66,29 +61,24 @@ function branch_rate_bounds!(psi_container::PSIContainer,
                             devices::IS.FlattenIteratorWrapper{B},
                             ::Type{<:AbstractBranchFormulation},
                             ::Type{<:PM.AbstractActivePowerModel}) where B<:PSY.ACBranch
-    names = Vector{String}(undef, length(devices))
-    limit_values = Vector{MinMax}(undef, length(devices))
-    additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
-    additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
+    constraint_data = Dict{String, DeviceRange}()
 
-    for (ix, d) in enumerate(devices)
-        limit_values[ix] = (min = -1*PSY.get_rate(d), max = PSY.get_rate(d))
-        names[ix] = PSY.get_name(d)
+    for d in devices
+        limit_values = (min = -1*PSY.get_rate(d), max = PSY.get_rate(d))
+        name = PSY.get_name(d)
         services_ub = Vector{Symbol}()
-        services_lb = Vector{Symbol}()
         for service in PSY.get_services(d)
             SR = typeof(service)
             push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
         end
-        additional_terms_ub[ix] = services_ub
-        additional_terms_lb[ix] = services_lb
+        constraint_data[name] = DeviceRange(limit_values, services_ub, Vector{Symbol}())
     end
     set_variable_bounds(psi_container,
-                        DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub),
+                        constraint_data,
                         Symbol("FpFT_$(B)"))
 
     set_variable_bounds(psi_container,
-                        DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub),
+                        constraint_data,
                         Symbol("FpTF_$(B)"))
     return
 end
@@ -99,29 +89,24 @@ function branch_rate_bounds!(psi_container::PSIContainer,
                                 ::Type{S}) where {B<:PSY.ACBranch,
                                                   D<:AbstractBranchFormulation,
                                                   S<:PM.AbstractPowerModel}
-    names = Vector{String}(undef, length(devices))
-    limit_values = Vector{MinMax}(undef, length(devices))
-    additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
-    additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
+    constraint_data = Dict{String, DeviceRange}()
 
-    for (ix, d) in enumerate(devices)
-        limit_values[ix] = (min = -1*PSY.get_rate(d), max = PSY.get_rate(d))
-        names[ix] = PSY.get_name(d)
+    for d in devices
+        limit_values = (min = -1*PSY.get_rate(d), max = PSY.get_rate(d))
+        name = PSY.get_name(d)
         services_ub = Vector{Symbol}()
-        services_lb = Vector{Symbol}()
         for service in PSY.get_services(d)
             SR = typeof(service)
             push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
         end
-        additional_terms_ub[ix] = services_ub
-        additional_terms_lb[ix] = services_lb
+        constraint_data[name] = DeviceRange(limit_values, services_ub, Vector{Symbol}())
     end
     set_variable_bounds(psi_container,
-                        DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub),
+                        constraint_data,
                         Symbol("FpFT_$(B)"))
 
     set_variable_bounds(psi_container,
-                        DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub),
+                        constraint_data,
                         Symbol("FpTF_$(B)"))
     return
 end
@@ -134,26 +119,21 @@ function branch_rate_constraints!(psi_container::PSIContainer,
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {B<:PSY.ACBranch,
                                                   D<:AbstractBranchFormulation,
                                                   S<:PM.AbstractDCPModel}
-    names = Vector{String}(undef, length(devices))
-    limit_values = Vector{MinMax}(undef, length(devices))
-    additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
-    additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
+    constraint_data = Dict{String, DeviceRange}()
 
-    for (ix, d) in enumerate(devices)
-        limit_values[ix] = (min = -1*PSY.get_rate(d), max = PSY.get_rate(d))
-        names[ix] = PSY.get_name(d)
+    for d in devices
+        limit_values = (min = -1*PSY.get_rate(d), max = PSY.get_rate(d))
+        name = PSY.get_name(d)
         services_ub = Vector{Symbol}()
-        services_lb = Vector{Symbol}()
         for service in PSY.get_services(d)
             SR = typeof(service)
             push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
         end
-        additional_terms_ub[ix] = services_ub
-        additional_terms_lb[ix] = services_lb
+        constraint_data[name] = DeviceRange(limit_values, services_ub, Vector{Symbol}())
     end
 
     device_range(psi_container,
-                 DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub),
+                 constraint_data,
                  Symbol("RateLimit_$(B)"),
                  Symbol("Fp_$(B)"))
     return
@@ -164,31 +144,26 @@ function branch_rate_constraints!(psi_container::PSIContainer,
                                 model::DeviceModel{B, <:AbstractBranchFormulation},
                                 ::Type{<:PM.AbstractActivePowerModel},
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where B<:PSY.ACBranch
-    names = Vector{String}(undef, length(devices))
-    limit_values = Vector{MinMax}(undef, length(devices))
-    additional_terms_ub = Vector{Vector{Symbol}}(undef, length(devices))
-    additional_terms_lb = Vector{Vector{Symbol}}(undef, length(devices))
+    constraint_data = Dict{String, DeviceRange}()
 
-    for (ix, d) in enumerate(devices)
-        limit_values[ix] = (min = -1*PSY.get_rate(d), max = PSY.get_rate(d))
-        names[ix] = PSY.get_name(d)
+    for d in devices
+        limit_values = (min = -1*PSY.get_rate(d), max = PSY.get_rate(d))
+        name = PSY.get_name(d)
         services_ub = Vector{Symbol}()
-        services_lb = Vector{Symbol}()
         for service in PSY.get_services(d)
             SR = typeof(service)
             push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
         end
-        additional_terms_ub[ix] = services_ub
-        additional_terms_lb[ix] = services_lb
+        constraint_data[name] = DeviceRange(limit_values, services_ub, Vector{Symbol}())
     end
 
     device_range(psi_container,
-                 DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub),
+                 constraint_data,
                  Symbol("RateLimitFT_$(B)"),
                  Symbol("FpFT_$(B)"))
 
     device_range(psi_container,
-                 DeviceRange(names, limit_values, additional_terms_ub, additional_terms_ub),
+                 constraint_data,
                  Symbol("RateLimitTF_$(B)"),
                  Symbol("FpTF_$(B)"))
     return
@@ -246,7 +221,7 @@ function branch_flow_constraints!(psi_container::PSIContainer,
     limit_values_FT = Vector{MinMax}(undef, length(devices))
     limit_values_TF = Vector{MinMax}(undef, length(devices))
 
-    for (ix, d) in enumerate(devices)
+    for d in devices
         limit_values_FT[ix] = PSY.get_flowlimits(d)
         limit_values_TFt[ix] = (min = PSY.get_flowlimits(d).max, max = PSY.get_flowlimits(d).min)
         names[ix] = PSY.get_name(d)
