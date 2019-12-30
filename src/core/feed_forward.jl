@@ -96,7 +96,7 @@ function ub_ff(psi_container::PSIContainer,
 
     for name in axes[1]
         value = JuMP.upper_bound(variable[name, 1])
-        param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel, value)
+        param_ub[name, t] = PJ.add_parameter(psi_container.JuMPmodel, value)
         for t in axes[2]
             con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
                                                 variable[name, t] <= param_ub[name, t])
@@ -257,7 +257,7 @@ function feed_forward!(psi_container::PSIContainer,
                      device_type::Type{I},
                      ff_model::UpperBoundFF) where {I<:PSY.StaticInjection}
 
-    for prefix in get_vars_prefix(ff_model)
+    for prefix in get_affected_variables(ff_model)
         var_name = Symbol(prefix, "_$(I)")
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         ub_ff(psi_container,
@@ -293,9 +293,9 @@ function feed_forward_update(sync::Chron,
                             to_stage::Stage,
                             from_stage::Stage) where Chron <: AbstractChronology
 
-    !(get_execution_count(from_stage) % sync.to_executions == 0) && return
+    !(get_execution_count(to_stage) % sync.to_executions == 0) && return
 
-    var_count = get_execution_count(from_stage) ÷ sync.to_executions
+    var_count = get_execution_count(to_stage) ÷ sync.to_executions
 
     for device_name in axes(param_array)[1]
         var_value = get_stage_variable(Chron, from_stage, device_name, param_reference, var_count)
@@ -312,6 +312,7 @@ function feed_forward_update(sync::SynchronizeTimeBlocks,
                             from_stage::Stage,
                             variable_map::Dict{Tuple{Int64,Int64},Int64}) where {T<:Dates.TimePeriod}
 
+    variable_map = to_stage.internal.variable_map
     execution_count = get_execution_count(to_stage) 
     for device_name in axes(param_array, 1) , time in axes(param_array, 2)
         var_count = variable_map[(execution_count+1,time)]
