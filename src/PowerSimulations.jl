@@ -146,7 +146,6 @@ import Dates
 import TimeSeries
 
 #I/O Imports
-import MathOptInterface: FileFormats
 import DataFrames
 import Feather
 import Colors
