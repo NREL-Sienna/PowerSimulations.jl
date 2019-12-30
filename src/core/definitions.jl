@@ -13,7 +13,7 @@ const IS = InfrastructureSystems
 const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
 const PJ = ParameterJuMP
-const MOPFM = MathOptFormat.MOF.Model
+const MOPFM = MOI.FileFormats.Model
 const TS = TimeSeries
 
 #Type Alias for JuMP and PJ containers
