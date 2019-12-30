@@ -75,9 +75,9 @@ function _get_time_series(psi_container::PSIContainer,
     time_steps = model_time_steps(psi_container)
     device_total = length(devices)
 
-    constraint_data = Dict{String, DeviceRange}()
-    ts_data_active = Dict{String, DeviceTimeSeries}()
-    ts_data_reactive = Dict{String, DeviceTimeSeries}()
+    constraint_data = Vector{DeviceRange}()
+    ts_data_active = Vector{DeviceTimeSeries}()
+    ts_data_reactive = Vector{DeviceTimeSeries}()
 
     for device in devices
         bus_number = PSY.get_number(PSY.get_bus(device))
@@ -94,12 +94,14 @@ function _get_time_series(psi_container::PSIContainer,
         else
             ts_vector = ones(time_steps[end])
         end
-        ts_data_active[name] = DeviceTimeSeries(bus_number, active_power, ts_vector)
-        ts_data_reactive[name] = DeviceTimeSeries(bus_number, reactive_power, ts_vector)
-        constraint_data[name] = DeviceRange(get_constraint_values(device), 
-                                            Vector{Symbol}(), 
-                                            Vector{Symbol}())
-        _device_services!(constraint_data[name], device, model)
+        range_data = DeviceRange(name, get_constraint_values(device))
+        _device_services!(range_data, device, model)
+        push!(constraint_data, range_data)
+        push!(ts_data_active, DeviceTimeSeries(name, bus_number, active_power, ts_vector,
+                                               range_data))
+        push!(ts_data_reactive, DeviceTimeSeries(name, bus_number, reactive_power,
+                                                 ts_vector, range_data))
+
     end
 
     return ts_data_active, ts_data_reactive, constraint_data
@@ -128,14 +130,12 @@ function activepower_constraints!(psi_container::PSIContainer,
     if parameters
         device_timeseries_param_ub(psi_container,
                                    ts_data_active,
-                                   constraint_data,
                                    Symbol("active_$(L)"),
                                    UpdateRef{L}("get_maxactivepower"),
                                    Symbol("P_$(L)"))
     else
         device_timeseries_ub(psi_container,
                             ts_data_active,
-                            constraint_data,
                             Symbol("active_$(L)"),
                             Symbol("P_$(L)"))
     end
@@ -164,7 +164,6 @@ function activepower_constraints!(psi_container::PSIContainer,
     if parameters
         device_timeseries_ub_bigM(psi_container,
                                  ts_data_active,
-                                 constraint_data,
                                  Symbol("active_$(L)"),
                                  Symbol("P_$(L)"),
                                  UpdateRef{L}("get_maxactivepower"),
@@ -172,7 +171,6 @@ function activepower_constraints!(psi_container::PSIContainer,
     else
         device_timeseries_ub_bin(psi_container,
                                 ts_data_active,
-                                constraint_data,
                                 Symbol("active_$(L)"),
                                 Symbol("P_$(L)"),
                                 Symbol("ON_$(L)"))
@@ -203,17 +201,17 @@ function nodal_expression!(psi_container::PSIContainer,
     end
 
     for t in model_time_steps(psi_container)
-        for (name, device_value) in ts_data_active
+        for device in ts_data_active
             _add_to_expression!(psi_container.expressions[:nodal_balance_active],
-                            device_value.bus_number,
-                            t,
-                            -device_value.multiplier * device_value.timeseries[t])
+                                device.bus_number,
+                                t,
+                                -device.multiplier * device.timeseries[t])
         end
-        for (name, device_value) in ts_data_reactive
+        for device in ts_data_reactive
             _add_to_expression!(psi_container.expressions[:nodal_balance_reactive],
-                            device_value.bus_number,
-                            t,
-                            -device_value.multiplier * device_value.timeseries[t])
+                                device.bus_number,
+                                t,
+                                -device.multiplier * device.timeseries[t])
         end
     end
 
@@ -237,11 +235,11 @@ function nodal_expression!(psi_container::PSIContainer,
         return
     end
 
-    for t in model_time_steps(psi_container), (name, device_value) in ts_data_active
+    for t in model_time_steps(psi_container), device in ts_data_active
         _add_to_expression!(psi_container.expressions[:nodal_balance_active],
-                            device_value.bus_number,
+                            device.bus_number,
                             t,
-                            -device_value.multiplier * device_value.timeseries[t])
+                            -device.multiplier * device.timeseries[t])
     end
 
     return
