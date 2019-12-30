@@ -10,7 +10,7 @@ end
 
 struct RecedingHorizon <: AbstractChronology
     step::Int64
-    function RecedingHorizon(;from_step::Int64=1)
+    function RecedingHorizon(;step::Int64=1)
         new(step)
     end
 end
@@ -23,13 +23,13 @@ function check_chronology(sync::Synchronize,
     from_stage_sync = sync.from_steps
 
     if from_stage_sync > from_stage_horizon
-        error("The lookahead length $(from_stage_horizon) in stage is insufficient to syncronize with $(from_stage_sync) feed_forward steps")
+        throw(IS.ConflictingInputsError("The lookahead length $(from_stage_horizon) in stage is insufficient to syncronize with $(from_stage_sync) feed_forward steps"))
     end
 
     if (from_stage_horizon % from_stage_sync) != 0
-        error("The number of feed_forward steps $(from_stage_horizon) in stage
+        throw(IS.ConflictingInputsError("The number of feed_forward steps $(from_stage_horizon) in stage
                needs to be a mutiple of the horizon length $(from_stage_horizon)
-               of stage to use Synchronize with parameters ($(from_stage_sync), $(to_stage_sync))")
+               of stage to use Synchronize with parameters ($(from_stage_sync), $(to_stage_sync))"))
     end
 
     return
