@@ -17,7 +17,6 @@ Constructs upper bound for given variable and time series data and a multiplier.
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * ts_data::Vector{DeviceTimeSeries} : container of device time series data and scaling factors
-* range_data::Dict{String, DeviceRange} : container of device range constraint modification data
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the variable
 """
@@ -81,7 +80,6 @@ where (name, data) in range_data.
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * ts_data::Vector{DeviceTimeSeries} : container of device time series data and scaling factors
-* range_data::Dict{String, DeviceRange} : container of device range constraint modification data
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the variable
 """
@@ -132,7 +130,6 @@ Constructs upper bound for given variable using a parameter. The constraint is
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * ts_data::Vector{DeviceTimeSeries} : container of device time series data and scaling factors
-* range_data::Dict{String, DeviceRange} : container of device range constraint modification data
 * cons_name::Symbol : name of the constraint
 * param_reference::UpdateRef : UpdateRef to access the parameter
 * var_name::Symbol : the name of the variable
@@ -201,7 +198,6 @@ Constructs lower bound for given variable using a parameter. The constraint is
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * ts_data::Vector{DeviceTimeSeries} : container of device time series data and scaling factors
-* range_data::Dict{String, DeviceRange} : container of device range constraint modification data
 * cons_name::Symbol : name of the constraint
 * param_reference::UpdateRef : UpdateRef to access the parameter
 * var_name::Symbol : the name of the variable
@@ -258,7 +254,6 @@ where (name, data) in range_data.
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * ts_data::Vector{DeviceTimeSeries} : container of device time series data and scaling factors
-* range_data::Dict{String, DeviceRange} : container of device range constraint modification data
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol :  name of the variable
 * binvar_name::Symbol : name of binary variable
@@ -323,7 +318,6 @@ Constructs upper bound for variable and time series and a multiplier or confines
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * ts_data::Vector{DeviceTimeSeries} : container of device time series data and scaling factors
-* range_data::Dict{String, DeviceRange} : container of device range constraint modification data
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol :  name of the variable
 param_reference::UpdateRef : UpdateRef of access the parameters
