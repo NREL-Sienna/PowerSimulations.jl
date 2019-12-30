@@ -192,7 +192,7 @@ function energy_balance_constraint!(psi_container::PSIContainer,
                                                             S<:PM.AbstractPowerModel}
     key = ICKey(DeviceEnergy, St)
     if !(key in keys(psi_container.initial_conditions))
-        error("Initial Conditions for $(St) Energy Constraints not in the model")
+        throw(IS.DataFormatError("Initial Conditions for $(St) Energy Constraints not in the model"))
     end
 
     efficiency_data = make_efficiency_data(devices)
