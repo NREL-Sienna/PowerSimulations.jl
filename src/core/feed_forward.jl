@@ -5,7 +5,7 @@ struct UpperBoundFF <: AbstractAffectFeedForward
 end
 
 function UpperBoundFF(;variable_from_stage, affected_variables)
-    return UpperBoundFF(variable, affected_variables, nothing)
+    return UpperBoundFF(variable_from_stage, affected_variables, nothing)
 end
 
 get_variable_from_stage(p::UpperBoundFF) = p.binary_from_stage
@@ -17,8 +17,8 @@ struct RangeFF <: AbstractAffectFeedForward
     cache::Union{Nothing, Type{<:AbstractCache}}
 end
 
-function RangeFF(;variable_from_stage_ub, affected_variables_lb, affected_variables)
-    return RangeFF(binary_from_stage, affected_variables, nothing)
+function RangeFF(;variable_from_stage_ub, variable_from_stage_lb, affected_variables)
+    return RangeFF(variable_from_stage_ub, variable_from_stage_lb, affected_variables, nothing)
 end
 
 get_bounds_from_stage(p::RangeFF) = (p.variable_from_stage_lb, p.variable_from_stage_lb)
@@ -237,7 +237,7 @@ function feed_forward!(psi_container::PSIContainer,
                      device_type::Type{I},
                      ff_model::UpperBoundFF) where {I<:PSY.StaticInjection}
 
-    for prefix in get_vars_prefix(ff_model)
+    for prefix in get_variable_from_stage(ff_model)
         var_name = Symbol(prefix, "_$(I)")
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         ub_ff(psi_container,
@@ -273,9 +273,9 @@ function feed_forward_update(sync::Chron,
                             to_stage::Stage,
                             from_stage::Stage) where Chron <: AbstractChronology
 
-    !(get_execution_count(from_stage) % sync.to_executions == 0) && return
+    !(get_execution_count(to_stage) % sync.to_executions == 0) && return
 
-    var_count = get_execution_count(from_stage) ÷ sync.to_executions
+    var_count = get_execution_count(to_stage) ÷ sync.to_executions
 
     for device_name in axes(param_array)[1]
         var_value = get_stage_variable(Chron, from_stage, device_name, param_reference, var_count)
