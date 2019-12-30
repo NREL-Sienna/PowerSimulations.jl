@@ -80,7 +80,7 @@ function activepower_constraints!(psi_container::PSIContainer,
         name = PSY.get_name(d)
         values = PSY.get_activepowerlimits(PSY.get_tech(d))
         constraint_data[name] = DeviceRange(values, Vector{Symbol}(), Vector{Symbol}())
-        _device_services(constraint_data[name], d, model)
+        _device_services!(constraint_data[name], d, model)
     end
     device_range(psi_container,
                  constraint_data,
@@ -102,7 +102,7 @@ function activepower_constraints!(psi_container::PSIContainer,
         limits = PSY.get_activepowerlimits(PSY.get_tech(d))
         name = PSY.get_name(d)
         constraint_data[name] = DeviceRange(limits, Vector{Symbol}(), Vector{Symbol}())
-        _device_services(constraint_data[name], d, model)
+        _device_services!(constraint_data[name], d, model)
     end
     device_semicontinuousrange(psi_container,
                                constraint_data,
@@ -126,7 +126,7 @@ function activepower_constraints!(psi_container::PSIContainer,
         limits = (min = 0.0, max = PSY.get_activepowerlimits(PSY.get_tech(d)).max)
         name = PSY.get_name(d)
         constraint_data[name] = DeviceRange(limits, Vector{Symbol}(), Vector{Symbol}())
-        _device_services(constraint_data[name], d, model)
+        _device_services!(constraint_data[name], d, model)
     end
 
     var_key = Symbol("P_$(T)")
@@ -159,7 +159,7 @@ function reactivepower_constraints!(psi_container::PSIContainer,
         name = PSY.get_name(d)
         limits = PSY.get_reactivepowerlimits(PSY.get_tech(d))
         constraint_data[name] = DeviceRange(limits, Vector{Symbol}(), Vector{Symbol}())
-        #_device_services(constraint_data[name], d, model)
+        #_device_services!(constraint_data[name], d, model)
         # Uncomment when we implement reactive power services
     end
     device_range(psi_container,
@@ -182,7 +182,7 @@ function reactivepower_constraints!(psi_container::PSIContainer,
         limits = PSY.get_reactivepowerlimits(PSY.get_tech(d))
         name = PSY.get_name(d)
         constraint_data[name] = DeviceRange(limits, Vector{Symbol}(), Vector{Symbol}())
-        #_device_services(constraint_data[name], d, model)
+        #_device_services!(constraint_data[name], d, model)
         # Uncomment when we implement reactive power services
     end
     device_semicontinuousrange(psi_container,

@@ -69,8 +69,8 @@ function active_power_constraints!(psi_container::PSIContainer,
         out_lims = PSY.get_outputactivepowerlimits(d)
         constraint_data_in[name] = DeviceRange(in_lims, Vector{Symbol}(), Vector{Symbol}())
         constraint_data_out[name] = DeviceRange(out_lims, Vector{Symbol}(), Vector{Symbol}())
-        #_device_services(constraint_data_in, d, model)
-        #_device_services(constraint_data_out, d, model)
+        #_device_services!(constraint_data_in, d, model)
+        #_device_services!(constraint_data_out, d, model)
     end
 
     device_range(psi_container,
@@ -99,8 +99,8 @@ function active_power_constraints!(psi_container::PSIContainer,
         out_lims =  PSY.get_outputactivepowerlimits(d)
         constraint_data_in[name] = DeviceRange(in_lims, Vector{Symbol}(), Vector{Symbol}())
         constraint_data_out[name] = DeviceRange(out_lims, Vector{Symbol}(), Vector{Symbol}())
-        #_device_services(constraint_data_in, d, model)
-        #_device_services(constraint_data_out, d, model)
+        #_device_services!(constraint_data_in, d, model)
+        #_device_services!(constraint_data_out, d, model)
     end
     reserve_device_semicontinuousrange(psi_container,
                                        constraint_data_in,
@@ -132,7 +132,7 @@ function reactive_power_constraints!(psi_container::PSIContainer,
         name = PSY.get_name(d)
         lims = PSY.get_reactivepowerlimits(d)
         constraint_data[name] = DeviceRange(lims, Vector{Symbol}(), Vector{Symbol}())
-        #_device_services(constraint_data, d, model)
+        #_device_services!(constraint_data, d, model)
         # Uncomment when we implement reactive power services
     end
 
@@ -166,7 +166,7 @@ function energy_capacity_constraints!(psi_container::PSIContainer,
         name = PSY.get_name(d)
         lims= PSY.get_capacity(d)
         constraint_data[name] = DeviceRange(lims, Vector{Symbol}(), Vector{Symbol}())
-        #_device_services(constraint_data, d, model)
+        #_device_services!(constraint_data, d, model)
         # Uncomment when we implement reactive power services
     end
 

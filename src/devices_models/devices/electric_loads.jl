@@ -99,7 +99,7 @@ function _get_time_series(psi_container::PSIContainer,
         constraint_data[name] = DeviceRange(get_constraint_values(device), 
                                             Vector{Symbol}(), 
                                             Vector{Symbol}())
-        _device_services(constraint_data[name], device, model)
+        _device_services!(constraint_data[name], device, model)
     end
 
     return ts_data_active, ts_data_reactive, constraint_data

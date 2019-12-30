@@ -23,37 +23,36 @@ Constructs upper bound for given variable and time series data and a multiplier.
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_ub(psi_container::PSIContainer,
-                              ts_data::Dict{String, DeviceTimeSeries},
-                              range_data::Dict{String, DeviceRange},
+                              ts_data::Vector{DeviceTimeSeries},
                               cons_name::Symbol,
                               var_name::Symbol)
     time_steps = model_time_steps(psi_container)
-    names = collect(keys(ts_data))
+    names = (d.name for d in ts_data)
     variable = get_variable(psi_container, var_name)
     ub_name = _middle_rename(cons_name, "_", "ub")
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
-    add_lower_bound = !all(isempty.((r.additional_terms_lb for r in values(range_data))))
+    add_lower_bound = !all(isempty.((r.range.additional_terms_lb for r in ts_data)))
     if add_lower_bound
         lb_name = _middle_rename(cons_name, "_", "lb")
         con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
     end
 
-    for (name, data) in range_data
+    for data in ts_data
         for t in time_steps
-            expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-            for val in data.additional_terms_ub
+            expression_ub = JuMP.AffExpr(0.0, variable[data.name, t] => 1.0)
+            for val in data.range.additional_terms_ub
                 JuMP.add_to_expression!(expression_ub, 
-                                        get_variable(psi_container, val)[name, t])
+                                        get_variable(psi_container, val)[data.name, t])
             end
-            con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                               expression_ub <= ts_data[name].multiplier *ts_data[name].timeseries[t])
+            con_ub[data.name, t] = JuMP.@constraint(psi_container.JuMPmodel,
+                                    expression_ub <= data.multiplier * data.timeseries[t])
             if add_lower_bound
-                expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-                for val in data.additional_terms_lb
+                expression_lb = JuMP.AffExpr(0.0, variable[data.name, t] => 1.0)
+                for val in data.range.additional_terms_lb
                     JuMP.add_to_expression!(expression_lb, 
-                                            get_variable(psi_container, val)[name, t], -1.0)
+                                            get_variable(psi_container, val)[data.name, t], -1.0)
                 end
-                con_lb[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
+                con_lb[data.name, t] = JuMP.@constraint(psi_container.JuMPmodel,
                                                 expression_lb >= 0.0)
             end
         end
@@ -143,41 +142,40 @@ Constructs upper bound for given variable using a parameter. The constraint is
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_param_ub(psi_container::PSIContainer,
-                                    ts_data::Dict{String, DeviceTimeSeries},
-                                    range_data::Dict{String, DeviceRange},
+                                    ts_data::Vector{DeviceTimeSeries},
                                     cons_name::Symbol,
                                     param_reference::UpdateRef,
                                     var_name::Symbol)
     time_steps = model_time_steps(psi_container)
-    names = collect(keys(ts_data))
+    names = (d.name for d in ts_data)
     variable = get_variable(psi_container, var_name)
     ub_name = _middle_rename(cons_name, "_", "ub")
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     param = _add_param_container!(psi_container, param_reference, names, time_steps)
-    add_lower_bound = !all(isempty.((r.additional_terms_lb for r in values(range_data))))
+    add_lower_bound = !all(isempty.((r.range.additional_terms_lb for r in ts_data)))
     if add_lower_bound
         lb_name = _middle_rename(cons_name, "_", "lb")
         con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
     end
 
-    for (name, data) in range_data
+    for data in ts_data
         for t in time_steps
-            expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-            for val in data.additional_terms_ub
+            expression_ub = JuMP.AffExpr(0.0, variable[data.name, t] => 1.0)
+            for val in data.range.additional_terms_ub
                 JuMP.add_to_expression!(expression_ub, 
-                                        get_variable(psi_container, val)[name, t])
+                                        get_variable(psi_container, val)[data.name, t])
             end
-            param[name, t] = PJ.add_parameter(psi_container.JuMPmodel, 
-                                              ts_data[name].timeseries[t])
-            con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                               expression_ub <= ts_data[name].multiplier * param[name, t])
+            param[data.name, t] = PJ.add_parameter(psi_container.JuMPmodel, 
+                                                   data.timeseries[t])
+            con_ub[data.name, t] = JuMP.@constraint(psi_container.JuMPmodel,
+                                               expression_ub <= data.multiplier * param[data.name, t])
             if add_lower_bound
-                expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-                for val in data.additional_terms_lb
+                expression_lb = JuMP.AffExpr(0.0, variable[data.name, t] => 1.0)
+                for val in data.range.additional_terms_lb
                     JuMP.add_to_expression!(expression_lb, 
-                                            get_variable(psi_container, val)[name, t], -1.0)
+                                            get_variable(psi_container, val)[data.name, t], -1.0)
                 end
-                con_lb[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
+                con_lb[data.name, t] = JuMP.@constraint(psi_container.JuMPmodel,
                                                 expression_lb >= 0.0)
             end
         end

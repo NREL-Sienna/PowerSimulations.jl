@@ -1,6 +1,6 @@
 @doc raw"""
     device_range(psi_container::PSIContainer,
-                 range_data::Dict{String, DeviceRange},
+                 range_data::Vector{DeviceRange},
                  cons_name::Symbol,
                  var_name::Symbol)
 
@@ -25,34 +25,38 @@ where limits in range_data.
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* range_data::Dict{String, DeviceRange} : contains names and vector of min/max
+* range_data::Vector{DeviceRange} : contains names and vector of min/max
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 """
 function device_range(psi_container::PSIContainer,
-                      range_data::Dict{String, DeviceRange},
+                      range_data::Vector{DeviceRange},
                       cons_name::Symbol,
                       var_name::Symbol)
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, var_name)
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
-    names = collect(keys(range_data))
+    names = (d.name for d in range_data)
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
 
-    for (name, data) in range_data
+    for data in range_data
         for t in time_steps
-            expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+            expression_ub = JuMP.AffExpr(0.0, variable[data.name, t] => 1.0)
             for val in data.additional_terms_ub
-                JuMP.add_to_expression!(expression_ub, get_variable(psi_container, val)[name, t])
+                JuMP.add_to_expression!(expression_ub, 
+                                        get_variable(psi_container, val)[data.name, t])
             end
-            expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+            expression_lb = JuMP.AffExpr(0.0, variable[data.name, t] => 1.0)
             for val in data.additional_terms_lb
-                JuMP.add_to_expression!(expression_lb, get_variable(psi_container, val)[name, t], -1.0)
+                JuMP.add_to_expression!(expression_lb, 
+                                        get_variable(psi_container, val)[data.name, t], -1.0)
             end
-            con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= data.limits.max)
-            con_lb[name, t] = JuMP.@constraint(psi_container.JuMPmodel, expression_lb >= data.limits.min)
+            con_ub[data.name, t] = JuMP.@constraint(psi_container.JuMPmodel, 
+                                                    expression_ub <= data.limits.max)
+            con_lb[data.name, t] = JuMP.@constraint(psi_container.JuMPmodel, 
+                                                    expression_lb >= data.limits.min)
         end
     end
 
@@ -61,7 +65,7 @@ end
 
 @doc raw"""
     device_semicontinuousrange(psi_container::PSIContainer,
-                                    range_data::Dict{String, DeviceRange},
+                                    range_data::Vector{DeviceRange},
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
@@ -91,13 +95,13 @@ where limits in range_data.
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* range_data::Dict{String, DeviceRange} : contains names and vector of min/max
+* range_data::Vector{DeviceRange} : contains names and vector of min/max
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 * binvar_name::Symbol : the name of the binary variable
 """
 function device_semicontinuousrange(psi_container::PSIContainer,
-                                    range_data::Dict{String, DeviceRange},
+                                    range_data::Vector{DeviceRange},
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
@@ -106,27 +110,31 @@ function device_semicontinuousrange(psi_container::PSIContainer,
     varbin = get_variable(psi_container, binvar_name)
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
-    names = collect(keys(range_data))
+    names = (d.name for d in range_data)
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
 
-    for (name, data) in range_data
+    for data in range_data
         for t in time_steps
-            if JuMP.has_lower_bound(varcts[name, t])
-                JuMP.set_lower_bound(varcts[name, t], 0.0)
+            if JuMP.has_lower_bound(varcts[data.name, t])
+                JuMP.set_lower_bound(varcts[data.name, t], 0.0)
             end
-            expression_ub = JuMP.AffExpr(0.0, varcts[name, t] => 1.0)
+            expression_ub = JuMP.AffExpr(0.0, varcts[data.name, t] => 1.0)
             for val in data.additional_terms_ub
-                JuMP.add_to_expression!(expression_ub, get_variable(psi_container, val)[name, t])
+                JuMP.add_to_expression!(expression_ub,
+                                        get_variable(psi_container, val)[data.name, t])
             end
-            expression_lb = JuMP.AffExpr(0.0, varcts[name, t] => 1.0)
+            expression_lb = JuMP.AffExpr(0.0, varcts[data.name, t] => 1.0)
             for val in data.additional_terms_lb
-                JuMP.add_to_expression!(expression_lb, get_variable(psi_container, val)[name, t], -1.0)
+                JuMP.add_to_expression!(expression_lb,
+                                        get_variable(psi_container, val)[data.name, t], -1.0)
             end
-            con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= data.limits.max * varbin[name, t])
-            con_lb[name, t] = JuMP.@constraint(psi_container.JuMPmodel, expression_lb >= data.limits.min * varbin[name, t])
+            con_ub[data.name, t] = JuMP.@constraint(psi_container.JuMPmodel,
+                                    expression_ub <= data.limits.max * varbin[data.name, t])
+            con_lb[data.name, t] = JuMP.@constraint(psi_container.JuMPmodel,
+                                    expression_lb >= data.limits.min * varbin[data.name, t])
         end
     end
 
@@ -135,7 +143,7 @@ end
 
 @doc raw"""
     reserve_device_semicontinuousrange(psi_container::PSIContainer,
-                                    range_data::Dict{String, DeviceRange},
+                                    range_data::Vector{DeviceRange},
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
@@ -165,14 +173,14 @@ where limits in range_data.
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* range_data::Dict{String, DeviceRange} : contains names and vector of min/max
+* range_data::Vector{DeviceRange} : contains names and vector of min/max
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 * binvar_name::Symbol : the name of the binary variable
 """
 #This function looks suspicious and repetittive. Needs verification
 function reserve_device_semicontinuousrange(psi_container::PSIContainer,
-                                            range_data::Dict{String, DeviceRange},
+                                            range_data::Vector{DeviceRange},
                                             cons_name::Symbol,
                                             var_name::Symbol,
                                             binvar_name::Symbol)
@@ -183,27 +191,31 @@ function reserve_device_semicontinuousrange(psi_container::PSIContainer,
 
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
-    names = collect(keys(range_data))
+    names = (d.name for d in range_data)
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
 
-    for (name, data) in range_data
+    for data in range_data
         for t in time_steps
-            if JuMP.has_lower_bound(varcts[name, t])
-                JuMP.set_lower_bound(varcts[name, t], 0.0)
+            if JuMP.has_lower_bound(varcts[data.name, t])
+                JuMP.set_lower_bound(varcts[data.name, t], 0.0)
             end
-            expression_ub = JuMP.AffExpr(0.0, varcts[name, t] => 1.0)
+            expression_ub = JuMP.AffExpr(0.0, varcts[data.name, t] => 1.0)
             for val in data.additional_terms_ub
-                JuMP.add_to_expression!(expression_ub, get_variable(psi_container, val)[name, t])
+                JuMP.add_to_expression!(expression_ub,
+                                        get_variable(psi_container, val)[data.name, t])
             end
-            expression_lb = JuMP.AffExpr(0.0, varcts[name, t] => 1.0)
+            expression_lb = JuMP.AffExpr(0.0, varcts[data.name, t] => 1.0)
             for val in data.additional_terms_lb
-                JuMP.add_to_expression!(expression_lb, get_variable(psi_container, val)[name, t], -1.0)
+                JuMP.add_to_expression!(expression_lb,
+                                        get_variable(psi_container, val)[data.name, t], -1.0)
             end
-            con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= data.limits.max * (1 - varbin[name, t]))
-            con_lb[name, t] = JuMP.@constraint(psi_container.JuMPmodel, expression_lb >= data.limits.min * (1 - varbin[name, t]))
+            con_ub[data.name, t] = JuMP.@constraint(psi_container.JuMPmodel, 
+                                        expression_ub <= data.limits.max * (1 - varbin[data.name, t]))
+            con_lb[data.name, t] = JuMP.@constraint(psi_container.JuMPmodel,
+                                        expression_lb >= data.limits.min * (1 - varbin[data.name, t]))
         end
     end
     return

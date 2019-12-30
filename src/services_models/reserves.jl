@@ -98,7 +98,7 @@ function include_service!(constraint_data::DeviceRange,
     return
 end
 
-function _device_services(constraint_data::DeviceRange,
+function _device_services!(constraint_data::DeviceRange,
                           device::D,
                           model::DeviceModel) where D <: PSY.Device
     for service_model in get_services(model)

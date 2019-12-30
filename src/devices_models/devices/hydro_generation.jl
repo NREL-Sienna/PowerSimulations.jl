@@ -89,7 +89,7 @@ function reactivepower_constraints!(psi_container::PSIContainer,
     for (ix, d) in enumerate(devices)
         constraint_data.values[ix] = PSY.get_reactivepowerlimits(PSY.get_tech(d))
         constraint_data.names[ix] = PSY.get_name(d)
-        #_device_services(constraint_data, ix, d, model)
+        #_device_services!(constraint_data, ix, d, model)
         # Uncomment when we implement reactive power services
     end
 
@@ -134,7 +134,7 @@ function _get_time_series(psi_container::PSIContainer,
         constraint_data[name] = DeviceRange(get_constraint_values(device), 
                                             Vector{Symbol}(), 
                                             Vector{Symbol}())
-        _device_services(constraint_data[name], device, model)
+        _device_services!(constraint_data[name], device, model)
     end
     return active_timeseries, reactive_timeseries, constraint_data
 end
