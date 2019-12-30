@@ -127,9 +127,11 @@ function reactive_power_constraints!(psi_container::PSIContainer,
     constraint_data = Vector{DeviceRange}()
     for d in devices
         name = PSY.get_name(d)
-        lims = PSY.get_reactivepowerlimits(d)
-        push!(constraint_data, DeviceRange(name, lims)) #_device_services!(DeviceRange(name, lims), d, model)
+        limits = PSY.get_reactivepowerlimits(d)
+        range_data = DeviceRange(name, limits)
+        #_device_services!(range_data, d, model)
         # Uncomment when we implement reactive power services
+        push!(constraint_data, range_data)
     end
 
     device_range(psi_container,
@@ -160,9 +162,11 @@ function energy_capacity_constraints!(psi_container::PSIContainer,
     constraint_data = Vector{DeviceRange}()
     for d in devices
         name = PSY.get_name(d)
-        lims= PSY.get_capacity(d)
-        push!(constraint_data, DeviceRange(name, lims)) #_device_services!(DeviceRange(name, lims), d, model)
+        limits= PSY.get_capacity(d)
+        range_data = DeviceRange(name, limits)
+        #_device_services!(range_data, d, model)
         # Uncomment when we implement reactive power services
+        push!(constraint_data, range_data)
     end
 
     device_range(psi_container,

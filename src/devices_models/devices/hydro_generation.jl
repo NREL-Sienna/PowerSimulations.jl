@@ -85,12 +85,14 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                     model::DeviceModel{H, AbstractHydroDispatchFormulation},
                                     system_formulation::Type{<:PM.AbstractPowerModel},
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
-    constraint_data = DeviceRange(length(devices))
-    for (ix, d) in enumerate(devices)
-        constraint_data.values[ix] = PSY.get_reactivepowerlimits(PSY.get_tech(d))
-        constraint_data.names[ix] = PSY.get_name(d)
-        #_device_services!(constraint_data, ix, d, model)
+    constraint_data = Vector(DeviceRange)()
+    for d in devices
+        limits =  PSY.get_reactivepowerlimits(PSY.get_tech(d))
+        name =  PSY.get_name(d)
+        range_data = DeviceRange(name, limits)
+        #_device_services!(range_data, d, model)
         # Uncomment when we implement reactive power services
+        push!(constraint_data, range_data)
     end
 
     device_range(psi_container,

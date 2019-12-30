@@ -75,12 +75,13 @@ function activepower_constraints!(psi_container::PSIContainer,
                                  model::DeviceModel{T, <:AbstractThermalDispatchFormulation},
                                  ::Type{<:PM.AbstractPowerModel},
                                  feed_forward::Nothing) where T<:PSY.ThermalGen
-    constraint_data = Dict{String, DeviceRange}()
+    constraint_data = Vector{DeviceRange}()
     for d in devices
         name = PSY.get_name(d)
-        values = PSY.get_activepowerlimits(PSY.get_tech(d))
-        constraint_data[name] = DeviceRange(values, Vector{Symbol}(), Vector{Symbol}())
-        _device_services!(constraint_data[name], d, model)
+        limits = PSY.get_activepowerlimits(PSY.get_tech(d))
+        range_data = DeviceRange(name, limits)
+        _device_services!(range_data, d, model)
+        push!(constraint_data, range_data)
     end
     device_range(psi_container,
                  constraint_data,
@@ -97,12 +98,13 @@ function activepower_constraints!(psi_container::PSIContainer,
                                  model::DeviceModel{T, <:AbstractThermalFormulation},
                                  ::Type{<:PM.AbstractPowerModel},
                                  feed_forward::Nothing) where T<:PSY.ThermalGen
-    constraint_data = Dict{String, DeviceRange}()
+    constraint_data = Vector{DeviceRange}()
     for d in devices
         limits = PSY.get_activepowerlimits(PSY.get_tech(d))
         name = PSY.get_name(d)
-        constraint_data[name] = DeviceRange(limits, Vector{Symbol}(), Vector{Symbol}())
-        _device_services!(constraint_data[name], d, model)
+        range_data = DeviceRange(name, limits)
+        _device_services!(range_data, d, model)
+        push!(constraint_data, range_data)
     end
     device_semicontinuousrange(psi_container,
                                constraint_data,
@@ -121,12 +123,13 @@ function activepower_constraints!(psi_container::PSIContainer,
                                   model::DeviceModel{T, ThermalDispatchNoMin},
                                   ::Type{<:PM.AbstractPowerModel},
                                   feed_forward::Nothing) where T<:PSY.ThermalGen
-    constraint_data = Dict{String, DeviceRange}()
+    constraint_data = Vector{DeviceRange}()
     for d in devices
         limits = (min = 0.0, max = PSY.get_activepowerlimits(PSY.get_tech(d)).max)
         name = PSY.get_name(d)
-        constraint_data[name] = DeviceRange(limits, Vector{Symbol}(), Vector{Symbol}())
-        _device_services!(constraint_data[name], d, model)
+        range_data = DeviceRange(name, limits)
+        _device_services!(range_data, d, model)
+        push!(constraint_data, range_data)
     end
 
     var_key = Symbol("P_$(T)")
@@ -154,13 +157,14 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                    model::DeviceModel{T, <:AbstractThermalDispatchFormulation},
                                    ::Type{<:PM.AbstractPowerModel},
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where T<:PSY.ThermalGen
-    constraint_data = Dict{String, DeviceRange}()
+    constraint_data = Vector{DeviceRange}()
     for d in devices
         name = PSY.get_name(d)
         limits = PSY.get_reactivepowerlimits(PSY.get_tech(d))
-        constraint_data[name] = DeviceRange(limits, Vector{Symbol}(), Vector{Symbol}())
-        #_device_services!(constraint_data[name], d, model)
+        range_data = DeviceRange(name, limits)
+        #_device_services!(range_data, d, model)
         # Uncomment when we implement reactive power services
+        push!(constraint_data, range_data)
     end
     device_range(psi_container,
                  constraint_data,
@@ -177,13 +181,14 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                    model::DeviceModel{T, <:AbstractThermalFormulation},
                                    ::Type{<:PM.AbstractPowerModel},
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where T<:PSY.ThermalGen
-    constraint_data = Dict{String, DeviceRange}()
+    constraint_data = Vector{DeviceRange}()
     for d in devices
         limits = PSY.get_reactivepowerlimits(PSY.get_tech(d))
         name = PSY.get_name(d)
-        constraint_data[name] = DeviceRange(limits, Vector{Symbol}(), Vector{Symbol}())
-        #_device_services!(constraint_data[name], d, model)
+        range_data = DeviceRange(name, limits)
+        #_device_services!(range_data, d, model)
         # Uncomment when we implement reactive power services
+        push!(constraint_data, range_data)
     end
     device_semicontinuousrange(psi_container,
                                constraint_data,
