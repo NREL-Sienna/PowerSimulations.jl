@@ -110,7 +110,7 @@ function add_cache!(feedforward::F, sim::Simulation,
     return
 end
 
-function _build_chronology_map(sim::Simulation)
+function _build_variable_map(sim::Simulation)
     for (stage_number,stage_name) in sim.sequence.order
         stage_number == 1 && continue
         stage = get_stage(sim, stage_name)
@@ -360,7 +360,7 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
         _attach_feed_forward!(sim, stage_name)
     end
     _assign_chronologies(sim)
-    _build_chronology_map(sim)
+    _build_variable_map(sim)
     _check_steps(sim, stage_initial_times)
     _build_stages!(sim, verbose = verbose; kwargs...)
     sim.internal.compiled_status = true
