@@ -33,7 +33,7 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                     model::DeviceModel{R, RenewableFullDispatch},
                                     system_formulation::Type{<:PM.AbstractPowerModel},
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
-    constraint_data = Dict{String,DeviceRange}()
+    constraint_data = Dict{String, DeviceRange}()
     for (ix, d) in enumerate(devices)
         tech = PSY.get_tech(d)
         name = PSY.get_name(d)

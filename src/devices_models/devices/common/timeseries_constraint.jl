@@ -1,7 +1,7 @@
 @doc raw"""
     device_timeseries_ub(psi_container::PSIContainer,
-                     ts_data::Dict{String,DeviceTimeSeries},
-                     range_data::Dict{String,DeviceRange},
+                     ts_data::Dict{String, DeviceTimeSeries},
+                     range_data::Dict{String, DeviceRange},
                      cons_name::Symbol,
                      var_name::Symbol)
 
@@ -17,14 +17,14 @@ Constructs upper bound for given variable and time series data and a multiplier.
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* ts_data::Dict{String,DeviceTimeSeries} : container of device time series data and scaling factors
-* range_data::Dict{String,DeviceRange} : container of device range constraint modification data
+* ts_data::Dict{String, DeviceTimeSeries} : container of device time series data and scaling factors
+* range_data::Dict{String, DeviceRange} : container of device range constraint modification data
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_ub(psi_container::PSIContainer,
-                              ts_data::Dict{String,DeviceTimeSeries},
-                              range_data::Dict{String,DeviceRange},
+                              ts_data::Dict{String, DeviceTimeSeries},
+                              range_data::Dict{String, DeviceRange},
                               cons_name::Symbol,
                               var_name::Symbol)
     time_steps = model_time_steps(psi_container)
@@ -64,8 +64,8 @@ end
 
 @doc raw"""
     device_timeseries_lb(psi_container::PSIContainer,
-                     ts_data::Dict{String,DeviceTimeSeries},
-                     range_data::Dict{String,DeviceRange},
+                     ts_data::Dict{String, DeviceTimeSeries},
+                     range_data::Dict{String, DeviceRange},
                      cons_name::Symbol,
                      var_name::Symbol)
 
@@ -83,14 +83,14 @@ where (name, data) in range_data.
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* ts_data::Dict{String,DeviceTimeSeries} : container of device time series data and scaling factors
-* range_data::Dict{String,DeviceRange} : container of device range constraint modification data
+* ts_data::Dict{String, DeviceTimeSeries} : container of device time series data and scaling factors
+* range_data::Dict{String, DeviceRange} : container of device range constraint modification data
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_lb(psi_container::PSIContainer,
-                              ts_data::Dict{String,DeviceTimeSeries},
-                              range_data::Dict{String,DeviceRange},
+                              ts_data::Dict{String, DeviceTimeSeries},
+                              range_data::Dict{String, DeviceRange},
                               cons_name::Symbol,
                               var_name::Symbol)
     time_steps = model_time_steps(psi_container)
@@ -117,8 +117,8 @@ end
 #NOTE: there is a floating, unnamed lower bound constraint in this function. This may need to be changed.
 @doc raw"""
     device_timeseries_param_ub(psi_container::PSIContainer,
-                                    ts_data::Dict{String,DeviceTimeSeries},
-                                    range_data::Dict{String,DeviceRange},
+                                    ts_data::Dict{String, DeviceTimeSeries},
+                                    range_data::Dict{String, DeviceRange},
                                     cons_name::Symbol,
                                     param_reference::UpdateRef,
                                     var_name::Symbol)
@@ -136,15 +136,15 @@ Constructs upper bound for given variable using a parameter. The constraint is
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* ts_data::Dict{String,DeviceTimeSeries} : container of device time series data and scaling factors
-* range_data::Dict{String,DeviceRange} : container of device range constraint modification data
+* ts_data::Dict{String, DeviceTimeSeries} : container of device time series data and scaling factors
+* range_data::Dict{String, DeviceRange} : container of device range constraint modification data
 * cons_name::Symbol : name of the constraint
 * param_reference::UpdateRef : UpdateRef to access the parameter
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_param_ub(psi_container::PSIContainer,
-                                    ts_data::Dict{String,DeviceTimeSeries},
-                                    range_data::Dict{String,DeviceRange},
+                                    ts_data::Dict{String, DeviceTimeSeries},
+                                    range_data::Dict{String, DeviceRange},
                                     cons_name::Symbol,
                                     param_reference::UpdateRef,
                                     var_name::Symbol)
@@ -188,8 +188,8 @@ end
 
 @doc raw"""
     device_timeseries_param_lb(psi_container::PSIContainer,
-                                    ts_data::Dict{String,DeviceTimeSeries},
-                                    range_data::Dict{String,DeviceRange},
+                                    ts_data::Dict{String, DeviceTimeSeries},
+                                    range_data::Dict{String, DeviceRange},
                                     cons_name::Symbol,
                                     param_reference::UpdateRef,
                                     var_name::Symbol)
@@ -207,15 +207,15 @@ Constructs lower bound for given variable using a parameter. The constraint is
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* ts_data::Dict{String,DeviceTimeSeries} : container of device time series data and scaling factors
-* range_data::Dict{String,DeviceRange} : container of device range constraint modification data
+* ts_data::Dict{String, DeviceTimeSeries} : container of device time series data and scaling factors
+* range_data::Dict{String, DeviceRange} : container of device range constraint modification data
 * cons_name::Symbol : name of the constraint
 * param_reference::UpdateRef : UpdateRef to access the parameter
 * var_name::Symbol : the name of the variable
 """
 function device_timeseries_param_lb(psi_container::PSIContainer,
-                                    ts_data::Dict{String,DeviceTimeSeries},
-                                    range_data::Dict{String,DeviceRange},
+                                    ts_data::Dict{String, DeviceTimeSeries},
+                                    range_data::Dict{String, DeviceRange},
                                     cons_name::Symbol,
                                     param_reference::UpdateRef,
                                     var_name::Symbol)
@@ -246,8 +246,8 @@ end
 
 @doc raw"""
     device_timeseries_ub_bin(psi_container::PSIContainer,
-                                    ts_data::Dict{String,DeviceTimeSeries},
-                                    range_data::Dict{String,DeviceRange},
+                                    ts_data::Dict{String, DeviceTimeSeries},
+                                    range_data::Dict{String, DeviceRange},
                                     var_name::Symbol,
                                     binvar_name::Symbol)
 
@@ -266,15 +266,15 @@ where (name, data) in range_data.
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* ts_data::Dict{String,DeviceTimeSeries} : container of device time series data and scaling factors
-* range_data::Dict{String,DeviceRange} : container of device range constraint modification data
+* ts_data::Dict{String, DeviceTimeSeries} : container of device time series data and scaling factors
+* range_data::Dict{String, DeviceRange} : container of device range constraint modification data
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol :  name of the variable
 * binvar_name::Symbol : name of binary variable
 """
 function device_timeseries_ub_bin(psi_container::PSIContainer,
-                                    ts_data::Dict{String,DeviceTimeSeries},
-                                    range_data::Dict{String,DeviceRange},
+                                    ts_data::Dict{String, DeviceTimeSeries},
+                                    range_data::Dict{String, DeviceRange},
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
@@ -308,8 +308,8 @@ end
 
 @doc raw"""
     device_timeseries_ub_bigM(psi_container::PSIContainer,
-                                    ts_data::Dict{String,DeviceTimeSeries},
-                                    range_data::Dict{String,DeviceRange},
+                                    ts_data::Dict{String, DeviceTimeSeries},
+                                    range_data::Dict{String, DeviceRange},
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     param_reference::UpdateRef,
@@ -333,8 +333,8 @@ Constructs upper bound for variable and time series and a multiplier or confines
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* ts_data::Dict{String,DeviceTimeSeries} : container of device time series data and scaling factors
-* range_data::Dict{String,DeviceRange} : container of device range constraint modification data
+* ts_data::Dict{String, DeviceTimeSeries} : container of device time series data and scaling factors
+* range_data::Dict{String, DeviceRange} : container of device range constraint modification data
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol :  name of the variable
 param_reference::UpdateRef : UpdateRef of access the parameters
@@ -342,8 +342,8 @@ param_reference::UpdateRef : UpdateRef of access the parameters
 * M_value::Float64 : bigM
 """
 function device_timeseries_ub_bigM(psi_container::PSIContainer,
-                                    ts_data::Dict{String,DeviceTimeSeries},
-                                    range_data::Dict{String,DeviceRange},
+                                    ts_data::Dict{String, DeviceTimeSeries},
+                                    range_data::Dict{String, DeviceRange},
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     param_reference::UpdateRef,

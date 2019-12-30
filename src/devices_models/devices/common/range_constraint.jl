@@ -1,6 +1,6 @@
 @doc raw"""
     device_range(psi_container::PSIContainer,
-                 range_data::Dict{String,DeviceRange},
+                 range_data::Dict{String, DeviceRange},
                  cons_name::Symbol,
                  var_name::Symbol)
 
@@ -25,12 +25,12 @@ where limits in range_data.
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* range_data::Dict{String,DeviceRange} : contains names and vector of min/max
+* range_data::Dict{String, DeviceRange} : contains names and vector of min/max
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 """
 function device_range(psi_container::PSIContainer,
-                      range_data::Dict{String,DeviceRange},
+                      range_data::Dict{String, DeviceRange},
                       cons_name::Symbol,
                       var_name::Symbol)
     time_steps = model_time_steps(psi_container)
@@ -61,7 +61,7 @@ end
 
 @doc raw"""
     device_semicontinuousrange(psi_container::PSIContainer,
-                                    range_data::Dict{String,DeviceRange},
+                                    range_data::Dict{String, DeviceRange},
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
@@ -91,13 +91,13 @@ where limits in range_data.
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* range_data::Dict{String,DeviceRange} : contains names and vector of min/max
+* range_data::Dict{String, DeviceRange} : contains names and vector of min/max
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 * binvar_name::Symbol : the name of the binary variable
 """
 function device_semicontinuousrange(psi_container::PSIContainer,
-                                    range_data::Dict{String,DeviceRange},
+                                    range_data::Dict{String, DeviceRange},
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
@@ -135,7 +135,7 @@ end
 
 @doc raw"""
     reserve_device_semicontinuousrange(psi_container::PSIContainer,
-                                    range_data::Dict{String,DeviceRange},
+                                    range_data::Dict{String, DeviceRange},
                                     cons_name::Symbol,
                                     var_name::Symbol,
                                     binvar_name::Symbol)
@@ -165,14 +165,14 @@ where limits in range_data.
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* range_data::Dict{String,DeviceRange} : contains names and vector of min/max
+* range_data::Dict{String, DeviceRange} : contains names and vector of min/max
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 * binvar_name::Symbol : the name of the binary variable
 """
 #This function looks suspicious and repetittive. Needs verification
 function reserve_device_semicontinuousrange(psi_container::PSIContainer,
-                                            range_data::Dict{String,DeviceRange},
+                                            range_data::Dict{String, DeviceRange},
                                             cons_name::Symbol,
                                             var_name::Symbol,
                                             binvar_name::Symbol)
