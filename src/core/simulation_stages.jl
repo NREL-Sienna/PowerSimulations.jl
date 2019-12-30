@@ -42,9 +42,11 @@ function Stage(template::OperationsProblemTemplate,
 end
 
 get_execution_count(s::Stage) = s.internal.execution_count
+get_executions(s::Stage) = s.internal.executions
 get_sys(s::Stage) = s.sys
 get_template(s::Stage) = s.template
 get_number(s::Stage) = s.internal.number
+get_psi_container(s::Stage) = s.internal.psi_container
 
 # This makes the choice in which variable to get from the results.
 function get_stage_variable(::Type{RecedingHorizon},
