@@ -115,7 +115,7 @@ mutable struct PSIContainer
                        parameters::Union{Nothing, Dict{UpdateRef, JuMP.Containers.DenseAxisArray}},
                        initial_conditions::DICKDA,
                        pm::Union{Nothing, PM.AbstractPowerModel})
-
+        resolution = IS.time_period_conversion(resolution)
         new(JuMPmodel,
             optimizer_factory,
             time_steps,
