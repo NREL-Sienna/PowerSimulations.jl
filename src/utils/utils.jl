@@ -15,3 +15,13 @@ function compute_sha256(filename::AbstractString)
         return bytes2hex(SHA.sha256(io))
     end
 end
+
+"""
+Return the key for the given value 
+"""
+function find_key_with_value(d, value)
+    for (k, v) in d
+        v==value && return k
+    end
+    error("dict does not have value == $value")
+end
