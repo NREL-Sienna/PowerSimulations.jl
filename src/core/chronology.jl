@@ -1,10 +1,10 @@
 struct Consecutive <: AbstractChronology end
 
 struct Synchronize <: AbstractChronology
-    from_steps::Int64    # number of time periods to grab data from
+    from_periods::Int64    # number of time periods to grab data from
     to_executions::Int64 # number of times to run using the same data
-    function Synchronize(;from_steps, to_executions)
-        new(from_steps, to_executions)
+    function Synchronize(;from_periods, to_executions)
+        new(from_periods, to_executions)
     end
 end
 
@@ -28,7 +28,7 @@ function check_chronology(sync::Synchronize,
                              horizons::Dict{String, Int64})
     from_stage_horizon = horizons[stages.first]
     to_stage_sync = sync.to_executions
-    from_stage_sync = sync.from_steps
+    from_stage_sync = sync.from_periods
 
     if from_stage_sync > from_stage_horizon
         throw(IS.ConflictingInputsError("The lookahead length $(from_stage_horizon) in stage is insufficient to syncronize with $(from_stage_sync) feed_forward steps"))
