@@ -130,7 +130,7 @@ Exports Operational Problem Results to a path
 """
 function write_results(results::Results, save_path::String; kwargs...)
     if !isdir(save_path)
-        throw(ArgumentError("Specified path is not valid. Run write_results to save results."))
+        throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
     new_folder_path = replace_chars("$save_path/$(round(Dates.now(), Dates.Minute))", ":", "-")
     folder_path = mkdir(new_folder_path)
@@ -159,7 +159,7 @@ Exports Simulation Results to the path where they come from in the results folde
 """
 function write_results(res::DualResults, folder_path::String, results_folder::String; kwargs...)
     if !isdir(folder_path)
-        throw(ArgumentError("Specified path is not valid. Run write_results to save results."))
+        throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
     _write_data(res.variables, res.time_stamp, folder_path; kwargs...)
     _write_data(res.duals, folder_path; kwargs...)
@@ -187,7 +187,7 @@ Exports Simulations Results to the path where they come from in the results fold
 
 function write_results(res::SimulationResults, folder_path::String, results_folder::String; kwargs...)
     if !isdir(folder_path)
-        throw(ArgumentError("Specified path is not valid. Run write_results to save results."))
+        throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
     _write_data(res.variables, res.time_stamp, folder_path; kwargs...)
     _write_optimizer_log(res.optimizer_log, folder_path)
