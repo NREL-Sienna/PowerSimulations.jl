@@ -87,7 +87,7 @@ function _get_time_series(psi_container::PSIContainer,
     active_timeseries = Dict{String, DeviceTimeSeries}()
     reactive_timeseries = Dict{String, DeviceTimeSeries}()
 
-    for (ix, device) in enumerate(devices)
+    for device in devices
         bus_number = PSY.get_number(PSY.get_bus(device))
         name = PSY.get_name(device)
         tech = PSY.get_tech(device)
