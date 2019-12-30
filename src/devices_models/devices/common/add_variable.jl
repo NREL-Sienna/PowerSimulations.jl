@@ -103,10 +103,10 @@ Adds a bounds to a variable in the optimization model.
 
 """
 function set_variable_bounds(psi_container::PSIContainer,
-                            bounds::Dict{String, DeviceRange},
+                            bounds::Vector{DeviceRange},
                             var_name::Symbol)
-    for t in model_time_steps(psi_container), (name, bound) in bounds
-        var = psi_container.variables[var_name][name, t]
+    for t in model_time_steps(psi_container), bound in bounds
+        var = psi_container.variables[var_name][bound.name, t]
         JuMP.set_upper_bound(var, bound.limits.max)
         JuMP.set_lower_bound(var, bound.limits.min)
     end
