@@ -17,7 +17,7 @@ struct DeviceTimeSeries
     timeseries::Vector{Float64}
     range::Union{Nothing, DeviceRange}
     function DeviceTimeSeries(name, bus_number, multiplier, timeseries, range)
-        !isnothing(range) && @assert name == range.name
+        @assert isnothing(range) || name == range.name
         return new(name, bus_number, multiplier, timeseries, range)
     end
 end
