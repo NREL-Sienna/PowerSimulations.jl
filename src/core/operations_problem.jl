@@ -46,7 +46,7 @@ end
     kwargs...) where {M<:AbstractOperationsProblem,
                       T<:PM.AbstractPowerFormulation}
 
-This builds the optimization problem with the specific system and template
+This builds the optimization problem with the specific system and template.
 
 # Arguments
 - `::Type{M} where {M<:AbstractOperationsProblem, T<:PM.AbstractPowerFormulation} = TestOpProblem`:
