@@ -35,6 +35,17 @@ function SimulationInternal(steps::Int64, stages_keys::Base.KeySet)
     )
 end
 
+@doc raw"""
+    Simulation(steps::Int64
+                step_resolution::Dates.TimePeriod
+                stages::Dict{String, Stage{<:AbstractOperationsProblem}}
+                sequence::Union{Nothing, SimulationSequence}
+                simulation_folder::String
+                name::String
+                internal::Union{Nothing, SimulationInternal}
+                )
+                                       
+""" # TODO: Add DocString 
 mutable struct Simulation
     steps::Int64
     step_resolution::Dates.TimePeriod
@@ -109,7 +120,7 @@ function _assign_chronologies(sim::Simulation)
 
     for (key, chron) in sim.sequence.intra_stage_chronologies
         stage = get_stage(sim, key.second)
-        from_stage_number = find_key_with_value(sim.sequence.order, key.first) #TODO: this is fragile 
+        from_stage_number = find_key_with_value(sim.sequence.order, key.first)
         isempty(from_stage_number) && throw(ArgumentError("Stage $(key.first) not specified in the order dictionary"))
         for stage_number in from_stage_number
             stage.internal.chronolgy_dict[stage_number] = chron
@@ -147,7 +158,8 @@ function _get_simulation_initial_times!(sim::Simulation)
         horizon = get_horizon(get_sequence(sim), stage_name)
         seq_interval = get_interval(get_sequence(sim), stage_name)
         if PSY.are_forecasts_contiguous(stage_system)
-            stage_initial_times[stage_number] = PSY.generate_initial_times(stage_system, seq_interval, horizon)
+            stage_initial_times[stage_number] = PSY.generate_initial_times(stage_system, 
+                                                                    seq_interval, horizon)
             if isempty(stage_initial_times[stage_number])
                 throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and 
                         forecast interval ($interval) definitions are not compatible"))
@@ -267,6 +279,13 @@ function _check_folder(folder::String)
     end
 end
 
+
+@doc raw"""
+        build!(sim::Simulation; 
+                verbose::Bool = false, 
+                kwargs...)
+                            
+""" # TODO: Add DocString     
 function build!(sim::Simulation; verbose::Bool = false, kwargs...)
     _check_sequence(sim)
     _check_chronologies(sim)

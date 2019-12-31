@@ -15,6 +15,15 @@ mutable struct StageInternal
     end
 end
 
+@doc raw"""
+    Stage({M<:AbstractOperationsProblem}
+        template::OperationsProblemTemplate
+        sys::PSY.System
+        optimizer::JuMP.OptimizerFactory
+        internal::Union{Nothing, StageInternal}
+        )
+                                             
+""" # TODO: Add DocString    
 mutable struct Stage{M<:AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
