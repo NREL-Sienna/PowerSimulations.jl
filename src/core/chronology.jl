@@ -1,13 +1,30 @@
+"""
+Defines a logical sequence for simulation within one stage.
+"""
 struct Consecutive <: AbstractChronology end
 
+@doc raw"""
+    Synchronize(from_steps::Int64, 
+                to_executions::Int64
+                )
+Defines the co-ordination of time between Two stages.  
+
+# Arguments
+- `from_steps::Int64`: Number of time periods to grab data from
+- `to_executions::Int64`: Number of times to run using the same data
+"""
 struct Synchronize <: AbstractChronology
-    from_steps::Int64    #number of time periods to grab data from
-    to_executions::Int64 #number of times to run using the same data
+    from_steps::Int64    
+    to_executions::Int64 
     function Synchronize(;from_steps, to_executions)
         new(from_steps, to_executions)
     end
 end
 
+"""
+    RecedingHorizon(step::Int64
+                    )                             
+""" # TODO: Add DocString    
 struct RecedingHorizon <: AbstractChronology
     step::Int64
     function RecedingHorizon(;step::Int64=1)

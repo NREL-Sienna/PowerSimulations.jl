@@ -1,3 +1,14 @@
+@doc raw"""
+    SimulationSequence(initial_time::Union{Dates.DateTime, Nothing}
+                        horizons::Dict{String, Int64}
+                        intervals::Dict{String, <:Dates.TimePeriod}
+                        order::Dict{Int64, String}
+                        intra_stage_chronologies::Dict{Pair{String, String}, <:AbstractChronology}
+                        feed_forward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward}
+                        ini_cond_chronology::Dict{String, <:AbstractChronology}
+                        cache::Dict{String, Vector{<:AbstractCache}}
+                        )                               
+""" # TODO: Add DocString  
 mutable struct SimulationSequence
     initial_time::Union{Dates.DateTime, Nothing}
     horizons::Dict{String, Int64}
