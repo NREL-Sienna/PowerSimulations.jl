@@ -41,7 +41,7 @@ function test_chronology(file_path::String)
             time_1 = convert(Dates.DateTime, Feather.read(time_file_path_1)[1,1]) # first time
             time_2 = convert(Dates.DateTime, Feather.read(time_file_path_2)[1,1])
             time_change = time_2 - time_1
-            interval = get_interval(get_sequence(sim),name)
+            interval = PSI.get_interval(PSI.get_sequence(sim),name)
             @test Dates.Hour(time_change) == Dates.Hour(interval)
         end
     end
