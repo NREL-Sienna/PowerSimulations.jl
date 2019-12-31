@@ -216,7 +216,7 @@ end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
 function _write_psi_container(psi_container::PSIContainer, save_path::String)
-    MOF_model = MOPFM()
+    MOF_model = MOPFM(format=MOI.FileFormats.FORMAT_MOF)
     MOI.copy_to(MOF_model, JuMP.backend(psi_container.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)
     return
