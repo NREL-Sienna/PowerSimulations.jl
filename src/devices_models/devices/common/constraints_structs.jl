@@ -1,15 +1,23 @@
 """ Data Container to construct range constraints"""
 struct DeviceRange
-    names::Vector{String}
-    values::Vector{MinMax}
-    additional_terms_ub::Vector{Vector{Symbol}}
-    additional_terms_lb::Vector{Vector{Symbol}}
+    name::String
+    limits::MinMax
+    additional_terms_ub::Vector{Symbol}
+    additional_terms_lb::Vector{Symbol}
 end
 
-function DeviceRange(count::Int64)
-    names = Vector{String}(undef, count)
-    limit_values = Vector{MinMax}(undef, count)
-    additional_terms_ub = fill(Vector{Symbol}(), count)
-    additional_terms_lb = fill(Vector{Symbol}(), count)
-    return DeviceRange(names, limit_values, additional_terms_ub, additional_terms_lb)
+function DeviceRange(name::String, limits::MinMax)
+    return DeviceRange(name, limits, Vector{Symbol}(), Vector{Symbol}())
+end
+
+struct DeviceTimeSeries
+    name::String
+    bus_number::Int64
+    multiplier::Float64
+    timeseries::Vector{Float64}
+    range::Union{Nothing, DeviceRange}
+    function DeviceTimeSeries(name, bus_number, multiplier, timeseries, range)
+        @assert isnothing(range) || name == range.name
+        return new(name, bus_number, multiplier, timeseries, range)
+    end
 end

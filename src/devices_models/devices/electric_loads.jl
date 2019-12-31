@@ -67,15 +67,19 @@ end
 
 ######################## output constraints without Time Series ############################
 function _get_time_series(psi_container::PSIContainer,
-                          devices::IS.FlattenIteratorWrapper{<:PSY.ElectricLoad})
+                          devices::IS.FlattenIteratorWrapper{<:PSY.ElectricLoad},
+                          model::DeviceModel = DeviceModel(PSY.PowerLoad, StaticPowerLoad),
+                          get_constraint_values::Function = x -> (min = 0.0, max = 0.0))
     initial_time = model_initial_time(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     time_steps = model_time_steps(psi_container)
     device_total = length(devices)
-    ts_data_active = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, device_total)
-    ts_data_reactive = Vector{Tuple{String, Int64, Float64, Vector{Float64}}}(undef, device_total)
 
-    for (ix, device) in enumerate(devices)
+    constraint_data = Vector{DeviceRange}()
+    ts_data_active = Vector{DeviceTimeSeries}()
+    ts_data_reactive = Vector{DeviceTimeSeries}()
+
+    for device in devices
         bus_number = PSY.get_number(PSY.get_bus(device))
         name = PSY.get_name(device)
         active_power = use_forecast_data ? PSY.get_maxactivepower(device) : PSY.get_activepower(device)
@@ -90,11 +94,17 @@ function _get_time_series(psi_container::PSIContainer,
         else
             ts_vector = ones(time_steps[end])
         end
-        ts_data_active[ix] = (name, bus_number, active_power, ts_vector)
-        ts_data_reactive[ix] = (name, bus_number, reactive_power, ts_vector)
+        range_data = DeviceRange(name, get_constraint_values(device))
+        _device_services!(range_data, device, model)
+        push!(constraint_data, range_data)
+        push!(ts_data_active, DeviceTimeSeries(name, bus_number, active_power, ts_vector,
+                                               range_data))
+        push!(ts_data_reactive, DeviceTimeSeries(name, bus_number, reactive_power,
+                                                 ts_vector, range_data))
+
     end
 
-    return ts_data_active, ts_data_reactive
+    return ts_data_active, ts_data_reactive, constraint_data
 
 end
 
@@ -106,12 +116,9 @@ function activepower_constraints!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    constraint_data = DeviceRange(length(devices))
-    for (ix, d) in enumerate(devices)
-        ub_value = PSY.get_activepower(d)
-        constraint_data.values[ix] = (min=0.0, max=ub_value)
-        constraint_data.names[ix] = PSY.get_name(d)
-    end
+    ts_data_active, _, constraint_data = _get_time_series(psi_container, devices, model,
+                                                          x -> (min=0.0, max=PSY.get_activepower(x)))
+
     if !parameters && !use_forecast_data
         device_range(psi_container,
                      constraint_data,
@@ -120,18 +127,15 @@ function activepower_constraints!(psi_container::PSIContainer,
         return
     end
 
-    ts_data_active, _ = _get_time_series(psi_container, devices)
     if parameters
         device_timeseries_param_ub(psi_container,
                                    ts_data_active,
-                                   constraint_data,
                                    Symbol("active_$(L)"),
                                    UpdateRef{L}("get_maxactivepower"),
                                    Symbol("P_$(L)"))
     else
         device_timeseries_ub(psi_container,
                             ts_data_active,
-                            constraint_data,
                             Symbol("active_$(L)"),
                             Symbol("P_$(L)"))
     end
@@ -146,12 +150,9 @@ function activepower_constraints!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    constraint_data = DeviceRange(length(devices))
-    for (ix, d) in enumerate(devices)
-        ub_value = PSY.get_activepower(d)
-        constraint_data.values[ix] = (min=0.0, max=ub_value)
-        constraint_data.names[ix] = PSY.get_name(d)
-    end
+    ts_data_active, _, constraint_data = _get_time_series(psi_container, devices, model,
+                                                          x -> (min=0.0, max=PSY.get_activepower(x)))
+
     if !parameters && !use_forecast_data
         device_range(psi_container,
                     constraint_data,
@@ -160,11 +161,9 @@ function activepower_constraints!(psi_container::PSIContainer,
         return
     end
 
-    ts_data_active, _ = _get_time_series(psi_container, devices)
     if parameters
         device_timeseries_ub_bigM(psi_container,
                                  ts_data_active,
-                                 constraint_data,
                                  Symbol("active_$(L)"),
                                  Symbol("P_$(L)"),
                                  UpdateRef{L}("get_maxactivepower"),
@@ -172,7 +171,6 @@ function activepower_constraints!(psi_container::PSIContainer,
     else
         device_timeseries_ub_bin(psi_container,
                                 ts_data_active,
-                                constraint_data,
                                 Symbol("active_$(L)"),
                                 Symbol("P_$(L)"),
                                 Symbol("ON_$(L)"))
@@ -203,17 +201,17 @@ function nodal_expression!(psi_container::PSIContainer,
     end
 
     for t in model_time_steps(psi_container)
-        for device_value in ts_data_active
+        for device in ts_data_active
             _add_to_expression!(psi_container.expressions[:nodal_balance_active],
-                            device_value[2],
-                            t,
-                            -device_value[3]*device_value[4][t])
+                                device.bus_number,
+                                t,
+                                -device.multiplier * device.timeseries[t])
         end
-        for device_value in ts_data_reactive
+        for device in ts_data_reactive
             _add_to_expression!(psi_container.expressions[:nodal_balance_reactive],
-                            device_value[2],
-                            t,
-                            -device_value[3]*device_value[4][t])
+                                device.bus_number,
+                                t,
+                                -device.multiplier * device.timeseries[t])
         end
     end
 
@@ -237,11 +235,11 @@ function nodal_expression!(psi_container::PSIContainer,
         return
     end
 
-    for t in model_time_steps(psi_container), device_value in ts_data_active
+    for t in model_time_steps(psi_container), device in ts_data_active
         _add_to_expression!(psi_container.expressions[:nodal_balance_active],
-                            device_value[2],
+                            device.bus_number,
                             t,
-                            -device_value[3]*device_value[4][t])
+                            -device.multiplier * device.timeseries[t])
     end
 
     return

@@ -78,39 +78,34 @@ function modify_device_model!(devices_template::Dict{Symbol, DeviceModel},
 end
 
 function include_service!(constraint_data::DeviceRange,
-                          index::Int64,
                           services::Vector{SR},
                           ::ServiceModel{SR, <:AbstractReservesFormulation}) where SR <: PSY.Reserve{PSY.ReserveUp}
         services_ub = Vector{Symbol}(undef, length(services))
         for (ix, service) in enumerate(services)
-            services_ub[ix] = Symbol("$(PSY.get_name(service))_$SR")
+            push!(constraint_data.additional_terms_ub, Symbol("$(PSY.get_name(service))_$SR"))
         end
-        constraint_data.additional_terms_ub[index] = services_ub
     return
 end
 
 function include_service!(constraint_data::DeviceRange,
-                          index::Int64,
                           services::Vector{SR},
                           ::ServiceModel{SR, <:AbstractReservesFormulation}) where SR <: PSY.Reserve{PSY.ReserveDown}
         services_ub = Vector{Symbol}(undef, length(services))
         for (ix, service) in enumerate(services)
-            services_ub[ix] = Symbol("$(PSY.get_name(service))_$SR")
+            #uses the upper bound of the (downward) service requirement to determine a constraint LB
+            push!(constraint_data.additional_terms_lb, Symbol("$(PSY.get_name(service))_$SR"))
         end
-        #uses the upper bound of the (downward) service requirement to determine a constraint LB
-        constraint_data.additional_terms_lb[index] = services_ub
     return
 end
 
-function _device_services(constraint_data::DeviceRange,
-                          index::Int64,
+function _device_services!(constraint_data::DeviceRange,
                           device::D,
                           model::DeviceModel) where D <: PSY.Device
     for service_model in get_services(model)
         if PSY.has_service(device, service_model.service_type)
             services = [s for s in PSY.get_services(device) if isa(s, service_model.service_type)]
             @assert !isempty(services)
-            include_service!(constraint_data, index, services, service_model)
+            include_service!(constraint_data, services, service_model)
         end
     end
     return
