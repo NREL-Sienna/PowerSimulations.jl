@@ -26,21 +26,14 @@ get_bounds_from_stage(p::RangeFF) = (p.variable_from_stage_lb, p.variable_from_s
 struct EnergyLimitFF <: AbstractAffectFeedForward 
     variable_from_stage::Symbol
     affected_variables::Vector{Symbol}
-    from_resolution::Dates.TimePeriod
-    cache::Union{Nothing, CacheKey} 
+    cache::Union{Nothing, Type{<:AbstractCache}} 
 end
 
-function EnergyLimitFF(;variable_from_stage, affected_variables, 
-                        from_resolution)
-
-    from_resolution = IS.time_period_conversion(from_resolution)
-
-    return EnergyLimitFF(variable_from_stage, affected_variables, 
-                        from_resolution, nothing)
+function EnergyLimitFF(;variable_from_stage, affected_variables)
+    return EnergyLimitFF(variable_from_stage, affected_variables, nothing)
 end
 
 get_variable_from_stage(p::EnergyLimitFF) = p.variable_from_stage
-get_from_resolution(p::EnergyLimitFF) = p.from_resolution
 
 struct SemiContinuousFF <: AbstractAffectFeedForward
     binary_from_stage::Symbol

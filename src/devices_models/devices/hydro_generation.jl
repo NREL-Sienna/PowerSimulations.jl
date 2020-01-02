@@ -332,14 +332,12 @@ function energylimit_constraints!(psi_container::PSIContainer,
                     feed_forward::EnergyLimitFF) where H<:PSY.HydroGen
 
     parameters = model_has_parameters(psi_container)
-    from_resolution = get_from_resolution(feed_forward)
     for prefix in get_affected_variables(feed_forward)
         var_name = Symbol(prefix, "_$(H)")
         param_reference = UpdateRef{JuMP.VariableRef}(var_name)
         
         if parameters
             device_energylimit(psi_container,
-                                from_resolution,
                                 param_reference,
                                 Symbol("energy_limit_$(H)"), # TODO: better name for this constraint
                                 Symbol("P_$(H)"))
@@ -352,7 +350,6 @@ function energylimit_constraints!(psi_container::PSIContainer,
 end
 
 function device_energylimit(psi_container::PSIContainer,
-                            from_resolution::Dates.TimePeriod,
                             param_reference::UpdateRef,
                             cons_name::Symbol,
                             var_name::Symbol)
@@ -362,12 +359,11 @@ function device_energylimit(psi_container::PSIContainer,
     set_name = JuMP.axes(variable, 1)
     constraint = add_cons_container!(psi_container, cons_name, set_name)
     param = _add_param_container!(psi_container, param_reference, set_name)
-    @assert from_resolution >=  resolution
 
     for name in set_name
         param[name] = PJ.add_parameter(psi_container.JuMPmodel, 1.0)
         constraint[name] = JuMP.@constraint(psi_container.JuMPmodel,
-                    sum([variable[name, t] for t in time_steps]) <= Float64(from_resolution / resolution) * param[name])
+                    sum([variable[name, t] for t in time_steps])/length(time_steps) <=  param[name])
     end
 
     return
