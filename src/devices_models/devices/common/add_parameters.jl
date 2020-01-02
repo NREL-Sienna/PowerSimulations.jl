@@ -3,7 +3,7 @@ function include_parameters(psi_container::PSIContainer,
                             param_reference::UpdateRef,
                             axs...)
     if !model_has_parameters(psi_container)
-        error("Operational Model doesn't have parameters enabled. Include the keyword use_parameters=true")
+        throw(IS.DataFormatError("Operational Model doesn't have parameters enabled. Include the keyword use_parameters=true"))
     end
     param = _add_param_container!(psi_container, param_reference, axs...)
     Cidx = CartesianIndices(length.(axs))
@@ -19,7 +19,7 @@ function include_parameters(psi_container::PSIContainer,
                             expression_name::Symbol,
                             multiplier::Float64 = 1.0)
     if !model_has_parameters(psi_container)
-        error("Operational Model doesn't have parameters enabled. Include the keyword use_parameters=true")
+        throw(IS.DataFormatError("Operational Model doesn't have parameters enabled. Include the keyword use_parameters=true"))
     end
     time_steps = model_time_steps(psi_container)
     param = _add_param_container!(psi_container, param_reference, (r.name for r in ts_data), time_steps)
