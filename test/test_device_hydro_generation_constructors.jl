@@ -67,34 +67,34 @@ end
 
 end
 
-# @testset "Hydro DCPLossLess HydroDispatch with HydroDispatchSeasonalFlow Formulations" begin
-#     model = DeviceModel(HydroDispatch, HydroDispatchSeasonalFlow)
+@testset "Hydro DCPLossLess HydroDispatch with HydroDispatchSeasonalFlow Formulations" begin
+    model = DeviceModel(HydroDispatch, HydroDispatchSeasonalFlow)
 
-#     # Parameters Testing
-#     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
-#     construct_device!(op_problem, :Hydro, model)
-#     moi_tests(op_problem, true, 24, 0, 24, 0, 0, false)
-#     psi_checkobjfun_test(op_problem, GAEVF)
+    # Parameters Testing
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
+    construct_device!(op_problem, :Hydro, model)
+    moi_tests(op_problem, true, 24, 0, 24, 0, 0, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
 
-#     # No Parameters Testing
-#     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd)
-#     construct_device!(op_problem, :Hydro, model);
-#     moi_tests(op_problem, false, 24, 0, 24, 0, 0, false)
-#     psi_checkobjfun_test(op_problem, GAEVF)
+    # No Parameters Testing
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd)
+    construct_device!(op_problem, :Hydro, model);
+    moi_tests(op_problem, false, 24, 0, 24, 0, 0, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
 
-#     # No Forecast Testing
-#     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true, use_forecast_data = false)
-#     construct_device!(op_problem, :Hydro, model);
-#     moi_tests(op_problem, true, 1, 0, 1, 0, 0, false)
-#     psi_checkobjfun_test(op_problem, GAEVF)
+    # No Forecast Testing
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true, use_forecast_data = false)
+    construct_device!(op_problem, :Hydro, model);
+    moi_tests(op_problem, true, 1, 0, 1, 0, 0, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
 
-#     # No Forecast - No Parameters Testing
-#     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd; use_forecast_data = false)
-#     construct_device!(op_problem, :Hydro, model);
-#     moi_tests(op_problem, false, 1, 1, 0, 0, 0, false)
-#     psi_checkobjfun_test(op_problem, GAEVF)
+    # No Forecast - No Parameters Testing
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd; use_forecast_data = false)
+    construct_device!(op_problem, :Hydro, model);
+    moi_tests(op_problem, false, 1, 0, 1, 1, 0, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
 
-# end
+end
 
 @testset "Hydro DCPLossLess HydroDispatch with HydroCommitmentRunOfRiver Formulations" begin
     model = DeviceModel(HydroDispatch, HydroCommitmentRunOfRiver)
