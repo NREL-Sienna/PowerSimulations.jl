@@ -5,7 +5,7 @@ function include_parameters(psi_container::PSIContainer,
     if !model_has_parameters(psi_container)
         throw(IS.DataFormatError("Operational Model doesn't have parameters enabled. Include the keyword use_parameters=true"))
     end
-    param = _add_param_container!(psi_container, param_reference, axs...)
+    param = add_param_container!(psi_container, param_reference, axs...)
     Cidx = CartesianIndices(length.(axs))
     for idx in Cidx
         param.data[idx] = PJ.add_parameter(psi_container.JuMPmodel, data[idx])
@@ -22,7 +22,7 @@ function include_parameters(psi_container::PSIContainer,
         throw(IS.DataFormatError("Operational Model doesn't have parameters enabled. Include the keyword use_parameters=true"))
     end
     time_steps = model_time_steps(psi_container)
-    param = _add_param_container!(psi_container, param_reference, (r.name for r in ts_data), time_steps)
+    param = add_param_container!(psi_container, param_reference, (r.name for r in ts_data), time_steps)
     expr = get_expression(psi_container, expression_name)
     for t in time_steps, r in ts_data
         param[r.name, t] = PJ.add_parameter(psi_container.JuMPmodel, r.timeseries[t]);
