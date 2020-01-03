@@ -144,7 +144,7 @@ function device_timeseries_param_ub(psi_container::PSIContainer,
     variable = get_variable(psi_container, var_name)
     ub_name = _middle_rename(cons_name, "_", "ub")
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
-    param = _add_param_container!(psi_container, param_reference, names, time_steps)
+    param = add_param_container!(psi_container, param_reference, names, time_steps)
     add_lower_bound = !all(isempty.((r.range.additional_terms_lb for r in ts_data)))
     if add_lower_bound
         lb_name = _middle_rename(cons_name, "_", "lb")
@@ -212,7 +212,7 @@ function device_timeseries_param_lb(psi_container::PSIContainer,
     lb_name = _middle_rename(cons_name, "_", "lb")
     names = (d.name for d in ts_data)
     constraint =add_cons_container!(psi_container, lb_name, names, time_steps)
-    param =_add_param_container!(psi_container, param_reference, names, time_steps)
+    param =add_param_container!(psi_container, param_reference, names, time_steps)
 
     for data in ts_data
         for t in time_steps
@@ -339,7 +339,7 @@ function device_timeseries_ub_bigM(psi_container::PSIContainer,
     names = (d.name for d in ts_data)
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     con_status =add_cons_container!(psi_container, key_status, names, time_steps)
-    param =_add_param_container!(psi_container, param_reference, names, time_steps)
+    param =add_param_container!(psi_container, param_reference, names, time_steps)
 
     for data in ts_data
         for t in time_steps
