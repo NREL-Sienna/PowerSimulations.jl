@@ -31,7 +31,7 @@ function _remove_underscore(original::Symbol)
         return original
     end
 
-    parts = split(String(original),"_")
+    parts = rsplit(String(original), "_", limit=2)
 
     return parts[1]
 end
