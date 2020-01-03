@@ -74,7 +74,6 @@ export DeviceEnergy
 # cache_models
 export TimeStatusChange
 
-
 #operation_models
 export GenericOpProblem
 #export UnitCommitment
@@ -101,7 +100,7 @@ export execute!
 export make_references
 ## Utils Exports
 export SimulationResultsReference
-export get_sim_resolution
+#export get_sim_resolution
 export write_op_problem
 export write_results
 export check_file_integrity
@@ -114,16 +113,17 @@ export get_con_index
 export get_var_index
 
 # Plotting Utils
-export sort_data
-export get_stacked_plot_data
-export get_bar_plot_data
-export get_stacked_generation_data
-export get_stacked_aggregation_data
-export bar_plot
-export stack_plot
-export report
-export make_fuel_dictionary
-export fuel_plot
+# Commented out until implemented
+# export sort_data
+# export get_stacked_plot_data
+# export get_bar_plot_data
+# export get_stacked_generation_data
+# export get_stacked_aggregation_data
+# export bar_plot
+# export stack_plot
+# export report
+# export make_fuel_dictionary
+# export fuel_plot
 
 #################################################################################
 # Imports
@@ -216,9 +216,6 @@ include("network_models/network_constructor.jl")
 
 # Commented out until properly implemented
 #Operational Model Constructors
-#include("operation_templates/economic_dispatch.jl")
-#include("operation_templates/unit_commitment.jl")
-#include("operation_templates/opf.jl")
 
 #Routines
 include("routines/make_initial_conditions.jl")
