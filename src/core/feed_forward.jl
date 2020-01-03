@@ -34,9 +34,28 @@ function SemiContinuousFF(;binary_from_stage, affected_variables)
 end
 
 get_binary_from_stage(p::SemiContinuousFF) = p.binary_from_stage
+get_variable_from_stage(p::SemiContinuousFF) = p.binary_from_stage
 get_affected_variables(p::AbstractAffectFeedForward) = p.affected_variables
 
 ####################### Feed Forward Affects ###############################################
+
+function _add_parameter_value(psi_container::PSIContainer, 
+                                param_array::P, value,
+                                axs...) where {P<:JuMP.Containers.DenseAxisArray}
+    @assert length(param_array.axes) == length(axs)
+    isassigned(param_array, axs...) && return param_array[axs...]
+    param_array[axs...] = PJ.add_parameter(psi_container.JuMPmodel, value)
+    return param_array[axs...]
+end
+
+function _add_parameter_value(psi_container::PSIContainer,
+                                param_array::P, value,
+                                axs...) where { P<:JuMP.Containers.DenseAxisArray{PJ.ParameterRef,1}}
+    @assert length(param_array.axes) == 1
+    isassigned(param_array, first(axs)) && return param_array[first(axs)]
+    param_array[first(axs)] = PJ.add_parameter(psi_container.JuMPmodel, value)
+    return param_array[first(axs)]
+end
 
 @doc raw"""
         ub_ff(psi_container::PSIContainer,
@@ -72,15 +91,17 @@ function ub_ff(psi_container::PSIContainer,
     set_name = axes[1]
 
     @assert axes[2] == time_steps
-    param_ub = _add_param_container!(psi_container, param_reference, set_name)
+    param_ub = get_parameters(psi_container, param_reference) 
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
     for name in axes[1]
         value = JuMP.upper_bound(variable[name, 1])
-        param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel, value)
         for t in axes[2]
+            # Create Parameter & store it in the DenseAxisArray
+            p_ub = _add_parameter_value(psi_container, param_ub, value, name, t)
+            # Use the Parameter in the constraint
             con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                                variable[name, t] <= param_ub[name])
+                                                variable[name, t] <= p_ub)
         end
     end
 
@@ -136,15 +157,19 @@ function range_ff(psi_container::PSIContainer,
     con_ub =add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
     for name in axes[1]
-        param_lb[name] = PJ.add_parameter(psi_container.JuMPmodel,
-                                          JuMP.lower_bound(variable[name, 1]))
-        param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel,
-                                          JuMP.upper_bound(variable[name, 1]))
         for t in axes[2]
+            # Create Parameter & store it in the DenseAxisArray
+            p_ub = _add_parameter_value(psi_container, param_ub, 
+                                        JuMP.upper_bound(variable[name, 1]),
+                                        name, t)
+            p_lb = _add_parameter_value(psi_container, param_lb, 
+                                        JuMP.lower_bound(variable[name, 1]),
+                                        name, t)
+            # Use the Parameter in the constraint
             con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                            variable[name, t] <= param_ub[name])
+                                            variable[name, t] <= p_ub)
             con_lb[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                            variable[name, t] >= param_lb[name])
+                                            variable[name, t] >= p_lb)
         end
     end
 
@@ -199,19 +224,22 @@ function semicontinuousrange_ff(psi_container::PSIContainer,
     axes = JuMP.axes(variable)
     set_name = axes[1]
     @assert axes[2] == time_steps
-    param = _add_param_container!(psi_container, param_reference, set_name)
+    param = get_parameters(psi_container, param_reference) 
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
     con_lb = add_cons_container!(psi_container, lb_name, set_name, time_steps)
 
     for name in axes[1]
         ub_value = JuMP.upper_bound(variable[name, 1])
         lb_value = JuMP.lower_bound(variable[name, 1])
-        param[name] = PJ.add_parameter(psi_container.JuMPmodel, 1.0)
         for t in axes[2]
+            # Create Parameter & store it in the DenseAxisArray
+            p = _add_parameter_value(psi_container, param,
+                                    1.0, name, t)
+            # Use the Parameter in the constraint
             con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                            variable[name, t] <= ub_value*param[name])
+                                            variable[name, t] <= ub_value * p)
             con_lb[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                        variable[name, t] >= lb_value*param[name])
+                                        variable[name, t] >= lb_value * p)
         end
     end
 
@@ -280,6 +308,22 @@ function feed_forward_update(sync::Chron,
     for device_name in axes(param_array)[1]
         var_value = get_stage_variable(Chron, from_stage, device_name, param_reference, var_count)
         PJ.fix(param_array[device_name], var_value)
+    end
+    return
+end
+
+function feed_forward_update(sync::SynchronizeTime,
+                            variable_reference::UpdateRef{JuMP.VariableRef},
+                            param_array::JuMPParamArray,
+                            to_stage::Stage,
+                            from_stage::Stage)
+
+    variable_map = get_variable_map(to_stage)
+    execution_count = get_execution_count(to_stage) 
+    for device_name in axes(param_array, 1) , time in axes(param_array, 2)
+        var_count = variable_map[(execution_count+1,time)]
+        var_value = get_stage_variable(typeof(sync), from_stage, device_name, variable_reference, var_count)
+        PJ.fix(param_array[device_name, time], var_value)
     end
 
     return
