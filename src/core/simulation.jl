@@ -227,6 +227,54 @@ function _populate_caches!(sim::Simulation, stage_name::String)
     return
 end
 
+function _get_device_info(sim::Simulation, stage_name::String, ff_key)
+    #Note: key[1] = Stage name, key[2] = template field name, key[3] = device model key
+    stage = get_stage(sim, stage_name)
+    field_dict = getfield(stage.template, ff_key[2])
+    device_model = get(field_dict, ff_key[3], nothing)
+    device_type = device_model.device_type
+    devices = PSY.get_components(device_type, stage.sys)
+    devices_names  = [PSY.get_name(d) for d in devices]
+    return devices_names, device_type
+end
+
+function _add_params(sim::Simulation, stage_name::String)
+    stage = get_stage(sim, stage_name)
+    chronology = filter(p->(p.first.second == stage_name), sim.sequence.intra_stage_chronologies)
+    for chron in chronology
+        horizon = get_horizon(sim.sequence, stage_name)
+        feed_forward = filter(p->(p.first[1] == stage_name), sim.sequence.feed_forward)
+        for ff in feed_forward
+            names, device_type = _get_device_info(sim, stage_name, ff.first)
+            var_name = UpdateRef{JuMP.VariableRef}(Symbol(get_variable_from_stage(ff.second), "_$(device_type)"))
+            _add_param_container!(stage.internal.psi_container, chron.second, var_name, names, 1:horizon)
+        end
+    end
+    return
+end
+
+function _build_variable_map(sim::Simulation)
+    for (stage_number,stage_name) in sim.sequence.order
+        stage_number == 1 && continue
+        stage = get_stage(sim, stage_name)
+        previous_stage = get_stage(sim, stage_number - 1)
+        executions = get_executions(stage)
+        horizon = get_horizon(get_sequence(sim), stage_name)
+        map = get_variable_map(stage)
+        interval = get_interval(get_sequence(sim), stage_name)
+        resolution = PSY.get_forecasts_resolution(get_sys(stage))
+        prev_resolution = PSY.get_forecasts_resolution(get_sys(previous_stage))
+        sub_periods = prev_resolution/resolution
+        for e in 1:executions
+            for t in 1:horizon
+                elapsed_time = ((interval / resolution) * (e-1)) + t - 1
+                map[(e, t)] = ((sub_periods + elapsed_time) - (elapsed_time % sub_periods)) / sub_periods
+            end
+        end
+    end
+    return
+end
+
 function _build_stages!(sim::Simulation, verbose::Bool = true; kwargs...)
     system_to_file = get(kwargs, :system_to_file, true)
     for (stage_number, stage_name) in sim.sequence.order
@@ -239,6 +287,7 @@ function _build_stages!(sim::Simulation, verbose::Bool = true; kwargs...)
                                                     use_parameters = true,
                                                     initial_time = sim.sequence.initial_time,
                                                     horizon = horizon)
+        _add_params(sim, stage_name)
         _build!(stage.internal.psi_container,
                 stage.template,
                 stage.sys;
@@ -305,6 +354,7 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
     _check_steps(sim, stage_initial_times)
     _build_stages!(sim, verbose = verbose; kwargs...)
     _assign_chronologies(sim)
+    _build_variable_map(sim)
     sim.internal.compiled_status = true
     return
 end
