@@ -10,31 +10,33 @@ function construct_services!(psi_container::PSIContainer,
     isempty(services_template) && return
     services_mapping = PSY.get_contributing_device_mapping(sys)
     for service_model in values(services_template)
-        contributing_devices = _filter_service_mapping(service_model.service_type, services_mapping)
-        for value in values(contributing_devices)
-            add_service!(psi_container,
-                         value.service,
-                         service_model,
-                         value.contributing_devices,
-                         devices_template; kwargs...)
-        end
+        service_devices = _filter_service_mapping(service_model.service_type, services_mapping)
+        construct_service!(psi_container,
+                            sys,
+                            service_devices,
+                            service_model,
+                            devices_template; kwargs...)
     end
     return
 end
 
-function add_service!(psi_container::PSIContainer, service::SR,
+function construct_service!(psi_container::PSIContainer, 
+                      sys::PSY.System,
+                      service_devices::Dict{NamedTuple{(:type, :name),Tuple{DataType,String}},PSY.ServiceContributingDevices},
                       model::ServiceModel{SR, RangeReserve},
-                      contributing_devices::Vector{<:PSY.Device},
                       devices_template::Dict{Symbol, DeviceModel};
                       kwargs...) where SR<:PSY.Reserve
+    services = PSY.get_components(model.service_type, sys)
     #Variables
-    activeservice_variables!(psi_container, service, contributing_devices)
+    activeservice_variables!(psi_container, services, service_devices)
     # Constraints
-    service_requirement_constraint!(psi_container, service)
+    service_requirement_constraints!(psi_container, services, model)
 
-    modify_device_model!(devices_template,
-                         model,
-                         contributing_devices)
+    for contributing_devices in values(service_devices)
+        modify_device_model!(devices_template,
+                            model,
+                            contributing_devices.contributing_devices)
+    end
 
     return
 end
