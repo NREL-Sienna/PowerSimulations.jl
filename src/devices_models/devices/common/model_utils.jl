@@ -18,6 +18,18 @@ function _add_param_container!(psi_container::PSIContainer, param_reference::Upd
     return psi_container.parameters[param_reference]
 end
 
+function _add_param_container!(psi_container::PSIContainer, chron::C,
+                        update_reference::UpdateRef, axs...) where {C<: AbstractChronology}
+    _add_param_container!(psi_container, update_reference, axs[1:end-1]...)
+    return
+end
+
+function _add_param_container!(psi_container::PSIContainer, chron::SynchronizeTime,
+                        update_reference::UpdateRef, axs...)
+    _add_param_container!(psi_container, update_reference, axs...)
+    return
+end
+
 function _middle_rename(original::Symbol, split_char::String, addition::String)
 
     parts = split(String(original),split_char)
