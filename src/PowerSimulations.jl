@@ -203,7 +203,6 @@ include("network_models/ptdf_model.jl")
 
 #Device constructors
 include("devices_models/device_constructors/common/constructor_validations.jl")
-include("devices_models/device_constructors/common/device_constructor_utils.jl")
 include("devices_models/device_constructors/thermalgeneration_constructor.jl")
 include("devices_models/device_constructors/hydrogeneration_constructor.jl")
 include("devices_models/device_constructors/branch_constructor.jl")
