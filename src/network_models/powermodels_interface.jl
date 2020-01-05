@@ -345,7 +345,8 @@ function add_pm_var_refs!(psi_container::PSIContainer,
                                                         time_steps)
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
-                psi_container.variables[ps_v][name, t] = PM.var(psi_container.pm, t, 1, pm_v)[1] #pm_vars[pm_v][pm_bus]
+                number = PSY.get_number(bus)
+                psi_container.variables[ps_v][name, t] = PM.var(psi_container.pm, t, number, pm_v)[number] #pm_vars[pm_v][pm_bus]
             end
         end
     end
