@@ -1,19 +1,4 @@
 function include_parameters(psi_container::PSIContainer,
-                            data::Array,
-                            param_reference::UpdateRef,
-                            axs...)
-    if !model_has_parameters(psi_container)
-        throw(IS.DataFormatError("Operational Model doesn't have parameters enabled. Include the keyword use_parameters=true"))
-    end
-    param = add_param_container!(psi_container, param_reference, axs...)
-    Cidx = CartesianIndices(length.(axs))
-    for idx in Cidx
-        param.data[idx] = PJ.add_parameter(psi_container.JuMPmodel, data[idx])
-    end
-    return param
-end
-
-function include_parameters(psi_container::PSIContainer,
                             ts_data::Vector{DeviceTimeSeries},
                             param_reference::UpdateRef,
                             expression_name::Symbol,
