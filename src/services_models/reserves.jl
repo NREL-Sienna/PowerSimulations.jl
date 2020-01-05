@@ -33,8 +33,9 @@ function service_requirement_constraint!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
     forecast = model_uses_forecasts(psi_container)
     initial_time = model_initial_time(psi_container)
-    reserve_variable = get_variable(psi_container, Symbol("$(PSY.get_name(service))_$SR"))
-    constraint_name = Symbol(PSY.get_name(service), "_requirement_$SR")
+    service_name = PSY.get_name(service)
+    reserve_variable = get_variable(psi_container, Symbol("$(service_name)_$SR"))
+    constraint_name = Symbol(service_name, "_requirement_$SR")
     constraint = add_cons_container!(psi_container, constraint_name, time_steps)
     requirement = PSY.get_requirement(service)
     if forecast
