@@ -10,3 +10,4 @@ Manifest.toml
 .vscode
 *.h5
 tags
+test/Project.toml
