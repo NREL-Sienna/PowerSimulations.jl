@@ -18,15 +18,15 @@ function add_param_container!(psi_container::PSIContainer, param_reference::Upda
     return psi_container.parameters[param_reference]
 end
 
-function _add_param_container!(psi_container::PSIContainer, chron::C,
+function add_param_container!(psi_container::PSIContainer, chron::C,
                         update_reference::UpdateRef, axs...) where {C<: AbstractChronology}
-    _add_param_container!(psi_container, update_reference, axs[1:end-1]...)
+    add_param_container!(psi_container, update_reference, axs[1:end-1]...)
     return
 end
 
-function _add_param_container!(psi_container::PSIContainer, chron::SynchronizeTime,
+function add_param_container!(psi_container::PSIContainer, chron::SynchronizeTime,
                         update_reference::UpdateRef, axs...)
-    _add_param_container!(psi_container, update_reference, axs...)
+    add_param_container!(psi_container, update_reference, axs...)
     return
 end
 

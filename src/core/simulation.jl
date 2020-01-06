@@ -247,7 +247,7 @@ function _add_params(sim::Simulation, stage_name::String)
         for ff in feed_forward
             names, device_type = _get_device_info(sim, stage_name, ff.first)
             var_name = UpdateRef{JuMP.VariableRef}(Symbol(get_variable_from_stage(ff.second), "_$(device_type)"))
-            _add_param_container!(stage.internal.psi_container, chron.second, var_name, names, 1:horizon)
+            add_param_container!(stage.internal.psi_container, chron.second, var_name, names, 1:horizon)
         end
     end
     return
