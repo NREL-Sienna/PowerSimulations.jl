@@ -84,7 +84,7 @@ function ub_ff(psi_container::PSIContainer,
     set_name = axes[1]
 
     @assert axes[2] == time_steps
-    param_ub = _add_param_container!(psi_container, param_reference, set_name)
+    param_ub = add_param_container!(psi_container, param_reference, set_name)
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
     for name in axes[1]
@@ -140,12 +140,12 @@ function range_ff(psi_container::PSIContainer,
     @assert axes[2] == time_steps
 
     #Create containers for the constraints
-    param_lb =_add_param_container!(psi_container, param_reference[1], set_name)
-    param_ub =_add_param_container!(psi_container, param_reference[2], set_name)
+    param_lb = add_param_container!(psi_container, param_reference[1], set_name)
+    param_ub = add_param_container!(psi_container, param_reference[2], set_name)
 
     #Create containers for the parameters
-    con_lb =add_cons_container!(psi_container, lb_name, set_name, time_steps)
-    con_ub =add_cons_container!(psi_container, ub_name, set_name, time_steps)
+    con_lb = add_cons_container!(psi_container, lb_name, set_name, time_steps)
+    con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
     for name in axes[1]
         param_lb[name] = PJ.add_parameter(psi_container.JuMPmodel,
@@ -211,7 +211,7 @@ function semicontinuousrange_ff(psi_container::PSIContainer,
     axes = JuMP.axes(variable)
     set_name = axes[1]
     @assert axes[2] == time_steps
-    param = _add_param_container!(psi_container, param_reference, set_name)
+    param = add_param_container!(psi_container, param_reference, set_name)
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
     con_lb = add_cons_container!(psi_container, lb_name, set_name, time_steps)
 

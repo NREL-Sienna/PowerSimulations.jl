@@ -325,6 +325,7 @@ function energylimit_constraints!(psi_container::PSIContainer,
     return
 end
 
+
 function energylimit_constraints!(psi_container::PSIContainer,
                     devices::IS.FlattenIteratorWrapper{H},
                     model::DeviceModel{H, <:AbstractHydroFormulation},
@@ -344,6 +345,7 @@ function energylimit_constraints!(psi_container::PSIContainer,
         else
             @warn("Simulation without parameters doesn't support EnergyLimitFF, please consider changing your simulation setup.")
         end
+
     end
 
     return

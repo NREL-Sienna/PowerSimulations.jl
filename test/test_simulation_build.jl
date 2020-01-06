@@ -1,3 +1,4 @@
+IS.configure_logging(console_level = Logging.Info)
 file_path = joinpath(pwd(), "testing_sequence_build")
 !isdir(file_path) && mkdir(file_path)
 
