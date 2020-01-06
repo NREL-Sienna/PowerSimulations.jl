@@ -5,8 +5,8 @@ struct RangeReserve <: AbstractReservesFormulation end
 This function add the variables for reserves to the model
 """
 function activeservice_variables!(psi_container::PSIContainer,
-                                  services::IS.FlattenIteratorWrapper{SR},
-                                  service_devices::Dict{NamedTuple{(:type, :name),Tuple{DataType,String}},PSY.ServiceContributingDevices}) where SR<:PSY.Reserve
+                                  service::SR,
+                                  contributing_devices::Vector{<:PSY.Device}) where SR<:PSY.Reserve
 
     function get_ub_val(d::PSY.Device)
         return d.tech.activepowerlimits.max
@@ -14,66 +14,51 @@ function activeservice_variables!(psi_container::PSIContainer,
     function get_ub_val(d::PSY.RenewableGen)
         return d.tech.rating
     end
-    for service in services
-        devices = service_devices[(type = typeof(service), name = PSY.get_name(service))]
-        add_variable(psi_container,
-                    devices.contributing_devices,
-                    Symbol("$(PSY.get_name(service))_$SR"),
-                    false;
-                    ub_value = d -> get_ub_val(d),
-                    lb_value = d -> 0 )
-    end
+    add_variable(psi_container,
+                contributing_devices,
+                Symbol("$(PSY.get_name(service))_$SR"),
+                false;
+                ub_value = d -> get_ub_val(d),
+                lb_value = d -> 0 )
     return
 end
 
 ################################## Reserve Requirement Constraint ##########################
 # This function can be generalized later for any constraint of type Sum(req_var) >= requirement,
 # it will only need to be specific to the names and get forecast string.
-function service_requirement_constraints!(psi_container::PSIContainer,
-                                services::IS.FlattenIteratorWrapper{SR},
+function service_requirement_constraint!(psi_container::PSIContainer,
+                                service::SR,
                                 model::ServiceModel{SR, RangeReserve}) where SR<:PSY.Reserve
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
-
     initial_time = model_initial_time(psi_container)
     time_steps = model_time_steps(psi_container)
-    device_total = length(services)
-
     constraint_name = Symbol("requirement_$SR")
-    names = (PSY.get_name(s) for s in services)
-    constraint = add_cons_container!(psi_container, constraint_name, names, time_steps)
-    ts_data = Vector{DeviceTimeSeries}()
+    name = PSY.get_name(service)
+    constraint = get_constraints(psi_container, constraint_name)
+    reserve_variable = get_variable(psi_container, Symbol("$(name)_$SR"))
 
-    for service in services
-        name = PSY.get_name(service)
-        active_power = PSY.get_requirement(service)
-        if use_forecast_data
-            forecast = PSY.get_forecast(PSY.Deterministic,
-                                        service,
-                                        initial_time,
-                                        "get_requirement",
-                                        length(time_steps))
-            ts_vector = TS.values(PSY.get_data(forecast))
-        else
-            ts_vector = ones(time_steps[end])
-        end
-        push!(ts_data, DeviceTimeSeries(name, 0, active_power, ts_vector, nothing))
+    if use_forecast_data
+        ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
+                                                            service,
+                                                            initial_time,
+                                                            "get_requirement")))
+    else
+        ts_vector = ones(time_steps[end])
     end
-    if parameters
-        param = add_param_container!(psi_container, UpdateRef{SR}("get_requirement"), names, time_steps)
 
-        for data in ts_data, t in time_steps
-            param[data.name, t] = PJ.add_parameter(psi_container.JuMPmodel, 
-                                                   data.timeseries[t])
-            reserve_variable = get_variable(psi_container, Symbol("$(data.name)_$SR"))
-            constraint[data.name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                        sum(reserve_variable[:,t]) >= param[data.name, t] * data.multiplier)
+    if parameters
+        param = get_parameters(psi_container, UpdateRef{SR}("get_requirement"))
+        for t in time_steps
+            param[name, t] = PJ.add_parameter(psi_container.JuMPmodel, 
+                                                   ts_vector[t])
+            constraint[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
+                                        sum(reserve_variable[:,t]) >= param[name, t])
         end
     else
-        for data in ts_data, t in time_steps
-            reserve_variable = get_variable(psi_container, Symbol("$(data.name)_$SR"))
-            constraint[data.name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                    sum(reserve_variable[:,t]) >= data.timeseries[t] * data.multiplier)
+        for t in time_steps
+            constraint[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
+                                    sum(reserve_variable[:,t]) >= ts_vector[t])
         end
     end
     return
