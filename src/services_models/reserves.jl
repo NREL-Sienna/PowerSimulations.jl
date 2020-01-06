@@ -60,7 +60,7 @@ function service_requirement_constraints!(psi_container::PSIContainer,
         push!(ts_data, DeviceTimeSeries(name, 0, active_power, ts_vector, nothing))
     end
     if parameters
-        param = _add_param_container!(psi_container, UpdateRef{SR}("get_requirement"), names, time_steps)
+        param = add_param_container!(psi_container, UpdateRef{SR}("get_requirement"), names, time_steps)
 
         for data in ts_data, t in time_steps
             param[data.name, t] = PJ.add_parameter(psi_container.JuMPmodel, 
