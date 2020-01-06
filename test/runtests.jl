@@ -26,12 +26,11 @@ const PJ = ParameterJuMP
 const IS = InfrastructureSystems
 abstract type TestOpProblem<:PSI.AbstractOperationsProblem end
 
-ipopt_optimizer = JuMP.with_optimizer(Ipopt.Optimizer)  # use default print_level = 5
+ipopt_optimizer = JuMP.with_optimizer(Ipopt.Optimizer, print_level=0) # use default print_level = 5
                                                         # set to 0 to disable
-ipopt_ws_solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, mu_init=1e-4)
-GLPK_optimizer = JuMP.with_optimizer(GLPK.Optimizer, msg_lev = GLPK.MSG_ON)
-Cbc_optimizer = JuMP.with_optimizer(Cbc.Optimizer, logLevel=1)
-OSQP_optimizer = JuMP.with_optimizer(OSQP.Optimizer, verbose = true)
+GLPK_optimizer = JuMP.with_optimizer(GLPK.Optimizer, msg_lev = GLPK.MSG_OFF)
+Cbc_optimizer = JuMP.with_optimizer(Cbc.Optimizer, logLevel=0)
+OSQP_optimizer = JuMP.with_optimizer(OSQP.Optimizer, verbose = false)
 
 const LOG_FILE = "power-simulations-test.log"
 

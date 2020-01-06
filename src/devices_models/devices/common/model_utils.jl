@@ -13,7 +13,7 @@ function add_cons_container!(psi_container::PSIContainer, cons_name::Symbol, axs
     return psi_container.constraints[cons_name]
 end
 
-function _add_param_container!(psi_container::PSIContainer, param_reference::UpdateRef, axs...)
+function add_param_container!(psi_container::PSIContainer, param_reference::UpdateRef, axs...)
     psi_container.parameters[param_reference] = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...)
     return psi_container.parameters[param_reference]
 end

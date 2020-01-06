@@ -1,3 +1,4 @@
+IS.configure_logging(console_level = Logging.Info)
 if !isdir(joinpath(pwd(), "testing_reading_results"))
     file_path = mkdir(joinpath(pwd(), "testing_reading_results"))
 else

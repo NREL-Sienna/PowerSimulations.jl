@@ -1,10 +1,11 @@
+IS.configure_logging(console_level = Logging.Info)
 if !isdir(joinpath(pwd(), "testing_reading_results"))
     file_path = mkdir(joinpath(pwd(), "testing_reading_results"))
 else
     file_path = joinpath(pwd(), "testing_reading_results")
 end
 
-function test_chronology(file_path::String)
+function test_chronology(file_path::String)    
     ### Receding Horizon
 
     stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
