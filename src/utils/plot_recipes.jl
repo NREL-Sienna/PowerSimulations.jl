@@ -30,12 +30,12 @@ RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String)
     grid := false
     title := variable
     label := results.labels
-    legend := :topleft
+    legend := :outerright
     interval = time[2]-time[1]
-    time_interval = convert(Dates.Hour,interval*n)
+    time_interval = convert(Dates.Hour, interval * n)
     xlabel := "$time_interval"
     ylabel := "Generation (MW)"
-    xtick := time[1]:time_interval:time[n]+interval
+    xtick := [time[1], time[n]]
     #create filled polygon
     sy = vcat(z[:,1],zeros(n))
     sx = [time[1:n]; reverse(time[1:n])]
@@ -62,12 +62,12 @@ RecipesBase.@recipe function StackedGeneration(res::StackedGeneration)
     grid := false
     title := "Generator"
     label := res.labels
-    legend := :bottomright
+    legend := :outerright
     interval = time[2]-time[1]
-    time_interval = convert(Dates.Hour,interval*n)
+    time_interval = convert(Dates.Hour, interval * n)
     xlabel := "$time_interval"
     ylabel := "Generation (MW)"
-    xtick := time[1]:time_interval:time[n]+interval
+    xtick := [time[1], time[n]]
     # Create filled polygon
     sy = vcat(z[:,1],zeros(n))
     sx = [time[1:n]; reverse(time[1:n])]
@@ -97,6 +97,7 @@ RecipesBase.@recipe function BarPlot(res::BarPlot, variable::String)
   title := variable
   seriestype := :shape
   label := res.labels
+  legend := :outerright
   interval = time[2]-time[1]
   time_interval = convert(Dates.Hour,interval*n)
   xlabel := "$time_interval, $(time[1])"
@@ -125,11 +126,12 @@ RecipesBase.@recipe function BarGen(res::BarGeneration)
     title := "Generator"
     start_time = time[1]
     interval = time[2]-time[1]
-    time_interval = convert(Dates.Hour,interval*length(time))
+    time_interval = convert(Dates.Hour, interval*length(time))
     xlabel := "$time_interval, $(time[1])"
     ylabel := "Generation(MW)"
     seriestype := :shape
     label := res.labels
+    legend := :outerright
     xticks := false
     xlims := (1, 8)
     for c=1:size(z,2)
