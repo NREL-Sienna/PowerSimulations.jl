@@ -374,10 +374,10 @@ function device_budget_param_ub(psi_container::PSIContainer,
     variable = get_variable(psi_container, var_name)
     set_name = (r[1] for r in budget_data)
     no_of_budgets = length(budget_data[1][4])
-    time_lengths = time_steps/length(budget_data[1][4])
+    time_lengths = time_steps/no_of_budgets
     time_chunks = reshape(time_steps, (time_lengths, no_of_budgets))
-    constraint = _add_cons_container!(psi_container, cons_name, set_name, no_of_budgets)
-    param = add_param_container!(psi_container, param_reference, names, no_of_budgets)
+    constraint = add_cons_container!(psi_container, cons_name, set_name, 1:no_of_budgets)
+    param = add_param_container!(psi_container, param_reference, names, 1:no_of_budgets)
 
     for data in budget_data, i in 1:no_of_budgets
         name = data[1]
@@ -400,9 +400,9 @@ function device_budget_ub(psi_container::PSIContainer,
     variable = get_variable(psi_container, var_name)
     set_name = (r[1] for r in budget_data)
     no_of_budgets = length(budget_data[1][4])
-    time_lengths = time_steps/length(budget_data[1][4])
+    time_lengths = time_steps/no_of_budgets
     time_chunks = reshape(time_steps, (time_lengths, no_of_budgets))
-    constraint = _add_cons_container!(psi_container, cons_name, set_name, no_of_budgets)
+    constraint = add_cons_container!(psi_container, cons_name, set_name, 1:no_of_budgets)
 
     for data in budget_data, i in 1:no_of_budgets
         name = data[1]
