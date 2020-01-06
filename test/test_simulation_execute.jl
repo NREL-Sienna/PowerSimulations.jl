@@ -8,7 +8,7 @@ end
 function test_chronology(file_path::String)    
     ### Receding Horizon
 
-    stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
+    stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc_svc, c_sys5_uc, GLPK_optimizer),
                                "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
     sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
