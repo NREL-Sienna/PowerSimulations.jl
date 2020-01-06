@@ -36,7 +36,7 @@ end
 get_binary_from_stage(p::SemiContinuousFF) = p.binary_from_stage
 get_affected_variables(p::AbstractAffectFeedForward) = p.affected_variables
 
-struct IntegralBoundFF <: AbstractAffectFeedForward 
+struct IntegralLimitFF <: AbstractAffectFeedForward 
     variable_from_stage::Symbol
     affected_variables::Vector{Symbol}
     cache::Union{Nothing, Type{<:AbstractCache}} 
