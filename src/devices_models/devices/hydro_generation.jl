@@ -345,6 +345,13 @@ function _get_budget(psi_container::PSIContainer,
 end
 
 function budget_constraints!(psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{H},
+    model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
+    system_formulation::Type{<:PM.AbstractPowerModel},
+    feed_forward::IntegralLimitFF) where H<:PSY.HydroGen
+end
+
+function budget_constraints!(psi_container::PSIContainer,
                     devices::IS.FlattenIteratorWrapper{H},
                     model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
                     system_formulation::Type{<:PM.AbstractPowerModel},
