@@ -166,7 +166,7 @@ function activepower_constraints!(psi_container::PSIContainer,
         device_timeseries_param_ub(psi_container,
                             ts_data_active,
                             Symbol("activerange_$(H)"),
-                            UpdateRef{H}(:rating),
+                            UpdateRef{H}("get_rating"),
                             Symbol("P_$(H)"))
     else
         device_timeseries_ub(psi_container,
@@ -202,7 +202,7 @@ function activepower_constraints!(psi_container::PSIContainer,
                             ts_data_active,
                             Symbol("activerange_$(H)"),
                             Symbol("P_$(H)"),
-                            UpdateRef{H}(:rating),
+                            UpdateRef{H}("get_rating"),
                             Symbol("ON_$(H)"))
     else
         device_timeseries_ub_bin(psi_container,
@@ -247,11 +247,11 @@ function nodal_expression!(psi_container::PSIContainer,
     if parameters
         include_parameters(psi_container,
                            ts_data_active,
-                           UpdateRef{H}(:rating),
+                           UpdateRef{H}("get_rating"),
                            :nodal_balance_active)
         include_parameters(psi_container,
                            ts_data_reactive,
-                           UpdateRef{H}(:rating),
+                           UpdateRef{H}("get_rating"),
                            :nodal_balance_reactive)
         return
     end
@@ -283,7 +283,7 @@ function nodal_expression!(psi_container::PSIContainer,
     if parameters
         include_parameters(psi_container,
                            ts_data_active,
-                           UpdateRef{H}(:rating),
+                           UpdateRef{H}("get_rating"),
                            :nodal_balance_active)
         return
     end
