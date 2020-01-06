@@ -7,7 +7,7 @@
     model_template = OperationsProblemTemplate(CopperPlatePowerModel , devices, branches, services_template)
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters=p)
-        moi_tests(op_problem, p, 264, 0, 120, 168, 24, false)
+        moi_tests(op_problem, p, 384, 0, 120, 192, 24, false)
     end
 end
 
@@ -20,7 +20,7 @@ end
     model_template = OperationsProblemTemplate(CopperPlatePowerModel , devices, branches, services_template)
     for p in [true, false]
         op_problem = OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters=p)
-        moi_tests(op_problem, p, 624, 0, 240, 168, 144, true)
+        moi_tests(op_problem, p, 744, 0, 240, 192, 144, true)
     end
 end
 
