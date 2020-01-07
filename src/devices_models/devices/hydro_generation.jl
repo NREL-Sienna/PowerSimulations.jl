@@ -330,12 +330,12 @@ function _get_budget(psi_container::PSIContainer,
         tech = PSY.get_tech(device)
         # This is where you would get the water/energy storage capacity
         # which is then multiplied by the forecast value to get you the energy budget
-        energy_capacity = use_forecast_data ? PSY.get_storagecapacity(device) : PSY.get_activepower(device)
+        energy_capacity = use_forecast_data ? PSY.get_storage_capacity(device) : PSY.get_activepower(device)
         if use_forecast_data
             ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
                                                                 device,
                                                                 initial_time,
-                                                                "storagecapacity")))
+                                                                "storage_capacity")))
         else
             ts_vector = ones(time_steps[end])
         end
@@ -362,7 +362,7 @@ function budget_constraints!(psi_container::PSIContainer,
         device_budget_param_ub(psi_container,
                             budget_data,
                             Symbol("budget_$(H)"), # TODO: better name for this constraint
-                            UpdateRef{H}(:storagecapacity),
+                            UpdateRef{H}(:storage_capacity),
                             Symbol("P_$(H)"))
     else
         device_budget_param_ub(psi_container,
