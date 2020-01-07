@@ -37,6 +37,7 @@ device_name(ini_cond::InitialCondition) = PSY.get_name(ini_cond.device)
 #########################Initial Condition Updating#########################################
 # TODO: Consider when more than one UC model is used for the stages that the counts need
 # to be scaled.
+const ic_tolerance = 1.0e-10
 function calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationOFF, PSD},
                                 ic::InitialCondition,
                                 var_value::Float64,
@@ -47,7 +48,7 @@ function calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationOFF, PSD
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
     var_status = isapprox(var_value, 0.0, atol = 1e-4) ? 0.0 : 1.0
-    @assert abs(last_status - var_status) < eps()
+    @assert abs(last_status - var_status) < ic_tolerance
 
     if last_status >= 1.0
         return current_counter
@@ -68,7 +69,7 @@ function calculate_ic_quantity(initial_condition_key::ICKey{TimeDurationON, PSD}
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
     var_status = isapprox(var_value, 0.0, atol = 1e-4) ? 0.0 : 1.0
-    @assert abs(last_status - var_status) < eps()
+    @assert abs(last_status - var_status) < ic_tolerance
 
     if last_status >= 1.0
         return 0.0
@@ -92,13 +93,13 @@ function calculate_ic_quantity(initial_condition_key::ICKey{DevicePower, PSD},
                                var_value::Float64,
                                cache::Union{Nothing, AbstractCache}) where PSD <: PSY.ThermalGen
     if isnothing(cache)
-        status_change_to_on = value(ic) <= eps() && var_value >= eps()
-        status_change_to_off = value(ic) >= eps() && var_value <= eps()
+        status_change_to_on = value(ic) <= ic_tolerance && var_value >= ic_tolerance
+        status_change_to_off = value(ic) >= ic_tolerance && var_value <= ic_tolerance
     else
         name = device_name(ic)
         time_cache = cache_value(cache, name)
-        status_change_to_on = time_cache[:status] >= eps() && var_value <= eps()
-        status_change_to_off = time_cache[:status] <= eps() && var_value >= eps()
+        status_change_to_on = time_cache[:status] >= ic_tolerance && var_value <= ic_tolerance
+        status_change_to_off = time_cache[:status] <= ic_tolerance && var_value >= ic_tolerance
     end
 
 
