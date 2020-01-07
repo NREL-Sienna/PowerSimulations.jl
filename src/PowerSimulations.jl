@@ -58,6 +58,7 @@ export ThermalDispatchNoMin
 export RecedingHorizon
 export Synchronize
 export Consecutive
+export SynchronizeTime
 
 # feed_forward models
 export UpperBoundFF
