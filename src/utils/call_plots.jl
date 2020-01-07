@@ -124,6 +124,27 @@ function bar_plot(res::PSI.SimulationResults; kwargs...)
         res.variables, res.total_cost, res.optimizer_log, res.time_stamp)
     bar_plot(results; kwargs...)
 end
+
+function bar_plot(res::PSI.SimulationResults, variables::Array; kwargs...)
+    res_var = Dict()
+    for variable in variables
+        res_var[variable] = res.variables[variable]
+    end
+    results = OperationsProblemResults(
+        res_var, res.total_cost, res.optimizer_log, res.time_stamp)
+    bar_plot(results; kwargs...)
+end
+
+function bar_plot(res::PSI.OperationsProblemResults, variables::Array; kwargs...)
+    res_var = Dict()
+    for variable in variables
+        res_var[variable] = res.variables[variable]
+    end
+    results = OperationsProblemResults(
+        res_var, res.total_cost, res.optimizer_log, res.time_stamp)
+    bar_plot(results; kwargs...)
+end
+
 """
      stack_plot(OperationsProblemResults)
 
@@ -165,5 +186,25 @@ end
 function stack_plot(res::PSI.SimulationResults; kwargs...)
     results = OperationsProblemResults(
         res.variables, res.total_cost, res.optimizer_log, res.time_stamp)
+    stack_plot(results; kwargs...)
+end
+
+function stack_plot(res::PSI.SimulationResults, variables::Array; kwargs...)
+    res_var = Dict()
+    for variable in variables
+        res_var[variable] = res.variables[variable]
+    end
+    results = OperationsProblemResults(
+        res_var, res.total_cost, res.optimizer_log, res.time_stamp)
+    stack_plot(results; kwargs...)
+end
+
+function stack_plot(res::PSI.OperationsProblemResults, variables::Array; kwargs...)
+    res_var = Dict()
+    for variable in variables
+        res_var[variable] = res.variables[variable]
+    end
+    results = OperationsProblemResults(
+        res_var, res.total_cost, res.optimizer_log, res.time_stamp)
     stack_plot(results; kwargs...)
 end
