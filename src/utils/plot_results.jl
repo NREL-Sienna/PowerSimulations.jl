@@ -73,7 +73,7 @@ function get_bar_plot_data(res::OperationsProblemResults, variable::String; kwar
     if isnothing(sort)
         variable = variable[:, alphabetical]
     else
-        variable = variable[:,sort]
+        variable = variable[:, sort]
     end
 
     data = convert(Matrix, variable)
