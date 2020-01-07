@@ -119,20 +119,20 @@ end
 
 function get_bar_gen_data(res::OperationsProblemResults)
 
-   time_range = res.time_stamp[!,:Range]
-   key_name = collect(keys(res.variables))
-   variable = res.variables[Symbol(key_name[1])]
-   data_matrix = sum(convert(Matrix, variable), dims = 2)
-   legend = [key_name[1]]
+    time_range = res.time_stamp[!,:Range]
+    key_name = collect(keys(res.variables))
+    variable = res.variables[Symbol(key_name[1])]
+    data_matrix = sum(convert(Matrix, variable), dims = 2)
+    legend = [key_name[1]]
     for i in 1:length(key_name)
-       if i !== 1
-           variable = res.variables[Symbol(key_name[i])]
-           legend = hcat(legend, string.(key_name[i]))
-           data_matrix = hcat(data_matrix, sum(convert(Matrix, variable), dims = 2))
-       end
-   end
-   bar_data = sum(data_matrix, dims = 1)
-   return BarGeneration(time_range, bar_data, legend)
+        if i !== 1
+            variable = res.variables[Symbol(key_name[i])]
+            legend = hcat(legend, string.(key_name[i]))
+            data_matrix = hcat(data_matrix, sum(convert(Matrix, variable), dims = 2))
+        end
+    end
+    bar_data = sum(data_matrix, dims = 1)
+    return BarGeneration(time_range, bar_data, legend)
 
 end
 
@@ -179,7 +179,7 @@ function sort_data(res::OperationsProblemResults; kwargs...)
     for label in labels
         variable_dict[labels[label]] = res.variables[labels[label]]
     end
-    for (k,v) in Variables, k in keys(variable_dict)
+    for (k, v) in Variables, k in keys(variable_dict)
         variable = variable_dict[k]
         alphabetical = sort!(names(variable))
         order = Variables[k]

@@ -1,9 +1,6 @@
 IS.configure_logging(console_level = Logging.Info)
-if !isdir(joinpath(pwd(), "testing_reading_results"))
-    file_path = mkdir(joinpath(pwd(), "testing_reading_results"))
-else
-    file_path = joinpath(pwd(), "testing_reading_results")
-end
+path = joinpath(pwd(), "test_simulation_execute")
+!isdir(path) && mkdir(path)
 
 function test_chronology(file_path::String)
     ### Receding Horizon
@@ -176,8 +173,8 @@ function test_chronology(file_path::String)
     end
 end
 try
-    test_chronology(file_path)
+    test_chronology(path)
 finally
     @info("removing test files")
-    rm(file_path, recursive=true)
+    rm(path, recursive=true)
 end

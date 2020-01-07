@@ -1,5 +1,17 @@
+# Color Definitions
+maroon = Colors.RGBA(0.7, 0.1, 0.1, 0.95)
+darkgray = Colors.RGBA(0, 0, 0, 0.8)
+olivegreen = Colors.RGBA(0.33, 0.42, 0.18, 0.9)
+darkorange = Colors.RGBA(0.93, 0.46, 0, 1) 
+orchid = Colors.RGBA(0.56, 0.28, 0.54, 1)
+darkpink = Colors.RGBA(0.9, 0.5, 0.6, 0.80)
+lightyellow = Colors.RGBA(1, 1, 0.5, 0.6)
+steelblue = Colors.RGBA(0.27, 0.5, 0.7, 0.9)
+canaryyellow = Colors.RGBA(1, 0.757, 0.15, 01)
+khaki = Colors.RGBA(0.8, 0.6, 0.3, 1)
+
 ### Fuel Plots will be added in next PR
-#=
+#= 
 """
     fuel_plot(res, generator_dict)
 
@@ -27,15 +39,9 @@ will override the default series color
 
 function fuel_plot(res::PSI.OperationsProblemResults, generator_dict::Dict; kwargs...)
 
-    color_range = [Colors.RGBA(0.7,0.1,0.1,0.95), # maroon
-    Colors.RGBA(0,0,0,0.8), :lightblue, # Dark gray
-    Colors.RGBA(0.33,0.42,0.18,0.9), :pink, # olive green
-    Colors.RGBA(0.93,0.46,0,1), Colors.RGBA(0.56,0.28,0.54,1), # orange, orchid
-    Colors.RGBA(0.9,0.5,0.6,0.80),  # dark pink
-    Colors.RGBA(1, 1, 0.5, 0.6), # light yellow
-    Colors.RGBA(0.27, 0.5, 0.7, 0.9), # steel blue
-    Colors.RGBA(1, 0.757, 0.15, 01), # canary yellow
-    Colors.RGBA(0.8, 0.6, 0.3, 1), :red] # khaki
+    color_range = hcat(
+        [maroon], [darkgray], [:lightblue], [olivegreen], [:pink], [darkorange],
+        [orchid], [darkpink], [lightyellow], [steelblue], [canaryyellow], [khaki], [:red])
     
     fuels = ["Nuclear", "Coal", "Hydro", "Gas_CC",
              "Gas_CT", "Storage", "Oil_ST", "Oil_CT",
@@ -72,8 +78,7 @@ function fuel_plot(res::PSI.DualResults, generator_dict::Dict; kwargs...)
     results = OperationsProblemResults(res.variables, res.total_cost, 
     res.optimizer_log, res.time_stamp)
     fuel_plot(results, generator_dict; kwargs...)
-end
-=#
+end =#
 """
    bar_plot(OperationsProblemResults)
   
@@ -96,21 +101,13 @@ will override the default series color
 """
 
 function bar_plot(res::OperationsProblemResults; kwargs...)
-    default = hcat([Colors.RGBA(0.7,0.1,0.1,0.95)], # maroon
-              [Colors.RGBA(0,0,0,0.8)], [:lightblue], # Dark gray
-              [Colors.RGBA(0.33,0.42,0.18,0.9)], [:pink], # olive green
-              [Colors.RGBA(0.93,0.46,0,1)], [Colors.RGBA(0.56,0.28,0.54,1)], # orange, orchid
-              [Colors.RGBA(0.9,0.5,0.6,0.80)],  # dark pink
-              [Colors.RGBA(1, 1, 0.5, 0.6)], # light yellow
-              [Colors.RGBA(0.27, 0.5, 0.7, 0.9)], # steel blue
-              [Colors.RGBA(1, 0.757, 0.15, 01)], # canary yellow
-              [Colors.RGBA(0.8, 0.6, 0.3, 1)], [:red]) # khaki
+    default = hcat([maroon], [darkgray], [:lightblue], [olivegreen], [:pink], [darkorange],
+        [orchid], [darkpink], [lightyellow], [steelblue], [canaryyellow], [khaki], [:red])
     seriescolor = get(kwargs, :seriescolor, default)
-    key_name = string.(collect(keys(res.variables)))
-    for name in key_name
-            variable_bar = get_bar_plot_data(res, name)
-            p = RecipesBase.plot(variable_bar, name; seriescolor = seriescolor)
-            display(p)
+    for name in string.(keys(res.variables))
+        variable_bar = get_bar_plot_data(res, name)
+        p = RecipesBase.plot(variable_bar, name; seriescolor = seriescolor)
+        display(p)
     end
     bar_gen = get_bar_gen_data(res)
     p2 = RecipesBase.plot(bar_gen; seriescolor = seriescolor)
@@ -118,13 +115,13 @@ function bar_plot(res::OperationsProblemResults; kwargs...)
 end
 
 function bar_plot(res::PSI.DualResults; kwargs...)
-    results = OperationsProblemResults(res.variables, res.total_cost, 
-    res.optimizer_log, res.time_stamp)
+    results = OperationsProblemResults(
+        res.variables, res.total_cost, res.optimizer_log, res.time_stamp)
     bar_plot(results; kwargs...)
 end
 function bar_plot(res::PSI.SimulationResults; kwargs...)
-    results = OperationsProblemResults(res.variables, res.total_cost, 
-    res.optimizer_log, res.time_stamp)
+    results = OperationsProblemResults(
+        res.variables, res.total_cost, res.optimizer_log, res.time_stamp)
     bar_plot(results; kwargs...)
 end
 """
@@ -146,18 +143,10 @@ will override the default series color
 """
 
 function stack_plot(res::OperationsProblemResults; kwargs...)
-    default = hcat([Colors.RGBA(0.7,0.1,0.1,0.95)], # maroon
-    [Colors.RGBA(0,0,0,0.8)], [:lightblue], # Dark gray
-    [Colors.RGBA(0.33,0.42,0.18,0.9)], [:pink], # olive green
-    [Colors.RGBA(0.93,0.46,0,1)], [Colors.RGBA(0.56,0.28,0.54,1)], # orange, orchid
-    [Colors.RGBA(0.9,0.5,0.6,0.80)],  # dark pink
-    [Colors.RGBA(1, 1, 0.5, 0.6)], # light yellow
-    [Colors.RGBA(0.27, 0.5, 0.7, 0.9)], # steel blue
-    [Colors.RGBA(1, 0.757, 0.15, 01)], # canary yellow
-    [Colors.RGBA(0.8, 0.6, 0.3, 1)], [:red]) # khaki
-    seriescolor = get(kwargs, :seriescolor, default)  
-    key_name = string.(collect(keys(res.variables)))
-    for name in key_name
+    default = hcat([maroon], [darkgray], [:lightblue], [olivegreen], [:pink], [darkorange],
+        [orchid], [darkpink], [lightyellow], [steelblue], [canaryyellow], [khaki], [:red])
+    seriescolor = get(kwargs, :seriescolor, default)
+    for name in string.(keys(res.variables))
         variable_stack = get_stacked_plot_data(res, name)
         p3 = RecipesBase.plot(variable_stack, name; seriescolor = seriescolor)
         display(p3)
@@ -168,13 +157,13 @@ function stack_plot(res::OperationsProblemResults; kwargs...)
 end
 
 function stack_plot(res::PSI.DualResults; kwargs...)
-  results = OperationsProblemResults(res.variables, res.total_cost, 
-  res.optimizer_log, res.time_stamp)
-  stack_plot(results; kwargs...)
+    results = OperationsProblemResults(
+        res.variables, res.total_cost, res.optimizer_log, res.time_stamp)
+    stack_plot(results; kwargs...)
 end
 
 function stack_plot(res::PSI.SimulationResults; kwargs...)
-  results = OperationsProblemResults(res.variables, res.total_cost, 
-  res.optimizer_log, res.time_stamp)
-  stack_plot(results; kwargs...)
+    results = OperationsProblemResults(
+        res.variables, res.total_cost, res.optimizer_log, res.time_stamp)
+    stack_plot(results; kwargs...)
 end

@@ -1,9 +1,7 @@
 IS.configure_logging(console_level = Logging.Info)
-if !isdir(joinpath(pwd(), "testing_reading_results"))
-    file_path = mkdir(joinpath(pwd(), "testing_reading_results"))
-else
-    file_path = (joinpath(pwd(), "testing_reading_results"))
-end
+path = (joinpath(pwd(), "test_reading_results"))
+!isdir(path) && mkdir(path)
+
 
 function test_load_simulation()
     stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
@@ -167,8 +165,8 @@ function test_load_simulation()
 
 end
 try
-    test_load_simulation()
+    test_load_simulation(path)
 finally
     @info("removing test files")
-    rm(file_path, recursive=true)
+    rm(path, recursive=true)
 end

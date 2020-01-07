@@ -1,6 +1,6 @@
 IS.configure_logging(console_level = Logging.Info)
-file_path = joinpath(pwd(), "testing_sequence_build")
-!isdir(file_path) && mkdir(file_path)
+path = joinpath(pwd(), "test_sequence_build")
+!isdir(path) && mkdir(path)
 
 function test_sequence_build(file_path::String)
 
@@ -171,8 +171,8 @@ function test_sequence_build(file_path::String)
 end
 
 try
-    test_sequence_build(file_path)
+    test_sequence_build(path)
 finally
     @info("removing test files")
-    rm(file_path, recursive=true)
+    rm(path, recursive=true)
 end

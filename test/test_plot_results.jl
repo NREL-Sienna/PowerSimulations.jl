@@ -1,9 +1,6 @@
 IS.configure_logging(console_level = Logging.Info)
-if !isdir(joinpath(pwd(), "testing_plots"))
-    file_path = mkdir(joinpath(pwd(), "testing_plots"))
-else
-    file_path = joinpath(pwd(), "testing_plots")
-end
+path = joinpath(pwd(), "test_plots")
+!isdir(path) && mkdir(path)
 
 function test_plots(file_path::String)
     devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(ThermalStandard, ThermalDispatch),
@@ -18,8 +15,7 @@ function test_plots(file_path::String)
 
     @testset "testing bar plot" begin
         results = PSI.OperationsProblemResults(res.variables, res.total_cost, res.optimizer_log, res.time_stamp)
-        key_name = collect(keys(results.variables))
-        for name in key_name
+        for name in keys(results.variables)
             variable_bar = get_bar_plot_data(results, string(name))
             sort = sort!(names(results.variables[name]))
             sorted_results = res.variables[name][:, sort]
@@ -34,8 +30,7 @@ function test_plots(file_path::String)
 
     @testset "testing size of stack plot data" begin
         results = PSI.OperationsProblemResults(res.variables, res.total_cost, res.optimizer_log, res.time_stamp)
-        key_name = collect(keys(results.variables))
-        for name in key_name
+        for name in keys(results.variables)
             variable_stack = get_stacked_plot_data(results, string(name))
             data = variable_stack.data_matrix
             legend = variable_stack.labels
@@ -50,8 +45,8 @@ function test_plots(file_path::String)
 end
 
 try
-    test_plots(file_path)
+    test_plots(path)
 finally
     @info("removing test files")
-    rm(file_path, recursive=true)
+    rm(path, recursive=true)
 end
