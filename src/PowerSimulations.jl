@@ -117,10 +117,11 @@ export sort_data
 export get_stacked_plot_data
 export get_bar_plot_data
 export get_stacked_generation_data
-export get_stacked_aggregation_data
+export get_bar_gen_data
 export bar_plot
 export stack_plot
 export report
+### These will be uncommented in a separate PR
 # export make_fuel_dictionary
 # export fuel_plot
 
@@ -228,6 +229,8 @@ include("utils/dual_results.jl")
 include("utils/simulation_results_reference.jl")
 include("utils/simulation_results.jl")
 include("utils/printing.jl")
+
+#Plots
 include("utils/plot_results.jl")
 include("utils/plot_recipes.jl")
 include("utils/make_report.jl")
