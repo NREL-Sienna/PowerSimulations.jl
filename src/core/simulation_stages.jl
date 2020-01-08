@@ -3,13 +3,14 @@ mutable struct StageInternal
     number::Int64
     executions::Int64
     execution_count::Int64
+    synchronized_executions::Int64 # Number of executions per upper level stage step
     psi_container::Union{Nothing, PSIContainer}
     cache_dict::Dict{Type{<:AbstractCache}, AbstractCache}
     # Can probably be eliminated and use getter functions from
     # Simulation object. Need to determine if its always available in the stage update steps.
     chronolgy_dict::Dict{Int64, <:AbstractChronology}
     function StageInternal(number, executions, execution_count, psi_container)
-        new(number, executions, execution_count, psi_container,
+        new(number, executions, execution_count, 0, psi_container,
         Dict{Type{<:AbstractCache}, AbstractCache}(),
         Dict{Int64, AbstractChronology}())
     end
@@ -41,13 +42,12 @@ mutable struct Stage{M<:AbstractOperationsProblem}
            nothing)
 
     end
-
 end
 
 function Stage(template::OperationsProblemTemplate,
                sys::PSY.System,
                optimizer::JuMP.OptimizerFactory) where M<:AbstractOperationsProblem
-    return Stage(number, GenericOpProblem, sys, optimizer)
+    return Stage(GenericOpProblem, template, sys, optimizer)
 end
 
 get_execution_count(s::Stage) = s.internal.execution_count
