@@ -27,4 +27,4 @@ const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 const DSDA = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
 # Tolerance of comparisons
-const EqTolerance = 1.0e-10
+const ComparisonTolerance = 1.0e-10

@@ -47,18 +47,19 @@ function service_requirement_constraint!(psi_container::PSIContainer,
         ts_vector = ones(time_steps[end])
     end
 
+    requirement = PSY.get_requirement(service)
     if parameters
         param = get_parameters(psi_container, UpdateRef{SR}("get_requirement"))
         for t in time_steps
             param[name, t] = PJ.add_parameter(psi_container.JuMPmodel, 
-                                                   ts_vector[t])
+                                                   ts_vector[t] * requirement)
             constraint[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
                                         sum(reserve_variable[:,t]) >= param[name, t])
         end
     else
         for t in time_steps
             constraint[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                    sum(reserve_variable[:,t]) >= ts_vector[t])
+                                    sum(reserve_variable[:,t]) >= ts_vector[t] * requirement)
         end
     end
     return
