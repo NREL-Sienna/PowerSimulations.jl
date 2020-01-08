@@ -97,7 +97,6 @@ function ub_ff(psi_container::PSIContainer,
     end
 
     return
-
 end
 
 @doc raw"""
@@ -161,7 +160,6 @@ function range_ff(psi_container::PSIContainer,
     end
 
     return
-
 end
 
 
@@ -238,7 +236,7 @@ function semicontinuousrange_ff(psi_container::PSIContainer,
 end
 
 @doc raw"""
-        integrallimit_ff(psi_container::PSIContainer,
+        integral_limit_ff(psi_container::PSIContainer,
                         cons_name::Symbol,
                         param_reference::UpdateRef,
                         var_name::Symbol)
@@ -259,7 +257,7 @@ The Parameters are initialized using the upper boundary values of the provided v
 * param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
 * var_name::Symbol : the name of the continuous variable
 """
-function integrallimit_ff(psi_container::PSIContainer,
+function integral_limit_ff(psi_container::PSIContainer,
                             cons_name::Symbol,
                             param_reference::UpdateRef,
                             var_name::Symbol)
@@ -283,11 +281,9 @@ function integrallimit_ff(psi_container::PSIContainer,
     end
 
     return
-
 end
 
 ########################## FeedForward Constraints #########################################
-
 function feed_forward!(psi_container::PSIContainer,
                      device_type::Type{T},
                      ff_model::Nothing) where {T<:PSY.Component}
@@ -341,14 +337,14 @@ function feed_forward!(psi_container::PSIContainer,
     end
 
     return
-
 end
+
 #########################FeedForward Variables Updating#####################################
 function feed_forward_update(sync::Chron,
-                            param_reference::UpdateRef{JuMP.VariableRef},
-                            param_array::JuMPParamArray,
-                            to_stage::Stage,
-                            from_stage::Stage) where Chron <: AbstractChronology
+                             param_reference::UpdateRef{JuMP.VariableRef},
+                             param_array::JuMPParamArray,
+                             to_stage::Stage,
+                             from_stage::Stage) where Chron <: AbstractChronology
 
     !(get_execution_count(to_stage) % sync.to_executions == 0) && return
 
