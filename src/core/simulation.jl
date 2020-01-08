@@ -305,7 +305,7 @@ function build!(sim::Simulation; kwargs...)
         stage = get(sim.stages, stage_name, nothing)
         stage_interval = sim.sequence.intervals[stage_name]
         executions = Int(sim.step_resolution/stage_interval)
-        stage.internal = StageInternal(stage_number, executions, 0, Dict{Int64, Int64}(), nothing)
+        stage.internal = StageInternal(stage_number, executions, 0, nothing)
         isnothing(stage) && throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
         PSY.check_forecast_consistency(stage.sys)
         _attach_feed_forward!(sim, stage_name)
