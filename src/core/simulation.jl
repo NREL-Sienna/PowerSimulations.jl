@@ -44,8 +44,8 @@ end
                 name::String
                 internal::Union{Nothing, SimulationInternal}
                 )
-                                       
-""" # TODO: Add DocString 
+
+""" # TODO: Add DocString
 mutable struct Simulation
     steps::Int64
     step_resolution::Dates.TimePeriod
@@ -94,7 +94,7 @@ function _check_sequence(sim::Simulation)
         interval = get_interval(get_sequence(sim), stage_name)
         horizon_time = resolution * horizon
         if horizon_time < interval
-            throw(IS.ConflictingInputsError("horizon ($horizon_time) is 
+            throw(IS.ConflictingInputsError("horizon ($horizon_time) is
                                 shorter than interval ($interval) for $stage_name"))
         end
     end
@@ -108,8 +108,8 @@ function _check_chronologies(sim::Simulation)
         to_stage_horizon = sim.sequence.horizons[key.second]
         from_stage_interval = sim.sequence.intervals[key.first]
         to_stage_interval = sim.sequence.intervals[key.second]
-        check_chronology(chron, 
-                         (from_stage => to_stage), 
+        check_chronology(chron,
+                         (from_stage => to_stage),
                          (from_stage_horizon => to_stage_horizon),
                          (from_stage_interval => to_stage_interval))
     end
@@ -161,24 +161,24 @@ function _get_simulation_initial_times!(sim::Simulation)
 
     stage_initial_times = Dict{Int64, Vector{Dates.DateTime}}()
     time_range = Vector{Dates.DateTime}(undef, 2)
-    
+
     for (stage_number, stage_name) in sim.sequence.order
         stage_system = sim.stages[stage_name].sys
         interval = PSY.get_forecasts_interval(stage_system)
         horizon = get_horizon(get_sequence(sim), stage_name)
         seq_interval = get_interval(get_sequence(sim), stage_name)
         if PSY.are_forecasts_contiguous(stage_system)
-            stage_initial_times[stage_number] = PSY.generate_initial_times(stage_system, 
+            stage_initial_times[stage_number] = PSY.generate_initial_times(stage_system,
                                                                     seq_interval, horizon)
             if isempty(stage_initial_times[stage_number])
-                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and 
+                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and
                         forecast interval ($interval) definitions are not compatible"))
             end
         else
             stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage_system)
             interval = PSY.get_forecasts_interval(stage_system)
             if interval != seq_interval
-                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and 
+                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and
                         forecast interval ($interval) definitions are not compatible"))
             end
             for (ix, element) in enumerate(stage_initial_times[stage_number][1:end-1])
@@ -291,10 +291,10 @@ end
 
 
 @doc raw"""
-        build!(sim::Simulation; 
+        build!(sim::Simulation;
                 kwargs...)
-                            
-""" # TODO: Add DocString     
+
+""" # TODO: Add DocString
 function build!(sim::Simulation; kwargs...)
     _check_sequence(sim)
     _check_chronologies(sim)
@@ -305,7 +305,7 @@ function build!(sim::Simulation; kwargs...)
         stage = get(sim.stages, stage_name, nothing)
         stage_interval = sim.sequence.intervals[stage_name]
         executions = Int(sim.step_resolution/stage_interval)
-        stage.internal = StageInternal(stage_number, executions, 0, nothing)
+        stage.internal = StageInternal(stage_number, executions, 0, 0, nothing)
         isnothing(stage) && throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
         PSY.check_forecast_consistency(stage.sys)
         _attach_feed_forward!(sim, stage_name)
