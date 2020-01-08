@@ -23,9 +23,9 @@ end
 
 # internal function to parse through the reference dictionary and grab the file paths
 function _reading_references(results::Dict, duals::Array, stage::String, step::Array,
-                             references::Dict, extra_time::Int64)
+                             references::Dict, time_length::Int64)
 
-    for name in (dual)
+    for name in (duals)
         date_df = references[stage][name]
         step_df = DataFrames.DataFrame(Date = Dates.DateTime[], Step = String[], File_Path = String[])
         for n in 1:length(step)
@@ -35,23 +35,21 @@ function _reading_references(results::Dict, duals::Array, stage::String, step::A
         for (ix,time) in enumerate(step_df.Date)
             file_path = step_df[ix, :File_Path]
             var = Feather.read("$file_path")
-            correct_var_length = size(1:(size(var, 1) - extra_time), 1)
-            results[name] = vcat(results[name],var[1:correct_var_length,:])
+            results[name] = vcat(results[name],var[1:time_length, :])
         end
     end
     return results
 end
 # internal function to parse through the reference dictionary and grab the file paths
 function _reading_references(results::Dict, dual::Array, stage::String,
-                             references::Dict, extra_time::Int64)
+                             references::Dict, time_length::Int64)
     for name in dual
         date_df = references[stage][name]
         results[name] = DataFrames.DataFrame()
         for (ix,time) in enumerate(date_df.Date)
             file_path = date_df[ix, :File_Path]
             var = Feather.read(file_path)
-            correct_var_length = size(1:(size(var, 1) - extra_time_length), 1)
-            results[name] = vcat(results[name],var[1:correct_var_length,:])
+            results[name] = vcat(results[name],var[1:time_length,:])
         end
     end
     return results
