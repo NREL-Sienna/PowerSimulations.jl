@@ -12,8 +12,8 @@ Defines the co-ordination of time between Two stages.
 """
 struct Synchronize <: AbstractChronology
     from_steps::Int64
-    function Synchronize(;from_steps)
-        new(from_steps)
+    function Synchronize(;steps)
+        new(steps)
     end
 end
 
@@ -49,7 +49,6 @@ function check_chronology(sync::Synchronize,
                of stage to use Synchronize with parameters ($(from_stage_sync), $(to_stage_sync))"))
     end
 
-    stages.second.internal.synchronized_executions = to_stage_sync
     return
 end
 
