@@ -66,7 +66,6 @@ OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimiz
 ```
 
 # Accepted Key Words
-- `verbose::Bool`: verbose default is true
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
 - `optimizer::union{Nothing, JuMP.OptimizerFactory} = GLPK_optimizer`: The optimizer gets passed
 into the optimization model the default is nothing.
@@ -118,7 +117,6 @@ OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimiz
 
 
 # Accepted Key Words
-- `verbose::Bool`: verbose default is true
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
 - `optimizer::union{Nothing, JuMP.OptimizerFactory}`: The optimizer gets passed
 into the optimization model the default is nothing.
@@ -137,15 +135,16 @@ function OperationsProblem(::Type{M},
 
     optimizer = get(kwargs, :optimizer, nothing)
     return OperationsProblem{M}(OperationsProblemTemplate(T),
-                          sys,
-                          PSIContainer(T, sys, optimizer; kwargs...))
+                                sys,
+                                PSIContainer(T, sys, optimizer; kwargs...))
 
 end
+
 """
     OperationsProblem(::Type{T},
                     sys::PSY.System;
                     kwargs...) where {M<:AbstractOperationsProblem,
-                                    T<:PM.AbstractPowerFormulation}
+                                      T<:PM.AbstractPowerFormulation}
 
 This uses the Abstract Power Formulation to build the model reference and
 the optimization model and populates the operation model struct.
@@ -168,7 +167,6 @@ OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimiz
 ```
 
 # Accepted Key Words
-- `verbose::Bool`: verbose default is true
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
 - `optimizer::union{Nothing, JuMP.OptimizerFactory}`: The optimizer gets passed
 into the optimization model the default is nothing.
@@ -376,7 +374,6 @@ function build_op_problem!(op_problem::OperationsProblem{M}; kwargs...) where M<
 end
 
 function _build!(psi_container::PSIContainer, template::OperationsProblemTemplate, sys::PSY.System; kwargs...)
-    verbose = get(kwargs, :verbose, true)
     transmission = template.transmission
 
     # Order is required
@@ -385,22 +382,22 @@ function _build!(psi_container::PSIContainer, template::OperationsProblemTemplat
 
     # Build Injection devices
     for device_model in values(template.devices)
-        verbose && @info "Building $(device_model.device_type) with $(device_model.formulation) formulation"
+        @info "Building $(device_model.device_type) with $(device_model.formulation) formulation"
         construct_device!(psi_container, sys, device_model, transmission; kwargs...)
     end
 
     # Build Network
-    verbose && @info "Building $(transmission) network formulation"
+    @info "Building $(transmission) network formulation"
     construct_network!(psi_container, sys, transmission; kwargs...)
 
     # Build Branches
     for branch_model in values(template.branches)
-        verbose && @info "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
+        @info "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
         construct_device!(psi_container, sys, branch_model, transmission; kwargs...)
     end
 
     # Objective Function
-    verbose && @info "Building Objective"
+    @info "Building Objective"
     JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
 
     return

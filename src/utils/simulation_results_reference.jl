@@ -35,9 +35,8 @@ that contains the specific simulation run of the date run and "-test"
 
 # Example
 ```julia
-sim = Simulation("test", 7, stages, "/Users/yourusername/Desktop/";
-verbose = true, system_to_file = false)
-execute!(sim::Simulation; verbose::Bool = false, kwargs...)
+sim = Simulation("test", 7, stages, "/Users/yourusername/Desktop/"; system_to_file = false)
+execute!(sim::Simulation; kwargs...)
 references = make_references(sim, "2019-10-03T09-18-00-test")
 ```
 
