@@ -5,7 +5,7 @@ struct Consecutive <: AbstractChronology end
 
 @doc raw"""
     Synchronize(from_steps::Int64)
-Defines the co-ordination of time between Two stages.  
+Defines the co-ordination of time between Two stages.
 
 # Arguments
 - `from_steps::Int64`: Number of time periods to grab data from
@@ -18,8 +18,8 @@ struct Synchronize <: AbstractChronology
 end
 
 """
-    RecedingHorizon(step::Int64)                             
-""" # TODO: Add DocString    
+    RecedingHorizon(step::Int64)
+""" # TODO: Add DocString
 struct RecedingHorizon <: AbstractChronology
     step::Int64
     function RecedingHorizon(;step::Int64=1)
@@ -49,6 +49,7 @@ function check_chronology(sync::Synchronize,
                of stage to use Synchronize with parameters ($(from_stage_sync), $(to_stage_sync))"))
     end
 
+    stages.second.internal.synchronized_executions = to_stage_sync
     return
 end
 
