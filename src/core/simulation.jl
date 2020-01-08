@@ -126,13 +126,13 @@ function _assign_chronologies(sim::Simulation)
 
     for (key, chron) in sim.sequence.intra_stage_chronologies
         to_stage = get_stage(sim, key.second)
-        to_stage_interval = IS.time_period_conversion(get(sim.intervals, key.second, nothing))
+        to_stage_interval = IS.time_period_conversion(get(sim.sequence.intervals, key.second, nothing))
         from_stage_number = find_key_with_value(sim.sequence.order, key.first)
         isempty(from_stage_number) && throw(ArgumentError("Stage $(key.first) not specified in the order dictionary"))
         for stage_number in from_stage_number
             to_stage.internal.chronolgy_dict[stage_number] = chron
             from_stage = get_stage(sim, stage_number)
-            from_stage_resolution = IS.time_period_conversion(PSY.get_forecasts_resolution(from_stage))
+            from_stage_resolution = IS.time_period_conversion(PSY.get_forecasts_resolution(from_stage.sys))
             to_stage.internal.synchronized_executions[stage_number] = Int(from_stage_resolution/to_stage_interval)
         end
     end
@@ -305,7 +305,7 @@ function build!(sim::Simulation; kwargs...)
         stage = get(sim.stages, stage_name, nothing)
         stage_interval = sim.sequence.intervals[stage_name]
         executions = Int(sim.step_resolution/stage_interval)
-        stage.internal = StageInternal(stage_number, executions, 0, Dict{Int64, Int64}(), nothing)
+        stage.internal = StageInternal(stage_number, executions, 0, nothing)
         isnothing(stage) && throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
         PSY.check_forecast_consistency(stage.sys)
         _attach_feed_forward!(sim, stage_name)
