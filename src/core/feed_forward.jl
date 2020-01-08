@@ -36,10 +36,10 @@ end
 get_binary_from_stage(p::SemiContinuousFF) = p.binary_from_stage
 get_affected_variables(p::AbstractAffectFeedForward) = p.affected_variables
 
-struct IntegralLimitFF <: AbstractAffectFeedForward 
+struct IntegralLimitFF <: AbstractAffectFeedForward
     variable_from_stage::Symbol
     affected_variables::Vector{Symbol}
-    cache::Union{Nothing, Type{<:AbstractCache}} 
+    cache::Union{Nothing, Type{<:AbstractCache}}
 end
 
 function IntegralLimitFF(;variable_from_stage, affected_variables)
@@ -345,7 +345,6 @@ function feed_forward_update(sync::Chron,
                              param_array::JuMPParamArray,
                              to_stage::Stage,
                              from_stage::Stage) where Chron <: AbstractChronology
-
     for device_name in axes(param_array)[1]
         var_value = get_stage_variable(Chron, (from_stage => to_stage), device_name, param_reference)
         PJ.fix(param_array[device_name], var_value)
