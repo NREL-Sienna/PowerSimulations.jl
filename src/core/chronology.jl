@@ -4,26 +4,21 @@ Defines a logical sequence for simulation within one stage.
 struct Consecutive <: AbstractChronology end
 
 @doc raw"""
-    Synchronize(from_steps::Int64, 
-                to_executions::Int64
-                )
+    Synchronize(from_steps::Int64)
 Defines the co-ordination of time between Two stages.  
 
 # Arguments
 - `from_steps::Int64`: Number of time periods to grab data from
-- `to_executions::Int64`: Number of times to run using the same data
 """
 struct Synchronize <: AbstractChronology
-    from_steps::Int64    
-    to_executions::Int64 
-    function Synchronize(;from_steps, to_executions)
-        new(from_steps, to_executions)
+    from_steps::Int64
+    function Synchronize(;from_steps)
+        new(from_steps)
     end
 end
 
 """
-    RecedingHorizon(step::Int64
-                    )                             
+    RecedingHorizon(step::Int64)                             
 """ # TODO: Add DocString    
 struct RecedingHorizon <: AbstractChronology
     step::Int64
@@ -33,10 +28,15 @@ struct RecedingHorizon <: AbstractChronology
 end
 
 function check_chronology(sync::Synchronize,
-                             stages::Pair,
-                             horizons::Dict{String, Int64})
-    from_stage_horizon = horizons[stages.first]
-    to_stage_sync = sync.to_executions
+                          stages::Pair,
+                          horizons::Pair,
+                          intervals::Pair)
+    from_stage_horizon = horizons.first
+    from_stage_resolution = IS.time_period_conversion(PSY.get_forecasts_resolution(stages.first.sys))
+    @debug from_stage_resolution
+    to_stage_interval = IS.time_period_conversion(intervals.second)
+    @debug to_stage_interval
+    to_stage_sync = Int(from_stage_resolution/to_stage_interval)
     from_stage_sync = sync.from_steps
 
     if from_stage_sync > from_stage_horizon
@@ -49,14 +49,14 @@ function check_chronology(sync::Synchronize,
                of stage to use Synchronize with parameters ($(from_stage_sync), $(to_stage_sync))"))
     end
 
+    stages.second.internal.synchronized_executions = to_stage_sync
     return
 end
 
-check_chronology(sync::Consecutive, stages::Pair, horizons::Dict{String, Int64}) = nothing
+check_chronology(sync::Consecutive, stages::Pair, horizons::Pair, intervals::Pair) = nothing
+check_chronology(sync::RecedingHorizon, stages::Pair, horizons::Pair, intervals::Pair) = nothing
 
-check_chronology(sync::RecedingHorizon, stages::Pair, horizons::Dict{String, Int64}) = nothing
-
-function check_chronology(::T, stages::Pair, horizons::Dict{String, Int64}) where T <: AbstractChronology
+function check_chronology(::T, stages::Pair, horizons::Pair, intervals::Pair) where T <: AbstractChronology
     error("Feedforward Model $(T) not implemented")
     return
 end
