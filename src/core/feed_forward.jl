@@ -264,7 +264,7 @@ function integrallimit_ff(psi_container::PSIContainer,
                             param_reference::UpdateRef,
                             var_name::Symbol)
     time_steps = model_time_steps(psi_container)
-    ub_name = _middle_rename(cons_name, "_", "ub")
+    ub_name = _middle_rename(cons_name, "_", "integral_limit")
     variable = get_variable(psi_container, var_name)
 
     axes = JuMP.axes(variable)
@@ -353,7 +353,7 @@ function feed_forward_update(sync::Chron,
     !(get_execution_count(to_stage) % sync.to_executions == 0) && return
 
     var_count = get_execution_count(to_stage) ÷ sync.to_executions
-    
+
     for device_name in axes(param_array)[1]
         var_value = get_stage_variable(Chron, from_stage, device_name, param_reference, var_count)
         PJ.fix(param_array[device_name], var_value)
