@@ -49,7 +49,6 @@ function check_chronology(sync::Synchronize,
                of stage to use Synchronize with parameters ($(from_stage_sync), $(to_stage_sync))"))
     end
 
-    stages.second.internal.synchronized_executions = to_stage_sync
     return
 end
 
