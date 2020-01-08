@@ -361,13 +361,13 @@ function budget_constraints!(psi_container::PSIContainer,
     if parameters
         device_budget_param_ub(psi_container,
                             budget_data,
-                            Symbol("budget_$(H)"), # TODO: better name for this constraint
+                            Symbol("energy_limit_$(H)"), # TODO: better name for this constraint
                             UpdateRef{H}("get_storage_capacity"),
                             Symbol("P_$(H)"))
     else
         device_budget_ub(psi_container,
                         budget_data,
-                        Symbol("budget_$(H)"), # TODO: better name for this constraint
+                        Symbol("energy_limit_$(H)"), # TODO: better name for this constraint
                         Symbol("P_$(H)"))
     end
 end
