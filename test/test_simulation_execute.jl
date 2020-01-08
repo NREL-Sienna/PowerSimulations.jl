@@ -1,4 +1,3 @@
-IS.configure_logging(console_level = Logging.Info)
 path = joinpath(pwd(), "test_simulation_execute")
 !isdir(path) && mkdir(path)
 

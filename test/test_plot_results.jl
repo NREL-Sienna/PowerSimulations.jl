@@ -1,4 +1,3 @@
-IS.configure_logging(console_level = Logging.Info)
 path = joinpath(pwd(), "test_plots")
 !isdir(path) && mkdir(path)
 

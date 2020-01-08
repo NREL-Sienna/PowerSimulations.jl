@@ -1,4 +1,3 @@
-IS.configure_logging(console_level = Logging.Info)
 path = joinpath(pwd(), "test_sequence_build")
 !isdir(path) && mkdir(path)
 
