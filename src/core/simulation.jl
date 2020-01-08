@@ -86,7 +86,6 @@ end
 get_ini_cond_chronology(s::Simulation, number::Int64) = get(s.sequence.ini_cond_chronology, s.sequence.order[number], nothing)
 get_name(s::Simulation, stage::Stage) = get(s.sequence.order, get_number(stage), nothing)
 
-
 function _check_sequence(sim::Simulation)
     for (stage_number,stage_name) in sim.sequence.order
         stage = get_stage(sim, stage_name)
@@ -118,7 +117,7 @@ function _check_chronologies(sim::Simulation)
 end
 
 function _assign_chronologies(sim::Simulation)
-    function find_val(d,value)
+    function find_val(d, value)
         for (k, v) in d
          v == value && return k
         end
@@ -126,11 +125,15 @@ function _assign_chronologies(sim::Simulation)
     end
 
     for (key, chron) in sim.sequence.intra_stage_chronologies
-        stage = get_stage(sim, key.second)
+        to_stage = get_stage(sim, key.second)
+        to_stage_interval = IS.time_period_conversion(get(sim.intervals, key.second, nothing))
         from_stage_number = find_key_with_value(sim.sequence.order, key.first)
         isempty(from_stage_number) && throw(ArgumentError("Stage $(key.first) not specified in the order dictionary"))
         for stage_number in from_stage_number
-            stage.internal.chronolgy_dict[stage_number] = chron
+            to_stage.internal.chronolgy_dict[stage_number] = chron
+            from_stage = get_stage(sim, stage_number)
+            from_stage_resolution = IS.time_period_conversion(PSY.get_forecasts_resolution(from_stage))
+            to_stage.internal.synchronized_executions[stage_number] = Int(from_stage_resolution/to_stage_interval)
         end
     end
     return
