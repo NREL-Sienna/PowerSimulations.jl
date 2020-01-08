@@ -221,7 +221,6 @@ model_initial_time(psi_container::PSIContainer) = psi_container.initial_time
 #Internal Variables, Constraints and Parameters accessors
 get_variables(psi_container::PSIContainer) = psi_container.variables
 get_constraints(psi_container::PSIContainer) = psi_container.constraints
-get_constraints(psi_container::PSIContainer, name::Symbol) = psi_container.constraints[name]
 get_variable(psi_container::PSIContainer, name::Symbol) = psi_container.variables[name]
 get_constraint(psi_container::PSIContainer, name::Symbol) = psi_container.constraints[name]
 get_parameters(psi_container::PSIContainer, param_reference::UpdateRef) = psi_container.parameters[param_reference]
