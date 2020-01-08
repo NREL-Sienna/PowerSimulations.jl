@@ -1,7 +1,3 @@
-function _filter_service_mapping(::Type{SR}, map) where SR<:PSY.Service
-    return filter(p->(p.first.type <: SR), map)
-end
-
 function construct_services!(psi_container::PSIContainer,
                              sys::PSY.System,
                              services_template::Dict{Symbol, ServiceModel},
@@ -22,7 +18,7 @@ end
 
 function construct_service!(psi_container::PSIContainer, 
                       services::IS.FlattenIteratorWrapper{SR},
-                      services_mapping::Dict{NamedTuple{(:type, :name),Tuple{DataType,String}},PSY.ServiceContributingDevices},
+                      services_mapping::PSY.ServiceContributingDevicesMapping,
                       model::ServiceModel{SR, RangeReserve},
                       devices_template::Dict{Symbol, DeviceModel};
                       kwargs...) where SR<:PSY.Reserve
@@ -38,8 +34,7 @@ function construct_service!(psi_container::PSIContainer,
     add_cons_container!(psi_container, constraint_name, names, time_steps)
 
     for service in services
-        service_devices = _filter_service_mapping(typeof(service), services_mapping)
-        contributing_devices = service_devices[(type = typeof(service), 
+        contributing_devices = services_mapping[(type = typeof(service), 
                                                 name = PSY.get_name(service))].contributing_devices
         #Variables
         activeservice_variables!(psi_container, service, contributing_devices)

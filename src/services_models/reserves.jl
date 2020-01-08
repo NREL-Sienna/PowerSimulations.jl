@@ -59,7 +59,7 @@ function service_requirement_constraint!(psi_container::PSIContainer,
     else
         for t in time_steps
             constraint[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                    sum(reserve_variable[:,t]) >= ts_vector[t] * requirement)
+                                    sum(reserve_variable[:, t]) >= ts_vector[t] * requirement)
         end
     end
     return
