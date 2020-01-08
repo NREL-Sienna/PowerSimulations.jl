@@ -3,7 +3,7 @@ mutable struct StageInternal
     number::Int64
     executions::Int64
     execution_count::Int64
-    synchronized_executions::Int64 # Number of executions per upper level stage step
+    synchronized_executions::Dict{Int64, Int64} # Number of executions per upper level stage step
     psi_container::Union{Nothing, PSIContainer}
     cache_dict::Dict{Type{<:AbstractCache}, AbstractCache}
     # Can probably be eliminated and use getter functions from
