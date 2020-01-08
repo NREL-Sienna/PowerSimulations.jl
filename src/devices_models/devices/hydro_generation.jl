@@ -335,7 +335,7 @@ function _get_budget(psi_container::PSIContainer,
             ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
                                                                 device,
                                                                 initial_time,
-                                                                "storage_capacity")))
+                                                                "get_storage_capacity")))
         else
             ts_vector = ones(time_steps[end])
         end
@@ -362,13 +362,13 @@ function budget_constraints!(psi_container::PSIContainer,
         device_budget_param_ub(psi_container,
                             budget_data,
                             Symbol("budget_$(H)"), # TODO: better name for this constraint
-                            UpdateRef{H}(:storage_capacity),
+                            UpdateRef{H}("get_storage_capacity"),
                             Symbol("P_$(H)"))
     else
-        device_budget_param_ub(psi_container,
-                            budget_data,
-                            Symbol("budget_$(H)"), # TODO: better name for this constraint
-                            Symbol("P_$(H)"))
+        device_budget_ub(psi_container,
+                        budget_data,
+                        Symbol("budget_$(H)"), # TODO: better name for this constraint
+                        Symbol("P_$(H)"))
     end
 end
 
@@ -381,10 +381,10 @@ function device_budget_param_ub(psi_container::PSIContainer,
     variable = get_variable(psi_container, var_name)
     set_name = (r[1] for r in budget_data)
     no_of_budgets = length(budget_data[1][4])
-    time_lengths = time_steps/no_of_budgets
-    time_chunks = reshape(time_steps, (time_lengths, no_of_budgets))
+    time_lengths = Int(length(time_steps)/no_of_budgets)
+    time_chunks = reshape(collect(time_steps), (time_lengths, no_of_budgets))
     constraint = add_cons_container!(psi_container, cons_name, set_name, 1:no_of_budgets)
-    param = add_param_container!(psi_container, param_reference, names, 1:no_of_budgets)
+    param = add_param_container!(psi_container, param_reference, set_name, 1:no_of_budgets)
 
     for data in budget_data, i in 1:no_of_budgets
         name = data[1]
@@ -407,8 +407,8 @@ function device_budget_ub(psi_container::PSIContainer,
     variable = get_variable(psi_container, var_name)
     set_name = (r[1] for r in budget_data)
     no_of_budgets = length(budget_data[1][4])
-    time_lengths = time_steps/no_of_budgets
-    time_chunks = reshape(time_steps, (time_lengths, no_of_budgets))
+    time_lengths = Int(length(time_steps)/no_of_budgets)
+    time_chunks = reshape(collect(time_steps), (time_lengths, no_of_budgets))
     constraint = add_cons_container!(psi_container, cons_name, set_name, 1:no_of_budgets)
 
     for data in budget_data, i in 1:no_of_budgets
