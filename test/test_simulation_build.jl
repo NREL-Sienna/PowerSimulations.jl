@@ -21,8 +21,7 @@ function test_sequence_build(file_path::String)
                     steps = 1, step_resolution =Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
-                    simulation_folder= file_path,
-                    verbose = true)
+                    simulation_folder= file_path)
         build!(sim)
 
         for field in fieldnames(SimulationSequence)
@@ -48,8 +47,7 @@ function test_sequence_build(file_path::String)
                     steps = 1, step_resolution =Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
-                    simulation_folder= file_path,
-                    verbose = true)
+                    simulation_folder= file_path)
                     
         @test_throws IS.ConflictingInputsError build!(sim)
     end
@@ -68,8 +66,7 @@ function test_sequence_build(file_path::String)
                     steps = 1, step_resolution =Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
-                    simulation_folder= file_path,
-                    verbose = true)
+                    simulation_folder= file_path)
 
         @test_throws IS.ConflictingInputsError build!(sim)
     end
@@ -87,8 +84,7 @@ function test_sequence_build(file_path::String)
                     steps = 1, step_resolution =Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
-                    simulation_folder= "fake_path",
-                    verbose = true)
+                    simulation_folder= "fake_path")
                     
         @test_throws IS.ConflictingInputsError build!(sim)
     end
@@ -106,8 +102,7 @@ function test_sequence_build(file_path::String)
                     steps = 1, step_resolution =Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
-                    simulation_folder= file_path,
-                    verbose = true)
+                    simulation_folder= file_path)
                     
         @test_throws IS.ConflictingInputsError build!(sim)
     end
@@ -125,8 +120,7 @@ function test_sequence_build(file_path::String)
                     steps = 1, step_resolution =Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
-                    simulation_folder= file_path,
-                    verbose = true)
+                    simulation_folder= file_path)
                     
         @test_throws IS.ConflictingInputsError build!(sim)
     end
@@ -144,8 +138,7 @@ function test_sequence_build(file_path::String)
                     steps = 1, step_resolution =Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
-                    simulation_folder= file_path,
-                    verbose = true)
+                    simulation_folder= file_path)
                     
         @test_throws IS.ConflictingInputsError build!(sim)
     end
@@ -163,8 +156,7 @@ function test_sequence_build(file_path::String)
                     steps = 5, step_resolution =Hour(24),
                     stages = stages_definition,
                     stages_sequence = sequence,
-                    simulation_folder= file_path,
-                    verbose = true)
+                    simulation_folder= file_path)
                     
         @test_throws IS.ConflictingInputsError build!(sim)
     end

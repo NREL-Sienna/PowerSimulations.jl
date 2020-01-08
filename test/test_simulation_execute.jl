@@ -9,7 +9,7 @@ function test_chronology(file_path::String)
     ### Receding Horizon
 
     stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
-                               "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
+                             "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
     sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
                 intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 1, to_executions = 1)),
@@ -24,8 +24,7 @@ function test_chronology(file_path::String)
                     steps = 2, step_resolution =Hour(1),
                     stages = stages_definition,
                     stages_sequence = sequence,
-                    simulation_folder= file_path,
-                    verbose = true)
+                    simulation_folder= file_path)
                     
     build!(sim)
     sim_results = execute!(sim)
@@ -79,7 +78,7 @@ function test_chronology(file_path::String)
 
     ### Consecutive
     stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
-                               "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
+                             "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
     sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
                 intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 24, to_executions = 1)),
@@ -94,8 +93,7 @@ function test_chronology(file_path::String)
                 steps = 2, step_resolution = Hour(24),
                 stages = stages_definition,
                 stages_sequence = sequence,
-                simulation_folder= file_path,
-                verbose = true)
+                simulation_folder= file_path)
     build!(sim)
 
     sim_results = execute!(sim)
@@ -108,8 +106,8 @@ function test_chronology(file_path::String)
             reference_2 = PSI.get_reference(sim_results, name, 2, variable_list[1])[1]
             time_file_path_1 = joinpath(dirname(reference_1), "time_stamp.feather") #first line, file path
             time_file_path_2 = joinpath(dirname(reference_2), "time_stamp.feather")
-            time_1 = convert(Dates.DateTime, Feather.read(time_file_path_1)[end,1]) # first time
-            time_2 = convert(Dates.DateTime, Feather.read(time_file_path_2)[1,1])
+            time_1 = convert(Dates.DateTime, Feather.read(time_file_path_1)[end, 1]) # first time
+            time_2 = convert(Dates.DateTime, Feather.read(time_file_path_2)[1, 1])
             @test time_2 == time_1
         end
     end
@@ -132,8 +130,7 @@ function test_chronology(file_path::String)
                 steps = 1, step_resolution = Hour(24),
                 stages = stages_definition,
                 stages_sequence = sequence,
-                simulation_folder= file_path,
-                verbose = true)
+                simulation_folder= file_path)
     build!(sim)
 
     sim_results = execute!(sim)
@@ -144,9 +141,9 @@ function test_chronology(file_path::String)
             variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1] # 1 is first step
             ic = collect(values(value.(sim.stages["ED"].internal.psi_container.parameters[key])).data)# [device, time] 1 is first execution
             raw_result = Feather.read(variable_ref)
-            for i in 1:size(ic,1)
-                result = raw_result[end,i] # end is last result [time, device]
-                initial = ic[i,1] # [device, time]
+            for i in 1:size(ic, 1)
+                result = raw_result[end, i] # end is last result [time, device]
+                initial = ic[i, 1] # [device, time]
                 @test isapprox(initial, result)
             end
         end

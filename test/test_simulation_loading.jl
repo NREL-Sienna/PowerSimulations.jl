@@ -21,8 +21,7 @@ function test_load_simulation()
                  steps = 1, step_resolution =Hour(24),
                  stages = stages_definition,
                  stages_sequence = sequence,
-                 simulation_folder= file_path,
-                 verbose = true)
+                 simulation_folder= file_path)
     build!(sim)
     sim_results = execute!(sim)
     stage_names = keys(sim.stages)
@@ -94,8 +93,7 @@ function test_load_simulation()
                  steps = 2, step_resolution =Hour(1),
                  stages = stages_definition,
                  stages_sequence = sequence,
-                 simulation_folder= file_path,
-                 verbose = true)
+                 simulation_folder= file_path)
         build!(sim)
         sim_results = execute!(sim)
         stages = ["UC", "ED"]
@@ -132,8 +130,7 @@ function test_load_simulation()
                  steps = 2, step_resolution = Hour(24),
                  stages = stages_definition,
                  stages_sequence = sequence,
-                 simulation_folder= file_path,
-                 verbose = true)
+                 simulation_folder= file_path)
         build!(sim)
         sim_results = execute!(sim)
         stage_names = keys(sim.stages)
