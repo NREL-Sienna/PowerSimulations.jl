@@ -298,7 +298,7 @@ function feed_forward!(psi_container::PSIContainer,
                      device_type::Type{I},
                      ff_model::UpperBoundFF) where {I<:PSY.StaticInjection}
 
-    for prefix in get_variable_from_stage(ff_model)
+    for prefix in get_affected_variables(ff_model)
         var_name = Symbol(prefix, "_$(I)")
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         ub_ff(psi_container,
@@ -331,10 +331,10 @@ function feed_forward!(psi_container::PSIContainer,
                      device_type::Type{I},
                      ff_model::IntegralLimitFF) where {I<:PSY.StaticInjection}
 
-    for prefix in get_variable_from_stage(ff_model)
+    for prefix in get_affected_variables(ff_model)
         var_name = Symbol(prefix, "_$(I)")
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
-        ub_ff(psi_container,
+        integrallimit_ff(psi_container,
               Symbol("FF_$(I)"),
                      parameter_ref,
                      var_name)
@@ -353,7 +353,7 @@ function feed_forward_update(sync::Chron,
     !(get_execution_count(to_stage) % sync.to_executions == 0) && return
 
     var_count = get_execution_count(to_stage) ÷ sync.to_executions
-
+    
     for device_name in axes(param_array)[1]
         var_value = get_stage_variable(Chron, from_stage, device_name, param_reference, var_count)
         PJ.fix(param_array[device_name], var_value)
