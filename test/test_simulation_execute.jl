@@ -15,7 +15,8 @@ function test_chronology(file_path::String)
                 intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 1, to_executions = 1)),
                 horizons = Dict("UC" => 24, "ED" =>12),
                 intervals = Dict("UC" => Hour(1), "ED" => Minute(5)),
-                feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
+                feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P]),
+                                    ("ED", :devices, :HydED1) => PSI.IntegralLimitFF(variable_from_stage = :P,affected_variables = [:P])),
                 cache = Dict("ED" => [TimeStatusChange(:ON_ThermalStandard)]),
                 ini_cond_chronology = Dict("UC" => RecedingHorizon(), "ED" => RecedingHorizon())
                 )
@@ -138,8 +139,8 @@ function test_chronology(file_path::String)
 
     sim_results = execute!(sim)
     @testset "Testing to verify parameter feedforward for consecutive UC to ED" begin
-        P_keys = [PowerSimulations.UpdateRef{VariableRef}(:ON_ThermalStandard)]
-        vars_names = [:ON_ThermalStandard]
+        P_keys = [PSI.UpdateRef{VariableRef}(:ON_ThermalStandard), PSI.UpdateRef{VariableRef}(:P_HydroDispatch)]
+        vars_names = [:ON_ThermalStandard, :P_HydroDispatch]
         for (ik, key) in enumerate(P_keys)
             variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1] # 1 is first step
             ic = collect(values(value.(sim.stages["ED"].internal.psi_container.parameters[key])).data)# [device, time] 1 is first execution
