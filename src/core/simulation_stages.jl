@@ -10,7 +10,7 @@ mutable struct StageInternal
     # Simulation object. Need to determine if its always available in the stage update steps.
     chronolgy_dict::Dict{Int64, <:AbstractChronology}
     function StageInternal(number, executions, execution_count, psi_container)
-        new(number, executions, execution_count, 0, psi_container,
+        new(number, executions, execution_count, Dict{Int64, Int64}(), psi_container,
         Dict{Type{<:AbstractCache}, AbstractCache}(),
         Dict{Int64, AbstractChronology}())
     end
