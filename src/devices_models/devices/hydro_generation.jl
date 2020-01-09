@@ -390,9 +390,9 @@ function device_budget_param_ub(psi_container::PSIContainer,
         name = data[1]
         forecast = data[4][i]
         multiplier = data[3]
-        param[name] = PJ.add_parameter(psi_container.JuMPmodel, forecast)
-        constraint[name] = JuMP.@constraint(psi_container.JuMPmodel,
-                    sum([variable[name, t] for t in time_chunks[:, i]]) <= multiplier*param[name])
+        param[name,i] = PJ.add_parameter(psi_container.JuMPmodel, forecast)
+        constraint[name, i] = JuMP.@constraint(psi_container.JuMPmodel,
+                    sum([variable[name, t] for t in time_chunks[:, i]]) <= multiplier*param[name,i])
     end
 
     return
@@ -415,7 +415,7 @@ function device_budget_ub(psi_container::PSIContainer,
         name = data[1]
         forecast = data[4][i]
         multiplier = data[3]
-        constraint[name] = JuMP.@constraint(psi_container.JuMPmodel,
+        constraint[name, i] = JuMP.@constraint(psi_container.JuMPmodel,
                     sum([variable[name, t] for t in time_chunks[:, i]]) <= multiplier*forecast)
     end
 
