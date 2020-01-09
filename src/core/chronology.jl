@@ -11,7 +11,7 @@ Defines the co-ordination of time between Two stages.
 - `from_steps::Int64`: Number of time periods to grab data from
 """
 struct Synchronize <: AbstractChronology
-    from_steps::Int64
+    steps::Int64
     function Synchronize(;steps)
         new(steps)
     end
@@ -37,7 +37,7 @@ function check_chronology(sync::Synchronize,
     to_stage_interval = IS.time_period_conversion(intervals.second)
     @debug to_stage_interval
     to_stage_sync = Int(from_stage_resolution/to_stage_interval)
-    from_stage_sync = sync.from_steps
+    from_stage_sync = sync.steps
 
     if from_stage_sync > from_stage_horizon
         throw(IS.ConflictingInputsError("The lookahead length $(from_stage_horizon) in stage is insufficient to syncronize with $(from_stage_sync) feed_forward steps"))
