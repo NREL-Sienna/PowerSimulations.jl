@@ -70,7 +70,7 @@ function load_simulation_results(SimulationResultsReference::SimulationResultsRe
     optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     if !isempty(dual)
-        duals = _reading_references(duals, dual, stage, step, references, extra_time_length)
+        duals = _reading_references(duals, dual, stage, step, references, time_length)
         results = DualResults(variables, obj_value, optimizer, time_stamp, duals)
     else
         results = SimulationResults(variables, obj_value, optimizer, time_stamp)
@@ -133,7 +133,7 @@ function load_simulation_results(SimulationResultsReference::SimulationResultsRe
     optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     if !isempty(dual)
-        duals = _reading_references(duals, dual, stage, references, extra_time_length)
+        duals = _reading_references(duals, dual, stage, references, time_length)
         results = DualResults(variables, obj_value, optimizer, time_stamp, duals)
     else
         results = SimulationResults(variables, obj_value, optimizer, time_stamp)
