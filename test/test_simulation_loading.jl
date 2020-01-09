@@ -10,7 +10,7 @@ function test_load_simulation()
                         "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
     sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                   intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 24, to_executions = 1)),
+                   intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(stepts =  24)),
                    horizons = Dict("UC" => 24, "ED" => 12),
                    intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
                    feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -81,7 +81,7 @@ function test_load_simulation()
                                "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
         sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                   intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 1, to_executions = 1)),
+                   intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(stepts =  1)),
                    horizons = Dict("UC" => 24, "ED" => 12),
                    intervals = Dict("UC" => Hour(1), "ED" => Minute(5)),
                    feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -118,7 +118,7 @@ function test_load_simulation()
                         "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
         sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                   intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 1, to_executions = 1)),
+                   intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(stepts =  1)),
                    horizons = Dict("UC" => 24, "ED" => 12),
                    intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
                    feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
