@@ -100,7 +100,7 @@ execute!!(sim::Simulation; verbose::Bool = false, kwargs...)
 ```
 
 # Accepted Key Words
-- `dual_constraints::Vector{Symbol}`: if dual variables are desired in the
+- `constraints_duals::Vector{Symbol}`: if dual variables are desired in the
 results, include a vector of the variable names to be included
 """
 
@@ -114,7 +114,7 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
     isnothing(sim.internal) && error("Simulation not built, build the simulation to execute")
     sim.internal.raw_dir, sim.internal.models_dir, sim.internal.results_dir = _prepare_workspace(sim.name, sim.simulation_folder)
     _build_stage_paths!(sim, verbose = verbose; kwargs...)
-
+    constraints_duals = get(kwargs, :constraints_duals, nothing)
     steps = get_steps(sim)
     for s in 1:steps
         verbose && println("Step $(s)")
@@ -130,8 +130,7 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
                 raw_results_path = joinpath(sim.internal.raw_dir, run_name, replace_chars("$(sim.internal.current_time)", ":", "-"))
                 mkpath(raw_results_path)
                 update_stage!(stage, s, sim)
-                dual_constraints = get(kwargs, :dual_constraints, nothing)
-                _run_stage(stage, sim.internal.current_time, raw_results_path; duals = dual_constraints)
+                _run_stage(stage, sim.internal.current_time, raw_results_path; duals = constraints_duals)
                 sim.internal.run_count[s][stage_number] += 1
                 sim.internal.date_ref[stage_number] = sim.internal.date_ref[stage_number] + stage_interval
             end
@@ -140,6 +139,6 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
         end
 
     end
-    sim_results = SimulationResultsReference(sim)
+    sim_results = SimulationResultsReference(sim; constraints_duals = constraints_duals)
     return sim_results
 end
