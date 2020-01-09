@@ -36,17 +36,17 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
     end
 
     vars_result = get_model_result(op_problem)
-    if :duals in keys(kwargs)
-        dual_result = get_model_duals(op_problem, kwargs[:duals])
-        merge!(vars_result, dual_result)
-    end
     optimizer_log = get_optimizer_log(op_problem)
     time_stamp = get_time_stamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
     obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel))
     merge!(optimizer_log, timed_log)
-    results = SimulationResults(vars_result, obj_value, optimizer_log, time_stamp)
-
+    if :duals in keys(kwargs)
+        dual_result = get_model_duals(op_problem.psi_container, kwargs[:duals])
+        results = DualResults(vars_result, obj_value, optimizer_log, time_stamp, dual_result)
+    else
+        results = SimulationResults(vars_result, obj_value, optimizer_log, time_stamp)
+    end
     !isnothing(save_path) && write_results(results, save_path)
 
      return results
