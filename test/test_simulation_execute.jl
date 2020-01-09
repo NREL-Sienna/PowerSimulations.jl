@@ -54,7 +54,7 @@ function test_chronology(file_path::String)
             raw_result = Feather.read(variable_ref)
             ic = sim.stages["ED"].internal.psi_container.parameters[key]
             for name in DataFrames.names(raw_result)
-                result = raw_result[1, name] # first time period of results  [time, device]
+                result = raw_result[end, name] # first time period of results  [time, device]
                 initial = value(ic[String(name)]) # [device, time]
                 @test isapprox(initial, result, atol=1.0e-4)
             end
