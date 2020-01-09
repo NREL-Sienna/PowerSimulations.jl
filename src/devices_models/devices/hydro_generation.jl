@@ -180,6 +180,25 @@ end
 
 function activepower_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{H},
+                                model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
+                                system_formulation::Type{<:PM.AbstractPowerModel},
+                                feed_forward::IntegralLimitFF) where H<:PSY.HydroGen
+    parameters = model_has_parameters(psi_container)
+    use_forecast_data = model_uses_forecasts(psi_container)
+
+    ts_data_active, _, constraint_data = _get_time_series(psi_container, devices, model,
+                                                          x -> (min=0.0, max=PSY.get_activepower(x)))
+
+    device_range(psi_container,
+                    constraint_data,
+                    Symbol("activerange_$(H)"),
+                    Symbol("P_$(H)"))
+
+    return
+end
+
+function activepower_constraints!(psi_container::PSIContainer,
+                                devices::IS.FlattenIteratorWrapper{H},
                                 model::DeviceModel{H, <:AbstractHydroUnitCommitment},
                                 system_formulation::Type{<:PM.AbstractPowerModel},
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
