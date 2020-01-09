@@ -65,7 +65,7 @@ for t in 1:2
        add_forecast!(c_sys5_hyd, l, Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]))
    end
    for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hyd))
-       add_forecast!(c_sys5_hyd, h, Deterministic("get_rating", hydro_timeseries_DA[t][ix]))
+       add_forecast!(c_sys5_hyd, h, Deterministic("get_rating", hydro_dispatch_timeseries_DA[t][ix]))
    end
 end
 
