@@ -15,8 +15,7 @@ function test_chronology(file_path::String)
                 intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 1, to_executions = 12)),
                 horizons = Dict("UC" => 24, "ED" =>12),
                 intervals = Dict("UC" => Hour(1), "ED" => Minute(5)),
-                feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P]),
-                                    ("ED", :devices, :HydED1) => PSI.IntegralLimitFF(variable_from_stage = :P,affected_variables = [:P])),
+                feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
                 cache = Dict("ED" => [TimeStatusChange(:ON_ThermalStandard)]),
                 ini_cond_chronology = Dict("UC" => RecedingHorizon(), "ED" => RecedingHorizon())
                 )
@@ -79,14 +78,15 @@ function test_chronology(file_path::String)
     end
 
     ### Consecutive
-    stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
-                               "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
+    stages_definition = Dict("UC" => Stage(GenericOpProblem, template_hydro_uc, c_sys5_hy_uc, GLPK_optimizer),
+                               "ED" => Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, GLPK_optimizer))
 
     sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
                 intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 24, to_executions = 1)),
                 horizons = Dict("UC" => 24, "ED" => 12),
                 intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
-                feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
+                feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P]),
+                                    ("ED", :devices, :Hydro) => IntegralLimitFF(variable_from_stage = :P,affected_variables = [:P])),
                 cache = Dict("ED" => [TimeStatusChange(:ON_ThermalStandard)]),
                 ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive())
                 )
