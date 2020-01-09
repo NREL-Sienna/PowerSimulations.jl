@@ -346,12 +346,8 @@ function feed_forward_update(sync::Chron,
                              to_stage::Stage,
                              from_stage::Stage) where Chron <: AbstractChronology
 
-    !(get_execution_count(to_stage) % sync.to_executions == 0) && return
-
-    var_count = get_execution_count(to_stage) ÷ sync.to_executions
-
     for device_name in axes(param_array)[1]
-        var_value = get_stage_variable(Chron, from_stage, device_name, param_reference, var_count)
+        var_value = get_stage_variable(Chron, (from_stage => to_stage), device_name, param_reference)
         PJ.fix(param_array[device_name], var_value)
     end
 
