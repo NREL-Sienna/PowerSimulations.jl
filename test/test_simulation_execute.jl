@@ -12,7 +12,7 @@ function test_chronology(file_path::String)
                                "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
     sequence = SimulationSequence(order = Dict(1 => "UC", 2 => "ED"),
-                intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 1, to_executions = 12)),
+                intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 24, to_executions = 12)),
                 horizons = Dict("UC" => 24, "ED" =>12),
                 intervals = Dict("UC" => Hour(1), "ED" => Minute(5)),
                 feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -53,11 +53,11 @@ function test_chronology(file_path::String)
         for (ik, key) in enumerate(P_keys)
             variable_ref = PSI.get_reference(sim_results, "UC", 2, vars_names[ik])[1]
             raw_result = Feather.read(variable_ref)
-            ic = sim.stages["ED"].internal.psi_container.parameters[key]
+            parameter = sim.stages["ED"].internal.psi_container.parameters[key]
             for name in DataFrames.names(raw_result)
-                result = raw_result[1, name] # first time period of results  [time, device]
-                initial = value(ic[String(name)]) # [device, time]
-                @test isapprox(initial, result, atol=1.0e-4)
+                result = raw_result[1, name] # last time period of results  [time, device]
+                initial = value(parameter[String(name)]) # [device, time] # [device, time]
+                @test isapprox(initial, result)
             end
         end
     end
@@ -86,12 +86,12 @@ function test_chronology(file_path::String)
                 horizons = Dict("UC" => 24, "ED" => 12),
                 intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
                 feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P]),
-                                    ("ED", :devices, :Hydro) => IntegralLimitFF(variable_from_stage = :P,affected_variables = [:P])),
+                                    ("ED", :devices, :HydroDispatch) => IntegralLimitFF(variable_from_stage = :P,affected_variables = [:P])),
                 cache = Dict("ED" => [TimeStatusChange(:ON_ThermalStandard)]),
                 ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive())
                 )
 
-    sim = Simulation(name = "consecutive",
+    sim = Simulation(name = "consecutive_1",
                 steps = 2, step_resolution = Hour(24),
                 stages = stages_definition,
                 stages_sequence = sequence,
@@ -129,7 +129,7 @@ function test_chronology(file_path::String)
         end
     end
 
-    sim = Simulation(name = "consecutive",
+    sim = Simulation(name = "consecutive_2",
                 steps = 1, step_resolution = Hour(24),
                 stages = stages_definition,
                 stages_sequence = sequence,
