@@ -48,7 +48,6 @@ devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalDispatchNoMin)
                                     :HydroDispatch => DeviceModel(HydroDispatch, HydroDispatchSeasonalFlow),
                                     )
 template_hydro_ed= OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
-
 #=
 ## UC Model Ref
 branches = Dict(:L => DeviceModel(Line, StaticLine),
