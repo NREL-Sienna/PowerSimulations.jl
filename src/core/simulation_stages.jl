@@ -59,32 +59,30 @@ get_psi_container(s::Stage) = s.internal.psi_container
 
 # This makes the choice in which variable to get from the results.
 function get_stage_variable(::Type{RecedingHorizon},
-                           from_stage::Stage,
+                           stages::Pair{Stage, Stage},
                            device_name::String,
-                           var_ref::UpdateRef,
-                           to_stage_execution_count::Int64)
-    variable = get_value(from_stage.internal.psi_container, var_ref)
+                           var_ref::UpdateRef)
+
+    variable = get_value(stages.first.internal.psi_container, var_ref)
     step = axes(variable)[2][1]
     return JuMP.value(variable[device_name, step])
 end
 
 function get_stage_variable(::Type{Consecutive},
-                             from_stage::Stage,
+                             stages::Pair{Stage, Stage},
                              device_name::String,
-                             var_ref::UpdateRef,
-                             to_stage_execution_count::Int64)
-    variable = get_value(from_stage.internal.psi_container, var_ref)
+                             var_ref::UpdateRef)
+    variable = get_value(stages.first.internal.psi_container, var_ref)
     step = axes(variable)[2][end]
     return JuMP.value(variable[device_name, step])
 end
 
 function get_stage_variable(::Type{Synchronize},
-                            from_stage::Stage,
+                            stages::Pair{Stage, Stage},
                             device_name::String,
-                            var_ref::UpdateRef,
-                            to_stage_execution_count::Int64)
-    variable = get_value(from_stage.internal.psi_container, var_ref)
-    step = axes(variable)[2][to_stage_execution_count + 1]
+                            var_ref::UpdateRef)
+    variable = get_value(stages.first.internal.psi_container, var_ref)
+    step = axes(variable)[2][stages.second.internal.execution_count + 1]
     return JuMP.value(variable[device_name, step])
 end
 
@@ -100,12 +98,11 @@ function initial_condition_update!(initial_condition_key::ICKey,
                                     sync::Chron,
                                     ini_cond_vector::Vector{InitialCondition},
                                     to_stage::Stage,
-                                    from_stage::Stage) where Chron <: AbstractChronology
-    to_stage_execution_count = to_stage.internal.execution_count
+                                    from_stage::Stage) where Chron <: AbstractChronology    
     for ic in ini_cond_vector
         name = device_name(ic)
         update_ref = ic.update_ref
-        var_value = get_stage_variable(Chron, from_stage, name, update_ref, to_stage_execution_count)
+        var_value = get_stage_variable(Chron, (from_stage => to_stage), name, update_ref)
         cache = get(from_stage.internal.cache_dict, ic.cache, nothing)
         quantity = calculate_ic_quantity(initial_condition_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
