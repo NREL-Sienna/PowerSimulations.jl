@@ -63,6 +63,7 @@ export Consecutive
 export UpperBoundFF
 export SemiContinuousFF
 export RangeFF
+export IntegralLimitFF
 
 # Initial Conditions Quantities
 export DevicePower
