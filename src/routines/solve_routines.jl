@@ -56,13 +56,11 @@ function _run_stage(stage::Stage, start_time::Dates.DateTime, results_path::Stri
     @assert stage.internal.psi_container.JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
     timed_log = Dict{Symbol, Any}()
 
-    IS.redirect_stdout_to_log() do
-        model = stage.internal.psi_container.JuMPmodel
-        _,
-        timed_log[:timed_solve_time],
-        timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] = @timed JuMP.optimize!(model)
-    end
+    model = stage.internal.psi_container.JuMPmodel
+    _,
+    timed_log[:timed_solve_time],
+    timed_log[:solve_bytes_alloc],
+    timed_log[:sec_in_gc] = @timed JuMP.optimize!(model)
 
     @info "JuMP.optimize! completed" timed_log
 
