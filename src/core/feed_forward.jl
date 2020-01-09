@@ -36,6 +36,18 @@ end
 get_binary_from_stage(p::SemiContinuousFF) = p.binary_from_stage
 get_affected_variables(p::AbstractAffectFeedForward) = p.affected_variables
 
+struct IntegralLimitFF <: AbstractAffectFeedForward 
+    variable_from_stage::Symbol
+    affected_variables::Vector{Symbol}
+    cache::Union{Nothing, Type{<:AbstractCache}} 
+end
+
+function IntegralLimitFF(;variable_from_stage, affected_variables)
+    return IntegralLimitFF(variable_from_stage, affected_variables, nothing)
+end
+
+get_variable_from_stage(p::IntegralLimitFF) = p.variable_from_stage
+
 ####################### Feed Forward Affects ###############################################
 
 @doc raw"""
@@ -225,6 +237,55 @@ function semicontinuousrange_ff(psi_container::PSIContainer,
     return
 end
 
+@doc raw"""
+        integrallimit_ff(psi_container::PSIContainer,
+                        cons_name::Symbol,
+                        param_reference::UpdateRef,
+                        var_name::Symbol)
+
+Constructs a parametrized integral limit constraint to implement feed_forward from other models.
+The Parameters are initialized using the upper boundary values of the provided variables.
+
+# Constraints
+``` sum(variable[var_name, t] for t in time_steps)/length(time_steps) <= param_reference[var_name] ```
+
+# LaTeX
+
+`` \sum_{t} x \leq param^{max}``
+
+# Arguments
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
+* cons_name::Symbol : name of the constraint
+* param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
+* var_name::Symbol : the name of the continuous variable
+"""
+function integrallimit_ff(psi_container::PSIContainer,
+                            cons_name::Symbol,
+                            param_reference::UpdateRef,
+                            var_name::Symbol)
+    time_steps = model_time_steps(psi_container)
+    ub_name = _middle_rename(cons_name, "_", "ub")
+    variable = get_variable(psi_container, var_name)
+
+    axes = JuMP.axes(variable)
+    set_name = axes[1]
+
+    @assert axes[2] == time_steps
+    param_ub = add_param_container!(psi_container, param_reference, set_name)
+    con_ub = add_cons_container!(psi_container, ub_name, set_name)
+
+    for name in axes[1]
+        value = JuMP.upper_bound(variable[name, 1])
+
+        param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel, value*length(time_steps))
+            con_ub[name] = JuMP.@constraint(psi_container.JuMPmodel,
+                                sum(variable[name, t] for t in time_steps) / length(time_steps) <= param_ub[name])
+    end
+
+    return
+
+end
+
 ########################## FeedForward Constraints #########################################
 
 function feed_forward!(psi_container::PSIContainer,
@@ -266,6 +327,22 @@ function feed_forward!(psi_container::PSIContainer,
     return
 end
 
+function feed_forward!(psi_container::PSIContainer,
+                     device_type::Type{I},
+                     ff_model::IntegralLimitFF) where {I<:PSY.StaticInjection}
+
+    for prefix in get_variable_from_stage(ff_model)
+        var_name = Symbol(prefix, "_$(I)")
+        parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
+        ub_ff(psi_container,
+              Symbol("FF_$(I)"),
+                     parameter_ref,
+                     var_name)
+    end
+
+    return
+
+end
 #########################FeedForward Variables Updating#####################################
 function feed_forward_update(sync::Chron,
                             param_reference::UpdateRef{JuMP.VariableRef},
