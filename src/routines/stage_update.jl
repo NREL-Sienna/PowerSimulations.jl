@@ -7,6 +7,7 @@ function parameter_update!(param_reference::UpdateRef{T},
     initial_forecast_time = get_simulation_time(sim, stage_number)
     horizon = length(model_time_steps(stage.internal.psi_container))
     param_array = get_parameters(stage.internal.psi_container, param_reference)
+    stage_number
     for d in devices
         forecast = PSY.get_forecast(PSY.Deterministic,
                                     d,

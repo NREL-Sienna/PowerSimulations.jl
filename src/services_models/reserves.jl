@@ -6,7 +6,7 @@ This function add the variables for reserves to the model
 """
 function activeservice_variables!(psi_container::PSIContainer,
                                   service::SR,
-                                  devices::Vector{<:PSY.Device}) where SR<:PSY.Reserve
+                                  contributing_devices::Vector{<:PSY.Device}) where SR<:PSY.Reserve
 
     function get_ub_val(d::PSY.Device)
         return d.tech.activepowerlimits.max
@@ -14,13 +14,12 @@ function activeservice_variables!(psi_container::PSIContainer,
     function get_ub_val(d::PSY.RenewableGen)
         return d.tech.rating
     end
-    
     add_variable(psi_container,
-                 devices,
-                 Symbol("$(PSY.get_name(service))_$SR"),
-                 false;
-                 ub_value = d -> get_ub_val(d),
-                 lb_value = d -> 0 )
+                contributing_devices,
+                Symbol("$(PSY.get_name(service))_$SR"),
+                false;
+                ub_value = d -> get_ub_val(d),
+                lb_value = d -> 0 )
     return
 end
 
@@ -28,16 +27,18 @@ end
 # This function can be generalized later for any constraint of type Sum(req_var) >= requirement,
 # it will only need to be specific to the names and get forecast string.
 function service_requirement_constraint!(psi_container::PSIContainer,
-                                         service::SR) where {SR<:PSY.Reserve}
-    time_steps = model_time_steps(psi_container)
+                                service::SR,
+                                model::ServiceModel{SR, RangeReserve}) where SR<:PSY.Reserve
     parameters = model_has_parameters(psi_container)
-    forecast = model_uses_forecasts(psi_container)
+    use_forecast_data = model_uses_forecasts(psi_container)
     initial_time = model_initial_time(psi_container)
-    reserve_variable = get_variable(psi_container, Symbol("$(PSY.get_name(service))_$SR"))
-    constraint_name = Symbol(PSY.get_name(service), "_requirement_$SR")
-    constraint = add_cons_container!(psi_container, constraint_name, time_steps)
-    requirement = PSY.get_requirement(service)
-    if forecast
+    time_steps = model_time_steps(psi_container)
+    constraint_name = Symbol("requirement_$SR")
+    name = PSY.get_name(service)
+    constraint = get_constraint(psi_container, constraint_name)
+    reserve_variable = get_variable(psi_container, Symbol("$(name)_$SR"))
+
+    if use_forecast_data
         ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
                                                             service,
                                                             initial_time,
@@ -45,17 +46,20 @@ function service_requirement_constraint!(psi_container::PSIContainer,
     else
         ts_vector = ones(time_steps[end])
     end
+
+    requirement = PSY.get_requirement(service)
     if parameters
-        param = include_parameters(psi_container, ts_vector,
-                                   UpdateRef{SR}("get_requirement"), time_steps)
+        param = get_parameters(psi_container, UpdateRef{SR}("get_requirement"))
         for t in time_steps
-            constraint[t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                         sum(reserve_variable[:,t]) >= param[t]*requirement)
+            param[name, t] = PJ.add_parameter(psi_container.JuMPmodel, 
+                                                   ts_vector[t] * requirement)
+            constraint[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
+                                        sum(reserve_variable[:,t]) >= param[name, t])
         end
     else
         for t in time_steps
-            constraint[t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                    sum(reserve_variable[:,t]) >= ts_vector[t]*requirement)
+            constraint[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
+                                    sum(reserve_variable[:, t]) >= ts_vector[t] * requirement)
         end
     end
     return

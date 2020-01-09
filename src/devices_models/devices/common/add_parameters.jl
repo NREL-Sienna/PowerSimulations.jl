@@ -1,7 +1,10 @@
+
+#= not used
 function include_parameters(psi_container::PSIContainer,
                             data::Array,
                             param_reference::UpdateRef,
                             axs...)
+                            
     if !model_has_parameters(psi_container)
         throw(IS.DataFormatError("Operational Model doesn't have parameters enabled. Include the keyword use_parameters=true"))
     end
@@ -12,6 +15,7 @@ function include_parameters(psi_container::PSIContainer,
     end
     return param
 end
+=#
 
 function include_parameters(psi_container::PSIContainer,
                             ts_data::Vector{DeviceTimeSeries},

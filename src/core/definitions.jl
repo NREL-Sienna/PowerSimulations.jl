@@ -25,3 +25,6 @@ const JuMPAffineExpressionVector = Vector{GAE{V}} where V<:JuMP.AbstractVariable
 const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 const DSDA = Dict{Symbol, JuMP.Containers.DenseAxisArray}
+
+# Tolerance of comparisons
+const ComparisonTolerance = 1.0e-10

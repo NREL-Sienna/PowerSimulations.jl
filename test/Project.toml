@@ -21,4 +21,4 @@ TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [compat]
 InfrastructureSystems = "~0.5.1"
-PowerSystems = "~0.7"
+PowerSystems = "~0.7.1"
