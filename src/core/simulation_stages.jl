@@ -59,9 +59,9 @@ get_psi_container(s::Stage) = s.internal.psi_container
 
 # This makes the choice in which variable to get from the results.
 function get_stage_variable(::Type{RecedingHorizon},
-                           stages::Pair{Stage, Stage},
+                           stages::Pair{Stage{T}, Stage{T}},
                            device_name::String,
-                           var_ref::UpdateRef)
+                           var_ref::UpdateRef) where T <: AbstractOperationsProblem
 
     variable = get_value(stages.first.internal.psi_container, var_ref)
     step = axes(variable)[2][1]
@@ -69,18 +69,18 @@ function get_stage_variable(::Type{RecedingHorizon},
 end
 
 function get_stage_variable(::Type{Consecutive},
-                             stages::Pair{Stage, Stage},
+                             stages::Pair{Stage{T}, Stage{T}},
                              device_name::String,
-                             var_ref::UpdateRef)
+                             var_ref::UpdateRef) where T <: AbstractOperationsProblem
     variable = get_value(stages.first.internal.psi_container, var_ref)
     step = axes(variable)[2][end]
     return JuMP.value(variable[device_name, step])
 end
 
 function get_stage_variable(::Type{Synchronize},
-                            stages::Pair{Stage, Stage},
+                            stages::Pair{Stage{T}, Stage{T}},
                             device_name::String,
-                            var_ref::UpdateRef)
+                            var_ref::UpdateRef) where T <: AbstractOperationsProblem
     variable = get_value(stages.first.internal.psi_container, var_ref)
     step = axes(variable)[2][stages.second.internal.execution_count + 1]
     return JuMP.value(variable[device_name, step])
