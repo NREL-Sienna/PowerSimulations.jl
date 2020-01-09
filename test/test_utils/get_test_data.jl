@@ -223,8 +223,8 @@ function build_init(gens, data)
 end
 
 nodes = nodes5()
-# System with HydroPower Energy
-c_sys5_hy_uc = System(nodes, vcat(thermal_generators5_uc_testing(nodes), hydro_generators5(nodes)), loads5(nodes), branches5(nodes), nothing, 100.0, nothing, nothing)
+# System with HydroPower Energy for UC 
+c_sys5_hy_uc = System(nodes, vcat(thermal_generators5_uc_testing(nodes), hydro_generators5(nodes), renewable_generators5(nodes)), loads5(nodes), branches5(nodes), nothing, 100.0, nothing, nothing)
 for t in 1:2
    for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy_uc))
        add_forecast!(c_sys5_hy_uc, l, Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]))
@@ -238,10 +238,18 @@ for t in 1:2
    for (ix, h) in enumerate(get_components(HydroFix, c_sys5_hy_uc))
        add_forecast!(c_sys5_hy_uc, h, Deterministic("get_rating", hydro_timeseries_DA[t][ix]))
    end
+    for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_hy_uc))
+        add_forecast!(c_sys5_hy_uc, r, Deterministic("get_rating", ren_timeseries_DA[t][ix]))
+    end
+    for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_hy_uc))
+        add_forecast!(c_sys5_hy_uc, i, Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]))
+    end
 end
 
+
 nodes = nodes5()
-c_sys5_hy_ed = System(nodes, vcat(thermal_generators5_uc_testing(nodes), hydro_generators5(nodes)), loads5(nodes), branches5(nodes), nothing, 100.0, nothing, nothing)
+# System with HydroPower Energy for ED 
+c_sys5_hy_ed = System(nodes, vcat(thermal_generators5_uc_testing(nodes), hydro_generators5(nodes), renewable_generators5(nodes)),  vcat(loads5(nodes), interruptible(nodes)), branches5(nodes), nothing, 100.0, nothing, nothing)
 for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy_ed))
         ta = load_timeseries_DA[t][ix]
@@ -257,6 +265,30 @@ for t in 1:2
             ini_time = timestamp(ta[i]) #get the hour
             data = when(hydro_dispatch_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
             add_forecast!(c_sys5_hy_ed, l, Deterministic("get_rating", data))
+        end
+    end
+    for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_hy_ed))
+        ta = load_timeseries_DA[t][ix]
+        for i in 1:length(ta) # loop over hours
+            ini_time = timestamp(ta[i]) #get the hour
+            data = when(load_timeseries_RT[t][ix], hour,hour(ini_time[1])) # get the subset ts for that hour
+            add_forecast!(c_sys5_hy_ed, l, Deterministic("get_rating", data))
+        end
+    end
+    for (ix, l) in enumerate(get_components(HydroDispatch, c_sys5_hy_ed))
+        ta = hydro_dispatch_timeseries_DA[t][ix]
+        for i in 1:length(ta) # loop over hours
+            ini_time = timestamp(ta[i]) #get the hour
+            data = when(hydro_dispatch_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
+            add_forecast!(c_sys5_hy_ed, l, Deterministic("get_storage_capacity", data))
+        end
+    end
+    for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_hy_ed))
+        ta = load_timeseries_DA[t][ix]
+        for i in 1:length(ta) # loop over hours
+            ini_time = timestamp(ta[i]) #get the hour
+            data = when(load_timeseries_RT[t][ix], hour,hour(ini_time[1])) # get the subset ts for that hour
+            add_forecast!(c_sys5_hy_ed, l, Deterministic("get_maxactivepower", data))
         end
     end
     for (ix, l) in enumerate(get_components(HydroFix, c_sys5_hy_ed))
