@@ -56,7 +56,7 @@ function test_chronology(file_path::String)
             for name in DataFrames.names(raw_result)
                 result = raw_result[1, name] # first time period of results  [time, device]
                 initial = value(ic[String(name)]) # [device, time]
-                @test_broken isapprox(initial, result, atol=1.0e-4)
+                @test isapprox(initial, result, atol=1.0e-4)
             end
         end
     end
