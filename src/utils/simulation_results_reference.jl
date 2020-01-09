@@ -2,9 +2,9 @@ struct SimulationResultsReference
     ref::Dict
     results_folder::String
     chronologies::Dict
-    function SimulationResultsReference(sim::Simulation; kwargs...)
+    function SimulationResultsReference(sim::Simulation)
         date_run = convert(String, last(split(dirname(sim.internal.raw_dir), "/")))
-        ref = make_references(sim, date_run; kwargs...)
+        ref = make_references(sim, date_run)
         chronologies = Dict()
         for (stage_number, stage_name) in sim.sequence.order
             stage = get_stage(sim, stage_name)
@@ -51,9 +51,9 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
     for (stage_number, stage_name) in sim.sequence.order
         variables = Dict{Symbol, Any}()
         interval = sim.sequence.intervals[stage_name]
-        variable_names = (collect(keys(get_psi_container(sim.stages[stage_name]).variables)))
-        if :dual_constraints in keys(kwargs) && !isnothing(kwargs[:dual_constraints])
-            dual_cons = Symbol.(_concat_string(kwargs[:dual_constraints]))
+        variable_names = (collect(keys(sim.stages[stage_name].internal.psi_container.variables)))
+        if :dual_constraints in keys(kwargs) && !isnothing(get_constraints(stage.internal.psi_container))
+            dual_cons = _concat_string(kwargs[:dual_constraint])
             variable_names = vcat(variable_names, dual_cons)
         end
         for name in variable_names

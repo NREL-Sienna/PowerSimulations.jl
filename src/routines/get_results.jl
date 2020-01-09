@@ -82,11 +82,11 @@ function get_model_result(op_m::OperationsProblem)
     return results_dict
 end
 
-function get_model_duals(op::PSIContainer, cons::Vector{Symbol})
+function get_model_duals(op_m::OperationsProblem, cons::Vector{Symbol})
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
 
     for c in cons
-        v = get_constraint(op, c)
+        v = get_constraint(op_m.psi_container, c)
         results_dict[c] = _result_dataframe_duals(v)
     end
     return results_dict
