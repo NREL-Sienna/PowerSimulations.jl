@@ -222,13 +222,14 @@ include("routines/get_results.jl")
 include("routines/stage_update.jl")
 include("routines/solve_routines.jl")
 
-
 #Utils
 include("utils/optimization_debugging.jl")
 include("utils/dual_results.jl")
 include("utils/simulation_results_reference.jl")
 include("utils/simulation_results.jl")
 include("utils/printing.jl")
+include("utils/kwargs_check.jl")
+
 #Routines
 include("routines/write_results.jl")
 
