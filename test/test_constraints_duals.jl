@@ -13,10 +13,10 @@ function test_duals(file_path)
         services = Dict{Symbol, ServiceModel}()
         template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
         op_problem = OperationsProblem(TestOpProblem, template, c_sys5_re; optimizer = OSQP_optimizer, use_parameters = true)
-        res = solve_op_problem!(op_problem; duals = duals)
+        res = solve_op_problem!(op_problem; constraints_duals = duals)
         for i in 1:length(res.time_stamp)
             dual = JuMP.dual(op_problem.psi_container.constraints[:CopperPlateBalance][i])
-            @test dual == res.duals[:CopperPlateBalance][i, 1]
+            @test dual == res.constraints_duals[:CopperPlateBalance][i, 1]
         end
     end
     @testset "testing dual constraints in results" begin
@@ -43,7 +43,7 @@ function test_duals(file_path)
         sim_results = execute!(sim; constraints_duals = duals)
         res = PSI.load_simulation_results(sim_results, "ED")
         dual = JuMP.dual(sim.stages["ED"].internal.psi_container.constraints[:CopperPlateBalance][1])
-        @test dual == res.duals[:CopperPlateBalance_dual][1, 1]
+        @test dual == res.constraints_duals[:CopperPlateBalance_dual][1, 1]
 
         path = joinpath(file_path, "one")
         !isdir(path) && mkdir(path)

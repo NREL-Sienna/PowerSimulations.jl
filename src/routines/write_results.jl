@@ -161,7 +161,7 @@ function write_results(res::DualResults, folder_path::String, results_folder::St
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
     _write_data(res.variables, res.time_stamp, folder_path; kwargs...)
-    _write_data(res.duals, folder_path; kwargs...)
+    _write_data(res.constraints_duals, folder_path; kwargs...)
     _write_optimizer_log(res.optimizer_log, folder_path)
     _write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
     files = collect(readdir(folder_path))

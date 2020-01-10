@@ -3,22 +3,22 @@ struct DualResults <: Results
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
-    duals::Dict{Symbol,Any}
+    constraints_duals::Dict{Symbol,Any}
 end
 
 get_res_variables(result::DualResults) = result.variables
 get_cost(result::DualResults) = result.total_cost
 get_log(result::DualResults) = result.optimizer_log
 get_time_stamp(result::DualResults) = result.time_stamp
-get_duals(result::DualResults) = result.duals
+get_duals(result::DualResults) = result.constraints_duals
 get_variables(result::DualResults) = result.dual_variables
 """This function creates the correct results struct for the context"""
 function _make_results(variables::Dict,
                       total_cost::Dict,
                       optimizer_log::Dict,
                       time_stamp::DataFrames.DataFrame,
-                      duals::Dict)
-    return DualResults(variables, total_cost, optimizer_log, time_stamp, duals)
+                      constraints_duals::Dict)
+    return DualResults(variables, total_cost, optimizer_log, time_stamp, constraints_duals)
 end
 
 # internal function to parse through the reference dictionary and grab the file paths
