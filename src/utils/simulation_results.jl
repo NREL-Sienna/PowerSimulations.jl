@@ -1,5 +1,5 @@
 struct SimulationResults <: Results
-    variables::Dict{Symbol, DataFrames.DataFrame}
+    variables::Dict{Symbol,DataFrames.DataFrame}
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
@@ -55,12 +55,12 @@ function load_simulation_results(SimulationResultsReference::SimulationResultsRe
             step_df = vcat(step_df, date_df[date_df.Step .== step[n], :])
         end
         variables[(variable[l])] = DataFrames.DataFrame()
-        for (ix,time) in enumerate(step_df.Date)
+        for (ix, time) in enumerate(step_df.Date)
             file_path = step_df[ix, :File_Path]
             var = Feather.read("$file_path")
-            variables[(variable[l])] = vcat(variables[(variable[l])],var[1:time_length,:])
+            variables[(variable[l])] = vcat(variables[(variable[l])], var[1:time_length,:])
             if l == 1
-                time_stamp = vcat(time_stamp, _reading_time(file_path, time_length))
+                time_stamp = vcat(time_stamp, _read_time(file_path, time_length))
                 check_file_integrity(dirname(file_path))
             end
         end
@@ -68,9 +68,9 @@ function load_simulation_results(SimulationResultsReference::SimulationResultsRe
     time_stamp[!,:Range] = convert(Array{Dates.DateTime}, time_stamp[!,:Range])
     file_path = dirname(references[stage][variable[1]][1,:File_Path])
     optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
-    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
+    obj_value = Dict{Symbol,Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     if !isempty(dual)
-        duals = _reading_references(duals, dual, stage, step, references, extra_time_length)
+        duals = _read_references(duals, dual, stage, step, references, time_length)
         results = DualResults(variables, obj_value, optimizer, time_stamp, duals)
     else
         results = SimulationResults(variables, obj_value, optimizer, time_stamp)
@@ -118,12 +118,12 @@ function load_simulation_results(SimulationResultsReference::SimulationResultsRe
     for l in 1:length(variable)
         date_df = references[stage][variable[l]]
         variables[(variable[l])] = DataFrames.DataFrame()
-        for (ix,time) in enumerate(date_df.Date)
+        for (ix, time) in enumerate(date_df.Date)
             file_path = date_df[ix, :File_Path]
             var = Feather.read(file_path)
-            variables[(variable[l])] = vcat(variables[(variable[l])],var[1:time_length,:])
+            variables[(variable[l])] = vcat(variables[(variable[l])], var[1:time_length,:])
             if l == 1
-                time_stamp = vcat(time_stamp, _reading_time(file_path, time_length))
+                time_stamp = vcat(time_stamp, _read_time(file_path, time_length))
                 check_file_integrity(dirname(file_path))
             end
         end
@@ -131,9 +131,9 @@ function load_simulation_results(SimulationResultsReference::SimulationResultsRe
     time_stamp[!,:Range] = convert(Array{Dates.DateTime}, time_stamp[!,:Range])
     file_path = dirname(references[stage][variable[1]][1,:File_Path])
     optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
-    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
+    obj_value = Dict{Symbol,Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     if !isempty(dual)
-        duals = _reading_references(duals, dual, stage, references, extra_time_length)
+        duals = _read_references(duals, dual, stage, references, time_length)
         results = DualResults(variables, obj_value, optimizer, time_stamp, duals)
     else
         results = SimulationResults(variables, obj_value, optimizer, time_stamp)
@@ -170,19 +170,17 @@ function check_file_integrity(path::String)
     end
 
     if !matched
-        throw(IS.HashMismatchError(
-            "The hash value in the written files does not match the read files, results may have been tampered."
-        ))
+        throw(IS.HashMismatchError("The hash value in the written files does not match the read files, results may have been tampered."))
     end
 end
 
 function get_variable_names(sim::Simulation, stage::Any)
-     return collect(keys(sim.stages[stage].internal.psi_container.variables))
+    return collect(keys(sim.stages[stage].internal.psi_container.variables))
 end
 
 function get_reference(sim_results::SimulationResultsReference, stage::String, step::Int, variable::Symbol) 
-     file_paths = sim_results.ref["stage-$stage"][variable]
-     return filter(file_paths -> file_paths.Step == "step-$step", file_paths)[:, :File_Path]
+    file_paths = sim_results.ref["stage-$stage"][variable]
+    return filter(file_paths->file_paths.Step == "step-$step", file_paths)[:, :File_Path]
 end
 
 get_psi_container(sim::Simulation, stage::Any) = sim.stages[stage].internal.psi_container
