@@ -2,15 +2,15 @@ struct SimulationResultsReference
     ref::Dict
     results_folder::String
     chronologies::Dict
-    function SimulationResultsReference(sim::Simulation)
+    function SimulationResultsReference(sim::Simulation; kwargs...)
         date_run = convert(String, last(split(dirname(sim.internal.raw_dir), "/")))
-        ref = make_references(sim, date_run)
+        ref = make_references(sim, date_run; kwargs...)
         chronologies = Dict()
         for (stage_number, stage_name) in sim.sequence.order
             stage = get_stage(sim, stage_name)
             interval = sim.sequence.intervals[stage_name]
             resolution = PSY.get_forecasts_resolution(get_sys(stage))
-            chronologies["stage-$stage_name"] = convert(Int64, (interval/resolution))
+            chronologies["stage-$stage_name"] = convert(Int64, (interval / resolution))
         end
         new(ref, sim.internal.results_dir, chronologies)
     end
@@ -42,18 +42,18 @@ references = make_references(sim, "2019-10-03T09-18-00-test")
 ```
 
 # Accepted Key Words
-- `dual_constraints::Vector{Symbol}`: name of dual constraints to be added to results
+- `constraints_duals::Vector{Symbol}`: name of dual constraints to be added to results
 """
 function make_references(sim::Simulation, date_run::String; kwargs...)
     sim.internal.date_ref[1] = sim.internal.date_range[1]
     sim.internal.date_ref[2] = sim.internal.date_range[1]
     references = Dict()
     for (stage_number, stage_name) in sim.sequence.order
-        variables = Dict{Symbol, Any}()
+        variables = Dict{Symbol,Any}()
         interval = sim.sequence.intervals[stage_name]
-        variable_names = (collect(keys(sim.stages[stage_name].internal.psi_container.variables)))
-        if :dual_constraints in keys(kwargs) && !isnothing(get_constraints(stage.internal.psi_container))
-            dual_cons = _concat_string(kwargs[:dual_constraint])
+        variable_names = (collect(keys(get_psi_container(sim.stages[stage_name]).variables)))
+        if :constraints_duals in keys(kwargs) && !isnothing(kwargs[:constraints_duals])
+            dual_cons = Symbol.(_concat_string(kwargs[:constraints_duals]))
             variable_names = vcat(variable_names, dual_cons)
         end
         for name in variable_names
@@ -73,7 +73,7 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
                         variables[name] = vcat(variables[name], date_df)
                     else
                         @info("$full_path, no such file path")
-                     end
+                    end
                 end
                 sim.internal.run_count[s][stage_number] += 1
                 sim.internal.date_ref[stage_number] = sim.internal.date_ref[stage_number] + interval
@@ -84,7 +84,7 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
     return references
 end
 """This function outputs the step range correlated to a given date range"""
-function find_step_range(rsim_result::SimulationResultsReference, stage::String, Dates::StepRange{Dates.DateTime, Any})
+function find_step_range(rsim_result::SimulationResultsReference, stage::String, Dates::StepRange{Dates.DateTime,Any})
     references = sim_results.ref
     variable = (collect(keys(references[stage])))
     date_df = references[stage][variable[1]]

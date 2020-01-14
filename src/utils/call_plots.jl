@@ -106,11 +106,11 @@ function bar_plot(res::OperationsProblemResults; kwargs...)
     seriescolor = get(kwargs, :seriescolor, default)
     for name in string.(keys(res.variables))
         variable_bar = get_bar_plot_data(res, name)
-        p = RecipesBase.plot(variable_bar, name; seriescolor = seriescolor)
+        p = RecipesBase.plot(variable_bar, name; seriescolor = seriescolor, kwargs...)
         display(p)
     end
     bar_gen = get_bar_gen_data(res)
-    p2 = RecipesBase.plot(bar_gen; seriescolor = seriescolor)
+    p2 = RecipesBase.plot(bar_gen; seriescolor = seriescolor, kwargs...)
     display(p2)
 end
 

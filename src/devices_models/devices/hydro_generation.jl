@@ -166,7 +166,7 @@ function activepower_constraints!(psi_container::PSIContainer,
         device_timeseries_param_ub(psi_container,
                             ts_data_active,
                             Symbol("activerange_$(H)"),
-                            UpdateRef{H}(:rating),
+                            UpdateRef{H}("get_rating"),
                             Symbol("P_$(H)"))
     else
         device_timeseries_ub(psi_container,
@@ -174,6 +174,25 @@ function activepower_constraints!(psi_container::PSIContainer,
                             Symbol("activerange_$(H)"),
                             Symbol("P_$(H)"))
     end
+
+    return
+end
+
+function activepower_constraints!(psi_container::PSIContainer,
+                                devices::IS.FlattenIteratorWrapper{H},
+                                model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
+                                system_formulation::Type{<:PM.AbstractPowerModel},
+                                feed_forward::IntegralLimitFF) where H<:PSY.HydroGen
+    parameters = model_has_parameters(psi_container)
+    use_forecast_data = model_uses_forecasts(psi_container)
+
+    ts_data_active, _, constraint_data = _get_time_series(psi_container, devices, model,
+                                                          x -> (min=0.0, max=PSY.get_activepower(x)))
+
+    device_range(psi_container,
+                    constraint_data,
+                    Symbol("activerange_$(H)"),
+                    Symbol("P_$(H)"))
 
     return
 end
@@ -202,7 +221,7 @@ function activepower_constraints!(psi_container::PSIContainer,
                             ts_data_active,
                             Symbol("activerange_$(H)"),
                             Symbol("P_$(H)"),
-                            UpdateRef{H}(:rating),
+                            UpdateRef{H}("get_rating"),
                             Symbol("ON_$(H)"))
     else
         device_timeseries_ub_bin(psi_container,
@@ -247,11 +266,11 @@ function nodal_expression!(psi_container::PSIContainer,
     if parameters
         include_parameters(psi_container,
                            ts_data_active,
-                           UpdateRef{H}(:rating),
+                           UpdateRef{H}("get_rating"),
                            :nodal_balance_active)
         include_parameters(psi_container,
                            ts_data_reactive,
-                           UpdateRef{H}(:rating),
+                           UpdateRef{H}("get_rating"),
                            :nodal_balance_reactive)
         return
     end
@@ -283,7 +302,7 @@ function nodal_expression!(psi_container::PSIContainer,
     if parameters
         include_parameters(psi_container,
                            ts_data_active,
-                           UpdateRef{H}(:rating),
+                           UpdateRef{H}("get_rating"),
                            :nodal_balance_active)
         return
     end
@@ -330,18 +349,29 @@ function _get_budget(psi_container::PSIContainer,
         tech = PSY.get_tech(device)
         # This is where you would get the water/energy storage capacity
         # which is then multiplied by the forecast value to get you the energy budget
-        energy_capacity = use_forecast_data ? PSY.get_storagecapacity(device) : PSY.get_activepower(device)
+        if use_forecast_data
+            energy_capacity = PSY.get_storage_capacity(device)
+        else
+            energy_capacity = PSY.get_activepower(device)
+        end
         if use_forecast_data
             ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
                                                                 device,
                                                                 initial_time,
-                                                                "storagecapacity")))
+                                                                "get_storage_capacity")))
         else
             ts_vector = ones(time_steps[end])
         end
         budget_data[ix] = (name, bus_number, energy_capacity, ts_vector)
     end
     return budget_data
+end
+
+function budget_constraints!(psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{H},
+    model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
+    system_formulation::Type{<:PM.AbstractPowerModel},
+    feed_forward::IntegralLimitFF) where H<:PSY.HydroGen
 end
 
 function budget_constraints!(psi_container::PSIContainer,
@@ -354,14 +384,14 @@ function budget_constraints!(psi_container::PSIContainer,
     if parameters
         device_budget_param_ub(psi_container,
                             budget_data,
-                            Symbol("budget_$(H)"), # TODO: better name for this constraint
-                            UpdateRef{H}(:storagecapacity),
+                            Symbol("energy_limit_$(H)"), # TODO: better name for this constraint
+                            UpdateRef{H}("get_storage_capacity"),
                             Symbol("P_$(H)"))
     else
-        device_budget_param_ub(psi_container,
-                            budget_data,
-                            Symbol("budget_$(H)"), # TODO: better name for this constraint
-                            Symbol("P_$(H)"))
+        device_budget_ub(psi_container,
+                        budget_data,
+                        Symbol("energy_limit_$(H)"), # TODO: better name for this constraint
+                        Symbol("P_$(H)"))
     end
 end
 
@@ -374,18 +404,18 @@ function device_budget_param_ub(psi_container::PSIContainer,
     variable = get_variable(psi_container, var_name)
     set_name = (r[1] for r in budget_data)
     no_of_budgets = length(budget_data[1][4])
-    time_lengths = time_steps/length(budget_data[1][4])
-    time_chunks = reshape(time_steps, (time_lengths, no_of_budgets))
-    constraint = _add_cons_container!(psi_container, cons_name, set_name, no_of_budgets)
-    param = add_param_container!(psi_container, param_reference, names, no_of_budgets)
+    time_lengths = Int(length(time_steps)/no_of_budgets)
+    time_chunks = reshape(collect(time_steps), (time_lengths, no_of_budgets))
+    constraint = add_cons_container!(psi_container, cons_name, set_name, 1:no_of_budgets)
+    param = add_param_container!(psi_container, param_reference, set_name, 1:no_of_budgets)
 
     for data in budget_data, i in 1:no_of_budgets
         name = data[1]
         forecast = data[4][i]
         multiplier = data[3]
-        param[name] = PJ.add_parameter(psi_container.JuMPmodel, forecast)
-        constraint[name] = JuMP.@constraint(psi_container.JuMPmodel,
-                    sum([variable[name, t] for t in time_chunks[:, i]]) <= multiplier*param[name])
+        param[name, i] = PJ.add_parameter(psi_container.JuMPmodel, forecast)
+        constraint[name, i] = JuMP.@constraint(psi_container.JuMPmodel,
+                    sum([variable[name, t] for t in time_chunks[:, i]]) <= multiplier*param[name,i])
     end
 
     return
@@ -400,15 +430,15 @@ function device_budget_ub(psi_container::PSIContainer,
     variable = get_variable(psi_container, var_name)
     set_name = (r[1] for r in budget_data)
     no_of_budgets = length(budget_data[1][4])
-    time_lengths = time_steps/length(budget_data[1][4])
-    time_chunks = reshape(time_steps, (time_lengths, no_of_budgets))
-    constraint = _add_cons_container!(psi_container, cons_name, set_name, no_of_budgets)
+    time_lengths = Int(length(time_steps)/no_of_budgets)
+    time_chunks = reshape(collect(time_steps), (time_lengths, no_of_budgets))
+    constraint = add_cons_container!(psi_container, cons_name, set_name, 1:no_of_budgets)
 
     for data in budget_data, i in 1:no_of_budgets
         name = data[1]
         forecast = data[4][i]
         multiplier = data[3]
-        constraint[name] = JuMP.@constraint(psi_container.JuMPmodel,
+        constraint[name, i] = JuMP.@constraint(psi_container.JuMPmodel,
                     sum([variable[name, t] for t in time_chunks[:, i]]) <= multiplier*forecast)
     end
 
