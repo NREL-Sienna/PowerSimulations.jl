@@ -75,20 +75,6 @@ function test_load_simulation(file_path::String)
         end
     end
  ##################### from execute !
-    @testset "Testing to verify parameter feedforward for consecutive UC to ED" begin
-        P_keys = [PowerSimulations.UpdateRef{VariableRef}(:ON_ThermalStandard)]
-        vars_names = [:ON_ThermalStandard]
-        for (ik, key) in enumerate(P_keys)
-            variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1] # 1 is first step
-            ic = collect(values(value.(sim.stages["ED"].internal.psi_container.parameters[key])).data)# [device, time] 1 is first execution
-            raw_result = Feather.read(variable_ref)
-            for i in 1:size(ic,1)
-                result = raw_result[end,i] # end is last result [time, device]
-                initial = ic[i,1] # [device, time]
-                @test isapprox(initial, result)
-            end
-        end
-    end
 
     @testset "Testing to verify length of time_stamp" begin
         for name in keys(sim.stages)
@@ -110,15 +96,17 @@ function test_load_simulation(file_path::String)
     end
 ###################
 
-    stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
-                             "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
+    stages_definition = Dict("UC" => Stage(GenericOpProblem, template_hydro_uc, c_sys5_hy_uc, GLPK_optimizer),
+                             "ED" => Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, GLPK_optimizer))
 
     sequence = SimulationSequence(
         order = Dict(1 => "UC", 2 => "ED"),
         intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 24, to_executions = 1)),
         horizons = Dict("UC" => 24, "ED" => 12),
         intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
-        feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
+        feed_forward = Dict(
+            ("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P]),
+            ("ED", :devices, :HydroDispatch) =>IntegralLimitFF(variable_from_stage = :P,affected_variables = [:P])),
         cache = Dict("ED" => [TimeStatusChange(:ON_ThermalStandard)]),
         ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()))
     sim = Simulation(
@@ -130,6 +118,21 @@ function test_load_simulation(file_path::String)
         verbose = true)
     build!(sim)
     sim_results = execute!(sim)
+
+    @testset "Testing to verify parameter feedforward for consecutive UC to ED" begin
+        P_keys = [PSI.UpdateRef{VariableRef}(:P_HydroDispatch)] #[PSI.UpdateRef{VariableRef}(:ON_ThermalStandard), PSI.UpdateRef{VariableRef}(:P_HydroDispatch)]
+        vars_names = [:P_HydroDispatch] #[:ON_ThermalStandard, :P_HydroDispatch]
+        for (ik, key) in enumerate(P_keys)
+            variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1] # 1 is first step
+            parameter = collect(values(value.(sim.stages["ED"].internal.psi_container.parameters[key])).data)# [device, time] 1 is first execution
+            raw_result = Feather.read(variable_ref)
+            for i in 1:size(parameter, 1)
+                result = raw_result[end, i] # end is last result [time, device]
+                initial = parameter[1] # [device, time]
+                @test isapprox(initial, result)
+            end
+        end
+    end
 
     @testset "Testing to verify time gap for Consecutive" begin
         names = ["UC"]
