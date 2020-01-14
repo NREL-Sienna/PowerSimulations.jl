@@ -106,8 +106,8 @@ end
 ######################## output constraints without Time Series ############################
 function _get_time_series(psi_container::PSIContainer,
                           devices::IS.FlattenIteratorWrapper{<:PSY.HydroGen},
-                          model::DeviceModel = DeviceModel(PSY.HydroFix, HydroFixed),
-                          get_constraint_values::Function = x -> (min = 0.0, max = 0.0))
+                          model::DeviceModel,
+                          get_constraint_values::Function)
     initial_time = model_initial_time(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     parameters = model_has_parameters(psi_container)
@@ -207,6 +207,7 @@ function activepower_constraints!(psi_container::PSIContainer,
 
     ts_data_active, _, constraint_data = _get_time_series(psi_container, devices, model,
                                                           x -> PSY.get_activepowerlimits(PSY.get_tech(x)))
+
     if !parameters && !use_forecast_data
         device_semicontinuousrange(psi_container,
                                     constraint_data,
@@ -261,7 +262,9 @@ function nodal_expression!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{H},
                            system_formulation::Type{<:PM.AbstractPowerModel}) where H<:PSY.HydroGen
     parameters = model_has_parameters(psi_container)
-    ts_data_active, ts_data_reactive, _ = _get_time_series(psi_container, devices)
+    ts_data_active, ts_data_reactive, _ = _get_time_series(psi_container, devices,
+                                DeviceModel(H, HydroFixed), x -> (min = 0.0, max = 0.0))
+
 
     if parameters
         include_parameters(psi_container,
@@ -297,7 +300,8 @@ function nodal_expression!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{H},
                            system_formulation::Type{<:PM.AbstractActivePowerModel}) where H<:PSY.HydroGen
     parameters = model_has_parameters(psi_container)
-    ts_data_active, _, _  = _get_time_series(psi_container, devices)
+    ts_data_active, _, _  = _get_time_series(psi_container, devices,
+                                    DeviceModel(H, HydroFixed), x -> (min = 0.0, max = 0.0))
 
     if parameters
         include_parameters(psi_container,
