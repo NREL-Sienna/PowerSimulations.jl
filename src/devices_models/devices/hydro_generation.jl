@@ -349,7 +349,11 @@ function _get_budget(psi_container::PSIContainer,
         tech = PSY.get_tech(device)
         # This is where you would get the water/energy storage capacity
         # which is then multiplied by the forecast value to get you the energy budget
-        energy_capacity = use_forecast_data ? PSY.get_storage_capacity(device) : PSY.get_activepower(device)
+        if use_forecast_data
+            energy_capacity = PSY.get_storage_capacity(device)
+        else
+            energy_capacity = PSY.get_activepower(device)
+        end
         if use_forecast_data
             ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
                                                                 device,
@@ -409,7 +413,7 @@ function device_budget_param_ub(psi_container::PSIContainer,
         name = data[1]
         forecast = data[4][i]
         multiplier = data[3]
-        param[name,i] = PJ.add_parameter(psi_container.JuMPmodel, forecast)
+        param[name, i] = PJ.add_parameter(psi_container.JuMPmodel, forecast)
         constraint[name, i] = JuMP.@constraint(psi_container.JuMPmodel,
                     sum([variable[name, t] for t in time_chunks[:, i]]) <= multiplier*param[name,i])
     end
