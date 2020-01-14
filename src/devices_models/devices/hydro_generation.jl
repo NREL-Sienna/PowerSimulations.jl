@@ -36,6 +36,25 @@ function reactivepower_variables!(psi_container::PSIContainer,
     return
 end
 
+function energy_storage_variables!(psi_container::PSIContainer,
+                                  devices::IS.FlattenIteratorWrapper{H}) where H<:PSY.HydroGen
+    add_variable(psi_container,
+                 devices,
+                 Symbol("E_$(H)"),
+                 false;
+                 ub_value = d -> d.storage_capacity,
+                 lb_value = d -> 0.0,
+                 init_value = d -> d.initial_storage)
+
+    add_variable(psi_container,
+                 devices,
+                 Symbol("In_$(H)"),
+                 false;
+                 ub_value = d -> d.inflow,
+                 lb_value = d -> 0.0)
+    return
+end
+
 """
 This function add the variables for power generation commitment to the model
 """
@@ -233,6 +252,121 @@ function activepower_constraints!(psi_container::PSIContainer,
 
     return
 end
+
+######################## output constraints without Time Series ############################
+function _get_inflow_time_series(psi_container::PSIContainer,
+                            devices::IS.FlattenIteratorWrapper{<:PSY.HydroGen},
+                            model::DeviceModel{<:PSY.HydroGen, <:AbstractHydroFormulation},
+                            get_constraint_values::Function = x -> (min = 0.0, max = 0.0))
+    initial_time = model_initial_time(psi_container)
+    use_forecast_data = model_uses_forecasts(psi_container)
+    parameters = model_has_parameters(psi_container)
+    time_steps = model_time_steps(psi_container)
+    
+    constraint_data = Vector{DeviceRange}()
+    inflow_timeseries = Vector{DeviceTimeSeries}()
+
+    for device in devices
+        bus_number = PSY.get_number(PSY.get_bus(device))
+        name = PSY.get_name(device)
+        inflow_energy = PSY.get_infow(device)
+        if use_forecast_data
+            ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
+                                                                device,
+                                                                initial_time,
+                                                                "get_infow")))
+        else
+            ts_vector = ones(time_steps[end])
+        end
+        range_data = DeviceRange(name, get_constraint_values(device))
+        push!(constraint_data, range_data)
+        # _device_services!(range_data, device, model)
+        push!(inflow_timeseries, DeviceTimeSeries(name, bus_number, inflow_energy, ts_vector,
+                                                 range_data))
+    end
+    return inflow_timeseries, constraint_data
+end
+
+function inflow_constraints!(psi_container::PSIContainer,
+                            devices::IS.FlattenIteratorWrapper{H},
+                            model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
+                            system_formulation::Type{<:PM.AbstractPowerModel},
+                            feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
+
+    return
+end
+
+function inflow_constraints!(psi_container::PSIContainer,
+                            devices::IS.FlattenIteratorWrapper{H},
+                            model::DeviceModel{PSY.HydroDispatch, HydroDispatchSeasonalFlow},
+                            system_formulation::Type{<:PM.AbstractPowerModel},
+                            feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
+    parameters = model_has_parameters(psi_container)
+    use_forecast_data = model_uses_forecasts(psi_container)
+
+    ts_data_inflow, constraint_data = _get_inflow_time_series(psi_container, devices, model,
+                                            x -> (min=0.0, max=PSY.get_inflow(x)))
+
+    if !parameters && !use_forecast_data
+        device_range(psi_container,
+                     constraint_data,
+                     Symbol("inflowrange_$(H)"),
+                     Symbol("In_$(H)"))
+        return
+    end
+
+    if parameters
+        device_timeseries_param_ub(psi_container,
+                            ts_data_inflow,
+                            Symbol("inflowrange_$(H)"),
+                            UpdateRef{H}("get_inflow"),
+                            Symbol("In_$(H)"))
+    else
+        device_timeseries_ub(psi_container,
+                            ts_data_inflow,
+                            Symbol("inflowrange_$(H)"),
+                            Symbol("In_$(H)"))
+    end
+
+    return
+end
+
+###################################################### book keeping constraints ############
+
+function make_efficiency_data(devices::IS.FlattenIteratorWrapper{H}) where {H<:PSY.HydroGen}
+    names = Vector{String}(undef, length(devices))
+    in_out = Vector{InOut}(undef, length(devices))
+
+    for (ix, d) in enumerate(devices)
+        names[ix] = PSY.get_name(d)
+        in_out[ix] = (in = 1.0, out = 1.0) #PSY.get_efficiency(d)
+    end
+
+    return names, in_out
+end
+
+function energy_balance_constraint!(psi_container::PSIContainer,
+                                   devices::IS.FlattenIteratorWrapper{H},
+                                   ::Type{D},
+                                   ::Type{S},
+                                   feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {H<:PSY.HydroGen,
+                                                            D<:AbstractStorageFormulation,
+                                                            S<:PM.AbstractPowerModel}
+    key = ICKey(DeviceEnergy, H)
+    if !(key in keys(psi_container.initial_conditions))
+        throw(IS.DataFormatError("Initial Conditions for $(h) Energy Constraints not in the model"))
+    end
+
+    efficiency_data = make_efficiency_data(devices)
+
+    energy_balance(psi_container,
+                   psi_container.initial_conditions[key],
+                   efficiency_data,
+                   Symbol("energy_balance_$(H)"),
+                   (Symbol("P_$(H)"), Symbol("In_$(H)"), Symbol("E_$(H)")))
+    return
+end
+
 
 ########################## Make initial Conditions for a Model #############################
 function initial_conditions!(psi_container::PSIContainer,
