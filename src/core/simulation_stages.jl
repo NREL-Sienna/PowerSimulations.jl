@@ -23,8 +23,8 @@ end
         optimizer::JuMP.OptimizerFactory
         internal::Union{Nothing, StageInternal}
         )
-                                             
-""" # TODO: Add DocString    
+
+""" # TODO: Add DocString
 mutable struct Stage{M<:AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
@@ -62,7 +62,6 @@ function get_stage_variable(::Type{RecedingHorizon},
                            stages::Pair{Stage{T}, Stage{T}},
                            device_name::String,
                            var_ref::UpdateRef) where T <: AbstractOperationsProblem
-
     variable = get_value(stages.first.internal.psi_container, var_ref)
     step = axes(variable)[2][1]
     return JuMP.value(variable[device_name, step])
@@ -98,7 +97,7 @@ function initial_condition_update!(initial_condition_key::ICKey,
                                     sync::Chron,
                                     ini_cond_vector::Vector{InitialCondition},
                                     to_stage::Stage,
-                                    from_stage::Stage) where Chron <: AbstractChronology    
+                                    from_stage::Stage) where Chron <: AbstractChronology
     for ic in ini_cond_vector
         name = device_name(ic)
         update_ref = ic.update_ref
