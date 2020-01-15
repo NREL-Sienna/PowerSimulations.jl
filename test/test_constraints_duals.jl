@@ -37,8 +37,7 @@ function test_duals(file_path)
             steps = 1, step_resolution =Hour(24),
             stages = stages_definition,
             stages_sequence = sequence,
-            simulation_folder= file_path,
-            verbose = true)
+            simulation_folder= file_path)
         build!(sim)
         sim_results = execute!(sim; constraints_duals = duals)
         res = PSI.load_simulation_results(sim_results, "ED")
