@@ -62,7 +62,6 @@ function get_stage_variable(::Type{RecedingHorizon},
                            stages::Pair{Stage{T}, Stage{T}},
                            device_name::String,
                            var_ref::UpdateRef) where T <: AbstractOperationsProblem
-
     variable = get_value(stages.first.internal.psi_container, var_ref)
     step = axes(variable)[2][1]
     return JuMP.value(variable[device_name, step])
