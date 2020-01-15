@@ -1,9 +1,9 @@
 # writing a dictionary of dataframes to files
 
-function _write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, save_path::AbstractString; kwargs...)
+function _write_data(vars_results::Dict, save_path::String; kwargs...)
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
-        for (k,v) in vars_results
+        for (k, v) in vars_results
             file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
             file_type.write(file_path, vars_results[k])
         end
@@ -12,11 +12,11 @@ end
 
 # writing a dictionary of dataframes to files and appending the time
 
-function _write_data(vars_results::Dict{Symbol, DataFrames.DataFrame}, time::DataFrames.DataFrame, save_path::AbstractString; kwargs...)
+function _write_data(vars_results::Dict, time::DataFrames.DataFrame, save_path::AbstractString; kwargs...)
     file_type = get(kwargs, :file_type, Feather)
-    for (k,v) in vars_results
+    for (k, v) in vars_results
         var = DataFrames.DataFrame()
-        if file_type == CSV && size(time,1) == size(v,1)
+        if file_type == CSV && size(time, 1) == size(v, 1)
             var = hcat(time, v)
         else
             var = v
@@ -57,14 +57,14 @@ function _write_data(psi_container::PSIContainer, save_path::AbstractString; kwa
     return
 end
 
+
 function _write_data(psi_container::PSIContainer, save_path::AbstractString, dual_con::Vector{Symbol}; kwargs...)
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
         duals = get_model_duals(psi_container, dual_con)
         for (k, v) in duals
             file_path = joinpath(save_path, "$(k)_dual.$(lowercase("$file_type"))")
-            variable = _result_dataframe_variables(v)
-            file_type.write(file_path, variable)
+            file_type.write(file_path, v)
         end
     end
     return
@@ -91,14 +91,14 @@ end
 
 function _export_model_result(stage::Stage, start_time::Dates.DateTime, save_path::String, dual_con::Vector{Symbol})
     _write_data(stage, save_path)
-    _write_data(stage, save_path, dual_con)
-    _write_data(get_time_stamp(stage, start_time), save_path, "time_stamp")
+    _write_data(get_psi_container(stage), save_path, dual_con)
+    _write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
     files = collect(readdir(save_path))
     compute_file_hash(save_path, files)
     return
 end
 
-function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
+function _export_optimizer_log(optimizer_log::Dict{Symbol,Any},
                                psi_container::PSIContainer,
                                path::String)
 
@@ -110,7 +110,7 @@ function _export_optimizer_log(optimizer_log::Dict{Symbol, Any},
         optimizer_log[:solve_time] = MOI.get(psi_container.JuMPmodel, MOI.SolveTime())
     catch
         @warn("SolveTime() property not supported by the Solver")
-        optimizer_log[:solve_time] = NaN #"Not Supported by solver"
+        optimizer_log[:solve_time] = NaN # "Not Supported by solver"
     end
     _write_optimizer_log(optimizer_log, path)
     return
@@ -161,7 +161,7 @@ function write_results(res::DualResults, folder_path::String, results_folder::St
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
     _write_data(res.variables, res.time_stamp, folder_path; kwargs...)
-    _write_data(res.duals, folder_path; kwargs...)
+    _write_data(res.constraints_duals, folder_path; kwargs...)
     _write_optimizer_log(res.optimizer_log, folder_path)
     _write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
     files = collect(readdir(folder_path))
@@ -215,7 +215,7 @@ end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
 function _write_psi_container(psi_container::PSIContainer, save_path::String)
-    MOF_model = MOPFM(format=MOI.FileFormats.FORMAT_MOF)
+    MOF_model = MOPFM(format = MOI.FileFormats.FORMAT_MOF)
     MOI.copy_to(MOF_model, JuMP.backend(psi_container.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)
     return
