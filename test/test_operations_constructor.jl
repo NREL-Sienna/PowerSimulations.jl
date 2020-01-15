@@ -23,7 +23,7 @@ services = Dict{Symbol, ServiceModel}()
     op_problem = OperationsProblem(TestOpProblem, template,
                                             c_sys5_re;
                                             use_forecast_data = false,
-                                            parameters = false,
+                                            use_parameters = false,
                                             optimizer = GLPK_optimizer)
     moi_tests(op_problem, false, 5, 0, 5, 5, 1, false)
 end
