@@ -1,0 +1,690 @@
+┌ Warning: Initial time not defined as an argument, it will be infered from the data.
+│                Initial Simulation Time set to 2024-01-01T00:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/simulation.jl:197
+┌ Info: Building Stage 2-ED
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/simulation.jl:243
+┌ Info: Building InterruptibleLoad with DispatchablePowerLoad formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Building ThermalStandard with ThermalDispatchNoMin formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Building RenewableDispatch with RenewableFullDispatch formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Building PowerLoad with StaticPowerLoad formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Building CopperPlatePowerModel network formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:390
+┌ Info: Building Objective
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:400
+┌ Info: Building Stage 1-UC
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/simulation.jl:243
+┌ Info: Building InterruptibleLoad with StaticPowerLoad formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Warning: The data doesn't include devices of type InterruptibleLoad, consider changing the device models
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/devices_models/device_constructors/common/constructor_validations.jl:4
+┌ Info: Building ThermalStandard with ThermalBasicUnitCommitment formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Setting DeviceStatus initial conditions for the status of all devices ThermalStandard based on system data
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/make_initial_conditions.jl:19
+┌ Info: Setting DevicePower initial_condition of all devices ThermalStandard based on system data
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/make_initial_conditions.jl:54
+┌ Info: Setting TimeDurationON initial_condition of all devices ThermalStandard based on system data
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/make_initial_conditions.jl:91
+┌ Info: Setting TimeDurationOFF initial_condition of all devices ThermalStandard based on system data
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/make_initial_conditions.jl:91
+┌ Info: Building RenewableDispatch with RenewableFixed formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Warning: The data doesn't include devices of type RenewableDispatch, consider changing the device models
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/devices_models/device_constructors/common/constructor_validations.jl:4
+┌ Info: Building PowerLoad with StaticPowerLoad formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Building CopperPlatePowerModel network formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:390
+┌ Info: Building Objective
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:400
+┌ Info: Serialized time series data to /Users/jdlara/.julia/dev/PowerSimulations/testing_reading_results/receding/2020-01-14T16-59-00/models_json/stage_ED_model/ED_sys_data_time_series_storage.h5.
+└ @ InfrastructureSystems /Users/jdlara/.julia/packages/InfrastructureSystems/KJCTm/src/time_series_storage.jl:47
+┌ Info: Serialized System to /Users/jdlara/.julia/dev/PowerSimulations/testing_reading_results/receding/2020-01-14T16-59-00/models_json/stage_ED_model/ED_sys_data.json
+└ @ InfrastructureSystems /Users/jdlara/.julia/packages/InfrastructureSystems/KJCTm/src/serialization.jl:8
+┌ Info: Serialized time series data to /Users/jdlara/.julia/dev/PowerSimulations/testing_reading_results/receding/2020-01-14T16-59-00/models_json/stage_UC_model/UC_sys_data_time_series_storage.h5.
+└ @ InfrastructureSystems /Users/jdlara/.julia/packages/InfrastructureSystems/KJCTm/src/time_series_storage.jl:47
+┌ Info: Serialized System to /Users/jdlara/.julia/dev/PowerSimulations/testing_reading_results/receding/2020-01-14T16-59-00/models_json/stage_UC_model/UC_sys_data.json
+└ @ InfrastructureSystems /Users/jdlara/.julia/packages/InfrastructureSystems/KJCTm/src/serialization.jl:8
+┌ Info: Stage 1-UC
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:123
+┌ Info: Starting run step-1-stage-UC 2020-01-14T16:58:25.389
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 88.727846627,:solve_bytes_alloc => 1396941482,:sec_in_gc => 0.423265955)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Stage 2-ED
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:123
+┌ Info: Starting run step-1-stage-ED 2024-01-01T00:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.194101477,:solve_bytes_alloc => 13907188,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T00:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.178963788,:solve_bytes_alloc => 16145986,:sec_in_gc => 0.037444179)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T00:05:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000448245,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T00:10:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000399487,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T00:15:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000402631,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T00:20:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000399084,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T00:25:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000405904,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T00:30:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000398557,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T00:35:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000401121,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T00:40:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000402814,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T00:45:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000400202,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T00:50:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.00040048,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Stage 1-UC
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:123
+┌ Info: Starting run step-2-stage-UC 2024-01-01T00:55:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 23.191187008,:solve_bytes_alloc => 113602720,:sec_in_gc => 0.025659981)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Stage 2-ED
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:123
+┌ Info: Starting run step-2-stage-ED 2024-01-01T01:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.049627612,:solve_bytes_alloc => 4457737,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-01T01:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000373906,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-01T01:05:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000380299,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-01T01:10:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.00039182,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-01T01:15:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000399482,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-01T01:20:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000427822,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-01T01:25:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000386046,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-01T01:30:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000428394,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-01T01:35:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000383848,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-01T01:40:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.00038954,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-01T01:45:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000432792,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-01T01:50:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000479734,:solve_bytes_alloc => 52672,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Warning: Initial time not defined as an argument, it will be infered from the data.
+│                Initial Simulation Time set to 2024-01-01T00:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/simulation.jl:197
+┌ Info: Building Stage 2-ED
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/simulation.jl:243
+┌ Info: Building InterruptibleLoad with DispatchablePowerLoad formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Building ThermalStandard with ThermalDispatchNoMin formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Building RenewableDispatch with RenewableFullDispatch formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Building PowerLoad with StaticPowerLoad formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Building CopperPlatePowerModel network formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:390
+┌ Info: Building Objective
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:400
+┌ Info: Building Stage 1-UC
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/simulation.jl:243
+┌ Info: Building InterruptibleLoad with StaticPowerLoad formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Warning: The data doesn't include devices of type InterruptibleLoad, consider changing the device models
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/devices_models/device_constructors/common/constructor_validations.jl:4
+┌ Info: Building ThermalStandard with ThermalBasicUnitCommitment formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Setting DeviceStatus initial conditions for the status of all devices ThermalStandard based on system data
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/make_initial_conditions.jl:19
+┌ Info: Setting DevicePower initial_condition of all devices ThermalStandard based on system data
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/make_initial_conditions.jl:54
+┌ Info: Setting TimeDurationON initial_condition of all devices ThermalStandard based on system data
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/make_initial_conditions.jl:91
+┌ Info: Setting TimeDurationOFF initial_condition of all devices ThermalStandard based on system data
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/make_initial_conditions.jl:91
+┌ Info: Building RenewableDispatch with RenewableFixed formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Warning: The data doesn't include devices of type RenewableDispatch, consider changing the device models
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/devices_models/device_constructors/common/constructor_validations.jl:4
+┌ Info: Building PowerLoad with StaticPowerLoad formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Building CopperPlatePowerModel network formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:390
+┌ Info: Building Objective
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:400
+┌ Info: Serialized time series data to /Users/jdlara/.julia/dev/PowerSimulations/testing_reading_results/consecutive/2020-01-14T17-01-00/models_json/stage_ED_model/ED_sys_data_time_series_storage.h5.
+└ @ InfrastructureSystems /Users/jdlara/.julia/packages/InfrastructureSystems/KJCTm/src/time_series_storage.jl:47
+┌ Info: Serialized System to /Users/jdlara/.julia/dev/PowerSimulations/testing_reading_results/consecutive/2020-01-14T17-01-00/models_json/stage_ED_model/ED_sys_data.json
+└ @ InfrastructureSystems /Users/jdlara/.julia/packages/InfrastructureSystems/KJCTm/src/serialization.jl:8
+┌ Info: Serialized time series data to /Users/jdlara/.julia/dev/PowerSimulations/testing_reading_results/consecutive/2020-01-14T17-01-00/models_json/stage_UC_model/UC_sys_data_time_series_storage.h5.
+└ @ InfrastructureSystems /Users/jdlara/.julia/packages/InfrastructureSystems/KJCTm/src/time_series_storage.jl:47
+┌ Info: Serialized System to /Users/jdlara/.julia/dev/PowerSimulations/testing_reading_results/consecutive/2020-01-14T17-01-00/models_json/stage_UC_model/UC_sys_data.json
+└ @ InfrastructureSystems /Users/jdlara/.julia/packages/InfrastructureSystems/KJCTm/src/serialization.jl:8
+┌ Info: Stage 1-UC
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:123
+┌ Info: Starting run step-1-stage-UC 2020-01-14T17:00:51.946
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 88.432094747,:solve_bytes_alloc => 407506192,:sec_in_gc => 0.065974832)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Stage 2-ED
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:123
+┌ Info: Starting run step-1-stage-ED 2024-01-01T00:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.001998685,:solve_bytes_alloc => 527104,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T00:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000415594,:solve_bytes_alloc => 58992,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T01:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000422196,:solve_bytes_alloc => 58992,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T02:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000428452,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T03:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000421794,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T04:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000416279,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T05:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000424714,:solve_bytes_alloc => 58992,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T06:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000414974,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T07:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000565717,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T08:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000424151,:solve_bytes_alloc => 58992,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T09:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000412138,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T10:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000417081,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T11:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000451273,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T12:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000410616,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T13:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000416502,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T14:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000538014,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T15:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000447069,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T16:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000442321,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T17:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000412661,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T18:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000440343,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T19:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000408674,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T20:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000469375,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T21:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000474922,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T22:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.00065454,:solve_bytes_alloc => 58992,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Stage 1-UC
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:123
+┌ Info: Starting run step-2-stage-UC 2024-01-01T23:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.180254456,:solve_bytes_alloc => 347552,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Stage 2-ED
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:123
+┌ Info: Starting run step-2-stage-ED 2024-01-02T00:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000415126,:solve_bytes_alloc => 58992,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T00:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000431449,:solve_bytes_alloc => 58992,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T01:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000419155,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T02:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000476149,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T03:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000420182,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T04:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000428534,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T05:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000416033,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T06:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.00041204,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T07:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000448992,:solve_bytes_alloc => 58992,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T08:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000420294,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T09:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000419808,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T10:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.00046503,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T11:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000422397,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T12:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000422706,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T13:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.00041047,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T14:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000592758,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T15:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.00045902,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T16:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000455275,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T17:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000723681,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T18:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000473263,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T19:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000498939,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T20:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000478004,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T21:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000510321,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-2-stage-ED 2024-01-02T22:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000563014,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Building Stage 2-ED
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/simulation.jl:243
+┌ Info: Building InterruptibleLoad with DispatchablePowerLoad formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Building ThermalStandard with ThermalDispatchNoMin formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Building RenewableDispatch with RenewableFullDispatch formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Building PowerLoad with StaticPowerLoad formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Building CopperPlatePowerModel network formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:390
+┌ Info: Building Objective
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:400
+┌ Info: Building Stage 1-UC
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/simulation.jl:243
+┌ Info: Building InterruptibleLoad with StaticPowerLoad formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Warning: The data doesn't include devices of type InterruptibleLoad, consider changing the device models
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/devices_models/device_constructors/common/constructor_validations.jl:4
+┌ Info: Building ThermalStandard with ThermalBasicUnitCommitment formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Setting DeviceStatus initial conditions for the status of all devices ThermalStandard based on system data
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/make_initial_conditions.jl:19
+┌ Info: Setting DevicePower initial_condition of all devices ThermalStandard based on system data
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/make_initial_conditions.jl:54
+┌ Info: Setting TimeDurationON initial_condition of all devices ThermalStandard based on system data
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/make_initial_conditions.jl:91
+┌ Info: Setting TimeDurationOFF initial_condition of all devices ThermalStandard based on system data
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/make_initial_conditions.jl:91
+┌ Info: Building RenewableDispatch with RenewableFixed formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Warning: The data doesn't include devices of type RenewableDispatch, consider changing the device models
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/devices_models/device_constructors/common/constructor_validations.jl:4
+┌ Info: Building PowerLoad with StaticPowerLoad formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:385
+┌ Info: Building CopperPlatePowerModel network formulation
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:390
+┌ Info: Building Objective
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/core/operations_problem.jl:400
+┌ Info: Serialized time series data to /Users/jdlara/.julia/dev/PowerSimulations/testing_reading_results/consecutive/2020-01-14T17-02-00/models_json/stage_ED_model/ED_sys_data_time_series_storage.h5.
+└ @ InfrastructureSystems /Users/jdlara/.julia/packages/InfrastructureSystems/KJCTm/src/time_series_storage.jl:47
+┌ Info: Serialized System to /Users/jdlara/.julia/dev/PowerSimulations/testing_reading_results/consecutive/2020-01-14T17-02-00/models_json/stage_ED_model/ED_sys_data.json
+└ @ InfrastructureSystems /Users/jdlara/.julia/packages/InfrastructureSystems/KJCTm/src/serialization.jl:8
+┌ Info: Serialized time series data to /Users/jdlara/.julia/dev/PowerSimulations/testing_reading_results/consecutive/2020-01-14T17-02-00/models_json/stage_UC_model/UC_sys_data_time_series_storage.h5.
+└ @ InfrastructureSystems /Users/jdlara/.julia/packages/InfrastructureSystems/KJCTm/src/time_series_storage.jl:47
+┌ Info: Serialized System to /Users/jdlara/.julia/dev/PowerSimulations/testing_reading_results/consecutive/2020-01-14T17-02-00/models_json/stage_UC_model/UC_sys_data.json
+└ @ InfrastructureSystems /Users/jdlara/.julia/packages/InfrastructureSystems/KJCTm/src/serialization.jl:8
+┌ Info: Stage 1-UC
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:123
+┌ Info: Starting run step-1-stage-UC 2020-01-14T17:02:21.538
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 78.18523221,:solve_bytes_alloc => 407506192,:sec_in_gc => 0.069754657)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Stage 2-ED
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:123
+┌ Info: Starting run step-1-stage-ED 2024-01-01T00:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.002183426,:solve_bytes_alloc => 527104,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T00:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000405462,:solve_bytes_alloc => 58992,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T01:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000407156,:solve_bytes_alloc => 58992,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T02:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000401946,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T03:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000446908,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T04:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000405697,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T05:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000420557,:solve_bytes_alloc => 58992,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T06:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000464413,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T07:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000411973,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T08:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000424511,:solve_bytes_alloc => 58992,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T09:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000415217,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T10:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000406934,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T11:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000446655,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T12:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000464434,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T13:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000408648,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T14:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000405656,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T15:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000495189,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T16:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000408488,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T17:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000407735,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T18:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.00046701,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T19:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000417418,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T20:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000592355,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T21:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000573259,:solve_bytes_alloc => 57072,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: Starting run step-1-stage-ED 2024-01-01T22:00:00
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:127
+┌ Info: JuMP.optimize! completed
+│   timed_log = Dict{Symbol,Any}(:timed_solve_time => 0.000575862,:solve_bytes_alloc => 58992,:sec_in_gc => 0.0)
+└ @ PowerSimulations /Users/jdlara/.julia/dev/PowerSimulations/src/routines/solve_routines.jl:67
+┌ Info: removing test files
+└ @ Main /Users/jdlara/.julia/dev/PowerSimulations/test/test_simulation_execute.jl:178
+┌ Info: 
+│ Log message summary:
+│ 
+│ 0 Error events:
+│ 
+│ 2 Warn events:
+│   count=8 at /Users/jdlara/.julia/packages/InfrastructureSystems/KJCTm/src/validation.jl:202
+│     example message="Invalid range"
+│   count=2 at /Users/jdlara/.julia/packages/PowerSystems/guSHt/src/utils/IO/branchdata_checks.jl:156
+│     example message="Rate provided for Line("Line9", true, 0.0, 0.0, Arc(Bus(6, "Bus 6", PowerSystems.PV, -0.24818581963359368, 1.07, (min = 0.94, max = 1.06), 13.8, Dict{String,Any}(), InfrastructureSystems.InfrastructureSystemsInternal(UUID("4c122106-053c-4e15-a616-26955a6b0beb"), nothing)), Bus(12, "Bus 12", PowerSystems.PQ, -0.2630211182755455, 1.055, (min = 0.94, max = 1.06), 13.8, Dict{String,Any}(), InfrastructureSystems.InfrastructureSystemsInternal(UUID("e411b29b-5bbb-4737-82f6-36164800220d"), nothing)), InfrastructureSystems.InfrastructureSystemsInternal(UUID("e5b0ddd6-30af-419f-a103-7edf095eade9"), nothing)), 0.12291, 0.25581, (from = 0.0, to = 0.0), 2.02, (min = -1.04, max = 1.04), Service[], Dict{String,Any}(), InfrastructureSystems.Forecasts(Dict{InfrastructureSystems.ForecastKey,InfrastructureSystems.ForecastInternal}(), nothing), InfrastructureSystems.InfrastructureSystemsInternal(UUID("ba9044ab-bca8-44bf-a8e9-6dc1bbad015d"), nothing)) is 27.876, NaN times larger the expected SIL NaN in the range of (min = 12.0, max = 13.0)."
+│ 
+│ 0 Info events:
+└ @ Main /Users/jdlara/.julia/dev/PowerSimulations/test/runtests.jl:77
