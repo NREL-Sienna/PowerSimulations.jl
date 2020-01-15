@@ -28,3 +28,14 @@ const DSDA = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
 # Tolerance of comparisons
 const ComparisonTolerance = 1.0e-10
+
+const OPERATIONS_ACCEPTED_KWARGS = [
+                                    :horizon,
+                                    :initial_conditions,
+                                    :use_forecast_data,
+                                    :use_parameters,
+                                    :JuMPmodel,
+                                    :optimizer,
+                                    :PTDF,
+                                    ]
+const SIMULATION_BUILD_KWARGS = []
