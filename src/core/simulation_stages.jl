@@ -80,8 +80,6 @@ function get_stage_variable(::Type{Synchronize},
                             stages::Pair{Stage{T}, Stage{T}},
                             device_name::String,
                             var_ref::UpdateRef) where T <: AbstractOperationsProblem
-
-    !(get_execution_count(stages.first) % stages.second.to_executions == 0) && return
     variable = get_value(stages.first.internal.psi_container, var_ref)
     step = axes(variable)[2][stages.second.internal.execution_count + 1]
     return JuMP.value(variable[device_name, step])
