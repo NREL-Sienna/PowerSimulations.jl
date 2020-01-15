@@ -5,7 +5,7 @@ else
     file_path = joinpath(pwd(), "testing_reading_results")
 end
 
-function test_chronology(file_path::String)    
+function test_chronology(file_path::String)
     ### Receding Horizon
 
     stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
@@ -25,7 +25,7 @@ function test_chronology(file_path::String)
                     stages = stages_definition,
                     stages_sequence = sequence,
                     simulation_folder= file_path)
-                    
+
     build!(sim)
     sim_results = execute!(sim)
     results = load_simulation_results(sim_results, "UC")
@@ -54,7 +54,7 @@ function test_chronology(file_path::String)
             raw_result = Feather.read(variable_ref)
             ic = sim.stages["ED"].internal.psi_container.parameters[key]
             for name in DataFrames.names(raw_result)
-                result = raw_result[end, name] # first time period of results  [time, device]
+                result = raw_result[1, name] # first time period of results  [time, device]
                 initial = value(ic[String(name)]) # [device, time]
                 @test isapprox(initial, result, atol=1.0e-4)
             end
@@ -68,7 +68,7 @@ function test_chronology(file_path::String)
         for (ik, key) in enumerate(ic_keys)
             initial_conditions = get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
             vars = results.variables[vars_names[ik]] # change to getter function
-            for ic in initial_conditions 
+            for ic in initial_conditions
                 output = vars[1,Symbol(PSI.device_name(ic))] # change to getter function
                 initial_cond = value(PSI.get_condition(ic))
                 @test isapprox(output, initial_cond, atol = 1e-4)
@@ -97,7 +97,7 @@ function test_chronology(file_path::String)
     build!(sim)
 
     sim_results = execute!(sim)
-    
+
     @testset "Testing to verify time gap for Consecutive" begin
         names = ["UC"] # stage TODO why doesn't this work for ED??
         for name in names
@@ -118,7 +118,7 @@ function test_chronology(file_path::String)
         for (ik,key) in enumerate(ic_keys)
             variable_ref = PSI.get_reference(sim_results, "ED", 1, vars_names[ik])[24]
             initial_conditions = get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
-            for ic in initial_conditions 
+            for ic in initial_conditions
                 raw_result = Feather.read(variable_ref)[end,Symbol(PSI.device_name(ic))] # last value of last hour
                 initial_cond = value(PSI.get_condition(ic))
                 @test isapprox(raw_result, initial_cond)
