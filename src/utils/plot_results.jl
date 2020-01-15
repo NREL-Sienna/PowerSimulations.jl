@@ -54,7 +54,10 @@ function get_stacked_plot_data(res::OperationsProblemResults, variable::String; 
 
     data_matrix = convert(Matrix, variable)
     labels = collect(names(variable))
-    legend = string.(labels)
+    legend = [names(variable)[1]]
+    for name in 2:length(labels)
+        legend = hcat(legend, string.(labels[name]))
+    end
 
     return StackedArea(time_range, data_matrix, legend)
 
@@ -70,13 +73,16 @@ function get_bar_plot_data(res::OperationsProblemResults, variable::String; kwar
     if isnothing(sort)
         variable = variable[:, alphabetical]
     else
-        variable = variable[:,sort]
+        variable = variable[:, sort]
     end
 
     data = convert(Matrix, variable)
     bar_data = sum(data, dims = 1)
     labels = collect(names(variable))
-    legend = string.(labels)
+    legend = [names(variable)[1]]
+    for name in 2:length(labels)
+        legend = hcat(legend, string.(labels[name]))
+    end
 
     return BarPlot(time_range, bar_data, legend)
 
@@ -97,11 +103,12 @@ function get_stacked_generation_data(res::OperationsProblemResults; kwargs...)
 
     variable = res.variables[Symbol(labels[1])]
     data_matrix = sum(convert(Matrix, variable), dims = 2)
-    legend = string.(labels)
+    legend = [key_name[1]]
 
     for i in 1:length(labels)
         if i !== 1
             variable = res.variables[Symbol(labels[i])]
+            legend = hcat(legend, string.(key_name[i]))
             data_matrix = hcat(data_matrix, sum(convert(Matrix, variable), dims = 2))
         end
     end
@@ -112,20 +119,20 @@ end
 
 function get_bar_gen_data(res::OperationsProblemResults)
 
-   time_range = res.time_stamp[!,:Range]
-   key_name = collect(keys(res.variables))
-   variable = res.variables[Symbol(key_name[1])]
-   data_matrix = sum(convert(Matrix, variable), dims = 2)
-   legend = string.(key_name)
-
+    time_range = res.time_stamp[!,:Range]
+    key_name = collect(keys(res.variables))
+    variable = res.variables[Symbol(key_name[1])]
+    data_matrix = sum(convert(Matrix, variable), dims = 2)
+    legend = [key_name[1]]
     for i in 1:length(key_name)
-       if i !== 1
-           variable = res.variables[Symbol(key_name[i])]
-           data_matrix = hcat(data_matrix, sum(convert(Matrix, variable), dims = 2))
-       end
-   end
-   bar_data = sum(data_matrix, dims = 1)
-   return BarGeneration(time_range, bar_data, legend)
+        if i !== 1
+            variable = res.variables[Symbol(key_name[i])]
+            legend = hcat(legend, string.(key_name[i]))
+            data_matrix = hcat(data_matrix, sum(convert(Matrix, variable), dims = 2))
+        end
+    end
+    bar_data = sum(data_matrix, dims = 1)
+    return BarGeneration(time_range, bar_data, legend)
 
 end
 
@@ -172,7 +179,7 @@ function sort_data(res::OperationsProblemResults; kwargs...)
     for label in labels
         variable_dict[labels[label]] = res.variables[labels[label]]
     end
-    for (k,v) in Variables, k in keys(variable_dict)
+    for (k, v) in Variables, k in keys(variable_dict)
         variable = variable_dict[k]
         alphabetical = sort!(names(variable))
         order = Variables[k]
