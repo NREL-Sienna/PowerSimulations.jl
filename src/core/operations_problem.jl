@@ -81,6 +81,7 @@ function OperationsProblem(::Type{M},
                         optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
                         kwargs...) where {M<:AbstractOperationsProblem}
 
+    check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
     op_problem = OperationsProblem{M}(template,
                           sys,
                           PSIContainer(template.transmission, sys, optimizer; kwargs...))
