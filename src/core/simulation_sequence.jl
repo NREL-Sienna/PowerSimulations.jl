@@ -7,8 +7,8 @@
                         feed_forward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward}
                         ini_cond_chronology::Dict{String, <:AbstractChronology}
                         cache::Dict{String, Vector{<:AbstractCache}}
-                        )                               
-""" # TODO: Add DocString  
+                        )
+""" # TODO: Add DocString
 mutable struct SimulationSequence
     initial_time::Union{Dates.DateTime, Nothing}
     horizons::Dict{String, Int64}
@@ -27,7 +27,7 @@ mutable struct SimulationSequence
                                  feed_forward = Dict{Tuple{String, Symbol, Symbol}, AbstractAffectFeedForward}(),
                                  ini_cond_chronology = Dict{String, AbstractChronology}(),
                                  cache = Dict{String, Vector{AbstractCache}}())
-        intervals = IS.time_period_conversion(intervals)                                 
+        intervals = IS.time_period_conversion(intervals)
         new(
             initial_time,
             horizons,
