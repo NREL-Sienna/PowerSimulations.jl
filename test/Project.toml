@@ -23,5 +23,5 @@ TestSetExtensions = "98d24dd4-01ad-11ea-1b02-c9a08f80db04"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [compat]
-InfrastructureSystems = "~0.5.1"
+InfrastructureSystems = "~0.5"
 PowerSystems = "~0.8"
