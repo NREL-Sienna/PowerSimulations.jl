@@ -14,7 +14,7 @@ function test_duals(file_path)
         template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
         op_problem = OperationsProblem(TestOpProblem, template, c_sys5_re; optimizer = OSQP_optimizer, use_parameters = true)
         res = solve_op_problem!(op_problem; constraints_duals = duals)
-        for i in 1:length(res.time_stamp)
+        for i in 1:ncol(res.time_stamp)
             dual = JuMP.dual(op_problem.psi_container.constraints[:CopperPlateBalance][i])
             @test dual == res.constraints_duals[:CopperPlateBalance][i, 1]
         end

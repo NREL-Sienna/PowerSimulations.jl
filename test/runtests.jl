@@ -15,6 +15,7 @@ using OSQP
 using TimeSeries
 using ParameterJuMP
 using TestSetExtensions
+using DataFrames
 
 import PowerSystems.UtilsData: TestData
 download(TestData; branch = "master")
