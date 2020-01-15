@@ -330,7 +330,7 @@ function feed_forward!(psi_container::PSIContainer,
     for prefix in get_affected_variables(ff_model)
         var_name = Symbol(prefix, "_$(I)")
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
-        integrallimit_ff(psi_container,
+        integral_limit_ff(psi_container,
               Symbol("FF_$(I)"),
                      parameter_ref,
                      var_name)
