@@ -118,7 +118,7 @@ hydro_generators5(nodes5) = [
                     ),
                     HydroDispatch("HydroDispatch", true, nodes5[3], 0.0, 0.0,
                         TechHydro(0.600, PowerSystems.HY, (min = 0.0, max = 60.0), (min = 0.0, max = 60.0), (up = 10.0, down = 10.0), nothing),
-                        TwoPartCost(15.0, 0.0), 1.0, 0.2, 0.5)
+                        TwoPartCost(15.0, 0.0), 100.0, 20.0, 50.0)
                     ];
 
 battery5(nodes5) = [GenericBattery(name = "Bat",
@@ -242,10 +242,13 @@ Reserve_ts = [TimeArray(DayAhead, rand(24)),
               TimeArray(DayAhead+Day(1), rand(24))]
 
 hydro_timeseries_DA = [[TimeSeries.TimeArray(DayAhead,wind_ts_DA)],
-                     [TimeSeries.TimeArray(DayAhead + Day(1), rand(24)*0.1 + wind_ts_DA)]]
+                        [TimeSeries.TimeArray(DayAhead + Day(1),  wind_ts_DA)]];
 
 
 RealTime = collect(DateTime("1/1/2024 0:00:00", "d/m/y H:M:S"):Minute(5):DateTime("1/1/2024 23:55:00", "d/m/y H:M:S"))
+
+hydro_timeseries_RT = [[TimeArray(RealTime,repeat(wind_ts_DA,inner=12))],
+                     [TimeArray(RealTime + Day(1), repeat(wind_ts_DA,inner=12))]];
 
 load_timeseries_RT = [[TimeArray(RealTime, repeat(loadbus2_ts_DA,inner=12)),
                      TimeArray(RealTime, repeat(loadbus3_ts_DA,inner=12)),

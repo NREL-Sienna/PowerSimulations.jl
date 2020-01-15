@@ -6,7 +6,6 @@ struct OperationsProblemResults <: Results
     time_stamp::DataFrames.DataFrame
 end
 
-get_duals(result::OperationsProblemResults) = nothing
 """This function creates the correct results struct for the context"""
 function _make_results(variables::Dict,
                       total_cost::Dict,
@@ -27,14 +26,14 @@ function _make_results(variables::Dict,
                       total_cost::Dict,
                       optimizer_log::Dict,
                       time_stamp::Array,
-                      duals::Dict)
+                      constraints_duals::Dict)
     time_stamp = DataFrames.DataFrame(Range = time_stamp)
-    return DualResults(variables, total_cost, optimizer_log, time_stamp, duals)
+    return DualResults(variables, total_cost, optimizer_log, time_stamp, constraints_duals)
 end
 function get_variable(res_model::OperationsProblemResults, key::Symbol)
         try
-            !isnothing(results.variables)
-            return get(results.variables, key, nothing)
+            !isnothing(res_model.variables)
+            return get(res_model.variables, key, nothing)
         catch
             throw(ArgumentError("No variable with key $(key) has been found."))
         end

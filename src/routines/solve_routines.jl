@@ -36,17 +36,17 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
     end
 
     vars_result = get_model_result(op_problem)
-    if :duals in keys(kwargs)
-        dual_result = get_model_duals(op_problem, kwargs[:duals])
-        merge!(vars_result, dual_result)
-    end
     optimizer_log = get_optimizer_log(op_problem)
     time_stamp = get_time_stamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
     obj_value = Dict(:OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel))
     merge!(optimizer_log, timed_log)
-    results = SimulationResults(vars_result, obj_value, optimizer_log, time_stamp)
-
+    if :constraints_duals in keys(kwargs)
+        dual_result = get_model_duals(op_problem.psi_container, kwargs[:constraints_duals])
+        results = DualResults(vars_result, obj_value, optimizer_log, time_stamp, dual_result)
+    else
+        results = SimulationResults(vars_result, obj_value, optimizer_log, time_stamp)
+    end
     !isnothing(save_path) && write_results(results, save_path)
 
      return results
@@ -56,13 +56,11 @@ function _run_stage(stage::Stage, start_time::Dates.DateTime, results_path::Stri
     @assert stage.internal.psi_container.JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
     timed_log = Dict{Symbol, Any}()
 
-    IS.redirect_stdout_to_log() do
-        model = stage.internal.psi_container.JuMPmodel
-        _,
-        timed_log[:timed_solve_time],
-        timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] = @timed JuMP.optimize!(model)
-    end
+    model = stage.internal.psi_container.JuMPmodel
+    _,
+    timed_log[:timed_solve_time],
+    timed_log[:solve_bytes_alloc],
+    timed_log[:sec_in_gc] = @timed JuMP.optimize!(model)
 
     @info "JuMP.optimize! completed" timed_log
 
@@ -70,7 +68,7 @@ function _run_stage(stage::Stage, start_time::Dates.DateTime, results_path::Stri
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("Stage $(stage.internal.number) status is $(model_status)")
     end
-    retrieve_duals = get(kwargs, :duals, nothing)
+    retrieve_duals = get(kwargs, :constraints_duals, nothing)
     if !isnothing(retrieve_duals) && !isnothing(get_constraints(stage.internal.psi_container))
         _export_model_result(stage, start_time, results_path, retrieve_duals)
     else
@@ -99,7 +97,7 @@ execute!!(sim::Simulation; kwargs...)
 ```
 
 # Accepted Key Words
-- `dual_constraints::Vector{Symbol}`: if dual variables are desired in the
+- `constraints_duals::Vector{Symbol}`: if dual variables are desired in the
 results, include a vector of the variable names to be included
 """
 
@@ -112,8 +110,8 @@ function execute!(sim::Simulation; kwargs...)
 
     isnothing(sim.internal) && error("Simulation not built, build the simulation to execute")
     sim.internal.raw_dir, sim.internal.models_dir, sim.internal.results_dir = _prepare_workspace(sim.name, sim.simulation_folder)
-    _build_stage_paths!(sim; kwargs...)
-
+    _build_stage_paths!(sim, verbose = verbose; kwargs...)
+    constraints_duals = get(kwargs, :constraints_duals, nothing)
     steps = get_steps(sim)
     for s in 1:steps
         println("Step $(s)")
@@ -129,8 +127,7 @@ function execute!(sim::Simulation; kwargs...)
                 raw_results_path = joinpath(sim.internal.raw_dir, run_name, replace_chars("$(sim.internal.current_time)", ":", "-"))
                 mkpath(raw_results_path)
                 update_stage!(stage, s, sim)
-                dual_constraints = get(kwargs, :dual_constraints, nothing)
-                _run_stage(stage, sim.internal.current_time, raw_results_path; duals = dual_constraints)
+                _run_stage(stage, sim.internal.current_time, raw_results_path; constraints_duals = constraints_duals)
                 sim.internal.run_count[s][stage_number] += 1
                 sim.internal.date_ref[stage_number] = sim.internal.date_ref[stage_number] + stage_interval
             end
@@ -139,6 +136,6 @@ function execute!(sim::Simulation; kwargs...)
         end
 
     end
-    sim_results = SimulationResultsReference(sim)
+    sim_results = SimulationResultsReference(sim; constraints_duals = constraints_duals)
     return sim_results
 end

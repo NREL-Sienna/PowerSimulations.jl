@@ -32,6 +32,13 @@ addons:
 #before_script: # homebrew for mac
 #  - if [ $TRAVIS_OS_NAME = osx ]; then brew install gcc; fi
 
+script:
+  - while sleep 9m; do echo "=====[ $SECONDS seconds still running ]====="; done &
+  - julia --project --color=yes -e "import Pkg; Pkg.build(); Pkg.instantiate()"
+  - julia --project --check-bounds=yes --color=yes -e "if VERSION < v\"0.7.0-DEV.5183\"; Pkg.test(\"${JL_PKG}\", coverage=true); else using Pkg; Pkg.test(coverage=true); end"
+  - kill %1
+  - echo "Test successful."
+
 jobs:
   include:
     - stage: "Documentation"
