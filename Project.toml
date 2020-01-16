@@ -24,9 +24,9 @@ SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [compat]
-CSV = "=0.5.13"
+CSV = "~0.5"
 Colors = "~0.9"
-DataFrames = "~0.19.3"
+DataFrames = "~0.20"
 Feather = "~0.5.3"
 InfrastructureSystems = "~0.5.1"
 JSON = "0.21"

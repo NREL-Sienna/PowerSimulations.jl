@@ -223,7 +223,6 @@ include("routines/get_results.jl")
 include("routines/stage_update.jl")
 include("routines/solve_routines.jl")
 
-
 #Utils
 include("utils/optimization_debugging.jl")
 include("utils/dual_results.jl")
@@ -236,6 +235,7 @@ include("utils/plot_results.jl")
 include("utils/plot_recipes.jl")
 include("utils/make_report.jl")
 include("utils/call_plots.jl")
+include("utils/kwargs_check.jl")
 
 #Routines
 include("routines/write_results.jl")

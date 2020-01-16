@@ -14,7 +14,7 @@ function test_duals(file_path)
         template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
         op_problem = OperationsProblem(TestOpProblem, template, c_sys5_re; optimizer = OSQP_optimizer, use_parameters = true)
         res = solve_op_problem!(op_problem; constraints_duals = duals)
-        for i in 1:length(res.time_stamp)
+        for i in 1:ncol(res.time_stamp)
             dual = JuMP.dual(op_problem.psi_container.constraints[:CopperPlateBalance][i])
             @test dual == res.constraints_duals[:CopperPlateBalance][i, 1]
         end
@@ -25,7 +25,7 @@ function test_duals(file_path)
 
         sequence = SimulationSequence(
             order = Dict(1 => "UC", 2 => "ED"),
-            intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 24, to_executions = 1)),
+            intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(steps = 24)),
             horizons = Dict("UC" => 24, "ED" => 12),
             intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
             feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -37,8 +37,7 @@ function test_duals(file_path)
             steps = 1, step_resolution =Hour(24),
             stages = stages_definition,
             stages_sequence = sequence,
-            simulation_folder= file_path,
-            verbose = true)
+            simulation_folder= file_path)
         build!(sim)
         sim_results = execute!(sim; constraints_duals = duals)
         res = PSI.load_simulation_results(sim_results, "ED")

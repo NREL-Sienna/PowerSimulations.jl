@@ -15,6 +15,7 @@ using OSQP
 using TimeSeries
 using ParameterJuMP
 using TestSetExtensions
+using DataFrames
 
 import PowerSystems.UtilsData: TestData
 download(TestData; branch = "master")
@@ -24,6 +25,7 @@ const PSY = PowerSystems
 const PSI = PowerSimulations
 const PJ = ParameterJuMP
 const IS = InfrastructureSystems
+const TEST_KWARGS = [:good_kwarg_1, :good_kwarg_2]
 abstract type TestOpProblem<:PSI.AbstractOperationsProblem end
 
 ipopt_optimizer = JuMP.with_optimizer(Ipopt.Optimizer, print_level=0) # use default print_level = 5

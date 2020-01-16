@@ -44,8 +44,8 @@ end
                 name::String
                 internal::Union{Nothing, SimulationInternal}
                 )
-                                       
-""" # TODO: Add DocString 
+
+""" # TODO: Add DocString
 mutable struct Simulation
     steps::Int64
     step_resolution::Dates.TimePeriod
@@ -60,8 +60,7 @@ mutable struct Simulation
                         step_resolution::Dates.TimePeriod,
                         stages=Dict{String, Stage{AbstractOperationsProblem}}(),
                         stages_sequence=nothing,
-                        simulation_folder::String,
-                        verbose::Bool = false, kwargs...)
+                        simulation_folder::String, kwargs...)
     step_resolution = IS.time_period_conversion(step_resolution)
     new(
         steps,
@@ -87,7 +86,6 @@ end
 get_ini_cond_chronology(s::Simulation, number::Int64) = get(s.sequence.ini_cond_chronology, s.sequence.order[number], nothing)
 get_name(s::Simulation, stage::Stage) = get(s.sequence.order, get_number(stage), nothing)
 
-
 function _check_sequence(sim::Simulation)
     for (stage_number,stage_name) in sim.sequence.order
         stage = get_stage(sim, stage_name)
@@ -96,7 +94,7 @@ function _check_sequence(sim::Simulation)
         interval = get_interval(get_sequence(sim), stage_name)
         horizon_time = resolution * horizon
         if horizon_time < interval
-            throw(IS.ConflictingInputsError("horizon ($horizon_time) is 
+            throw(IS.ConflictingInputsError("horizon ($horizon_time) is
                                 shorter than interval ($interval) for $stage_name"))
         end
     end
@@ -104,26 +102,38 @@ end
 
 function _check_chronologies(sim::Simulation)
     for (key, chron) in sim.sequence.intra_stage_chronologies
-        check_chronology(chron, key, sim.sequence.horizons)
+        from_stage = get_stage(sim, key.first)
+        to_stage = get_stage(sim, key.second)
+        from_stage_horizon = sim.sequence.horizons[key.first]
+        to_stage_horizon = sim.sequence.horizons[key.second]
+        from_stage_interval = sim.sequence.intervals[key.first]
+        to_stage_interval = sim.sequence.intervals[key.second]
+        check_chronology(chron,
+                         (from_stage => to_stage),
+                         (from_stage_horizon => to_stage_horizon),
+                         (from_stage_interval => to_stage_interval))
     end
     return
 end
 
 function _assign_chronologies(sim::Simulation)
-
-    function find_val(d,value)
-        for (k,v) in d
-         v==value && return k
+    function find_val(d, value)
+        for (k, v) in d
+         v == value && return k
         end
         error("dict does not have value == $value")
     end
 
     for (key, chron) in sim.sequence.intra_stage_chronologies
-        stage = get_stage(sim, key.second)
+        to_stage = get_stage(sim, key.second)
+        to_stage_interval = IS.time_period_conversion(get(sim.sequence.intervals, key.second, nothing))
         from_stage_number = find_key_with_value(sim.sequence.order, key.first)
         isempty(from_stage_number) && throw(ArgumentError("Stage $(key.first) not specified in the order dictionary"))
         for stage_number in from_stage_number
-            stage.internal.chronolgy_dict[stage_number] = chron
+            to_stage.internal.chronolgy_dict[stage_number] = chron
+            from_stage = get_stage(sim, stage_number)
+            from_stage_resolution = IS.time_period_conversion(PSY.get_forecasts_resolution(from_stage.sys))
+            to_stage.internal.synchronized_executions[stage_number] = Int(from_stage_resolution/to_stage_interval)
         end
     end
     return
@@ -151,24 +161,24 @@ function _get_simulation_initial_times!(sim::Simulation)
 
     stage_initial_times = Dict{Int64, Vector{Dates.DateTime}}()
     time_range = Vector{Dates.DateTime}(undef, 2)
-    
+
     for (stage_number, stage_name) in sim.sequence.order
         stage_system = sim.stages[stage_name].sys
         interval = PSY.get_forecasts_interval(stage_system)
         horizon = get_horizon(get_sequence(sim), stage_name)
         seq_interval = get_interval(get_sequence(sim), stage_name)
         if PSY.are_forecasts_contiguous(stage_system)
-            stage_initial_times[stage_number] = PSY.generate_initial_times(stage_system, 
+            stage_initial_times[stage_number] = PSY.generate_initial_times(stage_system,
                                                                     seq_interval, horizon)
             if isempty(stage_initial_times[stage_number])
-                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and 
+                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and
                         forecast interval ($interval) definitions are not compatible"))
             end
         else
             stage_initial_times[stage_number] = PSY.get_forecast_initial_times(stage_system)
             interval = PSY.get_forecasts_interval(stage_system)
             if interval != seq_interval
-                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and 
+                throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and
                         forecast interval ($interval) definitions are not compatible"))
             end
             for (ix, element) in enumerate(stage_initial_times[stage_number][1:end-1])
@@ -227,10 +237,10 @@ function _populate_caches!(sim::Simulation, stage_name::String)
     return
 end
 
-function _build_stages!(sim::Simulation, verbose::Bool = true; kwargs...)
+function _build_stages!(sim::Simulation; kwargs...)
     system_to_file = get(kwargs, :system_to_file, true)
     for (stage_number, stage_name) in sim.sequence.order
-        verbose && @info("Building Stage $(stage_number)-$(stage_name)")
+        @info("Building Stage $(stage_number)-$(stage_name)")
         horizon = sim.sequence.horizons[stage_name]
         stage = get(sim.stages, stage_name, nothing)
         stage.internal.psi_container = PSIContainer(stage.template.transmission,
@@ -257,7 +267,7 @@ function _build_stages!(sim::Simulation, verbose::Bool = true; kwargs...)
     return
 end
 
-function _build_stage_paths!(sim::Simulation, verbose::Bool = true; kwargs...)
+function _build_stage_paths!(sim::Simulation; kwargs...)
     system_to_file = get(kwargs, :system_to_file, true)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get(sim.stages, stage_name, nothing)
@@ -281,12 +291,12 @@ end
 
 
 @doc raw"""
-        build!(sim::Simulation; 
-                verbose::Bool = false, 
+        build!(sim::Simulation;
                 kwargs...)
-                            
-""" # TODO: Add DocString     
-function build!(sim::Simulation; verbose::Bool = false, kwargs...)
+
+""" # TODO: Add DocString
+function build!(sim::Simulation; kwargs...)
+    check_kwargs(kwargs, SIMULATION_BUILD_KWARGS, "build!")
     _check_sequence(sim)
     _check_chronologies(sim)
     _check_folder(sim.simulation_folder)
@@ -303,7 +313,7 @@ function build!(sim::Simulation; verbose::Bool = false, kwargs...)
     end
     _assign_chronologies(sim)
     _check_steps(sim, stage_initial_times)
-    _build_stages!(sim, verbose = verbose; kwargs...)
+    _build_stages!(sim; kwargs...)
     _assign_chronologies(sim)
     sim.internal.compiled_status = true
     return

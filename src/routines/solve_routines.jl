@@ -80,7 +80,7 @@ function _run_stage(stage::Stage, start_time::Dates.DateTime, results_path::Stri
 end
 
 """
-    execute!(sim::Simulation; verbose::Bool = false, kwargs...)
+    execute!(sim::Simulation; kwargs...)
 
 Solves the simulation model for sequential Simulations
 and populates a nested folder structure created in Simulation()
@@ -92,9 +92,8 @@ each stage and step.
 
 # Example
 ```julia
-sim = Simulation("test", 7, stages, "/Users/folder";
-verbose = true, system_to_file = false)
-execute!!(sim::Simulation; verbose::Bool = false, kwargs...)
+sim = Simulation("test", 7, stages, "/Users/folder"; system_to_file = false)
+execute!!(sim::Simulation; kwargs...)
 ```
 
 # Accepted Key Words
@@ -102,7 +101,7 @@ execute!!(sim::Simulation; verbose::Bool = false, kwargs...)
 results, include a vector of the variable names to be included
 """
 
-function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
+function execute!(sim::Simulation; kwargs...)
     if sim.internal.reset
         sim.internal.reset = false
     elseif sim.internal.reset == false
@@ -111,11 +110,11 @@ function execute!(sim::Simulation; verbose::Bool = false, kwargs...)
 
     isnothing(sim.internal) && error("Simulation not built, build the simulation to execute")
     sim.internal.raw_dir, sim.internal.models_dir, sim.internal.results_dir = _prepare_workspace(sim.name, sim.simulation_folder)
-    _build_stage_paths!(sim, verbose = verbose; kwargs...)
+    _build_stage_paths!(sim; kwargs...)
     constraints_duals = get(kwargs, :constraints_duals, nothing)
     steps = get_steps(sim)
     for s in 1:steps
-        verbose && println("Step $(s)")
+        println("Step $(s)")
         for stage_number in 1:sim.internal.stages_count
             stage_name = sim.sequence.order[stage_number]
             stage = get(sim.stages, stage_name, nothing)

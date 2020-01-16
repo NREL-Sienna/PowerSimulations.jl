@@ -10,7 +10,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
         return
     end
 
-    parameters = get(kwargs, :parameters, true)
+
 
     #Variables
     active_power_variables!(psi_container, devices)
@@ -45,7 +45,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
         return
     end
 
-    parameters = get(kwargs, :parameters, true)
+
 
     #Variables
     active_power_variables!(psi_container, devices);
@@ -76,7 +76,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
         return
     end
 
-    parameters = get(kwargs, :parameters, true)
+
 
     #Variables
     active_power_variables!(psi_container, devices)
@@ -110,7 +110,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
         return
     end
 
-    parameters = get(kwargs, :parameters, true)
+
 
     #Variables
     active_power_variables!(psi_container, devices)

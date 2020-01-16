@@ -68,8 +68,8 @@ end
 ######################## output constraints without Time Series ############################
 function _get_time_series(psi_container::PSIContainer,
                           devices::IS.FlattenIteratorWrapper{<:PSY.ElectricLoad},
-                          model::DeviceModel = DeviceModel(PSY.PowerLoad, StaticPowerLoad),
-                          get_constraint_values::Function = x -> (min = 0.0, max = 0.0))
+                          model::DeviceModel,
+                          get_constraint_values::Function)
     initial_time = model_initial_time(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     time_steps = model_time_steps(psi_container)
@@ -183,7 +183,9 @@ end
 function nodal_expression!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{L},
                            ::Type{<:PM.AbstractPowerModel}) where L<:PSY.ElectricLoad
-    ts_data_active, ts_data_reactive = _get_time_series(psi_container, devices)
+    ts_data_active, ts_data_reactive = _get_time_series(psi_container, devices,
+                        DeviceModel(L, DispatchablePowerLoad), x -> (min = 0.0, max = 0.0))
+                        
     parameters = model_has_parameters(psi_container)
 
     if parameters
@@ -224,7 +226,8 @@ function nodal_expression!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{L},
                            ::Type{<:PM.AbstractActivePowerModel}) where L<:PSY.ElectricLoad
     parameters = model_has_parameters(psi_container)
-    ts_data_active, _ = _get_time_series(psi_container, devices)
+    ts_data_active, _ = _get_time_series(psi_container, devices,
+                        DeviceModel(L, DispatchablePowerLoad), x -> (min = 0.0, max = 0.0))
 
     if parameters
         include_parameters(psi_container,

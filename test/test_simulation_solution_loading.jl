@@ -8,7 +8,7 @@ function test_load_simulation(file_path::String)
 
     sequence = SimulationSequence(
         order = Dict(1 => "UC", 2 => "ED"),
-        intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 24, to_executions = 1)),
+        intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(steps = 24)),
         horizons = Dict("UC" => 24, "ED" => 12),
         intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
         feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -19,8 +19,7 @@ function test_load_simulation(file_path::String)
         steps = 1, step_resolution =Hour(24),
         stages = stages_definition,
         stages_sequence = sequence,
-        simulation_folder= file_path,
-        verbose = true)
+        simulation_folder= file_path)
     build!(sim)
     sim_results = execute!(sim)
     stage_names = keys(sim.stages)
@@ -101,7 +100,7 @@ function test_load_simulation(file_path::String)
 
     sequence = SimulationSequence(
         order = Dict(1 => "UC", 2 => "ED"),
-        intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 24, to_executions = 1)),
+        intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(steps = 24)),
         horizons = Dict("UC" => 24, "ED" => 12),
         intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
         feed_forward = Dict(
@@ -114,8 +113,7 @@ function test_load_simulation(file_path::String)
         steps = 2, step_resolution = Hour(24),
         stages = stages_definition,
         stages_sequence = sequence,
-        simulation_folder= file_path,
-        verbose = true)
+        simulation_folder= file_path)
     build!(sim)
     sim_results = execute!(sim)
 
@@ -154,7 +152,7 @@ function test_load_simulation(file_path::String)
         for (ik,key) in enumerate(ic_keys)
             variable_ref = PSI.get_reference(sim_results, "ED", 1, vars_names[ik])[24]
             initial_conditions = get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
-            for ic in initial_conditions 
+            for ic in initial_conditions
                 raw_result = Feather.read(variable_ref)[end,Symbol(PSI.device_name(ic))] # last value of last hour
                 initial_cond = value(PSI.get_condition(ic))
                 @test isapprox(raw_result, initial_cond)
@@ -166,7 +164,7 @@ function test_load_simulation(file_path::String)
                              "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
     sequence = SimulationSequence(
         order = Dict(1 => "UC", 2 => "ED"),
-        intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(from_steps = 1, to_executions = 12)),
+        intra_stage_chronologies = Dict(("UC"=>"ED") => RecedingHorizon()),
         horizons = Dict("UC" => 24, "ED" => 12),
         intervals = Dict("UC" => Hour(1), "ED" => Minute(5)),
         feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -178,8 +176,7 @@ function test_load_simulation(file_path::String)
         steps = 2, step_resolution = Hour(1),
         stages = stages_definition,
         stages_sequence = sequence,
-        simulation_folder = file_path,
-        verbose = true)
+        simulation_folder = file_path)
     build!(sim)
     sim_results = execute!(sim)
 
@@ -239,7 +236,7 @@ function test_load_simulation(file_path::String)
         for (ik, key) in enumerate(ic_keys)
             initial_conditions = get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
             vars = results.variables[vars_names[ik]] # change to getter function
-            for ic in initial_conditions 
+            for ic in initial_conditions
                 output = vars[1,Symbol(PSI.device_name(ic))] # change to getter function
                 initial_cond = value(PSI.get_condition(ic))
                 @test isapprox(output, initial_cond, atol = 1e-4)
