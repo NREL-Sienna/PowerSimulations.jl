@@ -6,6 +6,9 @@ branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine),
 services = Dict{Symbol, ServiceModel}()
 @testset "Operation Model kwargs with CopperPlatePowerModel base" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
+    @test_throws ArgumentError OperationsProblem(TestOpProblem,                                                     template,
+                                                 c_sys5;
+                                                 bad_kwarg = 10)
     op_problem = OperationsProblem(TestOpProblem, template,
                                             c_sys5;
                                             optimizer = GLPK_optimizer,
