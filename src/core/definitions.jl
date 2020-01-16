@@ -38,4 +38,7 @@ const OPERATIONS_ACCEPTED_KWARGS = [
                                     :optimizer,
                                     :PTDF,
                                     ]
-const SIMULATION_BUILD_KWARGS = []
+const SIMULATION_BUILD_KWARGS = [
+                                 :system_to_file,
+                                 :PTDF_matrices,
+                                 ]
