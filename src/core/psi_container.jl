@@ -1,9 +1,6 @@
 function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory},
                               parameters::Bool,
                               JuMPmodel::Union{JuMP.AbstractModel,Nothing})
-    if isa(optimizer, Nothing)
-        @info("The optimization model has no optimizer attached")
-    end
     if !isnothing(JuMPmodel)
         if parameters
             if !haskey(JuMPmodel.ext, :params)
@@ -13,7 +10,12 @@ function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory},
         end
         return JuMPmodel
     end
-    @info("Creating JuMP model with optimizer $(optimizer)")
+    name_optimizer = "$(optimizer)"
+    if isa(optimizer, Nothing)
+        @info("The optimization model has no optimizer attached")
+        name_optimizer = "nothing"
+    end
+    @info("Creating JuMP model with optimizer $(name_optimizer)")
     JuMPmodel = JuMP.Model(optimizer)
     if parameters
         PJ.enable_parameters(JuMPmodel)
