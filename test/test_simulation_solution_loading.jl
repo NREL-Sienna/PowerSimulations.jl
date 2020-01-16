@@ -8,7 +8,7 @@ function test_load_simulation(file_path::String)
 
     sequence = SimulationSequence(
         order = Dict(1 => "UC", 2 => "ED"),
-        intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(steps = 24)),
+        intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(periods = 24)),
         horizons = Dict("UC" => 24, "ED" => 12),
         intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
         feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
@@ -100,7 +100,7 @@ function test_load_simulation(file_path::String)
 
     sequence = SimulationSequence(
         order = Dict(1 => "UC", 2 => "ED"),
-        intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(steps = 24)),
+        intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(periods = 24)),
         horizons = Dict("UC" => 24, "ED" => 12),
         intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
         feed_forward = Dict(
