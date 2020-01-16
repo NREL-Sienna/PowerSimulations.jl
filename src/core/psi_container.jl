@@ -13,6 +13,7 @@ function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory},
         end
         return JuMPmodel
     end
+    @info("Creating JuMP model with optimizer $(optimizer)")
     JuMPmodel = JuMP.Model(optimizer)
     if parameters
         PJ.enable_parameters(JuMPmodel)
