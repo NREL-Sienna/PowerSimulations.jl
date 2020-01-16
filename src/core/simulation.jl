@@ -296,6 +296,7 @@ end
 
 """ # TODO: Add DocString
 function build!(sim::Simulation; kwargs...)
+    check_kwargs(kwargs, SIMULATION_BUILD_KWARGS, "build!")
     _check_sequence(sim)
     _check_chronologies(sim)
     _check_folder(sim.simulation_folder)
