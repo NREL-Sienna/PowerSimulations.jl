@@ -379,7 +379,6 @@ function _build!(psi_container::PSIContainer, template::OperationsProblemTemplat
 
     # Order is required
     #Build Services
-    # TODO: Add info print
     construct_services!(psi_container, sys, template.services, template.devices; kwargs...)
 
     # Build Injection devices
