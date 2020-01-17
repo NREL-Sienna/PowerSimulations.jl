@@ -4,6 +4,7 @@ abstract type AbstractHydroUnitCommitment <: AbstractHydroFormulation end
 struct HydroFixed <: AbstractHydroFormulation end
 struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
 struct HydroDispatchSeasonalFlow <: AbstractHydroDispatchFormulation end
+struct HydroDispatchReservoirFlow <: AbstractHydroDispatchFormulation end
 struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
 struct HydroCommitmentSeasonalFlow <: AbstractHydroUnitCommitment end
 
@@ -255,8 +256,8 @@ end
 
 ######################## output constraints without Time Series ############################
 function _get_inflow_time_series(psi_container::PSIContainer,
-                            devices::IS.FlattenIteratorWrapper{<:PSY.HydroGen},
-                            model::DeviceModel{<:PSY.HydroGen, <:AbstractHydroFormulation},
+                            devices::IS.FlattenIteratorWrapper{PSY.HydroDispatch},
+                            model::DeviceModel{PSY.HydroDispatch, <:AbstractHydroFormulation},
                             get_constraint_values::Function = x -> (min = 0.0, max = 0.0))
     initial_time = model_initial_time(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
@@ -269,7 +270,7 @@ function _get_inflow_time_series(psi_container::PSIContainer,
     for device in devices
         bus_number = PSY.get_number(PSY.get_bus(device))
         name = PSY.get_name(device)
-        inflow_energy = PSY.get_infow(device)
+        inflow_energy = PSY.get_inflow(device)
         if use_forecast_data
             ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
                                                                 device,
@@ -298,7 +299,7 @@ end
 
 function inflow_constraints!(psi_container::PSIContainer,
                             devices::IS.FlattenIteratorWrapper{H},
-                            model::DeviceModel{PSY.HydroDispatch, HydroDispatchSeasonalFlow},
+                            model::DeviceModel{PSY.HydroDispatch, HydroDispatchReservoirFlow},
                             system_formulation::Type{<:PM.AbstractPowerModel},
                             feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
     parameters = model_has_parameters(psi_container)
@@ -347,14 +348,21 @@ end
 
 function energy_balance_constraint!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{H},
-                                   ::Type{D},
-                                   ::Type{S},
-                                   feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {H<:PSY.HydroGen,
-                                                            D<:AbstractStorageFormulation,
-                                                            S<:PM.AbstractPowerModel}
-    key = ICKey(DeviceEnergy, H)
+                                   model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
+                                   system_formulation::Type{<:PM.AbstractPowerModel},
+                                   feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
+
+    return
+end
+
+function energy_balance_constraint!(psi_container::PSIContainer,
+                                   devices::IS.FlattenIteratorWrapper{PSY.HydroDispatch},
+                                   model::DeviceModel{PSY.HydroDispatch, HydroDispatchReservoirFlow},
+                                   system_formulation::Type{<:PM.AbstractPowerModel},
+                                   feed_forward::Union{Nothing, AbstractAffectFeedForward})
+    key = ICKey(DeviceEnergy, PSY.HydroDispatch)
     if !(key in keys(psi_container.initial_conditions))
-        throw(IS.DataFormatError("Initial Conditions for $(h) Energy Constraints not in the model"))
+        throw(IS.DataFormatError("Initial Conditions for $(PSY.HydroDispatch) Energy Constraints not in the model"))
     end
 
     efficiency_data = make_efficiency_data(devices)
@@ -362,8 +370,8 @@ function energy_balance_constraint!(psi_container::PSIContainer,
     energy_balance(psi_container,
                    psi_container.initial_conditions[key],
                    efficiency_data,
-                   Symbol("energy_balance_$(H)"),
-                   (Symbol("P_$(H)"), Symbol("In_$(H)"), Symbol("E_$(H)")))
+                   Symbol("energy_balance_$(PSY.HydroDispatch)"),
+                   (Symbol("P_$(PSY.HydroDispatch)"), Symbol("In_$(PSY.HydroDispatch)"), Symbol("E_$(PSY.HydroDispatch)")))
     return
 end
 
