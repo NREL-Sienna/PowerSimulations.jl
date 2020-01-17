@@ -134,6 +134,36 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     return
 end
 
+function construct_device!(psi_container::PSIContainer, sys::PSY.System,
+                           model::DeviceModel{H, HydroDispatchReservoirFlow},
+                           ::Type{S};
+                           kwargs...) where {H<:PSY.HydroGen,
+                                             S<:PM.AbstractActivePowerModel}
+    devices = PSY.get_components(H, sys)
+
+    if validate_available_devices(devices, H)
+        return
+    end
+
+    #Variables
+    activepower_variables!(psi_container, devices);
+    energy_storage_variables!(psi_container, devices)
+
+    #Initial Conditions
+    storage_energy_init(psi_container, devices)
+
+    #Constraints
+    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
+    inflow_constraints!(psi_container, devices, model, S, model.feed_forward)
+    energy_balance_constraint!(psi_container, devices, model, S, model.feed_forward)
+    feed_forward!(psi_container, H, model.feed_forward)
+
+    #Cost Function
+    cost_function(psi_container, devices, HydroDispatchReservoirFlow, S)
+
+    return
+end
+
 
 function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{H, D},
