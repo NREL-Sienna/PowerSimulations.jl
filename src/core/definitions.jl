@@ -42,3 +42,47 @@ const SIMULATION_BUILD_KWARGS = [
                                  :system_to_file,
                                  :PTDF_matrices,
                                  ]
+
+# The constants below are strings instead of enums because there is a requirement that users
+# should be able to define their own without changing PowerSimulations.
+
+
+# Variables
+const FLOW_REAL_POWER = "Fp"
+const REAL_POWER = "P"
+const REACTIVE_POWER = "Q"
+const P_OUT = "Pout"
+const P_IN = "Pin"
+const R = "R"
+const E = "E"
+const ON = "On"
+const START = "Start"
+const STOP = "Stop"
+const THETA = "theta"
+const VM = "Vm"
+
+# Constraints
+const ACTIVE_RANGE = "activerange"
+const ACTIVE_RANGE_LB = "activerange_lb"
+const ACTIVE_RANGE_UB = "activerange_ub"
+const COMMITMENT = "commitment"
+const DURATION = "duration"
+const DURATION_UP = "duration_up"
+const DURATION_DOWN = "duration_dn"
+const ENERGY_LIMIT = "energy_limit"
+const RAMP = "ramp"
+const RAMP_UP = "ramp_up"
+const RAMP_DOWN = "ramp_dn"
+const RATE_LIMIT = "RateLimit"
+const RATE_LIMIT_FT = "RateLimitFT"
+const RATE_LIMIT_TF = "RateLimitTF"
+const REACTIVE = "reactive"
+const REACTIVE_RANGE = "reactiverange"
+const FP_FT = "FpFT"
+const FP_TF = "FpTF"
+const FQ_FT = "FqFT"
+const FQ_TF = "FqTF"
+
+# Parameters
+const ACTIVE_POWER = "activepower"
+const ENERGY = "energy"

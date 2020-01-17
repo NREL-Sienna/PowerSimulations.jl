@@ -18,7 +18,7 @@ function test_write_functions(file_path)
         PSI._write_data(res.variables, mkdir(joinpath(file_path, "one")))
         readdir(joinpath(file_path, "one"))
         for (k, v) in res.variables
-            @test isfile(joinpath(file_path, "one/$k.feather"))
+            @test isfile(joinpath(file_path, "one", "$k.feather"))
         end
 
         PSI._write_data(res.variables, res.time_stamp, mkdir(joinpath(file_path, "two")); file_type = CSV)
@@ -28,18 +28,27 @@ function test_write_functions(file_path)
 
         PSI._write_data(res.variables, res.time_stamp, mkdir(joinpath(file_path, "three")))
         for (k, v) in res.variables
-            @test isfile(joinpath(file_path, "three/$k.feather"))
+            @test isfile(joinpath(file_path, "three", "$k.feather"))
         end
 
-        PSI._write_data(res.variables[:P_ThermalStandard], mkdir(joinpath(file_path, "four")), "P_ThermalStandard")
-        @test isfile(joinpath(file_path, "four/P_ThermalStandard.feather"))
+        var_name = PSI.variable_name(PSI.REAL_POWER, PSY.ThermalStandard)
+        PSI._write_data(
+            res.variables[var_name],
+            mkdir(joinpath(file_path, "four")),
+            string(var_name)
+        )
+        @test isfile(joinpath(file_path, "four", "$(var_name).feather"))
 
         #testing if directory is a file
-        PSI._write_data(res.variables[:P_ThermalStandard], joinpath(file_path, "four/P_ThermalStandard.feather"), "P_ThermalStandard")
-        @test isfile(joinpath(file_path, "four/P_ThermalStandard.feather"))
+        PSI._write_data(
+            res.variables[var_name],
+            joinpath(file_path, "four", "$(var_name).feather"),
+            string(var_name)
+        )
+        @test isfile(joinpath(file_path, "four", "$(var_name).feather"))
 
         PSI._write_optimizer_log(res.optimizer_log, mkdir(joinpath(file_path, "five")))
-        @test isfile(joinpath(file_path, "five/optimizer_log.json"))
+        @test isfile(joinpath(file_path, "five", "optimizer_log.json"))
 
         PSI.write_to_CSV(res, mkdir(joinpath(file_path, "six")))
         @test !isempty(joinpath(file_path, "six", "results"))

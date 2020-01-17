@@ -52,14 +52,15 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                     ::Type{<:PM.AbstractPowerModel},
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where L<:PSY.ElectricLoad
     time_steps = model_time_steps(psi_container)
-    key = Symbol("reactive_$(L)")
-    psi_container.constraints[key] = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
+    constraint = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
+    set_constraint!(psi_container, REACTIVE, L, constraint)
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(atan((PSY.get_maxreactivepower(d)/PSY.get_maxactivepower(d))))
-        psi_container.constraints[key][PSY.get_name(d), t] = JuMP.@constraint(psi_container.JuMPmodel,
-                        psi_container.variables[Symbol("Q_$(L)")][name, t] == psi_container.variables[Symbol("P_$(L)")][name, t]*pf)
+        reactive = get_variable(psi_container, REACTIVE_POWER, L)[name, t]
+        real = get_variable(psi_container, REAL_POWER, L)[name, t] * pf
+        constraint[name, t] = JuMP.@constraint(psi_container.JuMPmodel, reactive == real)
     end
     return
 end

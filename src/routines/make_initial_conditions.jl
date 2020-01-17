@@ -1,280 +1,207 @@
 const MISSING_INITIAL_CONDITIONS_TIME_COUNT = 999.0
 
 """
-Status Initis is always calculated based on the Power Output of the device
+Status Init is always calculated based on the Power Output of the device
 This is to make it easier to calculate when the previous model doesn't
 contain binaries. For instance, looking back on an ED model to find the
 IC of the UC model
 """
-function status_init(psi_container::PSIContainer,
-                     devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
-    key = ICKey(DeviceStatus, PSD)
-    parameters = model_has_parameters(psi_container)
-    length_devices = length(devices)
-    ini_conds = get_initial_conditions(psi_container, key)
-    # Improve here
-    ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
+function status_init(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T<:PSY.ThermalGen}
+    _make_initial_conditions!(
+        psi_container,
+        devices,
+        ICKey(DeviceStatus, T),
+        _make_initial_condition_active_power,
+        _get_active_power_status_value,
+    )
 
-    if isempty(ini_conds)
-        @info("Setting $(key.quantity) initial conditions for the status of all devices $(PSD) based on system data")
-        ini_conds = psi_container.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
-        for (ix, g) in enumerate(devices)
-            status_value = (PSY.get_activepower(g) > 0) ? 1.0 : 0.0
-            ini_conds[ix] = InitialCondition(psi_container,
-                                            g,
-                                            ref_key,
-                                            status_value)
-        end
-    else
-        ic_devices = (ic.device for ic in ini_conds)
-        for g in devices
-            g in ic_devices && continue
-            @info("Setting $(key.quantity) initial conditions for the status device $(g.name) based on system data")
-                status_value = (PSY.get_activepower(g) > 0) ? 1.0 : 0.0
-                push!(ini_conds, InitialCondition(psi_container,
-                                                  g,
-                                                  ref_key,
-                                                  status_value))
-        end
-    end
-    @assert length(ini_conds) == length(devices)
     return
 end
 
-function output_init(psi_container::PSIContainer,
-                    devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
-    key = ICKey(DevicePower, PSD)
-    parameters = model_has_parameters(psi_container)
-    length_devices = length(devices)
-    ini_conds = get_initial_conditions(psi_container, key)
-    # Improve this
-    ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
+function output_init(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T<:PSY.ThermalGen}
+    _make_initial_conditions!(
+        psi_container,
+        devices,
+        ICKey(DevicePower, T),
+        _make_initial_condition_active_power,
+        _get_active_power_output_value,
+        TimeStatusChange,
+    )
 
-    if isempty(ini_conds)
-        @info("Setting $(key.quantity) initial_condition of all devices $(PSD) based on system data")
-        ini_conds = psi_container.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
-        for (ix, g) in enumerate(devices)
-                ini_conds[ix] = InitialCondition(psi_container,
-                                                g,
-                                                ref_key,
-                                                PSY.get_activepower(g),
-                                                TimeStatusChange)
-        end
-    else
-        ic_devices = (ic.device for ic in ini_conds)
-        for g in devices
-            g in ic_devices && continue
-            @info("Setting $(key.quantity) initial_condition of device $(g.name) based on system data")
-                push!(ini_conds, InitialCondition(psi_container,
-                                                g,
-                                                ref_key,
-                                                PSY.get_activepower(g),
-                                                TimeStatusChange))
-        end
-    end
-
-    @assert length(ini_conds) == length(devices)
     return
 end
 
-function duration_init(psi_container::PSIContainer,
-                        devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.ThermalGen}
-    keys = [ICKey(TimeDurationON, PSD), ICKey(TimeDurationOFF, PSD)]
-    parameters = model_has_parameters(psi_container)
-    length_devices = length(devices)
-    ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
-
-    for (ik, key) in enumerate(keys)
-        ini_conds = get_initial_conditions(psi_container, key)
-
-        if isempty(ini_conds)
-            @info("Setting $(key.quantity) initial_condition of all devices $(PSD) based on system data")
-            ini_conds = psi_container.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
-            for (ix, g) in enumerate(devices)
-                time_on = (PSY.get_activepower(g) > 0) ? MISSING_INITIAL_CONDITIONS_TIME_COUNT : 0.0
-                time_off = PSY.get_activepower(g) <= 0 ? MISSING_INITIAL_CONDITIONS_TIME_COUNT : 0.0
-                times = [time_on, time_off]
-                ini_conds[ix] = InitialCondition(psi_container,
-                                                    g,
-                                                    ref_key,
-                                                    times[ik],
-                                                    TimeStatusChange)
-            end
-        else
-            ic_devices = (ic.device for ic in ini_conds if !isnothing(ic.cache))
-            for g in devices
-                g in ic_devices && continue
-                time_on = (PSY.get_activepower(g) > 0) ? MISSING_INITIAL_CONDITIONS_TIME_COUNT : 0.0
-                time_off = PSY.get_activepower(g) <= 0 ? MISSING_INITIAL_CONDITIONS_TIME_COUNT : 0.0
-                times = [time_on, time_off]
-                @info("Setting $(key.quantity) initial_condition of device $(g.name) based on system data")
-                push!(ini_conds, InitialCondition(
-                                                  psi_container,
-                                                  g,
-                                                  ref_key,
-                                                  times[ik],
-                                                  TimeStatusChange
-                                                  )
-                    )
-            end
-
-        end
-        @assert length(ini_conds) == length(devices)
+function duration_init(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T<:PSY.ThermalGen}
+    for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
+        _make_initial_conditions!(
+            psi_container,
+            devices,
+            key,
+            _make_initial_condition_active_power,
+            _get_active_power_duration_value,
+            TimeStatusChange,
+        )
     end
+
     return
 end
 
 ######################### Initialize Functions for Storage #################################
 
-function storage_energy_init(psi_container::PSIContainer,
-                             devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.Storage}
-    key = ICKey(DeviceEnergy, PSD)
-    parameters = model_has_parameters(psi_container)
-    length_devices = length(devices)
-    ini_conds = get_initial_conditions(psi_container, key)
-    ref_key = parameters ? Symbol("E_$(PSD)") : :energy
+function storage_energy_init(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T<:PSY.Storage}
+    key = ICKey(DeviceEnergy, T)
+    _make_initial_conditions!(
+        psi_container,
+        devices,
+        ICKey(DeviceEnergy, T),
+        _make_initial_condition_energy,
+        _get_energy_value,
+    )
 
-    if isempty(ini_conds)
-        @info("Setting $(key.quantity) initial_condition of all devices $(PSD) based on system data")
-        ini_conds = psi_container.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
-
-        for (ix, g) in enumerate(devices)
-            ini_conds[ix] = InitialCondition(psi_container,
-                                                g,
-                                                ref_key,
-                                                PSY.get_energy(g))
-        end
-    else
-        ic_devices = (ic.device for ic in ini_conds)
-        for g in devices
-            g in ic_devices && continue
-            @info("Setting $(key.quantity) initial_condition of device $(g.name) based on system data")
-            push!(ini_conds, InitialCondition(psi_container,
-                                            g,
-                                            ref_key,
-                                            PSY.get_energy(g)))
-        end
-    end
-
-    @assert length(ini_conds) == length(devices)
     return
 end
 
 ######################### Initialize Functions for Hydro #################################
-function status_init(psi_container::PSIContainer,
-                     devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.HydroGen}
-    key = ICKey(DeviceStatus, PSD)
-    parameters = model_has_parameters(psi_container)
-    length_devices = length(devices)
-    ini_conds = get_initial_conditions(psi_container, key)
-    # Improve here
-    ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
+function status_init(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T<:PSY.HydroGen}
+    _make_initial_conditions!(
+        psi_container,
+        devices,
+        ICKey(DeviceStatus, T),
+        _make_initial_condition_active_power,
+        _get_active_power_status_value,
+    )
+end
 
-    if isempty(ini_conds)
-        @info("Setting $(key.quantity) initial conditions for the status of all devices $(PSD) based on system data")
-        ini_conds = psi_container.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
-        for (ix, g) in enumerate(devices)
-            status_value = (PSY.get_activepower(g) > 0) ? 1.0 : 0.0
-            ini_conds[ix] = InitialCondition(psi_container,
-                                            g,
-                                            ref_key,
-                                            status_value)
-        end
-    else
-        ic_devices = (ic.device for ic in ini_conds)
-        for g in devices
-            g in ic_devices && continue
-            @info("Setting $(key.quantity) initial conditions for the status device $(g.name) based on system data")
-                status_value = (PSY.get_activepower(g) > 0) ? 1.0 : 0.0
-                push!(ini_conds, InitialCondition(psi_container,
-                                                  g,
-                                                  ref_key,
-                                                  status_value))
-        end
-    end
-    @assert length(ini_conds) == length(devices)
+function output_init(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T<:PSY.HydroGen}
+    _make_initial_conditions!(
+        psi_container,
+        devices,
+        ICKey(DevicePower, T),
+        _make_initial_condition_active_power,
+        _get_active_power_output_value,
+        TimeStatusChange,
+    )
+
     return
 end
 
-function output_init(psi_container::PSIContainer,
-                    devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.HydroGen}
-    key = ICKey(DevicePower, PSD)
-    parameters = model_has_parameters(psi_container)
-    length_devices = length(devices)
-    ini_conds = get_initial_conditions(psi_container, key)
-    # Improve this
-    ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
-
-    if isempty(ini_conds)
-        @info("Setting $(key.quantity) initial_condition of all devices $(PSD) based on system data")
-        ini_conds = psi_container.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
-        for (ix, g) in enumerate(devices)
-                ini_conds[ix] = InitialCondition(psi_container,
-                                                g,
-                                                ref_key,
-                                                PSY.get_activepower(g),
-                                                TimeStatusChange)
-        end
-    else
-        ic_devices = (ic.device for ic in ini_conds)
-        for g in devices
-            g in ic_devices && continue
-            @info("Setting $(key.quantity) initial_condition of device $(g.name) based on system data")
-                push!(ini_conds, InitialCondition(psi_container,
-                                                g,
-                                                ref_key,
-                                                PSY.get_activepower(g),
-                                                TimeStatusChange))
-        end
+function duration_init(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T<:PSY.HydroGen}
+    for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
+        _make_initial_conditions!(
+            psi_container,
+            devices,
+            key,
+            _make_initial_condition_active_power,
+            _get_active_power_duration_value,
+            TimeStatusChange,
+        )
     end
 
-    @assert length(ini_conds) == length(devices)
     return
 end
 
-function duration_init(psi_container::PSIContainer,
-                        devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.HydroGen}
-    keys = [ICKey(TimeDurationON, PSD), ICKey(TimeDurationOFF, PSD)]
-    parameters = model_has_parameters(psi_container)
+function _make_initial_conditions!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    key::ICKey,
+    make_ic_func::Function,
+    get_val_func::Function,
+    cache = nothing,
+) where {T<:PSY.Device}
     length_devices = length(devices)
-    ref_key = parameters ? Symbol("P_$(PSD)") : :activepower
+    ini_conds = get_initial_conditions(psi_container, key)
 
-    for (ik, key) in enumerate(keys)
-        ini_conds = get_initial_conditions(psi_container, key)
-        if isempty(ini_conds)
-            @info("Setting $(key.quantity) initial_condition of all devices $(PSD) based on system data")
-            ini_conds = psi_container.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
-
-            for (ix, g) in enumerate(devices)
-                time_on = (PSY.get_activepower(g) > 0) ? MISSING_INITIAL_CONDITIONS_TIME_COUNT : 0.0
-                time_off = PSY.get_activepower(g) <= 0 ? MISSING_INITIAL_CONDITIONS_TIME_COUNT : 0.0
-                times = [time_on, time_off]
-                ini_conds[ix] = InitialCondition(psi_container,
-                                                    g,
-                                                    ref_key,
-                                                    times[ik],
-                                                    TimeStatusChange)
-            end
-        else
-            ic_devices = (ic.device for ic in ini_conds if !isnothing(ic.cache))
-            for g in devices
-                g in ic_devices && continue
-                time_on = (PSY.get_activepower(g) > 0) ? MISSING_INITIAL_CONDITIONS_TIME_COUNT : 0.0
-                time_off = PSY.get_activepower(g) <= 0 ? MISSING_INITIAL_CONDITIONS_TIME_COUNT : 0.0
-                times = [time_on, time_off]
-                @info("Setting $(key.quantity) initial_condition of device $(g.name) based on system data")
-                push!(ini_conds, InitialCondition(
-                                                  psi_container,
-                                                  g,
-                                                  ref_key,
-                                                  times[ik],
-                                                  TimeStatusChange
-                                                  )
-                    )
-            end
+    if isempty(ini_conds)
+        @info "Setting $(key.quantity) initial conditions for the status of all devices $(T) based on system data"
+        ini_conds = Vector{InitialCondition}(undef, length_devices)
+        set_initial_conditions!(psi_container, key, ini_conds)
+        for (ix, dev) in enumerate(devices)
+            ini_conds[ix] = make_ic_func(psi_container, dev, get_val_func(dev, key), cache)
         end
-
-        @assert length(ini_conds) == length(devices)
+    else
+        ic_devices = Set((IS.get_uuid(ic.device) for ic in ini_conds))
+        for dev in devices
+            IS.get_uuid(dev) in ic_devices && continue
+            @info "Setting $(key.quantity) initial conditions for the status device $(PSY.get_name(dev)) based on system data"
+            push!(
+                ini_conds,
+                make_ic_func(psi_container, dev, get_val_func(dev, key), cache),
+            )
+        end
     end
+
+    @assert length(ini_conds) == length_devices
     return
+end
+
+function _make_initial_condition_active_power(psi_container, device, value, cache = nothing)
+    return InitialCondition(
+        psi_container,
+        device,
+        _get_ref_active_power(psi_container),
+        value,
+        cache,
+    )
+end
+
+function _make_initial_condition_energy(psi_container, device, value, cache = nothing)
+    return InitialCondition(
+        psi_container,
+        device,
+        _get_ref_energy(psi_container),
+        value,
+        cache,
+    )
+end
+
+function _get_active_power_status_value(device, key)
+    return PSY.get_activepower(device) > 0 ? 1.0 : 0.0
+end
+
+function _get_active_power_output_value(device, key)
+    return PSY.get_activepower(device)
+end
+
+function _get_energy_value(device, key)
+    return PSY.get_energy(device)
+end
+
+function _get_active_power_duration_value(dev, key)
+    if key.quantity == TimeDurationON
+        value = PSY.get_activepower(dev) > 0 ? MISSING_INITIAL_CONDITIONS_TIME_COUNT : 0.0
+    else
+        @assert key.quantity == TimeDurationOFF
+        value = PSY.get_activepower(dev) <= 0 ? MISSING_INITIAL_CONDITIONS_TIME_COUNT : 0.0
+    end
+
+    return value
+end
+
+function _get_ref_active_power(psi_container::PSIContainer)
+    return model_has_parameters(psi_container) ? REAL_POWER : ACTIVE_POWER
+end
+
+function _get_ref_energy(psi_container::PSIContainer)
+    return model_has_parameters(psi_container) ? E : ENERGY
 end

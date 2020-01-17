@@ -6,9 +6,9 @@ mutable struct TimeStatusChange <: AbstractCache
     ref::UpdateRef
 end
 
-function TimeStatusChange(parameter::Symbol)
+function TimeStatusChange(name::AbstractString, ::Type{T}) where T <: PSY.Device
     value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, 1)
-    return TimeStatusChange(value_array, UpdateRef{PJ.ParameterRef}(parameter))
+    return TimeStatusChange(value_array, UpdateRef{PJ.ParameterRef}(name, T))
 end
 
 cache_value(cache::AbstractCache, key) = cache.value[key]

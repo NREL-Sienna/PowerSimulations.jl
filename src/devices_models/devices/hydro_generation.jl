@@ -12,7 +12,7 @@ function activepower_variables!(psi_container::PSIContainer,
                                devices::IS.FlattenIteratorWrapper{H}) where H<:PSY.HydroGen
     add_variable(psi_container,
                  devices,
-                 Symbol("P_$(H)"),
+                 variable_name(REAL_POWER, H),
                  false,
                  :nodal_balance_active;
                  lb_value = d -> d.tech.activepowerlimits.min,
@@ -26,7 +26,7 @@ function reactivepower_variables!(psi_container::PSIContainer,
                                  devices::IS.FlattenIteratorWrapper{H}) where H<:PSY.HydroGen
     add_variable(psi_container,
                  devices,
-                 Symbol("Q_$(H)"),
+                 variable_name(REACTIVE_POWER, H),
                  false,
                  :nodal_balance_reactive,
                  ub_value = d -> d.tech.reactivepowerlimits.max,
@@ -42,7 +42,7 @@ This function add the variables for power generation commitment to the model
 function commitment_variables!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{H}) where {H<:PSY.HydroGen}
     time_steps = model_time_steps(psi_container)
-    var_names = [Symbol("ON_$(H)"), Symbol("START_$(H)"), Symbol("STOP_$(H)")]
+    var_names = [variable_name(ON, H), variable_name(START, H), variable_name(STOP, H)]
 
     for v in var_names
         add_variable(psi_container, devices, v, true)
@@ -62,19 +62,12 @@ function commitment_constraints!(psi_container::PSIContainer,
                                  feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {H<:PSY.HydroGen,
                                                                      D<:AbstractHydroUnitCommitment,
                                                                      S<:PM.AbstractPowerModel}
-    key = ICKey(DeviceStatus, H)
-
-    if !(key in keys(psi_container.initial_conditions))
-        throw(IS.DataFormatError("Initial status conditions not provided. This can lead to unwanted results"))
-    end
-
-    device_commitment(psi_container,
-                     psi_container.initial_conditions[key],
-                     Symbol("commitment_$(H)"),
-                     (Symbol("START_$(H)"),
-                      Symbol("STOP_$(H)"),
-                      Symbol("ON_$(H)"))
-                      )
+    device_commitment(
+        psi_container,
+        get_initial_conditions(psi_container, ICKey(DeviceStatus, H)),
+        constraint_name(COMMITMENT, H),
+        (variable_name(START, H), variable_name(STOP, H), variable_name(ON, H)),
+    )
 
     return
 end
@@ -95,10 +88,12 @@ function reactivepower_constraints!(psi_container::PSIContainer,
         push!(constraint_data, range_data)
     end
 
-    device_range(psi_container,
-                 constraint_data,
-                 Symbol("reactiverange_$(H)"),
-                 Symbol("Q_$(H)"))
+    device_range(
+        psi_container,
+        constraint_data,
+        constraint_name(REACTIVE_RANGE, H),
+        variable_name(REACTIVE_POWER, H)
+    )
     return
 end
 
@@ -155,24 +150,30 @@ function activepower_constraints!(psi_container::PSIContainer,
                                                           x -> (min=0.0, max=PSY.get_activepower(x)))
 
     if !parameters && !use_forecast_data
-        device_range(psi_container,
-                     constraint_data,
-                     Symbol("activerange_$(H)"),
-                     Symbol("P_$(H)"))
+        device_range(
+            psi_container,
+            constraint_data,
+            constraint_name(ACTIVE_RANGE, H),
+            variable_name(REAL_POWER, H),
+        )
         return
     end
 
     if parameters
-        device_timeseries_param_ub(psi_container,
-                            ts_data_active,
-                            Symbol("activerange_$(H)"),
-                            UpdateRef{H}("get_rating"),
-                            Symbol("P_$(H)"))
+        device_timeseries_param_ub(
+            psi_container,
+            ts_data_active,
+            constraint_name(ACTIVE_RANGE, H),
+            UpdateRef{H}("get_rating"),
+            variable_name(REAL_POWER, H),
+        )
     else
-        device_timeseries_ub(psi_container,
-                            ts_data_active,
-                            Symbol("activerange_$(H)"),
-                            Symbol("P_$(H)"))
+        device_timeseries_ub(
+            psi_container,
+            ts_data_active,
+            constraint_name(ACTIVE_RANGE, H),
+            variable_name(REAL_POWER, H),
+        )
     end
 
     return
@@ -189,10 +190,12 @@ function activepower_constraints!(psi_container::PSIContainer,
     ts_data_active, _, constraint_data = _get_time_series(psi_container, devices, model,
                                                           x -> (min=0.0, max=PSY.get_activepower(x)))
 
-    device_range(psi_container,
-                    constraint_data,
-                    Symbol("activerange_$(H)"),
-                    Symbol("P_$(H)"))
+    device_range(
+        psi_container,
+        constraint_data,
+        constraint_name(ACTIVE_RANGE, H),
+        variable_name(REAL_POWER, H),
+    )
 
     return
 end
@@ -209,27 +212,33 @@ function activepower_constraints!(psi_container::PSIContainer,
                                                           x -> PSY.get_activepowerlimits(PSY.get_tech(x)))
 
     if !parameters && !use_forecast_data
-        device_semicontinuousrange(psi_container,
-                                    constraint_data,
-                                    Symbol("activerange_$(H)"),
-                                    Symbol("P_$(H)"),
-                                    Symbol("ON_$(H)"))
+        device_semicontinuousrange(
+            psi_container,
+            constraint_data,
+            constraint_name(ACTIVE_RANGE, H),
+            variable_name(REAL_POWER, H),
+            variable_name(ON, H),
+        )
         return
     end
 
     if parameters
-        device_timeseries_ub_bigM(psi_container,
-                            ts_data_active,
-                            Symbol("activerange_$(H)"),
-                            Symbol("P_$(H)"),
-                            UpdateRef{H}("get_rating"),
-                            Symbol("ON_$(H)"))
+        device_timeseries_ub_bigM(
+            psi_container,
+            ts_data_active,
+            constraint_name(ACTIVE_RANGE, H),
+            variable_name(REAL_POWER, H),
+            UpdateRef{H}("get_rating"),
+            variable_name(ON, H),
+        )
     else
-        device_timeseries_ub_bin(psi_container,
-                            ts_data_active,
-                            Symbol("activerange_$(H)"),
-                            Symbol("P_$(H)"),
-                            Symbol("ON_$(H)"))
+        device_timeseries_ub_bin(
+            psi_container,
+            ts_data_active,
+            constraint_name(ACTIVE_RANGE, H),
+            variable_name(REAL_POWER, H),
+            variable_name(ON, H),
+        )
     end
 
     return
@@ -386,16 +395,20 @@ function budget_constraints!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
     budget_data  = _get_budget(psi_container, devices)
     if parameters
-        device_budget_param_ub(psi_container,
-                            budget_data,
-                            Symbol("energy_limit_$(H)"), # TODO: better name for this constraint
-                            UpdateRef{H}("get_storage_capacity"),
-                            Symbol("P_$(H)"))
+        device_budget_param_ub(
+            psi_container,
+            budget_data,
+            constraint_name(ENERGY_LIMIT, H),  # TODO: better name for this constraint
+            UpdateRef{H}("get_storage_capacity"),
+            variable_name(REAL_POWER, H),
+        )
     else
-        device_budget_ub(psi_container,
-                        budget_data,
-                        Symbol("energy_limit_$(H)"), # TODO: better name for this constraint
-                        Symbol("P_$(H)"))
+        device_budget_ub(
+            psi_container,
+            budget_data,
+            constraint_name(ENERGY_LIMIT), # TODO: better name for this constraint
+            variable_name(REAL_POWER, H),
+        )
     end
 end
 

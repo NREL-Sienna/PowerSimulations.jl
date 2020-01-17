@@ -59,16 +59,17 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
     names = (PSY.get_name(d) for d in devices)
     time_steps = model_time_steps(psi_container)
-    p_variable_name = Symbol("P_$(R)")
-    q_variable_name = Symbol("Q_$(R)")
-    constraint_name = Symbol("reactiverange_$(R)")
-    psi_container.constraints[constraint_name] = JuMPConstraintArray(undef, names, time_steps)
+    p_var = get_variable(psi_container, REAL_POWER, R)
+    q_var = get_variable(psi_container, REACTIVE_POWER, R)
+    constraint_val = JuMPConstraintArray(undef, names, time_steps)
+    set_constraint!(psi_container, REACTIVE_RANGE, R, constraint_val)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(d))))
-        psi_container.constraints[constraint_name][name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                psi_container.variables[q_variable_name][name, t] ==
-                                psi_container.variables[p_variable_name][name, t] * pf)
+        constraint_val[name, t] = JuMP.@constraint(
+            psi_container.JuMPmodel,
+            q_var[name, t] == p_var[name, t] * pf
+        )
     end
     return
 end

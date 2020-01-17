@@ -197,17 +197,13 @@ function energy_balance_constraint!(psi_container::PSIContainer,
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
                                                             D<:AbstractStorageFormulation,
                                                             S<:PM.AbstractPowerModel}
-    key = ICKey(DeviceEnergy, St)
-    if !(key in keys(psi_container.initial_conditions))
-        throw(IS.DataFormatError("Initial Conditions for $(St) Energy Constraints not in the model"))
-    end
-
     efficiency_data = make_efficiency_data(devices)
-
-    energy_balance(psi_container,
-                   psi_container.initial_conditions[key],
-                   efficiency_data,
-                   Symbol("energy_balance_$(St)"),
-                   (Symbol("Pout_$(St)"), Symbol("Pin_$(St)"), Symbol("E_$(St)")))
+    energy_balance(
+        psi_container,
+        get_initial_conditions(psi_container, ICKey(DeviceEnergy, St)),
+        efficiency_data,
+        constraint_name(ENERGY_LIMIT, St),
+        (variable_name(P_OUT, St), variable_name(P_IN, St), variable_name(E,St)),
+    )
     return
 end

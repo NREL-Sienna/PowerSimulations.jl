@@ -47,7 +47,11 @@ This function add the variables for power generation commitment to the model
 function commitment_variables!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{T}) where T<:PSY.ThermalGen
     time_steps = model_time_steps(psi_container)
-    var_names = [Symbol("ON_$(T)"), Symbol("START_$(T)"), Symbol("STOP_$(T)")]
+    var_names = (
+        variable_name(ON, T),
+        variable_name(START, T),
+        variable_name(STOP, T),
+    )
 
     for v in var_names
         add_variable(psi_container, devices, v, true)
@@ -106,11 +110,13 @@ function activepower_constraints!(psi_container::PSIContainer,
         _device_services!(range_data, d, model)
         push!(constraint_data, range_data)
     end
-    device_semicontinuousrange(psi_container,
-                               constraint_data,
-                               Symbol("activerange_$(T)"),
-                               Symbol("P_$(T)"),
-                               Symbol("ON_$(T)"))
+    device_semicontinuousrange(
+        psi_container,
+        constraint_data,
+        constraint_name(ACTIVE_RANGE, T),
+        variable_name(REAL_POWER, T),
+        variable_name(ON, T),
+    )
     return
 end
 
@@ -132,7 +138,7 @@ function activepower_constraints!(psi_container::PSIContainer,
         push!(constraint_data, range_data)
     end
 
-    var_key = Symbol("P_$(T)")
+    var_key = variable_name(REAL_POWER, T)
     variable = get_variable(psi_container, var_key)
     # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
     for v in variable
@@ -141,11 +147,12 @@ function activepower_constraints!(psi_container::PSIContainer,
         end
     end
 
-    device_range(psi_container,
-                 constraint_data,
-                 Symbol("activerange_$(T)"),
-                 Symbol("P_$(T)")
-                 )
+    device_range(
+        psi_container,
+        constraint_data,
+        constraint_name(ACTIVE_RANGE, T),
+        variable_name(REAL_POWER, T)
+    )
     return
 end
 
@@ -166,10 +173,13 @@ function reactivepower_constraints!(psi_container::PSIContainer,
         # Uncomment when we implement reactive power services
         push!(constraint_data, range_data)
     end
-    device_range(psi_container,
-                 constraint_data,
-                 Symbol("reactiverange_$(T)"),
-                 Symbol("Q_$(T)"))
+
+    device_range(
+        psi_container,
+        constraint_data,
+        constraint_name(REACTIVE_RANGE, T),
+        variable_name(REACTIVE_POWER, T),
+    )
     return
 end
 
@@ -190,11 +200,14 @@ function reactivepower_constraints!(psi_container::PSIContainer,
         # Uncomment when we implement reactive power services
         push!(constraint_data, range_data)
     end
-    device_semicontinuousrange(psi_container,
-                               constraint_data,
-                               Symbol("reactiverange_$(T)"),
-                               Symbol("Q_$(T)"),
-                               Symbol("ON_$(T)"))
+
+    device_semicontinuousrange(
+        psi_container,
+        constraint_data,
+        constraint_name(REACTIVE_RANGE, T),
+        variable_name(REACTIVE_POWER, T),
+        variable_name(ON, T),
+    )
     return
 end
 
@@ -209,17 +222,12 @@ function commitment_constraints!(psi_container::PSIContainer,
                                  feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {T<:PSY.ThermalGen,
                                                                      D<:AbstractThermalFormulation,
                                                                      S<:PM.AbstractPowerModel}
-    key = ICKey(DeviceStatus, T)
-    if !(key in keys(psi_container.initial_conditions))
-        throw(IS.DataFormatError("Initial status conditions not provided. This can lead to unwanted results"))
-    end
-    device_commitment(psi_container,
-                      psi_container.initial_conditions[key],
-                      Symbol("commitment_$(T)"),
-                     (Symbol("START_$(T)"),
-                      Symbol("STOP_$(T)"),
-                      Symbol("ON_$(T)"))
-                      )
+    device_commitment(
+        psi_container,
+        get_initial_conditions(psi_container, ICKey(DeviceStatus, T)),
+        constraint_name(COMMITMENT, T),
+        (variable_name(START, T), variable_name(STOP, T), variable_name(ON, T)),
+    )
     return
 end
 
@@ -299,25 +307,24 @@ function ramp_constraints!(psi_container::PSIContainer,
                            feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {T<:PSY.ThermalGen,
                                                     D<:AbstractThermalFormulation,
                                                     S<:PM.AbstractPowerModel}
-    key = ICKey(DevicePower, T)
-    if !(key in keys(psi_container.initial_conditions))
-        error("Initial Conditions for $(T) Rate of Change Constraints not in the model")
-    end
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
-    initial_conditions = get_initial_conditions(psi_container, key)
+    initial_conditions = get_initial_conditions(psi_container, ICKey(DevicePower, T))
     rate_data = _get_data_for_rocc(initial_conditions, resolution)
     ini_conds, ramp_params, minmax_params = _get_data_for_rocc(initial_conditions, resolution)
     if !isempty(ini_conds)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
-        device_mixedinteger_rateofchange(psi_container,
-                                         (ramp_params, minmax_params),
-                                         ini_conds,
-                                         Symbol("ramp_$(T)"),
-                                        (Symbol("P_$(T)"),
-                                         Symbol("START_$(T)"),
-                                         Symbol("STOP_$(T)"))
-                                        )
+        device_mixedinteger_rateofchange(
+            psi_container,
+            (ramp_params, minmax_params),
+            ini_conds,
+            constraint_name(RAMP, T),
+            (
+                variable_name(REAL_POWER, T),
+                variable_name(START, T),
+                variable_name(STOP, T),
+            )
+        )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
     end
@@ -331,22 +338,20 @@ function ramp_constraints!(psi_container::PSIContainer,
                           feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {T<:PSY.ThermalGen,
                                                    D<:AbstractThermalDispatchFormulation,
                                                    S<:PM.AbstractPowerModel}
-    key = ICKey(DevicePower, T)
-    if !(key in keys(psi_container.initial_conditions))
-        error("Initial Conditions for $(T) Rate of Change Constraints not in the model")
-    end
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
-    initial_conditions = get_initial_conditions(psi_container, key)
+    initial_conditions = get_initial_conditions(psi_container, ICKey(DevicePower, T))
     rate_data = _get_data_for_rocc(initial_conditions, resolution)
     ini_conds, ramp_params, minmax_params = _get_data_for_rocc(initial_conditions, resolution)
     if !isempty(ini_conds)
         # Here goes the reactive power ramp limits when versions for AC and DC are added
-        device_linear_rateofchange(psi_container,
-                                  ramp_params,
-                                  ini_conds,
-                                   Symbol("ramp_$(T)"),
-                                   Symbol("P_$(T)"))
+        device_linear_rateofchange(
+            psi_container,
+            ramp_params,
+            ini_conds,
+            constraint_name(RAMP, T),
+            variable_name(REAL_POWER, T),
+        )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
     end
@@ -405,38 +410,30 @@ function time_constraints!(psi_container::PSIContainer,
                           feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {T<:PSY.ThermalGen,
                                                    D<:AbstractThermalFormulation,
                                                    S<:PM.AbstractPowerModel}
-    ic_keys = [ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T)]
-    for key in ic_keys
-        if !(key in keys(psi_container.initial_conditions))
-            error("Initial Conditions for $(T) Time Constraint not in the model")
-        end
-    end
     parameters = model_has_parameters(psi_container)
     resolution = model_resolution(psi_container)
-    initial_conditions_on  = get_initial_conditions(psi_container, ic_keys[1])
-    initial_conditions_off = get_initial_conditions(psi_container, ic_keys[2])
+    initial_conditions_on  = get_initial_conditions(psi_container, ICKey(TimeDurationON, T))
+    initial_conditions_off = get_initial_conditions(psi_container, ICKey(TimeDurationOFF, T))
     ini_conds, time_params = _get_data_for_tdc(initial_conditions_on,
                                                initial_conditions_off,
                                                resolution)
     if !(isempty(ini_conds))
        if parameters
-            device_duration_parameters(psi_container,
-                                time_params,
-                                ini_conds,
-                                Symbol("duration_$(T)"),
-                                (Symbol("ON_$(T)"),
-                                Symbol("START_$(T)"),
-                                Symbol("STOP_$(T)"))
-                                      )
+            device_duration_parameters(
+                psi_container,
+                time_params,
+                ini_conds,
+                constraint_name(DURATION, T),
+                (variable_name(ON, T), variable_name(START, T), variable_name(STOP, T)),
+            )
         else
-            device_duration_retrospective(psi_container,
-                                        time_params,
-                                        ini_conds,
-                                        Symbol("duration_$(T)"),
-                                        (Symbol("ON_$(T)"),
-                                        Symbol("START_$(T)"),
-                                        Symbol("STOP_$(T)"))
-                                        )
+            device_duration_retrospective(
+                psi_container,
+                time_params,
+                ini_conds,
+                constraint_name(DURATION, T),
+                (variable_name(ON, T), variable_name(START, T), variable_name(STOP, T)),
+            )
         end
     else
         @warn "Data doesn't contain generators with time-up/down limits, consider adjusting your formulation"
@@ -463,10 +460,10 @@ function cost_function(psi_container::PSIContainer,
                        ::Type{<:PM.AbstractPowerModel},
                        feed_forward::Union{Nothing, AbstractAffectFeedForward}) where T<:PSY.ThermalGen
     #Variable Cost component
-    add_to_cost(psi_container, devices, Symbol("P_$(T)"), :variable)
+    add_to_cost(psi_container, devices, variable_name(REAL_POWER, T), :variable)
     #Commitment Cost Components
-    add_to_cost(psi_container, devices, Symbol("START_$(T)"), :startup)
-    add_to_cost(psi_container, devices, Symbol("STOP_$(T)"), :shutdn)
-    add_to_cost(psi_container, devices, Symbol("ON_$(T)"), :fixed)
+    add_to_cost(psi_container, devices, variable_name(START, T), :startup)
+    add_to_cost(psi_container, devices, variable_name(STOP, T), :shutdn)
+    add_to_cost(psi_container, devices, variable_name(ON, T), :fixed)
     return
 end

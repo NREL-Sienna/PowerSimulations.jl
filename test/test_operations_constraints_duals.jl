@@ -14,23 +14,29 @@ function test_duals(file_path)
         template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
         op_problem = OperationsProblem(TestOpProblem, template, c_sys5_re; optimizer = OSQP_optimizer, use_parameters = true)
         res = solve_op_problem!(op_problem; constraints_duals = duals)
+        name = PSI.constraint_name("CopperPlateBalance")
         for i in 1:ncol(res.time_stamp)
-            dual = JuMP.dual(op_problem.psi_container.constraints[:CopperPlateBalance][i])
-            @test dual == res.constraints_duals[:CopperPlateBalance][i, 1]
+            dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
+            @test dual == res.constraints_duals[name][i, 1]
         end
     end
     @testset "testing dual constraints in results" begin
         stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
                                 "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
+        affected_variables = [PSI.variable_name(PSI.REAL_POWER)]
         sequence = SimulationSequence(
             order = Dict(1 => "UC", 2 => "ED"),
             intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 24, "ED" => 12),
             intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
-            feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
-            cache = Dict("ED" => [TimeStatusChange(:ON_ThermalStandard)]),
-            ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive())
+            feed_forward = Dict(
+                ("ED", :devices, :Generators) => SemiContinuousFF(
+                    binary_from_stage = Symbol(PSI.ON),
+                    affected_variables = affected_variables),
+               ),
+                cache = Dict("ED" => [TimeStatusChange(PSI.ON, PSY.ThermalStandard)]),
+                ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive())
             )
         sim = Simulation(
             name = "aggregation",

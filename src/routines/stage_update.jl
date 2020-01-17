@@ -90,14 +90,14 @@ end
 function update_stage!(stage::Stage{M}, step::Int64, sim::Simulation) where M<:AbstractOperationsProblem
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && get_number(stage) == 1 && get_execution_count(stage) == 0) && return
-    for param_reference in keys(stage.internal.psi_container.parameters)
+    for param_reference in get_parameter_refs(stage.internal.psi_container)
         parameter_update!(param_reference, get_number(stage), sim)
     end
 
     _update_caches!(stage)
 
     # Set initial conditions of the stage I am about to run.
-    for (k, v) in stage.internal.psi_container.initial_conditions
+    for (k, v) in get_initial_conditions(stage.internal.psi_container)
         _intial_conditions_update!(k, v, get_number(stage), step, sim)
     end
 

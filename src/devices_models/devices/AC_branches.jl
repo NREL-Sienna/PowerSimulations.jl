@@ -52,9 +52,7 @@ function branch_rate_bounds!(psi_container::PSIContainer,
         push!(constraint_data, 
               DeviceRange(name, limit_values, services_ub, Vector{Symbol}()))
     end
-    set_variable_bounds(psi_container,
-                        constraint_data,
-                        Symbol("Fp_$(B)"))
+    set_variable_bounds!(psi_container, constraint_data, FLOW_REAL_POWER, B)
     return
 end
 
@@ -75,13 +73,8 @@ function branch_rate_bounds!(psi_container::PSIContainer,
         push!(constraint_data,
               DeviceRange(name, limit_values, services_ub, Vector{Symbol}()))
     end
-    set_variable_bounds(psi_container,
-                        constraint_data,
-                        Symbol("FpFT_$(B)"))
-
-    set_variable_bounds(psi_container,
-                        constraint_data,
-                        Symbol("FpTF_$(B)"))
+    set_variable_bounds!(psi_container, constraint_data, FP_FT, B)
+    set_variable_bounds!(psi_container, constraint_data, FP_TF, B)
     return
 end
 
@@ -104,13 +97,8 @@ function branch_rate_bounds!(psi_container::PSIContainer,
         push!(constraint_data,
               DeviceRange(name, limit_values, services_ub, Vector{Symbol}()))
     end
-    set_variable_bounds(psi_container,
-                        constraint_data,
-                        Symbol("FpFT_$(B)"))
-
-    set_variable_bounds(psi_container,
-                        constraint_data,
-                        Symbol("FpTF_$(B)"))
+    set_variable_bounds!(psi_container, constraint_data, FP_FT, B)
+    set_variable_bounds!(psi_container, constraint_data, FP_TF, B)
     return
 end
 

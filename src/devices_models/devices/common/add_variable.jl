@@ -79,9 +79,12 @@ function add_variable(psi_container::PSIContainer,
 end
 
 @doc raw"""
-    set_variable_bounds(psi_container::PSIContainer,
-                            bounds::DeviceRange,
-                            var_name::Symbol)
+    set_variable_bounds!(
+        psi_container::PSIContainer,
+        bounds::DeviceRange,
+        var_type::AbstractString,
+        device_type::Type{PSY.Device},
+    )
 
 Adds a bounds to a variable in the optimization model.
 
@@ -99,16 +102,20 @@ Adds a bounds to a variable in the optimization model.
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * bounds::DeviceRange : contains names and vector of min / max
-* var_name::Symbol : Base Name for the variable
+* var_type::AbstractString : type of the variable
+* T: type of the device
 
 """
-function set_variable_bounds(psi_container::PSIContainer,
-                            bounds::Vector{DeviceRange},
-                            var_name::Symbol)
+function set_variable_bounds!(
+    psi_container::PSIContainer,
+    bounds::Vector{DeviceRange},
+    var_type::AbstractString,
+    ::Type{T},
+) where T <: PSY.Device
+    var = get_variable(psi_container, var_type, T)
     for t in model_time_steps(psi_container), bound in bounds
-        var = psi_container.variables[var_name][bound.name, t]
-        JuMP.set_upper_bound(var, bound.limits.max)
-        JuMP.set_lower_bound(var, bound.limits.min)
+        _var = var[bound.name, t]
+        JuMP.set_upper_bound(_var, bound.limits.max)
+        JuMP.set_lower_bound(_var, bound.limits.min)
     end
-
 end

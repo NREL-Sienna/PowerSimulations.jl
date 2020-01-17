@@ -175,7 +175,7 @@ function check_file_integrity(path::String)
 end
 
 function get_variable_names(sim::Simulation, stage::Any)
-    return collect(keys(sim.stages[stage].internal.psi_container.variables))
+    return get_variable_names(sim.stages[stage].internal.psi_container)
 end
 
 function get_reference(sim_results::SimulationResultsReference, stage::String, step::Int, variable::Symbol) 

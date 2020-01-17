@@ -3,21 +3,6 @@ function _container_spec(m::M, axs...) where M<:JuMP.AbstractModel
     return JuMP.Containers.DenseAxisArray{JuMP.variable_type(m)}(undef, axs...)
 end
 
-function add_var_container!(psi_container::PSIContainer, var_name::Symbol, axs...)
-    psi_container.variables[var_name] = _container_spec(psi_container.JuMPmodel, axs...)
-    return psi_container.variables[var_name]
-end
-
-function add_cons_container!(psi_container::PSIContainer, cons_name::Symbol, axs...)
-    psi_container.constraints[cons_name] = JuMPConstraintArray(undef, axs...)
-    return psi_container.constraints[cons_name]
-end
-
-function add_param_container!(psi_container::PSIContainer, param_reference::UpdateRef, axs...)
-    psi_container.parameters[param_reference] = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...)
-    return psi_container.parameters[param_reference]
-end
-
 function _middle_rename(original::Symbol, split_char::String, addition::String)
 
     parts = split(String(original),split_char)

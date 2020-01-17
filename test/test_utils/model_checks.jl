@@ -32,7 +32,7 @@ end
 
 function psi_checkbinvar_test(op_problem::OperationsProblem, bin_variable_names::Vector{Symbol})
     for variable in bin_variable_names
-        for v in op_problem.psi_container.variables[variable]
+        for v in PSI.get_variable(op_problem.psi_container, variable)
             @test JuMP.is_binary(v)
         end
     end
