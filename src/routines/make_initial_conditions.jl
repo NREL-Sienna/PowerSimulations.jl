@@ -160,6 +160,42 @@ function storage_energy_init(psi_container::PSIContainer,
     return
 end
 
+######################### Initialize Functions for Storage #################################
+
+function storage_energy_init(psi_container::PSIContainer,
+                             devices::IS.FlattenIteratorWrapper{H}) where {H<:PSY.HydroGen}
+    key = ICKey(DeviceEnergy, H)
+    parameters = model_has_parameters(psi_container)
+    length_devices = length(devices)
+    ini_conds = get_initial_conditions(psi_container, key)
+    ref_key = parameters ? Symbol("E_$(H)") : :initial_storage
+
+    if isempty(ini_conds)
+        @info("Setting $(key.quantity) initial_condition of all devices $(H) based on system data")
+        ini_conds = psi_container.initial_conditions[key] = Vector{InitialCondition}(undef, length_devices)
+
+        for (ix, g) in enumerate(devices)
+            ini_conds[ix] = InitialCondition(psi_container,
+                                                g,
+                                                ref_key,
+                                                PSY.get_initial_storage(g))
+        end
+    else
+        ic_devices = (ic.device for ic in ini_conds)
+        for g in devices
+            g in ic_devices && continue
+            @info("Setting $(key.quantity) initial_condition of device $(g.name) based on system data")
+            push!(ini_conds, InitialCondition(psi_container,
+                                            g,
+                                            ref_key,
+                                            PSY.get_initial_storage(g)))
+        end
+    end
+
+    @assert length(ini_conds) == length(devices)
+    return
+end
+
 ######################### Initialize Functions for Hydro #################################
 function status_init(psi_container::PSIContainer,
                      devices::IS.FlattenIteratorWrapper{PSD}) where {PSD<:PSY.HydroGen}
