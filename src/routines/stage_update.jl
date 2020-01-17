@@ -69,7 +69,7 @@ function _intial_conditions_update!(initial_condition_key::ICKey,
         ini_cond_chronolgy = get_ini_cond_chronology(sim, stage_number)
     # Updates the next stage in the same step. Uses the same chronology as intra_stage
     elseif intra_stage_update
-        from_stage = sim.stages[stage_number-1]
+        from_stage = get_stage(sim, stage_number-1)
         ini_cond_chronolgy = current_stage.internal.chronolgy_dict[stage_number-1]
     # Update is done on the current stage
     elseif inner_stage_update
