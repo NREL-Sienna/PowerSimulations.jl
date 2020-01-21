@@ -309,7 +309,11 @@ function ramp_constraints!(psi_container::PSIContainer,
                                                     S<:PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
-    initial_conditions = get_initial_conditions(psi_container, ICKey(DevicePower, T))
+    key = ICKey(DevicePower, T)
+    if !(key in keys(get_initial_conditions(psi_container)))
+        error("Initial Conditions for $(T) Rate of Change Constraints not in the model")
+    end
+    initial_conditions = get_initial_conditions(psi_container, key)
     rate_data = _get_data_for_rocc(initial_conditions, resolution)
     ini_conds, ramp_params, minmax_params = _get_data_for_rocc(initial_conditions, resolution)
     if !isempty(ini_conds)
