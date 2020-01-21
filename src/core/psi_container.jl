@@ -232,12 +232,23 @@ end
 
 const JUMP_NAME_DELIMITER = "_"
 
-function _encode_for_jump(name::AbstractString, ::Type{T}) where T <: PSY.Device
+function _encode_for_jump(name::AbstractString, ::Type{T}) where T
     return Symbol(join((name, string(T)), JUMP_NAME_DELIMITER))
 end
 
-function _encode_for_jump(name::AbstractString) where T <: PSY.Device
+function _encode_for_jump(name::AbstractString)
     return Symbol(name)
+end
+
+# Ideally, the next two functions can be deleted once all existing code is changed to call
+# the form above.
+
+function _encode_for_jump(name::Symbol, ::Type{T}) where T
+    return _encode_for_jump(string(name), T)
+end
+
+function _encode_for_jump(name::Symbol)
+    return name
 end
 
 """

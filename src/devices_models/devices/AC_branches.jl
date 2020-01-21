@@ -25,12 +25,7 @@ flow_variables!(psi_container::PSIContainer,
 function flow_variables!(psi_container::PSIContainer,
                         ::Type{<:StandardPTDFModel},
                         devices::IS.FlattenIteratorWrapper{B}) where B<:PSY.ACBranch
-    var_name = Symbol("Fp_$(B)")
-
-    add_variable(psi_container,
-                devices,
-                var_name,
-                false)
+    add_variable(psi_container, devices, variable_name(FLOW_REAL_POWER, B), false)
     return
 end
 

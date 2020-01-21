@@ -16,7 +16,7 @@ function activeservice_variables!(psi_container::PSIContainer,
     end
     add_variable(psi_container,
                 contributing_devices,
-                Symbol("$(PSY.get_name(service))_$SR"),
+                variable_name(PSY.get_name(service), SR),
                 false;
                 ub_value = d -> get_ub_val(d),
                 lb_value = d -> 0 )
@@ -33,10 +33,9 @@ function service_requirement_constraint!(psi_container::PSIContainer,
     use_forecast_data = model_uses_forecasts(psi_container)
     initial_time = model_initial_time(psi_container)
     time_steps = model_time_steps(psi_container)
-    constraint_name = Symbol("requirement_$SR")
     name = PSY.get_name(service)
-    constraint = get_constraint(psi_container, constraint_name)
-    reserve_variable = get_variable(psi_container, Symbol("$(name)_$SR"))
+    constraint = get_constraint(psi_container, constraint_name(REQUIREMENT, SR))
+    reserve_variable = get_variable(psi_container, variable_name(name, SR))
 
     if use_forecast_data
         ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
@@ -84,9 +83,8 @@ end
 function include_service!(constraint_data::DeviceRange,
                           services::Vector{SR},
                           ::ServiceModel{SR, <:AbstractReservesFormulation}) where SR <: PSY.Reserve{PSY.ReserveUp}
-        services_ub = Vector{Symbol}(undef, length(services))
         for (ix, service) in enumerate(services)
-            push!(constraint_data.additional_terms_ub, Symbol("$(PSY.get_name(service))_$SR"))
+            push!(constraint_data.additional_terms_ub, constraint_name(PSY.get_name(service), SR))
         end
     return
 end
@@ -94,10 +92,9 @@ end
 function include_service!(constraint_data::DeviceRange,
                           services::Vector{SR},
                           ::ServiceModel{SR, <:AbstractReservesFormulation}) where SR <: PSY.Reserve{PSY.ReserveDown}
-        services_ub = Vector{Symbol}(undef, length(services))
         for (ix, service) in enumerate(services)
             #uses the upper bound of the (downward) service requirement to determine a constraint LB
-            push!(constraint_data.additional_terms_lb, Symbol("$(PSY.get_name(service))_$SR"))
+            push!(constraint_data.additional_terms_lb, constraint_name(PSY.get_name(service), SR))
         end
     return
 end

@@ -216,9 +216,12 @@ end
 function build_init(gens, data)
     init = Vector{InitialCondition}(undef, length(collect(gens)))
     for (ix,g) in enumerate(gens)
-        init[ix] = InitialCondition(g,
-                    PSI.UpdateRef{Device}(Symbol("P_$(typeof(g))")),
-                    data[ix],TimeStatusChange)
+        init[ix] = InitialCondition(
+            g,
+            PSI.UpdateRef{Device}(PSI.variable_name(PSI.REAL_POWER, typeof(g))),
+            data[ix],
+            TimeStatusChange,
+        )
     end
     return init
 end

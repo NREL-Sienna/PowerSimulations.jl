@@ -62,6 +62,7 @@ const THETA = "theta"
 const VM = "Vm"
 
 # Constraints
+const ACTIVE = "active"
 const ACTIVE_RANGE = "activerange"
 const ACTIVE_RANGE_LB = "activerange_lb"
 const ACTIVE_RANGE_UB = "activerange_ub"
@@ -82,6 +83,9 @@ const FP_FT = "FpFT"
 const FP_TF = "FpTF"
 const FQ_FT = "FqFT"
 const FQ_TF = "FqTF"
+const FEED_FORWARD = "FF"
+const FEED_FORWARD_BIN = "FFbin"
+const REQUIREMENT = "requirement"
 
 # Parameters
 const ACTIVE_POWER = "activepower"

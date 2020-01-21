@@ -9,7 +9,7 @@ function activepower_variables!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{L}) where L<:PSY.ElectricLoad
     add_variable(psi_container,
                  devices,
-                 Symbol("P_$(L)"),
+                 variable_name(REAL_POWER, L),
                  false,
                  :nodal_balance_active, -1.0;
                  ub_value = x -> PSY.get_maxactivepower(x),
@@ -22,7 +22,7 @@ function reactivepower_variables!(psi_container::PSIContainer,
                                   devices::IS.FlattenIteratorWrapper{L}) where L<:PSY.ElectricLoad
     add_variable(psi_container,
                  devices,
-                 Symbol("Q_$(L)"),
+                 variable_name(REACTIVE_POWER, L),
                  false,
                  :nodal_balance_reactive, -1.0;
                  ub_value = x -> PSY.get_maxreactivepower(x),
@@ -35,7 +35,7 @@ function commitment_variables!(psi_container::PSIContainer,
 
     add_variable(psi_container,
                  devices,
-                 Symbol("ON_$(L)"),
+                 variable_name(ON, L),
                  true)
 
     return
@@ -121,24 +121,30 @@ function activepower_constraints!(psi_container::PSIContainer,
                                                           x -> (min=0.0, max=PSY.get_activepower(x)))
 
     if !parameters && !use_forecast_data
-        device_range(psi_container,
-                     constraint_data,
-                     Symbol("activerange_$(L)"),
-                     Symbol("P_$(L)"))
+        device_range(
+            psi_container,
+            constraint_data,
+            constraint_name(ACTIVE_RANGE, L),
+            variable_name(REAL_POWER, L)
+        )
         return
     end
 
     if parameters
-        device_timeseries_param_ub(psi_container,
-                                   ts_data_active,
-                                   Symbol("active_$(L)"),
-                                   UpdateRef{L}("get_maxactivepower"),
-                                   Symbol("P_$(L)"))
+        device_timeseries_param_ub(
+            psi_container,
+            ts_data_active,
+            constraint_name(ACTIVE, L),
+            UpdateRef{L}("get_maxactivepower"),
+            variable_name(REAL_POWER, L),
+        )
     else
-        device_timeseries_ub(psi_container,
-                            ts_data_active,
-                            Symbol("active_$(L)"),
-                            Symbol("P_$(L)"))
+        device_timeseries_ub(
+            psi_container,
+            ts_data_active,
+            constraint_name(ACTIVE, L),
+            variable_name(REAL_POWER, L),
+        )
     end
     return
 end
@@ -155,26 +161,32 @@ function activepower_constraints!(psi_container::PSIContainer,
                                                           x -> (min=0.0, max=PSY.get_activepower(x)))
 
     if !parameters && !use_forecast_data
-        device_range(psi_container,
-                    constraint_data,
-                    Symbol("activerange_$(L)"),
-                    Symbol("P_$(L)"))
+        device_range(
+            psi_container,
+            constraint_data,
+            constraint_name(ACTIVE_RANGE, L),
+            variable_name(REAL_POWER, L),
+        )
         return
     end
 
     if parameters
-        device_timeseries_ub_bigM(psi_container,
-                                 ts_data_active,
-                                 Symbol("active_$(L)"),
-                                 Symbol("P_$(L)"),
-                                 UpdateRef{L}("get_maxactivepower"),
-                                 Symbol("ON_$(L)"))
+        device_timeseries_ub_bigM(
+            psi_container,
+            ts_data_active,
+            constraint_name(ACTIVE, L),
+            variable_name(REAL_POWER, L),
+            UpdateRef{L}("get_maxactivepower"),
+            constraint_name(ON, L),
+        )
     else
-        device_timeseries_ub_bin(psi_container,
-                                ts_data_active,
-                                Symbol("active_$(L)"),
-                                Symbol("P_$(L)"),
-                                Symbol("ON_$(L)"))
+        device_timeseries_ub_bin(
+            psi_container,
+            ts_data_active,
+            constraint_name(ACTIVE, L),
+            variable_name(REAL_POWER, L),
+            variable_name(ON, L),
+        )
     end
     return
 end
@@ -256,7 +268,7 @@ function cost_function(psi_container::PSIContainer,
                        ::Type{<:PM.AbstractPowerModel}) where L<:PSY.ControllableLoad
     add_to_cost(psi_container,
                 devices,
-                Symbol("P_$(L)"),
+                variable_name(REAL_POWER, L),
                 :variable,
                 -1.0)
     return
@@ -268,7 +280,7 @@ function cost_function(psi_container::PSIContainer,
                        ::Type{<:PM.AbstractPowerModel}) where L<:PSY.ControllableLoad
     add_to_cost(psi_container,
                 devices,
-                Symbol("ON_$(L)"),
+                variable_name(ON, L),
                 :fixed,
                 -1.0)
     return

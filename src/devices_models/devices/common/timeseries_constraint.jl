@@ -325,7 +325,8 @@ param_reference::UpdateRef : UpdateRef of access the parameters
 * M_value::Float64 : bigM
 """
 function device_timeseries_ub_bigM(psi_container::PSIContainer,
-                                    ts_data::Vector{DeviceTimeSeries},                                    cons_name::Symbol,
+                                    ts_data::Vector{DeviceTimeSeries},
+                                    cons_name::Symbol,
                                     var_name::Symbol,
                                     param_reference::UpdateRef,
                                     binvar_name::Symbol,
