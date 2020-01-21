@@ -130,9 +130,8 @@ function _make_initial_conditions!(
     cache = nothing,
 ) where {T<:PSY.Device}
     length_devices = length(devices)
-    ini_conds = get_initial_conditions(psi_container, key)
 
-    if isempty(ini_conds)
+    if !has_initial_conditions(psi_container, key)
         @info "Setting $(key.quantity) initial conditions for the status of all devices $(T) based on system data"
         ini_conds = Vector{InitialCondition}(undef, length_devices)
         set_initial_conditions!(psi_container, key, ini_conds)
@@ -140,6 +139,7 @@ function _make_initial_conditions!(
             ini_conds[ix] = make_ic_func(psi_container, dev, get_val_func(dev, key), cache)
         end
     else
+        ini_conds = get_initial_conditions(psi_container, key)
         ic_devices = Set((IS.get_uuid(ic.device) for ic in ini_conds))
         for dev in devices
             IS.get_uuid(dev) in ic_devices && continue

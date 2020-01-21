@@ -195,8 +195,17 @@ function InitialCondition(psi_container::PSIContainer,
 
 end
 
+function has_initial_conditions(psi_container::PSIContainer, key::ICKey)
+    return key in keys(psi_container.initial_conditions)
+end
+
 function get_initial_conditions(psi_container::PSIContainer, key::ICKey)
-    return get(psi_container.initial_conditions, key, Vector{InitialCondition}())
+    initial_conditions = get(psi_container.initial_conditions, key, nothing)
+    if isnothing(initial_conditions)
+        throw(IS.InvalidValue("initial conditions are not stored for $(key)"))
+    end
+
+    return initial_conditions
 end
 
 function set_initial_conditions!(psi_container::PSIContainer, key::ICKey, value)
