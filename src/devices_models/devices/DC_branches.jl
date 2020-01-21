@@ -13,20 +13,21 @@ function flow_variables!(psi_container::PSIContainer,
                         devices::IS.FlattenIteratorWrapper{B}) where B<:PSY.DCBranch
     time_steps = model_time_steps(psi_container)
     var_name = Symbol("Fp_$(B)")
-    var_value = _container_spec(
-        psi_container.JuMPmodel, (PSY.get_name(d) for d in devices), time_steps
+    container = _container_spec(
+        psi_container.JuMPmodel,
+        (PSY.get_name(d) for d in devices),
+        time_steps
     )
-    set_variable!(psi_container, FLOW_REAL_POWER, B, var_value)
+    set_variable!(psi_container, FLOW_REAL_POWER, B, container)
     for d in devices
         bus_fr = PSY.get_number(PSY.get_arc(d).from)
         bus_to = PSY.get_number(PSY.get_arc(d).to)
         for t in time_steps
             jvariable = JuMP.@variable(
                 psi_container.JuMPmodel,
-                base_name="$(bus_fr),
-                $(bus_to)_{$(PSY.get_name(d)), $(t)}",
+                base_name="$(bus_fr), $(bus_to)_{$(PSY.get_name(d)), $(t)}",
             )
-            var_value[PSY.get_name(d), t] = jvariable
+            container[PSY.get_name(d), t] = jvariable
             _add_to_expression!(psi_container.expressions[:nodal_balance_active],
                                 PSY.get_number(PSY.get_arc(d).from),
                                 t,
@@ -54,7 +55,9 @@ function branch_rate_constraints!(
     var = get_variable(psi_container, FLOW_REAL_POWER, B)
     time_steps = model_time_steps(psi_container)
     constraint_val = JuMPConstraintArray(
-        undef, (PSY.get_name(d) for d in devices), time_steps
+        undef,
+        (PSY.get_name(d) for d in devices),
+        time_steps
     )
     set_constraint!(psi_container, FLOW_REAL_POWER, B, constraint_val)
 
@@ -62,7 +65,8 @@ function branch_rate_constraints!(
         min_rate = max(PSY.get_activepowerlimits_from(d).min, PSY.get_activepowerlimits_to(d).min)
         max_rate = min(PSY.get_activepowerlimits_from(d).max, PSY.get_activepowerlimits_to(d).max)
         constraint_val[PSY.get_name(d), t] = JuMP.@constraint(
-            psi_container.JuMPmodel, min_rate <= var[PSY.get_name(d), t] <= max_rate
+            psi_container.JuMPmodel,
+            min_rate <= var[PSY.get_name(d), t] <= max_rate
         )
     end
     return
@@ -82,7 +86,8 @@ function branch_rate_constraints!(
         var = get_variable(psi_container, var_type, B)
         constraint_val = JuMPConstraintArray(
             undef,
-            (PSY.get_name(d) for d in devices), time_steps
+            (PSY.get_name(d) for d in devices),
+            time_steps
         )
         set_constraint!(psi_container, cons_type, B, constraint_val)
         time_steps = model_time_steps(psi_container)
@@ -98,7 +103,8 @@ function branch_rate_constraints!(
             )
             name = PSY.get_name(d)
             constraint_val[name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel, min_rate <= var[name, t] <= max_rate
+                psi_container.JuMPmodel,
+                min_rate <= var[name, t] <= max_rate
             )
         end
     end
@@ -120,7 +126,8 @@ function branch_rate_constraints!(
         var = get_variable(psi_container, var_type, B)
         constraint_val = JuMPConstraintArray(
             undef,
-            (PSY.get_name(d) for d in devices), time_steps
+            (PSY.get_name(d) for d in devices),
+            time_steps
         )
         set_constraint!(psi_container, cons_type, B, constraint_val)
 
@@ -134,7 +141,8 @@ function branch_rate_constraints!(
                 PSY.get_activepowerlimits_to(d).max
             )
             constraint_val[PSY.get_name(d), t] = JuMP.@constraint(
-                psi_container.JuMPmodel, min_rate <= var[PSY.get_name(d), t] <= max_rate
+                psi_container.JuMPmodel,
+                min_rate <= var[PSY.get_name(d), t] <= max_rate
             )
             _add_to_expression!(
                 psi_container.expressions[:nodal_balance_active],

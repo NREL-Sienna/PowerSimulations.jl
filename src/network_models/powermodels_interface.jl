@@ -340,15 +340,15 @@ function add_pm_var_refs!(psi_container::PSIContainer,
 
     for (pm_v, ps_v) in pm_var_map[PSY.Bus]
         if pm_v in pm_var_names
-            var_value = PSI._container_spec(
+            container = PSI._container_spec(
                 psi_container.JuMPmodel,
                 (PSY.get_name(b) for b in values(bus_dict)),
                 time_steps,
             )
-            set_variable!(psi_container, ps_v, var_value)
+            set_variable!(psi_container, ps_v, container)
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
-                var_value[name, t] = PM.var(psi_container.pm, t, 1, pm_v)[pm_bus] #pm_vars[pm_v][pm_bus]
+                container[name, t] = PM.var(psi_container.pm, t, 1, pm_v)[pm_bus] #pm_vars[pm_v][pm_bus]
             end
         end
     end
