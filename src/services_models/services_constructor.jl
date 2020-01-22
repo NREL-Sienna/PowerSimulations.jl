@@ -31,8 +31,7 @@ function construct_service!(psi_container::PSIContainer,
                                                 names,
                                                 time_steps)
 
-    constraint_name = Symbol("requirement_$SR")
-    add_cons_container!(psi_container, constraint_name, names, time_steps)
+    add_cons_container!(psi_container, constraint_name(REQUIREMENT, SR), names, time_steps)
 
     for service in services
         contributing_devices = services_mapping[(type = typeof(service),

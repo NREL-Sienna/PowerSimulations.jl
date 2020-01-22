@@ -175,27 +175,42 @@ end
 
 function InitialCondition(psi_container::PSIContainer,
                           device::T,
-                          access_ref::Symbol,
+                          access_ref::AbstractString,
                           value::Float64,
                           cache::Union{Nothing, Type{<:AbstractCache}}=nothing) where T <: PSY.Device
     if model_has_parameters(psi_container)
         return InitialCondition(device,
-                                UpdateRef{JuMP.VariableRef}(access_ref),
+                                UpdateRef{JuMP.VariableRef}(access_ref, T),
                                 PJ.add_parameter(psi_container.JuMPmodel, value),
                                 cache)
     else
-        !hasfield(T, access_ref) && error("Device of of type $(T) doesn't contain
-                                            the field $(access_ref)")
+        if !hasfield(T, Symbol(access_ref))
+            error("Device of type $T doesn't contain the field $access_ref")
+        end
         return InitialCondition(device,
-                                UpdateRef{T}(access_ref),
+                                UpdateRef{T}(access_ref, T),
                                 value,
                                 cache)
     end
 
 end
 
+function has_initial_conditions(psi_container::PSIContainer, key::ICKey)
+    return key in keys(psi_container.initial_conditions)
+end
+
 function get_initial_conditions(psi_container::PSIContainer, key::ICKey)
-    return get(psi_container.initial_conditions, key, Vector{InitialCondition}())
+    initial_conditions = get(psi_container.initial_conditions, key, nothing)
+    if isnothing(initial_conditions)
+        throw(IS.InvalidValue("initial conditions are not stored for $(key)"))
+    end
+
+    return initial_conditions
+end
+
+function set_initial_conditions!(psi_container::PSIContainer, key::ICKey, value)
+    @debug "set_initial_condition" key
+    psi_container.initial_conditions[key] = value
 end
 
 # Var_ref
@@ -210,8 +225,44 @@ function get_value(psi_container::PSIContainer, ref::UpdateRef{PJ.ParameterRef})
             return v
         end
     end
-    return
+
+    throw(IS.InvalidValue("$(ref) is not stored"))
 end
+
+
+const JUMP_NAME_DELIMITER = "_"
+
+function _encode_for_jump(name::AbstractString, ::Type{T}) where T
+    return Symbol(join((name, string(T)), JUMP_NAME_DELIMITER))
+end
+
+function _encode_for_jump(name::AbstractString)
+    return Symbol(name)
+end
+
+# Ideally, the next two functions can be deleted once all existing code is changed to call
+# the form above.
+
+function _encode_for_jump(name::Symbol, ::Type{T}) where T
+    return _encode_for_jump(string(name), T)
+end
+
+function _encode_for_jump(name::Symbol)
+    return name
+end
+
+"""
+Returns two-element Tuple (name, device_type) if device type was encoded into the name
+else one element Tuple with just the name.
+"""
+function _decode_from_jump(sym)
+    return Tuple(split(string(sym), JUMP_NAME_DELIMITER))
+end
+
+constraint_name(cons_type, device_type) = _encode_for_jump(cons_type, device_type)
+constraint_name(cons_type) = _encode_for_jump(cons_type)
+variable_name(var_type, device_type) = _encode_for_jump(var_type, device_type)
+variable_name(var_type) = _encode_for_jump(var_type)
 
 _variable_type(cm::PSIContainer) = JuMP.variable_type(cm.JuMPmodel)
 model_time_steps(psi_container::PSIContainer) = psi_container.time_steps
@@ -222,8 +273,146 @@ model_initial_time(psi_container::PSIContainer) = psi_container.initial_time
 #Internal Variables, Constraints and Parameters accessors
 get_variables(psi_container::PSIContainer) = psi_container.variables
 get_constraints(psi_container::PSIContainer) = psi_container.constraints
-get_variable(psi_container::PSIContainer, name::Symbol) = psi_container.variables[name]
-get_constraint(psi_container::PSIContainer, name::Symbol) = psi_container.constraints[name]
 get_parameters(psi_container::PSIContainer, param_reference::UpdateRef) = psi_container.parameters[param_reference]
 get_expression(psi_container::PSIContainer, name::Symbol) = psi_container.expressions[name]
 get_initial_conditions(psi_container::PSIContainer) = psi_container.initial_conditions
+
+function get_variable(
+    psi_container::PSIContainer,
+    var_type::AbstractString,
+    device_type::Type{<:PSY.Device},
+)
+    return get_variable(psi_container, variable_name(var_type, device_type))
+end
+
+function get_variable(psi_container::PSIContainer, var_type::AbstractString)
+    return get_variable(psi_container, variable_name(var_type))
+end
+
+function get_variable(psi_container::PSIContainer, name::Symbol)
+    var = get(psi_container.variables, name, nothing)
+    if isnothing(var)
+        @error "$name is not stored" sort!(get_variable_names(psi_container))
+        throw(IS.InvalidValue("variable $name is not stored"))
+    end
+        
+    return var
+end
+
+function get_variable_names(psi_container::PSIContainer)
+    return collect(keys(psi_container.variables))
+end
+
+function assign_variable!(
+    psi_container::PSIContainer,
+    variable_type::AbstractString,
+    device_type::Type{<:PSY.Device},
+    value,
+)
+    assign_variable!(psi_container, variable_name(variable_type, device_type), value)
+    return
+end
+
+function assign_variable!(
+    psi_container::PSIContainer,
+    variable_type::AbstractString,
+    value,
+)
+    assign_variable!(psi_container, variable_name(variable_type), value)
+    return
+end
+
+function assign_variable!(psi_container::PSIContainer, name::Symbol, value)
+    @debug "set_variable" name
+    psi_container.variables[name] = value
+    return
+end
+
+function add_var_container!(psi_container::PSIContainer, var_name::Symbol, axs...)
+    container = _container_spec(psi_container.JuMPmodel, axs...)
+    assign_variable!(psi_container, var_name, container)
+    return container
+end
+
+function get_constraint(
+    psi_container::PSIContainer,
+    constraint_type::AbstractString,
+    device_type::Type{<:PSY.Device},
+)
+    return get_constraint(psi_container, constraint_name(constraint_type, device_type))
+end
+
+function get_constraint(psi_container::PSIContainer, constraint_type::AbstractString)
+    return get_constraint(psi_container, constraint_name(constraint_type))
+end
+
+function get_constraint(psi_container::PSIContainer, name::Symbol)
+    var = get(psi_container.constraints, name, nothing)
+    if isnothing(var)
+        @error "$name is not stored" sort!(get_constraint_names(psi_container))
+        throw(IS.InvalidValue("constraint $name is not stored"))
+    end
+        
+    return var
+end
+
+function get_constraint_names(psi_container::PSIContainer)
+    return collect(keys(psi_container.constraints))
+end
+
+function assign_constraint!(
+    psi_container::PSIContainer,
+    constraint_type::AbstractString,
+    device_type::Type{<:PSY.Device},
+    value,
+)
+    assign_constraint!(psi_container, constraint_name(constraint_type, device_type), value)
+    return
+end
+
+function assign_constraint!(
+    psi_container::PSIContainer,
+    constraint_type::AbstractString,
+    value,
+)
+    assign_constraint!(psi_container, constraint_name(constraint_type), value)
+    return
+end
+
+function assign_constraint!(psi_container::PSIContainer, name::Symbol, value)
+    @debug "set_constraint" name
+    psi_container.constraints[name] = value
+    return
+end
+
+function add_cons_container!(psi_container::PSIContainer, cons_name::Symbol, axs...)
+    container = JuMPConstraintArray(undef, axs...)
+    assign_constraint!(psi_container, cons_name, container)
+    return container
+end
+
+function get_parameter(psi_container::PSIContainer, ref::UpdateRef)
+    parameter = get(psi_container.parameters, ref, nothing)
+    if isnothing(parameter)
+        @error "$ref is not stored" sort!(get_parameter_refs(psi_container))
+        throw(IS.InvalidValue("parameter $ref is not stored"))
+    end
+        
+    return parameter
+end
+
+function get_parameter_refs(psi_container::PSIContainer)
+    return collect(keys(psi_container.parameters))
+end
+
+function assign_parameter(psi_container::PSIContainer, ref::UpdateRef, value)
+    @debug "set_parameter" ref
+    psi_container.parameters[ref] = value
+    return
+end
+
+function add_param_container!(psi_container::PSIContainer, param_reference::UpdateRef, axs...)
+    container = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...)
+    assign_parameter(psi_container, param_reference, container)
+    return container
+end

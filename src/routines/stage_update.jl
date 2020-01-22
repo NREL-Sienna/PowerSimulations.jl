@@ -7,7 +7,6 @@ function parameter_update!(param_reference::UpdateRef{T},
     initial_forecast_time = get_simulation_time(sim, stage_number)
     horizon = length(model_time_steps(stage.internal.psi_container))
     param_array = get_parameters(stage.internal.psi_container, param_reference)
-    stage_number
     for d in devices
         forecast = PSY.get_forecast(PSY.Deterministic,
                                     d,
@@ -31,10 +30,8 @@ function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
                            sim::Simulation)
     stage = get_stage(sim, stage_number)
     param_array = get_parameters(stage.internal.psi_container, param_reference)
-    chronolgy_dict = get_stage(sim, stage_number).internal.chronolgy_dict
-    current_stage = get_stage(sim, stage_number)
-    for (k, ref) in chronolgy_dict
-        feed_forward_update(ref, param_reference, param_array, current_stage, get_stage(sim, k))
+    for (k, ref) in stage.internal.chronolgy_dict
+        feed_forward_update(ref, param_reference, param_array, stage, get_stage(sim, k))
     end
 
     return
@@ -90,14 +87,14 @@ end
 function update_stage!(stage::Stage{M}, step::Int64, sim::Simulation) where M<:AbstractOperationsProblem
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && get_number(stage) == 1 && get_execution_count(stage) == 0) && return
-    for param_reference in keys(stage.internal.psi_container.parameters)
+    for param_reference in get_parameter_refs(stage.internal.psi_container)
         parameter_update!(param_reference, get_number(stage), sim)
     end
 
     _update_caches!(stage)
 
     # Set initial conditions of the stage I am about to run.
-    for (k, v) in stage.internal.psi_container.initial_conditions
+    for (k, v) in get_initial_conditions(stage.internal.psi_container)
         _intial_conditions_update!(k, v, get_number(stage), step, sim)
     end
 

@@ -295,12 +295,9 @@ function feed_forward!(psi_container::PSIContainer,
                      ff_model::UpperBoundFF) where {I<:PSY.StaticInjection}
 
     for prefix in get_affected_variables(ff_model)
-        var_name = Symbol(prefix, "_$(I)")
+        var_name = variable_name(prefix, I)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
-        ub_ff(psi_container,
-              Symbol("FF_$(I)"),
-                     parameter_ref,
-                     var_name)
+        ub_ff(psi_container, constraint_name(FEED_FORWARD, I), parameter_ref, var_name)
     end
 
     return
@@ -310,14 +307,16 @@ end
 function feed_forward!(psi_container::PSIContainer,
                      device_type::Type{I},
                      ff_model::SemiContinuousFF) where {I<:PSY.StaticInjection}
-    bin_var = Symbol(get_binary_from_stage(ff_model), "_$(I)")
+    bin_var = variable_name(get_binary_from_stage(ff_model), I)
     parameter_ref = UpdateRef{JuMP.VariableRef}(bin_var)
     for prefix in get_affected_variables(ff_model)
-        var_name = Symbol(prefix, "_$(I)")
-        semicontinuousrange_ff(psi_container,
-                               Symbol("FFbin_$(I)"),
-                               parameter_ref,
-                               var_name)
+        var_name = variable_name(prefix, I)
+        semicontinuousrange_ff(
+            psi_container,
+            constraint_name(FEED_FORWARD_BIN, I),
+            parameter_ref,
+            var_name,
+        )
     end
 
     return
@@ -328,12 +327,14 @@ function feed_forward!(psi_container::PSIContainer,
                      ff_model::IntegralLimitFF) where {I<:PSY.StaticInjection}
 
     for prefix in get_affected_variables(ff_model)
-        var_name = Symbol(prefix, "_$(I)")
+        var_name = variable_name(prefix, I)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
-        integral_limit_ff(psi_container,
-              Symbol("FF_$(I)"),
-                     parameter_ref,
-                     var_name)
+        integral_limit_ff(
+            psi_container,
+            constraint_name(FEED_FORWARD, I),
+            parameter_ref,
+            var_name,
+        )
     end
 
     return

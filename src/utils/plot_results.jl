@@ -160,12 +160,17 @@ feature for variables with more than 5 generators.
 """
 function sort_data(res::OperationsProblemResults; kwargs...)
 
+    var_names = (
+        variable_name(REAL_POWER, PSY.ThermalStandard),
+        variable_name(REAL_POWER, PSY.RenewableDispatch),
+        variable_name(START, PSY.ThermalStandard),
+        variable_name(STOP, PSY.ThermalStandard),
+        variable_name(ON, PSY.ThermalStandard),
+    )
     Variables = Dict()
-    Variables[:P_ThermalStandard]  = get(kwargs, :P_ThermalStandard, nothing)
-    Variables[:P_RenewableDispatch]  = get(kwargs, :P_RenewableDispatch, nothing)
-    Variables[:START_ThermalStandard] = get(kwargs, :START_ThermalStandard, nothing)
-    Variables[:STOP_ThermalStandard] = get(kwargs, :STOP_ThermalStandard, nothing)
-    Variables[:ON_ThermalStandard] = get(kwargs, :ON_ThermalStandard, nothing)
+    for name in var_names
+        Variables[name] = get(kwargs, name, nothing)
+    end
     Variable_dict = get(kwargs, :Variables, nothing)
     key_name = collect(keys(res.variables))
     alphabetical = sort!(key_name)

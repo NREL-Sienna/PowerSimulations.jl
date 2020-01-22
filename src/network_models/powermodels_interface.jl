@@ -311,14 +311,21 @@ function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractActivePowerM
 end
 
 function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractPowerModel}
-    pm_var_map = Dict{Type, Dict{Symbol, Union{Symbol,NamedTuple}}}()
+    pm_var_map = Dict{Type, Dict{Symbol, Union{String,NamedTuple}}}()
 
-    pm_var_map[PSY.Bus] = Dict(:va => :theta,
-                                :vm => :Vm)
-    pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = :FpFT, to_from = :FpTF),
-                                    :q => (from_to = :FqFT, to_from = :FqTF))
-    pm_var_map[PSY.DCBranch] = Dict(:p_dc => (from_to = :FpFT, to_from = :FpTF),
-                                    :q_dc => (from_to = :FqFT, to_from = :FqTF))
+    pm_var_map[PSY.Bus] = Dict(:va => THETA,
+                               :vm => VM)
+    pm_var_map[PSY.ACBranch] = Dict(
+        :p => (from_to = FLOW_REAL_POWER_FROM_TO, to_from = FLOW_REAL_POWER_TO_FROM),
+        :q => (from_to = FLOW_REACTIVE_POWER_FROM_TO, to_from = FLOW_REACTIVE_POWER_TO_FROM)
+    )
+    pm_var_map[PSY.DCBranch] = Dict(
+        :p_dc => (from_to = FLOW_REAL_POWER_FROM_TO, to_from = FLOW_REAL_POWER_TO_FROM),
+        :q_dc => (
+            from_to = FLOW_REACTIVE_POWER_FROM_TO,
+            to_from = FLOW_REACTIVE_POWER_TO_FROM,
+        ),
+    )
 
     return pm_var_map
 end
@@ -340,12 +347,15 @@ function add_pm_var_refs!(psi_container::PSIContainer,
 
     for (pm_v, ps_v) in pm_var_map[PSY.Bus]
         if pm_v in pm_var_names
-            psi_container.variables[ps_v] = PSI._container_spec(psi_container.JuMPmodel,
-                                                        (PSY.get_name(b) for b in values(bus_dict)),
-                                                        time_steps)
+            container = PSI._container_spec(
+                psi_container.JuMPmodel,
+                (PSY.get_name(b) for b in values(bus_dict)),
+                time_steps,
+            )
+            assign_variable!(psi_container, ps_v, container)
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
-                psi_container.variables[ps_v][name, t] = PM.var(psi_container.pm, t, 1, pm_v)[pm_bus] #pm_vars[pm_v][pm_bus]
+                container[name, t] = PM.var(psi_container.pm, t, 1, pm_v)[pm_bus] #pm_vars[pm_v][pm_bus]
             end
         end
     end
@@ -370,11 +380,20 @@ function add_pm_var_refs!(psi_container::PSIContainer,
                 for dir in fieldnames(typeof(ps_v))
                     isnothing(getfield(ps_v, dir)) && continue
                     var_name = Symbol("$(getfield(ps_v, dir))_$(d_type)")
-                    psi_container.variables[var_name] = PSI._container_spec(psi_container.JuMPmodel,
-                                                                        (PSY.get_name(d[2]) for d in devices),
-                                                                        time_steps)
+                    container = PSI._container_spec(
+                        psi_container.JuMPmodel,
+                        (PSY.get_name(d[2]) for d in devices),
+                        time_steps
+                    )
+                    assign_variable!(psi_container, var_name, container)
                     for t in time_steps, (pm_d, d) in devices
-                        psi_container.variables[var_name][PSY.get_name(d), t] = PM.var(psi_container.pm, t, 1, pm_v, getfield(pm_d, dir))
+                        container[PSY.get_name(d), t] = PM.var(
+                            psi_container.pm,
+                            t,
+                            1,
+                            pm_v,
+                            getfield(pm_d, dir)
+                        )
                     end
                 end
             end

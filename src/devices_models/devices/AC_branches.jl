@@ -25,12 +25,7 @@ flow_variables!(psi_container::PSIContainer,
 function flow_variables!(psi_container::PSIContainer,
                         ::Type{<:StandardPTDFModel},
                         devices::IS.FlattenIteratorWrapper{B}) where B<:PSY.ACBranch
-    var_name = Symbol("Fp_$(B)")
-
-    add_variable(psi_container,
-                devices,
-                var_name,
-                false)
+    add_variable(psi_container, devices, variable_name(FLOW_REAL_POWER, B), false)
     return
 end
 
@@ -52,9 +47,7 @@ function branch_rate_bounds!(psi_container::PSIContainer,
         push!(constraint_data, 
               DeviceRange(name, limit_values, services_ub, Vector{Symbol}()))
     end
-    set_variable_bounds(psi_container,
-                        constraint_data,
-                        Symbol("Fp_$(B)"))
+    set_variable_bounds!(psi_container, constraint_data, FLOW_REAL_POWER, B)
     return
 end
 
@@ -75,13 +68,8 @@ function branch_rate_bounds!(psi_container::PSIContainer,
         push!(constraint_data,
               DeviceRange(name, limit_values, services_ub, Vector{Symbol}()))
     end
-    set_variable_bounds(psi_container,
-                        constraint_data,
-                        Symbol("FpFT_$(B)"))
-
-    set_variable_bounds(psi_container,
-                        constraint_data,
-                        Symbol("FpTF_$(B)"))
+    set_variable_bounds!(psi_container, constraint_data, FLOW_REAL_POWER_FROM_TO, B)
+    set_variable_bounds!(psi_container, constraint_data, FLOW_REAL_POWER_TO_FROM, B)
     return
 end
 
@@ -104,13 +92,8 @@ function branch_rate_bounds!(psi_container::PSIContainer,
         push!(constraint_data,
               DeviceRange(name, limit_values, services_ub, Vector{Symbol}()))
     end
-    set_variable_bounds(psi_container,
-                        constraint_data,
-                        Symbol("FpFT_$(B)"))
-
-    set_variable_bounds(psi_container,
-                        constraint_data,
-                        Symbol("FpTF_$(B)"))
+    set_variable_bounds!(psi_container, constraint_data, FLOW_REAL_POWER_FROM_TO, B)
+    set_variable_bounds!(psi_container, constraint_data, FLOW_REAL_POWER_TO_FROM, B)
     return
 end
 

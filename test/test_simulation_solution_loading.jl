@@ -11,8 +11,13 @@ function test_load_simulation(file_path::String)
         intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(periods = 24)),
         horizons = Dict("UC" => 24, "ED" => 12),
         intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
-        feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
-        cache = Dict("ED" => [TimeStatusChange(:ON_ThermalStandard)]),
+        feed_forward = Dict(
+            ("ED", :devices, :Generators) => SemiContinuousFF(
+                binary_from_stage = Symbol(PSI.ON),
+                affected_variables = [Symbol(PSI.REAL_POWER)]
+            )
+        ),
+        cache = Dict("ED" => [TimeStatusChange(PSI.ON, PSY.ThermalStandard)]),
         ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()))
     sim = Simulation(
         name = "aggregation",
@@ -104,9 +109,16 @@ function test_load_simulation(file_path::String)
         horizons = Dict("UC" => 24, "ED" => 12),
         intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
         feed_forward = Dict(
-            ("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P]),
-            ("ED", :devices, :HydroDispatch) =>IntegralLimitFF(variable_from_stage = :P,affected_variables = [:P])),
-        cache = Dict("ED" => [TimeStatusChange(:ON_ThermalStandard)]),
+            ("ED", :devices, :Generators) => SemiContinuousFF(
+                binary_from_stage = Symbol(PSI.ON),
+                affected_variables = [Symbol(PSI.REAL_POWER)]
+            ),
+            ("ED", :devices, :HydroDispatch) =>IntegralLimitFF(
+                variable_from_stage = Symbol(PSI.REAL_POWER),
+                affected_variables = [Symbol(PSI.REAL_POWER)]
+            )
+        ),
+        cache = Dict("ED" => [TimeStatusChange(PSI.ON, PSY.ThermalStandard)]),
         ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()))
     sim = Simulation(
         name = "consecutive",
@@ -118,11 +130,19 @@ function test_load_simulation(file_path::String)
     sim_results = execute!(sim)
 
     @testset "Testing to verify parameter feedforward for consecutive UC to ED" begin
-        P_keys = [PSI.UpdateRef{VariableRef}(:P_HydroDispatch)] #[PSI.UpdateRef{VariableRef}(:ON_ThermalStandard), PSI.UpdateRef{VariableRef}(:P_HydroDispatch)]
-        vars_names = [:P_HydroDispatch] #[:ON_ThermalStandard, :P_HydroDispatch]
+        P_keys = [
+            PSI.UpdateRef{VariableRef}(PSI.REAL_POWER, PSY.HydroDispatch),
+            #PSI.UpdateRef{VariableRef}(PSI.ON, PSY.ThermalStandard),
+            #PSI.UpdateRef{VariableRef}(PSI.REAL_POWER, PSY.HydroDispatch),
+        ]
+        vars_names = [
+            PSI.variable_name(PSI.REAL_POWER, PSY.HydroDispatch),
+            #PSI.variable_name(PSI.ON, PSY.ThermalStandard),
+            #PSI.variable_name(PSI.REAL_POWER, PSY.HydroDispatch),
+        ]
         for (ik, key) in enumerate(P_keys)
             variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1] # 1 is first step
-            parameter = collect(values(value.(sim.stages["ED"].internal.psi_container.parameters[key])).data)# [device, time] 1 is first execution
+            parameter = collect(values(value.(PSI.get_parameter(sim.stages["ED"].internal.psi_container, key))).data)# [device, time] 1 is first execution
             raw_result = Feather.read(variable_ref)
             for i in 1:size(parameter, 1)
                 result = raw_result[end, i] # end is last result [time, device]
@@ -148,7 +168,7 @@ function test_load_simulation(file_path::String)
 
     @testset "Testing to verify initial condition feedforward for consecutive ED to UC" begin
         ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
-        vars_names = [:P_ThermalStandard]
+        vars_names = [PSI.variable_name(PSI.REAL_POWER, PSY.ThermalStandard)]
         for (ik,key) in enumerate(ic_keys)
             variable_ref = PSI.get_reference(sim_results, "ED", 1, vars_names[ik])[24]
             initial_conditions = get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
@@ -167,8 +187,13 @@ function test_load_simulation(file_path::String)
         intra_stage_chronologies = Dict(("UC"=>"ED") => RecedingHorizon()),
         horizons = Dict("UC" => 24, "ED" => 12),
         intervals = Dict("UC" => Hour(1), "ED" => Minute(5)),
-        feed_forward = Dict(("ED", :devices, :Generators) => SemiContinuousFF(binary_from_stage = :ON, affected_variables = [:P])),
-        cache = Dict("ED" => [TimeStatusChange(:ON_ThermalStandard)]),
+        feed_forward = Dict(
+            ("ED", :devices, :Generators) => SemiContinuousFF(
+                binary_from_stage = Symbol(PSI.ON),
+                affected_variables = [Symbol(PSI.REAL_POWER)]
+            )
+        ),
+        cache = Dict("ED" => [TimeStatusChange(PSI.ON, PSY.ThermalStandard)]),
         ini_cond_chronology = Dict("UC" => RecedingHorizon(), "ED" => RecedingHorizon()))
 
     sim = Simulation(
@@ -184,7 +209,7 @@ function test_load_simulation(file_path::String)
         stages = ["UC", "ED"]
         for stage in stages
             results = load_simulation_results(sim_results, stage)
-            vars_names = [:P_ThermalStandard]
+            vars_names = [PSI.variable_name(PSI.REAL_POWER, PSY.ThermalStandard)]
             for name in vars_names
                 results.variables[name]
                 variable_ref = sim_results.ref["stage-$stage"][name]
@@ -215,12 +240,12 @@ function test_load_simulation(file_path::String)
     end
 
     @testset "Testing to verify parameter feedforward for Receding Horizon" begin
-        P_keys = [PowerSimulations.UpdateRef{VariableRef}(:ON_ThermalStandard)]
-        vars_names = [:ON_ThermalStandard]
+        P_keys = [PowerSimulations.UpdateRef{VariableRef}(PSI.ON, PSY.ThermalStandard)]
+        vars_names = [PSI.variable_name(PSI.ON, PSY.ThermalStandard)]
         for (ik, key) in enumerate(P_keys)
             variable_ref = PSI.get_reference(sim_results, "UC", 2, vars_names[ik])[1]
             raw_result = Feather.read(variable_ref)
-            ic = sim.stages["ED"].internal.psi_container.parameters[key]
+            ic = PSI.get_parameter(sim.stages["ED"].internal.psi_container, key)
             for name in DataFrames.names(raw_result)
                 result = raw_result[1, name] # first time period of results  [time, device]
                 initial = value(ic[String(name)]) # [device, time]
@@ -232,7 +257,7 @@ function test_load_simulation(file_path::String)
     @testset "Testing to verify initial condition feedforward for Receding Horizon" begin
         results = load_simulation_results(sim_results, "ED")
         ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
-        vars_names = [:P_ThermalStandard]
+        vars_names = [PSI.variable_name(PSI.REAL_POWER, PSY.ThermalStandard)]
         for (ik, key) in enumerate(ic_keys)
             initial_conditions = get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
             vars = results.variables[vars_names[ik]] # change to getter function

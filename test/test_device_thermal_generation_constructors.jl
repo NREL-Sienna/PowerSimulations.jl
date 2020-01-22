@@ -8,13 +8,17 @@ end
 
 ################################### Unit Commitment tests ##################################
 @testset "Thermal UC With DC - PF" begin
-    bin_variable_names = [:ON_ThermalStandard,
-                          :START_ThermalStandard,
-                          :STOP_ThermalStandard]
-    uc_constraint_names = [:ramp_up_ThermalStandard,
-                           :ramp_dn_ThermalStandard,
-                           :duration_up_ThermalStandard,
-                           :duration_dn_ThermalStandard]
+    bin_variable_names = [
+        PSI.variable_name(PSI.ON, PSY.ThermalStandard),
+        PSI.variable_name(PSI.START, PSY.ThermalStandard),
+        PSI.variable_name(PSI.STOP, PSY.ThermalStandard),
+    ]
+    uc_constraint_names = [
+        PSI.constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
+        PSI.constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
+        PSI.constraint_name(PSI.DURATION_UP, PSY.ThermalStandard),
+        PSI.constraint_name(PSI.DURATION_DOWN, PSY.ThermalStandard),
+    ]
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
     @info "5-Bus testing"
@@ -43,13 +47,17 @@ end
 end
 
 @testset "Thermal UC With AC - PF" begin
-    bin_variable_names = [:ON_ThermalStandard,
-                          :START_ThermalStandard,
-                          :STOP_ThermalStandard]
-    uc_constraint_names = [:ramp_up_ThermalStandard,
-                           :ramp_dn_ThermalStandard,
-                           :duration_up_ThermalStandard,
-                           :duration_dn_ThermalStandard]
+    bin_variable_names = [
+        PSI.variable_name(PSI.ON, PSY.ThermalStandard),
+        PSI.variable_name(PSI.START, PSY.ThermalStandard),
+        PSI.variable_name(PSI.STOP, PSY.ThermalStandard),
+    ]
+    uc_constraint_names = [
+        PSI.constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
+        PSI.constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
+        PSI.constraint_name(PSI.DURATION_UP, PSY.ThermalStandard),
+        PSI.constraint_name(PSI.DURATION_DOWN, PSY.ThermalStandard),
+    ]
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
     @info "5-Bus testing"
@@ -79,9 +87,11 @@ end
 
 ################################### Basic Unit Commitment tests ############################
 @testset "Thermal Basic UC With DC - PF" begin
-    bin_variable_names = [:ON_ThermalStandard,
-                          :START_ThermalStandard,
-                          :STOP_ThermalStandard]
+    bin_variable_names = [
+        PSI.variable_name(PSI.ON, PSY.ThermalStandard),
+        PSI.variable_name(PSI.START, PSY.ThermalStandard),
+        PSI.variable_name(PSI.STOP, PSY.ThermalStandard),
+    ]
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
     @info "5-Bus testing"
@@ -108,9 +118,11 @@ end
 end
 
 @testset "Thermal Basic UC With AC - PF" begin
-    bin_variable_names = [:ON_ThermalStandard,
-                          :START_ThermalStandard,
-                          :STOP_ThermalStandard]
+    bin_variable_names = [
+        PSI.variable_name(PSI.ON, PSY.ThermalStandard),
+        PSI.variable_name(PSI.START, PSY.ThermalStandard),
+        PSI.variable_name(PSI.STOP, PSY.ThermalStandard),
+    ]
      model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
     @info "5-Bus testing"
@@ -187,7 +199,11 @@ end
         op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
-        moi_lbvalue_test(op_problem, :activerange_lb_ThermalStandard, 0.0)
+        moi_lbvalue_test(
+            op_problem,
+            PSI.constraint_name(PSI.ACTIVE_RANGE_LB, PSY.ThermalStandard),
+            0.0
+        )
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
@@ -196,7 +212,11 @@ end
         op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
-        moi_lbvalue_test(op_problem, :activerange_lb_ThermalStandard, 0.0)
+        moi_lbvalue_test(
+            op_problem,
+            PSI.constraint_name(PSI.ACTIVE_RANGE_LB, PSY.ThermalStandard),
+            0.0
+        )
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
@@ -209,7 +229,11 @@ end
         op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
-        moi_lbvalue_test(op_problem, :activerange_lb_ThermalStandard, 0.0)
+        moi_lbvalue_test(
+            op_problem,
+            PSI.constraint_name(PSI.ACTIVE_RANGE_LB, PSY.ThermalStandard),
+            0.0
+        )
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
@@ -218,7 +242,11 @@ end
         op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
-        moi_lbvalue_test(op_problem, :activerange_lb_ThermalStandard, 0.0)
+        moi_lbvalue_test(
+            op_problem,
+            PSI.constraint_name(PSI.ACTIVE_RANGE_LB, PSY.ThermalStandard),
+            0.0
+        )
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
@@ -226,7 +254,10 @@ end
 
 ################################### Ramp Limited Testing ##################################
 @testset "Thermal Ramp Limited Dispatch With DC - PF" begin
-    constraint_names = [:ramp_up_ThermalStandard, :ramp_dn_ThermalStandard]
+    constraint_names = [
+        PSI.constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
+        PSI.constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
+    ]
     model = DeviceModel(ThermalStandard, ThermalRampLimited)
     @info "5-Bus testing"
     for p in [true, false]
@@ -247,7 +278,10 @@ end
 end
 
 @testset "Thermal Ramp Limited Dispatch With AC - PF" begin
-    constraint_names = [:ramp_up_ThermalStandard, :ramp_dn_ThermalStandard]
+    constraint_names = [
+        PSI.constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
+        PSI.constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
+    ]
     model = DeviceModel(ThermalStandard, ThermalRampLimited)
     @info "5-Bus testing"
     for p in [true, false]

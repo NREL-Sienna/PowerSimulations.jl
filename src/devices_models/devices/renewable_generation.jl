@@ -9,7 +9,7 @@ function activepower_variables!(psi_container::PSIContainer,
                                devices::IS.FlattenIteratorWrapper{R}) where R<:PSY.RenewableGen
     add_variable(psi_container,
                  devices,
-                 Symbol("P_$(R)"),
+                 variable_name(REAL_POWER, R),
                  false,
                  :nodal_balance_active;
                  lb_value = x -> 0.0,
@@ -21,7 +21,7 @@ function reactivepower_variables!(psi_container::PSIContainer,
                                  devices::IS.FlattenIteratorWrapper{R}) where R<:PSY.RenewableGen
     add_variable(psi_container,
                  devices,
-                 Symbol("Q_$(R)"),
+                 variable_name(REACTIVE_POWER, R),
                  false,
                  :nodal_balance_reactive)
     return
@@ -45,10 +45,12 @@ function reactivepower_constraints!(psi_container::PSIContainer,
         end
         push!(constraint_data, DeviceRange(name, lims))
     end
-    device_range(psi_container,
-                constraint_data,
-                Symbol("reactiverange_$(R)"),
-                Symbol("Q_$(R)"))
+    device_range(
+        psi_container,
+        constraint_data,
+        constraint_name(REACTIVE_RANGE, R),
+        variable_name(REACTIVE_POWER, R),
+    )
     return
 end
 
@@ -59,16 +61,17 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
     names = (PSY.get_name(d) for d in devices)
     time_steps = model_time_steps(psi_container)
-    p_variable_name = Symbol("P_$(R)")
-    q_variable_name = Symbol("Q_$(R)")
-    constraint_name = Symbol("reactiverange_$(R)")
-    psi_container.constraints[constraint_name] = JuMPConstraintArray(undef, names, time_steps)
+    p_var = get_variable(psi_container, REAL_POWER, R)
+    q_var = get_variable(psi_container, REACTIVE_POWER, R)
+    constraint_val = JuMPConstraintArray(undef, names, time_steps)
+    assign_constraint!(psi_container, REACTIVE_RANGE, R, constraint_val)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(d))))
-        psi_container.constraints[constraint_name][name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                psi_container.variables[q_variable_name][name, t] ==
-                                psi_container.variables[p_variable_name][name, t] * pf)
+        constraint_val[name, t] = JuMP.@constraint(
+            psi_container.JuMPmodel,
+            q_var[name, t] == p_var[name, t] * pf
+        )
     end
     return
 end
@@ -130,23 +133,29 @@ function activepower_constraints!(psi_container::PSIContainer,
                                             x -> (min = 0.0, max = PSY.get_activepower(x)))
 
     if !parameters && !use_forecast_data
-        device_range(psi_container,
-                    constraint_data,
-                    Symbol("activerange_$(R)"),
-                    Symbol("P_$(R)"))
+        device_range(
+            psi_container,
+            constraint_data,
+            constraint_name(ACTIVE_RANGE, R),
+            variable_name(REAL_POWER, R),
+        )
         return
     end
     if parameters
-        device_timeseries_param_ub(psi_container,
-                            ts_data_active,
-                            Symbol("activerange_$(R)"),
-                            UpdateRef{R}("get_rating"),
-                            Symbol("P_$(R)"))
+        device_timeseries_param_ub(
+            psi_container,
+            ts_data_active,
+            constraint_name(ACTIVE_RANGE, R),
+            UpdateRef{R}("get_rating"),
+            variable_name(REAL_POWER, R),
+        )
     else
-        device_timeseries_ub(psi_container,
-                            ts_data_active,
-                            Symbol("activerange_$(R)"),
-                            Symbol("P_$(R)"))
+        device_timeseries_ub(
+            psi_container,
+            ts_data_active,
+            constraint_name(ACTIVE_RANGE, R),
+            variable_name(REAL_POWER, R),
+        )
     end
     return
 end
