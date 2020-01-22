@@ -16,7 +16,7 @@ function activepower_variables!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{T}) where T<:PSY.ThermalGen
     add_variable(psi_container,
                  devices,
-                 Symbol("P_$(T)"),
+                 variable_name(REAL_POWER, T),
                  false,
                  :nodal_balance_active;
                  ub_value = d -> d.tech.activepowerlimits.max,
@@ -32,7 +32,7 @@ function reactivepower_variables!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{T}) where T<:PSY.ThermalGen
     add_variable(psi_container,
                  devices,
-                 Symbol("Q_$(T)"),
+                 variable_name(REACTIVE_POWER, T),
                  false,
                  :nodal_balance_reactive;
                  ub_value = d -> d.tech.reactivepowerlimits.max,
@@ -89,8 +89,8 @@ function activepower_constraints!(psi_container::PSIContainer,
     end
     device_range(psi_container,
                  constraint_data,
-                 Symbol("activerange_$(T)"),
-                 Symbol("P_$(T)"))
+                 constraint_name(ACTIVE_RANGE, T),
+                 variable_name(REAL_POWER, T))
     return
 end
 
