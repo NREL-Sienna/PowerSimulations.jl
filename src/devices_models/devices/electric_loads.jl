@@ -53,7 +53,7 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where L<:PSY.ElectricLoad
     time_steps = model_time_steps(psi_container)
     constraint = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
-    set_constraint!(psi_container, REACTIVE, L, constraint)
+    assign_constraint!(psi_container, REACTIVE, L, constraint)
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)

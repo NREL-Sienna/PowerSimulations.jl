@@ -303,26 +303,26 @@ function get_variable_names(psi_container::PSIContainer)
     return collect(keys(psi_container.variables))
 end
 
-function set_variable!(
+function assign_variable!(
     psi_container::PSIContainer,
     variable_type::AbstractString,
     device_type::Type{<:PSY.Device},
     value,
 )
-    set_variable!(psi_container, variable_name(variable_type, device_type), value)
+    assign_variable!(psi_container, variable_name(variable_type, device_type), value)
     return
 end
 
-function set_variable!(
+function assign_variable!(
     psi_container::PSIContainer,
     variable_type::AbstractString,
     value,
 )
-    set_variable!(psi_container, variable_name(variable_type), value)
+    assign_variable!(psi_container, variable_name(variable_type), value)
     return
 end
 
-function set_variable!(psi_container::PSIContainer, name::Symbol, value)
+function assign_variable!(psi_container::PSIContainer, name::Symbol, value)
     @debug "set_variable" name
     psi_container.variables[name] = value
     return
@@ -330,7 +330,7 @@ end
 
 function add_var_container!(psi_container::PSIContainer, var_name::Symbol, axs...)
     container = _container_spec(psi_container.JuMPmodel, axs...)
-    set_variable!(psi_container, var_name, container)
+    assign_variable!(psi_container, var_name, container)
     return container
 end
 
@@ -360,26 +360,26 @@ function get_constraint_names(psi_container::PSIContainer)
     return collect(keys(psi_container.constraints))
 end
 
-function set_constraint!(
+function assign_constraint!(
     psi_container::PSIContainer,
     constraint_type::AbstractString,
     device_type::Type{<:PSY.Device},
     value,
 )
-    set_constraint!(psi_container, constraint_name(constraint_type, device_type), value)
+    assign_constraint!(psi_container, constraint_name(constraint_type, device_type), value)
     return
 end
 
-function set_constraint!(
+function assign_constraint!(
     psi_container::PSIContainer,
     constraint_type::AbstractString,
     value,
 )
-    set_constraint!(psi_container, constraint_name(constraint_type), value)
+    assign_constraint!(psi_container, constraint_name(constraint_type), value)
     return
 end
 
-function set_constraint!(psi_container::PSIContainer, name::Symbol, value)
+function assign_constraint!(psi_container::PSIContainer, name::Symbol, value)
     @debug "set_constraint" name
     psi_container.constraints[name] = value
     return
@@ -387,7 +387,7 @@ end
 
 function add_cons_container!(psi_container::PSIContainer, cons_name::Symbol, axs...)
     container = JuMPConstraintArray(undef, axs...)
-    set_constraint!(psi_container, cons_name, container)
+    assign_constraint!(psi_container, cons_name, container)
     return container
 end
 
@@ -405,7 +405,7 @@ function get_parameter_refs(psi_container::PSIContainer)
     return collect(keys(psi_container.parameters))
 end
 
-function set_parameter!(psi_container::PSIContainer, ref::UpdateRef, value)
+function assign_parameter(psi_container::PSIContainer, ref::UpdateRef, value)
     @debug "set_parameter" ref
     psi_container.parameters[ref] = value
     return
@@ -413,6 +413,6 @@ end
 
 function add_param_container!(psi_container::PSIContainer, param_reference::UpdateRef, axs...)
     container = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...)
-    set_parameter!(psi_container, param_reference, container)
+    assign_parameter(psi_container, param_reference, container)
     return container
 end

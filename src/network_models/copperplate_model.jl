@@ -4,7 +4,7 @@ function copper_plate(psi_container::PSIContainer, expression::Symbol, bus_count
     devices_netinjection = _remove_undef!(psi_container.expressions[expression])
 
     constraint_val = JuMPConstraintArray(undef, time_steps)
-    set_constraint!(psi_container, "CopperPlateBalance", constraint_val)
+    assign_constraint!(psi_container, "CopperPlateBalance", constraint_val)
 
     for t in time_steps
         constraint_val[t] = JuMP.@constraint(

@@ -18,7 +18,7 @@ function flow_variables!(psi_container::PSIContainer,
         (PSY.get_name(d) for d in devices),
         time_steps
     )
-    set_variable!(psi_container, FLOW_REAL_POWER, B, container)
+    assign_variable!(psi_container, FLOW_REAL_POWER, B, container)
     for d in devices
         bus_fr = PSY.get_number(PSY.get_arc(d).from)
         bus_to = PSY.get_number(PSY.get_arc(d).to)
@@ -59,7 +59,7 @@ function branch_rate_constraints!(
         (PSY.get_name(d) for d in devices),
         time_steps
     )
-    set_constraint!(psi_container, FLOW_REAL_POWER, B, constraint_val)
+    assign_constraint!(psi_container, FLOW_REAL_POWER, B, constraint_val)
 
     for t in time_steps, d in devices
         min_rate = max(PSY.get_activepowerlimits_from(d).min, PSY.get_activepowerlimits_to(d).min)
@@ -89,7 +89,7 @@ function branch_rate_constraints!(
             (PSY.get_name(d) for d in devices),
             time_steps
         )
-        set_constraint!(psi_container, cons_type, B, constraint_val)
+        assign_constraint!(psi_container, cons_type, B, constraint_val)
         time_steps = model_time_steps(psi_container)
 
         for t in time_steps, d in devices
@@ -129,7 +129,7 @@ function branch_rate_constraints!(
             (PSY.get_name(d) for d in devices),
             time_steps
         )
-        set_constraint!(psi_container, cons_type, B, constraint_val)
+        assign_constraint!(psi_container, cons_type, B, constraint_val)
 
         for t in time_steps, d in devices
             min_rate = max(
