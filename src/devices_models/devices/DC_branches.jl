@@ -82,7 +82,7 @@ function branch_rate_constraints!(
     },
     feed_forward::Union{Nothing, AbstractAffectFeedForward},
 ) where B <: PSY.DCBranch
-    for (var_type, cons_type) in zip((FP_FT, FP_TF), (RATE_LIMIT_FT, RATE_LIMIT_TF))
+    for (var_type, cons_type) in zip((FLOW_REAL_POWER_FROM_TO, FLOW_REAL_POWER_TO_FROM), (RATE_LIMIT_FT, RATE_LIMIT_TF))
         var = get_variable(psi_container, var_type, B)
         constraint_val = JuMPConstraintArray(
             undef,
@@ -122,7 +122,7 @@ function branch_rate_constraints!(
     feed_forward::Union{Nothing, AbstractAffectFeedForward},
 ) where B <: PSY.DCBranch
     time_steps = model_time_steps(psi_container)
-    for (var_type, cons_type) in zip((FP_FT, FP_TF), (RATE_LIMIT_FT, RATE_LIMIT_TF))
+    for (var_type, cons_type) in zip((FLOW_REAL_POWER_FROM_TO, FLOW_REAL_POWER_TO_FROM), (RATE_LIMIT_FT, RATE_LIMIT_TF))
         var = get_variable(psi_container, var_type, B)
         constraint_val = JuMPConstraintArray(
             undef,

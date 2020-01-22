@@ -203,5 +203,6 @@ function _get_ref_active_power(psi_container::PSIContainer)
 end
 
 function _get_ref_energy(psi_container::PSIContainer)
-    return model_has_parameters(psi_container) ? E : ENERGY
+    # "energy" is the field name required by Storage devices.
+    return model_has_parameters(psi_container) ? E : "energy"
 end

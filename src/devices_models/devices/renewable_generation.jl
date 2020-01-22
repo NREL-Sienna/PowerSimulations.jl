@@ -9,7 +9,7 @@ function activepower_variables!(psi_container::PSIContainer,
                                devices::IS.FlattenIteratorWrapper{R}) where R<:PSY.RenewableGen
     add_variable(psi_container,
                  devices,
-                 Symbol("P_$(R)"),
+                 variable_name(REAL_POWER, R),
                  false,
                  :nodal_balance_active;
                  lb_value = x -> 0.0,
@@ -21,7 +21,7 @@ function reactivepower_variables!(psi_container::PSIContainer,
                                  devices::IS.FlattenIteratorWrapper{R}) where R<:PSY.RenewableGen
     add_variable(psi_container,
                  devices,
-                 Symbol("Q_$(R)"),
+                 variable_name(REACTIVE_POWER, R),
                  false,
                  :nodal_balance_reactive)
     return
@@ -45,10 +45,12 @@ function reactivepower_constraints!(psi_container::PSIContainer,
         end
         push!(constraint_data, DeviceRange(name, lims))
     end
-    device_range(psi_container,
-                constraint_data,
-                Symbol("reactiverange_$(R)"),
-                Symbol("Q_$(R)"))
+    device_range(
+        psi_container,
+        constraint_data,
+        constraint_name(REACTIVE_RANGE, R),
+        variable_name(REACTIVE_POWER, R),
+    )
     return
 end
 
@@ -131,23 +133,29 @@ function activepower_constraints!(psi_container::PSIContainer,
                                             x -> (min = 0.0, max = PSY.get_activepower(x)))
 
     if !parameters && !use_forecast_data
-        device_range(psi_container,
-                    constraint_data,
-                    Symbol("activerange_$(R)"),
-                    Symbol("P_$(R)"))
+        device_range(
+            psi_container,
+            constraint_data,
+            constraint_name(ACTIVE_RANGE, R),
+            variable_name(REAL_POWER, R),
+        )
         return
     end
     if parameters
-        device_timeseries_param_ub(psi_container,
-                            ts_data_active,
-                            Symbol("activerange_$(R)"),
-                            UpdateRef{R}("get_rating"),
-                            Symbol("P_$(R)"))
+        device_timeseries_param_ub(
+            psi_container,
+            ts_data_active,
+            constraint_name(ACTIVE_RANGE, R),
+            UpdateRef{R}("get_rating"),
+            variable_name(REAL_POWER, R),
+        )
     else
-        device_timeseries_ub(psi_container,
-                            ts_data_active,
-                            Symbol("activerange_$(R)"),
-                            Symbol("P_$(R)"))
+        device_timeseries_ub(
+            psi_container,
+            ts_data_active,
+            constraint_name(ACTIVE_RANGE, R),
+            variable_name(REAL_POWER, R),
+        )
     end
     return
 end

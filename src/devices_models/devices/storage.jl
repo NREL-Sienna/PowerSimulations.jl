@@ -203,7 +203,11 @@ function energy_balance_constraint!(psi_container::PSIContainer,
         get_initial_conditions(psi_container, ICKey(DeviceEnergy, St)),
         efficiency_data,
         constraint_name(ENERGY_LIMIT, St),
-        (variable_name(P_OUT, St), variable_name(P_IN, St), variable_name(E,St)),
+        (
+            variable_name(REAL_POWER_OUT, St),
+            variable_name(REAL_POWER_IN, St),
+            variable_name(ENERGY, St),
+        ),
     )
     return
 end
