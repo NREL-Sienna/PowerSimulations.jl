@@ -121,8 +121,8 @@ function branch_rate_constraints!(psi_container::PSIContainer,
 
     device_range(psi_container,
                  constraint_data,
-                 Symbol("RateLimit_$(B)"),
-                 Symbol("Fp_$(B)"))
+                 constraint_name(RATE_LIMIT, B),
+                 variable_name(FLOW_REAL_POWER, B))
     return
 end
 
@@ -147,13 +147,13 @@ function branch_rate_constraints!(psi_container::PSIContainer,
 
     device_range(psi_container,
                  constraint_data,
-                 Symbol("RateLimitFT_$(B)"),
-                 Symbol("FpFT_$(B)"))
+                 constraint_name(RATE_LIMIT_FT, B),
+                 variable_name(FLOW_REACTIVE_POWER_FROM_TO, B))
 
     device_range(psi_container,
                  constraint_data,
-                 Symbol("RateLimitTF_$(B)"),
-                 Symbol("FpTF_$(B)"))
+                 constraint_name(RATE_LIMIT_TF, B),
+                 variable_name(FLOW_REAL_POWER_TO_FROM, B))
     return
 end
 
@@ -185,16 +185,14 @@ function branch_flow_constraints!(psi_container::PSIContainer,
                                 model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
                                 ::Union{Type{PM.DCPPowerModel}, Type{StandardPTDFModel}},
                                 feed_forward::Union{Nothing, AbstractAffectFeedForward})
-
-
     flow_range_data = [(PSY.get_name(h), PSY.get_flowlimits(h)) for h in devices]
 
-    var_name = Symbol("Fp_$(B)")
-
-    device_range(psi_container,
-                range_data,
-                Symbol("FlowLimit_$(B)"),
-                var_name)
+    device_range(
+        psi_container,
+        range_data,
+        constraint_name(FLOW_LIMIT, B),
+        variable_name(FLOW_REAL_POWER, B),
+    )
 
     return
 
@@ -217,12 +215,12 @@ function branch_flow_constraints!(psi_container::PSIContainer,
 
     device_range(psi_container,
                  DeviceRange(names, limit_values_out, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
-                 Symbol("FlowLimitFT_$(B)"),
-                 Symbol("FpFT_$(B)"))
+                 constraint_name(FLOW_LIMIT_FROM_TO, B),
+                 variable_name(FLOW_REAL_POWER_FROM_TO, B))
 
     device_range(psi_container,
                  DeviceRange(names, limit_values_in, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
-                 Symbol("FlowLimitTF_$(B)"),
-                 Symbol("FpTF_$(B)"))
+                 constraint_name(FLOW_LIMIT_TO_FROM, B),
+                 variable_name(FLOW_REAL_POWER_TO_FROM, B))
     return
 end
