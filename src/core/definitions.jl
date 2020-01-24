@@ -61,6 +61,8 @@ const START = "Start"
 const STOP = "Stop"
 const THETA = "theta"
 const VM = "Vm"
+const INFLOW = "In"
+const SPILLAGE = "Sp"
 
 # Constraints
 const ACTIVE = "active"
@@ -93,3 +95,4 @@ const RATE_LIMIT_TF = "RateLimitTF"
 const REACTIVE = "reactive"
 const REACTIVE_RANGE = "reactiverange"
 const REQUIREMENT = "requirement"
+const INFLOW_RANGE = "inflowrange"
