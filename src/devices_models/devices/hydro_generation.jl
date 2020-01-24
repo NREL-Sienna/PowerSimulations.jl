@@ -3,9 +3,11 @@ abstract type AbstractHydroDispatchFormulation <: AbstractHydroFormulation end
 abstract type AbstractHydroUnitCommitment <: AbstractHydroFormulation end
 struct HydroFixed <: AbstractHydroFormulation end
 struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
-struct HydroDispatchSeasonalFlow <: AbstractHydroDispatchFormulation end
+struct HydroDispatchReservoirFlow <: AbstractHydroDispatchFormulation end
+struct HydroDispatchReservoirStorage <: AbstractHydroDispatchFormulation end
 struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
-struct HydroCommitmentSeasonalFlow <: AbstractHydroUnitCommitment end
+struct HydroCommitmentReservoirFlow <: AbstractHydroUnitCommitment end
+struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 
 ########################### Hydro generation variables #################################
 function activepower_variables!(psi_container::PSIContainer,
