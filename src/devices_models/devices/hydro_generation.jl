@@ -3,10 +3,11 @@ abstract type AbstractHydroDispatchFormulation <: AbstractHydroFormulation end
 abstract type AbstractHydroUnitCommitment <: AbstractHydroFormulation end
 struct HydroFixed <: AbstractHydroFormulation end
 struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
-struct HydroDispatchSeasonalFlow <: AbstractHydroDispatchFormulation end
 struct HydroDispatchReservoirFlow <: AbstractHydroDispatchFormulation end
+struct HydroDispatchReservoirStorage <: AbstractHydroDispatchFormulation end
 struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
-struct HydroCommitmentSeasonalFlow <: AbstractHydroUnitCommitment end
+struct HydroCommitmentReservoirFlow <: AbstractHydroUnitCommitment end
+struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 
 ########################### Hydro generation variables #################################
 function activepower_variables!(psi_container::PSIContainer,
@@ -53,6 +54,30 @@ function energy_storage_variables!(psi_container::PSIContainer,
                  false;
                  ub_value = d -> d.inflow,
                  lb_value = d -> 0.0)
+    return
+end
+
+function inflow_variables!(psi_container::PSIContainer,
+                                  devices::IS.FlattenIteratorWrapper{H}) where H<:PSY.HydroGen
+
+    add_variable(psi_container,
+                 devices,
+                 Symbol("In_$(H)"),
+                 false;
+                 ub_value = d -> d.inflow,
+                 lb_value = d -> 0.0)
+    return
+end
+
+function spillage_variables!(psi_container::PSIContainer,
+                                  devices::IS.FlattenIteratorWrapper{H}) where H<:PSY.HydroGen
+    
+    add_variable(psi_container,
+                 devices,
+                 Symbol("Sp_$(H)"),
+                 false;
+                 lb_value = d -> 0.0)
+
     return
 end
 
@@ -276,13 +301,13 @@ function _get_inflow_time_series(psi_container::PSIContainer,
             ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
                                                                 device,
                                                                 initial_time,
-                                                                "get_infow")))
+                                                                "get_inflow")))
         else
             ts_vector = ones(time_steps[end])
         end
         range_data = DeviceRange(name, get_constraint_values(device))
+        _device_spillage!(range_data, device, model)
         push!(constraint_data, range_data)
-        # _device_services!(range_data, device, model)
         push!(inflow_timeseries, DeviceTimeSeries(name, bus_number, inflow_energy, ts_vector,
                                                  range_data))
     end
@@ -300,7 +325,7 @@ end
 
 function inflow_constraints!(psi_container::PSIContainer,
                             devices::IS.FlattenIteratorWrapper{H},
-                            model::DeviceModel{PSY.HydroDispatch, HydroDispatchReservoirFlow},
+                            model::DeviceModel{PSY.HydroDispatch, HydroDispatchReservoirStorage},
                             system_formulation::Type{<:PM.AbstractPowerModel},
                             feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
     parameters = model_has_parameters(psi_container)
@@ -358,7 +383,7 @@ end
 
 function energy_balance_constraint!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{PSY.HydroDispatch},
-                                   model::DeviceModel{PSY.HydroDispatch, HydroDispatchReservoirFlow},
+                                   model::DeviceModel{PSY.HydroDispatch, HydroDispatchReservoirStorage},
                                    system_formulation::Type{<:PM.AbstractPowerModel},
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward})
     key = ICKey(DeviceEnergy, PSY.HydroDispatch)
@@ -372,7 +397,7 @@ function energy_balance_constraint!(psi_container::PSIContainer,
                    psi_container.initial_conditions[key],
                    efficiency_data,
                    Symbol("energy_balance_$(PSY.HydroDispatch)"),
-                   (Symbol("P_$(PSY.HydroDispatch)"), Symbol("In_$(PSY.HydroDispatch)"), Symbol("E_$(PSY.HydroDispatch)")))
+                   (Symbol("In_$(PSY.HydroDispatch)"), Symbol("P_$(PSY.HydroDispatch)"), Symbol("E_$(PSY.HydroDispatch)")))
     return
 end
 
@@ -513,39 +538,41 @@ function _get_budget(psi_container::PSIContainer,
     return budget_data
 end
 
-function budget_constraints!(psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-    feed_forward::IntegralLimitFF) where H<:PSY.HydroGen
+function energy_limit_constraints!(psi_container::PSIContainer,
+                                    devices::IS.FlattenIteratorWrapper{H},
+                                    model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
+                                    system_formulation::Type{<:PM.AbstractPowerModel},
+                                    feed_forward::IntegralLimitFF) where H<:PSY.HydroGen
+
+    return
 end
 
-function budget_constraints!(psi_container::PSIContainer,
-                    devices::IS.FlattenIteratorWrapper{H},
-                    model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
-                    system_formulation::Type{<:PM.AbstractPowerModel},
-                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
+function energy_limit_constraints!(psi_container::PSIContainer,
+                                    devices::IS.FlattenIteratorWrapper{H},
+                                    model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
+                                    system_formulation::Type{<:PM.AbstractPowerModel},
+                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
     parameters = model_has_parameters(psi_container)
     budget_data  = _get_budget(psi_container, devices)
     if parameters
-        device_budget_param_ub(psi_container,
-                            budget_data,
-                            Symbol("energy_limit_$(H)"), # TODO: better name for this constraint
-                            UpdateRef{H}("get_storage_capacity"),
-                            Symbol("P_$(H)"))
+        device_energy_limit_param_ub(psi_container,
+                                    budget_data,
+                                    Symbol("energy_limit_$(H)"),
+                                    UpdateRef{H}("get_storage_capacity"),
+                                    Symbol("P_$(H)"))
     else
-        device_budget_ub(psi_container,
-                        budget_data,
-                        Symbol("energy_limit_$(H)"), # TODO: better name for this constraint
-                        Symbol("P_$(H)"))
+        device_energy_limit_ub(psi_container,
+                                budget_data,
+                                Symbol("energy_limit_$(H)"),
+                                Symbol("P_$(H)"))
     end
 end
 
-function device_budget_param_ub(psi_container::PSIContainer,
-                            budget_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
-                            cons_name::Symbol,
-                            param_reference::UpdateRef,
-                            var_name::Symbol)
+function device_energy_limit_param_ub(psi_container::PSIContainer,
+                                        budget_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
+                                        cons_name::Symbol,
+                                        param_reference::UpdateRef,
+                                        var_name::Symbol)
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, var_name)
     set_name = (r[1] for r in budget_data)
@@ -568,10 +595,10 @@ function device_budget_param_ub(psi_container::PSIContainer,
 end
 
 
-function device_budget_ub(psi_container::PSIContainer,
-                            budget_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
-                            cons_name::Symbol,
-                            var_name::Symbol)
+function device_energy_limit_ub(psi_container::PSIContainer,
+                                budget_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
+                                cons_name::Symbol,
+                                var_name::Symbol)
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, var_name)
     set_name = (r[1] for r in budget_data)
@@ -588,5 +615,19 @@ function device_budget_ub(psi_container::PSIContainer,
                     sum([variable[name, t] for t in time_chunks[:, i]]) <= multiplier*forecast)
     end
 
+    return
+end
+
+function _device_spillage!(range_data::DeviceRange, 
+                            device::H, 
+                            model::DeviceModel{H, <:AbstractHydroFormulation}) where H<:PSY.HydroGen
+    return
+end
+
+function _device_spillage!(range_data::DeviceRange, 
+                            device::H, 
+                            model::DeviceModel{H, HydroDispatchReservoirStorage}) where H<:PSY.HydroGen
+    
+    push!(range_data.additional_terms_ub, Symbol("Sp_$H"))
     return
 end
