@@ -540,25 +540,26 @@ function _get_budget(psi_container::PSIContainer,
     return budget_data
 end
 
-function budget_constraints!(psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-    feed_forward::IntegralLimitFF) where H<:PSY.HydroGen
+function energy_limit_constraints!(psi_container::PSIContainer,
+                                    devices::IS.FlattenIteratorWrapper{H},
+                                    model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
+                                    system_formulation::Type{<:PM.AbstractPowerModel},
+                                    feed_forward::IntegralLimitFF) where H<:PSY.HydroGen
+    return
 end
 
-function budget_constraints!(psi_container::PSIContainer,
-                    devices::IS.FlattenIteratorWrapper{H},
-                    model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
-                    system_formulation::Type{<:PM.AbstractPowerModel},
-                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
+function energy_limit_constraints!(psi_container::PSIContainer,
+                                    devices::IS.FlattenIteratorWrapper{H},
+                                    model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
+                                    system_formulation::Type{<:PM.AbstractPowerModel},
+                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
     parameters = model_has_parameters(psi_container)
     budget_data  = _get_budget(psi_container, devices)
     if parameters
         device_budget_param_ub(
             psi_container,
             budget_data,
-            constraint_name(ENERGY_LIMIT, H),  # TODO: better name for this constraint
+            constraint_name(ENERGY_LIMIT, H),
             UpdateRef{H}("get_storage_capacity"),
             variable_name(REAL_POWER, H),
         )
@@ -566,17 +567,17 @@ function budget_constraints!(psi_container::PSIContainer,
         device_budget_ub(
             psi_container,
             budget_data,
-            constraint_name(ENERGY_LIMIT), # TODO: better name for this constraint
+            constraint_name(ENERGY_LIMIT),
             variable_name(REAL_POWER, H),
         )
     end
 end
 
-function device_budget_param_ub(psi_container::PSIContainer,
-                            budget_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
-                            cons_name::Symbol,
-                            param_reference::UpdateRef,
-                            var_name::Symbol)
+function device_energy_limit_param_ub(psi_container::PSIContainer,
+                                    budget_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
+                                    cons_name::Symbol,
+                                    param_reference::UpdateRef,
+                                    var_name::Symbol)
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, var_name)
     set_name = (r[1] for r in budget_data)
@@ -599,10 +600,10 @@ function device_budget_param_ub(psi_container::PSIContainer,
 end
 
 
-function device_budget_ub(psi_container::PSIContainer,
-                            budget_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
-                            cons_name::Symbol,
-                            var_name::Symbol)
+function device_energy_limit_ub(psi_container::PSIContainer,
+                                budget_data::Vector{Tuple{String, Int64, Float64, Vector{Float64}}},
+                                cons_name::Symbol,
+                                var_name::Symbol)
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, var_name)
     set_name = (r[1] for r in budget_data)
