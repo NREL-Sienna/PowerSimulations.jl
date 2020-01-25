@@ -17,9 +17,9 @@ function activepower_variables!(psi_container::PSIContainer,
                  variable_name(REAL_POWER, H),
                  false,
                  :nodal_balance_active;
-                 lb_value = d -> d.tech.activepowerlimits.min,
-                 ub_value = d -> d.tech.activepowerlimits.max,
-                 init_value = d -> PSY.get_activepower(PSY.get_tech(d)))
+                 lb_value = d -> PSY.get_activepowerlimits(PSY.get_tech(d)).min,
+                 ub_value = d -> PSY.get_activepowerlimits(PSY.get_tech(d)).max,
+                 init_value = d -> PSY.get_activepower(d))
 
     return
 end
@@ -31,9 +31,9 @@ function reactivepower_variables!(psi_container::PSIContainer,
                  variable_name(REACTIVE_POWER, H),
                  false,
                  :nodal_balance_reactive;
-                 ub_value = d -> d.tech.reactivepowerlimits.max,
-                 lb_value = d -> d.tech.reactivepowerlimits.min,
-                 init_value = d -> d.tech.reactivepower)
+                 ub_value = d -> PSY.get_reactivepowerlimits(PSY.get_tech(d)).max,
+                 lb_value = d -> PSY.get_reactivepowerlimits(PSY.get_tech(d)).min,
+                 init_value = d -> PSY.get_reactivepower(d))
 
     return
 end
@@ -44,9 +44,9 @@ function energy_variables!(psi_container::PSIContainer,
                  devices,
                  variable_name(ENERGY, H),
                  false;
-                 ub_value = d -> d.storage_capacity,
+                 ub_value = d -> PSY.get_storage_capacity(d),
                  lb_value = d -> 0.0,
-                 init_value = d -> d.initial_storage)
+                 init_value = d -> PSY.get_initial_storage(d))
 
     return
 end
@@ -57,7 +57,7 @@ function inflow_variables!(psi_container::PSIContainer,
                  devices,
                  variable_name(INFLOW, H),
                  false;
-                 ub_value = d -> d.inflow,
+                 ub_value = d -> PSY.get_inflow(d),
                  lb_value = d -> 0.0)
 
     return
@@ -69,7 +69,7 @@ function spillage_variables!(psi_container::PSIContainer,
                  devices,
                  variable_name(SPILLAGE, H),
                  false;
-                 ub_value = d -> d.inflow,
+                 ub_value = d -> PSY.get_inflow(d),
                  lb_value = d -> 0.0)
 
     return
