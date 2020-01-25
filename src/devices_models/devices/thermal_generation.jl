@@ -19,9 +19,9 @@ function activepower_variables!(psi_container::PSIContainer,
                  variable_name(REAL_POWER, T),
                  false,
                  :nodal_balance_active;
-                 ub_value = d -> d.tech.activepowerlimits.max,
-                 lb_value = d -> d.tech.activepowerlimits.min,
-                 init_value = d -> PSY.get_activepower(PSY.get_tech(d)))
+                 ub_value = d -> PSY.get_activepowerlimits(PSY.get_tech(d)).max,
+                 lb_value = d -> PSY.get_activepowerlimits(PSY.get_tech(d)).min,
+                 init_value = d -> PSY.get_activepower(d))
     return
 end
 
@@ -35,9 +35,9 @@ function reactivepower_variables!(psi_container::PSIContainer,
                  variable_name(REACTIVE_POWER, T),
                  false,
                  :nodal_balance_reactive;
-                 ub_value = d -> d.tech.reactivepowerlimits.max,
-                 lb_value = d -> d.tech.reactivepowerlimits.min,
-                 init_value = d -> d.tech.reactivepower)
+                 ub_value = d -> PSY.get_reactivepowerlimits(PSY.get_tech(d)).max,
+                 lb_value = d -> PSY.get_reactivepowerlimits(PSY.get_tech(d)).min,
+                 init_value = d -> PSY.get_reactivepower(d))
     return
 end
 
