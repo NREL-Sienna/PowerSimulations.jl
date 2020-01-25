@@ -147,7 +147,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
 
     #Variables
     activepower_variables!(psi_container, devices);
-    energy_storage_variables!(psi_container, devices)
+    energy_variables!(psi_container, devices)
     inflow_variables!(psi_container, devices)
     spillage_variables!(psi_container, devices)
 
