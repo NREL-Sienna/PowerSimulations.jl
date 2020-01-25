@@ -116,14 +116,17 @@ function _get_time_series(psi_container::PSIContainer,
         bus_number = PSY.get_number(PSY.get_bus(device))
         name = PSY.get_name(device)
         tech = PSY.get_tech(device)
-        # pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
-        active_power = use_forecast_data ? PSY.get_rating(tech) : PSY.get_activepower(device)
+        pf = PSY.get_reactivepower(device) / PSY.get_rating(tech)       
         if use_forecast_data
+            active_power = PSY.get_rating(tech)
+            reactive_power = PSY.get_rating(tech) * pf
             ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
                                                                 device,
                                                                 initial_time,
                                                                 "get_rating")))
         else
+            active_power = PSY.get_activepower(device)
+            reactive_power = PSY.get_reactivepower(device) 
             ts_vector = ones(time_steps[end])
         end
         range_data = DeviceRange(name, get_constraint_values(device))
@@ -131,7 +134,7 @@ function _get_time_series(psi_container::PSIContainer,
         push!(constraint_data, range_data)
         push!(active_timeseries, DeviceTimeSeries(name, bus_number, active_power, ts_vector,
                                                  range_data))
-        push!(reactive_timeseries, DeviceTimeSeries(name, bus_number, active_power,
+        push!(reactive_timeseries, DeviceTimeSeries(name, bus_number, reactive_power,
                                                     ts_vector, range_data))
     end
     return active_timeseries, reactive_timeseries, constraint_data
