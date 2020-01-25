@@ -130,7 +130,7 @@ function storage_energy_init(
         psi_container,
         devices,
         ICKey(DeviceEnergy, T),
-        _make_initial_condition_energy,
+        _make_initial_condition_reservoir_energy,
         _get_reservoir_energy_value,
     )
 
@@ -191,6 +191,16 @@ function _make_initial_condition_energy(psi_container, device, value, cache = no
     )
 end
 
+function _make_initial_condition_reservoir_energy(psi_container, device, value, cache = nothing)
+    return InitialCondition(
+        psi_container,
+        device,
+        _get_ref_reservoir_energy(psi_container),
+        value,
+        cache,
+    )
+end
+
 function _get_active_power_status_value(device, key)
     return PSY.get_activepower(device) > 0 ? 1.0 : 0.0
 end
@@ -224,5 +234,10 @@ end
 
 function _get_ref_energy(psi_container::PSIContainer)
     # "energy" is the field name required by Storage devices.
-    return model_has_parameters(psi_container) ? E : "energy"
+    return model_has_parameters(psi_container) ? ENERGY : "energy"  
+end
+
+function _get_ref_reservoir_energy(psi_container::PSIContainer)
+    # "storage_capacity" is the field name required by HydroDispatch devices.
+    return model_has_parameters(psi_container) ? ENERGY : "storage_capacity"  
 end
