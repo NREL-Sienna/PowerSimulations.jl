@@ -121,6 +121,22 @@ function duration_init(
     return
 end
 
+function storage_energy_init(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T<:PSY.HydroGen}
+    key = ICKey(DeviceEnergy, T)
+    _make_initial_conditions!(
+        psi_container,
+        devices,
+        ICKey(DeviceEnergy, T),
+        _make_initial_condition_energy,
+        _get_reservoir_energy_value,
+    )
+
+    return
+end
+
 function _make_initial_conditions!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
@@ -185,6 +201,10 @@ end
 
 function _get_energy_value(device, key)
     return PSY.get_energy(device)
+end
+
+function _get_reservoir_energy_value(device, key)
+    return PSY.get_initial_storage(device)
 end
 
 function _get_active_power_duration_value(dev, key)
