@@ -556,7 +556,7 @@ function energy_limit_constraints!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
     budget_data  = _get_budget(psi_container, devices)
     if parameters
-        device_budget_param_ub(
+        device_energy_limit_param_ub(
             psi_container,
             budget_data,
             constraint_name(ENERGY_LIMIT, H),
@@ -564,7 +564,7 @@ function energy_limit_constraints!(psi_container::PSIContainer,
             variable_name(REAL_POWER, H),
         )
     else
-        device_budget_ub(
+        device_energy_limit_ub(
             psi_container,
             budget_data,
             constraint_name(ENERGY_LIMIT),
