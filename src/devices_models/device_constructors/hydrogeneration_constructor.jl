@@ -217,7 +217,7 @@ end
 function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{PSY.HydroFix, D},
                            ::Type{S};
-                           kwargs...) where {D<:AbstractHydroFormulation,
+                           kwargs...) where {D<:AbstractHydroUnitCommitment,
                                              S<:PM.AbstractPowerModel}
     @warn("The Formulation $(D) only applies to Dispatchable Hydro, *
                Consider Changing the Device Formulation to HydroFixed")
