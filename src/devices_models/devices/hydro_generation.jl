@@ -281,11 +281,11 @@ function nodal_expression!(psi_container::PSIContainer,
     if parameters
         include_parameters(psi_container,
                            ts_data_active,
-                           UpdateRef{H}("get_maxactivepower"),
+                           UpdateRef{H}("get_activepower"),
                            :nodal_balance_active)
         include_parameters(psi_container,
                            ts_data_reactive,
-                           UpdateRef{H}("get_maxreactivepower"),
+                           UpdateRef{H}("get_reactivepower"),
                            :nodal_balance_reactive)
         return
     end
