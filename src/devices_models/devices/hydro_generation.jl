@@ -499,9 +499,18 @@ function cost_function(psi_container::PSIContainer,
                        system_formulation::Type{<:PM.AbstractPowerModel}) where D<:AbstractHydroFormulation
     add_to_cost(psi_container,
                 devices,
-                Symbol("P_HydroDispatch"),
+                variable_name(REAL_POWER, PSY.HydroDispatch),
                 :fixed,
                 -1.0)
+
+    return
+end
+
+function cost_function(psi_container::PSIContainer,
+                       devices::IS.FlattenIteratorWrapper{H},
+                       device_formulation::Type{D},
+                       system_formulation::Type{<:PM.AbstractPowerModel}) where {D<:AbstractHydroFormulation,
+                                                                                H<:PSY.HydroGen}
 
     return
 end
