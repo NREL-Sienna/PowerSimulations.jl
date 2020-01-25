@@ -67,8 +67,8 @@ end
 
 end
 
-@testset "Hydro DCPLossLess HydroDispatch with HydroDispatchSeasonalFlow Formulations" begin
-    model = DeviceModel(HydroDispatch, HydroDispatchSeasonalFlow)
+@testset "Hydro DCPLossLess HydroDispatch with HydroDispatchReservoirFlow Formulations" begin
+    model = DeviceModel(HydroDispatch, HydroDispatchReservoirFlow)
 
     # Parameters Testing
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hy_uc; use_parameters = true)
@@ -125,8 +125,8 @@ end
 
 end
 
-@testset "Hydro DCPLossLess HydroDispatch with HydroCommitmentSeasonalFlow Formulations" begin
-    model = DeviceModel(HydroDispatch, HydroCommitmentSeasonalFlow)
+@testset "Hydro DCPLossLess HydroDispatch with HydroCommitmentReservoirlFlow Formulations" begin
+    model = DeviceModel(HydroDispatch, HydroCommitmentReservoirFlow)
 
     # Parameters Testing
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
