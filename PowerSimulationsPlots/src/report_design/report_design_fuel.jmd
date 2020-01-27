@@ -17,7 +17,7 @@ else
     Plots.gr()
 end
 
-    bar_plot(WEAVE_ARGS["res"])
+bar_plot(WEAVE_ARGS["res"])
 ```
 
 # Stack Plots
@@ -25,6 +25,13 @@ end
 ```julia; echo = false
 
 stack_plot(WEAVE_ARGS["res"])
+```
+
+# Fuel Plots
+
+```julia; echo = false
+
+fuel_plot(WEAVE_ARGS["res"], WEAVE_ARGS["gen"])
 ```
 
 # Tables
