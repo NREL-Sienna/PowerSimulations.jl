@@ -561,7 +561,7 @@ function energy_limit_constraints!(psi_container::PSIContainer,
                                     system_formulation::Type{<:PM.AbstractPowerModel},
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
     parameters = model_has_parameters(psi_container)
-    @show budget_data  = _get_budget(psi_container, devices)
+    budget_data  = _get_budget(psi_container, devices)
     if parameters
         device_energy_limit_param_ub(
             psi_container,
