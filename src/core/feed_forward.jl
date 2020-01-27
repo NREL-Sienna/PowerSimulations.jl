@@ -275,7 +275,7 @@ function integral_limit_ff(psi_container::PSIContainer,
     for name in axes[1]
         value = JuMP.upper_bound(variable[name, 1])
 
-        param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel, value*length(time_steps))
+        param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel, value)
             con_ub[name] = JuMP.@constraint(psi_container.JuMPmodel,
                                 sum(variable[name, t] for t in time_steps) / length(time_steps) <= param_ub[name])
     end
