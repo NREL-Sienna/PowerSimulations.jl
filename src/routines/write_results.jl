@@ -117,18 +117,18 @@ function _export_optimizer_log(optimizer_log::Dict{Symbol,Any},
 end
 
 """
-    write_model_results(results::Results, save_path::String)
+    write_results(results::OperationsProblemResults, save_path::String)
 
 Exports Operational Problem Results to a path
 
 # Arguments
-- `results::Results`: results from the simulation
+- `results::OperationsProblemResults`: results from the simulation
 - `save_path::String`: folder path where the files will be written
 
 # Accepted Key Words
 - `file_type = CSV`: only CSV and featherfile are accepted
 """
-function write_results(results::Results, save_path::String; kwargs...)
+function write_results(results::OperationsProblemResults, save_path::String; kwargs...)
     if !isdir(save_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
@@ -144,12 +144,12 @@ function write_results(results::Results, save_path::String; kwargs...)
 end
 
 """
-    write_model_results(results::DualResults, save_path::String, results_folder::String)
+    write_results(results::DualResults, save_path::String, results_folder::String)
 
 Exports Simulation Results to the path where they come from in the results folder
 
 # Arguments
-- `results::Results`: results from the simulation
+- `results::DualResults`: results from the simulation
 - `save_path::String`: folder path where the files will be written
 - `results_folder`: name of the folder where the results will be written
 
@@ -171,12 +171,12 @@ function write_results(res::DualResults, folder_path::String, results_folder::St
 end
 
 """
-    write_model_results(results::OperationsProblemResults, save_path::String, results_folder::String)
+    write_results(results::SimulationResults, save_path::String, results_folder::String)
 
 Exports Simulations Results to the path where they come from in the results folder
 
 # Arguments
-- `results::Results`: results from the simulation
+- `results::SimulationResults`: results from the simulation
 - `save_path::String`: folder path where the files will be written
 - `results_folder`: name of the folder where the results will be written
 
