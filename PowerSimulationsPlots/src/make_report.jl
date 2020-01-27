@@ -26,10 +26,10 @@ report(results, out_path; jmd = jmd)
 jmd has a default of ".../pwd()/report_design/report_design.jmd"
 
 """
-function report(res::Results, out_path::String; kwargs...)
+function report(res::PSI.Results, out_path::String; kwargs...)
 
     doctype = get(kwargs, :doctype, "md2pdf")
-    default_string = joinpath(pwd(), "src/utils/report_design/report_design.jmd")
+    default_string = joinpath(pwd(), "src/report_design/report_design.jmd")
     jmd = get(kwargs, :jmd, default_string)
     args = Dict("res" => res, "variables" => res.variables)
     Weave.weave(jmd, out_path = out_path, latex_cmd = "xelatex",

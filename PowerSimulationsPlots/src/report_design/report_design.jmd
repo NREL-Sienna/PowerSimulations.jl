@@ -1,16 +1,17 @@
 ---
 title : Weave example
 author : SIIP
-date : Friday the 13th
+date : 1-14
 ---
 
 # Bar Plots
 
 ```julia; echo = false
+using PowerSimulationsPlots
 using PowerSimulations
 using Plots
 
-gr()
+Plots.gr()
 
 bar_plot(WEAVE_ARGS["res"])
 ```

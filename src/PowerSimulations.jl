@@ -115,19 +115,6 @@ export get_all_var_index
 export get_con_index
 export get_var_index
 
-# Plotting Utils
-export sort_data
-export get_stacked_plot_data
-export get_bar_plot_data
-export get_stacked_generation_data
-export get_bar_gen_data
-export bar_plot
-export stack_plot
-export report
-### These will be uncommented in a separate PR
-# export make_fuel_dictionary
-# export fuel_plot
-
 #################################################################################
 # Imports
 #Modeling Imports
@@ -141,7 +128,6 @@ import LinearAlgebra
 import PowerSystems
 import InfrastructureSystems
 import PowerModels
-import RecipesBase
 import Requires
 
 #TimeStamp Management Imports
@@ -151,7 +137,6 @@ import TimeSeries
 #I/O Imports
 import DataFrames
 import Feather
-import Colors
 import JSON
 import CSV
 import SHA
@@ -232,11 +217,6 @@ include("utils/simulation_results_reference.jl")
 include("utils/simulation_results.jl")
 include("utils/printing.jl")
 
-#Plots
-include("utils/plot_results.jl")
-include("utils/plot_recipes.jl")
-include("utils/make_report.jl")
-include("utils/call_plots.jl")
 include("utils/kwargs_check.jl")
 
 #Routines

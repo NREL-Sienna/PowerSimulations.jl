@@ -23,23 +23,23 @@ struct BarGeneration
 end
 
 """
+    get_stacked_plot_data(res::Results, variable::String)
 
-get_stacked_plot_data(res::OperationsProblemResults, variable::String)
+This function takes in results and uses a dataframe from whichever variable name was given and converts it to type StackedArea.
+StackedArea is the type of struct that signals the plot() function to use the StackedArea plot recipe method.
 
-This function takes in results of struct OperationsProblemResult. It takes the
-dataframe from whichever variable name was given and converts it to type StackedArea.
-StackedArea is the type of struct that signals the plot() function to use the
-StackedArea plot recipe method.
+# Arguments
+- `res::Results`: simulation or operations results
+- `variable::String`: the variable to be plotted
 
 #Example
-
 ```julia
 ThermalStandard = get_stacked_plot_data(res, "P_ThermalStandard")
 plot(ThermalStandard)
 ```
 """
 
-function get_stacked_plot_data(res::OperationsProblemResults, variable::String; kwargs...)
+function get_stacked_plot_data(res::PSI.Results, variable::String; kwargs...)
 
     sort = get(kwargs, :sort, nothing)
     time_range = res.time_stamp[!,:Range]
@@ -63,7 +63,7 @@ function get_stacked_plot_data(res::OperationsProblemResults, variable::String; 
 
 end
 
-function get_bar_plot_data(res::OperationsProblemResults, variable::String; kwargs...)
+function get_bar_plot_data(res::PSI.Results, variable::String; kwargs...)
 
     sort = get(kwargs, :sort, nothing)
     time_range = res.time_stamp[!,:Range]
@@ -88,7 +88,7 @@ function get_bar_plot_data(res::OperationsProblemResults, variable::String; kwar
 
 end
 
-function get_stacked_generation_data(res::OperationsProblemResults; kwargs...)
+function get_stacked_generation_data(res::PSI.Results; kwargs...)
 
     sort = get(kwargs, :sort, nothing)
     time_range = res.time_stamp[!,:Range]
@@ -117,7 +117,7 @@ function get_stacked_generation_data(res::OperationsProblemResults; kwargs...)
 
 end
 
-function get_bar_gen_data(res::OperationsProblemResults)
+function get_bar_gen_data(res::PSI.Results)
 
     time_range = res.time_stamp[!,:Range]
     key_name = collect(keys(res.variables))
@@ -137,64 +137,44 @@ function get_bar_gen_data(res::OperationsProblemResults)
 end
 
 """
-    sort_data(results::OperationsProblemResults)
+    sort_data(results::Results)
 
-This function takes in struct OperationsProblemResults,
-sorts the generators in each variable, and outputs the sorted
+This function takes in struct Results, sorts the generators in each variable, and outputs the sorted
 results. The generic function sorts the generators alphabetically.
 
 # Arguments
-- `results::OperationsProblemResults`: the results of the simulation
+- `results::Results`: the results of the simulation
 
-# Accepted Key Words
-- `Variables` to choose which variables to be sorted.
+# Key Words
+- `Variables::Dict{Symbol, Array{Symbol}`: the desired variables and their generator order
 
 #Examples
 ```julia
-new_results = sort_data(results)
+Variables = Dict(:ON_ThermalStandard => [:Brighton, :Solitude])
+sorted_results = sort_data(res_UC; Variables = Variables)
 ```
-***Note:*** only the generators included in 'my_order' will be in the
-results, and consequently, only these will be plotted. This can be a nice
-feature for variables with more than 5 generators.
-
+***Note:*** only the generators included in key word 'Variables' will be in the
+results, and consequently, only these will be plotted. 
 """
-function sort_data(res::OperationsProblemResults; kwargs...)
-
-    var_names = (
-        variable_name(REAL_POWER, PSY.ThermalStandard),
-        variable_name(REAL_POWER, PSY.RenewableDispatch),
-        variable_name(START, PSY.ThermalStandard),
-        variable_name(STOP, PSY.ThermalStandard),
-        variable_name(ON, PSY.ThermalStandard),
-    )
-    Variables = Dict()
-    for name in var_names
-        Variables[name] = get(kwargs, name, nothing)
-    end
-    Variable_dict = get(kwargs, :Variables, nothing)
-    key_name = collect(keys(res.variables))
-    alphabetical = sort!(key_name)
-
-    if !isnothing(Variable_dict)
-        labels = Variable_dict
+function sort_data(res::PSI.Results; kwargs...)
+    order = get(kwargs, :Variables, Dict())
+    if !isempty(order)
+        labels = collect(keys(order))
     else
-        labels = alphabetical
+        labels = sort!(collect(keys(res.variables)))
     end
-    variable_dict = Dict()
+    sorted_variables = Dict()
     for label in labels
-        variable_dict[labels[label]] = res.variables[labels[label]]
+        sorted_variables[label] = res.variables[label]
     end
-    for (k, v) in Variables, k in keys(variable_dict)
-        variable = variable_dict[k]
-        alphabetical = sort!(names(variable))
-        order = Variables[k]
-        if isnothing(order)
-            variable = variable[:, alphabetical]
+    for (k, variable) in sorted_variables
+        if !isempty(order)
+            variable = variable[:, order[k]]
         else
-            variable = variable[:, order]
+            alphabetical = sort!(names(variable))
+            variable = variable[:, alphabetical]
         end
-        variable_dict[k] = variable
+        sorted_variables[k] = variable
     end
-    res = OperationsProblemResults(variable_dict, res.total_cost, res.optimizer_log, res.time_stamp)
-    return res
+    return PSI.OperationsProblemResults(sorted_variables, res.total_cost, res.optimizer_log, res.time_stamp)
 end
