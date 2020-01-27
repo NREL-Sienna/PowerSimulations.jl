@@ -73,13 +73,13 @@ end
     # Parameters Testing
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hy_uc; use_parameters = true)
     construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, true, 24, 0, 48, 0, 0, false)
+    moi_tests(op_problem, true, 24, 0, 25, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Parameters Testing
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hy_uc)
     construct_device!(op_problem, :Hydro, model);
-    moi_tests(op_problem, false, 24, 0, 48, 0, 0, false)
+    moi_tests(op_problem, false, 24, 0, 25, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast Testing
