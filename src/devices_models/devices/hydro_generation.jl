@@ -515,22 +515,22 @@ function cost_function(psi_container::PSIContainer,
     return
 end
 
-##################################### Water/Energy Budget Constraint ############################
-function _get_budget(psi_container::PSIContainer,
+##################################### Water/Energy Limit Constraint ############################
+function _get_energy_limit(psi_container::PSIContainer,
                     devices::IS.FlattenIteratorWrapper{H}) where H<:PSY.HydroGen
     initial_time = model_initial_time(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     parameters = model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
     device_total = length(devices)
-    budget_data = Vector{DeviceTimeSeries}()
+    energy_limit_data = Vector{DeviceTimeSeries}()
 
     for (ix, device) in enumerate(devices)
         bus_number = PSY.get_number(PSY.get_bus(device))
         name = PSY.get_name(device)
         tech = PSY.get_tech(device)
         # This is where you would get the water/energy storage capacity
-        # which is then multiplied by the forecast value to get you the energy budget
+        # which is then multiplied by the forecast value to get you the energy limit
         energy_capacity = use_forecast_data ? PSY.get_storage_capacity(device) : PSY.get_activepower(device)
         if use_forecast_data
             forecast = PSY.get_forecast(PSY.Deterministic,
@@ -542,9 +542,9 @@ function _get_budget(psi_container::PSIContainer,
         else
             ts_vector = ones(time_steps[end])
         end
-        push!(budget_data, DeviceTimeSeries(name, bus_number, energy_capacity, ts_vector, nothing))
+        push!(energy_limit_data, DeviceTimeSeries(name, bus_number, energy_capacity, ts_vector, nothing))
     end
-    return budget_data
+    return energy_limit_data
 end
 
 function energy_limit_constraints!(psi_container::PSIContainer,
@@ -561,11 +561,11 @@ function energy_limit_constraints!(psi_container::PSIContainer,
                                     system_formulation::Type{<:PM.AbstractPowerModel},
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
     parameters = model_has_parameters(psi_container)
-    budget_data  = _get_budget(psi_container, devices)
+    energy_limit_data  = _get_energy_limit(psi_container, devices)
     if parameters
         device_energy_limit_param_ub(
             psi_container,
-            budget_data,
+            energy_limit_data,
             constraint_name(ENERGY_LIMIT, H),
             UpdateRef{H}("get_storage_capacity"),
             variable_name(REAL_POWER, H),
@@ -573,7 +573,7 @@ function energy_limit_constraints!(psi_container::PSIContainer,
     else
         device_energy_limit_ub(
             psi_container,
-            budget_data,
+            energy_limit_data,
             constraint_name(ENERGY_LIMIT),
             variable_name(REAL_POWER, H),
         )
@@ -581,17 +581,17 @@ function energy_limit_constraints!(psi_container::PSIContainer,
 end
 
 function device_energy_limit_param_ub(psi_container::PSIContainer,
-                                    budget_data::Vector{DeviceTimeSeries},
+                                    energy_limit_data::Vector{DeviceTimeSeries},
                                     cons_name::Symbol,
                                     param_reference::UpdateRef,
                                     var_name::Symbol)
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, var_name)
-    set_name = (r.name for r in budget_data)
+    set_name = (r.name for r in energy_limit_data)
     constraint = add_cons_container!(psi_container, cons_name, set_name)
     param = add_param_container!(psi_container, param_reference, set_name)
 
-    for data in budget_data
+    for data in energy_limit_data
         name = data.name
         multiplier = data.multiplier
         param[name] = PJ.add_parameter(psi_container.JuMPmodel, sum(data.timeseries))
@@ -604,15 +604,15 @@ end
 
 
 function device_energy_limit_ub(psi_container::PSIContainer,
-                                budget_data::Vector{DeviceTimeSeries},
+                                energy_limit_data::Vector{DeviceTimeSeries},
                                 cons_name::Symbol,
                                 var_name::Symbol)
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, var_name)
-    names = (r.name for r in budget_data)
+    names = (r.name for r in energy_limit_data)
     constraint = add_cons_container!(psi_container, cons_name, names)
 
-    for data in budget_data
+    for data in energy_limit_data
         name = data.name
         forecast = data.timeseries
         multiplier = data.multiplier
