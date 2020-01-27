@@ -42,20 +42,20 @@ plot(ThermalStandard)
 function get_stacked_plot_data(res::PSI.Results, variable::String; kwargs...)
 
     sort = get(kwargs, :sort, nothing)
-    time_range = res.time_stamp[!,:Range]
+    time_range = res.time_stamp[!, :Range]
     variable = res.variables[Symbol(variable)]
     alphabetical = sort!(names(variable))
 
     if isnothing(sort)
         variable = variable[:, alphabetical]
     else
-        variable = variable[:,sort]
+        variable = variable[:, sort]
     end
 
     data_matrix = convert(Matrix, variable)
     labels = collect(names(variable))
     legend = [names(variable)[1]]
-    for name in 2:length(labels)
+    for name = 2:length(labels)
         legend = hcat(legend, string.(labels[name]))
     end
 
@@ -66,7 +66,7 @@ end
 function get_bar_plot_data(res::PSI.Results, variable::String; kwargs...)
 
     sort = get(kwargs, :sort, nothing)
-    time_range = res.time_stamp[!,:Range]
+    time_range = res.time_stamp[!, :Range]
     variable = res.variables[Symbol(variable)]
     alphabetical = sort!(names(variable))
 
@@ -80,7 +80,7 @@ function get_bar_plot_data(res::PSI.Results, variable::String; kwargs...)
     bar_data = sum(data, dims = 1)
     labels = collect(names(variable))
     legend = [names(variable)[1]]
-    for name in 2:length(labels)
+    for name = 2:length(labels)
         legend = hcat(legend, string.(labels[name]))
     end
 
@@ -91,7 +91,7 @@ end
 function get_stacked_generation_data(res::PSI.Results; kwargs...)
 
     sort = get(kwargs, :sort, nothing)
-    time_range = res.time_stamp[!,:Range]
+    time_range = res.time_stamp[!, :Range]
     key_name = collect(keys(res.variables))
     alphabetical = sort!(key_name)
 
@@ -105,7 +105,7 @@ function get_stacked_generation_data(res::PSI.Results; kwargs...)
     data_matrix = sum(convert(Matrix, variable), dims = 2)
     legend = [key_name[1]]
 
-    for i in 1:length(labels)
+    for i = 1:length(labels)
         if i !== 1
             variable = res.variables[Symbol(labels[i])]
             legend = hcat(legend, string.(key_name[i]))
@@ -119,12 +119,12 @@ end
 
 function get_bar_gen_data(res::PSI.Results)
 
-    time_range = res.time_stamp[!,:Range]
+    time_range = res.time_stamp[!, :Range]
     key_name = collect(keys(res.variables))
     variable = res.variables[Symbol(key_name[1])]
     data_matrix = sum(convert(Matrix, variable), dims = 2)
     legend = [key_name[1]]
-    for i in 1:length(key_name)
+    for i = 1:length(key_name)
         if i !== 1
             variable = res.variables[Symbol(key_name[i])]
             legend = hcat(legend, string.(key_name[i]))
@@ -176,5 +176,10 @@ function sort_data(res::PSI.Results; kwargs...)
         end
         sorted_variables[k] = variable
     end
-    return PSI.OperationsProblemResults(sorted_variables, res.total_cost, res.optimizer_log, res.time_stamp)
+    return PSI.OperationsProblemResults(
+        sorted_variables,
+        res.total_cost,
+        res.optimizer_log,
+        res.time_stamp,
+    )
 end

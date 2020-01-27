@@ -3,7 +3,7 @@ import Plots
 maroon = Colors.RGBA(0.7, 0.1, 0.1, 0.95)
 darkgray = Colors.RGBA(0, 0, 0, 0.8)
 olivegreen = Colors.RGBA(0.33, 0.42, 0.18, 0.9)
-darkorange = Colors.RGBA(0.93, 0.46, 0, 1) 
+darkorange = Colors.RGBA(0.93, 0.46, 0, 1)
 orchid = Colors.RGBA(0.56, 0.28, 0.54, 1)
 darkpink = Colors.RGBA(0.9, 0.5, 0.6, 0.80)
 lightyellow = Colors.RGBA(1, 1, 0.5, 0.6)
@@ -11,31 +11,91 @@ steelblue = Colors.RGBA(0.27, 0.5, 0.7, 0.9)
 canaryyellow = Colors.RGBA(1, 0.757, 0.15, 01)
 khaki = Colors.RGBA(0.8, 0.6, 0.3, 1)
 
-gr_default = hcat(maroon, darkgray, :lightblue, olivegreen, :pink,
-    darkorange, orchid, darkpink, lightyellow, steelblue, 
-    canaryyellow, khaki, :red, khaki, khaki)
+gr_default = hcat(
+    maroon,
+    darkgray,
+    :lightblue,
+    olivegreen,
+    :pink,
+    darkorange,
+    orchid,
+    darkpink,
+    lightyellow,
+    steelblue,
+    canaryyellow,
+    khaki,
+    :red,
+    khaki,
+    khaki,
+)
 
-fuel_default = vcat(maroon, darkgray, :lightblue, olivegreen, :pink, darkorange,
-        orchid, darkpink, lightyellow, steelblue, canaryyellow, khaki, :red)
+fuel_default = vcat(
+    maroon,
+    darkgray,
+    :lightblue,
+    olivegreen,
+    :pink,
+    darkorange,
+    orchid,
+    darkpink,
+    lightyellow,
+    steelblue,
+    canaryyellow,
+    khaki,
+    :red,
+)
 
-plotly_default = vcat(:firebrick, :slategrey, :lightblue, :darkolivegreen, :lightpink, 
-:darkorange, :purple, :pink, :lightgoldenrodyellow, :steelblue, 
-:goldenrod, :tan, :red) # tan is the problem
+plotly_default = vcat(
+    :firebrick,
+    :slategrey,
+    :lightblue,
+    :darkolivegreen,
+    :lightpink,
+    :darkorange,
+    :purple,
+    :pink,
+    :lightgoldenrodyellow,
+    :steelblue,
+    :goldenrod,
+    :tan,
+    :red,
+) # tan is the problem
 
-function match_fuel_colors(stack::StackedGeneration, bar::BarGeneration, backend::Any, default::Array)
+function match_fuel_colors(
+    stack::StackedGeneration,
+    bar::BarGeneration,
+    backend::Any,
+    default::Array,
+)
     if backend == Plots.PlotlyJSBackend()
         color_range = plotly_default
     else
         color_range = fuel_default
     end
-    fuels = ["Nuclear", "Coal", "Hydro", "Gas_CC",
-             "Gas_CT", "Storage", "Oil_ST", "Oil_CT",
-             "Sync_Cond", "Wind", "Solar", "CSP", "curtailment"]
+    fuels = [
+        "Nuclear",
+        "Coal",
+        "Hydro",
+        "Gas_CC",
+        "Gas_CT",
+        "Storage",
+        "Oil_ST",
+        "Oil_CT",
+        "Sync_Cond",
+        "Wind",
+        "Solar",
+        "CSP",
+        "curtailment",
+    ]
     color_fuel = DataFrames.DataFrame(fuels = fuels, colors = color_range)
-    default = [(color_fuel[findall(in(["$(bar.labels[1])"]), color_fuel.fuels), :][:,:colors])[1]]
-    for i in 2:length(bar.labels)
-        specific_color = (color_fuel[findall(in(["$(bar.labels[i])"]),
-            color_fuel.fuels), :][:,:colors])[1]
+    default =
+        [(color_fuel[findall(in(["$(bar.labels[1])"]), color_fuel.fuels), :][:, :colors])[1]]
+    for i = 2:length(bar.labels)
+        specific_color =
+            (color_fuel[findall(in(["$(bar.labels[i])"]), color_fuel.fuels), :][
+                :,
+                :colors,
+            ])[1]
         default = hcat(default, specific_color)
     end
     return default
@@ -159,7 +219,12 @@ function bar_plot(res::PSI.Results, variables::Array; kwargs...)
     for variable in variables
         res_var[variable] = res.variables[variable]
     end
-    results = PSI.OperationsProblemResults(res_var, res.total_cost, res.optimizer_log, res.time_stamp)
+    results = PSI.OperationsProblemResults(
+        res_var,
+        res.total_cost,
+        res.optimizer_log,
+        res.time_stamp,
+    )
     bar_plot(results; kwargs...)
 end
 
@@ -200,7 +265,8 @@ function stack_plot(res::PSI.Results; kwargs...)
             variable_stack = get_stacked_plot_data(res, name)
             p = RecipesBase.plot(variable_stack, name; seriescolor = seriescolor)
             set_display && display(p)
-            !isnothing(save_fig) && Plots.savefig(p, joinpath(save_fig, "$(name)_Stack.png"))
+            !isnothing(save_fig) &&
+            Plots.savefig(p, joinpath(save_fig, "$(name)_Stack.png"))
         end
         p = RecipesBase.plot(stacked_gen; seriescolor = seriescolor)
         set_display && display(p)
@@ -214,7 +280,12 @@ function stack_plot(res::PSI.SimulationResults, variables::Array; kwargs...)
     for variable in variables
         res_var[variable] = res.variables[variable]
     end
-    results = PSI.OperationsProblemResults(res_var, res.total_cost, res.optimizer_log, res.time_stamp)
+    results = PSI.OperationsProblemResults(
+        res_var,
+        res.total_cost,
+        res.optimizer_log,
+        res.time_stamp,
+    )
     stack_plot(results; kwargs...)
 end
 
@@ -223,6 +294,11 @@ function stack_plot(res::PSI.Results, variables::Array; kwargs...)
     for variable in variables
         res_var[variable] = res.variables[variable]
     end
-    results = PSI.OperationsProblemResults(res_var, res.total_cost, res.optimizer_log, res.time_stamp)
+    results = PSI.OperationsProblemResults(
+        res_var,
+        res.total_cost,
+        res.optimizer_log,
+        res.time_stamp,
+    )
     stack_plot(results; kwargs...)
 end

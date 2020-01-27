@@ -31,8 +31,13 @@ function report(res::PSI.Results, out_path::String; kwargs...)
     default_string = joinpath(pwd(), "src/report_design/report_design.jmd")
     jmd = get(kwargs, :jmd, default_string)
     args = Dict("res" => res, "variables" => res.variables, "backend" => backend)
-    Weave.weave(jmd, out_path = out_path, latex_cmd = "xelatex",
-                doctype = doctype, args = args)
+    Weave.weave(
+        jmd,
+        out_path = out_path,
+        latex_cmd = "xelatex",
+        doctype = doctype,
+        args = args,
+    )
 
 end
 
@@ -71,9 +76,19 @@ function report(res::PSI.Results, generators::Dict, out_path::String; kwargs...)
     backend = get(kwargs, :backend, Plots.gr())
     default_string = joinpath(pwd(), "src/report_design/report_design_fuel.jmd")
     jmd = get(kwargs, :jmd, default_string)
-    args = Dict("res" => res, "variables" => res.variables, "gen" => generators, "backend" => backend)
-    Weave.weave(jmd, out_path = out_path, latex_cmd = "xelatex",
-                doctype = doctype, args = args)
+    args = Dict(
+        "res" => res,
+        "variables" => res.variables,
+        "gen" => generators,
+        "backend" => backend,
+    )
+    Weave.weave(
+        jmd,
+        out_path = out_path,
+        latex_cmd = "xelatex",
+        doctype = doctype,
+        args = args,
+    )
 
 end
 
@@ -111,8 +126,18 @@ function report(res::PSI.Results, system::PSY.System, out_path::String; kwargs..
     backend = get(kwargs, :backend, gr())
     default_string = joinpath(pwd(), "src/report_design/report_design_fuel.jmd")
     jmd = get(kwargs, :jmd, default_string)
-    args = Dict("res" => res, "variables" => res.variables, "gen" => system, "backend" => backend)
-    Weave.weave(jmd, out_path = out_path, latex_cmd = "xelatex",
-                doctype = doctype, args = args)
+    args = Dict(
+        "res" => res,
+        "variables" => res.variables,
+        "gen" => system,
+        "backend" => backend,
+    )
+    Weave.weave(
+        jmd,
+        out_path = out_path,
+        latex_cmd = "xelatex",
+        doctype = doctype,
+        args = args,
+    )
 
 end

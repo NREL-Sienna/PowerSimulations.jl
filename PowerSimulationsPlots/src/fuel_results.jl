@@ -1,27 +1,49 @@
-order = (["Nuclear", "Coal", "Hydro", "Gas_CC", "Gas_CT", "Storage", "Oil_ST",
-        "Oil_CT", "Sync_Cond", "Wind", "Solar", "CSP", "curtailment"])
+order = ([
+    "Nuclear",
+    "Coal",
+    "Hydro",
+    "Gas_CC",
+    "Gas_CT",
+    "Storage",
+    "Oil_ST",
+    "Oil_CT",
+    "Sync_Cond",
+    "Wind",
+    "Solar",
+    "CSP",
+    "curtailment",
+])
 function _get_iterator(sys::PSY.System, res::PSI.Results)
     iterators = []
     for (k, v) in res.variables
         if "$k"[1:2] == "P_"
             datatype = (split("$k", "P_")[2])
             if datatype == "ThermalStandard"
-                iterators = vcat(iterators, collect(PSY.get_components(PSY.ThermalStandard, sys)))
+                iterators =
+                    vcat(iterators, collect(PSY.get_components(PSY.ThermalStandard, sys)))
             elseif datatype == "RenewableDispatch"
-                iterators = vcat(iterators, collect(PSY.get_components(PSY.RenewableDispatch, sys)))  
-            end 
+                iterators =
+                    vcat(iterators, collect(PSY.get_components(PSY.RenewableDispatch, sys)))
+            end
         end
     end
     iterators_sorted = Dict{Any,Any}()
     for iterator in iterators
         name = iterator.name
         iterators_sorted[name] = []
-        if isdefined(iterator.tech, :fuel)  
-            iterators_sorted[name] = vcat(iterators_sorted[name],
-                (NamedTuple{(:primemover, :fuel)}, ((iterator.tech.primemover), (iterator.tech.fuel))))
+        if isdefined(iterator.tech, :fuel)
+            iterators_sorted[name] = vcat(
+                iterators_sorted[name],
+                (
+                    NamedTuple{(:primemover, :fuel)},
+                    ((iterator.tech.primemover), (iterator.tech.fuel)),
+                ),
+            )
         else
-            iterators_sorted[name] = vcat(iterators_sorted[name],
-                (NamedTuple{(:primemover, :fuel)}, (iterator.tech.primemover, nothing)))
+            iterators_sorted[name] = vcat(
+                iterators_sorted[name],
+                (NamedTuple{(:primemover, :fuel)}, (iterator.tech.primemover, nothing)),
+            )
         end
     end
     return iterators_sorted
@@ -49,8 +71,10 @@ function make_fuel_dictionary(sys::PSY.System, res::PSI.Results; kwargs...)
     categories = Dict()
     categories["Solar"] = NamedTuple{(:primemover, :fuel)}, (PSY.PVe, nothing)
     categories["Wind"] = NamedTuple{(:primemover, :fuel)}, (PSY.WT, nothing)
-    categories["Oil_CT"] = NamedTuple{(:primemover, :fuel)}, (PSY.CT, PSY.DISTILLATE_FUEL_OIL)
-    categories["Oil_ST"] = NamedTuple{(:primemover, :fuel)}, (PSY.ST, PSY.DISTILLATE_FUEL_OIL)
+    categories["Oil_CT"] =
+        NamedTuple{(:primemover, :fuel)}, (PSY.CT, PSY.DISTILLATE_FUEL_OIL)
+    categories["Oil_ST"] =
+        NamedTuple{(:primemover, :fuel)}, (PSY.ST, PSY.DISTILLATE_FUEL_OIL)
     categories["Storage"] = NamedTuple{(:primemover, :fuel)}, (PSY.BA, nothing)
     categories["Gas_CT"] = NamedTuple{(:primemover, :fuel)}, (PSY.CT, PSY.NATURAL_GAS)
     categories["Gas_CC"] = NamedTuple{(:primemover, :fuel)}, (PSY.CC, PSY.NATURAL_GAS)
@@ -60,7 +84,7 @@ function make_fuel_dictionary(sys::PSY.System, res::PSI.Results; kwargs...)
     categories = get(kwargs, :categories, categories)
     iterators = _get_iterator(sys, res)
     generators = Dict()
-    
+
     for (category, fuel_type) in categories
         generators["$category"] = []
         for (name, fuels) in iterators
@@ -80,19 +104,19 @@ end
 function _aggregate_data(res::PSI.OperationsProblemResults, generators::Dict)
     All_var = DataFrames.DataFrame()
     var_names = collect(keys(res.variables))
-    for i in 1:length(var_names)
+    for i = 1:length(var_names)
         All_var = hcat(All_var, res.variables[var_names[i]], makeunique = true)
     end
     fuel_dataframes = Dict()
-    
+
     for (k, v) in generators
         generator_df = DataFrames.DataFrame()
         for l in v
-            generator_df = hcat(generator_df, All_var[:,Symbol("$(l)")], makeunique = true)
+            generator_df = hcat(generator_df, All_var[:, Symbol("$(l)")], makeunique = true)
         end
         fuel_dataframes[k] = generator_df
     end
-  
+
     return fuel_dataframes
 end
 
@@ -115,10 +139,10 @@ fuel_plot(res, c_sys5_re)
 function get_stacked_aggregation_data(res::PSI.OperationsProblemResults, generators::Dict)
     # order at the top
     category_aggs = _aggregate_data(res, generators)
-    time_range = res.time_stamp[!,:Range]
+    time_range = res.time_stamp[!, :Range]
     labels = collect(keys(category_aggs))
     new_labels = []
-    
+
     for fuel in order
         for label in labels
             if label == fuel
@@ -129,7 +153,7 @@ function get_stacked_aggregation_data(res::PSI.OperationsProblemResults, generat
     variable = category_aggs[(new_labels[1])]
     data_matrix = sum(Matrix(variable), dims = 2)
     legend = [string.(new_labels)[1]]
-    for i in 2:length(new_labels)
+    for i = 2:length(new_labels)
         variable = category_aggs[(new_labels[i])]
         legend = hcat(legend, string.(new_labels)[i])
         data_matrix = hcat(data_matrix, sum(Matrix(variable), dims = 2))
@@ -138,7 +162,7 @@ function get_stacked_aggregation_data(res::PSI.OperationsProblemResults, generat
 end
 function get_bar_aggregation_data(res::PSI.OperationsProblemResults, generators::Dict)
     category_aggs = _aggregate_data(res, generators)
-    time_range = res.time_stamp[!,:Range]
+    time_range = res.time_stamp[!, :Range]
     labels = collect(keys(category_aggs))
     new_labels = []
     for fuel in order
@@ -151,7 +175,7 @@ function get_bar_aggregation_data(res::PSI.OperationsProblemResults, generators:
     variable = category_aggs[(new_labels[1])]
     data_matrix = sum(Matrix(variable), dims = 2)
     legend = [string.(new_labels)[1]]
-    for i in 2:length(new_labels)
+    for i = 2:length(new_labels)
         variable = category_aggs[(new_labels[i])]
         data_matrix = hcat(data_matrix, sum(Matrix(variable), dims = 2))
         legend = hcat(legend, string.(new_labels)[i])

@@ -12,7 +12,12 @@ end
 
 # writing a dictionary of dataframes to files and appending the time
 
-function _write_data(vars_results::Dict, time::DataFrames.DataFrame, save_path::AbstractString; kwargs...)
+function _write_data(
+    vars_results::Dict,
+    time::DataFrames.DataFrame,
+    save_path::AbstractString;
+    kwargs...,
+)
     file_type = get(kwargs, :file_type, Feather)
     for (k, v) in vars_results
         var = DataFrames.DataFrame()
@@ -26,7 +31,12 @@ function _write_data(vars_results::Dict, time::DataFrames.DataFrame, save_path::
     end
 end
 
-function _write_data(data::DataFrames.DataFrame, save_path::AbstractString, file_name::String; kwargs...)
+function _write_data(
+    data::DataFrames.DataFrame,
+    save_path::AbstractString,
+    file_name::String;
+    kwargs...,
+)
     if isfile(save_path)
         save_path = dirname(save_path)
     end
@@ -58,7 +68,12 @@ function _write_data(psi_container::PSIContainer, save_path::AbstractString; kwa
 end
 
 
-function _write_data(psi_container::PSIContainer, save_path::AbstractString, dual_con::Vector{Symbol}; kwargs...)
+function _write_data(
+    psi_container::PSIContainer,
+    save_path::AbstractString,
+    dual_con::Vector{Symbol};
+    kwargs...,
+)
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
         duals = get_model_duals(psi_container, dual_con)
@@ -89,7 +104,12 @@ function _export_model_result(stage::Stage, start_time::Dates.DateTime, save_pat
     return
 end
 
-function _export_model_result(stage::Stage, start_time::Dates.DateTime, save_path::String, dual_con::Vector{Symbol})
+function _export_model_result(
+    stage::Stage,
+    start_time::Dates.DateTime,
+    save_path::String,
+    dual_con::Vector{Symbol},
+)
     _write_data(stage, save_path)
     _write_data(get_psi_container(stage), save_path, dual_con)
     _write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
@@ -98,12 +118,15 @@ function _export_model_result(stage::Stage, start_time::Dates.DateTime, save_pat
     return
 end
 
-function _export_optimizer_log(optimizer_log::Dict{Symbol,Any},
-                               psi_container::PSIContainer,
-                               path::String)
+function _export_optimizer_log(
+    optimizer_log::Dict{Symbol,Any},
+    psi_container::PSIContainer,
+    path::String,
+)
 
     optimizer_log[:obj_value] = JuMP.objective_value(psi_container.JuMPmodel)
-    optimizer_log[:termination_status] = Int(JuMP.termination_status(psi_container.JuMPmodel))
+    optimizer_log[:termination_status] =
+        Int(JuMP.termination_status(psi_container.JuMPmodel))
     optimizer_log[:primal_status] = Int(JuMP.primal_status(psi_container.JuMPmodel))
     optimizer_log[:dual_status] = Int(JuMP.dual_status(psi_container.JuMPmodel))
     try
@@ -132,7 +155,8 @@ function write_results(results::Results, save_path::String; kwargs...)
     if !isdir(save_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
-    new_folder_path = replace_chars("$save_path/$(round(Dates.now(), Dates.Minute))", ":", "-")
+    new_folder_path =
+        replace_chars("$save_path/$(round(Dates.now(), Dates.Minute))", ":", "-")
     folder_path = mkdir(new_folder_path)
     _write_data(results.variables, folder_path; kwargs...)
     _write_optimizer_log(results.optimizer_log, folder_path)
@@ -156,7 +180,12 @@ Exports Simulation Results to the path where they come from in the results folde
 # Accepted Key Words
 - `file_type = CSV`: only CSV and featherfile are accepted
 """
-function write_results(res::DualResults, folder_path::String, results_folder::String; kwargs...)
+function write_results(
+    res::DualResults,
+    folder_path::String,
+    results_folder::String;
+    kwargs...,
+)
     if !isdir(folder_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
@@ -184,7 +213,12 @@ Exports Simulations Results to the path where they come from in the results fold
 - `file_type = CSV`: only CSV and featherfile are accepted
 """
 
-function write_results(res::SimulationResults, folder_path::String, results_folder::String; kwargs...)
+function write_results(
+    res::SimulationResults,
+    folder_path::String,
+    results_folder::String;
+    kwargs...,
+)
     if !isdir(folder_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
@@ -197,7 +231,12 @@ function write_results(res::SimulationResults, folder_path::String, results_fold
     return
 end
 
-function write_results(res::OperationsProblemResults, folder_path::String, results_folder::String; kwargs...)
+function write_results(
+    res::OperationsProblemResults,
+    folder_path::String,
+    results_folder::String;
+    kwargs...,
+)
     if !isdir(folder_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
