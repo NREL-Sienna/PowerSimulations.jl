@@ -200,7 +200,6 @@ function stack_plot(res::PSI.Results; kwargs...)
             variable_stack = get_stacked_plot_data(res, name)
             p = RecipesBase.plot(variable_stack, name; seriescolor = seriescolor)
             set_display && display(p)
-            @show save_fig
             !isnothing(save_fig) && Plots.savefig(p, joinpath(save_fig, "$(name)_Stack.png"))
         end
         p = RecipesBase.plot(stacked_gen; seriescolor = seriescolor)

@@ -58,7 +58,7 @@ function test_plots(file_path::String)
             bar_plot(res; save = file_path, display = false)
             stack_plot(res; save = file_path, display = false)
             fuel_plot(res, generators; save = file_path, display = false)
-            @show list = readdir(file_path)
+            list = readdir(file_path)
             @test list == ["Bar_Generation.png", "Fuel_Bar.png", "Fuel_Stack.png",
                 "P_RenewableDispatch_Bar.png", "P_RenewableDispatch_Stack.png",
                 "P_ThermalStandard_Bar.png", "P_ThermalStandard_Stack.png", "Stack_Generation.png"]
