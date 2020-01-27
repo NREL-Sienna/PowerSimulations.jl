@@ -45,7 +45,7 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
         dual_result = get_model_duals(op_problem.psi_container, kwargs[:constraints_duals])
         results = DualResults(vars_result, obj_value, optimizer_log, time_stamp, dual_result)
     else
-        results = SimulationResults(vars_result, obj_value, optimizer_log, time_stamp)
+        results = OperationsProblemResults(vars_result, obj_value, optimizer_log, time_stamp)
     end
     !isnothing(save_path) && write_results(results, save_path)
 
