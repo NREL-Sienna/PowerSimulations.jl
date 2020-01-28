@@ -190,7 +190,7 @@ function activepower_constraints!(psi_container::PSIContainer,
     use_forecast_data = model_uses_forecasts(psi_container)
 
     ts_data_active, _, constraint_data = _get_time_series(psi_container, devices, model,
-                                                          x -> (min=0.0, max=PSY.get_activepower(x)))
+                                                          x -> PSY.get_activepowerlimits(PSY.get_tech(x)))
 
     if !parameters && !use_forecast_data
         device_range(
@@ -231,7 +231,7 @@ function activepower_constraints!(psi_container::PSIContainer,
     use_forecast_data = model_uses_forecasts(psi_container)
 
     ts_data_active, _, constraint_data = _get_time_series(psi_container, devices, model,
-                                                          x -> (min=0.0, max=PSY.get_activepower(x)))
+                                                          x -> PSY.get_activepowerlimits(PSY.get_tech(x)))
 
     device_range(
         psi_container,
