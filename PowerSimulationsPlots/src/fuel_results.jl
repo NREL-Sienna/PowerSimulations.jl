@@ -50,13 +50,13 @@ function _get_iterator(sys::PSY.System, res::PSI.Results)
 end
 
 """
-    generators = make_fuel_dictionary(c_sys5_re, results)
+    generators = make_fuel_dictionary(system::PSY.System, results::PSI.Results)
 
 This function makes a dictionary of fuel type and the generators associated.
 
 # Arguments
 - `c_sys5_re::PSY.System`: the system that is used to create the results
-- `results::Results`: simulation or operations results
+- `results::PSI.Results`: simulation or operations results
 
 # Key Words
 - `categories::Dict{String, NamedTuple}`: if stacking by a different category is desired
@@ -121,22 +121,27 @@ function _aggregate_data(res::PSI.OperationsProblemResults, generators::Dict)
 end
 
 """
-    stack = stacked_aggregation_data(res, generators)
+    stack = get_stacked_aggregation_data(res, generators::Dict)
 
 This function aggregates the data into a struct type StackedGeneration
 so that the results can be plotted using the StackedGeneration recipe.
 
 # Example
-generators = make_fuel_dictionary(res, c_sys5_re)
-stack = stacked_aggregation_data(res, generators)
+```julia
+using Plots
+gr()
+generators = make_fuel_dictionary(res, system)
+stack = get_stacked_aggregation_data(res, generators)
 plot(stack)
-
-OR
-
-fuel_plot(res, c_sys5_re)
-
+```
+*OR*
+```julia
+using Plots
+gr()
+fuel_plot(res, system)
+```
 """
-function get_stacked_aggregation_data(res::PSI.OperationsProblemResults, generators::Dict)
+function get_stacked_aggregation_data(res::PSI.Results, generators::Dict)
     # order at the top
     category_aggs = _aggregate_data(res, generators)
     time_range = res.time_stamp[!, :Range]
@@ -160,7 +165,28 @@ function get_stacked_aggregation_data(res::PSI.OperationsProblemResults, generat
     end
     return StackedGeneration(time_range, data_matrix, legend)
 end
-function get_bar_aggregation_data(res::PSI.OperationsProblemResults, generators::Dict)
+"""
+    bar = get_bar_aggregation_data(results::PSI.Results, generators::Dict)
+
+This function aggregates the data into a struct type StackedGeneration
+so that the results can be plotted using the StackedGeneration recipe.
+
+# Example
+```julia
+using Plots
+gr()
+generators = make_fuel_dictionary(res, system)
+bar = get_bar_aggregation_data(res, generators)
+plot(bar)
+```
+*OR*
+```julia
+using Plots
+gr()
+fuel_plot(res, system)
+```
+"""
+function get_bar_aggregation_data(res::PSI.Results, generators::Dict)
     category_aggs = _aggregate_data(res, generators)
     time_range = res.time_stamp[!, :Range]
     labels = collect(keys(category_aggs))

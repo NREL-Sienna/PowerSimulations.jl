@@ -25,7 +25,9 @@ function plotly_stack_gen(stacked_gen::StackedGeneration, seriescolor::Array; kw
         PlotlyJS.Layout(title = "Variables", yaxis_title = "Generation (MW)"),
     )
     set_display && display(p)
-    !isnothing(save_fig) && Plots.savefig(p, joinpath(save_fig, "Stack_Generation.png"))
+    if !isnothing(save_fig)
+        Plots.savefig(p, joinpath(save_fig, "Stack_Generation.png"))
+    end
 end
 
 function plotly_stack_plots(res::PSI.Results, seriescolor::Array; kwargs...)
@@ -54,7 +56,9 @@ function plotly_stack_plots(res::PSI.Results, seriescolor::Array; kwargs...)
             PlotlyJS.Layout(title = "$key", yaxis_title = "Generation (MW)"),
         )
         set_display && display(p)
-        !isnothing(save_fig) && Plots.savefig(p, joinpath(save_fig, "$(key)_Stack.png"))
+        if !isnothing(save_fig)
+            Plots.savefig(p, joinpath(save_fig, "$(key)_Stack.png"))
+        end
     end
 end
 
@@ -87,7 +91,9 @@ function plotly_bar_gen(bar_gen::BarGeneration, seriescolor::Array; kwargs...)
         ),
     )
     set_display && display(p)
-    !isnothing(save_fig) && PlotlyJS.savefig(p, joinpath(save_fig, "Bar_Generation.svg"))
+    if !isnothing(save_fig)
+        PlotlyJS.savefig(p, joinpath(save_fig, "Bar_Generation.svg"))
+    end
 end
 
 function plotly_bar_plots(res::PSI.Results, seriescolor::Array; kwargs...)
@@ -121,7 +127,9 @@ function plotly_bar_plots(res::PSI.Results, seriescolor::Array; kwargs...)
             ),
         )
         set_display && display(p)
-        !isnothing(save_fig) && PlotlyJS.savefig(p, joinpath(save_fig, "$(key)_Bar.svg"))
+        if !isnothing(save_fig)
+            PlotlyJS.savefig(p, joinpath(save_fig, "$(key)_Bar.svg"))
+        end
     end
 end
 

@@ -3,12 +3,14 @@ using Dates
 using Plots
 using PowerSimulationsPlots
 using PowerSimulations
+using InfrastructureSystems
 using Test
 using TestSetExtensions
 using Weave
 
 const PSI = PowerSimulations
 const PSP = PowerSimulationsPlots
+const IS = InfrastructureSystems
 path = joinpath(pwd(), "plots")
 !isdir(path) && mkdir(path)
 
@@ -80,6 +82,7 @@ function test_plots(file_path::String)
             "Stack_Generation.png",
         ]
     end
+
     @testset "testing report production" begin
         report(res, file_path)
         @test isfile(joinpath(file_path, "report_design.pdf"))

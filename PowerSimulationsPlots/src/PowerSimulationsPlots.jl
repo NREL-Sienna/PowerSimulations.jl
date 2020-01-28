@@ -22,10 +22,11 @@ import Feather
 
 import PowerSimulations
 import PowerSystems
+import InfrastructureSystems
 
 const PSI = PowerSimulations
 const PSY = PowerSystems
-
+const IS = InfrastructureSystems
 include("plot_results.jl")
 include("fuel_results.jl")
 include("plot_recipes.jl")
