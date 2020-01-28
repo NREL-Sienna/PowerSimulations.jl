@@ -54,7 +54,8 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     return
 end
 
-
+#=
+# All Hydro UC formulations are currently not supported
 function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{H, D},
                            ::Type{S};
@@ -85,6 +86,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
 
     return
 end
+=#
 
 function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{H, D},
@@ -166,6 +168,8 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     return
 end
 
+#=
+# All Hydro UC formulations are currently not supported
 function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{H, D},
                            ::Type{S};
@@ -196,7 +200,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
 
     return
 end
-
+=#
 
 function construct_device!(psi_container::PSIContainer, sys::PSY.System,
                            model::DeviceModel{H, HydroFixed},
