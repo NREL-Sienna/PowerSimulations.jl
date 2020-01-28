@@ -113,10 +113,11 @@ end
 ####################################### Reactive Power Constraints #########################
 function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{H},
-                                    model::DeviceModel{H, AbstractHydroDispatchFormulation},
+                                    model::DeviceModel{H, D},
                                     system_formulation::Type{<:PM.AbstractPowerModel},
-                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
-    constraint_data = Vector(DeviceRange)()
+                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {H<:PSY.HydroGen,
+                                                                                                D<:AbstractHydroDispatchFormulation}
+    constraint_data = Vector{DeviceRange}()
     for d in devices
         limits =  PSY.get_reactivepowerlimits(PSY.get_tech(d))
         name =  PSY.get_name(d)
