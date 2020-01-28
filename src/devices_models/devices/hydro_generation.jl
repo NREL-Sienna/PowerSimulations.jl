@@ -69,7 +69,6 @@ function spillage_variables!(psi_container::PSIContainer,
                  devices,
                  variable_name(SPILLAGE, H),
                  false;
-                 ub_value = d -> PSY.get_inflow(d),
                  lb_value = d -> 0.0)
 
     return
@@ -146,7 +145,7 @@ function _get_time_series(psi_container::PSIContainer,
     use_forecast_data = model_uses_forecasts(psi_container)
     parameters = model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
-    
+
     constraint_data = Vector{DeviceRange}()
     active_timeseries = Vector{DeviceTimeSeries}()
     reactive_timeseries = Vector{DeviceTimeSeries}()
@@ -316,7 +315,8 @@ function _get_inflow_time_series(psi_container::PSIContainer,
     end
     return inflow_timeseries, constraint_data
 end
-
+#=
+# TODO: Determine if this is useful for ROR formulation ?
 function inflow_constraints!(psi_container::PSIContainer,
                             devices::IS.FlattenIteratorWrapper{H},
                             model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
@@ -360,20 +360,8 @@ function inflow_constraints!(psi_container::PSIContainer,
 
     return
 end
-
-######################## Energy balance constraints ############################
-
-function make_efficiency_data(devices::IS.FlattenIteratorWrapper{H}) where {H<:PSY.HydroGen}
-    names = Vector{String}(undef, length(devices))
-    in_out = Vector{InOut}(undef, length(devices))
-
-    for (ix, d) in enumerate(devices)
-        names[ix] = PSY.get_name(d)
-        in_out[ix] = (in = 1.0, out = 1.0) #PSY.get_efficiency(d)
-    end
-
-    return names, in_out
-end
+=#
+####################### Energy balance constraints ############################
 
 function energy_balance_constraint!(psi_container::PSIContainer,
                                    devices::IS.FlattenIteratorWrapper{H},
@@ -394,13 +382,15 @@ function energy_balance_constraint!(psi_container::PSIContainer,
         throw(IS.DataFormatError("Initial Conditions for $(PSY.HydroDispatch) Energy Constraints not in the model"))
     end
 
-    efficiency_data = make_efficiency_data(devices)
+    ts_data_inflow, constraint_data = _get_inflow_time_series(psi_container, devices, model,
+                                            x -> (min=0.0, max=PSY.get_inflow(x)))
 
-    energy_balance(psi_container,
+    reservoir_energy_balance(psi_container,
                    psi_container.initial_conditions[key],
-                   efficiency_data,
                    constraint_name(ENERGY_CAPACITY, H),
-                   (variable_name(INFLOW, H), variable_name(REAL_POWER, H), variable_name(ENERGY, H)))
+                   ts_data_inflow,
+                   (variable_name(SPILLAGE, H), variable_name(REAL_POWER, H), variable_name(ENERGY, H)),
+                   UpdateRef{H}("get_inflow"))
     return
 end
 
@@ -623,16 +613,18 @@ function device_energy_limit_ub(psi_container::PSIContainer,
     return
 end
 
-function _device_spillage!(range_data::DeviceRange, 
-                            device::H, 
+function _device_spillage!(range_data::DeviceRange,
+                            device::H,
                             model::DeviceModel{H, <:AbstractHydroFormulation}) where H<:PSY.HydroGen
     return
 end
 
-function _device_spillage!(range_data::DeviceRange, 
-                            device::H, 
+#=
+function _device_spillage!(range_data::DeviceRange,
+                            device::H,
                             model::DeviceModel{H, HydroDispatchReservoirStorage}) where H<:PSY.HydroGen
 
     push!(range_data.additional_terms_ub, Symbol("Sp_$H"))
     return
 end
+=#
