@@ -6,10 +6,13 @@ struct HydroFixed <: AbstractHydroFormulation end
 struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
 struct HydroDispatchReservoirFlow <: AbstractHydroReservoirFormulation end
 struct HydroDispatchReservoirStorage <: AbstractHydroReservoirFormulation end
+#=
+# Commenting out all Unit Commitment formulations as all Hydro UC
+# formulations are currently not supported
 struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirFlow <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
-
+=#
 ########################### Hydro generation variables #################################
 function activepower_variables!(psi_container::PSIContainer,
                                devices::IS.FlattenIteratorWrapper{H}) where H<:PSY.HydroGen
@@ -90,7 +93,9 @@ function commitment_variables!(psi_container::PSIContainer,
     return
 end
 
-### Constraints for Thermal Generation without commitment variables ####
+#=
+# All Hydro UC formulations are currently not supported
+### Constraints for Hydro Generation with commitment variables ####
 """
 This function adds the Commitment Status constraint when there are CommitmentVariables
 """
@@ -110,7 +115,7 @@ function commitment_constraints!(psi_container::PSIContainer,
 
     return
 end
-
+=#
 ####################################### Reactive Power Constraints #########################
 function reactivepower_constraints!(psi_container::PSIContainer,
                                     devices::IS.FlattenIteratorWrapper{H},
@@ -243,6 +248,8 @@ function activepower_constraints!(psi_container::PSIContainer,
     return
 end
 
+#=
+# All Hydro UC formulations are currently not supported
 function activepower_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{H},
                                 model::DeviceModel{H, <:AbstractHydroUnitCommitment},
@@ -286,7 +293,7 @@ function activepower_constraints!(psi_container::PSIContainer,
 
     return
 end
-
+=#
 ######################## Inflow constraints ############################
 function _get_inflow_time_series(psi_container::PSIContainer,
                             devices::IS.FlattenIteratorWrapper{PSY.HydroDispatch},
