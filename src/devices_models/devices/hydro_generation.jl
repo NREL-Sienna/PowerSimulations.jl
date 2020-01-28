@@ -164,7 +164,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE_RANGE, H),
-            UpdateRef{H}("get_rating"),
+            UpdateRef{H}(REAL_POWER, "get_rating"),  # TODO: reviewers?
             variable_name(REAL_POWER, H),
         )
     else
@@ -228,7 +228,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             ts_data_active,
             constraint_name(ACTIVE_RANGE, H),
             variable_name(REAL_POWER, H),
-            UpdateRef{H}("get_rating"),
+            UpdateRef{H}(ON, "get_rating"),  # TODO: reviewers?
             variable_name(ON, H),
         )
     else
@@ -276,14 +276,18 @@ function nodal_expression!(psi_container::PSIContainer,
 
 
     if parameters
-        include_parameters(psi_container,
-                           ts_data_active,
-                           UpdateRef{H}("get_rating"),
-                           :nodal_balance_active)
-        include_parameters(psi_container,
-                           ts_data_reactive,
-                           UpdateRef{H}("get_rating"),
-                           :nodal_balance_reactive)
+        include_parameters(
+            psi_container,
+            ts_data_active,
+            UpdateRef{H}(ACTIVE_POWER, "get_rating"),  # TODO: reviewers?
+            :nodal_balance_active,
+        )
+        include_parameters(
+            psi_container,
+            ts_data_reactive,
+            UpdateRef{H}(REACTIVE_POWER, "get_rating"),  # TODO: reviewers?
+            :nodal_balance_reactive,
+        )
         return
     end
 
@@ -313,10 +317,12 @@ function nodal_expression!(psi_container::PSIContainer,
                                     DeviceModel(H, HydroFixed), x -> (min = 0.0, max = 0.0))
 
     if parameters
-        include_parameters(psi_container,
-                           ts_data_active,
-                           UpdateRef{H}("get_rating"),
-                           :nodal_balance_active)
+        include_parameters(
+            psi_container,
+            ts_data_active,
+            UpdateRef{H}(ACTIVE_POWER, "get_rating"),  # TODO: reviewers?
+            :nodal_balance_active,
+        )
         return
     end
 
@@ -392,14 +398,13 @@ function budget_constraints!(psi_container::PSIContainer,
                     model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
                     system_formulation::Type{<:PM.AbstractPowerModel},
                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
-    parameters = model_has_parameters(psi_container)
     budget_data  = _get_budget(psi_container, devices)
-    if parameters
+    if model_has_parameters(psi_container)
         device_budget_param_ub(
             psi_container,
             budget_data,
             constraint_name(ENERGY_LIMIT, H),  # TODO: better name for this constraint
-            UpdateRef{H}("get_storage_capacity"),
+            UpdateRef{H}(REAL_POWER, "get_storage_capacity"),  # TODO reviewers?
             variable_name(REAL_POWER, H),
         )
     else

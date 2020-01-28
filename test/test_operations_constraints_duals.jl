@@ -35,7 +35,7 @@ function test_duals(file_path)
                     binary_from_stage = Symbol(PSI.ON),
                     affected_variables = affected_variables),
                ),
-                cache = Dict("ED" => [TimeStatusChange(PSI.ON, PSY.ThermalStandard)]),
+                cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
                 ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive())
             )
         sim = Simulation(

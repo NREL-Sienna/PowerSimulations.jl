@@ -58,29 +58,35 @@ get_number(s::Stage) = s.internal.number
 get_psi_container(s::Stage) = s.internal.psi_container
 
 # This makes the choice in which variable to get from the results.
-function get_stage_variable(::Type{RecedingHorizon},
-                           stages::Pair{Stage{T}, Stage{T}},
-                           device_name::String,
-                           var_ref::UpdateRef) where T <: AbstractOperationsProblem
-    variable = get_value(stages.first.internal.psi_container, var_ref)
+function get_stage_variable(
+    ::Type{RecedingHorizon},
+    stages::Pair{Stage{T},Stage{T}},
+    device_name::AbstractString,
+    var_ref::UpdateRef,
+) where {T<:AbstractOperationsProblem}
+    variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
     step = axes(variable)[2][1]
     return JuMP.value(variable[device_name, step])
 end
 
-function get_stage_variable(::Type{Consecutive},
-                             stages::Pair{Stage{T}, Stage{T}},
-                             device_name::String,
-                             var_ref::UpdateRef) where T <: AbstractOperationsProblem
-    variable = get_value(stages.first.internal.psi_container, var_ref)
+function get_stage_variable(
+    ::Type{Consecutive},
+    stages::Pair{Stage{T},Stage{T}},
+    device_name::String,
+    var_ref::UpdateRef,
+) where {T<:AbstractOperationsProblem}
+    variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
     step = axes(variable)[2][end]
     return JuMP.value(variable[device_name, step])
 end
 
-function get_stage_variable(::Type{Synchronize},
-                            stages::Pair{Stage{T}, Stage{T}},
-                            device_name::String,
-                            var_ref::UpdateRef) where T <: AbstractOperationsProblem
-    variable = get_value(stages.first.internal.psi_container, var_ref)
+function get_stage_variable(
+    ::Type{Synchronize},
+    stages::Pair{Stage{T},Stage{T}},
+    device_name::String,
+    var_ref::UpdateRef,
+) where {T<:AbstractOperationsProblem}
+    variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
     step = axes(variable)[2][stages.second.internal.execution_count + 1]
     return JuMP.value(variable[device_name, step])
 end
@@ -93,16 +99,18 @@ initial_condition_update!(initial_condition_key::ICKey,
                           to_stage::Stage,
                           from_stage::Stage) = nothing
 
-function initial_condition_update!(initial_condition_key::ICKey,
-                                    sync::Chron,
-                                    ini_cond_vector::Vector{InitialCondition},
-                                    to_stage::Stage,
-                                    from_stage::Stage) where Chron <: AbstractChronology
+function initial_condition_update!(
+    initial_condition_key::ICKey,
+    sync::T,
+    ini_cond_vector::Vector{InitialCondition},
+    to_stage::Stage,
+    from_stage::Stage,
+) where {T<:AbstractChronology}
     for ic in ini_cond_vector
         name = device_name(ic)
-        update_ref = ic.update_ref
-        var_value = get_stage_variable(Chron, (from_stage => to_stage), name, update_ref)
-        cache = get(from_stage.internal.cache_dict, ic.cache, nothing)
+        var_value = get_stage_variable(T, (from_stage => to_stage), name, ic.update_ref)
+        cache = isnothing(ic.cache_type) ? nothing :
+            from_stage.internal.cache_dict[ic.cache_type]
         quantity = calculate_ic_quantity(initial_condition_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
     end

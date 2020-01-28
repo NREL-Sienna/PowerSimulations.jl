@@ -26,10 +26,14 @@ function construct_service!(psi_container::PSIContainer,
 
     time_steps = model_time_steps(psi_container)
     names = (PSY.get_name(s) for s in services)
-    model_has_parameters(psi_container) && add_param_container!(psi_container,
-                                                UpdateRef{SR}("get_requirement"),
-                                                names,
-                                                time_steps)
+    if model_has_parameters(psi_container)
+        add_param_container!(
+            psi_container,
+            UpdateRef{SR}("service_requirement", "get_requirement"),
+            names,
+            time_steps,
+        )
+    end
 
     add_cons_container!(psi_container, constraint_name(REQUIREMENT, SR), names, time_steps)
 

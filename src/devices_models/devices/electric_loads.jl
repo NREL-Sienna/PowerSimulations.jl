@@ -135,7 +135,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE, L),
-            UpdateRef{L}("get_maxactivepower"),
+            UpdateRef{L}(REAL_POWER, "get_maxactivepower"),  # TODO: reviewers?
             variable_name(REAL_POWER, L),
         )
     else
@@ -176,7 +176,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             ts_data_active,
             constraint_name(ACTIVE, L),
             variable_name(REAL_POWER, L),
-            UpdateRef{L}("get_maxactivepower"),
+            UpdateRef{L}(ON, "get_maxactivepower"),  # TODO: reviewers?
             constraint_name(ON, L),
         )
     else
@@ -202,16 +202,20 @@ function nodal_expression!(psi_container::PSIContainer,
     parameters = model_has_parameters(psi_container)
 
     if parameters
-        include_parameters(psi_container,
-                        ts_data_active,
-                        UpdateRef{L}("get_maxactivepower"),
-                        :nodal_balance_active,
-                        -1.0)
-        include_parameters(psi_container,
-                        ts_data_reactive,
-                        UpdateRef{L}("get_maxactivepower"),
-                        :nodal_balance_reactive,
-                        -1.0)
+        include_parameters(
+            psi_container,
+            ts_data_active,
+            UpdateRef{L}(ACTIVE_POWER, "get_maxactivepower"),  # TODO: reviewers?
+            :nodal_balance_active,
+            -1.0,
+        )
+        include_parameters(
+            psi_container,
+            ts_data_reactive,
+            UpdateRef{L}(REACTIVE_POWER, "get_maxactivepower"),  # TODO: reviewers?
+            :nodal_balance_reactive,
+            -1.0,
+        )
         return
     end
 
@@ -243,11 +247,13 @@ function nodal_expression!(psi_container::PSIContainer,
                         DeviceModel(L, DispatchablePowerLoad), x -> (min = 0.0, max = 0.0))
 
     if parameters
-        include_parameters(psi_container,
-                        ts_data_active,
-                        UpdateRef{L}("get_maxactivepower"),
-                        :nodal_balance_active,
-                        -1.0)
+        include_parameters(
+            psi_container,
+            ts_data_active,
+            UpdateRef{L}(ACTIVE_POWER, "get_maxactivepower"),  # TODO: reviewers?
+            :nodal_balance_active,
+            -1.0,
+        )
         return
     end
 

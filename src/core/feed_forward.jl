@@ -196,10 +196,12 @@ where r in range_data.
 * var_name::Symbol : the name of the continuous variable
 * param_reference::UpdateRef : UpdateRef of the parameter
 """
-function semicontinuousrange_ff(psi_container::PSIContainer,
-                                cons_name::Symbol,
-                                param_reference::UpdateRef,
-                                var_name::Symbol)
+function semicontinuousrange_ff(
+    psi_container::PSIContainer,
+    cons_name::Symbol,
+    param_reference::UpdateRef,
+    var_name::Symbol,
+)
     time_steps = model_time_steps(psi_container)
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
@@ -279,8 +281,6 @@ function integral_limit_ff(psi_container::PSIContainer,
             con_ub[name] = JuMP.@constraint(psi_container.JuMPmodel,
                                 sum(variable[name, t] for t in time_steps) / length(time_steps) <= param_ub[name])
     end
-
-    return
 end
 
 ########################## FeedForward Constraints #########################################
@@ -293,63 +293,63 @@ end
 function feed_forward!(psi_container::PSIContainer,
                      device_type::Type{I},
                      ff_model::UpperBoundFF) where {I<:PSY.StaticInjection}
-
     for prefix in get_affected_variables(ff_model)
         var_name = variable_name(prefix, I)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         ub_ff(psi_container, constraint_name(FEED_FORWARD, I), parameter_ref, var_name)
     end
-
-    return
-
 end
 
-function feed_forward!(psi_container::PSIContainer,
-                     device_type::Type{I},
-                     ff_model::SemiContinuousFF) where {I<:PSY.StaticInjection}
-    bin_var = variable_name(get_binary_from_stage(ff_model), I)
+function feed_forward!(
+    psi_container::PSIContainer,
+   ::Type{T},
+   ff_model::SemiContinuousFF,
+) where {T<:PSY.StaticInjection}
+    bin_var = variable_name(get_binary_from_stage(ff_model), T)
     parameter_ref = UpdateRef{JuMP.VariableRef}(bin_var)
     for prefix in get_affected_variables(ff_model)
-        var_name = variable_name(prefix, I)
+        var_name = variable_name(prefix, T)
         semicontinuousrange_ff(
             psi_container,
-            constraint_name(FEED_FORWARD_BIN, I),
+            constraint_name(FEED_FORWARD_BIN, T),
             parameter_ref,
             var_name,
         )
     end
-
-    return
 end
 
-function feed_forward!(psi_container::PSIContainer,
-                     device_type::Type{I},
-                     ff_model::IntegralLimitFF) where {I<:PSY.StaticInjection}
-
+function feed_forward!(
+    psi_container::PSIContainer,
+    ::Type{T},
+    ff_model::IntegralLimitFF,
+) where {T<:PSY.StaticInjection}
     for prefix in get_affected_variables(ff_model)
-        var_name = variable_name(prefix, I)
+        var_name = variable_name(prefix, T)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         integral_limit_ff(
             psi_container,
-            constraint_name(FEED_FORWARD, I),
+            constraint_name(FEED_FORWARD, T),
             parameter_ref,
             var_name,
         )
     end
-
-    return
 end
 
 #########################FeedForward Variables Updating#####################################
-function feed_forward_update(sync::Chron,
-                             param_reference::UpdateRef{JuMP.VariableRef},
-                             param_array::JuMPParamArray,
-                             to_stage::Stage,
-                             from_stage::Stage) where Chron <: AbstractChronology
+function feed_forward_update(
+    sync::T,
+    param_reference::UpdateRef{JuMP.VariableRef},
+    param_array::JuMPParamArray,
+    to_stage::Stage,
+    from_stage::Stage,
+) where {T<:AbstractChronology}
     for device_name in axes(param_array)[1]
-        var_value = get_stage_variable(Chron, (from_stage => to_stage), device_name, param_reference)
+        var_value = get_stage_variable(
+            T,
+            (from_stage => to_stage),
+            device_name,
+            param_reference,
+        )
         PJ.fix(param_array[device_name], var_value)
     end
-
-    return
 end

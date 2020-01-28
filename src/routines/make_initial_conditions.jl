@@ -132,7 +132,7 @@ function _make_initial_conditions!(
     length_devices = length(devices)
 
     if !has_initial_conditions(psi_container, key)
-        @info "Setting $(key.quantity) initial conditions for the status of all devices $(T) based on system data"
+        @info "Setting $(key.ic_type) initial conditions for the status of all devices $(T) based on system data"
         ini_conds = Vector{InitialCondition}(undef, length_devices)
         set_initial_conditions!(psi_container, key, ini_conds)
         for (ix, dev) in enumerate(devices)
@@ -143,7 +143,7 @@ function _make_initial_conditions!(
         ic_devices = Set((IS.get_uuid(ic.device) for ic in ini_conds))
         for dev in devices
             IS.get_uuid(dev) in ic_devices && continue
-            @info "Setting $(key.quantity) initial conditions for the status device $(PSY.get_name(dev)) based on system data"
+            @info "Setting $(key.ic_type) initial conditions for the status device $(PSY.get_name(dev)) based on system data"
             push!(
                 ini_conds,
                 make_ic_func(psi_container, dev, get_val_func(dev, key), cache),
@@ -155,21 +155,31 @@ function _make_initial_conditions!(
     return
 end
 
-function _make_initial_condition_active_power(psi_container, device, value, cache = nothing)
+function _make_initial_condition_active_power(
+    psi_container,
+    device::T,
+    value,
+    cache = nothing,
+) where {T<:PSY.Component}
     return InitialCondition(
         psi_container,
         device,
-        _get_ref_active_power(psi_container),
+        _get_ref_active_power(T, psi_container),
         value,
         cache,
     )
 end
 
-function _make_initial_condition_energy(psi_container, device, value, cache = nothing)
+function _make_initial_condition_energy(
+    psi_container,
+    device::T,
+    value,
+    cache = nothing,
+) where {T<:PSY.Component}
     return InitialCondition(
         psi_container,
         device,
-        _get_ref_energy(psi_container),
+        _get_ref_energy(T, psi_container),
         value,
         cache,
     )
@@ -188,21 +198,26 @@ function _get_energy_value(device, key)
 end
 
 function _get_active_power_duration_value(dev, key)
-    if key.quantity == TimeDurationON
+    if key.ic_type == TimeDurationON
         value = PSY.get_activepower(dev) > 0 ? MISSING_INITIAL_CONDITIONS_TIME_COUNT : 0.0
     else
-        @assert key.quantity == TimeDurationOFF
+        @assert key.ic_type == TimeDurationOFF
         value = PSY.get_activepower(dev) <= 0 ? MISSING_INITIAL_CONDITIONS_TIME_COUNT : 0.0
     end
 
     return value
 end
 
-function _get_ref_active_power(psi_container::PSIContainer)
-    return model_has_parameters(psi_container) ? REAL_POWER : ACTIVE_POWER
+function _get_ref_active_power(
+    ::Type{T},
+    psi_container::PSIContainer,
+) where {T<:PSY.Component}
+    return model_has_parameters(psi_container) ?
+           UpdateRef{JuMP.VariableRef}(T, REAL_POWER) :
+           UpdateRef{T}(ACTIVE_POWER, "get_activepower")
 end
 
-function _get_ref_energy(psi_container::PSIContainer)
-    # "energy" is the field name required by Storage devices.
-    return model_has_parameters(psi_container) ? E : "energy"
+function _get_ref_energy(::Type{T}, psi_container::PSIContainer) where {T<:PSY.Component}
+    return model_has_parameters(psi_container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
+           UpdateRef{T}(ENERGY, "get_energy")
 end

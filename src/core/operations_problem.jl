@@ -69,7 +69,7 @@ OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimiz
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
 - `optimizer::union{Nothing, JuMP.OptimizerFactory} = GLPK_optimizer`: The optimizer gets passed
 into the optimization model the default is nothing.
-- `initial_conditions::DICKDA`: default of Dict{ICKey, Array{InitialCondition}}
+- `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
 - `parameters::Bool`: enable JuMP parameters
 - `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
@@ -121,7 +121,7 @@ OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimiz
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
 - `optimizer::union{Nothing, JuMP.OptimizerFactory}`: The optimizer gets passed
 into the optimization model the default is nothing.
-- `initial_conditions::DICKDA`: default of Dict{ICKey, Array{InitialCondition}}
+- `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
 - `parameters::Bool`: enable JuMP parameters
 - `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
@@ -171,7 +171,7 @@ OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimiz
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
 - `optimizer::union{Nothing, JuMP.OptimizerFactory}`: The optimizer gets passed
 into the optimization model the default is nothing.
-- `initial_conditions::DICKDA`: default of Dict{ICKey, Array{InitialCondition}}
+- `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
 - `parameters::Bool`: enable JuMP parameters
 - `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
@@ -358,7 +358,7 @@ function get_initial_conditions(op_problem::OperationsProblem)
 end
 
 function get_initial_conditions(op_problem::OperationsProblem,
-                                ic::InitialConditionQuantity,
+                                ic::InitialConditionType,
                                 device::PSY.Device)
 
     psi_container = op_problem.psi_container

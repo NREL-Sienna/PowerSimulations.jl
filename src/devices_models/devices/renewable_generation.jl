@@ -146,7 +146,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE_RANGE, R),
-            UpdateRef{R}("get_rating"),
+            UpdateRef{R}(ACTIVE_POWER, "get_rating"),  # TODO reviewers?
             variable_name(REAL_POWER, R),
         )
     else
@@ -169,14 +169,18 @@ function nodal_expression!(psi_container::PSIContainer,
                         DeviceModel(R, RenewableFullDispatch), x -> (min = 0.0, max = 0.0))
 
     if parameters
-        include_parameters(psi_container,
-                           ts_data_active,
-                           UpdateRef{R}("get_rating"),
-                           :nodal_balance_active)
-        include_parameters(psi_container,
-                           ts_data_reactive,
-                           UpdateRef{R}("get_rating"),
-                           :nodal_balance_reactive)
+        include_parameters(
+            psi_container,
+            ts_data_active,
+            UpdateRef{R}(ACTIVE_POWER, "get_rating"),  # TODO: reviewers?
+            :nodal_balance_active,
+        )
+        include_parameters(
+            psi_container,
+            ts_data_reactive,
+            UpdateRef{R}(REACTIVE_POWER, "get_rating"),  # TODO: reviewers?
+            :nodal_balance_reactive,
+        )
         return
     end
     for t in model_time_steps(psi_container)
@@ -204,10 +208,12 @@ function nodal_expression!(psi_container::PSIContainer,
                         DeviceModel(R, RenewableFullDispatch), x -> (min = 0.0, max = 0.0))
                         
     if parameters
-        include_parameters(psi_container,
-                           ts_data_active,
-                           UpdateRef{R}("get_rating"),
-                           :nodal_balance_active)
+        include_parameters(
+            psi_container,
+            ts_data_active,
+            UpdateRef{R}(ACTIVE_POWER, "get_rating"),  # TODO: reviewers?
+            :nodal_balance_active,
+        )
         return
     end
     for t in model_time_steps(psi_container)
