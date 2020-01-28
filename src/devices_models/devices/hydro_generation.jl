@@ -382,17 +382,29 @@ function energy_balance_constraint!(psi_container::PSIContainer,
                                    system_formulation::Type{<:PM.AbstractPowerModel},
                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {H<:PSY.HydroDispatch}
     key = ICKey(DeviceEnergy, PSY.HydroDispatch)
+    parameters = model_has_parameters(psi_container)
+    use_forecast_data = model_uses_forecasts(psi_container)
+
     if !(key in keys(psi_container.initial_conditions))
         throw(IS.DataFormatError("Initial Conditions for $(PSY.HydroDispatch) Energy Constraints not in the model"))
     end
 
     ts_data_inflow, constraint_data = _get_inflow_time_series(psi_container, devices, model,
                                             x -> (min=0.0, max=PSY.get_inflow(x)))
-
-    reservoir_energy_balance(psi_container,
-                   psi_container.initial_conditions[key],
-                   constraint_name(ENERGY_CAPACITY, H),
-                   (variable_name(INFLOW, H), variable_name(ACTIVE_POWER, H), variable_name(ENERGY, H)))
+    if parameters
+        reservoir_energy_balance_param(psi_container,
+                                        psi_container.initial_conditions[key],
+                                        ts_data_inflow,
+                                        constraint_name(ENERGY_CAPACITY, H),
+                                        (variable_name(SPILLAGE, H), variable_name(REAL_POWER, H), variable_name(ENERGY, H)),
+                                        UpdateRef{H}("get_inflow"))
+    else
+        reservoir_energy_balance_param(psi_container,
+                                        psi_container.initial_conditions[key],
+                                        ts_data_inflow,
+                                        constraint_name(ENERGY_CAPACITY, H),
+                                        (variable_name(SPILLAGE, H), variable_name(REAL_POWER, H), variable_name(ENERGY, H)))
+    end
     return
 end
 
