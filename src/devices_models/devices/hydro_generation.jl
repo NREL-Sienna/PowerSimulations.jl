@@ -1,10 +1,11 @@
 abstract type AbstractHydroFormulation <: AbstractDeviceFormulation end
 abstract type AbstractHydroDispatchFormulation <: AbstractHydroFormulation end
 abstract type AbstractHydroUnitCommitment <: AbstractHydroFormulation end
+abstract type AbstractHydroReservoirFormulation <: AbstractHydroDispatchFormulation end
 struct HydroFixed <: AbstractHydroFormulation end
 struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
-struct HydroDispatchReservoirFlow <: AbstractHydroDispatchFormulation end
-struct HydroDispatchReservoirStorage <: AbstractHydroDispatchFormulation end
+struct HydroDispatchReservoirFlow <: AbstractHydroReservoirFormulation end
+struct HydroDispatchReservoirStorage <: AbstractHydroReservoirFormulation end
 struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirFlow <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
@@ -223,9 +224,9 @@ end
 
 function activepower_constraints!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{H},
-                                model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
+                                model::DeviceModel{H, <:AbstractHydroReservoirFormulation},
                                 system_formulation::Type{<:PM.AbstractPowerModel},
-                                feed_forward::IntegralLimitFF) where H<:PSY.HydroGen
+                                feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
