@@ -121,6 +121,22 @@ function duration_init(
     return
 end
 
+function storage_energy_init(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T<:PSY.HydroGen}
+    key = ICKey(DeviceEnergy, T)
+    _make_initial_conditions!(
+        psi_container,
+        devices,
+        ICKey(DeviceEnergy, T),
+        _make_initial_condition_reservoir_energy,
+        _get_reservoir_energy_value,
+    )
+
+    return
+end
+
 function _make_initial_conditions!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
@@ -185,6 +201,16 @@ function _make_initial_condition_energy(
     )
 end
 
+function _make_initial_condition_reservoir_energy(psi_container, device, value, cache = nothing)
+    return InitialCondition(
+        psi_container,
+        device,
+        _get_ref_reservoir_energy(psi_container),
+        value,
+        cache,
+    )
+end
+
 function _get_active_power_status_value(device, key)
     return PSY.get_activepower(device) > 0 ? 1.0 : 0.0
 end
@@ -195,6 +221,10 @@ end
 
 function _get_energy_value(device, key)
     return PSY.get_energy(device)
+end
+
+function _get_reservoir_energy_value(device, key)
+    return PSY.get_initial_storage(device)
 end
 
 function _get_active_power_duration_value(dev, key)
@@ -220,4 +250,9 @@ end
 function _get_ref_energy(::Type{T}, psi_container::PSIContainer) where {T<:PSY.Component}
     return model_has_parameters(psi_container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
            UpdateRef{T}(ENERGY, "get_energy")
+end
+
+function _get_ref_reservoir_energy(psi_container::PSIContainer)
+    # "storage_capacity" is the field name required by HydroDispatch devices.
+    return model_has_parameters(psi_container) ? ENERGY : "storage_capacity"  
 end

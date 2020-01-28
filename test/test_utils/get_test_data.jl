@@ -67,6 +67,12 @@ for t in 1:2
    for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hyd))
        add_forecast!(c_sys5_hyd, h, Deterministic("get_rating", hydro_timeseries_DA[t][ix]))
    end
+   for (ix, h) in enumerate(get_components(HydroDispatch, c_sys5_hyd))
+       add_forecast!(c_sys5_hyd, h, Deterministic("get_storage_capacity", hydro_timeseries_DA[t][ix]))
+   end
+   for (ix, h) in enumerate(get_components(HydroDispatch, c_sys5_hyd))
+       add_forecast!(c_sys5_hyd, h, Deterministic("get_inflow", hydro_timeseries_DA[t][ix].*0.8))
+   end
 end
 
 #System with Storage Device
