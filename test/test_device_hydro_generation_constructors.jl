@@ -95,7 +95,8 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
 end
-
+#=
+# All Hydro UC formulations are currently not supported
 @testset "Hydro DCPLossLess HydroDispatch with HydroCommitmentRunOfRiver Formulations" begin
     model = DeviceModel(HydroDispatch, HydroCommitmentRunOfRiver)
 
@@ -153,6 +154,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
 end
+=#
 
 @testset "Hydro DCPLossLess HydroDispatch with HydroDispatchReservoirStorage Formulations" begin
     model = DeviceModel(HydroDispatch, HydroDispatchReservoirStorage)
@@ -177,6 +179,8 @@ end
 
 end
 
+#=
+# All Hydro UC formulations are currently not supported
 @testset "Hydro DCPLossLess HydroDispatch with HydroCommitmentReservoirStorage Formulations" begin
     model = DeviceModel(HydroDispatch, HydroCommitmentReservoirStorage)
 
@@ -205,3 +209,4 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
 end
+=#
