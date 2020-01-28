@@ -155,6 +155,7 @@ function _get_time_series(psi_container::PSIContainer,
         bus_number = PSY.get_number(PSY.get_bus(device))
         name = PSY.get_name(device)
         tech = PSY.get_tech(device)
+        # Hydro gens dont't have a power factor field, so the pf calc is commented
         # pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
         active_power = use_forecast_data ? PSY.get_rating(tech) : PSY.get_activepower(device)
         reactive_power = use_forecast_data ? PSY.get_rating(tech) : PSY.get_reactivepower(device)
@@ -171,6 +172,7 @@ function _get_time_series(psi_container::PSIContainer,
         push!(constraint_data, range_data)
         push!(active_timeseries, DeviceTimeSeries(name, bus_number, active_power, ts_vector,
                                                  range_data))
+        # not scaling active power by pf since pf isn't avaialable for hydro gens
         push!(reactive_timeseries, DeviceTimeSeries(name, bus_number, reactive_power,
                                                     ts_vector, range_data))
     end
@@ -442,17 +444,17 @@ function nodal_expression!(psi_container::PSIContainer,
     end
 
     for t in model_time_steps(psi_container)
-        for device_value in ts_data_active
+        for device in ts_data_active
             _add_to_expression!(psi_container.expressions[:nodal_balance_active],
-                            device_value[2],
+                            device.bus_number,
                             t,
-                            device_value[3]*device_value[4][t])
+                            device.multiplier * device.timeseries[t])
         end
-        for device_value in ts_data_reactive
+        for device in ts_data_reactive
             _add_to_expression!(psi_container.expressions[:nodal_balance_reactive],
-                            device_value[2],
+                            device.bus_number,
                             t,
-                            device_value[3]*device_value[4][t])
+                            device.multiplier * device.timeseries[t])
         end
     end
 
