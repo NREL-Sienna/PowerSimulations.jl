@@ -399,11 +399,11 @@ function energy_balance_constraint!(psi_container::PSIContainer,
                                         (variable_name(SPILLAGE, H), variable_name(REAL_POWER, H), variable_name(ENERGY, H)),
                                         UpdateRef{H}("get_inflow"))
     else
-        reservoir_energy_balance_param(psi_container,
-                                        psi_container.initial_conditions[key],
-                                        ts_data_inflow,
-                                        constraint_name(ENERGY_CAPACITY, H),
-                                        (variable_name(SPILLAGE, H), variable_name(REAL_POWER, H), variable_name(ENERGY, H)))
+        reservoir_energy_balance(psi_container,
+                                psi_container.initial_conditions[key],
+                                ts_data_inflow,
+                                constraint_name(ENERGY_CAPACITY, H),
+                                (variable_name(SPILLAGE, H), variable_name(REAL_POWER, H), variable_name(ENERGY, H)))
     end
     return
 end
