@@ -18,6 +18,8 @@ function build_cache!(cache::TimeStatusChange, op_problem::OperationsProblem)
 end
 
 function build_cache!(cache::TimeStatusChange, psi_container::PSIContainer)
+    # TODO: This currently only supports parameters; we may need to support variables and
+    # constraints in the future. A get function would need to be parametrized on cache.ref.
     parameter = get_parameter_array(psi_container, cache.ref)
     value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, axes(parameter)...)
 
