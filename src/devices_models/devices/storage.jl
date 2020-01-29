@@ -7,14 +7,14 @@ function active_power_variables!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
     add_variable(psi_container,
                  devices,
-                 variable_name(REAL_POWER_IN, St),
+                 variable_name(ACTIVE_POWER_IN, St),
                  false,
                  :nodal_balance_active,
                  -1.0;
                  lb_value = d -> 0.0,)
     add_variable(psi_container,
                  devices,
-                 variable_name(REAL_POWER_OUT, St),
+                 variable_name(ACTIVE_POWER_OUT, St),
                  false,
                  :nodal_balance_active;
                  lb_value = d -> 0.0,)
@@ -74,12 +74,12 @@ function active_power_constraints!(psi_container::PSIContainer,
     device_range(psi_container,
                  constraint_data_out,
                  constraint_name(OUTPUT_POWER_RANGE, St),
-                 variable_name(REAL_POWER_OUT, St))
+                 variable_name(ACTIVE_POWER_OUT, St))
 
     device_range(psi_container,
                  constraint_data_in,
                  constraint_name(INPUT_POWER_RANGE, St),
-                 variable_name(REAL_POWER_IN, St))
+                 variable_name(ACTIVE_POWER_IN, St))
     return
 end
 
@@ -102,13 +102,13 @@ function active_power_constraints!(psi_container::PSIContainer,
     reserve_device_semicontinuousrange(psi_container,
                                        constraint_data_in,
                                        constraint_name(INPUT_POWER_RANGE, St),
-                                       variable_name(REAL_POWER_IN, St),
+                                       variable_name(ACTIVE_POWER_IN, St),
                                        variable_name(RESERVE, St))
 
     reserve_device_semicontinuousrange(psi_container,
                                        constraint_data_out,
                                        constraint_name(OUTPUT_POWER_RANGE, St),
-                                       variable_name(REAL_POWER_OUT, St),
+                                       variable_name(ACTIVE_POWER_OUT, St),
                                        variable_name(RESERVE, St))
     return
 end
@@ -204,8 +204,8 @@ function energy_balance_constraint!(psi_container::PSIContainer,
         efficiency_data,
         constraint_name(ENERGY_LIMIT, St),
         (
-            variable_name(REAL_POWER_OUT, St),
-            variable_name(REAL_POWER_IN, St),
+            variable_name(ACTIVE_POWER_OUT, St),
+            variable_name(ACTIVE_POWER_IN, St),
             variable_name(ENERGY, St),
         ),
     )

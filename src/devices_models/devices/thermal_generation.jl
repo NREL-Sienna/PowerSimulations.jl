@@ -16,7 +16,7 @@ function activepower_variables!(psi_container::PSIContainer,
                            devices::IS.FlattenIteratorWrapper{T}) where T<:PSY.ThermalGen
     add_variable(psi_container,
                  devices,
-                 variable_name(REAL_POWER, T),
+                 variable_name(ACTIVE_POWER, T),
                  false,
                  :nodal_balance_active;
                  ub_value = d -> PSY.get_activepowerlimits(PSY.get_tech(d)).max,
@@ -90,7 +90,7 @@ function activepower_constraints!(psi_container::PSIContainer,
     device_range(psi_container,
                  constraint_data,
                  constraint_name(ACTIVE_RANGE, T),
-                 variable_name(REAL_POWER, T))
+                 variable_name(ACTIVE_POWER, T))
     return
 end
 
@@ -114,7 +114,7 @@ function activepower_constraints!(psi_container::PSIContainer,
         psi_container,
         constraint_data,
         constraint_name(ACTIVE_RANGE, T),
-        variable_name(REAL_POWER, T),
+        variable_name(ACTIVE_POWER, T),
         variable_name(ON, T),
     )
     return
@@ -138,7 +138,7 @@ function activepower_constraints!(psi_container::PSIContainer,
         push!(constraint_data, range_data)
     end
 
-    var_key = variable_name(REAL_POWER, T)
+    var_key = variable_name(ACTIVE_POWER, T)
     variable = get_variable(psi_container, var_key)
     # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
     for v in variable
@@ -151,7 +151,7 @@ function activepower_constraints!(psi_container::PSIContainer,
         psi_container,
         constraint_data,
         constraint_name(ACTIVE_RANGE, T),
-        variable_name(REAL_POWER, T)
+        variable_name(ACTIVE_POWER, T)
     )
     return
 end
@@ -321,7 +321,7 @@ function ramp_constraints!(psi_container::PSIContainer,
             ini_conds,
             constraint_name(RAMP, T),
             (
-                variable_name(REAL_POWER, T),
+                variable_name(ACTIVE_POWER, T),
                 variable_name(START, T),
                 variable_name(STOP, T),
             )
@@ -351,7 +351,7 @@ function ramp_constraints!(psi_container::PSIContainer,
             ramp_params,
             ini_conds,
             constraint_name(RAMP, T),
-            variable_name(REAL_POWER, T),
+            variable_name(ACTIVE_POWER, T),
         )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
@@ -461,7 +461,7 @@ function cost_function(psi_container::PSIContainer,
                        ::Type{<:PM.AbstractPowerModel},
                        feed_forward::Union{Nothing, AbstractAffectFeedForward}) where T<:PSY.ThermalGen
     #Variable Cost component
-    add_to_cost(psi_container, devices, variable_name(REAL_POWER, T), :variable)
+    add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
     #Commitment Cost Components
     add_to_cost(psi_container, devices, variable_name(START, T), :startup)
     add_to_cost(psi_container, devices, variable_name(STOP, T), :shutdn)

@@ -224,7 +224,7 @@ function build_init(gens, data)
     for (ix,g) in enumerate(gens)
         init[ix] = InitialCondition(
             g,
-            PSI.UpdateRef{Device}(PSI.variable_name(PSI.REAL_POWER, typeof(g))),
+            PSI.UpdateRef{JuMP.VariableRef}(PSI.ACTIVE_POWER),
             data[ix],
             TimeStatusChange,
         )

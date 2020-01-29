@@ -9,7 +9,7 @@ function activepower_variables!(psi_container::PSIContainer,
                                devices::IS.FlattenIteratorWrapper{R}) where R<:PSY.RenewableGen
     add_variable(psi_container,
                  devices,
-                 variable_name(REAL_POWER, R),
+                 variable_name(ACTIVE_POWER, R),
                  false,
                  :nodal_balance_active;
                  lb_value = x -> 0.0,
@@ -61,7 +61,7 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
     names = (PSY.get_name(d) for d in devices)
     time_steps = model_time_steps(psi_container)
-    p_var = get_variable(psi_container, REAL_POWER, R)
+    p_var = get_variable(psi_container, ACTIVE_POWER, R)
     q_var = get_variable(psi_container, REACTIVE_POWER, R)
     constraint_val = JuMPConstraintArray(undef, names, time_steps)
     assign_constraint!(psi_container, REACTIVE_RANGE, R, constraint_val)
@@ -96,6 +96,7 @@ function _get_time_series(psi_container::PSIContainer,
         tech = PSY.get_tech(device)
         pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
         active_power = use_forecast_data ? PSY.get_rating(tech) : PSY.get_activepower(device)
+        reactive_power = use_forecast_data ? PSY.get_rating(tech) : PSY.get_reactivepower(device)
         if use_forecast_data
             forecast = PSY.get_forecast(PSY.Deterministic,
                                         device,
@@ -113,7 +114,7 @@ function _get_time_series(psi_container::PSIContainer,
         push!(active_timeseries, DeviceTimeSeries(name, bus_number, active_power, ts_vector,
                                                   range_data))
         push!(reactive_timeseries, DeviceTimeSeries(name, bus_number,
-                                                active_power * pf, ts_vector, range_data))
+                                                reactive_power * pf, ts_vector, range_data))
 
     end
     return active_timeseries, reactive_timeseries, constraint_data
@@ -137,7 +138,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             constraint_data,
             constraint_name(ACTIVE_RANGE, R),
-            variable_name(REAL_POWER, R),
+            variable_name(ACTIVE_POWER, R),
         )
         return
     end
@@ -146,15 +147,15 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE_RANGE, R),
-            UpdateRef{R}("get_rating"),
-            variable_name(REAL_POWER, R),
+            UpdateRef{R}(ACTIVE_POWER, "get_rating"),
+            variable_name(ACTIVE_POWER, R),
         )
     else
         device_timeseries_ub(
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE_RANGE, R),
-            variable_name(REAL_POWER, R),
+            variable_name(ACTIVE_POWER, R),
         )
     end
     return
@@ -169,14 +170,18 @@ function nodal_expression!(psi_container::PSIContainer,
                         DeviceModel(R, RenewableFullDispatch), x -> (min = 0.0, max = 0.0))
 
     if parameters
-        include_parameters(psi_container,
-                           ts_data_active,
-                           UpdateRef{R}("get_rating"),
-                           :nodal_balance_active)
-        include_parameters(psi_container,
-                           ts_data_reactive,
-                           UpdateRef{R}("get_rating"),
-                           :nodal_balance_reactive)
+        include_parameters(
+            psi_container,
+            ts_data_active,
+            UpdateRef{R}(ACTIVE_POWER, "get_rating"),
+            :nodal_balance_active,
+        )
+        include_parameters(
+            psi_container,
+            ts_data_reactive,
+            UpdateRef{R}(REACTIVE_POWER, "get_rating"),
+            :nodal_balance_reactive,
+        )
         return
     end
     for t in model_time_steps(psi_container)
@@ -204,10 +209,12 @@ function nodal_expression!(psi_container::PSIContainer,
                         DeviceModel(R, RenewableFullDispatch), x -> (min = 0.0, max = 0.0))
                         
     if parameters
-        include_parameters(psi_container,
-                           ts_data_active,
-                           UpdateRef{R}("get_rating"),
-                           :nodal_balance_active)
+        include_parameters(
+            psi_container,
+            ts_data_active,
+            UpdateRef{R}(ACTIVE_POWER, "get_rating"),
+            :nodal_balance_active,
+        )
         return
     end
     for t in model_time_steps(psi_container)

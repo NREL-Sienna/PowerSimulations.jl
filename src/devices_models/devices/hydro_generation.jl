@@ -14,7 +14,7 @@ function activepower_variables!(psi_container::PSIContainer,
                                devices::IS.FlattenIteratorWrapper{H}) where H<:PSY.HydroGen
     add_variable(psi_container,
                  devices,
-                 variable_name(REAL_POWER, H),
+                 variable_name(ACTIVE_POWER, H),
                  false,
                  :nodal_balance_active;
                  lb_value = d -> PSY.get_activepowerlimits(PSY.get_tech(d)).min,
@@ -157,6 +157,7 @@ function _get_time_series(psi_container::PSIContainer,
         tech = PSY.get_tech(device)
         # pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
         active_power = use_forecast_data ? PSY.get_rating(tech) : PSY.get_activepower(device)
+        reactive_power = use_forecast_data ? PSY.get_rating(tech) : PSY.get_reactivepower(device)
         if use_forecast_data
             ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
                                                                 device,
@@ -170,7 +171,7 @@ function _get_time_series(psi_container::PSIContainer,
         push!(constraint_data, range_data)
         push!(active_timeseries, DeviceTimeSeries(name, bus_number, active_power, ts_vector,
                                                  range_data))
-        push!(reactive_timeseries, DeviceTimeSeries(name, bus_number, active_power,
+        push!(reactive_timeseries, DeviceTimeSeries(name, bus_number, reactive_power,
                                                     ts_vector, range_data))
     end
     return active_timeseries, reactive_timeseries, constraint_data
@@ -193,7 +194,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             constraint_data,
             constraint_name(ACTIVE_RANGE, H),
-            variable_name(REAL_POWER, H),
+            variable_name(ACTIVE_POWER, H),
         )
         return
     end
@@ -203,15 +204,15 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE_RANGE, H),
-            UpdateRef{H}("get_rating"),
-            variable_name(REAL_POWER, H),
+            UpdateRef{H}(ACTIVE_POWER, "get_rating"),
+            variable_name(ACTIVE_POWER, H),
         )
     else
         device_timeseries_ub(
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE_RANGE, H),
-            variable_name(REAL_POWER, H),
+            variable_name(ACTIVE_POWER, H),
         )
     end
 
@@ -233,7 +234,7 @@ function activepower_constraints!(psi_container::PSIContainer,
         psi_container,
         constraint_data,
         constraint_name(ACTIVE_RANGE, H),
-        variable_name(REAL_POWER, H),
+        variable_name(ACTIVE_POWER, H),
     )
 
     return
@@ -255,7 +256,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             constraint_data,
             constraint_name(ACTIVE_RANGE, H),
-            variable_name(REAL_POWER, H),
+            variable_name(ACTIVE_POWER, H),
             variable_name(ON, H),
         )
         return
@@ -266,8 +267,8 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE_RANGE, H),
-            variable_name(REAL_POWER, H),
-            UpdateRef{H}("get_rating"),
+            variable_name(ACTIVE_POWER, H),
+            UpdateRef{H}(ON, "get_rating"),
             variable_name(ON, H),
         )
     else
@@ -275,7 +276,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE_RANGE, H),
-            variable_name(REAL_POWER, H),
+            variable_name(ACTIVE_POWER, H),
             variable_name(ON, H),
         )
     end
@@ -349,7 +350,7 @@ function inflow_constraints!(psi_container::PSIContainer,
         device_timeseries_param_ub(psi_container,
                             ts_data_inflow,
                             constraint_name(INFLOW_RANGE, H),
-                            UpdateRef{H}("get_inflow"),
+                            UpdateRef{H}(INFLOW_RANGE, "get_inflow"),
                             variable_name(INFLOW, H))
     else
         device_timeseries_ub(psi_container,
@@ -400,7 +401,7 @@ function energy_balance_constraint!(psi_container::PSIContainer,
                    psi_container.initial_conditions[key],
                    efficiency_data,
                    constraint_name(ENERGY_CAPACITY, H),
-                   (variable_name(INFLOW, H), variable_name(REAL_POWER, H), variable_name(ENERGY, H)))
+                   (variable_name(INFLOW, H), variable_name(ACTIVE_POWER, H), variable_name(ENERGY, H)))
     return
 end
 
@@ -436,14 +437,18 @@ function nodal_expression!(psi_container::PSIContainer,
 
 
     if parameters
-        include_parameters(psi_container,
-                           ts_data_active,
-                           UpdateRef{H}("get_rating"),
-                           :nodal_balance_active)
-        include_parameters(psi_container,
-                           ts_data_reactive,
-                           UpdateRef{H}("get_rating"),
-                           :nodal_balance_reactive)
+        include_parameters(
+            psi_container,
+            ts_data_active,
+            UpdateRef{H}(ACTIVE_POWER, "get_rating"),  # TODO: fix in PR #316
+            :nodal_balance_active,
+        )
+        include_parameters(
+            psi_container,
+            ts_data_reactive,
+            UpdateRef{H}(REACTIVE_POWER, "get_rating"),  # TODO: fix in PR #316
+            :nodal_balance_reactive,
+        )
         return
     end
 
@@ -473,10 +478,12 @@ function nodal_expression!(psi_container::PSIContainer,
                                     DeviceModel(H, HydroFixed), x -> (min = 0.0, max = 0.0))
 
     if parameters
-        include_parameters(psi_container,
-                           ts_data_active,
-                           UpdateRef{H}("get_rating"),
-                           :nodal_balance_active)
+        include_parameters(
+            psi_container,
+            ts_data_active,
+            UpdateRef{H}(ACTIVE_POWER, "get_rating"),  # TODO: fix in PR #316
+            :nodal_balance_active,
+        )
         return
     end
 
@@ -499,7 +506,7 @@ function cost_function(psi_container::PSIContainer,
                        system_formulation::Type{<:PM.AbstractPowerModel}) where D<:AbstractHydroFormulation
     add_to_cost(psi_container,
                 devices,
-                variable_name(REAL_POWER, PSY.HydroDispatch),
+                variable_name(ACTIVE_POWER, PSY.HydroDispatch),
                 :fixed,
                 -1.0)
 
@@ -560,22 +567,21 @@ function energy_limit_constraints!(psi_container::PSIContainer,
                                     model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
                                     system_formulation::Type{<:PM.AbstractPowerModel},
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where H<:PSY.HydroGen
-    parameters = model_has_parameters(psi_container)
     energy_limit_data  = _get_energy_limit(psi_container, devices)
-    if parameters
+    if model_has_parameters(psi_container)
         device_energy_limit_param_ub(
             psi_container,
             energy_limit_data,
             constraint_name(ENERGY_LIMIT, H),
-            UpdateRef{H}("get_storage_capacity"),
-            variable_name(REAL_POWER, H),
+            UpdateRef{H}(ENERGY_BUDGET, "get_storage_capacity"),
+            variable_name(ACTIVE_POWER, H),
         )
     else
         device_energy_limit_ub(
             psi_container,
             energy_limit_data,
             constraint_name(ENERGY_LIMIT),
-            variable_name(REAL_POWER, H),
+            variable_name(ACTIVE_POWER, H),
         )
     end
 end
