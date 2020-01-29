@@ -1,21 +1,25 @@
 #########################TimeSeries Data Updating###########################################
-function parameter_update!(param_reference::UpdateRef{T},
-                           stage_number::Int64,
-                           sim::Simulation) where T <: PSY.Component
+function parameter_update!(
+    param_reference::UpdateRef{T},
+    stage_number::Int64,
+    sim::Simulation,
+) where {T<:PSY.Component}
     stage = get_stage(sim, stage_number)
     devices = PSY.get_components(T, stage.sys)
     initial_forecast_time = get_simulation_time(sim, stage_number)
     horizon = length(model_time_steps(stage.internal.psi_container))
     param_array = get_parameters(stage.internal.psi_container, param_reference)
     for d in devices
-        forecast = PSY.get_forecast(PSY.Deterministic,
-                                    d,
-                                    initial_forecast_time,
-                                    "$(param_reference.access_ref)",
-                                    horizon)
+        forecast = PSY.get_forecast(
+            PSY.Deterministic,
+            d,
+            initial_forecast_time,
+            "$(param_reference.access_ref)",
+            horizon,
+        )
         ts_vector = TS.values(PSY.get_data(forecast))
         device_name = PSY.get_name(d)
-        for (ix, val) in enumerate(param_array[device_name,:])
+        for (ix, val) in enumerate(param_array[device_name, :])
             value = ts_vector[ix]
             JuMP.fix(val, value)
         end
@@ -25,9 +29,11 @@ function parameter_update!(param_reference::UpdateRef{T},
 end
 
 """Updates the forecast parameter value"""
-function parameter_update!(param_reference::UpdateRef{JuMP.VariableRef},
-                           stage_number::Int64,
-                           sim::Simulation)
+function parameter_update!(
+    param_reference::UpdateRef{JuMP.VariableRef},
+    stage_number::Int64,
+    sim::Simulation,
+)
     stage = get_stage(sim, stage_number)
     param_array = get_parameters(stage.internal.psi_container, param_reference)
     for (k, ref) in stage.internal.chronolgy_dict
@@ -46,11 +52,13 @@ function _update_caches!(stage::Stage)
     return
 end
 
-function _intial_conditions_update!(initial_condition_key::ICKey,
-                                   ini_cond_vector::Vector{InitialCondition},
-                                   stage_number::Int64,
-                                   step::Int64,
-                                   sim::Simulation)
+function _intial_conditions_update!(
+    initial_condition_key::ICKey,
+    ini_cond_vector::Vector{InitialCondition},
+    stage_number::Int64,
+    step::Int64,
+    sim::Simulation,
+)
     ini_cond_chronolgy = nothing
     current_stage = get_stage(sim, stage_number)
     #checks if current stage is the first in the step and the execution is the first to
@@ -64,27 +72,33 @@ function _intial_conditions_update!(initial_condition_key::ICKey,
     if intra_step_update
         from_stage = get_last_stage(sim)
         ini_cond_chronolgy = get_ini_cond_chronology(sim, stage_number)
-    # Updates the next stage in the same step. Uses the same chronology as intra_stage
+        # Updates the next stage in the same step. Uses the same chronology as intra_stage
     elseif intra_stage_update
-        from_stage = get_stage(sim, stage_number-1)
+        from_stage = get_stage(sim, stage_number - 1)
         ini_cond_chronolgy = current_stage.internal.chronolgy_dict[stage_number-1]
-    # Update is done on the current stage
+        # Update is done on the current stage
     elseif inner_stage_update
         from_stage = current_stage
         ini_cond_chronolgy = get_ini_cond_chronology(sim, stage_number)
     else
         error("Condition not implemented")
     end
-    initial_condition_update!(initial_condition_key,
-                             ini_cond_chronolgy,
-                             ini_cond_vector,
-                             current_stage,
-                             from_stage)
+    initial_condition_update!(
+        initial_condition_key,
+        ini_cond_chronolgy,
+        ini_cond_vector,
+        current_stage,
+        from_stage,
+    )
 
     return
 end
 
-function update_stage!(stage::Stage{M}, step::Int64, sim::Simulation) where M<:AbstractOperationsProblem
+function update_stage!(
+    stage::Stage{M},
+    step::Int64,
+    sim::Simulation,
+) where {M<:AbstractOperationsProblem}
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && get_number(stage) == 1 && get_execution_count(stage) == 0) && return
     for param_reference in get_parameter_refs(stage.internal.psi_container)

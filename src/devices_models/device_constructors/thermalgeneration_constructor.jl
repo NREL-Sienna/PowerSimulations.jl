@@ -1,12 +1,13 @@
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{T, D},
-                           ::Type{S};
-                           kwargs...) where {T<:PSY.ThermalGen,
-                                             D<:AbstractThermalFormulation,
-                                             S<:PM.AbstractPowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{T,D},
+    ::Type{S};
+    kwargs...,
+) where {T<:PSY.ThermalGen,D<:AbstractThermalFormulation,S<:PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
     if validate_available_devices(devices, T)
@@ -39,12 +40,13 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{T, D},
-                           ::Type{S};
-                           kwargs...) where {T<:PSY.ThermalGen,
-                                             D<:AbstractThermalFormulation,
-                                             S<:PM.AbstractActivePowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{T,D},
+    ::Type{S};
+    kwargs...,
+) where {T<:PSY.ThermalGen,D<:AbstractThermalFormulation,S<:PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 
     if validate_available_devices(devices, T)
@@ -74,11 +76,13 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{T, ThermalBasicUnitCommitment},
-                           ::Type{S};
-                           kwargs...) where {T<:PSY.ThermalGen,
-                                             S<:PM.AbstractPowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{T,ThermalBasicUnitCommitment},
+    ::Type{S};
+    kwargs...,
+) where {T<:PSY.ThermalGen,S<:PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
     if validate_available_devices(devices, T)
@@ -109,11 +113,13 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{T, ThermalBasicUnitCommitment},
-                           ::Type{S};
-                           kwargs...) where {T<:PSY.ThermalGen,
-                                             S<:PM.AbstractActivePowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{T,ThermalBasicUnitCommitment},
+    ::Type{S};
+    kwargs...,
+) where {T<:PSY.ThermalGen,S<:PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 
     if validate_available_devices(devices, T)
@@ -141,11 +147,13 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{T, ThermalRampLimited},
-                           ::Type{S};
-                           kwargs...) where {T<:PSY.ThermalGen,
-                                             S<:PM.AbstractPowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{T,ThermalRampLimited},
+    ::Type{S};
+    kwargs...,
+) where {T<:PSY.ThermalGen,S<:PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
     if validate_available_devices(devices, T)
@@ -175,11 +183,13 @@ end
 """
 This function creates the model for a full themal dispatch formulation depending on combination of devices, device_formulation and system_formulation
 """
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{T, ThermalRampLimited},
-                           ::Type{S};
-                           kwargs...) where {T<:PSY.ThermalGen,
-                                             S<:PM.AbstractActivePowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{T,ThermalRampLimited},
+    ::Type{S};
+    kwargs...,
+) where {T<:PSY.ThermalGen,S<:PM.AbstractActivePowerModel}
     devices = PSY.get_components(T, sys)
 
     if validate_available_devices(devices, T)
@@ -205,12 +215,13 @@ end
 
 
 
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{T, D},
-                           ::Type{S};
-                           kwargs...) where {T<:PSY.ThermalGen,
-                                             D<:AbstractThermalDispatchFormulation,
-                                             S<:PM.AbstractPowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{T,D},
+    ::Type{S};
+    kwargs...,
+) where {T<:PSY.ThermalGen,D<:AbstractThermalDispatchFormulation,S<:PM.AbstractPowerModel}
     devices = PSY.get_components(T, sys)
 
     if validate_available_devices(devices, T)
@@ -234,12 +245,17 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     return
 end
 
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{T, D},
-                           ::Type{S};
-                           kwargs...) where {T<:PSY.ThermalGen,
-                                             D<:AbstractThermalDispatchFormulation,
-                                             S<:PM.AbstractActivePowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{T,D},
+    ::Type{S};
+    kwargs...,
+) where {
+    T<:PSY.ThermalGen,
+    D<:AbstractThermalDispatchFormulation,
+    S<:PM.AbstractActivePowerModel,
+}
     devices = PSY.get_components(T, sys)
 
     if validate_available_devices(devices, T)

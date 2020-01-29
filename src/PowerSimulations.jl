@@ -222,10 +222,4 @@ include("utils/kwargs_check.jl")
 #Routines
 include("routines/write_results.jl")
 
-#Initialization
-function __init__()
-    Requires.@require Weave = "44d3d7a6-8a23-5bf8-98c5-b353f8df5ec9" include("utils/make_report.jl")
-end
-
-
 end

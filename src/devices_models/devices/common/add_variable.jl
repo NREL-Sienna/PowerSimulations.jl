@@ -38,39 +38,49 @@ If binary = true:
 * initial_value_function : Provides the function over device to obtain the warm start value
 
 """
-function add_variable(psi_container::PSIContainer,
-                      devices::D,
-                      var_name::Symbol,
-                      binary::Bool,
-                      expression_name::Union{Nothing,Symbol}=nothing,
-                      sign::Float64=1.0; kwargs...) where {D<:Union{Vector{<:PSY.Device},
-                                          IS.FlattenIteratorWrapper{<:PSY.Device}}}
+function add_variable(
+    psi_container::PSIContainer,
+    devices::D,
+    var_name::Symbol,
+    binary::Bool,
+    expression_name::Union{Nothing,Symbol} = nothing,
+    sign::Float64 = 1.0;
+    kwargs...,
+) where {D<:Union{Vector{<:PSY.Device},IS.FlattenIteratorWrapper{<:PSY.Device}}}
     time_steps = model_time_steps(psi_container)
-    variable = add_var_container!(psi_container, var_name, (PSY.get_name(d) for d in devices), time_steps)
+    variable = add_var_container!(
+        psi_container,
+        var_name,
+        (PSY.get_name(d) for d in devices),
+        time_steps,
+    )
     jvar_name = _remove_underscore(var_name)
 
     lb_f = get(kwargs, :lb_value, nothing)
-    init_f= get(kwargs, :initial_value, nothing)
+    init_f = get(kwargs, :initial_value, nothing)
     ub_f = get(kwargs, :ub_value, nothing)
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
-        variable[name, t] = JuMP.@variable(psi_container.JuMPmodel,
-                                        base_name="$(jvar_name)_{$(name), $(t)}",
-                                        binary=binary
-                                        )
+        variable[name, t] = JuMP.@variable(
+            psi_container.JuMPmodel,
+            base_name = "$(jvar_name)_{$(name), $(t)}",
+            binary = binary
+        )
 
         !isnothing(ub_f) && JuMP.set_upper_bound(variable[name, t], ub_f(d))
         !isnothing(lb_f) && !binary && JuMP.set_lower_bound(variable[name, t], lb_f(d))
         !isnothing(init_f) && JuMP.set_start_value(variable[name, t], init_f(d))
 
         if !(isnothing(expression_name))
-        bus_number = PSY.get_number(PSY.get_bus(d))
-        _add_to_expression!(get_expression(psi_container, expression_name),
-                            bus_number,
-                            t,
-                            variable[name, t],
-                            sign)
+            bus_number = PSY.get_number(PSY.get_bus(d))
+            _add_to_expression!(
+                get_expression(psi_container, expression_name),
+                bus_number,
+                t,
+                variable[name, t],
+                sign,
+            )
         end
     end
 
@@ -111,7 +121,7 @@ function set_variable_bounds!(
     bounds::Vector{DeviceRange},
     var_type::AbstractString,
     ::Type{T},
-) where T <: PSY.Device
+) where {T<:PSY.Device}
     var = get_variable(psi_container, var_type, T)
     for t in model_time_steps(psi_container), bound in bounds
         _var = var[bound.name, t]

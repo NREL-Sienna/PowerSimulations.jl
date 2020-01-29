@@ -54,7 +54,7 @@ function get_logging_level(env_name::String, default)
 end
 
 function run_tests()
-    console_level = get_logging_level("SYS_CONSOLE_LOG_LEVEL", "Error")
+    console_level = get_logging_level("SYS_CONSOLE_LOG_LEVEL", "Info")
     console_logger = ConsoleLogger(stderr, console_level)
     file_level = get_logging_level("SYS_LOG_LEVEL", "Info")
 

@@ -1,9 +1,10 @@
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{H, D},
-                           ::Type{S};
-                           kwargs...) where {H<:PSY.HydroGen,
-                                             D<:AbstractHydroDispatchFormulation,
-                                             S<:PM.AbstractPowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{H,D},
+    ::Type{S};
+    kwargs...,
+) where {H<:PSY.HydroGen,D<:AbstractHydroDispatchFormulation,S<:PM.AbstractPowerModel}
     devices = PSY.get_components(H, sys)
 
     if validate_available_devices(devices, H)
@@ -11,8 +12,8 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables!(psi_container, devices);
-    reactivepower_variables!(psi_container, devices);
+    activepower_variables!(psi_container, devices)
+    reactivepower_variables!(psi_container, devices)
 
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
@@ -25,11 +26,13 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     return
 end
 
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{H, HydroDispatchReservoirFlow},
-                           ::Type{S};
-                           kwargs...) where {H<:PSY.HydroGen,
-                                             S<:PM.AbstractPowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{H,HydroDispatchReservoirFlow},
+    ::Type{S};
+    kwargs...,
+) where {H<:PSY.HydroGen,S<:PM.AbstractPowerModel}
     devices = PSY.get_components(H, sys)
 
     if validate_available_devices(devices, H)
@@ -37,8 +40,8 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables!(psi_container, devices);
-    reactivepower_variables!(psi_container, devices);
+    activepower_variables!(psi_container, devices)
+    reactivepower_variables!(psi_container, devices)
 
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
@@ -53,12 +56,13 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
 end
 
 
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{H, D},
-                           ::Type{S};
-                           kwargs...) where {H<:PSY.HydroGen,
-                                             D<:AbstractHydroUnitCommitment,
-                                             S<:PM.AbstractPowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{H,D},
+    ::Type{S};
+    kwargs...,
+) where {H<:PSY.HydroGen,D<:AbstractHydroUnitCommitment,S<:PM.AbstractPowerModel}
     devices = PSY.get_components(H, sys)
 
     if validate_available_devices(devices, H)
@@ -66,8 +70,8 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables!(psi_container, devices);
-    reactivepower_variables!(psi_container, devices);
+    activepower_variables!(psi_container, devices)
+    reactivepower_variables!(psi_container, devices)
 
     #Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)
@@ -84,12 +88,13 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     return
 end
 
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{H, D},
-                           ::Type{S};
-                           kwargs...) where {H<:PSY.HydroGen,
-                                             D<:AbstractHydroDispatchFormulation,
-                                             S<:PM.AbstractActivePowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{H,D},
+    ::Type{S};
+    kwargs...,
+) where {H<:PSY.HydroGen,D<:AbstractHydroDispatchFormulation,S<:PM.AbstractActivePowerModel}
     devices = PSY.get_components(H, sys)
 
     if validate_available_devices(devices, H)
@@ -97,7 +102,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables!(psi_container, devices);
+    activepower_variables!(psi_container, devices)
 
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
@@ -109,11 +114,13 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     return
 end
 
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{H, HydroDispatchReservoirFlow},
-                           ::Type{S};
-                           kwargs...) where {H<:PSY.HydroGen,
-                                             S<:PM.AbstractActivePowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{H,HydroDispatchReservoirFlow},
+    ::Type{S};
+    kwargs...,
+) where {H<:PSY.HydroGen,S<:PM.AbstractActivePowerModel}
     devices = PSY.get_components(H, sys)
 
     if validate_available_devices(devices, H)
@@ -121,7 +128,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables!(psi_container, devices);
+    activepower_variables!(psi_container, devices)
 
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
@@ -134,11 +141,13 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     return
 end
 
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{H, HydroDispatchReservoirStorage},
-                           ::Type{S};
-                           kwargs...) where {H<:PSY.HydroGen,
-                                             S<:PM.AbstractActivePowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{H,HydroDispatchReservoirStorage},
+    ::Type{S};
+    kwargs...,
+) where {H<:PSY.HydroGen,S<:PM.AbstractActivePowerModel}
     devices = PSY.get_components(H, sys)
 
     if validate_available_devices(devices, H)
@@ -146,7 +155,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables!(psi_container, devices);
+    activepower_variables!(psi_container, devices)
     energy_variables!(psi_container, devices)
     inflow_variables!(psi_container, devices)
     spillage_variables!(psi_container, devices)
@@ -166,12 +175,13 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     return
 end
 
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{H, D},
-                           ::Type{S};
-                           kwargs...) where {H<:PSY.HydroGen,
-                                             D<:AbstractHydroUnitCommitment,
-                                             S<:PM.AbstractActivePowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{H,D},
+    ::Type{S};
+    kwargs...,
+) where {H<:PSY.HydroGen,D<:AbstractHydroUnitCommitment,S<:PM.AbstractActivePowerModel}
 
     devices = PSY.get_components(H, sys)
 
@@ -180,7 +190,7 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     end
 
     #Variables
-    activepower_variables!(psi_container, devices);
+    activepower_variables!(psi_container, devices)
     commitment_variables!(psi_container, devices)
 
     #Initial Conditions
@@ -198,11 +208,13 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
 end
 
 
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{H, HydroFixed},
-                           ::Type{S};
-                           kwargs...) where {H<:PSY.HydroGen,
-                                             S<:PM.AbstractPowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{H,HydroFixed},
+    ::Type{S};
+    kwargs...,
+) where {H<:PSY.HydroGen,S<:PM.AbstractPowerModel}
     devices = PSY.get_components(H, sys)
 
     if validate_available_devices(devices, H)
@@ -214,24 +226,26 @@ function construct_device!(psi_container::PSIContainer, sys::PSY.System,
     return
 end
 
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{PSY.HydroFix, D},
-                           ::Type{S};
-                           kwargs...) where {D<:AbstractHydroUnitCommitment,
-                                             S<:PM.AbstractPowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{PSY.HydroFix,D},
+    ::Type{S};
+    kwargs...,
+) where {D<:AbstractHydroUnitCommitment,S<:PM.AbstractPowerModel}
     @warn("The Formulation $(D) only applies to Dispatchable Hydro, *
                Consider Changing the Device Formulation to HydroFixed")
 
-    construct_device!(psi_container,
-                      DeviceModel(PSY.HydroFix, HydroFixed),
-                      S;
-                      kwargs...)
+    construct_device!(psi_container, DeviceModel(PSY.HydroFix, HydroFixed), S; kwargs...)
 end
 
-function construct_device!(psi_container::PSIContainer, sys::PSY.System,
-                           model::DeviceModel{PSY.HydroFix, HydroFixed},
-                           ::Type{S};
-                           kwargs...) where {S<:PM.AbstractPowerModel}
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{PSY.HydroFix,HydroFixed},
+    ::Type{S};
+    kwargs...,
+) where {S<:PM.AbstractPowerModel}
     devices = PSY.get_components(PSY.HydroFix, sys)
 
     if validate_available_devices(devices, PSY.HydroFix)

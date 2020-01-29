@@ -1,4 +1,4 @@
-struct CopperPlatePowerModel <: PM.AbstractActivePowerModel  end
+struct CopperPlatePowerModel <: PM.AbstractActivePowerModel end
 struct StandardPTDFModel <: PM.AbstractDCPModel end
 
 #================================================

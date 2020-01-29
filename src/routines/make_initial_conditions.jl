@@ -191,7 +191,12 @@ function _make_initial_condition_energy(psi_container, device, value, cache = no
     )
 end
 
-function _make_initial_condition_reservoir_energy(psi_container, device, value, cache = nothing)
+function _make_initial_condition_reservoir_energy(
+    psi_container,
+    device,
+    value,
+    cache = nothing,
+)
     return InitialCondition(
         psi_container,
         device,
@@ -234,10 +239,10 @@ end
 
 function _get_ref_energy(psi_container::PSIContainer)
     # "energy" is the field name required by Storage devices.
-    return model_has_parameters(psi_container) ? ENERGY : "energy"  
+    return model_has_parameters(psi_container) ? ENERGY : "energy"
 end
 
 function _get_ref_reservoir_energy(psi_container::PSIContainer)
     # "storage_capacity" is the field name required by HydroDispatch devices.
-    return model_has_parameters(psi_container) ? ENERGY : "storage_capacity"  
+    return model_has_parameters(psi_container) ? ENERGY : "storage_capacity"
 end
