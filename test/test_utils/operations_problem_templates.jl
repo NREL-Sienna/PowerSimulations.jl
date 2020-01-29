@@ -73,7 +73,7 @@ branches = Dict(:L => DeviceModel(Line, StaticLine),
 
 services = Dict()
 
-devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalDispatch, SemiContinuousFF(Symbol(PSI.REAL_POWER), Symbol(PSI.ON)),
+devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalDispatch, SemiContinuousFF(Symbol(PSI.ACTIVE_POWER), Symbol(PSI.ON)),
                                     :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
                                     :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad),
                                     :ILoads =>  DeviceModel(InterruptibleLoad, InterruptiblePowerLoad,))

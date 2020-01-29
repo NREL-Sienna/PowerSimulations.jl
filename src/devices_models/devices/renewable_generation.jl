@@ -9,7 +9,7 @@ function activepower_variables!(psi_container::PSIContainer,
                                devices::IS.FlattenIteratorWrapper{R}) where R<:PSY.RenewableGen
     add_variable(psi_container,
                  devices,
-                 variable_name(REAL_POWER, R),
+                 variable_name(ACTIVE_POWER, R),
                  false,
                  :nodal_balance_active;
                  lb_value = x -> 0.0,
@@ -61,7 +61,7 @@ function reactivepower_constraints!(psi_container::PSIContainer,
                                     feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
     names = (PSY.get_name(d) for d in devices)
     time_steps = model_time_steps(psi_container)
-    p_var = get_variable(psi_container, REAL_POWER, R)
+    p_var = get_variable(psi_container, ACTIVE_POWER, R)
     q_var = get_variable(psi_container, REACTIVE_POWER, R)
     constraint_val = JuMPConstraintArray(undef, names, time_steps)
     assign_constraint!(psi_container, REACTIVE_RANGE, R, constraint_val)
@@ -138,7 +138,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             constraint_data,
             constraint_name(ACTIVE_RANGE, R),
-            variable_name(REAL_POWER, R),
+            variable_name(ACTIVE_POWER, R),
         )
         return
     end
@@ -148,14 +148,14 @@ function activepower_constraints!(psi_container::PSIContainer,
             ts_data_active,
             constraint_name(ACTIVE_RANGE, R),
             UpdateRef{R}(ACTIVE_POWER, "get_rating"),  # TODO reviewers?
-            variable_name(REAL_POWER, R),
+            variable_name(ACTIVE_POWER, R),
         )
     else
         device_timeseries_ub(
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE_RANGE, R),
-            variable_name(REAL_POWER, R),
+            variable_name(ACTIVE_POWER, R),
         )
     end
     return

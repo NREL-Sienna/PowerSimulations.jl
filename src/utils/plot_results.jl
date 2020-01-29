@@ -161,8 +161,8 @@ feature for variables with more than 5 generators.
 function sort_data(res::OperationsProblemResults; kwargs...)
 
     var_names = (
-        variable_name(REAL_POWER, PSY.ThermalStandard),
-        variable_name(REAL_POWER, PSY.RenewableDispatch),
+        variable_name(ACTIVE_POWER, PSY.ThermalStandard),
+        variable_name(ACTIVE_POWER, PSY.RenewableDispatch),
         variable_name(START, PSY.ThermalStandard),
         variable_name(STOP, PSY.ThermalStandard),
         variable_name(ON, PSY.ThermalStandard),

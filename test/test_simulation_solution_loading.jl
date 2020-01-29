@@ -14,7 +14,7 @@ function test_load_simulation(file_path::String)
         feed_forward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
                 binary_from_stage = Symbol(PSI.ON),
-                affected_variables = [Symbol(PSI.REAL_POWER)]
+                affected_variables = [Symbol(PSI.ACTIVE_POWER)]
             )
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
@@ -111,11 +111,11 @@ function test_load_simulation(file_path::String)
         feed_forward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
                 binary_from_stage = Symbol(PSI.ON),
-                affected_variables = [Symbol(PSI.REAL_POWER)]
+                affected_variables = [Symbol(PSI.ACTIVE_POWER)]
             ),
             ("ED", :devices, :HydroDispatch) =>IntegralLimitFF(
-                variable_from_stage = Symbol(PSI.REAL_POWER),
-                affected_variables = [Symbol(PSI.REAL_POWER)]
+                variable_from_stage = Symbol(PSI.ACTIVE_POWER),
+                affected_variables = [Symbol(PSI.ACTIVE_POWER)]
             )
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
@@ -131,15 +131,15 @@ function test_load_simulation(file_path::String)
 
     @testset "Testing to verify parameter feedforward for consecutive UC to ED" begin
         P_keys = [
-            (PSI.REAL_POWER, PSY.HydroDispatch),
+            (PSI.ACTIVE_POWER, PSY.HydroDispatch),
             #(PSI.ON, PSY.ThermalStandard),
-            #(PSI.REAL_POWER, PSY.HydroDispatch),
+            #(PSI.ACTIVE_POWER, PSY.HydroDispatch),
         ]
 
         vars_names = [
-            PSI.variable_name(PSI.REAL_POWER, PSY.HydroDispatch),
+            PSI.variable_name(PSI.ACTIVE_POWER, PSY.HydroDispatch),
             #PSI.variable_name(PSI.ON, PSY.ThermalStandard),
-            #PSI.variable_name(PSI.REAL_POWER, PSY.HydroDispatch),
+            #PSI.variable_name(PSI.ACTIVE_POWER, PSY.HydroDispatch),
         ]
         for (ik, key) in enumerate(P_keys)
             variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1] # 1 is first step
@@ -174,7 +174,7 @@ function test_load_simulation(file_path::String)
 
     @testset "Testing to verify initial condition feedforward for consecutive ED to UC" begin
         ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
-        vars_names = [PSI.variable_name(PSI.REAL_POWER, PSY.ThermalStandard)]
+        vars_names = [PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
         for (ik,key) in enumerate(ic_keys)
             variable_ref = PSI.get_reference(sim_results, "ED", 1, vars_names[ik])[24]
             initial_conditions = get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
@@ -196,7 +196,7 @@ function test_load_simulation(file_path::String)
         feed_forward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
                 binary_from_stage = Symbol(PSI.ON),
-                affected_variables = [Symbol(PSI.REAL_POWER)]
+                affected_variables = [Symbol(PSI.ACTIVE_POWER)]
             )
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
@@ -215,7 +215,7 @@ function test_load_simulation(file_path::String)
         stages = ["UC", "ED"]
         for stage in stages
             results = load_simulation_results(sim_results, stage)
-            vars_names = [PSI.variable_name(PSI.REAL_POWER, PSY.ThermalStandard)]
+            vars_names = [PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
             for name in vars_names
                 results.variables[name]
                 variable_ref = sim_results.ref["stage-$stage"][name]
@@ -267,7 +267,7 @@ function test_load_simulation(file_path::String)
     @testset "Testing to verify initial condition feedforward for Receding Horizon" begin
         results = load_simulation_results(sim_results, "ED")
         ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
-        vars_names = [PSI.variable_name(PSI.REAL_POWER, PSY.ThermalStandard)]
+        vars_names = [PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
         for (ik, key) in enumerate(ic_keys)
             initial_conditions = get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
             vars = results.variables[vars_names[ik]] # change to getter function

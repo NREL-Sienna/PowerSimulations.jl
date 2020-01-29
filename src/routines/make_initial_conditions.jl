@@ -248,7 +248,7 @@ function _get_ref_active_power(
     psi_container::PSIContainer,
 ) where {T<:PSY.Component}
     return model_has_parameters(psi_container) ?
-           UpdateRef{JuMP.VariableRef}(T, REAL_POWER) :
+           UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER) :
            UpdateRef{T}(ACTIVE_POWER, "get_activepower")
 end
 

@@ -9,7 +9,7 @@ function activepower_variables!(psi_container::PSIContainer,
                                 devices::IS.FlattenIteratorWrapper{L}) where L<:PSY.ElectricLoad
     add_variable(psi_container,
                  devices,
-                 variable_name(REAL_POWER, L),
+                 variable_name(ACTIVE_POWER, L),
                  false,
                  :nodal_balance_active, -1.0;
                  ub_value = x -> PSY.get_maxactivepower(x),
@@ -59,7 +59,7 @@ function reactivepower_constraints!(psi_container::PSIContainer,
         name = PSY.get_name(d)
         pf = sin(atan((PSY.get_maxreactivepower(d)/PSY.get_maxactivepower(d))))
         reactive = get_variable(psi_container, REACTIVE_POWER, L)[name, t]
-        real = get_variable(psi_container, REAL_POWER, L)[name, t] * pf
+        real = get_variable(psi_container, ACTIVE_POWER, L)[name, t] * pf
         constraint[name, t] = JuMP.@constraint(psi_container.JuMPmodel, reactive == real)
     end
     return
@@ -125,7 +125,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             constraint_data,
             constraint_name(ACTIVE_RANGE, L),
-            variable_name(REAL_POWER, L)
+            variable_name(ACTIVE_POWER, L)
         )
         return
     end
@@ -135,15 +135,15 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE, L),
-            UpdateRef{L}(REAL_POWER, "get_maxactivepower"),  # TODO: reviewers?
-            variable_name(REAL_POWER, L),
+            UpdateRef{L}(ACTIVE_POWER, "get_maxactivepower"),  # TODO: reviewers?
+            variable_name(ACTIVE_POWER, L),
         )
     else
         device_timeseries_ub(
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE, L),
-            variable_name(REAL_POWER, L),
+            variable_name(ACTIVE_POWER, L),
         )
     end
     return
@@ -165,7 +165,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             constraint_data,
             constraint_name(ACTIVE_RANGE, L),
-            variable_name(REAL_POWER, L),
+            variable_name(ACTIVE_POWER, L),
         )
         return
     end
@@ -175,7 +175,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE, L),
-            variable_name(REAL_POWER, L),
+            variable_name(ACTIVE_POWER, L),
             UpdateRef{L}(ON, "get_maxactivepower"),  # TODO: reviewers?
             constraint_name(ON, L),
         )
@@ -184,7 +184,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE, L),
-            variable_name(REAL_POWER, L),
+            variable_name(ACTIVE_POWER, L),
             variable_name(ON, L),
         )
     end
@@ -274,7 +274,7 @@ function cost_function(psi_container::PSIContainer,
                        ::Type{<:PM.AbstractPowerModel}) where L<:PSY.ControllableLoad
     add_to_cost(psi_container,
                 devices,
-                variable_name(REAL_POWER, L),
+                variable_name(ACTIVE_POWER, L),
                 :variable,
                 -1.0)
     return

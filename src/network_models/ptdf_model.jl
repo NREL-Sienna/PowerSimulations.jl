@@ -20,7 +20,7 @@ function ptdf_networkflow(psi_container::PSIContainer,
 
     for t in time_steps
         for br in branches
-            flow_variable = get_variable(psi_container, FLOW_REAL_POWER, typeof(br))
+            flow_variable = get_variable(psi_container, FLOW_ACTIVE_POWER, typeof(br))
             name = PSY.get_name(br)
             flow_expression =
                 sum(PTDF[name, PSY.get_number(b)]*nodal_balance_expressions[PSY.get_number(b), t] for b in buses)
@@ -35,7 +35,7 @@ function ptdf_networkflow(psi_container::PSIContainer,
             name = PSY.get_name(br)
             from_number = PSY.get_number(PSY.get_arc(br).from)
             to_number = PSY.get_number(PSY.get_arc(br).to)
-            flow_variable = get_variable(psi_container, FLOW_REAL_POWER, typeof(br))
+            flow_variable = get_variable(psi_container, FLOW_ACTIVE_POWER, typeof(br))
             _add_to_expression!(nodal_balance_expressions,
                                 from_number, t, flow_variable[name, t], -1.0)
             _add_to_expression!(nodal_balance_expressions,
