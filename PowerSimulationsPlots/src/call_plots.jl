@@ -1,61 +1,59 @@
 # Color Definitions
 import Plots
-maroon = Colors.RGBA(0.7, 0.1, 0.1, 0.95)
-darkgray = Colors.RGBA(0, 0, 0, 0.8)
-olivegreen = Colors.RGBA(0.33, 0.42, 0.18, 0.9)
-darkorange = Colors.RGBA(0.93, 0.46, 0, 1)
-orchid = Colors.RGBA(0.56, 0.28, 0.54, 1)
-darkpink = Colors.RGBA(0.9, 0.5, 0.6, 0.80)
-lightyellow = Colors.RGBA(1, 1, 0.5, 0.6)
-steelblue = Colors.RGBA(0.27, 0.5, 0.7, 0.9)
-canaryyellow = Colors.RGBA(1, 0.757, 0.15, 01)
-khaki = Colors.RGBA(0.8, 0.6, 0.3, 1)
+MAROON = Colors.RGBA(0.7, 0.1, 0.1, 0.95)
+DARKGRAY = Colors.RGBA(0, 0, 0, 0.8)
+OLIVEGREEN = Colors.RGBA(0.33, 0.42, 0.18, 0.9)
+DARKORANGE = Colors.RGBA(0.93, 0.46, 0, 1)
+ORCHID = Colors.RGBA(0.56, 0.28, 0.54, 1)
+DARKPINK = Colors.RGBA(0.9, 0.5, 0.6, 0.80)
+LIGHTYELLOW = Colors.RGBA(1, 1, 0.5, 0.6)
+STEELBLUE = Colors.RGBA(0.27, 0.5, 0.7, 0.9)
+CANARYYELLOW = Colors.RGBA(1, 0.757, 0.15, 01)
+KHAKI = Colors.RGBA(0.8, 0.6, 0.3, 1)
 
-gr_default = hcat(
-    maroon,
-    darkgray,
+GR_DEFAULT = hcat(
+    MAROON,
+    DARKGRAY,
     :lightblue,
-    olivegreen,
+    OLIVEGREEN,
     :pink,
-    darkorange,
-    orchid,
-    darkpink,
-    lightyellow,
-    steelblue,
-    canaryyellow,
-    khaki,
-    :red,
-    khaki,
-    khaki,
-)
-
-fuel_default = vcat(
-    maroon,
-    darkgray,
-    :lightblue,
-    olivegreen,
-    :pink,
-    darkorange,
-    orchid,
-    darkpink,
-    lightyellow,
-    steelblue,
-    canaryyellow,
-    khaki,
+    DARKORANGE,
+    ORCHID,
+    DARKPINK,
+    LIGHTYELLOW,
+    STEELBLUE,
+    CANARYYELLOW,
+    KHAKI,
     :red,
 )
 
-plotly_default = vcat(
+FUEL_DEFAULT = vcat(
+    MAROON,
+    DARKGRAY,
+    :lightblue,
+    OLIVEGREEN,
+    :pink,
+    DARKORANGE,
+    ORCHID,
+    DARKPINK,
+    LIGHTYELLOW,
+    STEELBLUE,
+    CANARYYELLOW,
+    KHAKI,
+    :red,
+)
+
+PLOTLY_DEFAULT = vcat(
     :firebrick,
     :slategrey,
     :lightblue,
-    :darkolivegreen,
+    :darkOLIVEGREEN,
     :lightpink,
-    :darkorange,
+    :DARKORANGE,
     :purple,
     :pink,
     :lightgoldenrodyellow,
-    :steelblue,
+    :STEELBLUE,
     :goldenrod,
     :tan,
     :red,
@@ -68,9 +66,9 @@ function match_fuel_colors(
     default::Array,
 )
     if backend == Plots.PlotlyJSBackend()
-        color_range = plotly_default
+        color_range = PLOTLY_DEFAULT
     else
-        color_range = fuel_default
+        color_range = FUEL_DEFAULT
     end
     fuels = [
         "Nuclear",
@@ -160,7 +158,7 @@ function fuel_plot(res::PSI.Results, generator_dict::Dict; kwargs...)
     stack = get_stacked_aggregation_data(res, generator_dict)
     bar = get_bar_aggregation_data(res, generator_dict)
     backend = Plots.backend()
-    default_colors = match_fuel_colors(stack, bar, backend, fuel_default)
+    default_colors = match_fuel_colors(stack, bar, backend, FUEL_DEFAULT)
     seriescolor = get(kwargs, :seriescolor, default_colors)
     if isnothing(backend)
         throw(IS.ConflictingInputsError("No backend detected. Type gr() to set a backend."))
@@ -190,13 +188,13 @@ function _fuel_plot_internal(
     set_display::Bool;
     kwargs...,
 )
-    P1 = RecipesBase.plot(stack; seriescolor = seriescolor)
-    P2 = RecipesBase.plot(bar; seriescolor = seriescolor)
-    set_display && display(P1)
-    set_display && display(P2)
+    p1 = RecipesBase.plot(stack; seriescolor = seriescolor)
+    p2 = RecipesBase.plot(bar; seriescolor = seriescolor)
+    set_display && display(p1)
+    set_display && display(p2)
     if !isnothing(save_fig)
-        Plots.savefig(P1, joinpath(save_fig, "Fuel_Stack.png"))
-        Plots.savefig(P2, joinpath(save_fig, "Fuel_Bar.png"))
+        Plots.savefig(p1, joinpath(save_fig, "Fuel_Stack.png"))
+        Plots.savefig(p2, joinpath(save_fig, "Fuel_Bar.png"))
     end
 end
 
@@ -241,7 +239,7 @@ function _bar_plot_internal(
     set_display::Bool;
     kwargs...,
 )
-    seriescolor = get(kwargs, :seriescolor, plotly_default)
+    seriescolor = get(kwargs, :seriescolor, PLOTLY_DEFAULT)
     plotly_bar_plots(res, seriescolor; kwargs...)
     plotly_bar_gen(bar_gen, seriescolor; kwargs...)
 end
@@ -254,7 +252,7 @@ function _bar_plot_internal(
     set_display::Bool;
     kwargs...,
 )
-    seriescolor = get(kwargs, :seriescolor, gr_default)
+    seriescolor = get(kwargs, :seriescolor, GR_DEFAULT)
     for name in string.(keys(res.variables))
         variable_bar = get_bar_plot_data(res, name)
         p = RecipesBase.plot(variable_bar, name; seriescolor = seriescolor)
@@ -310,7 +308,7 @@ function _stack_plot_internal(
     set_display::Bool;
     kwargs...,
 )
-    seriescolor = get(kwargs, :seriescolor, plotly_default)
+    seriescolor = get(kwargs, :seriescolor, PLOTLY_DEFAULT)
     plotly_stack_plots(res, seriescolor; kwargs...)
     plotly_stack_gen(stack, seriescolor; kwargs...)
 end
@@ -323,7 +321,7 @@ function _stack_plot_internal(
     set_display::Bool;
     kwargs...,
 )
-    seriescolor = get(kwargs, :seriescolor, gr_default)
+    seriescolor = get(kwargs, :seriescolor, GR_DEFAULT)
     for name in string.(keys(res.variables))
         variable_stack = get_bar_plot_data(res, name)
         p = RecipesBase.plot(variable_stack, name; seriescolor = seriescolor)
