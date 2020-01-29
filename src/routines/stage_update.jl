@@ -2,12 +2,11 @@
 function parameter_update!(
     param_reference::UpdateRef{T},
     container::ParameterContainer,
-    stage_number::Int64,
+    stage::Stage,
     sim::Simulation,
 ) where T <: PSY.Component
-    stage = get_stage(sim, stage_number)
     devices = PSY.get_components(T, stage.sys)
-    initial_forecast_time = get_simulation_time(sim, stage_number)
+    initial_forecast_time = get_simulation_time(sim, get_number(stage))
     horizon = length(model_time_steps(stage.internal.psi_container))
     for d in devices
         forecast = PSY.get_forecast(PSY.Deterministic,
@@ -30,10 +29,9 @@ end
 function parameter_update!(
     param_reference::UpdateRef{JuMP.VariableRef},
     container::ParameterContainer,
-    stage_number::Int64,
+    stage::Stage,
     sim::Simulation,
 )
-    stage = get_stage(sim, stage_number)
     param_array = get_parameter_array(container)
     for (k, ref) in stage.internal.chronolgy_dict
         feed_forward_update(
@@ -99,7 +97,7 @@ function update_stage!(stage::Stage{M}, step::Int64, sim::Simulation) where M<:A
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && get_number(stage) == 1 && get_execution_count(stage) == 0) && return
     for container in iterate_parameter_containers(stage.internal.psi_container)
-        parameter_update!(container.update_ref, container, get_number(stage), sim)
+        parameter_update!(container.update_ref, container, stage, sim)
     end
 
     _update_caches!(stage)
