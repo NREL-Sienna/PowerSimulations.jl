@@ -135,7 +135,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE, L),
-            UpdateRef{L}(ACTIVE_POWER, "get_maxactivepower"),  # TODO: reviewers?
+            UpdateRef{L}(ACTIVE_POWER, "get_maxactivepower"),
             variable_name(ACTIVE_POWER, L),
         )
     else
@@ -176,7 +176,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             ts_data_active,
             constraint_name(ACTIVE, L),
             variable_name(ACTIVE_POWER, L),
-            UpdateRef{L}(ON, "get_maxactivepower"),  # TODO: reviewers?
+            UpdateRef{L}(ON, "get_maxactivepower"),
             constraint_name(ON, L),
         )
     else
@@ -205,14 +205,14 @@ function nodal_expression!(psi_container::PSIContainer,
         include_parameters(
             psi_container,
             ts_data_active,
-            UpdateRef{L}(ACTIVE_POWER, "get_maxactivepower"),  # TODO: reviewers?
+            UpdateRef{L}(ACTIVE_POWER, "get_maxactivepower"),
             :nodal_balance_active,
             -1.0,
         )
         include_parameters(
             psi_container,
             ts_data_reactive,
-            UpdateRef{L}(REACTIVE_POWER, "get_maxactivepower"),  # TODO: reviewers?
+            UpdateRef{L}(REACTIVE_POWER, "get_maxactivepower"),
             :nodal_balance_reactive,
             -1.0,
         )
@@ -250,7 +250,7 @@ function nodal_expression!(psi_container::PSIContainer,
         include_parameters(
             psi_container,
             ts_data_active,
-            UpdateRef{L}(ACTIVE_POWER, "get_maxactivepower"),  # TODO: reviewers?
+            UpdateRef{L}(ACTIVE_POWER, "get_maxactivepower"),
             :nodal_balance_active,
             -1.0,
         )

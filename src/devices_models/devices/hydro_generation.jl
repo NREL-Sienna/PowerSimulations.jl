@@ -204,7 +204,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE_RANGE, H),
-            UpdateRef{H}(ACTIVE_POWER, "get_rating"),  # TODO: reviewers?
+            UpdateRef{H}(ACTIVE_POWER, "get_rating"),
             variable_name(ACTIVE_POWER, H),
         )
     else
@@ -268,7 +268,7 @@ function activepower_constraints!(psi_container::PSIContainer,
             ts_data_active,
             constraint_name(ACTIVE_RANGE, H),
             variable_name(ACTIVE_POWER, H),
-            UpdateRef{H}(ON, "get_rating"),  # TODO: reviewers?
+            UpdateRef{H}(ON, "get_rating"),
             variable_name(ON, H),
         )
     else
@@ -350,7 +350,7 @@ function inflow_constraints!(psi_container::PSIContainer,
         device_timeseries_param_ub(psi_container,
                             ts_data_inflow,
                             constraint_name(INFLOW_RANGE, H),
-                            UpdateRef{H}(INFLOW_RANGE, "get_inflow"), # TODO: reviewers?
+                            UpdateRef{H}(INFLOW_RANGE, "get_inflow"),
                             variable_name(INFLOW, H))
     else
         device_timeseries_ub(psi_container,
@@ -440,13 +440,13 @@ function nodal_expression!(psi_container::PSIContainer,
         include_parameters(
             psi_container,
             ts_data_active,
-            UpdateRef{H}(ACTIVE_POWER, "get_rating"),  # TODO: reviewers?
+            UpdateRef{H}(ACTIVE_POWER, "get_rating"),  # TODO: fix in PR #316
             :nodal_balance_active,
         )
         include_parameters(
             psi_container,
             ts_data_reactive,
-            UpdateRef{H}(REACTIVE_POWER, "get_rating"),  # TODO: reviewers?
+            UpdateRef{H}(REACTIVE_POWER, "get_rating"),  # TODO: fix in PR #316
             :nodal_balance_reactive,
         )
         return
@@ -481,7 +481,7 @@ function nodal_expression!(psi_container::PSIContainer,
         include_parameters(
             psi_container,
             ts_data_active,
-            UpdateRef{H}(ACTIVE_POWER, "get_rating"),  # TODO: reviewers?
+            UpdateRef{H}(ACTIVE_POWER, "get_rating"),  # TODO: fix in PR #316
             :nodal_balance_active,
         )
         return
@@ -573,7 +573,7 @@ function energy_limit_constraints!(psi_container::PSIContainer,
             psi_container,
             energy_limit_data,
             constraint_name(ENERGY_LIMIT, H),
-            UpdateRef{H}(ACTIVE_POWER, "get_storage_capacity"),  # TODO reviewers?
+            UpdateRef{H}(ENERGY_BUDGET, "get_storage_capacity"),
             variable_name(ACTIVE_POWER, H),
         )
     else

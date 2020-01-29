@@ -50,7 +50,7 @@ function service_requirement_constraint!(psi_container::PSIContainer,
     if parameters
         param = get_parameter_array(
             psi_container,
-            UpdateRef{SR}("service_requirement", "get_requirement"),
+            UpdateRef{SR}(SERVICE_REQUIREMENT, "get_requirement"),
         )
         for t in time_steps
             param[name, t] = PJ.add_parameter(psi_container.JuMPmodel, 

@@ -25,6 +25,7 @@ function UpdateRef{T}(
     name::AbstractString,
     accessor_func::AbstractString,
 ) where {T<:PSY.Component}
+    # Combine these three fields together in order to guarantee uniqueness.
     return UpdateRef{T}(_encode_for_jump(T, name, accessor_func), accessor_func)
 end
 
