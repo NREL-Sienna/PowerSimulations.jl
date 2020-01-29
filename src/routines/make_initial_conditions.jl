@@ -201,11 +201,16 @@ function _make_initial_condition_energy(
     )
 end
 
-function _make_initial_condition_reservoir_energy(psi_container, device, value, cache = nothing)
+function _make_initial_condition_reservoir_energy(
+    psi_container,
+    device::T,
+    value,
+    cache = nothing,
+) where {T<:PSY.Component}
     return InitialCondition(
         psi_container,
         device,
-        _get_ref_reservoir_energy(psi_container),
+        _get_ref_reservoir_energy(T, psi_container),
         value,
         cache,
     )
@@ -252,7 +257,11 @@ function _get_ref_energy(::Type{T}, psi_container::PSIContainer) where {T<:PSY.C
            UpdateRef{T}(ENERGY, "get_energy")
 end
 
-function _get_ref_reservoir_energy(psi_container::PSIContainer)
-    # "storage_capacity" is the field name required by HydroDispatch devices.
-    return model_has_parameters(psi_container) ? ENERGY : "storage_capacity"  
+function _get_ref_reservoir_energy(
+    ::Type{T},
+    psi_container::PSIContainer,
+) where {T<:PSY.Component}
+    # TODO: reviewers, is ENERGY correct here?
+    return model_has_parameters(psi_container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
+           UpdateRef{T}(ENERGY, "get_storage_capacity")
 end

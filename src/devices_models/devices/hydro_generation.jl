@@ -349,7 +349,7 @@ function inflow_constraints!(psi_container::PSIContainer,
         device_timeseries_param_ub(psi_container,
                             ts_data_inflow,
                             constraint_name(INFLOW_RANGE, H),
-                            UpdateRef{H}("get_inflow"),
+                            UpdateRef{H}(INFLOW_RANGE, "get_inflow"), # TODO: reviewers?
                             variable_name(INFLOW, H))
     else
         device_timeseries_ub(psi_container,
