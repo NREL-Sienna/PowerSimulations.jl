@@ -11,7 +11,7 @@ services = Dict{Symbol, ServiceModel}()
 @testset "Solving ED with CopperPlate" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
     parameters_value = [true, false]
-    systems = [c_sys5] #c_sys14
+    systems = [c_sys5, c_sys14]
     test_results = Dict{System, Float64}(c_sys5 => 240000.0,
                                              c_sys14 => 142000.0)
     for sys in systems, p in parameters_value
@@ -27,7 +27,7 @@ end
 @testset "Solving ED with PTDF Models" begin
     template = OperationsProblemTemplate(StandardPTDFModel, devices, branches, services);
     parameters_value = [true, false]
-    systems = [c_sys5, c_sys14_dc] #c_sys14
+    systems = [c_sys5, c_sys14, c_sys14_dc]
     PTDF_ref = Dict{System, PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc)
     test_results = Dict{System, Float64}(c_sys5 => 340000.0,
                                              c_sys14 => 142000.0,
@@ -43,7 +43,7 @@ end
 end
 
 @testset "Solving ED With PowerModels with loss-less convex models" begin
-    systems = [c_sys5, c_sys14_dc] #c_sys14
+    systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters_value = [true, false]
     networks = [DCPPowerModel,
                 NFAPowerModel]
@@ -64,7 +64,7 @@ end
 end
 
 @testset "Solving ED With PowerModels with linear convex models" begin
-    systems = [c_sys5] #c_sys14
+    systems = [c_sys5, c_sys14]
     parameters_value = [true, false]
     networks = [DCPLLPowerModel,
                 LPACCPowerModel]
