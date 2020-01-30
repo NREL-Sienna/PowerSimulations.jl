@@ -17,7 +17,8 @@ variables[:P_RenewableDispatch] = DataFrames.DataFrame(
 optimizer_log = Dict()
 objective_value = Dict()
 right_now = round(Dates.now(), Dates.Hour)
-time_stamp = DataFrames.DataFrame(:Range => right_now:Dates.Hour(1):right_now+Dates.Hour(4))
+time_stamp =
+    DataFrames.DataFrame(:Range => right_now:Dates.Hour(1):(right_now + Dates.Hour(4)))
 
 res = PSI.OperationsProblemResults(variables, optimizer_log, objective_value, time_stamp)
 

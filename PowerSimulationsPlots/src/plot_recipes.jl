@@ -133,7 +133,6 @@ function plotly_bar_plots(res::PSI.Results, seriescolor::Array; kwargs...)
     end
 end
 
-
 RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String)
     time = convert.(Dates.DateTime, results.time_range)
     n = length(time)
@@ -158,7 +157,7 @@ RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String)
     sx = [time[1:n]; reverse(time[1:n])]
     for c = 1:size(z, 2)
         if c !== 1
-            sy = hcat(sy, vcat(z[:, c], reverse(z[:, c-1])))
+            sy = hcat(sy, vcat(z[:, c], reverse(z[:, c - 1])))
         end
     end
     RecipesBase.@series begin
@@ -193,7 +192,7 @@ RecipesBase.@recipe function StackedGeneration(res::StackedGeneration)
     sx = [time[1:n]; reverse(time[1:n])]
     for c = 2:size(z, 2)
         if c !== 1
-            sy = hcat(sy, vcat(z[:, c], reverse(z[:, c-1])))
+            sy = hcat(sy, vcat(z[:, c], reverse(z[:, c - 1])))
         end
     end
     RecipesBase.@series begin
@@ -231,7 +230,7 @@ RecipesBase.@recipe function BarPlot(res::BarPlot, variable::String)
     # Create filled polygon
     for c = 1:size(z, 2)
         sx = [[4, 5]; [5, 4]]
-        sy = vcat(z[:, c], c == 1 ? zeros(n) : reverse(z[:, c-1]))
+        sy = vcat(z[:, c], c == 1 ? zeros(n) : reverse(z[:, c - 1]))
         RecipesBase.@series sx, sy
     end
 
@@ -263,7 +262,7 @@ RecipesBase.@recipe function BarGen(res::BarGeneration)
     xticks := false
     for c = 1:size(z, 2)
         sx = [[4, 5]; [5, 4]]
-        sy = vcat(z[:, c], c == 1 ? zeros(n) : reverse(z[:, c-1]))
+        sy = vcat(z[:, c], c == 1 ? zeros(n) : reverse(z[:, c - 1]))
         RecipesBase.@series sx, sy
     end
 end
