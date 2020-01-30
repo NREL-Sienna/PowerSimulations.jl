@@ -394,7 +394,6 @@ function construct_network!(op_problem::OperationsProblem; kwargs...)
     return
 end
 
-
 function construct_network!(
     op_problem::OperationsProblem,
     system_formulation::Type{T};
@@ -406,14 +405,15 @@ function construct_network!(
     return
 end
 
-
 function get_initial_conditions(op_problem::OperationsProblem)
     return op_problem.psi_container.initial_conditions
 end
 
-function get_initial_conditions(op_problem::OperationsProblem,
-                                ic::InitialConditionType,
-                                device::PSY.Device)
+function get_initial_conditions(
+    op_problem::OperationsProblem,
+    ic::InitialConditionType,
+    device::PSY.Device,
+)
 
     psi_container = op_problem.psi_container
     key = ICKey(ic, device)

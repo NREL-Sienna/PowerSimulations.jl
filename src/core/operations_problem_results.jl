@@ -103,6 +103,6 @@ function find_var_length(variables::Dict, variable_list::Array)
 end
 
 function shorten_time_stamp(time::DataFrames.DataFrame)
-    time = time[1:(size(time, 1)-1), :]
+    time = time[1:(size(time, 1) - 1), :]
     return time
 end

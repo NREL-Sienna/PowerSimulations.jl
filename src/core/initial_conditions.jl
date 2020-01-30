@@ -104,7 +104,6 @@ function calculate_ic_quantity(
             time_cache[:status] <= ComparisonTolerance && var_value >= ComparisonTolerance
     end
 
-
     if status_change_to_on
         return ic.device.tech.activepowerlimits.min
     end

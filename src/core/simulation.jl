@@ -192,8 +192,8 @@ function _get_simulation_initial_times!(sim::Simulation)
                 throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and
                         forecast interval ($interval) definitions are not compatible"))
             end
-            for (ix, element) in enumerate(stage_initial_times[stage_number][1:end-1])
-                if !(element + interval == stage_initial_times[stage_number][ix+1])
+            for (ix, element) in enumerate(stage_initial_times[stage_number][1:(end - 1)])
+                if !(element + interval == stage_initial_times[stage_number][ix + 1])
                     throw(IS.ConflictingInputsError("The sequence of forecasts is invalid"))
                 end
             end
@@ -311,7 +311,6 @@ function _check_folder(folder::String)
         throw(IS.ConflictingInputsError("Specified folder does not have write access [$e]"))
     end
 end
-
 
 @doc raw"""
         build!(sim::Simulation;
