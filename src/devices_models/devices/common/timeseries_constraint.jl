@@ -178,8 +178,7 @@ function device_timeseries_param_ub(
                     get_variable(psi_container, val)[data.name, t],
                 )
             end
-            param[data.name, t] =
-                PJ.add_parameter(psi_container.JuMPmodel, data.timeseries[t])
+            param[data.name, t] = PJ.add_parameter(psi_container.JuMPmodel, data.timeseries[t])
             con_ub[data.name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 expression_ub <= data.multiplier * param[data.name, t]
@@ -251,12 +250,9 @@ function device_timeseries_param_lb(
                     -1.0,
                 )
             end
-            param[data.name, t] =
-                PJ.add_parameter(psi_container.JuMPmodel, data.timeseries[t])
-            constraint[data.name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                expression_lb >= data.multiplier * param[name, t]
-            )
+            param[data.name, t] = PJ.add_parameter(psi_container.JuMPmodel, data.timeseries[t])
+            constraint[data.name, t] = JuMP.@constraint(psi_container.JuMPmodel,
+                                            expression_lb >= data.multiplier * param[name, t])
         end
     end
 
@@ -379,7 +375,7 @@ function device_timeseries_ub_bigM(
     varbin = get_variable(psi_container, binvar_name)
     names = (d.name for d in ts_data)
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
-    con_status = add_cons_container!(psi_container, key_status, names, time_steps)
+    con_status =add_cons_container!(psi_container, key_status, names, time_steps)
     param = add_param_container!(psi_container, param_reference, names, time_steps)
 
     for data in ts_data
@@ -391,17 +387,14 @@ function device_timeseries_ub_bigM(
                     get_variable(psi_container, val)[data.name, t],
                 )
             end
-            param[data.name, t] =
-                PJ.add_parameter(psi_container.JuMPmodel, data.timeseries[t])
+            param[data.name, t] = PJ.add_parameter(psi_container.JuMPmodel, data.timeseries[t])
             con_ub[data.name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 expression_ub - param[data.name, t] * data.multiplier <=
                     (1 - varbin[data.name, t]) * M_value
             )
-            con_status[data.name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                expression_ub <= varbin[data.name, t] * M_value
-            )
+            con_status[data.name, t] =  JuMP.@constraint(psi_container.JuMPmodel, 
+                                            expression_ub <= varbin[data.name, t] * M_value)
         end
     end
 

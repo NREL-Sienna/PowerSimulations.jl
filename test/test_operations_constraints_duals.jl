@@ -24,7 +24,7 @@ function test_duals(file_path)
         stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
                                 "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
-        affected_variables = [PSI.variable_name(PSI.REAL_POWER)]
+        affected_variables = [PSI.variable_name(PSI.ACTIVE_POWER)]
         sequence = SimulationSequence(
             order = Dict(1 => "UC", 2 => "ED"),
             intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(periods = 24)),
@@ -35,7 +35,7 @@ function test_duals(file_path)
                     binary_from_stage = Symbol(PSI.ON),
                     affected_variables = affected_variables),
                ),
-                cache = Dict("ED" => [TimeStatusChange(PSI.ON, PSY.ThermalStandard)]),
+                cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
                 ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive())
             )
         sim = Simulation(

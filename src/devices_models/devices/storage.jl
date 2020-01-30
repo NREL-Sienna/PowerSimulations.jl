@@ -3,27 +3,21 @@ struct BookKeeping <: AbstractStorageFormulation end
 struct BookKeepingwReservation <: AbstractStorageFormulation end
 #################################################Storage Variables#################################
 
-function active_power_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{St},
-) where {St<:PSY.Storage}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(REAL_POWER_IN, St),
-        false,
-        :nodal_balance_active,
-        -1.0;
-        lb_value = d -> 0.0,
-    )
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(REAL_POWER_OUT, St),
-        false,
-        :nodal_balance_active;
-        lb_value = d -> 0.0,
-    )
+function active_power_variables!(psi_container::PSIContainer,
+                                devices::IS.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
+    add_variable(psi_container,
+                 devices,
+                 variable_name(ACTIVE_POWER_IN, St),
+                 false,
+                 :nodal_balance_active,
+                 -1.0;
+                 lb_value = d -> 0.0,)
+    add_variable(psi_container,
+                 devices,
+                 variable_name(ACTIVE_POWER_OUT, St),
+                 false,
+                 :nodal_balance_active;
+                 lb_value = d -> 0.0,)
     return
 end
 
@@ -85,19 +79,15 @@ function active_power_constraints!(
         push!(constraint_data_out, DeviceRange(name, out_lims)) #_device_services!(DeviceRange(name, out_lims), d, model)
     end
 
-    device_range(
-        psi_container,
-        constraint_data_out,
-        constraint_name(OUTPUT_POWER_RANGE, St),
-        variable_name(REAL_POWER_OUT, St),
-    )
+    device_range(psi_container,
+                 constraint_data_out,
+                 constraint_name(OUTPUT_POWER_RANGE, St),
+                 variable_name(ACTIVE_POWER_OUT, St))
 
-    device_range(
-        psi_container,
-        constraint_data_in,
-        constraint_name(INPUT_POWER_RANGE, St),
-        variable_name(REAL_POWER_IN, St),
-    )
+    device_range(psi_container,
+                 constraint_data_in,
+                 constraint_name(INPUT_POWER_RANGE, St),
+                 variable_name(ACTIVE_POWER_IN, St))
     return
 end
 
@@ -118,21 +108,17 @@ function active_power_constraints!(
         push!(constraint_data_out, DeviceRange(name, out_lims)) #_device_services!(DeviceRange(name, out_lims), d, model)
 
     end
-    reserve_device_semicontinuousrange(
-        psi_container,
-        constraint_data_in,
-        constraint_name(INPUT_POWER_RANGE, St),
-        variable_name(REAL_POWER_IN, St),
-        variable_name(RESERVE, St),
-    )
+    reserve_device_semicontinuousrange(psi_container,
+                                       constraint_data_in,
+                                       constraint_name(INPUT_POWER_RANGE, St),
+                                       variable_name(ACTIVE_POWER_IN, St),
+                                       variable_name(RESERVE, St))
 
-    reserve_device_semicontinuousrange(
-        psi_container,
-        constraint_data_out,
-        constraint_name(OUTPUT_POWER_RANGE, St),
-        variable_name(REAL_POWER_OUT, St),
-        variable_name(RESERVE, St),
-    )
+    reserve_device_semicontinuousrange(psi_container,
+                                       constraint_data_out,
+                                       constraint_name(OUTPUT_POWER_RANGE, St),
+                                       variable_name(ACTIVE_POWER_OUT, St),
+                                       variable_name(RESERVE, St))
     return
 end
 
@@ -234,8 +220,8 @@ function energy_balance_constraint!(
         efficiency_data,
         constraint_name(ENERGY_LIMIT, St),
         (
-            variable_name(REAL_POWER_OUT, St),
-            variable_name(REAL_POWER_IN, St),
+            variable_name(ACTIVE_POWER_OUT, St),
+            variable_name(ACTIVE_POWER_IN, St),
             variable_name(ENERGY, St),
         ),
     )

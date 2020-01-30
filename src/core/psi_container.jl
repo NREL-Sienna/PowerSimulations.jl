@@ -32,69 +32,61 @@ function _make_container_array(V::DataType, parameters::Bool, ax...)
     return
 end
 
-function _make_expressions_dict(
-    transmission::Type{S},
-    V::DataType,
-    bus_numbers::Vector{Int64},
-    time_steps::UnitRange{Int64},
-    parameters::Bool,
-) where {S<:PM.AbstractPowerModel}
-    return DSDA(
-        :nodal_balance_active =>
-            _make_container_array(V, parameters, bus_numbers, time_steps),
-        :nodal_balance_reactive =>
-            _make_container_array(V, parameters, bus_numbers, time_steps),
-    )
+function _make_expressions_dict(transmission::Type{S},
+                                V::DataType,
+                                bus_numbers::Vector{Int64},
+                                time_steps::UnitRange{Int64},
+                                parameters::Bool) where {S<:PM.AbstractPowerModel}
+    return DSDA(:nodal_balance_active =>  _make_container_array(V,
+                                                                parameters,
+                                                                bus_numbers,
+                                                                time_steps),
+                :nodal_balance_reactive => _make_container_array(V,
+                                                                 parameters,
+                                                                 bus_numbers,
+                                                                 time_steps))
 end
 
-function _make_expressions_dict(
-    transmission::Type{S},
-    V::DataType,
-    bus_numbers::Vector{Int64},
-    time_steps::UnitRange{Int64},
-    parameters::Bool,
-) where {S<:PM.AbstractActivePowerModel}
-    return DSDA(
-        :nodal_balance_active =>
-            _make_container_array(V, parameters, bus_numbers, time_steps),
-    )
+function _make_expressions_dict(transmission::Type{S},
+                                V::DataType,
+                                bus_numbers::Vector{Int64},
+                                time_steps::UnitRange{Int64},
+                                parameters::Bool) where {S<:PM.AbstractActivePowerModel}
+    return DSDA(:nodal_balance_active =>  _make_container_array(V,
+                                                                parameters,
+                                                                bus_numbers,
+                                                                time_steps))
 end
 
 
-function _psi_container_init(
-    bus_numbers::Vector{Int64},
-    jump_model::JuMP.AbstractModel,
-    optimizer::Union{Nothing,JuMP.OptimizerFactory},
-    transmission::Type{S},
-    time_steps::UnitRange{Int64},
-    resolution::Dates.TimePeriod,
-    use_forecast_data::Bool,
-    initial_time::Dates.DateTime,
-    make_parameters_container::Bool,
-    ini_con::DICKDA,
-) where {S<:PM.AbstractPowerModel}
+function _psi_container_init(bus_numbers::Vector{Int64},
+                        jump_model::JuMP.AbstractModel,
+                        optimizer::Union{Nothing, JuMP.OptimizerFactory},
+                        transmission::Type{S},
+                        time_steps::UnitRange{Int64},
+                        resolution::Dates.TimePeriod,
+                        use_forecast_data::Bool,
+                        initial_time::Dates.DateTime,
+                        make_parameters_container::Bool,
+                        ini_con::InitialConditionsContainer) where {S<:PM.AbstractPowerModel}
     V = JuMP.variable_type(jump_model)
-    psi_container = PSIContainer(
-        jump_model,
-        optimizer,
-        time_steps,
-        resolution,
-        use_forecast_data,
-        initial_time,
-        DSDA(),
-        DSDA(),
-        zero(JuMP.GenericAffExpr{Float64,V}),
-        _make_expressions_dict(
-            transmission,
-            V,
-            bus_numbers,
-            time_steps,
-            make_parameters_container,
-        ),
-        make_parameters_container ? DRDA() : nothing,
-        ini_con,
-        nothing,
-    )
+    psi_container = PSIContainer(jump_model,
+                              optimizer,
+                              time_steps,
+                              resolution,
+                              use_forecast_data,
+                              initial_time,
+                              DSDA(),
+                              DSDA(),
+                              zero(JuMP.GenericAffExpr{Float64, V}),
+                              _make_expressions_dict(transmission,
+                                                     V,
+                                                     bus_numbers,
+                                                     time_steps,
+                                                     make_parameters_container),
+                              make_parameters_container ? ParametersContainer() : nothing,
+                              ini_con,
+                              nothing)
     return psi_container
 end
 
@@ -108,26 +100,24 @@ mutable struct PSIContainer
     variables::Dict{Symbol,JuMP.Containers.DenseAxisArray}
     constraints::Dict{Symbol,JuMP.Containers.DenseAxisArray}
     cost_function::JuMP.AbstractJuMPScalar
-    expressions::Dict{Symbol,JuMP.Containers.DenseAxisArray}
-    parameters::Union{Nothing,Dict{UpdateRef,JuMP.Containers.DenseAxisArray}}
-    initial_conditions::DICKDA
-    pm::Union{Nothing,PM.AbstractPowerModel}
+    expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
+    parameters::Union{Nothing, ParametersContainer}
+    initial_conditions::InitialConditionsContainer
+    pm::Union{Nothing, PM.AbstractPowerModel}
 
-    function PSIContainer(
-        JuMPmodel::JuMP.AbstractModel,
-        optimizer_factory::Union{Nothing,JuMP.OptimizerFactory},
-        time_steps::UnitRange{Int64},
-        resolution::Dates.TimePeriod,
-        use_forecast_data::Bool,
-        initial_time::Dates.DateTime,
-        variables::Dict{Symbol,JuMP.Containers.DenseAxisArray},
-        constraints::Dict{Symbol,JuMP.Containers.DenseAxisArray},
-        cost_function::JuMP.AbstractJuMPScalar,
-        expressions::Dict{Symbol,JuMP.Containers.DenseAxisArray},
-        parameters::Union{Nothing,Dict{UpdateRef,JuMP.Containers.DenseAxisArray}},
-        initial_conditions::DICKDA,
-        pm::Union{Nothing,PM.AbstractPowerModel},
-    )
+    function PSIContainer(JuMPmodel::JuMP.AbstractModel,
+                       optimizer_factory::Union{Nothing, JuMP.OptimizerFactory},
+                       time_steps::UnitRange{Int64},
+                       resolution::Dates.TimePeriod,
+                       use_forecast_data::Bool,
+                       initial_time::Dates.DateTime,
+                       variables::Dict{Symbol, JuMP.Containers.DenseAxisArray},
+                       constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray},
+                       cost_function::JuMP.AbstractJuMPScalar,
+                       expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray},
+                       parameters::Union{Nothing, ParametersContainer},
+                       initial_conditions::InitialConditionsContainer,
+                       pm::Union{Nothing, PM.AbstractPowerModel})
         resolution = IS.time_period_conversion(resolution)
         new(
             JuMPmodel,
@@ -155,7 +145,7 @@ function PSIContainer(
 ) where {T<:PM.AbstractPowerModel}
     PSY.check_forecast_consistency(sys)
     user_defined_model = get(kwargs, :JuMPmodel, nothing)
-    ini_con = get(kwargs, :initial_conditions, DICKDA())
+    ini_con = get(kwargs, :initial_conditions, InitialConditionsContainer())
     make_parameters_container = get(kwargs, :use_parameters, false)
     use_forecast_data = get(kwargs, :use_forecast_data, true)
     jump_model =
@@ -195,24 +185,20 @@ end
 function InitialCondition(
     psi_container::PSIContainer,
     device::T,
-    access_ref::AbstractString,
+    update_ref::UpdateRef,
     value::Float64,
-    cache::Union{Nothing,Type{<:AbstractCache}} = nothing,
-) where {T<:PSY.Device}
+    cache_type::Union{Nothing,Type{<:AbstractCache}} = nothing,
+) where {T<:PSY.Component}
     if model_has_parameters(psi_container)
         return InitialCondition(
             device,
-            UpdateRef{JuMP.VariableRef}(access_ref, T),
+            update_ref,
             PJ.add_parameter(psi_container.JuMPmodel, value),
-            cache,
+            cache_type,
         )
-    else
-        if !hasfield(T, Symbol(access_ref))
-            error("Device of type $T doesn't contain the field $access_ref")
-        end
-        return InitialCondition(device, UpdateRef{T}(access_ref, T), value, cache)
     end
 
+    return InitialCondition(device, update_ref, value, cache_type)
 end
 
 function has_initial_conditions(psi_container::PSIContainer, key::ICKey)
@@ -233,55 +219,35 @@ function set_initial_conditions!(psi_container::PSIContainer, key::ICKey, value)
     psi_container.initial_conditions[key] = value
 end
 
-# Var_ref
-function get_value(psi_container::PSIContainer, ref::UpdateRef{JuMP.VariableRef})
-    return get_variable(psi_container, ref.access_ref)
+const _JUMP_NAME_DELIMITER = "_"
+
+function _encode_for_jump(::Type{T}, name1::AbstractString, name2::AbstractString) where T
+    return Symbol(join((name1, name2, T), _JUMP_NAME_DELIMITER))
 end
 
-# param_ref
-function get_value(psi_container::PSIContainer, ref::UpdateRef{PJ.ParameterRef})
-    for (k, v) in psi_container.parameters
-        if k.access_ref == ref.access_ref
-            return v
-        end
-    end
-
-    throw(IS.InvalidValue("$(ref) is not stored"))
+function _encode_for_jump(::Type{T}, name1::Symbol, name2::Symbol) where T
+    return _encode_for_jump(T, string(name), string(name2))
 end
 
+function _encode_for_jump(::Type{T}, name::AbstractString,) where T
+    return Symbol(join((name, T), _JUMP_NAME_DELIMITER))
+end
 
-const JUMP_NAME_DELIMITER = "_"
-
-function _encode_for_jump(name::AbstractString, ::Type{T}) where {T}
-    return Symbol(join((name, string(T)), JUMP_NAME_DELIMITER))
+function _encode_for_jump(::Type{T}, name::Symbol) where T
+    return Symbol(join((string(name), T), _JUMP_NAME_DELIMITER))
 end
 
 function _encode_for_jump(name::AbstractString)
     return Symbol(name)
 end
 
-# Ideally, the next two functions can be deleted once all existing code is changed to call
-# the form above.
-
-function _encode_for_jump(name::Symbol, ::Type{T}) where {T}
-    return _encode_for_jump(string(name), T)
-end
-
 function _encode_for_jump(name::Symbol)
     return name
 end
 
-"""
-Returns two-element Tuple (name, device_type) if device type was encoded into the name
-else one element Tuple with just the name.
-"""
-function _decode_from_jump(sym)
-    return Tuple(split(string(sym), JUMP_NAME_DELIMITER))
-end
-
-constraint_name(cons_type, device_type) = _encode_for_jump(cons_type, device_type)
+constraint_name(cons_type, device_type) = _encode_for_jump(device_type, cons_type)
 constraint_name(cons_type) = _encode_for_jump(cons_type)
-variable_name(var_type, device_type) = _encode_for_jump(var_type, device_type)
+variable_name(var_type, device_type) = _encode_for_jump(device_type, var_type)
 variable_name(var_type) = _encode_for_jump(var_type)
 
 _variable_type(cm::PSIContainer) = JuMP.variable_type(cm.JuMPmodel)
@@ -301,9 +267,9 @@ get_initial_conditions(psi_container::PSIContainer) = psi_container.initial_cond
 function get_variable(
     psi_container::PSIContainer,
     var_type::AbstractString,
-    device_type::Type{<:PSY.Device},
-)
-    return get_variable(psi_container, variable_name(var_type, device_type))
+    ::Type{T},
+) where {T<:PSY.Component}
+    return get_variable(psi_container, variable_name(var_type, T))
 end
 
 function get_variable(psi_container::PSIContainer, var_type::AbstractString)
@@ -327,10 +293,10 @@ end
 function assign_variable!(
     psi_container::PSIContainer,
     variable_type::AbstractString,
-    device_type::Type{<:PSY.Device},
+    ::Type{T},
     value,
-)
-    assign_variable!(psi_container, variable_name(variable_type, device_type), value)
+) where T<:PSY.Component
+    assign_variable!(psi_container, variable_name(variable_type, T), value)
     return
 end
 
@@ -340,7 +306,13 @@ function assign_variable!(psi_container::PSIContainer, variable_type::AbstractSt
 end
 
 function assign_variable!(psi_container::PSIContainer, name::Symbol, value)
-    @debug "set_variable" name
+    @debug "assign_variable" name
+
+    if haskey(psi_container.variables, name)
+        @error "variable $name is already stored" sort!(get_variable_names(psi_container))
+        throw(IS.InvalidValue("variable $name is already stored"))
+    end
+
     psi_container.variables[name] = value
     return
 end
@@ -354,9 +326,9 @@ end
 function get_constraint(
     psi_container::PSIContainer,
     constraint_type::AbstractString,
-    device_type::Type{<:PSY.Device},
-)
-    return get_constraint(psi_container, constraint_name(constraint_type, device_type))
+    ::Type{T},
+) where T<:PSY.Component
+    return get_constraint(psi_container, constraint_name(constraint_type, T))
 end
 
 function get_constraint(psi_container::PSIContainer, constraint_type::AbstractString)
@@ -380,10 +352,10 @@ end
 function assign_constraint!(
     psi_container::PSIContainer,
     constraint_type::AbstractString,
-    device_type::Type{<:PSY.Device},
+    ::Type{T},
     value,
-)
-    assign_constraint!(psi_container, constraint_name(constraint_type, device_type), value)
+) where T<:PSY.Component
+    assign_constraint!(psi_container, constraint_name(constraint_type, T), value)
     return
 end
 
@@ -408,23 +380,52 @@ function add_cons_container!(psi_container::PSIContainer, cons_name::Symbol, axs
     return container
 end
 
-function get_parameter(psi_container::PSIContainer, ref::UpdateRef)
-    parameter = get(psi_container.parameters, ref, nothing)
-    if isnothing(parameter)
-        @error "$ref is not stored" sort!(get_parameter_refs(psi_container))
-        throw(IS.InvalidValue("parameter $ref is not stored"))
-    end
-
-    return parameter
-end
-
-function get_parameter_refs(psi_container::PSIContainer)
+function get_parameter_names(psi_container::PSIContainer)
     return collect(keys(psi_container.parameters))
 end
 
-function assign_parameter(psi_container::PSIContainer, ref::UpdateRef, value)
-    @debug "set_parameter" ref
-    psi_container.parameters[ref] = value
+function get_parameter_container(psi_container::PSIContainer, name::AbstractString)
+    return get_parameter_container(psi_container, Symbol(name))
+end
+
+function get_parameter_container(psi_container::PSIContainer, name::Symbol)
+    container = get(psi_container.parameters, name, nothing)
+    if isnothing(container)
+        @error "$name is not stored" sort!(get_parameter_names(psi_container))
+        throw(IS.InvalidValue("parameter $name is not stored"))
+    end
+    return container
+end
+
+function get_parameter_container(
+    psi_container::PSIContainer,
+    name::Symbol,
+    ::Type{T},
+) where T<:PSY.Component
+    return get_parameter_container(psi_container, _encode_for_jump(T, name))
+end
+
+function get_parameter_container(psi_container::PSIContainer, ref::UpdateRef)
+    return get_parameter_container(psi_container, ref.access_ref)
+end
+
+function get_parameter_array(psi_container::PSIContainer, ref)
+    return get_parameter_array(get_parameter_container(psi_container, ref))
+end
+
+function assign_parameter!(psi_container::PSIContainer, container::ParameterContainer)
+    @debug "assign_parameter" container.update_ref
+    name = container.update_ref.access_ref
+    if name isa AbstractString
+        name = Symbol(name)
+    end
+
+    if haskey(psi_container.parameters, name)
+        @error "parameter $name is already stored" sort!(get_parameter_names(psi_container))
+        throw(IS.InvalidValue("parameter $name is already stored"))
+    end
+
+    psi_container.parameters[name] = container
     return
 end
 
@@ -433,7 +434,18 @@ function add_param_container!(
     param_reference::UpdateRef,
     axs...,
 )
-    container = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...)
-    assign_parameter(psi_container, param_reference, container)
-    return container
+    container = ParameterContainer(
+        param_reference,
+        JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...),
+    )
+    assign_parameter!(psi_container, container)
+    return container.array
+end
+
+function iterate_parameter_containers(psi_container::PSIContainer)
+    Channel() do channel
+        for container in values(psi_container.parameters)
+            put!(channel, container)
+        end
+    end
 end

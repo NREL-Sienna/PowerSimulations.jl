@@ -22,7 +22,7 @@ function flow_variables!(
         (PSY.get_name(d) for d in devices),
         time_steps,
     )
-    assign_variable!(psi_container, FLOW_REAL_POWER, B, container)
+    assign_variable!(psi_container, FLOW_ACTIVE_POWER, B, container)
     for d in devices
         bus_fr = PSY.get_number(PSY.get_arc(d).from)
         bus_to = PSY.get_number(PSY.get_arc(d).to)
@@ -58,13 +58,16 @@ function branch_rate_constraints!(
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B,<:AbstractDCLineFormulation},
     system_formulation::Type{<:PM.AbstractDCPModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
-) where {B<:PSY.DCBranch}
-    var = get_variable(psi_container, FLOW_REAL_POWER, B)
+    feed_forward::Union{Nothing, AbstractAffectFeedForward},
+) where B <: PSY.DCBranch
+    var = get_variable(psi_container, FLOW_ACTIVE_POWER, B)
     time_steps = model_time_steps(psi_container)
-    constraint_val =
-        JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
-    assign_constraint!(psi_container, FLOW_REAL_POWER, B, constraint_val)
+    constraint_val = JuMPConstraintArray(
+        undef,
+        (PSY.get_name(d) for d in devices),
+        time_steps
+    )
+    assign_constraint!(psi_container, FLOW_ACTIVE_POWER, B, constraint_val)
 
     for t in time_steps, d in devices
         min_rate =
@@ -87,12 +90,9 @@ function branch_rate_constraints!(
         Type{<:PM.AbstractActivePowerModel},
         Type{<:PM.AbstractPowerModel},
     },
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
-) where {B<:PSY.DCBranch}
-    for (var_type, cons_type) in zip(
-        (FLOW_REAL_POWER_FROM_TO, FLOW_REAL_POWER_TO_FROM),
-        (RATE_LIMIT_FT, RATE_LIMIT_TF),
-    )
+    feed_forward::Union{Nothing, AbstractAffectFeedForward},
+) where B <: PSY.DCBranch
+    for (var_type, cons_type) in zip((FLOW_ACTIVE_POWER_FROM_TO, FLOW_ACTIVE_POWER_TO_FROM), (RATE_LIMIT_FT, RATE_LIMIT_TF))
         var = get_variable(psi_container, var_type, B)
         constraint_val =
             JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
@@ -129,10 +129,7 @@ function branch_rate_constraints!(
     feed_forward::Union{Nothing,AbstractAffectFeedForward},
 ) where {B<:PSY.DCBranch}
     time_steps = model_time_steps(psi_container)
-    for (var_type, cons_type) in zip(
-        (FLOW_REAL_POWER_FROM_TO, FLOW_REAL_POWER_TO_FROM),
-        (RATE_LIMIT_FT, RATE_LIMIT_TF),
-    )
+    for (var_type, cons_type) in zip((FLOW_ACTIVE_POWER_FROM_TO, FLOW_ACTIVE_POWER_TO_FROM), (RATE_LIMIT_FT, RATE_LIMIT_TF))
         var = get_variable(psi_container, var_type, B)
         constraint_val =
             JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
