@@ -19,19 +19,31 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # Using Parameters Testing
-    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re; use_parameters = true)
+    op_problem =
+        OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re; use_parameters = true)
     construct_device!(op_problem, :Renewable, model)
     moi_tests(op_problem, true, 72, 0, 72, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
-    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re; use_forecast_data = false)
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        DCPPowerModel,
+        c_sys5_re;
+        use_forecast_data = false,
+    )
     construct_device!(op_problem, :Renewable, model)
     moi_tests(op_problem, false, 3, 0, 3, 3, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast Testing
-    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re; use_parameters = true, use_forecast_data = false)
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        DCPPowerModel,
+        c_sys5_re;
+        use_parameters = true,
+        use_forecast_data = false,
+    )
     construct_device!(op_problem, :Renewable, model)
     moi_tests(op_problem, true, 3, 0, 3, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -40,7 +52,8 @@ end
 @testset "Renewable ACPPower Full Dispatch" begin
     model = DeviceModel(RenewableDispatch, RenewableFullDispatch)
     for p in [true, false]
-        op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_re; use_parameters = p)
+        op_problem =
+            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_re; use_parameters = p)
         construct_device!(op_problem, :Renewable, model)
         if p
             moi_tests(op_problem, p, 144, 0, 144, 72, 0, false)
@@ -53,7 +66,13 @@ end
     end
     # No Forecast Test
     for p in [true, false]
-        op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_re; use_forecast_data = false, use_parameters = p)
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            ACPPowerModel,
+            c_sys5_re;
+            use_forecast_data = false,
+            use_parameters = p,
+        )
         construct_device!(op_problem, :Renewable, model)
         if p
             moi_tests(op_problem, p, 6, 0, 6, 3, 0, false)
@@ -77,19 +96,31 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # Using Parameters Testing
-    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re; use_parameters = true)
+    op_problem =
+        OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re; use_parameters = true)
     construct_device!(op_problem, :Renewable, model)
     moi_tests(op_problem, true, 72, 0, 72, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
-    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re; use_forecast_data = false)
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        DCPPowerModel,
+        c_sys5_re;
+        use_forecast_data = false,
+    )
     construct_device!(op_problem, :Renewable, model)
     moi_tests(op_problem, false, 3, 0, 3, 3, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast Testing
-    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re; use_parameters = true, use_forecast_data = false)
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        DCPPowerModel,
+        c_sys5_re;
+        use_parameters = true,
+        use_forecast_data = false,
+    )
     construct_device!(op_problem, :Renewable, model)
     moi_tests(op_problem, true, 3, 0, 3, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
@@ -98,7 +129,8 @@ end
 @testset "Renewable ACPPower ConstantPowerFactor" begin
     model = DeviceModel(RenewableDispatch, RenewableConstantPowerFactor)
     for p in [true, false]
-        op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_re; use_parameters = p)
+        op_problem =
+            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_re; use_parameters = p)
         construct_device!(op_problem, :Renewable, model)
         if p
             moi_tests(op_problem, p, 144, 0, 72, 0, 72, false)
@@ -111,7 +143,13 @@ end
     end
     # No Forecast Test
     for p in [true, false]
-        op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_re; use_forecast_data = false, use_parameters = p)
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            ACPPowerModel,
+            c_sys5_re;
+            use_forecast_data = false,
+            use_parameters = p,
+        )
         construct_device!(op_problem, :Renewable, model)
         if p
             moi_tests(op_problem, p, 6, 0, 3, 0, 3, false)
@@ -127,7 +165,8 @@ end
 @testset "Renewable DCPLossLess FixedOutput" begin
     model = DeviceModel(RenewableDispatch, RenewableFixed)
     for p in [true, false]
-        op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re; use_parameters = p)
+        op_problem =
+            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re; use_parameters = p)
         construct_device!(op_problem, :Renewable, model)
         if p
             moi_tests(op_problem, p, 0, 0, 0, 0, 0, false)
@@ -142,7 +181,8 @@ end
 @testset "Renewable ACPPowerModel FixedOutput" begin
     model = DeviceModel(RenewableDispatch, RenewableFixed)
     for p in [true, false]
-        op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_re; use_parameters = p)
+        op_problem =
+            OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_re; use_parameters = p)
         construct_device!(op_problem, :Renewable, model)
         if p
             moi_tests(op_problem, p, 0, 0, 0, 0, 0, false)
