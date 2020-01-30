@@ -41,7 +41,7 @@ function _read_references(
             File_Path = String[],
         )
         for n = 1:length(step)
-            step_df = vcat(step_df, date_df[date_df.Step.==step[n], :])
+            step_df = vcat(step_df, date_df[date_df.Step .== step[n], :])
         end
         results[name] = DataFrames.DataFrame()
         for (ix, time) in enumerate(step_df.Date)

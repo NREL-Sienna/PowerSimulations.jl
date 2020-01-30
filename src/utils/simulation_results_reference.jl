@@ -16,7 +16,6 @@ struct SimulationResultsReference
     end
 end
 
-
 """
     make_references(sim::Simulation, date_run::String; kwargs...)
 
@@ -50,32 +49,44 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
     for (stage_number, stage_name) in sim.sequence.order
         variables = Dict{Symbol,Any}()
         interval = sim.sequence.intervals[stage_name]
-        variable_names = (collect(keys(get_psi_container(sim.stages[stage_name]).variables)))
+        variable_names =
+            (collect(keys(get_psi_container(sim.stages[stage_name]).variables)))
         if :constraints_duals in keys(kwargs) && !isnothing(kwargs[:constraints_duals])
             dual_cons = Symbol.(_concat_string(kwargs[:constraints_duals]))
             variable_names = vcat(variable_names, dual_cons)
         end
         for name in variable_names
-            variables[name] = DataFrames.DataFrame(Date = Dates.DateTime[],
-                                           Step = String[], File_Path = String[])
+            variables[name] = DataFrames.DataFrame(
+                Date = Dates.DateTime[],
+                Step = String[],
+                File_Path = String[],
+            )
         end
-        for s in 1:sim.steps
+        for s = 1:(sim.steps)
             stage = get_stage(sim, stage_name)
-            for run in 1:stage.internal.executions
+            for run = 1:(stage.internal.executions)
                 sim.internal.current_time = sim.internal.date_ref[stage_number]
                 for name in variable_names
-                    full_path = joinpath(sim.internal.raw_dir, "step-$(s)-stage-$(stage_name)",
-                                replace_chars("$(sim.internal.current_time)", ":", "-"), "$(name).feather")
+                    full_path = joinpath(
+                        sim.internal.raw_dir,
+                        "step-$(s)-stage-$(stage_name)",
+                        replace_chars("$(sim.internal.current_time)", ":", "-"),
+                        "$(name).feather",
+                    )
                     if isfile(full_path)
-                        date_df = DataFrames.DataFrame(Date = sim.internal.current_time,
-                                                       Step = "step-$(s)", File_Path = full_path)
+                        date_df = DataFrames.DataFrame(
+                            Date = sim.internal.current_time,
+                            Step = "step-$(s)",
+                            File_Path = full_path,
+                        )
                         variables[name] = vcat(variables[name], date_df)
                     else
                         @info("$full_path, no such file path")
                     end
                 end
                 sim.internal.run_count[s][stage_number] += 1
-                sim.internal.date_ref[stage_number] = sim.internal.date_ref[stage_number] + interval
+                sim.internal.date_ref[stage_number] =
+                    sim.internal.date_ref[stage_number] + interval
             end
         end
         references["stage-$stage_name"] = variables
@@ -83,7 +94,11 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
     return references
 end
 """This function outputs the step range correlated to a given date range"""
-function find_step_range(rsim_result::SimulationResultsReference, stage::String, Dates::StepRange{Dates.DateTime,Any})
+function find_step_range(
+    rsim_result::SimulationResultsReference,
+    stage::String,
+    Dates::StepRange{Dates.DateTime,Any},
+)
     references = sim_results.ref
     variable = (collect(keys(references[stage])))
     date_df = references[stage][variable[1]]

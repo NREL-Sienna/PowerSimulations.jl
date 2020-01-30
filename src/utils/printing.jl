@@ -4,10 +4,13 @@ function Base.show(io::IO, op_problem::OperationsProblem)
 end
 =#
 
-function _organize_model(val::Dict{Symbol, T}, field::Symbol, io::IO) where T <: Union{DeviceModel, ServiceModel}
+function _organize_model(
+    val::Dict{Symbol,T},
+    field::Symbol,
+    io::IO,
+) where {T<:Union{DeviceModel,ServiceModel}}
     println(io, "  $(field): ")
     for (i, ix) in val
-
         println(io, "      $(i):")
         for inner_field in fieldnames(T)
             inner_field == :services && continue
@@ -41,7 +44,7 @@ function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTempla
 
     for field in fieldnames(OperationsProblemTemplate)
         val = getfield(template, Symbol(field))
-        if typeof(val) <: Dict{Symbol, <:Union{DeviceModel, ServiceModel}}
+        if typeof(val) <: Dict{Symbol,<:Union{DeviceModel,ServiceModel}}
             println(io, "============================================")
             _organize_model(val, field, io)
         else
@@ -100,9 +103,9 @@ function Base.show(io::IO, ::MIME"text/plain", results::Results)
     for (k, v) in results.total_cost
         println(io, "Total Cost: $(k) = $(v)")
     end
- end
+end
 
- function Base.show(io::IO, ::MIME"text/html", results::PSI.Results)
+function Base.show(io::IO, ::MIME"text/html", results::PSI.Results)
     println(io, "<h1>Results</h1>")
     for (k, v) in results.variables
         time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
@@ -124,21 +127,21 @@ function Base.show(io::IO, ::MIME"text/plain", results::Results)
     for (k, v) in results.total_cost
         println(io, "<p><b>Total Cost: $(v)<b/></p>")
     end
- end
+end
 
- function Base.show(io::IO, stage::Stage)
+function Base.show(io::IO, stage::Stage)
     println(io, "Stage()")
- end
+end
 
- function Base.show(io::IO, ::MIME"text/html", services::Dict{Symbol, PSI.ServiceModel})
+function Base.show(io::IO, ::MIME"text/html", services::Dict{Symbol,PSI.ServiceModel})
     println(io, "<h1>Services</h1>")
     for (k, v) in services
         println(io, "<p><b>$(k)</b></p>")
         println(io, "<p>$(v)</p>")
     end
- end
+end
 
- function Base.show(io::IO, ::MIME"text/html", sim_results::SimulationResultsReference)
+function Base.show(io::IO, ::MIME"text/html", sim_results::SimulationResultsReference)
     println(io, "<h1>Simulation Results Reference</h1>")
     println(io, "<p><b>Results Folder:</b> $(sim_results.results_folder)</p>")
     println(io, "<h2>Reference Tables</h2>")
@@ -152,9 +155,9 @@ function Base.show(io::IO, ::MIME"text/plain", results::Results)
         println(io, "<p><b>$(k)</b></p>")
         println(io, "<p>time length: $(v)</p>")
     end
- end
+end
 
- function Base.show(io::IO, ::MIME"text/plain", sim_results::SimulationResultsReference)
+function Base.show(io::IO, ::MIME"text/plain", sim_results::SimulationResultsReference)
     println(io, "Simulation Results Reference\n")
     println(io, "Results Folder: $(sim_results.results_folder)\n")
     println(io, "Reference Tables\n")
@@ -168,4 +171,4 @@ function Base.show(io::IO, ::MIME"text/plain", results::Results)
         println(io, "$(k)\n")
         println(io, "time length: $(v)\n")
     end
- end
+end
