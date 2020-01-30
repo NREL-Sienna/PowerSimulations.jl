@@ -1,14 +1,18 @@
 abstract type AbstractHydroFormulation <: AbstractDeviceFormulation end
 abstract type AbstractHydroDispatchFormulation <: AbstractHydroFormulation end
 abstract type AbstractHydroUnitCommitment <: AbstractHydroFormulation end
+abstract type AbstractHydroReservoirFormulation <: AbstractHydroDispatchFormulation end
 struct HydroFixed <: AbstractHydroFormulation end
 struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
-struct HydroDispatchReservoirFlow <: AbstractHydroDispatchFormulation end
-struct HydroDispatchReservoirStorage <: AbstractHydroDispatchFormulation end
+struct HydroDispatchReservoirFlow <: AbstractHydroReservoirFormulation end
+struct HydroDispatchReservoirStorage <: AbstractHydroReservoirFormulation end
+#=
+# Commenting out all Unit Commitment formulations as all Hydro UC
+# formulations are currently not supported
 struct HydroCommitmentRunOfRiver <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirFlow <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
-
+=#
 ########################### Hydro generation variables #################################
 function activepower_variables!(psi_container::PSIContainer,
                                devices::IS.FlattenIteratorWrapper{H}) where H<:PSY.HydroGen
@@ -84,7 +88,6 @@ function spillage_variables!(
         devices,
         variable_name(SPILLAGE, H),
         false;
-        ub_value = d -> PSY.get_inflow(d),
         lb_value = d -> 0.0,
     )
 
@@ -108,6 +111,8 @@ function commitment_variables!(
     return
 end
 
+#=
+# All Hydro UC formulations are currently not supported
 ### Constraints for Thermal Generation without commitment variables ####
 """
 This function adds the Commitment Status constraint when there are CommitmentVariables
@@ -128,15 +133,15 @@ function commitment_constraints!(
 
     return
 end
-
+=#
 ####################################### Reactive Power Constraints #########################
 function reactivepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H,AbstractHydroDispatchFormulation},
+    model::DeviceModel{H,D},
     system_formulation::Type{<:PM.AbstractPowerModel},
     feed_forward::Union{Nothing,AbstractAffectFeedForward},
-) where {H<:PSY.HydroGen}
+) where {H<:PSY.HydroGen, D<:AbstractHydroDispatchFormulation}
     constraint_data = Vector(DeviceRange)()
     for d in devices
         limits = PSY.get_reactivepowerlimits(PSY.get_tech(d))
@@ -177,6 +182,7 @@ function _get_time_series(
         bus_number = PSY.get_number(PSY.get_bus(device))
         name = PSY.get_name(device)
         tech = PSY.get_tech(device)
+        # Hydro gens dont't have a power factor field, so the pf calc is commented
         # pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
         active_power = use_forecast_data ? PSY.get_rating(tech) : PSY.get_activepower(device)
         reactive_power = use_forecast_data ? PSY.get_rating(tech) : PSY.get_reactivepower(device)
@@ -195,6 +201,7 @@ function _get_time_series(
         push!(constraint_data, range_data)
         push!(active_timeseries, DeviceTimeSeries(name, bus_number, active_power, ts_vector,
                                                  range_data))
+        # not scaling active power by pf since pf isn't avaialable for hydro gens
         push!(reactive_timeseries, DeviceTimeSeries(name, bus_number, reactive_power,
                                                     ts_vector, range_data))
     end
@@ -216,7 +223,7 @@ function activepower_constraints!(
         psi_container,
         devices,
         model,
-        x -> (min = 0.0, max = PSY.get_activepower(x)),
+        x -> PSY.get_activepowerlimits(PSY.get_tech(x)),
     )
 
     if !parameters && !use_forecast_data
@@ -252,9 +259,9 @@ end
 function activepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H,<:AbstractHydroDispatchFormulation},
+    model::DeviceModel{H,<:AbstractHydroReservoirFormulation},
     system_formulation::Type{<:PM.AbstractPowerModel},
-    feed_forward::IntegralLimitFF,
+    feed_forward::Union{Nothing, AbstractAffectFeedForward},
 ) where {H<:PSY.HydroGen}
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
@@ -263,7 +270,7 @@ function activepower_constraints!(
         psi_container,
         devices,
         model,
-        x -> (min = 0.0, max = PSY.get_activepower(x)),
+        x -> PSY.get_activepowerlimits(PSY.get_tech(x)),
     )
 
     device_range(
@@ -276,6 +283,8 @@ function activepower_constraints!(
     return
 end
 
+#=
+# All Hydro UC formulations are currently not supported
 function activepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
@@ -325,7 +334,7 @@ function activepower_constraints!(
 
     return
 end
-
+=#
 ######################## Inflow constraints ############################
 function _get_inflow_time_series(
     psi_container::PSIContainer,
@@ -366,6 +375,8 @@ function _get_inflow_time_series(
     return inflow_timeseries, constraint_data
 end
 
+#=
+# TODO: Determine if this is useful for ROR formulation ?
 function inflow_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
@@ -421,20 +432,8 @@ function inflow_constraints!(
 
     return
 end
-
+=#
 ######################## Energy balance constraints ############################
-
-function make_efficiency_data(devices::IS.FlattenIteratorWrapper{H}) where {H<:PSY.HydroGen}
-    names = Vector{String}(undef, length(devices))
-    in_out = Vector{InOut}(undef, length(devices))
-
-    for (ix, d) in enumerate(devices)
-        names[ix] = PSY.get_name(d)
-        in_out[ix] = (in = 1.0, out = 1.0) #PSY.get_efficiency(d)
-    end
-
-    return names, in_out
-end
 
 function energy_balance_constraint!(
     psi_container::PSIContainer,
@@ -455,17 +454,29 @@ function energy_balance_constraint!(
     feed_forward::Union{Nothing,AbstractAffectFeedForward},
 ) where {H<:PSY.HydroDispatch}
     key = ICKey(DeviceEnergy, PSY.HydroDispatch)
+    parameters = model_has_parameters(psi_container)
+    use_forecast_data = model_uses_forecasts(psi_container)
+
     if !(key in keys(psi_container.initial_conditions))
         throw(IS.DataFormatError("Initial Conditions for $(PSY.HydroDispatch) Energy Constraints not in the model"))
     end
 
-    efficiency_data = make_efficiency_data(devices)
-
-    energy_balance(psi_container,
-                   psi_container.initial_conditions[key],
-                   efficiency_data,
-                   constraint_name(ENERGY_CAPACITY, H),
-                   (variable_name(INFLOW, H), variable_name(ACTIVE_POWER, H), variable_name(ENERGY, H)))
+    ts_data_inflow, constraint_data = _get_inflow_time_series(psi_container, devices, model,
+                                            x -> (min=0.0, max=PSY.get_inflow(x)))
+    if parameters
+        reservoir_energy_balance_param(psi_container,
+                                        psi_container.initial_conditions[key],
+                                        ts_data_inflow,
+                                        constraint_name(ENERGY_CAPACITY, H),
+                                        (variable_name(SPILLAGE, H), variable_name(ACTIVE_POWER, H), variable_name(ENERGY, H)),
+                                        UpdateRef{H}(INFLOW, "get_inflow"))
+    else
+        reservoir_energy_balance(psi_container,
+                                psi_container.initial_conditions[key],
+                                ts_data_inflow,
+                                constraint_name(ENERGY_CAPACITY, H),
+                                (variable_name(SPILLAGE, H), variable_name(ACTIVE_POWER, H), variable_name(ENERGY, H)))
+    end
     return
 end
 
@@ -725,6 +736,7 @@ function _device_spillage!(
     return
 end
 
+#=
 function _device_spillage!(
     range_data::DeviceRange,
     device::H,
@@ -734,3 +746,4 @@ function _device_spillage!(
     push!(range_data.additional_terms_ub, Symbol("Sp_$H"))
     return
 end
+=#
