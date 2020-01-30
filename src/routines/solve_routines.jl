@@ -127,12 +127,12 @@ function execute!(sim::Simulation; kwargs...)
     steps = get_steps(sim)
     for s = 1:steps
         println("Step $(s)")
-        for stage_number = 1:sim.internal.stages_count
+        for stage_number = 1:(sim.internal.stages_count)
             stage_name = sim.sequence.order[stage_number]
             stage = get(sim.stages, stage_name, nothing)
             @info "Stage $(stage_number)-$(stage_name)"
             stage_interval = sim.sequence.intervals[stage_name]
-            for run = 1:stage.internal.executions
+            for run = 1:(stage.internal.executions)
                 run_name = "step-$s-stage-$stage_name"
                 @info "Starting run $run_name $(sim.internal.current_time)"
                 sim.internal.current_time = sim.internal.date_ref[stage_number]
