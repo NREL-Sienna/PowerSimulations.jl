@@ -7,7 +7,7 @@ dc_line = DeviceModel(HVDCLine, HVDCDispatch)
 
 @testset "Network Copper Plate" begin
     network = CopperPlatePowerModel
-    systems = [c_sys5, c_sys14_dc] #c_sys14
+    systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
     test_results = Dict{System, Vector{Int64}}(c_sys5 => [120, 0, 120, 120, 24],
                                                    c_sys14 => [120, 0, 120, 120, 24],
@@ -38,7 +38,7 @@ end
 
 @testset "Network DC-PF with PTDF formulation" begin
     network = StandardPTDFModel
-    systems = [c_sys5, c_sys14_dc] #c_sys14
+    systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimit_lb_Line, :RateLimit_ub_Line, :nodal_balance, :network_flow]
     parameters = [true, false]
@@ -77,7 +77,7 @@ end
 
 @testset "Network DC lossless -PF network with PowerModels DCPlosslessForm" begin
     network = DCPPowerModel
-    systems = [c_sys5, c_sys14_dc] #c_sys14
+    systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimit_ub_Line, :RateLimit_lb_Line]
     parameters = [true, false]
@@ -109,7 +109,7 @@ end
 
 @testset  "Network Solve AC-PF PowerModels StandardACPModel" begin
     network = ACPPowerModel
-    systems = [c_sys5, c_sys14_dc] #c_sys14
+    systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimitFT_Line, :RateLimitTF_Line]
     parameters = [true, false]
@@ -140,7 +140,7 @@ end
 
 @testset  "Network Solve AC-PF PowerModels linear approximation models" begin
     networks = [DCPPowerModel, NFAPowerModel]
-    systems = [c_sys5, c_sys14_dc] #c_sys14
+    systems = [c_sys5, c_sys14, c_sys14_dc]
     p = true
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
@@ -161,7 +161,7 @@ end
                 ACRPowerModel,
                 ACTPowerModel
                 ]
-    systems = [c_sys5, c_sys14_dc] #c_sys14
+    systems = [c_sys5, c_sys14, c_sys14_dc]
 
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
@@ -177,7 +177,7 @@ end
 
 @testset  "Network AC-PF PowerModels quadratic loss approximations models" begin
     networks = [DCPLLPowerModel, LPACCPowerModel]
-    systems = [c_sys5, c_sys14_dc] #c_sys14
+    systems = [c_sys5, c_sys14, c_sys14_dc]
 
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
@@ -197,7 +197,7 @@ end
                  QCRMPowerModel,
                  QCLSPowerModel,
                  ]
-    systems = [c_sys5, c_sys14_dc] #c_sys14
+    systems = [c_sys5, c_sys14, c_sys14_dc]
 
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
