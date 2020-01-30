@@ -49,10 +49,20 @@ function ptdf_networkflow(
             from_number = PSY.get_number(PSY.get_arc(br).from)
             to_number = PSY.get_number(PSY.get_arc(br).to)
             flow_variable = get_variable(psi_container, FLOW_ACTIVE_POWER, typeof(br))
-            _add_to_expression!(nodal_balance_expressions,
-                                from_number, t, flow_variable[name, t], -1.0)
-            _add_to_expression!(nodal_balance_expressions,
-                                to_number, t, flow_variable[name, t], 1.0)
+            _add_to_expression!(
+                nodal_balance_expressions,
+                from_number,
+                t,
+                flow_variable[name, t],
+                -1.0,
+            )
+            _add_to_expression!(
+                nodal_balance_expressions,
+                to_number,
+                t,
+                flow_variable[name, t],
+                1.0,
+            )
 
         end
 

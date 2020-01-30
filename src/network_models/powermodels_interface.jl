@@ -60,7 +60,6 @@ function post_nip(pm::PM.AbstractPowerModel)
 
 end
 
-
 ""
 function build_nip_expr_model(
     data::Dict{String,Any},
@@ -114,7 +113,6 @@ function post_nip_expr(pm::PM.AbstractPowerModel)
 
 end
 
-
 #################################################################################
 # Model Extention Functions
 
@@ -160,7 +158,6 @@ function variable_reactive_net_injection(
     return
 end
 
-
 ""
 function constraint_power_balance_ni(
     pm::PM.AbstractPowerModel,
@@ -184,7 +181,6 @@ function constraint_power_balance_ni(
     return
 
 end
-
 
 ""
 function constraint_power_balance_ni(
@@ -214,7 +210,6 @@ function constraint_power_balance_ni(
     return
 
 end
-
 
 ""
 function constraint_power_balance_ni_expr(
@@ -252,7 +247,6 @@ function constraint_power_balance_ni_expr(
 
 end
 
-
 ""
 function constraint_power_balance_ni_expr(
     pm::PM.AbstractPowerModel,
@@ -283,7 +277,6 @@ function constraint_power_balance_ni_expr(
     return
 
 end
-
 
 "active power only models ignore reactive power variables"
 function variable_reactive_net_injection(pm::PM.AbstractActivePowerModel; kwargs...)
@@ -425,11 +418,16 @@ function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractPowerModel}
 
     pm_var_map[PSY.Bus] = Dict(:va => THETA, :vm => VM)
     pm_var_map[PSY.ACBranch] = Dict(
-        :p => (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
-        :q => (from_to = FLOW_REACTIVE_POWER_FROM_TO, to_from = FLOW_REACTIVE_POWER_TO_FROM)
+        :p =>
+                (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
+        :q => (
+            from_to = FLOW_REACTIVE_POWER_FROM_TO,
+            to_from = FLOW_REACTIVE_POWER_TO_FROM,
+        ),
     )
     pm_var_map[PSY.DCBranch] = Dict(
-        :p_dc => (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
+        :p_dc =>
+                (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
         :q_dc => (
             from_to = FLOW_REACTIVE_POWER_FROM_TO,
             to_from = FLOW_REACTIVE_POWER_TO_FROM,

@@ -30,7 +30,6 @@ export ACRPowerModel
 import PowerModels: ACTPowerModel
 export ACTPowerModel
 
-
 ##### Linear Approximations #####
 import PowerModels: DCPPowerModel
 export DCPPowerModel
