@@ -45,7 +45,9 @@ function construct_device!(
 
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
-    reactivepower_constraints!(psi_container, devices, model, S, model.feed_forward)
+    # since hydro generators don't currently have pf info, don't add any additional
+    # reactive power constraints other than the variable bounds.
+    # reactivepower_constraints!(psi_container, devices, model, S, model.feed_forward)
     energy_limit_constraints!(psi_container, devices, model, S, model.feed_forward)
     feed_forward!(psi_container, H, model.feed_forward)
 
@@ -55,7 +57,8 @@ function construct_device!(
     return
 end
 
-
+#=
+# All Hydro UC formulations are currently not supported
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
@@ -87,6 +90,7 @@ function construct_device!(
 
     return
 end
+=#
 
 function construct_device!(
     psi_container::PSIContainer,
@@ -157,7 +161,6 @@ function construct_device!(
     #Variables
     activepower_variables!(psi_container, devices)
     energy_variables!(psi_container, devices)
-    inflow_variables!(psi_container, devices)
     spillage_variables!(psi_container, devices)
 
     #Initial Conditions
@@ -165,7 +168,6 @@ function construct_device!(
 
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
-    inflow_constraints!(psi_container, devices, model, S, model.feed_forward)
     energy_balance_constraint!(psi_container, devices, model, S, model.feed_forward)
     feed_forward!(psi_container, H, model.feed_forward)
 
@@ -175,6 +177,7 @@ function construct_device!(
     return
 end
 
+#=
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
@@ -206,7 +209,7 @@ function construct_device!(
 
     return
 end
-
+=#
 
 function construct_device!(
     psi_container::PSIContainer,
