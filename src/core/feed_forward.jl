@@ -1,10 +1,10 @@
 struct UpperBoundFF <: AbstractAffectFeedForward
     variable_from_stage::Symbol
     affected_variables::Vector{Symbol}
-    cache::Union{Nothing, Type{<:AbstractCache}}
+    cache::Union{Nothing,Type{<:AbstractCache}}
 end
 
-function UpperBoundFF(;variable_from_stage, affected_variables)
+function UpperBoundFF(; variable_from_stage, affected_variables)
     return UpperBoundFF(variable_from_stage, affected_variables, nothing)
 end
 
@@ -14,11 +14,16 @@ struct RangeFF <: AbstractAffectFeedForward
     variable_from_stage_ub::Symbol
     variable_from_stage_lb::Symbol
     affected_variables::Vector{Symbol}
-    cache::Union{Nothing, Type{<:AbstractCache}}
+    cache::Union{Nothing,Type{<:AbstractCache}}
 end
 
-function RangeFF(;variable_from_stage_ub, variable_from_stage_lb, affected_variables)
-    return RangeFF(variable_from_stage_ub, variable_from_stage_lb, affected_variables, nothing)
+function RangeFF(; variable_from_stage_ub, variable_from_stage_lb, affected_variables)
+    return RangeFF(
+        variable_from_stage_ub,
+        variable_from_stage_lb,
+        affected_variables,
+        nothing,
+    )
 end
 
 get_bounds_from_stage(p::RangeFF) = (p.variable_from_stage_lb, p.variable_from_stage_lb)
@@ -26,10 +31,10 @@ get_bounds_from_stage(p::RangeFF) = (p.variable_from_stage_lb, p.variable_from_s
 struct SemiContinuousFF <: AbstractAffectFeedForward
     binary_from_stage::Symbol
     affected_variables::Vector{Symbol}
-    cache::Union{Nothing, Type{<:AbstractCache}}
+    cache::Union{Nothing,Type{<:AbstractCache}}
 end
 
-function SemiContinuousFF(;binary_from_stage, affected_variables)
+function SemiContinuousFF(; binary_from_stage, affected_variables)
     return SemiContinuousFF(binary_from_stage, affected_variables, nothing)
 end
 
@@ -39,10 +44,10 @@ get_affected_variables(p::AbstractAffectFeedForward) = p.affected_variables
 struct IntegralLimitFF <: AbstractAffectFeedForward
     variable_from_stage::Symbol
     affected_variables::Vector{Symbol}
-    cache::Union{Nothing, Type{<:AbstractCache}}
+    cache::Union{Nothing,Type{<:AbstractCache}}
 end
 
-function IntegralLimitFF(;variable_from_stage, affected_variables)
+function IntegralLimitFF(; variable_from_stage, affected_variables)
     return IntegralLimitFF(variable_from_stage, affected_variables, nothing)
 end
 
@@ -72,10 +77,12 @@ The Parameters are initialized using the uppper boundary values of the provided 
 * param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
 * var_name::Symbol : the name of the continuous variable
 """
-function ub_ff(psi_container::PSIContainer,
-               cons_name::Symbol,
-               param_reference::UpdateRef,
-               var_name::Symbol)
+function ub_ff(
+    psi_container::PSIContainer,
+    cons_name::Symbol,
+    param_reference::UpdateRef,
+    var_name::Symbol,
+)
     time_steps = model_time_steps(psi_container)
     ub_name = _middle_rename(cons_name, "_", "ub")
     variable = get_variable(psi_container, var_name)
@@ -91,8 +98,10 @@ function ub_ff(psi_container::PSIContainer,
         value = JuMP.upper_bound(variable[name, 1])
         param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel, value)
         for t in axes[2]
-            con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                                variable[name, t] <= param_ub[name])
+            con_ub[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                variable[name, t] <= param_ub[name]
+            )
         end
     end
 
@@ -125,10 +134,12 @@ where r in range_data.
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 """
-function range_ff(psi_container::PSIContainer,
-                  cons_name::Symbol,
-                  param_reference::NTuple{2, UpdateRef},
-                  var_name::Symbol)
+function range_ff(
+    psi_container::PSIContainer,
+    cons_name::Symbol,
+    param_reference::NTuple{2,UpdateRef},
+    var_name::Symbol,
+)
     time_steps = model_time_steps(psi_container)
     ub_name = _middle_rename(cons_name, "_", "ub")
     lb_name = _middle_rename(cons_name, "_", "lb")
@@ -147,15 +158,19 @@ function range_ff(psi_container::PSIContainer,
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
     for name in axes[1]
-        param_lb[name] = PJ.add_parameter(psi_container.JuMPmodel,
-                                          JuMP.lower_bound(variable[name, 1]))
-        param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel,
-                                          JuMP.upper_bound(variable[name, 1]))
+        param_lb[name] =
+            PJ.add_parameter(psi_container.JuMPmodel, JuMP.lower_bound(variable[name, 1]))
+        param_ub[name] =
+            PJ.add_parameter(psi_container.JuMPmodel, JuMP.upper_bound(variable[name, 1]))
         for t in axes[2]
-            con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                            variable[name, t] <= param_ub[name])
-            con_lb[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                            variable[name, t] >= param_lb[name])
+            con_ub[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                variable[name, t] <= param_ub[name]
+            )
+            con_lb[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                variable[name, t] >= param_lb[name]
+            )
         end
     end
 
@@ -220,10 +235,14 @@ function semicontinuousrange_ff(
         lb_value = JuMP.lower_bound(variable[name, 1])
         param[name] = PJ.add_parameter(psi_container.JuMPmodel, 1.0)
         for t in axes[2]
-            con_ub[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                            variable[name, t] <= ub_value*param[name])
-            con_lb[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                        variable[name, t] >= lb_value*param[name])
+            con_ub[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                variable[name, t] <= ub_value * param[name]
+            )
+            con_lb[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                variable[name, t] >= lb_value * param[name]
+            )
         end
     end
 
@@ -259,10 +278,12 @@ The Parameters are initialized using the upper boundary values of the provided v
 * param_reference : Reference to the PJ.ParameterRef used to determine the upperbound
 * var_name::Symbol : the name of the continuous variable
 """
-function integral_limit_ff(psi_container::PSIContainer,
-                            cons_name::Symbol,
-                            param_reference::UpdateRef,
-                            var_name::Symbol)
+function integral_limit_ff(
+    psi_container::PSIContainer,
+    cons_name::Symbol,
+    param_reference::UpdateRef,
+    var_name::Symbol,
+)
     time_steps = model_time_steps(psi_container)
     ub_name = _middle_rename(cons_name, "_", "integral_limit")
     variable = get_variable(psi_container, var_name)
@@ -284,9 +305,11 @@ function integral_limit_ff(psi_container::PSIContainer,
 end
 
 ########################## FeedForward Constraints #########################################
-function feed_forward!(psi_container::PSIContainer,
-                     device_type::Type{T},
-                     ff_model::Nothing) where {T<:PSY.Component}
+function feed_forward!(
+    psi_container::PSIContainer,
+    device_type::Type{T},
+    ff_model::Nothing,
+) where {T<:PSY.Component}
     return
 end
 

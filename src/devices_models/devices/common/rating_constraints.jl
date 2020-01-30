@@ -24,10 +24,12 @@ where r in rating data and t in time steps.
 - : var_names[1] : var1
 - : var_names[2] : var2
 """
-function rating_constraint!(psi_container::PSIContainer,
-                            rating_data::Vector{Tuple{String, Float64}},
-                            cons_name::Symbol,
-                            var_names::Tuple{Symbol, Symbol})
+function rating_constraint!(
+    psi_container::PSIContainer,
+    rating_data::Vector{Tuple{String,Float64}},
+    cons_name::Symbol,
+    var_names::Tuple{Symbol,Symbol},
+)
     time_steps = model_time_steps(psi_container)
     var1 = get_variable(psi_container, var_names[1])
     var2 = get_variable(psi_container, var_names[2])
@@ -36,7 +38,10 @@ function rating_constraint!(psi_container::PSIContainer,
 
     for r in rating_data
         for t in time_steps
-          constraint[r[1], t] = JuMP.@constraint(psi_container.JuMPmodel, var1[r[1], t]^2 + var2[r[1], t]^2 <= r[2]^2)
+            constraint[r[1], t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                var1[r[1], t]^2 + var2[r[1], t]^2 <= r[2]^2
+            )
         end
     end
 

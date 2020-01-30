@@ -22,45 +22,53 @@ function active_power_variables!(psi_container::PSIContainer,
 end
 
 
-function reactive_power_variables!(psi_container::PSIContainer,
-                                  devices::IS.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
-    add_variable(psi_container,
-                 devices,
-                 variable_name(REACTIVE_POWER, St),
-                 false,
-                 :nodal_balance_reactive)
+function reactive_power_variables!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{St},
+) where {St<:PSY.Storage}
+    add_variable(
+        psi_container,
+        devices,
+        variable_name(REACTIVE_POWER, St),
+        false,
+        :nodal_balance_reactive,
+    )
     return
 end
 
 
-function energy_storage_variables!(psi_container::PSIContainer,
-                                  devices::IS.FlattenIteratorWrapper{St}) where St<:PSY.Storage
-    add_variable(psi_container,
-                 devices,
-                 variable_name(ENERGY, St),
-                 false;
-                 lb_value = d -> 0.0,)
+function energy_storage_variables!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{St},
+) where {St<:PSY.Storage}
+    add_variable(
+        psi_container,
+        devices,
+        variable_name(ENERGY, St),
+        false;
+        lb_value = d -> 0.0,
+    )
     return
 end
 
 
-function storage_reservation_variables!(psi_container::PSIContainer,
-                                       devices::IS.FlattenIteratorWrapper{St}) where St<:PSY.Storage
-    add_variable(psi_container,
-                 devices,
-                 variable_name(RESERVE, St),
-                 true)
+function storage_reservation_variables!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{St},
+) where {St<:PSY.Storage}
+    add_variable(psi_container, devices, variable_name(RESERVE, St), true)
     return
 end
 
 ###################################################### output power constraints#################################
 
-function active_power_constraints!(psi_container::PSIContainer,
-                                   devices::IS.FlattenIteratorWrapper{St},
-                                   model::DeviceModel{St, BookKeeping},
-                                   ::Type{S},
-                                   feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
-                                                     S<:PM.AbstractPowerModel}
+function active_power_constraints!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{St},
+    model::DeviceModel{St,BookKeeping},
+    ::Type{S},
+    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+) where {St<:PSY.Storage,S<:PM.AbstractPowerModel}
     constraint_data_in = Vector{DeviceRange}()
     constraint_data_out = Vector{DeviceRange}()
     for d in devices
@@ -83,18 +91,19 @@ function active_power_constraints!(psi_container::PSIContainer,
     return
 end
 
-function active_power_constraints!(psi_container::PSIContainer,
-                                   devices::IS.FlattenIteratorWrapper{St},
-                                   model::DeviceModel{St, BookKeepingwReservation},
-                                   ::Type{S},
-                                   feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
-                                                     S<:PM.AbstractPowerModel}
+function active_power_constraints!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{St},
+    model::DeviceModel{St,BookKeepingwReservation},
+    ::Type{S},
+    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+) where {St<:PSY.Storage,S<:PM.AbstractPowerModel}
     constraint_data_in = Vector{DeviceRange}()
     constraint_data_out = Vector{DeviceRange}()
     for d in devices
         name = PSY.get_name(d)
         in_lims = PSY.get_inputactivepowerlimits(d)
-        out_lims =  PSY.get_outputactivepowerlimits(d)
+        out_lims = PSY.get_outputactivepowerlimits(d)
         push!(constraint_data_in, DeviceRange(name, in_lims)) #_device_services!(DeviceRange(name, in_lims), d, model)
         push!(constraint_data_out, DeviceRange(name, out_lims)) #_device_services!(DeviceRange(name, out_lims), d, model)
 
@@ -117,13 +126,13 @@ end
 """
 This function adds the reactive  power limits of generators when there are CommitmentVariables
 """
-function reactive_power_constraints!(psi_container::PSIContainer,
-                                   devices::IS.FlattenIteratorWrapper{St},
-                                   model::DeviceModel{St, D},
-                                   ::Type{S},
-                                   feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
-                                                     D<:AbstractStorageFormulation,
-                                                     S<:PM.AbstractPowerModel}
+function reactive_power_constraints!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{St},
+    model::DeviceModel{St,D},
+    ::Type{S},
+    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+) where {St<:PSY.Storage,D<:AbstractStorageFormulation,S<:PM.AbstractPowerModel}
     constraint_data = Vector{DeviceRange}()
     for d in devices
         name = PSY.get_name(d)
@@ -134,51 +143,58 @@ function reactive_power_constraints!(psi_container::PSIContainer,
         push!(constraint_data, range_data)
     end
 
-    device_range(psi_container,
-                 constraint_data,
-                 constraint_name(REACTIVE_RANGE, St),
-                 variable_name(REACTIVE_POWER, St))
+    device_range(
+        psi_container,
+        constraint_data,
+        constraint_name(REACTIVE_RANGE, St),
+        variable_name(REACTIVE_POWER, St),
+    )
     return
 end
 
 ########################## Make initial Conditions for a Model #############################
-function initial_conditions!(psi_container::PSIContainer,
-                            devices::IS.FlattenIteratorWrapper{St},
-                            ::Type{D}) where {St<:PSY.Storage,
-                                                                D<:AbstractStorageFormulation}
+function initial_conditions!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{St},
+    ::Type{D},
+) where {St<:PSY.Storage,D<:AbstractStorageFormulation}
     storage_energy_init(psi_container, devices)
     return
 end
 
 ###################################################### Energy Capacity constraints##########
 
-function energy_capacity_constraints!(psi_container::PSIContainer,
-                                    devices::IS.FlattenIteratorWrapper{St},
-                                    model::DeviceModel{St, D},
-                                    ::Type{S},
-                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
-                                                                        D<:AbstractStorageFormulation,
-                                                                        S<:PM.AbstractPowerModel}
+function energy_capacity_constraints!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{St},
+    model::DeviceModel{St,D},
+    ::Type{S},
+    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+) where {St<:PSY.Storage,D<:AbstractStorageFormulation,S<:PM.AbstractPowerModel}
     constraint_data = Vector{DeviceRange}()
     for d in devices
         name = PSY.get_name(d)
-        limits= PSY.get_capacity(d)
+        limits = PSY.get_capacity(d)
         range_data = DeviceRange(name, limits)
         #_device_services!(range_data, d, model)
         # Uncomment when we implement reactive power services
         push!(constraint_data, range_data)
     end
 
-    device_range(psi_container,
-                 constraint_data,
-                 constraint_name(ENERGY_CAPACITY, St),
-                 variable_name(ENERGY, St))
+    device_range(
+        psi_container,
+        constraint_data,
+        constraint_name(ENERGY_CAPACITY, St),
+        variable_name(ENERGY, St),
+    )
     return
 end
 
 ###################################################### book keeping constraints ############
 
-function make_efficiency_data(devices::IS.FlattenIteratorWrapper{St}) where {St<:PSY.Storage}
+function make_efficiency_data(
+    devices::IS.FlattenIteratorWrapper{St},
+) where {St<:PSY.Storage}
     names = Vector{String}(undef, length(devices))
     in_out = Vector{InOut}(undef, length(devices))
 
@@ -190,13 +206,13 @@ function make_efficiency_data(devices::IS.FlattenIteratorWrapper{St}) where {St<
     return names, in_out
 end
 
-function energy_balance_constraint!(psi_container::PSIContainer,
-                                   devices::IS.FlattenIteratorWrapper{St},
-                                   ::Type{D},
-                                   ::Type{S},
-                                   feed_forward::Union{Nothing, AbstractAffectFeedForward}) where {St<:PSY.Storage,
-                                                            D<:AbstractStorageFormulation,
-                                                            S<:PM.AbstractPowerModel}
+function energy_balance_constraint!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{St},
+    ::Type{D},
+    ::Type{S},
+    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+) where {St<:PSY.Storage,D<:AbstractStorageFormulation,S<:PM.AbstractPowerModel}
     efficiency_data = make_efficiency_data(devices)
     energy_balance(
         psi_container,

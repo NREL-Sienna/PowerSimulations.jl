@@ -12,7 +12,11 @@ function _result_dataframe_variables(variable::JuMP.Containers.DenseAxisArray)
 
     elseif length(axes(variable)) == 2
 
-        result = Array{Float64,length(variable.axes)}(undef, length(variable.axes[2]), length(variable.axes[1]))
+        result = Array{Float64,length(variable.axes)}(
+            undef,
+            length(variable.axes[2]),
+            length(variable.axes[1]),
+        )
         names = Array{Symbol,1}(undef, length(variable.axes[1]))
 
         for t in variable.axes[2], (ix, name) in enumerate(variable.axes[1])
@@ -23,15 +27,18 @@ function _result_dataframe_variables(variable::JuMP.Containers.DenseAxisArray)
         return DataFrames.DataFrame(result, names)
 
     elseif length(axes(variable)) == 3
-        extra_dims = sum(length(axes(variable)[2:end - 1]))
-        extra_vars = [Symbol("S$(s)") for s in 1:extra_dims]
+        extra_dims = sum(length(axes(variable)[2:end-1]))
+        extra_vars = [Symbol("S$(s)") for s = 1:extra_dims]
         result_df = DataFrames.DataFrame()
         names = vcat(extra_vars, Symbol.(axes(variable)[1]))
 
         for i in variable.axes[2]
             third_dim = collect(fill(i, size(variable)[end]))
-            result = Array{Float64,2}(undef, length(last(variable.axes)),
-                                              length(first(variable.axes)))
+            result = Array{Float64,2}(
+                undef,
+                length(last(variable.axes)),
+                length(first(variable.axes)),
+            )
             for t in last(variable.axes), (ix, name) in enumerate(first(variable.axes))
                 result[t, ix] = JuMP.value(variable[name, i, t])
             end
@@ -51,19 +58,25 @@ function _result_dataframe_duals(constraint::JuMP.Containers.DenseAxisArray)
     if length(axes(constraint)) == 1
         result = Vector{Float64}(undef, length(first(constraint.axes)))
         for t in constraint.axes[1]
-            try result[t] = JuMP.dual(constraint[t])
+            try
+                result[t] = JuMP.dual(constraint[t])
             catch
                 result[t] = NaN
             end
         end
         return DataFrames.DataFrame(var = result)
     elseif length(axes(constraint)) == 2
-        result = Array{Float64,length(variable.axes)}(undef, length(constraint.axes[2]), length(constraint.axes[1]))
+        result = Array{Float64,length(variable.axes)}(
+            undef,
+            length(constraint.axes[2]),
+            length(constraint.axes[1]),
+        )
         names = Array{Symbol,1}(undef, length(constraint.axes[1]))
         for t in constraint.axes[2], (ix, name) in enumerate(constraint.axes[1])
-            try result[t, ix] = JuMP.dual(constraint[name, t])
+            try
+                result[t, ix] = JuMP.dual(constraint[name, t])
             catch
-                result[t, ix] =  NaN
+                result[t, ix] = NaN
             end
             names[ix] = Symbol(name)
         end
@@ -101,7 +114,7 @@ function get_optimizer_log(op_m::OperationsProblem)
     optimizer_log[:termination_status] = JuMP.termination_status(psi_container.JuMPmodel)
     optimizer_log[:primal_status] = JuMP.primal_status(psi_container.JuMPmodel)
     optimizer_log[:dual_status] = JuMP.dual_status(psi_container.JuMPmodel)
-    optimizer_log[:solver] =  JuMP.solver_name(psi_container.JuMPmodel)
+    optimizer_log[:solver] = JuMP.solver_name(psi_container.JuMPmodel)
 
     try
         optimizer_log[:solve_time] = MOI.get(psi_container.JuMPmodel, MOI.SolveTime())
@@ -118,7 +131,7 @@ function get_time_stamps(op_problem::OperationsProblem)
     initial_time = PSY.get_forecasts_initial_time(op_problem.sys)
     interval = PSY.get_forecasts_resolution(op_problem.sys)
     horizon = PSY.get_forecasts_horizon(op_problem.sys)
-    range_time = collect(initial_time:interval:initial_time + interval .* horizon)
+    range_time = collect(initial_time:interval:initial_time+interval.*horizon)
     time_stamp = DataFrames.DataFrame(Range = range_time[:, 1])
 
     return time_stamp
@@ -127,7 +140,7 @@ end
 function get_time_stamps(stage::Stage, start_time::Dates.DateTime)
     resolution = PSY.get_forecasts_resolution(stage.sys)
     horizon = stage.internal.psi_container.time_steps[end]
-    range_time = collect(start_time:resolution:start_time + resolution * horizon)
+    range_time = collect(start_time:resolution:start_time+resolution*horizon)
     time_stamp = DataFrames.DataFrame(Range = range_time[:, 1])
 
     return time_stamp

@@ -3,16 +3,22 @@ mutable struct StageInternal
     number::Int64
     executions::Int64
     execution_count::Int64
-    synchronized_executions::Dict{Int64, Int64} # Number of executions per upper level stage step
-    psi_container::Union{Nothing, PSIContainer}
-    cache_dict::Dict{Type{<:AbstractCache}, AbstractCache}
+    synchronized_executions::Dict{Int64,Int64} # Number of executions per upper level stage step
+    psi_container::Union{Nothing,PSIContainer}
+    cache_dict::Dict{Type{<:AbstractCache},AbstractCache}
     # Can probably be eliminated and use getter functions from
     # Simulation object. Need to determine if its always available in the stage update steps.
-    chronolgy_dict::Dict{Int64, <:AbstractChronology}
+    chronolgy_dict::Dict{Int64,<:AbstractChronology}
     function StageInternal(number, executions, execution_count, psi_container)
-        new(number, executions, execution_count, Dict{Int64, Int64}(), psi_container,
-        Dict{Type{<:AbstractCache}, AbstractCache}(),
-        Dict{Int64, AbstractChronology}())
+        new(
+            number,
+            executions,
+            execution_count,
+            Dict{Int64,Int64}(),
+            psi_container,
+            Dict{Type{<:AbstractCache},AbstractCache}(),
+            Dict{Int64,AbstractChronology}(),
+        )
     end
 end
 
@@ -29,24 +35,25 @@ mutable struct Stage{M<:AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
     optimizer::JuMP.OptimizerFactory
-    internal::Union{Nothing, StageInternal}
+    internal::Union{Nothing,StageInternal}
 
-    function Stage(::Type{M},
-                   template::OperationsProblemTemplate,
-                   sys::PSY.System,
-                   optimizer::JuMP.OptimizerFactory) where M<:AbstractOperationsProblem
+    function Stage(
+        ::Type{M},
+        template::OperationsProblemTemplate,
+        sys::PSY.System,
+        optimizer::JuMP.OptimizerFactory,
+    ) where {M<:AbstractOperationsProblem}
 
-    new{M}(template,
-           sys,
-           optimizer,
-           nothing)
+        new{M}(template, sys, optimizer, nothing)
 
     end
 end
 
-function Stage(template::OperationsProblemTemplate,
-               sys::PSY.System,
-               optimizer::JuMP.OptimizerFactory) where M<:AbstractOperationsProblem
+function Stage(
+    template::OperationsProblemTemplate,
+    sys::PSY.System,
+    optimizer::JuMP.OptimizerFactory,
+) where {M<:AbstractOperationsProblem}
     return Stage(GenericOpProblem, template, sys, optimizer)
 end
 
@@ -93,11 +100,13 @@ end
 
 #Defined here because it requires Stage to defined
 
-initial_condition_update!(initial_condition_key::ICKey,
-                          ::Nothing,
-                          ini_cond_vector::Vector{InitialCondition},
-                          to_stage::Stage,
-                          from_stage::Stage) = nothing
+initial_condition_update!(
+    initial_condition_key::ICKey,
+    ::Nothing,
+    ini_cond_vector::Vector{InitialCondition},
+    to_stage::Stage,
+    from_stage::Stage,
+) = nothing
 
 function initial_condition_update!(
     initial_condition_key::ICKey,

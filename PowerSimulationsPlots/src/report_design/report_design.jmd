@@ -1,0 +1,40 @@
+---
+title : Weave example
+author : SIIP
+date : 1-14
+---
+
+# Bar Plots
+
+```julia; echo = false
+using PowerSimulationsPlots
+using PowerSimulations
+using Plots
+
+if WEAVE_ARGS["backend"] == plotlyjs()
+    Plots.plotlyjs()
+else
+    Plots.gr()
+end
+
+    bar_plot(WEAVE_ARGS["res"])
+```
+
+# Stack Plots
+
+```julia; echo = false
+
+stack_plot(WEAVE_ARGS["res"])
+```
+
+# Tables
+
+```julia; echo = false
+for (k,v) in WEAVE_ARGS["variables"]
+display((WEAVE_ARGS["variables"])[k])
+end
+
+
+
+```
+

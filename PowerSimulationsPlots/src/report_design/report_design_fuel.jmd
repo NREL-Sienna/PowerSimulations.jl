@@ -1,16 +1,21 @@
 ---
 title : Weave example
 author : SIIP
-date : Friday the 13th
+date : 1-14
 ---
 
 # Bar Plots
 
 ```julia; echo = false
+using PowerSimulationsPlots
 using PowerSimulations
 using Plots
 
-gr()
+if WEAVE_ARGS["backend"] == plotlyjs()
+    Plots.plotlyjs()
+else
+    Plots.gr()
+end
 
 bar_plot(WEAVE_ARGS["res"])
 ```
@@ -20,6 +25,13 @@ bar_plot(WEAVE_ARGS["res"])
 ```julia; echo = false
 
 stack_plot(WEAVE_ARGS["res"])
+```
+
+# Fuel Plots
+
+```julia; echo = false
+
+fuel_plot(WEAVE_ARGS["res"], WEAVE_ARGS["gen"])
 ```
 
 # Tables

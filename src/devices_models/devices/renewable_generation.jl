@@ -17,22 +17,28 @@ function activepower_variables!(psi_container::PSIContainer,
     return
 end
 
-function reactivepower_variables!(psi_container::PSIContainer,
-                                 devices::IS.FlattenIteratorWrapper{R}) where R<:PSY.RenewableGen
-    add_variable(psi_container,
-                 devices,
-                 variable_name(REACTIVE_POWER, R),
-                 false,
-                 :nodal_balance_reactive)
+function reactivepower_variables!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{R},
+) where {R<:PSY.RenewableGen}
+    add_variable(
+        psi_container,
+        devices,
+        variable_name(REACTIVE_POWER, R),
+        false,
+        :nodal_balance_reactive,
+    )
     return
 end
 
 ####################################### Reactive Power Constraints #########################
-function reactivepower_constraints!(psi_container::PSIContainer,
-                                    devices::IS.FlattenIteratorWrapper{R},
-                                    model::DeviceModel{R, RenewableFullDispatch},
-                                    system_formulation::Type{<:PM.AbstractPowerModel},
-                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
+function reactivepower_constraints!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{R},
+    model::DeviceModel{R,RenewableFullDispatch},
+    system_formulation::Type{<:PM.AbstractPowerModel},
+    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+) where {R<:PSY.RenewableGen}
     constraint_data = Vector{DeviceRange}()
     for (ix, d) in enumerate(devices)
         tech = PSY.get_tech(d)
@@ -54,11 +60,13 @@ function reactivepower_constraints!(psi_container::PSIContainer,
     return
 end
 
-function reactivepower_constraints!(psi_container::PSIContainer,
-                                    devices::IS.FlattenIteratorWrapper{R},
-                                    model::DeviceModel{R, RenewableConstantPowerFactor},
-                                    system_formulation::Type{<:PM.AbstractPowerModel},
-                                    feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
+function reactivepower_constraints!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{R},
+    model::DeviceModel{R,RenewableConstantPowerFactor},
+    system_formulation::Type{<:PM.AbstractPowerModel},
+    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+) where {R<:PSY.RenewableGen}
     names = (PSY.get_name(d) for d in devices)
     time_steps = model_time_steps(psi_container)
     p_var = get_variable(psi_container, ACTIVE_POWER, R)
@@ -68,19 +76,19 @@ function reactivepower_constraints!(psi_container::PSIContainer,
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(d))))
-        constraint_val[name, t] = JuMP.@constraint(
-            psi_container.JuMPmodel,
-            q_var[name, t] == p_var[name, t] * pf
-        )
+        constraint_val[name, t] =
+            JuMP.@constraint(psi_container.JuMPmodel, q_var[name, t] == p_var[name, t] * pf)
     end
     return
 end
 
 ######################## output constraints without Time Series ############################
-function _get_time_series(psi_container::PSIContainer,
-                          devices::IS.FlattenIteratorWrapper{<:PSY.RenewableGen},
-                          model::Union{Nothing,DeviceModel},
-                          get_constraint_values::Function)
+function _get_time_series(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{<:PSY.RenewableGen},
+    model::Union{Nothing,DeviceModel},
+    get_constraint_values::Function,
+)
     initial_time = model_initial_time(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     parameters = model_has_parameters(psi_container)
@@ -98,11 +106,13 @@ function _get_time_series(psi_container::PSIContainer,
         active_power = use_forecast_data ? PSY.get_rating(tech) : PSY.get_activepower(device)
         reactive_power = use_forecast_data ? PSY.get_rating(tech) : PSY.get_reactivepower(device)
         if use_forecast_data
-            forecast = PSY.get_forecast(PSY.Deterministic,
-                                        device,
-                                        initial_time,
-                                        "get_rating",
-                                        length(time_steps))
+            forecast = PSY.get_forecast(
+                PSY.Deterministic,
+                device,
+                initial_time,
+                "get_rating",
+                length(time_steps),
+            )
             ts_vector = TS.values(PSY.get_data(forecast))
         else
             ts_vector = ones(time_steps[end])
@@ -120,18 +130,22 @@ function _get_time_series(psi_container::PSIContainer,
     return active_timeseries, reactive_timeseries, constraint_data
 end
 
-function activepower_constraints!(psi_container::PSIContainer,
-                                devices::IS.FlattenIteratorWrapper{R},
-                                model::DeviceModel{R, <:AbstractRenewableDispatchFormulation},
-                                system_formulation::Type{<:PM.AbstractPowerModel},
-                                feed_forward::Union{Nothing, AbstractAffectFeedForward}) where R<:PSY.RenewableGen
+function activepower_constraints!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{R},
+    model::DeviceModel{R,<:AbstractRenewableDispatchFormulation},
+    system_formulation::Type{<:PM.AbstractPowerModel},
+    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+) where {R<:PSY.RenewableGen}
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    ts_data_active, _, constraint_data = _get_time_series(psi_container,
-                                            devices,
-                                            model,
-                                            x -> (min = 0.0, max = PSY.get_activepower(x)))
+    ts_data_active, _, constraint_data = _get_time_series(
+        psi_container,
+        devices,
+        model,
+        x -> (min = 0.0, max = PSY.get_activepower(x)),
+    )
 
     if !parameters && !use_forecast_data
         device_range(
@@ -162,12 +176,18 @@ function activepower_constraints!(psi_container::PSIContainer,
 end
 
 ########################## Addition of to the nodal balances ###############################
-function nodal_expression!(psi_container::PSIContainer,
-                           devices::IS.FlattenIteratorWrapper{R},
-                           system_formulation::Type{<:PM.AbstractPowerModel}) where R<:PSY.RenewableGen
+function nodal_expression!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{R},
+    system_formulation::Type{<:PM.AbstractPowerModel},
+) where {R<:PSY.RenewableGen}
     parameters = model_has_parameters(psi_container)
-    ts_data_active, ts_data_reactive, _ = _get_time_series(psi_container, devices,
-                        DeviceModel(R, RenewableFullDispatch), x -> (min = 0.0, max = 0.0))
+    ts_data_active, ts_data_reactive, _ = _get_time_series(
+        psi_container,
+        devices,
+        DeviceModel(R, RenewableFullDispatch),
+        x -> (min = 0.0, max = 0.0),
+    )
 
     if parameters
         include_parameters(
@@ -186,28 +206,38 @@ function nodal_expression!(psi_container::PSIContainer,
     end
     for t in model_time_steps(psi_container)
         for device in ts_data_active
-            _add_to_expression!(psi_container.expressions[:nodal_balance_active],
-                            device.bus_number,
-                            t,
-                            device.multiplier * device.timeseries[t])
+            _add_to_expression!(
+                psi_container.expressions[:nodal_balance_active],
+                device.bus_number,
+                t,
+                device.multiplier * device.timeseries[t],
+            )
         end
         for device in ts_data_reactive
-            _add_to_expression!(psi_container.expressions[:nodal_balance_reactive],
-                            device.bus_number,
-                            t,
-                            device.multiplier * device.timeseries[t])
+            _add_to_expression!(
+                psi_container.expressions[:nodal_balance_reactive],
+                device.bus_number,
+                t,
+                device.multiplier * device.timeseries[t],
+            )
         end
     end
     return
 end
 
-function nodal_expression!(psi_container::PSIContainer,
-                           devices::IS.FlattenIteratorWrapper{R},
-                           system_formulation::Type{<:PM.AbstractActivePowerModel}) where R<:PSY.RenewableGen
+function nodal_expression!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{R},
+    system_formulation::Type{<:PM.AbstractActivePowerModel},
+) where {R<:PSY.RenewableGen}
     parameters = model_has_parameters(psi_container)
-    ts_data_active, ts_data_reactive, _ = _get_time_series(psi_container, devices,
-                        DeviceModel(R, RenewableFullDispatch), x -> (min = 0.0, max = 0.0))
-                        
+    ts_data_active, ts_data_reactive, _ = _get_time_series(
+        psi_container,
+        devices,
+        DeviceModel(R, RenewableFullDispatch),
+        x -> (min = 0.0, max = 0.0),
+    )
+
     if parameters
         include_parameters(
             psi_container,
@@ -219,24 +249,24 @@ function nodal_expression!(psi_container::PSIContainer,
     end
     for t in model_time_steps(psi_container)
         for device in ts_data_active
-            _add_to_expression!(psi_container.expressions[:nodal_balance_active],
-                            device.bus_number,
-                            t,
-                            device.multiplier * device.timeseries[t])
+            _add_to_expression!(
+                psi_container.expressions[:nodal_balance_active],
+                device.bus_number,
+                t,
+                device.multiplier * device.timeseries[t],
+            )
         end
     end
     return
 end
 
 ##################################### renewable generation cost ############################
-function cost_function(psi_container::PSIContainer,
-                       devices::IS.FlattenIteratorWrapper{PSY.RenewableDispatch},
-                       device_formulation::Type{D},
-                       system_formulation::Type{<:PM.AbstractPowerModel}) where D<:AbstractRenewableDispatchFormulation
-    add_to_cost(psi_container,
-                devices,
-                Symbol("P_RenewableDispatch"),
-                :fixed,
-                -1.0)
+function cost_function(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{PSY.RenewableDispatch},
+    device_formulation::Type{D},
+    system_formulation::Type{<:PM.AbstractPowerModel},
+) where {D<:AbstractRenewableDispatchFormulation}
+    add_to_cost(psi_container, devices, Symbol("P_RenewableDispatch"), :fixed, -1.0)
     return
 end

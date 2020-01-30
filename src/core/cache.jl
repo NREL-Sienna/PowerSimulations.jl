@@ -2,7 +2,7 @@
 Tracks the last time status of a device changed in a simulation
 """
 mutable struct TimeStatusChange <: AbstractCache
-    value::JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}
+    value::JuMP.Containers.DenseAxisArray{Dict{Symbol,Float64}}
     ref::UpdateRef
 end
 

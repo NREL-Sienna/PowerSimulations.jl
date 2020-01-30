@@ -34,14 +34,16 @@ If t > 1:
 - : var_names[3] : varenergy
 
 """
-function energy_balance(psi_container::PSIContainer,
-                        initial_conditions::Vector{InitialCondition},
-                        efficiency_data::Tuple{Vector{String}, Vector{InOut}},
-                        cons_name::Symbol,
-                        var_names::Tuple{Symbol, Symbol, Symbol})
+function energy_balance(
+    psi_container::PSIContainer,
+    initial_conditions::Vector{InitialCondition},
+    efficiency_data::Tuple{Vector{String},Vector{InOut}},
+    cons_name::Symbol,
+    var_names::Tuple{Symbol,Symbol,Symbol},
+)
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
-    fraction_of_hour = Dates.value(Dates.Minute(resolution))/60
+    fraction_of_hour = Dates.value(Dates.Minute(resolution)) / 60
     name_index = efficiency_data[1]
 
     varin = get_variable(psi_container, var_names[1])
@@ -54,9 +56,12 @@ function energy_balance(psi_container::PSIContainer,
         eff_in = efficiency_data[2][ix].in
         eff_out = efficiency_data[2][ix].out
 
-        constraint[name, 1] = JuMP.@constraint(psi_container.JuMPmodel,
-                                   varenergy[name, 1] == initial_conditions[ix].value + varin[name, 1]*eff_in*fraction_of_hour
-                                                    - (varout[name, 1])*fraction_of_hour/eff_out)
+        constraint[name, 1] = JuMP.@constraint(
+            psi_container.JuMPmodel,
+            varenergy[name, 1] ==
+                initial_conditions[ix].value + varin[name, 1] * eff_in * fraction_of_hour -
+                (varout[name, 1]) * fraction_of_hour / eff_out
+        )
 
     end
 
@@ -64,9 +69,12 @@ function energy_balance(psi_container::PSIContainer,
         eff_in = efficiency_data[2][ix].in
         eff_out = efficiency_data[2][ix].out
 
-        constraint[name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                                   varenergy[name, t] == varenergy[name, t-1] + varin[name, t]*eff_in*fraction_of_hour
-                                                    - (varout[name, t])*fraction_of_hour/eff_out)
+        constraint[name, t] = JuMP.@constraint(
+            psi_container.JuMPmodel,
+            varenergy[name, t] ==
+                varenergy[name, t-1] + varin[name, t] * eff_in * fraction_of_hour -
+                (varout[name, t]) * fraction_of_hour / eff_out
+        )
     end
 
     return

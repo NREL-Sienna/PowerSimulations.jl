@@ -55,11 +55,13 @@ function _update_caches!(stage::Stage)
     return
 end
 
-function _intial_conditions_update!(initial_condition_key::ICKey,
-                                   ini_cond_vector::Vector{InitialCondition},
-                                   stage_number::Int64,
-                                   step::Int64,
-                                   sim::Simulation)
+function _intial_conditions_update!(
+    initial_condition_key::ICKey,
+    ini_cond_vector::Vector{InitialCondition},
+    stage_number::Int64,
+    step::Int64,
+    sim::Simulation,
+)
     ini_cond_chronolgy = nothing
     current_stage = get_stage(sim, stage_number)
     #checks if current stage is the first in the step and the execution is the first to
@@ -73,27 +75,33 @@ function _intial_conditions_update!(initial_condition_key::ICKey,
     if intra_step_update
         from_stage = get_last_stage(sim)
         ini_cond_chronolgy = get_ini_cond_chronology(sim, stage_number)
-    # Updates the next stage in the same step. Uses the same chronology as intra_stage
+        # Updates the next stage in the same step. Uses the same chronology as intra_stage
     elseif intra_stage_update
-        from_stage = get_stage(sim, stage_number-1)
+        from_stage = get_stage(sim, stage_number - 1)
         ini_cond_chronolgy = current_stage.internal.chronolgy_dict[stage_number-1]
-    # Update is done on the current stage
+        # Update is done on the current stage
     elseif inner_stage_update
         from_stage = current_stage
         ini_cond_chronolgy = get_ini_cond_chronology(sim, stage_number)
     else
         error("Condition not implemented")
     end
-    initial_condition_update!(initial_condition_key,
-                             ini_cond_chronolgy,
-                             ini_cond_vector,
-                             current_stage,
-                             from_stage)
+    initial_condition_update!(
+        initial_condition_key,
+        ini_cond_chronolgy,
+        ini_cond_vector,
+        current_stage,
+        from_stage,
+    )
 
     return
 end
 
-function update_stage!(stage::Stage{M}, step::Int64, sim::Simulation) where M<:AbstractOperationsProblem
+function update_stage!(
+    stage::Stage{M},
+    step::Int64,
+    sim::Simulation,
+) where {M<:AbstractOperationsProblem}
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && get_number(stage) == 1 && get_execution_count(stage) == 0) && return
     for container in iterate_parameter_containers(stage.internal.psi_container)

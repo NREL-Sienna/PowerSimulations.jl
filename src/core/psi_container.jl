@@ -1,6 +1,8 @@
-function _pass_abstract_jump(optimizer::Union{Nothing, JuMP.OptimizerFactory},
-                              parameters::Bool,
-                              JuMPmodel::Union{JuMP.AbstractModel,Nothing})
+function _pass_abstract_jump(
+    optimizer::Union{Nothing,JuMP.OptimizerFactory},
+    parameters::Bool,
+    JuMPmodel::Union{JuMP.AbstractModel,Nothing},
+)
     if !isnothing(JuMPmodel)
         if parameters
             if !haskey(JuMPmodel.ext, :params)
@@ -90,13 +92,13 @@ end
 
 mutable struct PSIContainer
     JuMPmodel::JuMP.AbstractModel
-    optimizer_factory::Union{Nothing, JuMP.OptimizerFactory}
+    optimizer_factory::Union{Nothing,JuMP.OptimizerFactory}
     time_steps::UnitRange{Int64}
     resolution::Dates.TimePeriod
     use_forecast_data::Bool
     initial_time::Dates.DateTime
-    variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
-    constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
+    variables::Dict{Symbol,JuMP.Containers.DenseAxisArray}
+    constraints::Dict{Symbol,JuMP.Containers.DenseAxisArray}
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     parameters::Union{Nothing, ParametersContainer}
@@ -117,7 +119,8 @@ mutable struct PSIContainer
                        initial_conditions::InitialConditionsContainer,
                        pm::Union{Nothing, PM.AbstractPowerModel})
         resolution = IS.time_period_conversion(resolution)
-        new(JuMPmodel,
+        new(
+            JuMPmodel,
             optimizer_factory,
             time_steps,
             resolution,
@@ -129,20 +132,24 @@ mutable struct PSIContainer
             expressions,
             parameters,
             initial_conditions,
-            pm)
+            pm,
+        )
     end
 end
 
-function PSIContainer(::Type{T},
-                   sys::PSY.System,
-                   optimizer::Union{Nothing, JuMP.OptimizerFactory};
-                   kwargs...) where {T<:PM.AbstractPowerModel}
+function PSIContainer(
+    ::Type{T},
+    sys::PSY.System,
+    optimizer::Union{Nothing,JuMP.OptimizerFactory};
+    kwargs...,
+) where {T<:PM.AbstractPowerModel}
     PSY.check_forecast_consistency(sys)
     user_defined_model = get(kwargs, :JuMPmodel, nothing)
     ini_con = get(kwargs, :initial_conditions, InitialConditionsContainer())
     make_parameters_container = get(kwargs, :use_parameters, false)
     use_forecast_data = get(kwargs, :use_forecast_data, true)
-    jump_model = _pass_abstract_jump(optimizer, make_parameters_container, user_defined_model)
+    jump_model =
+        _pass_abstract_jump(optimizer, make_parameters_container, user_defined_model)
     initial_time = get(kwargs, :initial_time, PSY.get_forecasts_initial_time(sys))
 
     if use_forecast_data
@@ -160,16 +167,18 @@ function PSIContainer(::Type{T},
 
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
 
-    return _psi_container_init(bus_numbers,
-                           jump_model,
-                           optimizer,
-                           T,
-                           time_steps,
-                           resolution,
-                           use_forecast_data,
-                           initial_time,
-                           make_parameters_container,
-                           ini_con)
+    return _psi_container_init(
+        bus_numbers,
+        jump_model,
+        optimizer,
+        T,
+        time_steps,
+        resolution,
+        use_forecast_data,
+        initial_time,
+        make_parameters_container,
+        ini_con,
+    )
 
 end
 
@@ -250,7 +259,8 @@ model_initial_time(psi_container::PSIContainer) = psi_container.initial_time
 #Internal Variables, Constraints and Parameters accessors
 get_variables(psi_container::PSIContainer) = psi_container.variables
 get_constraints(psi_container::PSIContainer) = psi_container.constraints
-get_parameters(psi_container::PSIContainer, param_reference::UpdateRef) = psi_container.parameters[param_reference]
+get_parameters(psi_container::PSIContainer, param_reference::UpdateRef) =
+    psi_container.parameters[param_reference]
 get_expression(psi_container::PSIContainer, name::Symbol) = psi_container.expressions[name]
 get_initial_conditions(psi_container::PSIContainer) = psi_container.initial_conditions
 
@@ -272,7 +282,7 @@ function get_variable(psi_container::PSIContainer, name::Symbol)
         @error "$name is not stored" sort!(get_variable_names(psi_container))
         throw(IS.InvalidValue("variable $name is not stored"))
     end
-        
+
     return var
 end
 
@@ -290,11 +300,7 @@ function assign_variable!(
     return
 end
 
-function assign_variable!(
-    psi_container::PSIContainer,
-    variable_type::AbstractString,
-    value,
-)
+function assign_variable!(psi_container::PSIContainer, variable_type::AbstractString, value)
     assign_variable!(psi_container, variable_name(variable_type), value)
     return
 end
@@ -335,7 +341,7 @@ function get_constraint(psi_container::PSIContainer, name::Symbol)
         @error "$name is not stored" sort!(get_constraint_names(psi_container))
         throw(IS.InvalidValue("constraint $name is not stored"))
     end
-        
+
     return var
 end
 
@@ -388,7 +394,6 @@ function get_parameter_container(psi_container::PSIContainer, name::Symbol)
         @error "$name is not stored" sort!(get_parameter_names(psi_container))
         throw(IS.InvalidValue("parameter $name is not stored"))
     end
-        
     return container
 end
 

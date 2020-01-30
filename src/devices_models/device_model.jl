@@ -1,7 +1,8 @@
 abstract type AbstractDeviceFormulation end
 
-function _check_device_formulation(::Type{D}) where D<:Union{AbstractDeviceFormulation,
-                                                                PSY.Device}
+function _check_device_formulation(
+    ::Type{D},
+) where {D<:Union{AbstractDeviceFormulation,PSY.Device}}
     if !isconcretetype(D)
         throw(ArgumentError("The device model must contain only concrete types, $(D) is an Abstract Type"))
     end
@@ -31,20 +32,21 @@ branches = Dict{Symbol, DeviceModel}
     :dc_line => DeviceModel(PSY.HVDCLine, HVDCDispatch))
 ```
 """
-mutable struct DeviceModel{D<:PSY.Device,
-                           B<:AbstractDeviceFormulation}
+mutable struct DeviceModel{D<:PSY.Device,B<:AbstractDeviceFormulation}
     device_type::Type{D}
     formulation::Type{B}
     # TODO: Needs to be made into an array if more than one feedforward is desired
-    feed_forward::Union{Nothing, AbstractAffectFeedForward}
+    feed_forward::Union{Nothing,AbstractAffectFeedForward}
     services::Vector{ServiceModel}
 
-    function DeviceModel(::Type{D},
-                         ::Type{B},
-                         FF=nothing) where {D<:PSY.Device, B<:AbstractDeviceFormulation}
-    _check_device_formulation(D)
-    _check_device_formulation(B)
-    new{D, B}(D, B, FF, Vector{ServiceModel}())
+    function DeviceModel(
+        ::Type{D},
+        ::Type{B},
+        FF = nothing,
+    ) where {D<:PSY.Device,B<:AbstractDeviceFormulation}
+        _check_device_formulation(D)
+        _check_device_formulation(B)
+        new{D,B}(D, B, FF, Vector{ServiceModel}())
     end
 end
 
