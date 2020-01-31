@@ -232,14 +232,14 @@ function bar_plot(res::PSI.Results; kwargs...)
 end
 
 function bar_plot(res::PSI.Results, variables::Array; kwargs...)
-     res_var = Dict()
-     for variable in variables
-         res_var[variable] = res.variables[variable]
-     end
-     results = OperationsProblemResults(
-         res_var, res.total_cost, res.optimizer_log, res.time_stamp)
-     bar_plot(results; kwargs...)
- end
+    res_var = Dict()
+    for variable in variables
+        res_var[variable] = res.variables[variable]
+    end
+    results =
+        OperationsProblemResults(res_var, res.total_cost, res.optimizer_log, res.time_stamp)
+    bar_plot(results; kwargs...)
+end
 
 function _bar_plot_internal(
     res::PSI.Results,
@@ -311,14 +311,14 @@ function stack_plot(res::PSI.Results; kwargs...)
 end
 
 function stack_plot(res::PSI.Results, variables::Array; kwargs...)
-     res_var = Dict()
-     for variable in variables
-         res_var[variable] = res.variables[variable]
-     end
-     results = OperationsProblemResults(
-         res_var, res.total_cost, res.optimizer_log, res.time_stamp)
-     stack_plot(results; kwargs...)
- end
+    res_var = Dict()
+    for variable in variables
+        res_var[variable] = res.variables[variable]
+    end
+    results =
+        OperationsProblemResults(res_var, res.total_cost, res.optimizer_log, res.time_stamp)
+    stack_plot(results; kwargs...)
+end
 
 function _stack_plot_internal(
     res::PSI.Results,
