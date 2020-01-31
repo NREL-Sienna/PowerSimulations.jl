@@ -160,7 +160,7 @@ res = solve_op_problem!(op_problem; constraints_duals = duals)
     name = PSI.constraint_name("CopperPlateBalance")
     for i in 1:ncol(res.time_stamp)
         dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
-        @test dual == res.constraints_duals[name][i, 1]
+        @test isapprox(dual, res.constraints_duals[name][i, 1])
     end
 end
 
