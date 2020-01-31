@@ -106,7 +106,7 @@ function test_load_simulation(file_path::String)
     @testset "testing dual constraints in results" begin
         res = PSI.load_simulation_results(sim_results, "ED")
         dual = JuMP.dual(sim.stages["ED"].internal.psi_container.constraints[:CopperPlateBalance][1])
-        @test dual == res.constraints_duals[:CopperPlateBalance_dual][1, 1]
+        @test isapprox(dual, res.constraints_duals[:CopperPlateBalance_dual][1, 1], atol=1.0e-4)
 
         path = joinpath(file_path, "one")
         !isdir(path) && mkdir(path)
