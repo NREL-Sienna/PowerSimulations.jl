@@ -70,7 +70,7 @@ function device_commitment(
         name = PSY.get_name(i.device)
         constraint[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            varon[name, t] == varon[name, t-1] + varstart[name, t] - varstop[name, t]
+            varon[name, t] == varon[name, t - 1] + varstart[name, t] - varstop[name, t]
         )
         aux_constraint[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,

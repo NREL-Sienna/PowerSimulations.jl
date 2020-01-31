@@ -98,7 +98,6 @@ function construct_device!(
     return
 end
 
-
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,

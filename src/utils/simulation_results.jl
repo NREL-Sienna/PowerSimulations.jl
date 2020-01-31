@@ -53,7 +53,7 @@ function load_simulation_results(
     time_length = SimulationResultsReference.chronologies[stage]
     dual = _find_duals(collect(keys(references[stage])))
     variable = setdiff(variable, dual)
-    for l in 1:length(variable)
+    for l = 1:length(variable)
         date_df = references[stage][variable[l]]
         step_df = DataFrames.DataFrame(
             Date = Dates.DateTime[],

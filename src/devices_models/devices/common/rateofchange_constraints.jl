@@ -68,11 +68,11 @@ function device_linear_rateofchange(
         name = device_name(ic)
         con_up[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, t] - variable[name, t-1] <= rate_data[ix].up
+            variable[name, t] - variable[name, t - 1] <= rate_data[ix].up
         )
         con_down[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, t-1] - variable[name, t] <= rate_data[ix].down
+            variable[name, t - 1] - variable[name, t] <= rate_data[ix].down
         )
     end
 
@@ -156,12 +156,12 @@ function device_mixedinteger_rateofchange(
         name = device_name(ic)
         con_up[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, t] - variable[name, t-1] <=
+            variable[name, t] - variable[name, t - 1] <=
                 rate_data[1][ix].up + rate_data[2][ix].max * varstart[name, t]
         )
         con_down[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, t-1] - variable[name, t] <=
+            variable[name, t - 1] - variable[name, t] <=
                 rate_data[1][ix].down + rate_data[2][ix].min * varstop[name, t]
         )
     end

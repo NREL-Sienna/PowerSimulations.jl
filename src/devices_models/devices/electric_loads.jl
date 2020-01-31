@@ -5,18 +5,22 @@ struct InterruptiblePowerLoad <: AbstractControllablePowerLoadFormulation end
 struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
 
 ########################### dispatchable load variables ####################################
-function activepower_variables!(psi_container::PSIContainer,
-                                devices::IS.FlattenIteratorWrapper{L}) where L<:PSY.ElectricLoad
-    add_variable(psi_container,
-                 devices,
-                 variable_name(ACTIVE_POWER, L),
-                 false,
-                 :nodal_balance_active, -1.0;
-                 ub_value = x -> PSY.get_maxactivepower(x),
-                 lb_value = x -> 0.0)
+function activepower_variables!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{L},
+) where {L<:PSY.ElectricLoad}
+    add_variable(
+        psi_container,
+        devices,
+        variable_name(ACTIVE_POWER, L),
+        false,
+        :nodal_balance_active,
+        -1.0;
+        ub_value = x -> PSY.get_maxactivepower(x),
+        lb_value = x -> 0.0,
+    )
     return
 end
-
 
 function reactivepower_variables!(
     psi_container::PSIContainer,
@@ -70,7 +74,6 @@ function reactivepower_constraints!(
     end
     return
 end
-
 
 ######################## output constraints without Time Series ############################
 function _get_time_series(
@@ -147,7 +150,7 @@ function activepower_constraints!(
             psi_container,
             constraint_data,
             constraint_name(ACTIVE_RANGE, L),
-            variable_name(ACTIVE_POWER, L)
+            variable_name(ACTIVE_POWER, L),
         )
         return
     end
@@ -219,7 +222,6 @@ function activepower_constraints!(
     return
 end
 
-
 ########################## Addition of to the nodal balances ###############################
 function nodal_expression!(
     psi_container::PSIContainer,
@@ -274,7 +276,6 @@ function nodal_expression!(
 
     return
 
-
 end
 
 function nodal_expression!(
@@ -314,15 +315,13 @@ function nodal_expression!(
 end
 
 ############################## FormulationControllable Load Cost ###########################
-function cost_function(psi_container::PSIContainer,
-                       devices::IS.FlattenIteratorWrapper{L},
-                       ::Type{DispatchablePowerLoad},
-                       ::Type{<:PM.AbstractPowerModel}) where L<:PSY.ControllableLoad
-    add_to_cost(psi_container,
-                devices,
-                variable_name(ACTIVE_POWER, L),
-                :variable,
-                -1.0)
+function cost_function(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{L},
+    ::Type{DispatchablePowerLoad},
+    ::Type{<:PM.AbstractPowerModel},
+) where {L<:PSY.ControllableLoad}
+    add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, L), :variable, -1.0)
     return
 end
 

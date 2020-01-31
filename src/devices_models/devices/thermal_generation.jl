@@ -12,16 +12,20 @@ struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
 """
 This function add the variables for power generation output to the model
 """
-function activepower_variables!(psi_container::PSIContainer,
-                           devices::IS.FlattenIteratorWrapper{T}) where T<:PSY.ThermalGen
-    add_variable(psi_container,
-                 devices,
-                 variable_name(ACTIVE_POWER, T),
-                 false,
-                 :nodal_balance_active;
-                 ub_value = d -> PSY.get_activepowerlimits(PSY.get_tech(d)).max,
-                 lb_value = d -> PSY.get_activepowerlimits(PSY.get_tech(d)).min,
-                 init_value = d -> PSY.get_activepower(d))
+function activepower_variables!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T<:PSY.ThermalGen}
+    add_variable(
+        psi_container,
+        devices,
+        variable_name(ACTIVE_POWER, T),
+        false,
+        :nodal_balance_active;
+        ub_value = d -> PSY.get_activepowerlimits(PSY.get_tech(d)).max,
+        lb_value = d -> PSY.get_activepowerlimits(PSY.get_tech(d)).min,
+        init_value = d -> PSY.get_activepower(d),
+    )
     return
 end
 
@@ -95,10 +99,12 @@ function activepower_constraints!(
         _device_services!(range_data, d, model)
         push!(constraint_data, range_data)
     end
-    device_range(psi_container,
-                 constraint_data,
-                 constraint_name(ACTIVE_RANGE, T),
-                 variable_name(ACTIVE_POWER, T))
+    device_range(
+        psi_container,
+        constraint_data,
+        constraint_name(ACTIVE_RANGE, T),
+        variable_name(ACTIVE_POWER, T),
+    )
     return
 end
 
@@ -163,7 +169,7 @@ function activepower_constraints!(
         psi_container,
         constraint_data,
         constraint_name(ACTIVE_RANGE, T),
-        variable_name(ACTIVE_POWER, T)
+        variable_name(ACTIVE_POWER, T),
     )
     return
 end
@@ -312,9 +318,9 @@ function _get_data_for_rocc(
         end
     end
     if idx < lenght_devices
-        deleteat!(ini_conds, idx+1:lenght_devices)
-        deleteat!(ramp_params, idx+1:lenght_devices)
-        deleteat!(minmax_params, idx+1:lenght_devices)
+        deleteat!(ini_conds, (idx + 1):lenght_devices)
+        deleteat!(ramp_params, (idx + 1):lenght_devices)
+        deleteat!(minmax_params, (idx + 1):lenght_devices)
     end
     return ini_conds, ramp_params, minmax_params
 end
@@ -347,7 +353,7 @@ function ramp_constraints!(
                 variable_name(ACTIVE_POWER, T),
                 variable_name(START, T),
                 variable_name(STOP, T),
-            )
+            ),
         )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
@@ -425,7 +431,7 @@ function _get_data_for_tdc(
     end
     if idx < lenght_devices_on
         ini_conds = ini_conds[1:idx, :]
-        deleteat!(time_params, idx+1:lenght_devices_on)
+        deleteat!(time_params, (idx + 1):lenght_devices_on)
     end
     return ini_conds, time_params
 end

@@ -138,15 +138,14 @@ function _pwlparamcheck(cost_)
         flag = false
     end
     l = length(cost_)
-    for i = 1:(l-2)
-        if ((cost_[i+1][1] - cost_[i][1]) / (cost_[i+1][2] - cost_[i][2])) >
-           ((cost_[i+2][1] - cost_[i+1][1]) / (cost_[i+2][2] - cost_[i+1][2]))
+    for i = 1:(l - 2)
+        if ((cost_[i + 1][1] - cost_[i][1]) / (cost_[i + 1][2] - cost_[i][2])) >
+           ((cost_[i + 2][1] - cost_[i + 1][1]) / (cost_[i + 2][2] - cost_[i + 1][2]))
             flag = false
         end
     end
     return flag
 end
-
 
 @doc raw"""
     _pwlgencost_sos(psi_container::PSIContainer,
@@ -244,7 +243,7 @@ function _pwlgencost_linear(
 ) where {JV<:JuMP.AbstractVariableRef}
     gen_cost = JuMP.GenericAffExpr{Float64,_variable_type(psi_container)}()
     upperbound(i) =
-        (i == 1 ? cost_component[i][2] : (cost_component[i][2] - cost_component[i-1][2]))
+        (i == 1 ? cost_component[i][2] : (cost_component[i][2] - cost_component[i - 1][2]))
     pwlvars = JuMP.@variable(
         psi_container.JuMPmodel,
         [i = 1:length(cost_component)],
@@ -263,8 +262,8 @@ function _pwlgencost_linear(
         else
             JuMP.add_to_expression!(
                 gen_cost,
-                (cost_component[ix][1] - cost_component[ix-1][1]) *
-                (pwlvar / (cost_component[ix][2] - cost_component[ix-1][2])),
+                (cost_component[ix][1] - cost_component[ix - 1][1]) *
+                (pwlvar / (cost_component[ix][2] - cost_component[ix - 1][2])),
             )
         end
     end

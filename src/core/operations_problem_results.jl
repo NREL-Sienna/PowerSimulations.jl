@@ -76,8 +76,11 @@ function load_operation_results(folder_path::AbstractString)
         throw(ArgumentError("Not a folder path."))
     end
     files_in_folder = collect(readdir(folder_path))
-    variable_list = setdiff(files_in_folder, ["time_stamp.feather", "optimizer_log.json", "check.sha256"])
-    variables = Dict{Symbol, DataFrames.DataFrame}()
+    variable_list = setdiff(
+        files_in_folder,
+        ["time_stamp.feather", "optimizer_log.json", "check.sha256"],
+    )
+    variables = Dict{Symbol,DataFrames.DataFrame}()
     duals = Dict()
     dual = _find_duals(variable_list)
     variable_list = setdiff(variable_list, dual)
