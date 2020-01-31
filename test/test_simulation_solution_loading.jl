@@ -3,8 +3,9 @@ path = (joinpath(pwd(), "test_reading_results"))
 
 
 function test_load_simulation(file_path::String)
-    stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
-                             "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
+    duals = [:CopperPlateBalance]
+    stages_definition = Dict("UC" => Stage(GenericOpProblem, template_hydro_uc, c_sys5_hy_uc, GLPK_optimizer),
+                             "ED" => Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, GLPK_optimizer))
 
     sequence = SimulationSequence(
         order = Dict(1 => "UC", 2 => "ED"),
@@ -15,18 +16,22 @@ function test_load_simulation(file_path::String)
             ("ED", :devices, :Generators) => SemiContinuousFF(
                 binary_from_stage = Symbol(PSI.ON),
                 affected_variables = [Symbol(PSI.ACTIVE_POWER)]
+            ),
+            ("ED", :devices, :HydroDispatch) =>IntegralLimitFF(
+                variable_from_stage = Symbol(PSI.ACTIVE_POWER),
+                affected_variables = [Symbol(PSI.ACTIVE_POWER)]
             )
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
         ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()))
     sim = Simulation(
         name = "aggregation",
-        steps = 1, step_resolution =Hour(24),
+        steps = 2, step_resolution = Hour(24),
         stages = stages_definition,
         stages_sequence = sequence,
-        simulation_folder= file_path)
+        simulation_folder = file_path)
     build!(sim)
-    sim_results = execute!(sim)
+    sim_results = execute!(sim; constraints_duals = duals)
     stage_names = keys(sim.stages)
     step = ["step-1", "step-2"]
 
@@ -50,7 +55,7 @@ function test_load_simulation(file_path::String)
             end
             res = load_simulation_results(sim_results, name; write = true)
             variable_list = String.(PSI.get_variable_names(sim, name))
-            variable_list = [variable_list; "optimizer_log"; "time_stamp"; "check"]
+            variable_list = [variable_list; "CopperPlateBalance_dual"; "optimizer_log"; "time_stamp"; "check"]
             file_list = collect(readdir(sim_results.results_folder))
             for name in file_list
                 variable = splitext(name)[1]
@@ -78,7 +83,6 @@ function test_load_simulation(file_path::String)
             @test results.variables == res.variables
         end
     end
- ##################### from execute !
 
     @testset "Testing to verify length of time_stamp" begin
         for name in keys(sim.stages)
@@ -98,36 +102,22 @@ function test_load_simulation(file_path::String)
             @test time_stamp[!,:Range] == test
         end
     end
-###################
+###########################################################
+    @testset "testing dual constraints in results" begin
+        res = PSI.load_simulation_results(sim_results, "ED")
+        dual = JuMP.dual(sim.stages["ED"].internal.psi_container.constraints[:CopperPlateBalance][1])
+        @test isapprox(dual, res.constraints_duals[:CopperPlateBalance_dual][1, 1], atol=1.0e-4)
 
-    stages_definition = Dict("UC" => Stage(GenericOpProblem, template_hydro_uc, c_sys5_hy_uc, GLPK_optimizer),
-                             "ED" => Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, GLPK_optimizer))
+        path = joinpath(file_path, "one")
+        !isdir(path) && mkdir(path)
+        PSI.write_to_CSV(res, path)
+        @test !isempty(path)
 
-    sequence = SimulationSequence(
-        order = Dict(1 => "UC", 2 => "ED"),
-        intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(periods = 24)),
-        horizons = Dict("UC" => 24, "ED" => 12),
-        intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
-        feed_forward = Dict(
-            ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_from_stage = Symbol(PSI.ON),
-                affected_variables = [Symbol(PSI.ACTIVE_POWER)]
-            ),
-            ("ED", :devices, :HydroDispatch) =>IntegralLimitFF(
-                variable_from_stage = Symbol(PSI.ACTIVE_POWER),
-                affected_variables = [Symbol(PSI.ACTIVE_POWER)]
-            )
-        ),
-        cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-        ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()))
-    sim = Simulation(
-        name = "consecutive",
-        steps = 2, step_resolution = Hour(24),
-        stages = stages_definition,
-        stages_sequence = sequence,
-        simulation_folder= file_path)
-    build!(sim)
-    sim_results = execute!(sim)
+        path = joinpath(file_path, "two")
+        !isdir(path) && mkdir(path)
+        PSI.write_results(res, path, "results")
+        @test !isempty(path)
+    end
 
     @testset "Testing to verify parameter feedforward for consecutive UC to ED" begin
         P_keys = [
@@ -186,8 +176,6 @@ function test_load_simulation(file_path::String)
         end
     end
 ####################
-    stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
-                             "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
     sequence = SimulationSequence(
         order = Dict(1 => "UC", 2 => "ED"),
         intra_stage_chronologies = Dict(("UC"=>"ED") => RecedingHorizon()),
@@ -211,24 +199,6 @@ function test_load_simulation(file_path::String)
     build!(sim)
     sim_results = execute!(sim)
 
-    @testset "Testing to verify raw results match aggregated for Receding Horizon" begin
-        stages = ["UC", "ED"]
-        for stage in stages
-            results = load_simulation_results(sim_results, stage)
-            vars_names = [PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
-            for name in vars_names
-                results.variables[name]
-                variable_ref = sim_results.ref["stage-$stage"][name]
-                vars = results.variables[name]
-                for step in sim.steps
-                    output = vars[step, :]
-                    raw_result = first(Feather.read(variable_ref[step, 3]))
-                    @test isapprox(output, raw_result, atol = 1e-4)
-                end
-            end
-        end
-    end
-################### from execute !!
     @testset "Testing to verify time gap for Receding Horizon" begin
         names = ["UC"] # TODO why doesn't this work for ED??
         for name in names

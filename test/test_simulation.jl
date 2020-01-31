@@ -6,34 +6,34 @@ function test_sequence_build(file_path::String)
     stages_definition = Dict("UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
                              "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer))
 
-    @testset "Simulation Sequence Tests" begin
-        sequence = SimulationSequence(
-            order = Dict(1 => "UC", 2 => "ED"),
-            intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(periods = 24)),
-            horizons = Dict("UC" => 24, "ED" => 12),
-            intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
-            feed_forward = Dict(
-                ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = Symbol(PSI.ON),
-                    affected_variables = [Symbol(PSI.ACTIVE_POWER)]
-                ),
+    sequence = SimulationSequence(
+        order = Dict(1 => "UC", 2 => "ED"),
+        intra_stage_chronologies = Dict(("UC"=>"ED") => Synchronize(periods = 24)),
+        horizons = Dict("UC" => 24, "ED" => 12),
+        intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
+        feed_forward = Dict(
+            ("ED", :devices, :Generators) => SemiContinuousFF(
+                binary_from_stage = Symbol(PSI.ON),
+                affected_variables = [Symbol(PSI.ACTIVE_POWER)]
             ),
-            cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()))
-        sim = Simulation(
-            name = "test",
-            steps = 1, step_resolution =Hour(24),
-            stages = stages_definition,
-            stages_sequence = sequence,
-            simulation_folder= file_path)
-        build!(sim)
+        ),
+        cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
+        ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()))
+    sim = Simulation(
+        name = "test",
+        steps = 1, step_resolution =Hour(24),
+        stages = stages_definition,
+        stages_sequence = sequence,
+        simulation_folder= file_path)
+    build!(sim)
 
+    @testset "Simulation Sequence Tests" begin
+        build!(sim)
         for field in fieldnames(SimulationSequence)
             if fieldtype(SimulationSequence, field) == Union{Dates.DateTime, Nothing}
                  @test !isnothing(getfield(sim.sequence, field))
             end
         end
-
         @test isa(sim.sequence, SimulationSequence)
     end
 ###################### Negative Tests ########################################
@@ -58,7 +58,7 @@ function test_sequence_build(file_path::String)
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder= file_path)
-        @test_throws IS.ConflictingInputsError build!(sim)
+        @test_throws IS.ConflictingInputsError PSI._check_sequence(sim)
     end
 
     @testset "testing if Horizon and interval result in a discountinous simulation" begin
@@ -77,11 +77,11 @@ function test_sequence_build(file_path::String)
             ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()))
         sim = Simulation(
             name = "short_interval",
-            steps = 1, step_resolution =Hour(24),
+            steps = 1, step_resolution = Hour(24),
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder= file_path)
-        @test_throws IS.ConflictingInputsError build!(sim)
+        @test_throws IS.ConflictingInputsError PSI._check_sequence(sim)
     end
 
     @testset "testing if file path is not writeable" begin
@@ -103,8 +103,8 @@ function test_sequence_build(file_path::String)
             steps = 1, step_resolution =Hour(24),
             stages = stages_definition,
             stages_sequence = sequence,
-            simulation_folder= "fake_path")
-        @test_throws IS.ConflictingInputsError build!(sim)
+            simulation_folder = "fake_path")
+        @test_throws IS.ConflictingInputsError PSI._check_folder(sim.simulation_folder)
     end
 
     @testset "testing if interval is shorter than resolution" begin
@@ -126,8 +126,8 @@ function test_sequence_build(file_path::String)
             steps = 1, step_resolution =Hour(24),
             stages = stages_definition,
             stages_sequence = sequence,
-            simulation_folder= file_path)
-        @test_throws IS.ConflictingInputsError build!(sim)
+            simulation_folder = file_path)
+        @test_throws IS.ConflictingInputsError PSI._get_simulation_initial_times!(sim)
     end
 
     @testset "chronology look ahead length is too long for horizon" begin
@@ -150,7 +150,7 @@ function test_sequence_build(file_path::String)
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder= file_path)
-        @test_throws IS.ConflictingInputsError build!(sim)
+        @test_throws IS.ConflictingInputsError PSI._check_chronologies(sim)#build!(sim)
     end
 
     @testset "too long of a horizon for forecast" begin
@@ -173,7 +173,8 @@ function test_sequence_build(file_path::String)
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder= file_path)
-        @test_throws IS.ConflictingInputsError build!(sim)
+        sim.internal = PSI.SimulationInternal(sim.steps, keys(sim.sequence.order))
+        @test_throws IS.ConflictingInputsError PSI._get_simulation_initial_times!(sim)
     end
 
     @testset "too many steps for forecast" begin
@@ -196,7 +197,9 @@ function test_sequence_build(file_path::String)
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder= file_path)
-        @test_throws IS.ConflictingInputsError build!(sim)
+        sim.internal = PSI.SimulationInternal(sim.steps, keys(sim.sequence.order))
+        stage_initial_times = PSI._get_simulation_initial_times!(sim)
+        @test_throws IS.ConflictingInputsError PSI._check_steps(sim, stage_initial_times)
     end
 end
 
