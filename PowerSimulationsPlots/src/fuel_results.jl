@@ -101,7 +101,7 @@ function make_fuel_dictionary(sys::PSY.System, res::PSI.Results; kwargs...)
     return generators
 end
 
-function _aggregate_data(res::PSI.OperationsProblemResults, generators::Dict)
+function _aggregate_data(res::PSI.Results, generators::Dict)
     All_var = DataFrames.DataFrame()
     var_names = collect(keys(res.variables))
     for i = 1:length(var_names)

@@ -231,6 +231,16 @@ function bar_plot(res::PSI.Results; kwargs...)
     _bar_plot_internal(res, bar_gen, backend, save_fig, set_display; kwargs...)
 end
 
+function bar_plot(res::PSI.Results, variables::Array; kwargs...)
+     res_var = Dict()
+     for variable in variables
+         res_var[variable] = res.variables[variable]
+     end
+     results = OperationsProblemResults(
+         res_var, res.total_cost, res.optimizer_log, res.time_stamp)
+     bar_plot(results; kwargs...)
+ end
+
 function _bar_plot_internal(
     res::PSI.Results,
     bar_gen::BarGeneration,
@@ -300,6 +310,16 @@ function stack_plot(res::PSI.Results; kwargs...)
     _stack_plot_internal(res, stacked_gen, backend, save_fig, set_display; kwargs...)
 end
 
+function stack_plot(res::PSI.Results, variables::Array; kwargs...)
+     res_var = Dict()
+     for variable in variables
+         res_var[variable] = res.variables[variable]
+     end
+     results = OperationsProblemResults(
+         res_var, res.total_cost, res.optimizer_log, res.time_stamp)
+     stack_plot(results; kwargs...)
+ end
+
 function _stack_plot_internal(
     res::PSI.Results,
     stack::StackedGeneration,
@@ -323,7 +343,7 @@ function _stack_plot_internal(
 )
     seriescolor = get(kwargs, :seriescolor, GR_DEFAULT)
     for name in string.(keys(res.variables))
-        variable_stack = get_bar_plot_data(res, name)
+        variable_stack = get_stack_plot_data(res, name)
         p = RecipesBase.plot(variable_stack, name; seriescolor = seriescolor)
         set_display && display(p)
         if !isnothing(save_fig)
