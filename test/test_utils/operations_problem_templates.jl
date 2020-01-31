@@ -1,53 +1,63 @@
 ## UC Model Ref
 branches = Dict()
 services = Dict()
-devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
-                                    :Ren => DeviceModel(RenewableDispatch, RenewableFixed),
-                                    :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad),
-                                    :ILoads =>  DeviceModel(InterruptibleLoad, StaticPowerLoad),
-                                    )
-template_uc= OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
+devices = Dict(
+    :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
+    :Ren => DeviceModel(RenewableDispatch, RenewableFixed),
+    :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+    :ILoads => DeviceModel(InterruptibleLoad, StaticPowerLoad),
+)
+template_uc = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 
 ## ED Model Ref
 branches = Dict()
 services = Dict()
-devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalDispatchNoMin),
-                                    :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
-                                    :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad),
-                                    :ILoads =>  DeviceModel(InterruptibleLoad, DispatchablePowerLoad),
-                                    )
-template_ed= OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
+devices = Dict(
+    :Generators => DeviceModel(ThermalStandard, ThermalDispatchNoMin),
+    :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
+    :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+    :ILoads => DeviceModel(InterruptibleLoad, DispatchablePowerLoad),
+)
+template_ed = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 
 ## UC with services Model Ref
 branches = Dict()
-services = Dict(:ReserveUp => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
-                :ReserveDown => ServiceModel(VariableReserve{ReserveDown}, RangeReserve))
-devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
-                                    :Ren => DeviceModel(RenewableDispatch, RenewableFixed),
-                                    :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad),
-                                    :ILoads =>  DeviceModel(InterruptibleLoad, StaticPowerLoad),
-                                    )
-template_uc_svc= OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
+services = Dict(
+    :ReserveUp => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+    :ReserveDown => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+)
+devices = Dict(
+    :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
+    :Ren => DeviceModel(RenewableDispatch, RenewableFixed),
+    :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+    :ILoads => DeviceModel(InterruptibleLoad, StaticPowerLoad),
+)
+template_uc_svc =
+    OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 
 # UC with Hydro Model Ref
 branches = Dict()
 services = Dict()
-devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
-                                    :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad),
-                                    :HydroDispatch => DeviceModel(HydroDispatch, HydroDispatchRunOfRiver),
-                                    )
-template_hydro_uc= OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
+devices = Dict(
+    :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
+    :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+    :HydroDispatch => DeviceModel(HydroDispatch, HydroDispatchRunOfRiver),
+)
+template_hydro_uc =
+    OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 
 ## ED with Hydro Model Ref
 branches = Dict()
 services = Dict()
-devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalDispatchNoMin),
-                                    :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
-                                    :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad),
-                                    :ILoads =>  DeviceModel(InterruptibleLoad, DispatchablePowerLoad),
-                                    :HydroDispatch => DeviceModel(HydroDispatch, HydroDispatchReservoirFlow),
-                                    )
-template_hydro_ed= OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
+devices = Dict(
+    :Generators => DeviceModel(ThermalStandard, ThermalDispatchNoMin),
+    :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
+    :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+    :ILoads => DeviceModel(InterruptibleLoad, DispatchablePowerLoad),
+    :HydroDispatch => DeviceModel(HydroDispatch, HydroDispatchReservoirFlow),
+)
+template_hydro_ed =
+    OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 #=
 ## UC Model Ref
 branches = Dict(:L => DeviceModel(Line, StaticLine),
@@ -61,7 +71,6 @@ devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCo
                                     :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
                                     :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad),
                                     :ILoads =>  DeviceModel(InterruptibleLoad, StaticPowerLoad))
-
 
 template_uc= OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 

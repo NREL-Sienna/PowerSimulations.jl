@@ -1,4 +1,4 @@
-main_paths = ["./src", "./PowerSimulationsPlots"]
+main_paths = ["."]
 for main_path in main_paths
     format(
         main_path;
