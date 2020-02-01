@@ -159,7 +159,7 @@ function test_load_simulation(file_path::String)
                 ).array
             parameter = collect(values(value.(array.data)))  # [device, time] 1 is first execution
             raw_result = Feather.read(variable_ref)
-            for i = 1:size(parameter, 1)
+            for i in 1:size(parameter, 1)
                 result = raw_result[end, i] # end is last result [time, device]
                 initial = parameter[1] # [device, time]
                 @test isapprox(initial, result)

@@ -62,9 +62,9 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
                 File_Path = String[],
             )
         end
-        for s = 1:(sim.steps)
+        for s in 1:(sim.steps)
             stage = get_stage(sim, stage_name)
-            for run = 1:(stage.internal.executions)
+            for run in 1:(stage.internal.executions)
                 sim.internal.current_time = sim.internal.date_ref[stage_number]
                 for name in variable_names
                     full_path = joinpath(

@@ -104,7 +104,7 @@ end
 function _aggregate_data(res::PSI.Results, generators::Dict)
     All_var = DataFrames.DataFrame()
     var_names = collect(keys(res.variables))
-    for i = 1:length(var_names)
+    for i in 1:length(var_names)
         All_var = hcat(All_var, res.variables[var_names[i]], makeunique = true)
     end
     fuel_dataframes = Dict()
@@ -158,7 +158,7 @@ function get_stacked_aggregation_data(res::PSI.Results, generators::Dict)
     variable = category_aggs[(new_labels[1])]
     data_matrix = sum(Matrix(variable), dims = 2)
     legend = [string.(new_labels)[1]]
-    for i = 2:length(new_labels)
+    for i in 2:length(new_labels)
         variable = category_aggs[(new_labels[i])]
         legend = hcat(legend, string.(new_labels)[i])
         data_matrix = hcat(data_matrix, sum(Matrix(variable), dims = 2))
@@ -201,7 +201,7 @@ function get_bar_aggregation_data(res::PSI.Results, generators::Dict)
     variable = category_aggs[(new_labels[1])]
     data_matrix = sum(Matrix(variable), dims = 2)
     legend = [string.(new_labels)[1]]
-    for i = 2:length(new_labels)
+    for i in 2:length(new_labels)
         variable = category_aggs[(new_labels[i])]
         data_matrix = hcat(data_matrix, sum(Matrix(variable), dims = 2))
         legend = hcat(legend, string.(new_labels)[i])

@@ -1,8 +1,8 @@
 ###### Operations for JuMPExpressionMatrix ######
 
 function _remove_undef!(expression_array::T) where {T<:JuMPExpressionMatrix}
-    for j = 1:size(expression_array)[2]
-        for i = 1:size(expression_array)[1]
+    for j in 1:size(expression_array)[2]
+        for i in 1:size(expression_array)[1]
             if !isassigned(expression_array, i, j)
                 expression_array[i, j] = zero(eltype(expression_array))
             else

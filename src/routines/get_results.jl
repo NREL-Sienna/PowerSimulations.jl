@@ -28,7 +28,7 @@ function _result_dataframe_variables(variable::JuMP.Containers.DenseAxisArray)
 
     elseif length(axes(variable)) == 3
         extra_dims = sum(length(axes(variable)[2:(end - 1)]))
-        extra_vars = [Symbol("S$(s)") for s = 1:extra_dims]
+        extra_vars = [Symbol("S$(s)") for s in 1:extra_dims]
         result_df = DataFrames.DataFrame()
         names = vcat(extra_vars, Symbol.(axes(variable)[1]))
 

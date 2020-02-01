@@ -138,7 +138,7 @@ function _pwlparamcheck(cost_)
         flag = false
     end
     l = length(cost_)
-    for i = 1:(l - 2)
+    for i in 1:(l - 2)
         if ((cost_[i + 1][1] - cost_[i][1]) / (cost_[i + 1][2] - cost_[i][2])) >
            ((cost_[i + 2][1] - cost_[i + 1][1]) / (cost_[i + 2][2] - cost_[i + 1][2]))
             flag = false

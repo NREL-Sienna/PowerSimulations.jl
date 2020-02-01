@@ -38,7 +38,7 @@ function test_plots(file_path::String)
             variable_bar = PSP.get_bar_plot_data(results, string(name))
             sort = sort!(names(results.variables[name]))
             sorted_results = res.variables[name][:, sort]
-            for i = 1:length(sort)
+            for i in 1:length(sort)
                 @test isapprox(
                     variable_bar.bar_data[i],
                     sum(sorted_results[:, i]),

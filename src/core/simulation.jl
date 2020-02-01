@@ -14,7 +14,7 @@ end
 function SimulationInternal(steps::Int64, stages_keys::Base.KeySet)
     count_dict = Dict{Int64,Dict{Int64,Int64}}()
 
-    for s = 1:steps
+    for s in 1:steps
         count_dict[s] = Dict{Int64,Int64}()
         for st in stages_keys
             count_dict[s][st] = 0

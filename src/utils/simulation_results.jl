@@ -53,14 +53,14 @@ function load_simulation_results(
     time_length = SimulationResultsReference.chronologies[stage]
     dual = _find_duals(collect(keys(references[stage])))
     variable = setdiff(variable, dual)
-    for l = 1:length(variable)
+    for l in 1:length(variable)
         date_df = references[stage][variable[l]]
         step_df = DataFrames.DataFrame(
             Date = Dates.DateTime[],
             Step = String[],
             File_Path = String[],
         )
-        for n = 1:length(step)
+        for n in 1:length(step)
             step_df = vcat(step_df, date_df[date_df.Step .== step[n], :])
         end
         variables[(variable[l])] = DataFrames.DataFrame()
@@ -133,7 +133,7 @@ function load_simulation_results(
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
     time_length = SimulationResultsReference.chronologies[stage]
 
-    for l = 1:length(variable)
+    for l in 1:length(variable)
         date_df = references[stage][variable[l]]
         variables[(variable[l])] = DataFrames.DataFrame()
         for (ix, time) in enumerate(date_df.Date)

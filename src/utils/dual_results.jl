@@ -40,7 +40,7 @@ function _read_references(
             Step = String[],
             File_Path = String[],
         )
-        for n = 1:length(step)
+        for n in 1:length(step)
             step_df = vcat(step_df, date_df[date_df.Step .== step[n], :])
         end
         results[name] = DataFrames.DataFrame()
@@ -89,7 +89,7 @@ function columnsum(variable::DataFrames.DataFrame)
     shortvar = DataFrames.DataFrame()
     varnames = collect(names(variable))
     eachsum = (sum.(eachrow(variable)))
-    for i = 1:size(variable, 1)
+    for i in 1:size(variable, 1)
         df = DataFrames.DataFrame(Symbol(varnames[i]) => eachsum[i])
         shortvar = hcat(shortvar, df)
     end
@@ -98,7 +98,7 @@ end
 # internal function to check for duals
 function _find_duals(variables::Array)
     duals = []
-    for i = 1:length(variables)
+    for i in 1:length(variables)
         if occursin("dual", String.(variables[i]))
             duals = vcat(duals, variables[i])
         end

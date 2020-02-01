@@ -90,7 +90,7 @@ function match_fuel_colors(
     color_fuel = DataFrames.DataFrame(fuels = fuels, colors = color_range)
     default =
         [(color_fuel[findall(in(["$(bar.labels[1])"]), color_fuel.fuels), :][:, :colors])[1]]
-    for i = 2:length(bar.labels)
+    for i in 2:length(bar.labels)
         specific_color =
             (color_fuel[findall(in(["$(bar.labels[i])"]), color_fuel.fuels), :][
                 :,

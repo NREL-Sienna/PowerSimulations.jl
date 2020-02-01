@@ -17,7 +17,7 @@ c_sys5 = System(
     nothing,
     nothing,
 )
-for t = 1:2
+for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5))
         add_forecast!(
             c_sys5,
@@ -57,7 +57,7 @@ c_sys5_re = System(
     nothing,
     nothing,
 )
-for t = 1:2
+for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_re))
         add_forecast!(
             c_sys5_re,
@@ -81,7 +81,7 @@ c_sys5_re_only = System(
     nothing,
     nothing,
 )
-for t = 1:2
+for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_re_only))
         add_forecast!(
             c_sys5_re_only,
@@ -110,7 +110,7 @@ c_sys5_hy = System(
     nothing,
     nothing,
 )
-for t = 1:2
+for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy))
         add_forecast!(
             c_sys5_hy,
@@ -134,7 +134,7 @@ c_sys5_hyd = System(
     nothing,
     nothing,
 )
-for t = 1:2
+for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hyd))
         add_forecast!(
             c_sys5_hyd,
@@ -177,7 +177,7 @@ c_sys5_bat = System(
     nothing,
     nothing,
 )
-for t = 1:2
+for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_bat))
         add_forecast!(
             c_sys5_bat,
@@ -199,7 +199,7 @@ c_sys5_il = System(
     nothing,
     nothing,
 )
-for t = 1:2
+for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_il))
         add_forecast!(
             c_sys5_il,
@@ -228,7 +228,7 @@ c_sys5_dc = System(
     nothing,
     nothing,
 )
-for t = 1:2
+for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_dc))
         add_forecast!(
             c_sys5_dc,
@@ -363,7 +363,7 @@ c_sys5_uc = System(
     nothing,
     nothing,
 );
-for t = 1:2
+for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_uc))
         add_forecast!(
             c_sys5_uc,
@@ -394,30 +394,30 @@ c_sys5_ed = System(
     nothing,
 );
 
-for t = 1:2 # loop over days
+for t in 1:2 # loop over days
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_ed))
         ta = load_timeseries_DA[t][ix]
-        for i = 1:length(ta) # loop over hours
+        for i in 1:length(ta) # loop over hours
             ini_time = timestamp(ta[i]) #get the hour
             data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
             add_forecast!(c_sys5_ed, l, Deterministic("get_maxactivepower", data))
         end
     end
 end
-for t = 1:2
+for t in 1:2
     for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_ed))
         ta = load_timeseries_DA[t][ix]
-        for i = 1:length(ta) # loop over hours
+        for i in 1:length(ta) # loop over hours
             ini_time = timestamp(ta[i]) #get the hour
             data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
             add_forecast!(c_sys5_ed, l, Deterministic("get_rating", data))
         end
     end
 end
-for t = 1:2
+for t in 1:2
     for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_ed))
         ta = load_timeseries_DA[t][ix]
-        for i = 1:length(ta) # loop over hours
+        for i in 1:length(ta) # loop over hours
             ini_time = timestamp(ta[i]) #get the hour
             data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
             add_forecast!(c_sys5_ed, l, Deterministic("get_maxactivepower", data))
@@ -433,7 +433,7 @@ add_service!(
     [collect(get_components(ThermalStandard, c_sys5_uc))[end]],
 )
 add_service!(c_sys5_uc, reserve_uc[3], get_components(ThermalStandard, c_sys5_uc))
-for t = 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_uc))
+for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_uc))
     add_forecast!(c_sys5_uc, serv, Deterministic("get_requirement", Reserve_ts[t]))
 end
 
@@ -444,7 +444,7 @@ add_service!(
     reserve_re[2],
     [collect(get_components(RenewableDispatch, c_sys5_re))[end]],
 )
-for t = 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_re))
+for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_re))
     add_forecast!(c_sys5_re, serv, Deterministic("get_requirement", Reserve_ts[t]))
 end
 
@@ -455,7 +455,7 @@ add_service!(
     reserve_hy[2],
     [collect(get_components(HydroDispatch, c_sys5_hyd))[end]],
 )
-for t = 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_hyd))
+for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_hyd))
     add_forecast!(c_sys5_hyd, serv, Deterministic("get_requirement", Reserve_ts[t]))
 end
 
@@ -466,7 +466,7 @@ add_service!(
     reserve_il[2],
     [collect(get_components(InterruptibleLoad, c_sys5_il))[end]],
 )
-for t = 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_il))
+for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_il))
     add_forecast!(c_sys5_il, serv, Deterministic("get_requirement", Reserve_ts[t]))
 end
 
@@ -497,7 +497,7 @@ c_sys5_hy_uc = System(
     nothing,
     nothing,
 )
-for t = 1:2
+for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy_uc))
         add_forecast!(
             c_sys5_hy_uc,
@@ -556,10 +556,10 @@ c_sys5_hy_ed = System(
     nothing,
     nothing,
 )
-for t = 1:2
+for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy_ed))
         ta = load_timeseries_DA[t][ix]
-        for i = 1:length(ta)
+        for i in 1:length(ta)
             ini_time = timestamp(ta[i])
             data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
             add_forecast!(c_sys5_hy_ed, l, Deterministic("get_maxactivepower", data))
@@ -567,7 +567,7 @@ for t = 1:2
     end
     for (ix, l) in enumerate(get_components(HydroDispatch, c_sys5_hy_ed))
         ta = hydro_timeseries_DA[t][ix]
-        for i = 1:length(ta)
+        for i in 1:length(ta)
             ini_time = timestamp(ta[i])
             data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
             add_forecast!(c_sys5_hy_ed, l, Deterministic("get_rating", data))
@@ -575,7 +575,7 @@ for t = 1:2
     end
     for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_hy_ed))
         ta = load_timeseries_DA[t][ix]
-        for i = 1:length(ta)
+        for i in 1:length(ta)
             ini_time = timestamp(ta[i])
             data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
             add_forecast!(c_sys5_hy_ed, l, Deterministic("get_rating", data))
@@ -583,7 +583,7 @@ for t = 1:2
     end
     for (ix, l) in enumerate(get_components(HydroDispatch, c_sys5_hy_ed))
         ta = hydro_timeseries_DA[t][ix]
-        for i = 1:length(ta)
+        for i in 1:length(ta)
             ini_time = timestamp(ta[i])
             data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
             add_forecast!(c_sys5_hy_ed, l, Deterministic("get_storage_capacity", data))
@@ -591,7 +591,7 @@ for t = 1:2
     end
     for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_hy_ed))
         ta = load_timeseries_DA[t][ix]
-        for i = 1:length(ta)
+        for i in 1:length(ta)
             ini_time = timestamp(ta[i])
             data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
             add_forecast!(c_sys5_hy_ed, l, Deterministic("get_maxactivepower", data))
@@ -599,7 +599,7 @@ for t = 1:2
     end
     for (ix, l) in enumerate(get_components(HydroFix, c_sys5_hy_ed))
         ta = hydro_timeseries_DA[t][ix]
-        for i = 1:length(ta)
+        for i in 1:length(ta)
             ini_time = timestamp(ta[i])
             data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
             add_forecast!(c_sys5_hy_ed, l, Deterministic("get_rating", data))

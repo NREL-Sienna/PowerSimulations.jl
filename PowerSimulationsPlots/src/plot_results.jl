@@ -58,7 +58,7 @@ function get_stacked_plot_data(res::PSI.Results, variable::String; kwargs...)
     data_matrix = convert(Matrix, variable)
     labels = collect(names(variable))
     legend = [names(variable)[1]]
-    for name = 2:length(labels)
+    for name in 2:length(labels)
         legend = hcat(legend, string.(labels[name]))
     end
 
@@ -103,7 +103,7 @@ function get_bar_plot_data(res::PSI.Results, variable::String; kwargs...)
     bar_data = sum(data, dims = 1)
     labels = collect(names(variable))
     legend = [names(variable)[1]]
-    for name = 2:length(labels)
+    for name in 2:length(labels)
         legend = hcat(legend, string.(labels[name]))
     end
 
@@ -146,7 +146,7 @@ function get_stacked_generation_data(res::PSI.Results; kwargs...)
     data_matrix = sum(convert(Matrix, variable), dims = 2)
     legend = [key_name[1]]
 
-    for i = 1:length(labels)
+    for i in 1:length(labels)
         if i !== 1
             variable = res.variables[Symbol(labels[i])]
             legend = hcat(legend, string.(key_name[i]))
@@ -184,7 +184,7 @@ function get_bar_gen_data(res::PSI.Results)
     variable = res.variables[Symbol(key_name[1])]
     data_matrix = sum(convert(Matrix, variable), dims = 2)
     legend = [key_name[1]]
-    for i = 1:length(key_name)
+    for i in 1:length(key_name)
         if i !== 1
             variable = res.variables[Symbol(key_name[i])]
             legend = hcat(legend, string.(key_name[i]))
