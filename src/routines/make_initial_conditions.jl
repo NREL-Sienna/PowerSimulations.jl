@@ -148,7 +148,7 @@ function _make_initial_conditions!(
     length_devices = length(devices)
 
     if !has_initial_conditions(psi_container, key)
-        @info "Setting $(key.ic_type) initial conditions for the status of all devices $(T) based on system data"
+        @debug "Setting $(key.ic_type) initial conditions for the status of all devices $(T) based on system data"
         ini_conds = Vector{InitialCondition}(undef, length_devices)
         set_initial_conditions!(psi_container, key, ini_conds)
         for (ix, dev) in enumerate(devices)
@@ -159,7 +159,7 @@ function _make_initial_conditions!(
         ic_devices = Set((IS.get_uuid(ic.device) for ic in ini_conds))
         for dev in devices
             IS.get_uuid(dev) in ic_devices && continue
-            @info "Setting $(key.ic_type) initial conditions for the status device $(PSY.get_name(dev)) based on system data"
+            @debug "Setting $(key.ic_type) initial conditions for the status device $(PSY.get_name(dev)) based on system data"
             push!(
                 ini_conds,
                 make_ic_func(psi_container, dev, get_val_func(dev, key), cache),

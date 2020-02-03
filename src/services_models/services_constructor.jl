@@ -8,7 +8,7 @@ function construct_services!(
     isempty(services_template) && return
     services_mapping = PSY.get_contributing_device_mapping(sys)
     for service_model in values(services_template)
-        @info "Building $(service_model.service_type) with $(service_model.formulation) formulation"
+        @debug "Building $(service_model.service_type) with $(service_model.formulation) formulation"
         services = PSY.get_components(service_model.service_type, sys)
         construct_service!(
             psi_container,

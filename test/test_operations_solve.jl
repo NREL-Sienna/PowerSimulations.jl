@@ -17,8 +17,8 @@ services = Dict{Symbol,ServiceModel}()
     parameters_value = [true, false]
     systems = [c_sys5, c_sys14]
     test_results = Dict{System,Float64}(c_sys5 => 240000.0, c_sys14 => 142000.0)
+    @info "Testing solve ED with CopperPlatePowerModel network"
     for sys in systems, p in parameters_value
-        @info("Testing solve ED with CopperPlatePowerModel network")
         @testset "ED CopperPlatePowerModel model use_parameters = $(p)" begin
             ED = OperationsProblem(
                 TestOpProblem,
@@ -45,8 +45,8 @@ end
         c_sys14_dc => 142000.0,
     )
 
+    @info "Testing solve ED with StandardPTDFModel network"
     for sys in systems, p in parameters_value
-        @info("Testing solve ED with StandardPTDFModel network")
         @testset "ED StandardPTDFModel model use_parameters = $(p)" begin
             ED = OperationsProblem(
                 TestOpProblem,

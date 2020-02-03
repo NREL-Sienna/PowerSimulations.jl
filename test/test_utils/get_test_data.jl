@@ -361,7 +361,8 @@ c_sys5_uc = System(
     nothing,
     100.0,
     nothing,
-    nothing,
+    nothing;
+    time_series_in_memory = true,
 );
 for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_uc))
@@ -391,7 +392,8 @@ c_sys5_ed = System(
     nothing,
     100.0,
     nothing,
-    nothing,
+    nothing;
+    time_series_in_memory = true,
 );
 
 for t in 1:2 # loop over days
@@ -495,7 +497,8 @@ c_sys5_hy_uc = System(
     nothing,
     100.0,
     nothing,
-    nothing,
+    nothing;
+    time_series_in_memory = true,
 )
 for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy_uc))
@@ -554,7 +557,8 @@ c_sys5_hy_ed = System(
     nothing,
     100.0,
     nothing,
-    nothing,
+    nothing;
+    time_series_in_memory = true,
 )
 for t in 1:2
     for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy_ed))
