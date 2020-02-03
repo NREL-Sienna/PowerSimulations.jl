@@ -13,9 +13,9 @@ function _pass_abstract_jump(
         return JuMPmodel
     end
     if isa(optimizer, Nothing)
-        @info("The optimization model has no optimizer attached")
+        @debug "The optimization model has no optimizer attached"
     end
-    @info("Instantiating the JuMP model")
+    @debug  "Instantiating the JuMP model"
     JuMPmodel = JuMP.Model(optimizer)
     if parameters
         PJ.enable_parameters(JuMPmodel)

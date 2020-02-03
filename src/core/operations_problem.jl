@@ -445,22 +445,22 @@ function _build!(
 
     # Build Injection devices
     for device_model in values(template.devices)
-        @info "Building $(device_model.device_type) with $(device_model.formulation) formulation"
+        @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
         construct_device!(psi_container, sys, device_model, transmission; kwargs...)
     end
 
     # Build Network
-    @info "Building $(transmission) network formulation"
+    @debug "Building $(transmission) network formulation"
     construct_network!(psi_container, sys, transmission; kwargs...)
 
     # Build Branches
     for branch_model in values(template.branches)
-        @info "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
+        @debug "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
         construct_device!(psi_container, sys, branch_model, transmission; kwargs...)
     end
 
     # Objective Function
-    @info "Building Objective"
+    @debug "Building Objective"
     JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
 
     return
