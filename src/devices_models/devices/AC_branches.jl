@@ -24,9 +24,11 @@ flow_variables!(
     ::IS.FlattenIteratorWrapper{<:PSY.ACBranch},
 ) = nothing
 
-function flow_variables!(psi_container::PSIContainer,
-                        ::Type{<:StandardPTDFModel},
-                        devices::IS.FlattenIteratorWrapper{B}) where B<:PSY.ACBranch
+function flow_variables!(
+    psi_container::PSIContainer,
+    ::Type{<:StandardPTDFModel},
+    devices::IS.FlattenIteratorWrapper{B},
+) where {B<:PSY.ACBranch}
     add_variable(psi_container, devices, variable_name(FLOW_ACTIVE_POWER, B), false)
     return
 end
@@ -133,10 +135,12 @@ function branch_rate_constraints!(
         )
     end
 
-    device_range(psi_container,
-                 constraint_data,
-                 constraint_name(RATE_LIMIT, B),
-                 variable_name(FLOW_ACTIVE_POWER, B))
+    device_range(
+        psi_container,
+        constraint_data,
+        constraint_name(RATE_LIMIT, B),
+        variable_name(FLOW_ACTIVE_POWER, B),
+    )
     return
 end
 
@@ -170,13 +174,14 @@ function branch_rate_constraints!(
         variable_name(FLOW_REACTIVE_POWER_FROM_TO, B),
     )
 
-    device_range(psi_container,
-                 constraint_data,
-                 constraint_name(RATE_LIMIT_TF, B),
-                 variable_name(FLOW_ACTIVE_POWER_TO_FROM, B))
+    device_range(
+        psi_container,
+        constraint_data,
+        constraint_name(RATE_LIMIT_TF, B),
+        variable_name(FLOW_ACTIVE_POWER_TO_FROM, B),
+    )
     return
 end
-
 
 function branch_rate_constraints!(
     psi_container::PSIContainer,
@@ -244,14 +249,28 @@ function branch_flow_constraints!(
         names[ix] = PSY.get_name(d)
     end
 
-    device_range(psi_container,
-                 DeviceRange(names, limit_values_out, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
-                 constraint_name(FLOW_LIMIT_FROM_TO, B),
-                 variable_name(FLOW_ACTIVE_POWER_FROM_TO, B))
+    device_range(
+        psi_container,
+        DeviceRange(
+            names,
+            limit_values_out,
+            Vector{Vector{Symbol}}(),
+            Vector{Vector{Symbol}}(),
+        ),
+        constraint_name(FLOW_LIMIT_FROM_TO, B),
+        variable_name(FLOW_ACTIVE_POWER_FROM_TO, B),
+    )
 
-    device_range(psi_container,
-                 DeviceRange(names, limit_values_in, Vector{Vector{Symbol}}(), Vector{Vector{Symbol}}()),
-                 constraint_name(FLOW_LIMIT_TO_FROM, B),
-                 variable_name(FLOW_ACTIVE_POWER_TO_FROM, B))
+    device_range(
+        psi_container,
+        DeviceRange(
+            names,
+            limit_values_in,
+            Vector{Vector{Symbol}}(),
+            Vector{Vector{Symbol}}(),
+        ),
+        constraint_name(FLOW_LIMIT_TO_FROM, B),
+        variable_name(FLOW_ACTIVE_POWER_TO_FROM, B),
+    )
     return
 end

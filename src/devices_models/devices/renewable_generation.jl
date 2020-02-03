@@ -5,15 +5,19 @@ struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
 struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
 ########################### renewable generation variables #################################
-function activepower_variables!(psi_container::PSIContainer,
-                               devices::IS.FlattenIteratorWrapper{R}) where R<:PSY.RenewableGen
-    add_variable(psi_container,
-                 devices,
-                 variable_name(ACTIVE_POWER, R),
-                 false,
-                 :nodal_balance_active;
-                 lb_value = x -> 0.0,
-                 ub_value = x -> PSY.get_rating(PSY.get_tech(x)))
+function activepower_variables!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{R},
+) where {R<:PSY.RenewableGen}
+    add_variable(
+        psi_container,
+        devices,
+        variable_name(ACTIVE_POWER, R),
+        false,
+        :nodal_balance_active;
+        lb_value = x -> 0.0,
+        ub_value = x -> PSY.get_rating(PSY.get_tech(x)),
+    )
     return
 end
 
@@ -103,8 +107,10 @@ function _get_time_series(
         name = PSY.get_name(device)
         tech = PSY.get_tech(device)
         pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
-        active_power = use_forecast_data ? PSY.get_rating(tech) : PSY.get_activepower(device)
-        reactive_power = use_forecast_data ? PSY.get_rating(tech) : PSY.get_reactivepower(device)
+        active_power =
+            use_forecast_data ? PSY.get_rating(tech) : PSY.get_activepower(device)
+        reactive_power =
+            use_forecast_data ? PSY.get_rating(tech) : PSY.get_reactivepower(device)
         if use_forecast_data
             forecast = PSY.get_forecast(
                 PSY.Deterministic,
@@ -121,10 +127,14 @@ function _get_time_series(
         range_data = DeviceRange(name, get_constraint_values(device))
         _device_services!(range_data, device, model)
         push!(constraint_data, range_data)
-        push!(active_timeseries, DeviceTimeSeries(name, bus_number, active_power, ts_vector,
-                                                  range_data))
-        push!(reactive_timeseries, DeviceTimeSeries(name, bus_number,
-                                                reactive_power * pf, ts_vector, range_data))
+        push!(
+            active_timeseries,
+            DeviceTimeSeries(name, bus_number, active_power, ts_vector, range_data),
+        )
+        push!(
+            reactive_timeseries,
+            DeviceTimeSeries(name, bus_number, reactive_power * pf, ts_vector, range_data),
+        )
 
     end
     return active_timeseries, reactive_timeseries, constraint_data

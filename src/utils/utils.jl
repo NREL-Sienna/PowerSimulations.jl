@@ -21,7 +21,7 @@ Return the key for the given value
 """
 function find_key_with_value(d, value)
     for (k, v) in d
-        v==value && return k
+        v == value && return k
     end
     error("dict does not have value == $value")
 end

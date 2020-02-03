@@ -48,7 +48,6 @@ function _write_data(
     return
 end
 
-
 function _write_optimizer_log(optimizer_log::Dict, save_path::AbstractString)
 
     JSON.write(joinpath(save_path, "optimizer_log.json"), JSON.json(optimizer_log))
@@ -66,7 +65,6 @@ function _write_data(psi_container::PSIContainer, save_path::AbstractString; kwa
     end
     return
 end
-
 
 function _write_data(
     psi_container::PSIContainer,

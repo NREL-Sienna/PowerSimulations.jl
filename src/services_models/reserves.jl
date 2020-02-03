@@ -56,7 +56,7 @@ function service_requirement_constraint!(
 
     requirement = PSY.get_requirement(service)
     if parameters
-        param = get_parameter_array(
+        param = get_value_array(
             psi_container,
             UpdateRef{SR}(SERVICE_REQUIREMENT, "get_requirement"),
         )

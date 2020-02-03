@@ -3,7 +3,7 @@ struct ParameterContainer
     array::JuMP.Containers.DenseAxisArray
 end
 
-get_parameter_array(c::ParameterContainer) = c.array
+get_value_array(c::ParameterContainer) = c.array
 Base.length(c::ParameterContainer) = length(c.array)
 Base.size(c::ParameterContainer) = size(c.array)
 

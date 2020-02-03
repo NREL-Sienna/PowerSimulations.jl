@@ -81,6 +81,9 @@ function load_operation_results(folder_path::AbstractString)
         ["time_stamp.feather", "optimizer_log.json", "check.sha256"],
     )
     variables = Dict{Symbol,DataFrames.DataFrame}()
+    duals = Dict()
+    dual = _find_duals(variable_list)
+    variable_list = setdiff(variable_list, dual)
     for name in variable_list
         variable_name = splitext(name)[1]
         file_path = joinpath(folder_path, name)
@@ -103,6 +106,6 @@ function find_var_length(variables::Dict, variable_list::Array)
 end
 
 function shorten_time_stamp(time::DataFrames.DataFrame)
-    time = time[1:(size(time, 1)-1), :]
+    time = time[1:(size(time, 1) - 1), :]
     return time
 end

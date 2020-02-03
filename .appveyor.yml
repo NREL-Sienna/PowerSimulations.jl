@@ -15,11 +15,6 @@ matrix:
   - julia_version: latest
   - julia_version: 1.3
 
-branches:
-  only:
-    - master
-    - /release-.*/
-
 notifications:
   - provider: Email
     on_build_success: false
@@ -31,7 +26,7 @@ install:
 
 build_script:
   - C:\julia\bin\julia --project --color=yes -e " using InteractiveUtils; versioninfo();
-        import Pkg; Pkg.build(verbose = true); Pkg.instantiate()"
+        import Pkg; Pkg.build(); Pkg.instantiate()"
 
 test_script:
   - echo "%JL_TEST_SCRIPT%"

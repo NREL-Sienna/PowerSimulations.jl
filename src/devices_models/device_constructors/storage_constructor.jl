@@ -11,8 +11,6 @@ function construct_device!(
         return
     end
 
-
-
     #Variables
     active_power_variables!(psi_container, devices)
     reactive_power_variables!(psi_container, devices)
@@ -47,8 +45,6 @@ function construct_device!(
         return
     end
 
-
-
     #Variables
     active_power_variables!(psi_container, devices)
     energy_storage_variables!(psi_container, devices)
@@ -79,8 +75,6 @@ function construct_device!(
     if validate_available_devices(devices, St)
         return
     end
-
-
 
     #Variables
     active_power_variables!(psi_container, devices)
@@ -121,8 +115,6 @@ function construct_device!(
     if validate_available_devices(devices, St)
         return
     end
-
-
 
     #Variables
     active_power_variables!(psi_container, devices)

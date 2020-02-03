@@ -7,15 +7,13 @@ julia:
   - 1.2
   - 1.3
   - nightly
-
 codecov: true
-
 notifications:
   email: false
 
 ## uncomment the following lines to allow failures on nightly julia
 ## (tests will run but not make your overall status red)
-matrix:
+jobs:
   allow_failures:
   - julia: nightly
   - os: osx
@@ -35,7 +33,7 @@ addons:
 script:
   - while sleep 9m; do echo "=====[ $SECONDS seconds still running ]====="; done &
   - julia --project --color=yes -e "import Pkg; Pkg.build(); Pkg.instantiate()"
-  - julia --project --check-bounds=yes --color=yes -e "if VERSION < v\"0.7.0-DEV.5183\"; Pkg.test(\"${JL_PKG}\", coverage=true); else using Pkg; Pkg.test(coverage=true); end"
+  - julia --project --check-bounds=yes --color=yes -e "using Pkg; Pkg.test(coverage=true);"
   - kill %1
   - echo "Test successful."
 

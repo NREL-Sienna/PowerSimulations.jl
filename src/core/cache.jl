@@ -6,8 +6,8 @@ mutable struct TimeStatusChange <: AbstractCache
     ref::UpdateRef
 end
 
-function TimeStatusChange(::Type{T}, name::AbstractString) where T <: PSY.Device
-    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, 1)
+function TimeStatusChange(::Type{T}, name::AbstractString) where {T<:PSY.Device}
+    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol,Float64}}(undef, 1)
     return TimeStatusChange(value_array, UpdateRef{PJ.ParameterRef}(T, name))
 end
 
@@ -21,7 +21,8 @@ function build_cache!(cache::TimeStatusChange, psi_container::PSIContainer)
     # TODO: This currently only supports parameters; we may need to support variables and
     # constraints in the future. A get function would need to be parametrized on cache.ref.
     parameter = get_parameter_array(psi_container, cache.ref)
-    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, axes(parameter)...)
+    value_array =
+        JuMP.Containers.DenseAxisArray{Dict{Symbol,Float64}}(undef, axes(parameter)...)
 
     for name in parameter.axes[1]
         status = PJ.value(parameter[name])
@@ -35,7 +36,7 @@ end
 
 ################################Cache Update################################################
 function update_cache!(c::TimeStatusChange, stage::Stage)
-    parameter = get_parameter_array(stage.internal.psi_container, c.ref)
+    parameter = get_value_array(stage.internal.psi_container, c.ref)
     for name in parameter.axes[1]
         param_status = PJ.value(parameter[name])
         if c.value[name][:status] == param_status

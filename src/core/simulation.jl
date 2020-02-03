@@ -14,7 +14,7 @@ end
 function SimulationInternal(steps::Int64, stages_keys::Base.KeySet)
     count_dict = Dict{Int64,Dict{Int64,Int64}}()
 
-    for s = 1:steps
+    for s in 1:steps
         count_dict[s] = Dict{Int64,Int64}()
         for st in stages_keys
             count_dict[s][st] = 0
@@ -192,8 +192,8 @@ function _get_simulation_initial_times!(sim::Simulation)
                 throw(IS.ConflictingInputsError("Simulation interval ($seq_interval) and
                         forecast interval ($interval) definitions are not compatible"))
             end
-            for (ix, element) in enumerate(stage_initial_times[stage_number][1:end-1])
-                if !(element + interval == stage_initial_times[stage_number][ix+1])
+            for (ix, element) in enumerate(stage_initial_times[stage_number][1:(end - 1)])
+                if !(element + interval == stage_initial_times[stage_number][ix + 1])
                     throw(IS.ConflictingInputsError("The sequence of forecasts is invalid"))
                 end
             end
@@ -311,7 +311,6 @@ function _check_folder(folder::String)
         throw(IS.ConflictingInputsError("Specified folder does not have write access [$e]"))
     end
 end
-
 
 @doc raw"""
         build!(sim::Simulation;

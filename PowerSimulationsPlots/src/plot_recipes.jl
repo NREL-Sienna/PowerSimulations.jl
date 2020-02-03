@@ -5,7 +5,7 @@ function plotly_stack_gen(stacked_gen::StackedGeneration, seriescolor::Array; kw
     save_fig = get(kwargs, :save, nothing)
     traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
     gens = stacked_gen.labels
-    for gen = 1:length(gens)
+    for gen in 1:length(gens)
         push!(
             traces,
             PlotlyJS.scatter(;
@@ -36,7 +36,7 @@ function plotly_stack_plots(res::PSI.Results, seriescolor::Array; kwargs...)
     for (key, var) in res.variables
         traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
         gens = collect(names(var))
-        for gen = 1:length(gens)
+        for gen in 1:length(gens)
             push!(
                 traces,
                 PlotlyJS.scatter(;
@@ -69,7 +69,7 @@ function plotly_bar_gen(bar_gen::BarGeneration, seriescolor::Array; kwargs...)
     time_span = convert(Dates.Hour, (time_range[2]) - (time_range[1])) * length(time_range)
     traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
     gens = bar_gen.labels
-    for gen = 1:length(gens)
+    for gen in 1:length(gens)
         push!(
             traces,
             PlotlyJS.scatter(;
@@ -106,7 +106,7 @@ function plotly_bar_plots(res::PSI.Results, seriescolor::Array; kwargs...)
     for (key, var) in res.variables
         traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
         gens = collect(names(var))
-        for gen = 1:length(gens)
+        for gen in 1:length(gens)
             push!(
                 traces,
                 PlotlyJS.scatter(;
@@ -133,7 +133,6 @@ function plotly_bar_plots(res::PSI.Results, seriescolor::Array; kwargs...)
     end
 end
 
-
 RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String)
     time = convert.(Dates.DateTime, results.time_range)
     n = length(time)
@@ -156,9 +155,9 @@ RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String)
     # create filled polygon
     sy = vcat(z[:, 1], zeros(n))
     sx = [time[1:n]; reverse(time[1:n])]
-    for c = 1:size(z, 2)
+    for c in 1:size(z, 2)
         if c !== 1
-            sy = hcat(sy, vcat(z[:, c], reverse(z[:, c-1])))
+            sy = hcat(sy, vcat(z[:, c], reverse(z[:, c - 1])))
         end
     end
     RecipesBase.@series begin
@@ -191,9 +190,9 @@ RecipesBase.@recipe function StackedGeneration(res::StackedGeneration)
     # Create filled polygon
     sy = vcat(z[:, 1], zeros(n))
     sx = [time[1:n]; reverse(time[1:n])]
-    for c = 2:size(z, 2)
+    for c in 2:size(z, 2)
         if c !== 1
-            sy = hcat(sy, vcat(z[:, c], reverse(z[:, c-1])))
+            sy = hcat(sy, vcat(z[:, c], reverse(z[:, c - 1])))
         end
     end
     RecipesBase.@series begin
@@ -229,9 +228,9 @@ RecipesBase.@recipe function BarPlot(res::BarPlot, variable::String)
     xticks := false
     n = 2
     # Create filled polygon
-    for c = 1:size(z, 2)
+    for c in 1:size(z, 2)
         sx = [[4, 5]; [5, 4]]
-        sy = vcat(z[:, c], c == 1 ? zeros(n) : reverse(z[:, c-1]))
+        sy = vcat(z[:, c], c == 1 ? zeros(n) : reverse(z[:, c - 1]))
         RecipesBase.@series sx, sy
     end
 
@@ -261,9 +260,9 @@ RecipesBase.@recipe function BarGen(res::BarGeneration)
     legend := :outerright
     xlims := (1, 8)
     xticks := false
-    for c = 1:size(z, 2)
+    for c in 1:size(z, 2)
         sx = [[4, 5]; [5, 4]]
-        sy = vcat(z[:, c], c == 1 ? zeros(n) : reverse(z[:, c-1]))
+        sy = vcat(z[:, c], c == 1 ? zeros(n) : reverse(z[:, c - 1]))
         RecipesBase.@series sx, sy
     end
 end

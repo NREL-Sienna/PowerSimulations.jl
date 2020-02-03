@@ -394,7 +394,6 @@ function construct_network!(op_problem::OperationsProblem; kwargs...)
     return
 end
 
-
 function construct_network!(
     op_problem::OperationsProblem,
     system_formulation::Type{T};
@@ -406,14 +405,15 @@ function construct_network!(
     return
 end
 
-
 function get_initial_conditions(op_problem::OperationsProblem)
     return op_problem.psi_container.initial_conditions
 end
 
-function get_initial_conditions(op_problem::OperationsProblem,
-                                ic::InitialConditionType,
-                                device::PSY.Device)
+function get_initial_conditions(
+    op_problem::OperationsProblem,
+    ic::InitialConditionType,
+    device::PSY.Device,
+)
 
     psi_container = op_problem.psi_container
     key = ICKey(ic, device)
@@ -445,22 +445,22 @@ function _build!(
 
     # Build Injection devices
     for device_model in values(template.devices)
-        @info "Building $(device_model.device_type) with $(device_model.formulation) formulation"
+        @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
         construct_device!(psi_container, sys, device_model, transmission; kwargs...)
     end
 
     # Build Network
-    @info "Building $(transmission) network formulation"
+    @debug "Building $(transmission) network formulation"
     construct_network!(psi_container, sys, transmission; kwargs...)
 
     # Build Branches
     for branch_model in values(template.branches)
-        @info "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
+        @debug "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
         construct_device!(psi_container, sys, branch_model, transmission; kwargs...)
     end
 
     # Objective Function
-    @info "Building Objective"
+    @debug "Building Objective"
     JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
 
     return

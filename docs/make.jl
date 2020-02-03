@@ -8,10 +8,10 @@ makedocs(
     strict = true,
     authors = "Jose Daniel Lara, Clayton Barrows and Dheepak Krishnamurthy",
     pages = Any[
-        "Introduction"=>"index.md",
+        "Introduction" => "index.md",
         #"Quick Start Guide" => "qs_guide.md",
-        "Operation Model"=>"man/op_problem.md",
-        "API"=>Any["PowerSimulations"=>"api/PowerSimulations.md"],
+        "Operation Model" => "man/op_problem.md",
+        "API" => Any["PowerSimulations" => "api/PowerSimulations.md"],
     ],
 )
 

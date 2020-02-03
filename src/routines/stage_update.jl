@@ -4,19 +4,21 @@ function parameter_update!(
     container::ParameterContainer,
     stage::Stage,
     sim::Simulation,
-) where T <: PSY.Component
+) where {T<:PSY.Component}
     devices = PSY.get_components(T, stage.sys)
     initial_forecast_time = get_simulation_time(sim, get_number(stage))
     horizon = length(model_time_steps(stage.internal.psi_container))
     for d in devices
-        forecast = PSY.get_forecast(PSY.Deterministic,
-                                    d,
-                                    initial_forecast_time,
-                                    get_accessor_func(param_reference),
-                                    horizon)
+        forecast = PSY.get_forecast(
+            PSY.Deterministic,
+            d,
+            initial_forecast_time,
+            get_accessor_func(param_reference),
+            horizon,
+        )
         ts_vector = TS.values(PSY.get_data(forecast))
         device_name = PSY.get_name(d)
-        for (ix, val) in enumerate(container.array[device_name,:])
+        for (ix, val) in enumerate(container.array[device_name, :])
             value = ts_vector[ix]
             JuMP.fix(val, value)
         end
@@ -32,15 +34,9 @@ function parameter_update!(
     stage::Stage,
     sim::Simulation,
 )
-    param_array = get_parameter_array(container)
+    param_array = get_value_array(container)
     for (k, ref) in stage.internal.chronolgy_dict
-        feed_forward_update(
-            ref,
-            param_reference,
-            param_array,
-            stage,
-            get_stage(sim, k),
-        )
+        feed_forward_update(ref, param_reference, param_array, stage, get_stage(sim, k))
     end
 
     return
@@ -78,7 +74,7 @@ function _intial_conditions_update!(
         # Updates the next stage in the same step. Uses the same chronology as intra_stage
     elseif intra_stage_update
         from_stage = get_stage(sim, stage_number - 1)
-        ini_cond_chronolgy = current_stage.internal.chronolgy_dict[stage_number-1]
+        ini_cond_chronolgy = current_stage.internal.chronolgy_dict[stage_number - 1]
         # Update is done on the current stage
     elseif inner_stage_update
         from_stage = current_stage
