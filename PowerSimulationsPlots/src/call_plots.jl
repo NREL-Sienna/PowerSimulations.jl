@@ -1,63 +1,82 @@
 # Color Definitions
+# to define or change the RGB based on a 288 scale, divide by 288 for each rgb and set A = 1
 import Plots
-MAROON = Colors.RGBA(0.7, 0.1, 0.1, 0.95)
-DARKGRAY = Colors.RGBA(0, 0, 0, 0.8)
-OLIVEGREEN = Colors.RGBA(0.33, 0.42, 0.18, 0.9)
-DARKORANGE = Colors.RGBA(0.93, 0.46, 0, 1)
-ORCHID = Colors.RGBA(0.56, 0.28, 0.54, 1)
-DARKPINK = Colors.RGBA(0.9, 0.5, 0.6, 0.80)
-LIGHTYELLOW = Colors.RGBA(1, 1, 0.5, 0.6)
-STEELBLUE = Colors.RGBA(0.27, 0.5, 0.7, 0.9)
-CANARYYELLOW = Colors.RGBA(1, 0.757, 0.15, 01)
-KHAKI = Colors.RGBA(0.8, 0.6, 0.3, 1)
+NUCLEAR = Colors.RGBA(0.615, 0.108, 0.125, 1)
+COAL = Colors.RGBA(0.118, 0.118, 0.118, 1)
+HYDRO = Colors.RGBA(0.083, 0.441, 0.514, 1)
+GAS_CC = Colors.RGBA(0.285, 0.462, 0.372, 1)
+GAS_CT = Colors.RGBA(0.493, 0.406, 0.563, 1)
+STORAGE = Colors.RGBA(0.128, 0.528, 0.556, 1)
+OIL_ST = Colors.RGBA(0.462, 0.212, 0.351, 1) # petroleum
+OIL_CT = Colors.RGBA(0.462, 0.212, 0.351, 1) # petroleum
+SYNC_COND = Colors.RGBA(0.462, 0.212, 0.351, 1) # petroleum
+WIND = Colors.RGBA(0.000, 0.632, 0.830, 1)
+SOLAR = Colors.RGBA(0.885, 0.594, 0.007, 1)
+CSP = Colors.RGBA(0.875, 0.410, 0.094, 1)
+CURTAILMENT = Colors.RGBA(0.847, 0.219, 0.295, 1)
+
+# Out of a 288 rgba scale
+NUCLEAR_288 = "rgba(177, 31, 36, 1)"
+COAL_288 = "rgba(34, 34, 34, 1)"
+HYDRO_288 = "rgba(24, 127, 148, 1)"
+GAS_CC_288 = "rgba(82, 133, 107, 1)"
+GAS_CT_288 = "rgba(142, 117, 162, 1)"
+STORAGE_288 = "rgba(37, 152, 160, 1)"
+OIL_ST_288 = "rgba(133, 61, 101, 1)" # petroleum
+OIL_CT_288 = "rgba(133, 61, 101, 1)" # petroleum
+SYNC_COND_288 = "rgba(133, 61, 101, 1)" # petroleum
+WIND_288 = "rgba(0, 182, 239, 1)"
+SOLAR_288 = "rgba(255, 171, 2, 1)"
+CSP_288 = "rgba(252, 118, 27, 1)"
+CURTAILMENT_288 = "rgba(244, 63, 85, 1)"
 
 GR_DEFAULT = hcat(
-    MAROON,
-    DARKGRAY,
-    :lightblue,
-    OLIVEGREEN,
-    :pink,
-    DARKORANGE,
-    ORCHID,
-    DARKPINK,
-    LIGHTYELLOW,
-    STEELBLUE,
-    CANARYYELLOW,
-    KHAKI,
-    :red,
+    NUCLEAR,
+    COAL,
+    HYDRO,
+    GAS_CC,
+    GAS_CT,
+    STORAGE,
+    OIL_ST,
+    OIL_CT,
+    SYNC_COND,
+    WIND,
+    SOLAR,
+    CSP,
+    CURTAILMENT
 )
 
 FUEL_DEFAULT = vcat(
-    MAROON,
-    DARKGRAY,
-    :lightblue,
-    OLIVEGREEN,
-    :pink,
-    DARKORANGE,
-    ORCHID,
-    DARKPINK,
-    LIGHTYELLOW,
-    STEELBLUE,
-    CANARYYELLOW,
-    KHAKI,
-    :red,
+    NUCLEAR,
+    COAL,
+    HYDRO,
+    GAS_CC,
+    GAS_CT,
+    STORAGE,
+    OIL_ST,
+    OIL_CT,
+    SYNC_COND,
+    WIND,
+    SOLAR,
+    CSP,
+    CURTAILMENT
 )
 
 PLOTLY_DEFAULT = vcat(
-    :firebrick,
-    :slategrey,
-    :lightblue,
-    :darkOLIVEGREEN,
-    :lightpink,
-    :DARKORANGE,
-    :purple,
-    :pink,
-    :lightgoldenrodyellow,
-    :STEELBLUE,
-    :goldenrod,
-    :tan,
-    :red,
-) # tan is the problem
+    NUCLEAR_288,
+    COAL_288,
+    HYDRO_288,
+    GAS_CC_288,
+    GAS_CT_288,
+    STORAGE_288,
+    OIL_ST_288,
+    OIL_CT_288,
+    SYNC_COND_288,
+    WIND_288,
+    SOLAR_288,
+    CSP_288,
+    CURTAILMENT_288
+)
 
 function match_fuel_colors(
     stack::StackedGeneration,
@@ -343,7 +362,7 @@ function _stack_plot_internal(
 )
     seriescolor = get(kwargs, :seriescolor, GR_DEFAULT)
     for name in string.(keys(res.variables))
-        variable_stack = get_stack_plot_data(res, name)
+        variable_stack = get_stacked_plot_data(res, name)
         p = RecipesBase.plot(variable_stack, name; seriescolor = seriescolor)
         set_display && display(p)
         if !isnothing(save_fig)
