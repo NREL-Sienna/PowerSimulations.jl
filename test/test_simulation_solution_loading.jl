@@ -20,7 +20,7 @@ function test_load_simulation(file_path::String)
                 binary_from_stage = Symbol(PSI.ON),
                 affected_variables = [Symbol(PSI.ACTIVE_POWER)],
             ),
-            ("ED", :devices, :HydroDispatch) => IntegralLimitFF(
+            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
                 variable_from_stage = Symbol(PSI.ACTIVE_POWER),
                 affected_variables = [Symbol(PSI.ACTIVE_POWER)],
             ),
@@ -139,15 +139,15 @@ function test_load_simulation(file_path::String)
 
     @testset "Testing to verify parameter feedforward for consecutive UC to ED" begin
         P_keys = [
-            (PSI.ACTIVE_POWER, PSY.HydroDispatch),
+            (PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
             #(PSI.ON, PSY.ThermalStandard),
-            #(PSI.ACTIVE_POWER, PSY.HydroDispatch),
+            #(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
         ]
 
         vars_names = [
-            PSI.variable_name(PSI.ACTIVE_POWER, PSY.HydroDispatch),
+            PSI.variable_name(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
             #PSI.variable_name(PSI.ON, PSY.ThermalStandard),
-            #PSI.variable_name(PSI.ACTIVE_POWER, PSY.HydroDispatch),
+            #PSI.variable_name(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
         ]
         for (ik, key) in enumerate(P_keys)
             variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1] # 1 is first step

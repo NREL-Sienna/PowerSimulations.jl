@@ -1,7 +1,7 @@
 @testset "Renewable data misspecification" begin
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
-    warn_message = "The data doesn't include devices of type HydroDispatch, consider changing the device models"
-    model = DeviceModel(HydroDispatch, HydroDispatchRunOfRiver)
+    warn_message = "The data doesn't include devices of type HydroEnergyReservoir, consider changing the device models"
+    model = DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver)
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5)
     @test_logs (:warn, warn_message) construct_device!(op_problem, :Hydro, model)
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14)
@@ -9,7 +9,7 @@
 end
 
 @testset "Hydro DCPLossLess FixedOutput" begin
-    model = DeviceModel(HydroFix, HydroFixed)
+    model = DeviceModel(HydroDispatch, HydroFixed)
 
     # Parameters Testing
     op_problem =
@@ -56,6 +56,47 @@ end
     op_problem =
         OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
     construct_device!(op_problem, :Hydro, model)
+    moi_tests(op_problem, true, 0, 0, 0, 0, 0, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
+
+    # No Parameters Testing
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd)
+    construct_device!(op_problem, :Hydro, model)
+    moi_tests(op_problem, false, 0, 0, 0, 0, 0, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
+
+    # No Forecast Testing
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        DCPPowerModel,
+        c_sys5_hyd;
+        use_parameters = true,
+        use_forecast_data = false,
+    )
+    construct_device!(op_problem, :Hydro, model)
+    moi_tests(op_problem, true, 0, 0, 0, 0, 0, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
+
+    # No Forecast - No Parameters Testing
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        DCPPowerModel,
+        c_sys5_hyd;
+        use_forecast_data = false,
+    )
+    construct_device!(op_problem, :Hydro, model)
+    moi_tests(op_problem, false, 0, 0, 0, 0, 0, false)
+    psi_checkobjfun_test(op_problem, GAEVF)
+
+end
+
+@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchRunOfRiver formulations" begin
+    model = DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver)
+
+    # Parameters Testing
+    op_problem =
+        OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd; use_parameters = true)
+    construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, true, 24, 0, 24, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
@@ -90,8 +131,8 @@ end
 
 end
 
-@testset "Hydro DCPLossLess HydroDispatch with HydroDispatchReservoirFlow Formulations" begin
-    model = DeviceModel(HydroDispatch, HydroDispatchReservoirFlow)
+@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchReservoirFlow Formulations" begin
+    model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirFlow)
 
     # Parameters Testing
     op_problem =
@@ -133,8 +174,8 @@ end
 
 #=
 # All Hydro UC formulations are currently not supported
-@testset "Hydro DCPLossLess HydroDispatch with HydroCommitmentRunOfRiver Formulations" begin
-    model = DeviceModel(HydroDispatch, HydroCommitmentRunOfRiver)
+@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroCommitmentRunOfRiver Formulations" begin
+    model = DeviceModel(HydroEnergyReservoir, HydroCommitmentRunOfRiver)
 
     # Parameters Testing
     op_problem =
@@ -174,8 +215,8 @@ end
 
 end
 
-@testset "Hydro DCPLossLess HydroDispatch with HydroCommitmentReservoirlFlow Formulations" begin
-    model = DeviceModel(HydroDispatch, HydroCommitmentReservoirFlow)
+@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroCommitmentReservoirlFlow Formulations" begin
+    model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirFlow)
 
     # Parameters Testing
     op_problem =
@@ -216,8 +257,8 @@ end
 end
 =#
 
-@testset "Hydro DCPLossLess HydroDispatch with HydroDispatchReservoirStorage Formulations" begin
-    model = DeviceModel(HydroDispatch, HydroDispatchReservoirStorage)
+@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations" begin
+    model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage)
 
     # Parameters Testing
     op_problem =
@@ -261,8 +302,8 @@ end
 
 #=
 # All Hydro UC formulations are currently not supported
-@testset "Hydro DCPLossLess HydroDispatch with HydroCommitmentReservoirStorage Formulations" begin
-    model = DeviceModel(HydroDispatch, HydroCommitmentReservoirStorage)
+@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroCommitmentReservoirStorage Formulations" begin
+    model = DeviceModel(HydroEnergyReservoir, HydroCommitmentReservoirStorage)
 
     # Parameters Testing
     op_problem =
