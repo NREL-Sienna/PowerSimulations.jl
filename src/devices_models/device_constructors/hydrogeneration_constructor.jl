@@ -232,26 +232,26 @@ end
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{PSY.HydroFix,D},
+    model::DeviceModel{PSY.HydroDispatch,D},
     ::Type{S};
     kwargs...,
 ) where {D<:AbstractHydroUnitCommitment,S<:PM.AbstractPowerModel}
     @warn("The Formulation $(D) only applies to Dispatchable Hydro, *
                Consider Changing the Device Formulation to HydroFixed")
 
-    construct_device!(psi_container, DeviceModel(PSY.HydroFix, HydroFixed), S; kwargs...)
+    construct_device!(psi_container, DeviceModel(PSY.HydroDispatch, HydroFixed), S; kwargs...)
 end
 
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{PSY.HydroFix,HydroFixed},
+    model::DeviceModel{PSY.HydroDispatch,HydroFixed},
     ::Type{S};
     kwargs...,
 ) where {S<:PM.AbstractPowerModel}
-    devices = PSY.get_components(PSY.HydroFix, sys)
+    devices = PSY.get_components(PSY.HydroDispatch, sys)
 
-    if validate_available_devices(devices, PSY.HydroFix)
+    if validate_available_devices(devices, PSY.HydroDispatch)
         return
     end
 
