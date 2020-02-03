@@ -43,7 +43,7 @@ GR_DEFAULT = hcat(
     WIND,
     SOLAR,
     CSP,
-    CURTAILMENT
+    CURTAILMENT,
 )
 
 FUEL_DEFAULT = vcat(
@@ -59,7 +59,7 @@ FUEL_DEFAULT = vcat(
     WIND,
     SOLAR,
     CSP,
-    CURTAILMENT
+    CURTAILMENT,
 )
 
 PLOTLY_DEFAULT = vcat(
@@ -75,7 +75,7 @@ PLOTLY_DEFAULT = vcat(
     WIND_288,
     SOLAR_288,
     CSP_288,
-    CURTAILMENT_288
+    CURTAILMENT_288,
 )
 
 function match_fuel_colors(
@@ -107,7 +107,7 @@ function match_fuel_colors(
     color_fuel = DataFrames.DataFrame(fuels = fuels, colors = color_range)
     default =
         [(color_fuel[findall(in(["$(bar.labels[1])"]), color_fuel.fuels), :][:, :colors])[1]]
-    for i in 2:length(bar.labels)
+    for i = 2:length(bar.labels)
         specific_color =
             (color_fuel[findall(in(["$(bar.labels[i])"]), color_fuel.fuels), :][
                 :,
