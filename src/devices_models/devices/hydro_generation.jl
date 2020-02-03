@@ -346,8 +346,8 @@ end
 ######################## Inflow constraints ############################
 function _get_inflow_time_series(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.HydroDispatch},
-    model::DeviceModel{PSY.HydroDispatch,<:AbstractHydroFormulation},
+    devices::IS.FlattenIteratorWrapper{PSY.HydroEnergyReservoir},
+    model::DeviceModel{PSY.HydroEnergyReservoir,<:AbstractHydroFormulation},
     get_constraint_values::Function = x -> (min = 0.0, max = 0.0),
 )
     initial_time = model_initial_time(psi_container)
@@ -399,7 +399,7 @@ end
 function inflow_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{PSY.HydroDispatch,HydroDispatchReservoirStorage},
+    model::DeviceModel{PSY.HydroEnergyReservoir,HydroDispatchReservoirStorage},
     system_formulation::Type{<:PM.AbstractPowerModel},
     feed_forward::Union{Nothing,AbstractAffectFeedForward},
 ) where {H<:PSY.HydroGen}
@@ -457,16 +457,16 @@ end
 function energy_balance_constraint!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{PSY.HydroDispatch,HydroDispatchReservoirStorage},
+    model::DeviceModel{H, HydroDispatchReservoirStorage},
     system_formulation::Type{<:PM.AbstractPowerModel},
     feed_forward::Union{Nothing,AbstractAffectFeedForward},
-) where {H<:PSY.HydroDispatch}
-    key = ICKey(DeviceEnergy, PSY.HydroDispatch)
+) where {H<:PSY.HydroEnergyReservoir}
+    key = ICKey(DeviceEnergy, H)
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !(key in keys(psi_container.initial_conditions))
-        throw(IS.DataFormatError("Initial Conditions for $(PSY.HydroDispatch) Energy Constraints not in the model"))
+        throw(IS.DataFormatError("Initial Conditions for $(H) Energy Constraints not in the model"))
     end
 
     ts_data_inflow, constraint_data = _get_inflow_time_series(
@@ -619,14 +619,14 @@ end
 ##################################### Hydro generation cost ############################
 function cost_function(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.HydroDispatch},
+    devices::IS.FlattenIteratorWrapper{PSY.HydroEnergyReservoir},
     device_formulation::Type{D},
     system_formulation::Type{<:PM.AbstractPowerModel},
 ) where {D<:AbstractHydroFormulation}
     add_to_cost(
         psi_container,
         devices,
-        variable_name(ACTIVE_POWER, PSY.HydroDispatch),
+        variable_name(ACTIVE_POWER, PSY.HydroEnergyReservoir),
         :fixed,
         -1.0,
     )
