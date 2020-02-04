@@ -239,7 +239,12 @@ function construct_device!(
     @warn("The Formulation $(D) only applies to Dispatchable Hydro, *
                Consider Changing the Device Formulation to HydroFixed")
 
-    construct_device!(psi_container, DeviceModel(PSY.HydroDispatch, HydroFixed), S; kwargs...)
+    construct_device!(
+        psi_container,
+        DeviceModel(PSY.HydroDispatch, HydroFixed),
+        S;
+        kwargs...,
+    )
 end
 
 function construct_device!(

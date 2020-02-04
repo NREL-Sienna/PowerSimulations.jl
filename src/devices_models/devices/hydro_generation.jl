@@ -457,7 +457,7 @@ end
 function energy_balance_constraint!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H, HydroDispatchReservoirStorage},
+    model::DeviceModel{H,HydroDispatchReservoirStorage},
     system_formulation::Type{<:PM.AbstractPowerModel},
     feed_forward::Union{Nothing,AbstractAffectFeedForward},
 ) where {H<:PSY.HydroEnergyReservoir}
