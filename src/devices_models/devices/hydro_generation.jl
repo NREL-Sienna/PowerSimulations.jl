@@ -187,8 +187,8 @@ function _get_time_series(
         tech = PSY.get_tech(device)
         # Hydro gens dont't have a power factor field, so the pf is calculated
         # pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
-        pf = PSY.get_reactivepower(device) / PSY.get_rating(tech)
-        pf = iszero(pf) ? pf : 1.0
+        pf = PSY.get_reactivepower(device) / PSY.get_rating(tech) # TODO: remove if pf gets added to hydro struct
+        pf = iszero(pf) ? pf : 1.0 # TODO: remove if pf gets added to hydro struct
 
         if use_forecast_data
             active_power = PSY.get_rating(tech)
