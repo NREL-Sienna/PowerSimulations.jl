@@ -30,7 +30,8 @@ SOLAR_288 = "rgba(255, 171, 2, 1)"
 CSP_288 = "rgba(252, 118, 27, 1)"
 CURTAILMENT_288 = "rgba(244, 63, 85, 1)"
 
-GR_DEFAULT = hcat(NUCLEAR,
+GR_DEFAULT = hcat(
+    NUCLEAR,
     COAL,
     HYDRO,
     GAS_CC,
@@ -45,7 +46,8 @@ GR_DEFAULT = hcat(NUCLEAR,
     CURTAILMENT,
 )
 
-FUEL_DEFAULT = vcat(NUCLEAR,
+FUEL_DEFAULT = vcat(
+    NUCLEAR,
     COAL,
     HYDRO,
     GAS_CC,
@@ -60,7 +62,8 @@ FUEL_DEFAULT = vcat(NUCLEAR,
     CURTAILMENT,
 )
 
-PLOTLY_DEFAULT = vcat(NUCLEAR_288,
+PLOTLY_DEFAULT = vcat(
+    NUCLEAR_288,
     COAL_288,
     HYDRO_288,
     GAS_CC_288,
@@ -75,7 +78,8 @@ PLOTLY_DEFAULT = vcat(NUCLEAR_288,
     CURTAILMENT_288,
 )
 
-function match_fuel_colors(stack::StackedGeneration,
+function match_fuel_colors(
+    stack::StackedGeneration,
     bar::BarGeneration,
     backend::Any,
     default::Array,
@@ -181,24 +185,28 @@ function fuel_plot(res::PSI.Results, generator_dict::Dict; kwargs...)
     _fuel_plot_internal(stack, bar, seriescolor, backend, save_fig, set_display; kwargs...)
 end
 
-function _fuel_plot_internal(stack::StackedGeneration,
+function _fuel_plot_internal(
+    stack::StackedGeneration,
     bar::BarGeneration,
     seriescolor::Array,
     backend::Plots.PlotlyJSBackend,
     save_fig::Any,
     set_display::Bool;
-    kwargs...,)
+    kwargs...,
+)
     plotly_stack_gen(stack, seriescolor; kwargs...)
     plotly_bar_gen(bar, seriescolor; kwargs...)
 end
 
-function _fuel_plot_internal(stack::StackedGeneration,
+function _fuel_plot_internal(
+    stack::StackedGeneration,
     bar::BarGeneration,
     seriescolor::Array,
     backend::Any,
     save_fig::Any,
     set_display::Bool;
-    kwargs...,)
+    kwargs...,
+)
     p1 = RecipesBase.plot(stack; seriescolor = seriescolor)
     p2 = RecipesBase.plot(bar; seriescolor = seriescolor)
     set_display && display(p1)
@@ -252,23 +260,27 @@ function bar_plot(res::PSI.Results, variables::Array; kwargs...)
     bar_plot(results; kwargs...)
 end
 
-function _bar_plot_internal(res::PSI.Results,
+function _bar_plot_internal(
+    res::PSI.Results,
     bar_gen::BarGeneration,
     backend::Plots.PlotlyJSBackend,
     save_fig::Any,
     set_display::Bool;
-    kwargs...,)
+    kwargs...,
+)
     seriescolor = get(kwargs, :seriescolor, PLOTLY_DEFAULT)
     plotly_bar_plots(res, seriescolor; kwargs...)
     plotly_bar_gen(bar_gen, seriescolor; kwargs...)
 end
 
-function _bar_plot_internal(res::PSI.Results,
+function _bar_plot_internal(
+    res::PSI.Results,
     bar_gen::BarGeneration,
     backend::Any,
     save_fig::Any,
     set_display::Bool;
-    kwargs...,)
+    kwargs...,
+)
     seriescolor = get(kwargs, :seriescolor, GR_DEFAULT)
     for name in string.(keys(res.variables))
         variable_bar = get_bar_plot_data(res, name)
@@ -327,23 +339,27 @@ function stack_plot(res::PSI.Results, variables::Array; kwargs...)
     stack_plot(results; kwargs...)
 end
 
-function _stack_plot_internal(res::PSI.Results,
+function _stack_plot_internal(
+    res::PSI.Results,
     stack::StackedGeneration,
     backend::Plots.PlotlyJSBackend,
     save_fig::Any,
     set_display::Bool;
-    kwargs...,)
+    kwargs...,
+)
     seriescolor = get(kwargs, :seriescolor, PLOTLY_DEFAULT)
     plotly_stack_plots(res, seriescolor; kwargs...)
     plotly_stack_gen(stack, seriescolor; kwargs...)
 end
 
-function _stack_plot_internal(res::PSI.Results,
+function _stack_plot_internal(
+    res::PSI.Results,
     stack::StackedGeneration,
     backend::Any,
     save_fig::Any,
     set_display::Bool;
-    kwargs...,)
+    kwargs...,
+)
     seriescolor = get(kwargs, :seriescolor, GR_DEFAULT)
     for name in string.(keys(res.variables))
         variable_stack = get_stacked_plot_data(res, name)
