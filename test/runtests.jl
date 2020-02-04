@@ -72,10 +72,16 @@ function run_tests()
         include("test_utils/operations_problem_templates.jl")
 
         if get(ENV, "APPVEYOR", "False") == "True"
-            include("test_base_structs.jl")
-            include("test_operations_solve.jl")
-            include("test_simulation.jl")
-            include("test_simulation_solution_loading.jl")
+            @time @testset "Begin PowerSimulations tests" begin
+                tests = [
+                    "test_operations_solve.jl",
+                    "test_simulation.jl",
+                    "test_simulation_solution_loading.jl",
+                ]
+                for filename in tests
+                    @time include(filename)
+                end
+            end
         else
             @time @testset "Begin PowerSimulations tests" begin
                 @includetests ARGS
