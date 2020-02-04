@@ -29,11 +29,11 @@ cache:
 #  - if [ $TRAVIS_OS_NAME = osx ]; then brew install gcc; fi
 
 script:
-#  - while sleep 9m; do echo "=====[ $SECONDS seconds still running ]====="; done &
+  - while sleep 9m; do echo "=====[ $SECONDS seconds still running ]====="; done &
   - julia --project --color=yes -e "import Pkg; Pkg.update(); Pkg.build(); Pkg.instantiate()"
-  - travis_wait 30 julia --project --check-bounds=yes --color=yes -e "using Pkg; Pkg.test(coverage=true);"
-#  - kill %1
-#  - echo "Test successful."
+  - julia --project --check-bounds=yes --color=yes -e "using Pkg; Pkg.test(coverage=true);"
+  - kill %1
+  - echo "Test successful."
 
 jobs:
   fast_finish: true
