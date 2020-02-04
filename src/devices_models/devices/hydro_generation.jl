@@ -199,6 +199,8 @@ function _get_time_series(
                 "get_rating",
             )))
         else
+            active_power = PSY.get_activepower(device)
+            reactive_power = PSY.get_reactivepower(device) 
             ts_vector = ones(time_steps[end])
         end
         range_data = DeviceRange(name, get_constraint_values(device))
@@ -545,13 +547,13 @@ function nodal_expression!(
         include_parameters(
             psi_container,
             ts_data_active,
-            UpdateRef{H}(ACTIVE_POWER, "get_rating"),  # TODO: fix in PR #316
+            UpdateRef{H}(ACTIVE_POWER, "get_activepower"),
             :nodal_balance_active,
         )
         include_parameters(
             psi_container,
             ts_data_reactive,
-            UpdateRef{H}(REACTIVE_POWER, "get_rating"),  # TODO: fix in PR #316
+            UpdateRef{H}(REACTIVE_POWER, "get_reactivepower"),
             :nodal_balance_reactive,
         )
         return

@@ -121,6 +121,8 @@ function _get_time_series(
             )
             ts_vector = TS.values(PSY.get_data(forecast))
         else
+            active_power = PSY.get_activepower(device)
+            reactive_power = PSY.get_reactivepower(device)
             ts_vector = ones(time_steps[end])
         end
 
@@ -203,13 +205,13 @@ function nodal_expression!(
         include_parameters(
             psi_container,
             ts_data_active,
-            UpdateRef{R}(ACTIVE_POWER, "get_rating"),
+            UpdateRef{R}(ACTIVE_POWER, "get_activepower"),
             :nodal_balance_active,
         )
         include_parameters(
             psi_container,
             ts_data_reactive,
-            UpdateRef{R}(REACTIVE_POWER, "get_rating"),
+            UpdateRef{R}(REACTIVE_POWER, "get_reactivepower"),
             :nodal_balance_reactive,
         )
         return
