@@ -69,7 +69,7 @@ function run_tests()
         include("test_utils/model_checks.jl")
         include("test_utils/operations_problem_templates.jl")
 
-        if get(ENV, "APPVEYOR", false)
+        if get(ENV, "APPVEYOR", "False") == "True"
             include("test_base_structs.jl")
             include("test_operations_solve.jl")
             include("test_simulation.jl")
