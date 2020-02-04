@@ -107,11 +107,9 @@ function _get_time_series(
         name = PSY.get_name(device)
         tech = PSY.get_tech(device)
         pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
-        active_power =
-            use_forecast_data ? PSY.get_rating(tech) : PSY.get_activepower(device)
-        reactive_power =
-            use_forecast_data ? PSY.get_rating(tech) : PSY.get_reactivepower(device)
         if use_forecast_data
+            active_power = PSY.get_rating(tech)
+            reactive_power = PSY.get_rating(tech)
             forecast = PSY.get_forecast(
                 PSY.Deterministic,
                 device,
