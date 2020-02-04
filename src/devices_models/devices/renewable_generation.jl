@@ -133,7 +133,7 @@ function _get_time_series(
         )
         push!(
             reactive_timeseries,
-            DeviceTimeSeries(name, bus_number, reactive_power * pf, ts_vector, range_data),
+            DeviceTimeSeries(name, bus_number, reactive_power, ts_vector, range_data),
         )
 
     end
