@@ -7,20 +7,18 @@ julia:
   - 1.2
   - 1.3
   - nightly
-codecov: true
 notifications:
   email: false
 
 ## uncomment the following lines to allow failures on nightly julia
 ## (tests will run but not make your overall status red)
-jobs:
-  allow_failures:
-  - julia: nightly
-  - os: osx
-
 addons:
   apt_packages:
     - gfortran
+
+cache:
+ directories:
+   - /home/travis/.julia/
 
 ## uncomment and modify the following lines to manually install system packages
 #addons:
@@ -32,12 +30,16 @@ addons:
 
 script:
   - while sleep 9m; do echo "=====[ $SECONDS seconds still running ]====="; done &
-  - julia --project --color=yes -e "import Pkg; Pkg.build(); Pkg.instantiate()"
+  - julia --project --color=yes -e "import Pkg; Pkg.update(); Pkg.build(); Pkg.instantiate()"
   - julia --project --check-bounds=yes --color=yes -e "using Pkg; Pkg.test(coverage=true);"
   - kill %1
   - echo "Test successful."
 
 jobs:
+  fast_finish: true
+  allow_failures:
+    - julia: nightly
+    - os: osx
   include:
     - stage: "Documentation"
       julia: 1.2
@@ -46,3 +48,8 @@ jobs:
         - julia --project=docs -e 'using Pkg; Pkg.instantiate(); Pkg.add(PackageSpec(path=pwd()))'
         - julia --project=docs --color=yes -e 'include("docs/make.jl")'
       after_success: skip
+after_success: julia -e '
+  using Pkg;
+  Pkg.add("Coverage");
+  using Coverage;
+  Codecov.submit(process_folder());'

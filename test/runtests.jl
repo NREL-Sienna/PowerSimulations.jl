@@ -17,8 +17,10 @@ using ParameterJuMP
 using TestSetExtensions
 using DataFrames
 
-import PowerSystems.UtilsData: TestData
-download(TestData; branch = "master")
+if get(ENV, "APPVEYOR", "False") == "False"
+    import PowerSystems.UtilsData: TestData
+    download(TestData; branch = "master")
+end
 
 const PM = PowerModels
 const PSY = PowerSystems
@@ -69,8 +71,21 @@ function run_tests()
         include("test_utils/model_checks.jl")
         include("test_utils/operations_problem_templates.jl")
 
-        @time @testset "Begin PowerSimulations tests" begin
-            @includetests ARGS
+        if get(ENV, "APPVEYOR", "False") == "True"
+            @time @testset "Begin PowerSimulations tests" begin
+                tests = [
+                    "test_operations_solve.jl",
+                    "test_simulation.jl",
+                    "test_simulation_solution_loading.jl",
+                ]
+                for filename in tests
+                    @time include(filename)
+                end
+            end
+        else
+            @time @testset "Begin PowerSimulations tests" begin
+                @includetests ARGS
+            end
         end
 
         # TODO: Enable this once all expected errors are not logged.
