@@ -92,7 +92,7 @@ end
 
 @testset "Testing Reserves from Hydro" begin
     devices = Dict{Symbol,DeviceModel}(
-        :Generators => DeviceModel(HydroDispatch, HydroDispatchRunOfRiver),
+        :Generators => DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
     branches = Dict{Symbol,DeviceModel}()
