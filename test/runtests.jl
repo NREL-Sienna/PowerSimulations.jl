@@ -69,8 +69,15 @@ function run_tests()
         include("test_utils/model_checks.jl")
         include("test_utils/operations_problem_templates.jl")
 
-        @time @testset "Begin PowerSimulations tests" begin
-            @includetests ARGS
+        if get(ENV, "APPVEYOR", false)
+            include("test_base_structs.jl")
+            include("test_operations_solve.jl")
+            include("test_simulation.jl")
+            include("test_simulation_solution_loading.jl")
+        else
+            @time @testset "Begin PowerSimulations tests" begin
+                @includetests ARGS
+            end
         end
 
         # TODO: Enable this once all expected errors are not logged.
@@ -83,8 +90,7 @@ end
 logger = global_logger()
 
 try
-    @show ENV["APPVEYOR"]
-    #run_tests()
+    run_tests()
 finally
     # Guarantee that the global logger is reset.
     global_logger(logger)
