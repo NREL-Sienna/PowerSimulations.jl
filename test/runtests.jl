@@ -83,7 +83,8 @@ end
 logger = global_logger()
 
 try
-    run_tests()
+    @show ENV["APPVEYOR"]
+    #run_tests()
 finally
     # Guarantee that the global logger is reset.
     global_logger(logger)
