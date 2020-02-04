@@ -110,7 +110,6 @@ function _get_time_series(
         if use_forecast_data
             active_power = PSY.get_rating(tech)
             reactive_power = PSY.get_rating(tech) * pf
-        if use_forecast_data
             forecast = PSY.get_forecast(
                 PSY.Deterministic,
                 device,

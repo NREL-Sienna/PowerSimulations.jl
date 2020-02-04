@@ -94,11 +94,9 @@ function _get_time_series(
     for device in devices
         bus_number = PSY.get_number(PSY.get_bus(device))
         name = PSY.get_name(device)
-        active_power =
-            use_forecast_data ? PSY.get_maxactivepower(device) : PSY.get_activepower(device)
-        reactive_power = use_forecast_data ? PSY.get_maxreactivepower(device) :
-            PSY.get_reactivepower(device)
         if use_forecast_data
+            active_power = PSY.get_maxactivepower(device)
+            reactive_power = PSY.get_maxreactivepower(device)
             forecast = PSY.get_forecast(
                 PSY.Deterministic,
                 device,
@@ -108,6 +106,8 @@ function _get_time_series(
             )
             ts_vector = TS.values(PSY.get_data(forecast))
         else
+            active_power = PSY.get_activepower(device)
+            reactive_power = PSY.get_reactivepower(device)
             ts_vector = ones(time_steps[end])
         end
         range_data = DeviceRange(name, get_constraint_values(device))

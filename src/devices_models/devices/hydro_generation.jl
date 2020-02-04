@@ -213,7 +213,7 @@ function _get_time_series(
         )
         push!(
             reactive_timeseries,
-            DeviceTimeSeries(name, bus_number, reactive_power, ts_vector, range_data),
+            DeviceTimeSeries(name, bus_number, reactive_power, ts_vector .* pf, range_data),
         )
     end
     return active_timeseries, reactive_timeseries, constraint_data
@@ -664,9 +664,8 @@ function _get_energy_limit(
         tech = PSY.get_tech(device)
         # This is where you would get the water/energy storage capacity
         # which is then multiplied by the forecast value to get you the energy limit
-        energy_capacity = use_forecast_data ? PSY.get_storage_capacity(device) :
-            PSY.get_activepower(device)
         if use_forecast_data
+            energy_capacity = PSY.get_storage_capacity(device)
             forecast = PSY.get_forecast(
                 PSY.Deterministic,
                 device,
@@ -676,6 +675,7 @@ function _get_energy_limit(
             )
             ts_vector = TS.values(PSY.get_data(forecast))
         else
+            energy_capacity = PSY.get_activepower(device)
             ts_vector = ones(time_steps[end])
         end
         push!(
