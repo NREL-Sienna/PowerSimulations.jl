@@ -15,8 +15,7 @@ matrix:
   - julia_version: latest
 
 cache:
- directories:
-   - C:\Users\appveyor\.julia\
+  - C:\Users\appveyor\.julia\
 
 notifications:
   - provider: Email
