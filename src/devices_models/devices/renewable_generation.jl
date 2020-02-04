@@ -107,11 +107,10 @@ function _get_time_series(
         name = PSY.get_name(device)
         tech = PSY.get_tech(device)
         pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
-        active_power =
-            use_forecast_data ? PSY.get_rating(tech) : PSY.get_activepower(device)
-        reactive_power =
-            use_forecast_data ? PSY.get_rating(tech) : PSY.get_reactivepower(device)
+
         if use_forecast_data
+            active_power = PSY.get_rating(tech)
+            reactive_power = PSY.get_rating(tech) * pf
             forecast = PSY.get_forecast(
                 PSY.Deterministic,
                 device,
@@ -121,6 +120,8 @@ function _get_time_series(
             )
             ts_vector = TS.values(PSY.get_data(forecast))
         else
+            active_power = PSY.get_activepower(device)
+            reactive_power = PSY.get_reactivepower(device)
             ts_vector = ones(time_steps[end])
         end
 
@@ -133,7 +134,7 @@ function _get_time_series(
         )
         push!(
             reactive_timeseries,
-            DeviceTimeSeries(name, bus_number, reactive_power * pf, ts_vector, range_data),
+            DeviceTimeSeries(name, bus_number, reactive_power, ts_vector, range_data),
         )
 
     end
@@ -203,13 +204,13 @@ function nodal_expression!(
         include_parameters(
             psi_container,
             ts_data_active,
-            UpdateRef{R}(ACTIVE_POWER, "get_rating"),
+            UpdateRef{R}(ACTIVE_POWER, "get_activepower"),
             :nodal_balance_active,
         )
         include_parameters(
             psi_container,
             ts_data_reactive,
-            UpdateRef{R}(REACTIVE_POWER, "get_rating"),
+            UpdateRef{R}(REACTIVE_POWER, "get_reactivepower"),
             :nodal_balance_reactive,
         )
         return
