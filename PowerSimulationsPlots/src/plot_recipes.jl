@@ -1,10 +1,24 @@
 ### PlotlyJS set up
 import PlotlyJS
+
+function set_seriescolor(seriescolor::Array, gens::Array)
+    colors = []
+    for i in 1:length(gens)
+        count = i % length(seriescolor)
+        if count == 0
+            count = length(seriescolor)
+        end
+        colors = vcat(colors, seriescolor[count])
+    end
+    return colors
+end
+
 function plotly_stack_gen(stacked_gen::StackedGeneration, seriescolor::Array; kwargs...)
     set_display = get(kwargs, :display, true)
     save_fig = get(kwargs, :save, nothing)
     traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
     gens = stacked_gen.labels
+    seriescolor = set_seriescolor(seriescolor, gens)
     for gen in 1:length(gens)
         push!(
             traces,
@@ -24,7 +38,7 @@ function plotly_stack_gen(stacked_gen::StackedGeneration, seriescolor::Array; kw
         traces,
         PlotlyJS.Layout(title = "Variables", yaxis_title = "Generation (MW)"),
     )
-    set_display && display(p)
+    set_display && PlotlyJS.display(p)
     if !isnothing(save_fig)
         Plots.savefig(p, joinpath(save_fig, "Stack_Generation.png"))
     end
@@ -36,6 +50,7 @@ function plotly_stack_plots(res::PSI.Results, seriescolor::Array; kwargs...)
     for (key, var) in res.variables
         traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
         gens = collect(names(var))
+        seriescolor = set_seriescolor(seriescolor, gens)
         for gen in 1:length(gens)
             push!(
                 traces,
@@ -55,7 +70,7 @@ function plotly_stack_plots(res::PSI.Results, seriescolor::Array; kwargs...)
             traces,
             PlotlyJS.Layout(title = "$key", yaxis_title = "Generation (MW)"),
         )
-        set_display && display(p)
+        set_display && PlotlyJS.display(p)
         if !isnothing(save_fig)
             Plots.savefig(p, joinpath(save_fig, "$(key)_Stack.png"))
         end
@@ -66,9 +81,12 @@ function plotly_bar_gen(bar_gen::BarGeneration, seriescolor::Array; kwargs...)
     time_range = bar_gen.time_range
     set_display = get(kwargs, :display, true)
     save_fig = get(kwargs, :save, nothing)
-    time_span = convert(Dates.Hour, (time_range[2]) - (time_range[1])) * length(time_range)
+    time_span = IS.convert_compound_period(
+        convert(Dates.TimePeriod, time_range[2] - time_range[1]) * length(time_range),
+    )
     traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
     gens = bar_gen.labels
+    seriescolor = set_seriescolor(seriescolor, gens)
     for gen in 1:length(gens)
         push!(
             traces,
@@ -90,7 +108,7 @@ function plotly_bar_gen(bar_gen::BarGeneration, seriescolor::Array; kwargs...)
             barmode = "stack",
         ),
     )
-    set_display && display(p)
+    set_display && PlotlyJS.display(p)
     if !isnothing(save_fig)
         PlotlyJS.savefig(p, joinpath(save_fig, "Bar_Generation.svg"))
     end
@@ -100,12 +118,14 @@ function plotly_bar_plots(res::PSI.Results, seriescolor::Array; kwargs...)
     set_display = get(kwargs, :display, true)
     save_fig = get(kwargs, :save, nothing)
     time_range = res.time_stamp
-    time_span =
-        convert(Dates.Hour, (time_range[2, 1]) - (time_range[1, 1])) *
-        length(time_range[!, 1])
+    time_span = IS.convert_compound_period(
+        convert(Dates.TimePeriod, time_range[2, 1] - time_range[1, 1]) *
+            size(time_range, 1),
+    )
     for (key, var) in res.variables
         traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
         gens = collect(names(var))
+        seriescolor = set_seriescolor(seriescolor, gens)
         for gen in 1:length(gens)
             push!(
                 traces,
@@ -126,7 +146,7 @@ function plotly_bar_plots(res::PSI.Results, seriescolor::Array; kwargs...)
                 barmode = "stack",
             ),
         )
-        set_display && display(p)
+        set_display && PlotlyJS.display(p)
         if !isnothing(save_fig)
             PlotlyJS.savefig(p, joinpath(save_fig, "$(key)_Bar.svg"))
         end
