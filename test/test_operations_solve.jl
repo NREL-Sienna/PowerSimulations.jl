@@ -286,7 +286,6 @@ function test_write_functions(file_path)
 
     @testset "test write result functions" begin
         new_path = joinpath(file_path, "seven")
-        @test_throws IS.ConflictingInputsError PSI.write_results(res, new_path) # not yet a directory
         PSI.write_results(res, mkdir(new_path))
         @test !isempty(new_path)
     end
