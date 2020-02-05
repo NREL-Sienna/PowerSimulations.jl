@@ -153,8 +153,10 @@ function write_results(results::Results, save_path::String; kwargs...)
     if !isdir(save_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
-    folder_path =
-        mkdir(joinpath(save_path, replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-")))
+    folder_path = mkdir(joinpath(
+        save_path,
+        replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-"),
+    ))
     _write_data(results.variables, folder_path; kwargs...)
     _write_optimizer_log(results.optimizer_log, folder_path)
     _write_data(results.time_stamp, folder_path, "time_stamp"; kwargs...)
