@@ -1,5 +1,7 @@
 ### PlotlyJS set up
 import PlotlyJS
+import WebIO
+WebIO.install_jupyter_nbextension()
 
 function set_seriescolor(seriescolor::Array, gens::Array)
     colors = []
