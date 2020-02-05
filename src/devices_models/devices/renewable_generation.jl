@@ -204,7 +204,7 @@ function nodal_expression!(
         include_parameters(
             psi_container,
             ts_data_active,
-            UpdateRef{R}(ACTIVE_POWER, "get_activepower"),
+            UpdateRef{R}(ACTIVE_POWER, "get_rating"),
             :nodal_balance_active,
         )
         include_parameters(

@@ -536,6 +536,8 @@ function nodal_expression!(
     system_formulation::Type{<:PM.AbstractPowerModel},
 ) where {H<:PSY.HydroGen}
     parameters = model_has_parameters(psi_container)
+    use_forecast_data = model_uses_forecasts(psi_container)
+
     ts_data_active, ts_data_reactive, _ = _get_time_series(
         psi_container,
         devices,
@@ -544,18 +546,33 @@ function nodal_expression!(
     )
 
     if parameters
-        include_parameters(
-            psi_container,
-            ts_data_active,
-            UpdateRef{H}(ACTIVE_POWER, "get_activepower"),
-            :nodal_balance_active,
-        )
-        include_parameters(
-            psi_container,
-            ts_data_reactive,
-            UpdateRef{H}(REACTIVE_POWER, "get_reactivepower"),
-            :nodal_balance_reactive,
-        )
+        if use_forecast_data
+            include_parameters(
+                psi_container,
+                ts_data_active,
+                UpdateRef{H}(ACTIVE_POWER, "get_maxactivepower"),
+                :nodal_balance_active,
+            )
+            include_parameters(
+                psi_container,
+                ts_data_reactive,
+                UpdateRef{H}(REACTIVE_POWER, "get_maxreactivepower"),
+                :nodal_balance_reactive,
+            )
+        else
+            include_parameters(
+                psi_container,
+                ts_data_active,
+                UpdateRef{H}(ACTIVE_POWER, "get_activepower"),
+                :nodal_balance_active,
+            )
+            include_parameters(
+                psi_container,
+                ts_data_reactive,
+                UpdateRef{H}(REACTIVE_POWER, "get_reactivepower"),
+                :nodal_balance_reactive,
+            )
+        end
         return
     end
 

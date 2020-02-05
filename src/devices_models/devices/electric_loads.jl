@@ -237,22 +237,40 @@ function nodal_expression!(
     )
 
     parameters = model_has_parameters(psi_container)
+    use_forecast_data = model_uses_forecasts(psi_container)
 
     if parameters
-        include_parameters(
-            psi_container,
-            ts_data_active,
-            UpdateRef{L}(ACTIVE_POWER, "get_maxactivepower"),
-            :nodal_balance_active,
-            -1.0,
-        )
-        include_parameters(
-            psi_container,
-            ts_data_reactive,
-            UpdateRef{L}(REACTIVE_POWER, "get_maxreactivepower"),
-            :nodal_balance_reactive,
-            -1.0,
-        )
+        if use_forecast_data
+            include_parameters(
+                psi_container,
+                ts_data_active,
+                UpdateRef{L}(ACTIVE_POWER, "get_maxactivepower"),
+                :nodal_balance_active,
+                -1.0,
+            )
+            include_parameters(
+                psi_container,
+                ts_data_reactive,
+                UpdateRef{L}(REACTIVE_POWER, "get_maxreactivepower"),
+                :nodal_balance_reactive,
+                -1.0,
+            )
+        else
+            include_parameters(
+                psi_container,
+                ts_data_active,
+                UpdateRef{L}(ACTIVE_POWER, "get_activepower"),
+                :nodal_balance_active,
+                -1.0,
+            )
+            include_parameters(
+                psi_container,
+                ts_data_reactive,
+                UpdateRef{L}(REACTIVE_POWER, "get_reactivepower"),
+                :nodal_balance_reactive,
+                -1.0,
+            )
+        end
         return
     end
 
