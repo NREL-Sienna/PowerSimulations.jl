@@ -50,7 +50,18 @@ function check_chronology(sync::Synchronize, stages::Pair, horizons::Pair, inter
     return
 end
 
-check_chronology(sync::Consecutive, stages::Pair, horizons::Pair, intervals::Pair) = nothing
+function get_ini_cond_from_stage(order::Dict{String, Int64}, sync::Consecutive)
+
+
+
+    @warn("The chronoly Consecutive does not make use of the horizons parameter")
+end
+
+function check_chronology(sync::Consecutive, stages::Pair, horizons::Pair, intervals::Pair)
+    @warn("The chronoly Consecutive does not make use of the horizons parameter")
+    return
+end
+
 check_chronology(sync::RecedingHorizon, stages::Pair, horizons::Pair, intervals::Pair) =
     nothing
 
@@ -60,6 +71,6 @@ function check_chronology(
     horizons::Pair,
     intervals::Pair,
 ) where {T<:AbstractChronology}
-    error("Feedforward Model $(T) not implemented")
+    error("Chronology $(T) not implemented")
     return
 end

@@ -105,7 +105,12 @@ function _check_sequence(sim::Simulation)
     end
 end
 
+
+
 function _check_chronologies(sim::Simulation)
+    if isempty(sim.sequence.intra_stage_chronologies)
+        @info("No Intra-Stage Chronologies defined")
+    end
     for (key, chron) in sim.sequence.intra_stage_chronologies
         from_stage = get_stage(sim, key.first)
         to_stage = get_stage(sim, key.second)
@@ -120,6 +125,17 @@ function _check_chronologies(sim::Simulation)
             (from_stage_interval => to_stage_interval),
         )
     end
+    if isempty(sim.sequence.intra_stage_chronologies)
+        @info("No Initial Conditions Chronologies defined")
+    end
+    simulation_order = sim.sequence.order
+    for (key, chron) in sim.sequence.ini_cond_chronology
+        to_stage = get_stage(sim, key)
+        # This check assumes that the initial conditions are retrieved from the previous
+        # stage executed
+        from_stage_key = get_ini_cond_from_stage(key, simulation_order, chron)
+    end
+
     return
 end
 
@@ -208,7 +224,7 @@ function _get_simulation_initial_times!(sim::Simulation)
 
     if isnothing(get_initial_time(get_sequence(sim)))
         sim.sequence.initial_time = stage_initial_times[1][1]
-        @warn("Initial time not defined as an argument, it will be infered from the data.
+        @warn("Initial Simulation time not defined as an argument, it will be infered from the data.
                Initial Simulation Time set to $(sim.sequence.initial_time)")
     end
 
