@@ -255,8 +255,12 @@ function bar_plot(res::PSI.Results, variables::Array; kwargs...)
     for variable in variables
         res_var[variable] = res.variables[variable]
     end
-    results =
-        OperationsProblemResults(res_var, res.total_cost, res.optimizer_log, res.time_stamp)
+    results = PSI.OperationsProblemResults(
+        res_var,
+        res.total_cost,
+        res.optimizer_log,
+        res.time_stamp,
+    )
     bar_plot(results; kwargs...)
 end
 
@@ -334,8 +338,12 @@ function stack_plot(res::PSI.Results, variables::Array; kwargs...)
     for variable in variables
         res_var[variable] = res.variables[variable]
     end
-    results =
-        OperationsProblemResults(res_var, res.total_cost, res.optimizer_log, res.time_stamp)
+    results = PSI.OperationsProblemResults(
+        res_var,
+        res.total_cost,
+        res.optimizer_log,
+        res.time_stamp,
+    )
     stack_plot(results; kwargs...)
 end
 
