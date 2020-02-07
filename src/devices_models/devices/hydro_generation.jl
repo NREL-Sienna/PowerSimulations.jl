@@ -179,19 +179,14 @@ function _get_time_series(
 
     constraint_data = Vector{DeviceRange}()
     active_timeseries = Vector{DeviceTimeSeries}()
-    reactive_timeseries = Vector{DeviceTimeSeries}()
 
     for device in devices
         bus_number = PSY.get_number(PSY.get_bus(device))
         name = PSY.get_name(device)
         tech = PSY.get_tech(device)
-        # Hydro gens dont't have a power factor field, so the pf calc is commented
-        # pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
-        active_power =
-            use_forecast_data ? PSY.get_rating(tech) : PSY.get_activepower(device)
-        reactive_power =
-            use_forecast_data ? PSY.get_rating(tech) : PSY.get_reactivepower(device)
+
         if use_forecast_data
+            active_power = PSY.get_rating(tech)
             ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
                 PSY.Deterministic,
                 device,
@@ -199,6 +194,7 @@ function _get_time_series(
                 "get_rating",
             )))
         else
+            active_power = PSY.get_activepower(device)
             ts_vector = ones(time_steps[end])
         end
         range_data = DeviceRange(name, get_constraint_values(device))
@@ -208,13 +204,8 @@ function _get_time_series(
             active_timeseries,
             DeviceTimeSeries(name, bus_number, active_power, ts_vector, range_data),
         )
-        # not scaling active power by pf since pf isn't avaialable for hydro gens
-        push!(
-            reactive_timeseries,
-            DeviceTimeSeries(name, bus_number, reactive_power, ts_vector, range_data),
-        )
     end
-    return active_timeseries, reactive_timeseries, constraint_data
+    return active_timeseries, constraint_data
 end
 
 function activepower_constraints!(
@@ -227,7 +218,7 @@ function activepower_constraints!(
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    ts_data_active, _, constraint_data = _get_time_series(
+    ts_data_active, constraint_data = _get_time_series(
         psi_container,
         devices,
         model,
@@ -274,7 +265,7 @@ function activepower_constraints!(
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    ts_data_active, _, constraint_data = _get_time_series(
+    ts_data_active, constraint_data = _get_time_series(
         psi_container,
         devices,
         model,
@@ -303,7 +294,7 @@ function activepower_constraints!(
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    ts_data_active, _, constraint_data = _get_time_series(
+    ts_data_active, constraint_data = _get_time_series(
         psi_container,
         devices,
         model,
@@ -534,7 +525,9 @@ function nodal_expression!(
     system_formulation::Type{<:PM.AbstractPowerModel},
 ) where {H<:PSY.HydroGen}
     parameters = model_has_parameters(psi_container)
-    ts_data_active, ts_data_reactive, _ = _get_time_series(
+    use_forecast_data = model_uses_forecasts(psi_container)
+
+    ts_data_active, _ = _get_time_series(
         psi_container,
         devices,
         DeviceModel(H, HydroFixed),
@@ -542,18 +535,21 @@ function nodal_expression!(
     )
 
     if parameters
-        include_parameters(
-            psi_container,
-            ts_data_active,
-            UpdateRef{H}(ACTIVE_POWER, "get_rating"),  # TODO: fix in PR #316
-            :nodal_balance_active,
-        )
-        include_parameters(
-            psi_container,
-            ts_data_reactive,
-            UpdateRef{H}(REACTIVE_POWER, "get_rating"),  # TODO: fix in PR #316
-            :nodal_balance_reactive,
-        )
+        if use_forecast_data
+            include_parameters(
+                psi_container,
+                ts_data_active,
+                UpdateRef{H}(ACTIVE_POWER, "get_maxactivepower"),
+                :nodal_balance_active,
+            )
+        else
+            include_parameters(
+                psi_container,
+                ts_data_active,
+                UpdateRef{H}(ACTIVE_POWER, "get_activepower"),
+                :nodal_balance_active,
+            )
+        end
         return
     end
 
@@ -561,14 +557,6 @@ function nodal_expression!(
         for device_value in ts_data_active
             _add_to_expression!(
                 psi_container.expressions[:nodal_balance_active],
-                device_value[2],
-                t,
-                device_value[3] * device_value[4][t],
-            )
-        end
-        for device_value in ts_data_reactive
-            _add_to_expression!(
-                psi_container.expressions[:nodal_balance_reactive],
                 device_value[2],
                 t,
                 device_value[3] * device_value[4][t],
@@ -585,7 +573,7 @@ function nodal_expression!(
     system_formulation::Type{<:PM.AbstractActivePowerModel},
 ) where {H<:PSY.HydroGen}
     parameters = model_has_parameters(psi_container)
-    ts_data_active, _, _ = _get_time_series(
+    ts_data_active, _ = _get_time_series(
         psi_container,
         devices,
         DeviceModel(H, HydroFixed),
@@ -662,9 +650,8 @@ function _get_energy_limit(
         tech = PSY.get_tech(device)
         # This is where you would get the water/energy storage capacity
         # which is then multiplied by the forecast value to get you the energy limit
-        energy_capacity = use_forecast_data ? PSY.get_storage_capacity(device) :
-            PSY.get_activepower(device)
         if use_forecast_data
+            energy_capacity = PSY.get_storage_capacity(device)
             forecast = PSY.get_forecast(
                 PSY.Deterministic,
                 device,
@@ -674,6 +661,7 @@ function _get_energy_limit(
             )
             ts_vector = TS.values(PSY.get_data(forecast))
         else
+            energy_capacity = PSY.get_activepower(device)
             ts_vector = ones(time_steps[end])
         end
         push!(

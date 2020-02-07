@@ -94,11 +94,10 @@ function _get_time_series(
     for device in devices
         bus_number = PSY.get_number(PSY.get_bus(device))
         name = PSY.get_name(device)
-        active_power =
-            use_forecast_data ? PSY.get_maxactivepower(device) : PSY.get_activepower(device)
-        reactive_power = use_forecast_data ? PSY.get_maxreactivepower(device) :
-            PSY.get_reactivepower(device)
+
         if use_forecast_data
+            active_power = PSY.get_maxactivepower(device)
+            reactive_power = PSY.get_maxreactivepower(device)
             forecast = PSY.get_forecast(
                 PSY.Deterministic,
                 device,
@@ -108,6 +107,8 @@ function _get_time_series(
             )
             ts_vector = TS.values(PSY.get_data(forecast))
         else
+            active_power = PSY.get_activepower(device)
+            reactive_power = PSY.get_reactivepower(device)
             ts_vector = ones(time_steps[end])
         end
         range_data = DeviceRange(name, get_constraint_values(device))
@@ -236,22 +237,40 @@ function nodal_expression!(
     )
 
     parameters = model_has_parameters(psi_container)
+    use_forecast_data = model_uses_forecasts(psi_container)
 
     if parameters
-        include_parameters(
-            psi_container,
-            ts_data_active,
-            UpdateRef{L}(ACTIVE_POWER, "get_maxactivepower"),
-            :nodal_balance_active,
-            -1.0,
-        )
-        include_parameters(
-            psi_container,
-            ts_data_reactive,
-            UpdateRef{L}(REACTIVE_POWER, "get_maxactivepower"),
-            :nodal_balance_reactive,
-            -1.0,
-        )
+        if use_forecast_data
+            include_parameters(
+                psi_container,
+                ts_data_active,
+                UpdateRef{L}(ACTIVE_POWER, "get_maxactivepower"),
+                :nodal_balance_active,
+                -1.0,
+            )
+            include_parameters(
+                psi_container,
+                ts_data_reactive,
+                UpdateRef{L}(REACTIVE_POWER, "get_maxreactivepower"),
+                :nodal_balance_reactive,
+                -1.0,
+            )
+        else
+            include_parameters(
+                psi_container,
+                ts_data_active,
+                UpdateRef{L}(ACTIVE_POWER, "get_activepower"),
+                :nodal_balance_active,
+                -1.0,
+            )
+            include_parameters(
+                psi_container,
+                ts_data_reactive,
+                UpdateRef{L}(REACTIVE_POWER, "get_reactivepower"),
+                :nodal_balance_reactive,
+                -1.0,
+            )
+        end
         return
     end
 
