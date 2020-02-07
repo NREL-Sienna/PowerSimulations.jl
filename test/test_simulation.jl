@@ -2,6 +2,13 @@ path = joinpath(pwd(), "test_sequence_build")
 !isdir(path) && mkdir(path)
 
 function test_sequence_build(file_path::String)
+
+    @test_throws ArgumentError sim = Simulation(
+        name = "test",
+        steps = 1,
+        simulation_folder = file_path,
+    )
+
     stages_definition = Dict(
         "UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
         "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer),

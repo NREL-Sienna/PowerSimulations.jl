@@ -306,6 +306,9 @@ end
 """ # TODO: Add DocString
 function build!(sim::Simulation; kwargs...)
     check_kwargs(kwargs, SIMULATION_BUILD_KWARGS, "build!")
+    if isnothing(sim.sequence) || isempty(sim.stages)
+        throw(ArgumentError("The simulation object requires a valid definition of stages and SimulationSequence"))
+    end
     _check_forecasts_sequence(sim)
     _check_feedforward_chronologies(sim)
     _check_folder(sim.simulation_folder)
