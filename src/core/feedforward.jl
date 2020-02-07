@@ -23,6 +23,8 @@ struct RecedingHorizon <: FeedForwardChronology
     end
 end
 
+struct Consecutive <:FeedForwardChronology end
+
 function check_chronology(sync::Synchronize, stages::Pair, horizons::Pair, intervals::Pair)
     from_stage_horizon = horizons.first
     from_stage_resolution =
@@ -34,11 +36,11 @@ function check_chronology(sync::Synchronize, stages::Pair, horizons::Pair, inter
     from_stage_sync = sync.periods
 
     if from_stage_sync > from_stage_horizon
-        throw(IS.ConflictingInputsError("The lookahead length $(from_stage_horizon) in stage is insufficient to syncronize with $(from_stage_sync) feed_forward periods"))
+        throw(IS.ConflictingInputsError("The lookahead length $(from_stage_horizon) in stage is insufficient to syncronize with $(from_stage_sync) feedforward periods"))
     end
 
     if (from_stage_horizon % from_stage_sync) != 0
-        throw(IS.ConflictingInputsError("The number of feed_forward periods $(from_stage_horizon) in stage
+        throw(IS.ConflictingInputsError("The number of feedforward periods $(from_stage_horizon) in stage
                needs to be a mutiple of the horizon length $(from_stage_horizon)
                of stage to use Synchronize with parameters ($(from_stage_sync), $(to_stage_sync))"))
     end
@@ -124,7 +126,7 @@ get_variable_from_stage(p::IntegralLimitFF) = p.variable_from_stage
               param_reference::UpdateRef,
               var_name::Symbol)
 
-Constructs a parametrized upper bound constraint to implement feed_forward from other models.
+Constructs a parametrized upper bound constraint to implement feedforward from other models.
 The Parameters are initialized using the uppper boundary values of the provided variables.
 
 # Constraints
@@ -177,7 +179,7 @@ end
                         param_reference::NTuple{2, UpdateRef},
                         var_name::Symbol)
 
-Constructs min/max range parametrized constraint from device variable to include feed_forward.
+Constructs min/max range parametrized constraint from device variable to include feedforward.
 
 # Constraints
 
@@ -324,7 +326,7 @@ end
                         param_reference::UpdateRef,
                         var_name::Symbol)
 
-Constructs a parametrized integral limit constraint to implement feed_forward from other models.
+Constructs a parametrized integral limit constraint to implement feedforward from other models.
 The Parameters are initialized using the upper boundary values of the provided variables.
 
 # Constraints
@@ -370,7 +372,7 @@ function integral_limit_ff(
 end
 
 ########################## FeedForward Constraints #########################################
-function feed_forward!(
+function feedforward!(
     psi_container::PSIContainer,
     device_type::Type{T},
     ff_model::Nothing,
@@ -378,7 +380,7 @@ function feed_forward!(
     return
 end
 
-function feed_forward!(
+function feedforward!(
     psi_container::PSIContainer,
     device_type::Type{I},
     ff_model::UpperBoundFF,
@@ -386,11 +388,11 @@ function feed_forward!(
     for prefix in get_affected_variables(ff_model)
         var_name = variable_name(prefix, I)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
-        ub_ff(psi_container, constraint_name(FEED_FORWARD, I), parameter_ref, var_name)
+        ub_ff(psi_container, constraint_name(feedforward, I), parameter_ref, var_name)
     end
 end
 
-function feed_forward!(
+function feedforward!(
     psi_container::PSIContainer,
     ::Type{T},
     ff_model::SemiContinuousFF,
@@ -401,14 +403,14 @@ function feed_forward!(
         var_name = variable_name(prefix, T)
         semicontinuousrange_ff(
             psi_container,
-            constraint_name(FEED_FORWARD_BIN, T),
+            constraint_name(feedforward_BIN, T),
             parameter_ref,
             var_name,
         )
     end
 end
 
-function feed_forward!(
+function feedforward!(
     psi_container::PSIContainer,
     ::Type{T},
     ff_model::IntegralLimitFF,
@@ -418,7 +420,7 @@ function feed_forward!(
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         integral_limit_ff(
             psi_container,
-            constraint_name(FEED_FORWARD, T),
+            constraint_name(feedforward, T),
             parameter_ref,
             var_name,
         )
@@ -460,7 +462,7 @@ function get_stage_variable(
     return JuMP.value(variable[device_name, step])
 end
 
-function feed_forward_update(
+function feedforward_update(
     sync::T,
     param_reference::UpdateRef{JuMP.VariableRef},
     param_array::JuMPParamArray,

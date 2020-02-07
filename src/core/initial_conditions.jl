@@ -1,5 +1,5 @@
-struct Consecutive <: IniCondChronology end
-struct Detached <: IniCondChronology end
+struct InterStage <: IniCondChronology end
+struct IntraStage <: IniCondChronology end
 
 #########################Initial Conditions Definitions#####################################
 struct DevicePower <: InitialConditionType end

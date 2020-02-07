@@ -16,9 +16,9 @@ function construct_device!(
     reactivepower_variables!(psi_container, devices)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
-    reactivepower_constraints!(psi_container, devices, model, S, model.feed_forward)
-    feed_forward!(psi_container, H, model.feed_forward)
+    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
+    reactivepower_constraints!(psi_container, devices, model, S, model.feedforward)
+    feedforward!(psi_container, H, model.feedforward)
 
     #Cost Function
     cost_function(psi_container, devices, D, S)
@@ -44,12 +44,12 @@ function construct_device!(
     reactivepower_variables!(psi_container, devices)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
+    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
     # since hydro generators don't currently have pf info, don't add any additional
     # reactive power constraints other than the variable bounds.
-    # reactivepower_constraints!(psi_container, devices, model, S, model.feed_forward)
-    energy_limit_constraints!(psi_container, devices, model, S, model.feed_forward)
-    feed_forward!(psi_container, H, model.feed_forward)
+    # reactivepower_constraints!(psi_container, devices, model, S, model.feedforward)
+    energy_limit_constraints!(psi_container, devices, model, S, model.feedforward)
+    feedforward!(psi_container, H, model.feedforward)
 
     #Cost Function
     cost_function(psi_container, devices, HydroDispatchReservoirFlow, S)
@@ -80,10 +80,10 @@ function construct_device!(
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
-    reactivepower_constraints!(psi_container, devices, model, S, model.feed_forward)
-    commitment_constraints!(psi_container, devices, model, S, model.feed_forward)
-    feed_forward!(psi_container, H, model.feed_forward)
+    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
+    reactivepower_constraints!(psi_container, devices, model, S, model.feedforward)
+    commitment_constraints!(psi_container, devices, model, S, model.feedforward)
+    feedforward!(psi_container, H, model.feedforward)
 
     #Cost Function
     cost_function(psi_container, devices, D, S)
@@ -109,8 +109,8 @@ function construct_device!(
     activepower_variables!(psi_container, devices)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
-    feed_forward!(psi_container, H, model.feed_forward)
+    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
+    feedforward!(psi_container, H, model.feedforward)
 
     #Cost Function
     cost_function(psi_container, devices, D, S)
@@ -135,9 +135,9 @@ function construct_device!(
     activepower_variables!(psi_container, devices)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
-    energy_limit_constraints!(psi_container, devices, model, S, model.feed_forward)
-    feed_forward!(psi_container, H, model.feed_forward)
+    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
+    energy_limit_constraints!(psi_container, devices, model, S, model.feedforward)
+    feedforward!(psi_container, H, model.feedforward)
 
     #Cost Function
     cost_function(psi_container, devices, HydroDispatchReservoirFlow, S)
@@ -167,9 +167,9 @@ function construct_device!(
     storage_energy_init(psi_container, devices)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
-    energy_balance_constraint!(psi_container, devices, model, S, model.feed_forward)
-    feed_forward!(psi_container, H, model.feed_forward)
+    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
+    energy_balance_constraint!(psi_container, devices, model, S, model.feedforward)
+    feedforward!(psi_container, H, model.feedforward)
 
     #Cost Function
     cost_function(psi_container, devices, HydroDispatchReservoirStorage, S)
@@ -200,9 +200,9 @@ function construct_device!(
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    activepower_constraints!(psi_container, devices, model, S, model.feed_forward)
-    commitment_constraints!(psi_container, devices, model, S, model.feed_forward)
-    feed_forward!(psi_container, H, model.feed_forward)
+    activepower_constraints!(psi_container, devices, model, S, model.feedforward)
+    commitment_constraints!(psi_container, devices, model, S, model.feedforward)
+    feedforward!(psi_container, H, model.feedforward)
 
     #Cost Function
     cost_function(psi_container, devices, D, S)

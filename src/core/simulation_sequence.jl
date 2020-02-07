@@ -104,8 +104,8 @@ end
                         horizons::Dict{String, Int64}
                         intervals::Dict{String, <:Dates.TimePeriod}
                         order::Dict{Int64, String}
-                        intra_stage_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
-                        feed_forward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward}
+                        feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
+                        feedforward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward}
                         ini_cond_chronology::Dict{String, <:FeedForwardChronology}
                         cache::Dict{String, Vector{<:AbstractCache}}
                         )
@@ -116,8 +116,8 @@ mutable struct SimulationSequence
     step_resolution::Dates.TimePeriod
     intervals::Dict{String,<:Dates.TimePeriod}
     order::Dict{Int64,String}
-    intra_stage_chronologies::Dict{Pair{String,String},<:FeedForwardChronology}
-    feed_forward::Dict{Tuple{String,Symbol,Symbol},<:AbstractAffectFeedForward}
+    feedforward_chronologies::Dict{Pair{String,String},<:FeedForwardChronology}
+    feedforward::Dict{Tuple{String,Symbol,Symbol},<:AbstractAffectFeedForward}
     ini_cond_chronology::IniCondChronology
     cache::Dict{String,Vector{<:AbstractCache}}
     execution_order::Vector{Int64}
@@ -128,9 +128,9 @@ mutable struct SimulationSequence
         step_resolution::Dates.TimePeriod,
         intervals::Dict{String,<:Dates.TimePeriod},
         order::Dict{Int64,String},
-        intra_stage_chronologies = Dict{Pair{String,String},FeedForwardChronology}(),
-        feed_forward = Dict{Tuple{String,Symbol,Symbol},AbstractAffectFeedForward}(),
-        ini_cond_chronology = Consecutive(),
+        feedforward_chronologies = Dict{Pair{String,String},FeedForwardChronology}(),
+        feedforward = Dict{Tuple{String,Symbol,Symbol},AbstractAffectFeedForward}(),
+        ini_cond_chronology = InterStage(),
         cache = Dict{String,Vector{AbstractCache}}(),
     )
         _check_stage_order(order)
@@ -143,8 +143,8 @@ mutable struct SimulationSequence
             step_resolution,
             intervals,
             order,
-            intra_stage_chronologies,
-            feed_forward,
+            feedforward_chronologies,
+            feedforward,
             ini_cond_chronology,
             cache,
             _get_execution_order_vector(order, intervals, step_resolution)

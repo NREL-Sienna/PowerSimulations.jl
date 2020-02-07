@@ -101,10 +101,10 @@ function _check_forecasts_sequence(sim::Simulation)
 end
 
 function _check_feedforward_chronologies(sim::Simulation)
-    if isempty(sim.sequence.intra_stage_chronologies)
+    if isempty(sim.sequence.feedforward_chronologies)
         @info("No Intra-Stage Chronologies defined")
     end
-    for (key, chron) in sim.sequence.intra_stage_chronologies
+    for (key, chron) in sim.sequence.feedforward_chronologies
         from_stage = get_stage(sim, key.first)
         to_stage = get_stage(sim, key.second)
         from_stage_horizon = sim.sequence.horizons[key.first]
@@ -129,7 +129,7 @@ function _assign_feedforward_chronologies(sim::Simulation)
         error("dict does not have value == $value")
     end
 
-    for (key, chron) in sim.sequence.intra_stage_chronologies
+    for (key, chron) in sim.sequence.feedforward_chronologies
         to_stage = get_stage(sim, key.second)
         to_stage_interval =
             IS.time_period_conversion(get(sim.sequence.intervals, key.second, nothing))
@@ -213,16 +213,16 @@ function _get_simulation_initial_times!(sim::Simulation)
     return stage_initial_times
 end
 
-function _attach_feed_forward!(sim::Simulation, stage_name::String)
+function _attach_feedforward!(sim::Simulation, stage_name::String)
     stage = get(sim.stages, stage_name, nothing)
-    feed_forward = filter(p -> (p.first[1] == stage_name), sim.sequence.feed_forward)
-    for (key, ff) in feed_forward
+    feedforward = filter(p -> (p.first[1] == stage_name), sim.sequence.feedforward)
+    for (key, ff) in feedforward
         #Note: key[1] = Stage name, key[2] = template field name, key[3] = device model key
         field_dict = getfield(stage.template, key[2])
         device_model = get(field_dict, key[3], nothing)
         isnothing(device_model) &&
         throw(IS.ConflictingInputsError("Device model $(key[3]) not found in stage $(stage_name)"))
-        device_model.feed_forward = ff
+        device_model.feedforward = ff
     end
     return
 end
@@ -330,7 +330,7 @@ function build!(sim::Simulation; kwargs...)
         isnothing(stage) &&
         throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
         PSY.check_forecast_consistency(stage.sys)
-        _attach_feed_forward!(sim, stage_name)
+        _attach_feedforward!(sim, stage_name)
     end
     _assign_feedforward_chronologies(sim)
     _check_steps(sim, stage_initial_times)

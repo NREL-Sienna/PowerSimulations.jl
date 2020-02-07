@@ -70,7 +70,7 @@ activepower_constraints!(
     devices::IS.FlattenIteratorWrapper{<:PSY.ThermalGen},
     model::DeviceModel{<:PSY.ThermalGen,<:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feed_forward::SemiContinuousFF,
+    feedforward::SemiContinuousFF,
 ) = nothing
 
 activepower_constraints!(
@@ -78,7 +78,7 @@ activepower_constraints!(
     devices::IS.FlattenIteratorWrapper{<:PSY.ThermalGen},
     model::DeviceModel{<:PSY.ThermalGen,ThermalDispatchNoMin},
     ::Type{<:PM.AbstractPowerModel},
-    feed_forward::SemiContinuousFF,
+    feedforward::SemiContinuousFF,
 ) = nothing
 
 """
@@ -89,7 +89,7 @@ function activepower_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T,<:AbstractThermalDispatchFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feed_forward::Nothing,
+    feedforward::Nothing,
 ) where {T<:PSY.ThermalGen}
     constraint_data = Vector{DeviceRange}()
     for d in devices
@@ -116,7 +116,7 @@ function activepower_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T,<:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feed_forward::Nothing,
+    feedforward::Nothing,
 ) where {T<:PSY.ThermalGen}
     constraint_data = Vector{DeviceRange}()
     for d in devices
@@ -145,7 +145,7 @@ function activepower_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T,ThermalDispatchNoMin},
     ::Type{<:PM.AbstractPowerModel},
-    feed_forward::Nothing,
+    feedforward::Nothing,
 ) where {T<:PSY.ThermalGen}
     constraint_data = Vector{DeviceRange}()
     for d in devices
@@ -182,7 +182,7 @@ function reactivepower_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T,<:AbstractThermalDispatchFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {T<:PSY.ThermalGen}
     constraint_data = Vector{DeviceRange}()
     for d in devices
@@ -211,7 +211,7 @@ function reactivepower_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T,<:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {T<:PSY.ThermalGen}
     constraint_data = Vector{DeviceRange}()
     for d in devices
@@ -242,7 +242,7 @@ function commitment_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T,D},
     ::Type{S},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {T<:PSY.ThermalGen,D<:AbstractThermalFormulation,S<:PM.AbstractPowerModel}
     device_commitment(
         psi_container,
@@ -333,7 +333,7 @@ function ramp_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T,D},
     system_formulation::Type{S},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {T<:PSY.ThermalGen,D<:AbstractThermalFormulation,S<:PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
@@ -366,7 +366,7 @@ function ramp_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T,D},
     system_formulation::Type{S},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {T<:PSY.ThermalGen,D<:AbstractThermalDispatchFormulation,S<:PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
@@ -441,7 +441,7 @@ function time_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T,D},
     system_formulation::Type{S},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {T<:PSY.ThermalGen,D<:AbstractThermalFormulation,S<:PM.AbstractPowerModel}
     parameters = model_has_parameters(psi_container)
     resolution = model_resolution(psi_container)
@@ -480,7 +480,7 @@ function cost_function(
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{<:AbstractThermalDispatchFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {T<:PSY.ThermalGen}
     add_to_cost(psi_container, devices, Symbol("P_$(T)"), :variable)
     return
@@ -491,7 +491,7 @@ function cost_function(
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{<:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {T<:PSY.ThermalGen}
     #Variable Cost component
     add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)

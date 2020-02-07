@@ -59,7 +59,7 @@ function reactivepower_constraints!(
     devices::IS.FlattenIteratorWrapper{L},
     model::DeviceModel{L,<:AbstractControllablePowerLoadFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {L<:PSY.ElectricLoad}
     time_steps = model_time_steps(psi_container)
     constraint = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
@@ -133,7 +133,7 @@ function activepower_constraints!(
     devices::IS.FlattenIteratorWrapper{L},
     model::DeviceModel{L,DispatchablePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {L<:PSY.ElectricLoad}
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
@@ -179,7 +179,7 @@ function activepower_constraints!(
     devices::IS.FlattenIteratorWrapper{L},
     model::DeviceModel{L,InterruptiblePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {L<:PSY.ElectricLoad}
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)

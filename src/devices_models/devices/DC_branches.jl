@@ -58,7 +58,7 @@ function branch_rate_constraints!(
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B,<:AbstractDCLineFormulation},
     system_formulation::Type{<:PM.AbstractDCPModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {B<:PSY.DCBranch}
     var = get_variable(psi_container, FLOW_ACTIVE_POWER, B)
     time_steps = model_time_steps(psi_container)
@@ -87,7 +87,7 @@ function branch_rate_constraints!(
         Type{<:PM.AbstractActivePowerModel},
         Type{<:PM.AbstractPowerModel},
     },
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {B<:PSY.DCBranch}
     for (var_type, cons_type) in zip(
         (FLOW_ACTIVE_POWER_FROM_TO, FLOW_ACTIVE_POWER_TO_FROM),
@@ -126,7 +126,7 @@ function branch_rate_constraints!(
         Type{<:PM.AbstractActivePowerModel},
         Type{<:PM.AbstractPowerModel},
     },
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {B<:PSY.DCBranch}
     time_steps = model_time_steps(psi_container)
     for (var_type, cons_type) in zip(

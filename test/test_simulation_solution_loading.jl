@@ -12,10 +12,10 @@ function test_load_simulation(file_path::String)
 
     sequence = SimulationSequence(
         order = Dict(1 => "UC", 2 => "ED"),
-        intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
         horizons = Dict("UC" => 24, "ED" => 12),
         intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
-        feed_forward = Dict(
+        feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
                 binary_from_stage = Symbol(PSI.ON),
                 affected_variables = [Symbol(PSI.ACTIVE_POWER)],
@@ -26,7 +26,7 @@ function test_load_simulation(file_path::String)
             ),
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-        ini_cond_chronology = Consecutive(),
+        ini_cond_chronology = InterStage(),
     )
     sim = Simulation(
         name = "aggregation",
@@ -198,17 +198,17 @@ function test_load_simulation(file_path::String)
     ####################
     sequence = SimulationSequence(
         order = Dict(1 => "UC", 2 => "ED"),
-        intra_stage_chronologies = Dict(("UC" => "ED") => RecedingHorizon()),
+        feedforward_chronologies = Dict(("UC" => "ED") => RecedingHorizon()),
         horizons = Dict("UC" => 24, "ED" => 12),
         intervals = Dict("UC" => Hour(1), "ED" => Minute(5)),
-        feed_forward = Dict(
+        feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
                 binary_from_stage = Symbol(PSI.ON),
                 affected_variables = [Symbol(PSI.ACTIVE_POWER)],
             ),
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-        ini_cond_chronology = Dict("UC" => RecedingHorizon(), "ED" => RecedingHorizon()),
+        ini_cond_chronology = interstage(),
     )
 
     sim = Simulation(

@@ -36,7 +36,7 @@ function parameter_update!(
 )
     param_array = get_parameter_array(container)
     for (k, ref) in stage.internal.chronolgy_dict
-        feed_forward_update(ref, param_reference, param_array, stage, get_stage(sim, k))
+        feedforward_update(ref, param_reference, param_array, stage, get_stage(sim, k))
     end
 
     return

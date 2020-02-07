@@ -36,7 +36,7 @@ mutable struct DeviceModel{D<:PSY.Device,B<:AbstractDeviceFormulation}
     device_type::Type{D}
     formulation::Type{B}
     # TODO: Needs to be made into an array if more than one feedforward is desired
-    feed_forward::Union{Nothing,AbstractAffectFeedForward}
+    feedforward::Union{Nothing,AbstractAffectFeedForward}
     services::Vector{ServiceModel}
 
     function DeviceModel(
@@ -50,5 +50,5 @@ mutable struct DeviceModel{D<:PSY.Device,B<:AbstractDeviceFormulation}
     end
 end
 
-get_feed_forward(m::DeviceModel) = m.feed_forward
+get_feedforward(m::DeviceModel) = m.feedforward
 get_services(m::Union{DeviceModel,Nothing}) = isnothing(m) ? nothing : m.services

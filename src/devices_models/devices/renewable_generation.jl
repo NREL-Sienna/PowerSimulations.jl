@@ -41,7 +41,7 @@ function reactivepower_constraints!(
     devices::IS.FlattenIteratorWrapper{R},
     model::DeviceModel{R,RenewableFullDispatch},
     system_formulation::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {R<:PSY.RenewableGen}
     constraint_data = Vector{DeviceRange}()
     for (ix, d) in enumerate(devices)
@@ -69,7 +69,7 @@ function reactivepower_constraints!(
     devices::IS.FlattenIteratorWrapper{R},
     model::DeviceModel{R,RenewableConstantPowerFactor},
     system_formulation::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {R<:PSY.RenewableGen}
     names = (PSY.get_name(d) for d in devices)
     time_steps = model_time_steps(psi_container)
@@ -145,7 +145,7 @@ function activepower_constraints!(
     devices::IS.FlattenIteratorWrapper{R},
     model::DeviceModel{R,<:AbstractRenewableDispatchFormulation},
     system_formulation::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {R<:PSY.RenewableGen}
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)

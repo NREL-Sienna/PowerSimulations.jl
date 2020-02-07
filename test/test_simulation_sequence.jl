@@ -1,14 +1,14 @@
 @testset "Simulation Sequence" begin
-intra_stage_chronologies = Dict(("UC" => "HAUC") => Synchronize(periods = 24),
+feedforward_chronologies = Dict(("UC" => "HAUC") => Synchronize(periods = 24),
                                 ("HAUC" => "ED") => RecedingHorizon(),
                                 ("ED" => "AGC") => RecedingHorizon())
-ini_cond_chronology = Dict("ED" => Consecutive())
+ini_cond_chronology = InterStage()
 order = Dict(1 => "DAUC", 2 => "HAUC", 3 => "ED", 4 => "AGC")
 intervals = Dict("DAUC" => Hour(24), "HAUC" => Hour(1), "ED" => Minute(5), "AGC" => Minute(1))
 horizons = Dict("DAUC" => 48, "HAUC" => 24, "ED" => 12, "AGC" => 6)
 
 test_sequence = SimulationSequence(order = order,
-                                     intra_stage_chronologies = intra_stage_chronologies,
+                                     feedforward_chronologies = feedforward_chronologies,
                                      step_resolution = Hour(24),
                                      horizons = horizons,
                                      intervals = intervals,
@@ -21,7 +21,7 @@ test_sequence = SimulationSequence(order = order,
 
     bad_order = Dict(1 => "DAUC", 5 => "HAUC", 3 => "ED", 4 => "AGC")
     @test_throws IS.InvalidValue     SimulationSequence(order = bad_order,
-                                     intra_stage_chronologies = intra_stage_chronologies,
+                                     feedforward_chronologies = feedforward_chronologies,
                                      step_resolution = Hour(24),
                                      horizons = horizons,
                                      intervals = intervals,

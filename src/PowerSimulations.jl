@@ -56,12 +56,12 @@ export ThermalDispatch
 export ThermalRampLimited
 export ThermalDispatchNoMin
 
-# feed_forward sequences
+# feedforward sequences
 export RecedingHorizon
 export Synchronize
 export Consecutive
 
-# feed_forward models
+# feedforward models
 export UpperBoundFF
 export SemiContinuousFF
 export RangeFF
@@ -164,7 +164,7 @@ include("core/initial_conditions.jl")
 include("core/psi_container.jl")
 include("core/operations_problem.jl")
 include("core/simulation_stages.jl")
-include("core/feed_forward.jl")
+include("core/feedforward.jl")
 include("core/cache.jl")
 include("core/simulation_sequence.jl")
 include("core/simulation.jl")

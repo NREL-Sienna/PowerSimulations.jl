@@ -70,7 +70,7 @@ function active_power_constraints!(
     devices::IS.FlattenIteratorWrapper{St},
     model::DeviceModel{St,BookKeeping},
     ::Type{S},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {St<:PSY.Storage,S<:PM.AbstractPowerModel}
     constraint_data_in = Vector{DeviceRange}()
     constraint_data_out = Vector{DeviceRange}()
@@ -103,7 +103,7 @@ function active_power_constraints!(
     devices::IS.FlattenIteratorWrapper{St},
     model::DeviceModel{St,BookKeepingwReservation},
     ::Type{S},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {St<:PSY.Storage,S<:PM.AbstractPowerModel}
     constraint_data_in = Vector{DeviceRange}()
     constraint_data_out = Vector{DeviceRange}()
@@ -141,7 +141,7 @@ function reactive_power_constraints!(
     devices::IS.FlattenIteratorWrapper{St},
     model::DeviceModel{St,D},
     ::Type{S},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {St<:PSY.Storage,D<:AbstractStorageFormulation,S<:PM.AbstractPowerModel}
     constraint_data = Vector{DeviceRange}()
     for d in devices
@@ -179,7 +179,7 @@ function energy_capacity_constraints!(
     devices::IS.FlattenIteratorWrapper{St},
     model::DeviceModel{St,D},
     ::Type{S},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {St<:PSY.Storage,D<:AbstractStorageFormulation,S<:PM.AbstractPowerModel}
     constraint_data = Vector{DeviceRange}()
     for d in devices
@@ -221,7 +221,7 @@ function energy_balance_constraint!(
     devices::IS.FlattenIteratorWrapper{St},
     ::Type{D},
     ::Type{S},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {St<:PSY.Storage,D<:AbstractStorageFormulation,S<:PM.AbstractPowerModel}
     efficiency_data = make_efficiency_data(devices)
     energy_balance(

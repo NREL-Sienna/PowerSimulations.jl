@@ -117,7 +117,7 @@ function branch_rate_constraints!(
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B,D},
     ::Type{S},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {B<:PSY.ACBranch,D<:AbstractBranchFormulation,S<:PM.AbstractDCPModel}
     constraint_data = Vector{DeviceRange}()
 
@@ -149,7 +149,7 @@ function branch_rate_constraints!(
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B,<:AbstractBranchFormulation},
     ::Type{<:PM.AbstractActivePowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {B<:PSY.ACBranch}
     constraint_data = Vector{DeviceRange}()
 
@@ -188,7 +188,7 @@ function branch_rate_constraints!(
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B,<:AbstractBranchFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {B<:PSY.ACBranch}
     range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
@@ -216,7 +216,7 @@ function branch_flow_constraints!(
     devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
     model::DeviceModel{PSY.MonitoredLine,FlowMonitoredLine},
     ::Union{Type{PM.DCPPowerModel},Type{StandardPTDFModel}},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 )
     flow_range_data = [(PSY.get_name(h), PSY.get_flowlimits(h)) for h in devices]
 
@@ -236,7 +236,7 @@ function branch_flow_constraints!(
     devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
     model::DeviceModel{PSY.MonitoredLine,FlowMonitoredLine},
     ::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing,AbstractAffectFeedForward},
 )
     names = Vector{String}(undef, length(devices))
     limit_values_FT = Vector{MinMax}(undef, length(devices))
