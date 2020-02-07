@@ -38,7 +38,7 @@ const OPERATIONS_ACCEPTED_KWARGS = [
     :optimizer,
     :PTDF,
 ]
-const SIMULATION_BUILD_KWARGS = [:system_to_file, :PTDF_matrices]
+const SIMULATION_BUILD_KWARGS = [:initial_time, :system_to_file, :PTDF_matrices]
 
 # The constants below are strings instead of enums because there is a requirement that users
 # should be able to define their own without changing PowerSimulations.
