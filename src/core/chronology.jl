@@ -1,7 +1,7 @@
 """
 Defines a logical sequence for simulation within one stage.
 """
-struct Consecutive <: AbstractChronology end
+struct Consecutive <: FeedForwardChronology end
 
 @doc raw"""
     Synchronize(periods::Int64)
@@ -10,7 +10,7 @@ Defines the co-ordination of time between Two stages.
 # Arguments
 - `periods::Int64`: Number of time periods to grab data from
 """
-struct Synchronize <: AbstractChronology
+struct Synchronize <: FeedForwardChronology
     periods::Int64
     function Synchronize(; periods)
         new(periods)
@@ -20,7 +20,7 @@ end
 """
     RecedingHorizon(period::Int64)
 """ # TODO: Add DocString
-struct RecedingHorizon <: AbstractChronology
+struct RecedingHorizon <: FeedForwardChronology
     period::Int64
     function RecedingHorizon(; period::Int64 = 1)
         new(period)
@@ -51,9 +51,6 @@ function check_chronology(sync::Synchronize, stages::Pair, horizons::Pair, inter
 end
 
 function get_ini_cond_from_stage(order::Dict{String, Int64}, sync::Consecutive)
-
-
-
     @warn("The chronoly Consecutive does not make use of the horizons parameter")
 end
 
@@ -70,7 +67,7 @@ function check_chronology(
     stages::Pair,
     horizons::Pair,
     intervals::Pair,
-) where {T<:AbstractChronology}
+) where {T<:FeedForwardChronology}
     error("Chronology $(T) not implemented")
     return
 end

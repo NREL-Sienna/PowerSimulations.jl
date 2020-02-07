@@ -103,9 +103,9 @@ end
                         horizons::Dict{String, Int64}
                         intervals::Dict{String, <:Dates.TimePeriod}
                         order::Dict{Int64, String}
-                        intra_stage_chronologies::Dict{Pair{String, String}, <:AbstractChronology}
+                        intra_stage_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
                         feed_forward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward}
-                        ini_cond_chronology::Dict{String, <:AbstractChronology}
+                        ini_cond_chronology::Dict{String, <:FeedForwardChronology}
                         cache::Dict{String, Vector{<:AbstractCache}}
                         )
 """ # TODO: Add DocString
@@ -115,9 +115,9 @@ mutable struct SimulationSequence
     step_resolution::Dates.TimePeriod
     intervals::Dict{String,<:Dates.TimePeriod}
     order::Dict{Int64,String}
-    intra_stage_chronologies::Dict{Pair{String,String},<:AbstractChronology}
+    intra_stage_chronologies::Dict{Pair{String,String},<:FeedForwardChronology}
     feed_forward::Dict{Tuple{String,Symbol,Symbol},<:AbstractAffectFeedForward}
-    ini_cond_chronology::Dict{String,<:AbstractChronology}
+    ini_cond_chronology::Dict{String,<:FeedForwardChronology}
     cache::Dict{String,Vector{<:AbstractCache}}
     execution_order::Vector{Int64}
 
@@ -127,9 +127,9 @@ mutable struct SimulationSequence
         step_resolution::Dates.TimePeriod,
         intervals::Dict{String,<:Dates.TimePeriod},
         order::Dict{Int64,String},
-        intra_stage_chronologies = Dict{Pair{String,String},AbstractChronology}(),
+        intra_stage_chronologies = Dict{Pair{String,String},FeedForwardChronology}(),
         feed_forward = Dict{Tuple{String,Symbol,Symbol},AbstractAffectFeedForward}(),
-        ini_cond_chronology = Dict{String,AbstractChronology}(),
+        ini_cond_chronology = Dict{String,FeedForwardChronology}(),
         cache = Dict{String,Vector{AbstractCache}}(),
     )
         _check_stage_order(order)

@@ -369,7 +369,7 @@ function feed_forward_update(
     param_array::JuMPParamArray,
     to_stage::Stage,
     from_stage::Stage,
-) where {T<:AbstractChronology}
+) where {T<:FeedForwardChronology}
     for device_name in axes(param_array)[1]
         var_value =
             get_stage_variable(T, (from_stage => to_stage), device_name, param_reference)

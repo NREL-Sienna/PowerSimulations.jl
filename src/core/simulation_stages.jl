@@ -8,7 +8,7 @@ mutable struct StageInternal
     cache_dict::Dict{Type{<:AbstractCache},AbstractCache}
     # Can probably be eliminated and use getter functions from
     # Simulation object. Need to determine if its always available in the stage update steps.
-    chronolgy_dict::Dict{Int64,<:AbstractChronology}
+    chronolgy_dict::Dict{Int64,<:FeedForwardChronology}
     function StageInternal(number, executions, execution_count, psi_container)
         new(
             number,
@@ -17,7 +17,7 @@ mutable struct StageInternal
             Dict{Int64,Int64}(),
             psi_container,
             Dict{Type{<:AbstractCache},AbstractCache}(),
-            Dict{Int64,AbstractChronology}(),
+            Dict{Int64,FeedForwardChronology}(),
         )
     end
 end
@@ -114,7 +114,7 @@ function initial_condition_update!(
     ini_cond_vector::Vector{InitialCondition},
     to_stage::Stage,
     from_stage::Stage,
-) where {T<:AbstractChronology}
+) where {T<:FeedForwardChronology}
     for ic in ini_cond_vector
         name = device_name(ic)
         var_value = get_stage_variable(T, (from_stage => to_stage), name, ic.update_ref)
