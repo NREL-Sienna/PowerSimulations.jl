@@ -8,6 +8,7 @@ function test_sequence_build(file_path::String)
     )
 
     sequence = SimulationSequence(
+        step_resolution = Hour(24),
         order = Dict(1 => "UC", 2 => "ED"),
         intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
         horizons = Dict("UC" => 24, "ED" => 12),
@@ -21,10 +22,13 @@ function test_sequence_build(file_path::String)
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
         ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
     )
+
+    @test length(findall(x -> x == 2, sequence.execution_order)) == 24
+    @test length(findall(x -> x == 1, sequence.execution_order)) == 1
+
     sim = Simulation(
         name = "test",
         steps = 1,
-        step_resolution = Hour(24),
         stages = stages_definition,
         stages_sequence = sequence,
         simulation_folder = file_path,
@@ -43,6 +47,7 @@ function test_sequence_build(file_path::String)
     ###################### Negative Tests ########################################
     @testset "testing if horizon is shorter than interval" begin
         sequence = SimulationSequence(
+        step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
             intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 4, "ED" => 2),
@@ -59,7 +64,7 @@ function test_sequence_build(file_path::String)
         sim = Simulation(
             name = "short_horizon",
             steps = 1,
-            step_resolution = Hour(24),
+
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder = file_path,
@@ -69,6 +74,7 @@ function test_sequence_build(file_path::String)
 
     @testset "testing if Horizon and interval result in a discountinous simulation" begin
         sequence = SimulationSequence(
+        step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
             intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 24, "ED" => 12),
@@ -85,7 +91,7 @@ function test_sequence_build(file_path::String)
         sim = Simulation(
             name = "short_interval",
             steps = 1,
-            step_resolution = Hour(24),
+
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder = file_path,
@@ -95,6 +101,7 @@ function test_sequence_build(file_path::String)
 
     @testset "testing if file path is not writeable" begin
         sequence = SimulationSequence(
+        step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
             intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 24, "ED" => 12),
@@ -111,7 +118,7 @@ function test_sequence_build(file_path::String)
         sim = Simulation(
             name = "fake_path",
             steps = 1,
-            step_resolution = Hour(24),
+
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder = "fake_path",
@@ -121,6 +128,7 @@ function test_sequence_build(file_path::String)
 
     @testset "testing if interval is shorter than resolution" begin
         sequence = SimulationSequence(
+        step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
             intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 24, "ED" => 12),
@@ -137,7 +145,7 @@ function test_sequence_build(file_path::String)
         sim = Simulation(
             name = "interval",
             steps = 1,
-            step_resolution = Hour(24),
+
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder = file_path,
@@ -147,6 +155,7 @@ function test_sequence_build(file_path::String)
 
     @testset "chronology look ahead length is too long for horizon" begin
         sequence = SimulationSequence(
+        step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
             intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 30)),
             horizons = Dict("UC" => 24, "ED" => 12),
@@ -163,7 +172,7 @@ function test_sequence_build(file_path::String)
         sim = Simulation(
             name = "look_ahead",
             steps = 1,
-            step_resolution = Hour(24),
+
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder = file_path,
@@ -173,6 +182,7 @@ function test_sequence_build(file_path::String)
 
     @testset "too long of a horizon for forecast" begin
         sequence = SimulationSequence(
+        step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
             intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 72, "ED" => 12),
@@ -189,7 +199,7 @@ function test_sequence_build(file_path::String)
         sim = Simulation(
             name = "long_horizon",
             steps = 1,
-            step_resolution = Hour(24),
+
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder = file_path,
@@ -200,6 +210,7 @@ function test_sequence_build(file_path::String)
 
     @testset "too many steps for forecast" begin
         sequence = SimulationSequence(
+        step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
             intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 24, "ED" => 12),
@@ -216,7 +227,7 @@ function test_sequence_build(file_path::String)
         sim = Simulation(
             name = "steps",
             steps = 5,
-            step_resolution = Hour(24),
+
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder = file_path,
