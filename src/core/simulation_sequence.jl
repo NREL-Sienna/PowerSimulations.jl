@@ -99,6 +99,31 @@ function _check_stage_order(order::Dict{Int64,String})
     return
 end
 
+function _check_feedforward(feedforward::Dict{Tuple{String,Symbol,Symbol},<:AbstractAffectFeedForward}, feedforward_chronologies::Dict{Pair{String,String},<:FeedForwardChronology})
+    for stage_key in keys(feedforward)
+        @debug stage_key
+        invalid = isempty((k for k in keys(feedforward_chronologies) if k.second == stage_key[1]))
+        invalid && throw(ArgumentError("No valid Chronology has been defined for the feedforward added to $(stage_key[1])"))
+    end
+    return
+end
+
+function _check_chronology_consistency(order::Dict{Int64,String},
+                                        feedforward_chronologies::Dict{Pair{String,String},<:FeedForwardChronology},
+                                        ini_cond_chronology::IniCondChronology)
+
+    if isempty(feedforward_chronologies)
+        @warn("No Feedforward Chronologies have been defined. This configuration assummes that there is no information passing between stages")
+    end
+    if length(order) == 1
+        if isa(ini_cond_chronology, InterStage)
+            @warn("Single stage detected, the default Initial Condition Chronology is IntraStage(), other values will be ignored.")
+        end
+    end
+    #TODO: Add more consistency checks
+    return
+end
+
 @doc raw"""
     SimulationSequence(initial_time::Union{Dates.DateTime, Nothing}
                         horizons::Dict{String, Int64}
@@ -111,7 +136,6 @@ end
                         )
 """ # TODO: Add DocString
 mutable struct SimulationSequence
-    initial_time::Union{Dates.DateTime,Nothing}
     horizons::Dict{String,Int64}
     step_resolution::Dates.TimePeriod
     intervals::Dict{String,<:Dates.TimePeriod}
@@ -123,7 +147,6 @@ mutable struct SimulationSequence
     execution_order::Vector{Int64}
 
     function SimulationSequence(;
-        initial_time::Union{Dates.DateTime,Nothing} = nothing,
         horizons::Dict{String,Int64},
         step_resolution::Dates.TimePeriod,
         intervals::Dict{String,<:Dates.TimePeriod},
@@ -134,11 +157,14 @@ mutable struct SimulationSequence
         cache = Dict{String,Vector{AbstractCache}}(),
     )
         _check_stage_order(order)
+        _check_feedforward(feedforward, feedforward_chronologies)
+        _check_chronology_consistency(order, feedforward_chronologies, ini_cond_chronology)
+        ini_cond_chronology = length(order) == 1 ? IntraStage() : ini_cond_chronology
+
         intervals = IS.time_period_conversion(intervals)
         step_resolution = IS.time_period_conversion(step_resolution)
 
         new(
-            initial_time,
             horizons,
             step_resolution,
             intervals,
@@ -153,7 +179,6 @@ mutable struct SimulationSequence
     end
 end
 
-get_initial_time(s::SimulationSequence) = s.initial_time
 get_horizon(s::SimulationSequence, stage::String) = get(s.horizons, stage, nothing)
 get_interval(s::SimulationSequence, stage::String) = get(s.intervals, stage, nothing)
 get_order(s::SimulationSequence, number::Int64) = get(s.order, number, nothing)
