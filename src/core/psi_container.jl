@@ -235,7 +235,7 @@ function _encode_for_jump(::Type{T}, name1::AbstractString, name2::AbstractStrin
 end
 
 function _encode_for_jump(::Type{T}, name1::Symbol, name2::Symbol) where {T}
-    return _encode_for_jump(T, string(name), string(name2))
+    return _encode_for_jump(T, string(name1), string(name2))
 end
 
 function _encode_for_jump(::Type{T}, name::AbstractString) where {T}
