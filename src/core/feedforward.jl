@@ -25,12 +25,17 @@ end
 
 struct Consecutive <:FeedForwardChronology end
 
-function check_chronology(sync::Synchronize, stages::Pair, horizons::Pair, intervals::Pair)
-    from_stage_horizon = horizons.first
+function check_chronology(sim::Simulation, key::NTuple{2, String}, sync::Synchronize)
+    from_stage = get_stage(sim, key.first)
+    to_stage = get_stage(sim, key.second)
+    from_stage_horizon = sim.sequence.horizons[key.first]
+    to_stage_horizon = sim.sequence.horizons[key.second]
+    from_stage_interval = sim.sequence.intervals[key.first]
+    to_stage_interval = sim.sequence.intervals[key.second]
+
     from_stage_resolution =
-        IS.time_period_conversion(PSY.get_forecasts_resolution(stages.first.sys))
+        IS.time_period_conversion(PSY.get_forecasts_resolution(from_stage.sys))
     @debug from_stage_resolution
-    to_stage_interval = IS.time_period_conversion(intervals.second)
     @debug to_stage_interval
     to_stage_sync = Int(from_stage_resolution / to_stage_interval)
     from_stage_sync = sync.periods
@@ -48,7 +53,17 @@ function check_chronology(sync::Synchronize, stages::Pair, horizons::Pair, inter
     return
 end
 
-check_chronology(sync::RecedingHorizon, stages::Pair, horizons::Pair, intervals::Pair) =
+function check_chronology(sim::Simulation, key::NTuple{2, String}, ::Consecutive)
+    from_stage_horizon = sim.sequence.horizons[key.first]
+    from_stage_interval = sim.sequence.intervals[key.first]
+    if from_stage_horizon != from_stage_interval
+        @warn("Consecutive Chronology Requires the same interval and horizon, the parameter horizon = $(from_stage_horizon) in stage $(key.first) will be replaced with $(from_stage_interval). If this is not the desired behviour consider changing your chronology to RecedingHorizon")
+    end
+    sim.sequence.horizons[key.first] = sim.sequence.intervals[key.first]
+    return
+end
+
+check_chronology(sim::Simulation, key::NTuple{2, String}, ::RecedingHorizon) =
     nothing
 
 function check_chronology(

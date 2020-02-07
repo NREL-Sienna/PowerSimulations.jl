@@ -102,21 +102,10 @@ end
 
 function _check_feedforward_chronologies(sim::Simulation)
     if isempty(sim.sequence.feedforward_chronologies)
-        @info("No Intra-Stage Chronologies defined")
+        @info("No Feedforward Chronologies defined")
     end
     for (key, chron) in sim.sequence.feedforward_chronologies
-        from_stage = get_stage(sim, key.first)
-        to_stage = get_stage(sim, key.second)
-        from_stage_horizon = sim.sequence.horizons[key.first]
-        to_stage_horizon = sim.sequence.horizons[key.second]
-        from_stage_interval = sim.sequence.intervals[key.first]
-        to_stage_interval = sim.sequence.intervals[key.second]
-        check_chronology(
-            chron,
-            (from_stage => to_stage),
-            (from_stage_horizon => to_stage_horizon),
-            (from_stage_interval => to_stage_interval),
-        )
+        check_chronology(sim, key, chron)
     end
     return
 end
@@ -324,11 +313,11 @@ function build!(sim::Simulation; kwargs...)
     stage_initial_times = _get_simulation_initial_times!(sim)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get(sim.stages, stage_name, nothing)
+        isnothing(stage) &&
+        throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
         stage_interval = sim.sequence.intervals[stage_name]
         executions = Int(sim.sequence.step_resolution / stage_interval)
         stage.internal = StageInternal(stage_number, executions, 0, nothing)
-        isnothing(stage) &&
-        throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
         PSY.check_forecast_consistency(stage.sys)
         _attach_feedforward!(sim, stage_name)
     end
