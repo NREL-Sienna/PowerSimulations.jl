@@ -121,7 +121,7 @@ function _check_feedforward_chronologies(sim::Simulation)
     return
 end
 
-function _assign_chronologies(sim::Simulation)
+function _assign_feedforward_chronologies(sim::Simulation)
     function find_val(d, value)
         for (k, v) in d
             v == value && return k
@@ -332,7 +332,7 @@ function build!(sim::Simulation; kwargs...)
         PSY.check_forecast_consistency(stage.sys)
         _attach_feed_forward!(sim, stage_name)
     end
-    #_assign_chronologies(sim)
+    _assign_feedforward_chronologies(sim)
     _check_steps(sim, stage_initial_times)
     _build_stages!(sim; kwargs...)
     sim.internal.compiled_status = true
