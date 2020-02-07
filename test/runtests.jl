@@ -17,10 +17,8 @@ using ParameterJuMP
 using TestSetExtensions
 using DataFrames
 
-if get(ENV, "APPVEYOR", "False") == "False"
-    import PowerSystems.UtilsData: TestData
-    download(TestData; branch = "master")
-end
+import PowerSystems.UtilsData: TestData
+download(TestData; branch = "master")
 
 const PM = PowerModels
 const PSY = PowerSystems
