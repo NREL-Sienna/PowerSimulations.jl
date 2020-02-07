@@ -86,9 +86,9 @@ end
 
 function _check_stage_order(order::Dict{Int64,String})
     sorted_keys = sort(collect(keys(order)))
-    @show not_sorted = (sorted_keys[1] != 1)
+    not_sorted = (sorted_keys[1] != 1)
     for element in diff(sorted_keys)
-        @show not_sorted = (element != 1)
+        not_sorted = (element != 1)
         not_sorted && break
     end
 
