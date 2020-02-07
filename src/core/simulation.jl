@@ -325,7 +325,7 @@ function build!(sim::Simulation; kwargs...)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get(sim.stages, stage_name, nothing)
         stage_interval = sim.sequence.intervals[stage_name]
-        executions = Int(sim.step_resolution / stage_interval)
+        executions = Int(sim.sequence.step_resolution / stage_interval)
         stage.internal = StageInternal(stage_number, executions, 0, nothing)
         isnothing(stage) &&
         throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
