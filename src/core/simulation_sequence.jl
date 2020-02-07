@@ -77,6 +77,7 @@ function _get_execution_order_vector(
     intervals::Dict{String,<:Dates.TimePeriod},
     step_resolution::Dates.TimePeriod,
 )
+    length(order) == 1 && return [1]
     interval_run_counts = _calculate_interval_inner_counts(order, intervals, step_resolution)
     execution_order_vector = _allocate_execution_order(interval_run_counts)
     _fill_execution_order(execution_order_vector, interval_run_counts)
