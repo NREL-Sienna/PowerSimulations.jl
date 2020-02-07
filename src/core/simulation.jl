@@ -100,7 +100,7 @@ function _check_forecasts_sequence(sim::Simulation)
     end
 end
 
-function _check_chronologies(sim::Simulation)
+function _check_feedforward_chronologies(sim::Simulation)
     if isempty(sim.sequence.intra_stage_chronologies)
         @info("No Intra-Stage Chronologies defined")
     end
@@ -118,17 +118,6 @@ function _check_chronologies(sim::Simulation)
             (from_stage_interval => to_stage_interval),
         )
     end
-    if isempty(sim.sequence.intra_stage_chronologies)
-        @info("No Initial Conditions Chronologies defined")
-    end
-    simulation_order = sim.sequence.order
-    for (key, chron) in sim.sequence.ini_cond_chronology
-        to_stage = get_stage(sim, key)
-        # This check assumes that the initial conditions are retrieved from the previous
-        # stage executed
-        from_stage_key = get_ini_cond_from_stage(key, simulation_order, chron)
-    end
-
     return
 end
 
@@ -329,7 +318,7 @@ end
 function build!(sim::Simulation; kwargs...)
     check_kwargs(kwargs, SIMULATION_BUILD_KWARGS, "build!")
     _check_forecasts_sequence(sim)
-    _check_chronologies(sim)
+    _check_feedforward_chronologies(sim)
     _check_folder(sim.simulation_folder)
     sim.internal = SimulationInternal(sim.steps, keys(sim.sequence.order))
     stage_initial_times = _get_simulation_initial_times!(sim)
