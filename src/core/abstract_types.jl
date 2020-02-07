@@ -4,6 +4,7 @@ abstract type AbstractAffectFeedForward end
 
 abstract type AbstractCache end
 abstract type FeedForwardChronology end
+abstract type IniCondChronology end
 abstract type InitialConditionType end
 abstract type Results end
 abstract type AbstractOperationsProblem end

@@ -64,40 +64,6 @@ get_template(s::Stage) = s.template
 get_number(s::Stage) = s.internal.number
 get_psi_container(s::Stage) = s.internal.psi_container
 
-# This makes the choice in which variable to get from the results.
-function get_stage_variable(
-    ::Type{RecedingHorizon},
-    stages::Pair{Stage{T},Stage{T}},
-    device_name::AbstractString,
-    var_ref::UpdateRef,
-) where {T<:AbstractOperationsProblem}
-    variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
-    step = axes(variable)[2][1]
-    return JuMP.value(variable[device_name, step])
-end
-
-function get_stage_variable(
-    ::Type{Consecutive},
-    stages::Pair{Stage{T},Stage{T}},
-    device_name::String,
-    var_ref::UpdateRef,
-) where {T<:AbstractOperationsProblem}
-    variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
-    step = axes(variable)[2][end]
-    return JuMP.value(variable[device_name, step])
-end
-
-function get_stage_variable(
-    ::Type{Synchronize},
-    stages::Pair{Stage{T},Stage{T}},
-    device_name::String,
-    var_ref::UpdateRef,
-) where {T<:AbstractOperationsProblem}
-    variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
-    step = axes(variable)[2][stages.second.internal.execution_count + 1]
-    return JuMP.value(variable[device_name, step])
-end
-
 #Defined here because it requires Stage to defined
 
 initial_condition_update!(

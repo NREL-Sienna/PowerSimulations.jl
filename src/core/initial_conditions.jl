@@ -1,3 +1,7 @@
+struct Consecutive <: IniCondChronology end
+struct Detached <: IniCondChronology end
+
+#########################Initial Conditions Definitions#####################################
 struct DevicePower <: InitialConditionType end
 struct DeviceStatus <: InitialConditionType end
 struct TimeDurationON <: InitialConditionType end

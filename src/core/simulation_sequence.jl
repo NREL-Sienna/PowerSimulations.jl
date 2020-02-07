@@ -117,7 +117,7 @@ mutable struct SimulationSequence
     order::Dict{Int64,String}
     intra_stage_chronologies::Dict{Pair{String,String},<:FeedForwardChronology}
     feed_forward::Dict{Tuple{String,Symbol,Symbol},<:AbstractAffectFeedForward}
-    ini_cond_chronology::Dict{String,<:FeedForwardChronology}
+    ini_cond_chronology::IniCondChronology
     cache::Dict{String,Vector{<:AbstractCache}}
     execution_order::Vector{Int64}
 
@@ -129,7 +129,7 @@ mutable struct SimulationSequence
         order::Dict{Int64,String},
         intra_stage_chronologies = Dict{Pair{String,String},FeedForwardChronology}(),
         feed_forward = Dict{Tuple{String,Symbol,Symbol},AbstractAffectFeedForward}(),
-        ini_cond_chronology = Dict{String,FeedForwardChronology}(),
+        ini_cond_chronology = Consecutive(),
         cache = Dict{String,Vector{AbstractCache}}(),
     )
         _check_stage_order(order)

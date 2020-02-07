@@ -26,7 +26,7 @@ function test_load_simulation(file_path::String)
             ),
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-        ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
+        ini_cond_chronology = Consecutive(),
     )
     sim = Simulation(
         name = "aggregation",

@@ -20,7 +20,7 @@ function test_sequence_build(file_path::String)
             ),
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-        ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
+        ini_cond_chronology = Consecutive(),
     )
 
     @test length(findall(x -> x == 2, sequence.execution_order)) == 24
@@ -59,7 +59,7 @@ function test_sequence_build(file_path::String)
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
+            ini_cond_chronology = Consecutive(),
         )
         sim = Simulation(
             name = "short_horizon",
@@ -86,7 +86,7 @@ function test_sequence_build(file_path::String)
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
+            ini_cond_chronology = Consecutive(),
         )
         sim = Simulation(
             name = "short_interval",
@@ -113,7 +113,7 @@ function test_sequence_build(file_path::String)
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
+            ini_cond_chronology = Consecutive(),
         )
         sim = Simulation(
             name = "fake_path",
@@ -140,7 +140,7 @@ function test_sequence_build(file_path::String)
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
+            ini_cond_chronology = Consecutive(),
         )
         sim = Simulation(
             name = "interval",
@@ -167,7 +167,7 @@ function test_sequence_build(file_path::String)
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
+            ini_cond_chronology = Consecutive(),
         )
         sim = Simulation(
             name = "look_ahead",
@@ -194,7 +194,7 @@ function test_sequence_build(file_path::String)
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
+            ini_cond_chronology = Consecutive(),
         )
         sim = Simulation(
             name = "long_horizon",
@@ -222,7 +222,7 @@ function test_sequence_build(file_path::String)
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
+            ini_cond_chronology = Consecutive(),
         )
         sim = Simulation(
             name = "steps",
