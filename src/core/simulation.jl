@@ -37,7 +37,6 @@ end
 
 @doc raw"""
     Simulation(steps::Int64
-                step_resolution::Dates.TimePeriod
                 stages::Dict{String, Stage{<:AbstractOperationsProblem}}
                 sequence::Union{Nothing, SimulationSequence}
                 simulation_folder::String
@@ -48,7 +47,6 @@ end
 """ # TODO: Add DocString
 mutable struct Simulation
     steps::Int64
-    step_resolution::Dates.TimePeriod
     stages::Dict{String,Stage{<:AbstractOperationsProblem}}
     sequence::Union{Nothing,SimulationSequence}
     simulation_folder::String
@@ -58,16 +56,13 @@ mutable struct Simulation
     function Simulation(;
         name::String,
         steps::Int64,
-        step_resolution::Dates.TimePeriod,
         stages = Dict{String,Stage{AbstractOperationsProblem}}(),
         stages_sequence = nothing,
         simulation_folder::String,
         kwargs...,
     )
-        step_resolution = IS.time_period_conversion(step_resolution)
         new(
             steps,
-            step_resolution,
             stages,
             stages_sequence,
             simulation_folder,
@@ -91,7 +86,7 @@ get_ini_cond_chronology(s::Simulation, number::Int64) =
     get(s.sequence.ini_cond_chronology, s.sequence.order[number], nothing)
 get_name(s::Simulation, stage::Stage) = get(s.sequence.order, get_number(stage), nothing)
 
-function _check_sequence(sim::Simulation)
+function _check_forecasts_sequence(sim::Simulation)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get_stage(sim, stage_name)
         resolution = PSY.get_forecasts_resolution(get_sys(stage))
@@ -104,8 +99,6 @@ function _check_sequence(sim::Simulation)
         end
     end
 end
-
-
 
 function _check_chronologies(sim::Simulation)
     if isempty(sim.sequence.intra_stage_chronologies)
@@ -335,8 +328,9 @@ end
 """ # TODO: Add DocString
 function build!(sim::Simulation; kwargs...)
     check_kwargs(kwargs, SIMULATION_BUILD_KWARGS, "build!")
-    _check_sequence(sim)
-    _check_chronologies(sim)
+    _check_forecasts_sequence(sim)
+    _make_sequence_vector(sim)
+    #_check_chronologies(sim)
     _check_folder(sim.simulation_folder)
     sim.internal = SimulationInternal(sim.steps, keys(sim.sequence.order))
     stage_initial_times = _get_simulation_initial_times!(sim)
@@ -350,10 +344,9 @@ function build!(sim::Simulation; kwargs...)
         PSY.check_forecast_consistency(stage.sys)
         _attach_feed_forward!(sim, stage_name)
     end
-    _assign_chronologies(sim)
+    #_assign_chronologies(sim)
     _check_steps(sim, stage_initial_times)
     _build_stages!(sim; kwargs...)
-    _assign_chronologies(sim)
     sim.internal.compiled_status = true
     return
 end
