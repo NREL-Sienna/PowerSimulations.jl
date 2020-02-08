@@ -48,6 +48,7 @@ end
 mutable struct Simulation
     steps::Int64
     stages::Dict{String,Stage{<:AbstractOperationsProblem}}
+    initial_time::Union{Nothing, Dates.DateTime}
     sequence::Union{Nothing,SimulationSequence}
     simulation_folder::String
     name::String
@@ -61,9 +62,12 @@ mutable struct Simulation
         simulation_folder::String,
         kwargs...,
     )
+        check_kwargs(kwargs, SIMULATION_KWARGS, "Simulation")
+        initial_time = get(kwargs, :initial_time, nothing)
         new(
             steps,
             stages,
+            initial_time,
             stages_sequence,
             simulation_folder,
             name,
@@ -73,6 +77,7 @@ mutable struct Simulation
 end
 
 ################# accessor functions ####################
+get_initial_time(s::Simulation) = s.initial_time
 get_sequence(s::Simulation) = s.sequence
 get_steps(s::Simulation) = s.steps
 get_date_range(s::Simulation) = s.internal.date_range
@@ -159,7 +164,7 @@ function _get_simulation_initial_times!(sim::Simulation)
 
     stage_initial_times = Dict{Int64,Vector{Dates.DateTime}}()
     time_range = Vector{Dates.DateTime}(undef, 2)
-
+    sim_ini_time = get_initial_time(sim)
     for (stage_number, stage_name) in sim.sequence.order
         stage_system = sim.stages[stage_name].sys
         interval = PSY.get_forecasts_interval(stage_system)
@@ -185,6 +190,12 @@ function _get_simulation_initial_times!(sim::Simulation)
                 end
             end
         end
+        if !isnothing(sim_ini_time)
+            @show [x for x in stage_initial_times[stage_number] if x == sim_ini_time]
+            if isempty((x for x in stage_initial_times[stage_number] if x == sim_ini_time))
+                throw(IS.ConflictingInputsError("The specified simulation initial_time $sim_ini_time isn't contained in stage $stage_number"))
+            end
+        end
         stage_number == 1 && (time_range[1] = stage_initial_times[stage_number][1])
         (
             stage_number == k_size &&
@@ -193,9 +204,9 @@ function _get_simulation_initial_times!(sim::Simulation)
     end
     sim.internal.date_range = Tuple(time_range)
 
-    if isnothing(get_initial_time(get_sequence(sim)))
-        sim.sequence.initial_time = stage_initial_times[1][1]
-        @warn("Initial Simulation time not defined as an argument, it will be infered from the data.
+    if isnothing(get_initial_time(sim))
+        sim.initial_time = stage_initial_times[1][1]
+        @debug("Initial Simulation will be infered from the data.
                Initial Simulation Time set to $(sim.sequence.initial_time)")
     end
 
@@ -223,6 +234,7 @@ function _check_steps(
     for (stage_number, stage_name) in sim.sequence.order
         forecast_count = length(stage_initial_times[stage_number])
         stage = get(sim.stages, stage_name, nothing)
+        @assert !isnothing(stage)
         if get_steps(sim) * get_executions(stage) > forecast_count
             throw(IS.ConflictingInputsError("The number of available time series ($(forecast_count)) is not enough to perform the
             desired amount of simulation steps ($(sim.steps*stage.internal.execution_count))."))
@@ -248,12 +260,13 @@ function _build_stages!(sim::Simulation; kwargs...)
         @info("Building Stage $(stage_number)-$(stage_name)")
         horizon = sim.sequence.horizons[stage_name]
         stage = get(sim.stages, stage_name, nothing)
+        @assert !isnothing(stage)
         stage.internal.psi_container = PSIContainer(
             stage.template.transmission,
             stage.sys,
             stage.optimizer;
             use_parameters = true,
-            initial_time = sim.sequence.initial_time,
+            initial_time = get_initial_time(sim),
             horizon = horizon,
         )
         _build!(stage.internal.psi_container, stage.template, stage.sys; kwargs...)
@@ -278,6 +291,7 @@ function _build_stage_paths!(sim::Simulation; kwargs...)
     system_to_file = get(kwargs, :system_to_file, true)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get(sim.stages, stage_name, nothing)
+        @assert !isnothing(stage)
         stage_path = joinpath(sim.internal.models_dir, "stage_$(stage_name)_model")
         mkpath(stage_path)
         _write_psi_container(
