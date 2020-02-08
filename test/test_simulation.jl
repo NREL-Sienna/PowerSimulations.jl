@@ -24,25 +24,25 @@ function test_sequence_build(file_path::String)
         ini_cond_chronology = InterStage(),
     )
 
-
     @testset "Test Simulation Simulation Sequence Validation" begin
         @test length(findall(x -> x == 2, sequence.execution_order)) == 24
         @test length(findall(x -> x == 1, sequence.execution_order)) == 1
     end
 
     @testset "Simulation with provided initial time" begin
+    second_day = DayAhead[24]+Hour(1)
     sim = Simulation(
         name = "test",
         steps = 1,
         stages = stages_definition,
         stages_sequence = sequence,
         simulation_folder = file_path,
-        initial_time = DayAhead[2],
+        initial_time = second_day,
     )
     build!(sim)
 
     for stage in values(sim.stages)
-        @test stage.interal.psi_container.initial_time == DayAhead[2]
+        @test stage.internal.psi_container.initial_time == second_day
     end
     end
 
