@@ -16,8 +16,8 @@ function test_sequence_build(file_path::String)
         intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_from_stage = Symbol(PSI.ON),
-                affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+                binary_from_stage = PSI.ON,
+                affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
@@ -93,8 +93,8 @@ function test_sequence_build(file_path::String)
             intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = Symbol(PSI.ON),
-                    affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
@@ -119,8 +119,8 @@ function test_sequence_build(file_path::String)
             intervals = Dict("UC" => Minute(5), "ED" => Minute(1)),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = Symbol(PSI.ON),
-                    affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
@@ -145,8 +145,8 @@ function test_sequence_build(file_path::String)
             intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = Symbol(PSI.ON),
-                    affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
@@ -171,8 +171,8 @@ function test_sequence_build(file_path::String)
             intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = Symbol(PSI.ON),
-                    affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
@@ -198,8 +198,8 @@ function test_sequence_build(file_path::String)
             intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = Symbol(PSI.ON),
-                    affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),

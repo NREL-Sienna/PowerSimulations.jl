@@ -11,18 +11,19 @@ function test_load_simulation(file_path::String)
     )
 
     sequence = SimulationSequence(
+        step_resolution = Hour(24),
         order = Dict(1 => "UC", 2 => "ED"),
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
         horizons = Dict("UC" => 24, "ED" => 12),
         intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_from_stage = Symbol(PSI.ON),
-                affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+                binary_from_stage = PSI.ON,
+                affected_variables = [PSI.ACTIVE_POWER],
             ),
             ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                variable_from_stage = Symbol(PSI.ACTIVE_POWER),
-                affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+                variable_from_stage = PSI.ACTIVE_POWER,
+                affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
@@ -31,7 +32,6 @@ function test_load_simulation(file_path::String)
     sim = Simulation(
         name = "aggregation",
         steps = 2,
-        step_resolution = Hour(24),
         stages = stages_definition,
         stages_sequence = sequence,
         simulation_folder = file_path,
@@ -203,8 +203,8 @@ function test_load_simulation(file_path::String)
         intervals = Dict("UC" => Hour(1), "ED" => Minute(5)),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_from_stage = Symbol(PSI.ON),
-                affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+                binary_from_stage = PSI.ON,
+                affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),

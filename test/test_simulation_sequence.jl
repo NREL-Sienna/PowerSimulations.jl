@@ -41,8 +41,8 @@
         intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_from_stage = Symbol(PSI.ON),
-                affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+                binary_from_stage = PSI.ON,
+                affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
@@ -71,8 +71,8 @@ end
     intervals = Dict("UC" => Hour(2), "ED" => Hour(3)),
     feedforward = Dict(
         ("ED", :devices, :Generators) => SemiContinuousFF(
-            binary_from_stage = Symbol(PSI.ON),
-            affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+            binary_from_stage = PSI.ON,
+            affected_variables = [PSI.ACTIVE_POWER],
         ),
     ),
     cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),

@@ -23,7 +23,7 @@ struct RecedingHorizon <: FeedForwardChronology
     end
 end
 
-struct Consecutive <:FeedForwardChronology end
+struct Consecutive <: FeedForwardChronology end
 
 function check_chronology(sim::Simulation, key::Pair, sync::Synchronize)
     from_stage = get_stage(sim, key.first)
@@ -63,8 +63,7 @@ function check_chronology(sim::Simulation, key::Pair, ::Consecutive)
     return
 end
 
-check_chronology(sim::Simulation, key::Pair, ::RecedingHorizon) =
-    nothing
+check_chronology(sim::Simulation, key::Pair, ::RecedingHorizon) = nothing
 
 function check_chronology(sim::Simulation, key::Pair, ::T) where {T<:FeedForwardChronology}
     error("Chronology $(T) not implemented")
@@ -77,6 +76,13 @@ struct UpperBoundFF <: AbstractAffectFeedForward
     variable_from_stage::Symbol
     affected_variables::Vector{Symbol}
     cache::Union{Nothing,Type{<:AbstractCache}}
+    function UpperBoundFF(
+        variable_from_stage::AbstractString,
+        affected_variables::Vector{<:AbstractString},
+        cache::Union{Nothing,Type{<:AbstractCache}},
+    )
+        new(Symbol(variable_from_stage), Symbol.(affected_variables), cache)
+    end
 end
 
 function UpperBoundFF(; variable_from_stage, affected_variables)
@@ -90,6 +96,19 @@ struct RangeFF <: AbstractAffectFeedForward
     variable_from_stage_lb::Symbol
     affected_variables::Vector{Symbol}
     cache::Union{Nothing,Type{<:AbstractCache}}
+    function RangeFF(
+        variable_from_stage_ub::AbstractString,
+        variable_from_stage_lb::AbstractString,
+        affected_variables::Vector{<:AbstractString},
+        cache::Union{Nothing,Type{<:AbstractCache}},
+    )
+        new(
+            Symbol(variable_from_stage_ub),
+            Symbol(variable_from_stage_ub),
+            Symbol.(affected_variables),
+            cache,
+        )
+    end
 end
 
 function RangeFF(; variable_from_stage_ub, variable_from_stage_lb, affected_variables)
@@ -107,6 +126,13 @@ struct SemiContinuousFF <: AbstractAffectFeedForward
     binary_from_stage::Symbol
     affected_variables::Vector{Symbol}
     cache::Union{Nothing,Type{<:AbstractCache}}
+    function SemiContinuousFF(
+        binary_from_stage::AbstractString,
+        affected_variables::Vector{<:AbstractString},
+        cache::Union{Nothing,Type{<:AbstractCache}},
+    )
+        new(Symbol(binary_from_stage), Symbol.(affected_variables), cache)
+    end
 end
 
 function SemiContinuousFF(; binary_from_stage, affected_variables)
@@ -120,6 +146,13 @@ struct IntegralLimitFF <: AbstractAffectFeedForward
     variable_from_stage::Symbol
     affected_variables::Vector{Symbol}
     cache::Union{Nothing,Type{<:AbstractCache}}
+    function IntegralLimitFF(
+        variable_from_stage::AbstractString,
+        affected_variables::Vector{<:AbstractString},
+        cache::Union{Nothing,Type{<:AbstractCache}},
+    )
+        new(Symbol(variable_from_stage), Symbol.(affected_variables), cache)
+    end
 end
 
 function IntegralLimitFF(; variable_from_stage, affected_variables)
@@ -468,7 +501,7 @@ function get_stage_variable(
     var_ref::UpdateRef,
 ) where {T<:AbstractOperationsProblem}
     variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
-    step = axes(variable)[2][stages.second.internal.execution_count + 1]
+    step = axes(variable)[2][stages.second.internal.execution_count+1]
     return JuMP.value(variable[device_name, step])
 end
 
