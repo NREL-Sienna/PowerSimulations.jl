@@ -173,6 +173,7 @@ function _get_time_series(
     get_constraint_values::Function,
 )
     initial_time = model_initial_time(psi_container)
+@debug initial_time
     use_forecast_data = model_uses_forecasts(psi_container)
     parameters = model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
@@ -351,6 +352,7 @@ function _get_inflow_time_series(
     get_constraint_values::Function = x -> (min = 0.0, max = 0.0),
 )
     initial_time = model_initial_time(psi_container)
+@debug initial_time
     use_forecast_data = model_uses_forecasts(psi_container)
     parameters = model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
@@ -650,6 +652,7 @@ function _get_energy_limit(
     devices::IS.FlattenIteratorWrapper{H},
 ) where {H<:PSY.HydroGen}
     initial_time = model_initial_time(psi_container)
+@debug initial_time
     use_forecast_data = model_uses_forecasts(psi_container)
     parameters = model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)

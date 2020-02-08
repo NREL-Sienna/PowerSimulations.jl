@@ -25,7 +25,7 @@ end
 
 struct Consecutive <:FeedForwardChronology end
 
-function check_chronology(sim::Simulation, key::NTuple{2, String}, sync::Synchronize)
+function check_chronology(sim::Simulation, key::Pair, sync::Synchronize)
     from_stage = get_stage(sim, key.first)
     to_stage = get_stage(sim, key.second)
     from_stage_horizon = sim.sequence.horizons[key.first]
@@ -53,7 +53,7 @@ function check_chronology(sim::Simulation, key::NTuple{2, String}, sync::Synchro
     return
 end
 
-function check_chronology(sim::Simulation, key::NTuple{2, String}, ::Consecutive)
+function check_chronology(sim::Simulation, key::Pair, ::Consecutive)
     from_stage_horizon = sim.sequence.horizons[key.first]
     from_stage_interval = sim.sequence.intervals[key.first]
     if from_stage_horizon != from_stage_interval
@@ -63,15 +63,10 @@ function check_chronology(sim::Simulation, key::NTuple{2, String}, ::Consecutive
     return
 end
 
-check_chronology(sim::Simulation, key::NTuple{2, String}, ::RecedingHorizon) =
+check_chronology(sim::Simulation, key::Pair, ::RecedingHorizon) =
     nothing
 
-function check_chronology(
-    ::T,
-    stages::Pair,
-    horizons::Pair,
-    intervals::Pair,
-) where {T<:FeedForwardChronology}
+function check_chronology(sim::Simulation, key::Pair, ::T) where {T<:FeedForwardChronology}
     error("Chronology $(T) not implemented")
     return
 end

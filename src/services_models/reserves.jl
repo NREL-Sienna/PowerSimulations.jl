@@ -38,6 +38,7 @@ function service_requirement_constraint!(
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     initial_time = model_initial_time(psi_container)
+@debug initial_time
     time_steps = model_time_steps(psi_container)
     name = PSY.get_name(service)
     constraint = get_constraint(psi_container, constraint_name(REQUIREMENT, SR))

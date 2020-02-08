@@ -83,6 +83,7 @@ function _get_time_series(
     get_constraint_values::Function,
 )
     initial_time = model_initial_time(psi_container)
+@debug initial_time
     use_forecast_data = model_uses_forecasts(psi_container)
     time_steps = model_time_steps(psi_container)
     device_total = length(devices)

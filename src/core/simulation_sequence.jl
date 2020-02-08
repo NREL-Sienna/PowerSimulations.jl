@@ -17,7 +17,14 @@ function _calculate_interval_inner_counts(
         previous_stage_name = order[k-1]
         stage_interval = intervals[stage_name]
         previous_stage_interval = intervals[previous_stage_name]
-        interval_run_counts[k] = previous_stage_interval / stage_interval
+        try
+            interval_run_counts[k] = previous_stage_interval / stage_interval
+        catch e
+            if isa(e, InexactError)
+                throw(IS.ConflictingInputsError("The interval configuration provided results in a fractional number of executions of stage $stage_name"))
+            end
+            throw(e)
+        end
         @debug "Stage $k is executed $(interval_run_counts[k]) time within each interval of Stage $(k-1)"
     end
     stage_name = order[1]
