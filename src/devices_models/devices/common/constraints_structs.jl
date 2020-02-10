@@ -12,7 +12,7 @@ end
 
 struct DeviceTimeSeries
     name::String
-    bus_number::Int64
+    bus_number::Int
     multiplier::Float64
     timeseries::Vector{Float64}
     range::Union{Nothing,DeviceRange}

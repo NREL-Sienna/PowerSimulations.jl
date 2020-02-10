@@ -1,24 +1,24 @@
 ############################Chronologies For FeedForward###################################
 @doc raw"""
-    Synchronize(periods::Int64)
+    Synchronize(periods::Int)
 Defines the co-ordination of time between Two stages.
 
 # Arguments
-- `periods::Int64`: Number of time periods to grab data from
+- `periods::Int`: Number of time periods to grab data from
 """
 struct Synchronize <: FeedForwardChronology
-    periods::Int64
+    periods::Int
     function Synchronize(; periods)
         new(periods)
     end
 end
 
 """
-    RecedingHorizon(period::Int64)
+    RecedingHorizon(period::Int)
 """ # TODO: Add DocString
 struct RecedingHorizon <: FeedForwardChronology
-    period::Int64
-    function RecedingHorizon(; period::Int64 = 1)
+    period::Int
+    function RecedingHorizon(; period::Int = 1)
         new(period)
     end
 end
@@ -35,8 +35,7 @@ function check_chronology(sim::Simulation, key::Pair, sync::Synchronize)
 
     from_stage_resolution =
         IS.time_period_conversion(PSY.get_forecasts_resolution(from_stage.sys))
-    @debug from_stage_resolution
-    @debug to_stage_interval
+    @debug from_stage_resolution, to_stage_interval
     to_stage_sync = Int(from_stage_resolution / to_stage_interval)
     from_stage_sync = sync.periods
 
@@ -53,7 +52,7 @@ function check_chronology(sim::Simulation, key::Pair, sync::Synchronize)
     return
 end
 
-function check_chronology(sim::Simulation, key::Pair, ::Consecutive)
+function check_chronology!(sim::Simulation, key::Pair, ::Consecutive)
     from_stage_horizon = sim.sequence.horizons[key.first]
     from_stage_interval = sim.sequence.intervals[key.first]
     if from_stage_horizon != from_stage_interval
@@ -63,9 +62,9 @@ function check_chronology(sim::Simulation, key::Pair, ::Consecutive)
     return
 end
 
-check_chronology(sim::Simulation, key::Pair, ::RecedingHorizon) = nothing
+check_chronology!(sim::Simulation, key::Pair, ::RecedingHorizon) = nothing
 
-function check_chronology(sim::Simulation, key::Pair, ::T) where {T<:FeedForwardChronology}
+function check_chronology!(sim::Simulation, key::Pair, ::T) where {T<:FeedForwardChronology}
     error("Chronology $(T) not implemented")
     return
 end

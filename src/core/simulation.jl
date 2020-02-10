@@ -2,20 +2,20 @@ mutable struct SimulationInternal
     raw_dir::Union{String,Nothing}
     models_dir::Union{String,Nothing}
     results_dir::Union{String,Nothing}
-    stages_count::Int64
-    run_count::Dict{Int64,Dict{Int64,Int64}}
-    date_ref::Dict{Int64,Dates.DateTime}
+    stages_count::Int
+    run_count::Dict{Int,Dict{Int,Int}}
+    date_ref::Dict{Int,Dates.DateTime}
     date_range::NTuple{2,Dates.DateTime} #Inital Time of the first forecast and Inital Time of the last forecast
     current_time::Dates.DateTime
     reset::Bool
     compiled_status::Bool
 end
 
-function SimulationInternal(steps::Int64, stages_keys::Base.KeySet)
-    count_dict = Dict{Int64,Dict{Int64,Int64}}()
+function SimulationInternal(steps::Int, stages_keys::Base.KeySet)
+    count_dict = Dict{Int,Dict{Int,Int}}()
 
     for s in 1:steps
-        count_dict[s] = Dict{Int64,Int64}()
+        count_dict[s] = Dict{Int,Int}()
         for st in stages_keys
             count_dict[s][st] = 0
         end
@@ -27,7 +27,7 @@ function SimulationInternal(steps::Int64, stages_keys::Base.KeySet)
         nothing,
         length(stages_keys),
         count_dict,
-        Dict{Int64,Dates.DateTime}(),
+        Dict{Int,Dates.DateTime}(),
         (Dates.now(), Dates.now()),
         Dates.now(),
         true,
@@ -36,7 +36,7 @@ function SimulationInternal(steps::Int64, stages_keys::Base.KeySet)
 end
 
 @doc raw"""
-    Simulation(steps::Int64
+    Simulation(steps::Int
                 stages::Dict{String, Stage{<:AbstractOperationsProblem}}
                 sequence::Union{Nothing, SimulationSequence}
                 simulation_folder::String
@@ -46,7 +46,7 @@ end
 
 """ # TODO: Add DocString
 mutable struct Simulation
-    steps::Int64
+    steps::Int
     stages::Dict{String,Stage{<:AbstractOperationsProblem}}
     initial_time::Union{Nothing, Dates.DateTime}
     sequence::Union{Nothing,SimulationSequence}
@@ -56,7 +56,7 @@ mutable struct Simulation
 
     function Simulation(;
         name::String,
-        steps::Int64,
+        steps::Int,
         stages = Dict{String,Stage{AbstractOperationsProblem}}(),
         stages_sequence = nothing,
         simulation_folder::String,
@@ -82,12 +82,12 @@ get_sequence(s::Simulation) = s.sequence
 get_steps(s::Simulation) = s.steps
 get_date_range(s::Simulation) = s.internal.date_range
 get_stage(s::Simulation, name::String) = get(s.stages, name, nothing)
-get_stage(s::Simulation, number::Int64) = get(s.stages, s.sequence.order[number], nothing)
+get_stage(s::Simulation, number::Int) = get(s.stages, s.sequence.order[number], nothing)
 get_last_stage(s::Simulation) = get_stage(s, s.internal.stages_count)
-function get_simulation_time(s::Simulation, stage_number::Int64)
+function get_simulation_time(s::Simulation, stage_number::Int)
     return s.internal.date_ref[stage_number]
 end
-get_ini_cond_chronology(s::Simulation, number::Int64) =
+get_ini_cond_chronology(s::Simulation, number::Int) =
     get(s.sequence.ini_cond_chronology, s.sequence.order[number], nothing)
 get_name(s::Simulation, stage::Stage) = get(s.sequence.order, get_number(stage), nothing)
 
@@ -110,7 +110,7 @@ function _check_feedforward_chronologies(sim::Simulation)
         @info("No Feedforward Chronologies defined")
     end
     for (key, chron) in sim.sequence.feedforward_chronologies
-        check_chronology(sim, key, chron)
+        check_chronology!(sim, key, chron)
     end
     return
 end
@@ -162,7 +162,7 @@ function _get_simulation_initial_times!(sim::Simulation)
     k_size = length(k)
     @assert k_size == maximum(k)
 
-    stage_initial_times = Dict{Int64,Vector{Dates.DateTime}}()
+    stage_initial_times = Dict{Int,Vector{Dates.DateTime}}()
     time_range = Vector{Dates.DateTime}(undef, 2)
     sim_ini_time = get_initial_time(sim)
     for (stage_number, stage_name) in sim.sequence.order
@@ -190,11 +190,9 @@ function _get_simulation_initial_times!(sim::Simulation)
                 end
             end
         end
-        if !isnothing(sim_ini_time)
-            if isempty([x for x in stage_initial_times[stage_number] if x == sim_ini_time])
+        if !isnothing(sim_ini_time) && !mapreduce(x -> x == sim_ini_time, *, stage_initial_times[stage_number])
                 throw(IS.ConflictingInputsError("The specified simulation initial_time $sim_ini_time isn't contained in stage $stage_number.
                 Manually provided initial times have to be compatible with the specified interval and horizon in the stages."))
-            end
         end
         stage_number == 1 && (time_range[1] = stage_initial_times[stage_number][1])
         (
@@ -229,12 +227,11 @@ end
 
 function _check_steps(
     sim::Simulation,
-    stage_initial_times::Dict{Int64,Vector{Dates.DateTime}},
+    stage_initial_times::Dict{Int,Vector{Dates.DateTime}},
 )
     for (stage_number, stage_name) in sim.sequence.order
         forecast_count = length(stage_initial_times[stage_number])
-        stage = get(sim.stages, stage_name, nothing)
-        @assert !isnothing(stage)
+        stage = sim.stages[stage_name]
         if get_steps(sim) * get_executions(stage) > forecast_count
             throw(IS.ConflictingInputsError("The number of available time series ($(forecast_count)) is not enough to perform the
             desired amount of simulation steps ($(sim.steps*stage.internal.execution_count))."))
@@ -259,8 +256,7 @@ function _build_stages!(sim::Simulation; kwargs...)
     for (stage_number, stage_name) in sim.sequence.order
         @info("Building Stage $(stage_number)-$(stage_name)")
         horizon = sim.sequence.horizons[stage_name]
-        stage = get(sim.stages, stage_name, nothing)
-        @assert !isnothing(stage)
+        stage = sim.stages[stage_name]
         stage.internal.psi_container = PSIContainer(
             stage.template.transmission,
             stage.sys,
@@ -290,8 +286,7 @@ end
 function _build_stage_paths!(sim::Simulation; kwargs...)
     system_to_file = get(kwargs, :system_to_file, true)
     for (stage_number, stage_name) in sim.sequence.order
-        stage = get(sim.stages, stage_name, nothing)
-        @assert !isnothing(stage)
+        stage = sim.stages[stage_name]
         stage_path = joinpath(sim.internal.models_dir, "stage_$(stage_name)_model")
         mkpath(stage_path)
         _write_psi_container(

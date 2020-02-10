@@ -35,8 +35,8 @@ end
 function _make_expressions_dict(
     transmission::Type{S},
     V::DataType,
-    bus_numbers::Vector{Int64},
-    time_steps::UnitRange{Int64},
+    bus_numbers::Vector{Int},
+    time_steps::UnitRange{Int},
     parameters::Bool,
 ) where {S<:PM.AbstractPowerModel}
     return DSDA(
@@ -50,8 +50,8 @@ end
 function _make_expressions_dict(
     transmission::Type{S},
     V::DataType,
-    bus_numbers::Vector{Int64},
-    time_steps::UnitRange{Int64},
+    bus_numbers::Vector{Int},
+    time_steps::UnitRange{Int},
     parameters::Bool,
 ) where {S<:PM.AbstractActivePowerModel}
     return DSDA(
@@ -61,11 +61,11 @@ function _make_expressions_dict(
 end
 
 function _psi_container_init(
-    bus_numbers::Vector{Int64},
+    bus_numbers::Vector{Int},
     jump_model::JuMP.AbstractModel,
     optimizer::Union{Nothing,JuMP.OptimizerFactory},
     transmission::Type{S},
-    time_steps::UnitRange{Int64},
+    time_steps::UnitRange{Int},
     resolution::Dates.TimePeriod,
     use_forecast_data::Bool,
     initial_time::Dates.DateTime,
@@ -100,7 +100,7 @@ end
 mutable struct PSIContainer
     JuMPmodel::JuMP.AbstractModel
     optimizer_factory::Union{Nothing,JuMP.OptimizerFactory}
-    time_steps::UnitRange{Int64}
+    time_steps::UnitRange{Int}
     resolution::Dates.TimePeriod
     use_forecast_data::Bool
     initial_time::Dates.DateTime
@@ -115,7 +115,7 @@ mutable struct PSIContainer
     function PSIContainer(
         JuMPmodel::JuMP.AbstractModel,
         optimizer_factory::Union{Nothing,JuMP.OptimizerFactory},
-        time_steps::UnitRange{Int64},
+        time_steps::UnitRange{Int},
         resolution::Dates.TimePeriod,
         use_forecast_data::Bool,
         initial_time::Dates.DateTime,

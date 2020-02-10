@@ -4,11 +4,11 @@ const GQEVF = JuMP.GenericQuadExpr{Float64,VariableRef}
 function moi_tests(
     op_problem::OperationsProblem,
     params::Bool,
-    vars::Int64,
-    interval::Int64,
-    lessthan::Int64,
-    greaterthan::Int64,
-    equalto::Int64,
+    vars::Int,
+    interval::Int,
+    lessthan::Int,
+    greaterthan::Int,
+    equalto::Int,
     binary::Bool,
 )
 

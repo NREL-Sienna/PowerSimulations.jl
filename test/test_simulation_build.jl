@@ -21,7 +21,7 @@ function test_sequence_build(file_path::String)
             ),
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-        ini_cond_chronology = InterStage(),
+        ini_cond_chronology = InterStageChronology(),
     )
 
     @testset "Test Simulation Simulation Sequence Validation" begin
@@ -98,7 +98,7 @@ function test_sequence_build(file_path::String)
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = InterStage(),
+            ini_cond_chronology = InterStageChronology(),
         )
         sim = Simulation(
             name = "fake_path",
@@ -124,7 +124,7 @@ function test_sequence_build(file_path::String)
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = InterStage(),
+            ini_cond_chronology = InterStageChronology(),
         )
         sim = Simulation(
             name = "interval",
@@ -150,7 +150,7 @@ function test_sequence_build(file_path::String)
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = InterStage(),
+            ini_cond_chronology = InterStageChronology(),
         )
         sim = Simulation(
             name = "look_ahead",
@@ -176,7 +176,7 @@ function test_sequence_build(file_path::String)
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = InterStage(),
+            ini_cond_chronology = InterStageChronology(),
         )
         sim = Simulation(
             name = "long_horizon",
@@ -203,7 +203,7 @@ function test_sequence_build(file_path::String)
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = InterStage(),
+            ini_cond_chronology = InterStageChronology(),
         )
         sim = Simulation(
             name = "steps",

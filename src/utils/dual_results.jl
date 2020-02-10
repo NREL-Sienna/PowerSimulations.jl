@@ -30,7 +30,7 @@ function _read_references(
     stage::String,
     step::Array,
     references::Dict,
-    time_length::Int64,
+    time_length::Int,
 )
 
     for name in (duals)
@@ -58,7 +58,7 @@ function _read_references(
     dual::Array,
     stage::String,
     references::Dict,
-    time_length::Int64,
+    time_length::Int,
 )
     for name in dual
         date_df = references[stage][name]

@@ -1,7 +1,7 @@
 
 """ "Each Tuple corresponds to (con_name, internal_index, moi_index)"""
 function get_all_constraint_index(op_problem::OperationsProblem)
-    con_index = Vector{Tuple{Symbol,Int64,Int64}}()
+    con_index = Vector{Tuple{Symbol,Int,Int}}()
     for (key, value) in op_problem.psi_container.constraints
         for (idx, constraint) in enumerate(value)
             moi_index = JuMP.optimizer_index(constraint)
@@ -14,7 +14,7 @@ end
 
 """ "Each Tuple corresponds to (con_name, internal_index, moi_index)"""
 function get_all_var_index(op_problem::OperationsProblem)
-    var_index = Vector{Tuple{Symbol,Int64,Int64}}()
+    var_index = Vector{Tuple{Symbol,Int,Int}}()
     for (key, value) in op_problem.psi_container.variables
         for (idx, variable) in enumerate(value)
             moi_index = JuMP.optimizer_index(variable)
@@ -25,7 +25,7 @@ function get_all_var_index(op_problem::OperationsProblem)
     return var_index
 end
 
-function get_con_index(op_problem::OperationsProblem, index::Int64)
+function get_con_index(op_problem::OperationsProblem, index::Int)
 
     for i in get_all_constraint_index(op_problem::OperationsProblem)
         if i[3] == index
@@ -39,7 +39,7 @@ function get_con_index(op_problem::OperationsProblem, index::Int64)
 
 end
 
-function get_var_index(op_problem::OperationsProblem, index::Int64)
+function get_var_index(op_problem::OperationsProblem, index::Int)
 
     for i in get_all_var_index(op_problem::OperationsProblem)
         if i[3] == index

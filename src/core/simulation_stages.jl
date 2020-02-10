@@ -1,23 +1,23 @@
 ######## Internal Simulation Object Structs ########
 mutable struct StageInternal
-    number::Int64
-    executions::Int64
-    execution_count::Int64
-    synchronized_executions::Dict{Int64,Int64} # Number of executions per upper level stage step
+    number::Int
+    executions::Int
+    execution_count::Int
+    synchronized_executions::Dict{Int,Int} # Number of executions per upper level stage step
     psi_container::Union{Nothing,PSIContainer}
     cache_dict::Dict{Type{<:AbstractCache},AbstractCache}
     # Can probably be eliminated and use getter functions from
     # Simulation object. Need to determine if its always available in the stage update steps.
-    chronolgy_dict::Dict{Int64,<:FeedForwardChronology}
+    chronolgy_dict::Dict{Int,<:FeedForwardChronology}
     function StageInternal(number, executions, execution_count, psi_container)
         new(
             number,
             executions,
             execution_count,
-            Dict{Int64,Int64}(),
+            Dict{Int,Int}(),
             psi_container,
             Dict{Type{<:AbstractCache},AbstractCache}(),
-            Dict{Int64,FeedForwardChronology}(),
+            Dict{Int,FeedForwardChronology}(),
         )
     end
 end

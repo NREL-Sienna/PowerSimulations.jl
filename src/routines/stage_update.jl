@@ -54,8 +54,8 @@ end
 function _intial_conditions_update!(
     initial_condition_key::ICKey,
     ini_cond_vector::Vector{InitialCondition},
-    stage_number::Int64,
-    step::Int64,
+    stage_number::Int,
+    step::Int,
     sim::Simulation,
 )
     ini_cond_chronolgy = nothing
@@ -95,7 +95,7 @@ end
 
 function update_stage!(
     stage::Stage{M},
-    step::Int64,
+    step::Int,
     sim::Simulation,
 ) where {M<:AbstractOperationsProblem}
     # Is first run of first stage? Yes -> do nothing

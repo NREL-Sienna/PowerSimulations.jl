@@ -68,8 +68,8 @@ export RangeFF
 export IntegralLimitFF
 
 # InitialConditions chrons
-export InterStage
-export IntraStage
+export InterStageChronology
+export IntraStageChronology
 
 # Initial Conditions Quantities
 export DevicePower

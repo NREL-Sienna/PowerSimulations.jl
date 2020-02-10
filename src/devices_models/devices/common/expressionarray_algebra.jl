@@ -23,8 +23,8 @@ end
 
 function _add_to_expression!(
     expression_array::T,
-    ix::Int64,
-    jx::Int64,
+    ix::Int,
+    jx::Int,
     var::JV,
     multiplier::Float64,
 ) where {T,JV<:JuMP.AbstractVariableRef}
@@ -39,8 +39,8 @@ end
 
 function _add_to_expression!(
     expression_array::T,
-    ix::Int64,
-    jx::Int64,
+    ix::Int,
+    jx::Int,
     var::JV,
     multiplier::Float64,
     constant::Float64,
@@ -57,8 +57,8 @@ end
 
 function _add_to_expression!(
     expression_array::T,
-    ix::Int64,
-    jx::Int64,
+    ix::Int,
+    jx::Int,
     value::Float64,
 ) where {T}
     if isassigned(expression_array, ix, jx)
@@ -72,8 +72,8 @@ end
 
 function _add_to_expression!(
     expression_array::T,
-    ix::Int64,
-    jx::Int64,
+    ix::Int,
+    jx::Int,
     parameter::PJ.ParameterRef,
 ) where {T}
     if isassigned(expression_array, ix, jx)

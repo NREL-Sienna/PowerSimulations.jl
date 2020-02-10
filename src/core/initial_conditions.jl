@@ -1,5 +1,5 @@
-struct InterStage <: IniCondChronology end
-struct IntraStage <: IniCondChronology end
+struct InterStageChronology <: IniCondChronology end
+struct IntraStageChronology <: IniCondChronology end
 
 #########################Initial Conditions Definitions#####################################
 struct DevicePower <: InitialConditionType end

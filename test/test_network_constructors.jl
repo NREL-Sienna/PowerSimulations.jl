@@ -9,7 +9,7 @@ dc_line = DeviceModel(HVDCLine, HVDCDispatch)
     network = CopperPlatePowerModel
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
-    test_results = Dict{System,Vector{Int64}}(
+    test_results = Dict{System,Vector{Int}}(
         c_sys5 => [120, 0, 120, 120, 24],
         c_sys14 => [120, 0, 120, 120, 24],
         c_sys14_dc => [120, 0, 120, 120, 24],
@@ -58,7 +58,7 @@ end
     parameters = [true, false]
     PTDF_ref =
         Dict{System,PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc)
-    test_results = Dict{System,Vector{Int64}}(
+    test_results = Dict{System,Vector{Int}}(
         c_sys5 => [264, 0, 264, 264, 264],
         c_sys14 => [600, 0, 600, 600, 816],
         c_sys14_dc => [600, 48, 552, 552, 768],
@@ -109,7 +109,7 @@ end
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimit_ub_Line, :RateLimit_lb_Line]
     parameters = [true, false]
-    test_results = Dict{System,Vector{Int64}}(
+    test_results = Dict{System,Vector{Int}}(
         c_sys5 => [384, 0, 408, 408, 288],
         c_sys14 => [936, 0, 1080, 1080, 840],
         c_sys14_dc => [984, 48, 984, 984, 840],
@@ -154,7 +154,7 @@ end
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimitFT_Line, :RateLimitTF_Line]
     parameters = [true, false]
-    test_results = Dict{System,Vector{Int64}}(
+    test_results = Dict{System,Vector{Int}}(
         c_sys5 => [1056, 0, 384, 384, 264],
         c_sys14 => [2832, 0, 720, 720, 696],
         c_sys14_dc => [2832, 96, 672, 672, 744],

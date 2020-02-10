@@ -497,7 +497,7 @@ function add_pm_var_refs!(
     pm_map::Dict,
     pm_var_map::Dict,
     pm_var_names::Base.KeySet,
-    time_steps::UnitRange{Int64},
+    time_steps::UnitRange{Int},
 )
 
     for d_type in Set(device_types)

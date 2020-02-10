@@ -27,7 +27,7 @@ function test_load_simulation(file_path::String)
             ),
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-        ini_cond_chronology = InterStage(),
+        ini_cond_chronology = InterStageChronology(),
     )
     sim = Simulation(
         name = "aggregation",
@@ -208,7 +208,7 @@ function test_load_simulation(file_path::String)
             ),
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-        ini_cond_chronology = interstage(),
+        ini_cond_chronology = InterStageChronology(),
     )
 
     sim = Simulation(

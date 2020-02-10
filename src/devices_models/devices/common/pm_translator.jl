@@ -1,23 +1,23 @@
 
 struct PMmap
-    bus::Dict{Int64,PSY.Bus}
+    bus::Dict{Int,PSY.Bus}
     arcs::Dict{
         NamedTuple{
             (:from_to, :to_from),
-            Tuple{Tuple{Int64,Int64,Int64},Tuple{Int64,Int64,Int64}},
+            Tuple{Tuple{Int,Int,Int},Tuple{Int,Int,Int}},
         },
         t where t<:PSY.ACBranch,
     }
     arcs_dc::Dict{
         NamedTuple{
             (:from_to, :to_from),
-            Tuple{Tuple{Int64,Int64,Int64},Tuple{Int64,Int64,Int64}},
+            Tuple{Tuple{Int,Int,Int},Tuple{Int,Int,Int}},
         },
         t where t<:PSY.DCBranch,
     }
 end
 
-function get_branch_to_pm(ix::Int64, branch::PSY.PhaseShiftingTransformer)
+function get_branch_to_pm(ix::Int, branch::PSY.PhaseShiftingTransformer)
     PM_branch = Dict{String,Any}(
         "br_r" => PSY.get_r(branch),
         "rate_a" => PSY.get_rate(branch),
@@ -41,7 +41,7 @@ function get_branch_to_pm(ix::Int64, branch::PSY.PhaseShiftingTransformer)
     return PM_branch
 end
 
-function get_branch_to_pm(ix::Int64, branch::PSY.Transformer2W)
+function get_branch_to_pm(ix::Int, branch::PSY.Transformer2W)
     PM_branch = Dict{String,Any}(
         "br_r" => PSY.get_r(branch),
         "rate_a" => PSY.get_rate(branch),
@@ -65,7 +65,7 @@ function get_branch_to_pm(ix::Int64, branch::PSY.Transformer2W)
     return PM_branch
 end
 
-function get_branch_to_pm(ix::Int64, branch::PSY.TapTransformer)
+function get_branch_to_pm(ix::Int, branch::PSY.TapTransformer)
     PM_branch = Dict{String,Any}(
         "br_r" => PSY.get_r(branch),
         "rate_a" => PSY.get_rate(branch),
@@ -89,7 +89,7 @@ function get_branch_to_pm(ix::Int64, branch::PSY.TapTransformer)
     return PM_branch
 end
 
-function get_branch_to_pm(ix::Int64, branch::PSY.Line)
+function get_branch_to_pm(ix::Int, branch::PSY.Line)
     PM_branch = Dict{String,Any}(
         "br_r" => PSY.get_r(branch),
         "rate_a" => PSY.get_rate(branch),
@@ -113,7 +113,7 @@ function get_branch_to_pm(ix::Int64, branch::PSY.Line)
     return PM_branch
 end
 
-function get_branch_to_pm(ix::Int64, branch::PSY.HVDCLine)
+function get_branch_to_pm(ix::Int, branch::PSY.HVDCLine)
     PM_branch = Dict{String,Any}(
         "loss1" => PSY.get_loss(branch).l1,
         "mp_pmax" => PSY.get_reactivepowerlimits_from(branch).max,
@@ -152,14 +152,14 @@ function get_branches_to_pm(sys::PSY.System)
     PMmap_ac = Dict{
         NamedTuple{
             (:from_to, :to_from),
-            Tuple{Tuple{Int64,Int64,Int64},Tuple{Int64,Int64,Int64}},
+            Tuple{Tuple{Int,Int,Int},Tuple{Int,Int,Int}},
         },
         t where t<:PSY.ACBranch,
     }()
     PMmap_dc = Dict{
         NamedTuple{
             (:from_to, :to_from),
-            Tuple{Tuple{Int64,Int64,Int64},Tuple{Int64,Int64,Int64}},
+            Tuple{Tuple{Int,Int,Int},Tuple{Int,Int,Int}},
         },
         t where t<:PSY.DCBranch,
     }()
@@ -187,9 +187,9 @@ end
 
 function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.Bus})
     PM_buses = Dict{String,Any}()
-    PMmap_buses = Dict{Int64,PSY.Bus}()
+    PMmap_buses = Dict{Int,PSY.Bus}()
 
-    pm_bustypes = Dict{PSY.BusType,Int64}(
+    pm_bustypes = Dict{PSY.BusType,Int}(
         PSY.ISOLATED => 4,
         PSY.PQ => 1,
         PSY.PV => 2,
@@ -222,7 +222,7 @@ function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.Bus})
     return PM_buses, PMmap_buses
 end
 
-function pass_to_pm(sys::PSY.System, time_periods::Int64)
+function pass_to_pm(sys::PSY.System, time_periods::Int)
 
     ac_lines, dc_lines, PMmap_ac, PMmap_dc = get_branches_to_pm(sys)
     buses = PSY.get_components(PSY.Bus, sys)

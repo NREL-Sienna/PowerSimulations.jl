@@ -4,7 +4,7 @@
         ("HAUC" => "ED") => RecedingHorizon(),
         ("ED" => "AGC") => RecedingHorizon(),
     )
-    ini_cond_chronology = InterStage()
+    ini_cond_chronology = InterStageChronology()
     order = Dict(1 => "DAUC", 2 => "HAUC", 3 => "ED", 4 => "AGC")
     intervals =
         Dict("DAUC" => Hour(24), "HAUC" => Hour(1), "ED" => Minute(5), "AGC" => Minute(1))
@@ -46,7 +46,7 @@
             ),
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-        ini_cond_chronology = InterStage(),
+        ini_cond_chronology = InterStageChronology(),
     )
 
     test_sequence = SimulationSequence(
@@ -54,15 +54,15 @@
         step_resolution = Hour(24),
         horizons = Dict("DAUC" => 24),
         intervals = Dict("DAUC" => Hour(24)),
-        ini_cond_chronology = InterStage(),
+        ini_cond_chronology = InterStageChronology(),
     )
 
-    @test isa(test_sequence.ini_cond_chronology, IntraStage)
+    @test isa(test_sequence.ini_cond_chronology, IntraStageChronology)
     @test test_sequence.execution_order == [1]
 
 end
 
-@testset "testing if Horizon and interval result in a discountinous simulation" begin
+@testset "testing if Horizon and interval result in a discontinuous simulation" begin
     @test_throws IS.ConflictingInputsError SimulationSequence(
     step_resolution = Hour(24),
     order = Dict(1 => "UC", 2 => "ED"),
@@ -76,6 +76,6 @@ end
         ),
     ),
     cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-    ini_cond_chronology = InterStage(),
+    ini_cond_chronology = InterStageChronology(),
 )
 end

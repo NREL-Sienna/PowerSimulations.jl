@@ -10,7 +10,7 @@ struct SimulationResultsReference
             stage = get_stage(sim, stage_name)
             interval = sim.sequence.intervals[stage_name]
             resolution = PSY.get_forecasts_resolution(get_sys(stage))
-            chronologies["stage-$stage_name"] = convert(Int64, (interval / resolution))
+            chronologies["stage-$stage_name"] = convert(Int, (interval / resolution))
         end
         new(ref, sim.internal.results_dir, chronologies)
     end
