@@ -32,7 +32,7 @@ For example, an annual production cost modeling simulation can be created by for
 
 ### _Model_ formulations contained in PowerSimulations:
  - [Unit Commitment](https://en.wikipedia.org/wiki/Unit_commitment_problem_in_electrical_power_production)
- - [Economic Distpatch](https://en.wikipedia.org/wiki/Economic_dispatch).
+ - [Economic Dispatch](https://en.wikipedia.org/wiki/Economic_dispatch).
  - [DC Power Flow](https://www.mech.kuleuven.be/en/tme/research/energy_environment/Pdf/wpen2014-12.pdf)
 
 ## Installation
