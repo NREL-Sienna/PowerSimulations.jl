@@ -37,6 +37,7 @@ const OPERATIONS_ACCEPTED_KWARGS = [
     :JuMPmodel,
     :optimizer,
     :PTDF,
+    :initial_time,
 ]
 const SIMULATION_BUILD_KWARGS = [:system_to_file, :PTDF_matrices]
 
