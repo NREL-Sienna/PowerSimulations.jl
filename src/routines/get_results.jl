@@ -12,12 +12,12 @@ function _result_dataframe_variables(variable::JuMP.Containers.DenseAxisArray)
 
     elseif length(axes(variable)) == 2
 
-        result = Array{Float64,length(variable.axes)}(
+        result = Array{Float64, length(variable.axes)}(
             undef,
             length(variable.axes[2]),
             length(variable.axes[1]),
         )
-        names = Array{Symbol,1}(undef, length(variable.axes[1]))
+        names = Array{Symbol, 1}(undef, length(variable.axes[1]))
 
         for t in variable.axes[2], (ix, name) in enumerate(variable.axes[1])
             result[t, ix] = JuMP.value(variable[name, t])
@@ -34,7 +34,7 @@ function _result_dataframe_variables(variable::JuMP.Containers.DenseAxisArray)
 
         for i in variable.axes[2]
             third_dim = collect(fill(i, size(variable)[end]))
-            result = Array{Float64,2}(
+            result = Array{Float64, 2}(
                 undef,
                 length(last(variable.axes)),
                 length(first(variable.axes)),
@@ -66,12 +66,12 @@ function _result_dataframe_duals(constraint::JuMP.Containers.DenseAxisArray)
         end
         return DataFrames.DataFrame(var = result)
     elseif length(axes(constraint)) == 2
-        result = Array{Float64,length(variable.axes)}(
+        result = Array{Float64, length(variable.axes)}(
             undef,
             length(constraint.axes[2]),
             length(constraint.axes[1]),
         )
-        names = Array{Symbol,1}(undef, length(constraint.axes[1]))
+        names = Array{Symbol, 1}(undef, length(constraint.axes[1]))
         for t in constraint.axes[2], (ix, name) in enumerate(constraint.axes[1])
             try
                 result[t, ix] = JuMP.dual(constraint[name, t])
@@ -87,7 +87,7 @@ function _result_dataframe_duals(constraint::JuMP.Containers.DenseAxisArray)
 end
 
 function get_model_result(op_m::OperationsProblem)
-    results_dict = Dict{Symbol,DataFrames.DataFrame}()
+    results_dict = Dict{Symbol, DataFrames.DataFrame}()
 
     for (k, v) in get_variables(op_m.psi_container)
         results_dict[k] = _result_dataframe_variables(v)
@@ -96,7 +96,7 @@ function get_model_result(op_m::OperationsProblem)
 end
 
 function get_model_duals(op::PSIContainer, cons::Vector{Symbol})
-    results_dict = Dict{Symbol,DataFrames.DataFrame}()
+    results_dict = Dict{Symbol, DataFrames.DataFrame}()
 
     for c in cons
         v = get_constraint(op, c)
@@ -109,7 +109,7 @@ end
 
 function get_optimizer_log(op_m::OperationsProblem)
     psi_container = op_m.psi_container
-    optimizer_log = Dict{Symbol,Any}()
+    optimizer_log = Dict{Symbol, Any}()
     optimizer_log[:obj_value] = JuMP.objective_value(psi_container.JuMPmodel)
     optimizer_log[:termination_status] = JuMP.termination_status(psi_container.JuMPmodel)
     optimizer_log[:primal_status] = JuMP.primal_status(psi_container.JuMPmodel)

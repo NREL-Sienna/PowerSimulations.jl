@@ -3,21 +3,21 @@ mutable struct StageInternal
     number::Int
     executions::Int
     execution_count::Int
-    synchronized_executions::Dict{Int,Int} # Number of executions per upper level stage step
-    psi_container::Union{Nothing,PSIContainer}
-    cache_dict::Dict{Type{<:AbstractCache},AbstractCache}
+    synchronized_executions::Dict{Int, Int} # Number of executions per upper level stage step
+    psi_container::Union{Nothing, PSIContainer}
+    cache_dict::Dict{Type{<:AbstractCache}, AbstractCache}
     # Can probably be eliminated and use getter functions from
     # Simulation object. Need to determine if its always available in the stage update steps.
-    chronolgy_dict::Dict{Int,<:FeedForwardChronology}
+    chronolgy_dict::Dict{Int, <:FeedForwardChronology}
     function StageInternal(number, executions, execution_count, psi_container)
         new(
             number,
             executions,
             execution_count,
-            Dict{Int,Int}(),
+            Dict{Int, Int}(),
             psi_container,
-            Dict{Type{<:AbstractCache},AbstractCache}(),
-            Dict{Int,FeedForwardChronology}(),
+            Dict{Type{<:AbstractCache}, AbstractCache}(),
+            Dict{Int, FeedForwardChronology}(),
         )
     end
 end
@@ -31,18 +31,18 @@ end
         )
 
 """ # TODO: Add DocString
-mutable struct Stage{M<:AbstractOperationsProblem}
+mutable struct Stage{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
     optimizer::JuMP.OptimizerFactory
-    internal::Union{Nothing,StageInternal}
+    internal::Union{Nothing, StageInternal}
 
     function Stage(
         ::Type{M},
         template::OperationsProblemTemplate,
         sys::PSY.System,
         optimizer::JuMP.OptimizerFactory,
-    ) where {M<:AbstractOperationsProblem}
+    ) where {M <: AbstractOperationsProblem}
 
         new{M}(template, sys, optimizer, nothing)
 
@@ -53,7 +53,7 @@ function Stage(
     template::OperationsProblemTemplate,
     sys::PSY.System,
     optimizer::JuMP.OptimizerFactory,
-) where {M<:AbstractOperationsProblem}
+) where {M <: AbstractOperationsProblem}
     return Stage(GenericOpProblem, template, sys, optimizer)
 end
 
@@ -80,7 +80,7 @@ function initial_condition_update!(
     ini_cond_vector::Vector{InitialCondition},
     to_stage::Stage,
     from_stage::Stage,
-) where {T<:FeedForwardChronology}
+) where {T <: FeedForwardChronology}
     for ic in ini_cond_vector
         name = device_name(ic)
         var_value = get_stage_variable(T, (from_stage => to_stage), name, ic.update_ref)

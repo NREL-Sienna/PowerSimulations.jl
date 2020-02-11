@@ -8,7 +8,7 @@ function activeservice_variables!(
     psi_container::PSIContainer,
     service::SR,
     contributing_devices::Vector{<:PSY.Device},
-) where {SR<:PSY.Reserve}
+) where {SR <: PSY.Reserve}
 
     function get_ub_val(d::PSY.Device)
         return d.tech.activepowerlimits.max
@@ -33,12 +33,12 @@ end
 function service_requirement_constraint!(
     psi_container::PSIContainer,
     service::SR,
-    model::ServiceModel{SR,RangeReserve},
-) where {SR<:PSY.Reserve}
+    model::ServiceModel{SR, RangeReserve},
+) where {SR <: PSY.Reserve}
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
     initial_time = model_initial_time(psi_container)
-@debug initial_time
+    @debug initial_time
     time_steps = model_time_steps(psi_container)
     name = PSY.get_name(service)
     constraint = get_constraint(psi_container, constraint_name(REQUIREMENT, SR))
@@ -81,8 +81,8 @@ function service_requirement_constraint!(
 end
 
 function modify_device_model!(
-    devices_template::Dict{Symbol,DeviceModel},
-    service_model::ServiceModel{<:PSY.Reserve,RangeReserve},
+    devices_template::Dict{Symbol, DeviceModel},
+    service_model::ServiceModel{<:PSY.Reserve, RangeReserve},
     contributing_devices::Vector{<:PSY.Device},
 )
     device_types = unique(typeof.(contributing_devices))
@@ -101,8 +101,8 @@ end
 function include_service!(
     constraint_data::DeviceRange,
     services::Vector{SR},
-    ::ServiceModel{SR,<:AbstractReservesFormulation},
-) where {SR<:PSY.Reserve{PSY.ReserveUp}}
+    ::ServiceModel{SR, <:AbstractReservesFormulation},
+) where {SR <: PSY.Reserve{PSY.ReserveUp}}
     for (ix, service) in enumerate(services)
         push!(
             constraint_data.additional_terms_ub,
@@ -115,8 +115,8 @@ end
 function include_service!(
     constraint_data::DeviceRange,
     services::Vector{SR},
-    ::ServiceModel{SR,<:AbstractReservesFormulation},
-) where {SR<:PSY.Reserve{PSY.ReserveDown}}
+    ::ServiceModel{SR, <:AbstractReservesFormulation},
+) where {SR <: PSY.Reserve{PSY.ReserveDown}}
     for (ix, service) in enumerate(services)
         #uses the upper bound of the (downward) service requirement to determine a constraint LB
         push!(
@@ -131,7 +131,7 @@ function _device_services!(
     constraint_data::DeviceRange,
     device::D,
     model::DeviceModel,
-) where {D<:PSY.Device}
+) where {D <: PSY.Device}
     for service_model in get_services(model)
         if PSY.has_service(device, service_model.service_type)
             services =

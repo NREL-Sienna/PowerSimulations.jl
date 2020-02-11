@@ -8,7 +8,7 @@
 
 ""
 function build_nip_model(
-    data::Dict{String,Any},
+    data::Dict{String, Any},
     model_constructor;
     multinetwork = true,
     kwargs...,
@@ -62,7 +62,7 @@ end
 
 ""
 function build_nip_expr_model(
-    data::Dict{String,Any},
+    data::Dict{String, Any},
     model_constructor;
     multinetwork = true,
     kwargs...,
@@ -166,10 +166,10 @@ function constraint_power_balance_ni(
     cnd::Int = pm.ccnd,
 )
     if !haskey(PM.con(pm, nw, cnd), :power_balance_p)
-        PM.con(pm, nw, cnd)[:power_balance_p] = Dict{Int,JuMP.ConstraintRef}()
+        PM.con(pm, nw, cnd)[:power_balance_p] = Dict{Int, JuMP.ConstraintRef}()
     end
     if !haskey(PM.con(pm, nw, cnd), :power_balance_q)
-        PM.con(pm, nw, cnd)[:power_balance_q] = Dict{Int,JuMP.ConstraintRef}()
+        PM.con(pm, nw, cnd)[:power_balance_q] = Dict{Int, JuMP.ConstraintRef}()
     end
 
     bus = PM.ref(pm, nw, :bus, i)
@@ -219,10 +219,10 @@ function constraint_power_balance_ni_expr(
     cnd::Int = pm.ccnd,
 )
     if !haskey(PM.con(pm, nw, cnd), :power_balance_p)
-        PM.con(pm, nw, cnd)[:power_balance_p] = Dict{Int,JuMP.ConstraintRef}()
+        PM.con(pm, nw, cnd)[:power_balance_p] = Dict{Int, JuMP.ConstraintRef}()
     end
     if !haskey(PM.con(pm, nw, cnd), :power_balance_q)
-        PM.con(pm, nw, cnd)[:power_balance_q] = Dict{Int,JuMP.ConstraintRef}()
+        PM.con(pm, nw, cnd)[:power_balance_q] = Dict{Int, JuMP.ConstraintRef}()
     end
 
     bus = PM.ref(pm, nw, :bus, i)
@@ -334,7 +334,7 @@ function powermodels_network!(
     psi_container::PSIContainer,
     system_formulation::Type{S},
     sys::PSY.System,
-) where {S<:PM.AbstractPowerModel}
+) where {S <: PM.AbstractPowerModel}
 
     time_steps = model_time_steps(psi_container)
     pm_data, PM_map = pass_to_pm(sys, time_steps[end])
@@ -366,7 +366,7 @@ function powermodels_network!(
     psi_container::PSIContainer,
     system_formulation::Type{S},
     sys::PSY.System,
-) where {S<:PM.AbstractActivePowerModel}
+) where {S <: PM.AbstractActivePowerModel}
 
     time_steps = model_time_steps(psi_container)
     pm_data, PM_map = pass_to_pm(sys, time_steps[end])
@@ -393,8 +393,8 @@ end
 
 #### PM accessor functions ########
 
-function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractDCPModel}
-    pm_var_map = Dict{Type,Dict{Symbol,Union{Symbol,NamedTuple}}}()
+function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractDCPModel}
+    pm_var_map = Dict{Type, Dict{Symbol, Union{Symbol, NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta)
     pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = :Fp, to_from = nothing))
@@ -403,8 +403,8 @@ function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractDCPModel}
     return pm_var_map
 end
 
-function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractActivePowerModel}
-    pm_var_map = Dict{Type,Dict{Symbol,Union{Symbol,NamedTuple}}}()
+function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowerModel}
+    pm_var_map = Dict{Type, Dict{Symbol, Union{Symbol, NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta)
     pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = :FpFT, to_from = :FpTF))
@@ -413,8 +413,8 @@ function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractActivePowerM
     return pm_var_map
 end
 
-function PMvarmap(system_formulation::Type{S}) where {S<:PM.AbstractPowerModel}
-    pm_var_map = Dict{Type,Dict{Symbol,Union{String,NamedTuple}}}()
+function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel}
+    pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => THETA, :vm => VM)
     pm_var_map[PSY.ACBranch] = Dict(
@@ -441,7 +441,7 @@ function add_pm_var_refs!(
     psi_container::PSIContainer,
     system_formulation::Type{S},
     sys::PSY.System,
-) where {S<:PM.AbstractPowerModel}
+) where {S <: PM.AbstractPowerModel}
 
     time_steps = model_time_steps(psi_container)
     bus_dict = psi_container.pm.ext[:PMmap].bus

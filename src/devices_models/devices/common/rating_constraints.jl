@@ -26,9 +26,9 @@ where r in rating data and t in time steps.
 """
 function rating_constraint!(
     psi_container::PSIContainer,
-    rating_data::Vector{Tuple{String,Float64}},
+    rating_data::Vector{Tuple{String, Float64}},
     cons_name::Symbol,
-    var_names::Tuple{Symbol,Symbol},
+    var_names::Tuple{Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
     var1 = get_variable(psi_container, var_names[1])

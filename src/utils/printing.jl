@@ -5,10 +5,10 @@ end
 =#
 
 function _organize_model(
-    val::Dict{Symbol,T},
+    val::Dict{Symbol, T},
     field::Symbol,
     io::IO,
-) where {T<:Union{DeviceModel,ServiceModel}}
+) where {T <: Union{DeviceModel, ServiceModel}}
     println(io, "  $(field): ")
     for (i, ix) in val
         println(io, "      $(i):")
@@ -44,7 +44,7 @@ function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTempla
 
     for field in fieldnames(OperationsProblemTemplate)
         val = getfield(template, Symbol(field))
-        if typeof(val) <: Dict{Symbol,<:Union{DeviceModel,ServiceModel}}
+        if typeof(val) <: Dict{Symbol, <:Union{DeviceModel, ServiceModel}}
             println(io, "============================================")
             _organize_model(val, field, io)
         else
@@ -133,7 +133,7 @@ function Base.show(io::IO, stage::Stage)
     println(io, "Stage()")
 end
 
-function Base.show(io::IO, ::MIME"text/html", services::Dict{Symbol,PSI.ServiceModel})
+function Base.show(io::IO, ::MIME"text/html", services::Dict{Symbol, PSI.ServiceModel})
     println(io, "<h1>Services</h1>")
     for (k, v) in services
         println(io, "<p><b>$(k)</b></p>")
@@ -173,7 +173,6 @@ function Base.show(io::IO, ::MIME"text/plain", sim_results::SimulationResultsRef
     end
 end
 
-
 function _count_stages(sequence::Array)
     stages = Dict()
     stage = 1
@@ -198,25 +197,39 @@ function _print_feedforward(io::IO, feed_forward::Dict, to::Array, from::Any)
         period = sync.periods
         stage1 = keys[1]
         stage2 = keys[2]
-        spaces = " " ^ (length(stage2) + 2)
-        dashes = "-" ^ (length(stage2) + 2)
+        spaces = " "^(length(stage2) + 2)
+        dashes = "-"^(length(stage2) + 2)
         if period <= 12
             times = period
-            line5 = string("└─$stage2 " ^ times, "($period) to : $to")
+            line5 = string("└─$stage2 "^times, "($period) to : $to")
         else
             times = 12
-            line5 = string("└─$stage2 " ^ times, "... (x$period) to : $to")
+            line5 = string("└─$stage2 "^times, "... (x$period) to : $to")
         end
         if iseven(times)
-            spacing = (Int(times/2)-2)
-            line3 = string("┌", string(dashes, "┬") ^ spacing, "----", "┼", string(dashes, "┬") ^ (spacing+1), "----┐")
+            spacing = (Int(times / 2) - 2)
+            line3 = string(
+                "┌",
+                string(dashes, "┬")^spacing,
+                "----",
+                "┼",
+                string(dashes, "┬")^(spacing + 1),
+                "----┐",
+            )
         else
-            spacing = Int((times/2)-1.5)
-            line3 = string("┌", string(dashes, "┬") ^ spacing, "----", "┼", string(dashes, "┬") ^ (spacing), "----┐")
+            spacing = Int((times / 2) - 1.5)
+            line3 = string(
+                "┌",
+                string(dashes, "┬")^spacing,
+                "----",
+                "┼",
+                string(dashes, "┬")^(spacing),
+                "----┐",
+            )
         end
-        line1 = string("     " ^ (spacing), " $stage1--┐ from : $from")
-        line2 = string("     " ^ (spacing), " " ^ length(stage1), "   |")
-        line4 = string("|", string(spaces, "|") ^ (times-2), "    |")
+        line1 = string("     "^(spacing), " $stage1--┐ from : $from")
+        line2 = string("     "^(spacing), " "^length(stage1), "   |")
+        line4 = string("|", string(spaces, "|")^(times - 2), "    |")
         println(io, "$line1\n$line2\n$line3\n$line4\n$line4\n$line5\n")
     end
 end
@@ -245,20 +258,23 @@ function _print_inter_stages(io::IO, stages::Dict)
                 end
             else
                 N = 2^(i - 2)
-                space_count = 10*(2^(total - i))
+                space_count = 10 * (2^(total - i))
                 if i == total
-                    print1 = "|             ┌----/" ^ (N-1)
-                    print2 = "|             |     " ^ (N-1)
-                    print3 = "$i --> $i ...$num   " ^ N
+                    print1 = "|             ┌----/"^(N - 1)
+                    print2 = "|             |     "^(N - 1)
+                    print3 = "$i --> $i ...$num   "^N
                     println(io, "$print1|\n$print2|\n$print3")
                 else
-                    spaces = " " ^ (space_count-11)
-                    up = Int(space_count/2)
-                    print = string("$i ", " "^(space_count - 4),"  $i ...$num", spaces) ^ N
+                    spaces = " "^(space_count - 11)
+                    up = Int(space_count / 2)
+                    print = string("$i ", " "^(space_count - 4), "  $i ...$num", spaces)^N
                     println(io, "$print")
-                    if i!== total-1
-                        indent1 = string(string("|", " " ^ (up+7), "┌", "-"^(up-10), "/") ^ (2*N - 1), "|")
-                        indent2 = string("|", " " ^ (up+7), "|", " " ^ (up-9)) ^ (2*N - 1)
+                    if i !== total - 1
+                        indent1 = string(
+                            string("|", " "^(up + 7), "┌", "-"^(up - 10), "/")^(2 * N - 1),
+                            "|",
+                        )
+                        indent2 = string("|", " "^(up + 7), "|", " "^(up - 9))^(2 * N - 1)
                         println(io, "$indent1\n$indent2|")
                     end
                 end
@@ -288,14 +304,14 @@ function _print_intra_stages(io::IO, stages::Dict)
                 println(io, "$i\n")
             else
                 N = 2^(i - 2)
-                space_count = 10*(2^(total - i))
+                space_count = 10 * (2^(total - i))
                 if i == total
-                    print = "$i --> $i ...$num   " ^ N
+                    print = "$i --> $i ...$num   "^N
                     println(io, "$print\n\n")
                 else
-                    spaces = " " ^ (space_count-11)
-                    print = string("$i ", "-"^(space_count - 4),"> $i ...$num", spaces) ^ N
-                    indent = string(" " ^ (space_count)) ^ (N*2)
+                    spaces = " "^(space_count - 11)
+                    print = string("$i ", "-"^(space_count - 4), "> $i ...$num", spaces)^N
+                    indent = string(" "^(space_count))^(N * 2)
                     println(io, "$print\n$indent")
                 end
             end
@@ -314,7 +330,7 @@ function Base.show(io::IO, sequence::SimulationSequence)
         if isa(v, SemiContinuousFF)
             from = String.(v.binary_from_stage)
         elseif isa(v, RangeFF)
-            from = String.([v.variable_from_stage_ub, v. variable_from_stage_lb])
+            from = String.([v.variable_from_stage_ub, v.variable_from_stage_lb])
         else
             from = String.(v.variable_from_stage)
         end

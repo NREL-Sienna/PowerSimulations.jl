@@ -37,9 +37,9 @@ If t > 1:
 function energy_balance(
     psi_container::PSIContainer,
     initial_conditions::Vector{InitialCondition},
-    efficiency_data::Tuple{Vector{String},Vector{InOut}},
+    efficiency_data::Tuple{Vector{String}, Vector{InOut}},
     cons_name::Symbol,
-    var_names::Tuple{Symbol,Symbol,Symbol},
+    var_names::Tuple{Symbol, Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
@@ -111,7 +111,7 @@ function reservoir_energy_balance_param(
     initial_conditions::Vector{InitialCondition},
     inflow_data::Vector{DeviceTimeSeries},
     cons_name::Symbol,
-    var_names::Tuple{Symbol,Symbol,Symbol},
+    var_names::Tuple{Symbol, Symbol, Symbol},
     param_reference::UpdateRef,
 )
     time_steps = model_time_steps(psi_container)
@@ -186,7 +186,7 @@ function reservoir_energy_balance(
     initial_conditions::Vector{InitialCondition},
     inflow_data::Vector{DeviceTimeSeries},
     cons_name::Symbol,
-    var_names::Tuple{Symbol,Symbol,Symbol},
+    var_names::Tuple{Symbol, Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)

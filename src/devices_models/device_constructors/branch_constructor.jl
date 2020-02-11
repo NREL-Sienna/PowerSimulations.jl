@@ -1,26 +1,26 @@
 construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{B,Br},
+    model::DeviceModel{B, Br},
     ::Type{CopperPlatePowerModel};
     kwargs...,
-) where {B<:PSY.DCBranch,Br<:AbstractBranchFormulation} = nothing
+) where {B <: PSY.DCBranch, Br <: AbstractBranchFormulation} = nothing
 
 construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{B,Br},
+    model::DeviceModel{B, Br},
     ::Type{CopperPlatePowerModel};
     kwargs...,
-) where {B<:PSY.ACBranch,Br<:AbstractBranchFormulation} = nothing
+) where {B <: PSY.ACBranch, Br <: AbstractBranchFormulation} = nothing
 
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{B,Br},
+    model::DeviceModel{B, Br},
     ::Type{S};
     kwargs...,
-) where {B<:PSY.Branch,Br<:AbstractBranchFormulation,S<:PM.AbstractPowerModel}
+) where {B <: PSY.Branch, Br <: AbstractBranchFormulation, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(B, sys)
 
     if validate_available_devices(devices, B)
@@ -36,10 +36,10 @@ end
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{PSY.MonitoredLine,FlowMonitoredLine},
+    model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
     ::Type{S};
     kwargs...,
-) where {S<:PM.AbstractPowerModel}
+) where {S <: PM.AbstractPowerModel}
     devices = PSY.get_components(PSY.MonitoredLine, sys)
 
     if validate_available_devices(devices, PSY.MonitoredLine)
@@ -60,7 +60,7 @@ construct_device!(
     sys::PSY.System,
     ::DeviceModel{
         <:PSY.Branch,
-        <:Union{Type{StaticLineUnbounded},Type{StaticTransformerUnbounded}},
+        <:Union{Type{StaticLineUnbounded}, Type{StaticTransformerUnbounded}},
     },
     ::Type{<:PM.AbstractPowerModel},
 ) = nothing
@@ -68,10 +68,10 @@ construct_device!(
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{B,Br},
+    model::DeviceModel{B, Br},
     ::Type{S};
     kwargs...,
-) where {B<:PSY.DCBranch,Br<:AbstractBranchFormulation,S<:PM.AbstractPowerModel}
+) where {B <: PSY.DCBranch, Br <: AbstractBranchFormulation, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(B, sys)
 
     if validate_available_devices(devices, B)

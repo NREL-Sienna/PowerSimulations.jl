@@ -4,7 +4,7 @@ function ptdf_networkflow(
     buses::IS.FlattenIteratorWrapper{PSY.Bus},
     expression::Symbol,
     PTDF::PSY.PTDF,
-) where {B<:PSY.Branch}
+) where {B <: PSY.Branch}
     time_steps = model_time_steps(psi_container)
     network_flow =
         add_cons_container!(psi_container, :network_flow, PTDF.axes[1], time_steps)

@@ -117,7 +117,7 @@ function _export_model_result(
 end
 
 function _export_optimizer_log(
-    optimizer_log::Dict{Symbol,Any},
+    optimizer_log::Dict{Symbol, Any},
     psi_container::PSIContainer,
     path::String,
 )

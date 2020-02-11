@@ -30,20 +30,20 @@ function test_sequence_build(file_path::String)
     end
 
     @testset "Simulation with provided initial time" begin
-    second_day = DayAhead[24]+Hour(1)
-    sim = Simulation(
-        name = "test",
-        steps = 1,
-        stages = stages_definition,
-        stages_sequence = sequence,
-        simulation_folder = file_path,
-        initial_time = second_day,
-    )
-    build!(sim)
+        second_day = DayAhead[24] + Hour(1)
+        sim = Simulation(
+            name = "test",
+            steps = 1,
+            stages = stages_definition,
+            stages_sequence = sequence,
+            simulation_folder = file_path,
+            initial_time = second_day,
+        )
+        build!(sim)
 
-    for stage in values(sim.stages)
-        @test stage.internal.psi_container.initial_time == second_day
-    end
+        for stage in values(sim.stages)
+            @test stage.internal.psi_container.initial_time == second_day
+        end
     end
 
     sim = Simulation(
@@ -58,7 +58,7 @@ function test_sequence_build(file_path::String)
     @testset "Simulation Sequence Tests" begin
         build!(sim)
         for field in fieldnames(SimulationSequence)
-            if fieldtype(SimulationSequence, field) == Union{Dates.DateTime,Nothing}
+            if fieldtype(SimulationSequence, field) == Union{Dates.DateTime, Nothing}
                 @test !isnothing(getfield(sim.sequence, field))
             end
         end
@@ -68,7 +68,7 @@ function test_sequence_build(file_path::String)
     ###################### Negative Tests ########################################
     @testset "testing when a simulation has incorrect arguments" begin
         sim = Simulation(name = "test", steps = 1, simulation_folder = file_path)
-        @test_throws ArgumentError  build!(sim)
+        @test_throws ArgumentError build!(sim)
     end
 
     @testset "testing if a wrong initial time is provided" begin

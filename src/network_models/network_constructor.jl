@@ -52,7 +52,7 @@ function construct_network!(
     sys::PSY.System,
     ::Type{T};
     kwargs...,
-) where {T<:PM.AbstractPowerModel}
+) where {T <: PM.AbstractPowerModel}
     incompat_list = [
         PM.SDPWRMPowerModel,
         PM.SparseSDPWRMPowerModel,

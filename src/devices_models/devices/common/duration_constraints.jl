@@ -49,7 +49,7 @@ function device_duration_retrospective(
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
     cons_name::Symbol,
-    var_names::Tuple{Symbol,Symbol,Symbol},
+    var_names::Tuple{Symbol, Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
 
@@ -68,7 +68,7 @@ function device_duration_retrospective(
         for (ix, ic) in enumerate(initial_duration[:, 1])
             name = device_name(ic)
             # Minimum Up-time Constraint
-            lhs_on = JuMP.GenericAffExpr{Float64,_variable_type(psi_container)}(0)
+            lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}(0)
             for i in (t - duration_data[ix].up + 1):t
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_on, varstart[name, i])
@@ -84,7 +84,7 @@ function device_duration_retrospective(
         for (ix, ic) in enumerate(initial_duration[:, 2])
             name = device_name(ic)
             # Minimum Down-time Constraint
-            lhs_off = JuMP.GenericAffExpr{Float64,_variable_type(psi_container)}(0)
+            lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}(0)
             for i in (t - duration_data[ix].down + 1):t
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_off, varstop[name, i])
@@ -150,7 +150,7 @@ function device_duration_look_ahead(
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
     cons_name::Symbol,
-    var_names::Tuple{Symbol,Symbol,Symbol},
+    var_names::Tuple{Symbol, Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
     varon = get_variable(psi_container, var_names[1])
@@ -168,7 +168,7 @@ function device_duration_look_ahead(
         for (ix, ic) in enumerate(initial_duration[:, 1])
             name = device_name(ic)
             # Minimum Up-time Constraint
-            lhs_on = JuMP.GenericAffExpr{Float64,_variable_type(psi_container)}(0)
+            lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}(0)
             for i in (t - duration_data[ix].up + 1):t
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_on, varon[name, i])
@@ -186,7 +186,7 @@ function device_duration_look_ahead(
         for (ix, ic) in enumerate(initial_duration[:, 2])
             name = device_name(ic)
             # Minimum Down-time Constraint
-            lhs_off = JuMP.GenericAffExpr{Float64,_variable_type(psi_container)}(0)
+            lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}(0)
             for i in (t - duration_data[ix].down + 1):t
                 if i in time_steps
                     JuMP.add_to_expression!(lhs_off, (1 - varon[name, i]))
@@ -258,7 +258,7 @@ function device_duration_parameters(
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
     cons_name::Symbol,
-    var_names::Tuple{Symbol,Symbol,Symbol},
+    var_names::Tuple{Symbol, Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
 
@@ -277,7 +277,7 @@ function device_duration_parameters(
         for (ix, ic) in enumerate(initial_duration[:, 1])
             name = device_name(ic)
             # Minimum Up-time Constraint
-            lhs_on = JuMP.GenericAffExpr{Float64,_variable_type(psi_container)}(0)
+            lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}(0)
             for i in (t - duration_data[ix].up + 1):t
                 if t <= duration_data[ix].up
                     if in(i, time_steps)
@@ -304,7 +304,7 @@ function device_duration_parameters(
         for (ix, ic) in enumerate(initial_duration[:, 2])
             name = device_name(ic)
             # Minimum Down-time Constraint
-            lhs_off = JuMP.GenericAffExpr{Float64,_variable_type(psi_container)}(0)
+            lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}(0)
             for i in (t - duration_data[ix].down + 1):t
                 if t <= duration_data[ix].down
                     if in(i, time_steps)

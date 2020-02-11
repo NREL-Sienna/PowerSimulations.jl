@@ -70,9 +70,8 @@ function run_tests()
         include("test_utils/operations_problem_templates.jl")
 
         @time @testset "Begin PowerSimulations tests" begin
-                @includetests ARGS
+            @includetests ARGS
         end
-
 
         # TODO: Enable this once all expected errors are not logged.
         #@test length(IS.get_log_events(multi_logger.tracker, Logging.Error)) == 0

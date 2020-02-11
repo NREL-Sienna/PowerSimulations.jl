@@ -1,10 +1,10 @@
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{St,D},
+    model::DeviceModel{St, D},
     ::Type{S};
     kwargs...,
-) where {St<:PSY.Storage,D<:AbstractStorageFormulation,S<:PM.AbstractPowerModel}
+) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(St, sys)
 
     if validate_available_devices(devices, St)
@@ -34,10 +34,14 @@ end
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{St,D},
+    model::DeviceModel{St, D},
     ::Type{S};
     kwargs...,
-) where {St<:PSY.Storage,D<:AbstractStorageFormulation,S<:PM.AbstractActivePowerModel}
+) where {
+    St <: PSY.Storage,
+    D <: AbstractStorageFormulation,
+    S <: PM.AbstractActivePowerModel,
+}
 
     devices = PSY.get_components(St, sys)
 
@@ -66,10 +70,10 @@ end
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{St,BookKeepingwReservation},
+    model::DeviceModel{St, BookKeepingwReservation},
     ::Type{S};
     kwargs...,
-) where {St<:PSY.Storage,S<:PM.AbstractPowerModel}
+) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(St, sys)
 
     if validate_available_devices(devices, St)
@@ -106,10 +110,10 @@ end
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{St,BookKeepingwReservation},
+    model::DeviceModel{St, BookKeepingwReservation},
     ::Type{S};
     kwargs...,
-) where {St<:PSY.Storage,S<:PM.AbstractActivePowerModel}
+) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(St, sys)
 
     if validate_available_devices(devices, St)

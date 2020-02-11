@@ -1,5 +1,5 @@
 """ Returns the correct container spec for the selected type of JuMP Model"""
-function _container_spec(m::M, axs...) where {M<:JuMP.AbstractModel}
+function _container_spec(m::M, axs...) where {M <: JuMP.AbstractModel}
     return JuMP.Containers.DenseAxisArray{JuMP.variable_type(m)}(undef, axs...)
 end
 

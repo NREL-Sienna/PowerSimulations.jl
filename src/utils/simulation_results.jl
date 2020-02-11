@@ -1,5 +1,5 @@
 struct SimulationResults <: Results
-    variables::Dict{Symbol,DataFrames.DataFrame}
+    variables::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
@@ -77,7 +77,7 @@ function load_simulation_results(
     time_stamp[!, :Range] = convert(Array{Dates.DateTime}, time_stamp[!, :Range])
     file_path = dirname(references[stage][variable[1]][1, :File_Path])
     optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
-    obj_value = Dict{Symbol,Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
+    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     if !isempty(dual)
         duals = _read_references(duals, dual, stage, step, references, time_length)
         results = DualResults(variables, obj_value, optimizer, time_stamp, duals)
@@ -149,7 +149,7 @@ function load_simulation_results(
     time_stamp[!, :Range] = convert(Array{Dates.DateTime}, time_stamp[!, :Range])
     file_path = dirname(references[stage][variable[1]][1, :File_Path])
     optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
-    obj_value = Dict{Symbol,Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
+    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     if !isempty(dual)
         duals = _read_references(duals, dual, stage, references, time_length)
         results = DualResults(variables, obj_value, optimizer, time_stamp, duals)

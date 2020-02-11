@@ -64,18 +64,18 @@ end
 
 @testset "testing if Horizon and interval result in a discontinuous simulation" begin
     @test_throws IS.ConflictingInputsError SimulationSequence(
-    step_resolution = Hour(24),
-    order = Dict(1 => "UC", 2 => "ED"),
-    feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-    horizons = Dict("UC" => 24, "ED" => 12),
-    intervals = Dict("UC" => Hour(2), "ED" => Hour(3)),
-    feedforward = Dict(
-        ("ED", :devices, :Generators) => SemiContinuousFF(
-            binary_from_stage = PSI.ON,
-            affected_variables = [PSI.ACTIVE_POWER],
+        step_resolution = Hour(24),
+        order = Dict(1 => "UC", 2 => "ED"),
+        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+        horizons = Dict("UC" => 24, "ED" => 12),
+        intervals = Dict("UC" => Hour(2), "ED" => Hour(3)),
+        feedforward = Dict(
+            ("ED", :devices, :Generators) => SemiContinuousFF(
+                binary_from_stage = PSI.ON,
+                affected_variables = [PSI.ACTIVE_POWER],
+            ),
         ),
-    ),
-    cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-    ini_cond_chronology = InterStageChronology(),
-)
+        cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
+        ini_cond_chronology = InterStageChronology(),
+    )
 end

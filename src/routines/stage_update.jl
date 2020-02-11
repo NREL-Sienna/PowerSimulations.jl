@@ -4,7 +4,7 @@ function parameter_update!(
     container::ParameterContainer,
     stage::Stage,
     sim::Simulation,
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     devices = PSY.get_components(T, stage.sys)
     initial_forecast_time = get_simulation_time(sim, get_number(stage))
     horizon = length(model_time_steps(stage.internal.psi_container))
@@ -97,7 +97,7 @@ function update_stage!(
     stage::Stage{M},
     step::Int,
     sim::Simulation,
-) where {M<:AbstractOperationsProblem}
+) where {M <: AbstractOperationsProblem}
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && get_number(stage) == 1 && get_execution_count(stage) == 0) && return
     for container in iterate_parameter_containers(stage.internal.psi_container)

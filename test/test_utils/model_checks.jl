@@ -1,5 +1,5 @@
-const GAEVF = JuMP.GenericAffExpr{Float64,VariableRef}
-const GQEVF = JuMP.GenericQuadExpr{Float64,VariableRef}
+const GAEVF = JuMP.GenericAffExpr{Float64, VariableRef}
+const GQEVF = JuMP.GenericQuadExpr{Float64, VariableRef}
 
 function moi_tests(
     op_problem::OperationsProblem,

@@ -14,7 +14,7 @@ function flow_variables!(
     psi_container::PSIContainer,
     system_formulation::Type{StandardPTDFModel},
     devices::IS.FlattenIteratorWrapper{B},
-) where {B<:PSY.DCBranch}
+) where {B <: PSY.DCBranch}
     time_steps = model_time_steps(psi_container)
     var_name = Symbol("Fp_$(B)")
     container = _container_spec(
@@ -56,10 +56,10 @@ end
 function branch_rate_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B,<:AbstractDCLineFormulation},
+    model::DeviceModel{B, <:AbstractDCLineFormulation},
     system_formulation::Type{<:PM.AbstractDCPModel},
-    feedforward::Union{Nothing,AbstractAffectFeedForward},
-) where {B<:PSY.DCBranch}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {B <: PSY.DCBranch}
     var = get_variable(psi_container, FLOW_ACTIVE_POWER, B)
     time_steps = model_time_steps(psi_container)
     constraint_val =
@@ -82,13 +82,13 @@ end
 function branch_rate_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B,HVDCLossless},
+    model::DeviceModel{B, HVDCLossless},
     system_formulation::Union{
         Type{<:PM.AbstractActivePowerModel},
         Type{<:PM.AbstractPowerModel},
     },
-    feedforward::Union{Nothing,AbstractAffectFeedForward},
-) where {B<:PSY.DCBranch}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {B <: PSY.DCBranch}
     for (var_type, cons_type) in zip(
         (FLOW_ACTIVE_POWER_FROM_TO, FLOW_ACTIVE_POWER_TO_FROM),
         (RATE_LIMIT_FT, RATE_LIMIT_TF),
@@ -121,13 +121,13 @@ end
 function branch_rate_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B,<:AbstractDCLineFormulation},
+    model::DeviceModel{B, <:AbstractDCLineFormulation},
     system_formulation::Union{
         Type{<:PM.AbstractActivePowerModel},
         Type{<:PM.AbstractPowerModel},
     },
-    feedforward::Union{Nothing,AbstractAffectFeedForward},
-) where {B<:PSY.DCBranch}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {B <: PSY.DCBranch}
     time_steps = model_time_steps(psi_container)
     for (var_type, cons_type) in zip(
         (FLOW_ACTIVE_POWER_FROM_TO, FLOW_ACTIVE_POWER_TO_FROM),

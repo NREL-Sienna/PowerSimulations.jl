@@ -16,7 +16,7 @@ end
 function plotly_stack_gen(stacked_gen::StackedGeneration, seriescolor::Array; kwargs...)
     set_display = get(kwargs, :display, true)
     save_fig = get(kwargs, :save, nothing)
-    traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
+    traces = PlotlyJS.GenericTrace{Dict{Symbol, Any}}[]
     gens = stacked_gen.labels
     seriescolor = set_seriescolor(seriescolor, gens)
     for gen in 1:length(gens)
@@ -48,7 +48,7 @@ function plotly_stack_plots(res::PSI.Results, seriescolor::Array; kwargs...)
     set_display = get(kwargs, :display, true)
     save_fig = get(kwargs, :save, nothing)
     for (key, var) in res.variables
-        traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
+        traces = PlotlyJS.GenericTrace{Dict{Symbol, Any}}[]
         gens = collect(names(var))
         seriescolor = set_seriescolor(seriescolor, gens)
         for gen in 1:length(gens)
@@ -84,7 +84,7 @@ function plotly_bar_gen(bar_gen::BarGeneration, seriescolor::Array; kwargs...)
     time_span = IS.convert_compound_period(
         convert(Dates.TimePeriod, time_range[2] - time_range[1]) * length(time_range),
     )
-    traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
+    traces = PlotlyJS.GenericTrace{Dict{Symbol, Any}}[]
     gens = bar_gen.labels
     seriescolor = set_seriescolor(seriescolor, gens)
     for gen in 1:length(gens)
@@ -123,7 +123,7 @@ function plotly_bar_plots(res::PSI.Results, seriescolor::Array; kwargs...)
             size(time_range, 1),
     )
     for (key, var) in res.variables
-        traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
+        traces = PlotlyJS.GenericTrace{Dict{Symbol, Any}}[]
         gens = collect(names(var))
         seriescolor = set_seriescolor(seriescolor, gens)
         for gen in 1:length(gens)
