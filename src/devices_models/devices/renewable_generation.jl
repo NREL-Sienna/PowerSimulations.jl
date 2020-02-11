@@ -8,7 +8,7 @@ struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 function activepower_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{R},
-) where {R<:PSY.RenewableGen}
+) where {R <: PSY.RenewableGen}
     add_variable(
         psi_container,
         devices,
@@ -24,7 +24,7 @@ end
 function reactivepower_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{R},
-) where {R<:PSY.RenewableGen}
+) where {R <: PSY.RenewableGen}
     add_variable(
         psi_container,
         devices,
@@ -39,10 +39,10 @@ end
 function reactivepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{R},
-    model::DeviceModel{R,RenewableFullDispatch},
+    model::DeviceModel{R, RenewableFullDispatch},
     system_formulation::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
-) where {R<:PSY.RenewableGen}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {R <: PSY.RenewableGen}
     constraint_data = Vector{DeviceRange}()
     for (ix, d) in enumerate(devices)
         tech = PSY.get_tech(d)
@@ -67,10 +67,10 @@ end
 function reactivepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{R},
-    model::DeviceModel{R,RenewableConstantPowerFactor},
+    model::DeviceModel{R, RenewableConstantPowerFactor},
     system_formulation::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
-) where {R<:PSY.RenewableGen}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {R <: PSY.RenewableGen}
     names = (PSY.get_name(d) for d in devices)
     time_steps = model_time_steps(psi_container)
     p_var = get_variable(psi_container, ACTIVE_POWER, R)
@@ -90,10 +90,11 @@ end
 function _get_time_series(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{<:PSY.RenewableGen},
-    model::Union{Nothing,DeviceModel},
+    model::Union{Nothing, DeviceModel},
     get_constraint_values::Function,
 )
     initial_time = model_initial_time(psi_container)
+    @debug initial_time
     use_forecast_data = model_uses_forecasts(psi_container)
     parameters = model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
@@ -144,10 +145,10 @@ end
 function activepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{R},
-    model::DeviceModel{R,<:AbstractRenewableDispatchFormulation},
+    model::DeviceModel{R, <:AbstractRenewableDispatchFormulation},
     system_formulation::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
-) where {R<:PSY.RenewableGen}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {R <: PSY.RenewableGen}
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
@@ -191,7 +192,7 @@ function nodal_expression!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{R},
     system_formulation::Type{<:PM.AbstractPowerModel},
-) where {R<:PSY.RenewableGen}
+) where {R <: PSY.RenewableGen}
     parameters = model_has_parameters(psi_container)
     ts_data_active, ts_data_reactive, _ = _get_time_series(
         psi_container,
@@ -240,7 +241,7 @@ function nodal_expression!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{R},
     system_formulation::Type{<:PM.AbstractActivePowerModel},
-) where {R<:PSY.RenewableGen}
+) where {R <: PSY.RenewableGen}
     parameters = model_has_parameters(psi_container)
     ts_data_active, ts_data_reactive, _ = _get_time_series(
         psi_container,
@@ -277,7 +278,7 @@ function cost_function(
     devices::IS.FlattenIteratorWrapper{PSY.RenewableDispatch},
     device_formulation::Type{D},
     system_formulation::Type{<:PM.AbstractPowerModel},
-) where {D<:AbstractRenewableDispatchFormulation}
+) where {D <: AbstractRenewableDispatchFormulation}
     add_to_cost(psi_container, devices, Symbol("P_RenewableDispatch"), :fixed, -1.0)
     return
 end

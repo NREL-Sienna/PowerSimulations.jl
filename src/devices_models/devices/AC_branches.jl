@@ -28,7 +28,7 @@ function flow_variables!(
     psi_container::PSIContainer,
     ::Type{<:StandardPTDFModel},
     devices::IS.FlattenIteratorWrapper{B},
-) where {B<:PSY.ACBranch}
+) where {B <: PSY.ACBranch}
     add_variable(psi_container, devices, variable_name(FLOW_ACTIVE_POWER, B), false)
     return
 end
@@ -39,7 +39,7 @@ function branch_rate_bounds!(
     devices::IS.FlattenIteratorWrapper{B},
     ::Type{<:AbstractBranchFormulation},
     ::Type{<:PM.AbstractDCPModel},
-) where {B<:PSY.ACBranch}
+) where {B <: PSY.ACBranch}
     constraint_data = Vector{DeviceRange}()
 
     for d in devices
@@ -64,7 +64,7 @@ function branch_rate_bounds!(
     devices::IS.FlattenIteratorWrapper{B},
     ::Type{<:AbstractBranchFormulation},
     ::Type{<:PM.AbstractActivePowerModel},
-) where {B<:PSY.ACBranch}
+) where {B <: PSY.ACBranch}
     constraint_data = Vector{DeviceRange}()
 
     for d in devices
@@ -90,7 +90,7 @@ function branch_rate_bounds!(
     devices::IS.FlattenIteratorWrapper{B},
     ::Type{D},
     ::Type{S},
-) where {B<:PSY.ACBranch,D<:AbstractBranchFormulation,S<:PM.AbstractPowerModel}
+) where {B <: PSY.ACBranch, D <: AbstractBranchFormulation, S <: PM.AbstractPowerModel}
     constraint_data = Vector{DeviceRange}()
 
     for d in devices
@@ -115,10 +115,10 @@ end
 function branch_rate_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B,D},
+    model::DeviceModel{B, D},
     ::Type{S},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
-) where {B<:PSY.ACBranch,D<:AbstractBranchFormulation,S<:PM.AbstractDCPModel}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {B <: PSY.ACBranch, D <: AbstractBranchFormulation, S <: PM.AbstractDCPModel}
     constraint_data = Vector{DeviceRange}()
 
     for d in devices
@@ -147,10 +147,10 @@ end
 function branch_rate_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B,<:AbstractBranchFormulation},
+    model::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{<:PM.AbstractActivePowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
-) where {B<:PSY.ACBranch}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {B <: PSY.ACBranch}
     constraint_data = Vector{DeviceRange}()
 
     for d in devices
@@ -186,10 +186,10 @@ end
 function branch_rate_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B,<:AbstractBranchFormulation},
+    model::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
-) where {B<:PSY.ACBranch}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {B <: PSY.ACBranch}
     range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
 
     rating_constraint!(
@@ -214,9 +214,9 @@ end
 function branch_flow_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
-    model::DeviceModel{PSY.MonitoredLine,FlowMonitoredLine},
-    ::Union{Type{PM.DCPPowerModel},Type{StandardPTDFModel}},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
+    ::Union{Type{PM.DCPPowerModel}, Type{StandardPTDFModel}},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
 )
     flow_range_data = [(PSY.get_name(h), PSY.get_flowlimits(h)) for h in devices]
 
@@ -234,9 +234,9 @@ end
 function branch_flow_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
-    model::DeviceModel{PSY.MonitoredLine,FlowMonitoredLine},
+    model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
     ::Type{<:PM.AbstractPowerModel},
-    feed_forward::Union{Nothing,AbstractAffectFeedForward},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
 )
     names = Vector{String}(undef, length(devices))
     limit_values_FT = Vector{MinMax}(undef, length(devices))

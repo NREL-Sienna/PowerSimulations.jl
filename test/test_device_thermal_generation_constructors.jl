@@ -317,13 +317,13 @@ end
 end
 
 ############################# UC validation tests ##########################################
-branches = Dict{Symbol,DeviceModel}()
-services = Dict{Symbol,ServiceModel}()
-ED_devices = Dict{Symbol,DeviceModel}(
+branches = Dict{Symbol, DeviceModel}()
+services = Dict{Symbol, ServiceModel}()
+ED_devices = Dict{Symbol, DeviceModel}(
     :Generators => DeviceModel(ThermalStandard, ThermalRampLimited),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
 )
-UC_devices = Dict{Symbol,DeviceModel}(
+UC_devices = Dict{Symbol, DeviceModel}(
     :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
 )

@@ -9,23 +9,46 @@ function test_sequence_build(file_path::String)
     )
 
     sequence = SimulationSequence(
+        step_resolution = Hour(24),
         order = Dict(1 => "UC", 2 => "ED"),
-        intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
         horizons = Dict("UC" => 24, "ED" => 12),
         intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
-        feed_forward = Dict(
+        feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_from_stage = Symbol(PSI.ON),
-                affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+                binary_from_stage = PSI.ON,
+                affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
         cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-        ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
+        ini_cond_chronology = InterStageChronology(),
     )
+
+    @testset "Test Simulation Simulation Sequence Validation" begin
+        @test length(findall(x -> x == 2, sequence.execution_order)) == 24
+        @test length(findall(x -> x == 1, sequence.execution_order)) == 1
+    end
+
+    @testset "Simulation with provided initial time" begin
+        second_day = DayAhead[24] + Hour(1)
+        sim = Simulation(
+            name = "test",
+            steps = 1,
+            stages = stages_definition,
+            stages_sequence = sequence,
+            simulation_folder = file_path,
+            initial_time = second_day,
+        )
+        build!(sim)
+
+        for stage in values(sim.stages)
+            @test stage.internal.psi_container.initial_time == second_day
+        end
+    end
+
     sim = Simulation(
         name = "test",
         steps = 1,
-        step_resolution = Hour(24),
         stages = stages_definition,
         stages_sequence = sequence,
         simulation_folder = file_path,
@@ -35,84 +58,51 @@ function test_sequence_build(file_path::String)
     @testset "Simulation Sequence Tests" begin
         build!(sim)
         for field in fieldnames(SimulationSequence)
-            if fieldtype(SimulationSequence, field) == Union{Dates.DateTime,Nothing}
+            if fieldtype(SimulationSequence, field) == Union{Dates.DateTime, Nothing}
                 @test !isnothing(getfield(sim.sequence, field))
             end
         end
         @test isa(sim.sequence, SimulationSequence)
     end
+
     ###################### Negative Tests ########################################
-    @testset "testing if horizon is shorter than interval" begin
-        sequence = SimulationSequence(
-            order = Dict(1 => "UC", 2 => "ED"),
-            intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-            horizons = Dict("UC" => 4, "ED" => 2),
-            intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
-            feed_forward = Dict(
-                ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = Symbol(PSI.ON),
-                    affected_variables = [Symbol(PSI.ACTIVE_POWER)],
-                ),
-            ),
-            cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
-        )
-        sim = Simulation(
-            name = "short_horizon",
-            steps = 1,
-            step_resolution = Hour(24),
-            stages = stages_definition,
-            stages_sequence = sequence,
-            simulation_folder = file_path,
-        )
-        @test_throws IS.ConflictingInputsError PSI._check_sequence(sim)
+    @testset "testing when a simulation has incorrect arguments" begin
+        sim = Simulation(name = "test", steps = 1, simulation_folder = file_path)
+        @test_throws ArgumentError build!(sim)
     end
 
-    @testset "testing if Horizon and interval result in a discountinous simulation" begin
-        sequence = SimulationSequence(
-            order = Dict(1 => "UC", 2 => "ED"),
-            intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-            horizons = Dict("UC" => 24, "ED" => 12),
-            intervals = Dict("UC" => Hour(2), "ED" => Hour(3)),
-            feed_forward = Dict(
-                ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = Symbol(PSI.ON),
-                    affected_variables = [Symbol(PSI.ACTIVE_POWER)],
-                ),
-            ),
-            cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
-        )
+    @testset "testing if a wrong initial time is provided" begin
+
         sim = Simulation(
-            name = "short_interval",
+            name = "test",
             steps = 1,
-            step_resolution = Hour(24),
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder = file_path,
+            initial_time = Dates.now(),
         )
-        @test_throws IS.ConflictingInputsError PSI._check_sequence(sim)
+        @test_throws IS.ConflictingInputsError build!(sim)
     end
 
     @testset "testing if file path is not writeable" begin
         sequence = SimulationSequence(
+            step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
-            intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+            feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 24, "ED" => 12),
             intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
-            feed_forward = Dict(
+            feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = Symbol(PSI.ON),
-                    affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
+            ini_cond_chronology = InterStageChronology(),
         )
         sim = Simulation(
             name = "fake_path",
             steps = 1,
-            step_resolution = Hour(24),
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder = "fake_path",
@@ -122,23 +112,23 @@ function test_sequence_build(file_path::String)
 
     @testset "testing if interval is shorter than resolution" begin
         sequence = SimulationSequence(
+            step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
-            intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+            feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 24, "ED" => 12),
             intervals = Dict("UC" => Minute(5), "ED" => Minute(1)),
-            feed_forward = Dict(
+            feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = Symbol(PSI.ON),
-                    affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
+            ini_cond_chronology = InterStageChronology(),
         )
         sim = Simulation(
             name = "interval",
             steps = 1,
-            step_resolution = Hour(24),
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder = file_path,
@@ -148,49 +138,49 @@ function test_sequence_build(file_path::String)
 
     @testset "chronology look ahead length is too long for horizon" begin
         sequence = SimulationSequence(
+            step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
-            intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 30)),
+            feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 30)),
             horizons = Dict("UC" => 24, "ED" => 12),
             intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
-            feed_forward = Dict(
+            feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = Symbol(PSI.ON),
-                    affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
+            ini_cond_chronology = InterStageChronology(),
         )
         sim = Simulation(
             name = "look_ahead",
             steps = 1,
-            step_resolution = Hour(24),
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder = file_path,
         )
-        @test_throws IS.ConflictingInputsError PSI._check_chronologies(sim)#build!(sim)
+        @test_throws IS.ConflictingInputsError PSI._check_feedforward_chronologies(sim)#build!(sim)
     end
 
     @testset "too long of a horizon for forecast" begin
         sequence = SimulationSequence(
+            step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
-            intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+            feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 72, "ED" => 12),
             intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
-            feed_forward = Dict(
+            feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = Symbol(PSI.ON),
-                    affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
+            ini_cond_chronology = InterStageChronology(),
         )
         sim = Simulation(
             name = "long_horizon",
             steps = 1,
-            step_resolution = Hour(24),
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder = file_path,
@@ -201,23 +191,23 @@ function test_sequence_build(file_path::String)
 
     @testset "too many steps for forecast" begin
         sequence = SimulationSequence(
+            step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
-            intra_stage_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+            feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 24, "ED" => 12),
             intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
-            feed_forward = Dict(
+            feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = Symbol(PSI.ON),
-                    affected_variables = [Symbol(PSI.ACTIVE_POWER)],
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
             cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-            ini_cond_chronology = Dict("UC" => Consecutive(), "ED" => Consecutive()),
+            ini_cond_chronology = InterStageChronology(),
         )
         sim = Simulation(
             name = "steps",
             steps = 5,
-            step_resolution = Hour(24),
             stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder = file_path,

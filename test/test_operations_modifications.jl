@@ -1,9 +1,9 @@
-devices = Dict{Symbol,DeviceModel}(
+devices = Dict{Symbol, DeviceModel}(
     :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
 )
-branches = Dict{Symbol,DeviceModel}(:L => DeviceModel(Line, StaticLineUnbounded))
-services = Dict{Symbol,ServiceModel}()
+branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLineUnbounded))
+services = Dict{Symbol, ServiceModel}()
 
 @testset "Operation set ref models" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
@@ -13,7 +13,7 @@ services = Dict{Symbol,ServiceModel}()
 
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     op_problem = OperationsProblem(TestOpProblem, template, c_sys5)
-    new_devices = Dict{Symbol,DeviceModel}(
+    new_devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
@@ -25,7 +25,7 @@ services = Dict{Symbol,ServiceModel}()
 
     template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
     op_problem = OperationsProblem(TestOpProblem, template, c_sys5)
-    new_branches = Dict{Symbol,DeviceModel}(:L => DeviceModel(Line, StaticLine))
+    new_branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
     set_branches_template!(op_problem, new_branches)
     @test op_problem.template.branches[:L].formulation == StaticLine
 end

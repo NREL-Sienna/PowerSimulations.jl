@@ -18,7 +18,7 @@ automatically get written to feather files
 - `constraints_duals::Array`: Array of the constraints duals to be in the results
 """
 function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
-    timed_log = Dict{Symbol,Any}()
+    timed_log = Dict{Symbol, Any}()
     save_path = get(kwargs, :save_path, nothing)
 
     if op_problem.psi_container.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
@@ -65,7 +65,7 @@ function _run_stage(
     kwargs...,
 )
     @assert stage.internal.psi_container.JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
-    timed_log = Dict{Symbol,Any}()
+    timed_log = Dict{Symbol, Any}()
 
     model = stage.internal.psi_container.JuMPmodel
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =

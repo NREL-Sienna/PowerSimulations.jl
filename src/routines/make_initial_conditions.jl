@@ -9,7 +9,7 @@ IC of the UC model
 function status_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-) where {T<:PSY.ThermalGen}
+) where {T <: PSY.ThermalGen}
     _make_initial_conditions!(
         psi_container,
         devices,
@@ -24,7 +24,7 @@ end
 function output_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-) where {T<:PSY.ThermalGen}
+) where {T <: PSY.ThermalGen}
     _make_initial_conditions!(
         psi_container,
         devices,
@@ -40,7 +40,7 @@ end
 function duration_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-) where {T<:PSY.ThermalGen}
+) where {T <: PSY.ThermalGen}
     for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
         _make_initial_conditions!(
             psi_container,
@@ -60,7 +60,7 @@ end
 function storage_energy_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-) where {T<:PSY.Storage}
+) where {T <: PSY.Storage}
     key = ICKey(DeviceEnergy, T)
     _make_initial_conditions!(
         psi_container,
@@ -77,7 +77,7 @@ end
 function status_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-) where {T<:PSY.HydroGen}
+) where {T <: PSY.HydroGen}
     _make_initial_conditions!(
         psi_container,
         devices,
@@ -90,7 +90,7 @@ end
 function output_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-) where {T<:PSY.HydroGen}
+) where {T <: PSY.HydroGen}
     _make_initial_conditions!(
         psi_container,
         devices,
@@ -106,7 +106,7 @@ end
 function duration_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-) where {T<:PSY.HydroGen}
+) where {T <: PSY.HydroGen}
     for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
         _make_initial_conditions!(
             psi_container,
@@ -124,7 +124,7 @@ end
 function storage_energy_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-) where {T<:PSY.HydroGen}
+) where {T <: PSY.HydroGen}
     key = ICKey(DeviceEnergy, T)
     _make_initial_conditions!(
         psi_container,
@@ -144,7 +144,7 @@ function _make_initial_conditions!(
     make_ic_func::Function,
     get_val_func::Function,
     cache = nothing,
-) where {T<:PSY.Device}
+) where {T <: PSY.Device}
     length_devices = length(devices)
 
     if !has_initial_conditions(psi_container, key)
@@ -176,7 +176,7 @@ function _make_initial_condition_active_power(
     device::T,
     value,
     cache = nothing,
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     return InitialCondition(
         psi_container,
         device,
@@ -191,7 +191,7 @@ function _make_initial_condition_energy(
     device::T,
     value,
     cache = nothing,
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     return InitialCondition(
         psi_container,
         device,
@@ -206,7 +206,7 @@ function _make_initial_condition_reservoir_energy(
     device::T,
     value,
     cache = nothing,
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     return InitialCondition(
         psi_container,
         device,
@@ -246,13 +246,13 @@ end
 function _get_ref_active_power(
     ::Type{T},
     psi_container::PSIContainer,
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     return model_has_parameters(psi_container) ?
            UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER) :
            UpdateRef{T}(ACTIVE_POWER, "get_activepower")
 end
 
-function _get_ref_energy(::Type{T}, psi_container::PSIContainer) where {T<:PSY.Component}
+function _get_ref_energy(::Type{T}, psi_container::PSIContainer) where {T <: PSY.Component}
     return model_has_parameters(psi_container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
            UpdateRef{T}(ENERGY, "get_energy")
 end
@@ -260,7 +260,7 @@ end
 function _get_ref_reservoir_energy(
     ::Type{T},
     psi_container::PSIContainer,
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     # TODO: reviewers, is ENERGY correct here?
     return model_has_parameters(psi_container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
            UpdateRef{T}(ENERGY, "get_storage_capacity")

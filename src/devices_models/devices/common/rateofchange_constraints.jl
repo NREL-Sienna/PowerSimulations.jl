@@ -121,10 +121,10 @@ If t > 1:
 """
 function device_mixedinteger_rateofchange(
     psi_container::PSIContainer,
-    rate_data::Tuple{Vector{UpDown},Vector{MinMax}},
+    rate_data::Tuple{Vector{UpDown}, Vector{MinMax}},
     initial_conditions::Vector{InitialCondition},
     cons_name::Symbol,
-    var_names::Tuple{Symbol,Symbol,Symbol},
+    var_names::Tuple{Symbol, Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
     up_name = _middle_rename(cons_name, "_", "up")

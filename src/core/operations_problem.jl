@@ -2,9 +2,9 @@ struct GenericOpProblem <: AbstractOperationsProblem end
 
 mutable struct OperationsProblemTemplate
     transmission::Type{<:PM.AbstractPowerModel}
-    devices::Dict{Symbol,DeviceModel}
-    branches::Dict{Symbol,DeviceModel}
-    services::Dict{Symbol,ServiceModel}
+    devices::Dict{Symbol, DeviceModel}
+    branches::Dict{Symbol, DeviceModel}
+    services::Dict{Symbol, ServiceModel}
 end
 
 """
@@ -23,18 +23,18 @@ Creates a model reference of the Power Formulation, devices, branches, and servi
 template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 ```
 """
-function OperationsProblemTemplate(::Type{T}) where {T<:PM.AbstractPowerModel}
+function OperationsProblemTemplate(::Type{T}) where {T <: PM.AbstractPowerModel}
 
     return OperationsProblemTemplate(
         T,
-        Dict{Symbol,DeviceModel}(),
-        Dict{Symbol,DeviceModel}(),
-        Dict{Symbol,ServiceModel}(),
+        Dict{Symbol, DeviceModel}(),
+        Dict{Symbol, DeviceModel}(),
+        Dict{Symbol, ServiceModel}(),
     )
 
 end
 
-mutable struct OperationsProblem{M<:AbstractOperationsProblem}
+mutable struct OperationsProblem{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
     psi_container::PSIContainer
@@ -81,9 +81,9 @@ function OperationsProblem(
     ::Type{M},
     template::OperationsProblemTemplate,
     sys::PSY.System;
-    optimizer::Union{Nothing,JuMP.OptimizerFactory} = nothing,
+    optimizer::Union{Nothing, JuMP.OptimizerFactory} = nothing,
     kwargs...,
-) where {M<:AbstractOperationsProblem}
+) where {M <: AbstractOperationsProblem}
 
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
     op_problem = OperationsProblem{M}(
@@ -139,7 +139,7 @@ function OperationsProblem(
     ::Type{T},
     sys::PSY.System;
     kwargs...,
-) where {M<:AbstractOperationsProblem,T<:PM.AbstractPowerModel}
+) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
 
     optimizer = get(kwargs, :optimizer, nothing)
     return OperationsProblem{M}(
@@ -191,7 +191,7 @@ function OperationsProblem(
     ::Type{T},
     sys::PSY.System;
     kwargs...,
-) where {T<:PM.AbstractPowerModel}
+) where {T <: PM.AbstractPowerModel}
 
     return OperationsProblem(GenericOpProblem, T, sys; kwargs...)
 
@@ -207,7 +207,7 @@ function set_transmission_model!(
     op_problem::OperationsProblem{M},
     transmission::Type{T};
     kwargs...,
-) where {T<:PM.AbstractPowerModel,M<:AbstractOperationsProblem}
+) where {T <: PM.AbstractPowerModel, M <: AbstractOperationsProblem}
 
     # Reset the psi_container
     op_problem.template.transmission = transmission
@@ -225,9 +225,9 @@ end
 
 function set_devices_template!(
     op_problem::OperationsProblem{M},
-    devices::Dict{Symbol,DeviceModel};
+    devices::Dict{Symbol, DeviceModel};
     kwargs...,
-) where {M<:AbstractOperationsProblem}
+) where {M <: AbstractOperationsProblem}
 
     # Reset the psi_container
     op_problem.template.devices = devices
@@ -245,9 +245,9 @@ end
 
 function set_branches_template!(
     op_problem::OperationsProblem{M},
-    branches::Dict{Symbol,DeviceModel};
+    branches::Dict{Symbol, DeviceModel};
     kwargs...,
-) where {M<:AbstractOperationsProblem}
+) where {M <: AbstractOperationsProblem}
 
     # Reset the psi_container
     op_problem.template.branches = branches
@@ -265,9 +265,9 @@ end
 
 function set_services_template!(
     op_problem::OperationsProblem{M},
-    services::Dict{Symbol,DeviceModel};
+    services::Dict{Symbol, DeviceModel};
     kwargs...,
-) where {M<:AbstractOperationsProblem}
+) where {M <: AbstractOperationsProblem}
 
     # Reset the psi_container
     op_problem.template.services = services
@@ -286,9 +286,13 @@ end
 function set_device_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
-    device::DeviceModel{D,B};
+    device::DeviceModel{D, B};
     kwargs...,
-) where {D<:PSY.StaticInjection,B<:AbstractDeviceFormulation,M<:AbstractOperationsProblem}
+) where {
+    D <: PSY.StaticInjection,
+    B <: AbstractDeviceFormulation,
+    M <: AbstractOperationsProblem,
+}
 
     if haskey(op_problem.template.devices, name)
         op_problem.template.devices[name] = device
@@ -310,9 +314,9 @@ end
 function set_branch_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
-    branch::DeviceModel{D,B};
+    branch::DeviceModel{D, B};
     kwargs...,
-) where {D<:PSY.Branch,B<:AbstractDeviceFormulation,M<:AbstractOperationsProblem}
+) where {D <: PSY.Branch, B <: AbstractDeviceFormulation, M <: AbstractOperationsProblem}
 
     if haskey(op_problem.template.branches, name)
         op_problem.template.branches[name] = branch
@@ -336,7 +340,7 @@ function set_services_model!(
     name::Symbol,
     service::DeviceModel;
     kwargs...,
-) where {M<:AbstractOperationsProblem}
+) where {M <: AbstractOperationsProblem}
 
     if haskey(op_problem.template.devices, name)
         op_problem.template.services[name] = service
@@ -398,7 +402,7 @@ function construct_network!(
     op_problem::OperationsProblem,
     system_formulation::Type{T};
     kwargs...,
-) where {T<:PM.AbstractPowerModel}
+) where {T <: PM.AbstractPowerModel}
 
     construct_network!(op_problem.psi_container, get_system(op_problem), T; kwargs...)
 
@@ -425,7 +429,7 @@ end
 function build_op_problem!(
     op_problem::OperationsProblem{M};
     kwargs...,
-) where {M<:AbstractOperationsProblem}
+) where {M <: AbstractOperationsProblem}
     sys = get_system(op_problem)
     _build!(op_problem.psi_container, op_problem.template, sys; kwargs...)
     return

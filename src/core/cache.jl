@@ -2,12 +2,12 @@
 Tracks the last time status of a device changed in a simulation
 """
 mutable struct TimeStatusChange <: AbstractCache
-    value::JuMP.Containers.DenseAxisArray{Dict{Symbol,Float64}}
+    value::JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}
     ref::UpdateRef
 end
 
-function TimeStatusChange(::Type{T}, name::AbstractString) where {T<:PSY.Device}
-    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol,Float64}}(undef, 1)
+function TimeStatusChange(::Type{T}, name::AbstractString) where {T <: PSY.Device}
+    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, 1)
     return TimeStatusChange(value_array, UpdateRef{PJ.ParameterRef}(T, name))
 end
 
@@ -22,7 +22,7 @@ function build_cache!(cache::TimeStatusChange, psi_container::PSIContainer)
     # constraints in the future. A get function would need to be parametrized on cache.ref.
     parameter = get_parameter_array(psi_container, cache.ref)
     value_array =
-        JuMP.Containers.DenseAxisArray{Dict{Symbol,Float64}}(undef, axes(parameter)...)
+        JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, axes(parameter)...)
 
     for name in parameter.axes[1]
         status = PJ.value(parameter[name])

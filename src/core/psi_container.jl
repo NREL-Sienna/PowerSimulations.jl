@@ -1,7 +1,7 @@
 function _pass_abstract_jump(
-    optimizer::Union{Nothing,JuMP.OptimizerFactory},
+    optimizer::Union{Nothing, JuMP.OptimizerFactory},
     parameters::Bool,
-    JuMPmodel::Union{JuMP.AbstractModel,Nothing},
+    JuMPmodel::Union{JuMP.AbstractModel, Nothing},
 )
     if !isnothing(JuMPmodel)
         if parameters
@@ -35,10 +35,10 @@ end
 function _make_expressions_dict(
     transmission::Type{S},
     V::DataType,
-    bus_numbers::Vector{Int64},
-    time_steps::UnitRange{Int64},
+    bus_numbers::Vector{Int},
+    time_steps::UnitRange{Int},
     parameters::Bool,
-) where {S<:PM.AbstractPowerModel}
+) where {S <: PM.AbstractPowerModel}
     return DSDA(
         :nodal_balance_active =>
             _make_container_array(V, parameters, bus_numbers, time_steps),
@@ -50,10 +50,10 @@ end
 function _make_expressions_dict(
     transmission::Type{S},
     V::DataType,
-    bus_numbers::Vector{Int64},
-    time_steps::UnitRange{Int64},
+    bus_numbers::Vector{Int},
+    time_steps::UnitRange{Int},
     parameters::Bool,
-) where {S<:PM.AbstractActivePowerModel}
+) where {S <: PM.AbstractActivePowerModel}
     return DSDA(
         :nodal_balance_active =>
             _make_container_array(V, parameters, bus_numbers, time_steps),
@@ -61,17 +61,17 @@ function _make_expressions_dict(
 end
 
 function _psi_container_init(
-    bus_numbers::Vector{Int64},
+    bus_numbers::Vector{Int},
     jump_model::JuMP.AbstractModel,
-    optimizer::Union{Nothing,JuMP.OptimizerFactory},
+    optimizer::Union{Nothing, JuMP.OptimizerFactory},
     transmission::Type{S},
-    time_steps::UnitRange{Int64},
+    time_steps::UnitRange{Int},
     resolution::Dates.TimePeriod,
     use_forecast_data::Bool,
     initial_time::Dates.DateTime,
     make_parameters_container::Bool,
     ini_con::InitialConditionsContainer,
-) where {S<:PM.AbstractPowerModel}
+) where {S <: PM.AbstractPowerModel}
     V = JuMP.variable_type(jump_model)
     psi_container = PSIContainer(
         jump_model,
@@ -82,7 +82,7 @@ function _psi_container_init(
         initial_time,
         DSDA(),
         DSDA(),
-        zero(JuMP.GenericAffExpr{Float64,V}),
+        zero(JuMP.GenericAffExpr{Float64, V}),
         _make_expressions_dict(
             transmission,
             V,
@@ -99,33 +99,33 @@ end
 
 mutable struct PSIContainer
     JuMPmodel::JuMP.AbstractModel
-    optimizer_factory::Union{Nothing,JuMP.OptimizerFactory}
-    time_steps::UnitRange{Int64}
+    optimizer_factory::Union{Nothing, JuMP.OptimizerFactory}
+    time_steps::UnitRange{Int}
     resolution::Dates.TimePeriod
     use_forecast_data::Bool
     initial_time::Dates.DateTime
-    variables::Dict{Symbol,JuMP.Containers.DenseAxisArray}
-    constraints::Dict{Symbol,JuMP.Containers.DenseAxisArray}
+    variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
+    constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     cost_function::JuMP.AbstractJuMPScalar
-    expressions::Dict{Symbol,JuMP.Containers.DenseAxisArray}
-    parameters::Union{Nothing,ParametersContainer}
+    expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
+    parameters::Union{Nothing, ParametersContainer}
     initial_conditions::InitialConditionsContainer
-    pm::Union{Nothing,PM.AbstractPowerModel}
+    pm::Union{Nothing, PM.AbstractPowerModel}
 
     function PSIContainer(
         JuMPmodel::JuMP.AbstractModel,
-        optimizer_factory::Union{Nothing,JuMP.OptimizerFactory},
-        time_steps::UnitRange{Int64},
+        optimizer_factory::Union{Nothing, JuMP.OptimizerFactory},
+        time_steps::UnitRange{Int},
         resolution::Dates.TimePeriod,
         use_forecast_data::Bool,
         initial_time::Dates.DateTime,
-        variables::Dict{Symbol,JuMP.Containers.DenseAxisArray},
-        constraints::Dict{Symbol,JuMP.Containers.DenseAxisArray},
+        variables::Dict{Symbol, JuMP.Containers.DenseAxisArray},
+        constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray},
         cost_function::JuMP.AbstractJuMPScalar,
-        expressions::Dict{Symbol,JuMP.Containers.DenseAxisArray},
-        parameters::Union{Nothing,ParametersContainer},
+        expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray},
+        parameters::Union{Nothing, ParametersContainer},
         initial_conditions::InitialConditionsContainer,
-        pm::Union{Nothing,PM.AbstractPowerModel},
+        pm::Union{Nothing, PM.AbstractPowerModel},
     )
         resolution = IS.time_period_conversion(resolution)
         new(
@@ -149,9 +149,10 @@ end
 function PSIContainer(
     ::Type{T},
     sys::PSY.System,
-    optimizer::Union{Nothing,JuMP.OptimizerFactory};
+    optimizer::Union{Nothing, JuMP.OptimizerFactory};
     kwargs...,
-) where {T<:PM.AbstractPowerModel}
+) where {T <: PM.AbstractPowerModel}
+    check_kwargs(kwargs, PSICONTAINER_ACCEPTED_KWARGS, "PSIContainer")
     PSY.check_forecast_consistency(sys)
     user_defined_model = get(kwargs, :JuMPmodel, nothing)
     ini_con = get(kwargs, :initial_conditions, InitialConditionsContainer())
@@ -196,8 +197,8 @@ function InitialCondition(
     device::T,
     update_ref::UpdateRef,
     value::Float64,
-    cache_type::Union{Nothing,Type{<:AbstractCache}} = nothing,
-) where {T<:PSY.Component}
+    cache_type::Union{Nothing, Type{<:AbstractCache}} = nothing,
+) where {T <: PSY.Component}
     if model_has_parameters(psi_container)
         return InitialCondition(
             device,
@@ -235,7 +236,7 @@ function _encode_for_jump(::Type{T}, name1::AbstractString, name2::AbstractStrin
 end
 
 function _encode_for_jump(::Type{T}, name1::Symbol, name2::Symbol) where {T}
-    return _encode_for_jump(T, string(name), string(name2))
+    return _encode_for_jump(T, string(name1), string(name2))
 end
 
 function _encode_for_jump(::Type{T}, name::AbstractString) where {T}
@@ -277,7 +278,7 @@ function get_variable(
     psi_container::PSIContainer,
     var_type::AbstractString,
     ::Type{T},
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     return get_variable(psi_container, variable_name(var_type, T))
 end
 
@@ -304,7 +305,7 @@ function assign_variable!(
     variable_type::AbstractString,
     ::Type{T},
     value,
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     assign_variable!(psi_container, variable_name(variable_type, T), value)
     return
 end
@@ -336,7 +337,7 @@ function get_constraint(
     psi_container::PSIContainer,
     constraint_type::AbstractString,
     ::Type{T},
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     return get_constraint(psi_container, constraint_name(constraint_type, T))
 end
 
@@ -363,7 +364,7 @@ function assign_constraint!(
     constraint_type::AbstractString,
     ::Type{T},
     value,
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     assign_constraint!(psi_container, constraint_name(constraint_type, T), value)
     return
 end
@@ -410,7 +411,7 @@ function get_parameter_container(
     psi_container::PSIContainer,
     name::Symbol,
     ::Type{T},
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     return get_parameter_container(psi_container, _encode_for_jump(T, name))
 end
 

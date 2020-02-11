@@ -56,16 +56,20 @@ export ThermalDispatch
 export ThermalRampLimited
 export ThermalDispatchNoMin
 
-# feed_forward sequences
+# feedforward chrons
 export RecedingHorizon
 export Synchronize
 export Consecutive
 
-# feed_forward models
+# feedforward models
 export UpperBoundFF
 export SemiContinuousFF
 export RangeFF
 export IntegralLimitFF
+
+# InitialConditions chrons
+export InterStageChronology
+export IntraStageChronology
 
 # Initial Conditions Quantities
 export DevicePower
@@ -156,7 +160,6 @@ include("utils/utils.jl")
 include("core/abstract_types.jl")
 include("devices_models/devices/common/constraints_structs.jl")
 include("core/aux_structs.jl")
-include("core/chronology.jl")
 include("services_models/services_model.jl")
 include("devices_models/device_model.jl")
 include("network_models/networks.jl")
@@ -166,9 +169,9 @@ include("core/psi_container.jl")
 include("core/operations_problem.jl")
 include("core/simulation_stages.jl")
 include("core/cache.jl")
-include("core/feed_forward.jl")
 include("core/simulation_sequence.jl")
 include("core/simulation.jl")
+include("core/feedforward.jl")
 include("core/operations_problem_results.jl")
 
 #Services Models

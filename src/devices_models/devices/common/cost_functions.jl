@@ -33,7 +33,7 @@ function ps_cost(
     cost_component::Float64,
     dt::Float64,
     sign::Float64,
-) where {JV<:JuMP.AbstractVariableRef}
+) where {JV <: JuMP.AbstractVariableRef}
     gen_cost = sum(variable) * cost_component
 
     return sign * gen_cost * dt
@@ -68,7 +68,7 @@ function ps_cost(
     cost_component::PSY.VariableCost{Float64},
     dt::Float64,
     sign::Float64,
-) where {JV<:JuMP.AbstractVariableRef}
+) where {JV <: JuMP.AbstractVariableRef}
     return ps_cost(psi_container, variable, PSY.get_cost(cost_component), dt, sign)
 end
 
@@ -105,10 +105,10 @@ Returns ```gen_cost```
 function ps_cost(
     psi_container::PSIContainer,
     variable::JuMP.Containers.DenseAxisArray{JV},
-    cost_component::PSY.VariableCost{NTuple{2,Float64}},
+    cost_component::PSY.VariableCost{NTuple{2, Float64}},
     dt::Float64,
     sign::Float64,
-) where {JV<:JuMP.AbstractVariableRef}
+) where {JV <: JuMP.AbstractVariableRef}
     if cost_component[1] >= eps()
         gen_cost =
             sum(variable .^ 2) * cost_component[1] + sum(variable) * cost_component[2]
@@ -177,9 +177,9 @@ Returns ```gen_cost```
 function _pwlgencost_sos(
     psi_container::PSIContainer,
     variable::JV,
-    cost_component::Vector{NTuple{2,Float64}},
-) where {JV<:JuMP.AbstractVariableRef}
-    gen_cost = JuMP.GenericAffExpr{Float64,_variable_type(psi_container)}()
+    cost_component::Vector{NTuple{2, Float64}},
+) where {JV <: JuMP.AbstractVariableRef}
+    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
     pwlvars = JuMP.@variable(
         psi_container.JuMPmodel,
         [i = 1:length(cost_component)],
@@ -239,9 +239,9 @@ Returns ```gen_cost```
 function _pwlgencost_linear(
     psi_container::PSIContainer,
     variable::JV,
-    cost_component::Vector{NTuple{2,Float64}},
-) where {JV<:JuMP.AbstractVariableRef}
-    gen_cost = JuMP.GenericAffExpr{Float64,_variable_type(psi_container)}()
+    cost_component::Vector{NTuple{2, Float64}},
+) where {JV <: JuMP.AbstractVariableRef}
+    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
     upperbound(i) =
         (i == 1 ? cost_component[i][2] : (cost_component[i][2] - cost_component[i - 1][2]))
     pwlvars = JuMP.@variable(
@@ -292,8 +292,8 @@ Returns ```gen_cost```
 function _pwl_cost(
     psi_container::PSIContainer,
     variable::JV,
-    cost_component::Vector{NTuple{2,Float64}},
-) where {JV<:JuMP.AbstractVariableRef}
+    cost_component::Vector{NTuple{2, Float64}},
+) where {JV <: JuMP.AbstractVariableRef}
     # If array is full of tuples with zeros return 0.0
     all(iszero.(last.(cost_component))) && return 0.0
 
@@ -342,11 +342,11 @@ where ``c_v`` is given by
 function ps_cost(
     psi_container::PSIContainer,
     variable::JuMP.Containers.DenseAxisArray{JV},
-    cost_component::PSY.VariableCost{Vector{NTuple{2,Float64}}},
+    cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
     dt::Float64,
     sign::Float64,
-) where {JV<:JuMP.AbstractVariableRef}
-    gen_cost = JuMP.GenericAffExpr{Float64,_variable_type(psi_container)}()
+) where {JV <: JuMP.AbstractVariableRef}
+    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
     cost_array = cost_component.cost
     for var in variable
         c = _pwl_cost(psi_container, var, cost_array)
@@ -393,7 +393,7 @@ function add_to_cost(
     var_name::Symbol,
     cost_symbol::Symbol,
     sign::Float64 = 1.0,
-) where {D<:IS.FlattenIteratorWrapper{<:PSY.Device}}
+) where {D <: IS.FlattenIteratorWrapper{<:PSY.Device}}
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Minute(resolution)) / 60
     variable = get_variable(psi_container, var_name)

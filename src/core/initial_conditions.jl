@@ -1,30 +1,46 @@
+"""
+    InterStageChronology()
+
+    Type struct to select an information sharing model between stages that uses results from the most recent stage executed to calculate the initial conditions. This model takes into account solutions from stages defined finer resolutions
+"""
+
+struct InterStageChronology <: IniCondChronology end
+
+"""
+    InterStageChronology()
+
+    Type struct to select an information sharing model between stages that uses results from the same recent stage to calculate the initial conditions. This model ignores solutions from stages defined finer resolutions.
+"""
+struct IntraStageChronology <: IniCondChronology end
+
+#########################Initial Conditions Definitions#####################################
 struct DevicePower <: InitialConditionType end
 struct DeviceStatus <: InitialConditionType end
 struct TimeDurationON <: InitialConditionType end
 struct TimeDurationOFF <: InitialConditionType end
 struct DeviceEnergy <: InitialConditionType end
 
-mutable struct InitialCondition{T<:Union{PJ.ParameterRef,Float64}}
+mutable struct InitialCondition{T <: Union{PJ.ParameterRef, Float64}}
     device::PSY.Device
     update_ref::UpdateRef
     value::T
-    cache_type::Union{Nothing,Type{<:AbstractCache}}
+    cache_type::Union{Nothing, Type{<:AbstractCache}}
 end
 
 function InitialCondition(
     device::PSY.Device,
     update_ref::UpdateRef,
     value::T,
-) where {T<:Union{PJ.ParameterRef,Float64}}
+) where {T <: Union{PJ.ParameterRef, Float64}}
     return InitialCondition(device, update_ref, value, nothing)
 end
 
-struct ICKey{IC<:InitialConditionType,D<:PSY.Device}
+struct ICKey{IC <: InitialConditionType, D <: PSY.Device}
     ic_type::Type{IC}
     device_type::Type{D}
 end
 
-const InitialConditionsContainer = Dict{ICKey,Array{InitialCondition}}
+const InitialConditionsContainer = Dict{ICKey, Array{InitialCondition}}
 
 function value(p::InitialCondition{Float64})
     return p.value
@@ -42,11 +58,11 @@ device_name(ini_cond::InitialCondition) = PSY.get_name(ini_cond.device)
 # TODO: Consider when more than one UC model is used for the stages that the counts need
 # to be scaled.
 function calculate_ic_quantity(
-    initial_condition_key::ICKey{TimeDurationOFF,T},
+    initial_condition_key::ICKey{TimeDurationOFF, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::Union{Nothing,AbstractCache},
-) where {T<:PSY.Component}
+    cache::Union{Nothing, AbstractCache},
+) where {T <: PSY.Component}
     name = device_name(ic)
     time_cache = cache_value(cache, name)
 
@@ -59,11 +75,11 @@ function calculate_ic_quantity(
 end
 
 function calculate_ic_quantity(
-    initial_condition_key::ICKey{TimeDurationON,T},
+    initial_condition_key::ICKey{TimeDurationON, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::Union{Nothing,AbstractCache},
-) where {T<:PSY.Component}
+    cache::Union{Nothing, AbstractCache},
+) where {T <: PSY.Component}
     name = device_name(ic)
     time_cache = cache_value(cache, name)
 
@@ -76,20 +92,20 @@ function calculate_ic_quantity(
 end
 
 function calculate_ic_quantity(
-    initial_condition_key::ICKey{DeviceStatus,T},
+    initial_condition_key::ICKey{DeviceStatus, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::Union{Nothing,AbstractCache},
-) where {T<:PSY.Component}
+    cache::Union{Nothing, AbstractCache},
+) where {T <: PSY.Component}
     return isapprox(var_value, 0.0, atol = ComparisonTolerance) ? 0.0 : 1.0
 end
 
 function calculate_ic_quantity(
-    initial_condition_key::ICKey{DevicePower,T},
+    initial_condition_key::ICKey{DevicePower, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::Union{Nothing,AbstractCache},
-) where {T<:PSY.ThermalGen}
+    cache::Union{Nothing, AbstractCache},
+) where {T <: PSY.ThermalGen}
     if isnothing(cache)
         status_change_to_on =
             value(ic) <= ComparisonTolerance && var_value >= ComparisonTolerance

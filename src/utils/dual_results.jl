@@ -1,9 +1,9 @@
 struct DualResults <: Results
-    variables::Dict{Symbol,DataFrames.DataFrame}
+    variables::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
-    constraints_duals::Dict{Symbol,Any}
+    constraints_duals::Dict{Symbol, Any}
 end
 
 get_res_variables(result::DualResults) = result.variables
@@ -30,7 +30,7 @@ function _read_references(
     stage::String,
     step::Array,
     references::Dict,
-    time_length::Int64,
+    time_length::Int,
 )
 
     for name in (duals)
@@ -58,7 +58,7 @@ function _read_references(
     dual::Array,
     stage::String,
     references::Dict,
-    time_length::Int64,
+    time_length::Int,
 )
     for name in dual
         date_df = references[stage][name]

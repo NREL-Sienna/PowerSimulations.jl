@@ -4,7 +4,7 @@ function parameter_update!(
     container::ParameterContainer,
     stage::Stage,
     sim::Simulation,
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     devices = PSY.get_components(T, stage.sys)
     initial_forecast_time = get_simulation_time(sim, get_number(stage))
     horizon = length(model_time_steps(stage.internal.psi_container))
@@ -36,7 +36,7 @@ function parameter_update!(
 )
     param_array = get_parameter_array(container)
     for (k, ref) in stage.internal.chronolgy_dict
-        feed_forward_update(ref, param_reference, param_array, stage, get_stage(sim, k))
+        feedforward_update(ref, param_reference, param_array, stage, get_stage(sim, k))
     end
 
     return
@@ -54,8 +54,8 @@ end
 function _intial_conditions_update!(
     initial_condition_key::ICKey,
     ini_cond_vector::Vector{InitialCondition},
-    stage_number::Int64,
-    step::Int64,
+    stage_number::Int,
+    step::Int,
     sim::Simulation,
 )
     ini_cond_chronolgy = nothing
@@ -95,9 +95,9 @@ end
 
 function update_stage!(
     stage::Stage{M},
-    step::Int64,
+    step::Int,
     sim::Simulation,
-) where {M<:AbstractOperationsProblem}
+) where {M <: AbstractOperationsProblem}
     # Is first run of first stage? Yes -> do nothing
     (step == 1 && get_number(stage) == 1 && get_execution_count(stage) == 0) && return
     for container in iterate_parameter_containers(stage.internal.psi_container)

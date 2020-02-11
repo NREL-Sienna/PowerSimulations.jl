@@ -10,7 +10,7 @@ struct SimulationResultsReference
             stage = get_stage(sim, stage_name)
             interval = sim.sequence.intervals[stage_name]
             resolution = PSY.get_forecasts_resolution(get_sys(stage))
-            chronologies["stage-$stage_name"] = convert(Int64, (interval / resolution))
+            chronologies["stage-$stage_name"] = convert(Int, (interval / resolution))
         end
         new(ref, sim.internal.results_dir, chronologies)
     end
@@ -47,7 +47,7 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
     sim.internal.date_ref[2] = sim.internal.date_range[1]
     references = Dict()
     for (stage_number, stage_name) in sim.sequence.order
-        variables = Dict{Symbol,Any}()
+        variables = Dict{Symbol, Any}()
         interval = sim.sequence.intervals[stage_name]
         variable_names =
             (collect(keys(get_psi_container(sim.stages[stage_name]).variables)))
@@ -97,7 +97,7 @@ end
 function find_step_range(
     rsim_result::SimulationResultsReference,
     stage::String,
-    Dates::StepRange{Dates.DateTime,Any},
+    Dates::StepRange{Dates.DateTime, Any},
 )
     references = sim_results.ref
     variable = (collect(keys(references[stage])))

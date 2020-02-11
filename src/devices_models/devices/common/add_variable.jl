@@ -43,10 +43,10 @@ function add_variable(
     devices::D,
     var_name::Symbol,
     binary::Bool,
-    expression_name::Union{Nothing,Symbol} = nothing,
+    expression_name::Union{Nothing, Symbol} = nothing,
     sign::Float64 = 1.0;
     kwargs...,
-) where {D<:Union{Vector{<:PSY.Device},IS.FlattenIteratorWrapper{<:PSY.Device}}}
+) where {D <: Union{Vector{<:PSY.Device}, IS.FlattenIteratorWrapper{<:PSY.Device}}}
     time_steps = model_time_steps(psi_container)
     variable = add_var_container!(
         psi_container,
@@ -121,7 +121,7 @@ function set_variable_bounds!(
     bounds::Vector{DeviceRange},
     var_type::AbstractString,
     ::Type{T},
-) where {T<:PSY.Device}
+) where {T <: PSY.Device}
     var = get_variable(psi_container, var_type, T)
     for t in model_time_steps(psi_container), bound in bounds
         _var = var[bound.name, t]

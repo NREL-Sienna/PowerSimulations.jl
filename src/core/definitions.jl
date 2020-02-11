@@ -1,9 +1,9 @@
 #################################################################################
 #Type Alias for long type signatures
-const MinMax = NamedTuple{(:min, :max),NTuple{2,Float64}}
-const NamedMinMax = Tuple{String,MinMax}
-const UpDown = NamedTuple{(:up, :down),NTuple{2,Float64}}
-const InOut = NamedTuple{(:in, :out),NTuple{2,Float64}}
+const MinMax = NamedTuple{(:min, :max), NTuple{2, Float64}}
+const NamedMinMax = Tuple{String, MinMax}
+const UpDown = NamedTuple{(:up, :down), NTuple{2, Float64}}
+const InOut = NamedTuple{(:in, :out), NTuple{2, Float64}}
 
 # Type Alias From other Packages
 const PM = PowerModels
@@ -18,13 +18,14 @@ const TS = TimeSeries
 
 #Type Alias for JuMP and PJ containers
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
-const PGAE{V} = PJ.ParametrizedGenericAffExpr{Float64,V} where {V<:JuMP.AbstractVariableRef}
-const GAE{V} = JuMP.GenericAffExpr{Float64,V} where {V<:JuMP.AbstractVariableRef}
-const JuMPAffineExpressionArray = Matrix{GAE{V}} where {V<:JuMP.AbstractVariableRef}
-const JuMPAffineExpressionVector = Vector{GAE{V}} where {V<:JuMP.AbstractVariableRef}
+const PGAE{V} =
+    PJ.ParametrizedGenericAffExpr{Float64, V} where {V <: JuMP.AbstractVariableRef}
+const GAE{V} = JuMP.GenericAffExpr{Float64, V} where {V <: JuMP.AbstractVariableRef}
+const JuMPAffineExpressionArray = Matrix{GAE{V}} where {V <: JuMP.AbstractVariableRef}
+const JuMPAffineExpressionVector = Vector{GAE{V}} where {V <: JuMP.AbstractVariableRef}
 const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
-const DSDA = Dict{Symbol,JuMP.Containers.DenseAxisArray}
+const DSDA = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
 # Tolerance of comparisons
 const ComparisonTolerance = 1.0e-10
@@ -34,12 +35,17 @@ const OPERATIONS_ACCEPTED_KWARGS = [
     :initial_conditions,
     :use_forecast_data,
     :use_parameters,
+    :initial_time,
     :JuMPmodel,
     :optimizer,
     :PTDF,
     :initial_time,
 ]
+
+const PSICONTAINER_ACCEPTED_KWARGS = OPERATIONS_ACCEPTED_KWARGS
+
 const SIMULATION_BUILD_KWARGS = [:system_to_file, :PTDF_matrices]
+const SIMULATION_KWARGS = [:initial_time]
 
 # The constants below are strings instead of enums because there is a requirement that users
 # should be able to define their own without changing PowerSimulations.
@@ -73,8 +79,8 @@ const DURATION_DOWN = "duration_dn"
 const DURATION_UP = "duration_up"
 const ENERGY_CAPACITY = "energy_capacity"
 const ENERGY_LIMIT = "energy_limit"
-const FEED_FORWARD = "FF"
-const FEED_FORWARD_BIN = "FFbin"
+const FEEDFORWARD = "FF"
+const FEEDFORWARD_BIN = "FF_bin"
 const FLOW_LIMIT = "FlowLimit"
 const FLOW_LIMIT_FROM_TO = "FlowLimitFT"
 const FLOW_LIMIT_TO_FROM = "FlowLimitTF"

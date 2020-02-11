@@ -1,13 +1,13 @@
-devices = Dict{Symbol,DeviceModel}(
+devices = Dict{Symbol, DeviceModel}(
     :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
 )
-branches = Dict{Symbol,DeviceModel}(
+branches = Dict{Symbol, DeviceModel}(
     :L => DeviceModel(Line, StaticLine),
     :T => DeviceModel(Transformer2W, StaticTransformer),
     :TT => DeviceModel(TapTransformer, StaticTransformer),
 )
-services = Dict{Symbol,ServiceModel}()
+services = Dict{Symbol, ServiceModel}()
 @testset "Operation Model kwargs with CopperPlatePowerModel base" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     @test_throws ArgumentError OperationsProblem(
@@ -74,11 +74,11 @@ end
     for net in networks, thermal in thermal_gens, system in systems, p in [true, false]
         @testset "Operation Model $(net) - $(thermal) - $(system)" begin
             thermal_model = DeviceModel(ThermalStandard, thermal)
-            devices = Dict{Symbol,DeviceModel}(
+            devices = Dict{Symbol, DeviceModel}(
                 :Generators => DeviceModel(ThermalStandard, thermal),
                 :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
             )
-            branches = Dict{Symbol,DeviceModel}(:L => DeviceModel(Line, StaticLine))
+            branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
             template = OperationsProblemTemplate(net, devices, branches, services)
             op_problem = OperationsProblem(
                 TestOpProblem,

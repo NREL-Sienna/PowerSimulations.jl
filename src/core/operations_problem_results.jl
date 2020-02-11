@@ -1,6 +1,6 @@
 get_results(result::Results) = nothing
 struct OperationsProblemResults <: Results
-    variables::Dict{Symbol,DataFrames.DataFrame}
+    variables::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
@@ -80,7 +80,7 @@ function load_operation_results(folder_path::AbstractString)
         files_in_folder,
         ["time_stamp.feather", "optimizer_log.json", "check.sha256"],
     )
-    variables = Dict{Symbol,DataFrames.DataFrame}()
+    variables = Dict{Symbol, DataFrames.DataFrame}()
     duals = Dict()
     dual = _find_duals(variable_list)
     variable_list = setdiff(variable_list, dual)
@@ -94,7 +94,7 @@ function load_operation_results(folder_path::AbstractString)
     if size(time_stamp, 1) > find_var_length(variables, variable_list)
         time_stamp = shorten_time_stamp(time_stamp)
     end
-    obj_value = Dict{Symbol,Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
+    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     check_file_integrity(folder_path)
     results = _make_results(variables, obj_value, optimizer, time_stamp)
     return results
