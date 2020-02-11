@@ -191,7 +191,6 @@ function _get_simulation_initial_times!(sim::Simulation)
                 end
             end
         end
-        @show mapreduce(x -> x == sim_ini_time, |, stage_initial_times[stage_number]) == isempty((x for x in stage_initial_times[stage_number] if x == sim_ini_time))
         if !isnothing(sim_ini_time) && !mapreduce(x -> x == sim_ini_time, |, stage_initial_times[stage_number])
             throw(IS.ConflictingInputsError("The specified simulation initial_time $sim_ini_time isn't contained in stage $stage_number.
             Manually provided initial times have to be compatible with the specified interval and horizon in the stages."))
