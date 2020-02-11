@@ -15,21 +15,21 @@ case5_dc_data = PM.replicate(case5_dc_data, 2)
 #  Ideally this would also test the number of constraints generated
 
 @testset "PowerModels Model Build" begin
-    pm = PowerSimulations.build_nip_model(case5_data, DCPPowerModel)
+    pm = PowerSimulations.instantiate_nip_model(case5_data, DCPPowerModel)
     @test JuMP.num_variables(pm.model) == 34
-    pm = PowerSimulations.build_nip_model(case5_data, PM.ACPPowerModel)
+    pm = PowerSimulations.instantiate_nip_model(case5_data, PM.ACPPowerModel)
     @test JuMP.num_variables(pm.model) == 96
-    pm = PowerSimulations.build_nip_model(case5_data, PM.SOCWRPowerModel)
+    pm = PowerSimulations.instantiate_nip_model(case5_data, PM.SOCWRPowerModel)
     @test JuMP.num_variables(pm.model) == 110
 end
 
 @testset "PM with type extensions" begin
-    pm = PowerSimulations.build_nip_model(case5_dc_data, DCPPowerModel)
+    pm = PowerSimulations.instantiate_nip_model(case5_dc_data, DCPPowerModel)
     JuMP.num_variables(pm.model) == 34 # Repetitive?
-    pm = PowerSimulations.build_nip_model(case5_dc_data, ACPPowerModel)
+    pm = PowerSimulations.instantiate_nip_model(case5_dc_data, ACPPowerModel)
     JuMP.num_variables(pm.model) == 96
-    pm = PowerSimulations.build_nip_model(case5_dc_data, DCPPowerModel)
+    pm = PowerSimulations.instantiate_nip_model(case5_dc_data, DCPPowerModel)
     @test JuMP.num_variables(pm.model) == 36
-    pm = PowerSimulations.build_nip_model(case5_dc_data, DCPPowerModel)
+    pm = PowerSimulations.instantiate_nip_model(case5_dc_data, DCPPowerModel)
     @test JuMP.num_variables(pm.model) == 36 # 48 was originally here, verify??
 end
