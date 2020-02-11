@@ -126,10 +126,7 @@ function variable_net_injection(pm::PM.AbstractPowerModel; kwargs...)
 end
 
 ""
-function variable_active_net_injection(
-    pm::PM.AbstractPowerModel;
-    nw::Int = pm.cnw,
-)
+function variable_active_net_injection(pm::PM.AbstractPowerModel; nw::Int = pm.cnw)
     PM.var(pm, nw)[:pni] = JuMP.@variable(
         pm.model,
         [i in PM.ids(pm, nw, :bus)],
@@ -142,10 +139,7 @@ function variable_active_net_injection(
 end
 
 ""
-function variable_reactive_net_injection(
-    pm::PM.AbstractPowerModel;
-    nw::Int = pm.cnw,
-)
+function variable_reactive_net_injection(pm::PM.AbstractPowerModel; nw::Int = pm.cnw)
     PM.var(pm, nw)[:qni] = JuMP.@variable(
         pm.model,
         [i in PM.ids(pm, nw, :bus)],
@@ -157,11 +151,7 @@ function variable_reactive_net_injection(
 end
 
 ""
-function constraint_power_balance_ni(
-    pm::PM.AbstractPowerModel,
-    i::Int;
-    nw::Int = pm.cnw,
-)
+function constraint_power_balance_ni(pm::PM.AbstractPowerModel, i::Int; nw::Int = pm.cnw)
     if !haskey(PM.con(pm, nw), :power_balance_p)
         PM.con(pm, nw)[:power_balance_p] = Dict{Int, JuMP.ConstraintRef}()
     end
@@ -227,15 +217,7 @@ function constraint_power_balance_ni_expr(
     pni_expr = PM.ref(pm, nw, :bus, i, "pni")
     qni_expr = PM.ref(pm, nw, :bus, i, "qni")
 
-    constraint_power_balance_ni_expr(
-        pm,
-        nw,
-        i,
-        bus_arcs,
-        bus_arcs_dc,
-        pni_expr,
-        qni_expr,
-    )
+    constraint_power_balance_ni_expr(pm, nw, i, bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
 
     return
 
