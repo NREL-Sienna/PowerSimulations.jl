@@ -167,6 +167,7 @@ function _get_simulation_initial_times!(sim::Simulation)
     sim_ini_time = get_initial_time(sim)
     for (stage_number, stage_name) in sim.sequence.order
         stage_system = sim.stages[stage_name].sys
+        PSY.check_forecast_consistency(stage_system)
         interval = PSY.get_forecasts_interval(stage_system)
         horizon = get_horizon(get_sequence(sim), stage_name)
         seq_interval = get_interval(get_sequence(sim), stage_name)
@@ -330,7 +331,6 @@ function build!(sim::Simulation; kwargs...)
         stage_interval = sim.sequence.intervals[stage_name]
         executions = Int(sim.sequence.step_resolution / stage_interval)
         stage.internal = StageInternal(stage_number, executions, 0, nothing)
-        PSY.check_forecast_consistency(stage.sys)
         _attach_feedforward!(sim, stage_name)
     end
     _assign_feedforward_chronologies(sim)
