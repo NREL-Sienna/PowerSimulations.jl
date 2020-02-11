@@ -466,7 +466,7 @@ function feedforward!(
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         integral_limit_ff(
             psi_container,
-            constraint_name(feedforward, T),
+            constraint_name(FEEDFORWARD, T),
             parameter_ref,
             var_name,
         )
