@@ -177,12 +177,12 @@ function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.Bus})
     PM_buses = Dict{String, Any}()
     PMmap_buses = Dict{Int, PSY.Bus}()
 
-    pm_bustypes = Dict{PSY.BusType, Int}(
-        PSY.ISOLATED => 4,
-        PSY.PQ => 1,
-        PSY.PV => 2,
-        PSY.REF => 3,
-        PSY.SLACK => 3,
+    pm_bustypes = Dict{PSY.BusTypes.BusType, Int}(
+        PSY.BusTypes.ISOLATED => 4,
+        PSY.BusTypes.PQ => 1,
+        PSY.BusTypes.PV => 2,
+        PSY.BusTypes.REF => 3,
+        PSY.BusTypes.SLACK => 3,
     )
 
     for bus in buses
@@ -203,7 +203,7 @@ function get_buses_to_pm(buses::IS.FlattenIteratorWrapper{PSY.Bus})
             "name" => PSY.get_name(bus),
         )
         PM_buses["$(number)"] = PM_bus
-        if PSY.get_bustype(bus) != PSY.ISOLATED::PSY.BusType
+        if PSY.get_bustype(bus) != PSY.BusTypes.ISOLATED::PSY.BusTypes.BusType
             PMmap_buses[number] = bus
         end
     end
