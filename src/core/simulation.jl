@@ -120,8 +120,9 @@ function _assign_feedforward_chronologies(sim::Simulation)
         to_stage_interval =
             IS.time_period_conversion(get(sim.sequence.intervals, key.second, nothing))
         from_stage_number = find_key_with_value(sim.sequence.order, key.first)
-        isempty(from_stage_number) &&
-        throw(ArgumentError("Stage $(key.first) not specified in the order dictionary"))
+        if isempty(from_stage_number)
+            throw(ArgumentError("Stage $(key.first) not specified in the order dictionary"))
+        end
         for stage_number in from_stage_number
             to_stage.internal.chronolgy_dict[stage_number] = chron
             from_stage = get_stage(sim, stage_number)
