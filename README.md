@@ -1,7 +1,6 @@
 # PowerSimulations
 
 [![Build Status](https://img.shields.io/travis/com/NREL/PowerSimulations.jl/master.svg)](https://travis-ci.com/NREL/PowerSimulations.jl)
-[![Build status](https://ci.appveyor.com/api/projects/status/5ttibe9nj9w0va8v/branch/master?svg=true)](https://ci.appveyor.com/project/jd-lara/powersimulations-jl/branch/master)
 [![codecov](https://codecov.io/gh/NREL/PowerSimulations.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/NREL/PowerSimulations.jl)
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://nrel.github.io/PowerSimulations.jl/latest)
 [![Join the chat at https://gitter.im/NREL/PowerSimulations.jl](https://badges.gitter.im/NREL/PowerSimulations.jl.svg)](https://gitter.im/NREL/PowerSimulations.jl)
@@ -39,8 +38,8 @@ For example, an annual production cost modeling simulation can be created by for
 
 ```julia
 julia> ]
-(v1.2) pkg> add PowerSystems
-(v1.2) pkg> add PowerSimulations
+(v1.3) pkg> add PowerSystems
+(v1.3) pkg> add PowerSimulations
 ```
 ## Usage
 
