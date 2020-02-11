@@ -17,14 +17,10 @@ function _calculate_interval_inner_counts(
         previous_stage_name = order[k-1]
         stage_interval = intervals[stage_name]
         previous_stage_interval = intervals[previous_stage_name]
-        try
-            interval_run_counts[k] = previous_stage_interval / stage_interval
-        catch e
-            if isa(e, InexactError)
-                throw(IS.ConflictingInputsError("The interval configuration provided results in a fractional number of executions of stage $stage_name"))
-            end
-            throw(e)
+        if Dates.Millisecond(previous_stage_interval % stage_interval) != Dates.Millisecond(0)
+            throw(IS.ConflictingInputsError("The interval configuration provided results in a fractional number of executions of stage $stage_name"))
         end
+        interval_run_counts[k] = previous_stage_interval / stage_interval
         @debug "Stage $k is executed $(interval_run_counts[k]) time within each interval of Stage $(k-1)"
     end
     stage_name = order[1]
@@ -51,7 +47,6 @@ function _fill_execution_order(
     interval_run_counts::Dict{Int,Int},
 )
     function _fill_stage(
-        execution_order::Vector{Int},
         index::Int,
         stage::Int
     )
@@ -59,7 +54,6 @@ function _fill_execution_order(
             next_stage = stage + 1
             for i in 1:interval_run_counts[next_stage]
                 index = _fill_stage(
-                    execution_order,
                     index,
                     next_stage,
                 )
@@ -72,7 +66,7 @@ function _fill_execution_order(
     index = length(execution_order)
     stages = sort!(collect(keys(interval_run_counts)))
     last_stage = stages[end]
-    _fill_stage(execution_order, index, stages[1])
+    _fill_stage(index, stages[1])
 end
 
 function _get_execution_order_vector(

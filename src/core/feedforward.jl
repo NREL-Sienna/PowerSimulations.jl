@@ -25,7 +25,7 @@ end
 
 struct Consecutive <: FeedForwardChronology end
 
-function check_chronology(sim::Simulation, key::Pair, sync::Synchronize)
+function check_chronology!(sim::Simulation, key::Pair, sync::Synchronize)
     from_stage = get_stage(sim, key.first)
     to_stage = get_stage(sim, key.second)
     from_stage_horizon = sim.sequence.horizons[key.first]
@@ -445,7 +445,7 @@ function feedforward!(
         var_name = variable_name(prefix, T)
         semicontinuousrange_ff(
             psi_container,
-            constraint_name(feedforward_BIN, T),
+            constraint_name(FEEDFORWARD_BIN, T),
             parameter_ref,
             var_name,
         )
