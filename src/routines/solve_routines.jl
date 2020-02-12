@@ -128,7 +128,7 @@ function execute!(sim::Simulation; kwargs...)
     execution_order = get_execution_order(sim)
     for s in 1:get_steps(sim)
         println("Executing Step $(s)")
-        for stage_number in execution_order
+        for (ix, stage_number) in enumerate(execution_order)
             stage_name = sim.sequence.order[stage_number] # TODO: implement some efficient way of indexing with stage name.
             stage = get_stage(sim, stage_name)
             stage_interval = get_stage_interval(sim, stage_name)
@@ -141,7 +141,7 @@ function execute!(sim::Simulation; kwargs...)
                 replace_chars("$(sim.internal.current_time)", ":", "-"),
             )
             mkpath(raw_results_path)
-            #update_stage!(stage, s, sim)
+            update_stage!(stage, ix, s, sim)
             _run_stage(
                 stage,
                 sim.internal.current_time,

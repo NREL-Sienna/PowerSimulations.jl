@@ -47,41 +47,20 @@ function _update_caches!(stage::Stage)
     for cache in values(stage.internal.cache_dict)
         update_cache!(cache, stage)
     end
-
     return
 end
 
 function _intial_conditions_update!(
+    current_stage::Stage,
     initial_condition_key::ICKey,
     ini_cond_vector::Vector{InitialCondition},
-    stage_number::Int,
     step::Int,
+    current_execution_index::Int64,
     sim::Simulation,
 )
-    ini_cond_chronolgy = nothing
-    current_stage = get_stage(sim, stage_number)
-    #checks if current stage is the first in the step and the execution is the first to
-    # look backwards on the previous step
-    intra_step_update = (stage_number == 1 && get_execution_count(current_stage) == 0)
-    #checks if current execution is the first execution to look into the previuous stage
-    intra_stage_update = (stage_number > 1 && get_execution_count(current_stage) == 0)
-    #checks that the current run and stage ininital conditions is based on the current results
-    inner_stage_update = (stage_number > 1 && get_execution_count(current_stage) > 0)
-    # makes the update based on the last stage.
-    if intra_step_update
-        from_stage = get_last_stage(sim)
-        ini_cond_chronolgy = get_ini_cond_chronology(sim, stage_number)
-        # Updates the next stage in the same step. Uses the same chronology as intra_stage
-    elseif intra_stage_update
-        from_stage = get_stage(sim, stage_number - 1)
-        ini_cond_chronolgy = current_stage.internal.chronolgy_dict[stage_number - 1]
-        # Update is done on the current stage
-    elseif inner_stage_update
-        from_stage = current_stage
-        ini_cond_chronolgy = get_ini_cond_chronology(sim, stage_number)
-    else
-        error("Condition not implemented")
-    end
+
+
+
     initial_condition_update!(
         initial_condition_key,
         ini_cond_chronolgy,
@@ -95,6 +74,7 @@ end
 
 function update_stage!(
     stage::Stage{M},
+    current_execution_index::Int64,
     step::Int,
     sim::Simulation,
 ) where {M <: AbstractOperationsProblem}
@@ -108,7 +88,7 @@ function update_stage!(
 
     # Set initial conditions of the stage I am about to run.
     for (k, v) in get_initial_conditions(stage.internal.psi_container)
-        _intial_conditions_update!(k, v, get_number(stage), step, sim)
+        _intial_conditions_update!(stage, k, v, current_execution_index, step, sim)
     end
 
     return

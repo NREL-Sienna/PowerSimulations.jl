@@ -266,6 +266,7 @@ function _build_stages!(sim::Simulation; kwargs...)
             horizon = horizon,
         )
         _build!(stage.internal.psi_container, stage.template, stage.sys; kwargs...)
+        # TODO: Add here the checks for the adecuate definition of the caches
         _populate_caches!(sim, stage_name)
 
         if PSY.are_forecasts_contiguous(stage.sys)
