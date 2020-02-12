@@ -77,6 +77,7 @@ function _run_stage(
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("Stage $(stage.internal.number) status is $(model_status)")
     end
+    # TODO: Add Fallback when optimization fails
     retrieve_duals = get(kwargs, :constraints_duals, nothing)
     if !isnothing(retrieve_duals) &&
        !isnothing(get_constraints(stage.internal.psi_container))
@@ -120,44 +121,38 @@ function execute!(sim::Simulation; kwargs...)
 
     isnothing(sim.internal) &&
     error("Simulation not built, build the simulation to execute")
-    sim.internal.raw_dir, sim.internal.models_dir, sim.internal.results_dir =
-        _prepare_workspace(sim.name, sim.simulation_folder)
+    name = get_name(sim)
+    folder = get_simulation_folder(sim)
+    sim.internal.raw_dir, sim.internal.models_dir, sim.internal.results_dir = _prepare_workspace(name, folder)
     _build_stage_paths!(sim; kwargs...)
-    constraints_duals = get(kwargs, :constraints_duals, nothing)
-    steps = get_steps(sim)
-    for s in 1:steps
-        println("Step $(s)")
-        for stage_number in 1:(sim.internal.stages_count)
-            stage_name = sim.sequence.order[stage_number]
-            stage = get(sim.stages, stage_name, nothing)
-            @info "Stage $(stage_number)-$(stage_name)"
-            stage_interval = sim.sequence.intervals[stage_name]
-            for run in 1:(stage.internal.executions)
-                run_name = "step-$s-stage-$stage_name"
-                @info "Starting run $run_name $(sim.internal.current_time)"
-                sim.internal.current_time = sim.internal.date_ref[stage_number]
-                raw_results_path = joinpath(
-                    sim.internal.raw_dir,
-                    run_name,
-                    replace_chars("$(sim.internal.current_time)", ":", "-"),
-                )
-                mkpath(raw_results_path)
-                update_stage!(stage, s, sim)
-                _run_stage(
-                    stage,
-                    sim.internal.current_time,
-                    raw_results_path;
-                    constraints_duals = constraints_duals,
-                )
-                sim.internal.run_count[s][stage_number] += 1
-                sim.internal.date_ref[stage_number] =
-                    sim.internal.date_ref[stage_number] + stage_interval
-            end
-            @assert stage.internal.executions == stage.internal.execution_count
-            stage.internal.execution_count = 0 # reset stage execution_count
+    execution_order = get_execution_order(sim)
+    for s in 1:get_steps(sim)
+        println("Executing Step $(s)")
+        for stage_number in execution_order
+            stage_name = sim.sequence.order[stage_number] # TODO: implement some efficient way of indexing with stage name.
+            stage = get_stage(sim, stage_name)
+            stage_interval = get_stage_interval(sim, stage_name)
+            run_name = "stage-$stage_name"
+            sim.internal.current_time = sim.internal.date_ref[stage_number]
+            @info "Starting run $run_name $(sim.internal.current_time)"
+            raw_results_path = joinpath(
+                sim.internal.raw_dir,
+                run_name,
+                replace_chars("$(sim.internal.current_time)", ":", "-"),
+            )
+            mkpath(raw_results_path)
+            #update_stage!(stage, s, sim)
+            _run_stage(
+                stage,
+                sim.internal.current_time,
+                raw_results_path;
+                kwargs...
+            )
+            sim.internal.run_count[s][stage_number] += 1
+            sim.internal.date_ref[stage_number] += stage_interval
         end
-
     end
+    constraints_duals = get(kwargs, :constraints_duals, nothing)
     sim_results = SimulationResultsReference(sim; constraints_duals = constraints_duals)
     return sim_results
 end
