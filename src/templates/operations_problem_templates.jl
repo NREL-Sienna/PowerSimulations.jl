@@ -77,7 +77,6 @@ template = template_economic_dispatch()
 - `services::Dict{Symbol, ServiceModel}` : override default `ServiceModel` settings
 """
 function template_economic_dispatch(; kwargs...)
-    network = get(kwargs, :network, CopperPlatePowerModel)
 
     devices = get(
         kwargs,
@@ -93,20 +92,9 @@ function template_economic_dispatch(; kwargs...)
         ),
     )
 
-    branches = get(
-        kwargs,
-        :branches,
-        Dict(
-            :L => DeviceModel(PSY.Line, StaticLine),
-            :T => DeviceModel(PSY.Transformer2W, StaticTransformer),
-            :TT => DeviceModel(PSY.TapTransformer, StaticTransformer),
-            :DC => DeviceModel(PSY.HVDCLine, HVDCDispatch),
-        ),
-    )
-
     services = get(kwargs, :services, Dict())
 
-    template = OperationsProblemTemplate(network, devices, branches, services)
+    template = template_unit_commitment(devices = devices, services = services; kwargs...)
 
     return template
 end

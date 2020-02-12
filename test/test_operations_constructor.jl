@@ -2,14 +2,8 @@ devices = Dict{Symbol, DeviceModel}(
     :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
 )
-branches = Dict{Symbol, DeviceModel}(
-    :L => DeviceModel(Line, StaticLine),
-    :T => DeviceModel(Transformer2W, StaticTransformer),
-    :TT => DeviceModel(TapTransformer, StaticTransformer),
-)
-services = Dict{Symbol, ServiceModel}()
 @testset "Operation Model kwargs with CopperPlatePowerModel base" begin
-    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+    template = template_economic_dispatch(devices = devices)
     @test_throws ArgumentError OperationsProblem(
         TestOpProblem,
         template,
