@@ -74,14 +74,17 @@ get_sequence(s::Simulation) = s.sequence
 get_steps(s::Simulation) = s.steps
 get_date_range(s::Simulation) = s.internal.date_range
 get_stage(s::Simulation, name::String) = get(s.stages, name, nothing)
+get_stage_interval(s::Simulation, name::String) = s.sequence.intervals[name]
 get_stage(s::Simulation, number::Int) = get(s.stages, s.sequence.order[number], nothing)
 get_last_stage(s::Simulation) = get_stage(s, s.internal.stages_count)
 function get_simulation_time(s::Simulation, stage_number::Int)
     return s.internal.date_ref[stage_number]
 end
-get_ini_cond_chronology(s::Simulation, number::Int) =
-    get(s.sequence.ini_cond_chronology, s.sequence.order[number], nothing)
-get_name(s::Simulation, stage::Stage) = get(s.sequence.order, get_number(stage), nothing)
+get_ini_cond_chronology(s::Simulation) = s.sequence.ini_cond_chronology
+get_stage_name(s::Simulation, stage::Stage) = get(s.sequence.order, get_number(stage), nothing)
+get_name(s::Simulation) = s.name
+get_simulation_folder(s::Simulation) = s.simulation_folder
+get_execution_order(s::Simulation) = s.sequence.execution_order
 
 function _check_forecasts_sequence(sim::Simulation)
     for (stage_number, stage_name) in sim.sequence.order
@@ -225,9 +228,11 @@ function _check_steps(
     stage_initial_times::Dict{Int, Vector{Dates.DateTime}},
 )
     for (stage_number, stage_name) in sim.sequence.order
-        forecast_count = length(stage_initial_times[stage_number])
         stage = sim.stages[stage_name]
-        if get_steps(sim) * get_executions(stage) > forecast_count
+        execution_counts = get_executions(stage)
+        @assert length(findall(x -> x == stage_number, sim.sequence.execution_order)) == execution_counts
+        forecast_count = length(stage_initial_times[stage_number])
+        if get_steps(sim) * execution_counts > forecast_count
             throw(IS.ConflictingInputsError("The number of available time series ($(forecast_count)) is not enough to perform the
             desired amount of simulation steps ($(sim.steps*stage.internal.execution_count))."))
         end
