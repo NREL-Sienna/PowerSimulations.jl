@@ -118,6 +118,9 @@ export get_all_constraint_index
 export get_all_var_index
 export get_con_index
 export get_var_index
+## Templates Exports
+export template_unit_commitment
+export template_economic_dispatch
 
 #################################################################################
 # Imports
@@ -225,5 +228,8 @@ include("utils/kwargs_check.jl")
 
 #Routines
 include("routines/write_results.jl")
+
+#Templates
+include("templates/operations_problem_templates.jl")
 
 end
