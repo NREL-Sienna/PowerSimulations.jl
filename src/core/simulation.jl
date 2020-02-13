@@ -88,6 +88,8 @@ get_name(s::Simulation) = s.name
 get_simulation_folder(s::Simulation) = s.simulation_folder
 get_execution_order(s::Simulation) = s.sequence.execution_order
 get_current_execution_index(s::Simulation) = s.sequence.current_execution_index
+get_stage_caches(s::Simulation, stage::String) = get(s.sequence.cache, stage, nothing)
+
 
 function _check_forecasts_sequence(sim::Simulation)
     for (stage_number, stage_name) in sim.sequence.order
@@ -243,10 +245,23 @@ function _check_steps(
     return
 end
 
+function _check_required_ini_cond_caches(sim::Simulation)
+    for (stage_number, stage_name) in sim.sequence.order
+        stage = get_stage(sim, stage_name)
+        for (k, v) in get_initial_conditions(stage.internal.psi_container)
+            isnothing(v[1].cache_type) && continue
+            c = get_cache(stage, v[1].cache_type)
+            if isnothing(c)
+                throw(IS.ArgumentError("No cache defined for initial condition $(k)"))
+            end
+        end
+    end
+    return
+end
+
 function _populate_caches!(sim::Simulation, stage_name::String)
-    caches = get(sim.sequence.cache, stage_name, nothing)
+    caches = get_stage_caches(sim, stage_name)
     isnothing(caches) && return
-    cache_dict = Dict{Type{<:AbstractCache}, AbstractCache}()
     for c in caches
         sim.stages[stage_name].internal.cache_dict[typeof(c)] = c
         build_cache!(c, sim.stages[stage_name].internal.psi_container)
@@ -259,7 +274,7 @@ function _build_stages!(sim::Simulation; kwargs...)
     for (stage_number, stage_name) in sim.sequence.order
         @info("Building Stage $(stage_number)-$(stage_name)")
         horizon = sim.sequence.horizons[stage_name]
-        stage = sim.stages[stage_name]
+        stage = get_stage(sim, stage_name)
         stage.internal.psi_container = PSIContainer(
             stage.template.transmission,
             stage.sys,
@@ -269,9 +284,7 @@ function _build_stages!(sim::Simulation; kwargs...)
             horizon = horizon,
         )
         _build!(stage.internal.psi_container, stage.template, stage.sys; kwargs...)
-        # TODO: Add here the checks for the adecuate definition of the caches
         _populate_caches!(sim, stage_name)
-
         if PSY.are_forecasts_contiguous(stage.sys)
             sim.internal.date_ref[stage_number] = PSY.generate_initial_times(
                 stage.sys,
@@ -283,7 +296,7 @@ function _build_stages!(sim::Simulation; kwargs...)
                 PSY.get_forecast_initial_times(stage.sys)[1]
         end
     end
-
+    _check_required_ini_cond_caches(sim)
     return
 end
 
@@ -350,6 +363,8 @@ end
 #############################Interfacing Functions##########################################
 # These are the functions that the user will have to implement to update a custom IC Chron #
 # or custom InitialConditionType #
+
+""" Updates the initial conditions of the stage"""
 function initial_condition_update!(
     stage::Stage,
     ini_cond_key::ICKey,
@@ -359,14 +374,16 @@ function initial_condition_update!(
     ini_cond_vector = get_initial_conditions(stage.internal.psi_container)[ini_cond_key]
     for ic in ini_cond_vector
         name = device_name(ic)
-        source_stage = get_stage(sim, stage.name)
-        var_value = get_stage_variable(T, (source_stage => stage), name, ic.update_ref)
-        cache = isnothing(ic.cache_type) ? nothing :
-            from_stage.internal.cache_dict[ic.cache_type]
+        interval_chronology = get_stage_interval_chronology(sim, stage.name)
+        var_value = get_stage_variable(interval_chronology, (stage => stage), name, ic.update_ref)
+        cache = get_cache(stage, ic.cache_type)
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
     end
+    return
 end
+
+""" Updates the initial conditions of the stage"""
 function initial_condition_update!(
     stage::Stage,
     ini_cond_key::ICKey,
@@ -380,9 +397,9 @@ function initial_condition_update!(
         current_ix = get_current_execution_index(sim)
         source_stage_ix = current_ix == 1 ? length(execution_index) : current_ix - 1
         source_stage = get_stage(sim, execution_index[source_stage_ix])
-        var_value = get_stage_variable(T, (source_stage => stage), name, ic.update_ref)
-        cache = isnothing(ic.cache_type) ? nothing :
-            from_stage.internal.cache_dict[ic.cache_type]
+        interval_chronology = get_stage_interval_chronology(sim, source_stage.name)
+        var_value = get_stage_variable(interval_chronology, (source_stage => stage), name, ic.update_ref)
+        cache = get_cache(stage, ic.cache_type)
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
     end

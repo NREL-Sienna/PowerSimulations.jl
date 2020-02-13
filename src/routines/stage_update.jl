@@ -45,7 +45,6 @@ end
 function _update_initial_conditions!(stage::Stage, sim::Simulation)
     ini_cond_chronology = sim.sequence.ini_cond_chronology
     for (k, v) in get_initial_conditions(stage.internal.psi_container)
-        @show k, v
         initial_condition_update!(stage, k, ini_cond_chronology, sim)
     end
     return

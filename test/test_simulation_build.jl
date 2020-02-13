@@ -159,7 +159,7 @@ function test_sequence_build(file_path::String)
             stages_sequence = sequence,
             simulation_folder = file_path,
         )
-        @test_throws IS.ConflictingInputsError PSI._check_feedforward_chronologies(sim)#build!(sim)
+        @test_throws IS.ConflictingInputsError PSI._check_feedforward_chronologies(sim)
     end
 
     @testset "too long of a horizon for forecast" begin
@@ -216,6 +216,32 @@ function test_sequence_build(file_path::String)
         stage_initial_times = PSI._get_simulation_initial_times!(sim)
         @test_throws IS.ConflictingInputsError PSI._check_steps(sim, stage_initial_times)
     end
+
+    @testset "Innapropiate cache definition" begin
+    sequence = SimulationSequence(
+        step_resolution = Hour(24),
+        order = Dict(1 => "UC", 2 => "ED"),
+        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+        horizons = Dict("UC" => 24, "ED" => 12),
+        intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive())),
+        feedforward = Dict(
+            ("ED", :devices, :Generators) => SemiContinuousFF(
+                binary_from_stage = PSI.ON,
+                affected_variables = [PSI.ACTIVE_POWER],
+            ),
+        ),
+        ini_cond_chronology = InterStageChronology(),
+    )
+    sim = Simulation(
+            name = "steps",
+            steps = 1,
+            stages = stages_definition,
+            stages_sequence = sequence,
+            simulation_folder = file_path,
+        )
+    @test_throws ArgumentError build!(sim)
+    end
+
 end
 
 try

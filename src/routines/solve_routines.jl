@@ -129,7 +129,8 @@ function execute!(sim::Simulation; kwargs...)
     for s in 1:get_steps(sim)
         println("Executing Step $(s)")
         for (ix, stage_number) in enumerate(execution_order)
-            stage_name = sim.sequence.order[stage_number] # TODO: implement some efficient way of indexing with stage name.
+            # TODO: implement some efficient way of indexing with stage name.
+            stage_name = get_stage_name(sim, stage_number)
             stage = get_stage(sim, stage_name)
             stage_interval = get_stage_interval(sim, stage_name)
             run_name = "stage-$stage_name"
