@@ -263,7 +263,7 @@ function test_sequence_build(file_path::String)
             name = "test",
             steps = 1,
             stages = stages_definition,
-            stages_sequence = sequence,
+            stages_sequence = sequence_bad_cache,
             simulation_folder = file_path,
         )
         @test_throws ArgumentError build!(sim)
