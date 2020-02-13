@@ -83,7 +83,8 @@ function _filter_variables(results::PSI.Results; kwargs...)
     reserves = get(kwargs, :reserves, false)
     if reserves
         for (key, var) in results.variables
-            if "$key"[1:2] == "P_" || "$key"[1:5] == "Spin_" || "$key"[1:4] == "Reg_" || "$key"[1:5] == "Flex_"
+            if "$key"[1:2] == "P_" ||
+               "$key"[1:5] == "Spin_" || "$key"[1:4] == "Reg_" || "$key"[1:5] == "Flex_"
                 filter_results[key] = var
             end
         end
@@ -94,7 +95,12 @@ function _filter_variables(results::PSI.Results; kwargs...)
             end
         end
     end
-    results = PSI._make_results(filter_results, results.total_cost, results.optimizer_log, results.time_stamp)
+    results = PSI._make_results(
+        filter_results,
+        results.total_cost,
+        results.optimizer_log,
+        results.time_stamp,
+    )
     return results
 end
 
@@ -456,7 +462,14 @@ function stack_plot(results::Array{}; kwargs...)
     if isnothing(backend)
         throw(IS.ConflictingInputsError("No backend detected. Type gr() to set a backend."))
     end
-    _stack_plot_internal(new_results, stacked_gen, backend, save_fig, set_display; kwargs...)
+    _stack_plot_internal(
+        new_results,
+        stacked_gen,
+        backend,
+        save_fig,
+        set_display;
+        kwargs...,
+    )
 end
 
 function stack_plot(res::PSI.Results, variables::Array; kwargs...)
@@ -537,7 +550,7 @@ function _stack_plot_internal(
     kwargs...,
 )
     seriescolor = get(kwargs, :seriescolor, GR_DEFAULT)
-    
+
     for name in string.(keys(results[1].variables))
         variable_stack = get_stacked_plot_data(results[1], name)
         for res in 2:length(results)

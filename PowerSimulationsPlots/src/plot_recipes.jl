@@ -33,7 +33,7 @@ end
 function plotly_stack_gen(stacked_gen::StackedGeneration, seriescolor::Array; kwargs...)
     set_display = get(kwargs, :display, true)
     save_fig = get(kwargs, :save, nothing)
-    traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
+    traces = PlotlyJS.GenericTrace{Dict{Symbol, Any}}[]
     gens = stacked_gen.labels
     seriescolor = set_seriescolor(seriescolor, gens)
     for gen in 1:length(gens)
@@ -66,7 +66,7 @@ function plotly_stack_gen(stacks::Array{StackedGeneration}, seriescolor::Array; 
     save_fig = get(kwargs, :save, nothing)
     plots = []
     for stack in 1:length(stacks)
-        trace = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
+        trace = PlotlyJS.GenericTrace{Dict{Symbol, Any}}[]
         gens = stacks[stack].labels
         seriescolor = set_seriescolor(seriescolor, gens)
         for gen in 1:length(gens)
@@ -118,7 +118,7 @@ function plotly_stack_plots(results::PSI.Results, seriescolor::Array; kwargs...)
     set_display = get(kwargs, :display, true)
     save_fig = get(kwargs, :save, nothing)
     for (key, var) in results.variables
-        traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
+        traces = PlotlyJS.GenericTrace{Dict{Symbol, Any}}[]
         var = results.variables[key]
         gens = collect(names(var))
         seriescolor = set_seriescolor(seriescolor, gens)
@@ -138,8 +138,8 @@ function plotly_stack_plots(results::PSI.Results, seriescolor::Array; kwargs...)
             )
         end
         p = PlotlyJS.plot(
-        traces,
-        PlotlyJS.Layout(title = "$key", yaxis_title = "Generation (MW)"),
+            traces,
+            PlotlyJS.Layout(title = "$key", yaxis_title = "Generation (MW)"),
         )
         set_display && PlotlyJS.display(p)
         if !isnothing(save_fig)
@@ -155,7 +155,7 @@ function plotly_stack_plots(results::Array, seriescolor::Array; kwargs...)
     for key in collect(keys(results[1, 1].variables))
         plots = []
         for res in 1:size(results, 2)
-            traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
+            traces = PlotlyJS.GenericTrace{Dict{Symbol, Any}}[]
             var = results[1, res].variables[key]
             gens = collect(names(var))
             seriescolor = set_seriescolor(seriescolor, gens)
@@ -181,8 +181,12 @@ function plotly_stack_plots(results::Array, seriescolor::Array; kwargs...)
                 )
             end
             p = PlotlyJS.plot(
-            traces,
-            PlotlyJS.Layout(title = "$key", yaxis_title = "Generation (MW)", grid = (rows = 3, columns = 1, pattern = "independent")),
+                traces,
+                PlotlyJS.Layout(
+                    title = "$key",
+                    yaxis_title = "Generation (MW)",
+                    grid = (rows = 3, columns = 1, pattern = "independent"),
+                ),
             )
             plots = vcat(plots, p)
         end
@@ -201,7 +205,7 @@ function plotly_bar_gen(bar_gen::BarGeneration, seriescolor::Array; kwargs...)
     time_span = IS.convert_compound_period(
         convert(Dates.TimePeriod, time_range[2] - time_range[1]) * length(time_range),
     )
-    traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
+    traces = PlotlyJS.GenericTrace{Dict{Symbol, Any}}[]
     gens = bar_gen.labels
     seriescolor = set_seriescolor(seriescolor, gens)
     for gen in 1:length(gens)
@@ -231,7 +235,11 @@ function plotly_bar_gen(bar_gen::BarGeneration, seriescolor::Array; kwargs...)
     end
 end
 
-function plotly_bar_gen(bar_gen::Array{PowerSimulationsPlots.BarGeneration}, seriescolor::Array; kwargs...)
+function plotly_bar_gen(
+    bar_gen::Array{PowerSimulationsPlots.BarGeneration},
+    seriescolor::Array;
+    kwargs...,
+)
     time_range = bar_gen[1].time_range
     set_display = get(kwargs, :display, true)
     save_fig = get(kwargs, :save, nothing)
@@ -241,7 +249,7 @@ function plotly_bar_gen(bar_gen::Array{PowerSimulationsPlots.BarGeneration}, ser
     seriescolor = set_seriescolor(seriescolor, bar_gen[1].labels)
     plots = []
     for bar in 1:length(bar_gen)
-        traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
+        traces = PlotlyJS.GenericTrace{Dict{Symbol, Any}}[]
         gens = bar_gen[bar].labels
         for gen in 1:length(gens)
             if bar == 1
@@ -292,7 +300,7 @@ function plotly_bar_plots(results::Array, seriescolor::Array; kwargs...)
         plots = []
         for res in 1:length(results)
             var = results[res].variables[key]
-            traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
+            traces = PlotlyJS.GenericTrace{Dict{Symbol, Any}}[]
             gens = collect(names(var))
             seriescolor = set_seriescolor(seriescolor, gens)
             for gen in 1:length(gens)
@@ -340,7 +348,7 @@ function plotly_bar_plots(res::PSI.Results, seriescolor::Array; kwargs...)
             size(time_range, 1),
     )
     for (key, var) in res.variables
-        traces = PlotlyJS.GenericTrace{Dict{Symbol,Any}}[]
+        traces = PlotlyJS.GenericTrace{Dict{Symbol, Any}}[]
         gens = collect(names(var))
         seriescolor = set_seriescolor(seriescolor, gens)
         for gen in 1:length(gens)
@@ -370,7 +378,11 @@ function plotly_bar_plots(res::PSI.Results, seriescolor::Array; kwargs...)
     end
 end
 
-RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String, seriescolor::Array)
+RecipesBase.@recipe function StackedPlot(
+    results::StackedArea,
+    variable::String,
+    seriescolor::Array,
+)
     seriescolor := seriescolor
     time = convert.(Dates.DateTime, results.time_range)
     n = length(time)
@@ -404,7 +416,11 @@ RecipesBase.@recipe function StackedPlot(results::StackedArea, variable::String,
     end
 end
 
-RecipesBase.@recipe function StackedPlot(results::Array{PowerSimulationsPlots.StackedArea}, variable::String, seriescolor::Array)
+RecipesBase.@recipe function StackedPlot(
+    results::Array{PowerSimulationsPlots.StackedArea},
+    variable::String,
+    seriescolor::Array,
+)
     layout := (length(results), 1)
     for i in 1:length(results)
         res = results[i]
@@ -478,7 +494,10 @@ RecipesBase.@recipe function StackedGeneration(res::StackedGeneration, seriescol
 
 end
 
-RecipesBase.@recipe function StackedGeneration(results::Array{StackedGeneration}, seriescolor::Array)
+RecipesBase.@recipe function StackedGeneration(
+    results::Array{StackedGeneration},
+    seriescolor::Array,
+)
     layout := (length(results), 1)
     for i in 1:length(results)
         res = results[i]
@@ -551,7 +570,11 @@ RecipesBase.@recipe function BarPlot(res::BarPlot, variable::String, seriescolor
 
 end
 
-RecipesBase.@recipe function BarPlot(results::Array{BarPlot}, variable::String, seriescolor::Array)
+RecipesBase.@recipe function BarPlot(
+    results::Array{BarPlot},
+    variable::String,
+    seriescolor::Array,
+)
     layout := (length(results), 1)
     for i in 1:length(results)
         res = results[i]
