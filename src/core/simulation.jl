@@ -4,6 +4,7 @@ mutable struct SimulationInternal
     results_dir::Union{String, Nothing}
     stages_count::Int
     run_count::Dict{Int, Dict{Int, Int}}
+    current_execution_index::Int64
     date_ref::Dict{Int, Dates.DateTime}
     date_range::NTuple{2, Dates.DateTime} #Inital Time of the first forecast and Inital Time of the last forecast
     current_time::Dates.DateTime
@@ -27,6 +28,7 @@ function SimulationInternal(steps::Int, stages_keys::Base.KeySet)
         nothing,
         length(stages_keys),
         count_dict,
+        0,
         Dict{Int, Dates.DateTime}(),
         (Dates.now(), Dates.now()),
         Dates.now(),
@@ -74,24 +76,25 @@ get_sequence(s::Simulation) = s.sequence
 get_steps(s::Simulation) = s.steps
 get_date_range(s::Simulation) = s.internal.date_range
 get_stage(s::Simulation, name::String) = get(s.stages, name, nothing)
-get_stage_interval(s::Simulation, name::String) = s.sequence.intervals[name]
+get_stage_interval(s::Simulation, name::String) = get_stage_interval(s.sequence, name)
 get_stage(s::Simulation, number::Int) = get(s.stages, s.sequence.order[number], nothing)
-get_last_stage(s::Simulation) = get_stage(s, s.internal.stages_count)
+get_stages_quantity(s::Simulation) = s.internal.stages_count
 function get_simulation_time(s::Simulation, stage_number::Int)
     return s.internal.date_ref[stage_number]
 end
 get_ini_cond_chronology(s::Simulation) = s.sequence.ini_cond_chronology
-get_stage_name(s::Simulation, stage::Stage) = get(s.sequence.order, get_number(stage), nothing)
+get_stage_name(s::Simulation, stage::Stage) = get_stage_name(s.sequence, stage)
 get_name(s::Simulation) = s.name
 get_simulation_folder(s::Simulation) = s.simulation_folder
 get_execution_order(s::Simulation) = s.sequence.execution_order
+get_current_execution_index(s::Simulation) = s.sequence.current_execution_index
 
 function _check_forecasts_sequence(sim::Simulation)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get_stage(sim, stage_name)
         resolution = PSY.get_forecasts_resolution(get_sys(stage))
-        horizon = get_horizon(get_sequence(sim), stage_name)
-        interval = get_interval(get_sequence(sim), stage_name)
+        horizon = get_stage_horizon(get_sequence(sim), stage_name)
+        interval = get_stage_interval(get_sequence(sim), stage_name)
         horizon_time = resolution * horizon
         if horizon_time < interval
             throw(IS.ConflictingInputsError("horizon ($horizon_time) is
@@ -121,7 +124,7 @@ function _assign_feedforward_chronologies(sim::Simulation)
     for (key, chron) in sim.sequence.feedforward_chronologies
         to_stage = get_stage(sim, key.second)
         to_stage_interval =
-            IS.time_period_conversion(get(sim.sequence.intervals, key.second, nothing))
+            IS.time_period_conversion(get_stage_interval(sim, key.second))
         from_stage_number = find_key_with_value(sim.sequence.order, key.first)
         if isempty(from_stage_number)
             throw(ArgumentError("Stage $(key.first) not specified in the order dictionary"))
@@ -165,8 +168,8 @@ function _get_simulation_initial_times!(sim::Simulation)
         stage_system = sim.stages[stage_name].sys
         PSY.check_forecast_consistency(stage_system)
         interval = PSY.get_forecasts_interval(stage_system)
-        horizon = get_horizon(get_sequence(sim), stage_name)
-        seq_interval = get_interval(get_sequence(sim), stage_name)
+        horizon = get_stage_horizon(get_sequence(sim), stage_name)
+        seq_interval = get_stage_interval(get_sequence(sim), stage_name)
         if PSY.are_forecasts_contiguous(stage_system)
             stage_initial_times[stage_number] =
                 PSY.generate_initial_times(stage_system, seq_interval, horizon)
@@ -272,8 +275,8 @@ function _build_stages!(sim::Simulation; kwargs...)
         if PSY.are_forecasts_contiguous(stage.sys)
             sim.internal.date_ref[stage_number] = PSY.generate_initial_times(
                 stage.sys,
-                get_interval(get_sequence(sim), stage_name),
-                get_horizon(get_sequence(sim), stage_name),
+                get_stage_interval(get_sequence(sim), stage_name),
+                get_stage_horizon(get_sequence(sim), stage_name),
             )[1]
         else
             sim.internal.date_ref[stage_number] =
@@ -325,11 +328,12 @@ function build!(sim::Simulation; kwargs...)
     sim.internal = SimulationInternal(sim.steps, keys(sim.sequence.order))
     stage_initial_times = _get_simulation_initial_times!(sim)
     for (stage_number, stage_name) in sim.sequence.order
-        stage = get(sim.stages, stage_name, nothing)
-        isnothing(stage) &&
-        throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
-        stage_interval = sim.sequence.intervals[stage_name]
-        executions = Int(sim.sequence.step_resolution / stage_interval)
+        stage = get_stage(sim, stage_name)
+        if isnothing(stage)
+            throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
+        end
+        stage_interval = get_stage_interval(sim, stage_name)
+        executions = Int(get_step_resolution(sim.sequence) / stage_interval)
         stage.internal = StageInternal(stage_number, executions, 0, nothing)
         _attach_feedforward!(sim, stage_name)
     end
@@ -337,5 +341,51 @@ function build!(sim::Simulation; kwargs...)
     _check_steps(sim, stage_initial_times)
     _build_stages!(sim; kwargs...)
     sim.internal.compiled_status = true
+    return
+end
+
+
+#Defined here because it requires Stage and Simulation to defined
+
+#############################Interfacing Functions##########################################
+# These are the functions that the user will have to implement to update a custom IC Chron #
+# or custom InitialConditionType #
+function initial_condition_update!(
+    stage::Stage,
+    ini_cond_key::ICKey,
+    chronology::IntraStageChronology,
+    sim::Simulation
+)
+    ini_cond_vector = get_initial_conditions(stage.internal.psi_container)[ini_cond_key]
+    for ic in ini_cond_vector
+        name = device_name(ic)
+        source_stage = get_stage(sim, stage.name)
+        var_value = get_stage_variable(T, (source_stage => stage), name, ic.update_ref)
+        cache = isnothing(ic.cache_type) ? nothing :
+            from_stage.internal.cache_dict[ic.cache_type]
+        quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
+        PJ.fix(ic.value, quantity)
+    end
+end
+function initial_condition_update!(
+    stage::Stage,
+    ini_cond_key::ICKey,
+    chronology::InterStageChronology,
+    sim::Simulation
+)
+    execution_index = get_execution_order(sim)
+    ini_cond_vector = get_initial_conditions(stage.internal.psi_container)[ini_cond_key]
+    for ic in ini_cond_vector
+        name = device_name(ic)
+        current_ix = get_current_execution_index(sim)
+        source_stage_ix = current_ix == 1 ? length(execution_index) : current_ix - 1
+        source_stage = get_stage(sim, execution_index[source_stage_ix])
+        var_value = get_stage_variable(T, (source_stage => stage), name, ic.update_ref)
+        cache = isnothing(ic.cache_type) ? nothing :
+            from_stage.internal.cache_dict[ic.cache_type]
+        quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
+        PJ.fix(ic.value, quantity)
+    end
+
     return
 end

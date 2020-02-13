@@ -17,7 +17,7 @@ function test_load_simulation(file_path::String)
         order = Dict(1 => "UC", 2 => "ED"),
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
         horizons = Dict("UC" => 24, "ED" => 12),
-        intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
+        intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive())),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
                 binary_from_stage = PSI.ON,
@@ -235,7 +235,7 @@ function test_load_simulation(file_path::String)
             time_1 = convert(Dates.DateTime, Feather.read(time_file_path_1)[1, 1]) # first time
             time_2 = convert(Dates.DateTime, Feather.read(time_file_path_2)[1, 1])
             time_change = time_2 - time_1
-            interval = PSI.get_interval(PSI.get_sequence(sim), name)
+            interval = PSI.get_stage_interval(PSI.get_sequence(sim), name)
             @test Dates.Hour(time_change) == Dates.Hour(interval)
         end
     end

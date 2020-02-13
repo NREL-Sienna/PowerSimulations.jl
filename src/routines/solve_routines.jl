@@ -134,6 +134,7 @@ function execute!(sim::Simulation; kwargs...)
             stage_interval = get_stage_interval(sim, stage_name)
             run_name = "stage-$stage_name"
             sim.internal.current_time = sim.internal.date_ref[stage_number]
+            sim.internal.current_execution_index = ix
             @info "Starting run $run_name $(sim.internal.current_time)"
             raw_results_path = joinpath(
                 sim.internal.raw_dir,
@@ -141,7 +142,8 @@ function execute!(sim::Simulation; kwargs...)
                 replace_chars("$(sim.internal.current_time)", ":", "-"),
             )
             mkpath(raw_results_path)
-            update_stage!(stage, ix, s, sim)
+            # Is first run of first stage? Yes -> don't update stage
+            !(step == 1 && ix == 1) && update_stage!(stage, s, sim)
             _run_stage(
                 stage,
                 sim.internal.current_time,

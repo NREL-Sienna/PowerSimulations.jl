@@ -1,10 +1,10 @@
 #########################TimeSeries Data Updating###########################################
-function parameter_update!(
+function update_parameter!(
     param_reference::UpdateRef{T},
     container::ParameterContainer,
     stage::Stage,
     sim::Simulation,
-) where {T <: PSY.Component}
+) where {T<:PSY.Component}
     devices = PSY.get_components(T, stage.sys)
     initial_forecast_time = get_simulation_time(sim, get_number(stage))
     horizon = length(model_time_steps(stage.internal.psi_container))
@@ -28,7 +28,7 @@ function parameter_update!(
 end
 
 """Updates the forecast parameter value"""
-function parameter_update!(
+function update_parameter!(
     param_reference::UpdateRef{JuMP.VariableRef},
     container::ParameterContainer,
     stage::Stage,
@@ -42,7 +42,15 @@ function parameter_update!(
     return
 end
 
-#############################Interfacing Functions##########################################
+function _update_initial_conditions!(stage::Stage, sim::Simulation)
+    ini_cond_chronology = sim.sequence.ini_cond_chronology
+    for (k, v) in get_initial_conditions(stage.internal.psi_container)
+        @show k, v
+        initial_condition_update!(stage, k, ini_cond_chronology, sim)
+    end
+    return
+end
+
 function _update_caches!(stage::Stage)
     for cache in values(stage.internal.cache_dict)
         update_cache!(cache, stage)
@@ -50,46 +58,27 @@ function _update_caches!(stage::Stage)
     return
 end
 
-function _intial_conditions_update!(
-    current_stage::Stage,
-    initial_condition_key::ICKey,
-    ini_cond_vector::Vector{InitialCondition},
-    step::Int,
-    current_execution_index::Int64,
-    sim::Simulation,
-)
-
-
-
-    initial_condition_update!(
-        initial_condition_key,
-        ini_cond_chronolgy,
-        ini_cond_vector,
-        current_stage,
-        from_stage,
-    )
-
+function _update_parameters(stage::Stage, sim::Simulation)
+    for container in iterate_parameter_containers(stage.internal.psi_container)
+        update_parameter!(container.update_ref, container, stage, sim)
+    end
     return
 end
 
-function update_stage!(
-    stage::Stage{M},
-    current_execution_index::Int64,
-    step::Int,
-    sim::Simulation,
-) where {M <: AbstractOperationsProblem}
-    # Is first run of first stage? Yes -> do nothing
-    (step == 1 && get_number(stage) == 1 && get_execution_count(stage) == 0) && return
-    for container in iterate_parameter_containers(stage.internal.psi_container)
-        parameter_update!(container.update_ref, container, stage, sim)
-    end
-
+""" Required update stage function call"""
+# Is possible this function needs a better name
+function _update_stage!(stage::Stage, sim::Simulation)
+    _update_parameters(stage, sim)
     _update_caches!(stage)
-
     # Set initial conditions of the stage I am about to run.
-    for (k, v) in get_initial_conditions(stage.internal.psi_container)
-        _intial_conditions_update!(stage, k, v, current_execution_index, step, sim)
-    end
+    _update_initial_conditions!(stage, sim)
+    return
+end
 
+#############################Interfacing Functions##########################################
+## These are the functions that the user will have to implement to update a custom stage ###
+""" Generic Stage update function for most problems with no customization"""
+function update_stage!(stage::Stage{M}, step::Int, sim::Simulation) where {M<:AbstractOperationsProblem}
+    _update_stage!(stage, sim)
     return
 end

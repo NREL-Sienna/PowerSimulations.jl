@@ -13,7 +13,7 @@ function test_sequence_build(file_path::String)
         order = Dict(1 => "UC", 2 => "ED"),
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
         horizons = Dict("UC" => 24, "ED" => 12),
-        intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
+        intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive())),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
                 binary_from_stage = PSI.ON,
@@ -90,7 +90,7 @@ function test_sequence_build(file_path::String)
             order = Dict(1 => "UC", 2 => "ED"),
             feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 24, "ED" => 12),
-            intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
+            intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive())),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
                     binary_from_stage = PSI.ON,
@@ -116,7 +116,7 @@ function test_sequence_build(file_path::String)
             order = Dict(1 => "UC", 2 => "ED"),
             feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 24, "ED" => 12),
-            intervals = Dict("UC" => Minute(5), "ED" => Minute(1)),
+            intervals = Dict("UC" => (Minute(5), RecedingHorizon()), "ED" => (Minute(1), RecedingHorizon())),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
                     binary_from_stage = PSI.ON,
@@ -142,7 +142,7 @@ function test_sequence_build(file_path::String)
             order = Dict(1 => "UC", 2 => "ED"),
             feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 30)),
             horizons = Dict("UC" => 24, "ED" => 12),
-            intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
+            intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive())),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
                     binary_from_stage = PSI.ON,
@@ -168,7 +168,7 @@ function test_sequence_build(file_path::String)
             order = Dict(1 => "UC", 2 => "ED"),
             feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 72, "ED" => 12),
-            intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
+            intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive())),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
                     binary_from_stage = PSI.ON,
@@ -195,7 +195,7 @@ function test_sequence_build(file_path::String)
             order = Dict(1 => "UC", 2 => "ED"),
             feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 24, "ED" => 12),
-            intervals = Dict("UC" => Hour(24), "ED" => Hour(1)),
+            intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive())),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
                     binary_from_stage = PSI.ON,

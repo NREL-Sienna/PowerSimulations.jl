@@ -48,7 +48,7 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
     references = Dict()
     for (stage_number, stage_name) in sim.sequence.order
         variables = Dict{Symbol, Any}()
-        interval = sim.sequence.intervals[stage_name]
+        interval = get_stage_interval(sim, stage_name)
         variable_names =
             (collect(keys(get_psi_container(sim.stages[stage_name]).variables)))
         if :constraints_duals in keys(kwargs) && !isnothing(kwargs[:constraints_duals])
