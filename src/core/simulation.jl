@@ -245,7 +245,7 @@ function _check_steps(
     return
 end
 
-function _check_required_ini_cond_caches(sim::Simulation, ::InterStageChronology)
+function _check_required_ini_cond_caches(sim::Simulation, ::IntraStageChronology)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get_stage(sim, stage_name)
         for (k, v) in get_initial_conditions(stage.internal.psi_container)
@@ -259,16 +259,22 @@ function _check_required_ini_cond_caches(sim::Simulation, ::InterStageChronology
     return
 end
 
-function _check_required_ini_cond_caches(sim::Simulation, ::IntraStageChronology)
+function _check_required_ini_cond_caches(sim::Simulation, ::InterStageChronology)
     for (stage_number, stage_name) in sim.sequence.order
-        stage = get_stage(sim, stage_name)
-        for (k, v) in get_initial_conditions(stage.internal.psi_container)
+        receiving_stage = get_stage(sim, stage_name)
+        for (k, v) in get_initial_conditions(receiving_stage.internal.psi_container)
+            # No cache needed for the initial condition -> continue
             isnothing(v[1].cache_type) && continue
-
-            c = get_cache(stage, v[1].cache_type)
-            if isnothing(c)
-                throw(IS.ArgumentError("No cache defined for initial condition $(k)"))
+            c = nothing
+            # Search other stages
+            for source_stage in values(sim.stages)
+                c = get_cache(source_stage, v[1].cache_type)
+                break
             end
+            if isnothing(c)
+                throw(IS.ArgumentError("Cache $(v[1].cache_type) not defined for initial condition $(k.ic_type) in stage $receiving_stage "))
+            end
+            @debug "found cache $(v[1].cache_type) for initial condition $(k.ic_type)"
         end
     end
     return
@@ -311,7 +317,7 @@ function _build_stages!(sim::Simulation; kwargs...)
                 PSY.get_forecast_initial_times(stage.sys)[1]
         end
     end
-   # _check_required_ini_cond_caches(sim)
+    _check_required_ini_cond_caches(sim, sim.sequence.ini_cond_chronology)
     return
 end
 
