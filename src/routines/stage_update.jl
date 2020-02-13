@@ -4,7 +4,7 @@ function update_parameter!(
     container::ParameterContainer,
     stage::Stage,
     sim::Simulation,
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     devices = PSY.get_components(T, stage.sys)
     initial_forecast_time = get_simulation_time(sim, get_number(stage))
     horizon = length(model_time_steps(stage.internal.psi_container))
@@ -77,7 +77,11 @@ end
 #############################Interfacing Functions##########################################
 ## These are the functions that the user will have to implement to update a custom stage ###
 """ Generic Stage update function for most problems with no customization"""
-function update_stage!(stage::Stage{M}, step::Int, sim::Simulation) where {M<:AbstractOperationsProblem}
+function update_stage!(
+    stage::Stage{M},
+    step::Int,
+    sim::Simulation,
+) where {M <: AbstractOperationsProblem}
     _update_stage!(stage, sim)
     return
 end

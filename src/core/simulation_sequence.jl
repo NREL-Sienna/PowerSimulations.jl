@@ -177,8 +177,9 @@ end
 
 get_stage_horizon(s::SimulationSequence, stage::String) = get(s.horizons, stage, nothing)
 get_stage_interval(s::SimulationSequence, stage::String) = s.intervals[stage][1]
-get_stage_name(s::SimulationSequence, stage::Stage) = get(s.order, get_number(stage), nothing)
+get_stage_name(s::SimulationSequence, stage::Stage) =
+    get(s.order, get_number(stage), nothing)
 get_step_resolution(s::SimulationSequence) = s.step_resolution
-function  get_stage_interval_chronology(s::SimulationSequence, stage::String)
+function get_stage_interval_chronology(s::SimulationSequence, stage::String)
     return s.interval[stage][2]
 end

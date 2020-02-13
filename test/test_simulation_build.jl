@@ -13,7 +13,10 @@ function test_sequence_build(file_path::String)
         order = Dict(1 => "UC", 2 => "ED"),
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
         horizons = Dict("UC" => 24, "ED" => 12),
-        intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive())),
+        intervals = Dict(
+            "UC" => (Hour(24), Consecutive()),
+            "ED" => (Hour(1), Consecutive()),
+        ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
                 binary_from_stage = PSI.ON,
@@ -90,7 +93,10 @@ function test_sequence_build(file_path::String)
             order = Dict(1 => "UC", 2 => "ED"),
             feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 24, "ED" => 12),
-            intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive())),
+            intervals = Dict(
+                "UC" => (Hour(24), Consecutive()),
+                "ED" => (Hour(1), Consecutive()),
+            ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
                     binary_from_stage = PSI.ON,
@@ -116,7 +122,10 @@ function test_sequence_build(file_path::String)
             order = Dict(1 => "UC", 2 => "ED"),
             feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 24, "ED" => 12),
-            intervals = Dict("UC" => (Minute(5), RecedingHorizon()), "ED" => (Minute(1), RecedingHorizon())),
+            intervals = Dict(
+                "UC" => (Minute(5), RecedingHorizon()),
+                "ED" => (Minute(1), RecedingHorizon()),
+            ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
                     binary_from_stage = PSI.ON,
@@ -142,7 +151,10 @@ function test_sequence_build(file_path::String)
             order = Dict(1 => "UC", 2 => "ED"),
             feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 30)),
             horizons = Dict("UC" => 24, "ED" => 12),
-            intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive())),
+            intervals = Dict(
+                "UC" => (Hour(24), Consecutive()),
+                "ED" => (Hour(1), Consecutive()),
+            ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
                     binary_from_stage = PSI.ON,
@@ -168,7 +180,10 @@ function test_sequence_build(file_path::String)
             order = Dict(1 => "UC", 2 => "ED"),
             feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 72, "ED" => 12),
-            intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive())),
+            intervals = Dict(
+                "UC" => (Hour(24), Consecutive()),
+                "ED" => (Hour(1), Consecutive()),
+            ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
                     binary_from_stage = PSI.ON,
@@ -195,7 +210,10 @@ function test_sequence_build(file_path::String)
             order = Dict(1 => "UC", 2 => "ED"),
             feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
             horizons = Dict("UC" => 24, "ED" => 12),
-            intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive())),
+            intervals = Dict(
+                "UC" => (Hour(24), Consecutive()),
+                "ED" => (Hour(1), Consecutive()),
+            ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
                     binary_from_stage = PSI.ON,
@@ -218,46 +236,52 @@ function test_sequence_build(file_path::String)
     end
 
     @testset "Innapropiate cache definition" begin
-    # Cache is not defined all together
-    sequence_no_cache = SimulationSequence(
-        step_resolution = Hour(24),
-        order = Dict(1 => "UC", 2 => "ED"),
-        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        horizons = Dict("UC" => 24, "ED" => 12),
-        intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive())),
-        feedforward = Dict(
-            ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_from_stage = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+        # Cache is not defined all together
+        sequence_no_cache = SimulationSequence(
+            step_resolution = Hour(24),
+            order = Dict(1 => "UC", 2 => "ED"),
+            feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+            horizons = Dict("UC" => 24, "ED" => 12),
+            intervals = Dict(
+                "UC" => (Hour(24), Consecutive()),
+                "ED" => (Hour(1), Consecutive()),
             ),
-        ),
-        ini_cond_chronology = InterStageChronology(),
-    )
-    sim = Simulation(
+            feedforward = Dict(
+                ("ED", :devices, :Generators) => SemiContinuousFF(
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
+                ),
+            ),
+            ini_cond_chronology = InterStageChronology(),
+        )
+        sim = Simulation(
             name = "steps",
             steps = 1,
             stages = stages_definition,
             stages_sequence = sequence_no_cache,
             simulation_folder = file_path,
         )
-    @test_throws ArgumentError build!(sim)
+        @test_throws ArgumentError build!(sim)
 
-    # Uses IntraStage but the cache is defined in the wrong stage
-    sequence_bad_cache = SimulationSequence(
-        step_resolution = Hour(24),
-        order = Dict(1 => "UC", 2 => "ED"),
-        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        horizons = Dict("UC" => 24, "ED" => 12),
-        intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive())),
-        feedforward = Dict(
-            ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_from_stage = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+        # Uses IntraStage but the cache is defined in the wrong stage
+        sequence_bad_cache = SimulationSequence(
+            step_resolution = Hour(24),
+            order = Dict(1 => "UC", 2 => "ED"),
+            feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+            horizons = Dict("UC" => 24, "ED" => 12),
+            intervals = Dict(
+                "UC" => (Hour(24), Consecutive()),
+                "ED" => (Hour(1), Consecutive()),
             ),
-        ),
-        cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-        ini_cond_chronology = IntraStageChronology(),
-    )
+            feedforward = Dict(
+                ("ED", :devices, :Generators) => SemiContinuousFF(
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
+                ),
+            ),
+            cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
+            ini_cond_chronology = IntraStageChronology(),
+        )
 
         sim = Simulation(
             name = "test",

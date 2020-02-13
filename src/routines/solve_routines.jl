@@ -123,7 +123,8 @@ function execute!(sim::Simulation; kwargs...)
     error("Simulation not built, build the simulation to execute")
     name = get_name(sim)
     folder = get_simulation_folder(sim)
-    sim.internal.raw_dir, sim.internal.models_dir, sim.internal.results_dir = _prepare_workspace(name, folder)
+    sim.internal.raw_dir, sim.internal.models_dir, sim.internal.results_dir =
+        _prepare_workspace(name, folder)
     _build_stage_paths!(sim; kwargs...)
     execution_order = get_execution_order(sim)
     for s in 1:get_steps(sim)
@@ -145,12 +146,7 @@ function execute!(sim::Simulation; kwargs...)
             mkpath(raw_results_path)
             # Is first run of first stage? Yes -> don't update stage
             !(step == 1 && ix == 1) && update_stage!(stage, s, sim)
-            _run_stage(
-                stage,
-                sim.internal.current_time,
-                raw_results_path;
-                kwargs...
-            )
+            _run_stage(stage, sim.internal.current_time, raw_results_path; kwargs...)
             sim.internal.run_count[s][stage_number] += 1
             sim.internal.date_ref[stage_number] += stage_interval
         end

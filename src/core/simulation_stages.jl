@@ -63,4 +63,5 @@ get_sys(s::Stage) = s.sys
 get_template(s::Stage) = s.template
 get_number(s::Stage) = s.internal.number
 get_psi_container(s::Stage) = s.internal.psi_container
-get_cache(s::Stage, ::Type{T}) where T <: AbstractCache = get(s.internal.cache_dict, T, nothing)
+get_cache(s::Stage, ::Type{T}) where {T <: AbstractCache} =
+    get(s.internal.cache_dict, T, nothing)

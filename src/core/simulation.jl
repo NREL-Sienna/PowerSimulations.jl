@@ -90,7 +90,6 @@ get_execution_order(s::Simulation) = s.sequence.execution_order
 get_current_execution_index(s::Simulation) = s.sequence.current_execution_index
 get_stage_caches(s::Simulation, stage::String) = get(s.sequence.cache, stage, nothing)
 
-
 function _check_forecasts_sequence(sim::Simulation)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get_stage(sim, stage_name)
@@ -125,8 +124,7 @@ function _assign_feedforward_chronologies(sim::Simulation)
 
     for (key, chron) in sim.sequence.feedforward_chronologies
         to_stage = get_stage(sim, key.second)
-        to_stage_interval =
-            IS.time_period_conversion(get_stage_interval(sim, key.second))
+        to_stage_interval = IS.time_period_conversion(get_stage_interval(sim, key.second))
         from_stage_number = find_key_with_value(sim.sequence.order, key.first)
         if isempty(from_stage_number)
             throw(ArgumentError("Stage $(key.first) not specified in the order dictionary"))
@@ -235,7 +233,8 @@ function _check_steps(
     for (stage_number, stage_name) in sim.sequence.order
         stage = sim.stages[stage_name]
         execution_counts = get_executions(stage)
-        @assert length(findall(x -> x == stage_number, sim.sequence.execution_order)) == execution_counts
+        @assert length(findall(x -> x == stage_number, sim.sequence.execution_order)) ==
+                execution_counts
         forecast_count = length(stage_initial_times[stage_number])
         if get_steps(sim) * execution_counts > forecast_count
             throw(IS.ConflictingInputsError("The number of available time series ($(forecast_count)) is not enough to perform the
@@ -378,7 +377,6 @@ function build!(sim::Simulation; kwargs...)
     return
 end
 
-
 #Defined here because it requires Stage and Simulation to defined
 
 #############################Interfacing Functions##########################################
@@ -390,13 +388,14 @@ function initial_condition_update!(
     stage::Stage,
     ini_cond_key::ICKey,
     chronology::IntraStageChronology,
-    sim::Simulation
+    sim::Simulation,
 )
     ini_cond_vector = get_initial_conditions(stage.internal.psi_container)[ini_cond_key]
     for ic in ini_cond_vector
         name = device_name(ic)
         interval_chronology = get_stage_interval_chronology(sim, stage.name)
-        var_value = get_stage_variable(interval_chronology, (stage => stage), name, ic.update_ref)
+        var_value =
+            get_stage_variable(interval_chronology, (stage => stage), name, ic.update_ref)
         cache = get_cache(stage, ic.cache_type)
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
@@ -409,7 +408,7 @@ function initial_condition_update!(
     stage::Stage,
     ini_cond_key::ICKey,
     chronology::InterStageChronology,
-    sim::Simulation
+    sim::Simulation,
 )
     execution_index = get_execution_order(sim)
     ini_cond_vector = get_initial_conditions(stage.internal.psi_container)[ini_cond_key]
@@ -419,7 +418,12 @@ function initial_condition_update!(
         source_stage_ix = current_ix == 1 ? length(execution_index) : current_ix - 1
         source_stage = get_stage(sim, execution_index[source_stage_ix])
         interval_chronology = get_stage_interval_chronology(sim, source_stage.name)
-        var_value = get_stage_variable(interval_chronology, (source_stage => stage), name, ic.update_ref)
+        var_value = get_stage_variable(
+            interval_chronology,
+            (source_stage => stage),
+            name,
+            ic.update_ref,
+        )
         cache = get_cache(stage, ic.cache_type)
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
