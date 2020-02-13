@@ -338,9 +338,9 @@ function Base.show(io::IO, sequence::SimulationSequence)
     _print_feedforward(io, sequence.feedforward_chronologies, to, from)
     println(io, "Initial Condition Chronology")
     println(io, "----------------------------\n")
-    if sequence.ini_cond_chronology == IntraStage()
+    if sequence.ini_cond_chronology == IntraStageChronology()
         _print_intra_stages(io, stages)
-    elseif sequence.ini_cond_chronology == InterStage()
+    elseif sequence.ini_cond_chronology == InterStageChronology()
         _print_inter_stages(io, stages)
     end
 end
