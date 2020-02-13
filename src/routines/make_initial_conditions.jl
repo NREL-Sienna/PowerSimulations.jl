@@ -84,6 +84,7 @@ function status_init(
         ICKey(DeviceStatus, T),
         _make_initial_condition_active_power,
         _get_active_power_status_value,
+        # Doesn't require Cache
     )
 end
 
@@ -97,7 +98,7 @@ function output_init(
         ICKey(DevicePower, T),
         _make_initial_condition_active_power,
         _get_active_power_output_value,
-        TimeStatusChange,
+        # Doesn't require Cache
     )
 
     return
