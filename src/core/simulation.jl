@@ -245,11 +245,26 @@ function _check_steps(
     return
 end
 
-function _check_required_ini_cond_caches(sim::Simulation)
+function _check_required_ini_cond_caches(sim::Simulation, ::InterStageChronology)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get_stage(sim, stage_name)
         for (k, v) in get_initial_conditions(stage.internal.psi_container)
             isnothing(v[1].cache_type) && continue
+            c = get_cache(stage, v[1].cache_type)
+            if isnothing(c)
+                throw(IS.ArgumentError("Cache $(v[1].cache_type) not defined for initial condition $(k.ic_type) in stage $stage_name"))
+            end
+        end
+    end
+    return
+end
+
+function _check_required_ini_cond_caches(sim::Simulation, ::IntraStageChronology)
+    for (stage_number, stage_name) in sim.sequence.order
+        stage = get_stage(sim, stage_name)
+        for (k, v) in get_initial_conditions(stage.internal.psi_container)
+            isnothing(v[1].cache_type) && continue
+
             c = get_cache(stage, v[1].cache_type)
             if isnothing(c)
                 throw(IS.ArgumentError("No cache defined for initial condition $(k)"))
@@ -296,7 +311,7 @@ function _build_stages!(sim::Simulation; kwargs...)
                 PSY.get_forecast_initial_times(stage.sys)[1]
         end
     end
-    _check_required_ini_cond_caches(sim)
+   # _check_required_ini_cond_caches(sim)
     return
 end
 
