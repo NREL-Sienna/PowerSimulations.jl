@@ -4,7 +4,7 @@ path = (joinpath(pwd(), "test_reading_results"))
 function test_load_simulation(file_path::String)
 
     single_stage_definition =
-    Dict("ED" => Stage(GenericOpProblem, template_ed, c_sys5_uc, GLPK_optimizer))
+        Dict("ED" => Stage(GenericOpProblem, template_ed, c_sys5_uc, GLPK_optimizer))
 
     single_sequence = SimulationSequence(
         step_resolution = Hour(1),
@@ -25,9 +25,9 @@ function test_load_simulation(file_path::String)
     execute!(sim_single)
 
     @testset "Single stage sequential tests" begin
-    stage_single = PSI.get_stage(sim_single, "ED")
-    @test JuMP.termination_status(stage_single.internal.psi_container.JuMPmodel) in
-        [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        stage_single = PSI.get_stage(sim_single, "ED")
+        @test JuMP.termination_status(stage_single.internal.psi_container.JuMPmodel) in
+              [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
 
     end
 
