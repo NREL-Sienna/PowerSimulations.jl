@@ -89,8 +89,8 @@ get_simulation_folder(s::Simulation) = s.simulation_folder
 get_execution_order(s::Simulation) = s.sequence.execution_order
 get_current_execution_index(s::Simulation) = s.sequence.current_execution_index
 get_stage_cache_definition(s::Simulation, stage::String) = get(s.sequence.cache, stage, nothing)
-get_cache(s::Simulation, ::Type{T}) where {T <: AbstractCache} =
-    get(s.internal.simulation_cache, T, nothing)
+get_cache(s::Simulation, ::Type{T}, ::Type{D}) where {T <: AbstractCache, D <: PSY.Device} =
+    get(s.internal.simulation_cache, CacheKey(T,D), nothing)
 
 
 function _check_forecasts_sequence(sim::Simulation)
@@ -254,8 +254,8 @@ function _check_required_ini_cond_caches(sim::Simulation)
         stage = get_stage(sim, stage_name)
         for (k, v) in get_initial_conditions(stage.internal.psi_container)
             # No cache needed for the initial condition -> continue
-            isnothing(v[1].cache_key) && continue
-            c = get_cache(sim, v[1].cache_key)
+            isnothing(v[1].cache_type) && continue
+            c = get_cache(sim, v[1].cache_type, k.device_type)
             if isnothing(c)
                 throw(IS.ArgumentError("Cache $(v[1].cache_key) not defined for initial condition $(k.ic_key) in stage $stage_name"))
             end
