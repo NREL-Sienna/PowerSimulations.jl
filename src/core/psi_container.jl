@@ -286,6 +286,10 @@ function get_variable(psi_container::PSIContainer, var_type::AbstractString)
     return get_variable(psi_container, variable_name(var_type))
 end
 
+function get_variable(psi_container::PSIContainer, update_ref::UpdateRef)
+    return get_variable(psi_container, update_ref.access_ref)
+end
+
 function get_variable(psi_container::PSIContainer, name::Symbol)
     var = get(psi_container.variables, name, nothing)
     if isnothing(var)
@@ -463,15 +467,13 @@ end
 # Here because requires the container to be defined
 
 function build_cache!(psi_container::PSIContainer, cache::TimeStatusChange)
-    # TODO: This currently only supports parameters; we may need to support variables and
-    # constraints in the future. A get function would need to be parametrized on cache.ref.
-    parameter = get_parameter_array(psi_container, cache.ref)
+    variable = get_variable(psi_container, cache.ref)
     value_array =
-        JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, axes(parameter)...)
+        JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, axes(variable)...)
 
-    for name in parameter.axes[1]
-        status = PJ.value(parameter[name])
-        value_array[name] = Dict(:count => 999.0, :status => status)
+    for name in variable.axes[1]
+        #status = JuMP.value(variable[name])
+        value_array[name] = Dict(:count => 999.0, :status => 1.0)
     end
 
     cache.value = value_array

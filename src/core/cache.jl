@@ -8,7 +8,7 @@ end
 
 function TimeStatusChange(::Type{T}, name::AbstractString) where {T <: PSY.Device}
     value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, 1)
-    return TimeStatusChange(value_array, UpdateRef{PJ.ParameterRef}(T, name))
+    return TimeStatusChange(value_array, UpdateRef{JuMP.VariableRef}(T, name))
 end
 
 cache_value(cache::AbstractCache, key) = cache.value[key]

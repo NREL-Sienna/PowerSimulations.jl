@@ -9,6 +9,7 @@ mutable struct SimulationInternal
     current_time::Dates.DateTime
     reset::Bool
     compiled_status::Bool
+    global_cache::Dict{String, Dict{<:Type{<:AbstractCache}, AbstractCache}}
 end
 
 function SimulationInternal(steps::Int, stages_keys::Base.KeySet)
@@ -32,6 +33,7 @@ function SimulationInternal(steps::Int, stages_keys::Base.KeySet)
         Dates.now(),
         true,
         false,
+        Dict{String, Dict{<:Type{<:AbstractCache}, AbstractCache}}()
     )
 end
 
@@ -244,21 +246,7 @@ function _check_steps(
     return
 end
 
-function _check_required_ini_cond_caches(sim::Simulation, ::IntraStageChronology)
-    for (stage_number, stage_name) in sim.sequence.order
-        stage = get_stage(sim, stage_name)
-        for (k, v) in get_initial_conditions(stage.internal.psi_container)
-            isnothing(v[1].cache_type) && continue
-            c = get_cache(stage, v[1].cache_type)
-            if isnothing(c)
-                throw(IS.ArgumentError("Cache $(v[1].cache_type) not defined for initial condition $(k.ic_type) in stage $stage_name"))
-            end
-        end
-    end
-    return
-end
-
-function _check_required_ini_cond_caches(sim::Simulation, ::InterStageChronology)
+function _check_required_ini_cond_caches(sim::Simulation)
     for (stage_number, stage_name) in sim.sequence.order
         receiving_stage = get_stage(sim, stage_name)
         for (k, v) in get_initial_conditions(receiving_stage.internal.psi_container)
@@ -267,6 +255,7 @@ function _check_required_ini_cond_caches(sim::Simulation, ::InterStageChronology
             c = nothing
             # Search other stages
             for source_stage in values(sim.stages)
+                @show source_stage
                 c = get_cache(source_stage, v[1].cache_type)
                 break
             end
@@ -282,7 +271,9 @@ end
 function _populate_caches!(sim::Simulation, stage_name::String)
     caches = get_stage_caches(sim, stage_name)
     isnothing(caches) && return
+    sim.internal.global_cache[stage_name] = Dict{Type{<:AbstractCache}, AbstractCache}()
     for c in caches
+        sim.internal.global_cache[stage_name][typeof(c)] = c
         sim.stages[stage_name].internal.cache_dict[typeof(c)] = c
         build_cache!(sim.stages[stage_name].internal.psi_container, c)
     end
@@ -316,7 +307,7 @@ function _build_stages!(sim::Simulation; kwargs...)
                 PSY.get_forecast_initial_times(stage.sys)[1]
         end
     end
-    _check_required_ini_cond_caches(sim, sim.sequence.ini_cond_chronology)
+    _check_required_ini_cond_caches(sim)
     return
 end
 
