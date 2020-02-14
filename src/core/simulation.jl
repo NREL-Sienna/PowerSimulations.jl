@@ -9,7 +9,7 @@ mutable struct SimulationInternal
     current_time::Dates.DateTime
     reset::Bool
     compiled_status::Bool
-    simulation_cache::Dict{String, Dict{<:Type{<:AbstractCache}, AbstractCache}}
+    simulation_cache::Dict{<:CacheKey, AbstractCache}
 end
 
 function SimulationInternal(steps::Int, stages_keys::Base.KeySet)
@@ -33,7 +33,7 @@ function SimulationInternal(steps::Int, stages_keys::Base.KeySet)
         Dates.now(),
         true,
         false,
-        Dict{String, Dict{<:Type{<:AbstractCache}, AbstractCache}}()
+        Dict{CacheKey, AbstractCache}()
     )
 end
 
@@ -88,7 +88,10 @@ get_name(s::Simulation) = s.name
 get_simulation_folder(s::Simulation) = s.simulation_folder
 get_execution_order(s::Simulation) = s.sequence.execution_order
 get_current_execution_index(s::Simulation) = s.sequence.current_execution_index
-get_stage_caches(s::Simulation, stage::String) = get(s.sequence.cache, stage, nothing)
+get_stage_cache_definition(s::Simulation, stage::String) = get(s.sequence.cache, stage, nothing)
+get_cache(s::Simulation, ::Type{T}) where {T <: AbstractCache} =
+    get(s.internal.simulation_cache, T, nothing)
+
 
 function _check_forecasts_sequence(sim::Simulation)
     for (stage_number, stage_name) in sim.sequence.order
@@ -218,7 +221,7 @@ function _attach_feedforward!(sim::Simulation, stage_name::String)
     stage = get(sim.stages, stage_name, nothing)
     feedforward = filter(p -> (p.first[1] == stage_name), sim.sequence.feedforward)
     for (key, ff) in feedforward
-        #Note: key[1] = Stage name, key[2] = template field name, key[3] = device model key
+        # Note: key[1] = Stage name, key[2] = template field name, key[3] = device model key
         field_dict = getfield(stage.template, key[2])
         device_model = get(field_dict, key[3], nothing)
         isnothing(device_model) &&
@@ -248,32 +251,30 @@ end
 
 function _check_required_ini_cond_caches(sim::Simulation)
     for (stage_number, stage_name) in sim.sequence.order
-        receiving_stage = get_stage(sim, stage_name)
-        for (k, v) in get_initial_conditions(receiving_stage.internal.psi_container)
+        stage = get_stage(sim, stage_name)
+        for (k, v) in get_initial_conditions(stage.internal.psi_container)
             # No cache needed for the initial condition -> continue
-            isnothing(v[1].cache_type) && continue
-            c = nothing
-            # Search other stages, substitue for search in the global cache
-            for source_stage in values(sim.stages)
-                c = get_cache(source_stage, v[1].cache_type)
-                !isnothing(c) && break
-            end
+            isnothing(v[1].cache_key) && continue
+            c = get_cache(sim, v[1].cache_key)
             if isnothing(c)
-                throw(IS.ArgumentError("Cache $(v[1].cache_type) not defined for initial condition $(k.ic_type) in stage $receiving_stage "))
+                throw(IS.ArgumentError("Cache $(v[1].cache_key) not defined for initial condition $(k.ic_key) in stage $stage_name"))
             end
-            @debug "found cache $(v[1].cache_type) for initial condition $(k.ic_type)"
+            @debug "found cache $(v[1].cache_key) for initial condition $(k.ic_key) in stage $(stage_name)"
         end
     end
     return
 end
 
 function _populate_caches!(sim::Simulation, stage_name::String)
-    caches = get_stage_caches(sim, stage_name)
+    caches = get_stage_cache_definition(sim, stage_name)
     isnothing(caches) && return
-    sim.internal.simulation_cache[stage_name] = Dict{Type{<:AbstractCache}, AbstractCache}()
     for c in caches
-        sim.internal.simulation_cache[stage_name][typeof(c)] = c
-        sim.stages[stage_name].internal.cache_dict[typeof(c)] = c
+        cache_key = CacheKey(c)
+        push!(sim.stages[stage_name].internal.caches, cache_key)
+        if !haskey(sim.internal.simulation_cache, cache_key)
+            @debug "Cache $(cache_key) added to he simulation"
+            sim.internal.simulation_cache[cache_key] = c
+        end
         build_cache!(sim.stages[stage_name].internal.psi_container, c)
     end
     return
@@ -386,7 +387,7 @@ function initial_condition_update!(
         interval_chronology = get_stage_interval_chronology(sim, stage.name)
         var_value =
             get_stage_variable(interval_chronology, (stage => stage), name, ic.update_ref)
-        cache = get_cache(stage, ic.cache_type)
+        cache = get_cache(stage, ic.cache_key)
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
     end
@@ -415,7 +416,7 @@ function initial_condition_update!(
             name,
             ic.update_ref,
         )
-        cache = isnothing(ic.cache_type) ? nothing : get_cache(source_stage, ic.cache_type)
+        cache = isnothing(ic.cache_key) ? nothing : get_cache(source_stage, ic.cache_key)
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
     end

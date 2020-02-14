@@ -7,7 +7,7 @@ mutable struct StageInternal
     # This might be needed in the future to run multiple stages. For now it is disabled
     #synchronized_executions::Dict{Int, Int} # Number of executions per upper level stage step
     psi_container::Union{Nothing, PSIContainer}
-    cache_dict::Dict{Type{<:AbstractCache}, AbstractCache}
+    caches::Set{<:CacheKey{<:AbstractCache,<:PSY.Device}}
     chronolgy_dict::Dict{Int, <:FeedForwardChronology}
     function StageInternal(number, executions, execution_count, psi_container)
         new(
@@ -16,7 +16,7 @@ mutable struct StageInternal
             execution_count,
             #Dict{Int, Int}(),
             psi_container,
-            Dict{Type{<:AbstractCache}, AbstractCache}(),
+            Set{CacheKey{<:AbstractCache,<:PSY.Device}}(),
             Dict{Int, FeedForwardChronology}(),
         )
     end
@@ -63,8 +63,6 @@ get_sys(s::Stage) = s.sys
 get_template(s::Stage) = s.template
 get_number(s::Stage) = s.internal.number
 get_psi_container(s::Stage) = s.internal.psi_container
-get_cache(s::Stage, ::Type{T}) where {T <: AbstractCache} =
-    get(s.internal.cache_dict, T, nothing)
 
 function run_stage(
     stage::Stage,
