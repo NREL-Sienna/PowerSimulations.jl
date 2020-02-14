@@ -268,7 +268,7 @@ function _check_required_ini_cond_caches(sim::Simulation, ::InterStageChronology
             # Search other stages
             for source_stage in values(sim.stages)
                 c = get_cache(source_stage, v[1].cache_type)
-                break
+                !isnothing(c) && break
             end
             if isnothing(c)
                 throw(IS.ArgumentError("Cache $(v[1].cache_type) not defined for initial condition $(k.ic_type) in stage $receiving_stage "))
