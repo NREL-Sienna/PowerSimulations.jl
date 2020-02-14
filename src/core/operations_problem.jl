@@ -469,3 +469,7 @@ function _build!(
 
     return
 end
+
+function build_cache!(op_problem::OperationsProblem, cache::TimeStatusChange)
+    build_cache!(op_problem.psi_container, cache)
+end

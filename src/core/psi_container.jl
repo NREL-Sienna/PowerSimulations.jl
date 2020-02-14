@@ -459,3 +459,23 @@ function iterate_parameter_containers(psi_container::PSIContainer)
         end
     end
 end
+
+
+# Here because requires the container to be defined
+
+function build_cache!(psi_container::PSIContainer, cache::TimeStatusChange)
+    # TODO: This currently only supports parameters; we may need to support variables and
+    # constraints in the future. A get function would need to be parametrized on cache.ref.
+    parameter = get_parameter_array(psi_container, cache.ref)
+    value_array =
+        JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, axes(parameter)...)
+
+    for name in parameter.axes[1]
+        status = PJ.value(parameter[name])
+        value_array[name] = Dict(:count => 999.0, :status => status)
+    end
+
+    cache.value = value_array
+
+    return
+end

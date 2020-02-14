@@ -61,7 +61,7 @@ function calculate_ic_quantity(
     initial_condition_key::ICKey{TimeDurationOFF, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::Union{Nothing, AbstractCache},
+    cache::TimeStatusChange,
 ) where {T <: PSY.Component}
     name = device_name(ic)
     time_cache = cache_value(cache, name)
@@ -78,7 +78,7 @@ function calculate_ic_quantity(
     initial_condition_key::ICKey{TimeDurationON, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::Union{Nothing, AbstractCache},
+    cache::TimeStatusChange,
 ) where {T <: PSY.Component}
     name = device_name(ic)
     time_cache = cache_value(cache, name)
@@ -106,21 +106,11 @@ function calculate_ic_quantity(
     var_value::Float64,
     cache::Union{Nothing, AbstractCache},
 ) where {T <: PSY.ThermalGen}
-    if isnothing(cache)
-        status_change_to_on =
+    status_change_to_on =
             value(ic) <= ComparisonTolerance && var_value >= ComparisonTolerance
         status_change_to_off =
             value(ic) >= ComparisonTolerance && var_value <= ComparisonTolerance
-    else
-        name = device_name(ic)
-        time_cache = cache_value(cache, name)
-        status_change_to_on =
-            time_cache[:status] >= ComparisonTolerance && var_value <= ComparisonTolerance
-        status_change_to_off =
-            time_cache[:status] <= ComparisonTolerance && var_value >= ComparisonTolerance
-    end
-
-    if status_change_to_on
+      if status_change_to_on
         return ic.device.tech.activepowerlimits.min
     end
 

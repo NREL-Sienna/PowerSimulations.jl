@@ -8,7 +8,7 @@ struct SimulationResultsReference
         chronologies = Dict()
         for (stage_number, stage_name) in sim.sequence.order
             stage = get_stage(sim, stage_name)
-            interval = sim.sequence.intervals[stage_name]
+            interval = get_stage_interval(sim, stage_name)[1]
             resolution = PSY.get_forecasts_resolution(get_sys(stage))
             chronologies["stage-$stage_name"] = convert(Int, (interval / resolution))
         end
@@ -48,7 +48,7 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
     references = Dict()
     for (stage_number, stage_name) in sim.sequence.order
         variables = Dict{Symbol, Any}()
-        interval = get_stage_interval(sim, stage_name)
+        interval = get_stage_interval(sim, stage_name)[1]
         variable_names =
             (collect(keys(get_psi_container(sim.stages[stage_name]).variables)))
         if :constraints_duals in keys(kwargs) && !isnothing(kwargs[:constraints_duals])

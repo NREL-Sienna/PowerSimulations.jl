@@ -235,7 +235,7 @@ function test_sequence_build(file_path::String)
         @test_throws IS.ConflictingInputsError PSI._check_steps(sim, stage_initial_times)
     end
 
-    @testset "Innapropiate cache definition" begin
+    @testset "Inapropiate cache definition" begin
         # Cache is not defined all together
         sequence_no_cache = SimulationSequence(
             step_resolution = Hour(24),

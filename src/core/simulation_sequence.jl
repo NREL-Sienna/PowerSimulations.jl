@@ -62,6 +62,7 @@ function _fill_execution_order(
     stages = sort!(collect(keys(interval_run_counts)))
     last_stage = stages[end]
     _fill_stage(index, stages[1])
+    return
 end
 
 function _get_execution_order_vector(
@@ -139,6 +140,7 @@ mutable struct SimulationSequence
     ini_cond_chronology::IniCondChronology
     cache::Dict{String, Vector{<:AbstractCache}}
     execution_order::Vector{Int}
+    current_execution_index::Int64
 
     function SimulationSequence(;
         horizons::Dict{String, Int},
@@ -158,8 +160,9 @@ mutable struct SimulationSequence
         step_resolution = IS.time_period_conversion(step_resolution)
         _check_feedforward(feedforward, feedforward_chronologies)
         _check_chronology_consistency(order, feedforward_chronologies, ini_cond_chronology)
-        ini_cond_chronology =
-            length(order) == 1 ? IntraStageChronology() : ini_cond_chronology
+        if length(order) == 1
+            ini_cond_chronology = IntraStageChronology()
+        end
         new(
             horizons,
             step_resolution,
@@ -170,6 +173,7 @@ mutable struct SimulationSequence
             ini_cond_chronology,
             cache,
             _get_execution_order_vector(order, _intervals, step_resolution),
+            0
         )
 
     end
@@ -181,5 +185,5 @@ get_stage_name(s::SimulationSequence, stage::Stage) =
     get(s.order, get_number(stage), nothing)
 get_step_resolution(s::SimulationSequence) = s.step_resolution
 function get_stage_interval_chronology(s::SimulationSequence, stage::String)
-    return s.interval[stage][2]
+    return s.intervals[stage][2]
 end

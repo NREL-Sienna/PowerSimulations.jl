@@ -476,7 +476,7 @@ end
 #########################FeedForward Variables Updating#####################################
 # This makes the choice in which variable to get from the results.
 function get_stage_variable(
-    ::Type{RecedingHorizon},
+    ::RecedingHorizon,
     stages::Pair{Stage{T}, Stage{T}},
     device_name::AbstractString,
     var_ref::UpdateRef,
@@ -487,7 +487,7 @@ function get_stage_variable(
 end
 
 function get_stage_variable(
-    ::Type{Consecutive},
+    ::Consecutive,
     stages::Pair{Stage{T}, Stage{T}},
     device_name::String,
     var_ref::UpdateRef,
@@ -498,7 +498,7 @@ function get_stage_variable(
 end
 
 function get_stage_variable(
-    ::Type{Synchronize},
+    ::Synchronize,
     stages::Pair{Stage{T}, Stage{T}},
     device_name::String,
     var_ref::UpdateRef,
@@ -509,15 +509,15 @@ function get_stage_variable(
 end
 
 function feedforward_update(
-    sync::T,
+    sync::FeedForwardChronology,
     param_reference::UpdateRef{JuMP.VariableRef},
     param_array::JuMPParamArray,
     to_stage::Stage,
     from_stage::Stage,
-) where {T <: FeedForwardChronology}
+)
     for device_name in axes(param_array)[1]
         var_value =
-            get_stage_variable(T, (from_stage => to_stage), device_name, param_reference)
+            get_stage_variable(sync, (from_stage => to_stage), device_name, param_reference)
         PJ.fix(param_array[device_name], var_value)
     end
 end

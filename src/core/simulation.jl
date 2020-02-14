@@ -4,7 +4,6 @@ mutable struct SimulationInternal
     results_dir::Union{String, Nothing}
     stages_count::Int
     run_count::Dict{Int, Dict{Int, Int}}
-    current_execution_index::Int64
     date_ref::Dict{Int, Dates.DateTime}
     date_range::NTuple{2, Dates.DateTime} #Inital Time of the first forecast and Inital Time of the last forecast
     current_time::Dates.DateTime
@@ -28,7 +27,6 @@ function SimulationInternal(steps::Int, stages_keys::Base.KeySet)
         nothing,
         length(stages_keys),
         count_dict,
-        0,
         Dict{Int, Dates.DateTime}(),
         (Dates.now(), Dates.now()),
         Dates.now(),
@@ -134,8 +132,10 @@ function _assign_feedforward_chronologies(sim::Simulation)
             from_stage = get_stage(sim, stage_number)
             from_stage_resolution =
                 IS.time_period_conversion(PSY.get_forecasts_resolution(from_stage.sys))
-            to_stage.internal.synchronized_executions[stage_number] =
-                Int(from_stage_resolution / to_stage_interval)
+            # This line keeps track of the executions of a stage relative to other stages.
+            # This might be needed in the future to run multiple stages. For now it is disabled
+            #to_stage.internal.synchronized_executions[stage_number] =
+                #Int(from_stage_resolution / to_stage_interval)
         end
     end
     return
@@ -284,7 +284,7 @@ function _populate_caches!(sim::Simulation, stage_name::String)
     isnothing(caches) && return
     for c in caches
         sim.stages[stage_name].internal.cache_dict[typeof(c)] = c
-        build_cache!(c, sim.stages[stage_name].internal.psi_container)
+        build_cache!(sim.stages[stage_name].internal.psi_container, c)
     end
     return
 end
@@ -417,17 +417,85 @@ function initial_condition_update!(
         current_ix = get_current_execution_index(sim)
         source_stage_ix = current_ix == 1 ? length(execution_index) : current_ix - 1
         source_stage = get_stage(sim, execution_index[source_stage_ix])
-        interval_chronology = get_stage_interval_chronology(sim, source_stage.name)
+        source_stage_name = get_stage_name(sim, source_stage)
+        interval_chronology = get_stage_interval_chronology(sim.sequence, source_stage_name)
         var_value = get_stage_variable(
             interval_chronology,
             (source_stage => stage),
             name,
             ic.update_ref,
         )
-        cache = get_cache(stage, ic.cache_type)
+        cache = isnothing(ic.cache_type) ? nothing : get_cache(source_stage, ic.cache_type)
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
     end
 
     return
+end
+
+
+"""
+    execute!(sim::Simulation; kwargs...)
+
+Solves the simulation model for sequential Simulations
+and populates a nested folder structure created in Simulation()
+with a dated folder of featherfiles that contain the results for
+each stage and step.
+
+# Arguments
+- `sim::Simulation=sim`: simulation object created by Simulation()
+
+# Example
+```julia
+sim = Simulation("test", 7, stages, "/Users/folder")
+execute!!(sim::Simulation; kwargs...)
+```
+
+# Accepted Key Words
+- `constraints_duals::Vector{Symbol}`: if dual variables are desired in the
+results, include a vector of the variable names to be included
+"""
+
+function execute!(sim::Simulation; kwargs...)
+    if sim.internal.reset
+        sim.internal.reset = false
+    elseif sim.internal.reset == false
+        error("Re-build the simulation")
+    end
+
+    isnothing(sim.internal) &&
+    error("Simulation not built, build the simulation to execute")
+    name = get_name(sim)
+    folder = get_simulation_folder(sim)
+    sim.internal.raw_dir, sim.internal.models_dir, sim.internal.results_dir =
+        _prepare_workspace(name, folder)
+    _build_stage_paths!(sim; kwargs...)
+    execution_order = get_execution_order(sim)
+    for step in 1:get_steps(sim)
+        println("Executing Step $(step)")
+        for (ix, stage_number) in enumerate(execution_order)
+            # TODO: implement some efficient way of indexing with stage name.
+            stage = get_stage(sim, stage_number)
+            stage_name = get_stage_name(sim, stage)
+            stage_interval = get_stage_interval(sim, stage_name)
+            run_name = "stage-$stage_name"
+            sim.internal.current_time = sim.internal.date_ref[stage_number]
+            sim.sequence.current_execution_index = ix
+            @info "Starting run $run_name $(sim.internal.current_time)"
+            raw_results_path = joinpath(
+                sim.internal.raw_dir,
+                run_name,
+                replace_chars("$(sim.internal.current_time)", ":", "-"),
+            )
+            mkpath(raw_results_path)
+            # Is first run of first stage? Yes -> don't update stage
+            !(step == 1 && ix == 1) && update_stage!(stage, step, sim)
+            run_stage(stage, sim.internal.current_time, raw_results_path; kwargs...)
+            sim.internal.run_count[step][stage_number] += 1
+            sim.internal.date_ref[stage_number] += stage_interval
+        end
+    end
+    constraints_duals = get(kwargs, :constraints_duals, nothing)
+    sim_results = SimulationResultsReference(sim; constraints_duals = constraints_duals)
+    return sim_results
 end
