@@ -2,6 +2,35 @@ path = (joinpath(pwd(), "test_reading_results"))
 !isdir(path) && mkdir(path)
 
 function test_load_simulation(file_path::String)
+
+    single_stage_definition =
+    Dict("ED" => Stage(GenericOpProblem, template_ed, c_sys5_uc, GLPK_optimizer))
+
+    single_sequence = SimulationSequence(
+        step_resolution = Hour(1),
+        order = Dict(1 => "ED"),
+        horizons = Dict("ED" => 12),
+        intervals = Dict("ED" => (Hour(1), Consecutive())),
+        ini_cond_chronology = IntraStageChronology(),
+    )
+
+    sim_single = Simulation(
+        name = "consecutive",
+        steps = 2,
+        stages = single_stage_definition,
+        stages_sequence = single_sequence,
+        simulation_folder = file_path,
+    )
+    build!(sim_single)
+    execute!(sim_single)
+
+    @testset "Single stage sequential tests" begin
+    stage_single = PSI.get_stage(sim_single, "ED")
+    @test JuMP.termination_status(stage_single.internal.psi_container.JuMPmodel) in
+        [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+
+    end
+
     duals = [:CopperPlateBalance]
     stages_definition = Dict(
         "UC" =>
@@ -327,33 +356,6 @@ function test_load_simulation(file_path::String)
                 )
             )
         end
-    end
-
-    @testset "Single stage sequential tests" begin
-        stages_definition =
-            Dict("ED" => Stage(GenericOpProblem, template_ed, c_sys5_uc, GLPK_optimizer))
-
-        sequence = SimulationSequence(
-            step_resolution = Hour(1),
-            order = Dict(1 => "ED"),
-            horizons = Dict("ED" => 12),
-            intervals = Dict("ED" => (Hour(1), Consecutive())),
-            ini_cond_chronology = IntraStageChronology(),
-        )
-
-        sim = Simulation(
-            name = "aggregation",
-            steps = 2,
-            stages = stages_definition,
-            stages_sequence = sequence,
-            simulation_folder = file_path,
-        )
-        build!(sim)
-        sim_results = execute!(sim)
-        stage = PSI.get_stage(sim, "ED")
-        @test JuMP.termination_status(stage.internal.psi_container.JuMPmodel) in
-              [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
-
     end
 
 end
