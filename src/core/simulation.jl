@@ -9,7 +9,7 @@ mutable struct SimulationInternal
     current_time::Dates.DateTime
     reset::Bool
     compiled_status::Bool
-    global_cache::Dict{String, Dict{<:Type{<:AbstractCache}, AbstractCache}}
+    simulation_cache::Dict{String, Dict{<:Type{<:AbstractCache}, AbstractCache}}
 end
 
 function SimulationInternal(steps::Int, stages_keys::Base.KeySet)
@@ -253,11 +253,10 @@ function _check_required_ini_cond_caches(sim::Simulation)
             # No cache needed for the initial condition -> continue
             isnothing(v[1].cache_type) && continue
             c = nothing
-            # Search other stages
+            # Search other stages, substitue for search in the global cache
             for source_stage in values(sim.stages)
-                @show source_stage
                 c = get_cache(source_stage, v[1].cache_type)
-                break
+                !isnothing(c) && break
             end
             if isnothing(c)
                 throw(IS.ArgumentError("Cache $(v[1].cache_type) not defined for initial condition $(k.ic_type) in stage $receiving_stage "))
@@ -271,9 +270,9 @@ end
 function _populate_caches!(sim::Simulation, stage_name::String)
     caches = get_stage_caches(sim, stage_name)
     isnothing(caches) && return
-    sim.internal.global_cache[stage_name] = Dict{Type{<:AbstractCache}, AbstractCache}()
+    sim.internal.simulation_cache[stage_name] = Dict{Type{<:AbstractCache}, AbstractCache}()
     for c in caches
-        sim.internal.global_cache[stage_name][typeof(c)] = c
+        sim.internal.simulation_cache[stage_name][typeof(c)] = c
         sim.stages[stage_name].internal.cache_dict[typeof(c)] = c
         build_cache!(sim.stages[stage_name].internal.psi_container, c)
     end
@@ -424,6 +423,31 @@ function initial_condition_update!(
     return
 end
 
+function _update_caches!(sim::Simulation, stage::Stage)
+    for cache in keys(stage.internal.cache_dict)
+        update_cache!(sim, cache, stage)
+    end
+    return
+end
+
+################################Cache Update################################################
+function update_cache!(sim::Simulation, T::Type{TimeStatusChange}, stage::Stage)
+    c = get_cache(sim, T)
+    parameter = get_parameter_array(stage.internal.psi_container, c.ref)
+    for name in parameter.axes[1]
+        param_status = PJ.value(parameter[name])
+        if c.value[name][:status] == param_status
+            c.value[name][:count] += 1.0
+        elseif c.value[name][:status] != param_status
+            c.value[name][:count] = 1.0
+            c.value[name][:status] = param_status
+        end
+    end
+
+    return
+end
+
+
 """
     execute!(sim::Simulation; kwargs...)
 
@@ -481,6 +505,7 @@ function execute!(sim::Simulation; kwargs...)
             # Is first run of first stage? Yes -> don't update stage
             !(step == 1 && ix == 1) && update_stage!(stage, step, sim)
             run_stage(stage, sim.internal.current_time, raw_results_path; kwargs...)
+            _update_caches!(sim, stage)
             sim.internal.run_count[step][stage_number] += 1
             sim.internal.date_ref[stage_number] += stage_interval
         end

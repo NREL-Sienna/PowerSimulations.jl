@@ -66,22 +66,6 @@ get_psi_container(s::Stage) = s.internal.psi_container
 get_cache(s::Stage, ::Type{T}) where {T <: AbstractCache} =
     get(s.internal.cache_dict, T, nothing)
 
-################################Cache Update################################################
-function update_cache!(c::TimeStatusChange, stage::Stage)
-    parameter = get_parameter_array(stage.internal.psi_container, c.ref)
-    for name in parameter.axes[1]
-        param_status = PJ.value(parameter[name])
-        if c.value[name][:status] == param_status
-            c.value[name][:count] += 1.0
-        elseif c.value[name][:status] != param_status
-            c.value[name][:count] = 1.0
-            c.value[name][:status] = param_status
-        end
-    end
-
-    return
-end
-
 function run_stage(
     stage::Stage,
     start_time::Dates.DateTime,
@@ -111,7 +95,7 @@ function run_stage(
     end
     _export_optimizer_log(timed_log, stage.internal.psi_container, results_path)
     stage.internal.execution_count += 1
-    #Reset execution count
+    # Reset execution count
     if stage.internal.execution_count == stage.internal.executions
         stage.internal.execution_count = 0
     end
