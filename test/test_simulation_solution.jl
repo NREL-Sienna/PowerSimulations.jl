@@ -46,11 +46,11 @@ function test_load_simulation(file_path::String)
 
     @testset "All stages executed" begin
         for name in stage_names
-           stage = PSI.get_stage(sim, name)
-           @test JuMP.termination_status(stage.internal.psi_container.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+            stage = PSI.get_stage(sim, name)
+            @test JuMP.termination_status(stage.internal.psi_container.JuMPmodel) in
+                  [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
         end
     end
-
 
     @testset "testing reading and writing to the results folder" begin
         for name in stage_names
@@ -213,7 +213,10 @@ function test_load_simulation(file_path::String)
         step_resolution = Hour(1),
         feedforward_chronologies = Dict(("UC" => "ED") => RecedingHorizon()),
         horizons = Dict("UC" => 24, "ED" => 12),
-        intervals = Dict("UC" => (Hour(1), RecedingHorizon()), "ED" => (Minute(5), RecedingHorizon())),
+        intervals = Dict(
+            "UC" => (Hour(1), RecedingHorizon()),
+            "ED" => (Minute(5), RecedingHorizon()),
+        ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
                 binary_from_stage = PSI.ON,
