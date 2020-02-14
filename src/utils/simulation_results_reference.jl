@@ -81,7 +81,7 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
                         )
                         variables[name] = vcat(variables[name], date_df)
                     else
-                        @info("$full_path, no such file path")
+                        @warn("$full_path, does not contain any simulation result raw data")
                     end
                 end
                 sim.internal.run_count[s][stage_number] += 1

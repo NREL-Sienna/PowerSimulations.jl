@@ -477,7 +477,7 @@ function execute!(sim::Simulation; kwargs...)
             stage = get_stage(sim, stage_number)
             stage_name = get_stage_name(sim, stage)
             stage_interval = get_stage_interval(sim, stage_name)
-            run_name = "stage-$stage_name"
+            run_name = "step-$(step)-stage-$(stage_name)"
             sim.internal.current_time = sim.internal.date_ref[stage_number]
             sim.sequence.current_execution_index = ix
             @info "Starting run $run_name $(sim.internal.current_time)"

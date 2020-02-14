@@ -1,5 +1,3 @@
-# commented out until solution is fixed.
-#=
 path = (joinpath(pwd(), "test_reading_results"))
 !isdir(path) && mkdir(path)
 
@@ -17,7 +15,10 @@ function test_load_simulation(file_path::String)
         order = Dict(1 => "UC", 2 => "ED"),
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
         horizons = Dict("UC" => 24, "ED" => 12),
-        intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive())),
+        intervals = Dict(
+            "UC" => (Hour(24), Consecutive()),
+            "ED" => (Hour(1), Consecutive()),
+        ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
                 binary_from_stage = PSI.ON,
@@ -42,6 +43,14 @@ function test_load_simulation(file_path::String)
     sim_results = execute!(sim; constraints_duals = duals)
     stage_names = keys(sim.stages)
     step = ["step-1", "step-2"]
+
+    @testset "All stages executed" begin
+        for name in stage_names
+           stage = PSI.get_stage(sim, name)
+           @test JuMP.termination_status(stage.internal.psi_container.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        end
+    end
+
 
     @testset "testing reading and writing to the results folder" begin
         for name in stage_names
@@ -198,11 +207,13 @@ function test_load_simulation(file_path::String)
         end
     end
     ####################
+
     sequence = SimulationSequence(
         order = Dict(1 => "UC", 2 => "ED"),
+        step_resolution = Hour(1),
         feedforward_chronologies = Dict(("UC" => "ED") => RecedingHorizon()),
         horizons = Dict("UC" => 24, "ED" => 12),
-        intervals = Dict("UC" => Hour(1), "ED" => Minute(5)),
+        intervals = Dict("UC" => (Hour(1), RecedingHorizon()), "ED" => (Minute(5), RecedingHorizon())),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
                 binary_from_stage = PSI.ON,
@@ -216,7 +227,6 @@ function test_load_simulation(file_path::String)
     sim = Simulation(
         name = "receding_results",
         steps = 2,
-        step_resolution = Hour(1),
         stages = stages_definition,
         stages_sequence = sequence,
         simulation_folder = file_path,
@@ -323,4 +333,3 @@ finally
     @info("removing test files")
     rm(path, recursive = true)
 end
-=#
