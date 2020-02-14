@@ -107,10 +107,10 @@ function calculate_ic_quantity(
     cache::Union{Nothing, AbstractCache},
 ) where {T <: PSY.ThermalGen}
     status_change_to_on =
-            value(ic) <= ComparisonTolerance && var_value >= ComparisonTolerance
-        status_change_to_off =
-            value(ic) >= ComparisonTolerance && var_value <= ComparisonTolerance
-      if status_change_to_on
+        value(ic) <= ComparisonTolerance && var_value >= ComparisonTolerance
+    status_change_to_off =
+        value(ic) >= ComparisonTolerance && var_value <= ComparisonTolerance
+    if status_change_to_on
         return ic.device.tech.activepowerlimits.min
     end
 

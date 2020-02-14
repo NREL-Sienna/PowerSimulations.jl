@@ -66,8 +66,6 @@ get_psi_container(s::Stage) = s.internal.psi_container
 get_cache(s::Stage, ::Type{T}) where {T <: AbstractCache} =
     get(s.internal.cache_dict, T, nothing)
 
-
-
 ################################Cache Update################################################
 function update_cache!(c::TimeStatusChange, stage::Stage)
     parameter = get_parameter_array(stage.internal.psi_container, c.ref)

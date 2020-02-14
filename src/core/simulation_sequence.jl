@@ -173,7 +173,7 @@ mutable struct SimulationSequence
             ini_cond_chronology,
             cache,
             _get_execution_order_vector(order, _intervals, step_resolution),
-            0
+            0,
         )
 
     end

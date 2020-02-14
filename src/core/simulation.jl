@@ -135,7 +135,7 @@ function _assign_feedforward_chronologies(sim::Simulation)
             # This line keeps track of the executions of a stage relative to other stages.
             # This might be needed in the future to run multiple stages. For now it is disabled
             #to_stage.internal.synchronized_executions[stage_number] =
-                #Int(from_stage_resolution / to_stage_interval)
+            #Int(from_stage_resolution / to_stage_interval)
         end
     end
     return
@@ -432,7 +432,6 @@ function initial_condition_update!(
 
     return
 end
-
 
 """
     execute!(sim::Simulation; kwargs...)
