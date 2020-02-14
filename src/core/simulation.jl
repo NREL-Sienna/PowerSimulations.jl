@@ -391,7 +391,7 @@ function initial_condition_update!(
     sim::Simulation,
 )
     ini_cond_vector = get_initial_conditions(stage.internal.psi_container)[ini_cond_key]
-    for ic in ini_cond_vector
+    for ic in get_initial_conditions(stage.internal.psi_container)[ini_cond_key]
         name = device_name(ic)
         interval_chronology = get_stage_interval_chronology(sim, stage.name)
         var_value =
