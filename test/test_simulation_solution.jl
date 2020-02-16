@@ -31,10 +31,15 @@ function test_load_simulation(file_path::String)
 
     end
 
+    # Tests of a Simulation without Caches
     duals = [:CopperPlateBalance]
     stages_definition = Dict(
-        "UC" =>
-                Stage(GenericOpProblem, template_hydro_uc, c_sys5_hy_uc, GLPK_optimizer),
+        "UC" => Stage(
+            GenericOpProblem,
+            template_hydro_basic_uc,
+            c_sys5_hy_uc,
+            GLPK_optimizer,
+        ),
         "ED" =>
                 Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, GLPK_optimizer),
     )
@@ -58,7 +63,6 @@ function test_load_simulation(file_path::String)
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
-        cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
         ini_cond_chronology = InterStageChronology(),
     )
     sim = Simulation(
@@ -73,7 +77,7 @@ function test_load_simulation(file_path::String)
     stage_names = keys(sim.stages)
     step = ["step-1", "step-2"]
 
-    @testset "All stages executed" begin
+    @testset "All stages executed - No Cache" begin
         for name in stage_names
             stage = PSI.get_stage(sim, name)
             @test JuMP.termination_status(stage.internal.psi_container.JuMPmodel) in
@@ -230,7 +234,7 @@ function test_load_simulation(file_path::String)
                 get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
             for ic in initial_conditions
                 raw_result = Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
-                initial_cond = value(PSI.get_condition(ic))
+                initial_cond = value(PSI.get_value(ic))
                 @test isapprox(raw_result, initial_cond)
             end
         end
@@ -252,7 +256,6 @@ function test_load_simulation(file_path::String)
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
-        cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
         ini_cond_chronology = InterStageChronology(),
     )
 
@@ -312,7 +315,7 @@ function test_load_simulation(file_path::String)
             vars = results.variables[vars_names[ik]] # change to getter function
             for ic in initial_conditions
                 output = vars[1, Symbol(PSI.device_name(ic))] # change to getter function
-                initial_cond = value(PSI.get_condition(ic))
+                initial_cond = value(PSI.get_value(ic))
                 @test isapprox(output, initial_cond, atol = 1e-4)
             end
         end
@@ -327,16 +330,16 @@ function test_load_simulation(file_path::String)
             end
             variable_list = PSI.get_variable_names(sim, name)
             res = load_simulation_results(sim_results, name; write = true)
-            file_path = joinpath(sim_results.results_folder, "$(variable_list[1]).feather")
-            rm(file_path)
+            _file_path = joinpath(sim_results.results_folder, "$(variable_list[1]).feather")
+            rm(_file_path)
             fake_df = DataFrames.DataFrame(:A => Array(1:10))
-            Feather.write(file_path, fake_df)
+            Feather.write(_file_path, fake_df)
             @test_logs(
                 (:error, r"hash mismatch"),
                 match_mode = :any,
                 @test_throws(
                     IS.HashMismatchError,
-                    check_file_integrity(dirname(file_path))
+                    check_file_integrity(dirname(_file_path))
                 )
             )
         end
@@ -355,6 +358,67 @@ function test_load_simulation(file_path::String)
                     check_file_integrity(dirname(check_file_path))
                 )
             )
+        end
+    end
+
+    @testset "Simulation with Cache" begin
+        stages_definition = Dict(
+            "UC" => Stage(
+                GenericOpProblem,
+                template_hydro_standard_uc,
+                c_sys5_hy_uc,
+                GLPK_optimizer,
+            ),
+            "ED" => Stage(
+                GenericOpProblem,
+                template_hydro_ed,
+                c_sys5_hy_ed,
+                GLPK_optimizer,
+            ),
+        )
+
+        sequence_cache = SimulationSequence(
+            step_resolution = Hour(24),
+            order = Dict(1 => "UC", 2 => "ED"),
+            feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+            horizons = Dict("UC" => 24, "ED" => 12),
+            intervals = Dict(
+                "UC" => (Hour(24), Consecutive()),
+                "ED" => (Hour(1), Consecutive()),
+            ),
+            feedforward = Dict(
+                ("ED", :devices, :Generators) => SemiContinuousFF(
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
+                ),
+                ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
+                    variable_from_stage = PSI.ACTIVE_POWER,
+                    affected_variables = [PSI.ACTIVE_POWER],
+                ),
+            ),
+            cache = Dict("UC" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
+            ini_cond_chronology = InterStageChronology(),
+        )
+        sim_cache = Simulation(
+            name = "cache",
+            steps = 1,
+            stages = stages_definition,
+            stages_sequence = sequence_cache,
+            simulation_folder = file_path,
+        )
+        build!(sim_cache)
+        execute!(sim_cache)
+
+        var_names =
+            axes(PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On_ThermalStandard])[1]
+        for name in var_names
+            var =
+                PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On_ThermalStandard][
+                    name,
+                    24,
+                ]
+            cache = collect(values(sim_cache.internal.simulation_cache))[1].value[name]
+            @test JuMP.value(var) == cache[:status]
         end
     end
 

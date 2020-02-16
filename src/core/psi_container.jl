@@ -215,6 +215,14 @@ function has_initial_conditions(psi_container::PSIContainer, key::ICKey)
     return key in keys(psi_container.initial_conditions)
 end
 
+function get_initial_conditions(
+    psi_container::PSIContainer,
+    ::Type{T},
+    ::Type{D},
+) where {T <: InitialConditionType, D <: PSY.Device}
+    return get_initial_conditions(psi_container, ICKey(T, D))
+end
+
 function get_initial_conditions(psi_container::PSIContainer, key::ICKey)
     initial_conditions = get(psi_container.initial_conditions, key, nothing)
     if isnothing(initial_conditions)
@@ -284,6 +292,10 @@ end
 
 function get_variable(psi_container::PSIContainer, var_type::AbstractString)
     return get_variable(psi_container, variable_name(var_type))
+end
+
+function get_variable(psi_container::PSIContainer, update_ref::UpdateRef)
+    return get_variable(psi_container, update_ref.access_ref)
 end
 
 function get_variable(psi_container::PSIContainer, name::Symbol)
@@ -458,23 +470,4 @@ function iterate_parameter_containers(psi_container::PSIContainer)
             put!(channel, container)
         end
     end
-end
-
-# Here because requires the container to be defined
-
-function build_cache!(psi_container::PSIContainer, cache::TimeStatusChange)
-    # TODO: This currently only supports parameters; we may need to support variables and
-    # constraints in the future. A get function would need to be parametrized on cache.ref.
-    parameter = get_parameter_array(psi_container, cache.ref)
-    value_array =
-        JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, axes(parameter)...)
-
-    for name in parameter.axes[1]
-        status = PJ.value(parameter[name])
-        value_array[name] = Dict(:count => 999.0, :status => status)
-    end
-
-    cache.value = value_array
-
-    return
 end

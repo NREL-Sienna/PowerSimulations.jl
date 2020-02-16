@@ -50,13 +50,6 @@ function _update_initial_conditions!(stage::Stage, sim::Simulation)
     return
 end
 
-function _update_caches!(stage::Stage)
-    for cache in values(stage.internal.cache_dict)
-        update_cache!(cache, stage)
-    end
-    return
-end
-
 function _update_parameters(stage::Stage, sim::Simulation)
     for container in iterate_parameter_containers(stage.internal.psi_container)
         update_parameter!(container.update_ref, container, stage, sim)
@@ -68,8 +61,6 @@ end
 # Is possible this function needs a better name
 function _update_stage!(stage::Stage, sim::Simulation)
     _update_parameters(stage, sim)
-    _update_caches!(stage)
-    # Set initial conditions of the stage I am about to run.
     _update_initial_conditions!(stage, sim)
     return
 end

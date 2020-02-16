@@ -493,7 +493,7 @@ function get_stage_variable(
     var_ref::UpdateRef,
 ) where {T <: AbstractOperationsProblem}
     variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
-    step = axes(variable)[2][end]
+    step = axes(variable)[2][get_end_of_interval_step(stages.first)]
     return JuMP.value(variable[device_name, step])
 end
 

@@ -3,20 +3,22 @@ mutable struct StageInternal
     number::Int
     executions::Int
     execution_count::Int
+    end_of_interval_step::Int
     # This line keeps track of the executions of a stage relative to other stages.
     # This might be needed in the future to run multiple stages. For now it is disabled
     #synchronized_executions::Dict{Int, Int} # Number of executions per upper level stage step
     psi_container::Union{Nothing, PSIContainer}
-    cache_dict::Dict{Type{<:AbstractCache}, AbstractCache}
+    caches::Set{<:CacheKey{<:AbstractCache, <:PSY.Device}}
     chronolgy_dict::Dict{Int, <:FeedForwardChronology}
     function StageInternal(number, executions, execution_count, psi_container)
         new(
             number,
             executions,
             execution_count,
+            0,
             #Dict{Int, Int}(),
             psi_container,
-            Dict{Type{<:AbstractCache}, AbstractCache}(),
+            Set{CacheKey{<:AbstractCache, <:PSY.Device}}(),
             Dict{Int, FeedForwardChronology}(),
         )
     end
@@ -63,22 +65,26 @@ get_sys(s::Stage) = s.sys
 get_template(s::Stage) = s.template
 get_number(s::Stage) = s.internal.number
 get_psi_container(s::Stage) = s.internal.psi_container
-get_cache(s::Stage, ::Type{T}) where {T <: AbstractCache} =
-    get(s.internal.cache_dict, T, nothing)
+get_end_of_interval_step(s::Stage) = s.internal.end_of_interval_step
 
-################################Cache Update################################################
-function update_cache!(c::TimeStatusChange, stage::Stage)
-    parameter = get_parameter_array(stage.internal.psi_container, c.ref)
-    for name in parameter.axes[1]
-        param_status = PJ.value(parameter[name])
-        if c.value[name][:status] == param_status
-            c.value[name][:count] += 1.0
-        elseif c.value[name][:status] != param_status
-            c.value[name][:count] = 1.0
-            c.value[name][:status] = param_status
-        end
-    end
-
+function build!(
+    stage::Stage,
+    initial_time::Dates.DateTime,
+    horizon::Int,
+    stage_interval::Dates.Period;
+    kwargs...,
+)
+    stage.internal.psi_container = PSIContainer(
+        stage.template.transmission,
+        stage.sys,
+        stage.optimizer;
+        use_parameters = true,
+        initial_time = initial_time,
+        horizon = horizon,
+    )
+    _build!(stage.internal.psi_container, stage.template, stage.sys; kwargs...)
+    stage_resolution = PSY.get_forecasts_resolution(stage.sys)
+    stage.internal.end_of_interval_step = Int(stage_interval / stage_resolution)
     return
 end
 
@@ -111,9 +117,53 @@ function run_stage(
     end
     _export_optimizer_log(timed_log, stage.internal.psi_container, results_path)
     stage.internal.execution_count += 1
-    #Reset execution count
+    # Reset execution count
     if stage.internal.execution_count == stage.internal.executions
         stage.internal.execution_count = 0
     end
     return
+end
+
+# Here because requires the stage to be defined
+# This is a method a user defining a custom cache will have to define. This is the definition
+# in PSI for the building the TimeStatusChange
+function get_initial_cache(cache::AbstractCache, stage::Stage)
+    throw(ArgumentError("Initialization method for cache $(typeof(cache)) not defined"))
+end
+
+function get_initial_cache(cache::TimeStatusChange, stage::Stage)
+    ini_cond_on = get_initial_conditions(
+        stage.internal.psi_container,
+        TimeDurationON,
+        cache.device_type,
+    )
+
+    ini_cond_off = get_initial_conditions(
+        stage.internal.psi_container,
+        TimeDurationOFF,
+        cache.device_type,
+    )
+
+    device_axes = Set((
+        PSY.get_name(ic.device) for ic in Iterators.Flatten([ini_cond_on, ini_cond_off])
+    ))
+    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, device_axes)
+
+    for ic in ini_cond_on
+        device_name = PSY.get_name(ic.device)
+        condition = get_condition(ic)
+        status = (condition > 0.0) ? 1.0 : 0.0
+        value_array[device_name] = Dict(:count => condition, :status => status)
+    end
+
+    for ic in ini_cond_off
+        device_name = PSY.get_name(ic.device)
+        condition = get_condition(ic)
+        status = (condition > 0.0) ? 0.0 : 1.0
+        if value_array[device_name][:status] != status
+            throw(IS.ConflictingInputsError("Initial Conditions for $(device_name) are not compatible. The values provided are invalid"))
+        end
+    end
+
+    return value_array
 end
