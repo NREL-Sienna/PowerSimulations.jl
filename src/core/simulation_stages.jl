@@ -3,6 +3,7 @@ mutable struct StageInternal
     number::Int
     executions::Int
     execution_count::Int
+    end_of_interval_step::Int
     # This line keeps track of the executions of a stage relative to other stages.
     # This might be needed in the future to run multiple stages. For now it is disabled
     #synchronized_executions::Dict{Int, Int} # Number of executions per upper level stage step
@@ -14,6 +15,7 @@ mutable struct StageInternal
             number,
             executions,
             execution_count,
+            0,
             #Dict{Int, Int}(),
             psi_container,
             Set{CacheKey{<:AbstractCache, <:PSY.Device}}(),
@@ -63,6 +65,23 @@ get_sys(s::Stage) = s.sys
 get_template(s::Stage) = s.template
 get_number(s::Stage) = s.internal.number
 get_psi_container(s::Stage) = s.internal.psi_container
+get_end_of_interval_step(s::Stage) = s.internal.end_of_interval_step
+
+function build!(stage::Stage, initial_time::Dates.DateTime, horizon::Int, stage_interval::Dates.Period; kwargs...)
+    stage.internal.psi_container = PSIContainer(
+            stage.template.transmission,
+            stage.sys,
+            stage.optimizer;
+            use_parameters = true,
+            initial_time = initial_time,
+            horizon = horizon,
+        )
+        _build!(stage.internal.psi_container, stage.template, stage.sys; kwargs...)
+        stage_resolution = PSY.get_forecasts_resolution(stage.sys)
+        stage.internal.end_of_interval_step = Int(stage_interval/stage_resolution)
+    return
+end
+
 
 function run_stage(
     stage::Stage,

@@ -58,7 +58,7 @@ device_name(ini_cond::InitialCondition) = PSY.get_name(ini_cond.device)
 # TODO: Consider when more than one UC model is used for the stages that the counts need
 # to be scaled.
 function calculate_ic_quantity(
-    initial_condition_key::ICKey{TimeDurationOFF, T},
+    initial_condition_key::ICKey{TimeDurationON, T},
     ic::InitialCondition,
     var_value::Float64,
     cache::TimeStatusChange,
@@ -75,7 +75,7 @@ function calculate_ic_quantity(
 end
 
 function calculate_ic_quantity(
-    initial_condition_key::ICKey{TimeDurationON, T},
+    initial_condition_key::ICKey{TimeDurationOFF, T},
     ic::InitialCondition,
     var_value::Float64,
     cache::TimeStatusChange,
@@ -107,9 +107,9 @@ function calculate_ic_quantity(
     cache::Union{Nothing, AbstractCache},
 ) where {T <: PSY.ThermalGen}
     status_change_to_on =
-        value(ic) <= ComparisonTolerance && var_value >= ComparisonTolerance
+        get_condition(ic) <= ComparisonTolerance && var_value >= ComparisonTolerance
     status_change_to_off =
-        value(ic) >= ComparisonTolerance && var_value <= ComparisonTolerance
+        get_condition(ic) >= ComparisonTolerance && var_value <= ComparisonTolerance
     if status_change_to_on
         return ic.device.tech.activepowerlimits.min
     end

@@ -90,8 +90,10 @@ get_execution_order(s::Simulation) = s.sequence.execution_order
 get_current_execution_index(s::Simulation) = s.sequence.current_execution_index
 get_stage_cache_definition(s::Simulation, stage::String) =
     get(s.sequence.cache, stage, nothing)
-get_cache(s::Simulation, ::Type{T}, ::Type{D}) where {T <: AbstractCache, D <: PSY.Device} =
-    get(s.internal.simulation_cache, CacheKey(T, D), nothing)
+get_cache(s::Simulation, key::CacheKey) = get(s.internal.simulation_cache, key, nothing)
+function get_cache(s::Simulation, ::Type{T}, ::Type{D}) where {T <: AbstractCache, D <: PSY.Device}
+    return get_cache(s, CacheKey(T, D))
+end
 
 function _check_forecasts_sequence(sim::Simulation)
     for (stage_number, stage_name) in sim.sequence.order
@@ -285,28 +287,23 @@ function _build_stages!(sim::Simulation; kwargs...)
     system_to_file = get(kwargs, :system_to_file, true)
     for (stage_number, stage_name) in sim.sequence.order
         @info("Building Stage $(stage_number)-$(stage_name)")
-        horizon = sim.sequence.horizons[stage_name]
+        horizon = get_stage_horizon(get_sequence(sim), stage_name)
         stage = get_stage(sim, stage_name)
-        stage.internal.psi_container = PSIContainer(
-            stage.template.transmission,
-            stage.sys,
-            stage.optimizer;
-            use_parameters = true,
-            initial_time = get_initial_time(sim),
-            horizon = horizon,
-        )
-        _build!(stage.internal.psi_container, stage.template, stage.sys; kwargs...)
+        stage_interval = get_stage_interval(get_sequence(sim), stage_name)
+        initial_time = get_initial_time(sim)
+        build!(stage, initial_time, horizon, stage_interval; kwargs...)
         _populate_caches!(sim, stage_name)
         if PSY.are_forecasts_contiguous(stage.sys)
-            sim.internal.date_ref[stage_number] = PSY.generate_initial_times(
+            initial_date = PSY.generate_initial_times(
                 stage.sys,
-                get_stage_interval(get_sequence(sim), stage_name),
-                get_stage_horizon(get_sequence(sim), stage_name),
+                stage_interval,
+                horizon,
             )[1]
         else
-            sim.internal.date_ref[stage_number] =
-                PSY.get_forecast_initial_times(stage.sys)[1]
+            initial_date = PSY.get_forecast_initial_times(stage.sys)[1]
         end
+        @assert initial_date == initial_time
+        sim.internal.date_ref[stage_number] = initial_date
     end
     _check_required_ini_cond_caches(sim)
     return
@@ -417,7 +414,11 @@ function initial_condition_update!(
             name,
             ic.update_ref,
         )
-        cache = isnothing(ic.cache_key) ? nothing : get_cache(source_stage, ic.cache_key)
+        if isnothing(ic.cache_type)
+            cache = nothing
+        else
+            cache = get_cache(sim, ic.cache_type, ini_cond_key.device_type)
+        end
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
     end
@@ -426,23 +427,26 @@ function initial_condition_update!(
 end
 
 function _update_caches!(sim::Simulation, stage::Stage)
-    for cache in keys(stage.internal.cache_dict)
+    for cache in stage.internal.caches
         update_cache!(sim, cache, stage)
     end
     return
 end
 
 ################################Cache Update################################################
-function update_cache!(sim::Simulation, T::Type{TimeStatusChange}, stage::Stage)
-    c = get_cache(sim, T)
-    parameter = get_parameter_array(stage.internal.psi_container, c.ref)
-    for name in parameter.axes[1]
-        param_status = PJ.value(parameter[name])
-        if c.value[name][:status] == param_status
+# TODO: Need to be careful here if 2 stages modify the same cache. This function might need
+# dispatch on the Statge{OpModel} to assing different actions. e.g. HAUC and DAUC
+function update_cache!(sim::Simulation, key::CacheKey{TimeStatusChange, D}, stage::Stage) where D <: PSY.Device
+    c = get_cache(sim, key)
+    variable = get_variable(stage.internal.psi_container, c.ref)
+
+    for t in 1:get_end_of_interval_step(stage), name in variable.axes[1]
+        device_status = JuMP.value(variable[name, t])
+        if c.value[name][:status] == device_status
             c.value[name][:count] += 1.0
-        elseif c.value[name][:status] != param_status
+        elseif c.value[name][:status] != device_status
             c.value[name][:count] = 1.0
-            c.value[name][:status] = param_status
+            c.value[name][:status] = device_status
         end
     end
 
