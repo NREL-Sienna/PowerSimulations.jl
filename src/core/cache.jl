@@ -3,7 +3,7 @@ struct CacheKey{C <: AbstractCache, D <: PSY.Device}
     device_type::Type{D}
 end
 
-function CacheKey(cache::C) where C <: AbstractCache
+function CacheKey(cache::C) where {C <: AbstractCache}
     return CacheKey(C, cache.device_type)
 end
 

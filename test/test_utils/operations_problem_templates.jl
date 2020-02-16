@@ -7,7 +7,19 @@ devices = Dict(
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     :ILoads => DeviceModel(InterruptibleLoad, StaticPowerLoad),
 )
-template_uc = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
+template_basic_uc =
+    OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
+
+branches = Dict()
+services = Dict()
+devices = Dict(
+    :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
+    :Ren => DeviceModel(RenewableDispatch, RenewableFixed),
+    :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+    :ILoads => DeviceModel(InterruptibleLoad, StaticPowerLoad),
+)
+template_standard_uc =
+    OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 
 ## ED Model Ref
 branches = Dict()
@@ -32,7 +44,7 @@ devices = Dict(
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     :ILoads => DeviceModel(InterruptibleLoad, StaticPowerLoad),
 )
-template_uc_svc =
+template_basic_uc_svc =
     OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 
 # UC with Hydro Model Ref
@@ -73,7 +85,7 @@ devices = Dict(:Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCo
                                     :Loads =>  DeviceModel(PowerLoad, StaticPowerLoad),
                                     :ILoads =>  DeviceModel(InterruptibleLoad, StaticPowerLoad))
 
-template_uc= OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
+template_basic_uc= OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 
 ## ED Model Ref
 branches = Dict(:L => DeviceModel(Line, StaticLine),

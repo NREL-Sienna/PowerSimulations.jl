@@ -42,15 +42,15 @@ end
 
 const InitialConditionsContainer = Dict{ICKey, Array{InitialCondition}}
 
-function value(p::InitialCondition{Float64})
+function get_condition(p::InitialCondition{Float64})
     return p.value
 end
 
-function value(p::InitialCondition{PJ.ParameterRef})
+function get_condition(p::InitialCondition{PJ.ParameterRef})
     return PJ.value(p.value)
 end
 
-get_condition(ic::InitialCondition) = ic.value
+get_value(ic::InitialCondition) = ic.value
 
 device_name(ini_cond::InitialCondition) = PSY.get_name(ini_cond.device)
 

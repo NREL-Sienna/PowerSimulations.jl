@@ -31,7 +31,6 @@ function output_init(
         ICKey(DevicePower, T),
         _make_initial_condition_active_power,
         _get_active_power_output_value,
-        TimeStatusChange,
     )
 
     return

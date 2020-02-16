@@ -7,7 +7,7 @@ mutable struct StageInternal
     # This might be needed in the future to run multiple stages. For now it is disabled
     #synchronized_executions::Dict{Int, Int} # Number of executions per upper level stage step
     psi_container::Union{Nothing, PSIContainer}
-    caches::Set{<:CacheKey{<:AbstractCache,<:PSY.Device}}
+    caches::Set{<:CacheKey{<:AbstractCache, <:PSY.Device}}
     chronolgy_dict::Dict{Int, <:FeedForwardChronology}
     function StageInternal(number, executions, execution_count, psi_container)
         new(
@@ -16,7 +16,7 @@ mutable struct StageInternal
             execution_count,
             #Dict{Int, Int}(),
             psi_container,
-            Set{CacheKey{<:AbstractCache,<:PSY.Device}}(),
+            Set{CacheKey{<:AbstractCache, <:PSY.Device}}(),
             Dict{Int, FeedForwardChronology}(),
         )
     end
@@ -98,4 +98,48 @@ function run_stage(
         stage.internal.execution_count = 0
     end
     return
+end
+
+# Here because requires the stage to be defined
+# This is a method a user defining a custom cache will have to define. This is the definition
+# in PSI for the building the TimeStatusChange
+function get_initial_cache(cache::AbstractCache, stage::Stage)
+    throw(ArgumentError("Initialization method for cache $(typeof(cache)) not defined"))
+end
+
+function get_initial_cache(cache::TimeStatusChange, stage::Stage)
+    ini_cond_on = get_initial_conditions(
+        stage.internal.psi_container,
+        TimeDurationON,
+        cache.device_type,
+    )
+
+    ini_cond_off = get_initial_conditions(
+        stage.internal.psi_container,
+        TimeDurationOFF,
+        cache.device_type,
+    )
+
+    device_axes = Set((
+        PSY.get_name(ic.device) for ic in Iterators.Flatten([ini_cond_on, ini_cond_off])
+    ))
+    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, device_axes)
+
+    for ic in ini_cond_on
+        device_name = PSY.get_name(ic.device)
+        condition = get_condition(ic)
+        status = (condition > 0.0) ? 1.0 : 0.0
+        value_array[device_name] = Dict(:count => condition, :status => status)
+    end
+
+    for ic in ini_cond_off
+        device_name = PSY.get_name(ic.device)
+        condition = get_condition(ic)
+        status = (condition > 0.0) ? 0.0 : 1.0
+        if value_array[device_name][:status] != status
+            throw(IS.ConflictingInputsError("Initial Conditions for $(device_name) are not compatible. The values provided are invalid"))
+        end
+    end
+
+    return value_array
 end

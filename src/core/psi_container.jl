@@ -215,6 +215,14 @@ function has_initial_conditions(psi_container::PSIContainer, key::ICKey)
     return key in keys(psi_container.initial_conditions)
 end
 
+function get_initial_conditions(
+    psi_container::PSIContainer,
+    ::Type{T},
+    ::Type{D},
+) where {T <: InitialConditionType, D <: PSY.Device}
+    return get_initial_conditions(psi_container, ICKey(T, D))
+end
+
 function get_initial_conditions(psi_container::PSIContainer, key::ICKey)
     initial_conditions = get(psi_container.initial_conditions, key, nothing)
     if isnothing(initial_conditions)
@@ -462,21 +470,4 @@ function iterate_parameter_containers(psi_container::PSIContainer)
             put!(channel, container)
         end
     end
-end
-
-# Here because requires the container to be defined
-
-function build_cache!(psi_container::PSIContainer, cache::TimeStatusChange)
-    variable = get_variable(psi_container, cache.ref)
-    value_array =
-        JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, axes(variable)...)
-
-    for name in variable.axes[1]
-        #status = JuMP.value(variable[name])
-        value_array[name] = Dict(:count => 999.0, :status => 1.0)
-    end
-
-    cache.value = value_array
-
-    return
 end

@@ -33,7 +33,7 @@ function SimulationInternal(steps::Int, stages_keys::Base.KeySet)
         Dates.now(),
         true,
         false,
-        Dict{CacheKey, AbstractCache}()
+        Dict{CacheKey, AbstractCache}(),
     )
 end
 
@@ -88,10 +88,10 @@ get_name(s::Simulation) = s.name
 get_simulation_folder(s::Simulation) = s.simulation_folder
 get_execution_order(s::Simulation) = s.sequence.execution_order
 get_current_execution_index(s::Simulation) = s.sequence.current_execution_index
-get_stage_cache_definition(s::Simulation, stage::String) = get(s.sequence.cache, stage, nothing)
+get_stage_cache_definition(s::Simulation, stage::String) =
+    get(s.sequence.cache, stage, nothing)
 get_cache(s::Simulation, ::Type{T}, ::Type{D}) where {T <: AbstractCache, D <: PSY.Device} =
-    get(s.internal.simulation_cache, CacheKey(T,D), nothing)
-
+    get(s.internal.simulation_cache, CacheKey(T, D), nothing)
 
 function _check_forecasts_sequence(sim::Simulation)
     for (stage_number, stage_name) in sim.sequence.order
@@ -257,9 +257,9 @@ function _check_required_ini_cond_caches(sim::Simulation)
             isnothing(v[1].cache_type) && continue
             c = get_cache(sim, v[1].cache_type, k.device_type)
             if isnothing(c)
-                throw(IS.ArgumentError("Cache $(v[1].cache_key) not defined for initial condition $(k.ic_key) in stage $stage_name"))
+                throw(ArgumentError("Cache $(v[1].cache_type) not defined for initial condition $(k) in stage $stage_name"))
             end
-            @debug "found cache $(v[1].cache_key) for initial condition $(k.ic_key) in stage $(stage_name)"
+            @debug "found cache $(v[1].cache_type) for initial condition $(k) in stage $(stage_name)"
         end
     end
     return
@@ -268,14 +268,15 @@ end
 function _populate_caches!(sim::Simulation, stage_name::String)
     caches = get_stage_cache_definition(sim, stage_name)
     isnothing(caches) && return
+    stage = get_stage(sim, stage_name)
     for c in caches
         cache_key = CacheKey(c)
-        push!(sim.stages[stage_name].internal.caches, cache_key)
+        push!(stage.internal.caches, cache_key)
         if !haskey(sim.internal.simulation_cache, cache_key)
             @debug "Cache $(cache_key) added to he simulation"
             sim.internal.simulation_cache[cache_key] = c
         end
-        build_cache!(sim.stages[stage_name].internal.psi_container, c)
+        sim.internal.simulation_cache[cache_key].value = get_initial_cache(c, stage)
     end
     return
 end
@@ -447,7 +448,6 @@ function update_cache!(sim::Simulation, T::Type{TimeStatusChange}, stage::Stage)
 
     return
 end
-
 
 """
     execute!(sim::Simulation; kwargs...)
