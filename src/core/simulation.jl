@@ -91,7 +91,11 @@ get_current_execution_index(s::Simulation) = s.sequence.current_execution_index
 get_stage_cache_definition(s::Simulation, stage::String) =
     get(s.sequence.cache, stage, nothing)
 get_cache(s::Simulation, key::CacheKey) = get(s.internal.simulation_cache, key, nothing)
-function get_cache(s::Simulation, ::Type{T}, ::Type{D}) where {T <: AbstractCache, D <: PSY.Device}
+function get_cache(
+    s::Simulation,
+    ::Type{T},
+    ::Type{D},
+) where {T <: AbstractCache, D <: PSY.Device}
     return get_cache(s, CacheKey(T, D))
 end
 
@@ -294,11 +298,7 @@ function _build_stages!(sim::Simulation; kwargs...)
         build!(stage, initial_time, horizon, stage_interval; kwargs...)
         _populate_caches!(sim, stage_name)
         if PSY.are_forecasts_contiguous(stage.sys)
-            initial_date = PSY.generate_initial_times(
-                stage.sys,
-                stage_interval,
-                horizon,
-            )[1]
+            initial_date = PSY.generate_initial_times(stage.sys, stage_interval, horizon)[1]
         else
             initial_date = PSY.get_forecast_initial_times(stage.sys)[1]
         end
@@ -436,7 +436,11 @@ end
 ################################Cache Update################################################
 # TODO: Need to be careful here if 2 stages modify the same cache. This function might need
 # dispatch on the Statge{OpModel} to assing different actions. e.g. HAUC and DAUC
-function update_cache!(sim::Simulation, key::CacheKey{TimeStatusChange, D}, stage::Stage) where D <: PSY.Device
+function update_cache!(
+    sim::Simulation,
+    key::CacheKey{TimeStatusChange, D},
+    stage::Stage,
+) where {D <: PSY.Device}
     c = get_cache(sim, key)
     variable = get_variable(stage.internal.psi_container, c.ref)
 

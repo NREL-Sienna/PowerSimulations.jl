@@ -34,8 +34,12 @@ function test_load_simulation(file_path::String)
     # Tests of a Simulation without Caches
     duals = [:CopperPlateBalance]
     stages_definition = Dict(
-        "UC" =>
-                Stage(GenericOpProblem, template_hydro_basic_uc, c_sys5_hy_uc, GLPK_optimizer),
+        "UC" => Stage(
+            GenericOpProblem,
+            template_hydro_basic_uc,
+            c_sys5_hy_uc,
+            GLPK_optimizer,
+        ),
         "ED" =>
                 Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, GLPK_optimizer),
     )
@@ -358,52 +362,65 @@ function test_load_simulation(file_path::String)
     end
 
     @testset "Simulation with Cache" begin
-    stages_definition = Dict(
-        "UC" =>
-                Stage(GenericOpProblem, template_hydro_standard_uc, c_sys5_hy_uc, GLPK_optimizer),
-        "ED" =>
-                Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, GLPK_optimizer),
-    )
-
-    sequence_cache = SimulationSequence(
-        step_resolution = Hour(24),
-        order = Dict(1 => "UC", 2 => "ED"),
-        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-        horizons = Dict("UC" => 24, "ED" => 12),
-        intervals = Dict(
-            "UC" => (Hour(24), Consecutive()),
-            "ED" => (Hour(1), Consecutive()),
-        ),
-        feedforward = Dict(
-            ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_from_stage = PSI.ON,
-                affected_variables = [PSI.ACTIVE_POWER],
+        stages_definition = Dict(
+            "UC" => Stage(
+                GenericOpProblem,
+                template_hydro_standard_uc,
+                c_sys5_hy_uc,
+                GLPK_optimizer,
             ),
-            ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                variable_from_stage = PSI.ACTIVE_POWER,
-                affected_variables = [PSI.ACTIVE_POWER],
+            "ED" => Stage(
+                GenericOpProblem,
+                template_hydro_ed,
+                c_sys5_hy_ed,
+                GLPK_optimizer,
             ),
-        ),
-        cache = Dict("UC" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
-        ini_cond_chronology = InterStageChronology(),
-    )
-    sim_cache = Simulation(
-        name = "cache",
-        steps = 1,
-        stages = stages_definition,
-        stages_sequence = sequence_cache,
-        simulation_folder = file_path,
-    )
-    build!(sim_cache)
-    execute!(sim_cache)
+        )
 
-    var_names = axes(PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On_ThermalStandard])[1]
-    for name in var_names
-        var = PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On_ThermalStandard][name, 24]
-        cache = collect(values(sim_cache.internal.simulation_cache))[1].value[name]
-        @test JuMP.value(var) == cache[:status]
+        sequence_cache = SimulationSequence(
+            step_resolution = Hour(24),
+            order = Dict(1 => "UC", 2 => "ED"),
+            feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+            horizons = Dict("UC" => 24, "ED" => 12),
+            intervals = Dict(
+                "UC" => (Hour(24), Consecutive()),
+                "ED" => (Hour(1), Consecutive()),
+            ),
+            feedforward = Dict(
+                ("ED", :devices, :Generators) => SemiContinuousFF(
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
+                ),
+                ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
+                    variable_from_stage = PSI.ACTIVE_POWER,
+                    affected_variables = [PSI.ACTIVE_POWER],
+                ),
+            ),
+            cache = Dict("UC" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
+            ini_cond_chronology = InterStageChronology(),
+        )
+        sim_cache = Simulation(
+            name = "cache",
+            steps = 1,
+            stages = stages_definition,
+            stages_sequence = sequence_cache,
+            simulation_folder = file_path,
+        )
+        build!(sim_cache)
+        execute!(sim_cache)
+
+        var_names =
+            axes(PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On_ThermalStandard])[1]
+        for name in var_names
+            var =
+                PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On_ThermalStandard][
+                    name,
+                    24,
+                ]
+            cache = collect(values(sim_cache.internal.simulation_cache))[1].value[name]
+            @test JuMP.value(var) == cache[:status]
+        end
     end
-end
 
 end
 try
