@@ -7,7 +7,7 @@ Calculates how many times a stage is executed for every interval of the previous
 """
 function _calculate_interval_inner_counts(
     order::Dict{Int, String},
-    intervals::Dict{String, <:Dates.TimePeriod},
+    intervals::Dict{String, Tuple{Dates.TimePeriod, <:FeedForwardChronology}},
     step_resolution::Dates.TimePeriod,
 )
     reverse_order = sort(collect(keys(order)), rev = true)
@@ -15,8 +15,8 @@ function _calculate_interval_inner_counts(
     for k in reverse_order[1:(end - 1)]
         stage_name = order[k]
         previous_stage_name = order[k - 1]
-        stage_interval = intervals[stage_name]
-        previous_stage_interval = intervals[previous_stage_name]
+        stage_interval = intervals[stage_name][1]
+        previous_stage_interval = intervals[previous_stage_name][1]
         if Dates.Millisecond(previous_stage_interval % stage_interval) !=
            Dates.Millisecond(0)
             throw(IS.ConflictingInputsError("The interval configuration provided results in a fractional number of executions of stage $stage_name"))
@@ -25,7 +25,7 @@ function _calculate_interval_inner_counts(
         @debug "Stage $k is executed $(interval_run_counts[k]) time within each interval of Stage $(k-1)"
     end
     stage_name = order[1]
-    stage_interval = intervals[stage_name]
+    stage_interval = intervals[stage_name][1]
     interval_run_counts[1] = 1
     return interval_run_counts
 end
@@ -62,11 +62,12 @@ function _fill_execution_order(
     stages = sort!(collect(keys(interval_run_counts)))
     last_stage = stages[end]
     _fill_stage(index, stages[1])
+    return
 end
 
 function _get_execution_order_vector(
     order::Dict{Int, String},
-    intervals::Dict{String, <:Dates.TimePeriod},
+    intervals::Dict{String, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}},
     step_resolution::Dates.TimePeriod,
 )
     length(order) == 1 && return [1]
@@ -121,7 +122,7 @@ end
 @doc raw"""
     SimulationSequence(initial_time::Union{Dates.DateTime, Nothing}
                         horizons::Dict{String, Int}
-                        intervals::Dict{String, <:Dates.TimePeriod}
+                        intervals::Dict{String, <:Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}
                         order::Dict{Int, String}
                         feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
                         feedforward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward}
@@ -132,18 +133,19 @@ end
 mutable struct SimulationSequence
     horizons::Dict{String, Int}
     step_resolution::Dates.TimePeriod
-    intervals::Dict{String, <:Dates.TimePeriod}
+    intervals::Dict{String, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}
     order::Dict{Int, String}
     feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
     feedforward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward}
     ini_cond_chronology::IniCondChronology
     cache::Dict{String, Vector{<:AbstractCache}}
     execution_order::Vector{Int}
+    current_execution_index::Int64
 
     function SimulationSequence(;
         horizons::Dict{String, Int},
         step_resolution::Dates.TimePeriod,
-        intervals::Dict{String, <:Dates.TimePeriod},
+        intervals::Dict{String, <:Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}},
         order::Dict{Int, String},
         feedforward_chronologies = Dict{Pair{String, String}, FeedForwardChronology}(),
         feedforward = Dict{Tuple{String, Symbol, Symbol}, AbstractAffectFeedForward}(),
@@ -151,31 +153,37 @@ mutable struct SimulationSequence
         cache = Dict{String, Vector{AbstractCache}}(),
     )
         _check_stage_order(order)
+        _intervals = Dict{String, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}()
+        for (k, v) in intervals
+            _intervals[k] = (IS.time_period_conversion(intervals[k][1]), intervals[k][2])
+        end
+        step_resolution = IS.time_period_conversion(step_resolution)
         _check_feedforward(feedforward, feedforward_chronologies)
         _check_chronology_consistency(order, feedforward_chronologies, ini_cond_chronology)
-        ini_cond_chronology =
-            length(order) == 1 ? IntraStageChronology() : ini_cond_chronology
-
-        intervals = IS.time_period_conversion(intervals)
-        step_resolution = IS.time_period_conversion(step_resolution)
-
+        if length(order) == 1
+            ini_cond_chronology = IntraStageChronology()
+        end
         new(
             horizons,
             step_resolution,
-            intervals,
+            _intervals,
             order,
             feedforward_chronologies,
             feedforward,
             ini_cond_chronology,
             cache,
-            _get_execution_order_vector(order, intervals, step_resolution),
+            _get_execution_order_vector(order, _intervals, step_resolution),
+            0,
         )
 
     end
 end
 
-get_horizon(s::SimulationSequence, stage::String) = get(s.horizons, stage, nothing)
-get_interval(s::SimulationSequence, stage::String) = get(s.intervals, stage, nothing)
-get_order(s::SimulationSequence, number::Int) = get(s.order, number, nothing)
-get_name(s::SimulationSequence, stage::Stage) = get(s.order, get_number(stage), nothing)
+get_stage_horizon(s::SimulationSequence, stage::String) = get(s.horizons, stage, nothing)
+get_stage_interval(s::SimulationSequence, stage::String) = s.intervals[stage][1]
+get_stage_name(s::SimulationSequence, stage::Stage) =
+    get(s.order, get_number(stage), nothing)
 get_step_resolution(s::SimulationSequence) = s.step_resolution
+function get_stage_interval_chronology(s::SimulationSequence, stage::String)
+    return s.intervals[stage][2]
+end
