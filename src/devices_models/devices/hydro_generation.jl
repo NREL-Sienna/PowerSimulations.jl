@@ -586,7 +586,7 @@ function nodal_expression!(
         include_parameters(
             psi_container,
             ts_data_active,
-            UpdateRef{H}(ACTIVE_POWER, "get_rating"),
+            UpdateRef{H}(ACTIVE_POWER, "get_rating"),  # TODO: fix in PR #316
             :nodal_balance_active,
         )
         return

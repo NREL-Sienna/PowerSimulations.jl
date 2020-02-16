@@ -54,11 +54,13 @@ function device_linear_rateofchange(
         name = device_name(ic)
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, 1] - get_value(initial_conditions[ix]) <= rate_data[ix].up
+            variable[name, 1] - get_condition(initial_conditions[ix]) <=
+                rate_data[ix].up
         )
         con_down[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            get_value(initial_conditions[ix]) - variable[name, 1] <= rate_data[ix].down
+            get_condition(initial_conditions[ix]) - variable[name, 1] <=
+                rate_data[ix].down
         )
     end
 

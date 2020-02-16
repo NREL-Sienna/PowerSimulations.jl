@@ -30,8 +30,8 @@ function check_chronology!(sim::Simulation, key::Pair, sync::Synchronize)
     to_stage = get_stage(sim, key.second)
     from_stage_horizon = sim.sequence.horizons[key.first]
     to_stage_horizon = sim.sequence.horizons[key.second]
-    from_stage_interval = get_stage_interval(sim, key.first)
-    to_stage_interval = get_stage_interval(sim, key.second)
+    from_stage_interval = sim.sequence.intervals[key.first]
+    to_stage_interval = sim.sequence.intervals[key.second]
 
     from_stage_resolution =
         IS.time_period_conversion(PSY.get_forecasts_resolution(from_stage.sys))
@@ -54,11 +54,11 @@ end
 
 function check_chronology!(sim::Simulation, key::Pair, ::Consecutive)
     from_stage_horizon = sim.sequence.horizons[key.first]
-    from_stage_interval = get_stage_interval(sim, key.first)
+    from_stage_interval = sim.sequence.intervals[key.first]
     if from_stage_horizon != from_stage_interval
         @warn("Consecutive Chronology Requires the same interval and horizon, the parameter horizon = $(from_stage_horizon) in stage $(key.first) will be replaced with $(from_stage_interval). If this is not the desired behviour consider changing your chronology to RecedingHorizon")
     end
-    sim.sequence.horizons[key.first] = get_stage_interval(sim, key.first)
+    sim.sequence.horizons[key.first] = sim.sequence.intervals[key.first]
     return
 end
 
@@ -476,7 +476,7 @@ end
 #########################FeedForward Variables Updating#####################################
 # This makes the choice in which variable to get from the results.
 function get_stage_variable(
-    ::RecedingHorizon,
+    ::Type{RecedingHorizon},
     stages::Pair{Stage{T}, Stage{T}},
     device_name::AbstractString,
     var_ref::UpdateRef,
@@ -487,18 +487,18 @@ function get_stage_variable(
 end
 
 function get_stage_variable(
-    ::Consecutive,
+    ::Type{Consecutive},
     stages::Pair{Stage{T}, Stage{T}},
     device_name::String,
     var_ref::UpdateRef,
 ) where {T <: AbstractOperationsProblem}
     variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
-    step = axes(variable)[2][get_end_of_interval_step(stages.first)]
+    step = axes(variable)[2][end]
     return JuMP.value(variable[device_name, step])
 end
 
 function get_stage_variable(
-    ::Synchronize,
+    ::Type{Synchronize},
     stages::Pair{Stage{T}, Stage{T}},
     device_name::String,
     var_ref::UpdateRef,
@@ -509,15 +509,15 @@ function get_stage_variable(
 end
 
 function feedforward_update(
-    sync::FeedForwardChronology,
+    sync::T,
     param_reference::UpdateRef{JuMP.VariableRef},
     param_array::JuMPParamArray,
     to_stage::Stage,
     from_stage::Stage,
-)
+) where {T <: FeedForwardChronology}
     for device_name in axes(param_array)[1]
         var_value =
-            get_stage_variable(sync, (from_stage => to_stage), device_name, param_reference)
+            get_stage_variable(T, (from_stage => to_stage), device_name, param_reference)
         PJ.fix(param_array[device_name], var_value)
     end
 end
