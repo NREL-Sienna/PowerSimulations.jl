@@ -252,7 +252,6 @@ function test_load_simulation(file_path::String)
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
-        cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
         ini_cond_chronology = InterStageChronology(),
     )
 
@@ -327,16 +326,16 @@ function test_load_simulation(file_path::String)
             end
             variable_list = PSI.get_variable_names(sim, name)
             res = load_simulation_results(sim_results, name; write = true)
-            file_path = joinpath(sim_results.results_folder, "$(variable_list[1]).feather")
-            rm(file_path)
+            _file_path = joinpath(sim_results.results_folder, "$(variable_list[1]).feather")
+            rm(_file_path)
             fake_df = DataFrames.DataFrame(:A => Array(1:10))
-            Feather.write(file_path, fake_df)
+            Feather.write(_file_path, fake_df)
             @test_logs(
                 (:error, r"hash mismatch"),
                 match_mode = :any,
                 @test_throws(
                     IS.HashMismatchError,
-                    check_file_integrity(dirname(file_path))
+                    check_file_integrity(dirname(_file_path))
                 )
             )
         end
@@ -398,9 +397,10 @@ function test_load_simulation(file_path::String)
     build!(sim_cache)
     execute!(sim_cache)
 
-    for name in collect(axes(sim.stages["UC"].internal.psi_container.variables[:On_ThermalStandard])[1])
-        var = sim.stages["UC"].internal.psi_container.variables[:On_ThermalStandard][name, 24]
-        cache = collect(values(sim.internal.simulation_cache))[1].value[name]
+    var_names = axes(PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On_ThermalStandard])[1]
+    for name in var_names
+        var = PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On_ThermalStandard][name, 24]
+        cache = collect(values(sim_cache.internal.simulation_cache))[1].value[name]
         @test JuMP.value(var) == cache[:status]
     end
 end
