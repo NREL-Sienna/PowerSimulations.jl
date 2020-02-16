@@ -302,7 +302,6 @@ function _build_stages!(sim::Simulation; kwargs...)
         else
             initial_date = PSY.get_forecast_initial_times(stage.sys)[1]
         end
-        @assert initial_date == initial_time
         sim.internal.date_ref[stage_number] = initial_date
     end
     _check_required_ini_cond_caches(sim)
