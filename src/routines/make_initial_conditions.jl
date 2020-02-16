@@ -31,7 +31,6 @@ function output_init(
         ICKey(DevicePower, T),
         _make_initial_condition_active_power,
         _get_active_power_output_value,
-        TimeStatusChange,
     )
 
     return
@@ -56,7 +55,7 @@ function duration_init(
 end
 
 ######################### Initialize Functions for Storage #################################
-
+# TODO: This IC needs a cache for Simulation over long periods of tim
 function storage_energy_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
@@ -84,6 +83,7 @@ function status_init(
         ICKey(DeviceStatus, T),
         _make_initial_condition_active_power,
         _get_active_power_status_value,
+        # Doesn't require Cache
     )
 end
 
@@ -97,7 +97,7 @@ function output_init(
         ICKey(DevicePower, T),
         _make_initial_condition_active_power,
         _get_active_power_output_value,
-        TimeStatusChange,
+        # Doesn't require Cache
     )
 
     return
@@ -121,6 +121,7 @@ function duration_init(
     return
 end
 
+# TODO: This IC needs a cache for Simulation over long periods of time
 function storage_energy_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
