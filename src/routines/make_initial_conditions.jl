@@ -55,7 +55,7 @@ function duration_init(
 end
 
 ######################### Initialize Functions for Storage #################################
-
+# TODO: This IC needs a cache for Simulation over long periods of tim
 function storage_energy_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
@@ -121,6 +121,7 @@ function duration_init(
     return
 end
 
+# TODO: This IC needs a cache for Simulation over long periods of time
 function storage_energy_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
