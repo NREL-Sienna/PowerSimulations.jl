@@ -217,7 +217,7 @@ function _get_simulation_initial_times!(sim::Simulation)
     if isnothing(get_initial_time(sim))
         sim.initial_time = stage_initial_times[1][1]
         @debug("Initial Simulation will be infered from the data.
-               Initial Simulation Time set to $(sim.sequence.initial_time)")
+               Initial Simulation Time set to $(sim.initial_time)")
     end
 
     return stage_initial_times
