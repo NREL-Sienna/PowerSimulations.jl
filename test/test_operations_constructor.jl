@@ -89,9 +89,9 @@ end
     end
 
     @testset "Operations template constructors" begin
-            op_problem_ed = PSI.EconomicDispatchProblem(c_sys5)
-            op_problem_uc = PSI.UnitCommitmentProblem(c_sys5)
-            moi_tests(op_problem_uc, false, 480, 0, 240, 120, 144, true)
-            moi_tests(op_problem_ed, false, 120, 0, 168, 120, 24, false)
+        op_problem_ed = PSI.EconomicDispatchProblem(c_sys5)
+        op_problem_uc = PSI.UnitCommitmentProblem(c_sys5)
+        moi_tests(op_problem_uc, false, 480, 0, 240, 120, 144, true)
+        moi_tests(op_problem_ed, false, 120, 0, 168, 120, 24, false)
     end
 end
