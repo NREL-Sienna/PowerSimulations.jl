@@ -87,6 +87,22 @@ function _check_stage_order(order::Dict{Int, String})
     return
 end
 
+function _check_all_parameters_present(
+    order::Dict{Int, String},
+    intervals::Dict{String, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}},
+    horizons::Dict{String, Int},
+)
+    for stage_name in values(order)
+        if !(stage_name in keys(horizons))
+            throw(IS.ConflictingInputsError("Horizon not defined for stage $(stage_name)"))
+        end
+        if !(stage_name in keys(intervals))
+            throw(IS.ConflictingInputsError("Interval not defined for stage $(stage_name)"))
+        end
+    end
+    return
+end
+
 function _check_feedforward(
     feedforward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward},
     feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology},
@@ -133,6 +149,7 @@ end
 mutable struct SimulationSequence
     horizons::Dict{String, Int}
     step_resolution::Dates.TimePeriod
+    # The string here is the name of the stage
     intervals::Dict{String, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}
     order::Dict{Int, String}
     feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
@@ -153,6 +170,7 @@ mutable struct SimulationSequence
         cache = Dict{String, Vector{AbstractCache}}(),
     )
         _check_stage_order(order)
+        _check_all_parameters_present(order, intervals, horizons)
         _intervals = Dict{String, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}()
         for (k, v) in intervals
             _intervals[k] = (IS.time_period_conversion(intervals[k][1]), intervals[k][2])

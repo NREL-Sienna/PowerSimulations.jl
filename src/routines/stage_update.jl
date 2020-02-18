@@ -70,7 +70,6 @@ end
 """ Generic Stage update function for most problems with no customization"""
 function update_stage!(
     stage::Stage{M},
-    step::Int,
     sim::Simulation,
 ) where {M <: AbstractOperationsProblem}
     _update_stage!(stage, sim)

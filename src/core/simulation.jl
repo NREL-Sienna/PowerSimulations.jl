@@ -37,6 +37,23 @@ function SimulationInternal(steps::Int, stages_keys::Base.KeySet)
     )
 end
 
+function _set_internal_caches(
+    internal::SimulationInternal,
+    stage::Stage,
+    caches::Vector{<:AbstractCache},
+)
+    for c in caches
+        cache_key = CacheKey(c)
+        push!(stage.internal.caches, cache_key)
+        if !haskey(internal.simulation_cache, cache_key)
+            @debug "Cache $(cache_key) added to the simulation"
+            internal.simulation_cache[cache_key] = c
+        end
+        internal.simulation_cache[cache_key].value = get_initial_cache(c, stage)
+    end
+    return
+end
+
 @doc raw"""
     Simulation(steps::Int
                 stages::Dict{String, Stage{<:AbstractOperationsProblem}}
@@ -75,13 +92,27 @@ get_initial_time(s::Simulation) = s.initial_time
 get_sequence(s::Simulation) = s.sequence
 get_steps(s::Simulation) = s.steps
 get_date_range(s::Simulation) = s.internal.date_range
-get_stage(s::Simulation, name::String) = get(s.stages, name, nothing)
+
+function get_stage(s::Simulation, name::String)
+    stage = get(s.stages, name, nothing)
+    isnothing(stage) && throw(ArgumentError("Stage $(name) not present in the simulation"))
+    return stage
+end
+
 get_stage_interval(s::Simulation, name::String) = get_stage_interval(s.sequence, name)
-get_stage(s::Simulation, number::Int) = get(s.stages, s.sequence.order[number], nothing)
+
+function get_stage(s::Simulation, number::Int)
+    name = get(s.sequence.order, number, nothing)
+    isnothing(name) && throw(ArgumentError("Stage with $(number) not defined"))
+    return get_stage(s, name)
+end
+
 get_stages_quantity(s::Simulation) = s.internal.stages_count
+
 function get_simulation_time(s::Simulation, stage_number::Int)
     return s.internal.date_ref[stage_number]
 end
+
 get_ini_cond_chronology(s::Simulation) = s.sequence.ini_cond_chronology
 get_stage_name(s::Simulation, stage::Stage) = get_stage_name(s.sequence, stage)
 get_name(s::Simulation) = s.name
@@ -90,7 +121,14 @@ get_execution_order(s::Simulation) = s.sequence.execution_order
 get_current_execution_index(s::Simulation) = s.sequence.current_execution_index
 get_stage_cache_definition(s::Simulation, stage::String) =
     get(s.sequence.cache, stage, nothing)
-get_cache(s::Simulation, key::CacheKey) = get(s.internal.simulation_cache, key, nothing)
+
+function get_cache(s::Simulation, key::CacheKey)
+    c = get(s.internal.simulation_cache, key, nothing)
+    isnothing(c) &&
+    throw(ArgumentError("Cache with key $(key) not present in the simulation"))
+    return c
+end
+
 function get_cache(
     s::Simulation,
     ::Type{T},
@@ -275,15 +313,7 @@ function _populate_caches!(sim::Simulation, stage_name::String)
     caches = get_stage_cache_definition(sim, stage_name)
     isnothing(caches) && return
     stage = get_stage(sim, stage_name)
-    for c in caches
-        cache_key = CacheKey(c)
-        push!(stage.internal.caches, cache_key)
-        if !haskey(sim.internal.simulation_cache, cache_key)
-            @debug "Cache $(cache_key) added to he simulation"
-            sim.internal.simulation_cache[cache_key] = c
-        end
-        sim.internal.simulation_cache[cache_key].value = get_initial_cache(c, stage)
-    end
+    _set_internal_caches(sim.internal, stage, caches)
     return
 end
 
@@ -434,7 +464,7 @@ end
 
 ################################Cache Update################################################
 # TODO: Need to be careful here if 2 stages modify the same cache. This function might need
-# dispatch on the Statge{OpModel} to assing different actions. e.g. HAUC and DAUC
+# dispatch on the Statge{OpModel} to assign different actions. e.g. HAUC and DAUC
 function update_cache!(
     sim::Simulation,
     key::CacheKey{TimeStatusChange, D},
@@ -447,9 +477,12 @@ function update_cache!(
         device_status = JuMP.value(variable[name, t])
         if c.value[name][:status] == device_status
             c.value[name][:count] += 1.0
-        elseif c.value[name][:status] != device_status
+            @debug("Cache value TimeStatus for device $name set to $device_status and count to $(c.value[name][:count])")
+        else
+            c.value[name][:status] != device_status
             c.value[name][:count] = 1.0
             c.value[name][:status] = device_status
+            @debug("Cache value TimeStatus for device $name set to $device_status and count to 1.0")
         end
     end
 
@@ -511,7 +544,7 @@ function execute!(sim::Simulation; kwargs...)
             )
             mkpath(raw_results_path)
             # Is first run of first stage? Yes -> don't update stage
-            !(step == 1 && ix == 1) && update_stage!(stage, step, sim)
+            !(step == 1 && ix == 1) && update_stage!(stage, sim)
             run_stage(stage, sim.internal.current_time, raw_results_path; kwargs...)
             _update_caches!(sim, stage)
             sim.internal.run_count[step][stage_number] += 1
