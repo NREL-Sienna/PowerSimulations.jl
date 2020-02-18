@@ -105,6 +105,14 @@ export set_device_model!
 export build!
 export execute!
 export make_references
+## Template Exports
+export template_economic_dispatch
+export template_unit_commitment
+export EconomicDispatchProblem
+export UnitCommitmentProblem
+export run_economic_dispatch
+export run_unit_commitment
+
 ## Utils Exports
 export SimulationResultsReference
 #export get_sim_resolution
@@ -213,6 +221,9 @@ include("routines/make_initial_conditions.jl")
 include("routines/get_results.jl")
 include("routines/stage_update.jl")
 include("routines/solve_routines.jl")
+
+#Templates
+include("templates/operations_problem_templates.jl")
 
 #Utils
 include("utils/optimization_debugging.jl")
