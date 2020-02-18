@@ -33,6 +33,7 @@ ipopt_optimizer = JuMP.with_optimizer(Ipopt.Optimizer, print_level = 0) # use de
 GLPK_optimizer = JuMP.with_optimizer(GLPK.Optimizer, msg_lev = GLPK.MSG_OFF)
 Cbc_optimizer = JuMP.with_optimizer(Cbc.Optimizer, logLevel = 0)
 OSQP_optimizer = JuMP.with_optimizer(OSQP.Optimizer, verbose = false)
+fake_optimizer = JuMP.with_optimizer(Cbc.Optimizer, set_time_limit_sec = 3)
 
 const LOG_FILE = "power-simulations-test.log"
 

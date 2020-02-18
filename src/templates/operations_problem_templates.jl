@@ -1,6 +1,6 @@
-struct EDProblem <: AbstractOperationsProblem end
+struct EconomicDispatchProblem <: AbstractOperationsProblem end
 
-struct UCProblem <: AbstractOperationsProblem end
+struct UnitCommitmentProblem <: AbstractOperationsProblem end
 
 function _generic_template(; kwargs...)
     network = get(kwargs, :network, CopperPlatePowerModel)
@@ -127,7 +127,7 @@ ed_problem = EconomicDispatchProblem(system)
 
 function EconomicDispatchProblem(system::PSY.System; kwargs...)
     template = template_economic_dispatch(; kwargs...)
-    op_problem = OperationsProblem(EDProblem, template, system)
+    op_problem = OperationsProblem(EconomicDispatchProblem, template, system)
     return op_problem
 end
 
@@ -151,7 +151,7 @@ uc_problem = UnitCommitmentProblem(system)
 
 function UnitCommitmentProblem(system::PSY.System; kwargs...)
     template = template_unit_commitment(; kwargs...)
-    op_problem = OperationsProblem(UCProblem, template, system)
+    op_problem = OperationsProblem(UnitCommitmentProblem, template, system)
     return op_problem
 end
 
@@ -176,7 +176,7 @@ results = run_unit_commitment(system; optimizer = optimizer)
 
 function run_unit_commitment(sys::PSY.System; kwargs...)
     template = PSI.template_unit_commitment(; kwargs...)
-    op_problem = OperationsProblem(UCProblem, template, sys)
+    op_problem = OperationsProblem(UnitCommitmentProblem, template, sys)
     results = solve_op_problem!(op_problem; kwargs...)
     return results
 end
@@ -202,7 +202,7 @@ results = run_economic_dispatch(system; optimizer = optimizer)
 
 function run_economic_dispatch(sys::PSY.System; kwargs...)
     template = PSI.template_economic_dispatch(; kwargs...)
-    op_problem = OperationsProblem(EDProblem, template, sys)
+    op_problem = OperationsProblem(EconomicDispatchProblem, template, sys)
     results = solve_op_problem!(op_problem; kwargs...)
     return results
 end
