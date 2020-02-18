@@ -215,6 +215,14 @@ function has_initial_conditions(psi_container::PSIContainer, key::ICKey)
     return key in keys(psi_container.initial_conditions)
 end
 
+function get_initial_conditions(
+    psi_container::PSIContainer,
+    ::Type{T},
+    ::Type{D},
+) where {T <: InitialConditionType, D <: PSY.Device}
+    return get_initial_conditions(psi_container, ICKey(T, D))
+end
+
 function get_initial_conditions(psi_container::PSIContainer, key::ICKey)
     initial_conditions = get(psi_container.initial_conditions, key, nothing)
     if isnothing(initial_conditions)
@@ -284,6 +292,10 @@ end
 
 function get_variable(psi_container::PSIContainer, var_type::AbstractString)
     return get_variable(psi_container, variable_name(var_type))
+end
+
+function get_variable(psi_container::PSIContainer, update_ref::UpdateRef)
+    return get_variable(psi_container, update_ref.access_ref)
 end
 
 function get_variable(psi_container::PSIContainer, name::Symbol)

@@ -42,15 +42,15 @@ end
 
 const InitialConditionsContainer = Dict{ICKey, Array{InitialCondition}}
 
-function value(p::InitialCondition{Float64})
+function get_condition(p::InitialCondition{Float64})
     return p.value
 end
 
-function value(p::InitialCondition{PJ.ParameterRef})
+function get_condition(p::InitialCondition{PJ.ParameterRef})
     return PJ.value(p.value)
 end
 
-get_condition(ic::InitialCondition) = ic.value
+get_value(ic::InitialCondition) = ic.value
 
 device_name(ini_cond::InitialCondition) = PSY.get_name(ini_cond.device)
 
@@ -58,10 +58,10 @@ device_name(ini_cond::InitialCondition) = PSY.get_name(ini_cond.device)
 # TODO: Consider when more than one UC model is used for the stages that the counts need
 # to be scaled.
 function calculate_ic_quantity(
-    initial_condition_key::ICKey{TimeDurationOFF, T},
+    initial_condition_key::ICKey{TimeDurationON, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::Union{Nothing, AbstractCache},
+    cache::TimeStatusChange,
 ) where {T <: PSY.Component}
     name = device_name(ic)
     time_cache = cache_value(cache, name)
@@ -75,10 +75,10 @@ function calculate_ic_quantity(
 end
 
 function calculate_ic_quantity(
-    initial_condition_key::ICKey{TimeDurationON, T},
+    initial_condition_key::ICKey{TimeDurationOFF, T},
     ic::InitialCondition,
     var_value::Float64,
-    cache::Union{Nothing, AbstractCache},
+    cache::TimeStatusChange,
 ) where {T <: PSY.Component}
     name = device_name(ic)
     time_cache = cache_value(cache, name)
@@ -106,20 +106,10 @@ function calculate_ic_quantity(
     var_value::Float64,
     cache::Union{Nothing, AbstractCache},
 ) where {T <: PSY.ThermalGen}
-    if isnothing(cache)
-        status_change_to_on =
-            value(ic) <= ComparisonTolerance && var_value >= ComparisonTolerance
-        status_change_to_off =
-            value(ic) >= ComparisonTolerance && var_value <= ComparisonTolerance
-    else
-        name = device_name(ic)
-        time_cache = cache_value(cache, name)
-        status_change_to_on =
-            time_cache[:status] >= ComparisonTolerance && var_value <= ComparisonTolerance
-        status_change_to_off =
-            time_cache[:status] <= ComparisonTolerance && var_value >= ComparisonTolerance
-    end
-
+    status_change_to_on =
+        get_condition(ic) <= ComparisonTolerance && var_value >= ComparisonTolerance
+    status_change_to_off =
+        get_condition(ic) >= ComparisonTolerance && var_value <= ComparisonTolerance
     if status_change_to_on
         return ic.device.tech.activepowerlimits.min
     end

@@ -118,9 +118,6 @@ export get_all_constraint_index
 export get_all_var_index
 export get_con_index
 export get_var_index
-## Templates Exports
-export template_unit_commitment
-export template_economic_dispatch
 
 #################################################################################
 # Imports
@@ -167,11 +164,11 @@ include("services_models/services_model.jl")
 include("devices_models/device_model.jl")
 include("network_models/networks.jl")
 include("core/parameters.jl")
+include("core/cache.jl")
 include("core/initial_conditions.jl")
 include("core/psi_container.jl")
 include("core/operations_problem.jl")
 include("core/simulation_stages.jl")
-include("core/cache.jl")
 include("core/simulation_sequence.jl")
 include("core/simulation.jl")
 include("core/feedforward.jl")
@@ -228,8 +225,5 @@ include("utils/kwargs_check.jl")
 
 #Routines
 include("routines/write_results.jl")
-
-#Templates
-include("templates/operations_problem_templates.jl")
 
 end
