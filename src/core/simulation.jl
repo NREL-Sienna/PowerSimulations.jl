@@ -162,13 +162,6 @@ function _check_feedforward_chronologies(sim::Simulation)
 end
 
 function _assign_feedforward_chronologies(sim::Simulation)
-    function find_val(d, value)
-        for (k, v) in d
-            v == value && return k
-        end
-        error("dict does not have value == $value")
-    end
-
     for (key, chron) in sim.sequence.feedforward_chronologies
         to_stage = get_stage(sim, key.second)
         to_stage_interval = IS.time_period_conversion(get_stage_interval(sim, key.second))
