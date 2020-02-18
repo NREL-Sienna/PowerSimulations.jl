@@ -78,19 +78,22 @@ PLOTLY_DEFAULT = vcat(
     CURTAILMENT_288,
 )
 
+VARIABLE_TYPES = [PSI.ACTIVE_POWER, "Spin", "Reg", "Flex"]
+
 function _filter_variables(results::PSI.Results; kwargs...)
     filter_results = Dict()
     reserves = get(kwargs, :reserves, false)
     if reserves
         for (key, var) in results.variables
-            if "$key"[1:2] == "P_" ||
-               "$key"[1:5] == "Spin_" || "$key"[1:4] == "Reg_" || "$key"[1:5] == "Flex_"
+            start = split("$key", "_")[1]
+            if in(start, VARIABLE_TYPES)
                 filter_results[key] = var
             end
         end
     else
         for (key, var) in results.variables
-            if "$key"[1:2] == "P_"
+            start = split("$key", "_")[1]
+            if start == "P"
                 filter_results[key] = var
             end
         end
@@ -352,8 +355,21 @@ function bar_plot(results::Array{PSI.Results}, variables::Array; kwargs...)
 end
 
 function _bar_plot_internal(
-    res::Any,
-    bar_gen::Any,
+    res::PSI.Results,
+    bar_gen::BarGeneration,
+    backend::Plots.PlotlyJSBackend,
+    save_fig::Any,
+    set_display::Bool;
+    kwargs...,
+)
+    seriescolor = get(kwargs, :seriescolor, PLOTLY_DEFAULT)
+    plotly_bar_plots(res, seriescolor; kwargs...)
+    plotly_bar_gen(bar_gen, seriescolor; kwargs...)
+end
+
+function _bar_plot_internal(
+    res::Array,
+    bar_gen::Array,
     backend::Plots.PlotlyJSBackend,
     save_fig::Any,
     set_display::Bool;
@@ -389,8 +405,8 @@ function _bar_plot_internal(
 end
 
 function _bar_plot_internal(
-    results::Any,
-    bar_gen::Any,
+    results::Array,
+    bar_gen::Array,
     backend::Any,
     save_fig::Any,
     set_display::Bool;
