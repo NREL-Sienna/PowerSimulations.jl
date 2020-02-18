@@ -3,21 +3,6 @@ import PlotlyJS
 import WebIO
 WebIO.install_jupyter_nbextension()
 
-function _format_multiple_plots(length::Int, plots::Array)
-    if length == 2
-        plots = [plots[1], plots[2]]
-    elseif length == 3
-        plots = [plots[1], plots[2], plots[3]]
-    elseif length == 4
-        plots = [plots[1], plots[2], plots[3], plots[4]]
-    elseif length == 5
-        plots = [plots[1], plots[2], plots[3], plots[4], plots[5]]
-    elseif length >= 6
-        throw(IS.ConflictingInputsError("Too many results given."))
-    end
-    return plots
-end
-
 function set_seriescolor(seriescolor::Array, gens::Array)
     colors = []
     for i in 1:length(gens)
@@ -96,7 +81,7 @@ function plotly_stack_gen(stacks::Array{StackedGeneration}, seriescolor::Array; 
         )
         plots = vcat(plots, p)
     end
-    plots = _format_multiple_plots(length(stacks), plots)
+    plots = vcat(plots...)
     set_display && PlotlyJS.display(plots)
     if !isnothing(save_fig)
         PlotlyJS.savefig(plots, joinpath(save_fig, "Bar_Generation.png"))
@@ -190,7 +175,7 @@ function plotly_stack_plots(results::Array, seriescolor::Array; kwargs...)
             )
             plots = vcat(plots, p)
         end
-        plots = _format_multiple_plots(size(results, 2), plots)
+        plots = vcat(plots...)
         set_display && PlotlyJS.display(plots)
         if !isnothing(save_fig)
             PlotlyJS.savefig(plots, joinpath(save_fig, "Bar_Generation.png"))
@@ -265,6 +250,7 @@ function plotly_bar_gen(
                     x = ["$time_span, $(time_range[1])"],
                     y = bar_gen[bar].bar_data[:, gen],
                     type = "bar",
+                    barmode = "stack",
                     marker_color = seriescolor[gen],
                 ),
             )
@@ -276,15 +262,15 @@ function plotly_bar_gen(
                 yaxis_title = "Generation (MW)",
                 color = seriescolor,
                 barmode = "stack",
+                stackgroup = "one",
             ),
         )
         plots = vcat(plots, p)
     end
-    plots = _format_multiple_plots(length(bar_gen), plots)
-    plots = [plots[1], plots[2]]
+    plots = vcat(plots...)
     set_display && PlotlyJS.display(plots)
     if !isnothing(save_fig)
-        PlotlyJS.savefig(plots[1].o, joinpath(save_fig, "Bar_Generation.png"))
+        PlotlyJS.savefig(plots, joinpath(save_fig, "Bar_Generation.png"))
     end
 end
 
@@ -317,6 +303,8 @@ function plotly_bar_plots(results::Array, seriescolor::Array; kwargs...)
                         x = ["$time_span, $(time_range[1, 1])"],
                         y = sum(convert(Matrix, var)[:, gen], dims = 1),
                         type = "bar",
+                        barmode = "stack",
+                        stackgroup = "one",
                         marker_color = seriescolor[gen],
                     ),
                 )
@@ -331,7 +319,7 @@ function plotly_bar_plots(results::Array, seriescolor::Array; kwargs...)
             )
             plots = vcat(plots, p)
         end
-        plots = _format_multiple_plots(length(results), plots)
+        plots = vcat(plots...)
         set_display && PlotlyJS.display(plots)
         if !isnothing(save_fig)
             PlotlyJS.savefig(plots, joinpath(save_fig, "$(key)_Bar.png"))
@@ -359,6 +347,7 @@ function plotly_bar_plots(res::PSI.Results, seriescolor::Array; kwargs...)
                     x = ["$time_span, $(time_range[1, 1])"],
                     y = sum(convert(Matrix, var)[:, gen], dims = 1),
                     type = "bar",
+                    barmode = "stack",
                     marker_color = seriescolor[gen],
                 ),
             )
@@ -366,9 +355,9 @@ function plotly_bar_plots(res::PSI.Results, seriescolor::Array; kwargs...)
         p = PlotlyJS.plot(
             traces,
             PlotlyJS.Layout(
+                barmode = "stack",
                 title = "$key",
                 yaxis_title = "Generation (MW)",
-                barmode = "stack",
             ),
         )
         set_display && PlotlyJS.display(p)
