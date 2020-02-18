@@ -119,19 +119,19 @@ results = load_simulation_results(stage, step, variable, SimulationResultsRefere
 """
 
 function load_simulation_results(
-    SimulationResultsReference::SimulationResultsReference,
+    sim_output::SimulationResultsReference,
     stage_name::String;
     kwargs...,
 )
     stage = "stage-$stage_name"
-    references = SimulationResultsReference.ref
+    references = sim_output.ref
     variables = Dict()
     duals = Dict()
     variable = (collect(keys(references[stage])))
     dual = _find_duals(variable)
     variable = setdiff(variable, dual)
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
-    time_length = SimulationResultsReference.chronologies[stage]
+    time_length = sim_output.chronologies[stage]
 
     for l in 1:length(variable)
         date_df = references[stage][variable[l]]
@@ -147,6 +147,7 @@ function load_simulation_results(
         end
     end
     time_stamp[!, :Range] = convert(Array{Dates.DateTime}, time_stamp[!, :Range])
+    @show references[stage][variable[1]][1, :File_Path]
     file_path = dirname(references[stage][variable[1]][1, :File_Path])
     optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
@@ -159,7 +160,7 @@ function load_simulation_results(
     file_type = get(kwargs, :file_type, Feather)
     write = get(kwargs, :write, false)
     if write == true
-        write_results(results, SimulationResultsReference.results_folder, "results")
+        write_results(results, sim_output.results_folder, "results")
     end
     return results
 end
