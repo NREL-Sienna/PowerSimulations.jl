@@ -168,6 +168,7 @@ fuel_plot(res, sys)
 - `display::Bool`: set to false to prevent the plots from displaying
 - `save::String = "file_path"`: set a file path to save the plots
 - `seriescolor::Array`: Set different colors for the plots
+- `reserves::Bool`: if reserves = true, the researves will be plotted with the active power
 """
 function fuel_plot(res::PSI.Results, sys::PSY.System; kwargs...)
     ref = make_fuel_dictionary(sys, res)
@@ -202,6 +203,7 @@ fuel_plot(res, generator_dict)
 - `display::Bool`: set to false to prevent the plots from displaying
 - `save::String = "file_path"`: set a file path to save the plots
 - `seriescolor::Array`: Set different colors for the plots
+- `reserves::Bool`: if reserves = true, the researves will be plotted with the active power
 """
 
 function fuel_plot(res::PSI.Results, generator_dict::Dict; kwargs...)
@@ -291,6 +293,7 @@ bar_plot(results)
 - `display::Bool`: set to false to prevent the plots from displaying
 - `save::String = "file_path"`: set a file path to save the plots
 - `seriescolor::Array`: Set different colors for the plots
+- `reserves::Bool`: if reserves = true, the researves will be plotted with the active power
 """
 
 function bar_plot(res::PSI.Results; kwargs...)
@@ -304,6 +307,30 @@ function bar_plot(res::PSI.Results; kwargs...)
     end
     _bar_plot_internal(res, bar_gen, backend, save_fig, set_display; kwargs...)
 end
+
+"""
+   bar_plot(results::Array{PSI.Results})
+  
+This function plots a subplot for each result. Each subplot has a bar plot for the generators in each variable within
+the results variables dictionary, and makes a bar plot for all of the variables per result object.
+
+# Arguments
+- `res::Array{PSI.Results} = [results1; results2]`: results to be plotted
+
+# Example
+
+```julia
+results1 = solve_op_problem!(OpProblem1)
+results2 = solve_op_problem!(OpProblem2)
+bar_plot([results1; results2])
+```
+
+# Accepted Key Words
+- `display::Bool`: set to false to prevent the plots from displaying
+- `save::String = "file_path"`: set a file path to save the plots
+- `seriescolor::Array`: Set different colors for the plots
+- `reserves::Bool`: if reserves = true, the researves will be plotted with the active power
+"""
 
 function bar_plot(results::Array{}; kwargs...)
     backend = Plots.backend()
@@ -448,8 +475,10 @@ stack_plot(results)
 ```
 
 # Accepted Key Words
-plot attributes, such as seriescolor = [:red :blue :orange]
-will override the default series color
+- `display::Bool`: set to false to prevent the plots from displaying
+- `save::String = "file_path"`: set a file path to save the plots
+- `seriescolor::Array`: Set different colors for the plots
+- `reserves::Bool`: if reserves = true, the researves will be plotted with the active power
 """
 
 function stack_plot(res::PSI.Results; kwargs...)
@@ -463,6 +492,30 @@ function stack_plot(res::PSI.Results; kwargs...)
     end
     _stack_plot_internal(res, stacked_gen, backend, save_fig, set_display; kwargs...)
 end
+
+"""
+     stack_plot(results::Array{PSI.Results})
+
+This function plots a subplot for each result object. Each subplot stacks the generators in each variable within
+results variables dictionary, and makes a stack plot for all of the variables per result object.
+
+# Arguments
+- `res::Array{PSI.Results} = [results1, results2]`: results to be plotted
+
+# Examples
+
+```julia
+results1 = solve_op_problem!(OpProblem1)
+results2 = solve_op_problem!(OpProblem2)
+stack_plot([results1; results2])
+```
+
+# Accepted Key Words
+- `display::Bool`: set to false to prevent the plots from displaying
+- `save::String = "file_path"`: set a file path to save the plots
+- `seriescolor::Array`: Set different colors for the plots
+- `reserves::Bool`: if reserves = true, the researves will be plotted with the active power
+"""
 
 function stack_plot(results::Array{}; kwargs...)
     set_display = get(kwargs, :set_display, true)
@@ -487,6 +540,31 @@ function stack_plot(results::Array{}; kwargs...)
         kwargs...,
     )
 end
+
+"""
+     stack_plot(results::PSI.Results, variables::Array)
+
+This function plots a stack plot for the generators in each variable within
+the results variables dictionary, and makes a stack plot for all of the variables in the array.
+
+# Arguments
+- `res::PSI.Results = results`: results to be plotted
+- `variables::Array`: list of variables to be plotted in the results
+
+# Examples
+
+```julia
+results = solve_op_problem!(OpProblem)
+variables = [:var1, :var2, :var3]
+stack_plot(results, variables)
+```
+
+# Accepted Key Words
+- `display::Bool`: set to false to prevent the plots from displaying
+- `save::String = "file_path"`: set a file path to save the plots
+- `seriescolor::Array`: Set different colors for the plots
+- `reserves::Bool`: if reserves = true, the researves will be plotted with the active power
+"""
 
 function stack_plot(res::PSI.Results, variables::Array; kwargs...)
     res_var = Dict()
