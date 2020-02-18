@@ -87,9 +87,9 @@ function _check_stage_order(order::Dict{Int, String})
     return
 end
 
-function _check_all_parameters_present(
+function _check_all_inputs_present(
     order::Dict{Int, String},
-    intervals::Dict{String, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}},
+    intervals::Dict{String, <:Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}},
     horizons::Dict{String, Int},
 )
     for stage_name in values(order)
@@ -170,7 +170,7 @@ mutable struct SimulationSequence
         cache = Dict{String, Vector{AbstractCache}}(),
     )
         _check_stage_order(order)
-        _check_all_parameters_present(order, intervals, horizons)
+        _check_all_inputs_present(order, intervals, horizons)
         _intervals = Dict{String, Tuple{<:Dates.TimePeriod, <:FeedForwardChronology}}()
         for (k, v) in intervals
             _intervals[k] = (IS.time_period_conversion(intervals[k][1]), intervals[k][2])
