@@ -36,17 +36,18 @@ function check_chronology!(sim::Simulation, key::Pair, sync::Synchronize)
     from_stage_resolution =
         IS.time_period_conversion(PSY.get_forecasts_resolution(from_stage.sys))
     @debug from_stage_resolution, to_stage_interval
-    to_stage_sync = Int(from_stage_resolution / to_stage_interval)
+    # How many times the second stages executes per solution retireved from the from_stage.
+    # E.g. from_stage_resolution = 1 Hour, to_stage_interval = 5 minutes => 12 executions per solution
+    to_stage_executions_per_solution = Int(from_stage_resolution / to_stage_interval)
+    # Number of periods in the horizon that will be synchronized between the from_stage and the to_stage
     from_stage_sync = sync.periods
 
     if from_stage_sync > from_stage_horizon
         throw(IS.ConflictingInputsError("The lookahead length $(from_stage_horizon) in stage is insufficient to syncronize with $(from_stage_sync) feedforward periods"))
     end
 
-    if (from_stage_horizon % from_stage_sync) != 0
-        throw(IS.ConflictingInputsError("The number of feedforward periods $(from_stage_horizon) in stage
-               needs to be a mutiple of the horizon length $(from_stage_horizon)
-               of stage to use Synchronize with parameters ($(from_stage_sync), $(to_stage_sync))"))
+    if (from_stage_sync % to_stage_executions_per_solution) != 0
+        throw(IS.ConflictingInputsError("The current configuration implies $(from_stage_sync / to_stage_executions_per_solution) executions of $(key.second) per execution of $(key.first). The number of Synchronize periods $(sync.periods) in stage $(key.first) needs to be a mutiple of the number of stage $(key.second) execution for every stage $(key.first) interval."))
     end
 
     return
