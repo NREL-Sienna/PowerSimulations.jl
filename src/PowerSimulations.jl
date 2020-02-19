@@ -167,11 +167,12 @@ include("utils/utils.jl")
 
 #Models and constructors
 include("core/abstract_types.jl")
-include("devices_models/devices/common/constraints_structs.jl")
 include("core/aux_structs.jl")
+
 include("services_models/services_model.jl")
 include("devices_models/device_model.jl")
 include("network_models/networks.jl")
+
 include("core/parameters.jl")
 include("core/cache.jl")
 include("core/initial_conditions.jl")
@@ -183,10 +184,6 @@ include("core/simulation.jl")
 include("core/feedforward.jl")
 include("core/operations_problem_results.jl")
 
-#Services Models
-include("services_models/reserves.jl")
-include("services_models/services_constructor.jl")
-
 #Device Modeling components
 include("devices_models/devices/common.jl")
 include("devices_models/devices/renewable_generation.jl")
@@ -196,6 +193,10 @@ include("devices_models/devices/AC_branches.jl")
 include("devices_models/devices/DC_branches.jl")
 include("devices_models/devices/storage.jl")
 include("devices_models/devices/hydro_generation.jl")
+
+#Services Models
+include("services_models/reserves.jl")
+include("services_models/services_constructor.jl")
 
 #Network models
 include("network_models/copperplate_model.jl")
