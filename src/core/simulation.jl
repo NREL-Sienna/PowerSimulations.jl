@@ -357,7 +357,7 @@ end
         build!(sim::Simulation;
                 kwargs...)
 
-""" 
+"""
 function build!(sim::Simulation; kwargs...)
     TimerOutputs.reset_timer!(BUILD_SIMULATION_TIMER)
     TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Simulation" begin
