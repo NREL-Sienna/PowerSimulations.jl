@@ -53,7 +53,7 @@ function _set_internal_caches(
     end
     return
 end
-
+# TODO: Add DocString
 @doc raw"""
     Simulation(steps::Int
                 stages::Dict{String, Stage{<:AbstractOperationsProblem}}
@@ -63,7 +63,7 @@ end
                 internal::Union{Nothing, SimulationInternal}
                 )
 
-""" # TODO: Add DocString
+"""
 mutable struct Simulation
     steps::Int
     stages::Dict{String, Stage{<:AbstractOperationsProblem}}
@@ -352,12 +352,12 @@ function _check_folder(folder::String)
         throw(IS.ConflictingInputsError("Specified folder does not have write access [$e]"))
     end
 end
-
+# TODO: Add DocString
 @doc raw"""
         build!(sim::Simulation;
                 kwargs...)
 
-""" # TODO: Add DocString
+"""
 function build!(sim::Simulation; kwargs...)
     TimerOutputs.reset_timer!(BUILD_SIMULATION_TIMER)
     TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Simulation" begin

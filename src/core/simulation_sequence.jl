@@ -134,7 +134,7 @@ function _check_chronology_consistency(
     #TODO: Add more consistency checks
     return
 end
-
+# TODO: Add DocString
 @doc raw"""
     SimulationSequence(initial_time::Union{Dates.DateTime, Nothing}
                         horizons::Dict{String, Int}
@@ -145,7 +145,7 @@ end
                         ini_cond_chronology::Dict{String, <:FeedForwardChronology}
                         cache::Dict{String, Vector{<:AbstractCache}}
                         )
-""" # TODO: Add DocString
+"""
 mutable struct SimulationSequence
     horizons::Dict{String, Int}
     step_resolution::Dates.TimePeriod

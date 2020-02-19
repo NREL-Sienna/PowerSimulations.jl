@@ -24,7 +24,7 @@ mutable struct StageInternal
         )
     end
 end
-
+# TODO: Add DocString
 @doc raw"""
     Stage({M<:AbstractOperationsProblem}
         template::OperationsProblemTemplate
@@ -33,7 +33,7 @@ end
         internal::Union{Nothing, StageInternal}
         )
 
-""" # TODO: Add DocString
+"""
 mutable struct Stage{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
@@ -147,7 +147,7 @@ function get_initial_cache(cache::TimeStatusChange, stage::Stage)
 
     device_axes = Set((
         PSY.get_name(ic.device) for ic in Iterators.Flatten([ini_cond_on, ini_cond_off])
-    ))
+    ),)
     value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, device_axes)
 
     for ic in ini_cond_on

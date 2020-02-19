@@ -6,11 +6,10 @@ end
 function CacheKey(cache::C) where {C <: AbstractCache}
     return CacheKey(C, cache.device_type)
 end
-
+# The current implementation will require all custom caches to have the same data template
 """
 Tracks the last time status of a device changed in a simulation
 """
-# The current implementation will require all custom caches to have the same data template
 mutable struct TimeStatusChange <: AbstractCache
     device_type::Type{<:PSY.Device}
     value::JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}

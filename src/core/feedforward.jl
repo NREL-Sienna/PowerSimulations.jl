@@ -12,10 +12,10 @@ struct Synchronize <: FeedForwardChronology
         new(periods)
     end
 end
-
+# TODO: Add DocString
 """
     RecedingHorizon(period::Int)
-""" # TODO: Add DocString
+"""
 struct RecedingHorizon <: FeedForwardChronology
     period::Int
     function RecedingHorizon(; period::Int = 1)
