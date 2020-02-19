@@ -35,7 +35,7 @@ fast_ipopt_optimizer =
 GLPK_optimizer = JuMP.with_optimizer(GLPK.Optimizer, msg_lev = GLPK.MSG_OFF)
 Cbc_optimizer = JuMP.with_optimizer(Cbc.Optimizer, logLevel = 0)
 OSQP_optimizer = JuMP.with_optimizer(OSQP.Optimizer, verbose = false)
-fast_lp_optimizer = JuMP.with_optimizer(Cbc.Optimizer, logLevel = 0, set_time_limit_sec = 3)
+fast_lp_optimizer = JuMP.with_optimizer(Cbc.Optimizer, logLevel = 0, seconds= 3.0)
 
 const LOG_FILE = "power-simulations-test.log"
 

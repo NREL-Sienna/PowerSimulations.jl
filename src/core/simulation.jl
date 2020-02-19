@@ -386,7 +386,7 @@ function build!(sim::Simulation; kwargs...)
         sim.internal.compiled_status = true
     end
     # TODO: Send to logging
-    TimerOutputs.print_timer(BUILD_SIMULATION_TIMER)
+    TimerOutputs.print_timer(BUILD_SIMULATION_TIMER); println("\n")
     return
 end
 
@@ -565,6 +565,6 @@ function execute!(sim::Simulation; kwargs...)
         sim_results = SimulationResultsReference(sim; constraints_duals = constraints_duals)
     end
     # TODO: Add to logging later
-    TimerOutputs.print_timer(RUN_SIMULATION_TIMER)
+    TimerOutputs.print_timer(RUN_SIMULATION_TIMER); println("\n")
     return sim_results
 end

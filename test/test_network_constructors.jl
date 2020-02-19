@@ -188,7 +188,8 @@ end
         )
         psi_constraint_test(ps_model, constraint_names)
         psi_checkobjfun_test(ps_model, objfuncs[ix])
-        psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED])
+        psi_checksolve_test(ps_model, [MOI.TIME_LIMIT, MOI.OPTIMAL, MOI.LOCALLY_SOLVED])
+        @test primal_status(ps_model.psi_container.JuMPmodel) == MOI.FEASIBLE_POINT
     end
 end
 
