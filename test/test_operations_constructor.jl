@@ -90,7 +90,16 @@ end
             @test :nodal_balance_active in keys(op_problem.psi_container.expressions)
             @test (:params in keys(op_problem.psi_container.JuMPmodel.ext)) == p
         end
-
     end
 
+    @testset "Operations template constructors" begin
+        op_problem_ed = PSI.EconomicDispatchProblem(c_sys5)
+        op_problem_uc = PSI.UnitCommitmentProblem(c_sys5)
+        moi_tests(op_problem_uc, false, 480, 0, 240, 120, 144, true)
+        moi_tests(op_problem_ed, false, 120, 0, 168, 120, 24, false)
+        ED = PSI.run_economic_dispatch(c_sys5; optimizer = fake_optimizer)
+        UC = PSI.run_unit_commitment(c_sys5; optimizer = fake_optimizer)
+        @test ED.optimizer_log[:primal_status] == FEASIBLE_POINT
+        @test UC.optimizer_log[:primal_status] == FEASIBLE_POINT
+    end
 end
