@@ -29,13 +29,17 @@ const TEST_KWARGS = [:good_kwarg_1, :good_kwarg_2]
 abstract type TestOpProblem <: PSI.AbstractOperationsProblem end
 
 ipopt_optimizer = JuMP.optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0)
-fast_ipopt_optimizer =
-    JuMP.optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0, "max_cpu_time" => 5.0)
+fast_ipopt_optimizer = JuMP.optimizer_with_attributes(
+    Ipopt.Optimizer,
+    "print_level" => 0,
+    "max_cpu_time" => 5.0,
+)
 # use default print_level = 5 # set to 0 to disable
 GLPK_optimizer = JuMP.optimizer_with_attributes(GLPK.Optimizer, "msg_lev" => GLPK.MSG_OFF)
 Cbc_optimizer = JuMP.optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0)
 OSQP_optimizer = JuMP.optimizer_with_attributes(OSQP.Optimizer, "verbose" => false)
-fast_lp_optimizer = JuMP.optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "seconds" => 3.0)
+fast_lp_optimizer =
+    JuMP.optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "seconds" => 3.0)
 
 const LOG_FILE = "power-simulations-test.log"
 
