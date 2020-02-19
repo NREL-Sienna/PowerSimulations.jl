@@ -44,7 +44,7 @@ end
     OperationsProblem(::Type{M},
     template::OperationsProblemTemplate,
     sys::PSY.System;
-    optimizer::Union{Nothing, JuMP.OptimizerFactory}=nothing,
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}=nothing,
     kwargs...) where {M<:AbstractOperationsProblem,
                       T<:PM.AbstractPowerFormulation}
 
@@ -69,7 +69,7 @@ OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimiz
 
 # Accepted Key Words
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
-- `optimizer::union{Nothing, JuMP.OptimizerFactory} = GLPK_optimizer`: The optimizer gets passed
+- `optimizer::union{Nothing, JuMP.MOI.OptimizerWithAttributes} = GLPK_optimizer`: The optimizer gets passed
 into the optimization model the default is nothing.
 - `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
 - `parameters::Bool`: enable JuMP parameters
@@ -81,7 +81,7 @@ function OperationsProblem(
     ::Type{M},
     template::OperationsProblemTemplate,
     sys::PSY.System;
-    optimizer::Union{Nothing, JuMP.OptimizerFactory} = nothing,
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
     kwargs...,
 ) where {M <: AbstractOperationsProblem}
 
@@ -125,7 +125,7 @@ OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimiz
 
 # Accepted Key Words
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
-- `optimizer::union{Nothing, JuMP.OptimizerFactory}`: The optimizer gets passed
+- `optimizer::union{Nothing, JuMP.MOI.OptimizerWithAttributes}`: The optimizer gets passed
 into the optimization model the default is nothing.
 - `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
 - `parameters::Bool`: enable JuMP parameters
@@ -178,7 +178,7 @@ OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimiz
 
 # Accepted Key Words
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
-- `optimizer::union{Nothing, JuMP.OptimizerFactory}`: The optimizer gets passed
+- `optimizer::union{Nothing, JuMP.MOI.OptimizerWithAttributes}`: The optimizer gets passed
 into the optimization model the default is nothing.
 - `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
 - `parameters::Bool`: enable JuMP parameters

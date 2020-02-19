@@ -1,5 +1,5 @@
 function _pass_abstract_jump(
-    optimizer::Union{Nothing, JuMP.OptimizerFactory},
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
     parameters::Bool,
     JuMPmodel::Union{JuMP.AbstractModel, Nothing},
 )
@@ -63,7 +63,7 @@ end
 function _psi_container_init(
     bus_numbers::Vector{Int},
     jump_model::JuMP.AbstractModel,
-    optimizer::Union{Nothing, JuMP.OptimizerFactory},
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
     transmission::Type{S},
     time_steps::UnitRange{Int},
     resolution::Dates.TimePeriod,
@@ -99,7 +99,7 @@ end
 
 mutable struct PSIContainer
     JuMPmodel::JuMP.AbstractModel
-    optimizer_factory::Union{Nothing, JuMP.OptimizerFactory}
+    optimizer_factory::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
     time_steps::UnitRange{Int}
     resolution::Dates.TimePeriod
     use_forecast_data::Bool
@@ -114,7 +114,7 @@ mutable struct PSIContainer
 
     function PSIContainer(
         JuMPmodel::JuMP.AbstractModel,
-        optimizer_factory::Union{Nothing, JuMP.OptimizerFactory},
+        optimizer_factory::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
         time_steps::UnitRange{Int},
         resolution::Dates.TimePeriod,
         use_forecast_data::Bool,
@@ -149,7 +149,7 @@ end
 function PSIContainer(
     ::Type{T},
     sys::PSY.System,
-    optimizer::Union{Nothing, JuMP.OptimizerFactory};
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes};
     kwargs...,
 ) where {T <: PM.AbstractPowerModel}
     check_kwargs(kwargs, PSICONTAINER_ACCEPTED_KWARGS, "PSIContainer")

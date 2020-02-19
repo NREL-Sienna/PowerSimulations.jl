@@ -29,7 +29,7 @@ end
     Stage({M<:AbstractOperationsProblem}
         template::OperationsProblemTemplate
         sys::PSY.System
-        optimizer::JuMP.OptimizerFactory
+        optimizer::JuMP.MOI.OptimizerWithAttributes
         internal::Union{Nothing, StageInternal}
         )
 
@@ -37,14 +37,14 @@ end
 mutable struct Stage{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
-    optimizer::JuMP.OptimizerFactory
+    optimizer::JuMP.MOI.OptimizerWithAttributes
     internal::Union{Nothing, StageInternal}
 
     function Stage(
         ::Type{M},
         template::OperationsProblemTemplate,
         sys::PSY.System,
-        optimizer::JuMP.OptimizerFactory,
+        optimizer::JuMP.MOI.OptimizerWithAttributes,
     ) where {M <: AbstractOperationsProblem}
 
         new{M}(template, sys, optimizer, nothing)
@@ -55,7 +55,7 @@ end
 function Stage(
     template::OperationsProblemTemplate,
     sys::PSY.System,
-    optimizer::JuMP.OptimizerFactory,
+    optimizer::JuMP.MOI.OptimizerWithAttributes,
 ) where {M <: AbstractOperationsProblem}
     return Stage(GenericOpProblem, template, sys, optimizer)
 end

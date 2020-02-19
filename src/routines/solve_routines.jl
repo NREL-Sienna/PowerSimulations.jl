@@ -14,7 +14,7 @@ results = solve_op_problem!(OpModel)
 # Accepted Key Words
 - `save_path::String`: If a file path is provided the results
 automatically get written to feather files
-- `optimizer::OptimizerFactory`: The optimizer that is used to solve the model
+- `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 - `constraints_duals::Array`: Array of the constraints duals to be in the results
 """
 function solve_op_problem!(op_problem::OperationsProblem; kwargs...)

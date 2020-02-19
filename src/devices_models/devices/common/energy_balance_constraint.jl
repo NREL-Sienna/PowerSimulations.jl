@@ -129,28 +129,26 @@ function reservoir_energy_balance_param(
 
     for (ix, d) in enumerate(inflow_data)
         paraminflow[d.name, 1] = PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[1])
-        constraint[d.name, 1] = JuMP.@constraint(
-            psi_container.JuMPmodel,
-            varenergy[d.name, 1] ==
-                initial_conditions[ix].value +
-                (
+        exp =
+            initial_conditions[ix].value +
+            (
                 d.multiplier * paraminflow[d.name, 1] - varspill[d.name, 1] -
-                    varout[d.name, 1]
+                varout[d.name, 1]
             ) * fraction_of_hour
-        )
+        constraint[d.name, 1] =
+            JuMP.@constraint(psi_container.JuMPmodel, varenergy[d.name, 1] == exp)
 
         for t in time_steps[2:end]
             paraminflow[d.name, t] =
                 PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[t])
-            constraint[d.name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                varenergy[d.name, t] ==
-                    varenergy[d.name, t - 1] +
-                    (
+            exp =
+                varenergy[d.name, t - 1] +
+                (
                     d.multiplier * paraminflow[d.name, 1] - varspill[d.name, t] -
-                        varout[d.name, t]
+                    varout[d.name, t]
                 ) * fraction_of_hour
-            )
+            constraint[d.name, t] =
+                JuMP.@constraint(psi_container.JuMPmodel, varenergy[d.name, t] == exp)
         end
     end
     return
