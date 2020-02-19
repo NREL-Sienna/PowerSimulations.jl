@@ -188,7 +188,7 @@ end
         )
         psi_constraint_test(ps_model, constraint_names)
         psi_checkobjfun_test(ps_model, objfuncs[ix])
-         psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED])
+        psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED])
     end
 end
 
