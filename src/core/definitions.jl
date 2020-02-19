@@ -16,6 +16,9 @@ const PJ = ParameterJuMP
 const MOPFM = MOI.FileFormats.Model
 const TS = TimeSeries
 
+const BUILD_SIMULATION_TIMER = TimerOutputs.TimerOutput()
+const RUN_SIMULATION_TIMER = TimerOutputs.TimerOutput()
+
 #Type Alias for JuMP and PJ containers
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
 const PGAE{V} =

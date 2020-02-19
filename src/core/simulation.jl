@@ -313,19 +313,16 @@ end
 function _build_stages!(sim::Simulation; kwargs...)
     system_to_file = get(kwargs, :system_to_file, true)
     for (stage_number, stage_name) in sim.sequence.order
-        @info("Building Stage $(stage_number)-$(stage_name)")
-        horizon = get_stage_horizon(get_sequence(sim), stage_name)
-        stage = get_stage(sim, stage_name)
-        stage_interval = get_stage_interval(get_sequence(sim), stage_name)
-        initial_time = get_initial_time(sim)
-        build!(stage, initial_time, horizon, stage_interval; kwargs...)
-        _populate_caches!(sim, stage_name)
-        if PSY.are_forecasts_contiguous(stage.sys)
-            initial_date = PSY.generate_initial_times(stage.sys, stage_interval, horizon)[1]
-        else
-            initial_date = PSY.get_forecast_initial_times(stage.sys)[1]
+        TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Stage $(stage_name)" begin
+            @info("Building Stage $(stage_number)-$(stage_name)")
+            horizon = get_stage_horizon(get_sequence(sim), stage_name)
+            stage = get_stage(sim, stage_name)
+            stage_interval = get_stage_interval(get_sequence(sim), stage_name)
+            initial_time = get_initial_time(sim)
+            build!(stage, initial_time, horizon, stage_interval; kwargs...)
+            _populate_caches!(sim, stage_name)
+            sim.internal.date_ref[stage_number] = initial_time
         end
-        sim.internal.date_ref[stage_number] = initial_date
     end
     _check_required_ini_cond_caches(sim)
     return
@@ -362,29 +359,34 @@ end
 
 """ # TODO: Add DocString
 function build!(sim::Simulation; kwargs...)
-    check_kwargs(kwargs, SIMULATION_BUILD_KWARGS, "build!")
-    if isnothing(sim.sequence) || isempty(sim.stages)
-        throw(ArgumentError("The simulation object requires a valid definition of stages and SimulationSequence"))
-    end
-    _check_forecasts_sequence(sim)
-    _check_feedforward_chronologies(sim)
-    _check_folder(sim.simulation_folder)
-    sim.internal = SimulationInternal(sim.steps, keys(sim.sequence.order))
-    stage_initial_times = _get_simulation_initial_times!(sim)
-    for (stage_number, stage_name) in sim.sequence.order
-        stage = get_stage(sim, stage_name)
-        if isnothing(stage)
-            throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
+    TimerOutputs.reset_timer!(BUILD_SIMULATION_TIMER)
+    TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Simulation" begin
+        check_kwargs(kwargs, SIMULATION_BUILD_KWARGS, "build!")
+        if isnothing(sim.sequence) || isempty(sim.stages)
+            throw(ArgumentError("The simulation object requires a valid definition of stages and SimulationSequence"))
         end
-        stage_interval = get_stage_interval(sim, stage_name)
-        executions = Int(get_step_resolution(sim.sequence) / stage_interval)
-        stage.internal = StageInternal(stage_number, executions, 0, nothing)
-        _attach_feedforward!(sim, stage_name)
+        _check_forecasts_sequence(sim)
+        _check_feedforward_chronologies(sim)
+        _check_folder(sim.simulation_folder)
+        sim.internal = SimulationInternal(sim.steps, keys(sim.sequence.order))
+        stage_initial_times = _get_simulation_initial_times!(sim)
+        for (stage_number, stage_name) in sim.sequence.order
+            stage = get_stage(sim, stage_name)
+            if isnothing(stage)
+                throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
+            end
+            stage_interval = get_stage_interval(sim, stage_name)
+            executions = Int(get_step_resolution(sim.sequence) / stage_interval)
+            stage.internal = StageInternal(stage_number, executions, 0, nothing)
+            _attach_feedforward!(sim, stage_name)
+        end
+        _assign_feedforward_chronologies(sim)
+        _check_steps(sim, stage_initial_times)
+        _build_stages!(sim; kwargs...)
+        sim.internal.compiled_status = true
     end
-    _assign_feedforward_chronologies(sim)
-    _check_steps(sim, stage_initial_times)
-    _build_stages!(sim; kwargs...)
-    sim.internal.compiled_status = true
+    # TODO: Send to logging
+    TimerOutputs.print_timer(BUILD_SIMULATION_TIMER)
     return
 end
 
@@ -513,38 +515,56 @@ function execute!(sim::Simulation; kwargs...)
 
     isnothing(sim.internal) &&
     error("Simulation not built, build the simulation to execute")
-    name = get_name(sim)
-    folder = get_simulation_folder(sim)
-    sim.internal.raw_dir, sim.internal.models_dir, sim.internal.results_dir =
-        _prepare_workspace(name, folder)
-    _build_stage_paths!(sim; kwargs...)
-    execution_order = get_execution_order(sim)
-    for step in 1:get_steps(sim)
-        println("Executing Step $(step)")
-        for (ix, stage_number) in enumerate(execution_order)
-            # TODO: implement some efficient way of indexing with stage name.
-            stage = get_stage(sim, stage_number)
-            stage_name = get_stage_name(sim, stage)
-            stage_interval = get_stage_interval(sim, stage_name)
-            run_name = "step-$(step)-stage-$(stage_name)"
-            sim.internal.current_time = sim.internal.date_ref[stage_number]
-            sim.sequence.current_execution_index = ix
-            @info "Starting run $run_name $(sim.internal.current_time)"
-            raw_results_path = joinpath(
-                sim.internal.raw_dir,
-                run_name,
-                replace_chars("$(sim.internal.current_time)", ":", "-"),
-            )
-            mkpath(raw_results_path)
-            # Is first run of first stage? Yes -> don't update stage
-            !(step == 1 && ix == 1) && update_stage!(stage, sim)
-            run_stage(stage, sim.internal.current_time, raw_results_path; kwargs...)
-            _update_caches!(sim, stage)
-            sim.internal.run_count[step][stage_number] += 1
-            sim.internal.date_ref[stage_number] += stage_interval
+    TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
+    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
+        name = get_name(sim)
+        folder = get_simulation_folder(sim)
+        sim.internal.raw_dir, sim.internal.models_dir, sim.internal.results_dir =
+            _prepare_workspace(name, folder)
+        _build_stage_paths!(sim; kwargs...)
+        execution_order = get_execution_order(sim)
+        for step in 1:get_steps(sim)
+            TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
+                println("Executing Step $(step)")
+                for (ix, stage_number) in enumerate(execution_order)
+                    TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Stage $(stage_number)" begin
+                        # TODO: implement some efficient way of indexing with stage name.
+                        stage = get_stage(sim, stage_number)
+                        stage_name = get_stage_name(sim, stage)
+                        stage_interval = get_stage_interval(sim, stage_name)
+                        run_name = "step-$(step)-stage-$(stage_name)"
+                        sim.internal.current_time = sim.internal.date_ref[stage_number]
+                        sim.sequence.current_execution_index = ix
+                        @info "Starting run $run_name $(sim.internal.current_time)"
+                        raw_results_path = joinpath(
+                            sim.internal.raw_dir,
+                            run_name,
+                            replace_chars("$(sim.internal.current_time)", ":", "-"),
+                        )
+                        mkpath(raw_results_path)
+                        # Is first run of first stage? Yes -> don't update stage
+                        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Stage $(stage_number)" begin
+                            !(step == 1 && ix == 1) && update_stage!(stage, sim)
+                        end
+                        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run Stage $(stage_number)" begin
+                            run_stage(
+                                stage,
+                                sim.internal.current_time,
+                                raw_results_path;
+                                kwargs...,
+                            )
+                        end
+                        _update_caches!(sim, stage)
+                        sim.internal.run_count[step][stage_number] += 1
+                        sim.internal.date_ref[stage_number] += stage_interval
+                    end
+                end
+            end
         end
+        constraints_duals = get(kwargs, :constraints_duals, nothing)
+        sim_results = SimulationResultsReference(sim; constraints_duals = constraints_duals)
     end
-    constraints_duals = get(kwargs, :constraints_duals, nothing)
-    sim_results = SimulationResultsReference(sim; constraints_duals = constraints_duals)
+    # TODO: Add to logging later
+    TimerOutputs.print_timer(RUN_SIMULATION_TIMER)
     return sim_results
 end
