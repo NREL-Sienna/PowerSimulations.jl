@@ -50,6 +50,7 @@ function service_requirement_constraint!(
             service,
             initial_time,
             "get_requirement",
+            length(time_steps),
         )))
     else
         ts_vector = ones(time_steps[end])

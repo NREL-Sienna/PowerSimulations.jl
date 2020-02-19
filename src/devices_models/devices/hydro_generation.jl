@@ -193,6 +193,7 @@ function _get_time_series(
                 device,
                 initial_time,
                 "get_rating",
+                length(time_steps),
             )))
         else
             active_power = PSY.get_activepower(device)
@@ -361,6 +362,7 @@ function _get_inflow_time_series(
                 device,
                 initial_time,
                 "get_inflow",
+                length(time_steps),
             )))
         else
             ts_vector = ones(time_steps[end])
