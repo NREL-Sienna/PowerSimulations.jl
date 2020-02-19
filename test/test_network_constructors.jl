@@ -165,7 +165,7 @@ end
             TestOpProblem,
             network,
             sys;
-            optimizer = ipopt_optimizer,
+            optimizer = fast_ipopt_optimizer,
             use_parameters = p,
         )
         construct_device!(ps_model, :Thermal, thermal_model; use_parameters = p)
@@ -188,7 +188,7 @@ end
         )
         psi_constraint_test(ps_model, constraint_names)
         psi_checkobjfun_test(ps_model, objfuncs[ix])
-        psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED])
+         psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED])
     end
 end
 
@@ -226,7 +226,7 @@ end
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
         ps_model =
-            OperationsProblem(TestOpProblem, network, sys; optimizer = ipopt_optimizer)
+            OperationsProblem(TestOpProblem, network, sys; optimizer = fast_ipopt_optimizer)
         construct_device!(ps_model, :Thermal, thermal_model)
         construct_device!(ps_model, :Load, load_model)
         construct_network!(ps_model, network)
@@ -243,7 +243,7 @@ end
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
         ps_model =
-            OperationsProblem(TestOpProblem, network, sys; optimizer = ipopt_optimizer)
+            OperationsProblem(TestOpProblem, network, sys; optimizer = fast_ipopt_optimizer)
         construct_device!(ps_model, :Thermal, thermal_model)
         construct_device!(ps_model, :Load, load_model)
         construct_network!(ps_model, network)
@@ -261,7 +261,7 @@ end
     for network in networks, sys in systems
         @info "Testing construction of a $(network) network"
         ps_model =
-            OperationsProblem(TestOpProblem, network, sys; optimizer = ipopt_optimizer)
+            OperationsProblem(TestOpProblem, network, sys; optimizer = fast_ipopt_optimizer)
         construct_device!(ps_model, :Thermal, thermal_model)
         construct_device!(ps_model, :Load, load_model)
         construct_network!(ps_model, network)

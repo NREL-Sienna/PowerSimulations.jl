@@ -28,12 +28,13 @@ const IS = InfrastructureSystems
 const TEST_KWARGS = [:good_kwarg_1, :good_kwarg_2]
 abstract type TestOpProblem <: PSI.AbstractOperationsProblem end
 
-ipopt_optimizer = JuMP.with_optimizer(Ipopt.Optimizer, print_level = 0) # use default print_level = 5
-# set to 0 to disable
+ipopt_optimizer = JuMP.with_optimizer(Ipopt.Optimizer, print_level = 0)
+fast_ipopt_optimizer = JuMP.with_optimizer(Ipopt.Optimizer, print_level = 0, max_cpu_time = 5.0)
+# use default print_level = 5 # set to 0 to disable
 GLPK_optimizer = JuMP.with_optimizer(GLPK.Optimizer, msg_lev = GLPK.MSG_OFF)
 Cbc_optimizer = JuMP.with_optimizer(Cbc.Optimizer, logLevel = 0)
 OSQP_optimizer = JuMP.with_optimizer(OSQP.Optimizer, verbose = false)
-fake_optimizer = JuMP.with_optimizer(Cbc.Optimizer, set_time_limit_sec = 3)
+fast_lp_optimizer = JuMP.with_optimizer(Cbc.Optimizer, logLevel = 0, set_time_limit_sec = 3)
 
 const LOG_FILE = "power-simulations-test.log"
 
