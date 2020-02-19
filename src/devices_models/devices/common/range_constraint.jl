@@ -154,7 +154,7 @@ function device_semicontinuousrange(
 
     return
 end
-
+#This function looks suspicious and repetitive. Needs verification
 @doc raw"""
     reserve_device_semicontinuousrange(psi_container::PSIContainer,
                                     range_data::Vector{DeviceRange},
@@ -192,7 +192,6 @@ where limits in range_data.
 * var_name::Symbol : the name of the continuous variable
 * binvar_name::Symbol : the name of the binary variable
 """
-#This function looks suspicious and repetittive. Needs verification
 function reserve_device_semicontinuousrange(
     psi_container::PSIContainer,
     range_data::Vector{DeviceRange},

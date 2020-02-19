@@ -56,9 +56,9 @@ function _update_parameters(stage::Stage, sim::Simulation)
     end
     return
 end
-
-""" Required update stage function call"""
 # Is possible this function needs a better name
+""" Required update stage function call"""
+
 function _update_stage!(stage::Stage, sim::Simulation)
     _update_parameters(stage, sim)
     _update_initial_conditions!(stage, sim)
