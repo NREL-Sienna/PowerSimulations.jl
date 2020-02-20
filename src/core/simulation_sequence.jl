@@ -120,7 +120,7 @@ end
 function _check_chronology_consistency(
     order::Dict{Int, String},
     feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology},
-    ini_cond_chronology::IniCondChronology,
+    ini_cond_chronology::InitialConditionChronology,
 )
 
     if isempty(feedforward_chronologies)
@@ -154,7 +154,7 @@ mutable struct SimulationSequence
     order::Dict{Int, String}
     feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
     feedforward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward}
-    ini_cond_chronology::IniCondChronology
+    ini_cond_chronology::InitialConditionChronology
     cache::Dict{String, Vector{<:AbstractCache}}
     execution_order::Vector{Int}
     current_execution_index::Int64

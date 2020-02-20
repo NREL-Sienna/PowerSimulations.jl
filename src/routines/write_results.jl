@@ -248,7 +248,7 @@ function write_results(
     return
 end
 
-function compute_file_hash(path::String, files::Array)
+function compute_file_hash(path::String, files::Vector{String})
     open(joinpath(path, "check.sha256"), "w") do io
         for file in files
             file_path = joinpath(path, file)

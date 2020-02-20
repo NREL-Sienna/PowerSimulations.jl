@@ -4,14 +4,14 @@
     Type struct to select an information sharing model between stages that uses results from the most recent stage executed to calculate the initial conditions. This model takes into account solutions from stages defined finer resolutions
 """
 
-struct InterStageChronology <: IniCondChronology end
+struct InterStageChronology <: InitialConditionChronology end
 
 """
     InterStageChronology()
 
     Type struct to select an information sharing model between stages that uses results from the same recent stage to calculate the initial conditions. This model ignores solutions from stages defined finer resolutions.
 """
-struct IntraStageChronology <: IniCondChronology end
+struct IntraStageChronology <: InitialConditionChronology end
 
 #########################Initial Conditions Definitions#####################################
 struct DevicePower <: InitialConditionType end
@@ -68,8 +68,8 @@ function calculate_ic_quantity(
 
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
-    var_status = isapprox(var_value, 0.0, atol = ComparisonTolerance) ? 0.0 : 1.0
-    @assert abs(last_status - var_status) < ComparisonTolerance
+    var_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
+    @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
     return last_status >= 1.0 ? current_counter : 0.0
 end
@@ -85,8 +85,8 @@ function calculate_ic_quantity(
 
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
-    var_status = isapprox(var_value, 0.0, atol = ComparisonTolerance) ? 0.0 : 1.0
-    @assert abs(last_status - var_status) < ComparisonTolerance
+    var_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
+    @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
     return last_status >= 1.0 ? 0.0 : current_counter
 end
@@ -97,7 +97,7 @@ function calculate_ic_quantity(
     var_value::Float64,
     cache::Union{Nothing, AbstractCache},
 ) where {T <: PSY.Component}
-    return isapprox(var_value, 0.0, atol = ComparisonTolerance) ? 0.0 : 1.0
+    return isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
 end
 
 function calculate_ic_quantity(
@@ -107,9 +107,9 @@ function calculate_ic_quantity(
     cache::Union{Nothing, AbstractCache},
 ) where {T <: PSY.ThermalGen}
     status_change_to_on =
-        get_condition(ic) <= ComparisonTolerance && var_value >= ComparisonTolerance
+        get_condition(ic) <= ABSOLUTE_TOLERANCE && var_value >= ABSOLUTE_TOLERANCE
     status_change_to_off =
-        get_condition(ic) >= ComparisonTolerance && var_value <= ComparisonTolerance
+        get_condition(ic) >= ABSOLUTE_TOLERANCE && var_value <= ABSOLUTE_TOLERANCE
     if status_change_to_on
         return ic.device.tech.activepowerlimits.min
     end

@@ -39,7 +39,7 @@ function _make_expressions_dict(
     time_steps::UnitRange{Int},
     parameters::Bool,
 ) where {S <: PM.AbstractPowerModel}
-    return DSDA(
+    return DenseAxisArrayContainer(
         :nodal_balance_active =>
             _make_container_array(V, parameters, bus_numbers, time_steps),
         :nodal_balance_reactive =>
@@ -54,7 +54,7 @@ function _make_expressions_dict(
     time_steps::UnitRange{Int},
     parameters::Bool,
 ) where {S <: PM.AbstractActivePowerModel}
-    return DSDA(
+    return DenseAxisArrayContainer(
         :nodal_balance_active =>
             _make_container_array(V, parameters, bus_numbers, time_steps),
     )
@@ -80,8 +80,8 @@ function _psi_container_init(
         resolution,
         use_forecast_data,
         initial_time,
-        DSDA(),
-        DSDA(),
+        DenseAxisArrayContainer(),
+        DenseAxisArrayContainer(),
         zero(JuMP.GenericAffExpr{Float64, V}),
         _make_expressions_dict(
             transmission,

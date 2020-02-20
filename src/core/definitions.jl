@@ -28,10 +28,10 @@ const JuMPAffineExpressionArray = Matrix{GAE{V}} where {V <: JuMP.AbstractVariab
 const JuMPAffineExpressionVector = Vector{GAE{V}} where {V <: JuMP.AbstractVariableRef}
 const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
-const DSDA = Dict{Symbol, JuMP.Containers.DenseAxisArray}
+const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
 # Tolerance of comparisons
-const ComparisonTolerance = 1.0e-10
+const ABSOLUTE_TOLERANCE = 1.0e-10
 
 const OPERATIONS_ACCEPTED_KWARGS = [
     :horizon,
