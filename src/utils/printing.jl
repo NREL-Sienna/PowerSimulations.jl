@@ -105,7 +105,7 @@ function Base.show(io::IO, ::MIME"text/plain", results::Results)
     end
 end
 
-function Base.show(io::IO, ::MIME"text/html", results::PSI.Results)
+function Base.show(io::IO, ::MIME"text/html", results::IS.Results)
     println(io, "<h1>Results</h1>")
     for (k, v) in results.variables
         time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])

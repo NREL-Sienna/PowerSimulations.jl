@@ -6,5 +6,4 @@ abstract type AbstractCache end
 abstract type FeedForwardChronology end
 abstract type InitialConditionChronology end
 abstract type InitialConditionType end
-abstract type Results end
 abstract type AbstractOperationsProblem end
