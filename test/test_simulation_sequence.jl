@@ -91,21 +91,21 @@ end
 end
 
 @testset "testing if interval is shorter than resolution" begin
-       @test_throws IS.ConflictingInputsError sequence = SimulationSequence(
-            step_resolution = Hour(24),
-            order = Dict(1 => "UC", 2 => "ED"),
-            feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-            horizons = Dict("UC" => 24, "ED" => 12),
-            intervals = Dict(
-                "UC" => (Minute(5), RecedingHorizon()),
-                "ED" => (Minute(1), RecedingHorizon()),
+    @test_throws IS.ConflictingInputsError sequence = SimulationSequence(
+        step_resolution = Hour(24),
+        order = Dict(1 => "UC", 2 => "ED"),
+        feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+        horizons = Dict("UC" => 24, "ED" => 12),
+        intervals = Dict(
+            "UC" => (Minute(5), RecedingHorizon()),
+            "ED" => (Minute(1), RecedingHorizon()),
+        ),
+        feedforward = Dict(
+            ("ED", :devices, :Generators) => SemiContinuousFF(
+                binary_from_stage = PSI.ON,
+                affected_variables = [PSI.ACTIVE_POWER],
             ),
-            feedforward = Dict(
-                ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
-                    affected_variables = [PSI.ACTIVE_POWER],
-                ),
-            ),
-            ini_cond_chronology = InterStageChronology(),
-        )
+        ),
+        ini_cond_chronology = InterStageChronology(),
+    )
 end
