@@ -77,7 +77,7 @@ function Base.show(io::IO, results::OperationsProblemResults)
 
 =#
 
-function Base.show(io::IO, ::MIME"text/plain", results::Results)
+function Base.show(io::IO, ::MIME"text/plain", results::IS.Results)
     println(io, "\nResults")
     println(io, "===============\n")
 
