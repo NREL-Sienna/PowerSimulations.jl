@@ -135,11 +135,14 @@ function _check_chronology_consistency(
     return
 end
 
-function _check_step_interval_consistency(step_resolution::Dates.TimePeriod, first_stage_interval::Dates.TimePeriod)
+function _check_step_interval_consistency(
+    step_resolution::Dates.TimePeriod,
+    first_stage_interval::Dates.TimePeriod,
+)
     if step_resolution != first_stage_interval
         throw(IS.ConflictingInputsError("Currently specifing a step resolution not equal to the first stage interval is not supported"))
     end
-return
+    return
 end
 
 # TODO: Add DocString
