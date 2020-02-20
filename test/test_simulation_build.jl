@@ -114,34 +114,6 @@ function test_sequence_build(file_path::String)
         @test_throws IS.ConflictingInputsError PSI._check_folder(sim.simulation_folder)
     end
 
-    @testset "testing if interval is shorter than resolution" begin
-        sequence = SimulationSequence(
-            step_resolution = Hour(24),
-            order = Dict(1 => "UC", 2 => "ED"),
-            feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
-            horizons = Dict("UC" => 24, "ED" => 12),
-            intervals = Dict(
-                "UC" => (Minute(5), RecedingHorizon()),
-                "ED" => (Minute(1), RecedingHorizon()),
-            ),
-            feedforward = Dict(
-                ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
-                    affected_variables = [PSI.ACTIVE_POWER],
-                ),
-            ),
-            ini_cond_chronology = InterStageChronology(),
-        )
-        sim = Simulation(
-            name = "interval",
-            steps = 1,
-            stages = stages_definition,
-            stages_sequence = sequence,
-            simulation_folder = file_path,
-        )
-        @test_throws IS.ConflictingInputsError PSI._get_simulation_initial_times!(sim)
-    end
-
     @testset "chronology look ahead length is too long for horizon" begin
         sequence = SimulationSequence(
             step_resolution = Hour(24),
