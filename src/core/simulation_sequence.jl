@@ -187,7 +187,7 @@ mutable struct SimulationSequence
             _intervals[k] = (IS.time_period_conversion(intervals[k][1]), intervals[k][2])
         end
         step_resolution = IS.time_period_conversion(step_resolution)
-        _check_step_interval_consistency(step_resolution, get_stage_interval(order[1]))
+        _check_step_interval_consistency(step_resolution, intervals[order[1]][1])
         _check_feedforward(feedforward, feedforward_chronologies)
         _check_chronology_consistency(order, feedforward_chronologies, ini_cond_chronology)
         if length(order) == 1
