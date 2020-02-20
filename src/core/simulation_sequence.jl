@@ -140,7 +140,7 @@ function _check_step_interval_consistency(
     first_stage_interval::Dates.TimePeriod,
 )
     if step_resolution != first_stage_interval
-        throw(IS.ConflictingInputsError("Currently specifing a step resolution not equal to the first stage interval is not supported"))
+        throw(IS.ConflictingInputsError("step_resolution != first_stage_interval : this specification is not currently supported, adjust step_resolution or intervals arguments."))
     end
     return
 end
