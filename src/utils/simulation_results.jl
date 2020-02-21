@@ -23,7 +23,8 @@ function deserialize_sim_output(file_path::String)
         for variable in collect(readdir(joinpath(path, stage)))
             var = splitext(variable)[1]
             ref[stage][Symbol(var)] = Feather.read(joinpath(path, stage, variable))
-            ref[stage][Symbol(var)][!, :Date] = convert(Array{Dates.DateTime}, ref[stage][Symbol(var)][!, :Date])
+            ref[stage][Symbol(var)][!, :Date] =
+                convert(Array{Dates.DateTime}, ref[stage][Symbol(var)][!, :Date])
         end
     end
     results_folder = read_json(joinpath(path, "results_folder.json"))

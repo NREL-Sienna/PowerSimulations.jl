@@ -5,15 +5,15 @@ struct SimulationResultsReference
 end
 
 function SimulationResultsReference(sim::Simulation; kwargs...)
-        date_run = convert(String, last(split(dirname(sim.internal.raw_dir), "/")))
-        ref = make_references(sim, date_run; kwargs...)
-        chronologies = Dict()
-        for (stage_number, stage_name) in sim.sequence.order
-            stage = get_stage(sim, stage_name)
-            interval = get_stage_interval(sim, stage_name)
-            resolution = PSY.get_forecasts_resolution(get_sys(stage))
-            chronologies["stage-$stage_name"] = convert(Int, (interval / resolution))
-        end
+    date_run = convert(String, last(split(dirname(sim.internal.raw_dir), "/")))
+    ref = make_references(sim, date_run; kwargs...)
+    chronologies = Dict()
+    for (stage_number, stage_name) in sim.sequence.order
+        stage = get_stage(sim, stage_name)
+        interval = get_stage_interval(sim, stage_name)
+        resolution = PSY.get_forecasts_resolution(get_sys(stage))
+        chronologies["stage-$stage_name"] = convert(Int, (interval / resolution))
+    end
     return SimulationResultsReference(ref, sim.internal.results_dir, chronologies)
 end
 

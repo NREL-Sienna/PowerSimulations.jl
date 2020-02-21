@@ -257,8 +257,14 @@ function serialize_sim_output(sim_results::SimulationResultsReference)
             Feather.write(joinpath(path, "$i.feather"), v)
         end
     end
-    JSON.write(joinpath(file_path, "results_folder.json"), JSON.json(sim_results.results_folder))
-    JSON.write(joinpath(file_path, "chronologies.json"), JSON.json(sim_results.chronologies))
+    JSON.write(
+        joinpath(file_path, "results_folder.json"),
+        JSON.json(sim_results.results_folder),
+    )
+    JSON.write(
+        joinpath(file_path, "chronologies.json"),
+        JSON.json(sim_results.chronologies),
+    )
 end
 
 function compute_file_hash(path::String, files::Vector{String})
