@@ -248,6 +248,19 @@ function write_results(
     return
 end
 
+function serialize_sim_output(sim_results::SimulationResultsReference)
+    file_path = mkdir(joinpath(dirname(sim_results.results_folder), "output_references"))
+    for (k, stage) in sim_results.ref
+        for (i, v) in stage
+            path = joinpath(file_path, "$k")
+            !isdir(path) && mkdir(path)
+            Feather.write(joinpath(path, "$i.feather"), v)
+        end
+    end
+    JSON.write(joinpath(file_path, "results_folder.json"), JSON.json(sim_results.results_folder))
+    JSON.write(joinpath(file_path, "chronologies.json"), JSON.json(sim_results.chronologies))
+end
+
 function compute_file_hash(path::String, files::Vector{String})
     open(joinpath(path, "check.sha256"), "w") do io
         for file in files
