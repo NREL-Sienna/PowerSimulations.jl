@@ -138,7 +138,7 @@ function _export_optimizer_log(
 end
 
 """
-    write_results(results::Results, save_path::String)
+    write_results(results::IS.Results, save_path::String)
 
 Exports Operational Problem Results to a path
 
@@ -149,7 +149,7 @@ Exports Operational Problem Results to a path
 # Accepted Key Words
 - `file_type = CSV`: only CSV and featherfile are accepted
 """
-function write_results(results::Results, save_path::String; kwargs...)
+function write_results(results::IS.Results, save_path::String; kwargs...)
     if !isdir(save_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
