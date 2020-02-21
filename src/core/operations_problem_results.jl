@@ -1,5 +1,5 @@
-get_results(result::Results) = nothing
-struct OperationsProblemResults <: Results
+get_results(result::IS.Results) = nothing
+struct OperationsProblemResults <: IS.Results
     variables::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict
     optimizer_log::Dict
