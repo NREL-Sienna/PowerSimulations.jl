@@ -43,8 +43,9 @@ references = make_references(sim, "2019-10-03T09-18-00-test")
 - `constraints_duals::Vector{Symbol}`: name of dual constraints to be added to results
 """
 function make_references(sim::Simulation, date_run::String; kwargs...)
-    sim.internal.date_ref[1] = sim.internal.date_range[1]
-    sim.internal.date_ref[2] = sim.internal.date_range[1]
+    sim.internal.date_ref[1] = sim.initial_time
+    sim.internal.date_ref[2] = sim.initial_time
+
     references = Dict()
     for (stage_number, stage_name) in sim.sequence.order
         variables = Dict{Symbol, Any}()

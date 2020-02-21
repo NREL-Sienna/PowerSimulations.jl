@@ -1,4 +1,4 @@
-struct DualResults <: Results
+struct DualResults <: IS.Results
     variables::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict
     optimizer_log::Dict

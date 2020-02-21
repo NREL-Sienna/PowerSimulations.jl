@@ -147,7 +147,6 @@ function load_simulation_results(
         end
     end
     time_stamp[!, :Range] = convert(Array{Dates.DateTime}, time_stamp[!, :Range])
-    @show references[stage][variable[1]][1, :File_Path]
     file_path = dirname(references[stage][variable[1]][1, :File_Path])
     optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
