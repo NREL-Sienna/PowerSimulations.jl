@@ -19,7 +19,7 @@ function _pass_abstract_jump(
     if !isnothing(optimizer)
         JuMPmodel = JuMP.Model(optimizer)
     else
-       JuMPmodel = JuMP.Model()
+        JuMPmodel = JuMP.Model()
     end
     if parameters
         PJ.enable_parameters(JuMPmodel)
