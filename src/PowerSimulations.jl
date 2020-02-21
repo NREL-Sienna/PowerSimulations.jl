@@ -156,10 +156,6 @@ import SHA
 
 include("core/definitions.jl")
 
-#################################################################################
-##### JuMP methods overloading
-JuMP.Model(optimizer::Nothing; kwargs...) = JuMP.Model(kwargs...)
-
 ################################################################################
 # Includes
 
