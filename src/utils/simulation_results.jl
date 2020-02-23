@@ -28,7 +28,7 @@ function deserialize_sim_output(file_path::String)
         end
     end
     results_folder = read_json(joinpath(path, "results_folder.json"))
-    chronologies = read_json(joinpath(path, "chronologies.json"))
+    chronologies = Dict{Any, Any}(read_json(joinpath(path, "chronologies.json")))
     sim_output = SimulationResultsReference(ref, results_folder, chronologies)
     return sim_output
 end

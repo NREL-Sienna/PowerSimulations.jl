@@ -120,6 +120,15 @@ function test_load_simulation(file_path::String)
         end
     end
 
+    @testset "test simulation output serialization and deserialization" begin
+        output_path = joinpath(dirname(sim_results.results_folder), "output_references")
+        sim_output = collect(readdir(output_path))
+        @test sim_output ==
+              ["chronologies.json", "results_folder.json", "stage-ED", "stage-UC"]
+        sim_test = PSI.deserialize_sim_output(dirname(output_path))
+        @test sim_test.ref == sim_results.ref
+    end
+
     @testset "testing argument errors" begin
         for name in stage_names
             files = collect(readdir(sim_results.results_folder))
