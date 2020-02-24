@@ -138,7 +138,7 @@ function _export_optimizer_log(
 end
 
 """
-    write_results(results::Results, save_path::String)
+    write_results(results::IS.Results, save_path::String)
 
 Exports Operational Problem Results to a path
 
