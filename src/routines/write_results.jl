@@ -149,7 +149,7 @@ Exports Operational Problem Results to a path
 # Accepted Key Words
 - `file_type = CSV`: only CSV and featherfile are accepted
 """
-function write_results(results::Results, save_path::String; kwargs...)
+function write_results(results::IS.Results, save_path::String; kwargs...)
     if !isdir(save_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
@@ -167,7 +167,7 @@ function write_results(results::Results, save_path::String; kwargs...)
 end
 
 """
-    write_results(results::DualResults, save_path::String, results_folder::String)
+    write_results(results::DualResults)
 
 Exports Simulation Results to the path where they come from in the results folder
 
@@ -179,14 +179,10 @@ Exports Simulation Results to the path where they come from in the results folde
 # Accepted Key Words
 - `file_type = CSV`: only CSV and featherfile are accepted
 """
-function write_results(
-    res::DualResults,
-    folder_path::String,
-    results_folder::String;
-    kwargs...,
-)
+function write_results(res::DualResults; kwargs...)
+    folder_path = res.results_folder
     if !isdir(folder_path)
-        throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
+        throw(IS.ConflictingInputsError("Specified path is not valid. Set up results folder."))
     end
     _write_data(res.variables, res.time_stamp, folder_path; kwargs...)
     _write_data(res.constraints_duals, folder_path; kwargs...)
@@ -199,7 +195,7 @@ function write_results(
 end
 
 """
-    write_results(results::SimulationResults, save_path::String, results_folder::String)
+    write_results(results::SimulationResults)
 
 Exports Simulations Results to the path where they come from in the results folder
 
@@ -212,14 +208,10 @@ Exports Simulations Results to the path where they come from in the results fold
 - `file_type = CSV`: only CSV and featherfile are accepted
 """
 
-function write_results(
-    res::SimulationResults,
-    folder_path::String,
-    results_folder::String;
-    kwargs...,
-)
+function write_results(res::SimulationResults; kwargs...)
+    folder_path = res.results_folder
     if !isdir(folder_path)
-        throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
+        throw(IS.ConflictingInputsError("Specified path is not valid. Set up results folder."))
     end
     _write_data(res.variables, res.time_stamp, folder_path; kwargs...)
     _write_optimizer_log(res.optimizer_log, folder_path)
@@ -297,9 +289,9 @@ function write_to_CSV(results::OperationsProblemResults, folder_path::String)
 end
 # writes the results to CSV files in a folder path, but they can't be read back
 function write_to_CSV(results::DualResults, folder_path::String)
-    write_results(results, folder_path, "results"; file_type = CSV)
+    write_results(results, folder_path; file_type = CSV)
 end
 # writes the results to CSV files in a folder path, but they can't be read back
 function write_to_CSV(results::SimulationResults, folder_path::String)
-    write_results(results, folder_path, "results"; file_type = CSV)
+    write_results(results, folder_path; file_type = CSV)
 end

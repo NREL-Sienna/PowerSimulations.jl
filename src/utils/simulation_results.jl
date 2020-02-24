@@ -1,16 +1,25 @@
-struct SimulationResults <: Results
+struct SimulationResults <: IS.Results
     variables::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
+    results_folder::Union{Nothing, String}
     function SimulationResults(
         variables::Dict,
         total_cost::Dict,
         optimizer_log::Dict,
         time_stamp::DataFrames.DataFrame,
     )
-        results = OperationsProblemResults(variables, total_cost, optimizer_log, time_stamp)
-        new(variables, total_cost, optimizer_log, time_stamp)
+        new(variables, total_cost, optimizer_log, time_stamp, nothing)
+    end
+    function SimulationResults(
+        variables::Dict,
+        total_cost::Dict,
+        optimizer_log::Dict,
+        time_stamp::DataFrames.DataFrame,
+        results_folder::String,
+    )
+        new(variables, total_cost, optimizer_log, time_stamp, results_folder)
     end
 end
 
@@ -54,7 +63,6 @@ variable = [:P_ThermalStandard, :P_RenewableDispatch]
 results = load_simulation_results(stage,step, variable, SimulationResultsReference)
 ```
 # Accepted Key Words
-- `write::Bool`: if true, the aggregated results get written back to the results file in the folder structure
 """
 
 function load_simulation_results(
@@ -74,6 +82,7 @@ function load_simulation_results(
     variable::Array;
     kwargs...,
 )
+    results_folder = SimulationResultsReference.results_folder
     stage = "stage-$stage_name"
     references = SimulationResultsReference.ref
     variables = Dict() # variable dictionary
@@ -109,19 +118,11 @@ function load_simulation_results(
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     if !isempty(dual)
         duals = _read_references(duals, dual, stage, step, references, time_length)
-        results = DualResults(variables, obj_value, optimizer, time_stamp, duals)
+        results =
+            DualResults(variables, obj_value, optimizer, time_stamp, duals, results_folder)
     else
-        results = SimulationResults(variables, obj_value, optimizer, time_stamp)
-    end
-    file_type = get(kwargs, :file_type, Feather)
-    write = get(kwargs, :write, false)
-    if write == true || :file_type in keys(kwargs)
-        write_results(
-            results,
-            SimulationResultsReference.results_folder,
-            "results";
-            file_type = file_type,
-        )
+        results =
+            SimulationResults(variables, obj_value, optimizer, time_stamp, results_folder)
     end
     return results
 end
@@ -142,8 +143,6 @@ execute!(simulation)
 results = load_simulation_results("file_path", "stage_name")
 ```
 # Accepted Key Words
-- `write::Bool`: if true, the aggregated results get written back to the results file in the folder structure
-- `file_type::File Type = Feather`: default is feather file for writing the aggregated results back to the folder.
 """
 function load_simulation_results(path::String, stage_name::String, kwargs...)
     sim_results = deserialize_sim_output(path)
@@ -165,14 +164,13 @@ sim_output = execute!(simulation)
 results = load_simulation_results(sim_output, "stage_name")
 ```
 # Accepted Key Words
-- `write::Bool`: if true, the aggregated results get written back to the results file in the folder structure
-- `file_type::File Type = Feather`: default is feather file for writing the aggregated results back to the folder.
 """
 function load_simulation_results(
     sim_output::SimulationResultsReference,
     stage_name::String;
     kwargs...,
 )
+    results_folder = sim_output.results_folder
     stage = "stage-$stage_name"
     references = sim_output.ref
     variables = Dict()
@@ -202,14 +200,11 @@ function load_simulation_results(
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     if !isempty(dual)
         duals = _read_references(duals, dual, stage, references, time_length)
-        results = DualResults(variables, obj_value, optimizer, time_stamp, duals)
+        results =
+            DualResults(variables, obj_value, optimizer, time_stamp, duals, results_folder)
     else
-        results = SimulationResults(variables, obj_value, optimizer, time_stamp)
-    end
-    file_type = get(kwargs, :file_type, Feather)
-    write = get(kwargs, :write, false)
-    if write == true
-        write_results(results, sim_output.results_folder, "results")
+        results =
+            SimulationResults(variables, obj_value, optimizer, time_stamp, results_folder)
     end
     return results
 end
