@@ -85,13 +85,14 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "testing reading and writing to the results folder" begin
+    @testset "test reading and writing to the results folder" begin
         for name in stage_names
             files = collect(readdir(sim_results.results_folder))
             for f in files
                 rm("$(sim_results.results_folder)/$f")
             end
-            res = load_simulation_results(sim_results, name; write = true)
+            res = load_simulation_results(sim_results, name)
+            write_results(res)
             loaded_res = load_operation_results(sim_results.results_folder)
             @test loaded_res.variables == res.variables
         end
@@ -103,7 +104,8 @@ function test_load_simulation(file_path::String)
             for f in files
                 rm("$(sim_results.results_folder)/$f")
             end
-            res = load_simulation_results(sim_results, name; write = true)
+            res = load_simulation_results(sim_results, name)
+            write_results(res)
             variable_list = String.(PSI.get_variable_names(sim, name))
             variable_list = [
                 variable_list
@@ -122,16 +124,29 @@ function test_load_simulation(file_path::String)
 
     @testset "testing argument errors" begin
         for name in stage_names
-            files = collect(readdir(sim_results.results_folder))
-            for f in files
-                rm("$(sim_results.results_folder)/$f")
-            end
             res = load_simulation_results(sim_results, name)
-            @test_throws IS.ConflictingInputsError write_results(res, "nothing", "results")
+            if isdir(res.results_folder)
+                files = collect(readdir(res.results_folder))
+                @show files
+                for f in files
+                    rm("$(res.results_folder)/$f")
+                end
+                rm("$(res.results_folder)")
+            end
+            @test_throws IS.ConflictingInputsError write_results(res)
         end
     end
 
-    @testset "testing load simulation results between the two methods of load simulation" begin
+    @testset "test simulation output serialization and deserialization" begin
+        output_path = joinpath(dirname(sim_results.results_folder), "output_references")
+        sim_output = collect(readdir(output_path))
+        @test sim_output ==
+              ["chronologies.json", "results_folder.json", "stage-ED", "stage-UC"]
+        sim_test = PSI.deserialize_sim_output(dirname(output_path))
+        @test sim_test.ref == sim_results.ref
+    end
+
+    @testset "test load simulation results between the two methods of load simulation" begin
         for name in stage_names
             variable = PSI.get_variable_names(sim, name)
             results = load_simulation_results(sim_results, name)
@@ -140,14 +155,14 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "Testing to verify length of time_stamp" begin
+    @testset "Test to verify length of time_stamp" begin
         for name in keys(sim.stages)
             results = load_simulation_results(sim_results, name)
             @test size(unique(results.time_stamp), 1) == size(results.time_stamp, 1)
         end
     end
 
-    @testset "Testing to verify no gaps in the time_stamp" begin
+    @testset "Test to verify no gaps in the time_stamp" begin
         for name in keys(sim.stages)
             stage = sim.stages[name]
             results = load_simulation_results(sim_results, name)
@@ -160,7 +175,7 @@ function test_load_simulation(file_path::String)
         end
     end
     ###########################################################
-    @testset "testing dual constraints in results" begin
+    @testset "Test dual constraints in results" begin
         res = PSI.load_simulation_results(sim_results, "ED")
         dual =
             JuMP.dual(sim.stages["ED"].internal.psi_container.constraints[:CopperPlateBalance][1])
@@ -173,11 +188,6 @@ function test_load_simulation(file_path::String)
         path = joinpath(file_path, "one")
         !isdir(path) && mkdir(path)
         PSI.write_to_CSV(res, path)
-        @test !isempty(path)
-
-        path = joinpath(file_path, "two")
-        !isdir(path) && mkdir(path)
-        PSI.write_results(res, path, "results")
         @test !isempty(path)
     end
 
@@ -329,7 +339,8 @@ function test_load_simulation(file_path::String)
                 rm("$(sim_results.results_folder)/$f")
             end
             variable_list = PSI.get_variable_names(sim, name)
-            res = load_simulation_results(sim_results, name; write = true)
+            res = load_simulation_results(sim_results, name)
+            write_results(res)
             _file_path = joinpath(sim_results.results_folder, "$(variable_list[1]).feather")
             rm(_file_path)
             fake_df = DataFrames.DataFrame(:A => Array(1:10))

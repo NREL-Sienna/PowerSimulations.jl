@@ -4,6 +4,7 @@ struct DualResults <: IS.Results
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
     constraints_duals::Dict{Symbol, Any}
+    results_folder::Union{Nothing, String}
 end
 
 get_res_variables(result::DualResults) = result.variables
@@ -19,10 +20,34 @@ function _make_results(
     optimizer_log::Dict,
     time_stamp::DataFrames.DataFrame,
     constraints_duals::Dict,
+    results_folder::String,
 )
-    return DualResults(variables, total_cost, optimizer_log, time_stamp, constraints_duals)
+    return DualResults(
+        variables,
+        total_cost,
+        optimizer_log,
+        time_stamp,
+        constraints_duals,
+        results_folder,
+    )
 end
 
+function _make_results(
+    variables::Dict,
+    total_cost::Dict,
+    optimizer_log::Dict,
+    time_stamp::DataFrames.DataFrame,
+    constraints_duals::Dict,
+)
+    return DualResults(
+        variables,
+        total_cost,
+        optimizer_log,
+        time_stamp,
+        constraints_duals,
+        nothing,
+    )
+end
 # internal function to parse through the reference dictionary and grab the file paths
 function _read_references(
     results::Dict,

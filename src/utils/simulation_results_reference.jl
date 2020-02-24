@@ -2,18 +2,19 @@ struct SimulationResultsReference
     ref::Dict
     results_folder::String
     chronologies::Dict
-    function SimulationResultsReference(sim::Simulation; kwargs...)
-        date_run = convert(String, last(split(dirname(sim.internal.raw_dir), "/")))
-        ref = make_references(sim, date_run; kwargs...)
-        chronologies = Dict()
-        for (stage_number, stage_name) in sim.sequence.order
-            stage = get_stage(sim, stage_name)
-            interval = get_stage_interval(sim, stage_name)
-            resolution = PSY.get_forecasts_resolution(get_sys(stage))
-            chronologies["stage-$stage_name"] = convert(Int, (interval / resolution))
-        end
-        new(ref, sim.internal.results_dir, chronologies)
+end
+
+function SimulationResultsReference(sim::Simulation; kwargs...)
+    date_run = convert(String, last(split(dirname(sim.internal.raw_dir), "/")))
+    ref = make_references(sim, date_run; kwargs...)
+    chronologies = Dict()
+    for (stage_number, stage_name) in sim.sequence.order
+        stage = get_stage(sim, stage_name)
+        interval = get_stage_interval(sim, stage_name)
+        resolution = PSY.get_forecasts_resolution(get_sys(stage))
+        chronologies["stage-$stage_name"] = convert(Int, (interval / resolution))
     end
+    return SimulationResultsReference(ref, sim.internal.results_dir, chronologies)
 end
 
 """
@@ -45,7 +46,6 @@ references = make_references(sim, "2019-10-03T09-18-00-test")
 function make_references(sim::Simulation, date_run::String; kwargs...)
     sim.internal.date_ref[1] = sim.initial_time
     sim.internal.date_ref[2] = sim.initial_time
-
     references = Dict()
     for (stage_number, stage_name) in sim.sequence.order
         variables = Dict{Symbol, Any}()
@@ -82,7 +82,7 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
                         )
                         variables[name] = vcat(variables[name], date_df)
                     else
-                        @warn("$full_path, does not contain any simulation result raw data")
+                        @error "$full_path, does not contain any simulation result raw data"
                     end
                 end
                 sim.internal.run_count[s][stage_number] += 1

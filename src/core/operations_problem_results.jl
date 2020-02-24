@@ -34,7 +34,14 @@ function _make_results(
     constraints_duals::Dict,
 )
     time_stamp = DataFrames.DataFrame(Range = time_stamp)
-    return DualResults(variables, total_cost, optimizer_log, time_stamp, constraints_duals)
+    return DualResults(
+        variables,
+        total_cost,
+        optimizer_log,
+        time_stamp,
+        constraints_duals,
+        nothing,
+    )
 end
 function get_variable(res_model::OperationsProblemResults, key::Symbol)
     try

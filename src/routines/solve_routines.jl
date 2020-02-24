@@ -48,7 +48,7 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
     if :constraints_duals in keys(kwargs)
         dual_result = get_model_duals(op_problem.psi_container, kwargs[:constraints_duals])
         results =
-            DualResults(vars_result, obj_value, optimizer_log, time_stamp, dual_result)
+            _make_results(vars_result, obj_value, optimizer_log, time_stamp, dual_result)
     else
         results =
             OperationsProblemResults(vars_result, obj_value, optimizer_log, time_stamp)

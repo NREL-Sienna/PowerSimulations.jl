@@ -565,5 +565,6 @@ function execute!(sim::Simulation; kwargs...)
     end
 
     @info ("\n$(RUN_SIMULATION_TIMER)\n")
+    serialize_sim_output(sim_results)
     return sim_results
 end
