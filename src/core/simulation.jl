@@ -466,9 +466,9 @@ function update_cache!(
 ) where {D <: PSY.Device}
     c = get_cache(sim, key)
     variable = get_variable(stage.internal.psi_container, c.ref)
-
     for t in 1:get_end_of_interval_step(stage), name in variable.axes[1]
         device_status = JuMP.value(variable[name, t])
+        @debug name, device_status
         if c.value[name][:status] == device_status
             c.value[name][:count] += 1.0
             @debug("Cache value TimeStatus for device $name set to $device_status and count to $(c.value[name][:count])")
