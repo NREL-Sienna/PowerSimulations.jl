@@ -2,12 +2,12 @@
 
 [![Build Status](https://img.shields.io/travis/com/NREL/PowerSimulations.jl/master.svg)](https://travis-ci.com/NREL/PowerSimulations.jl)
 [![codecov](https://codecov.io/gh/NREL/PowerSimulations.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/NREL/PowerSimulations.jl)
-[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://nrel.github.io/PowerSimulations.jl/latest)
+[![Documentation](https://github.com/NREL/PowerSimulations.jl/workflows/Documentation/badge.svg)]((https://nrel.github.io/PowerSimulations.jl/latest))
 [![Join the chat at https://gitter.im/NREL/PowerSimulations.jl](https://badges.gitter.im/NREL/PowerSimulations.jl.svg)](https://gitter.im/NREL/PowerSimulations.jl)
 
 ## The current implementation of the functionalities can be seen in the test codes.
 
-`PowerSimulations.jl` is a Julia package for power system modeling and simulation. The objectives of the package are:
+`PowerSimulations.jl` is a Julia package for power system modeling and simulation of Power Systems operations. The objectives of the package are:
 
 - Provide a flexible modeling framework that can accommodate problems of different complexity and at different time-scales.
 
@@ -26,13 +26,11 @@ For example, an annual production cost modeling simulation can be created by for
 
 ### _Simulations_ enabled by PowerSimulations:
  - Production Cost Modeling
- - Capacity Expansion Modeling - _TODO_
  - Load Flow and Contingency Analysis - _TODO_
 
 ### _Model_ formulations contained in PowerSimulations:
  - [Unit Commitment](https://en.wikipedia.org/wiki/Unit_commitment_problem_in_electrical_power_production)
  - [Economic Dispatch](https://en.wikipedia.org/wiki/Economic_dispatch)
- - [DC Power Flow](https://www.mech.kuleuven.be/en/tme/research/energy_environment/Pdf/wpen2014-12.pdf)
 
 ## Installation
 
