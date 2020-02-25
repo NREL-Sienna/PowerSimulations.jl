@@ -3,27 +3,15 @@ language: julia
 os:
   - linux
   - osx
+  - windows
 julia:
-  - 1.2
   - 1.3
   - nightly
 
-codecov: true
-
-notifications:
-  email: false
-
 ## uncomment the following lines to allow failures on nightly julia
 ## (tests will run but not make your overall status red)
-matrix:
-  allow_failures:
-  - julia: nightly
-  - julia: 1.3
-  - os: osx
-
-addons:
-  apt_packages:
-    - gfortran
+notifications:
+  email: false
 
 ## uncomment and modify the following lines to manually install system packages
 #addons:
@@ -34,11 +22,12 @@ addons:
 #  - if [ $TRAVIS_OS_NAME = osx ]; then brew install gcc; fi
 
 jobs:
-  include:
-    - stage: "Documentation"
-      julia: 1.2
-      os: linux
-      script:
-        - julia --project=docs -e 'using Pkg; Pkg.instantiate(); Pkg.add(PackageSpec(path=pwd()))'
-        - julia --project=docs --color=yes -e 'include("docs/make.jl")'
-      after_success: skip
+  fast_finish: true
+  allow_failures:
+    - julia: nightly
+    - os: osx
+after_success: julia -e '
+  using Pkg;
+  Pkg.add("Coverage");
+  using Coverage;
+  Codecov.submit(process_folder());'

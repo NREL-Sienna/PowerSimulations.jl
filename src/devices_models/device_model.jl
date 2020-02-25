@@ -1,30 +1,10 @@
 abstract type AbstractDeviceFormulation end
 
-function _validate_device_formulation(::Type{D}) where D<:Union{AbstractDeviceFormulation,
-                                                                PSY.Device}
-
+function _check_device_formulation(
+    ::Type{D},
+) where {D <: Union{AbstractDeviceFormulation, PSY.Device}}
     if !isconcretetype(D)
         throw(ArgumentError("The device model must contain only concrete types, $(D) is an Abstract Type"))
-    end
-
-end
-
-mutable struct DeviceModel{D<:PSY.Device,
-                           B<:AbstractDeviceFormulation}
-    device_type::Type{D}
-    formulation::Type{B}
-    feedforward::Union{Nothing, AbstractFeedForwardAffect}
-
-    function DeviceModel(::Type{D},
-                    ::Type{B},
-                    feedforward::Union{Nothing, AbstractFeedForwardAffect}) where {D<:PSY.Device,
-                                                            B<:AbstractDeviceFormulation}
-
-    _validate_device_formulation(D)
-    _validate_device_formulation(B)
-
-    new{D, B}(D, B, feedforward)
-
     end
 
 end
@@ -52,13 +32,23 @@ branches = Dict{Symbol, DeviceModel}
     :dc_line => DeviceModel(PSY.HVDCLine, HVDCDispatch))
 ```
 """
-function DeviceModel(::Type{D},
-                     ::Type{B}) where {D<:PSY.Device,
-                                       B<:AbstractDeviceFormulation}
+mutable struct DeviceModel{D <: PSY.Device, B <: AbstractDeviceFormulation}
+    device_type::Type{D}
+    formulation::Type{B}
+    # TODO: Needs to be made into an array if more than one feedforward is desired
+    feedforward::Union{Nothing, AbstractAffectFeedForward}
+    services::Vector{ServiceModel}
 
-                    _validate_device_formulation(D)
-                    _validate_device_formulation(B)
-
-    return DeviceModel(D, B, nothing)
-
+    function DeviceModel(
+        ::Type{D},
+        ::Type{B},
+        FF = nothing,
+    ) where {D <: PSY.Device, B <: AbstractDeviceFormulation}
+        _check_device_formulation(D)
+        _check_device_formulation(B)
+        new{D, B}(D, B, FF, Vector{ServiceModel}())
+    end
 end
+
+get_feedforward(m::DeviceModel) = m.feedforward
+get_services(m::Union{DeviceModel, Nothing}) = isnothing(m) ? nothing : m.services

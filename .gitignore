@@ -8,3 +8,6 @@ docs/build/
 docs/site/
 Manifest.toml
 .vscode
+*.h5
+tags
+*.txt

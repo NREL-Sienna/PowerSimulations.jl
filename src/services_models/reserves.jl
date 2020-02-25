@@ -1,95 +1,144 @@
 abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
-struct RangeUpwardReserve <: AbstractReservesFormulation end
+struct RangeReserve <: AbstractReservesFormulation end
 ############################### Reserve Variables` #########################################
 """
 This function add the variables for reserves to the model
 """
-function activeservice_variables!(canonical::Canonical,
-                                  service::SR,
-                                  devices::Vector{<:PSY.Device}) where SR<:PSY.Reserve
-    add_variable(canonical,
-                 devices,
-                 Symbol("R$(PSY.get_name(service))_$SR"),
-                 false;
-                 ub_value = d -> d.tech.activepowerlimits.max,
-                 lb_value = d -> 0 )
+function activeservice_variables!(
+    psi_container::PSIContainer,
+    service::SR,
+    contributing_devices::Vector{<:PSY.Device},
+) where {SR <: PSY.Reserve}
+
+    function get_ub_val(d::PSY.Device)
+        return d.tech.activepowerlimits.max
+    end
+    function get_ub_val(d::PSY.RenewableGen)
+        return d.tech.rating
+    end
+    add_variable(
+        psi_container,
+        contributing_devices,
+        variable_name(PSY.get_name(service), SR),
+        false;
+        ub_value = d -> get_ub_val(d),
+        lb_value = d -> 0,
+    )
     return
 end
 
 ################################## Reserve Requirement Constraint ##########################
 # This function can be generalized later for any constraint of type Sum(req_var) >= requirement,
 # it will only need to be specific to the names and get forecast string.
-function service_requirement_constraint!(canonical::Canonical,
-                                         service::SR) where {SR<:PSY.Reserve}
-    time_steps = model_time_steps(canonical)
-    parameters = model_has_parameters(canonical)
-    forecast = model_uses_forecasts(canonical)
-    initial_time = model_initial_time(canonical)
-    reserve_variable = get_variable(canonical, Symbol("R$(PSY.get_name(service))_$SR"))
-    constraint_name = Symbol(PSY.get_name(service), "_requirement_$SR")
-    constraint = add_cons_container!(canonical, constraint_name, time_steps)
-    requirement = PSY.get_requirement(service)
-    if forecast
-        ts_vector = TS.values(PSY.get_data(PSY.get_forecast(PSY.Deterministic,
-                                                            service,
-                                                            initial_time,
-                                                            "get_requirement")))
+function service_requirement_constraint!(
+    psi_container::PSIContainer,
+    service::SR,
+    model::ServiceModel{SR, RangeReserve},
+) where {SR <: PSY.Reserve}
+    parameters = model_has_parameters(psi_container)
+    use_forecast_data = model_uses_forecasts(psi_container)
+    initial_time = model_initial_time(psi_container)
+    @debug initial_time
+    time_steps = model_time_steps(psi_container)
+    name = PSY.get_name(service)
+    constraint = get_constraint(psi_container, constraint_name(REQUIREMENT, SR))
+    reserve_variable = get_variable(psi_container, variable_name(name, SR))
+
+    if use_forecast_data
+        ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
+            PSY.Deterministic,
+            service,
+            initial_time,
+            "get_requirement",
+            length(time_steps),
+        )))
     else
         ts_vector = ones(time_steps[end])
     end
+
+    requirement = PSY.get_requirement(service)
     if parameters
-        param = include_parameters(canonical, ts_vector,
-                                   UpdateRef{SR}("get_requirement"), time_steps)
+        param = get_parameter_array(
+            psi_container,
+            UpdateRef{SR}(SERVICE_REQUIREMENT, "get_requirement"),
+        )
         for t in time_steps
-            constraint[t] = JuMP.@constraint(canonical.JuMPmodel,
-                                         sum(reserve_variable[:,t]) >= param[t]*requirement)
+            param[name, t] =
+                PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t] * requirement)
+            constraint[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                sum(reserve_variable[:, t]) >= param[name, t]
+            )
         end
     else
         for t in time_steps
-            constraint[t] = JuMP.@constraint(canonical.JuMPmodel,
-                                    sum(reserve_variable[:,t]) >= ts_vector[t]*requirement)
+            constraint[name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                sum(reserve_variable[:, t]) >= ts_vector[t] * requirement
+            )
         end
     end
     return
 end
 
-# This function can also be generalized.
-function add_to_service_expression!(canonical::Canonical,
-                                    model::ServiceModel{SR, RangeUpwardReserve},
-                                    service::SR,
-                                    expression_list::Vector{Symbol}) where {SR<:PSY.Reserve}
-    # Container
-    time_steps = model_time_steps(canonical)
-    devices = PSY.get_contributingdevices(service)
-    var_type = JuMP.variable_type(canonical.JuMPmodel)
-    expression = :upward_reserve
-    expression ∉ expression_list && push!(expression, expression_list)
-    expression_dict = get_expression!(canonical,
-                                      expression,
-                                      Dict{ServiceExpressionKey, Array{GAE{var_type}}}())
-    reserve_variable = get_variable(canonical, Symbol("R$(PSY.get_name(service))_$SR"))
-    #fill container
-    for d in devices
-        T = typeof(d)
-        name = PSY.get_name(d)
-        expressions = get!(expression_dict,
-                           ServiceExpressionKey(name, T),
-                           get_variable(canonical, Symbol("P_$(T)"))[name, :].data)
-        for t in time_steps
-            expressions[t] = JuMP.add_to_expression!(expressions[t], reserve_variable[name, t])
+function modify_device_model!(
+    devices_template::Dict{Symbol, DeviceModel},
+    service_model::ServiceModel{<:PSY.Reserve, RangeReserve},
+    contributing_devices::Vector{<:PSY.Device},
+)
+    device_types = unique(typeof.(contributing_devices))
+    for dt in device_types
+        for (device_model_name, device_model) in devices_template
+            # add message here when it exists
+            device_model.device_type != dt && continue
+            service_model in device_model.services && continue
+            push!(device_model.services, service_model)
         end
+    end
+
+    return
+end
+
+function include_service!(
+    constraint_data::DeviceRange,
+    services::Vector{SR},
+    ::ServiceModel{SR, <:AbstractReservesFormulation},
+) where {SR <: PSY.Reserve{PSY.ReserveUp}}
+    for (ix, service) in enumerate(services)
+        push!(
+            constraint_data.additional_terms_ub,
+            constraint_name(PSY.get_name(service), SR),
+        )
     end
     return
 end
 
-function add_device_constraints!(canonical::Canonical,
-                                 sys::PSY.System,
-                                 expression_list::Vector{Symbol})
-    for service_expression in expression_list
-        expression_dictionary = get_expression(canonical, service_expression)
-        for (k, v) in expression_dictionary
-            device = get_component(k.device_type, sys, k.name)
-            service_constraints(device, v, )
+function include_service!(
+    constraint_data::DeviceRange,
+    services::Vector{SR},
+    ::ServiceModel{SR, <:AbstractReservesFormulation},
+) where {SR <: PSY.Reserve{PSY.ReserveDown}}
+    for (ix, service) in enumerate(services)
+        #uses the upper bound of the (downward) service requirement to determine a constraint LB
+        push!(
+            constraint_data.additional_terms_lb,
+            constraint_name(PSY.get_name(service), SR),
+        )
+    end
+    return
+end
+
+function _device_services!(
+    constraint_data::DeviceRange,
+    device::D,
+    model::DeviceModel,
+) where {D <: PSY.Device}
+    for service_model in get_services(model)
+        if PSY.has_service(device, service_model.service_type)
+            services =
+                [s for s in PSY.get_services(device) if isa(s, service_model.service_type)]
+            @assert !isempty(services)
+            include_service!(constraint_data, services, service_model)
         end
     end
     return

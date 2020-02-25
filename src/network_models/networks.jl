@@ -1,4 +1,4 @@
-struct CopperPlatePowerModel <: PM.AbstractActivePowerModel  end
+struct CopperPlatePowerModel <: PM.AbstractActivePowerModel end
 struct StandardPTDFModel <: PM.AbstractDCPModel end
 
 #================================================
@@ -29,7 +29,6 @@ export ACRPowerModel
 
 import PowerModels: ACTPowerModel
 export ACTPowerModel
-
 
 ##### Linear Approximations #####
 import PowerModels: DCPPowerModel
