@@ -329,7 +329,7 @@ UC_devices = Dict{Symbol, DeviceModel}(
 )
 # Testing Ramping Constraint
 @testset "Solving ED with CopperPlate for testing Ramping Constraints" begin
-    node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230)
+    node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
     load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 1.0, 2.0)
     DA_ramp = collect(
         DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
@@ -397,7 +397,7 @@ end
 
 # Testing Duration Constraints
 @testset "Solving UC with CopperPlate for testing Duration Constraints" begin
-    node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230)
+    node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
     load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 1.0, 2.0)
     DA_dur = collect(
         DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
@@ -478,7 +478,7 @@ end
 
 ## PWL linear Cost implementation test
 @testset "Solving UC with CopperPlate testing Linear PWL" begin
-    node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230)
+    node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
     load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 1.0, 2.0)
     gens_cost = [
         ThermalStandard(
@@ -556,7 +556,7 @@ end
 
 ## PWL SOS-2 Cost implementation test
 @testset "Solving UC with CopperPlate testing SOS2 implementation" begin
-    node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230)
+    node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
     load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 1.0, 2.0)
     gens_cost_sos = [
         ThermalStandard(
