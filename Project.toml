@@ -4,7 +4,6 @@ authors = ["Jose Daniel Lara", "Dheepak Krishnamurthy", "Clayton Barrows"]
 version = "0.2.0"
 
 [deps]
-Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
@@ -18,7 +17,6 @@ ParameterJuMP = "774612a8-9878-5177-865a-ca53ae2495f9"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 PowerModels = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 PowerSystems = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
-Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
