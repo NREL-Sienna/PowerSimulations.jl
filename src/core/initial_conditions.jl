@@ -99,8 +99,6 @@ function calculate_ic_quantity(
     return var_value
 end
 
-
-
 """
 Status Init is always calculated based on the Power Output of the device
 This is to make it easier to calculate when the previous model doesn't

@@ -36,7 +36,6 @@ function compute_file_hash(path::String, files::Vector{String})
     end
 end
 
-
 function check_kwargs(input_kwargs, valid_set::Array{Symbol}, function_name::String)
     if isempty(input_kwargs)
         return

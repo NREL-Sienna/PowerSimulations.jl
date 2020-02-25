@@ -530,7 +530,6 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
     return results
 end
 
-
 function _result_dataframe_variables(variable::JuMP.Containers.DenseAxisArray)
     if length(axes(variable)) == 1
         result = Vector{Float64}(undef, length(first(variable.axes)))

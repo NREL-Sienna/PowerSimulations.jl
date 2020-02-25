@@ -483,7 +483,6 @@ function update_cache!(
     return
 end
 
-
 #########################TimeSeries Data Updating###########################################
 function update_parameter!(
     param_reference::UpdateRef{T},
