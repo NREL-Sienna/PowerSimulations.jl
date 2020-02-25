@@ -116,3 +116,38 @@ function shorten_time_stamp(time::DataFrames.DataFrame)
     time = time[1:(size(time, 1) - 1), :]
     return time
 end
+
+# This method is also used by DualResults
+"""
+    write_results(results::IS.Results, save_path::String)
+
+Exports Operational Problem Results to a path
+
+# Arguments
+- `results::OperationsProblemResults`: results from the simulation
+- `save_path::String`: folder path where the files will be written
+
+# Accepted Key Words
+- `file_type = CSV`: only CSV and featherfile are accepted
+"""
+function write_results(results::IS.Results, save_path::String; kwargs...)
+    if !isdir(save_path)
+        throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
+    end
+    folder_path = mkdir(joinpath(
+        save_path,
+        replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-"),
+    ))
+    _write_data(results.variables, folder_path; kwargs...)
+    _write_optimizer_log(results.optimizer_log, folder_path)
+    _write_data(results.time_stamp, folder_path, "time_stamp"; kwargs...)
+    files = collect(readdir(folder_path))
+    compute_file_hash(folder_path, files)
+    @info("Files written to $folder_path folder.")
+    return
+end
+
+# writes the results to CSV files in a folder path, but they can't be read back
+function write_to_CSV(results::OperationsProblemResults, folder_path::String)
+    write_results(results, folder_path, "results"; file_type = CSV)
+end

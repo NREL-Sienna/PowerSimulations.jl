@@ -33,6 +33,8 @@ const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 # Tolerance of comparisons
 const ABSOLUTE_TOLERANCE = 1.0e-10
 
+const MISSING_INITIAL_CONDITIONS_TIME_COUNT = 999.0
+
 const OPERATIONS_ACCEPTED_KWARGS = [
     :horizon,
     :initial_conditions,

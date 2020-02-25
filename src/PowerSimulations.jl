@@ -159,7 +159,7 @@ include("core/definitions.jl")
 ################################################################################
 # Includes
 
-include("utils/utils.jl")
+include("utils.jl")
 
 #Models and constructors
 include("core/abstract_types.jl")
@@ -171,14 +171,16 @@ include("network_models/networks.jl")
 
 include("core/parameters.jl")
 include("core/cache.jl")
-include("core/initial_conditions.jl")
 include("core/psi_container.jl")
+include("core/initial_conditions.jl")
+include("core/operations_problem_results.jl")
 include("core/operations_problem.jl")
 include("core/simulation_stages.jl")
 include("core/simulation_sequence.jl")
 include("core/simulation.jl")
 include("core/feedforward.jl")
-include("core/operations_problem_results.jl")
+include("core/simulation_results.jl")
+include("core/dual_results.jl")
 
 #Device Modeling components
 include("devices_models/devices/common.jl")
@@ -211,28 +213,9 @@ include("devices_models/device_constructors/storage_constructor.jl")
 #Network constructors
 include("network_models/network_constructor.jl")
 
-# Commented out until properly implemented
-#Operational Model Constructors
-
-#Routines
-include("routines/make_initial_conditions.jl")
-include("routines/get_results.jl")
-include("routines/stage_update.jl")
-include("routines/solve_routines.jl")
-
 #Templates
-include("templates/operations_problem_templates.jl")
-
-#Utils
-include("utils/optimization_debugging.jl")
-include("utils/dual_results.jl")
-include("utils/simulation_results_reference.jl")
-include("utils/simulation_results.jl")
-include("utils/printing.jl")
-
-include("utils/kwargs_check.jl")
-
-#Routines
-include("routines/write_results.jl")
+include("operations_problems_templates.jl")
+# Printing
+include("printing.jl")
 
 end

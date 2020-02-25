@@ -135,3 +135,36 @@ function _concat_string(duals::Vector{Symbol})
     duals = (String.(duals)) .* "_dual"
     return duals
 end
+
+"""
+    write_results(results::DualResults)
+
+Exports Simulation Results to the path where they come from in the results folder
+
+# Arguments
+- `results::DualResults`: results from the simulation
+- `save_path::String`: folder path where the files will be written
+- `results_folder`: name of the folder where the results will be written
+
+# Accepted Key Words
+- `file_type = CSV`: only CSV and featherfile are accepted
+"""
+function write_results(res::DualResults; kwargs...)
+    folder_path = res.results_folder
+    if !isdir(folder_path)
+        throw(IS.ConflictingInputsError("Specified path is not valid. Set up results folder."))
+    end
+    _write_data(res.variables, res.time_stamp, folder_path; kwargs...)
+    _write_data(res.constraints_duals, folder_path; kwargs...)
+    _write_optimizer_log(res.optimizer_log, folder_path)
+    _write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
+    files = collect(readdir(folder_path))
+    compute_file_hash(folder_path, files)
+    @info("Files written to $folder_path folder.")
+    return
+end
+
+# writes the results to CSV files in a folder path, but they can't be read back
+function write_to_CSV(results::DualResults, folder_path::String)
+    write_results(results, folder_path; file_type = CSV)
+end

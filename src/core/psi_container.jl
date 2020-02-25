@@ -1,3 +1,26 @@
+
+mutable struct InitialCondition{T <: Union{PJ.ParameterRef, Float64}}
+    device::PSY.Device
+    update_ref::UpdateRef
+    value::T
+    cache_type::Union{Nothing, Type{<:AbstractCache}}
+end
+
+function InitialCondition(
+    device::PSY.Device,
+    update_ref::UpdateRef,
+    value::T,
+) where {T <: Union{PJ.ParameterRef, Float64}}
+    return InitialCondition(device, update_ref, value, nothing)
+end
+
+struct ICKey{IC <: InitialConditionType, D <: PSY.Device}
+    ic_type::Type{IC}
+    device_type::Type{D}
+end
+
+const InitialConditionsContainer = Dict{ICKey, Array{InitialCondition}}
+#Defined here because of dependencies in psi_container
 function _pass_abstract_jump(
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
     parameters::Bool,
@@ -474,4 +497,43 @@ function iterate_parameter_containers(psi_container::PSIContainer)
             put!(channel, container)
         end
     end
+end
+
+function get_model_duals(op::PSIContainer, cons::Vector{Symbol})
+    results_dict = Dict{Symbol, DataFrames.DataFrame}()
+
+    for c in cons
+        v = get_constraint(op, c)
+        results_dict[c] = _result_dataframe_duals(v)
+    end
+    return results_dict
+end
+
+function _export_optimizer_log(
+    optimizer_log::Dict{Symbol, Any},
+    psi_container::PSIContainer,
+    path::String,
+)
+
+    optimizer_log[:obj_value] = JuMP.objective_value(psi_container.JuMPmodel)
+    optimizer_log[:termination_status] =
+        Int(JuMP.termination_status(psi_container.JuMPmodel))
+    optimizer_log[:primal_status] = Int(JuMP.primal_status(psi_container.JuMPmodel))
+    optimizer_log[:dual_status] = Int(JuMP.dual_status(psi_container.JuMPmodel))
+    try
+        optimizer_log[:solve_time] = MOI.get(psi_container.JuMPmodel, MOI.SolveTime())
+    catch
+        @warn("SolveTime() property not supported by the Solver")
+        optimizer_log[:solve_time] = NaN # "Not Supported by solver"
+    end
+    _write_optimizer_log(optimizer_log, path)
+    return
+end
+
+""" Exports the OpModel JuMP object in MathOptFormat"""
+function _write_psi_container(psi_container::PSIContainer, save_path::String)
+    MOF_model = MOPFM(format = MOI.FileFormats.FORMAT_MOF)
+    MOI.copy_to(MOF_model, JuMP.backend(psi_container.JuMPmodel))
+    MOI.write_to_file(MOF_model, save_path)
+    return
 end
