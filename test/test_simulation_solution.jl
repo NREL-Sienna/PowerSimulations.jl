@@ -112,6 +112,7 @@ function test_load_simulation(file_path::String)
                 "optimizer_log"
                 "time_stamp"
                 "check"
+                "base_power"
             ]
             file_list = collect(readdir(sim_results.results_folder))
             for name in file_list
@@ -139,8 +140,13 @@ function test_load_simulation(file_path::String)
     @testset "test simulation output serialization and deserialization" begin
         output_path = joinpath(dirname(sim_results.results_folder), "output_references")
         sim_output = collect(readdir(output_path))
-        @test sim_output ==
-              ["chronologies.json", "results_folder.json", "stage-ED", "stage-UC"]
+        @test sim_output == [
+            "base_power.json",
+            "chronologies.json",
+            "results_folder.json",
+            "stage-ED",
+            "stage-UC",
+        ]
         sim_test = PSI.deserialize_sim_output(dirname(output_path))
         @test sim_test.ref == sim_results.ref
     end

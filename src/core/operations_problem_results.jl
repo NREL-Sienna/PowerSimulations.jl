@@ -4,6 +4,7 @@ struct OperationsProblemResults <: IS.Results
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
+    base_power::Int
 end
 
 """This function creates the correct results struct for the context"""
@@ -12,8 +13,15 @@ function _make_results(
     total_cost::Dict,
     optimizer_log::Dict,
     time_stamp::DataFrames.DataFrame,
+    base_power::Int,
 )
-    return OperationsProblemResults(variables, total_cost, optimizer_log, time_stamp)
+    return OperationsProblemResults(
+        variables,
+        total_cost,
+        optimizer_log,
+        time_stamp,
+        base_power,
+    )
 end
 """This function creates the correct results struct for the context"""
 function _make_results(
@@ -21,9 +29,16 @@ function _make_results(
     total_cost::Dict,
     optimizer_log::Dict,
     time_stamp::Array,
+    base_power::Int,
 )
     time_stamp = DataFrames.DataFrame(Range = time_stamp)
-    return OperationsProblemResults(variables, total_cost, optimizer_log, time_stamp)
+    return OperationsProblemResults(
+        variables,
+        total_cost,
+        optimizer_log,
+        time_stamp,
+        base_power,
+    )
 end
 """This function creates the correct results struct for the context"""
 function _make_results(
@@ -32,6 +47,7 @@ function _make_results(
     optimizer_log::Dict,
     time_stamp::Array,
     constraints_duals::Dict,
+    base_power::Int,
 )
     time_stamp = DataFrames.DataFrame(Range = time_stamp)
     return DualResults(
@@ -41,6 +57,7 @@ function _make_results(
         time_stamp,
         constraints_duals,
         nothing,
+        base_power,
     )
 end
 function get_variable(res_model::OperationsProblemResults, key::Symbol)
@@ -85,7 +102,7 @@ function load_operation_results(folder_path::AbstractString)
     files_in_folder = collect(readdir(folder_path))
     variable_list = setdiff(
         files_in_folder,
-        ["time_stamp.feather", "optimizer_log.json", "check.sha256"],
+        ["time_stamp.feather", "base_power.json", "optimizer_log.json", "check.sha256"],
     )
     variables = Dict{Symbol, DataFrames.DataFrame}()
     duals = Dict()
@@ -98,12 +115,13 @@ function load_operation_results(folder_path::AbstractString)
     end
     optimizer = read_json(joinpath(folder_path, "optimizer_log.json"))
     time_stamp = Feather.read(joinpath(folder_path, "time_stamp.feather"))
+    @show base_power = Int(JSON.read(joinpath(folder_path, "base_power.json"))[1])
     if size(time_stamp, 1) > find_var_length(variables, variable_list)
         time_stamp = shorten_time_stamp(time_stamp)
     end
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     check_file_integrity(folder_path)
-    results = _make_results(variables, obj_value, optimizer, time_stamp)
+    results = _make_results(variables, obj_value, optimizer, time_stamp, base_power)
     return results
 end
 
@@ -139,6 +157,7 @@ function write_results(results::IS.Results, save_path::String; kwargs...)
         replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-"),
     ))
     _write_data(results.variables, folder_path; kwargs...)
+    _write_data(results.base_power, folder_path)
     _write_optimizer_log(results.optimizer_log, folder_path)
     _write_data(results.time_stamp, folder_path, "time_stamp"; kwargs...)
     files = collect(readdir(folder_path))

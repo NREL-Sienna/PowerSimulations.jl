@@ -5,6 +5,7 @@ struct DualResults <: IS.Results
     time_stamp::DataFrames.DataFrame
     constraints_duals::Dict{Symbol, Any}
     results_folder::Union{Nothing, String}
+    base_power::Int
 end
 
 get_res_variables(result::DualResults) = result.variables
@@ -13,6 +14,7 @@ get_log(result::DualResults) = result.optimizer_log
 get_time_stamp(result::DualResults) = result.time_stamp
 get_duals(result::DualResults) = result.constraints_duals
 get_variables(result::DualResults) = result.dual_variables
+get_base_power(results::DualResults) = Int(results.base_power)
 """This function creates the correct results struct for the context"""
 function _make_results(
     variables::Dict,
@@ -21,6 +23,7 @@ function _make_results(
     time_stamp::DataFrames.DataFrame,
     constraints_duals::Dict,
     results_folder::String,
+    base_power::Int,
 )
     return DualResults(
         variables,
@@ -29,6 +32,7 @@ function _make_results(
         time_stamp,
         constraints_duals,
         results_folder,
+        base_power,
     )
 end
 
@@ -38,6 +42,7 @@ function _make_results(
     optimizer_log::Dict,
     time_stamp::DataFrames.DataFrame,
     constraints_duals::Dict,
+    base_power::Int,
 )
     return DualResults(
         variables,
@@ -46,6 +51,7 @@ function _make_results(
         time_stamp,
         constraints_duals,
         nothing,
+        base_power,
     )
 end
 # internal function to parse through the reference dictionary and grab the file paths
@@ -156,6 +162,7 @@ function write_results(res::DualResults; kwargs...)
     end
     _write_data(res.variables, res.time_stamp, folder_path; kwargs...)
     _write_data(res.constraints_duals, folder_path; kwargs...)
+    _write_data(res.base_power, folder_path)
     _write_optimizer_log(res.optimizer_log, folder_path)
     _write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
     files = collect(readdir(folder_path))

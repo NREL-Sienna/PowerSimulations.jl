@@ -2,19 +2,27 @@ struct SimulationResultsReference
     ref::Dict
     results_folder::String
     chronologies::Dict
+    base_power::Dict
 end
 
 function SimulationResultsReference(sim::Simulation; kwargs...)
     date_run = convert(String, last(split(dirname(sim.internal.raw_dir), "/")))
     ref = make_references(sim, date_run; kwargs...)
     chronologies = Dict()
+    base_powers = Dict()
     for (stage_number, stage_name) in sim.sequence.order
         stage = get_stage(sim, stage_name)
         interval = get_stage_interval(sim, stage_name)
         resolution = PSY.get_forecasts_resolution(get_sys(stage))
         chronologies["stage-$stage_name"] = convert(Int, (interval / resolution))
+        base_powers[stage_name] = Int(sim.stages[stage_name].sys.basepower)
     end
-    return SimulationResultsReference(ref, sim.internal.results_dir, chronologies)
+    return SimulationResultsReference(
+        ref,
+        sim.internal.results_dir,
+        chronologies,
+        base_powers,
+    )
 end
 
 """
@@ -101,13 +109,15 @@ struct SimulationResults <: IS.Results
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
     results_folder::Union{Nothing, String}
+    base_power::Int
     function SimulationResults(
         variables::Dict,
         total_cost::Dict,
         optimizer_log::Dict,
         time_stamp::DataFrames.DataFrame,
+        base_power::Int,
     )
-        new(variables, total_cost, optimizer_log, time_stamp, nothing)
+        new(variables, total_cost, optimizer_log, time_stamp, nothing, base_power)
     end
     function SimulationResults(
         variables::Dict,
@@ -115,14 +125,18 @@ struct SimulationResults <: IS.Results
         optimizer_log::Dict,
         time_stamp::DataFrames.DataFrame,
         results_folder::String,
+        base_power::Int,
     )
-        new(variables, total_cost, optimizer_log, time_stamp, results_folder)
+        new(variables, total_cost, optimizer_log, time_stamp, results_folder, base_power)
     end
 end
 
 function deserialize_sim_output(file_path::String)
     path = joinpath(file_path, "output_references")
-    list = setdiff(collect(readdir(path)), ["results_folder.json", "chronologies.json"])
+    list = setdiff(
+        collect(readdir(path)),
+        ["results_folder.json", "chronologies.json", "base_power.json"],
+    )
     ref = Dict()
     for stage in list
         ref[stage] = Dict{Symbol, Any}()
@@ -135,7 +149,8 @@ function deserialize_sim_output(file_path::String)
     end
     results_folder = read_json(joinpath(path, "results_folder.json"))
     chronologies = Dict{Any, Any}(read_json(joinpath(path, "chronologies.json")))
-    sim_output = SimulationResultsReference(ref, results_folder, chronologies)
+    base_power = Dict{Any, Any}(read_json(joinpath(path, "base_power.json")))
+    sim_output = SimulationResultsReference(ref, results_folder, chronologies, base_power)
     return sim_output
 end
 
@@ -173,19 +188,20 @@ function load_simulation_results(
     load_simulation_results(sim_results, stage_name, step, variable; kwargs...)
 end
 function load_simulation_results(
-    SimulationResultsReference::SimulationResultsReference,
+    sim_output::SimulationResultsReference,
     stage_name::String,
     step::Array,
     variable::Array;
     kwargs...,
 )
-    results_folder = SimulationResultsReference.results_folder
+    results_folder = sim_output.results_folder
     stage = "stage-$stage_name"
-    references = SimulationResultsReference.ref
+    references = sim_output.ref
+    base_power = sim_output.base_power[stage_name]
     variables = Dict() # variable dictionary
     duals = Dict()
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
-    time_length = SimulationResultsReference.chronologies[stage]
+    time_length = sim_output.chronologies[stage]
     dual = _find_duals(collect(keys(references[stage])))
     variable = setdiff(variable, dual)
     for l in 1:length(variable)
@@ -215,11 +231,24 @@ function load_simulation_results(
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     if !isempty(dual)
         duals = _read_references(duals, dual, stage, step, references, time_length)
-        results =
-            DualResults(variables, obj_value, optimizer, time_stamp, duals, results_folder)
+        results = DualResults(
+            variables,
+            obj_value,
+            optimizer,
+            time_stamp,
+            duals,
+            results_folder,
+            base_power,
+        )
     else
-        results =
-            SimulationResults(variables, obj_value, optimizer, time_stamp, results_folder)
+        results = SimulationResults(
+            variables,
+            obj_value,
+            optimizer,
+            time_stamp,
+            results_folder,
+            base_power,
+        )
     end
     return results
 end
@@ -270,6 +299,7 @@ function load_simulation_results(
     results_folder = sim_output.results_folder
     stage = "stage-$stage_name"
     references = sim_output.ref
+    base_power = sim_output.base_power[stage_name]
     variables = Dict()
     duals = Dict()
     variable = (collect(keys(references[stage])))
@@ -297,11 +327,24 @@ function load_simulation_results(
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     if !isempty(dual)
         duals = _read_references(duals, dual, stage, references, time_length)
-        results =
-            DualResults(variables, obj_value, optimizer, time_stamp, duals, results_folder)
+        results = DualResults(
+            variables,
+            obj_value,
+            optimizer,
+            time_stamp,
+            duals,
+            results_folder,
+            base_power,
+        )
     else
-        results =
-            SimulationResults(variables, obj_value, optimizer, time_stamp, results_folder)
+        results = SimulationResults(
+            variables,
+            obj_value,
+            optimizer,
+            time_stamp,
+            results_folder,
+            base_power,
+        )
     end
     return results
 end
@@ -371,6 +414,7 @@ function write_results(res::SimulationResults; kwargs...)
     end
     _write_data(res.variables, res.time_stamp, folder_path; kwargs...)
     _write_optimizer_log(res.optimizer_log, folder_path)
+    _write_data(res.base_power, folder_path)
     _write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
     files = collect(readdir(folder_path))
     compute_file_hash(folder_path, files)
@@ -395,6 +439,7 @@ function serialize_sim_output(sim_results::SimulationResultsReference)
         joinpath(file_path, "chronologies.json"),
         JSON.json(sim_results.chronologies),
     )
+    JSON.write(joinpath(file_path, "base_power.json"), JSON.json(sim_results.base_power))
 end
 
 # writes the results to CSV files in a folder path, but they can't be read back
