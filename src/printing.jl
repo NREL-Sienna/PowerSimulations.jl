@@ -211,10 +211,10 @@ function _print_feedforward(io::IO, feed_forward::Dict, to::Array, from::Any)
             println("$line1\n$spaces|\n$spaces$line5\n")
         else
             if times == 2
-                line3 = string("┌", string(dashes,"┤"))
+                line3 = string("┌", string(dashes, "┤"))
                 spacing = 0
             elseif times == 3
-                line3 = string("┌", string(dashes, "┼"), string(dashes, "┐"))  
+                line3 = string("┌", string(dashes, "┼"), string(dashes, "┐"))
                 spacing = 0
             elseif iseven(times)
                 spacing = (Int(times / 2) - 2)
@@ -235,12 +235,12 @@ function _print_feedforward(io::IO, feed_forward::Dict, to::Array, from::Any)
                     "┼",
                     string(dashes, "┬")^(spacing),
                     "----┐",
-                    )
+                )
             end
-                line1 = string("     "^(spacing), " $stage1--┐ from : $from")
-                line2 = string("     "^(spacing), " "^length(stage1), "   |")
-                line4 = string("|", string(spaces, "|")^(times - 2), "    |")
-                println("$line1\n$line2\n$line3\n$line4\n$line4\n$line5\n")
+            line1 = string("     "^(spacing), " $stage1--┐ from : $from")
+            line2 = string("     "^(spacing), " "^length(stage1), "   |")
+            line4 = string("|", string(spaces, "|")^(times - 2), "    |")
+            println("$line1\n$line2\n$line3\n$line4\n$line4\n$line5\n")
         end
     end
 end
