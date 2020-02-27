@@ -240,13 +240,11 @@ function constraint_power_balance_ni_expr(
 
     PM.con(pm, n, :power_balance_p)[i] = JuMP.@constraint(
         pm.model,
-        sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) ==
-            pni_expr
+        sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni_expr
     )
     PM.con(pm, n, :power_balance_q)[i] = JuMP.@constraint(
         pm.model,
-        sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) ==
-            qni_expr
+        sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) == qni_expr
     )
 
     return
@@ -294,8 +292,7 @@ function constraint_power_balance_ni_expr(
 
     PM.con(pm, n, :power_balance_p)[i] = JuMP.@constraint(
         pm.model,
-        sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) ==
-            pni_expr
+        sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni_expr
     )
 
     return
@@ -391,16 +388,14 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel
 
     pm_var_map[PSY.Bus] = Dict(:va => THETA, :vm => VM)
     pm_var_map[PSY.ACBranch] = Dict(
-        :p =>
-                (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
+        :p =>     (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
         :q => (
             from_to = FLOW_REACTIVE_POWER_FROM_TO,
             to_from = FLOW_REACTIVE_POWER_TO_FROM,
         ),
     )
     pm_var_map[PSY.DCBranch] = Dict(
-        :p_dc =>
-                (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
+        :p_dc =>     (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
         :q_dc => (
             from_to = FLOW_REACTIVE_POWER_FROM_TO,
             to_from = FLOW_REACTIVE_POWER_TO_FROM,
