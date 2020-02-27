@@ -206,31 +206,42 @@ function _print_feedforward(io::IO, feed_forward::Dict, to::Array, from::Any)
             times = 12
             line5 = string("└─$stage2 "^times, "... (x$period) to : $to")
         end
-        if iseven(times)
-            spacing = (Int(times / 2) - 2)
-            line3 = string(
-                "┌",
-                string(dashes, "┬")^spacing,
-                "----",
-                "┼",
-                string(dashes, "┬")^(spacing + 1),
-                "----┐",
-            )
+        if times == 1
+            line1 = "$stage1--┐ from : $from"
+            println("$line1\n$spaces|\n$spaces$line5\n")
         else
-            spacing = Int((times / 2) - 1.5)
-            line3 = string(
-                "┌",
-                string(dashes, "┬")^spacing,
-                "----",
-                "┼",
-                string(dashes, "┬")^(spacing),
-                "----┐",
-            )
+            if times == 2
+                line3 = string("┌", string(dashes, "┤"))
+                spacing = 0
+            elseif times == 3
+                line3 = string("┌", string(dashes, "┼"), string(dashes, "┐"))
+                spacing = 0
+            elseif iseven(times)
+                spacing = (Int(times / 2) - 2)
+                line3 = string(
+                    "┌",
+                    string(dashes, "┬")^spacing,
+                    "----",
+                    "┼",
+                    string(dashes, "┬")^(spacing + 1),
+                    "----┐",
+                )
+            else
+                spacing = Int((times / 2) - 1.5)
+                line3 = string(
+                    "┌",
+                    string(dashes, "┬")^spacing,
+                    "----",
+                    "┼",
+                    string(dashes, "┬")^(spacing),
+                    "----┐",
+                )
+            end
+            line1 = string("     "^(spacing), " $stage1--┐ from : $from")
+            line2 = string("     "^(spacing), " "^length(stage1), "   |")
+            line4 = string("|", string(spaces, "|")^(times - 2), "    |")
+            println("$line1\n$line2\n$line3\n$line4\n$line4\n$line5\n")
         end
-        line1 = string("     "^(spacing), " $stage1--┐ from : $from")
-        line2 = string("     "^(spacing), " "^length(stage1), "   |")
-        line4 = string("|", string(spaces, "|")^(times - 2), "    |")
-        println(io, "$line1\n$line2\n$line3\n$line4\n$line4\n$line5\n")
     end
 end
 function _print_inter_stages(io::IO, stages::Dict)
