@@ -109,13 +109,13 @@ struct SimulationResults <: IS.Results
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
     results_folder::Union{Nothing, String}
-    base_power::Int
+    base_power::Float64
     function SimulationResults(
         variables::Dict,
         total_cost::Dict,
         optimizer_log::Dict,
         time_stamp::DataFrames.DataFrame,
-        base_power::Int,
+        base_power::Float64,
     )
         new(variables, total_cost, optimizer_log, time_stamp, nothing, base_power)
     end
@@ -125,7 +125,7 @@ struct SimulationResults <: IS.Results
         optimizer_log::Dict,
         time_stamp::DataFrames.DataFrame,
         results_folder::String,
-        base_power::Int,
+        base_power::Float64,
     )
         new(variables, total_cost, optimizer_log, time_stamp, results_folder, base_power)
     end

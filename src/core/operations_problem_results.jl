@@ -4,7 +4,7 @@ struct OperationsProblemResults <: IS.Results
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
-    base_power::Int
+    base_power::Float64
 end
 
 """This function creates the correct results struct for the context"""
@@ -13,7 +13,7 @@ function _make_results(
     total_cost::Dict,
     optimizer_log::Dict,
     time_stamp::DataFrames.DataFrame,
-    base_power::Int,
+    base_power::Float64,
 )
     return OperationsProblemResults(
         variables,
@@ -29,7 +29,7 @@ function _make_results(
     total_cost::Dict,
     optimizer_log::Dict,
     time_stamp::Array,
-    base_power::Int,
+    base_power::Float64,
 )
     time_stamp = DataFrames.DataFrame(Range = time_stamp)
     return OperationsProblemResults(
@@ -47,7 +47,7 @@ function _make_results(
     optimizer_log::Dict,
     time_stamp::Array,
     constraints_duals::Dict,
-    base_power::Int,
+    base_power::Float64,
 )
     time_stamp = DataFrames.DataFrame(Range = time_stamp)
     return DualResults(

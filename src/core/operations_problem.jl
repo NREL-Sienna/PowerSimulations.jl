@@ -763,7 +763,7 @@ function _write_data(op_problem::OperationsProblem, save_path::AbstractString; k
     return
 end
 
-function _write_data(base_power::Int, save_path::String)
+function _write_data(base_power::Float64, save_path::String)
     JSON.write(joinpath(save_path, "base_power.json"), JSON.json(base_power))
 end
 
