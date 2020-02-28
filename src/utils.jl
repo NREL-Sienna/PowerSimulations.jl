@@ -107,12 +107,24 @@ function write_data(base_power::Float64, save_path::String)
     JSON.write(joinpath(save_path, "base_power.json"), JSON.json(base_power))
 end
 
+function _jump_value(input::JuMP.VariableRef)
+    return JuMP.value(input)
+end
+
+function _jump_value(input::PJ.ParameterRef)
+    return PJ.value(input)
+end
+
+function _jump_value(input::JuMP.ConstraintRef)
+    return JuMP.dual(input)
+end
+
 function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray)
     if length(axes(input_array)) == 1
         result = Vector{Float64}(undef, length(first(input_array.axes)))
 
         for t in input_array.axes[1]
-            result[t] = JuMP.value(input_array[t])
+            result[t] = _jump_value(input_array[t])
         end
 
         return DataFrames.DataFrame(var = result)
@@ -127,7 +139,7 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray)
         names = Array{Symbol, 1}(undef, length(input_array.axes[1]))
 
         for t in input_array.axes[2], (ix, name) in enumerate(input_array.axes[1])
-            result[t, ix] = JuMP.value(input_array[name, t])
+            result[t, ix] = _jump_value(input_array[name, t])
             names[ix] = Symbol(name)
         end
 
@@ -147,7 +159,7 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray)
                 length(first(input_array.axes)),
             )
             for t in last(input_array.axes), (ix, name) in enumerate(first(input_array.axes))
-                result[t, ix] = JuMP.value(input_array[name, i, t])
+                result[t, ix] = _jump_value(input_array[name, i, t])
             end
             res = DataFrames.DataFrame(hcat(third_dim, result))
             result_df = vcat(result_df, res)
