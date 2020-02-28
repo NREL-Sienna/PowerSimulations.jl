@@ -500,6 +500,10 @@ function iterate_parameter_containers(psi_container::PSIContainer)
     end
 end
 
+function is_milp(container::PSIContainer)
+    return container.JuMPmodel.optimizer.model.last_solved_by_mip
+end
+
 function _export_optimizer_log(
     optimizer_log::Dict{Symbol, Any},
     psi_container::PSIContainer,
