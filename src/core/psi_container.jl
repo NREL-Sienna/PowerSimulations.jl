@@ -468,7 +468,7 @@ function get_model_duals(op::PSIContainer, cons::Vector{Symbol})
 
     for c in cons
         v = get_constraint(op, c)
-        results_dict[c] = _result_dataframe_duals(v)
+        results_dict[c] = axis_array_to_dataframe(v)
     end
     return results_dict
 end
