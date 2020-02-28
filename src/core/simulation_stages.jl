@@ -178,15 +178,15 @@ function get_time_stamps(stage::Stage, start_time::Dates.DateTime)
     return time_stamp
 end
 
-function _write_data(stage::Stage, save_path::AbstractString; kwargs...)
-    _write_data(stage.internal.psi_container, save_path; kwargs...)
+function write_data(stage::Stage, save_path::AbstractString; kwargs...)
+    write_data(stage.internal.psi_container, save_path; kwargs...)
     return
 end
 
 # These functions are writing directly to the feather file and skipping printing to memory.
 function _export_model_result(stage::Stage, start_time::Dates.DateTime, save_path::String)
-    _write_data(stage, save_path)
-    _write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
+    write_data(stage, save_path)
+    write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
     files = collect(readdir(save_path))
     compute_file_hash(save_path, files)
     return
@@ -198,9 +198,9 @@ function _export_model_result(
     save_path::String,
     dual_con::Vector{Symbol},
 )
-    _write_data(stage, save_path)
-    _write_data(get_psi_container(stage), save_path, dual_con)
-    _write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
+    write_data(stage, save_path)
+    write_data(get_psi_container(stage), save_path, dual_con)
+    write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
     files = collect(readdir(save_path))
     compute_file_hash(save_path, files)
     return
