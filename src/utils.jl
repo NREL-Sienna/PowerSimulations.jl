@@ -99,7 +99,7 @@ function write_data(
     return
 end
 
-function _write_optimizer_log(optimizer_log::Dict, save_path::AbstractString)
+function write_optimizer_log(optimizer_log::Dict, save_path::AbstractString)
     JSON.write(joinpath(save_path, "optimizer_log.json"), JSON.json(optimizer_log))
 end
 
@@ -107,47 +107,47 @@ function write_data(base_power::Float64, save_path::String)
     JSON.write(joinpath(save_path, "base_power.json"), JSON.json(base_power))
 end
 
-function result_dataframe_variables(variable::JuMP.Containers.DenseAxisArray)
-    if length(axes(variable)) == 1
-        result = Vector{Float64}(undef, length(first(variable.axes)))
+function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray)
+    if length(axes(input_array)) == 1
+        result = Vector{Float64}(undef, length(first(input_array.axes)))
 
-        for t in variable.axes[1]
-            result[t] = JuMP.value(variable[t])
+        for t in input_array.axes[1]
+            result[t] = JuMP.value(input_array[t])
         end
 
         return DataFrames.DataFrame(var = result)
 
-    elseif length(axes(variable)) == 2
+    elseif length(axes(input_array)) == 2
 
-        result = Array{Float64, length(variable.axes)}(
+        result = Array{Float64, length(input_array.axes)}(
             undef,
-            length(variable.axes[2]),
-            length(variable.axes[1]),
+            length(input_array.axes[2]),
+            length(input_array.axes[1]),
         )
-        names = Array{Symbol, 1}(undef, length(variable.axes[1]))
+        names = Array{Symbol, 1}(undef, length(input_array.axes[1]))
 
-        for t in variable.axes[2], (ix, name) in enumerate(variable.axes[1])
-            result[t, ix] = JuMP.value(variable[name, t])
+        for t in input_array.axes[2], (ix, name) in enumerate(input_array.axes[1])
+            result[t, ix] = JuMP.value(input_array[name, t])
             names[ix] = Symbol(name)
         end
 
         return DataFrames.DataFrame(result, names)
 
-    elseif length(axes(variable)) == 3
-        extra_dims = sum(length(axes(variable)[2:(end - 1)]))
+    elseif length(axes(input_array)) == 3
+        extra_dims = sum(length(axes(input_array)[2:(end - 1)]))
         extra_vars = [Symbol("S$(s)") for s in 1:extra_dims]
         result_df = DataFrames.DataFrame()
-        names = vcat(extra_vars, Symbol.(axes(variable)[1]))
+        names = vcat(extra_vars, Symbol.(axes(input_array)[1]))
 
-        for i in variable.axes[2]
-            third_dim = collect(fill(i, size(variable)[end]))
+        for i in input_array.axes[2]
+            third_dim = collect(fill(i, size(input_array)[end]))
             result = Array{Float64, 2}(
                 undef,
-                length(last(variable.axes)),
-                length(first(variable.axes)),
+                length(last(input_array.axes)),
+                length(first(input_array.axes)),
             )
-            for t in last(variable.axes), (ix, name) in enumerate(first(variable.axes))
-                result[t, ix] = JuMP.value(variable[name, i, t])
+            for t in last(input_array.axes), (ix, name) in enumerate(first(input_array.axes))
+                result[t, ix] = JuMP.value(input_array[name, i, t])
             end
             res = DataFrames.DataFrame(hcat(third_dim, result))
             result_df = vcat(result_df, res)
@@ -156,39 +156,37 @@ function result_dataframe_variables(variable::JuMP.Containers.DenseAxisArray)
         return DataFrames.names!(result_df, names)
 
     else
-        error("Dimension Number $(length(axes(variable))) not Supported")
+        error("Dimension Number $(length(axes(input_array))) not Supported")
     end
 
 end
 
-function result_dataframe_duals(constraint::JuMP.Containers.DenseAxisArray)
-    if length(axes(constraint)) == 1
-        result = Vector{Float64}(undef, length(first(constraint.axes)))
-        for t in constraint.axes[1]
-            try
-                result[t] = JuMP.dual(constraint[t])
-            catch
-                result[t] = NaN
-            end
-        end
-        return DataFrames.DataFrame(var = result)
-    elseif length(axes(constraint)) == 2
-        result = Array{Float64, length(constraint.axes)}(
-            undef,
-            length(constraint.axes[2]),
-            length(constraint.axes[1]),
-        )
-        names = Array{Symbol, 1}(undef, length(constraint.axes[1]))
-        for t in constraint.axes[2], (ix, name) in enumerate(constraint.axes[1])
-            try
-                result[t, ix] = JuMP.dual(constraint[name, t])
-            catch
-                result[t, ix] = NaN
-            end
-            names[ix] = Symbol(name)
-        end
-        return DataFrames.DataFrame(result, names)
-    else
-        error("Dimension Number $(length(axes(constraint))) not Supported")
-    end
+# this ensures that the time_stamp is not double shortened
+function find_var_length(es::Dict, e_list::Array)
+    return size(es[Symbol(splitext(e_list[1])[1])], 1)
+end
+
+function shorten_time_stamp(time::DataFrames.DataFrame)
+    time = time[1:(size(time, 1) - 1), :]
+    return time
+end
+
+""" Returns the correct container spec for the selected type of JuMP Model"""
+function container_spec(m::M, axs...) where {M <: JuMP.AbstractModel}
+    return JuMP.Containers.DenseAxisArray{JuMP.variable_type(m)}(undef, axs...)
+end
+
+function middle_rename(original::Symbol, split_char::String, addition::String)
+    parts = split(String(original), split_char)
+    return Symbol(parts[1], "_", addition, _JUMP_NAME_DELIMITER, parts[2])
+end
+
+"Replaces the string in `char` with the string`replacement`"
+function replace_chars(s::String, char::String, replacement::String)
+    return replace(s, Regex("[$char]") => replacement)
+end
+
+"Removes the string `char` from the original string"
+function remove_chars(s::String, char::String)
+    return replace_chars(s::String, char::String, "")
 end
