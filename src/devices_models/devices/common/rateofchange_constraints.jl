@@ -41,8 +41,8 @@ function device_linear_rateofchange(
     var_name::Symbol,
 )
     time_steps = model_time_steps(psi_container)
-    up_name = middle_rename(cons_name, "_", "up")
-    down_name = middle_rename(cons_name, "_", "dn")
+    up_name = middle_rename(cons_name, _JUMP_NAME_DELIMITER, "up")
+    down_name = middle_rename(cons_name, _JUMP_NAME_DELIMITER, "dn")
 
     variable = get_variable(psi_container, var_name)
 
@@ -125,8 +125,8 @@ function device_mixedinteger_rateofchange(
     var_names::Tuple{Symbol, Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
-    up_name = middle_rename(cons_name, "_", "up")
-    down_name = middle_rename(cons_name, "_", "dn")
+    up_name = middle_rename(cons_name, _JUMP_NAME_DELIMITER, "up")
+    down_name = middle_rename(cons_name, _JUMP_NAME_DELIMITER, "dn")
 
     variable = get_variable(psi_container, var_names[1])
     varstart = get_variable(psi_container, var_names[2])

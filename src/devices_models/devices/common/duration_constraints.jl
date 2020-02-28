@@ -57,8 +57,8 @@ function device_duration_retrospective(
     varstart = get_variable(psi_container, var_names[2])
     varstop = get_variable(psi_container, var_names[3])
 
-    name_up = middle_rename(cons_name, "_", "up")
-    name_down = middle_rename(cons_name, "_", "dn")
+    name_up = middle_rename(cons_name, _JUMP_NAME_DELIMITER, "up")
+    name_down = middle_rename(cons_name, _JUMP_NAME_DELIMITER, "dn")
 
     set_names = (device_name(ic) for ic in initial_duration[:, 1])
     con_up = add_cons_container!(psi_container, name_up, set_names, time_steps)
@@ -157,8 +157,8 @@ function device_duration_look_ahead(
     varstart = get_variable(psi_container, var_names[2])
     varstop = get_variable(psi_container, var_names[3])
 
-    name_up = middle_rename(cons_name, "_", "up")
-    name_down = middle_rename(cons_name, "_", "dn")
+    name_up = middle_rename(cons_name, _JUMP_NAME_DELIMITER, "up")
+    name_down = middle_rename(cons_name, _JUMP_NAME_DELIMITER, "dn")
 
     set_names = (device_name(ic) for ic in initial_duration[:, 1])
     con_up = add_cons_container!(psi_container, name_up, set_names, time_steps)
@@ -266,8 +266,8 @@ function device_duration_parameters(
     varstart = get_variable(psi_container, var_names[2])
     varstop = get_variable(psi_container, var_names[3])
 
-    name_up = middle_rename(cons_name, "_", "up")
-    name_down = middle_rename(cons_name, "_", "dn")
+    name_up = middle_rename(cons_name, _JUMP_NAME_DELIMITER, "up")
+    name_down = middle_rename(cons_name, _JUMP_NAME_DELIMITER, "dn")
 
     set_names = (device_name(ic) for ic in initial_duration[:, 1])
     con_up = add_cons_container!(psi_container, name_up, set_names, time_steps)
