@@ -71,7 +71,7 @@ function load_operation_results(folder_path::AbstractString)
     files_in_folder = collect(readdir(folder_path))
     variable_list = setdiff(
         files_in_folder,
-        ["time_stamp.feather", "optimizer_log.json", "check.sha256"],
+        ["time_stamp.feather", "base_power.json", "optimizer_log.json", "check.sha256"],
     )
     vars_result = Dict{Symbol, DataFrames.DataFrame}()
     dual_result = Dict{Symbol, Any}()
@@ -88,11 +88,13 @@ function load_operation_results(folder_path::AbstractString)
     end
     optimizer_log = read_json(joinpath(folder_path, "optimizer_log.json"))
     time_stamp = Feather.read(joinpath(folder_path, "time_stamp.feather"))
+    base_power = JSON.read(joinpath(folder_path, "base_power.json"))[1]
     if size(time_stamp, 1) > find_var_length(vars_result, variable_list)
         time_stamp = shorten_time_stamp(time_stamp)
     end
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer_log["obj_value"])
     check_file_integrity(folder_path)
+    # TODO: Load parameter results
     results = OperationsProblemResults(
         base_power,
         vars_result,
@@ -145,5 +147,5 @@ end
 
 # writes the results to CSV files in a folder path, but they can't be read back
 function write_to_CSV(results::OperationsProblemResults, folder_path::String)
-    write_results(results, joinpath(folder_path, "results"); file_type = CSV)
+    write_results(results, folder_path; file_type = CSV)
 end
