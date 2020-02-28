@@ -59,8 +59,8 @@ function energy_balance(
         constraint[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             varenergy[name, 1] ==
-            initial_conditions[ix].value + varin[name, 1] * eff_in * fraction_of_hour -
-            (varout[name, 1]) * fraction_of_hour / eff_out
+                initial_conditions[ix].value + varin[name, 1] * eff_in * fraction_of_hour -
+                (varout[name, 1]) * fraction_of_hour / eff_out
         )
 
     end
@@ -72,8 +72,8 @@ function energy_balance(
         constraint[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
             varenergy[name, t] ==
-            varenergy[name, t - 1] + varin[name, t] * eff_in * fraction_of_hour -
-            (varout[name, t]) * fraction_of_hour / eff_out
+                varenergy[name, t - 1] + varin[name, t] * eff_in * fraction_of_hour -
+                (varout[name, t]) * fraction_of_hour / eff_out
         )
     end
 
@@ -201,17 +201,20 @@ function reservoir_energy_balance(
         constraint[d.name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             varenergy[d.name, 1] ==
-            initial_conditions[ix].value +
-            (d.multiplier * d.timeseries[1] - varspill[d.name, 1] - varout[d.name, 1]) *
-            fraction_of_hour
+                initial_conditions[ix].value +
+                (d.multiplier * d.timeseries[1] - varspill[d.name, 1] - varout[d.name, 1]) *
+                fraction_of_hour
         )
 
         for t in time_steps[2:end]
             constraint[d.name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 varenergy[d.name, t] ==
-                varenergy[d.name, t - 1] +
-                (d.multiplier * d.timeseries[t] - varspill[d.name, t] - varout[d.name, t]) * fraction_of_hour
+                    varenergy[d.name, t - 1] +
+                    (
+                    d.multiplier * d.timeseries[t] - varspill[d.name, t] -
+                        varout[d.name, t]
+                ) * fraction_of_hour
             )
         end
     end

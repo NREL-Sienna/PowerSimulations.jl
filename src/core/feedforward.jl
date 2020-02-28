@@ -413,7 +413,7 @@ function integral_limit_ff(
         con_ub[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
             sum(variable[name, t] for t in time_steps) / length(time_steps) <=
-            param_ub[name]
+                param_ub[name]
         )
     end
 end

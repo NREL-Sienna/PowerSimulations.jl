@@ -1,12 +1,12 @@
 struct OperationsProblemResults <: IS.Results
     base_power::Float64
-    variables::Dict{Symbol,DataFrames.DataFrame}
+    variables::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
     results_folder::Union{Nothing, String}
     constraints_duals::Dict{Symbol, Any}
-    parameter_values::Dict{Symbol,DataFrames.DataFrame}
+    parameter_values::Dict{Symbol, DataFrames.DataFrame}
 end
 
 get_variables(result::OperationsProblemResults) = result.variables
@@ -15,7 +15,7 @@ get_time_stamp(result::OperationsProblemResults) = result.time_stamp
 get_duals(result::OperationsProblemResults) = result.constraints_duals
 
 function get_variable(res_model::OperationsProblemResults, key::Symbol)
-    var_result =  get(res_model.variables, key, nothing)
+    var_result = get(res_model.variables, key, nothing)
     if isnothing(var_result)
         throw(ArgumentError("No variable with key $(key) has been found."))
     end
@@ -38,7 +38,13 @@ function _make_results(
     optimizer_log::Dict,
     time_stamp::DataFrames.DataFrame,
 )
-    return OperationsProblemResults(base_power, variables, total_cost, optimizer_log, time_stamp)
+    return OperationsProblemResults(
+        base_power,
+        variables,
+        total_cost,
+        optimizer_log,
+        time_stamp,
+    )
 end
 
 """
@@ -67,8 +73,8 @@ function load_operation_results(folder_path::AbstractString)
         files_in_folder,
         ["time_stamp.feather", "optimizer_log.json", "check.sha256"],
     )
-    vars_result = Dict{Symbol,DataFrames.DataFrame}()
-    dual_result = Dict{Symbol,Any}()
+    vars_result = Dict{Symbol, DataFrames.DataFrame}()
+    dual_result = Dict{Symbol, Any}()
     dual_names = _find_duals(variable_list)
     for name in variable_list
         variable_name = splitext(name)[1]
@@ -85,16 +91,18 @@ function load_operation_results(folder_path::AbstractString)
     if size(time_stamp, 1) > find_var_length(vars_result, variable_list)
         time_stamp = shorten_time_stamp(time_stamp)
     end
-    obj_value = Dict{Symbol,Any}(:OBJECTIVE_FUNCTION => optimizer_log["obj_value"])
+    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer_log["obj_value"])
     check_file_integrity(folder_path)
-    results = OperationsProblemResults(base_power,
-                                       vars_result,
-                                        obj_value,
-                                        optimizer_log,
-                                        time_stamp,
-                                        folder_path,
-                                        dual_result,
-                                        Dict{Symbol,DataFrames.DataFrame}())
+    results = OperationsProblemResults(
+        base_power,
+        vars_result,
+        obj_value,
+        optimizer_log,
+        time_stamp,
+        folder_path,
+        dual_result,
+        Dict{Symbol, DataFrames.DataFrame}(),
+    )
     return results
 end
 
@@ -104,7 +112,7 @@ function find_var_length(variables::Dict, variable_list::Array)
 end
 
 function shorten_time_stamp(time::DataFrames.DataFrame)
-    time = time[1:(size(time, 1)-1), :]
+    time = time[1:(size(time, 1) - 1), :]
     return time
 end
 

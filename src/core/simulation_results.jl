@@ -304,7 +304,7 @@ function load_simulation_results(
     if !isempty(dual)
         duals = _read_references(duals, dual, stage, step, references, time_length)
         results = 0.0
-            #DualResults(variables, obj_value, optimizer, time_stamp, duals, results_folder)
+        #DualResults(variables, obj_value, optimizer, time_stamp, duals, results_folder)
     else
         results =
             SimulationResults(variables, obj_value, optimizer, time_stamp, results_folder)
@@ -386,7 +386,7 @@ function load_simulation_results(
     if !isempty(dual)
         duals = _read_references(duals, dual, stage, references, time_length)
         results = 0.0
-            #DualResults(variables, obj_value, optimizer, time_stamp, duals, results_folder)
+        #DualResults(variables, obj_value, optimizer, time_stamp, duals, results_folder)
     else
         results =
             SimulationResults(variables, obj_value, optimizer, time_stamp, results_folder)

@@ -289,7 +289,7 @@ function _encode_for_jump(name::Symbol)
 end
 
 function decode_symbol(name::Symbol)
-    return split(String(name),_JUMP_NAME_DELIMITER)
+    return split(String(name), _JUMP_NAME_DELIMITER)
 end
 
 constraint_name(cons_type, device_type) = _encode_for_jump(device_type, cons_type)
