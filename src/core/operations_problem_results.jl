@@ -145,5 +145,5 @@ end
 
 # writes the results to CSV files in a folder path, but they can't be read back
 function write_to_CSV(results::OperationsProblemResults, folder_path::String)
-    write_results(results, folder_path, "results"; file_type = CSV)
+    write_results(results, joinpath(folder_path, "results"); file_type = CSV)
 end
