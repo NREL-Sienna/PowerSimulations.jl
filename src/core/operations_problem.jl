@@ -2,9 +2,9 @@ struct GenericOpProblem <: AbstractOperationsProblem end
 
 mutable struct OperationsProblemTemplate
     transmission::Type{<:PM.AbstractPowerModel}
-    devices::Dict{Symbol, DeviceModel}
-    branches::Dict{Symbol, DeviceModel}
-    services::Dict{Symbol, ServiceModel}
+    devices::Dict{Symbol,DeviceModel}
+    branches::Dict{Symbol,DeviceModel}
+    services::Dict{Symbol,ServiceModel}
 end
 
 """
@@ -23,18 +23,18 @@ Creates a model reference of the Power Formulation, devices, branches, and servi
 template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 ```
 """
-function OperationsProblemTemplate(::Type{T}) where {T <: PM.AbstractPowerModel}
+function OperationsProblemTemplate(::Type{T}) where {T<:PM.AbstractPowerModel}
 
     return OperationsProblemTemplate(
         T,
-        Dict{Symbol, DeviceModel}(),
-        Dict{Symbol, DeviceModel}(),
-        Dict{Symbol, ServiceModel}(),
+        Dict{Symbol,DeviceModel}(),
+        Dict{Symbol,DeviceModel}(),
+        Dict{Symbol,ServiceModel}(),
     )
 
 end
 
-mutable struct OperationsProblem{M <: AbstractOperationsProblem}
+mutable struct OperationsProblem{M<:AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
     psi_container::PSIContainer
@@ -81,9 +81,9 @@ function OperationsProblem(
     ::Type{M},
     template::OperationsProblemTemplate,
     sys::PSY.System;
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+    optimizer::Union{Nothing,JuMP.MOI.OptimizerWithAttributes} = nothing,
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
 
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
     op_problem = OperationsProblem{M}(
@@ -139,7 +139,7 @@ function OperationsProblem(
     ::Type{T},
     sys::PSY.System;
     kwargs...,
-) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
+) where {M<:AbstractOperationsProblem,T<:PM.AbstractPowerModel}
 
     optimizer = get(kwargs, :optimizer, nothing)
     return OperationsProblem{M}(
@@ -191,7 +191,7 @@ function OperationsProblem(
     ::Type{T},
     sys::PSY.System;
     kwargs...,
-) where {T <: PM.AbstractPowerModel}
+) where {T<:PM.AbstractPowerModel}
 
     return OperationsProblem(GenericOpProblem, T, sys; kwargs...)
 
@@ -207,7 +207,7 @@ function set_transmission_model!(
     op_problem::OperationsProblem{M},
     transmission::Type{T};
     kwargs...,
-) where {T <: PM.AbstractPowerModel, M <: AbstractOperationsProblem}
+) where {T<:PM.AbstractPowerModel,M<:AbstractOperationsProblem}
 
     # Reset the psi_container
     op_problem.template.transmission = transmission
@@ -225,9 +225,9 @@ end
 
 function set_devices_template!(
     op_problem::OperationsProblem{M},
-    devices::Dict{Symbol, DeviceModel};
+    devices::Dict{Symbol,DeviceModel};
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
 
     # Reset the psi_container
     op_problem.template.devices = devices
@@ -245,9 +245,9 @@ end
 
 function set_branches_template!(
     op_problem::OperationsProblem{M},
-    branches::Dict{Symbol, DeviceModel};
+    branches::Dict{Symbol,DeviceModel};
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
 
     # Reset the psi_container
     op_problem.template.branches = branches
@@ -265,9 +265,9 @@ end
 
 function set_services_template!(
     op_problem::OperationsProblem{M},
-    services::Dict{Symbol, DeviceModel};
+    services::Dict{Symbol,DeviceModel};
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
 
     # Reset the psi_container
     op_problem.template.services = services
@@ -286,13 +286,9 @@ end
 function set_device_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
-    device::DeviceModel{D, B};
+    device::DeviceModel{D,B};
     kwargs...,
-) where {
-    D <: PSY.StaticInjection,
-    B <: AbstractDeviceFormulation,
-    M <: AbstractOperationsProblem,
-}
+) where {D<:PSY.StaticInjection,B<:AbstractDeviceFormulation,M<:AbstractOperationsProblem}
 
     if haskey(op_problem.template.devices, name)
         op_problem.template.devices[name] = device
@@ -314,9 +310,9 @@ end
 function set_branch_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
-    branch::DeviceModel{D, B};
+    branch::DeviceModel{D,B};
     kwargs...,
-) where {D <: PSY.Branch, B <: AbstractDeviceFormulation, M <: AbstractOperationsProblem}
+) where {D<:PSY.Branch,B<:AbstractDeviceFormulation,M<:AbstractOperationsProblem}
 
     if haskey(op_problem.template.branches, name)
         op_problem.template.branches[name] = branch
@@ -340,7 +336,7 @@ function set_services_model!(
     name::Symbol,
     service::DeviceModel;
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
 
     if haskey(op_problem.template.devices, name)
         op_problem.template.services[name] = service
@@ -392,9 +388,7 @@ function construct_device!(
 end
 
 function construct_network!(op_problem::OperationsProblem; kwargs...)
-
     construct_network!(op_problem, op_problem.template.transmission; kwargs...)
-
     return
 end
 
@@ -402,7 +396,7 @@ function construct_network!(
     op_problem::OperationsProblem,
     system_formulation::Type{T};
     kwargs...,
-) where {T <: PM.AbstractPowerModel}
+) where {T<:PM.AbstractPowerModel}
 
     construct_network!(op_problem.psi_container, get_system(op_problem), T; kwargs...)
 
@@ -429,7 +423,7 @@ end
 function build_op_problem!(
     op_problem::OperationsProblem{M};
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
     sys = get_system(op_problem)
     _build!(op_problem.psi_container, op_problem.template, sys; kwargs...)
     return
@@ -470,6 +464,39 @@ function _build!(
     return
 end
 
+
+function get_variables_value(op_m::OperationsProblem)
+    results_dict = Dict{Symbol,DataFrames.DataFrame}()
+    for (k, v) in get_variables(op_m.psi_container)
+        results_dict[k] = result_dataframe_variables(v)
+    end
+    return results_dict
+end
+
+function get_dual_values(op_m::OperationsProblem; kwargs...)
+    cons = get(kwargs, :constraints_duals, nothing)
+    isnothing(cons) && return Dict{Symbol,Any}()
+    results_dict = Dict{Symbol,DataFrames.DataFrame}()
+    for c in cons
+        v = get_constraint(op_m.psi_container, c)
+        results_dict[c] = result_dataframe_duals(v)
+    end
+    return results_dict
+end
+
+function get_parameters_value(op_m::OperationsProblem)
+    params_dict = Dict{Symbol,DataFrames.DataFrame}()
+    parameters = get_parameters(op_m.psi_container)
+    isempty(parameters) && return params_dict
+    for (k, v) in parameters
+        !isa(v.update_ref, UpdateRef{PSY.Device}) && continue
+        params_key_tuple = decode_symbol(k)
+        params_dict_key = Symbol(params_key_tuple[1], "_", params_key_tuple[3])
+        params_dict[params_dict_key] = result_dataframe_variables(get_parameter_array(v))
+    end
+    return params_dict
+end
+
 """
     solve_op_problem!(op_problem::OperationsProblem; kwargs...)
 
@@ -490,7 +517,7 @@ automatically get written to feather files
 - `constraints_duals::Array`: Array of the constraints duals to be in the results
 """
 function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
-    timed_log = Dict{Symbol, Any}()
+    timed_log = Dict{Symbol,Any}()
     save_path = get(kwargs, :save_path, nothing)
 
     if op_problem.psi_container.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
@@ -509,127 +536,39 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
         timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.psi_container.JuMPmodel)
     end
 
-    vars_result = get_model_result(op_problem)
+    vars_result = get_variables_value(op_problem)
+    param_values = get_parameters_value(op_problem)
     optimizer_log = get_optimizer_log(op_problem)
     time_stamp = get_time_stamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
+    base_power = PSY.get_basepower(op_problem.sys)
+    dual_result = get_dual_values(op_problem; kwargs...)
     obj_value = Dict(
         :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel),
     )
     merge!(optimizer_log, timed_log)
-    if :constraints_duals in keys(kwargs)
-        dual_result = get_model_duals(op_problem.psi_container, kwargs[:constraints_duals])
-        results =
-            _make_results(vars_result, obj_value, optimizer_log, time_stamp, dual_result)
-    else
-        results =
-            OperationsProblemResults(vars_result, obj_value, optimizer_log, time_stamp)
-    end
+
+    results = OperationsProblemResults(
+        base_power,
+        vars_result,
+        obj_value,
+        optimizer_log,
+        time_stamp,
+        save_path,
+        dual_result,
+        param_values,
+    )
+
     !isnothing(save_path) && write_results(results, save_path)
 
     return results
-end
-
-function _result_dataframe_variables(variable::JuMP.Containers.DenseAxisArray)
-    if length(axes(variable)) == 1
-        result = Vector{Float64}(undef, length(first(variable.axes)))
-
-        for t in variable.axes[1]
-            result[t] = JuMP.value(variable[t])
-        end
-
-        return DataFrames.DataFrame(var = result)
-
-    elseif length(axes(variable)) == 2
-
-        result = Array{Float64, length(variable.axes)}(
-            undef,
-            length(variable.axes[2]),
-            length(variable.axes[1]),
-        )
-        names = Array{Symbol, 1}(undef, length(variable.axes[1]))
-
-        for t in variable.axes[2], (ix, name) in enumerate(variable.axes[1])
-            result[t, ix] = JuMP.value(variable[name, t])
-            names[ix] = Symbol(name)
-        end
-
-        return DataFrames.DataFrame(result, names)
-
-    elseif length(axes(variable)) == 3
-        extra_dims = sum(length(axes(variable)[2:(end - 1)]))
-        extra_vars = [Symbol("S$(s)") for s in 1:extra_dims]
-        result_df = DataFrames.DataFrame()
-        names = vcat(extra_vars, Symbol.(axes(variable)[1]))
-
-        for i in variable.axes[2]
-            third_dim = collect(fill(i, size(variable)[end]))
-            result = Array{Float64, 2}(
-                undef,
-                length(last(variable.axes)),
-                length(first(variable.axes)),
-            )
-            for t in last(variable.axes), (ix, name) in enumerate(first(variable.axes))
-                result[t, ix] = JuMP.value(variable[name, i, t])
-            end
-            res = DataFrames.DataFrame(hcat(third_dim, result))
-            result_df = vcat(result_df, res)
-        end
-
-        return DataFrames.names!(result_df, names)
-
-    else
-        error("Dimension Number $(length(axes(variable))) not Supported")
-    end
-
-end
-
-function _result_dataframe_duals(constraint::JuMP.Containers.DenseAxisArray)
-    if length(axes(constraint)) == 1
-        result = Vector{Float64}(undef, length(first(constraint.axes)))
-        for t in constraint.axes[1]
-            try
-                result[t] = JuMP.dual(constraint[t])
-            catch
-                result[t] = NaN
-            end
-        end
-        return DataFrames.DataFrame(var = result)
-    elseif length(axes(constraint)) == 2
-        result = Array{Float64, length(variable.axes)}(
-            undef,
-            length(constraint.axes[2]),
-            length(constraint.axes[1]),
-        )
-        names = Array{Symbol, 1}(undef, length(constraint.axes[1]))
-        for t in constraint.axes[2], (ix, name) in enumerate(constraint.axes[1])
-            try
-                result[t, ix] = JuMP.dual(constraint[name, t])
-            catch
-                result[t, ix] = NaN
-            end
-            names[ix] = Symbol(name)
-        end
-        return DataFrames.DataFrame(result, names)
-    else
-        error("Dimension Number $(length(axes(constraint))) not Supported")
-    end
-end
-
-function get_model_result(op_m::OperationsProblem)
-    results_dict = Dict{Symbol, DataFrames.DataFrame}()
-
-    for (k, v) in get_variables(op_m.psi_container)
-        results_dict[k] = _result_dataframe_variables(v)
-    end
-    return results_dict
 end
 
 # Function to create a dictionary for the optimizer log of the simulation
 
 function get_optimizer_log(op_m::OperationsProblem)
     psi_container = op_m.psi_container
-    optimizer_log = Dict{Symbol, Any}()
+    optimizer_log = Dict{Symbol,Any}()
     optimizer_log[:obj_value] = JuMP.objective_value(psi_container.JuMPmodel)
     optimizer_log[:termination_status] = JuMP.termination_status(psi_container.JuMPmodel)
     optimizer_log[:primal_status] = JuMP.primal_status(psi_container.JuMPmodel)
@@ -651,99 +590,26 @@ function get_time_stamps(op_problem::OperationsProblem)
     initial_time = PSY.get_forecasts_initial_time(op_problem.sys)
     interval = PSY.get_forecasts_resolution(op_problem.sys)
     horizon = PSY.get_forecasts_horizon(op_problem.sys)
-    range_time = collect(initial_time:interval:(initial_time + interval .* horizon))
+    range_time = collect(initial_time:interval:(initial_time+interval.*horizon))
     time_stamp = DataFrames.DataFrame(Range = range_time[:, 1])
 
     return time_stamp
 end
 
-# writing a dictionary of dataframes to files
-
-function _write_data(vars_results::Dict, save_path::String; kwargs...)
-    file_type = get(kwargs, :file_type, Feather)
-    if file_type == Feather || file_type == CSV
-        for (k, v) in vars_results
-            file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
-            file_type.write(file_path, vars_results[k])
-        end
-    end
-end
-
-# writing a dictionary of dataframes to files and appending the time
-
-function _write_data(
-    vars_results::Dict,
-    time::DataFrames.DataFrame,
-    save_path::AbstractString;
-    kwargs...,
-)
-    file_type = get(kwargs, :file_type, Feather)
-    for (k, v) in vars_results
-        var = DataFrames.DataFrame()
-        if file_type == CSV && size(time, 1) == size(v, 1)
-            var = hcat(time, v)
-        else
-            var = v
-        end
-        file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
-        file_type.write(file_path, var)
-    end
-end
-
-function _write_data(
-    data::DataFrames.DataFrame,
-    save_path::AbstractString,
-    file_name::String;
-    kwargs...,
-)
-    if isfile(save_path)
-        save_path = dirname(save_path)
-    end
-    file_type = get(kwargs, :file_type, Feather)
-    if file_type == Feather || file_type == CSV
-        file_path = joinpath(save_path, "$(file_name).$(lowercase("$file_type"))")
-        file_type.write(file_path, data)
-    end
-    return
-end
-
-function _write_optimizer_log(optimizer_log::Dict, save_path::AbstractString)
-
-    JSON.write(joinpath(save_path, "optimizer_log.json"), JSON.json(optimizer_log))
-
-end
-
-function _write_data(psi_container::PSIContainer, save_path::AbstractString; kwargs...)
+function write_data(psi_container::PSIContainer, save_path::AbstractString; kwargs...)
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
         for (k, v) in get_variables(psi_container)
             file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
-            variable = _result_dataframe_variables(v)
+            variable = result_dataframe_variables(v)
             file_type.write(file_path, variable)
         end
     end
     return
 end
 
-function _write_data(
-    psi_container::PSIContainer,
-    save_path::AbstractString,
-    dual_con::Vector{Symbol};
-    kwargs...,
-)
-    file_type = get(kwargs, :file_type, Feather)
-    if file_type == Feather || file_type == CSV
-        duals = get_model_duals(psi_container, dual_con)
-        for (k, v) in duals
-            file_path = joinpath(save_path, "$(k)_dual.$(lowercase("$file_type"))")
-            file_type.write(file_path, v)
-        end
-    end
-    return
-end
-
-function _write_data(op_problem::OperationsProblem, save_path::AbstractString; kwargs...)
-    _write_data(op_problem.psi_container, save_path; kwargs...)
+function write_data(op_problem::OperationsProblem, save_path::AbstractString; kwargs...)
+    write_data(op_problem.psi_container, save_path; kwargs...)
     return
 end
 
@@ -756,7 +622,7 @@ end
 ################ Functions to debug optimization models#####################################
 """ "Each Tuple corresponds to (con_name, internal_index, moi_index)"""
 function get_all_constraint_index(op_problem::OperationsProblem)
-    con_index = Vector{Tuple{Symbol, Int, Int}}()
+    con_index = Vector{Tuple{Symbol,Int,Int}}()
     for (key, value) in op_problem.psi_container.constraints
         for (idx, constraint) in enumerate(value)
             moi_index = JuMP.optimizer_index(constraint)
@@ -768,7 +634,7 @@ end
 
 """ "Each Tuple corresponds to (con_name, internal_index, moi_index)"""
 function get_all_var_index(op_problem::OperationsProblem)
-    var_index = Vector{Tuple{Symbol, Int, Int}}()
+    var_index = Vector{Tuple{Symbol,Int,Int}}()
     for (key, value) in op_problem.psi_container.variables
         for (idx, variable) in enumerate(value)
             moi_index = JuMP.optimizer_index(variable)
