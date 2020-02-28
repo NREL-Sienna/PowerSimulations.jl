@@ -239,14 +239,14 @@ path = joinpath(pwd(), "test_writing")
 
 function test_write_functions(file_path)
 
-    @testset "test _write_data functions" begin
-        PSI._write_data(res.variables, mkdir(joinpath(file_path, "one")))
+    @testset "test write_data functions" begin
+        PSI.write_data(res.variables, mkdir(joinpath(file_path, "one")))
         readdir(joinpath(file_path, "one"))
         for (k, v) in res.variables
             @test isfile(joinpath(file_path, "one", "$k.feather"))
         end
 
-        PSI._write_data(
+        PSI.write_data(
             res.variables,
             res.time_stamp,
             mkdir(joinpath(file_path, "two"));
@@ -256,13 +256,13 @@ function test_write_functions(file_path)
             @test isfile(joinpath(file_path, "two/$k.csv"))
         end
 
-        PSI._write_data(res.variables, res.time_stamp, mkdir(joinpath(file_path, "three")))
+        PSI.write_data(res.variables, res.time_stamp, mkdir(joinpath(file_path, "three")))
         for (k, v) in res.variables
             @test isfile(joinpath(file_path, "three", "$k.feather"))
         end
 
         var_name = PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)
-        PSI._write_data(
+        PSI.write_data(
             res.variables[var_name],
             mkdir(joinpath(file_path, "four")),
             string(var_name),
@@ -270,7 +270,7 @@ function test_write_functions(file_path)
         @test isfile(joinpath(file_path, "four", "$(var_name).feather"))
 
         #testing if directory is a file
-        PSI._write_data(
+        PSI.write_data(
             res.variables[var_name],
             joinpath(file_path, "four", "$(var_name).feather"),
             string(var_name),
