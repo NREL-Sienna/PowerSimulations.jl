@@ -264,8 +264,6 @@ function set_initial_conditions!(psi_container::PSIContainer, key::ICKey, value)
     psi_container.initial_conditions[key] = value
 end
 
-const _JUMP_NAME_DELIMITER = "_"
-
 function _encode_for_jump(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}
     return Symbol(join((name1, name2, T), _JUMP_NAME_DELIMITER))
 end
@@ -290,6 +288,10 @@ function _encode_for_jump(name::Symbol)
     return name
 end
 
+function decode_symbol(name::Symbol)
+    return split(String(name),_JUMP_NAME_DELIMITER)
+end
+
 constraint_name(cons_type, device_type) = _encode_for_jump(device_type, cons_type)
 constraint_name(cons_type) = _encode_for_jump(cons_type)
 variable_name(var_type, device_type) = _encode_for_jump(device_type, var_type)
@@ -304,8 +306,7 @@ model_initial_time(psi_container::PSIContainer) = psi_container.initial_time
 #Internal Variables, Constraints and Parameters accessors
 get_variables(psi_container::PSIContainer) = psi_container.variables
 get_constraints(psi_container::PSIContainer) = psi_container.constraints
-get_parameters(psi_container::PSIContainer, param_reference::UpdateRef) =
-    psi_container.parameters[param_reference]
+get_parameters(psi_container::PSIContainer) = psi_container.parameters
 get_expression(psi_container::PSIContainer, name::Symbol) = psi_container.expressions[name]
 get_initial_conditions(psi_container::PSIContainer) = psi_container.initial_conditions
 
@@ -499,16 +500,6 @@ function iterate_parameter_containers(psi_container::PSIContainer)
     end
 end
 
-function get_model_duals(op::PSIContainer, cons::Vector{Symbol})
-    results_dict = Dict{Symbol, DataFrames.DataFrame}()
-
-    for c in cons
-        v = get_constraint(op, c)
-        results_dict[c] = _result_dataframe_duals(v)
-    end
-    return results_dict
-end
-
 function _export_optimizer_log(
     optimizer_log::Dict{Symbol, Any},
     psi_container::PSIContainer,
@@ -535,5 +526,26 @@ function _write_psi_container(psi_container::PSIContainer, save_path::String)
     MOF_model = MOPFM(format = MOI.FileFormats.FORMAT_MOF)
     MOI.copy_to(MOF_model, JuMP.backend(psi_container.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)
+    return
+end
+
+function write_data(
+    psi_container::PSIContainer,
+    save_path::AbstractString,
+    dual_con::Vector{Symbol};
+    kwargs...,
+)
+    duals = Dict{Symbol, Any}()
+    file_type = get(kwargs, :file_type, Feather)
+    if file_type == Feather || file_type == CSV
+        for c in dual_con
+            v = get_constraint(psi_container, c)
+            duals[c] = result_dataframe_duals(v)
+        end
+        for (k, v) in duals
+            file_path = joinpath(save_path, "$(k)_dual.$(lowercase("$file_type"))")
+            file_type.write(file_path, v)
+        end
+    end
     return
 end
