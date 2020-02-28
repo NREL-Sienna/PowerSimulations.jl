@@ -121,7 +121,6 @@ function set_variable_bounds!(
     var_type::AbstractString,
     ::Type{T},
 ) where {T <: PSY.Device}
-    @show var_type
     var = get_variable(psi_container, var_type, T)
     for t in model_time_steps(psi_container), bound in bounds
         _var = var[bound.name, t]
