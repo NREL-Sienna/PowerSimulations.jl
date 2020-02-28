@@ -488,6 +488,8 @@ function get_dual_values(op_m::OperationsProblem; kwargs...)
 end
 
 function get_parameters_value(op_m::OperationsProblem)
+    # TODO: Still not obvious implementation since it needs to get the multipliers from
+    # the system
     params_dict = Dict{Symbol, DataFrames.DataFrame}()
     parameters = get_parameters(op_m.psi_container)
     isempty(parameters) && return params_dict
