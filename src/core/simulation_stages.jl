@@ -110,9 +110,13 @@ function run_stage(
     end
     # TODO: Add Fallback when optimization fails
     retrieve_duals = get(kwargs, :constraints_duals, nothing)
-    if !isnothing(retrieve_duals) &&
-       !isnothing(get_constraints(stage.internal.psi_container))
-        _export_model_result(stage, start_time, results_path, retrieve_duals)
+    if !isnothing(retrieve_duals)
+        if is_milp(stage.internal.psi_container)
+            @warn("$(stage.internal.number) is an MILP, duals can't be exported")
+            _export_model_result(stage, start_time, results_path)
+        else
+            _export_model_result(stage, start_time, results_path, retrieve_duals)
+        end
     else
         _export_model_result(stage, start_time, results_path)
     end
