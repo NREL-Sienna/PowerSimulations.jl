@@ -29,11 +29,11 @@ function device_timeseries_ub(
     time_steps = model_time_steps(psi_container)
     names = (d.name for d in ts_data)
     variable = get_variable(psi_container, var_name)
-    ub_name = _middle_rename(cons_name, "_", "ub")
+    ub_name = middle_rename(cons_name, "_", "ub")
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     add_lower_bound = !all(isempty.((r.range.additional_terms_lb for r in ts_data)))
     if add_lower_bound
-        lb_name = _middle_rename(cons_name, "_", "lb")
+        lb_name = middle_rename(cons_name, "_", "lb")
         con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
     end
 
@@ -100,7 +100,7 @@ function device_timeseries_lb(
 )
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, var_name)
-    lb_name = _middle_rename(cons_name, "_", "lb")
+    lb_name = middle_rename(cons_name, "_", "lb")
     names = (d.name for d in ts_data)
     constraint = add_cons_container!(psi_container, lb_name, names, time_steps)
 
@@ -160,12 +160,12 @@ function device_timeseries_param_ub(
     time_steps = model_time_steps(psi_container)
     names = (d.name for d in ts_data)
     variable = get_variable(psi_container, var_name)
-    ub_name = _middle_rename(cons_name, "_", "ub")
+    ub_name = middle_rename(cons_name, "_", "ub")
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     param = add_param_container!(psi_container, param_reference, names, time_steps)
     add_lower_bound = !all(isempty.((r.range.additional_terms_lb for r in ts_data)))
     if add_lower_bound
-        lb_name = _middle_rename(cons_name, "_", "lb")
+        lb_name = middle_rename(cons_name, "_", "lb")
         con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
     end
 
@@ -236,7 +236,7 @@ function device_timeseries_param_lb(
 )
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, var_name)
-    lb_name = _middle_rename(cons_name, "_", "lb")
+    lb_name = middle_rename(cons_name, "_", "lb")
     names = (d.name for d in ts_data)
     constraint = add_cons_container!(psi_container, lb_name, names, time_steps)
     param = add_param_container!(psi_container, param_reference, names, time_steps)
@@ -299,7 +299,7 @@ function device_timeseries_ub_bin(
 )
 
     time_steps = model_time_steps(psi_container)
-    ub_name = _middle_rename(cons_name, "_", "ub")
+    ub_name = middle_rename(cons_name, "_", "ub")
 
     varcts = get_variable(psi_container, var_name)
     varbin = get_variable(psi_container, binvar_name)
@@ -372,8 +372,8 @@ function device_timeseries_ub_bigM(
     M_value::Float64 = 1e6,
 )
     time_steps = model_time_steps(psi_container)
-    ub_name = _middle_rename(cons_name, "_", "ub")
-    key_status = _middle_rename(cons_name, "_", "status")
+    ub_name = middle_rename(cons_name, "_", "ub")
+    key_status = middle_rename(cons_name, "_", "status")
 
     varcts = get_variable(psi_container, var_name)
     varbin = get_variable(psi_container, binvar_name)

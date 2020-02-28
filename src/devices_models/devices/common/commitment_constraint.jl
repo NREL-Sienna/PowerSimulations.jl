@@ -50,7 +50,7 @@ function device_commitment(
     varon = get_variable(psi_container, var_names[3])
     varstart_names = axes(varstart, 1)
     constraint = add_cons_container!(psi_container, cons_name, varstart_names, time_steps)
-    aux_cons_name = _middle_rename(cons_name, "_", "aux")
+    aux_cons_name = middle_rename(cons_name, "_", "aux")
     aux_constraint =
         add_cons_container!(psi_container, aux_cons_name, varstart_names, time_steps)
 

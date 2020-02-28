@@ -429,7 +429,7 @@ function add_pm_var_refs!(
 
     for (pm_v, ps_v) in pm_var_map[PSY.Bus]
         if pm_v in pm_var_names
-            container = PSI._container_spec(
+            container = PSI.container_spec(
                 psi_container.JuMPmodel,
                 (PSY.get_name(b) for b in values(bus_dict)),
                 time_steps,
@@ -480,7 +480,7 @@ function add_pm_var_refs!(
                 for dir in fieldnames(typeof(ps_v))
                     isnothing(getfield(ps_v, dir)) && continue
                     var_name = Symbol("$(getfield(ps_v, dir))_$(d_type)")
-                    container = PSI._container_spec(
+                    container = PSI.container_spec(
                         psi_container.JuMPmodel,
                         (PSY.get_name(d[2]) for d in devices),
                         time_steps,

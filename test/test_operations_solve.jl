@@ -277,7 +277,7 @@ function test_write_functions(file_path)
         )
         @test isfile(joinpath(file_path, "four", "$(var_name).feather"))
 
-        PSI._write_optimizer_log(res.optimizer_log, mkdir(joinpath(file_path, "five")))
+        PSI.write_optimizer_log(res.optimizer_log, mkdir(joinpath(file_path, "five")))
         @test isfile(joinpath(file_path, "five", "optimizer_log.json"))
 
         PSI.write_to_CSV(res, mkdir(joinpath(file_path, "six")))

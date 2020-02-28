@@ -458,7 +458,7 @@ function write_results(res::SimulationResults; kwargs...)
         throw(IS.ConflictingInputsError("Specified path is not valid. Set up results folder."))
     end
     write_data(res.variables, res.time_stamp, folder_path; kwargs...)
-    _write_optimizer_log(res.optimizer_log, folder_path)
+    write_optimizer_log(res.optimizer_log, folder_path)
     write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
     files = collect(readdir(folder_path))
     compute_file_hash(folder_path, files)

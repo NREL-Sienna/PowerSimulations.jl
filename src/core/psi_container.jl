@@ -368,7 +368,7 @@ function assign_variable!(psi_container::PSIContainer, name::Symbol, value)
 end
 
 function add_var_container!(psi_container::PSIContainer, var_name::Symbol, axs...)
-    container = _container_spec(psi_container.JuMPmodel, axs...)
+    container = container_spec(psi_container.JuMPmodel, axs...)
     assign_variable!(psi_container, var_name, container)
     return container
 end
@@ -517,7 +517,7 @@ function _export_optimizer_log(
         @warn("SolveTime() property not supported by the Solver")
         optimizer_log[:solve_time] = NaN # "Not Supported by solver"
     end
-    _write_optimizer_log(optimizer_log, path)
+    write_optimizer_log(optimizer_log, path)
     return
 end
 
@@ -540,7 +540,7 @@ function write_data(
     if file_type == Feather || file_type == CSV
         for c in dual_con
             v = get_constraint(psi_container, c)
-            duals[c] = result_dataframe_duals(v)
+            duals[c] = axis_array_to_dataframe(v)
         end
         for (k, v) in duals
             file_path = joinpath(save_path, "$(k)_dual.$(lowercase("$file_type"))")

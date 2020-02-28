@@ -17,7 +17,7 @@ function flow_variables!(
 ) where {B <: PSY.DCBranch}
     time_steps = model_time_steps(psi_container)
     var_name = Symbol("Fp_$(B)")
-    container = _container_spec(
+    container = container_spec(
         psi_container.JuMPmodel,
         (PSY.get_name(d) for d in devices),
         time_steps,
