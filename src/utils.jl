@@ -165,7 +165,9 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray)
                 length(last(input_array.axes)),
                 length(first(input_array.axes)),
             )
-            for t in last(input_array.axes), (ix, name) in enumerate(first(input_array.axes))
+            for t in last(input_array.axes),
+                (ix, name) in enumerate(first(input_array.axes))
+
                 result[t, ix] = _jump_value(input_array[name, i, t])
             end
             res = DataFrames.DataFrame(hcat(third_dim, result))

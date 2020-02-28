@@ -574,20 +574,17 @@ reserve5(thermal_generators5) = [
     VariableReserve{ReserveUp}(
         "Reserve1",
         0.6,
-        maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5]) .*
-            0.001,
+        maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5]) .* 0.001,
     ),
     VariableReserve{ReserveDown}(
         "Reserve2",
         0.3,
-        maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5]) .*
-            0.005,
+        maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5]) .* 0.005,
     ),
     VariableReserve{ReserveUp}(
         "Reserve11",
         0.8,
-        maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5]) .*
-            0.001,
+        maximum([gen.tech.activepowerlimits[:max] for gen in thermal_generators5]) .* 0.001,
     ),
 ]
 

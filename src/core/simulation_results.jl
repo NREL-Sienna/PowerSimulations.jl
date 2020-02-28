@@ -64,7 +64,8 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
             dual_cons = Symbol.(_concat_dual(kwargs[:constraints_duals]))
             variable_names = vcat(variable_names, dual_cons)
         end
-        params = collect(keys(get_parameters_value(get_psi_container(sim.stages[stage_name]))))
+        params =
+            collect(keys(get_parameters_value(get_psi_container(sim.stages[stage_name]))))
         param_keys = Symbol.(_concat_param(params))
         variable_names = vcat(variable_names, param_keys)
         for name in variable_names
@@ -338,7 +339,16 @@ function load_simulation_results(
     param_values = _read_references(params, param, stage, step, references, time_length)
     if !isempty(dual)
         duals = _read_references(duals, dual, stage, step, references, time_length)
-        SimulationResults(base_power, variables, obj_value, optimizer, time_stamp, duals, results_folder, param_values)
+        SimulationResults(
+            base_power,
+            variables,
+            obj_value,
+            optimizer,
+            time_stamp,
+            duals,
+            results_folder,
+            param_values,
+        )
     else
         results = SimulationResults(
             base_power,
@@ -432,7 +442,16 @@ function load_simulation_results(
     param_values = _read_references(params, param, stage, references, time_length)
     if !isempty(dual)
         duals = _read_references(duals, dual, stage, references, time_length)
-        SimulationResults(base_power, variables, obj_value, optimizer, time_stamp, duals, results_folder, param_values)
+        SimulationResults(
+            base_power,
+            variables,
+            obj_value,
+            optimizer,
+            time_stamp,
+            duals,
+            results_folder,
+            param_values,
+        )
     else
         results = SimulationResults(
             base_power,

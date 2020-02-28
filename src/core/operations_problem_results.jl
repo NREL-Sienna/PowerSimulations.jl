@@ -29,25 +29,6 @@ function get_time_stamps(results::OperationsProblemResults, key::Symbol)
     return results.time_stamp
 end
 
-"""This function creates the correct results struct for the context"""
-#=
-function _make_results(
-    base_power::Float64,
-    variables::Dict,
-    total_cost::Dict,
-    optimizer_log::Dict,
-    time_stamp::DataFrames.DataFrame,
-)
-    return OperationsProblemResults(
-        base_power,
-        variables,
-        total_cost,
-        optimizer_log,
-        time_stamp,
-        Dict{Symbol, DataFrames.DataFrame}(),
-    )
-end
-=#
 """
     results = load_operation_results(path)
 
