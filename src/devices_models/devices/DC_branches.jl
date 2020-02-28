@@ -16,8 +16,8 @@ function flow_variables!(
     devices::IS.FlattenIteratorWrapper{B},
 ) where {B <: PSY.DCBranch}
     time_steps = model_time_steps(psi_container)
-    var_name = Symbol("Fp_$(B)")
-    container = _container_spec(
+    var_name = variable_name(FLOW_ACTIVE_POWER, B)
+    container = container_spec(
         psi_container.JuMPmodel,
         (PSY.get_name(d) for d in devices),
         time_steps,
@@ -94,6 +94,7 @@ function branch_rate_constraints!(
         (RATE_LIMIT_FT, RATE_LIMIT_TF),
     )
         var = get_variable(psi_container, var_type, B)
+        time_steps = model_time_steps(psi_container)
         constraint_val =
             JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
         assign_constraint!(psi_container, cons_type, B, constraint_val)

@@ -264,8 +264,6 @@ function set_initial_conditions!(psi_container::PSIContainer, key::ICKey, value)
     psi_container.initial_conditions[key] = value
 end
 
-const _JUMP_NAME_DELIMITER = "_"
-
 function _encode_for_jump(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}
     return Symbol(join((name1, name2, T), _JUMP_NAME_DELIMITER))
 end
@@ -290,6 +288,10 @@ function _encode_for_jump(name::Symbol)
     return name
 end
 
+function decode_symbol(name::Symbol)
+    return split(String(name), _JUMP_NAME_DELIMITER)
+end
+
 constraint_name(cons_type, device_type) = _encode_for_jump(device_type, cons_type)
 constraint_name(cons_type) = _encode_for_jump(cons_type)
 variable_name(var_type, device_type) = _encode_for_jump(device_type, var_type)
@@ -304,8 +306,7 @@ model_initial_time(psi_container::PSIContainer) = psi_container.initial_time
 #Internal Variables, Constraints and Parameters accessors
 get_variables(psi_container::PSIContainer) = psi_container.variables
 get_constraints(psi_container::PSIContainer) = psi_container.constraints
-get_parameters(psi_container::PSIContainer, param_reference::UpdateRef) =
-    psi_container.parameters[param_reference]
+get_parameters(psi_container::PSIContainer) = psi_container.parameters
 get_expression(psi_container::PSIContainer, name::Symbol) = psi_container.expressions[name]
 get_initial_conditions(psi_container::PSIContainer) = psi_container.initial_conditions
 
@@ -367,7 +368,7 @@ function assign_variable!(psi_container::PSIContainer, name::Symbol, value)
 end
 
 function add_var_container!(psi_container::PSIContainer, var_name::Symbol, axs...)
-    container = _container_spec(psi_container.JuMPmodel, axs...)
+    container = container_spec(psi_container.JuMPmodel, axs...)
     assign_variable!(psi_container, var_name, container)
     return container
 end
@@ -462,6 +463,16 @@ function get_parameter_array(psi_container::PSIContainer, ref)
     return get_parameter_array(get_parameter_container(psi_container, ref))
 end
 
+function get_model_duals(op::PSIContainer, cons::Vector{Symbol})
+    results_dict = Dict{Symbol, DataFrames.DataFrame}()
+
+    for c in cons
+        v = get_constraint(op, c)
+        results_dict[c] = _result_dataframe_duals(v)
+    end
+    return results_dict
+end
+
 function assign_parameter!(psi_container::PSIContainer, container::ParameterContainer)
     @debug "assign_parameter" container.update_ref
     name = container.update_ref.access_ref
@@ -499,14 +510,8 @@ function iterate_parameter_containers(psi_container::PSIContainer)
     end
 end
 
-function get_model_duals(op::PSIContainer, cons::Vector{Symbol})
-    results_dict = Dict{Symbol, DataFrames.DataFrame}()
-
-    for c in cons
-        v = get_constraint(op, c)
-        results_dict[c] = _result_dataframe_duals(v)
-    end
-    return results_dict
+function is_milp(container::PSIContainer)
+    return container.JuMPmodel.moi_backend.optimizer.model.last_solved_by_mip
 end
 
 function _export_optimizer_log(
@@ -526,7 +531,7 @@ function _export_optimizer_log(
         @warn("SolveTime() property not supported by the Solver")
         optimizer_log[:solve_time] = NaN # "Not Supported by solver"
     end
-    _write_optimizer_log(optimizer_log, path)
+    write_optimizer_log(optimizer_log, path)
     return
 end
 

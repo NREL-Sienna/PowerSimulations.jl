@@ -61,9 +61,12 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
         variable_names =
             (collect(keys(get_psi_container(sim.stages[stage_name]).variables)))
         if :constraints_duals in keys(kwargs) && !isnothing(kwargs[:constraints_duals])
-            dual_cons = Symbol.(_concat_string(kwargs[:constraints_duals]))
+            dual_cons = Symbol.(_concat_dual(kwargs[:constraints_duals]))
             variable_names = vcat(variable_names, dual_cons)
         end
+        params = collect(keys(get_parameters_value(get_psi_container(sim.stages[stage_name]))))
+        param_keys = Symbol.(_concat_param(params))
+        variable_names = vcat(variable_names, param_keys)
         for name in variable_names
             variables[name] = DataFrames.DataFrame(
                 Date = Dates.DateTime[],
@@ -104,33 +107,36 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
 end
 
 struct SimulationResults <: IS.Results
+    base_power::Float64
     variables::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
+    constraints_duals::Union{Nothing, Dict{Symbol, Any}}
     results_folder::Union{Nothing, String}
-    base_power::Float64
-    function SimulationResults(
+    parameter_values::Dict{Symbol, DataFrames.DataFrame}
+end
+
+#=function SimulationResults(
+        base_power::Float64,
         variables::Dict,
         total_cost::Dict,
         optimizer_log::Dict,
         time_stamp::DataFrames.DataFrame,
-        base_power::Float64,
     )
-        new(variables, total_cost, optimizer_log, time_stamp, nothing, base_power)
+        new(base_power, variables, total_cost, optimizer_log, time_stamp, nothing, nothing, Dict{Symbol, DataFrames.DataFrame}())
     end
     function SimulationResults(
+        base_power::Float64,
         variables::Dict,
         total_cost::Dict,
         optimizer_log::Dict,
         time_stamp::DataFrames.DataFrame,
         results_folder::String,
-        base_power::Float64,
     )
-        new(variables, total_cost, optimizer_log, time_stamp, results_folder, base_power)
+        new(base_power, variables, total_cost, optimizer_log, time_stamp, results_folder,)
     end
-end
-
+=#
 function deserialize_sim_output(file_path::String)
     path = joinpath(file_path, "output_references")
     list = setdiff(
@@ -152,6 +158,104 @@ function deserialize_sim_output(file_path::String)
     base_power = Dict{Any, Any}(read_json(joinpath(path, "base_power.json")))
     sim_output = SimulationResultsReference(ref, results_folder, chronologies, base_power)
     return sim_output
+end
+
+# internal function to parse through the reference dictionary and grab the file paths
+function _read_references(
+    results::Dict,
+    list::Array,
+    stage::String,
+    step::Array,
+    references::Dict,
+    time_length::Int,
+)
+
+    for name in (list)
+        date_df = references[stage][name]
+        step_df = DataFrames.DataFrame(
+            Date = Dates.DateTime[],
+            Step = String[],
+            File_Path = String[],
+        )
+        for n in 1:length(step)
+            step_df = vcat(step_df, date_df[date_df.Step .== step[n], :])
+        end
+        results[name] = DataFrames.DataFrame()
+        for (ix, time) in enumerate(step_df.Date)
+            file_path = step_df[ix, :File_Path]
+            var = Feather.read("$file_path")
+            results[name] = vcat(results[name], var[1:time_length, :])
+        end
+    end
+    return results
+end
+# internal function to parse through the reference dictionary and grab the file paths
+function _read_references(
+    results::Dict,
+    list::Array,
+    stage::String,
+    references::Dict,
+    time_length::Int,
+)
+    for name in list
+        date_df = references[stage][name]
+        results[name] = DataFrames.DataFrame()
+        for (ix, time) in enumerate(date_df.Date)
+            file_path = date_df[ix, :File_Path]
+            var = Feather.read(file_path)
+            results[name] = vcat(results[name], var[1:time_length, :])
+        end
+    end
+    return results
+end
+# internal function to remove the overlapping results and only use the most recent
+function _read_time(file_path::String, time_length::Number)
+    time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
+    temp_time_stamp = Feather.read("$time_file_path")
+    time_stamp = temp_time_stamp[(1:time_length), :]
+    return time_stamp
+end
+
+""" This sums all of the rows in a result dataframe """
+function rowsum(variable::DataFrames.DataFrame, name::String)
+    variable = DataFrames.DataFrame(Symbol(name) => sum.(eachcol(variable)))
+    return variable
+end
+""" This sums each column in a result dataframe """
+function columnsum(variable::DataFrames.DataFrame)
+    shortvar = DataFrames.DataFrame()
+    varnames = collect(names(variable))
+    eachsum = (sum.(eachrow(variable)))
+    for i in 1:size(variable, 1)
+        df = DataFrames.DataFrame(Symbol(varnames[i]) => eachsum[i])
+        shortvar = hcat(shortvar, df)
+    end
+    return shortvar
+end
+# internal function to check for duals
+function _find_duals(variables::Array)
+    duals = []
+    for i in 1:length(variables)
+        if occursin("dual", String.(variables[i]))
+            duals = vcat(duals, variables[i])
+        end
+    end
+    return duals
+end
+# internal function for differentiating variables from duals in file names
+function _concat_dual(duals::Vector{Symbol})
+    dual = []
+    for d in duals
+        dual = vcat(dual, "dual_" * String(d))
+    end
+    return dual
+end
+function _concat_param(params::Vector{Symbol})
+    param = []
+    for p in params
+        param = vcat(param, "parameter_" * String(p))
+    end
+    return param
 end
 
 """
@@ -200,9 +304,11 @@ function load_simulation_results(
     base_power = sim_output.base_power[stage_name]
     variables = Dict() # variable dictionary
     duals = Dict()
+    params = Dict()
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
     time_length = sim_output.chronologies[stage]
     dual = _find_duals(collect(keys(references[stage])))
+    param = _find_params(collect(keys(references[stage])))
     variable = setdiff(variable, dual)
     for l in 1:length(variable)
         date_df = references[stage][variable[l]]
@@ -229,25 +335,20 @@ function load_simulation_results(
     file_path = dirname(references[stage][variable[1]][1, :File_Path])
     optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
+    param_values = _read_references(params, param, stage, step, references, time_length)
     if !isempty(dual)
         duals = _read_references(duals, dual, stage, step, references, time_length)
-        results = DualResults(
-            variables,
-            obj_value,
-            optimizer,
-            time_stamp,
-            duals,
-            results_folder,
-            base_power,
-        )
+        SimulationResults(base_power, variables, obj_value, optimizer, time_stamp, duals, results_folder, param_values)
     else
         results = SimulationResults(
+            base_power,
             variables,
             obj_value,
             optimizer,
             time_stamp,
             results_folder,
-            base_power,
+            nothing,
+            param_values,
         )
     end
     return results
@@ -302,9 +403,12 @@ function load_simulation_results(
     base_power = sim_output.base_power[stage_name]
     variables = Dict()
     duals = Dict()
+    params = Dict()
     variable = (collect(keys(references[stage])))
     dual = _find_duals(variable)
+    param = _find_params(variable)
     variable = setdiff(variable, dual)
+    variable = setdiff(variable, param)
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
     time_length = sim_output.chronologies[stage]
 
@@ -325,25 +429,20 @@ function load_simulation_results(
     file_path = dirname(references[stage][variable[1]][1, :File_Path])
     optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
+    param_values = _read_references(params, param, stage, references, time_length)
     if !isempty(dual)
         duals = _read_references(duals, dual, stage, references, time_length)
-        results = DualResults(
-            variables,
-            obj_value,
-            optimizer,
-            time_stamp,
-            duals,
-            results_folder,
-            base_power,
-        )
+        SimulationResults(base_power, variables, obj_value, optimizer, time_stamp, duals, results_folder, param_values)
     else
         results = SimulationResults(
+            base_power,
             variables,
             obj_value,
             optimizer,
             time_stamp,
             results_folder,
-            base_power,
+            nothing,
+            param_values,
         )
     end
     return results
@@ -412,10 +511,13 @@ function write_results(res::SimulationResults; kwargs...)
     if !isdir(folder_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Set up results folder."))
     end
-    _write_data(res.variables, res.time_stamp, folder_path; kwargs...)
-    _write_optimizer_log(res.optimizer_log, folder_path)
-    _write_data(res.base_power, folder_path)
-    _write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
+    write_data(res.variables, res.time_stamp, folder_path; kwargs...)
+    write_optimizer_log(res.optimizer_log, folder_path)
+    write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
+    if !isnothing(res.constraints_duals)
+        write_data(res.constraints_duals, folder_path; duals = true, kwargs...)
+    end
+    write_data(res.parameter_values, folder_path; params = true, kwargs...)
     files = collect(readdir(folder_path))
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")

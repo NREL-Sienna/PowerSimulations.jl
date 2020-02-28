@@ -40,7 +40,8 @@ function test_load_simulation(file_path::String)
             c_sys5_hy_uc,
             GLPK_optimizer,
         ),
-        "ED" =>     Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, GLPK_optimizer),
+        "ED" =>
+                Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, GLPK_optimizer),
     )
 
     sequence = SimulationSequence(
@@ -108,7 +109,7 @@ function test_load_simulation(file_path::String)
             variable_list = String.(PSI.get_variable_names(sim, name))
             variable_list = [
                 variable_list
-                "CopperPlateBalance_dual"
+                "dual_CopperPlateBalance"
                 "optimizer_log"
                 "time_stamp"
                 "check"
@@ -127,7 +128,6 @@ function test_load_simulation(file_path::String)
             res = load_simulation_results(sim_results, name)
             if isdir(res.results_folder)
                 files = collect(readdir(res.results_folder))
-                @show files
                 for f in files
                     rm("$(res.results_folder)/$f")
                 end

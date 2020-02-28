@@ -76,7 +76,8 @@ devices = Dict(
     :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     :ILoads => DeviceModel(InterruptibleLoad, DispatchablePowerLoad),
-    :HydroEnergyReservoir =>     DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirFlow),
+    :HydroEnergyReservoir =>
+            DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirFlow),
 )
 template_hydro_ed =
     OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)

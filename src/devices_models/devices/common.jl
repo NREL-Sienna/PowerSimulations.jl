@@ -1,5 +1,4 @@
 include("common/constraints_structs.jl")
-include("common/model_utils.jl")
 include("common/cost_functions.jl")
 include("common/range_constraint.jl")
 include("common/add_variable.jl")

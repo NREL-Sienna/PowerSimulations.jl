@@ -496,7 +496,7 @@ function cost_function(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
-    add_to_cost(psi_container, devices, Symbol("P_$(T)"), :variable)
+    add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
     return
 end
 

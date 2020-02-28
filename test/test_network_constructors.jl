@@ -54,7 +54,7 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names =
-        [:RateLimit_lb_Line, :RateLimit_ub_Line, :nodal_balance, :network_flow]
+        [:RateLimit_lb__Line, :RateLimit_ub__Line, :nodal_balance, :network_flow]
     parameters = [true, false]
     PTDF_ref =
         Dict{System, PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc)
@@ -107,7 +107,7 @@ end
     network = DCPPowerModel
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
-    constraint_names = [:RateLimit_ub_Line, :RateLimit_lb_Line]
+    constraint_names = [:RateLimit_ub__Line, :RateLimit_lb__Line]
     parameters = [true, false]
     test_results = Dict{System, Vector{Int}}(
         c_sys5 => [384, 0, 408, 408, 288],
@@ -152,7 +152,7 @@ end
     network = ACPPowerModel
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
-    constraint_names = [:RateLimitFT_Line, :RateLimitTF_Line]
+    constraint_names = [:RateLimitFT__Line, :RateLimitTF__Line]
     parameters = [true, false]
     test_results = Dict{System, Vector{Int}}(
         c_sys5 => [1056, 0, 384, 384, 264],

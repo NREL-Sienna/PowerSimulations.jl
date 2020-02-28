@@ -29,8 +29,11 @@ function ptdf_networkflow(
             flow_variable = get_variable(psi_container, FLOW_ACTIVE_POWER, typeof(br))
             name = PSY.get_name(br)
             flow_expression = sum(
-                PTDF[name, PSY.get_number(b)] *
-                nodal_balance_expressions[PSY.get_number(b), t] for b in buses
+                PTDF[
+                    name,
+                    PSY.get_number(b),
+                ] * nodal_balance_expressions[PSY.get_number(b), t]
+                for b in buses
             )
             network_flow[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
