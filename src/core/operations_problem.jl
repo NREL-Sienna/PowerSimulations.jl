@@ -492,9 +492,10 @@ function get_parameters_value(op_m::OperationsProblem)
     # the system
     params_dict = Dict{Symbol, DataFrames.DataFrame}()
     parameters = get_parameters(op_m.psi_container)
+    isnothing(parameters) && return params_dict
     isempty(parameters) && return params_dict
     for (k, v) in parameters
-        !isa(v.update_ref, UpdateRef{PSY.Device}) && continue
+        !isa(v.update_ref, UpdateRef{<:PSY.Component}) && continue
         params_key_tuple = decode_symbol(k)
         params_dict_key = Symbol(params_key_tuple[1], "_", params_key_tuple[3])
         params_dict[params_dict_key] = axis_array_to_dataframe(get_parameter_array(v))
