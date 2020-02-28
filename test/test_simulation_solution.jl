@@ -141,7 +141,7 @@ function test_load_simulation(file_path::String)
         output_path = joinpath(dirname(sim_results.results_folder), "output_references")
         sim_output = collect(readdir(output_path))
         @test sim_output ==
-              ["chronologies.json", "results_folder.json", "stage-ED", "stage-UC"]
+              ["chronologies.json", "base_power.json", "results_folder.json", "stage-ED", "stage-UC"]
         sim_test = PSI.deserialize_sim_output(dirname(output_path))
         @test sim_test.ref == sim_results.ref
     end
