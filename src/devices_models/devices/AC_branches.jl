@@ -195,15 +195,21 @@ function branch_rate_constraints!(
     rating_constraint!(
         psi_container,
         range_data,
-        constraint_name(RATE_LIMIT_FT,B),
-        (variable_name(FLOW_ACTIVE_POWER_FROM_TO,B), variable_name(FLOW_REACTIVE_POWER_FROM_TO,B)),
+        constraint_name(RATE_LIMIT_FT, B),
+        (
+            variable_name(FLOW_ACTIVE_POWER_FROM_TO, B),
+            variable_name(FLOW_REACTIVE_POWER_FROM_TO, B),
+        ),
     )
 
     rating_constraint!(
         psi_container,
         range_data,
-        constraint_name(RATE_LIMIT_TF,B),
-        (variable_name(FLOW_ACTIVE_POWER_TO_FROM,B), variable_name(FLOW_REACTIVE_POWER_TO_FROM,B)),
+        constraint_name(RATE_LIMIT_TF, B),
+        (
+            variable_name(FLOW_ACTIVE_POWER_TO_FROM, B),
+            variable_name(FLOW_REACTIVE_POWER_TO_FROM, B),
+        ),
     )
 
     return

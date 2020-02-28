@@ -40,8 +40,7 @@ function test_load_simulation(file_path::String)
             c_sys5_hy_uc,
             GLPK_optimizer,
         ),
-        "ED" =>
-                Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, GLPK_optimizer),
+        "ED" =>     Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, GLPK_optimizer),
     )
 
     sequence = SimulationSequence(
@@ -140,8 +139,13 @@ function test_load_simulation(file_path::String)
     @testset "test simulation output serialization and deserialization" begin
         output_path = joinpath(dirname(sim_results.results_folder), "output_references")
         sim_output = collect(readdir(output_path))
-        @test sim_output ==
-              ["chronologies.json", "base_power.json", "results_folder.json", "stage-ED", "stage-UC"]
+        @test sim_output == [
+            "chronologies.json",
+            "base_power.json",
+            "results_folder.json",
+            "stage-ED",
+            "stage-UC",
+        ]
         sim_test = PSI.deserialize_sim_output(dirname(output_path))
         @test sim_test.ref == sim_results.ref
     end
