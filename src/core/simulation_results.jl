@@ -139,6 +139,94 @@ function deserialize_sim_output(file_path::String)
     return sim_output
 end
 
+# internal function to parse through the reference dictionary and grab the file paths
+function _read_references(
+    results::Dict,
+    duals::Array,
+    stage::String,
+    step::Array,
+    references::Dict,
+    time_length::Int,
+)
+
+    for name in (duals)
+        date_df = references[stage][name]
+        step_df = DataFrames.DataFrame(
+            Date = Dates.DateTime[],
+            Step = String[],
+            File_Path = String[],
+        )
+        for n in 1:length(step)
+            step_df = vcat(step_df, date_df[date_df.Step .== step[n], :])
+        end
+        results[name] = DataFrames.DataFrame()
+        for (ix, time) in enumerate(step_df.Date)
+            file_path = step_df[ix, :File_Path]
+            var = Feather.read("$file_path")
+            results[name] = vcat(results[name], var[1:time_length, :])
+        end
+    end
+    return results
+end
+# internal function to parse through the reference dictionary and grab the file paths
+function _read_references(
+    results::Dict,
+    dual::Array,
+    stage::String,
+    references::Dict,
+    time_length::Int,
+)
+    for name in dual
+        date_df = references[stage][name]
+        results[name] = DataFrames.DataFrame()
+        for (ix, time) in enumerate(date_df.Date)
+            file_path = date_df[ix, :File_Path]
+            var = Feather.read(file_path)
+            results[name] = vcat(results[name], var[1:time_length, :])
+        end
+    end
+    return results
+end
+# internal function to remove the overlapping results and only use the most recent
+function _read_time(file_path::String, time_length::Number)
+    time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
+    temp_time_stamp = Feather.read("$time_file_path")
+    time_stamp = temp_time_stamp[(1:time_length), :]
+    return time_stamp
+end
+
+""" This sums all of the rows in a result dataframe """
+function rowsum(variable::DataFrames.DataFrame, name::String)
+    variable = DataFrames.DataFrame(Symbol(name) => sum.(eachcol(variable)))
+    return variable
+end
+""" This sums each column in a result dataframe """
+function columnsum(variable::DataFrames.DataFrame)
+    shortvar = DataFrames.DataFrame()
+    varnames = collect(names(variable))
+    eachsum = (sum.(eachrow(variable)))
+    for i in 1:size(variable, 1)
+        df = DataFrames.DataFrame(Symbol(varnames[i]) => eachsum[i])
+        shortvar = hcat(shortvar, df)
+    end
+    return shortvar
+end
+# internal function to check for duals
+function _find_duals(variables::Array)
+    duals = []
+    for i in 1:length(variables)
+        if occursin("dual", String.(variables[i]))
+            duals = vcat(duals, variables[i])
+        end
+    end
+    return duals
+end
+# internal function for differentiating variables from duals in file names
+function _concat_string(duals::Vector{Symbol})
+    duals = (String.(duals)) .* "_dual"
+    return duals
+end
+
 """
     load_simulation_results(stage, step, variable, SimulationResultsReference)
 
@@ -215,8 +303,8 @@ function load_simulation_results(
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     if !isempty(dual)
         duals = _read_references(duals, dual, stage, step, references, time_length)
-        results =
-            DualResults(variables, obj_value, optimizer, time_stamp, duals, results_folder)
+        results = 0.0
+            #DualResults(variables, obj_value, optimizer, time_stamp, duals, results_folder)
     else
         results =
             SimulationResults(variables, obj_value, optimizer, time_stamp, results_folder)
@@ -297,8 +385,8 @@ function load_simulation_results(
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     if !isempty(dual)
         duals = _read_references(duals, dual, stage, references, time_length)
-        results =
-            DualResults(variables, obj_value, optimizer, time_stamp, duals, results_folder)
+        results = 0.0
+            #DualResults(variables, obj_value, optimizer, time_stamp, duals, results_folder)
     else
         results =
             SimulationResults(variables, obj_value, optimizer, time_stamp, results_folder)
@@ -369,9 +457,9 @@ function write_results(res::SimulationResults; kwargs...)
     if !isdir(folder_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Set up results folder."))
     end
-    _write_data(res.variables, res.time_stamp, folder_path; kwargs...)
+    write_data(res.variables, res.time_stamp, folder_path; kwargs...)
     _write_optimizer_log(res.optimizer_log, folder_path)
-    _write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
+    write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
     files = collect(readdir(folder_path))
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
