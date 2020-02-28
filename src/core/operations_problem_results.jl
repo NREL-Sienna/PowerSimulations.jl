@@ -106,16 +106,6 @@ function load_operation_results(folder_path::AbstractString)
     return results
 end
 
-# this ensures that the time_stamp is not double shortened
-function find_var_length(variables::Dict, variable_list::Array)
-    return size(variables[Symbol(splitext(variable_list[1])[1])], 1)
-end
-
-function shorten_time_stamp(time::DataFrames.DataFrame)
-    time = time[1:(size(time, 1) - 1), :]
-    return time
-end
-
 # This method is also used by OperationsProblemResults
 """
     write_results(results::IS.Results, save_path::String)
@@ -145,7 +135,7 @@ function write_results(results::OperationsProblemResults, save_path::String; kwa
         write_data(results.parameter_values, folder_path; kwargs...)
     end
     write_data(results.base_power, folder_path)
-    _write_optimizer_log(results.optimizer_log, folder_path)
+    write_optimizer_log(results.optimizer_log, folder_path)
     write_data(results.time_stamp, folder_path, "time_stamp"; kwargs...)
     files = collect(readdir(folder_path))
     compute_file_hash(folder_path, files)
