@@ -93,6 +93,14 @@ get_sequence(s::Simulation) = s.sequence
 get_steps(s::Simulation) = s.steps
 get_date_range(s::Simulation) = s.internal.date_range
 
+function get_base_powers(s::Simulation)
+     base_powers = Dict()
+     for (k, v) in s.stages
+         base_powers[k] = v.sys.base_power
+     end
+     return base_powers
+ end
+
 function get_stage(s::Simulation, name::String)
     stage = get(s.stages, name, nothing)
     isnothing(stage) && throw(ArgumentError("Stage $(name) not present in the simulation"))

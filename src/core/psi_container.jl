@@ -533,6 +533,15 @@ function _write_psi_container(psi_container::PSIContainer, save_path::String)
     return
 end
 
+function get_model_duals(op::PSIContainer, cons::Vector{Symbol})
+     results_dict = Dict{Symbol, DataFrames.DataFrame}()
+      for c in cons
+         v = get_constraint(op, c)
+         results_dict[c] = axis_array_to_dataframe(v)
+     end
+     return results_dict
+ end
+
 function write_data(
     psi_container::PSIContainer,
     save_path::AbstractString,
