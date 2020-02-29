@@ -196,7 +196,7 @@ function ub_ff(
     var_name::Symbol,
 )
     time_steps = model_time_steps(psi_container)
-    ub_name = middle_rename(cons_name, _JUMP_NAME_DELIMITER, "ub")
+    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
     variable = get_variable(psi_container, var_name)
 
     axes = JuMP.axes(variable)
@@ -253,8 +253,8 @@ function range_ff(
     var_name::Symbol,
 )
     time_steps = model_time_steps(psi_container)
-    ub_name = middle_rename(cons_name, _JUMP_NAME_DELIMITER, "ub")
-    lb_name = middle_rename(cons_name, _JUMP_NAME_DELIMITER, "lb")
+    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
+    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
 
     variable = get_variable(psi_container, var_name)
     axes = JuMP.axes(variable)
@@ -329,8 +329,8 @@ function semicontinuousrange_ff(
     var_name::Symbol,
 )
     time_steps = model_time_steps(psi_container)
-    ub_name = middle_rename(cons_name, _JUMP_NAME_DELIMITER, "ub")
-    lb_name = middle_rename(cons_name, _JUMP_NAME_DELIMITER, "lb")
+    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
+    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
 
     variable = get_variable(psi_container, var_name)
 
@@ -396,7 +396,7 @@ function integral_limit_ff(
     var_name::Symbol,
 )
     time_steps = model_time_steps(psi_container)
-    ub_name = middle_rename(cons_name, _JUMP_NAME_DELIMITER, "integral_limit")
+    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "integral_limit")
     variable = get_variable(psi_container, var_name)
 
     axes = JuMP.axes(variable)

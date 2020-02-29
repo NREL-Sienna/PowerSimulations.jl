@@ -52,7 +52,7 @@ const PSICONTAINER_ACCEPTED_KWARGS = OPERATIONS_ACCEPTED_KWARGS
 const SIMULATION_BUILD_KWARGS = [:system_to_file, :PTDF_matrices]
 const SIMULATION_KWARGS = [:initial_time]
 
-const _JUMP_NAME_DELIMITER = "__"
+const PSI_NAME_DELIMITER = "__"
 
 # The constants below are strings instead of enums because there is a requirement that users
 # should be able to define their own without changing PowerSimulations.

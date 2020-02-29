@@ -199,7 +199,7 @@ end
 
 function middle_rename(original::Symbol, split_char::String, addition::String)
     parts = split(String(original), split_char)
-    return Symbol(parts[1], "_", addition, _JUMP_NAME_DELIMITER, parts[2])
+    return Symbol(parts[1], "_", addition, PSI_NAME_DELIMITER, parts[2])
 end
 
 "Replaces the string in `char` with the string`replacement`"

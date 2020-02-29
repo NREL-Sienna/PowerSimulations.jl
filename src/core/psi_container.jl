@@ -264,38 +264,38 @@ function set_initial_conditions!(psi_container::PSIContainer, key::ICKey, value)
     psi_container.initial_conditions[key] = value
 end
 
-function _encode_for_jump(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}
-    return Symbol(join((name1, name2, T), _JUMP_NAME_DELIMITER))
+function encode_symbol(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}
+    return Symbol(join((name1, name2, T), PSI_NAME_DELIMITER))
 end
 
-function _encode_for_jump(::Type{T}, name1::Symbol, name2::Symbol) where {T}
-    return _encode_for_jump(T, string(name1), string(name2))
+function encode_symbol(::Type{T}, name1::Symbol, name2::Symbol) where {T}
+    return encode_symbol(T, string(name1), string(name2))
 end
 
-function _encode_for_jump(::Type{T}, name::AbstractString) where {T}
-    return Symbol(join((name, T), _JUMP_NAME_DELIMITER))
+function encode_symbol(::Type{T}, name::AbstractString) where {T}
+    return Symbol(join((name, T), PSI_NAME_DELIMITER))
 end
 
-function _encode_for_jump(::Type{T}, name::Symbol) where {T}
-    return Symbol(join((string(name), T), _JUMP_NAME_DELIMITER))
+function encode_symbol(::Type{T}, name::Symbol) where {T}
+    return Symbol(join((string(name), T), PSI_NAME_DELIMITER))
 end
 
-function _encode_for_jump(name::AbstractString)
+function encode_symbol(name::AbstractString)
     return Symbol(name)
 end
 
-function _encode_for_jump(name::Symbol)
+function encode_symbol(name::Symbol)
     return name
 end
 
 function decode_symbol(name::Symbol)
-    return split(String(name), _JUMP_NAME_DELIMITER)
+    return split(String(name), PSI_NAME_DELIMITER)
 end
 
-constraint_name(cons_type, device_type) = _encode_for_jump(device_type, cons_type)
-constraint_name(cons_type) = _encode_for_jump(cons_type)
-variable_name(var_type, device_type) = _encode_for_jump(device_type, var_type)
-variable_name(var_type) = _encode_for_jump(var_type)
+constraint_name(cons_type, device_type) = encode_symbol(device_type, cons_type)
+constraint_name(cons_type) = encode_symbol(cons_type)
+variable_name(var_type, device_type) = encode_symbol(device_type, var_type)
+variable_name(var_type) = encode_symbol(var_type)
 
 _variable_type(cm::PSIContainer) = JuMP.variable_type(cm.JuMPmodel)
 model_time_steps(psi_container::PSIContainer) = psi_container.time_steps
@@ -452,7 +452,7 @@ function get_parameter_container(
     name::Symbol,
     ::Type{T},
 ) where {T <: PSY.Component}
-    return get_parameter_container(psi_container, _encode_for_jump(T, name))
+    return get_parameter_container(psi_container, encode_symbol(T, name))
 end
 
 function get_parameter_container(psi_container::PSIContainer, ref::UpdateRef)

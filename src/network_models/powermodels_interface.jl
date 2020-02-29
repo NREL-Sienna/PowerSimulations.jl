@@ -476,7 +476,7 @@ function add_pm_var_refs!(
                     isnothing(getfield(ps_v, dir)) && continue
                     # TODO: make a better mapping with the var names in the definitions file
                     var_name =
-                        Symbol("$(getfield(ps_v, dir))$(_JUMP_NAME_DELIMITER)$(d_type)")
+                        Symbol("$(getfield(ps_v, dir))$(PSI_NAME_DELIMITER)$(d_type)")
                     container = PSI.container_spec(
                         psi_container.JuMPmodel,
                         (PSY.get_name(d[2]) for d in devices),
