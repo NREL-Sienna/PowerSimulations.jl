@@ -141,8 +141,7 @@ function test_load_simulation(file_path::String)
         sim_output = collect(readdir(output_path))
         @test sim_output == [
             "base_power.json",
-            "chronologies.json"
-            "results_folder.json",
+            "chronologies.json" * "results_folder.json",
             "stage-ED",
             "stage-UC",
         ]

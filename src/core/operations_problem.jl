@@ -483,7 +483,9 @@ function get_dual_values(op_m::OperationsProblem; kwargs...)
         v = get_constraint(op_m.psi_container, c)
         results_dict[c] = axis_array_to_dataframe(v)
     end
-    return Dict(c => axis_array_to_dataframe(get_constraint(op_m.psi_container, c)) for c in cons)
+    return Dict(
+        c => axis_array_to_dataframe(get_constraint(op_m.psi_container, c)) for c in cons
+    )
 end
 
 function get_parameters_value(op_m::OperationsProblem)
