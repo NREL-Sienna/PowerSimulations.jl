@@ -4,7 +4,7 @@ struct OperationsProblemResults <: IS.Results
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
-    duals_values::Dict{Symbol, Any}
+    dual_values::Dict{Symbol, Any}
     parameter_values::Dict{Symbol, DataFrames.DataFrame}
 end
 
@@ -30,14 +30,14 @@ function get_time_stamps(results::OperationsProblemResults, key::Symbol)
 end
 
 function find_params(variables::Array)
-     params = []
-     for i in 1:length(variables)
-         if occursin("parameter", String.(variables[i]))
-             params = vcat(params, variables[i])
-         end
-     end
-     return params
- end
+    params = []
+    for i in 1:length(variables)
+        if occursin("parameter", String.(variables[i]))
+            params = vcat(params, variables[i])
+        end
+    end
+    return params
+end
 
 function find_duals(variables::Array)
     duals = []
@@ -91,10 +91,10 @@ function load_operation_results(folder_path::AbstractString)
         dual_result[Symbol(dual_name)] = Feather.read(file_path)
     end
     for name in param_names
-         param_name = splitext(name)[1]
-         file_path = joinpath(folder_path, name)
-         param_values[Symbol(param_name)] = Feather.read(file_path)
-     end
+        param_name = splitext(name)[1]
+        file_path = joinpath(folder_path, name)
+        param_values[Symbol(param_name)] = Feather.read(file_path)
+    end
     optimizer_log = read_json(joinpath(folder_path, "optimizer_log.json"))
     time_stamp = Feather.read(joinpath(folder_path, "time_stamp.feather"))
     base_power = JSON.read(joinpath(folder_path, "base_power.json"))[1]

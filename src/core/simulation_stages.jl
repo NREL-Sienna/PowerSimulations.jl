@@ -32,7 +32,6 @@ end
         optimizer::JuMP.MOI.OptimizerWithAttributes
         internal::Union{Nothing, StageInternal}
         )
-
 """
 mutable struct Stage{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
@@ -191,6 +190,7 @@ end
 function _export_model_result(stage::Stage, start_time::Dates.DateTime, save_path::String)
     write_data(stage, save_path)
     write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
+    write_data(get_parameters_value(get_psi_container(stage)), save_path; params = true)
     files = collect(readdir(save_path))
     compute_file_hash(save_path, files)
     return
@@ -202,8 +202,14 @@ function _export_model_result(
     save_path::String,
     dual_con::Vector{Symbol},
 )
+    duals = Dict()
+    for c in dual_con
+        v = get_constraint(get_psi_container(stage), c)
+        duals[c] = axis_array_to_dataframe(v)
+    end
     write_data(stage, save_path)
-    write_data(get_psi_container(stage), save_path, dual_con)
+    write_data(duals, save_path; duals = true)
+    write_data(get_parameters_value(stage.internal.psi_container), save_path; params = true)
     write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
     files = collect(readdir(save_path))
     compute_file_hash(save_path, files)

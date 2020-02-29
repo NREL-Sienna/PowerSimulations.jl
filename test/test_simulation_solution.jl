@@ -108,7 +108,7 @@ function test_load_simulation(file_path::String)
             variable_list = String.(PSI.get_variable_names(sim, name))
             variable_list = [
                 variable_list
-                "CopperPlateBalance_dual"
+                "dual_CopperPlateBalance"
                 "optimizer_log"
                 "time_stamp"
                 "check"
@@ -140,8 +140,8 @@ function test_load_simulation(file_path::String)
         output_path = joinpath(dirname(sim_results.results_folder), "output_references")
         sim_output = collect(readdir(output_path))
         @test sim_output == [
-            "chronologies.json",
             "base_power.json",
+            "chronologies.json"
             "results_folder.json",
             "stage-ED",
             "stage-UC",

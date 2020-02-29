@@ -53,9 +53,16 @@ end
 
 function write_data(vars_results::Dict, save_path::String; kwargs...)
     file_type = get(kwargs, :file_type, Feather)
+    if :duals in keys(kwargs)
+         name = "dual_"
+     elseif :params in keys(kwargs)
+         name = "parameter_"
+     else
+         name = ""
+     end
     if file_type == Feather || file_type == CSV
         for (k, v) in vars_results
-            file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
+            file_path = joinpath(save_path, "$name$k.$(lowercase("$file_type"))")
             file_type.write(file_path, vars_results[k])
         end
     end
