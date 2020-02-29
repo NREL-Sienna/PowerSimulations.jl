@@ -274,7 +274,7 @@ function load_simulation_results(
     results_folder = sim_output.results_folder
     stage = "stage-$stage_name"
     references = sim_output.ref
-    base_power = sim_output.base_power[stage_name]
+    base_power = sim_output.base_powers[stage_name]
     variables = Dict{Symbol, DataFrames.DataFrame}()
     duals = Dict{Symbol, Any}()
     params = Dict{Symbol, DataFrames.DataFrame}()
@@ -369,7 +369,7 @@ function load_simulation_results(
     results_folder = sim_output.results_folder
     stage = "stage-$stage_name"
     references = sim_output.ref
-    base_power = sim_output.base_power[stage_name]
+    base_power = sim_output.base_powers[stage_name]
     variables = Dict{Symbol, DataFrames.DataFrame}()
     duals = Dict{Symbol, Any}()
     params = Dict{Symbol, DataFrames.DataFrame}()
@@ -491,7 +491,8 @@ function serialize_sim_output(sim_results::SimulationResultsReference)
         for (i, v) in stage
             path = joinpath(file_path, "$k")
             !isdir(path) && mkdir(path)
-            Feather.write(joinpath(path, "$i.feather"), v)
+            # TODO: Remove this line. There shouldn't be empties coming here.
+            !isempty(v) && Feather.write(joinpath(path, "$i.feather"), v)
         end
     end
     JSON.write(
@@ -502,7 +503,7 @@ function serialize_sim_output(sim_results::SimulationResultsReference)
         joinpath(file_path, "chronologies.json"),
         JSON.json(sim_results.chronologies),
     )
-    JSON.write(joinpath(file_path, "base_power.json"), JSON.json(sim_results.base_power))
+    JSON.write(joinpath(file_path, "base_power.json"), JSON.json(sim_results.base_powers))
 end
 
 # writes the results to CSV files in a folder path, but they can't be read back

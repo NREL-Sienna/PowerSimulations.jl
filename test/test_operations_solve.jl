@@ -256,7 +256,11 @@ function test_write_functions(file_path)
             @test isfile(joinpath(file_path, "two/$k.csv"))
         end
 
-        PSI.write_data(res.variable_values, res.time_stamp, mkdir(joinpath(file_path, "three")))
+        PSI.write_data(
+            res.variable_values,
+            res.time_stamp,
+            mkdir(joinpath(file_path, "three")),
+        )
         for (k, v) in res.variable_values
             @test isfile(joinpath(file_path, "three", "$k.feather"))
         end

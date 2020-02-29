@@ -500,6 +500,21 @@ function iterate_parameter_containers(psi_container::PSIContainer)
     end
 end
 
+function get_parameters_value(psi_container::PSIContainer)
+    # TODO: Still not obvious implementation since it needs to get the multipliers from
+    # the system
+    params_dict = Dict{Symbol, DataFrames.DataFrame}()
+    parameters = get_parameters(psi_container)
+    (isnothing(parameters) || isempty(parameters)) && return params_dict
+    for (k, v) in parameters
+        !isa(v.update_ref, UpdateRef{<:PSY.Component}) && continue
+        params_key_tuple = decode_symbol(k)
+        params_dict_key = Symbol(params_key_tuple[1], "_", params_key_tuple[3])
+        params_dict[params_dict_key] = axis_array_to_dataframe(get_parameter_array(v))
+    end
+    return params_dict
+end
+
 function is_milp(container::PSIContainer)
     return container.JuMPmodel.moi_backend.optimizer.model.last_solved_by_mip
 end
