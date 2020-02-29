@@ -178,7 +178,7 @@ function test_load_simulation(file_path::String)
         end
     end
     ###########################################################
-    @testset "Test dual constraints in results" begin
+    @testset "Test constraint duals in results" begin
         res = PSI.load_simulation_results(sim_results, "ED")
         dual =
             JuMP.dual(sim.stages["ED"].internal.psi_container.constraints[:CopperPlateBalance][1])
