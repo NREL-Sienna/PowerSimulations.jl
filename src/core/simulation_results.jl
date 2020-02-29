@@ -310,7 +310,7 @@ function load_simulation_results(
     optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     duals = _read_references(duals, dual, stage, step, references, time_length)
-    param_values = _read_references(params, param, stage, references, time_length)
+    param_values = _read_references(params, param, stage, step, references, time_length)
     return SimulationResults(
         base_power,
         variables,
@@ -397,8 +397,8 @@ function load_simulation_results(
     file_path = dirname(references[stage][variable[1]][1, :File_Path])
     optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
-    param_values = _read_references(params, param, stage, step, references, time_length)
-    duals = _read_references(duals, dual, stage, step, references, time_length)
+    param_values = _read_references(params, param, stage, references, time_length)
+    duals = _read_references(duals, dual, stage, references, time_length)
     return SimulationResults(
         base_power,
         variables,
