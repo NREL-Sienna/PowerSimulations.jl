@@ -8,13 +8,13 @@ struct OperationsProblemResults <: IS.Results
     parameter_values::Dict{Symbol, DataFrames.DataFrame}
 end
 
-get_variables(result::OperationsProblemResults) = result.variables
+get_variables(result::OperationsProblemResults) = result.variable_values
 get_cost(result::OperationsProblemResults) = result.total_cost
 get_time_stamp(result::OperationsProblemResults) = result.time_stamp
-get_duals(result::OperationsProblemResults) = result.constraints_duals
+get_duals(result::OperationsProblemResults) = result.dual_values
 
 function get_variable(res_model::OperationsProblemResults, key::Symbol)
-    var_result = get(res_model.variables, key, nothing)
+    var_result = get(res_model.variable_values, key, nothing)
     if isnothing(var_result)
         throw(ArgumentError("No variable with key $(key) has been found."))
     end
@@ -137,9 +137,9 @@ function write_results(results::OperationsProblemResults, save_path::String; kwa
         save_path,
         replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-"),
     ))
-    write_data(results.variables, folder_path; kwargs...)
-    if !isempty(results.constraints_duals)
-        write_data(results.constraints_duals, folder_path; kwargs...)
+    write_data(results.variable_values, folder_path; kwargs...)
+    if !isempty(results.dual_values)
+        write_data(results.dual_values, folder_path; kwargs...)
     end
     if !isempty(results.parameter_values)
         write_data(results.parameter_values, folder_path; kwargs...)

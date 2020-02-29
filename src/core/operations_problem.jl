@@ -493,7 +493,7 @@ function get_parameters_value(op_m::OperationsProblem)
     # the system
     params_dict = Dict{Symbol, DataFrames.DataFrame}()
     parameters = get_parameters(op_m.psi_container)
-    isnothing(parameters) || isempty(parameters) && return params_dict
+    (isnothing(parameters) || isempty(parameters)) && return params_dict
     for (k, v) in parameters
         !isa(v.update_ref, UpdateRef{<:PSY.Component}) && continue
         params_key_tuple = decode_symbol(k)
@@ -560,7 +560,6 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
         obj_value,
         optimizer_log,
         time_stamp,
-        save_path,
         dual_result,
         param_values,
     )

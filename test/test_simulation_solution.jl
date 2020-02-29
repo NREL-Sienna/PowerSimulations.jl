@@ -93,7 +93,7 @@ function test_load_simulation(file_path::String)
             res = load_simulation_results(sim_results, name)
             write_results(res)
             loaded_res = load_operation_results(sim_results.results_folder)
-            @test loaded_res.variables == res.variables
+            @test loaded_res.variable_values == res.variable_values
         end
     end
 
@@ -154,7 +154,7 @@ function test_load_simulation(file_path::String)
             variable = PSI.get_variable_names(sim, name)
             results = load_simulation_results(sim_results, name)
             res = load_simulation_results(sim_results, name, step, variable)
-            @test results.variables == res.variables
+            @test results.variable_values == res.variable_values
         end
     end
 
@@ -184,7 +184,7 @@ function test_load_simulation(file_path::String)
             JuMP.dual(sim.stages["ED"].internal.psi_container.constraints[:CopperPlateBalance][1])
         @test isapprox(
             dual,
-            res.constraints_duals[:CopperPlateBalance_dual][1, 1],
+            res.dual_values[:CopperPlateBalance_dual][1, 1],
             atol = 1.0e-4,
         )
 
@@ -325,7 +325,7 @@ function test_load_simulation(file_path::String)
         for (ik, key) in enumerate(ic_keys)
             initial_conditions =
                 get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
-            vars = results.variables[vars_names[ik]] # change to getter function
+            vars = results.variable_values[vars_names[ik]] # change to getter function
             for ic in initial_conditions
                 output = vars[1, Symbol(PSI.device_name(ic))] # change to getter function
                 initial_cond = value(PSI.get_value(ic))

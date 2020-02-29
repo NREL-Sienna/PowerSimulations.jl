@@ -230,7 +230,7 @@ res = solve_op_problem!(op_problem; constraints_duals = duals)
     name = PSI.constraint_name("CopperPlateBalance")
     for i in 1:ncol(res.time_stamp)
         dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
-        @test isapprox(dual, res.constraints_duals[name][i, 1])
+        @test isapprox(dual, res.dual_values[name][i, 1])
     end
 end
 
@@ -240,30 +240,30 @@ path = joinpath(pwd(), "test_writing")
 function test_write_functions(file_path)
 
     @testset "test write_data functions" begin
-        PSI.write_data(res.variables, mkdir(joinpath(file_path, "one")))
+        PSI.write_data(res.variable_values, mkdir(joinpath(file_path, "one")))
         readdir(joinpath(file_path, "one"))
-        for (k, v) in res.variables
+        for (k, v) in res.variable_values
             @test isfile(joinpath(file_path, "one", "$k.feather"))
         end
 
         PSI.write_data(
-            res.variables,
+            res.variable_values,
             res.time_stamp,
             mkdir(joinpath(file_path, "two"));
             file_type = CSV,
         )
-        for (k, v) in res.variables
+        for (k, v) in res.variable_values
             @test isfile(joinpath(file_path, "two/$k.csv"))
         end
 
-        PSI.write_data(res.variables, res.time_stamp, mkdir(joinpath(file_path, "three")))
-        for (k, v) in res.variables
+        PSI.write_data(res.variable_values, res.time_stamp, mkdir(joinpath(file_path, "three")))
+        for (k, v) in res.variable_values
             @test isfile(joinpath(file_path, "three", "$k.feather"))
         end
 
         var_name = PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)
         PSI.write_data(
-            res.variables[var_name],
+            res.variable_values[var_name],
             mkdir(joinpath(file_path, "four")),
             string(var_name),
         )
@@ -271,7 +271,7 @@ function test_write_functions(file_path)
 
         #testing if directory is a file
         PSI.write_data(
-            res.variables[var_name],
+            res.variable_values[var_name],
             joinpath(file_path, "four", "$(var_name).feather"),
             string(var_name),
         )
