@@ -58,7 +58,7 @@ that contains the specific simulation run of the date run and "-test"
 
 # Example
 ```julia
-sim = Simulation("test", 7, stages, "/Users/yourusername/Desktop/"; system_to_file = false)
+sim = Simulation("Test", 7, stages, "/Users/yourusername/Desktop/"; system_to_file = false)
 execute!(sim::Simulation; kwargs...)
 references = make_references(sim, "2019-10-03T09-18-00-test")
 ```
@@ -241,13 +241,13 @@ for the desired step range and variables
 - `SimulationResultsReference::SimulationResultsReference`: the container for the reference dictionary created in execute!
 - `stage_number::Int = 1``: The stage of the results getting parsed: 1 or 2
 - `step::Array{String} = ["step-1", "step-2", "step-3"]`: the steps of the results getting parsed
-- `variable::Array{Symbol} = [:P_ThermalStandard, :P_RenewableDispatch]`: the variables to be parsed
+- `variable::Array{Symbol} = [:P__ThermalStandard, :P_RenewableDispatch]`: the variables to be parsed
 
 # Example
 ```julia
 stage = "stage-1"
 step = ["step-1", "step-2", "step-3"] # has to match the date range
-variable = [:P_ThermalStandard, :P_RenewableDispatch]
+variable = [:P__ThermalStandard, :P_RenewableDispatch]
 results = load_simulation_results(stage,step, variable, SimulationResultsReference)
 ```
 # Accepted Key Words

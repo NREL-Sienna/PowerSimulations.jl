@@ -84,7 +84,7 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "test reading and writing to the results folder" begin
+    @testset "Test reading and writing to the results folder" begin
         for name in stage_names
             files = collect(readdir(sim_results.results_folder))
             for f in files
@@ -97,7 +97,7 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "testing file names" begin
+    @testset "Testing file names" begin
         for name in stage_names
             files = collect(readdir(sim_results.results_folder))
             for f in files
@@ -121,7 +121,7 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "testing argument errors" begin
+    @testset "Testing argument errors" begin
         for name in stage_names
             res = load_simulation_results(sim_results, name)
             if isdir(res.results_folder)
@@ -136,12 +136,13 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "test simulation output serialization and deserialization" begin
+    @testset "Test simulation output serialization and deserialization" begin
         output_path = joinpath(dirname(sim_results.results_folder), "output_references")
         sim_output = collect(readdir(output_path))
         @test sim_output == [
             "base_power.json",
-            "chronologies.json" * "results_folder.json",
+            "chronologies.json",
+            "results_folder.json",
             "stage-ED",
             "stage-UC",
         ]
@@ -149,7 +150,7 @@ function test_load_simulation(file_path::String)
         @test sim_test.ref == sim_results.ref
     end
 
-    @testset "test load simulation results between the two methods of load simulation" begin
+    @testset "Test load simulation results between the two methods of load simulation" begin
         for name in stage_names
             variable = PSI.get_variable_names(sim, name)
             results = load_simulation_results(sim_results, name)

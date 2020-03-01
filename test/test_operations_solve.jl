@@ -233,12 +233,12 @@ res = solve_op_problem!(op_problem; constraints_duals = duals)
     end
 end
 
-path = joinpath(pwd(), "test_writing")
+path = joinpath(pwd(), "Test_writing")
 !isdir(path) && mkdir(path)
 
 function test_write_functions(file_path)
 
-    @testset "test write_data functions" begin
+    @testset "Test write_data functions" begin
         PSI.write_data(res.variable_values, mkdir(joinpath(file_path, "one")))
         readdir(joinpath(file_path, "one"))
         for (k, v) in res.variable_values
@@ -287,7 +287,7 @@ function test_write_functions(file_path)
         @test !isempty(joinpath(file_path, "six", "results"))
     end
 
-    @testset "test write result functions" begin
+    @testset "Test write result functions" begin
         new_path = joinpath(file_path, "seven")
         PSI.write_results(res, mkdir(new_path))
         @test !isempty(new_path)
