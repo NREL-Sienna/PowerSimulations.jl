@@ -1,5 +1,4 @@
 import CSV
-import Plots
 
 devices = Dict{Symbol, DeviceModel}(
     :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
