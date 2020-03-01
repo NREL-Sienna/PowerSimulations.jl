@@ -420,10 +420,10 @@ function test_load_simulation(file_path::String)
         execute!(sim_cache)
 
         var_names =
-            axes(PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On_ThermalStandard])[1]
+            axes(PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On__ThermalStandard])[1]
         for name in var_names
             var =
-                PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On_ThermalStandard][
+                PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On__ThermalStandard][
                     name,
                     24,
                 ]
