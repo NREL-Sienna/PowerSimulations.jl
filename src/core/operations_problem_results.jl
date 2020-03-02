@@ -1,55 +1,24 @@
-get_results(result::IS.Results) = nothing
 struct OperationsProblemResults <: IS.Results
-    variables::Dict{Symbol, DataFrames.DataFrame}
+    base_power::Float64
+    variable_values::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
+    dual_values::Dict{Symbol, Any}
+    parameter_values::Dict{Symbol, DataFrames.DataFrame}
 end
 
-"""This function creates the correct results struct for the context"""
-function _make_results(
-    variables::Dict,
-    total_cost::Dict,
-    optimizer_log::Dict,
-    time_stamp::DataFrames.DataFrame,
-)
-    return OperationsProblemResults(variables, total_cost, optimizer_log, time_stamp)
-end
-"""This function creates the correct results struct for the context"""
-function _make_results(
-    variables::Dict,
-    total_cost::Dict,
-    optimizer_log::Dict,
-    time_stamp::Array,
-)
-    time_stamp = DataFrames.DataFrame(Range = time_stamp)
-    return OperationsProblemResults(variables, total_cost, optimizer_log, time_stamp)
-end
-"""This function creates the correct results struct for the context"""
-function _make_results(
-    variables::Dict,
-    total_cost::Dict,
-    optimizer_log::Dict,
-    time_stamp::Array,
-    constraints_duals::Dict,
-)
-    time_stamp = DataFrames.DataFrame(Range = time_stamp)
-    return DualResults(
-        variables,
-        total_cost,
-        optimizer_log,
-        time_stamp,
-        constraints_duals,
-        nothing,
-    )
-end
+get_variables(result::OperationsProblemResults) = result.variable_values
+get_cost(result::OperationsProblemResults) = result.total_cost
+get_time_stamp(result::OperationsProblemResults) = result.time_stamp
+get_duals(result::OperationsProblemResults) = result.dual_values
+
 function get_variable(res_model::OperationsProblemResults, key::Symbol)
-    try
-        !isnothing(res_model.variables)
-        return get(res_model.variables, key, nothing)
-    catch
+    var_result = get(res_model.variable_values, key, nothing)
+    if isnothing(var_result)
         throw(ArgumentError("No variable with key $(key) has been found."))
     end
+    return var_result
 end
 
 function get_optimizer_log(results::OperationsProblemResults)
@@ -58,6 +27,16 @@ end
 
 function get_time_stamps(results::OperationsProblemResults, key::Symbol)
     return results.time_stamp
+end
+
+function _find_duals(variables::Array)
+    duals = []
+    for i in 1:length(variables)
+        if occursin("dual", String.(variables[i]))
+            duals = vcat(duals, variables[i])
+        end
+    end
+    return duals
 end
 
 """
@@ -78,46 +57,56 @@ results = load_operation_results("/Users/test/2019-10-03T09-18-00")
 ```
 """
 function load_operation_results(folder_path::AbstractString)
-
     if isfile(folder_path)
         throw(ArgumentError("Not a folder path."))
     end
     files_in_folder = collect(readdir(folder_path))
     variable_list = setdiff(
         files_in_folder,
-        ["time_stamp.feather", "optimizer_log.json", "check.sha256"],
+        ["time_stamp.feather", "base_power.json", "optimizer_log.json", "check.sha256"],
     )
-    variables = Dict{Symbol, DataFrames.DataFrame}()
-    duals = Dict()
-    dual = _find_duals(variable_list)
-    variable_list = setdiff(variable_list, dual)
+    vars_result = Dict{Symbol, DataFrames.DataFrame}()
+    dual_result = Dict{Symbol, Any}()
+    dual_names = _find_duals(variable_list)
+    param_names = _find_params(variable_list)
+    variable_list = setdiff(variable_list, vcat(dual_names, param_names))
+    param_values = Dict{Symbol, DataFrames.DataFrame}()
     for name in variable_list
         variable_name = splitext(name)[1]
         file_path = joinpath(folder_path, name)
-        variables[Symbol(variable_name)] = Feather.read(file_path)
+        vars_result[Symbol(variable_name)] = Feather.read(file_path)
     end
-    optimizer = read_json(joinpath(folder_path, "optimizer_log.json"))
+    for name in dual_names
+        dual_name = splitext(name)[1]
+        file_path = joinpath(folder_path, name)
+        dual_result[Symbol(dual_name)] = Feather.read(file_path)
+    end
+    for name in param_names
+        param_name = splitext(name)[1]
+        file_path = joinpath(folder_path, name)
+        param_values[Symbol(param_name)] = Feather.read(file_path)
+    end
+    optimizer_log = read_json(joinpath(folder_path, "optimizer_log.json"))
     time_stamp = Feather.read(joinpath(folder_path, "time_stamp.feather"))
-    if size(time_stamp, 1) > find_var_length(variables, variable_list)
+    base_power = JSON.read(joinpath(folder_path, "base_power.json"))[1]
+    if size(time_stamp, 1) > find_var_length(vars_result, variable_list)
         time_stamp = shorten_time_stamp(time_stamp)
     end
-    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
+    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer_log["obj_value"])
     check_file_integrity(folder_path)
-    results = _make_results(variables, obj_value, optimizer, time_stamp)
+    results = OperationsProblemResults(
+        base_power,
+        vars_result,
+        obj_value,
+        optimizer_log,
+        time_stamp,
+        dual_result,
+        param_values,
+    )
     return results
 end
 
-# this ensures that the time_stamp is not double shortened
-function find_var_length(variables::Dict, variable_list::Array)
-    return size(variables[Symbol(splitext(variable_list[1])[1])], 1)
-end
-
-function shorten_time_stamp(time::DataFrames.DataFrame)
-    time = time[1:(size(time, 1) - 1), :]
-    return time
-end
-
-# This method is also used by DualResults
+# This method is also used by OperationsProblemResults
 """
     write_results(results::IS.Results, save_path::String)
 
@@ -130,7 +119,7 @@ Exports Operational Problem Results to a path
 # Accepted Key Words
 - `file_type = CSV`: only CSV and featherfile are accepted
 """
-function write_results(results::IS.Results, save_path::String; kwargs...)
+function write_results(results::OperationsProblemResults, save_path::String; kwargs...)
     if !isdir(save_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
@@ -138,9 +127,17 @@ function write_results(results::IS.Results, save_path::String; kwargs...)
         save_path,
         replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-"),
     ))
-    _write_data(results.variables, folder_path; kwargs...)
-    _write_optimizer_log(results.optimizer_log, folder_path)
-    _write_data(results.time_stamp, folder_path, "time_stamp"; kwargs...)
+    write_data(results.variable_values, folder_path; kwargs...)
+    if !isempty(results.dual_values)
+        write_data(results.dual_values, folder_path; duals = true, kwargs...)
+    end
+    if !isempty(results.parameter_values)
+        write_data(results.parameter_values, folder_path; params = true, kwargs...)
+    end
+    #write_data(results.parameter_values, folder_path; params = true, kwargs...)
+    write_data(results.base_power, folder_path)
+    write_optimizer_log(results.optimizer_log, folder_path)
+    write_data(results.time_stamp, folder_path, "time_stamp"; kwargs...)
     files = collect(readdir(folder_path))
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
@@ -149,5 +146,15 @@ end
 
 # writes the results to CSV files in a folder path, but they can't be read back
 function write_to_CSV(results::OperationsProblemResults, folder_path::String)
-    write_results(results, folder_path, "results"; file_type = CSV)
+    write_results(results, folder_path; file_type = CSV)
+end
+
+function _find_params(variables::Array)
+    params = []
+    for i in 1:length(variables)
+        if occursin("parameter", String.(variables[i]))
+            params = vcat(params, variables[i])
+        end
+    end
+    return params
 end

@@ -69,7 +69,7 @@
 
 end
 
-@testset "testing if Horizon and interval result in a discontinuous simulation" begin
+@testset "Testing if Horizon and interval result in a discontinuous simulation" begin
     @test_throws IS.ConflictingInputsError SimulationSequence(
         step_resolution = Hour(24),
         order = Dict(1 => "UC", 2 => "ED"),
@@ -90,7 +90,7 @@ end
     )
 end
 
-@testset "testing if interval is shorter than resolution" begin
+@testset "Testing if interval is shorter than resolution" begin
     @test_throws IS.ConflictingInputsError sequence = SimulationSequence(
         step_resolution = Hour(24),
         order = Dict(1 => "UC", 2 => "ED"),

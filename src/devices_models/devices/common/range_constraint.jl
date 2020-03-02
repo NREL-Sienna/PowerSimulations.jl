@@ -37,8 +37,8 @@ function device_range(
 )
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, var_name)
-    ub_name = _middle_rename(cons_name, "_", "ub")
-    lb_name = _middle_rename(cons_name, "_", "lb")
+    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
+    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
     names = (d.name for d in range_data)
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
@@ -115,8 +115,8 @@ function device_semicontinuousrange(
     time_steps = model_time_steps(psi_container)
     varcts = get_variable(psi_container, var_name)
     varbin = get_variable(psi_container, binvar_name)
-    ub_name = _middle_rename(cons_name, "_", "ub")
-    lb_name = _middle_rename(cons_name, "_", "lb")
+    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
+    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
     names = (d.name for d in range_data)
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
@@ -204,8 +204,8 @@ function reserve_device_semicontinuousrange(
     varcts = get_variable(psi_container, var_name)
     varbin = get_variable(psi_container, binvar_name)
 
-    ub_name = _middle_rename(cons_name, "_", "ub")
-    lb_name = _middle_rename(cons_name, "_", "lb")
+    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
+    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
     names = (d.name for d in range_data)
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated

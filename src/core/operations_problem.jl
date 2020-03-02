@@ -202,6 +202,8 @@ get_devices_ref(op_problem::OperationsProblem) = op_problem.template.devices
 get_branches_ref(op_problem::OperationsProblem) = op_problem.template.branches
 get_services_ref(op_problem::OperationsProblem) = op_problem.template.services
 get_system(op_problem::OperationsProblem) = op_problem.sys
+get_psi_container(op_problem::OperationsProblem) = op_problem.psi_container
+get_base_power(op_problem::OperationsProblem) = op_problem.sys.basepower
 
 function set_transmission_model!(
     op_problem::OperationsProblem{M},
@@ -392,9 +394,7 @@ function construct_device!(
 end
 
 function construct_network!(op_problem::OperationsProblem; kwargs...)
-
     construct_network!(op_problem, op_problem.template.transmission; kwargs...)
-
     return
 end
 
@@ -470,6 +470,22 @@ function _build!(
     return
 end
 
+function get_variables_value(op_m::OperationsProblem)
+    results_dict = Dict{Symbol, DataFrames.DataFrame}()
+    for (k, v) in get_variables(op_m.psi_container)
+        results_dict[k] = axis_array_to_dataframe(v)
+    end
+    return results_dict
+end
+
+function get_parameters_value(op_m::OperationsProblem)
+    return get_parameters_value(op_m.psi_container)
+end
+
+function get_dual_values(op_m::OperationsProblem, constraints::Vector{Symbol})
+    return get_dual_values(op_m.psi_container, constraints)
+end
+
 """
     solve_op_problem!(op_problem::OperationsProblem; kwargs...)
 
@@ -509,120 +525,33 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
         timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.psi_container.JuMPmodel)
     end
 
-    vars_result = get_model_result(op_problem)
+    vars_result = get_variables_value(op_problem)
+    param_values = get_parameters_value(get_psi_container(op_problem))
     optimizer_log = get_optimizer_log(op_problem)
     time_stamp = get_time_stamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
+    base_power = PSY.get_basepower(op_problem.sys)
+    constraint_duals = get(kwargs, :constraints_duals, Vector{Symbol}())
+    dual_result = get_dual_values(op_problem, constraint_duals)
     obj_value = Dict(
         :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel),
     )
+    basepower = get_base_power(op_problem)
     merge!(optimizer_log, timed_log)
-    if :constraints_duals in keys(kwargs)
-        dual_result = get_model_duals(op_problem.psi_container, kwargs[:constraints_duals])
-        results =
-            _make_results(vars_result, obj_value, optimizer_log, time_stamp, dual_result)
-    else
-        results =
-            OperationsProblemResults(vars_result, obj_value, optimizer_log, time_stamp)
-    end
+
+    results = OperationsProblemResults(
+        base_power,
+        vars_result,
+        obj_value,
+        optimizer_log,
+        time_stamp,
+        dual_result,
+        param_values,
+    )
+
     !isnothing(save_path) && write_results(results, save_path)
 
     return results
-end
-
-function _result_dataframe_variables(variable::JuMP.Containers.DenseAxisArray)
-    if length(axes(variable)) == 1
-        result = Vector{Float64}(undef, length(first(variable.axes)))
-
-        for t in variable.axes[1]
-            result[t] = JuMP.value(variable[t])
-        end
-
-        return DataFrames.DataFrame(var = result)
-
-    elseif length(axes(variable)) == 2
-
-        result = Array{Float64, length(variable.axes)}(
-            undef,
-            length(variable.axes[2]),
-            length(variable.axes[1]),
-        )
-        names = Array{Symbol, 1}(undef, length(variable.axes[1]))
-
-        for t in variable.axes[2], (ix, name) in enumerate(variable.axes[1])
-            result[t, ix] = JuMP.value(variable[name, t])
-            names[ix] = Symbol(name)
-        end
-
-        return DataFrames.DataFrame(result, names)
-
-    elseif length(axes(variable)) == 3
-        extra_dims = sum(length(axes(variable)[2:(end - 1)]))
-        extra_vars = [Symbol("S$(s)") for s in 1:extra_dims]
-        result_df = DataFrames.DataFrame()
-        names = vcat(extra_vars, Symbol.(axes(variable)[1]))
-
-        for i in variable.axes[2]
-            third_dim = collect(fill(i, size(variable)[end]))
-            result = Array{Float64, 2}(
-                undef,
-                length(last(variable.axes)),
-                length(first(variable.axes)),
-            )
-            for t in last(variable.axes), (ix, name) in enumerate(first(variable.axes))
-                result[t, ix] = JuMP.value(variable[name, i, t])
-            end
-            res = DataFrames.DataFrame(hcat(third_dim, result))
-            result_df = vcat(result_df, res)
-        end
-
-        return DataFrames.names!(result_df, names)
-
-    else
-        error("Dimension Number $(length(axes(variable))) not Supported")
-    end
-
-end
-
-function _result_dataframe_duals(constraint::JuMP.Containers.DenseAxisArray)
-    if length(axes(constraint)) == 1
-        result = Vector{Float64}(undef, length(first(constraint.axes)))
-        for t in constraint.axes[1]
-            try
-                result[t] = JuMP.dual(constraint[t])
-            catch
-                result[t] = NaN
-            end
-        end
-        return DataFrames.DataFrame(var = result)
-    elseif length(axes(constraint)) == 2
-        result = Array{Float64, length(variable.axes)}(
-            undef,
-            length(constraint.axes[2]),
-            length(constraint.axes[1]),
-        )
-        names = Array{Symbol, 1}(undef, length(constraint.axes[1]))
-        for t in constraint.axes[2], (ix, name) in enumerate(constraint.axes[1])
-            try
-                result[t, ix] = JuMP.dual(constraint[name, t])
-            catch
-                result[t, ix] = NaN
-            end
-            names[ix] = Symbol(name)
-        end
-        return DataFrames.DataFrame(result, names)
-    else
-        error("Dimension Number $(length(axes(constraint))) not Supported")
-    end
-end
-
-function get_model_result(op_m::OperationsProblem)
-    results_dict = Dict{Symbol, DataFrames.DataFrame}()
-
-    for (k, v) in get_variables(op_m.psi_container)
-        results_dict[k] = _result_dataframe_variables(v)
-    end
-    return results_dict
 end
 
 # Function to create a dictionary for the optimizer log of the simulation
@@ -657,94 +586,25 @@ function get_time_stamps(op_problem::OperationsProblem)
     return time_stamp
 end
 
-# writing a dictionary of dataframes to files
-
-function _write_data(vars_results::Dict, save_path::String; kwargs...)
-    file_type = get(kwargs, :file_type, Feather)
-    if file_type == Feather || file_type == CSV
-        for (k, v) in vars_results
-            file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
-            file_type.write(file_path, vars_results[k])
-        end
-    end
-end
-
-# writing a dictionary of dataframes to files and appending the time
-
-function _write_data(
-    vars_results::Dict,
-    time::DataFrames.DataFrame,
-    save_path::AbstractString;
-    kwargs...,
-)
-    file_type = get(kwargs, :file_type, Feather)
-    for (k, v) in vars_results
-        var = DataFrames.DataFrame()
-        if file_type == CSV && size(time, 1) == size(v, 1)
-            var = hcat(time, v)
-        else
-            var = v
-        end
-        file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
-        file_type.write(file_path, var)
-    end
-end
-
-function _write_data(
-    data::DataFrames.DataFrame,
-    save_path::AbstractString,
-    file_name::String;
-    kwargs...,
-)
-    if isfile(save_path)
-        save_path = dirname(save_path)
-    end
-    file_type = get(kwargs, :file_type, Feather)
-    if file_type == Feather || file_type == CSV
-        file_path = joinpath(save_path, "$(file_name).$(lowercase("$file_type"))")
-        file_type.write(file_path, data)
-    end
-    return
-end
-
-function _write_optimizer_log(optimizer_log::Dict, save_path::AbstractString)
-
-    JSON.write(joinpath(save_path, "optimizer_log.json"), JSON.json(optimizer_log))
-
-end
-
-function _write_data(psi_container::PSIContainer, save_path::AbstractString; kwargs...)
+function write_data(psi_container::PSIContainer, save_path::AbstractString; kwargs...)
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
         for (k, v) in get_variables(psi_container)
             file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
-            variable = _result_dataframe_variables(v)
+            variable = axis_array_to_dataframe(v)
             file_type.write(file_path, variable)
         end
     end
     return
 end
 
-function _write_data(
-    psi_container::PSIContainer,
-    save_path::AbstractString,
-    dual_con::Vector{Symbol};
-    kwargs...,
-)
-    file_type = get(kwargs, :file_type, Feather)
-    if file_type == Feather || file_type == CSV
-        duals = get_model_duals(psi_container, dual_con)
-        for (k, v) in duals
-            file_path = joinpath(save_path, "$(k)_dual.$(lowercase("$file_type"))")
-            file_type.write(file_path, v)
-        end
-    end
+function write_data(op_problem::OperationsProblem, save_path::AbstractString; kwargs...)
+    write_data(op_problem.psi_container, save_path; kwargs...)
     return
 end
 
-function _write_data(op_problem::OperationsProblem, save_path::AbstractString; kwargs...)
-    _write_data(op_problem.psi_container, save_path; kwargs...)
-    return
+function _write_data(base_power::Float64, save_path::String)
+    JSON.write(joinpath(save_path, "base_power.json"), JSON.json(base_power))
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""

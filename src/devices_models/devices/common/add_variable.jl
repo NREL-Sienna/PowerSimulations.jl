@@ -54,7 +54,6 @@ function add_variable(
         (PSY.get_name(d) for d in devices),
         time_steps,
     )
-    jvar_name = _remove_underscore(var_name)
 
     lb_f = get(kwargs, :lb_value, nothing)
     init_f = get(kwargs, :initial_value, nothing)
@@ -64,7 +63,7 @@ function add_variable(
         name = PSY.get_name(d)
         variable[name, t] = JuMP.@variable(
             psi_container.JuMPmodel,
-            base_name = "$(jvar_name)_{$(name), $(t)}",
+            base_name = "$(var_name)_{$(name), $(t)}",
             binary = binary
         )
 

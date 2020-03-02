@@ -81,7 +81,7 @@ function Base.show(io::IO, ::MIME"text/plain", results::IS.Results)
     println(io, "\nResults")
     println(io, "===============\n")
 
-    for (k, v) in results.variables
+    for (k, v) in results.variable_values
         time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
         if size(time, 1) == size(v, 1)
             var = hcat(time, v)
@@ -107,7 +107,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/html", results::IS.Results)
     println(io, "<h1>Results</h1>")
-    for (k, v) in results.variables
+    for (k, v) in results.variable_values
         time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
         if size(time, 1) == size(v, 1)
             var = hcat(time, v)

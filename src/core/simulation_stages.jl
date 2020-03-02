@@ -32,7 +32,6 @@ end
         optimizer::JuMP.MOI.OptimizerWithAttributes
         internal::Union{Nothing, StageInternal}
         )
-
 """
 mutable struct Stage{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
@@ -110,9 +109,13 @@ function run_stage(
     end
     # TODO: Add Fallback when optimization fails
     retrieve_duals = get(kwargs, :constraints_duals, nothing)
-    if !isnothing(retrieve_duals) &&
-       !isnothing(get_constraints(stage.internal.psi_container))
-        _export_model_result(stage, start_time, results_path, retrieve_duals)
+    if !isnothing(retrieve_duals)
+        if is_milp(stage.internal.psi_container)
+            @warn("$(stage.internal.number) is a MILP, duals can't be exported")
+            _export_model_result(stage, start_time, results_path)
+        else
+            _export_model_result(stage, start_time, results_path, retrieve_duals)
+        end
     else
         _export_model_result(stage, start_time, results_path)
     end
@@ -178,15 +181,16 @@ function get_time_stamps(stage::Stage, start_time::Dates.DateTime)
     return time_stamp
 end
 
-function _write_data(stage::Stage, save_path::AbstractString; kwargs...)
-    _write_data(stage.internal.psi_container, save_path; kwargs...)
+function write_data(stage::Stage, save_path::AbstractString; kwargs...)
+    write_data(stage.internal.psi_container, save_path; kwargs...)
     return
 end
 
 # These functions are writing directly to the feather file and skipping printing to memory.
 function _export_model_result(stage::Stage, start_time::Dates.DateTime, save_path::String)
-    _write_data(stage, save_path)
-    _write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
+    write_data(stage, save_path)
+    write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
+    write_data(get_parameters_value(get_psi_container(stage)), save_path; params = true)
     files = collect(readdir(save_path))
     compute_file_hash(save_path, files)
     return
@@ -198,9 +202,15 @@ function _export_model_result(
     save_path::String,
     dual_con::Vector{Symbol},
 )
-    _write_data(stage, save_path)
-    _write_data(get_psi_container(stage), save_path, dual_con)
-    _write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
+    duals = Dict()
+    for c in dual_con
+        v = get_constraint(get_psi_container(stage), c)
+        duals[c] = axis_array_to_dataframe(v)
+    end
+    write_data(stage, save_path)
+    write_data(duals, save_path; duals = true)
+    write_data(get_parameters_value(stage.internal.psi_container), save_path; params = true)
+    write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
     files = collect(readdir(save_path))
     compute_file_hash(save_path, files)
     return
