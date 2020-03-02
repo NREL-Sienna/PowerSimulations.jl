@@ -27,8 +27,11 @@ end
 
 # internal function for differentiating variables from duals in file names
 function _concat_dual(duals::Vector{Symbol})
-    duals = (String.(duals)) .* "_dual"
-    return duals
+    dual = []
+    for d in duals
+        dual = vcat(dual, "dual_" * String(d))
+    end
+    return dual
 end
 
 # internal function for differentiating variables from parameters in file names
@@ -76,8 +79,10 @@ function make_references(sim::Simulation, date_run::String; kwargs...)
         variable_names =
             (collect(keys(get_psi_container(sim.stages[stage_name]).variables)))
         if :constraints_duals in keys(kwargs) && !isnothing(kwargs[:constraints_duals])
-            dual_cons = Symbol.(_concat_dual(kwargs[:constraints_duals]))
-            variable_names = vcat(variable_names, dual_cons)
+            if !is_milp(get_psi_container(sim.stages[stage_name]))
+                dual_cons = Symbol.(_concat_dual(kwargs[:constraints_duals]))
+                variable_names = vcat(variable_names, dual_cons)
+            end
         end
         params =
             collect(keys(get_parameters_value(get_psi_container(sim.stages[stage_name]))))
@@ -139,7 +144,6 @@ function deserialize_sim_output(file_path::String)
         collect(readdir(path)),
         ["results_folder.json", "chronologies.json", "base_power.json"],
     )
-    list = setdiff(collect(readdir(path)), ["results_folder.json", "chronologies.json"])
     ref = Dict()
     for stage in list
         ref[stage] = Dict{Symbol, Any}()
@@ -152,8 +156,8 @@ function deserialize_sim_output(file_path::String)
     end
     results_folder = read_json(joinpath(path, "results_folder.json"))
     chronologies = Dict{Any, Any}(read_json(joinpath(path, "chronologies.json")))
-    base_power = Dict{Any, Any}(read_json(joinpath(path, "base_power.json")))
-    sim_output = SimulationResultsReference(ref, results_folder, chronologies, base_power)
+    base_powers = Dict{Any, Any}(read_json(joinpath(path, "base_power.json")))
+    sim_output = SimulationResultsReference(ref, results_folder, chronologies, base_powers)
     return sim_output
 end
 
@@ -280,10 +284,9 @@ function load_simulation_results(
     params = Dict{Symbol, DataFrames.DataFrame}()
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
     time_length = sim_output.chronologies[stage]
-    dual = find_duals(collect(keys(references[stage])))
-    param = find_params(variable)
-    variable = setdiff(variable, dual)
-    variable = setdiff(variable, param)
+    dual = _find_duals(collect(keys(references[stage])))
+    param = _find_params(variable)
+    variable = setdiff(variable, vcat(param, dual))
     for l in 1:length(variable)
         date_df = references[stage][variable[l]]
         step_df = DataFrames.DataFrame(
@@ -374,9 +377,9 @@ function load_simulation_results(
     duals = Dict{Symbol, Any}()
     params = Dict{Symbol, DataFrames.DataFrame}()
     variable = (collect(keys(references[stage])))
-    dual = find_duals(variable)
-    param = find_params(collect(keys(references[stage])))
-    variable = setdiff(variable, dual)
+    dual = _find_duals(variable)
+    param = _find_params(collect(keys(references[stage])))
+    variable = setdiff(variable, vcat(param, dual))
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
     time_length = sim_output.chronologies[stage]
 
@@ -477,8 +480,9 @@ function write_results(res::SimulationResults; kwargs...)
     write_data(res.variable_values, res.time_stamp, folder_path; kwargs...)
     write_optimizer_log(res.optimizer_log, folder_path)
     write_data(res.time_stamp, folder_path, "time_stamp"; kwargs...)
-    write_data(res.dual_values, folder_path; duals = true, kwargs...)
-    write_data(res.parameter_values, folder_path; params = true, kwargs...)
+    write_data(res.base_power, folder_path)
+    write_data(res.dual_values, folder_path; kwargs...)
+    write_data(res.parameter_values, folder_path; kwargs...)
     files = collect(readdir(folder_path))
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
@@ -507,6 +511,6 @@ function serialize_sim_output(sim_results::SimulationResultsReference)
 end
 
 # writes the results to CSV files in a folder path, but they can't be read back
-function write_to_CSV(results::SimulationResults, folder_path::String)
-    write_results(results, folder_path; file_type = CSV)
+function write_to_CSV(results::SimulationResults)
+    write_results(results; file_type = CSV)
 end

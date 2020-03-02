@@ -29,17 +29,7 @@ function get_time_stamps(results::OperationsProblemResults, key::Symbol)
     return results.time_stamp
 end
 
-function find_params(variables::Array)
-    params = []
-    for i in 1:length(variables)
-        if occursin("parameter", String.(variables[i]))
-            params = vcat(params, variables[i])
-        end
-    end
-    return params
-end
-
-function find_duals(variables::Array)
+function _find_duals(variables::Array)
     duals = []
     for i in 1:length(variables)
         if occursin("dual", String.(variables[i]))
@@ -77,8 +67,9 @@ function load_operation_results(folder_path::AbstractString)
     )
     vars_result = Dict{Symbol, DataFrames.DataFrame}()
     dual_result = Dict{Symbol, Any}()
-    dual_names = find_duals(variable_list)
-    param_names = find_params(variable_list)
+    dual_names = _find_duals(variable_list)
+    param_names = _find_params(variable_list)
+    variable_list = setdiff(variable_list, vcat(dual_names, param_names))
     param_values = Dict{Symbol, DataFrames.DataFrame}()
     for name in variable_list
         variable_name = splitext(name)[1]
@@ -109,7 +100,6 @@ function load_operation_results(folder_path::AbstractString)
         obj_value,
         optimizer_log,
         time_stamp,
-        folder_path,
         dual_result,
         param_values,
     )
@@ -139,11 +129,12 @@ function write_results(results::OperationsProblemResults, save_path::String; kwa
     ))
     write_data(results.variable_values, folder_path; kwargs...)
     if !isempty(results.dual_values)
-        write_data(results.dual_values, folder_path; kwargs...)
+        write_data(results.dual_values, folder_path; duals = true, kwargs...)
     end
     if !isempty(results.parameter_values)
-        write_data(results.parameter_values, folder_path; kwargs...)
+        write_data(results.parameter_values, folder_path; params = true, kwargs...)
     end
+    #write_data(results.parameter_values, folder_path; params = true, kwargs...)
     write_data(results.base_power, folder_path)
     write_optimizer_log(results.optimizer_log, folder_path)
     write_data(results.time_stamp, folder_path, "time_stamp"; kwargs...)
@@ -156,4 +147,14 @@ end
 # writes the results to CSV files in a folder path, but they can't be read back
 function write_to_CSV(results::OperationsProblemResults, folder_path::String)
     write_results(results, folder_path; file_type = CSV)
+end
+
+function _find_params(variables::Array)
+    params = []
+    for i in 1:length(variables)
+        if occursin("parameter", String.(variables[i]))
+            params = vcat(params, variables[i])
+        end
+    end
+    return params
 end

@@ -556,26 +556,3 @@ function get_dual_values(op::PSIContainer, cons::Vector{Symbol})
     end
     return results_dict
 end
-
-#=
-function write_data(
-    psi_container::PSIContainer,
-    save_path::AbstractString,
-    dual_con::Vector{Symbol};
-    kwargs...,
-)
-    duals = Dict{Symbol, Any}()
-    file_type = get(kwargs, :file_type, Feather)
-    if file_type == Feather || file_type == CSV
-        for c in dual_con
-            v = get_constraint(psi_container, c)
-            duals[c] = axis_array_to_dataframe(v)
-        end
-        for (k, v) in duals
-            file_path = joinpath(save_path, "$(k)_dual.$(lowercase("$file_type"))")
-            file_type.write(file_path, v)
-        end
-    end
-    return
-end
-=#

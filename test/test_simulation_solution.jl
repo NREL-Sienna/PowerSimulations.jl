@@ -90,14 +90,16 @@ function test_load_simulation(file_path::String)
             for f in files
                 rm("$(sim_results.results_folder)/$f")
             end
+            rm(sim_results.results_folder)
             res = load_simulation_results(sim_results, name)
+            !ispath(res.results_folder) && mkdir(res.results_folder)
             write_results(res)
             loaded_res = load_operation_results(sim_results.results_folder)
             @test loaded_res.variable_values == res.variable_values
         end
     end
 
-    @testset "Testing file names" begin
+    @testset "Test file names" begin
         for name in stage_names
             files = collect(readdir(sim_results.results_folder))
             for f in files
@@ -112,6 +114,11 @@ function test_load_simulation(file_path::String)
                 "optimizer_log"
                 "time_stamp"
                 "check"
+                "base_power"
+                "parameter_P_InterruptibleLoad"
+                "parameter_P_PowerLoad"
+                "parameter_P_RenewableDispatch"
+                "parameter_P_HydroEnergyReservoir"
             ]
             file_list = collect(readdir(sim_results.results_folder))
             for name in file_list
@@ -121,12 +128,11 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "Testing argument errors" begin
+    @testset "Test argument errors" begin
         for name in stage_names
             res = load_simulation_results(sim_results, name)
             if isdir(res.results_folder)
                 files = collect(readdir(res.results_folder))
-                @show files
                 for f in files
                     rm("$(res.results_folder)/$f")
                 end
@@ -179,19 +185,18 @@ function test_load_simulation(file_path::String)
         end
     end
     ###########################################################
-    @testset "Test constraint duals in results" begin
+
+    @testset "Test dual constraints in results" begin
         res = PSI.load_simulation_results(sim_results, "ED")
         dual =
             JuMP.dual(sim.stages["ED"].internal.psi_container.constraints[:CopperPlateBalance][1])
-        @test isapprox(dual, res.dual_values[:CopperPlateBalance_dual][1, 1], atol = 1.0e-4)
-
-        path = joinpath(file_path, "one")
-        !isdir(path) && mkdir(path)
-        PSI.write_to_CSV(res, path)
-        @test !isempty(path)
+        @test isapprox(dual, res.dual_values[:dual_CopperPlateBalance][1, 1], atol = 1.0e-4)
+        !ispath(res.results_folder) && mkdir(res.results_folder)
+        PSI.write_to_CSV(res)
+        @test !isempty(res.results_folder)
     end
 
-    @testset "Testing to verify parameter feedforward for consecutive UC to ED" begin
+    @testset "Test to verify parameter feedforward for consecutive UC to ED" begin
         P_keys = [
             (PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
             #(PSI.ON, PSY.ThermalStandard),
@@ -330,6 +335,7 @@ function test_load_simulation(file_path::String)
             end
         end
     end
+
     ####################
     @testset "negative test checking total sums" begin
         stage_names = keys(sim.stages)
@@ -377,13 +383,17 @@ function test_load_simulation(file_path::String)
             "UC" => Stage(
                 GenericOpProblem,
                 template_hydro_standard_uc,
+                #template_uc,
                 c_sys5_hy_uc,
+                #c_sys5_uc,
                 GLPK_optimizer,
             ),
             "ED" => Stage(
                 GenericOpProblem,
                 template_hydro_ed,
+                #template_ed,
                 c_sys5_hy_ed,
+                #c_sys5_ed,
                 GLPK_optimizer,
             ),
         )
@@ -419,7 +429,6 @@ function test_load_simulation(file_path::String)
         )
         build!(sim_cache)
         execute!(sim_cache)
-
         var_names =
             axes(PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On__ThermalStandard])[1]
         for name in var_names

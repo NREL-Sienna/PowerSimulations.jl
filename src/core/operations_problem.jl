@@ -202,6 +202,8 @@ get_devices_ref(op_problem::OperationsProblem) = op_problem.template.devices
 get_branches_ref(op_problem::OperationsProblem) = op_problem.template.branches
 get_services_ref(op_problem::OperationsProblem) = op_problem.template.services
 get_system(op_problem::OperationsProblem) = op_problem.sys
+get_psi_container(op_problem::OperationsProblem) = op_problem.psi_container
+get_base_power(op_problem::OperationsProblem) = op_problem.sys.basepower
 
 function set_transmission_model!(
     op_problem::OperationsProblem{M},
@@ -524,7 +526,7 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
     end
 
     vars_result = get_variables_value(op_problem)
-    param_values = get_parameters_value(op_problem)
+    param_values = get_parameters_value(get_psi_container(op_problem))
     optimizer_log = get_optimizer_log(op_problem)
     time_stamp = get_time_stamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
@@ -534,6 +536,7 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
     obj_value = Dict(
         :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel),
     )
+    basepower = get_base_power(op_problem)
     merge!(optimizer_log, timed_log)
 
     results = OperationsProblemResults(
@@ -598,6 +601,10 @@ end
 function write_data(op_problem::OperationsProblem, save_path::AbstractString; kwargs...)
     write_data(op_problem.psi_container, save_path; kwargs...)
     return
+end
+
+function _write_data(base_power::Float64, save_path::String)
+    JSON.write(joinpath(save_path, "base_power.json"), JSON.json(base_power))
 end
 
 """ Exports the OpModel JuMP object in MathOptFormat"""
