@@ -478,31 +478,12 @@ function get_variables_value(op_m::OperationsProblem)
     return results_dict
 end
 
-function get_dual_values(op_m::OperationsProblem; kwargs...)
-    cons = get(kwargs, :constraints_duals, nothing)
-    isnothing(cons) && return Dict{Symbol, Any}()
-    results_dict = Dict{Symbol, DataFrames.DataFrame}()
-    for c in cons
-        v = get_constraint(op_m.psi_container, c)
-        results_dict[c] = axis_array_to_dataframe(v)
-    end
-    return results_dict
+function get_parameters_value(op_m::OperationsProblem)
+    return get_parameters_value(op_m.psi_container)
 end
 
-function get_parameters_value(psi_container::PSIContainer)
-    # TODO: Still not obvious implementation since it needs to get the multipliers from
-    # the system
-    params_dict = Dict{Symbol, DataFrames.DataFrame}()
-    parameters = get_parameters(psi_container)
-    isnothing(parameters) && return params_dict
-    isempty(parameters) && return params_dict
-    for (k, v) in parameters
-        !isa(v.update_ref, UpdateRef{<:PSY.Component}) && continue
-        params_key_tuple = decode_symbol(k)
-        params_dict_key = Symbol(params_key_tuple[1], "_", params_key_tuple[3])
-        params_dict[params_dict_key] = axis_array_to_dataframe(get_parameter_array(v))
-    end
-    return params_dict
+function get_dual_values(op_m::OperationsProblem, constraints::Vector{Symbol})
+    return get_dual_values(op_m.psi_container, constraints)
 end
 
 """
@@ -550,34 +531,24 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
     time_stamp = get_time_stamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
     base_power = PSY.get_basepower(op_problem.sys)
-    dual_result = get_dual_values(op_problem; kwargs...)
+    constraint_duals = get(kwargs, :constraints_duals, Vector{Symbol}())
+    dual_result = get_dual_values(op_problem, constraint_duals)
     obj_value = Dict(
         :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel),
     )
     basepower = get_base_power(op_problem)
     merge!(optimizer_log, timed_log)
-    if :constraints_duals in keys(kwargs)
-        dual_result = get_model_duals(op_problem.psi_container, kwargs[:constraints_duals])
-        results = OperationsProblemResults(
-            basepower,
-            vars_result,
-            obj_value,
-            optimizer_log,
-            time_stamp,
-            dual_result,
-            param_values,
-        )
-    else
-        results = OperationsProblemResults(
-            basepower,
-            vars_result,
-            obj_value,
-            optimizer_log,
-            time_stamp,
-            nothing,
-            param_values,
-        )
-    end
+
+    results = OperationsProblemResults(
+        base_power,
+        vars_result,
+        obj_value,
+        optimizer_log,
+        time_stamp,
+        dual_result,
+        param_values,
+    )
+
     !isnothing(save_path) && write_results(results, save_path)
 
     return results

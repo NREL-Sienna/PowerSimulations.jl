@@ -93,12 +93,12 @@ get_sequence(s::Simulation) = s.sequence
 get_steps(s::Simulation) = s.steps
 get_date_range(s::Simulation) = s.internal.date_range
 
-function get_base_power(s::Simulation)
-    basepowers = Dict()
+function get_base_powers(s::Simulation)
+    base_powers = Dict()
     for (k, v) in s.stages
-        basepowers[k] = Int(v.sys.basepower)
+        base_powers[k] = v.sys.base_powers
     end
-    return basepowers
+    return base_powers
 end
 
 function get_stage(s::Simulation, name::String)
@@ -582,7 +582,7 @@ each stage and step.
 
 # Example
 ```julia
-sim = Simulation("test", 7, stages, "/Users/folder")
+sim = Simulation("Test", 7, stages, "/Users/folder")
 execute!!(sim::Simulation; kwargs...)
 ```
 

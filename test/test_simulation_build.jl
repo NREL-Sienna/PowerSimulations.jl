@@ -68,12 +68,12 @@ function test_sequence_build(file_path::String)
     end
 
     ###################### Negative Tests ########################################
-    @testset "testing when a simulation has incorrect arguments" begin
+    @testset "Testing when a simulation has incorrect arguments" begin
         sim = Simulation(name = "test", steps = 1, simulation_folder = file_path)
         @test_throws ArgumentError build!(sim)
     end
 
-    @testset "testing if a wrong initial time is provided" begin
+    @testset "Testing if a wrong initial time is provided" begin
 
         sim = Simulation(
             name = "test",
@@ -86,7 +86,7 @@ function test_sequence_build(file_path::String)
         @test_throws IS.ConflictingInputsError build!(sim)
     end
 
-    @testset "testing if file path is not writeable" begin
+    @testset "Testing if file path is not writeable" begin
         sequence = SimulationSequence(
             step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),

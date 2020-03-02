@@ -1,20 +1,20 @@
 struct OperationsProblemResults <: IS.Results
     base_power::Float64
-    variables::Dict{Symbol, DataFrames.DataFrame}
+    variable_values::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
-    constraints_duals::Union{Nothing, Dict{Symbol, Any}}
+    dual_values::Dict{Symbol, Any}
     parameter_values::Dict{Symbol, DataFrames.DataFrame}
 end
 
-get_variables(result::OperationsProblemResults) = result.variables
+get_variables(result::OperationsProblemResults) = result.variable_values
 get_cost(result::OperationsProblemResults) = result.total_cost
 get_time_stamp(result::OperationsProblemResults) = result.time_stamp
-get_duals(result::OperationsProblemResults) = result.constraints_duals
+get_duals(result::OperationsProblemResults) = result.dual_values
 
 function get_variable(res_model::OperationsProblemResults, key::Symbol)
-    var_result = get(res_model.variables, key, nothing)
+    var_result = get(res_model.variable_values, key, nothing)
     if isnothing(var_result)
         throw(ArgumentError("No variable with key $(key) has been found."))
     end
@@ -27,6 +27,26 @@ end
 
 function get_time_stamps(results::OperationsProblemResults, key::Symbol)
     return results.time_stamp
+end
+
+function find_params(variables::Array)
+    params = []
+    for i in 1:length(variables)
+        if occursin("parameter", String.(variables[i]))
+            params = vcat(params, variables[i])
+        end
+    end
+    return params
+end
+
+function find_duals(variables::Array)
+    duals = []
+    for i in 1:length(variables)
+        if occursin("dual", String.(variables[i]))
+            duals = vcat(duals, variables[i])
+        end
+    end
+    return duals
 end
 
 """
@@ -57,9 +77,11 @@ function load_operation_results(folder_path::AbstractString)
     )
     vars_result = Dict{Symbol, DataFrames.DataFrame}()
     dual_result = Dict{Symbol, Any}()
+    dual_names = find_duals(variable_list)
+    param_names = find_params(variable_list)
+    variable_list = setdiff(variable_list, dual_names)
+    variable_list = setdiff(variable_list, param_names)
     param_values = Dict{Symbol, DataFrames.DataFrame}()
-    dual_names = _find_duals(variable_list)
-    param_names = _find_params(variable_list)
     for name in variable_list
         variable_name = splitext(name)[1]
         file_path = joinpath(folder_path, name)
@@ -83,7 +105,6 @@ function load_operation_results(folder_path::AbstractString)
     end
     obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer_log["obj_value"])
     check_file_integrity(folder_path)
-    # TODO: Load parameter results
     results = OperationsProblemResults(
         base_power,
         vars_result,
@@ -117,11 +138,14 @@ function write_results(results::OperationsProblemResults, save_path::String; kwa
         save_path,
         replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-"),
     ))
-    write_data(results.variables, folder_path; kwargs...)
-    if !isempty(results.constraints_duals)
-        write_data(results.constraints_duals, folder_path; duals = true, kwargs...)
+    write_data(results.variable_values, folder_path; kwargs...)
+    if !isempty(results.dual_values)
+        write_data(results.dual_values, folder_path; duals = true, kwargs...)
     end
-    write_data(results.parameter_values, folder_path; params = true, kwargs...)
+    if !isempty(results.parameter_values)
+        write_data(results.parameter_values, folder_path; params = true, kwargs...)
+    end
+    #write_data(results.parameter_values, folder_path; params = true, kwargs...)
     write_data(results.base_power, folder_path)
     write_optimizer_log(results.optimizer_log, folder_path)
     write_data(results.time_stamp, folder_path, "time_stamp"; kwargs...)

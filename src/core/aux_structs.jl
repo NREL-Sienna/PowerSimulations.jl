@@ -18,7 +18,7 @@ function UpdateRef{T}(
     ::Type{U},
     name::AbstractString,
 ) where {T <: Union{JuMP.VariableRef, PJ.ParameterRef}, U <: PSY.Component}
-    return UpdateRef{T}(_encode_for_jump(U, name), nothing)
+    return UpdateRef{T}(encode_symbol(U, name), nothing)
 end
 
 function UpdateRef{T}(
@@ -26,7 +26,7 @@ function UpdateRef{T}(
     accessor_func::AbstractString,
 ) where {T <: PSY.Component}
     # Combine these three fields together in order to guarantee uniqueness.
-    return UpdateRef{T}(_encode_for_jump(T, name, accessor_func), accessor_func)
+    return UpdateRef{T}(encode_symbol(T, name, accessor_func), accessor_func)
 end
 
 function get_accessor_func(ref::UpdateRef{T}) where {T <: PSY.Component}

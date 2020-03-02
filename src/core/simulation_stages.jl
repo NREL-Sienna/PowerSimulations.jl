@@ -32,7 +32,6 @@ end
         optimizer::JuMP.MOI.OptimizerWithAttributes
         internal::Union{Nothing, StageInternal}
         )
-
 """
 mutable struct Stage{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
@@ -112,7 +111,7 @@ function run_stage(
     retrieve_duals = get(kwargs, :constraints_duals, nothing)
     if !isnothing(retrieve_duals)
         if is_milp(stage.internal.psi_container)
-            @warn("$(stage.internal.number) is an MILP, duals can't be exported")
+            @warn("$(stage.internal.number) is a MILP, duals can't be exported")
             _export_model_result(stage, start_time, results_path)
         else
             _export_model_result(stage, start_time, results_path, retrieve_duals)
