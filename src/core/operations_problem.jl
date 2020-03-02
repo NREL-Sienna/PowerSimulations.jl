@@ -476,16 +476,12 @@ function get_variables_value(op_m::OperationsProblem)
     return results_dict
 end
 
-function get_dual_values(op_m::OperationsProblem; kwargs...)
-    cons = get(kwargs, :constraints_duals, [])
-    results_dict = Dict(
-        c => axis_array_to_dataframe(get_constraint(op_m.psi_container, c)) for c in cons
-    )
-    return results_dict
-end
-
 function get_parameters_value(op_m::OperationsProblem)
     return get_parameters_value(op_m.psi_container)
+end
+
+function get_dual_values(op_m::OperationsProblem, constraints::Vector{Symbol})
+    return get_dual_values(op_m.psi_container, constraints)
 end
 
 """
@@ -533,7 +529,8 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
     time_stamp = get_time_stamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
     base_power = PSY.get_basepower(op_problem.sys)
-    dual_result = get_dual_values(op_problem; kwargs...)
+    constraint_duals = get(kwargs, :constraints_duals, Vector{Symbol}())
+    dual_result = get_dual_values(op_problem, constraint_duals)
     obj_value = Dict(
         :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel),
     )
