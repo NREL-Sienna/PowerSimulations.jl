@@ -29,17 +29,7 @@ function get_time_stamps(results::OperationsProblemResults, key::Symbol)
     return results.time_stamp
 end
 
-function find_params(variables::Array)
-    params = []
-    for i in 1:length(variables)
-        if occursin("parameter", String.(variables[i]))
-            params = vcat(params, variables[i])
-        end
-    end
-    return params
-end
-
-function find_duals(variables::Array)
+function _find_duals(variables::Array)
     duals = []
     for i in 1:length(variables)
         if occursin("dual", String.(variables[i]))
@@ -77,10 +67,9 @@ function load_operation_results(folder_path::AbstractString)
     )
     vars_result = Dict{Symbol, DataFrames.DataFrame}()
     dual_result = Dict{Symbol, Any}()
-    dual_names = find_duals(variable_list)
-    param_names = find_params(variable_list)
-    variable_list = setdiff(variable_list, dual_names)
-    variable_list = setdiff(variable_list, param_names)
+    dual_names = _find_duals(variable_list)
+    param_names = _find_params(variable_list)
+    variable_list = setdiff(variable_list, vcat(dual_names, param_names))
     param_values = Dict{Symbol, DataFrames.DataFrame}()
     for name in variable_list
         variable_name = splitext(name)[1]

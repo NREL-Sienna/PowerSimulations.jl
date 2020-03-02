@@ -463,16 +463,6 @@ function get_parameter_array(psi_container::PSIContainer, ref)
     return get_parameter_array(get_parameter_container(psi_container, ref))
 end
 
-function get_model_duals(op::PSIContainer, cons::Vector{Symbol})
-    results_dict = Dict{Symbol, DataFrames.DataFrame}()
-
-    for c in cons
-        v = get_constraint(op, c)
-        results_dict[c] = axis_array_to_dataframe(v)
-    end
-    return results_dict
-end
-
 function assign_parameter!(psi_container::PSIContainer, container::ParameterContainer)
     @debug "assign_parameter" container.update_ref
     name = container.update_ref.access_ref

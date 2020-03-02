@@ -284,10 +284,9 @@ function load_simulation_results(
     params = Dict{Symbol, DataFrames.DataFrame}()
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
     time_length = sim_output.chronologies[stage]
-    dual = find_duals(collect(keys(references[stage])))
-    param = find_params(variable)
-    variable = setdiff(variable, dual)
-    variable = setdiff(variable, param)
+    dual = _find_duals(collect(keys(references[stage])))
+    param = _find_params(variable)
+    variable = setdiff(variable, vcat(param, dual))
     for l in 1:length(variable)
         date_df = references[stage][variable[l]]
         step_df = DataFrames.DataFrame(
@@ -378,10 +377,9 @@ function load_simulation_results(
     duals = Dict{Symbol, Any}()
     params = Dict{Symbol, DataFrames.DataFrame}()
     variable = (collect(keys(references[stage])))
-    dual = find_duals(variable)
-    param = find_params(collect(keys(references[stage])))
-    variable = setdiff(variable, dual)
-    variable = setdiff(variable, param)
+    dual = _find_duals(variable)
+    param = _find_params(collect(keys(references[stage])))
+    variable = setdiff(variable, vcat(param, dual))
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
     time_length = sim_output.chronologies[stage]
 
