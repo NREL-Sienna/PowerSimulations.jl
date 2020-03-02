@@ -524,7 +524,6 @@ function _export_optimizer_log(
     psi_container::PSIContainer,
     path::String,
 )
-
     optimizer_log[:obj_value] = JuMP.objective_value(psi_container.JuMPmodel)
     optimizer_log[:termination_status] =
         Int(JuMP.termination_status(psi_container.JuMPmodel))
@@ -557,6 +556,7 @@ function get_model_duals(op::PSIContainer, cons::Vector{Symbol})
     return results_dict
 end
 
+#=
 function write_data(
     psi_container::PSIContainer,
     save_path::AbstractString,
@@ -577,3 +577,4 @@ function write_data(
     end
     return
 end
+=#
