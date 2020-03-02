@@ -233,7 +233,7 @@ res = solve_op_problem!(op_problem; constraints_duals = duals)
     end
 end
 
-path = joinpath(pwd(), "Test_writing")
+path = joinpath(pwd(), "test_writing")
 !isdir(path) && mkdir(path)
 
 function test_write_functions(file_path)
