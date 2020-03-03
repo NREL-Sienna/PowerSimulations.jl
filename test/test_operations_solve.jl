@@ -235,7 +235,8 @@ end
 
 @testset "test get variable function" begin
     @test_throws IS.ConflictingInputsError PSI.get_variable(res, :fake)
-    @test res.variable_values[:P__ThermalStandard] == PSI.get_variable(res, :P__ThermalStandard)
+    @test res.variable_values[:P__ThermalStandard] ==
+          PSI.get_variable(res, :P__ThermalStandard)
 end
 
 path = joinpath(pwd(), "test_writing")
@@ -285,7 +286,10 @@ function test_write_functions(file_path)
         )
         @test isfile(joinpath(file_path, "four", "$(var_name).feather"))
 
-        PSI.write_optimizer_log(PSI.get_optimizer_log(res), mkdir(joinpath(file_path, "five")))
+        PSI.write_optimizer_log(
+            PSI.get_optimizer_log(res),
+            mkdir(joinpath(file_path, "five")),
+        )
         @test isfile(joinpath(file_path, "five", "optimizer_log.json"))
 
         PSI.write_to_CSV(res, mkdir(joinpath(file_path, "six")))
