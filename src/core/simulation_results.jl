@@ -217,23 +217,6 @@ function _read_time(file_path::String, time_length::Number)
     return time_stamp
 end
 
-""" This sums all of the rows in a result dataframe """
-function rowsum(variable::DataFrames.DataFrame, name::String)
-    variable = DataFrames.DataFrame(Symbol(name) => sum.(eachcol(variable)))
-    return variable
-end
-""" This sums each column in a result dataframe """
-function columnsum(variable::DataFrames.DataFrame)
-    shortvar = DataFrames.DataFrame()
-    varnames = collect(names(variable))
-    eachsum = (sum.(eachrow(variable)))
-    for i in 1:size(variable, 1)
-        df = DataFrames.DataFrame(Symbol(varnames[i]) => eachsum[i])
-        shortvar = hcat(shortvar, df)
-    end
-    return shortvar
-end
-
 """
     load_simulation_results(stage, step, variable, SimulationResultsReference)
 

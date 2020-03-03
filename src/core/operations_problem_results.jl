@@ -12,21 +12,14 @@ get_variables(result::OperationsProblemResults) = result.variable_values
 get_cost(result::OperationsProblemResults) = result.total_cost
 get_time_stamp(result::OperationsProblemResults) = result.time_stamp
 get_duals(result::OperationsProblemResults) = result.dual_values
+get_optimizer_log(results::OperationsProblemResults) = results.optimizer_log
 
 function get_variable(res_model::OperationsProblemResults, key::Symbol)
     var_result = get(res_model.variable_values, key, nothing)
     if isnothing(var_result)
-        throw(ArgumentError("No variable with key $(key) has been found."))
+        throw(IS.ConflictingInputsError("No variable with key $(key) has been found."))
     end
     return var_result
-end
-
-function get_optimizer_log(results::OperationsProblemResults)
-    return results.optimizer_log
-end
-
-function get_time_stamps(results::OperationsProblemResults, key::Symbol)
-    return results.time_stamp
 end
 
 function _find_duals(variables::Array)
@@ -127,9 +120,9 @@ function write_results(results::OperationsProblemResults, save_path::String; kwa
         save_path,
         replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-"),
     ))
-    write_data(results.variable_values, folder_path; kwargs...)
-    if !isempty(results.dual_values)
-        write_data(results.dual_values, folder_path; duals = true, kwargs...)
+    write_data(get_variables(results), folder_path; kwargs...)
+    if !isempty(get_duals(results))
+        write_data(get_duals(results), folder_path; duals = true, kwargs...)
     end
     if !isempty(results.parameter_values)
         write_data(results.parameter_values, folder_path; params = true, kwargs...)

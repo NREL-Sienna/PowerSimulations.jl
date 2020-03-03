@@ -227,10 +227,16 @@ res = solve_op_problem!(op_problem; constraints_duals = duals)
 
 @testset "test constraint duals in the operations problem" begin
     name = PSI.constraint_name("CopperPlateBalance")
-    for i in 1:ncol(res.time_stamp)
+    for i in 1:ncol(PSI.get_time_stamp(res))
         dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
-        @test isapprox(dual, res.dual_values[name][i, 1])
+        @test isapprox(dual, PSI.get_duals(res)[name][i, 1])
     end
+end
+
+@testset "test get variable function" begin
+    @test_throws IS.ConflictingInputsError PSI.get_variable(res, :fake)
+    @test res.variable_values[:P__ThermalStandard] ==
+          PSI.get_variable(res, :P__ThermalStandard)
 end
 
 path = joinpath(pwd(), "test_writing")
@@ -239,34 +245,34 @@ path = joinpath(pwd(), "test_writing")
 function test_write_functions(file_path)
 
     @testset "Test write_data functions" begin
-        PSI.write_data(res.variable_values, mkdir(joinpath(file_path, "one")))
+        PSI.write_data(PSI.get_variables(res), mkdir(joinpath(file_path, "one")))
         readdir(joinpath(file_path, "one"))
-        for (k, v) in res.variable_values
+        for (k, v) in PSI.get_variables(res)
             @test isfile(joinpath(file_path, "one", "$k.feather"))
         end
 
         PSI.write_data(
-            res.variable_values,
+            PSI.get_variables(res),
             res.time_stamp,
             mkdir(joinpath(file_path, "two"));
             file_type = CSV,
         )
-        for (k, v) in res.variable_values
+        for (k, v) in PSI.get_variables(res)
             @test isfile(joinpath(file_path, "two/$k.csv"))
         end
 
         PSI.write_data(
-            res.variable_values,
+            PSI.get_variables(res),
             res.time_stamp,
             mkdir(joinpath(file_path, "three")),
         )
-        for (k, v) in res.variable_values
+        for (k, v) in PSI.get_variables(res)
             @test isfile(joinpath(file_path, "three", "$k.feather"))
         end
 
         var_name = PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)
         PSI.write_data(
-            res.variable_values[var_name],
+            PSI.get_variables(res)[var_name],
             mkdir(joinpath(file_path, "four")),
             string(var_name),
         )
@@ -274,13 +280,16 @@ function test_write_functions(file_path)
 
         #testing if directory is a file
         PSI.write_data(
-            res.variable_values[var_name],
+            PSI.get_variables(res)[var_name],
             joinpath(file_path, "four", "$(var_name).feather"),
             string(var_name),
         )
         @test isfile(joinpath(file_path, "four", "$(var_name).feather"))
 
-        PSI.write_optimizer_log(res.optimizer_log, mkdir(joinpath(file_path, "five")))
+        PSI.write_optimizer_log(
+            PSI.get_optimizer_log(res),
+            mkdir(joinpath(file_path, "five")),
+        )
         @test isfile(joinpath(file_path, "five", "optimizer_log.json"))
 
         PSI.write_to_CSV(res, mkdir(joinpath(file_path, "six")))
