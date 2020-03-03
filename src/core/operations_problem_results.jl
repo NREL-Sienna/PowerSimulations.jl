@@ -12,6 +12,15 @@ get_variables(result::OperationsProblemResults) = result.variable_values
 get_cost(result::OperationsProblemResults) = result.total_cost
 get_time_stamp(result::OperationsProblemResults) = result.time_stamp
 get_duals(result::OperationsProblemResults) = result.dual_values
+get_optimizer_log(results::OperationsProblemResults) = results.optimizer_log
+
+function get_variable(res_model::OperationsProblemResults, key::Symbol)
+    var_result = get(res_model.variable_values, key, nothing)
+    if isnothing(var_result)
+         throw(IS.ConflictingInputsError("No variable with key $(key) has been found."))		
+     end
+     return var_result
+ end
 
 function _find_duals(variables::Array)
     duals = []
