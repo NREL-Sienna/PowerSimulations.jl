@@ -113,6 +113,13 @@ export UnitCommitmentProblem
 export run_economic_dispatch
 export run_unit_commitment
 
+## Demand Response
+export demandconstraints
+export demandconstraintsfull
+export demandconstraintsgreedy
+export demandconstraintsprices
+export demandconstraintstou
+
 ## Utils Exports
 export SimulationResultsReference
 #export get_sim_resolution
@@ -216,5 +223,9 @@ include("network_models/network_constructor.jl")
 include("operations_problems_templates.jl")
 # Printing
 include("printing.jl")
+
+#Demand Reponse Files
+include("demand_response/demand_response.jl")
+include("demand_response/bev.jl")
 
 end
