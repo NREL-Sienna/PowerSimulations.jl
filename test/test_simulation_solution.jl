@@ -190,7 +190,7 @@ function test_load_simulation(file_path::String)
         res = PSI.load_simulation_results(sim_results, "ED")
         dual =
             JuMP.dual(sim.stages["ED"].internal.psi_container.constraints[:CopperPlateBalance][1])
-        @test isapprox(dual, res.dual_values[:dual_CopperPlateBalance][1, 1], atol = 1.0e-4)
+        @test isapprox(dual, PSI.get_duals(res)[:dual_CopperPlateBalance][1, 1], atol = 1.0e-4)
         !ispath(res.results_folder) && mkdir(res.results_folder)
         PSI.write_to_CSV(res)
         @test !isempty(res.results_folder)
