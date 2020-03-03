@@ -1,5 +1,4 @@
 import CSV
-import Plots
 
 devices = Dict{Symbol, DeviceModel}(
     :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
@@ -230,7 +229,7 @@ res = solve_op_problem!(op_problem; constraints_duals = duals)
     name = PSI.constraint_name("CopperPlateBalance")
     for i in 1:ncol(res.time_stamp)
         dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
-        @test isapprox(dual, res.constraints_duals[name][i, 1])
+        @test isapprox(dual, res.dual_values[name][i, 1])
     end
 end
 
@@ -239,52 +238,56 @@ path = joinpath(pwd(), "test_writing")
 
 function test_write_functions(file_path)
 
-    @testset "test _write_data functions" begin
-        PSI._write_data(res.variables, mkdir(joinpath(file_path, "one")))
+    @testset "Test write_data functions" begin
+        PSI.write_data(res.variable_values, mkdir(joinpath(file_path, "one")))
         readdir(joinpath(file_path, "one"))
-        for (k, v) in res.variables
+        for (k, v) in res.variable_values
             @test isfile(joinpath(file_path, "one", "$k.feather"))
         end
 
-        PSI._write_data(
-            res.variables,
+        PSI.write_data(
+            res.variable_values,
             res.time_stamp,
             mkdir(joinpath(file_path, "two"));
             file_type = CSV,
         )
-        for (k, v) in res.variables
+        for (k, v) in res.variable_values
             @test isfile(joinpath(file_path, "two/$k.csv"))
         end
 
-        PSI._write_data(res.variables, res.time_stamp, mkdir(joinpath(file_path, "three")))
-        for (k, v) in res.variables
+        PSI.write_data(
+            res.variable_values,
+            res.time_stamp,
+            mkdir(joinpath(file_path, "three")),
+        )
+        for (k, v) in res.variable_values
             @test isfile(joinpath(file_path, "three", "$k.feather"))
         end
 
         var_name = PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)
-        PSI._write_data(
-            res.variables[var_name],
+        PSI.write_data(
+            res.variable_values[var_name],
             mkdir(joinpath(file_path, "four")),
             string(var_name),
         )
         @test isfile(joinpath(file_path, "four", "$(var_name).feather"))
 
         #testing if directory is a file
-        PSI._write_data(
-            res.variables[var_name],
+        PSI.write_data(
+            res.variable_values[var_name],
             joinpath(file_path, "four", "$(var_name).feather"),
             string(var_name),
         )
         @test isfile(joinpath(file_path, "four", "$(var_name).feather"))
 
-        PSI._write_optimizer_log(res.optimizer_log, mkdir(joinpath(file_path, "five")))
+        PSI.write_optimizer_log(res.optimizer_log, mkdir(joinpath(file_path, "five")))
         @test isfile(joinpath(file_path, "five", "optimizer_log.json"))
 
         PSI.write_to_CSV(res, mkdir(joinpath(file_path, "six")))
         @test !isempty(joinpath(file_path, "six", "results"))
     end
 
-    @testset "test write result functions" begin
+    @testset "Test write result functions" begin
         new_path = joinpath(file_path, "seven")
         PSI.write_results(res, mkdir(new_path))
         @test !isempty(new_path)

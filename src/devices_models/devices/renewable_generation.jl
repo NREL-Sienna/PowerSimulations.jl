@@ -279,6 +279,12 @@ function cost_function(
     device_formulation::Type{D},
     system_formulation::Type{<:PM.AbstractPowerModel},
 ) where {D <: AbstractRenewableDispatchFormulation}
-    add_to_cost(psi_container, devices, Symbol("P_RenewableDispatch"), :fixed, -1.0)
+    add_to_cost(
+        psi_container,
+        devices,
+        variable_name(ACTIVE_POWER, PSY.RenewableDispatch),
+        :fixed,
+        -1.0,
+    )
     return
 end

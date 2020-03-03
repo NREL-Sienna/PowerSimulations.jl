@@ -195,15 +195,21 @@ function branch_rate_constraints!(
     rating_constraint!(
         psi_container,
         range_data,
-        Symbol("RateLimitFT_$(B)"),
-        (Symbol("FpFT_$(B)"), Symbol("FqFT_$(B)")),
+        constraint_name(RATE_LIMIT_FT, B),
+        (
+            variable_name(FLOW_ACTIVE_POWER_FROM_TO, B),
+            variable_name(FLOW_REACTIVE_POWER_FROM_TO, B),
+        ),
     )
 
     rating_constraint!(
         psi_container,
         range_data,
-        Symbol("RateLimitTF_$(B)"),
-        (Symbol("FpTF_$(B)"), Symbol("FqTF_$(B)")),
+        constraint_name(RATE_LIMIT_TF, B),
+        (
+            variable_name(FLOW_ACTIVE_POWER_TO_FROM, B),
+            variable_name(FLOW_REACTIVE_POWER_TO_FROM, B),
+        ),
     )
 
     return
@@ -219,16 +225,13 @@ function branch_flow_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 )
     flow_range_data = [(PSY.get_name(h), PSY.get_flowlimits(h)) for h in devices]
-
     device_range(
         psi_container,
-        range_data,
-        constraint_name(FLOW_LIMIT, B),
-        variable_name(FLOW_ACTIVE_POWER, B),
+        flow_range_data,
+        constraint_name(FLOW_LIMIT, PSY.MonitoredLine),
+        variable_name(FLOW_ACTIVE_POWER, PSY.MonitoredLine),
     )
-
     return
-
 end
 
 function branch_flow_constraints!(
@@ -242,9 +245,9 @@ function branch_flow_constraints!(
     limit_values_FT = Vector{MinMax}(undef, length(devices))
     limit_values_TF = Vector{MinMax}(undef, length(devices))
 
-    for d in devices
+    for (ix, d) in enumerate(devices)
         limit_values_FT[ix] = PSY.get_flowlimits(d)
-        limit_values_TFt[ix] =
+        limit_values_TF[ix] =
             (min = PSY.get_flowlimits(d).max, max = PSY.get_flowlimits(d).min)
         names[ix] = PSY.get_name(d)
     end
@@ -253,24 +256,24 @@ function branch_flow_constraints!(
         psi_container,
         DeviceRange(
             names,
-            limit_values_out,
+            limit_values_FT,
             Vector{Vector{Symbol}}(),
             Vector{Vector{Symbol}}(),
         ),
-        constraint_name(FLOW_LIMIT_FROM_TO, B),
-        variable_name(FLOW_ACTIVE_POWER_FROM_TO, B),
+        constraint_name(FLOW_LIMIT_FROM_TO, PSY.MonitoredLine),
+        variable_name(FLOW_ACTIVE_POWER_FROM_TO, PSY.MonitoredLineB),
     )
 
     device_range(
         psi_container,
         DeviceRange(
             names,
-            limit_values_in,
+            limit_values_TF,
             Vector{Vector{Symbol}}(),
             Vector{Vector{Symbol}}(),
         ),
-        constraint_name(FLOW_LIMIT_TO_FROM, B),
-        variable_name(FLOW_ACTIVE_POWER_TO_FROM, B),
+        constraint_name(FLOW_LIMIT_TO_FROM, PSY.MonitoredLine),
+        variable_name(FLOW_ACTIVE_POWER_TO_FROM, PSY.MonitoredLine),
     )
     return
 end

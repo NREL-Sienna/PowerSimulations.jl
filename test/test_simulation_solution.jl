@@ -84,20 +84,22 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "test reading and writing to the results folder" begin
+    @testset "Test reading and writing to the results folder" begin
         for name in stage_names
             files = collect(readdir(sim_results.results_folder))
             for f in files
                 rm("$(sim_results.results_folder)/$f")
             end
+            rm(sim_results.results_folder)
             res = load_simulation_results(sim_results, name)
+            !ispath(res.results_folder) && mkdir(res.results_folder)
             write_results(res)
             loaded_res = load_operation_results(sim_results.results_folder)
-            @test loaded_res.variables == res.variables
+            @test loaded_res.variable_values == res.variable_values
         end
     end
 
-    @testset "testing file names" begin
+    @testset "Test file names" begin
         for name in stage_names
             files = collect(readdir(sim_results.results_folder))
             for f in files
@@ -108,10 +110,15 @@ function test_load_simulation(file_path::String)
             variable_list = String.(PSI.get_variable_names(sim, name))
             variable_list = [
                 variable_list
-                "CopperPlateBalance_dual"
+                "dual_CopperPlateBalance"
                 "optimizer_log"
                 "time_stamp"
                 "check"
+                "base_power"
+                "parameter_P_InterruptibleLoad"
+                "parameter_P_PowerLoad"
+                "parameter_P_RenewableDispatch"
+                "parameter_P_HydroEnergyReservoir"
             ]
             file_list = collect(readdir(sim_results.results_folder))
             for name in file_list
@@ -121,12 +128,11 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "testing argument errors" begin
+    @testset "Test argument errors" begin
         for name in stage_names
             res = load_simulation_results(sim_results, name)
             if isdir(res.results_folder)
                 files = collect(readdir(res.results_folder))
-                @show files
                 for f in files
                     rm("$(res.results_folder)/$f")
                 end
@@ -136,21 +142,26 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "test simulation output serialization and deserialization" begin
+    @testset "Test simulation output serialization and deserialization" begin
         output_path = joinpath(dirname(sim_results.results_folder), "output_references")
         sim_output = collect(readdir(output_path))
-        @test sim_output ==
-              ["chronologies.json", "results_folder.json", "stage-ED", "stage-UC"]
+        @test sim_output == [
+            "base_power.json",
+            "chronologies.json",
+            "results_folder.json",
+            "stage-ED",
+            "stage-UC",
+        ]
         sim_test = PSI.deserialize_sim_output(dirname(output_path))
         @test sim_test.ref == sim_results.ref
     end
 
-    @testset "test load simulation results between the two methods of load simulation" begin
+    @testset "Test load simulation results between the two methods of load simulation" begin
         for name in stage_names
             variable = PSI.get_variable_names(sim, name)
             results = load_simulation_results(sim_results, name)
             res = load_simulation_results(sim_results, name, step, variable)
-            @test results.variables == res.variables
+            @test results.variable_values == res.variable_values
         end
     end
 
@@ -174,23 +185,18 @@ function test_load_simulation(file_path::String)
         end
     end
     ###########################################################
+
     @testset "Test dual constraints in results" begin
         res = PSI.load_simulation_results(sim_results, "ED")
         dual =
             JuMP.dual(sim.stages["ED"].internal.psi_container.constraints[:CopperPlateBalance][1])
-        @test isapprox(
-            dual,
-            res.constraints_duals[:CopperPlateBalance_dual][1, 1],
-            atol = 1.0e-4,
-        )
-
-        path = joinpath(file_path, "one")
-        !isdir(path) && mkdir(path)
-        PSI.write_to_CSV(res, path)
-        @test !isempty(path)
+        @test isapprox(dual, res.dual_values[:dual_CopperPlateBalance][1, 1], atol = 1.0e-4)
+        !ispath(res.results_folder) && mkdir(res.results_folder)
+        PSI.write_to_CSV(res)
+        @test !isempty(res.results_folder)
     end
 
-    @testset "Testing to verify parameter feedforward for consecutive UC to ED" begin
+    @testset "Test to verify parameter feedforward for consecutive UC to ED" begin
         P_keys = [
             (PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
             #(PSI.ON, PSY.ThermalStandard),
@@ -321,7 +327,7 @@ function test_load_simulation(file_path::String)
         for (ik, key) in enumerate(ic_keys)
             initial_conditions =
                 get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
-            vars = results.variables[vars_names[ik]] # change to getter function
+            vars = results.variable_values[vars_names[ik]] # change to getter function
             for ic in initial_conditions
                 output = vars[1, Symbol(PSI.device_name(ic))] # change to getter function
                 initial_cond = value(PSI.get_value(ic))
@@ -329,6 +335,7 @@ function test_load_simulation(file_path::String)
             end
         end
     end
+
     ####################
     @testset "negative test checking total sums" begin
         stage_names = keys(sim.stages)
@@ -376,13 +383,17 @@ function test_load_simulation(file_path::String)
             "UC" => Stage(
                 GenericOpProblem,
                 template_hydro_standard_uc,
+                #template_uc,
                 c_sys5_hy_uc,
+                #c_sys5_uc,
                 GLPK_optimizer,
             ),
             "ED" => Stage(
                 GenericOpProblem,
                 template_hydro_ed,
+                #template_ed,
                 c_sys5_hy_ed,
+                #c_sys5_ed,
                 GLPK_optimizer,
             ),
         )
@@ -418,12 +429,11 @@ function test_load_simulation(file_path::String)
         )
         build!(sim_cache)
         execute!(sim_cache)
-
         var_names =
-            axes(PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On_ThermalStandard])[1]
+            axes(PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On__ThermalStandard])[1]
         for name in var_names
             var =
-                PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On_ThermalStandard][
+                PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On__ThermalStandard][
                     name,
                     24,
                 ]

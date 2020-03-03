@@ -264,36 +264,38 @@ function set_initial_conditions!(psi_container::PSIContainer, key::ICKey, value)
     psi_container.initial_conditions[key] = value
 end
 
-const _JUMP_NAME_DELIMITER = "_"
-
-function _encode_for_jump(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}
-    return Symbol(join((name1, name2, T), _JUMP_NAME_DELIMITER))
+function encode_symbol(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}
+    return Symbol(join((name1, name2, T), PSI_NAME_DELIMITER))
 end
 
-function _encode_for_jump(::Type{T}, name1::Symbol, name2::Symbol) where {T}
-    return _encode_for_jump(T, string(name1), string(name2))
+function encode_symbol(::Type{T}, name1::Symbol, name2::Symbol) where {T}
+    return encode_symbol(T, string(name1), string(name2))
 end
 
-function _encode_for_jump(::Type{T}, name::AbstractString) where {T}
-    return Symbol(join((name, T), _JUMP_NAME_DELIMITER))
+function encode_symbol(::Type{T}, name::AbstractString) where {T}
+    return Symbol(join((name, T), PSI_NAME_DELIMITER))
 end
 
-function _encode_for_jump(::Type{T}, name::Symbol) where {T}
-    return Symbol(join((string(name), T), _JUMP_NAME_DELIMITER))
+function encode_symbol(::Type{T}, name::Symbol) where {T}
+    return Symbol(join((string(name), T), PSI_NAME_DELIMITER))
 end
 
-function _encode_for_jump(name::AbstractString)
+function encode_symbol(name::AbstractString)
     return Symbol(name)
 end
 
-function _encode_for_jump(name::Symbol)
+function encode_symbol(name::Symbol)
     return name
 end
 
-constraint_name(cons_type, device_type) = _encode_for_jump(device_type, cons_type)
-constraint_name(cons_type) = _encode_for_jump(cons_type)
-variable_name(var_type, device_type) = _encode_for_jump(device_type, var_type)
-variable_name(var_type) = _encode_for_jump(var_type)
+function decode_symbol(name::Symbol)
+    return split(String(name), PSI_NAME_DELIMITER)
+end
+
+constraint_name(cons_type, device_type) = encode_symbol(device_type, cons_type)
+constraint_name(cons_type) = encode_symbol(cons_type)
+variable_name(var_type, device_type) = encode_symbol(device_type, var_type)
+variable_name(var_type) = encode_symbol(var_type)
 
 _variable_type(cm::PSIContainer) = JuMP.variable_type(cm.JuMPmodel)
 model_time_steps(psi_container::PSIContainer) = psi_container.time_steps
@@ -304,8 +306,7 @@ model_initial_time(psi_container::PSIContainer) = psi_container.initial_time
 #Internal Variables, Constraints and Parameters accessors
 get_variables(psi_container::PSIContainer) = psi_container.variables
 get_constraints(psi_container::PSIContainer) = psi_container.constraints
-get_parameters(psi_container::PSIContainer, param_reference::UpdateRef) =
-    psi_container.parameters[param_reference]
+get_parameters(psi_container::PSIContainer) = psi_container.parameters
 get_expression(psi_container::PSIContainer, name::Symbol) = psi_container.expressions[name]
 get_initial_conditions(psi_container::PSIContainer) = psi_container.initial_conditions
 
@@ -367,7 +368,7 @@ function assign_variable!(psi_container::PSIContainer, name::Symbol, value)
 end
 
 function add_var_container!(psi_container::PSIContainer, var_name::Symbol, axs...)
-    container = _container_spec(psi_container.JuMPmodel, axs...)
+    container = container_spec(psi_container.JuMPmodel, axs...)
     assign_variable!(psi_container, var_name, container)
     return container
 end
@@ -451,7 +452,7 @@ function get_parameter_container(
     name::Symbol,
     ::Type{T},
 ) where {T <: PSY.Component}
-    return get_parameter_container(psi_container, _encode_for_jump(T, name))
+    return get_parameter_container(psi_container, encode_symbol(T, name))
 end
 
 function get_parameter_container(psi_container::PSIContainer, ref::UpdateRef)
@@ -499,14 +500,23 @@ function iterate_parameter_containers(psi_container::PSIContainer)
     end
 end
 
-function get_model_duals(op::PSIContainer, cons::Vector{Symbol})
-    results_dict = Dict{Symbol, DataFrames.DataFrame}()
-
-    for c in cons
-        v = get_constraint(op, c)
-        results_dict[c] = _result_dataframe_duals(v)
+function get_parameters_value(psi_container::PSIContainer)
+    # TODO: Still not obvious implementation since it needs to get the multipliers from
+    # the system
+    params_dict = Dict{Symbol, DataFrames.DataFrame}()
+    parameters = get_parameters(psi_container)
+    (isnothing(parameters) || isempty(parameters)) && return params_dict
+    for (k, v) in parameters
+        !isa(v.update_ref, UpdateRef{<:PSY.Component}) && continue
+        params_key_tuple = decode_symbol(k)
+        params_dict_key = Symbol(params_key_tuple[1], "_", params_key_tuple[3])
+        params_dict[params_dict_key] = axis_array_to_dataframe(get_parameter_array(v))
     end
-    return results_dict
+    return params_dict
+end
+
+function is_milp(container::PSIContainer)
+    return container.JuMPmodel.moi_backend.optimizer.model.last_solved_by_mip
 end
 
 function _export_optimizer_log(
@@ -514,7 +524,6 @@ function _export_optimizer_log(
     psi_container::PSIContainer,
     path::String,
 )
-
     optimizer_log[:obj_value] = JuMP.objective_value(psi_container.JuMPmodel)
     optimizer_log[:termination_status] =
         Int(JuMP.termination_status(psi_container.JuMPmodel))
@@ -526,7 +535,7 @@ function _export_optimizer_log(
         @warn("SolveTime() property not supported by the Solver")
         optimizer_log[:solve_time] = NaN # "Not Supported by solver"
     end
-    _write_optimizer_log(optimizer_log, path)
+    write_optimizer_log(optimizer_log, path)
     return
 end
 
@@ -536,4 +545,14 @@ function _write_psi_container(psi_container::PSIContainer, save_path::String)
     MOI.copy_to(MOF_model, JuMP.backend(psi_container.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)
     return
+end
+
+function get_dual_values(op::PSIContainer, cons::Vector{Symbol})
+    results_dict = Dict{Symbol, DataFrames.DataFrame}()
+    isempty(cons) && return results_dict
+    for c in cons
+        v = get_constraint(op, c)
+        results_dict[c] = axis_array_to_dataframe(v)
+    end
+    return results_dict
 end
