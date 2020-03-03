@@ -2,6 +2,9 @@
 *.jl.*.cov
 *.jl.mem
 *.log
+*.tmp
+*.sw?
+tmp/
 .DS_Store
 *.ipynb_checkpoints
 docs/build/
