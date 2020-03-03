@@ -1,5 +1,5 @@
+using Cbc
 using Dates
-using GLPK
 using JuMP
 using MathOptInterface
 using PowerSimulations
@@ -28,8 +28,8 @@ end
 
 
 function checkcharging(f)
-    bevs = populate_BEV_demand(EVIPRO_DATA)
-    the_optimizer = with_optimizer(GLPK.Optimizer)
+    bevs = populate_BEV_demand_legacy(EVIPRO_DATA)
+    the_optimizer = optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0)
     deltamax = 0
     i = 0
     for bev in bevs
@@ -37,7 +37,8 @@ function checkcharging(f)
         bev = augment(bev)
         @test begin
             problem = f(bev)
-            JuMP.optimize!(problem.model, the_optimizer)
+            JuMP.set_optimizer(problem.model, the_optimizer)
+            JuMP.optimize!(problem.model)
             optimizeresult = JuMP.termination_status(problem.model) == MathOptInterface.OPTIMAL
             if !optimizeresult
                 @warn string("BEV ", i, " in '", EVIPRO_DATA, "' solution failed with ", JuMP.termination_status(problem.model), ".")
