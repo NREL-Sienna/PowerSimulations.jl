@@ -2,5 +2,15 @@
 *.jl.*.cov
 *.jl.mem
 *.log
+*.tmp
+*.sw?
+tmp/
 .DS_Store
 *.ipynb_checkpoints
+docs/build/
+docs/site/
+Manifest.toml
+.vscode
+*.h5
+tags
+*.txt

@@ -1,37 +1,17 @@
+## Documentation: http://docs.travis-ci.org/user/languages/julia/
 language: julia
 os:
   - linux
   - osx
-
+  - windows
 julia:
-  - 1.1
+  - 1.3
   - nightly
-
-notifications:
-  email: false
 
 ## uncomment the following lines to allow failures on nightly julia
 ## (tests will run but not make your overall status red)
-matrix:
-  exclude:
-    - os: windows
-      julia: nightly
-      language: julia
-
-  include:
-    - os: windows
-      language: sh
-      before_install:
-        - choco install julia
-
-  allow_failures:
-  - julia: nightly
-  - os: osx
-  - os: windows
-
-addons:
-  apt_packages:
-    - gfortran
+notifications:
+  email: false
 
 ## uncomment and modify the following lines to manually install system packages
 #addons:
@@ -41,12 +21,13 @@ addons:
 #before_script: # homebrew for mac
 #  - if [ $TRAVIS_OS_NAME = osx ]; then brew install gcc; fi
 
-## uncomment the following lines to override the default test script
-script:
-  - julia --project --color=yes -e "import Pkg; Pkg.build(); Pkg.instantiate()"
-  - julia --check-bounds=yes --depwarn=no --inline=no --color=yes --project -e "import Pkg; Pkg.test(coverage=true);"
-
-after_success:
-  # push coverage results to Codecov
-  - julia --project -e 'import Pkg; Pkg.add("Documenter"); include("docs/make.jl")'
-  - julia -e 'import Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+jobs:
+  fast_finish: true
+  allow_failures:
+    - julia: nightly
+    - os: osx
+after_success: julia -e '
+  using Pkg;
+  Pkg.add("Coverage");
+  using Coverage;
+  Codecov.submit(process_folder());'

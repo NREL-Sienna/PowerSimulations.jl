@@ -1,30 +1,37 @@
 name = "PowerSimulations"
 uuid = "e690365d-45e2-57bb-ac84-44ba829e73c4"
 authors = ["Jose Daniel Lara", "Dheepak Krishnamurthy", "Clayton Barrows"]
-version = "0.1.0"
+version = "0.2.2"
 
 [deps]
-AxisArrays = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
-Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-InfrastructureModels = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
+Feather = "becb17da-46f6-5d3c-ad1b-1c5fe96bc73c"
+InfrastructureSystems = "2cd47ed4-ca9b-11e9-27f2-ab636a7671f1"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
-LinQuadOptInterface = "f8899e07-120b-5979-ab1d-7b97bb9e1a48"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 ParameterJuMP = "774612a8-9878-5177-865a-ca53ae2495f9"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 PowerModels = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 PowerSystems = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
+SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
+TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 
-[extras]
-GLPK = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
-Ipopt = "b6b21f68-93f8-5de0-b562-5493be1d77c9"
-Memento = "f28f55f0-a522-5efc-85c2-fe41dfb9b2d9"
-OSQP = "ab2f91bb-94b4-55e3-9ba0-7f65df51de79"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[targets]
-test = ["Test", "Ipopt", "GLPK", "OSQP", "Memento"]
+[compat]
+CSV = "~0.5"
+DataFrames = "~0.20"
+Feather = "~0.5.3"
+InfrastructureSystems = "~0.5"
+JSON = "0.21"
+JuMP = "~0.21"
+MathOptInterface = "~0.9.9"
+ParameterJuMP = "~v0.2"
+PowerModels = "~0.15"
+PowerSystems = "~0.11"
+TimeSeries = "~v0.16"
+TimerOutputs = "~0.5"
+julia = "^1.2"

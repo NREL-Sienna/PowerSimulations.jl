@@ -1,5 +1,0 @@
-include("thermalgeneration_constructor.jl")
-include("branch_constructor.jl")
-include("renewablegeneration_constructor.jl")
-include("load_constructor.jl")
-include("storage_constructor.jl")
