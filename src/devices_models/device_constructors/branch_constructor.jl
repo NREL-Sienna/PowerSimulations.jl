@@ -28,7 +28,7 @@ function construct_device!(
     end
 
     branch_rate_bounds!(psi_container, devices, Br, S)
-    branch_rate_constraints!(psi_container, devices, model, S, model.feedforward)
+    branch_rate_constraints!(psi_container, devices, model, S,get_feedforward(model))
 
     return
 end
@@ -48,9 +48,9 @@ function construct_device!(
 
     branch_rate_bounds!(psi_container, devices, model.formulation, S)
 
-    branch_rate_constraints!(psi_container, devices, model, S, model.feedforward)
+    branch_rate_constraints!(psi_container, devices, model, S,get_feedforward(model))
 
-    branch_flow_constraints!(psi_container, devices, model, S, model.feedforward)
+    branch_flow_constraints!(psi_container, devices, model, S,get_feedforward(model))
 
     return
 end
@@ -78,7 +78,7 @@ function construct_device!(
         return
     end
 
-    branch_rate_constraints!(psi_container, devices, model, S, model.feedforward)
+    branch_rate_constraints!(psi_container, devices, model, S,get_feedforward(model))
 
     return
 end
