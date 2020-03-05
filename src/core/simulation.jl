@@ -506,9 +506,9 @@ function update_cache!(
     variable = get_variable(stage.internal.psi_container, c.ref)
     t = get_end_of_interval_step(stage)
     for name in variable.axes[1]
-        device_status = JuMP.value(variable[name, t])
-        @debug name, device_status
-        c.value[name] == device_status
+        device_energy = JuMP.value(variable[name, t])
+        @debug name, device_energy
+        c.value[name] = device_energy
         @debug("Cache value EnergyStored for device $name set to $(c.value[name])")
     end
 
