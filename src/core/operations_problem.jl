@@ -2,9 +2,9 @@ struct GenericOpProblem <: AbstractOperationsProblem end
 
 mutable struct OperationsProblemTemplate
     transmission::Type{<:PM.AbstractPowerModel}
-    devices::Dict{Symbol, DeviceModel}
-    branches::Dict{Symbol, DeviceModel}
-    services::Dict{Symbol, ServiceModel}
+    devices::Dict{Symbol,DeviceModel}
+    branches::Dict{Symbol,DeviceModel}
+    services::Dict{Symbol,ServiceModel}
 end
 
 """
@@ -23,18 +23,18 @@ Creates a model reference of the Power Formulation, devices, branches, and servi
 template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 ```
 """
-function OperationsProblemTemplate(::Type{T}) where {T <: PM.AbstractPowerModel}
+function OperationsProblemTemplate(::Type{T}) where {T<:PM.AbstractPowerModel}
 
     return OperationsProblemTemplate(
         T,
-        Dict{Symbol, DeviceModel}(),
-        Dict{Symbol, DeviceModel}(),
-        Dict{Symbol, ServiceModel}(),
+        Dict{Symbol,DeviceModel}(),
+        Dict{Symbol,DeviceModel}(),
+        Dict{Symbol,ServiceModel}(),
     )
 
 end
 
-mutable struct OperationsProblem{M <: AbstractOperationsProblem}
+mutable struct OperationsProblem{M<:AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
     psi_container::PSIContainer
@@ -81,9 +81,9 @@ function OperationsProblem(
     ::Type{M},
     template::OperationsProblemTemplate,
     sys::PSY.System;
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+    optimizer::Union{Nothing,JuMP.MOI.OptimizerWithAttributes} = nothing,
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
 
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
     op_problem = OperationsProblem{M}(
@@ -139,7 +139,7 @@ function OperationsProblem(
     ::Type{T},
     sys::PSY.System;
     kwargs...,
-) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
+) where {M<:AbstractOperationsProblem,T<:PM.AbstractPowerModel}
 
     optimizer = get(kwargs, :optimizer, nothing)
     return OperationsProblem{M}(
@@ -191,7 +191,7 @@ function OperationsProblem(
     ::Type{T},
     sys::PSY.System;
     kwargs...,
-) where {T <: PM.AbstractPowerModel}
+) where {T<:PM.AbstractPowerModel}
 
     return OperationsProblem(GenericOpProblem, T, sys; kwargs...)
 
@@ -209,7 +209,7 @@ function set_transmission_model!(
     op_problem::OperationsProblem{M},
     transmission::Type{T};
     kwargs...,
-) where {T <: PM.AbstractPowerModel, M <: AbstractOperationsProblem}
+) where {T<:PM.AbstractPowerModel,M<:AbstractOperationsProblem}
 
     # Reset the psi_container
     op_problem.template.transmission = transmission
@@ -227,9 +227,9 @@ end
 
 function set_devices_template!(
     op_problem::OperationsProblem{M},
-    devices::Dict{Symbol, DeviceModel};
+    devices::Dict{Symbol,DeviceModel};
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
 
     # Reset the psi_container
     op_problem.template.devices = devices
@@ -247,9 +247,9 @@ end
 
 function set_branches_template!(
     op_problem::OperationsProblem{M},
-    branches::Dict{Symbol, DeviceModel};
+    branches::Dict{Symbol,DeviceModel};
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
 
     # Reset the psi_container
     op_problem.template.branches = branches
@@ -267,9 +267,9 @@ end
 
 function set_services_template!(
     op_problem::OperationsProblem{M},
-    services::Dict{Symbol, DeviceModel};
+    services::Dict{Symbol,<:ServiceModel};
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
 
     # Reset the psi_container
     op_problem.template.services = services
@@ -288,13 +288,9 @@ end
 function set_device_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
-    device::DeviceModel{D, B};
+    device::DeviceModel{D,B};
     kwargs...,
-) where {
-    D <: PSY.StaticInjection,
-    B <: AbstractDeviceFormulation,
-    M <: AbstractOperationsProblem,
-}
+) where {D<:PSY.StaticInjection,B<:AbstractDeviceFormulation,M<:AbstractOperationsProblem}
 
     if haskey(op_problem.template.devices, name)
         op_problem.template.devices[name] = device
@@ -316,9 +312,9 @@ end
 function set_branch_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
-    branch::DeviceModel{D, B};
+    branch::DeviceModel{D,B};
     kwargs...,
-) where {D <: PSY.Branch, B <: AbstractDeviceFormulation, M <: AbstractOperationsProblem}
+) where {D<:PSY.Branch,B<:AbstractDeviceFormulation,M<:AbstractOperationsProblem}
 
     if haskey(op_problem.template.branches, name)
         op_problem.template.branches[name] = branch
@@ -342,7 +338,7 @@ function set_services_model!(
     name::Symbol,
     service::DeviceModel;
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
 
     if haskey(op_problem.template.devices, name)
         op_problem.template.services[name] = service
@@ -402,7 +398,7 @@ function construct_network!(
     op_problem::OperationsProblem,
     system_formulation::Type{T};
     kwargs...,
-) where {T <: PM.AbstractPowerModel}
+) where {T<:PM.AbstractPowerModel}
 
     construct_network!(op_problem.psi_container, get_system(op_problem), T; kwargs...)
 
@@ -429,7 +425,7 @@ end
 function build_op_problem!(
     op_problem::OperationsProblem{M};
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
     sys = get_system(op_problem)
     _build!(op_problem.psi_container, op_problem.template, sys; kwargs...)
     return
@@ -471,7 +467,7 @@ function _build!(
 end
 
 function get_variables_value(op_m::OperationsProblem)
-    results_dict = Dict{Symbol, DataFrames.DataFrame}()
+    results_dict = Dict{Symbol,DataFrames.DataFrame}()
     for (k, v) in get_variables(op_m.psi_container)
         results_dict[k] = axis_array_to_dataframe(v)
     end
@@ -508,8 +504,8 @@ automatically get written to feather files
 function solve_op_problem!(
     op_problem::OperationsProblem{T};
     kwargs...,
-) where {T <: AbstractOperationsProblem}
-    timed_log = Dict{Symbol, Any}()
+) where {T<:AbstractOperationsProblem}
+    timed_log = Dict{Symbol,Any}()
     save_path = get(kwargs, :save_path, nothing)
 
     if op_problem.psi_container.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
@@ -564,7 +560,7 @@ end
 
 function get_optimizer_log(op_m::OperationsProblem)
     psi_container = op_m.psi_container
-    optimizer_log = Dict{Symbol, Any}()
+    optimizer_log = Dict{Symbol,Any}()
     optimizer_log[:obj_value] = JuMP.objective_value(psi_container.JuMPmodel)
     optimizer_log[:termination_status] = JuMP.termination_status(psi_container.JuMPmodel)
     optimizer_log[:primal_status] = JuMP.primal_status(psi_container.JuMPmodel)
@@ -586,7 +582,7 @@ function get_time_stamps(op_problem::OperationsProblem)
     initial_time = PSY.get_forecasts_initial_time(op_problem.sys)
     interval = PSY.get_forecasts_resolution(op_problem.sys)
     horizon = PSY.get_forecasts_horizon(op_problem.sys)
-    range_time = collect(initial_time:interval:(initial_time + interval .* horizon))
+    range_time = collect(initial_time:interval:(initial_time+interval.*horizon))
     time_stamp = DataFrames.DataFrame(Range = range_time[:, 1])
 
     return time_stamp
@@ -622,7 +618,7 @@ end
 ################ Functions to debug optimization models#####################################
 """ "Each Tuple corresponds to (con_name, internal_index, moi_index)"""
 function get_all_constraint_index(op_problem::OperationsProblem)
-    con_index = Vector{Tuple{Symbol, Int, Int}}()
+    con_index = Vector{Tuple{Symbol,Int,Int}}()
     for (key, value) in op_problem.psi_container.constraints
         for (idx, constraint) in enumerate(value)
             moi_index = JuMP.optimizer_index(constraint)
@@ -634,7 +630,7 @@ end
 
 """ "Each Tuple corresponds to (con_name, internal_index, moi_index)"""
 function get_all_var_index(op_problem::OperationsProblem)
-    var_index = Vector{Tuple{Symbol, Int, Int}}()
+    var_index = Vector{Tuple{Symbol,Int,Int}}()
     for (key, value) in op_problem.psi_container.variables
         for (idx, variable) in enumerate(value)
             moi_index = JuMP.optimizer_index(variable)
