@@ -80,6 +80,7 @@ export DeviceEnergy
 
 # cache_models
 export TimeStatusChange
+export EnergyStored
 
 #operation_models
 export GenericOpProblem
