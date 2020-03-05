@@ -99,6 +99,27 @@ function calculate_ic_quantity(
     return var_value
 end
 
+#TODO: New Method to calculate EnergyStatus Cache
+function calculate_ic_quantity(
+    initial_condition_key::ICKey{DeviceEnergy, T},
+    ic::InitialCondition,
+    var_value::Float64,
+    cache::Union{Nothing, AbstractCache},
+) where {T <: PSY.Component}
+
+    name = device_name(ic)
+    energy_cache = cache_value(cache, name)
+    charged = energy_cache <= var_value
+    discharged = energy_cache >= var_value
+    if charged
+        return var_value
+    elseif discharged
+        return var_value
+    end 
+        
+    return energy_cache
+end
+
 """
 Status Init is always calculated based on the Power Output of the device
 This is to make it easier to calculate when the previous model doesn't
@@ -232,6 +253,7 @@ function storage_energy_init(
         ICKey(DeviceEnergy, T),
         _make_initial_condition_reservoir_energy,
         _get_reservoir_energy_value,
+        EnergyStored,
     )
 
     return
