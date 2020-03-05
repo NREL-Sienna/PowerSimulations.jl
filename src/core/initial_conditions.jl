@@ -109,14 +109,9 @@ function calculate_ic_quantity(
 
     name = device_name(ic)
     energy_cache = cache_value(cache, name)
-    charged = energy_cache <= var_value
-    discharged = energy_cache >= var_value
-    if charged
-        return var_value
-    elseif discharged
+    if energy_cache != var_value
         return var_value
     end
-
     return energy_cache
 end
 
