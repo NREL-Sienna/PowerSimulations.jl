@@ -505,7 +505,10 @@ automatically get written to feather files
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 - `constraints_duals::Array`: Array of the constraints duals to be in the results
 """
-function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
+function solve_op_problem!(
+    op_problem::OperationsProblem{T};
+    kwargs...,
+) where {T <: AbstractOperationsProblem}
     timed_log = Dict{Symbol, Any}()
     save_path = get(kwargs, :save_path, nothing)
 
@@ -513,18 +516,21 @@ function solve_op_problem!(op_problem::OperationsProblem; kwargs...)
         if !(:optimizer in keys(kwargs))
             error("No Optimizer has been defined, can't solve the operational problem")
         end
+        JuMP.set_optimizer(op_problem.psi_container.JuMPmodel, kwargs[:optimizer])
         _,
         timed_log[:timed_solve_time],
         timed_log[:solve_bytes_alloc],
-        timed_log[:sec_in_gc] =
-            @timed JuMP.optimize!(op_problem.psi_container.JuMPmodel, kwargs[:optimizer])
+        timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.psi_container.JuMPmodel)
     else
         _,
         timed_log[:timed_solve_time],
         timed_log[:solve_bytes_alloc],
         timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.psi_container.JuMPmodel)
     end
-
+    model_status = JuMP.primal_status(op_problem.psi_container.JuMPmodel)
+    if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
+        error("The Operational Problem $(T) status is $(model_status)")
+    end
     vars_result = get_variables_value(op_problem)
     param_values = get_parameters_value(get_psi_container(op_problem))
     optimizer_log = get_optimizer_log(op_problem)
