@@ -323,7 +323,7 @@ function test_write_functions(file_path)
                     PTDF = PTDF_ref[sys],
                     use_parameters = p,
                 )
-                res = solve_op_problem(UC; optimizer = GLPK_optimizer)
+                res = solve_op_problem!(UC; optimizer = GLPK_optimizer)
                 @test isapprox(PSI.get_cost(res)[:OBJECTIVE_FUNCTION], 340000, 100000)
             end
         end
