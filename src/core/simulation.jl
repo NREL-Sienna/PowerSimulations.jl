@@ -425,7 +425,8 @@ function initial_condition_update!(
     ini_cond_vector = get_initial_conditions(stage.internal.psi_container)[ini_cond_key]
     for ic in get_initial_conditions(stage.internal.psi_container)[ini_cond_key]
         name = device_name(ic)
-        interval_chronology = get_stage_interval_chronology(sim.sequence, get_stage_name(sim, stage))
+        interval_chronology =
+            get_stage_interval_chronology(sim.sequence, get_stage_name(sim, stage))
         var_value =
             get_stage_variable(interval_chronology, (stage => stage), name, ic.update_ref)
         if isnothing(ic.cache_type)
@@ -525,7 +526,6 @@ function update_cache!(
 
     return
 end
-
 
 #########################TimeSeries Data Updating###########################################
 function update_parameter!(

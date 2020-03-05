@@ -115,8 +115,8 @@ function calculate_ic_quantity(
         return var_value
     elseif discharged
         return var_value
-    end 
-        
+    end
+
     return energy_cache
 end
 

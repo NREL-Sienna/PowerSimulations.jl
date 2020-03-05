@@ -625,7 +625,7 @@ for t in 1:2
         ta = hydro_timeseries_DA[t][ix]
         for i in 1:length(ta)
             ini_time = timestamp(ta[i])
-            data = when(hydro_timeseries_RT[t][ix].* 0.8, hour, hour(ini_time[1]))
+            data = when(hydro_timeseries_RT[t][ix] .* 0.8, hour, hour(ini_time[1]))
             add_forecast!(c_sys5_hy_ed, l, Deterministic("get_inflow", data))
         end
     end

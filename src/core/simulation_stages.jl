@@ -179,9 +179,7 @@ function get_initial_cache(cache::EnergyStored, stage::Stage)
         cache.device_type,
     )
 
-    device_axes = Set((
-        PSY.get_name(ic.device) for ic in ini_cond_level
-    ),)
+    device_axes = Set((PSY.get_name(ic.device) for ic in ini_cond_level),)
     value_array = JuMP.Containers.DenseAxisArray{Float64}(undef, device_axes)
     for ic in ini_cond_level
         device_name = PSY.get_name(ic.device)
