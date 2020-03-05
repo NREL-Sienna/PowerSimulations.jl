@@ -172,6 +172,25 @@ function get_initial_cache(cache::TimeStatusChange, stage::Stage)
     return value_array
 end
 
+function get_initial_cache(cache::EnergyStored, stage::Stage)
+    ini_cond_level = get_initial_conditions(
+        stage.internal.psi_container,
+        DeviceEnergy,
+        cache.device_type,
+    )
+
+    device_axes = Set((
+        PSY.get_name(ic.device) for ic in ini_cond_level
+    ),)
+    value_array = JuMP.Containers.DenseAxisArray{Float64}(undef, device_axes)
+    for ic in ini_cond_level
+        device_name = PSY.get_name(ic.device)
+        condition = get_condition(ic)
+        value_array[device_name] = condition
+    end
+    return value_array
+end
+
 function get_time_stamps(stage::Stage, start_time::Dates.DateTime)
     resolution = PSY.get_forecasts_resolution(stage.sys)
     horizon = stage.internal.psi_container.time_steps[end]
