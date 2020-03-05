@@ -417,7 +417,12 @@ function test_load_simulation(file_path::String)
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
-            cache = Dict("UC" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON), EnergyStored(PSY.HydroEnergyReservoir, PSI.ENERGY)]),
+            cache = Dict(
+                "UC" => [
+                    TimeStatusChange(PSY.ThermalStandard, PSI.ON),
+                    EnergyStored(PSY.HydroEnergyReservoir, PSI.ENERGY),
+                ],
+            ),
             ini_cond_chronology = InterStageChronology(),
         )
         sim_cache = Simulation(
@@ -446,9 +451,11 @@ function test_load_simulation(file_path::String)
             vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
             for (ik, key) in enumerate(ic_keys)
                 variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1]
-                initial_conditions = get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
+                initial_conditions =
+                    get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
                 for ic in initial_conditions
-                    raw_result = Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
+                    raw_result =
+                        Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
                     initial_cond = value(PSI.get_value(ic))
                     @test isapprox(raw_result, initial_cond)
                 end
