@@ -307,28 +307,11 @@ function test_write_functions(file_path)
             :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
             :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
         )
-        parameters_value = [true, false]
-        systems = [c_sys5, c_sys5_dc]
-        networks = [DCPPowerModel, NFAPowerModel, StandardPTDFModel, CopperPlatePowerModel]
-        PTDF_ref = Dict{System, PTDF}(c_sys5 => PTDF5, c_sys5_dc => PTDF5_dc)
-
-        for net in networks, p in parameters_value, sys in systems
-            @info("Testing solve UC with $(net) network")
-            @testset "UC model $(net) and use_parameters = $(p)" begin
-                template = OperationsProblemTemplate(net, devices, branches, services)
-                UC = OperationsProblem(
-                    TestOpProblem,
-                    template,
-                    sys;
-                    PTDF = PTDF_ref[sys],
-                    use_parameters = p,
-                )
-                res = solve_op_problem!(UC; optimizer = GLPK_optimizer)
-                @test isapprox(PSI.get_cost(res)[:OBJECTIVE_FUNCTION], 340000, 100000)
-            end
-        end
+        template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
+        UC = OperationsProblem(TestOpProblem, template, c_sys5; PTDF = PTDF5)
+        res = solve_op_problem!(UC; optimizer = GLPK_optimizer)
+        @test isapprox(PSI.get_cost(res)[:OBJECTIVE_FUNCTION], 340000, 100000)
     end
-
 end
 
 try
