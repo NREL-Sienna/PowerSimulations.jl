@@ -527,7 +527,7 @@ function solve_op_problem!(
         timed_log[:solve_bytes_alloc],
         timed_log[:sec_in_gc] = @timed JuMP.optimize!(op_problem.psi_container.JuMPmodel)
     end
-    model_status = JuMP.primal_status(op_problem.internal.psi_container.JuMPmodel)
+    model_status = JuMP.primal_status(op_problem.psi_container.JuMPmodel)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("The Operational Problem $(T) status is $(model_status)")
     end
