@@ -9,15 +9,12 @@ end
 
 """
     OperationsProblemTemplate(::Type{T}) where {T<:PM.AbstractPowerFormulation}
-
 Creates a model reference of the Power Formulation, devices, branches, and services.
-
 # Arguments
 - `model::Type{T<:PM.AbstractPowerFormulation}`:
 - `devices::Dict{Symbol, DeviceModel}`: device dictionary
 - `branches::Dict{Symbol, BranchModel}`: branch dictionary
 - `services::Dict{Symbol, ServiceModel}`: service dictionary
-
 # Example
 ```julia
 template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
@@ -47,26 +44,21 @@ end
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}=nothing,
     kwargs...) where {M<:AbstractOperationsProblem,
                       T<:PM.AbstractPowerFormulation}
-
 This builds the optimization problem with the specific system and template.
-
 # Arguments
 - `::Type{M} where {M<:AbstractOperationsProblem, T<:PM.AbstractPowerFormulation} = TestOpProblem`:
 The abstract operation model type
 - `template::OperationsProblemTemplate`: The model reference made up of transmission, devices,
                                           branches, and services.
 - `sys::PSY.System`: the system created using Power Systems
-
 # Output
 - `op_problem::OperationsProblem`: The operation model contains the model type, model, Power
 Systems system, and optimization model.
-
 # Example
 ```julia
 template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
 ```
-
 # Accepted Key Words
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
 - `optimizer::union{Nothing, JuMP.MOI.OptimizerWithAttributes} = GLPK_optimizer`: The optimizer gets passed
@@ -103,26 +95,20 @@ end
                     sys::PSY.System;
                     kwargs...) where {M<:AbstractOperationsProblem,
                                     T<:PM.AbstractPowerFormulation}
-
 This uses the Abstract Power Formulation to build the model reference and
 the optimization model and populates the operation model struct.
-
 # Arguments
 - `op_problem::Type{M} = where {M<:AbstractOperationsProblem`: Defines the type of the operation model
 - `::Type{T} where T<:PM.AbstractPowerFormulation`: The power formulation used for model ref & optimization model
 - `sys::PSY.System`: the system created in Power Systems
-
 # Output
 - `op_problem::OperationsProblem`: The operation model contains the model type, model, Power
 Systems system, and optimization model.
-
 # Example
 ```julia
 template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
 ```
-
-
 # Accepted Key Words
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
 - `optimizer::union{Nothing, JuMP.MOI.OptimizerWithAttributes}`: The optimizer gets passed
@@ -132,7 +118,6 @@ into the optimization model the default is nothing.
 - `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
 - `initial_time::Dates.DateTime`: initial time of forecast
-
 """
 function OperationsProblem(
     ::Type{M},
@@ -155,27 +140,21 @@ end
                     sys::PSY.System;
                     kwargs...) where {M<:AbstractOperationsProblem,
                                       T<:PM.AbstractPowerFormulation}
-
 This uses the Abstract Power Formulation to build the model reference and
 the optimization model and populates the operation model struct.
-
 ***Note:*** the abstract operation model is set to the default operation model
-
 # Arguments
 - `op_problem::Type{M}`: Defines the type of the operation model
 - `::Type{T} where T<:PM.AbstractPowerFormulation`: The power formulation used for model ref & optimization model
 - `sys::PSY.System`: the system created in Power Systems
-
 # Output
 - `op_problem::OperationsProblem`: The operation model contains the model type, model, Power
 Systems system, and optimization model.
-
 # Example
 ```julia
 template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
 ```
-
 # Accepted Key Words
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
 - `optimizer::union{Nothing, JuMP.MOI.OptimizerWithAttributes}`: The optimizer gets passed
@@ -185,7 +164,6 @@ into the optimization model the default is nothing.
 - `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
 - `initial_time::Dates.DateTime`: initial time of forecast
-
 """
 function OperationsProblem(
     ::Type{T},
@@ -484,13 +462,10 @@ end
 
 """
     solve_op_problem!(op_problem::OperationsProblem; kwargs...)
-
 This solves the operational model for a single instance and
 outputs results of type OperationsProblemResult
-
 # Arguments
 - `op_problem::OperationModel = op_problem`: operation model
-
 # Examples
 ```julia
 results = solve_op_problem!(OpModel)
