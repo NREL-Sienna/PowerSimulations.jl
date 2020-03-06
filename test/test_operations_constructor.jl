@@ -8,8 +8,10 @@ branches = Dict{Symbol, DeviceModel}(
     :TT => DeviceModel(TapTransformer, StaticTransformer),
 )
 services = Dict{Symbol, ServiceModel}()
+
 @testset "Operation Model kwargs with CopperPlatePowerModel base" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+
     @test_throws ArgumentError OperationsProblem(
         TestOpProblem,
         template,
@@ -47,6 +49,7 @@ services = Dict{Symbol, ServiceModel}()
 end
 
 @testset "Operation Model Constructors with Parameters" begin
+
     networks = [
         CopperPlatePowerModel,
         StandardPTDFModel,
@@ -101,5 +104,59 @@ end
         UC = PSI.run_unit_commitment(c_sys5; optimizer = fast_lp_optimizer)
         @test ED.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
         @test UC.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
+    end
+
+    @testset "AC branch Branch rate constraints" begin
+        thermal_model = DeviceModel(ThermalStandard, ThermalDispatch)
+        devices = Dict{Symbol, DeviceModel}(
+            :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+            :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+        )
+        branches = Dict{Symbol, DeviceModel}(
+            :L => DeviceModel(PSY.MonitoredLine, PSI.FlowMonitoredLine),
+        )
+        template = OperationsProblemTemplate(ACPPowerModel, devices, branches, services)
+        system = c_sys5
+        line = PSY.get_component(Line, system, "1")
+        PSY.convert_component!(MonitoredLine, line, system; force = true)
+        limits = PSY.get_flowlimits(PSY.get_component(MonitoredLine, system, "1"))
+        op_problem_m = OperationsProblem(
+            TestOpProblem,
+            template,
+            system;
+            optimizer = ipopt_optimizer,
+            use_parameters = false,
+        )
+        monitored = solve_op_problem!(op_problem_m)
+        fq = monitored.variable_values[:FqFT__MonitoredLine][1, 1]
+        fp = monitored.variable_values[:FpFT__MonitoredLine][1, 1]
+        flow = sqrt((fp[1])^2 + (fq[1])^2)
+        @test isapprox(flow, limits.from_to, atol = 1e-3)
+    end
+
+    @testset "DC branch Branch rate constraints" begin
+        thermal_model = DeviceModel(ThermalStandard, ThermalDispatch)
+        devices = Dict{Symbol, DeviceModel}(
+            :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+            :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+        )
+        branches = Dict{Symbol, DeviceModel}(
+            :L => DeviceModel(PSY.MonitoredLine, PSI.FlowMonitoredLine),
+        )
+        template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
+        system = c_sys5
+        limits = PSY.get_flowlimits(PSY.get_component(MonitoredLine, system, "1"))
+        rate = PSY.get_rate(PSY.get_component(MonitoredLine, system, "1"))
+        op_problem_m = OperationsProblem(
+            TestOpProblem,
+            template,
+            system;
+            optimizer = ipopt_optimizer,
+            use_parameters = false,
+        )
+        monitored = solve_op_problem!(op_problem_m)
+        fp = monitored.variable_values[:Fp__MonitoredLine][1, 1]
+        @test fp <= limits.from_to
+        @test fp <= rate
     end
 end
