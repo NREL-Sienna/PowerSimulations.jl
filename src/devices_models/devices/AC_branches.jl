@@ -252,9 +252,9 @@ function branch_flow_constraints!(
     from = Vector{PSI.DeviceRange}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         limit_values_FT[ix] =
-            (min = PSY.get_flowlimits(d).to_from, max = PSY.get_flowlimits(d).from_to)
+            (min = -1 * PSY.get_flowlimits(d).from_to, max = PSY.get_flowlimits(d).from_to)
         limit_values_TF[ix] =
-            (min = PSY.get_flowlimits(d).from_to, max = PSY.get_flowlimits(d).to_from)
+            (min = -1 * PSY.get_flowlimits(d).to_from, max = PSY.get_flowlimits(d).to_from)
         names[ix] = PSY.get_name(d)
         to[ix] = DeviceRange(names[ix], limit_values_FT[ix])
         from[ix] = DeviceRange(names[ix], limit_values_TF[ix])
