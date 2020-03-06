@@ -83,31 +83,7 @@ function get_branch_to_pm(ix::Int, branch::PSY.TapTransformer)
     return PM_branch
 end
 
-function get_branch_to_pm(ix::Int, branch::PSY.Line)
-    PM_branch = Dict{String, Any}(
-        "br_r" => PSY.get_r(branch),
-        "rate_a" => PSY.get_rate(branch),
-        "shift" => 0.0,
-        "rate_b" => PSY.get_rate(branch),
-        "br_x" => PSY.get_x(branch),
-        "rate_c" => PSY.get_rate(branch),
-        "g_to" => 0.0,
-        "g_fr" => 0.0,
-        "b_fr" => PSY.get_b(branch).from,
-        "f_bus" => PSY.get_number(PSY.get_arc(branch).from),
-        "br_status" => Float64(PSY.get_available(branch)),
-        "t_bus" => PSY.get_number(PSY.get_arc(branch).to),
-        "b_to" => PSY.get_b(branch).to,
-        "index" => ix,
-        "angmin" => PSY.get_anglelimits(branch).min,
-        "angmax" => PSY.get_anglelimits(branch).max,
-        "transformer" => false,
-        "tap" => 1.0,
-    )
-    return PM_branch
-end
-
-function get_branch_to_pm(ix::Int, branch::PSY.MonitoredLine)
+function get_branch_to_pm(ix::Int, branch::PSY.ACBranch)
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "rate_a" => PSY.get_rate(branch),

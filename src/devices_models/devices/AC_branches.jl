@@ -224,15 +224,10 @@ function branch_flow_constraints!(
     ::Union{Type{PM.DCPPowerModel}, Type{StandardPTDFModel}},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 )
-    flow_range_data = Vector{PSI.DeviceRange}()
-    for h in devices
-        flow_range_data = vcat(
-            flow_range_data,
-            DeviceRange(
-                PSY.get_name(h),
-                (min = PSY.get_flowlimits(h).to_from, max = PSY.get_flowlimits(h).from_to),
-            ),
-        )
+    flow_range_data = Vector{PSI.DeviceRange}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
+        minmax = (min = PSY.get_flowlimits(d).to_from, max = PSY.get_flowlimits(d).from_to)
+        flow_range_data[ix] = DeviceRange(PSY.get_name(d), minmax)
     end
     device_range(
         psi_container,
@@ -253,16 +248,16 @@ function branch_flow_constraints!(
     names = Vector{String}(undef, length(devices))
     limit_values_FT = Vector{MinMax}(undef, length(devices))
     limit_values_TF = Vector{MinMax}(undef, length(devices))
-    to = Vector{PSI.DeviceRange}()
-    from = Vector{PSI.DeviceRange}()
+    to = Vector{PSI.DeviceRange}(undef, length(devices))
+    from = Vector{PSI.DeviceRange}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         limit_values_FT[ix] =
             (min = PSY.get_flowlimits(d).to_from, max = PSY.get_flowlimits(d).from_to)
         limit_values_TF[ix] =
             (min = PSY.get_flowlimits(d).from_to, max = PSY.get_flowlimits(d).to_from)
         names[ix] = PSY.get_name(d)
-        to = vcat(to, DeviceRange(names[ix], limit_values_FT[ix]))
-        from = vcat(from, DeviceRange(names[ix], limit_values_TF[ix]))
+        to[ix] = DeviceRange(names[ix], limit_values_FT[ix])
+        from[ix] = DeviceRange(names[ix], limit_values_TF[ix])
     end
 
     device_range(
