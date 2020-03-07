@@ -224,7 +224,11 @@ function branch_flow_constraints!(
     ::Union{Type{PM.DCPPowerModel}, Type{StandardPTDFModel}},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 )
-    flow_range_data = [(PSY.get_name(h), PSY.get_flowlimits(h)) for h in devices]
+    flow_range_data = Vector{PSI.DeviceRange}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
+        minmax = (min = PSY.get_flowlimits(d).to_from, max = PSY.get_flowlimits(d).from_to)
+        flow_range_data[ix] = DeviceRange(PSY.get_name(d), minmax)
+    end
     device_range(
         psi_container,
         flow_range_data,
@@ -244,34 +248,27 @@ function branch_flow_constraints!(
     names = Vector{String}(undef, length(devices))
     limit_values_FT = Vector{MinMax}(undef, length(devices))
     limit_values_TF = Vector{MinMax}(undef, length(devices))
-
+    to = Vector{PSI.DeviceRange}(undef, length(devices))
+    from = Vector{PSI.DeviceRange}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        limit_values_FT[ix] = PSY.get_flowlimits(d)
+        limit_values_FT[ix] =
+            (min = -1 * PSY.get_flowlimits(d).from_to, max = PSY.get_flowlimits(d).from_to)
         limit_values_TF[ix] =
-            (min = PSY.get_flowlimits(d).max, max = PSY.get_flowlimits(d).min)
+            (min = -1 * PSY.get_flowlimits(d).to_from, max = PSY.get_flowlimits(d).to_from)
         names[ix] = PSY.get_name(d)
+        to[ix] = DeviceRange(names[ix], limit_values_FT[ix])
+        from[ix] = DeviceRange(names[ix], limit_values_TF[ix])
     end
 
     device_range(
         psi_container,
-        DeviceRange(
-            names,
-            limit_values_FT,
-            Vector{Vector{Symbol}}(),
-            Vector{Vector{Symbol}}(),
-        ),
+        to,
         constraint_name(FLOW_LIMIT_FROM_TO, PSY.MonitoredLine),
-        variable_name(FLOW_ACTIVE_POWER_FROM_TO, PSY.MonitoredLineB),
+        variable_name(FLOW_ACTIVE_POWER_FROM_TO, PSY.MonitoredLine),
     )
-
     device_range(
         psi_container,
-        DeviceRange(
-            names,
-            limit_values_TF,
-            Vector{Vector{Symbol}}(),
-            Vector{Vector{Symbol}}(),
-        ),
+        from,
         constraint_name(FLOW_LIMIT_TO_FROM, PSY.MonitoredLine),
         variable_name(FLOW_ACTIVE_POWER_TO_FROM, PSY.MonitoredLine),
     )

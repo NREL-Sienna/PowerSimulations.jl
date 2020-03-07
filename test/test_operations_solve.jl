@@ -136,7 +136,6 @@ end
                  QCLSPowerModel,]
     test_results = Dict{System, Float64}(c_sys5 => 320000.0,
                                              c_sys14 => 142000.0)
-
     for  net in networks, p in parameters_value, sys in systems
         @info("Testing solve ED with $(net) network")
         @testset "ED model $(net) and use_parameters = $(p)" begin
@@ -144,10 +143,8 @@ end
         ED = OperationsProblem(TestOpProblem, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
         #The tolerance range here is large because Relaxations have a lower objective value
         psi_checksolve_test(ED, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], test_results[sys], 25000)
-
         end
     end
-
 end
 =#
 
@@ -309,6 +306,10 @@ function test_write_functions(file_path)
         )
         template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
         UC = OperationsProblem(TestOpProblem, template, c_sys5; PTDF = PTDF5)
+        set_services_template!(
+            UC,
+            Dict(:Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve)),
+        )
         res = solve_op_problem!(UC; optimizer = GLPK_optimizer)
         @test isapprox(PSI.get_cost(res)[:OBJECTIVE_FUNCTION], 340000.0; atol = 100000.0)
     end

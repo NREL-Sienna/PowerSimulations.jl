@@ -27,6 +27,27 @@ for t in 1:2
     end
 end
 
+nodes = nodes5()
+c_sys5_ml = System(
+    nodes,
+    thermal_generators5(nodes),
+    loads5(nodes),
+    branches5(nodes),
+    nothing,
+    100.0,
+    nothing,
+    nothing,
+)
+for t in 1:2
+    for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_ml))
+        add_forecast!(
+            c_sys5_ml,
+            l,
+            Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+        )
+    end
+end
+
 nodes = nodes14()
 c_sys14 = System(
     nodes,
