@@ -112,6 +112,11 @@ export EconomicDispatchProblem
 export UnitCommitmentProblem
 export run_economic_dispatch
 export run_unit_commitment
+## Results interfaces
+export get_variables
+export get_total_cost
+export get_optimizer_log
+export get_time_stamp
 
 ## Utils Exports
 export SimulationResultsReference
