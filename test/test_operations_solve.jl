@@ -311,7 +311,7 @@ function test_write_functions(file_path)
             Dict(:Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve)),
         )
         res = solve_op_problem!(UC; optimizer = GLPK_optimizer)
-        @test isapprox(PSI.get_cost(res)[:OBJECTIVE_FUNCTION], 340000.0; atol = 100000.0)
+        @test isapprox(PSI.get_total_cost(res)[:OBJECTIVE_FUNCTION], 340000.0; atol = 100000.0)
     end
 end
 
