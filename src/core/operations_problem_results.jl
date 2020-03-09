@@ -8,11 +8,11 @@ struct OperationsProblemResults <: IS.Results
     parameter_values::Dict{Symbol, DataFrames.DataFrame}
 end
 
-get_variables(result::OperationsProblemResults) = result.variable_values
-get_total_cost(result::OperationsProblemResults) = result.total_cost
-get_time_stamp(result::OperationsProblemResults) = result.time_stamp
+IS.get_variables(result::OperationsProblemResults) = result.variable_values
+IS.get_total_cost(result::OperationsProblemResults) = result.total_cost
+IS.get_optimizer_log(results::OperationsProblemResults) = results.optimizer_log
+IS.get_time_stamp(result::OperationsProblemResults) = result.time_stamp
 get_duals(result::OperationsProblemResults) = result.dual_values
-get_optimizer_log(results::OperationsProblemResults) = results.optimizer_log
 
 function get_variable(res_model::OperationsProblemResults, key::Symbol)
     var_result = get(res_model.variable_values, key, nothing)
@@ -112,7 +112,7 @@ Exports Operational Problem Results to a path
 # Accepted Key Words
 - `file_type = CSV`: only CSV and featherfile are accepted
 """
-function write_results(results::OperationsProblemResults, save_path::String; kwargs...)
+function IS.write_results(results::OperationsProblemResults, save_path::String; kwargs...)
     if !isdir(save_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
@@ -120,7 +120,7 @@ function write_results(results::OperationsProblemResults, save_path::String; kwa
         save_path,
         replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-"),
     ))
-    write_data(get_variables(results), folder_path; kwargs...)
+    write_data(IS.get_variables(results), folder_path; kwargs...)
     if !isempty(get_duals(results))
         write_data(get_duals(results), folder_path; duals = true, kwargs...)
     end
@@ -139,7 +139,7 @@ end
 
 # writes the results to CSV files in a folder path, but they can't be read back
 function write_to_CSV(results::OperationsProblemResults, folder_path::String)
-    write_results(results, folder_path; file_type = CSV)
+    IS.write_results(results, folder_path; file_type = CSV)
 end
 
 function _find_params(variables::Array)

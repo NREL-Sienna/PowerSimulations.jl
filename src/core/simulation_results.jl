@@ -138,6 +138,12 @@ struct SimulationResults <: IS.Results
     parameter_values::Dict{Symbol, DataFrames.DataFrame}
 end
 
+IS.get_variables(result::SimulationResults) = result.variable_values
+IS.get_total_cost(result::SimulationResults) = result.total_cost
+IS.get_optimizer_log(results::SimulationResults) = results.optimizer_log
+IS.get_time_stamp(result::SimulationResults) = result.time_stamp
+get_duals(result::SimulationResults) = result.dual_values
+
 function deserialize_sim_output(file_path::String)
     path = joinpath(file_path, "output_references")
     list = setdiff(
@@ -455,7 +461,7 @@ Exports Simulations Results to the path where they come from in the results fold
 - `file_type = CSV`: only CSV and featherfile are accepted
 """
 
-function write_results(res::SimulationResults; kwargs...)
+function IS.write_results(res::SimulationResults; kwargs...)
     folder_path = res.results_folder
     if !isdir(folder_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Set up results folder."))
@@ -495,5 +501,5 @@ end
 
 # writes the results to CSV files in a folder path, but they can't be read back
 function write_to_CSV(results::SimulationResults)
-    write_results(results; file_type = CSV)
+    IS.write_results(results; file_type = CSV)
 end
