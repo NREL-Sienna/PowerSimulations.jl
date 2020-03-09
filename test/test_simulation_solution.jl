@@ -96,6 +96,7 @@ function test_load_simulation(file_path::String)
             write_results(res)
             loaded_res = load_operation_results(sim_results.results_folder)
             @test loaded_res.variable_values == res.variable_values
+            @test loaded_res.parameter_values == res.parameter_values
         end
     end
 
@@ -162,6 +163,7 @@ function test_load_simulation(file_path::String)
             results = load_simulation_results(sim_results, name)
             res = load_simulation_results(sim_results, name, step, variable)
             @test results.variable_values == res.variable_values
+            @test results.parameter_values == res.parameter_values
         end
     end
 
