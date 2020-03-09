@@ -501,5 +501,5 @@ end
 
 # writes the results to CSV files in a folder path, but they can't be read back
 function write_to_CSV(results::SimulationResults)
-    IS.write_results(results; file_type = CSV)
+    write_results(results; file_type = CSV)
 end

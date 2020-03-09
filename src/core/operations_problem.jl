@@ -530,7 +530,7 @@ function solve_op_problem!(
         param_values,
     )
 
-    !isnothing(save_path) && IS.write_results(results, save_path)
+    !isnothing(save_path) && write_results(results, save_path)
 
     return results
 end

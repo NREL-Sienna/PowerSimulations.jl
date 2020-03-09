@@ -113,10 +113,6 @@ export UnitCommitmentProblem
 export run_economic_dispatch
 export run_unit_commitment
 ## Results interfaces
-export get_variables
-export get_total_cost
-export get_optimizer_log
-export get_time_stamp
 export get_duals
 
 ## Utils Exports
@@ -145,6 +141,14 @@ import ParameterJuMP
 import LinearAlgebra
 import PowerSystems
 import InfrastructureSystems
+# so that users have access to IS.Results interfaces
+import InfrastructureSystems:
+    get_variables, get_total_cost, get_optimizer_log, get_time_stamp, write_results
+export get_variables
+export get_total_cost
+export get_optimizer_log
+export get_time_stamp
+export write_results
 import PowerModels
 import TimerOutputs
 
@@ -185,7 +189,6 @@ include("core/simulation_sequence.jl")
 include("core/simulation.jl")
 include("core/feedforward.jl")
 include("core/simulation_results.jl")
-include("core/results_interface.jl")
 
 #Device Modeling components
 include("devices_models/devices/common.jl")
