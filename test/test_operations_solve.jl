@@ -283,10 +283,7 @@ function test_write_functions(file_path)
         )
         @test isfile(joinpath(file_path, "four", "$(var_name).feather"))
 
-        PSI.write_optimizer_log(
-            get_optimizer_log(res),
-            mkdir(joinpath(file_path, "five")),
-        )
+        PSI.write_optimizer_log(get_optimizer_log(res), mkdir(joinpath(file_path, "five")))
         @test isfile(joinpath(file_path, "five", "optimizer_log.json"))
 
         PSI.write_to_CSV(res, mkdir(joinpath(file_path, "six")))
@@ -311,11 +308,7 @@ function test_write_functions(file_path)
             Dict(:Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve)),
         )
         res = solve_op_problem!(UC; optimizer = GLPK_optimizer)
-        @test isapprox(
-            get_total_cost(res)[:OBJECTIVE_FUNCTION],
-            340000.0;
-            atol = 100000.0,
-        )
+        @test isapprox(get_total_cost(res)[:OBJECTIVE_FUNCTION], 340000.0; atol = 100000.0)
     end
 end
 
