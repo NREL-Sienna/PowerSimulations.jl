@@ -224,9 +224,9 @@ res = solve_op_problem!(op_problem; constraints_duals = duals)
 
 @testset "test constraint duals in the operations problem" begin
     name = PSI.constraint_name("CopperPlateBalance")
-    for i in 1:ncol(PSI.get_time_stamp(res))
+    for i in 1:ncol(get_time_stamp(res))
         dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
-        @test isapprox(dual, PSI.get_duals(res)[name][i, 1])
+        @test isapprox(dual, get_duals(res)[name][i, 1])
     end
 end
 
@@ -242,34 +242,34 @@ path = joinpath(pwd(), "test_writing")
 function test_write_functions(file_path)
 
     @testset "Test write_data functions" begin
-        PSI.write_data(PSI.get_variables(res), mkdir(joinpath(file_path, "one")))
+        PSI.write_data(get_variables(res), mkdir(joinpath(file_path, "one")))
         readdir(joinpath(file_path, "one"))
-        for (k, v) in PSI.get_variables(res)
+        for (k, v) in get_variables(res)
             @test isfile(joinpath(file_path, "one", "$k.feather"))
         end
 
         PSI.write_data(
-            PSI.get_variables(res),
+            get_variables(res),
             res.time_stamp,
             mkdir(joinpath(file_path, "two"));
             file_type = CSV,
         )
-        for (k, v) in PSI.get_variables(res)
+        for (k, v) in get_variables(res)
             @test isfile(joinpath(file_path, "two/$k.csv"))
         end
 
         PSI.write_data(
-            PSI.get_variables(res),
+            get_variables(res),
             res.time_stamp,
             mkdir(joinpath(file_path, "three")),
         )
-        for (k, v) in PSI.get_variables(res)
+        for (k, v) in get_variables(res)
             @test isfile(joinpath(file_path, "three", "$k.feather"))
         end
 
         var_name = PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)
         PSI.write_data(
-            PSI.get_variables(res)[var_name],
+            get_variables(res)[var_name],
             mkdir(joinpath(file_path, "four")),
             string(var_name),
         )
@@ -277,16 +277,13 @@ function test_write_functions(file_path)
 
         #testing if directory is a file
         PSI.write_data(
-            PSI.get_variables(res)[var_name],
+            get_variables(res)[var_name],
             joinpath(file_path, "four", "$(var_name).feather"),
             string(var_name),
         )
         @test isfile(joinpath(file_path, "four", "$(var_name).feather"))
 
-        PSI.write_optimizer_log(
-            PSI.get_optimizer_log(res),
-            mkdir(joinpath(file_path, "five")),
-        )
+        PSI.write_optimizer_log(get_optimizer_log(res), mkdir(joinpath(file_path, "five")))
         @test isfile(joinpath(file_path, "five", "optimizer_log.json"))
 
         PSI.write_to_CSV(res, mkdir(joinpath(file_path, "six")))
@@ -311,11 +308,7 @@ function test_write_functions(file_path)
             Dict(:Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve)),
         )
         res = solve_op_problem!(UC; optimizer = GLPK_optimizer)
-        @test isapprox(
-            PSI.get_total_cost(res)[:OBJECTIVE_FUNCTION],
-            340000.0;
-            atol = 100000.0,
-        )
+        @test isapprox(get_total_cost(res)[:OBJECTIVE_FUNCTION], 340000.0; atol = 100000.0)
     end
 end
 
