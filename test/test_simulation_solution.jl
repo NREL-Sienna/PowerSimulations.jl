@@ -215,7 +215,7 @@ function test_load_simulation(file_path::String)
                     sim.stages["ED"].internal.psi_container,
                     Symbol(key[1]),
                     key[2],
-                ).array
+                ).parameter_array
             parameter = collect(values(value.(array.data)))  # [device, time] 1 is first execution
             raw_result = Feather.read(variable_ref)
             for i in 1:size(parameter, 1)
@@ -311,7 +311,7 @@ function test_load_simulation(file_path::String)
                     sim.stages["ED"].internal.psi_container,
                     Symbol(key[1]),
                     key[2],
-                ).array
+                ).parameter_array
             for name in DataFrames.names(raw_result)
                 result = raw_result[1, name] # first time period of results  [time, device]
                 initial = value(ic[String(name)]) # [device, time]

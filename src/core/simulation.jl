@@ -511,7 +511,7 @@ function update_parameter!(
         )
         ts_vector = TS.values(PSY.get_data(forecast))
         device_name = PSY.get_name(d)
-        for (ix, val) in enumerate(container.array[device_name, :])
+        for (ix, val) in enumerate(container.parameter_array[device_name, :])
             value = ts_vector[ix]
             JuMP.fix(val, value)
         end
