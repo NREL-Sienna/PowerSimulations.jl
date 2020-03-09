@@ -120,7 +120,7 @@ function IS.write_results(results::OperationsProblemResults, save_path::String; 
         save_path,
         replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-"),
     ))
-    write_data(IS.get_variables(results), folder_path; kwargs...)
+    write_data(get_variables(results), folder_path; kwargs...)
     if !isempty(get_duals(results))
         write_data(get_duals(results), folder_path; duals = true, kwargs...)
     end

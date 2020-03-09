@@ -185,6 +185,7 @@ include("core/simulation_sequence.jl")
 include("core/simulation.jl")
 include("core/feedforward.jl")
 include("core/simulation_results.jl")
+include("core/results_interface.jl")
 
 #Device Modeling components
 include("devices_models/devices/common.jl")

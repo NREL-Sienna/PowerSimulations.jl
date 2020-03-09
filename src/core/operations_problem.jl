@@ -450,7 +450,7 @@ end
 
 function get_variables_value(op_m::OperationsProblem)
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
-    for (k, v) in IS.get_variables(op_m.psi_container)
+    for (k, v) in get_variables(op_m.psi_container)
         results_dict[k] = axis_array_to_dataframe(v)
     end
     return results_dict
@@ -570,7 +570,7 @@ end
 function write_data(psi_container::PSIContainer, save_path::AbstractString; kwargs...)
     file_type = get(kwargs, :file_type, Feather)
     if file_type == Feather || file_type == CSV
-        for (k, v) in IS.get_variables(psi_container)
+        for (k, v) in get_variables(psi_container)
             file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
             variable = axis_array_to_dataframe(v)
             file_type.write(file_path, variable)

@@ -74,7 +74,7 @@ function psi_checksolve_test(
     res = solve_op_problem!(op_problem)
     @test termination_status(op_problem.psi_container.JuMPmodel) in status
     @test isapprox(
-        PSI.get_total_cost(res)[:OBJECTIVE_FUNCTION],
+        get_total_cost(res)[:OBJECTIVE_FUNCTION],
         expected_result,
         atol = tol,
     )

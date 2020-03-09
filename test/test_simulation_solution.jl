@@ -93,7 +93,7 @@ function test_load_simulation(file_path::String)
             rm(sim_results.results_folder)
             res = load_simulation_results(sim_results, name)
             !ispath(res.results_folder) && mkdir(res.results_folder)
-            write_results(res)
+            IS.write_results(res)
             loaded_res = load_operation_results(sim_results.results_folder)
             @test loaded_res.variable_values == res.variable_values
         end
@@ -106,7 +106,7 @@ function test_load_simulation(file_path::String)
                 rm("$(sim_results.results_folder)/$f")
             end
             res = load_simulation_results(sim_results, name)
-            write_results(res)
+            IS.write_results(res)
             variable_list = String.(PSI.get_variable_names(sim, name))
             variable_list = [
                 variable_list
@@ -138,7 +138,7 @@ function test_load_simulation(file_path::String)
                 end
                 rm("$(res.results_folder)")
             end
-            @test_throws IS.ConflictingInputsError write_results(res)
+            @test_throws IS.ConflictingInputsError IS.write_results(res)
         end
     end
 
@@ -346,7 +346,7 @@ function test_load_simulation(file_path::String)
             end
             variable_list = PSI.get_variable_names(sim, name)
             res = load_simulation_results(sim_results, name)
-            write_results(res)
+            IS.write_results(res)
             _file_path = joinpath(sim_results.results_folder, "$(variable_list[1]).feather")
             rm(_file_path)
             fake_df = DataFrames.DataFrame(:A => Array(1:10))

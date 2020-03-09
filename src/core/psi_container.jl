@@ -304,7 +304,7 @@ model_has_parameters(psi_container::PSIContainer) = !isnothing(psi_container.par
 model_uses_forecasts(psi_container::PSIContainer) = psi_container.use_forecast_data
 model_initial_time(psi_container::PSIContainer) = psi_container.initial_time
 #Internal Variables, Constraints and Parameters accessors
-IS.get_variables(psi_container::PSIContainer) = psi_container.variables
+get_variables(psi_container::PSIContainer) = psi_container.variables
 get_constraints(psi_container::PSIContainer) = psi_container.constraints
 get_parameters(psi_container::PSIContainer) = psi_container.parameters
 get_expression(psi_container::PSIContainer, name::Symbol) = psi_container.expressions[name]

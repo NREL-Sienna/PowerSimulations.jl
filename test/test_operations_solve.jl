@@ -224,9 +224,9 @@ res = solve_op_problem!(op_problem; constraints_duals = duals)
 
 @testset "test constraint duals in the operations problem" begin
     name = PSI.constraint_name("CopperPlateBalance")
-    for i in 1:ncol(PSI.get_time_stamp(res))
+    for i in 1:ncol(get_time_stamp(res))
         dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
-        @test isapprox(dual, PSI.get_duals(res)[name][i, 1])
+        @test isapprox(dual, get_duals(res)[name][i, 1])
     end
 end
 
@@ -284,7 +284,7 @@ function test_write_functions(file_path)
         @test isfile(joinpath(file_path, "four", "$(var_name).feather"))
 
         PSI.write_optimizer_log(
-            PSI.get_optimizer_log(res),
+            get_optimizer_log(res),
             mkdir(joinpath(file_path, "five")),
         )
         @test isfile(joinpath(file_path, "five", "optimizer_log.json"))
@@ -312,7 +312,7 @@ function test_write_functions(file_path)
         )
         res = solve_op_problem!(UC; optimizer = GLPK_optimizer)
         @test isapprox(
-            PSI.get_total_cost(res)[:OBJECTIVE_FUNCTION],
+            get_total_cost(res)[:OBJECTIVE_FUNCTION],
             340000.0;
             atol = 100000.0,
         )
