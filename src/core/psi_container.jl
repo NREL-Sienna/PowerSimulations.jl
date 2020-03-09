@@ -490,7 +490,7 @@ function add_param_container!(
         JuMP.Containers.DenseAxisArray{Float64}(undef, axs...),
     )
     assign_parameter!(psi_container, container)
-    return container.parameter_array
+    return container
 end
 
 function iterate_parameter_containers(psi_container::PSIContainer)
@@ -511,7 +511,9 @@ function get_parameters_value(psi_container::PSIContainer)
         !isa(v.update_ref, UpdateRef{<:PSY.Component}) && continue
         params_key_tuple = decode_symbol(k)
         params_dict_key = Symbol(params_key_tuple[1], "_", params_key_tuple[3])
-        params_dict[params_dict_key] = axis_array_to_dataframe(get_parameter_array(v))
+        param_array = axis_array_to_dataframe(get_parameter_array(v))
+        multiplier_array = axis_array_to_dataframe(get_multiplier_array(v))
+        params_dict[params_dict_key] = param_array .* multiplier_array
     end
     return params_dict
 end

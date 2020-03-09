@@ -123,8 +123,12 @@ function reservoir_energy_balance_param(
     varout = get_variable(psi_container, var_names[2])
     varenergy = get_variable(psi_container, var_names[3])
 
-    paraminflow =
-        add_param_container!(psi_container, param_reference, name_index, time_steps)
+    paraminflow = get_parameter_array(add_param_container!(
+        psi_container,
+        param_reference,
+        name_index,
+        time_steps,
+    ))
     constraint = add_cons_container!(psi_container, cons_name, name_index, time_steps)
 
     for (ix, d) in enumerate(inflow_data)

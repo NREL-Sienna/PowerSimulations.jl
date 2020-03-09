@@ -5,6 +5,7 @@ struct ParameterContainer
 end
 
 get_parameter_array(c::ParameterContainer) = c.parameter_array
+get_multiplier_array(c::ParameterContainer) = c.multiplier_array
 Base.length(c::ParameterContainer) = length(c.parameter_array)
 Base.size(c::ParameterContainer) = size(c.parameter_array)
 
