@@ -242,34 +242,34 @@ path = joinpath(pwd(), "test_writing")
 function test_write_functions(file_path)
 
     @testset "Test write_data functions" begin
-        PSI.write_data(PSI.IS.get_variables(res), mkdir(joinpath(file_path, "one")))
+        PSI.write_data(get_variables(res), mkdir(joinpath(file_path, "one")))
         readdir(joinpath(file_path, "one"))
-        for (k, v) in PSI.IS.get_variables(res)
+        for (k, v) in get_variables(res)
             @test isfile(joinpath(file_path, "one", "$k.feather"))
         end
 
         PSI.write_data(
-            PSI.IS.get_variables(res),
+            get_variables(res),
             res.time_stamp,
             mkdir(joinpath(file_path, "two"));
             file_type = CSV,
         )
-        for (k, v) in PSI.IS.get_variables(res)
+        for (k, v) in get_variables(res)
             @test isfile(joinpath(file_path, "two/$k.csv"))
         end
 
         PSI.write_data(
-            PSI.IS.get_variables(res),
+            get_variables(res),
             res.time_stamp,
             mkdir(joinpath(file_path, "three")),
         )
-        for (k, v) in PSI.IS.get_variables(res)
+        for (k, v) in get_variables(res)
             @test isfile(joinpath(file_path, "three", "$k.feather"))
         end
 
         var_name = PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)
         PSI.write_data(
-            PSI.IS.get_variables(res)[var_name],
+            get_variables(res)[var_name],
             mkdir(joinpath(file_path, "four")),
             string(var_name),
         )
@@ -277,7 +277,7 @@ function test_write_functions(file_path)
 
         #testing if directory is a file
         PSI.write_data(
-            PSI.IS.get_variables(res)[var_name],
+            get_variables(res)[var_name],
             joinpath(file_path, "four", "$(var_name).feather"),
             string(var_name),
         )

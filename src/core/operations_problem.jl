@@ -506,7 +506,7 @@ function solve_op_problem!(
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
         error("The Operational Problem $(T) status is $(model_status)")
     end
-    vars_result = IS.get_variables_value(op_problem)
+    vars_result = get_variables_value(op_problem)
     param_values = get_parameters_value(get_psi_container(op_problem))
     optimizer_log = get_optimizer_log(op_problem)
     time_stamp = get_time_stamps(op_problem)
