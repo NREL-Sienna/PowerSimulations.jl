@@ -31,15 +31,14 @@ function include_parameters(
     end
     time_steps = model_time_steps(psi_container)
     ## TODO, replace multiplier
-    param = get_parameter_array(add_param_container!(
-        psi_container,
-        param_reference,
-        (r.name for r in ts_data),
-        time_steps,
-    ))
+    names = [r.name for r in ts_data]
+    container = add_param_container!(psi_container, param_reference, names, time_steps)
+    param = get_parameter_array(container)
+    mult = get_multiplier_array(container)
     expr = get_expression(psi_container, expression_name)
     for t in time_steps, r in ts_data
         param[r.name, t] = PJ.add_parameter(psi_container.JuMPmodel, r.timeseries[t])
+        mult[r.name, t] = r.multiplier * multiplier
         _add_to_expression!(
             expr,
             r.bus_number,

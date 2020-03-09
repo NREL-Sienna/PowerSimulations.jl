@@ -203,8 +203,8 @@ function ub_ff(
     set_name = axes[1]
 
     @assert axes[2] == time_steps
-    param_ub =
-        get_parameter_array(add_param_container!(psi_container, param_reference, set_name))
+    container = add_param_container!(psi_container, param_reference, set_name)
+    param_ub = get_parameter_array(container)
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
     for name in axes[1]
@@ -263,16 +263,10 @@ function range_ff(
     @assert axes[2] == time_steps
 
     #Create containers for the constraints
-    param_lb = get_parameter_array(add_param_container!(
-        psi_container,
-        param_reference[1],
-        set_name,
-    ))
-    param_ub = get_parameter_array(add_param_container!(
-        psi_container,
-        param_reference[2],
-        set_name,
-    ))
+    container_lb = add_param_container!(psi_container, param_reference[1], set_name)
+    param_lb = get_parameter_array(container_lb)
+    container_ub = add_param_container!(psi_container, param_reference[2], set_name)
+    param_ub = get_parameter_array(container_ub)
 
     #Create containers for the parameters
     con_lb = add_cons_container!(psi_container, lb_name, set_name, time_steps)
@@ -414,8 +408,8 @@ function integral_limit_ff(
     set_name = axes[1]
 
     @assert axes[2] == time_steps
-    param_ub =
-        get_parameter_array(add_param_container!(psi_container, param_reference, set_name))
+    container_ub = add_param_container!(psi_container, param_reference, set_name)
+    param_ub = get_parameter_array(container_ub)
     con_ub = add_cons_container!(psi_container, ub_name, set_name)
 
     for name in axes[1]
