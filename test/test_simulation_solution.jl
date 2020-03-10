@@ -382,7 +382,7 @@ function test_load_simulation(file_path::String)
         stages_definition = Dict(
             "UC" => Stage(
                 GenericOpProblem,
-                template_hydro_standard_uc,
+                template_hydro_st_standard_uc,
                 #template_uc,
                 c_sys5_hy_uc,
                 #c_sys5_uc,
@@ -390,7 +390,7 @@ function test_load_simulation(file_path::String)
             ),
             "ED" => Stage(
                 GenericOpProblem,
-                template_hydro_ed,
+                template_hydro_st_ed,
                 #template_ed,
                 c_sys5_hy_ed,
                 #c_sys5_ed,
@@ -441,7 +441,7 @@ function test_load_simulation(file_path::String)
             simulation_folder = file_path,
         )
         build!(sim_cache)
-        execute!(sim_cache)
+        sim_cache_results = execute!(sim_cache)
         var_names =
             axes(PSI.get_stage(sim_cache, "UC").internal.psi_container.variables[:On__ThermalStandard])[1]
         for name in var_names
@@ -450,7 +450,7 @@ function test_load_simulation(file_path::String)
                     name,
                     24,
                 ]
-            cache = collect(values(sim_cache.internal.simulation_cache))[1].value[name]
+            cache = sim_cache.internal.simulation_cache[PSI.CacheKey(PSI.TimeStatusChange, PSY.ThermalStandard)].value[name]
             @test JuMP.value(var) == cache[:status]
         end
 
@@ -458,12 +458,52 @@ function test_load_simulation(file_path::String)
             ic_keys = [PSI.ICKey(PSI.DeviceEnergy, PSY.HydroEnergyReservoir)]
             vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
             for (ik, key) in enumerate(ic_keys)
-                variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1]
+                variable_ref = PSI.get_reference(sim_cache_results, "ED", 1, vars_names[ik])[end]
                 initial_conditions =
-                    get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
+                    get_initial_conditions(PSI.get_psi_container(sim_cache, "UC"), key)
                 for ic in initial_conditions
                     raw_result =
                         Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
+                    initial_cond = value(PSI.get_value(ic))
+                    @test isapprox(raw_result, initial_cond)
+                end
+            end
+        end
+    end
+
+    @testset "" begin
+        single_stage_definition =
+        Dict("ED" => Stage(GenericOpProblem, template_hydro_st_ed, c_sys5_hy_ed, GLPK_optimizer))
+
+        single_sequence = SimulationSequence(
+            step_resolution = Hour(1),
+            order = Dict(1 => "ED"),
+            horizons = Dict("ED" => 12),
+            intervals = Dict("ED" => (Hour(1), Consecutive())),
+            cache = Dict(
+                "ED" => [ EnergyStored(PSY.HydroEnergyReservoir, PSI.ENERGY),
+                ]),
+            ini_cond_chronology = IntraStageChronology(),
+        )
+
+        sim_single = Simulation(
+            name = "cache_st",
+            steps = 2,
+            stages = single_stage_definition,
+            stages_sequence = single_sequence,
+            simulation_folder = file_path,
+        )
+        build!(sim_single)
+        sim_cache_results = execute!(sim_single)
+
+        @testset "Testing to verify initial condition update using EnergyStored cache" begin
+            ic_keys = [PSI.ICKey(PSI.DeviceEnergy, PSY.HydroEnergyReservoir)]
+            vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
+            for (ik, key) in enumerate(ic_keys)
+                variable_ref = PSI.get_reference(sim_cache_results, "ED", 1, vars_names[ik])[1]
+                initial_conditions = get_initial_conditions(PSI.get_psi_container(sim_single, "ED"), key)
+                for ic in initial_conditions
+                    raw_result = Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
                     initial_cond = value(PSI.get_value(ic))
                     @test isapprox(raw_result, initial_cond)
                 end
