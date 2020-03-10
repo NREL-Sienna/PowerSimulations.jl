@@ -162,7 +162,9 @@ function device_timeseries_param_ub(
     variable = get_variable(psi_container, var_name)
     ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
-    param = add_param_container!(psi_container, param_reference, names, time_steps)
+    container = add_param_container!(psi_container, param_reference, names, time_steps)
+    multiplier = get_multiplier_array(container)
+    param = get_parameter_array(container)
     add_lower_bound = !all(isempty.((r.range.additional_terms_lb for r in ts_data)))
     if add_lower_bound
         lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
@@ -184,6 +186,7 @@ function device_timeseries_param_ub(
                 psi_container.JuMPmodel,
                 expression_ub <= data.multiplier * param[data.name, t]
             )
+            multiplier[data.name, t] = data.multiplier
             if add_lower_bound
                 expression_lb = JuMP.AffExpr(0.0, variable[data.name, t] => 1.0)
                 for val in data.range.additional_terms_lb
@@ -239,7 +242,9 @@ function device_timeseries_param_lb(
     lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
     names = (d.name for d in ts_data)
     constraint = add_cons_container!(psi_container, lb_name, names, time_steps)
-    param = add_param_container!(psi_container, param_reference, names, time_steps)
+    container = add_param_container!(psi_container, param_reference, names, time_steps)
+    multiplier = get_multiplier_array(container)
+    param = get_parameter_array(container)
 
     for data in ts_data
         for t in time_steps
@@ -255,8 +260,9 @@ function device_timeseries_param_lb(
                 PJ.add_parameter(psi_container.JuMPmodel, data.timeseries[t])
             constraint[data.name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                expression_lb >= data.multiplier * param[name, t]
+                expression_lb >= data.multiplier * param[data.name, t]
             )
+            multiplier[data.name, t] = data.multiplier
         end
     end
 
@@ -380,7 +386,9 @@ function device_timeseries_ub_bigM(
     names = (d.name for d in ts_data)
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     con_status = add_cons_container!(psi_container, key_status, names, time_steps)
-    param = add_param_container!(psi_container, param_reference, names, time_steps)
+    container = add_param_container!(psi_container, param_reference, names, time_steps)
+    multiplier = get_multiplier_array(container)
+    param = get_parameter_array(container)
 
     for data in ts_data
         for t in time_steps
@@ -402,6 +410,7 @@ function device_timeseries_ub_bigM(
                 psi_container.JuMPmodel,
                 expression_ub <= varbin[data.name, t] * M_value
             )
+            multiplier[data.name, t] = data.multiplier
         end
     end
 

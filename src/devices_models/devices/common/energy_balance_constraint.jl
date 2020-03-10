@@ -122,17 +122,18 @@ function reservoir_energy_balance_param(
     varspill = get_variable(psi_container, var_names[1])
     varout = get_variable(psi_container, var_names[2])
     varenergy = get_variable(psi_container, var_names[3])
-
-    paraminflow =
-        add_param_container!(psi_container, param_reference, name_index, time_steps)
+    container = add_param_container!(psi_container, param_reference, name_index, time_steps)
+    paraminflow = get_parameter_array(container)
+    multiplier = get_multiplier_array(container)
     constraint = add_cons_container!(psi_container, cons_name, name_index, time_steps)
 
     for (ix, d) in enumerate(inflow_data)
+        multiplier[d.name, 1] = d.multiplier
         paraminflow[d.name, 1] = PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[1])
         exp =
             initial_conditions[ix].value +
             (
-                d.multiplier * paraminflow[d.name, 1] - varspill[d.name, 1] -
+                multiplier[d.name, 1] * paraminflow[d.name, 1] - varspill[d.name, 1] -
                 varout[d.name, 1]
             ) * fraction_of_hour
         constraint[d.name, 1] =

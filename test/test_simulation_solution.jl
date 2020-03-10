@@ -96,6 +96,7 @@ function test_load_simulation(file_path::String)
             write_results(res)
             loaded_res = load_operation_results(sim_results.results_folder)
             @test loaded_res.variable_values == res.variable_values
+            @test loaded_res.parameter_values == res.parameter_values
         end
     end
 
@@ -162,6 +163,7 @@ function test_load_simulation(file_path::String)
             results = load_simulation_results(sim_results, name)
             res = load_simulation_results(sim_results, name, step, variable)
             @test results.variable_values == res.variable_values
+            @test results.parameter_values == res.parameter_values
         end
     end
 
@@ -210,12 +212,11 @@ function test_load_simulation(file_path::String)
         ]
         for (ik, key) in enumerate(P_keys)
             variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1] # 1 is first step
-            array =
-                PSI.get_parameter_container(
-                    sim.stages["ED"].internal.psi_container,
-                    Symbol(key[1]),
-                    key[2],
-                ).array
+            array = PSI.get_parameter_array(PSI.get_parameter_container(
+                sim.stages["ED"].internal.psi_container,
+                Symbol(key[1]),
+                key[2],
+            ))
             parameter = collect(values(value.(array.data)))  # [device, time] 1 is first execution
             raw_result = Feather.read(variable_ref)
             for i in 1:size(parameter, 1)
@@ -306,12 +307,11 @@ function test_load_simulation(file_path::String)
         for (ik, key) in enumerate(P_keys)
             variable_ref = PSI.get_reference(sim_results, "UC", 2, vars_names[ik])[1]
             raw_result = Feather.read(variable_ref)
-            ic =
-                PSI.get_parameter_container(
-                    sim.stages["ED"].internal.psi_container,
-                    Symbol(key[1]),
-                    key[2],
-                ).array
+            ic = PSI.get_parameter_array(PSI.get_parameter_container(
+                sim.stages["ED"].internal.psi_container,
+                Symbol(key[1]),
+                key[2],
+            ))
             for name in DataFrames.names(raw_result)
                 result = raw_result[1, name] # first time period of results  [time, device]
                 initial = value(ic[String(name)]) # [device, time]

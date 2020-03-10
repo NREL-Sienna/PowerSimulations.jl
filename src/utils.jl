@@ -126,7 +126,63 @@ function _jump_value(input::JuMP.ConstraintRef)
     return JuMP.dual(input)
 end
 
-function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray)
+function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{Float64})
+    if length(axes(input_array)) == 1
+        result = Vector{Float64}(undef, length(first(input_array.axes)))
+
+        for t in input_array.axes[1]
+            result[t] = input_array[t]
+        end
+
+        return DataFrames.DataFrame(var = result)
+
+    elseif length(axes(input_array)) == 2
+
+        result = Array{Float64, length(input_array.axes)}(
+            undef,
+            length(input_array.axes[2]),
+            length(input_array.axes[1]),
+        )
+        names = Array{Symbol, 1}(undef, length(input_array.axes[1]))
+
+        for t in input_array.axes[2], (ix, name) in enumerate(input_array.axes[1])
+            result[t, ix] = input_array[name, t]
+            names[ix] = Symbol(name)
+        end
+
+        return DataFrames.DataFrame(result, names)
+
+    elseif length(axes(input_array)) == 3
+        extra_dims = sum(length(axes(input_array)[2:(end - 1)]))
+        extra_vars = [Symbol("S$(s)") for s in 1:extra_dims]
+        result_df = DataFrames.DataFrame()
+        names = vcat(extra_vars, Symbol.(axes(input_array)[1]))
+
+        for i in input_array.axes[2]
+            third_dim = collect(fill(i, size(input_array)[end]))
+            result = Array{Float64, 2}(
+                undef,
+                length(last(input_array.axes)),
+                length(first(input_array.axes)),
+            )
+            for t in last(input_array.axes),
+                (ix, name) in enumerate(first(input_array.axes))
+
+                result[t, ix] = input_array[name, i, t]
+            end
+            res = DataFrames.DataFrame(hcat(third_dim, result))
+            result_df = vcat(result_df, res)
+        end
+
+        return DataFrames.names!(result_df, names)
+
+    else
+        error("Dimension Number $(length(axes(input_array))) not Supported")
+    end
+
+end
+
+function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{})
     if length(axes(input_array)) == 1
         result = Vector{Float64}(undef, length(first(input_array.axes)))
 

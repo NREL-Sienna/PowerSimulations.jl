@@ -274,7 +274,7 @@ function load_simulation_results(
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
     time_length = sim_output.chronologies[stage]
     dual = _find_duals(collect(keys(references[stage])))
-    param = _find_params(variable)
+    param = _find_params(collect(keys(references[stage])))
     variable = setdiff(variable, vcat(param, dual))
     for l in 1:length(variable)
         date_df = references[stage][variable[l]]
