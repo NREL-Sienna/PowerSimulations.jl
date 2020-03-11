@@ -128,14 +128,28 @@ end
         @test ED.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
         @test UC.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
     end
+
 end
 
-@testset "AC branch Branch rate constraints" begin
+@testset "AC Branch rate constraints" begin
     thermal_model = DeviceModel(ThermalStandard, ThermalDispatch)
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
+    #=
+        branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
+        template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            template,
+            c_sys5;
+            optimizer = ipopt_optimizer,
+            use_parameters = true,
+        )
+        ED = solve_op_problem!(op_problem)
+        # TO DO add test for branch_rate_constraint
+    =#
     branches = Dict{Symbol, DeviceModel}(
         :L => DeviceModel(PSY.MonitoredLine, PSI.FlowMonitoredLine),
     )

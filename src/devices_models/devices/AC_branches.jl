@@ -89,12 +89,10 @@ end
 function branch_rate_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B, D},
-    ::Type{S},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {B <: PSY.ACBranch, D <: AbstractBranchFormulation, S <: PM.AbstractDCPModel}
+    ::Type{<:AbstractBranchFormulation},
+    ::Type{<:PM.AbstractActivePowerModel},
+) where {B <: PSY.ACBranch}
     constraint_data = Vector{DeviceRange}()
-
     for d in devices
         limit_values = (min = -1 * PSY.get_rate(d), max = PSY.get_rate(d))
         name = PSY.get_name(d)
@@ -117,6 +115,43 @@ function branch_rate_constraints!(
     )
     return
 end
+function branch_rate_constraints!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{B},
+    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::Type{<:PM.AbstractActivePowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {B <: PSY.ACBranch}
+    constraint_data = Vector{DeviceRange}()
+    for d in devices
+        limit_values = (min = -1 * PSY.get_rate(d), max = PSY.get_rate(d))
+        name = PSY.get_name(d)
+        services_ub = Vector{Symbol}()
+        for service in PSY.get_services(d)
+            SR = typeof(service)
+            push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
+        end
+        push!(
+            constraint_data,
+            DeviceRange(name, limit_values, services_ub, Vector{Symbol}()),
+        )
+    end
+
+    device_range(
+        psi_container,
+        constraint_data,
+        constraint_name(RATE_LIMIT_FT, B),
+        variable_name(FLOW_REACTIVE_POWER_FROM_TO, B),
+    )
+
+    device_range(
+        psi_container,
+        constraint_data,
+        constraint_name(RATE_LIMIT_TF, B),
+        variable_name(FLOW_ACTIVE_POWER_TO_FROM, B),
+    )
+    return
+end
 
 function branch_rate_constraints!(
     psi_container::PSIContainer,
@@ -126,7 +161,6 @@ function branch_rate_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {B <: PSY.ACBranch}
     range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
-
     rating_constraint!(
         psi_container,
         range_data,
