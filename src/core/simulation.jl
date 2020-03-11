@@ -127,8 +127,20 @@ get_name(s::Simulation) = s.name
 get_simulation_folder(s::Simulation) = s.simulation_folder
 get_execution_order(s::Simulation) = s.sequence.execution_order
 get_current_execution_index(s::Simulation) = s.sequence.current_execution_index
-get_stage_cache_definition(s::Simulation, stage::String) =
-    get(s.sequence.cache, stage, nothing)
+
+function get_stage_cache_definition(s::Simulation, stage::String)
+    caches = s.sequence.cache
+    cache_ref = Array{AbstractCache, 1}()
+    for stage_names in keys(caches)
+        if stage in stage_names
+            push!(cache_ref, caches[stage_names])
+        end
+    end
+    if isempty(cache_ref)
+        return nothing
+    end
+    return cache_ref
+end
 
 function get_cache(s::Simulation, key::CacheKey)
     c = get(s.internal.simulation_cache, key, nothing)

@@ -166,7 +166,7 @@ mutable struct SimulationSequence
     feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
     feedforward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward}
     ini_cond_chronology::InitialConditionChronology
-    cache::Dict{String, Vector{<:AbstractCache}}
+    cache::Dict{Tuple, AbstractCache}
     execution_order::Vector{Int}
     current_execution_index::Int64
 
@@ -178,7 +178,7 @@ mutable struct SimulationSequence
         feedforward_chronologies = Dict{Pair{String, String}, FeedForwardChronology}(),
         feedforward = Dict{Tuple{String, Symbol, Symbol}, AbstractAffectFeedForward}(),
         ini_cond_chronology = InterStageChronology(),
-        cache = Dict{String, Vector{AbstractCache}}(),
+        cache = Dict{Tuple, AbstractCache}(),
     )
         _check_stage_order(order)
         _check_all_inputs_present(order, intervals, horizons)
