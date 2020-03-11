@@ -255,7 +255,7 @@ function test_sequence_build(file_path::String)
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
-            cache = Dict("UC" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
+            cache = Dict(("UC",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
             ini_cond_chronology = InterStageChronology(),
         )
         sim = Simulation(
@@ -286,7 +286,7 @@ function test_sequence_build(file_path::String)
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
-            cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
+            cache = Dict(("ED",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
             ini_cond_chronology = IntraStageChronology(),
         )
 
