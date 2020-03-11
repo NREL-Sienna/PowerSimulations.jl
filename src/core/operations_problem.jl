@@ -177,8 +177,6 @@ end
 
 get_transmission_ref(op_problem::OperationsProblem) = op_problem.template.transmission
 get_devices_ref(op_problem::OperationsProblem) = op_problem.template.devices
-get_branches_ref(op_problem::OperationsProblem) = op_problem.template.branches
-get_services_ref(op_problem::OperationsProblem) = op_problem.template.services
 get_system(op_problem::OperationsProblem) = op_problem.sys
 get_psi_container(op_problem::OperationsProblem) = op_problem.psi_container
 get_base_power(op_problem::OperationsProblem) = op_problem.sys.basepower
@@ -318,11 +316,10 @@ end
 function set_services_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
-    service::DeviceModel;
+    service::ServiceModel;
     kwargs...,
 ) where {M <: AbstractOperationsProblem}
-
-    if haskey(op_problem.template.devices, name)
+    if haskey(op_problem.template.services, name)
         op_problem.template.services[name] = service
         op_problem.psi_container = PSIContainer(
             op_problem.template.transmission,
@@ -385,10 +382,6 @@ function construct_network!(
     construct_network!(op_problem.psi_container, get_system(op_problem), T; kwargs...)
 
     return
-end
-
-function get_initial_conditions(op_problem::OperationsProblem)
-    return op_problem.psi_container.initial_conditions
 end
 
 function get_initial_conditions(
@@ -456,14 +449,6 @@ function get_variables_value(op_m::OperationsProblem)
     return results_dict
 end
 
-function get_parameters_value(op_m::OperationsProblem)
-    return get_parameters_value(op_m.psi_container)
-end
-
-function get_dual_values(op_m::OperationsProblem, constraints::Vector{Symbol})
-    return get_dual_values(op_m.psi_container, constraints)
-end
-
 """
     solve_op_problem!(op_problem::OperationsProblem; kwargs...)
 This solves the operational model for a single instance and
@@ -513,7 +498,7 @@ function solve_op_problem!(
     time_stamp = shorten_time_stamp(time_stamp)
     base_power = PSY.get_basepower(op_problem.sys)
     constraint_duals = get(kwargs, :constraints_duals, Vector{Symbol}())
-    dual_result = get_dual_values(op_problem, constraint_duals)
+    dual_result = get_dual_values(op_problem.psi_container, constraint_duals)
     obj_value = Dict(
         :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel),
     )
@@ -579,17 +564,13 @@ function write_data(psi_container::PSIContainer, save_path::AbstractString; kwar
     return
 end
 
-function write_data(op_problem::OperationsProblem, save_path::AbstractString; kwargs...)
+function write_data(op_problem::OperationsProblem, save_path::String; kwargs...)
     write_data(op_problem.psi_container, save_path; kwargs...)
     return
 end
 
-function _write_data(base_power::Float64, save_path::String)
-    JSON.write(joinpath(save_path, "base_power.json"), JSON.json(base_power))
-end
-
 """ Exports the OpModel JuMP object in MathOptFormat"""
-function write_op_problem(op_problem::OperationsProblem, save_path::String)
+function export_op_model(op_problem::OperationsProblem, save_path::String)
     _write_psi_container(op_problem.psi_container, save_path)
     return
 end

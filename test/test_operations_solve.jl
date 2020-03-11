@@ -241,6 +241,14 @@ path = joinpath(pwd(), "test_writing")
 
 function test_write_functions(file_path)
 
+    @testset "Test write optimizer problem" begin
+        path = mkdir(joinpath(file_path, "op_problem"))
+        file = joinpath(path, "op_problem.txt")
+        PSI.export_op_model(op_problem, file)
+        PSI.write_data(op_problem, path)
+        @test collect(readdir(path)) == ["P__ThermalStandard.feather", "op_problem.txt"]
+    end
+
     @testset "Test write_data functions" begin
         PSI.write_data(get_variables(res), mkdir(joinpath(file_path, "one")))
         readdir(joinpath(file_path, "one"))

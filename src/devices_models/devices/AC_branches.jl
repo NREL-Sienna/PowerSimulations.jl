@@ -62,32 +62,6 @@ end
 function branch_rate_bounds!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    ::Type{<:AbstractBranchFormulation},
-    ::Type{<:PM.AbstractActivePowerModel},
-) where {B <: PSY.ACBranch}
-    constraint_data = Vector{DeviceRange}()
-
-    for d in devices
-        limit_values = (min = -1 * PSY.get_rate(d), max = PSY.get_rate(d))
-        name = PSY.get_name(d)
-        services_ub = Vector{Symbol}()
-        for service in PSY.get_services(d)
-            SR = typeof(service)
-            push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
-        end
-        push!(
-            constraint_data,
-            DeviceRange(name, limit_values, services_ub, Vector{Symbol}()),
-        )
-    end
-    set_variable_bounds!(psi_container, constraint_data, FLOW_ACTIVE_POWER_FROM_TO, B)
-    set_variable_bounds!(psi_container, constraint_data, FLOW_ACTIVE_POWER_TO_FROM, B)
-    return
-end
-
-function branch_rate_bounds!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{B},
     ::Type{D},
     ::Type{S},
 ) where {B <: PSY.ACBranch, D <: AbstractBranchFormulation, S <: PM.AbstractPowerModel}
@@ -140,45 +114,6 @@ function branch_rate_constraints!(
         constraint_data,
         constraint_name(RATE_LIMIT, B),
         variable_name(FLOW_ACTIVE_POWER, B),
-    )
-    return
-end
-
-function branch_rate_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B, <:AbstractBranchFormulation},
-    ::Type{<:PM.AbstractActivePowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {B <: PSY.ACBranch}
-    constraint_data = Vector{DeviceRange}()
-
-    for d in devices
-        limit_values = (min = -1 * PSY.get_rate(d), max = PSY.get_rate(d))
-        name = PSY.get_name(d)
-        services_ub = Vector{Symbol}()
-        for service in PSY.get_services(d)
-            SR = typeof(service)
-            push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
-        end
-        push!(
-            constraint_data,
-            DeviceRange(name, limit_values, services_ub, Vector{Symbol}()),
-        )
-    end
-
-    device_range(
-        psi_container,
-        constraint_data,
-        constraint_name(RATE_LIMIT_FT, B),
-        variable_name(FLOW_REACTIVE_POWER_FROM_TO, B),
-    )
-
-    device_range(
-        psi_container,
-        constraint_data,
-        constraint_name(RATE_LIMIT_TF, B),
-        variable_name(FLOW_ACTIVE_POWER_TO_FROM, B),
     )
     return
 end

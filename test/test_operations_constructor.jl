@@ -49,6 +49,29 @@ services = Dict{Symbol, ServiceModel}()
     moi_tests(op_problem, false, 5, 0, 5, 5, 1, false)
 end
 
+@testset "testing getter functions" begin
+    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        template,
+        c_sys5;
+        optimizer = GLPK_optimizer,
+        use_parameters = true,
+    )
+    MOIU.attach_optimizer(op_problem.psi_container.JuMPmodel)
+    con_index = collect(get_all_constraint_index(op_problem))
+    length = size(con_index, 1)
+    constraint =
+        op_problem.psi_container.constraints[last(con_index)[1]].data[last(con_index)[2]]
+    @test PSI.get_con_index(op_problem, length) == constraint
+    @test PSI.get_con_index(op_problem, length + 1) == nothing
+    var_index = collect(get_all_var_index(op_problem))
+    length = size(var_index, 1)
+    var = op_problem.psi_container.variables[last(var_index)[1]].data[last(var_index)[2]]
+    @test get_var_index(op_problem, length) == var
+    @test get_var_index(op_problem, length + 1) == nothing
+end
+
 @testset "Operation Model Constructors with Parameters" begin
 
     networks = [
