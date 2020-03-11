@@ -126,11 +126,6 @@ function _jump_value(input::JuMP.ConstraintRef)
     return JuMP.dual(input)
 end
 
-function _jump_value(int::Int64)
-    @warn("This is for testing purposes only.")
-    return int
-end
-
 function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{Float64})
     if length(axes(input_array)) == 1
         result = Vector{Float64}(undef, length(first(input_array.axes)))

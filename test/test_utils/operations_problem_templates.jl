@@ -80,6 +80,11 @@ devices = Dict(
 )
 template_hydro_ed =
     OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+
+function PSI._jump_value(int::Int64)
+    @warn("This is for testing purposes only.")
+    return int
+end
 #=
 ## UC Model Ref
 branches = Dict(:L => DeviceModel(Line, StaticLine),

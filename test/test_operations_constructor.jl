@@ -63,8 +63,8 @@ end
     length = size(con_index, 1)
     constraint =
         op_problem.psi_container.constraints[last(con_index)[1]].data[last(con_index)[2]]
-    @test PSI.get_con_index(op_problem, length) == constraint
-    @test PSI.get_con_index(op_problem, length + 1) == nothing
+    @test get_con_index(op_problem, length) == constraint
+    @test get_con_index(op_problem, length + 1) == nothing
     var_index = collect(get_all_var_index(op_problem))
     length = size(var_index, 1)
     var = op_problem.psi_container.variables[last(var_index)[1]].data[last(var_index)[2]]

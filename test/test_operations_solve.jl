@@ -228,6 +228,8 @@ res = solve_op_problem!(op_problem; constraints_duals = duals)
         dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
         @test isapprox(dual, get_duals(res)[name][i, 1])
     end
+    dual_results = get_dual_values(op_problem, duals)
+    @test dual_results == res.dual_values
 end
 
 @testset "test get variable function" begin
@@ -243,10 +245,11 @@ function test_write_functions(file_path)
 
     @testset "Test write optimizer problem" begin
         path = mkdir(joinpath(file_path, "op_problem"))
-        file = joinpath(path, "op_problem.txt")
+        file = joinpath(path, "op_problem.json")
         PSI.export_op_model(op_problem, file)
         PSI.write_data(op_problem, path)
-        @test collect(readdir(path)) == ["P__ThermalStandard.feather", "op_problem.txt"]
+        list = sort!(collect(readdir(path)))
+        @test ["P__ThermalStandard.feather", "op_problem.json"] == list
     end
 
     @testset "Test write_data functions" begin
