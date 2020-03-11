@@ -441,8 +441,10 @@ function test_load_simulation(file_path::String)
                     name,
                     24,
                 ]
-            cache =
-                PSI.get_cache(sim_cache, PSI.CacheKey(TimeStatusChange, PSY.ThermalStandard)).value[name]
+            cache = PSI.get_cache(
+                sim_cache,
+                PSI.CacheKey(TimeStatusChange, PSY.ThermalStandard),
+            ).value[name]
             @test JuMP.value(var) == cache[:status]
         end
 
