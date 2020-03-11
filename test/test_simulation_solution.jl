@@ -417,22 +417,13 @@ function test_load_simulation(file_path::String)
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
-<<<<<<< HEAD
-<<<<<<< HEAD
-            cache = Dict(("UC",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
-=======
-            cache = Dict("UC" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON), EnergyStored(PSY.HydroEnergyReservoir, PSI.ENERGY)]),
->>>>>>> Adding test for Energy Stored cache
-=======
             cache = Dict(
-                "UC" => [
-                    TimeStatusChange(PSY.ThermalStandard, PSI.ON),
-                    EnergyStored(PSY.HydroEnergyReservoir, PSI.ENERGY),
-                ],
+                ("UC",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON),
+                ("UC", "ED") => EnergyStored(PSY.HydroEnergyReservoir, PSI.ENERGY),
             ),
->>>>>>> Julia formatter changes
             ini_cond_chronology = InterStageChronology(),
         )
+
         sim_cache = Simulation(
             name = "cache",
             steps = 2,
@@ -451,7 +442,7 @@ function test_load_simulation(file_path::String)
                     24,
                 ]
             cache =
-                get_cache(sim_cache, CacheKey(TimeStatusChange, PSY.ThermalStandard)).value[name]
+                PSI.get_cache(sim_cache, PSI.CacheKey(TimeStatusChange, PSY.ThermalStandard)).value[name]
             @test JuMP.value(var) == cache[:status]
         end
 
@@ -488,7 +479,7 @@ function test_load_simulation(file_path::String)
             order = Dict(1 => "ED"),
             horizons = Dict("ED" => 12),
             intervals = Dict("ED" => (Hour(1), Consecutive())),
-            cache = Dict("ED" => [EnergyStored(PSY.HydroEnergyReservoir, PSI.ENERGY)]),
+            cache = Dict(("ED",) => EnergyStored(PSY.HydroEnergyReservoir, PSI.ENERGY)),
             ini_cond_chronology = IntraStageChronology(),
         )
 
