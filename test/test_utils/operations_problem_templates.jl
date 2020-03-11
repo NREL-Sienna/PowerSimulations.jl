@@ -76,7 +76,7 @@ devices = Dict(
     :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     :ILoads => DeviceModel(InterruptibleLoad, DispatchablePowerLoad),
-    :HydroEnergyReservoir => DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirFlow),
+    :HydroEnergyReservoir =>     DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirFlow),
 )
 template_hydro_ed =
     OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
@@ -86,7 +86,8 @@ services = Dict()
 devices = Dict(
     :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-    :HydroEnergyReservoir => DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage),
+    :HydroEnergyReservoir =>
+        DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage),
 )
 template_hydro_st_standard_uc =
     OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
@@ -99,7 +100,8 @@ devices = Dict(
     :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     :ILoads => DeviceModel(InterruptibleLoad, DispatchablePowerLoad),
-    :HydroEnergyReservoir => DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage),
+    :HydroEnergyReservoir =>
+        DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage),
 )
 template_hydro_st_ed =
     OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)

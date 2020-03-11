@@ -442,7 +442,8 @@ function test_load_simulation(file_path::String)
                     name,
                     24,
                 ]
-            cache = sim_cache.internal.simulation_cache[PSI.CacheKey(PSI.TimeStatusChange, PSY.ThermalStandard)].value[name]
+            cache =
+                get_cache(sim_cache, CacheKey(TimeStatusChange, PSY.ThermalStandard)).value[name]
             @test JuMP.value(var) == cache[:status]
         end
 
@@ -450,7 +451,8 @@ function test_load_simulation(file_path::String)
             ic_keys = [PSI.ICKey(PSI.DeviceEnergy, PSY.HydroEnergyReservoir)]
             vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
             for (ik, key) in enumerate(ic_keys)
-                variable_ref = PSI.get_reference(sim_cache_results, "ED", 1, vars_names[ik])[end]
+                variable_ref =
+                    PSI.get_reference(sim_cache_results, "ED", 1, vars_names[ik])[end]
                 initial_conditions =
                     get_initial_conditions(PSI.get_psi_container(sim_cache, "UC"), key)
                 for ic in initial_conditions
@@ -464,17 +466,21 @@ function test_load_simulation(file_path::String)
     end
 
     @testset "" begin
-        single_stage_definition =
-        Dict("ED" => Stage(GenericOpProblem, template_hydro_st_ed, c_sys5_hy_ed, GLPK_optimizer))
+        single_stage_definition = Dict(
+            "ED" => Stage(
+                GenericOpProblem,
+                template_hydro_st_ed,
+                c_sys5_hy_ed,
+                GLPK_optimizer,
+            ),
+        )
 
         single_sequence = SimulationSequence(
             step_resolution = Hour(1),
             order = Dict(1 => "ED"),
             horizons = Dict("ED" => 12),
             intervals = Dict("ED" => (Hour(1), Consecutive())),
-            cache = Dict(
-                "ED" => [ EnergyStored(PSY.HydroEnergyReservoir, PSI.ENERGY),
-                ]),
+            cache = Dict("ED" => [EnergyStored(PSY.HydroEnergyReservoir, PSI.ENERGY)]),
             ini_cond_chronology = IntraStageChronology(),
         )
 
@@ -492,10 +498,13 @@ function test_load_simulation(file_path::String)
             ic_keys = [PSI.ICKey(PSI.DeviceEnergy, PSY.HydroEnergyReservoir)]
             vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
             for (ik, key) in enumerate(ic_keys)
-                variable_ref = PSI.get_reference(sim_cache_results, "ED", 1, vars_names[ik])[1]
-                initial_conditions = get_initial_conditions(PSI.get_psi_container(sim_single, "ED"), key)
+                variable_ref =
+                    PSI.get_reference(sim_cache_results, "ED", 1, vars_names[ik])[1]
+                initial_conditions =
+                    get_initial_conditions(PSI.get_psi_container(sim_single, "ED"), key)
                 for ic in initial_conditions
-                    raw_result = Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
+                    raw_result =
+                        Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
                     initial_cond = value(PSI.get_value(ic))
                     @test isapprox(raw_result, initial_cond)
                 end
