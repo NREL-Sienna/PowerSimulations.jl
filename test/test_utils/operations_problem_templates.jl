@@ -81,7 +81,6 @@ devices = Dict(
 template_hydro_ed =
     OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 
-
 branches = Dict()
 services = Dict()
 devices = Dict(

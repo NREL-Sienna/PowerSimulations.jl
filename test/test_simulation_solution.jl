@@ -448,8 +448,8 @@ function test_load_simulation(file_path::String)
         end
 
         @testset "Testing to verify initial condition update using EnergyStored cache" begin
-        ic_keys = [PSI.ICKey(PSI.DeviceEnergy, PSY.HydroEnergyReservoir)]
-        vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
+            ic_keys = [PSI.ICKey(PSI.DeviceEnergy, PSY.HydroEnergyReservoir)]
+            vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
             for (ik, key) in enumerate(ic_keys)
                 variable_ref =
                     PSI.get_reference(sim_cache_results, "ED", 1, vars_names[ik])[end]
