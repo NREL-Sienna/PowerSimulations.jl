@@ -425,10 +425,15 @@ function initial_condition_update!(
     ini_cond_vector = get_initial_conditions(stage.internal.psi_container)[ini_cond_key]
     for ic in get_initial_conditions(stage.internal.psi_container)[ini_cond_key]
         name = device_name(ic)
-        interval_chronology = get_stage_interval_chronology(sim, stage.name)
+        interval_chronology =
+            get_stage_interval_chronology(sim.sequence, get_stage_name(sim, stage))
         var_value =
             get_stage_variable(interval_chronology, (stage => stage), name, ic.update_ref)
-        cache = get_cache(stage, ic.cache_key)
+        if isnothing(ic.cache_type)
+            cache = nothing
+        else
+            cache = get_cache(sim, ic.cache_type, ini_cond_key.device_type)
+        end
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
     end
@@ -498,6 +503,24 @@ function update_cache!(
             c.value[name][:status] = device_status
             @debug("Cache value TimeStatus for device $name set to $device_status and count to 1.0")
         end
+    end
+
+    return
+end
+
+function update_cache!(
+    sim::Simulation,
+    key::CacheKey{StoredEnergy, D},
+    stage::Stage,
+) where {D <: PSY.Device}
+    c = get_cache(sim, key)
+    variable = get_variable(stage.internal.psi_container, c.ref)
+    t = get_end_of_interval_step(stage)
+    for name in variable.axes[1]
+        device_energy = JuMP.value(variable[name, t])
+        @debug name, device_energy
+        c.value[name] = device_energy
+        @debug("Cache value StoredEnergy for device $name set to $(c.value[name])")
     end
 
     return

@@ -456,7 +456,7 @@ function energy_balance_constraint!(
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HydroEnergyReservoir}
-    key = ICKey(DeviceEnergy, H)
+    key = ICKey(EnergyLevel, H)
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
