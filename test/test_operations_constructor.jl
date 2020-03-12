@@ -137,19 +137,6 @@ end
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
-    #=
-        branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
-        template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
-        op_problem = OperationsProblem(
-            TestOpProblem,
-            template,
-            c_sys5;
-            optimizer = ipopt_optimizer,
-            use_parameters = true,
-        )
-        ED = solve_op_problem!(op_problem)
-        # TO DO add test for branch_rate_constraint
-    =#
     branches = Dict{Symbol, DeviceModel}(
         :L => DeviceModel(PSY.MonitoredLine, PSI.FlowMonitoredLine),
     )

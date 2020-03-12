@@ -65,7 +65,6 @@ function branch_rate_constraints!(
     constraint_val =
         JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
     assign_constraint!(psi_container, FLOW_ACTIVE_POWER, B, constraint_val)
-
     for t in time_steps, d in devices
         min_rate =
             max(PSY.get_activepowerlimits_from(d).min, PSY.get_activepowerlimits_to(d).min)

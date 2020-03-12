@@ -41,7 +41,6 @@ function branch_rate_bounds!(
     ::Type{<:PM.AbstractDCPModel},
 ) where {B <: PSY.ACBranch}
     constraint_data = Vector{DeviceRange}()
-
     for d in devices
         limit_values = (min = -1 * PSY.get_rate(d), max = PSY.get_rate(d))
         name = PSY.get_name(d)
@@ -106,7 +105,6 @@ function branch_rate_constraints!(
             DeviceRange(name, limit_values, services_ub, Vector{Symbol}()),
         )
     end
-
     device_range(
         psi_container,
         constraint_data,
@@ -136,19 +134,18 @@ function branch_rate_constraints!(
             DeviceRange(name, limit_values, services_ub, Vector{Symbol}()),
         )
     end
-
     device_range(
         psi_container,
         constraint_data,
-        constraint_name(RATE_LIMIT_FT, B),
-        variable_name(FLOW_REACTIVE_POWER_FROM_TO, B),
+        constraint_name(RATE_LIMIT, B),
+        variable_name(FLOW_ACTIVE_POWER, B),
     )
 
     device_range(
         psi_container,
         constraint_data,
-        constraint_name(RATE_LIMIT_TF, B),
-        variable_name(FLOW_ACTIVE_POWER_TO_FROM, B),
+        constraint_name(RATE_LIMIT, B),
+        variable_name(FLOW_ACTIVE_POWER, B),
     )
     return
 end
