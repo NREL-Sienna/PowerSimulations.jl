@@ -51,7 +51,7 @@ end
                 TestOpProblem,
                 template,
                 sys;
-                PTDF = PTDF_ref[sys],
+                parameters = NetworkOperationsParameters(PTDF_ref[sys]),
                 optimizer = OSQP_optimizer,
                 use_parameters = p,
             )
@@ -202,7 +202,7 @@ end
                 TestOpProblem,
                 template,
                 sys;
-                PTDF = PTDF_ref[sys],
+                parameters = NetworkOperationsParameters(PTDF_ref[sys]),
                 optimizer = GLPK_optimizer,
                 use_parameters = p,
             )
@@ -316,7 +316,12 @@ function test_write_functions(file_path)
             :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
         )
         template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
-        UC = OperationsProblem(TestOpProblem, template, c_sys5; PTDF = PTDF5)
+        UC = OperationsProblem(
+            TestOpProblem,
+            template,
+            c_sys5;
+            parameters = NetworkOperationsParameters(PTDF5),
+        )
         set_services_template!(
             UC,
             Dict(:Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve)),

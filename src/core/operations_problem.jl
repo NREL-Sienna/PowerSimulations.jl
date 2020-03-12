@@ -64,7 +64,7 @@ OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimiz
 - `optimizer::union{Nothing, JuMP.MOI.OptimizerWithAttributes} = GLPK_optimizer`: The optimizer gets passed
 into the optimization model the default is nothing.
 - `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
-- `parameters::Bool`: enable JuMP parameters
+- `parameters::OperationsProblemParameters`: parameters specific to the problem type
 - `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
 - `initial_time::Dates.DateTime`: initial time of forecast
@@ -74,6 +74,7 @@ function OperationsProblem(
     template::OperationsProblemTemplate,
     sys::PSY.System;
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
     kwargs...,
 ) where {M <: AbstractOperationsProblem}
 
@@ -84,7 +85,7 @@ function OperationsProblem(
         PSIContainer(template.transmission, sys, optimizer; kwargs...),
     )
 
-    build_op_problem!(op_problem; kwargs...)
+    build_op_problem!(op_problem; parameters = parameters)
 
     return op_problem
 
@@ -371,18 +372,30 @@ function construct_device!(
 
 end
 
-function construct_network!(op_problem::OperationsProblem; kwargs...)
-    construct_network!(op_problem, op_problem.template.transmission; kwargs...)
+function construct_network!(
+    op_problem::OperationsProblem;
+    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
+)
+    construct_network!(
+        op_problem,
+        op_problem.template.transmission;
+        parameters = parameters,
+    )
     return
 end
 
 function construct_network!(
     op_problem::OperationsProblem,
     system_formulation::Type{T};
-    kwargs...,
+    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
 ) where {T <: PM.AbstractPowerModel}
 
-    construct_network!(op_problem.psi_container, get_system(op_problem), T; kwargs...)
+    construct_network!(
+        op_problem.psi_container,
+        get_system(op_problem),
+        T;
+        parameters = parameters,
+    )
 
     return
 end
@@ -406,10 +419,10 @@ end
 
 function build_op_problem!(
     op_problem::OperationsProblem{M};
-    kwargs...,
+    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
 ) where {M <: AbstractOperationsProblem}
     sys = get_system(op_problem)
-    _build!(op_problem.psi_container, op_problem.template, sys; kwargs...)
+    _build!(op_problem.psi_container, op_problem.template, sys; parameters = parameters)
     return
 end
 
@@ -417,31 +430,45 @@ function _build!(
     psi_container::PSIContainer,
     template::OperationsProblemTemplate,
     sys::PSY.System;
-    kwargs...,
+    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
 )
     transmission = template.transmission
 
     # Order is required
-    #Build Services
-    construct_services!(psi_container, sys, template.services, template.devices; kwargs...)
 
-    # Build Injection devices
+    construct_services!(
+        psi_container,
+        sys,
+        template.services,
+        template.devices;
+        parameters = parameters,
+    )
+
     for device_model in values(template.devices)
         @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
-        construct_device!(psi_container, sys, device_model, transmission; kwargs...)
+        construct_device!(
+            psi_container,
+            sys,
+            device_model,
+            transmission;
+            parameters = parameters,
+        )
     end
 
-    # Build Network
     @debug "Building $(transmission) network formulation"
-    construct_network!(psi_container, sys, transmission; kwargs...)
+    construct_network!(psi_container, sys, transmission; parameters = parameters)
 
-    # Build Branches
     for branch_model in values(template.branches)
         @debug "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
-        construct_device!(psi_container, sys, branch_model, transmission; kwargs...)
+        construct_device!(
+            psi_container,
+            sys,
+            branch_model,
+            transmission;
+            parameters = parameters,
+        )
     end
 
-    # Objective Function
     @debug "Building Objective"
     JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
 
