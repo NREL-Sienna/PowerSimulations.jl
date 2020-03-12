@@ -315,7 +315,7 @@ function test_load_simulation(file_path::String)
             for name in DataFrames.names(raw_result)
                 result = raw_result[1, name] # first time period of results  [time, device]
                 initial = value(ic[String(name)]) # [device, time]
-                @test_skip isapprox(initial, result, atol = 1.0e-4)
+                @test isapprox(initial, result, atol = 1.0e-4)
             end
         end
     end
@@ -331,7 +331,7 @@ function test_load_simulation(file_path::String)
             for ic in initial_conditions
                 output = vars[1, Symbol(PSI.device_name(ic))] # change to getter function
                 initial_cond = value(PSI.get_value(ic))
-                @test_skip isapprox(output, initial_cond, atol = 1.0e-4)
+                @test_broken isapprox(output, initial_cond, atol = 1.0e-4)
             end
         end
     end
