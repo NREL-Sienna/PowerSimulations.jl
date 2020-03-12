@@ -93,7 +93,6 @@ function build!(
         stage.sys;
         parameters = stage.parameters,
     )
-    _build!(stage.internal.psi_container, stage.template, stage.sys; kwargs...)
     stage.internal.warm_start_enabled = MOI.supports(
         JuMP.backend(stage.internal.psi_container.JuMPmodel),
         MOI.VariablePrimalStart(),
