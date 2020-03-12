@@ -28,7 +28,7 @@ const IS = InfrastructureSystems
 const TEST_KWARGS = [:good_kwarg_1, :good_kwarg_2]
 abstract type TestOpProblem <: PSI.AbstractOperationsProblem end
 
-ipopt_optimizer = JuMP.optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0)
+ipopt_optimizer = JuMP.optimizer_with_attributes(Ipopt.Optimizer, "tol" => 1e-6, "print_level" => 0)
 fast_ipopt_optimizer = JuMP.optimizer_with_attributes(
     Ipopt.Optimizer,
     "print_level" => 0,
