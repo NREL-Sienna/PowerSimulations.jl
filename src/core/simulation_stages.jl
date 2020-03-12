@@ -172,7 +172,7 @@ function get_initial_cache(cache::TimeStatusChange, stage::Stage)
     return value_array
 end
 
-function get_initial_cache(cache::EnergyStored, stage::Stage)
+function get_initial_cache(cache::StoredEnergy, stage::Stage)
     ini_cond_level = get_initial_conditions(
         stage.internal.psi_container,
         DeviceEnergy,

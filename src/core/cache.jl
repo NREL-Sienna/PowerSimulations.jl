@@ -21,15 +21,15 @@ function TimeStatusChange(::Type{T}, name::AbstractString) where {T <: PSY.Devic
     return TimeStatusChange(T, value_array, UpdateRef{JuMP.VariableRef}(T, name))
 end
 
-mutable struct EnergyStored <: AbstractCache
+mutable struct StoredEnergy <: AbstractCache
     device_type::Type{<:PSY.Device}
     value::JuMP.Containers.DenseAxisArray{Float64}
     ref::UpdateRef
 end
 
-function EnergyStored(::Type{T}, name::AbstractString) where {T <: PSY.Device}
+function StoredEnergy(::Type{T}, name::AbstractString) where {T <: PSY.Device}
     value_array = JuMP.Containers.DenseAxisArray{Float64}(undef, 1)
-    return EnergyStored(T, value_array, UpdateRef{JuMP.VariableRef}(T, name))
+    return StoredEnergy(T, value_array, UpdateRef{JuMP.VariableRef}(T, name))
 end
 
 cache_value(cache::AbstractCache, key) = cache.value[key]

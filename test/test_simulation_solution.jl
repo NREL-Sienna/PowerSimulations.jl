@@ -419,7 +419,7 @@ function test_load_simulation(file_path::String)
             ),
             cache = Dict(
                 ("UC",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON),
-                ("UC", "ED") => EnergyStored(PSY.HydroEnergyReservoir, PSI.ENERGY),
+                ("UC", "ED") => StoredEnergy(PSY.HydroEnergyReservoir, PSI.ENERGY),
             ),
             ini_cond_chronology = InterStageChronology(),
         )
@@ -447,7 +447,7 @@ function test_load_simulation(file_path::String)
             @test JuMP.value(var) == cache[:status]
         end
 
-        @testset "Testing to verify initial condition update using EnergyStored cache" begin
+        @testset "Testing to verify initial condition update using StoredEnergy cache" begin
             ic_keys = [PSI.ICKey(PSI.DeviceEnergy, PSY.HydroEnergyReservoir)]
             vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
             for (ik, key) in enumerate(ic_keys)
@@ -480,7 +480,7 @@ function test_load_simulation(file_path::String)
             order = Dict(1 => "ED"),
             horizons = Dict("ED" => 12),
             intervals = Dict("ED" => (Hour(1), Consecutive())),
-            cache = Dict(("ED",) => EnergyStored(PSY.HydroEnergyReservoir, PSI.ENERGY)),
+            cache = Dict(("ED",) => StoredEnergy(PSY.HydroEnergyReservoir, PSI.ENERGY)),
             ini_cond_chronology = IntraStageChronology(),
         )
 
@@ -494,7 +494,7 @@ function test_load_simulation(file_path::String)
         build!(sim_single)
         sim_cache_results = execute!(sim_single)
 
-        @testset "Testing to verify initial condition update using EnergyStored cache" begin
+        @testset "Testing to verify initial condition update using StoredEnergy cache" begin
             ic_keys = [PSI.ICKey(PSI.DeviceEnergy, PSY.HydroEnergyReservoir)]
             vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
             for (ik, key) in enumerate(ic_keys)

@@ -247,7 +247,7 @@ function storage_energy_init(
         ICKey(DeviceEnergy, T),
         _make_initial_condition_reservoir_energy,
         _get_reservoir_energy_value,
-        EnergyStored,
+        StoredEnergy,
     )
 
     return

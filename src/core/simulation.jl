@@ -510,7 +510,7 @@ end
 
 function update_cache!(
     sim::Simulation,
-    key::CacheKey{EnergyStored, D},
+    key::CacheKey{StoredEnergy, D},
     stage::Stage,
 ) where {D <: PSY.Device}
     c = get_cache(sim, key)
@@ -520,7 +520,7 @@ function update_cache!(
         device_energy = JuMP.value(variable[name, t])
         @debug name, device_energy
         c.value[name] = device_energy
-        @debug("Cache value EnergyStored for device $name set to $(c.value[name])")
+        @debug("Cache value StoredEnergy for device $name set to $(c.value[name])")
     end
 
     return
