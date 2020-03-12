@@ -3,7 +3,7 @@ function construct_services!(
     sys::PSY.System,
     services_template::Dict{Symbol, ServiceModel},
     devices_template::Dict{Symbol, DeviceModel};
-    kwargs...,
+    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
 )
     isempty(services_template) && return
     services_mapping = PSY.get_contributing_device_mapping(sys)
@@ -16,7 +16,7 @@ function construct_services!(
             services_mapping,
             service_model,
             devices_template;
-            kwargs...,
+            parameters = parameters,
         )
     end
     return
@@ -28,7 +28,7 @@ function construct_service!(
     services_mapping::PSY.ServiceContributingDevicesMapping,
     model::ServiceModel{SR, RangeReserve},
     devices_template::Dict{Symbol, DeviceModel};
-    kwargs...,
+    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
 ) where {SR <: PSY.Reserve}
 
     time_steps = model_time_steps(psi_container)
