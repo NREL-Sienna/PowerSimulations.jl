@@ -519,6 +519,9 @@ function get_parameters_value(psi_container::PSIContainer)
 end
 
 function is_milp(container::PSIContainer)
+    type_of_optimizer = typeof(container.JuMPmodel.moi_backend.optimizer.model)
+    supports_milp = hasfield(type_of_optimizer, :last_solved_by_mip)
+    !supports_milp && return false
     return container.JuMPmodel.moi_backend.optimizer.model.last_solved_by_mip
 end
 

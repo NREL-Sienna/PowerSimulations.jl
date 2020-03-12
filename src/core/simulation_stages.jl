@@ -4,6 +4,7 @@ mutable struct StageInternal
     executions::Int
     execution_count::Int
     end_of_interval_step::Int
+    warm_start_enabled::Bool
     # This line keeps track of the executions of a stage relative to other stages.
     # This might be needed in the future to run multiple stages. For now it is disabled
     #synchronized_executions::Dict{Int, Int} # Number of executions per upper level stage step
@@ -17,7 +18,7 @@ mutable struct StageInternal
             executions,
             execution_count,
             0,
-            #Dict{Int, Int}(),
+            true,
             psi_container,
             Set{CacheKey}(),
             Dict{Int, FeedForwardChronology}(),
@@ -66,6 +67,7 @@ get_template(s::Stage) = s.template
 get_number(s::Stage) = s.internal.number
 get_psi_container(s::Stage) = s.internal.psi_container
 get_end_of_interval_step(s::Stage) = s.internal.end_of_interval_step
+warm_start_enabled(s::Stage) = s.internal.warm_start_enabled
 
 function build!(
     stage::Stage,
@@ -83,6 +85,11 @@ function build!(
         horizon = horizon,
     )
     _build!(stage.internal.psi_container, stage.template, stage.sys; kwargs...)
+    stage.internal.warm_start_enabled = MOI.supports(
+        JuMP.backend(stage.internal.psi_container.JuMPmodel),
+        MOI.VariablePrimalStart(),
+        MOI.VariableIndex,
+    )
     stage_resolution = PSY.get_forecasts_resolution(stage.sys)
     stage.internal.end_of_interval_step = Int(stage_interval / stage_resolution)
     return
@@ -169,6 +176,20 @@ function get_initial_cache(cache::TimeStatusChange, stage::Stage)
         end
     end
 
+    return value_array
+end
+
+function get_initial_cache(cache::StoredEnergy, stage::Stage)
+    ini_cond_level =
+        get_initial_conditions(stage.internal.psi_container, EnergyLevel, cache.device_type)
+
+    device_axes = Set((PSY.get_name(ic.device) for ic in ini_cond_level),)
+    value_array = JuMP.Containers.DenseAxisArray{Float64}(undef, device_axes)
+    for ic in ini_cond_level
+        device_name = PSY.get_name(ic.device)
+        condition = get_condition(ic)
+        value_array[device_name] = condition
+    end
     return value_array
 end
 

@@ -18,7 +18,7 @@ struct DevicePower <: InitialConditionType end
 struct DeviceStatus <: InitialConditionType end
 struct TimeDurationON <: InitialConditionType end
 struct TimeDurationOFF <: InitialConditionType end
-struct DeviceEnergy <: InitialConditionType end
+struct EnergyLevel <: InitialConditionType end
 
 function get_condition(p::InitialCondition{Float64})
     return p.value
@@ -99,6 +99,21 @@ function calculate_ic_quantity(
     return var_value
 end
 
+function calculate_ic_quantity(
+    initial_condition_key::ICKey{EnergyLevel, T},
+    ic::InitialCondition,
+    var_value::Float64,
+    cache::Union{Nothing, AbstractCache},
+) where {T <: PSY.Component}
+
+    name = device_name(ic)
+    energy_cache = cache_value(cache, name)
+    if energy_cache != var_value
+        return var_value
+    end
+    return energy_cache
+end
+
 """
 Status Init is always calculated based on the Power Output of the device
 This is to make it easier to calculate when the previous model doesn't
@@ -159,11 +174,11 @@ function storage_energy_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.Storage}
-    key = ICKey(DeviceEnergy, T)
+    key = ICKey(EnergyLevel, T)
     _make_initial_conditions!(
         psi_container,
         devices,
-        ICKey(DeviceEnergy, T),
+        key,
         _make_initial_condition_energy,
         _get_energy_value,
     )
@@ -225,13 +240,14 @@ function storage_energy_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.HydroGen}
-    key = ICKey(DeviceEnergy, T)
+    key = ICKey(EnergyLevel, T)
     _make_initial_conditions!(
         psi_container,
         devices,
-        ICKey(DeviceEnergy, T),
+        key,
         _make_initial_condition_reservoir_energy,
         _get_reservoir_energy_value,
+        StoredEnergy,
     )
 
     return

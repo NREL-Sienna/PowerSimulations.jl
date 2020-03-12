@@ -52,7 +52,7 @@
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
-        cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
+        cache = Dict(("ED",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
         ini_cond_chronology = InterStageChronology(),
     )
 
@@ -85,7 +85,7 @@ end
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
-        cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
+        cache = Dict(("ED",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
         ini_cond_chronology = InterStageChronology(),
     )
 end

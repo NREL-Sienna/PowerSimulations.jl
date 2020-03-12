@@ -226,7 +226,7 @@ function energy_balance_constraint!(
     efficiency_data = make_efficiency_data(devices)
     energy_balance(
         psi_container,
-        get_initial_conditions(psi_container, ICKey(DeviceEnergy, St)),
+        get_initial_conditions(psi_container, ICKey(EnergyLevel, St)),
         efficiency_data,
         constraint_name(ENERGY_LIMIT, St),
         (

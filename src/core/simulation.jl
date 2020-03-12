@@ -127,8 +127,20 @@ get_name(s::Simulation) = s.name
 get_simulation_folder(s::Simulation) = s.simulation_folder
 get_execution_order(s::Simulation) = s.sequence.execution_order
 get_current_execution_index(s::Simulation) = s.sequence.current_execution_index
-get_stage_cache_definition(s::Simulation, stage::String) =
-    get(s.sequence.cache, stage, nothing)
+
+function get_stage_cache_definition(s::Simulation, stage::String)
+    caches = s.sequence.cache
+    cache_ref = Array{AbstractCache, 1}()
+    for stage_names in keys(caches)
+        if stage in stage_names
+            push!(cache_ref, caches[stage_names])
+        end
+    end
+    if isempty(cache_ref)
+        return nothing
+    end
+    return cache_ref
+end
 
 function get_cache(s::Simulation, key::CacheKey)
     c = get(s.internal.simulation_cache, key, nothing)
@@ -364,7 +376,6 @@ end
 @doc raw"""
         build!(sim::Simulation;
                 kwargs...)
-
 """
 function build!(sim::Simulation; kwargs...)
     TimerOutputs.reset_timer!(BUILD_SIMULATION_TIMER)
@@ -413,10 +424,15 @@ function initial_condition_update!(
     ini_cond_vector = get_initial_conditions(stage.internal.psi_container)[ini_cond_key]
     for ic in get_initial_conditions(stage.internal.psi_container)[ini_cond_key]
         name = device_name(ic)
-        interval_chronology = get_stage_interval_chronology(sim, stage.name)
+        interval_chronology =
+            get_stage_interval_chronology(sim.sequence, get_stage_name(sim, stage))
         var_value =
             get_stage_variable(interval_chronology, (stage => stage), name, ic.update_ref)
-        cache = get_cache(stage, ic.cache_key)
+        if isnothing(ic.cache_type)
+            cache = nothing
+        else
+            cache = get_cache(sim, ic.cache_type, ini_cond_key.device_type)
+        end
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
     end
@@ -491,6 +507,24 @@ function update_cache!(
     return
 end
 
+function update_cache!(
+    sim::Simulation,
+    key::CacheKey{StoredEnergy, D},
+    stage::Stage,
+) where {D <: PSY.Device}
+    c = get_cache(sim, key)
+    variable = get_variable(stage.internal.psi_container, c.ref)
+    t = get_end_of_interval_step(stage)
+    for name in variable.axes[1]
+        device_energy = JuMP.value(variable[name, t])
+        @debug name, device_energy
+        c.value[name] = device_energy
+        @debug("Cache value StoredEnergy for device $name set to $(c.value[name])")
+    end
+
+    return
+end
+
 #########################TimeSeries Data Updating###########################################
 function update_parameter!(
     param_reference::UpdateRef{T},
@@ -549,9 +583,18 @@ function _update_parameters(stage::Stage, sim::Simulation)
     end
     return
 end
-# Is possible this function needs a better name
-""" Required update stage function call"""
 
+function _apply_warm_start!(stage::Stage)
+    for variable in values(stage.internal.psi_container.variables)
+        for e in variable
+            current_solution = JuMP.value(e)
+            JuMP.set_start_value(e, current_solution)
+        end
+    end
+    return
+end
+
+""" Required update stage function call"""
 function _update_stage!(stage::Stage, sim::Simulation)
     _update_parameters(stage, sim)
     _update_initial_conditions!(stage, sim)
@@ -639,7 +682,14 @@ function execute!(sim::Simulation; kwargs...)
                                 kwargs...,
                             )
                         end
-                        _update_caches!(sim, stage)
+                        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
+                            _update_caches!(sim, stage)
+                        end
+                        if warm_start_enabled(stage)
+                            TimerOutputs.@timeit RUN_SIMULATION_TIMER "Warm Start $(stage_number)" begin
+                                _apply_warm_start!(stage)
+                            end
+                        end
                         sim.internal.run_count[step][stage_number] += 1
                         sim.internal.date_ref[stage_number] += stage_interval
                     end
