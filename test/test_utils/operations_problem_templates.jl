@@ -81,6 +81,21 @@ devices = Dict(
 template_hydro_ed =
     OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 
+function PSI._jump_value(int::Int64)
+    @warn("This is for testing purposes only.")
+    return int
+end
+
+function _test_print_methods(list::Array)
+    for object in list
+        normal = repr(object)
+        io = IOBuffer()
+        show(io, "text/plain", object)
+        grabbed = String(take!(io))
+        @test !isnothing(grabbed)
+    end
+end
+
 branches = Dict()
 services = Dict()
 devices = Dict(

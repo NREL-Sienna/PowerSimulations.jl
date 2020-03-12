@@ -221,13 +221,18 @@ op_problem = OperationsProblem(
     use_parameters = true,
 )
 res = solve_op_problem!(op_problem; constraints_duals = duals)
-
+@testset "Test print methods" begin
+    list = [template, op_problem, op_problem.psi_container, res, services]
+    _test_print_methods(list)
+end
 @testset "test constraint duals in the operations problem" begin
     name = PSI.constraint_name("CopperPlateBalance")
     for i in 1:ncol(get_time_stamp(res))
         dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
         @test isapprox(dual, get_duals(res)[name][i, 1])
     end
+    dual_results = get_dual_values(op_problem, duals)
+    @test dual_results == res.dual_values
 end
 
 @testset "test get variable function" begin
@@ -240,6 +245,15 @@ path = joinpath(pwd(), "test_writing")
 !isdir(path) && mkdir(path)
 
 function test_write_functions(file_path)
+
+    @testset "Test write optimizer problem" begin
+        path = mkdir(joinpath(file_path, "op_problem"))
+        file = joinpath(path, "op_problem.json")
+        PSI.export_op_model(op_problem, file)
+        PSI.write_data(op_problem, path)
+        list = sort!(collect(readdir(path)))
+        @test ["P__ThermalStandard.feather", "op_problem.json"] == list
+    end
 
     @testset "Test write_data functions" begin
         PSI.write_data(get_variables(res), mkdir(joinpath(file_path, "one")))

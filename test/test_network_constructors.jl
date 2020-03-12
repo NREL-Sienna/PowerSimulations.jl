@@ -59,9 +59,9 @@ end
     PTDF_ref =
         Dict{System, PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc)
     test_results = Dict{System, Vector{Int}}(
-        c_sys5 => [264, 0, 264, 264, 264],
-        c_sys14 => [600, 0, 600, 600, 816],
-        c_sys14_dc => [600, 48, 552, 552, 768],
+        c_sys5 => [264, 0, 408, 408, 264],
+        c_sys14 => [600, 0, 1080, 1080, 816],
+        c_sys14_dc => [600, 48, 984, 984, 768],
     )
 
     for (ix, sys) in enumerate(systems), p in parameters
@@ -110,9 +110,9 @@ end
     constraint_names = [:RateLimit_ub__Line, :RateLimit_lb__Line]
     parameters = [true, false]
     test_results = Dict{System, Vector{Int}}(
-        c_sys5 => [384, 0, 408, 408, 288],
-        c_sys14 => [936, 0, 1080, 1080, 840],
-        c_sys14_dc => [984, 48, 984, 984, 840],
+        c_sys5 => [384, 0, 552, 552, 288],
+        c_sys14 => [936, 0, 1560, 1560, 840],
+        c_sys14_dc => [984, 48, 1416, 1416, 840],
     )
 
     for (ix, sys) in enumerate(systems), p in parameters

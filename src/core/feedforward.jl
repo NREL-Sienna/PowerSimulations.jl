@@ -17,9 +17,9 @@ end
     RecedingHorizon(period::Int)
 """
 struct RecedingHorizon <: FeedForwardChronology
-    period::Int
-    function RecedingHorizon(; period::Int = 1)
-        new(period)
+    periods::Int
+    function RecedingHorizon(; periods::Int = 1)
+        new(periods)
     end
 end
 

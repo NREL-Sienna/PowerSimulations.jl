@@ -146,6 +146,7 @@ import InfrastructureSystems
 import InfrastructureSystems:
     get_variables, get_total_cost, get_optimizer_log, get_time_stamp, write_results
 export get_variables
+export get_dual_values
 export get_total_cost
 export get_optimizer_log
 export get_time_stamp

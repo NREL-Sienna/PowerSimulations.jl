@@ -22,7 +22,7 @@ function test_load_simulation(file_path::String)
         simulation_folder = file_path,
     )
     build!(sim_single)
-    execute!(sim_single)
+    res = execute!(sim_single)
 
     @testset "Single stage sequential tests" begin
         stage_single = PSI.get_stage(sim_single, "ED")
@@ -227,7 +227,7 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "Testing to verify time gap for Consecutive" begin
+    @testset "Test to verify time gap for Consecutive" begin
         names = ["UC"]
         for name in names
             variable_list = PSI.get_variable_names(sim, name)
@@ -241,7 +241,7 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "Testing to verify initial condition feedforward for consecutive ED to UC" begin
+    @testset "Test to verify initial condition feedforward for consecutive ED to UC" begin
         ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
         vars_names = [PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
         for (ik, key) in enumerate(ic_keys)
@@ -285,7 +285,7 @@ function test_load_simulation(file_path::String)
     build!(sim)
     sim_results = execute!(sim)
 
-    @testset "Testing to verify time gap for Receding Horizon" begin
+    @testset "Test to verify time gap for Receding Horizon" begin
         names = ["UC"] # TODO why doesn't this work for ED??
         for name in names
             variable_list = PSI.get_variable_names(sim, name)
@@ -301,7 +301,7 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "Testing to verify parameter feedforward for Receding Horizon" begin
+    @testset "Test to verify parameter feedforward for Receding Horizon" begin
         P_keys = [(PSI.ON, PSY.ThermalStandard)]
         vars_names = [PSI.variable_name(PSI.ON, PSY.ThermalStandard)]
         for (ik, key) in enumerate(P_keys)
@@ -320,7 +320,7 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "Testing to verify initial condition feedforward for Receding Horizon" begin
+    @testset "Test to verify initial condition feedforward for Receding Horizon" begin
         results = load_simulation_results(sim_results, "ED")
         ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
         vars_names = [PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
@@ -335,7 +335,10 @@ function test_load_simulation(file_path::String)
             end
         end
     end
-
+    @testset "Test print methods" begin
+        list = [sim, sim_results, sim.sequence, sim_single.sequence, res, sim.stages["UC"]]
+        _test_print_methods(list)
+    end
     ####################
     @testset "negative test checking total sums" begin
         stage_names = keys(sim.stages)
@@ -511,7 +514,6 @@ function test_load_simulation(file_path::String)
             end
         end
     end
-
 end
 try
     test_load_simulation(path)
