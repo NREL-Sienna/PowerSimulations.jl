@@ -24,6 +24,7 @@ mutable struct StageInternal
         )
     end
 end
+
 # TODO: Add DocString
 @doc raw"""
     Stage({M<:AbstractOperationsProblem}
@@ -37,26 +38,27 @@ mutable struct Stage{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
     optimizer::JuMP.MOI.OptimizerWithAttributes
+    parameters::Union{Nothing, OperationsProblemParameters}
     internal::Union{Nothing, StageInternal}
 
     function Stage(
         ::Type{M},
         template::OperationsProblemTemplate,
         sys::PSY.System,
-        optimizer::JuMP.MOI.OptimizerWithAttributes,
+        optimizer::JuMP.MOI.OptimizerWithAttributes;
+        parameters::Union{Nothing, OperationsProblemParameters} = nothing,
     ) where {M <: AbstractOperationsProblem}
-
-        new{M}(template, sys, optimizer, nothing)
-
+        new{M}(template, sys, optimizer, parameters, nothing)
     end
 end
 
 function Stage(
     template::OperationsProblemTemplate,
     sys::PSY.System,
-    optimizer::JuMP.MOI.OptimizerWithAttributes,
+    optimizer::JuMP.MOI.OptimizerWithAttributes;
+    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
 ) where {M <: AbstractOperationsProblem}
-    return Stage(GenericOpProblem, template, sys, optimizer)
+    return Stage(GenericOpProblem, template, sys, optimizer; parameters = parameters)
 end
 
 get_execution_count(s::Stage) = s.internal.execution_count
@@ -81,8 +83,14 @@ function build!(
         use_parameters = true,
         initial_time = initial_time,
         horizon = horizon,
+        kwargs...,
     )
-    _build!(stage.internal.psi_container, stage.template, stage.sys; kwargs...)
+    _build!(
+        stage.internal.psi_container,
+        stage.template,
+        stage.sys;
+        parameters = stage.parameters,
+    )
     stage_resolution = PSY.get_forecasts_resolution(stage.sys)
     stage.internal.end_of_interval_step = Int(stage_interval / stage_resolution)
     return

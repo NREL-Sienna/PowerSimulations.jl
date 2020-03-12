@@ -25,13 +25,13 @@ dc_line = DeviceModel(HVDCLine, HVDCDispatch)
             optimizer = OSQP_optimizer,
             use_parameters = p,
         )
-        construct_device!(ps_model, :Thermal, thermal_model; use_parameters = p)
-        construct_device!(ps_model, :Load, load_model; use_parameters = p)
-        construct_network!(ps_model, network; use_parameters = p)
-        construct_device!(ps_model, :Line, line_model; use_parameters = p)
-        construct_device!(ps_model, :Tf, transformer_model; use_parameters = p)
-        construct_device!(ps_model, :TTf, ttransformer_model; use_parameters = p)
-        construct_device!(ps_model, :DCLine, dc_line; use_parameters = p)
+        construct_device!(ps_model, :Thermal, thermal_model)
+        construct_device!(ps_model, :Load, load_model)
+        construct_network!(ps_model, network)
+        construct_device!(ps_model, :Line, line_model)
+        construct_device!(ps_model, :Tf, transformer_model)
+        construct_device!(ps_model, :TTf, ttransformer_model)
+        construct_device!(ps_model, :DCLine, dc_line)
 
         moi_tests(
             ps_model,
@@ -56,12 +56,15 @@ end
     constraint_names =
         [:RateLimit_lb__Line, :RateLimit_ub__Line, :nodal_balance, :network_flow]
     parameters = [true, false]
-    PTDF_ref =
-        Dict{System, PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc)
-    test_results = Dict{System, Vector{Int}}(
-        c_sys5 => [264, 0, 264, 264, 264],
-        c_sys14 => [600, 0, 600, 600, 816],
-        c_sys14_dc => [600, 48, 552, 552, 768],
+    PTDF_ref = Dict{UUIDs.UUID, PTDF}(
+        IS.get_uuid(c_sys5) => PTDF5,
+        IS.get_uuid(c_sys14) => PTDF14,
+        IS.get_uuid(c_sys14_dc) => PTDF14_dc,
+    )
+    test_results = Dict{UUIDs.UUID, Vector{Int}}(
+        IS.get_uuid(c_sys5) => [264, 0, 264, 264, 264],
+        IS.get_uuid(c_sys14) => [600, 0, 600, 600, 816],
+        IS.get_uuid(c_sys14_dc) => [600, 48, 552, 552, 768],
     )
 
     for (ix, sys) in enumerate(systems), p in parameters
@@ -72,22 +75,23 @@ end
             optimizer = OSQP_optimizer,
             use_parameters = p,
         )
-        construct_device!(ps_model, :Thermal, thermal_model; use_parameters = p)
-        construct_device!(ps_model, :Load, load_model; use_parameters = p)
-        construct_network!(ps_model, network; PTDF = PTDF_ref[sys], use_parameters = p)
-        construct_device!(ps_model, :Line, line_model; use_parameters = p)
-        construct_device!(ps_model, :Tf, transformer_model; use_parameters = p)
-        construct_device!(ps_model, :TTf, ttransformer_model; use_parameters = p)
-        construct_device!(ps_model, :DCLine, dc_line; use_parameters = p)
+        construct_device!(ps_model, :Thermal, thermal_model)
+        construct_device!(ps_model, :Load, load_model)
+        params = NetworkOperationsParameters(PTDF_ref[IS.get_uuid(sys)])
+        construct_network!(ps_model, network; parameters = params)
+        construct_device!(ps_model, :Line, line_model)
+        construct_device!(ps_model, :Tf, transformer_model)
+        construct_device!(ps_model, :TTf, ttransformer_model)
+        construct_device!(ps_model, :DCLine, dc_line)
 
         moi_tests(
             ps_model,
             p,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[IS.get_uuid(sys)][1],
+            test_results[IS.get_uuid(sys)][2],
+            test_results[IS.get_uuid(sys)][3],
+            test_results[IS.get_uuid(sys)][4],
+            test_results[IS.get_uuid(sys)][5],
             false,
         )
         psi_constraint_test(ps_model, constraint_names)
@@ -99,8 +103,6 @@ end
     ps_model = OperationsProblem(TestOpProblem, network, c_sys5; optimizer = GLPK_optimizer)
     construct_device!(ps_model, :Thermal, thermal_model)
     construct_device!(ps_model, :Load, load_model)
-    @test_throws ArgumentError construct_network!(ps_model, network)
-
 end
 
 @testset "Network DC lossless -PF network with PowerModels DCPlosslessForm" begin
@@ -123,13 +125,13 @@ end
             optimizer = OSQP_optimizer,
             use_parameters = p,
         )
-        construct_device!(ps_model, :Thermal, thermal_model; use_parameters = p)
-        construct_device!(ps_model, :Load, load_model; use_parameters = p)
-        construct_network!(ps_model, network; use_parameters = p)
-        construct_device!(ps_model, :Line, line_model; use_parameters = p)
-        construct_device!(ps_model, :Tf, transformer_model; use_parameters = p)
-        construct_device!(ps_model, :TTf, ttransformer_model; use_parameters = p)
-        construct_device!(ps_model, :DCLine, dc_line; use_parameters = p)
+        construct_device!(ps_model, :Thermal, thermal_model)
+        construct_device!(ps_model, :Load, load_model)
+        construct_network!(ps_model, network)
+        construct_device!(ps_model, :Line, line_model)
+        construct_device!(ps_model, :Tf, transformer_model)
+        construct_device!(ps_model, :TTf, ttransformer_model)
+        construct_device!(ps_model, :DCLine, dc_line)
 
         moi_tests(
             ps_model,
@@ -168,13 +170,13 @@ end
             optimizer = fast_ipopt_optimizer,
             use_parameters = p,
         )
-        construct_device!(ps_model, :Thermal, thermal_model; use_parameters = p)
-        construct_device!(ps_model, :Load, load_model; use_parameters = p)
-        construct_network!(ps_model, network; use_parameters = p)
-        construct_device!(ps_model, :Line, line_model; use_parameters = p)
-        construct_device!(ps_model, :Tf, transformer_model; use_parameters = p)
-        construct_device!(ps_model, :TTf, ttransformer_model; use_parameters = p)
-        construct_device!(ps_model, :DCLine, dc_line; use_parameters = p)
+        construct_device!(ps_model, :Thermal, thermal_model)
+        construct_device!(ps_model, :Load, load_model)
+        construct_network!(ps_model, network)
+        construct_device!(ps_model, :Line, line_model)
+        construct_device!(ps_model, :Tf, transformer_model)
+        construct_device!(ps_model, :TTf, ttransformer_model)
+        construct_device!(ps_model, :DCLine, dc_line)
 
         moi_tests(
             ps_model,
@@ -207,11 +209,11 @@ end
             optimizer = OSQP_optimizer,
             use_parameters = p,
         )
-        construct_device!(ps_model, :Thermal, thermal_model; use_parameters = p)
-        construct_device!(ps_model, :Load, load_model; use_parameters = p)
-        construct_network!(ps_model, network; use_parameters = p)
-        construct_device!(ps_model, :Line, line_model; use_parameters = p)
-        construct_device!(ps_model, :DCLine, dc_line; use_parameters = p)
+        construct_device!(ps_model, :Thermal, thermal_model)
+        construct_device!(ps_model, :Load, load_model)
+        construct_network!(ps_model, network)
+        construct_device!(ps_model, :Line, line_model)
+        construct_device!(ps_model, :DCLine, dc_line)
         psi_checksolve_test(ps_model, [MOI.OPTIMAL])
 
     end

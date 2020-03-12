@@ -3,7 +3,7 @@ construct_device!(
     sys::PSY.System,
     model::DeviceModel{B, Br},
     ::Type{CopperPlatePowerModel};
-    kwargs...,
+    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
 ) where {B <: PSY.DCBranch, Br <: AbstractBranchFormulation} = nothing
 
 construct_device!(
@@ -11,7 +11,7 @@ construct_device!(
     sys::PSY.System,
     model::DeviceModel{B, Br},
     ::Type{CopperPlatePowerModel};
-    kwargs...,
+    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
 ) where {B <: PSY.ACBranch, Br <: AbstractBranchFormulation} = nothing
 
 function construct_device!(
@@ -19,7 +19,7 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{B, Br},
     ::Type{S};
-    kwargs...,
+    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
 ) where {B <: PSY.Branch, Br <: AbstractBranchFormulation, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(B, sys)
 
@@ -38,7 +38,7 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
     ::Type{S};
-    kwargs...,
+    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
 ) where {S <: PM.AbstractPowerModel}
     devices = PSY.get_components(PSY.MonitoredLine, sys)
 
@@ -62,7 +62,8 @@ construct_device!(
         <:PSY.Branch,
         <:Union{Type{StaticLineUnbounded}, Type{StaticTransformerUnbounded}},
     },
-    ::Type{<:PM.AbstractPowerModel},
+    ::Type{<:PM.AbstractPowerModel};
+    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
 ) = nothing
 
 function construct_device!(
@@ -70,7 +71,7 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{B, Br},
     ::Type{S};
-    kwargs...,
+    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
 ) where {B <: PSY.DCBranch, Br <: AbstractBranchFormulation, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(B, sys)
 
