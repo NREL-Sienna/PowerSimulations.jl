@@ -87,7 +87,7 @@ end
                 TestOpProblem,
                 template,
                 system;
-                PTDF = PTDF5,
+                parameters = NetworkOperationsParameters(PTDF5),
                 use_parameters = p,
             )
             @test :nodal_balance_active in keys(op_problem.psi_container.expressions)
