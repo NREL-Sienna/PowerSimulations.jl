@@ -122,5 +122,4 @@ end
         @test ED.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
         @test UC.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
     end
-
 end
