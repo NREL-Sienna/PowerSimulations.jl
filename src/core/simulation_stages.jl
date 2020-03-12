@@ -18,7 +18,7 @@ mutable struct StageInternal
             executions,
             execution_count,
             0,
-            false,
+            true,
             psi_container,
             Set{CacheKey}(),
             Dict{Int, FeedForwardChronology}(),
