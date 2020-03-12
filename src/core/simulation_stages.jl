@@ -4,6 +4,7 @@ mutable struct StageInternal
     executions::Int
     execution_count::Int
     end_of_interval_step::Int
+    warm_start_enabled::Bool
     # This line keeps track of the executions of a stage relative to other stages.
     # This might be needed in the future to run multiple stages. For now it is disabled
     #synchronized_executions::Dict{Int, Int} # Number of executions per upper level stage step
@@ -17,7 +18,7 @@ mutable struct StageInternal
             executions,
             execution_count,
             0,
-            #Dict{Int, Int}(),
+            false,
             psi_container,
             Set{CacheKey}(),
             Dict{Int, FeedForwardChronology}(),
@@ -66,6 +67,7 @@ get_template(s::Stage) = s.template
 get_number(s::Stage) = s.internal.number
 get_psi_container(s::Stage) = s.internal.psi_container
 get_end_of_interval_step(s::Stage) = s.internal.end_of_interval_step
+warm_start_enabled(s::Stage) = s.internal.warm_start_enabled
 
 function build!(
     stage::Stage,
@@ -83,6 +85,11 @@ function build!(
         horizon = horizon,
     )
     _build!(stage.internal.psi_container, stage.template, stage.sys; kwargs...)
+    stage.internal.warm_start_enabled = MOI.supports(
+        JuMP.backend(stage.internal.psi_container.JuMPmodel),
+        MOI.VariablePrimalStart(),
+        MOI.VariableIndex,
+    )
     stage_resolution = PSY.get_forecasts_resolution(stage.sys)
     stage.internal.end_of_interval_step = Int(stage_interval / stage_resolution)
     return
