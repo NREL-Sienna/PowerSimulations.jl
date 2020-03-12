@@ -376,7 +376,6 @@ end
 @doc raw"""
         build!(sim::Simulation;
                 kwargs...)
-
 """
 function build!(sim::Simulation; kwargs...)
     TimerOutputs.reset_timer!(BUILD_SIMULATION_TIMER)
@@ -584,9 +583,18 @@ function _update_parameters(stage::Stage, sim::Simulation)
     end
     return
 end
-# Is possible this function needs a better name
-""" Required update stage function call"""
 
+function _apply_warm_start!(stage::Stage)
+    for variable in values(stage.internal.psi_container.variables)
+        for e in variable
+            current_solution = JuMP.value(e)
+            JuMP.set_start_value(e, current_solution)
+        end
+    end
+    return
+end
+
+""" Required update stage function call"""
 function _update_stage!(stage::Stage, sim::Simulation)
     _update_parameters(stage, sim)
     _update_initial_conditions!(stage, sim)
@@ -674,7 +682,14 @@ function execute!(sim::Simulation; kwargs...)
                                 kwargs...,
                             )
                         end
-                        _update_caches!(sim, stage)
+                        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
+                            _update_caches!(sim, stage)
+                        end
+                        if warm_start_enabled(stage)
+                            TimerOutputs.@timeit RUN_SIMULATION_TIMER "Warm Start $(stage_number)" begin
+                                _apply_warm_start!(stage)
+                            end
+                        end
                         sim.internal.run_count[step][stage_number] += 1
                         sim.internal.date_ref[stage_number] += stage_interval
                     end
