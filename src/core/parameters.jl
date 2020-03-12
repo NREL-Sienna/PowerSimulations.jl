@@ -10,3 +10,11 @@ Base.length(c::ParameterContainer) = length(c.parameter_array)
 Base.size(c::ParameterContainer) = size(c.parameter_array)
 
 const ParametersContainer = Dict{Symbol, ParameterContainer}
+
+abstract type OperationsProblemParameters end
+
+struct NetworkOperationsParameters <: OperationsProblemParameters
+    ptdf::PSY.PTDF
+end
+
+get_ptdf(p::NetworkOperationsParameters) = p.ptdf
