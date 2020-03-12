@@ -173,11 +173,8 @@ function get_initial_cache(cache::TimeStatusChange, stage::Stage)
 end
 
 function get_initial_cache(cache::StoredEnergy, stage::Stage)
-    ini_cond_level = get_initial_conditions(
-        stage.internal.psi_container,
-        EnergyLevel,
-        cache.device_type,
-    )
+    ini_cond_level =
+        get_initial_conditions(stage.internal.psi_container, EnergyLevel, cache.device_type)
 
     device_axes = Set((PSY.get_name(ic.device) for ic in ini_cond_level),)
     value_array = JuMP.Containers.DenseAxisArray{Float64}(undef, device_axes)
