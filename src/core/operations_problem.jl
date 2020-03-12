@@ -74,6 +74,7 @@ function OperationsProblem(
     template::OperationsProblemTemplate,
     sys::PSY.System;
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
     kwargs...,
 ) where {M <: AbstractOperationsProblem}
 
@@ -84,7 +85,6 @@ function OperationsProblem(
         PSIContainer(template.transmission, sys, optimizer; kwargs...),
     )
 
-    parameters = get(kwargs, :parameters, nothing)
     build_op_problem!(op_problem; parameters = parameters)
 
     return op_problem
