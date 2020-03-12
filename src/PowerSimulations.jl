@@ -76,7 +76,7 @@ export DevicePower
 export DeviceStatus
 export TimeDurationON
 export TimeDurationOFF
-export DeviceEnergy
+export EnergyLevel
 
 # cache_models
 export TimeStatusChange

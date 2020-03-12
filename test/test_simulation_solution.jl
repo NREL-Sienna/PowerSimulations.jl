@@ -448,7 +448,7 @@ function test_load_simulation(file_path::String)
         end
 
         @testset "Testing to verify initial condition update using StoredEnergy cache" begin
-            ic_keys = [PSI.ICKey(PSI.DeviceEnergy, PSY.HydroEnergyReservoir)]
+            ic_keys = [PSI.ICKey(PSI.EnergyLevel, PSY.HydroEnergyReservoir)]
             vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
             for (ik, key) in enumerate(ic_keys)
                 variable_ref =
@@ -495,7 +495,7 @@ function test_load_simulation(file_path::String)
         sim_cache_results = execute!(sim_single)
 
         @testset "Testing to verify initial condition update using StoredEnergy cache" begin
-            ic_keys = [PSI.ICKey(PSI.DeviceEnergy, PSY.HydroEnergyReservoir)]
+            ic_keys = [PSI.ICKey(PSI.EnergyLevel, PSY.HydroEnergyReservoir)]
             vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
             for (ik, key) in enumerate(ic_keys)
                 variable_ref =

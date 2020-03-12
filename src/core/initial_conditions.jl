@@ -18,7 +18,7 @@ struct DevicePower <: InitialConditionType end
 struct DeviceStatus <: InitialConditionType end
 struct TimeDurationON <: InitialConditionType end
 struct TimeDurationOFF <: InitialConditionType end
-struct DeviceEnergy <: InitialConditionType end
+struct EnergyLevel <: InitialConditionType end
 
 function get_condition(p::InitialCondition{Float64})
     return p.value
@@ -100,7 +100,7 @@ function calculate_ic_quantity(
 end
 
 function calculate_ic_quantity(
-    initial_condition_key::ICKey{DeviceEnergy, T},
+    initial_condition_key::ICKey{EnergyLevel, T},
     ic::InitialCondition,
     var_value::Float64,
     cache::Union{Nothing, AbstractCache},
@@ -174,11 +174,11 @@ function storage_energy_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.Storage}
-    key = ICKey(DeviceEnergy, T)
+    key = ICKey(EnergyLevel, T)
     _make_initial_conditions!(
         psi_container,
         devices,
-        ICKey(DeviceEnergy, T),
+        key,
         _make_initial_condition_energy,
         _get_energy_value,
     )
@@ -240,11 +240,11 @@ function storage_energy_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.HydroGen}
-    key = ICKey(DeviceEnergy, T)
+    key = ICKey(EnergyLevel, T)
     _make_initial_conditions!(
         psi_container,
         devices,
-        ICKey(DeviceEnergy, T),
+        key,
         _make_initial_condition_reservoir_energy,
         _get_reservoir_energy_value,
         StoredEnergy,
