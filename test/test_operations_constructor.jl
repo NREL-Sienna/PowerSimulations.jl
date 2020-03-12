@@ -76,7 +76,6 @@ end
     systems = [c_sys5, c_sys5_re, c_sys5_bat]
     for net in networks, thermal in thermal_gens, system in systems, p in [true, false]
         @testset "Operation Model $(net) - $(thermal) - $(system)" begin
-            thermal_model = DeviceModel(ThermalStandard, thermal)
             devices = Dict{Symbol, DeviceModel}(
                 :Generators => DeviceModel(ThermalStandard, thermal),
                 :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
@@ -108,7 +107,6 @@ end
 end
 
 @testset "AC branch Branch rate constraints" begin
-    thermal_model = DeviceModel(ThermalStandard, ThermalDispatch)
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
@@ -136,7 +134,6 @@ end
 end
 
 @testset "DC branch Branch rate constraints" begin
-    thermal_model = DeviceModel(ThermalStandard, ThermalDispatch)
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
