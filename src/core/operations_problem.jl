@@ -85,6 +85,7 @@ function OperationsProblem(
         PSIContainer(template.transmission, sys, optimizer; kwargs...),
     )
 
+    parameters = get(kwargs, :parameters, nothing)
     build_op_problem!(op_problem; parameters = parameters)
 
     return op_problem
