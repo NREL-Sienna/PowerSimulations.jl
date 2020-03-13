@@ -15,7 +15,6 @@ export SimulationSequence
 #Network Relevant Exports
 export StandardPTDFModel
 export CopperPlatePowerModel
-export NetworkOperationsParameters
 
 ######## Device Models ########
 export DeviceModel
