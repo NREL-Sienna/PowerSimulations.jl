@@ -21,14 +21,12 @@ template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, s
 ```
 """
 function OperationsProblemTemplate(::Type{T}) where {T <: PM.AbstractPowerModel}
-
     return OperationsProblemTemplate(
         T,
         Dict{Symbol, DeviceModel}(),
         Dict{Symbol, DeviceModel}(),
         Dict{Symbol, ServiceModel}(),
     )
-
 end
 
 mutable struct OperationsProblem{M <: AbstractOperationsProblem}
@@ -64,7 +62,7 @@ OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimiz
 - `optimizer::union{Nothing, JuMP.MOI.OptimizerWithAttributes} = GLPK_optimizer`: The optimizer gets passed
 into the optimization model the default is nothing.
 - `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
-- `parameters::OperationsProblemParameters`: parameters specific to the problem type
+- `parameters::OperationsProblemSettings`: parameters specific to the problem type
 - `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
 - `initial_time::Dates.DateTime`: initial time of forecast
@@ -73,19 +71,19 @@ function OperationsProblem(
     ::Type{M},
     template::OperationsProblemTemplate,
     sys::PSY.System;
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
-    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
     kwargs...,
 ) where {M <: AbstractOperationsProblem}
 
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
+    settings = OperationsProblemSettings(kwargs)
+
     op_problem = OperationsProblem{M}(
         template,
         sys,
-        PSIContainer(template.transmission, sys, optimizer; kwargs...),
+        PSIContainer(template.transmission, sys, settings),
     )
 
-    build_op_problem!(op_problem; parameters = parameters)
+    build_op_problem!(op_problem)
 
     return op_problem
 
@@ -126,14 +124,14 @@ function OperationsProblem(
     sys::PSY.System;
     kwargs...,
 ) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
+    check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
+    settings = OperationsProblemSettings(sys, kwargs)
 
-    optimizer = get(kwargs, :optimizer, nothing)
     return OperationsProblem{M}(
         OperationsProblemTemplate(T),
         sys,
-        PSIContainer(T, sys, optimizer; kwargs...),
+        PSIContainer(T, sys, settings),
     )
-
 end
 
 """
@@ -193,8 +191,7 @@ function set_transmission_model!(
     op_problem.psi_container = PSIContainer(
         transmission,
         op_problem.sys,
-        op_problem.psi_container.optimizer_factory;
-        kwargs...,
+        op_problem.psi_container.settings
     )
 
     build_op_problem!(op_problem; kwargs...)
@@ -213,8 +210,7 @@ function set_devices_template!(
     op_problem.psi_container = PSIContainer(
         op_problem.template.transmission,
         op_problem.sys,
-        op_problem.psi_container.optimizer_factory;
-        kwargs...,
+op_problem.psi_container.settings
     )
 
     build_op_problem!(op_problem; kwargs...)
@@ -233,8 +229,7 @@ function set_branches_template!(
     op_problem.psi_container = PSIContainer(
         op_problem.template.transmission,
         op_problem.sys,
-        op_problem.psi_container.optimizer_factory;
-        kwargs...,
+op_problem.psi_container.settings
     )
 
     build_op_problem!(op_problem; kwargs...)
@@ -253,8 +248,7 @@ function set_services_template!(
     op_problem.psi_container = PSIContainer(
         op_problem.template.transmission,
         op_problem.sys,
-        op_problem.psi_container.optimizer_factory;
-        kwargs...,
+op_problem.psi_container.settings
     )
 
     build_op_problem!(op_problem; kwargs...)
@@ -370,28 +364,24 @@ function construct_device!(
 end
 
 function construct_network!(
-    op_problem::OperationsProblem;
-    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
+    op_problem::OperationsProblem
 )
     construct_network!(
         op_problem,
-        op_problem.template.transmission;
-        parameters = parameters,
+        op_problem.template.transmission
     )
     return
 end
 
 function construct_network!(
     op_problem::OperationsProblem,
-    system_formulation::Type{T};
-    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
+    system_formulation::Type{T}
 ) where {T <: PM.AbstractPowerModel}
 
     construct_network!(
         op_problem.psi_container,
         get_system(op_problem),
-        T;
-        parameters = parameters,
+        T
     )
 
     return
@@ -411,11 +401,10 @@ function get_initial_conditions(
 end
 
 function build_op_problem!(
-    op_problem::OperationsProblem{M};
-    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
+    op_problem::OperationsProblem{M}
 ) where {M <: AbstractOperationsProblem}
     sys = get_system(op_problem)
-    _build!(op_problem.psi_container, op_problem.template, sys; parameters = parameters)
+    _build!(op_problem.psi_container, op_problem.template, sys)
     return
 end
 
@@ -423,7 +412,6 @@ function _build!(
     psi_container::PSIContainer,
     template::OperationsProblemTemplate,
     sys::PSY.System;
-    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
 )
     transmission = template.transmission
 
@@ -433,8 +421,7 @@ function _build!(
         psi_container,
         sys,
         template.services,
-        template.devices;
-        parameters = parameters,
+        template.devices
     )
 
     for device_model in values(template.devices)
@@ -443,13 +430,12 @@ function _build!(
             psi_container,
             sys,
             device_model,
-            transmission;
-            parameters = parameters,
+            transmission
         )
     end
 
     @debug "Building $(transmission) network formulation"
-    construct_network!(psi_container, sys, transmission; parameters = parameters)
+    construct_network!(psi_container, sys, transmission)
 
     for branch_model in values(template.branches)
         @debug "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
@@ -457,8 +443,7 @@ function _build!(
             psi_container,
             sys,
             branch_model,
-            transmission;
-            parameters = parameters,
+            transmission
         )
     end
 
