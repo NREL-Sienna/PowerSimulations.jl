@@ -77,9 +77,9 @@ function _make_expressions_dict(
     )
 end
 
-mutable struct OperationsProblemSettings
+mutable struct PSISettings
     horizon::Union{Nothing, Int}
-    initial_conditions::Union{Nothing, Dict{Any, Any}}
+    initial_conditions::Union{Nothing, InitialConditionsContainer}
     use_forecast_data::Bool
     use_parameters::Bool
     initial_time::Union{Nothing, Dates.DateTime}
@@ -88,7 +88,7 @@ mutable struct OperationsProblemSettings
     ext::Dict{String, Any}
 end
 
-function OperationsProblemSettings(sys, kwargs...)
+function PSISettings(sys::PSY.System; kwargs...)
     initial_time = get(kwargs, :initial_time, PSY.get_forecasts_initial_time(sys))
     use_parameters = get(kwargs, :use_parameters, false)
     use_forecast_data = get(kwargs, :use_forecast_data, true)
@@ -99,11 +99,12 @@ function OperationsProblemSettings(sys, kwargs...)
     optimizer = get(kwargs, :optimizer, nothing)
     ext = get(kwargs, :additional_settings, Dict{String, Any}())
 
-    return OperationsProblemSettings(
+    return PSISettings(
         horizon,
         ini_con,
         use_forecast_data,
         use_parameters,
+        initial_time,
         PTDF,
         optimizer,
         ext,
@@ -111,14 +112,14 @@ function OperationsProblemSettings(sys, kwargs...)
 
 end
 
-get_horizon(settings::OperationsProblemSettings) = settings.horizon
-get_initial_conditions(settings::OperationsProblemSettings) = settings.initial_conditions
-get_use_forecast_data(settings::OperationsProblemSettings) = settings.use_forecast_data
-get_use_parameters(settings::OperationsProblemSettings) = settings.use_parameters
-get_initial_time(settings::OperationsProblemSettings) = settings.inital_time
-get_PTDF(settings::OperationsProblemSettings) = settings.PTDF
-get_optimizer(settings::OperationsProblemSettings) = settings.optimizer
-get_ext(settings::OperationsProblemSettings) = settings.ext
+get_horizon(settings::PSISettings) = settings.horizon
+get_initial_conditions(settings::PSISettings) = settings.initial_conditions
+get_use_forecast_data(settings::PSISettings) = settings.use_forecast_data
+get_use_parameters(settings::PSISettings) = settings.use_parameters
+get_initial_time(settings::PSISettings) = settings.initial_time
+get_PTDF(settings::PSISettings) = settings.PTDF
+get_optimizer(settings::PSISettings) = settings.optimizer
+get_ext(settings::PSISettings) = settings.ext
 
 function _psi_container_init(
     bus_numbers::Vector{Int},
@@ -126,17 +127,15 @@ function _psi_container_init(
     transmission::Type{S},
     time_steps::UnitRange{Int},
     resolution::Dates.TimePeriod,
-    settings::OperationsProblemSettings,
+    settings::PSISettings
 ) where {S <: PM.AbstractPowerModel}
     V = JuMP.variable_type(jump_model)
     make_parameters_container = get_use_parameters(settings)
     psi_container = PSIContainer(
         jump_model,
-        get_optimizer(settings),
         time_steps,
         resolution,
-        get_use_forecast_data,
-        get_initial_time(settings),
+        settings,
         DenseAxisArrayContainer(),
         DenseAxisArrayContainer(),
         zero(JuMP.GenericAffExpr{Float64, V}),
@@ -148,8 +147,9 @@ function _psi_container_init(
             make_parameters_container,
         ),
         make_parameters_container ? ParametersContainer() : nothing,
+        #This will be improved with the implementation of inicond passing
         get_initial_conditions(settings),
-        nothing,
+        nothing
     )
     return psi_container
 end
@@ -158,8 +158,7 @@ mutable struct PSIContainer
     JuMPmodel::JuMP.AbstractModel
     time_steps::UnitRange{Int}
     resolution::Dates.TimePeriod
-    use_forecast_data::Bool
-    initial_time::Dates.DateTime
+    settings::PSISettings
     variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     cost_function::JuMP.AbstractJuMPScalar
@@ -172,7 +171,7 @@ mutable struct PSIContainer
         JuMPmodel::JuMP.AbstractModel,
         time_steps::UnitRange{Int},
         resolution::Dates.TimePeriod,
-        settings::OperationsProblemSettings,
+        settings::PSISettings,
         variables::Dict{Symbol, JuMP.Containers.DenseAxisArray},
         constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray},
         cost_function::JuMP.AbstractJuMPScalar,
@@ -201,7 +200,7 @@ end
 function PSIContainer(
     ::Type{T},
     sys::PSY.System,
-    settings::OperationsProblemSettings,
+    settings::PSISettings,
 ) where {T <: PM.AbstractPowerModel}
     PSY.check_forecast_consistency(sys)
     #This will be improved with the implementation of inicond passing
@@ -229,8 +228,7 @@ function PSIContainer(
         T,
         time_steps,
         resolution,
-        get_initial_time(settings),
-        ini_con,
+        settings
     )
 
 end
@@ -316,9 +314,9 @@ variable_name(var_type) = encode_symbol(var_type)
 _variable_type(cm::PSIContainer) = JuMP.variable_type(cm.JuMPmodel)
 model_time_steps(psi_container::PSIContainer) = psi_container.time_steps
 model_resolution(psi_container::PSIContainer) = psi_container.resolution
-model_has_parameters(psi_container::PSIContainer) = !isnothing(psi_container.parameters)
-model_uses_forecasts(psi_container::PSIContainer) = psi_container.use_forecast_data
-model_initial_time(psi_container::PSIContainer) = psi_container.initial_time
+model_has_parameters(psi_container::PSIContainer) = get_use_parameters(psi_container.settings)
+model_uses_forecasts(psi_container::PSIContainer) = get_use_forecast_data(psi_container.settings)
+model_initial_time(psi_container::PSIContainer) = get_initial_time(psi_container.settings)
 #Internal Variables, Constraints and Parameters accessors
 get_variables(psi_container::PSIContainer) = psi_container.variables
 get_constraints(psi_container::PSIContainer) = psi_container.constraints
