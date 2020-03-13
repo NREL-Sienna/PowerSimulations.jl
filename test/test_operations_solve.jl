@@ -314,11 +314,7 @@ function test_write_functions(file_path)
             :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
         )
         template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
-        UC = OperationsProblem(
-            TestOpProblem,
-            template,
-            c_sys5;
-        )
+        UC = OperationsProblem(TestOpProblem, template, c_sys5;)
         set_services_template!(
             UC,
             Dict(:Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve)),

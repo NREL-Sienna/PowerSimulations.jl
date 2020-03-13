@@ -190,11 +190,8 @@ function set_transmission_model!(
 
     # Reset the psi_container
     op_problem.template.transmission = transmission
-    op_problem.psi_container = PSIContainer(
-        transmission,
-        op_problem.sys,
-        op_problem.psi_container.settings
-    )
+    op_problem.psi_container =
+        PSIContainer(transmission, op_problem.sys, op_problem.psi_container.settings)
 
     build_op_problem!(op_problem; kwargs...)
 
@@ -212,7 +209,7 @@ function set_devices_template!(
     op_problem.psi_container = PSIContainer(
         op_problem.template.transmission,
         op_problem.sys,
-op_problem.psi_container.settings
+        op_problem.psi_container.settings,
     )
 
     build_op_problem!(op_problem; kwargs...)
@@ -231,7 +228,7 @@ function set_branches_template!(
     op_problem.psi_container = PSIContainer(
         op_problem.template.transmission,
         op_problem.sys,
-op_problem.psi_container.settings
+        op_problem.psi_container.settings,
     )
 
     build_op_problem!(op_problem; kwargs...)
@@ -250,7 +247,7 @@ function set_services_template!(
     op_problem.psi_container = PSIContainer(
         op_problem.template.transmission,
         op_problem.sys,
-op_problem.psi_container.settings
+        op_problem.psi_container.settings,
     )
 
     build_op_problem!(op_problem; kwargs...)
@@ -366,26 +363,17 @@ function construct_device!(
 
 end
 
-function construct_network!(
-    op_problem::OperationsProblem
-)
-    construct_network!(
-        op_problem,
-        op_problem.template.transmission
-    )
+function construct_network!(op_problem::OperationsProblem)
+    construct_network!(op_problem, op_problem.template.transmission)
     return
 end
 
 function construct_network!(
     op_problem::OperationsProblem,
-    system_formulation::Type{T}
+    system_formulation::Type{T},
 ) where {T <: PM.AbstractPowerModel}
 
-    construct_network!(
-        op_problem.psi_container,
-        get_system(op_problem),
-        T
-    )
+    construct_network!(op_problem.psi_container, get_system(op_problem), T)
 
     return
 end
@@ -408,7 +396,7 @@ function get_initial_conditions(
 end
 
 function build_op_problem!(
-    op_problem::OperationsProblem{M}
+    op_problem::OperationsProblem{M},
 ) where {M <: AbstractOperationsProblem}
     sys = get_system(op_problem)
     _build!(op_problem.psi_container, op_problem.template, sys)
@@ -418,27 +406,17 @@ end
 function _build!(
     psi_container::PSIContainer,
     template::OperationsProblemTemplate,
-    sys::PSY.System;
+    sys::PSY.System;,
 )
     transmission = template.transmission
 
     # Order is required
 
-    construct_services!(
-        psi_container,
-        sys,
-        template.services,
-        template.devices
-    )
+    construct_services!(psi_container, sys, template.services, template.devices)
 
     for device_model in values(template.devices)
         @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
-        construct_device!(
-            psi_container,
-            sys,
-            device_model,
-            transmission
-        )
+        construct_device!(psi_container, sys, device_model, transmission)
     end
 
     @debug "Building $(transmission) network formulation"
@@ -446,12 +424,7 @@ function _build!(
 
     for branch_model in values(template.branches)
         @debug "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
-        construct_device!(
-            psi_container,
-            sys,
-            branch_model,
-            transmission
-        )
+        construct_device!(psi_container, sys, branch_model, transmission)
     end
 
     @debug "Building Objective"

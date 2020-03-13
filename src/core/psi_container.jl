@@ -23,7 +23,7 @@ const InitialConditionsContainer = Dict{ICKey, Array{InitialCondition}}
 #Defined here because of dependencies in psi_container
 function _make_jump_model(
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
-    parameters::Bool
+    parameters::Bool,
 )
     if isa(optimizer, Nothing)
         @debug "The optimization model has no optimizer attached"
@@ -126,7 +126,7 @@ function _psi_container_init(
     transmission::Type{S},
     time_steps::UnitRange{Int},
     resolution::Dates.TimePeriod,
-    settings::OperationsProblemSettings
+    settings::OperationsProblemSettings,
 ) where {S <: PM.AbstractPowerModel}
     V = JuMP.variable_type(jump_model)
     make_parameters_container = get_use_parameters(settings)
@@ -201,7 +201,7 @@ end
 function PSIContainer(
     ::Type{T},
     sys::PSY.System,
-    settings::OperationsProblemSettings
+    settings::OperationsProblemSettings,
 ) where {T <: PM.AbstractPowerModel}
     PSY.check_forecast_consistency(sys)
     #This will be improved with the implementation of inicond passing
