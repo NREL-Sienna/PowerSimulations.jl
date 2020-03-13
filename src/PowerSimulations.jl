@@ -129,9 +129,11 @@ export get_all_constraint_index
 export get_all_var_index
 export get_con_index
 export get_var_index
+export configure_logging
 
 #################################################################################
 # Imports
+import Logging
 #Modeling Imports
 import JuMP
 # so that users do not need to import JuMP to use a solver with PowerModels
@@ -170,6 +172,7 @@ include("core/definitions.jl")
 ################################################################################
 # Includes
 
+include("logging.jl")
 include("utils.jl")
 
 #Models and constructors
