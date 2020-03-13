@@ -1,8 +1,7 @@
 function construct_network!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    system_formulation::Type{CopperPlatePowerModel};
-    parameters::Union{Nothing, NetworkOperationsParameters} = nothing,
+    system_formulation::Type{CopperPlatePowerModel}
 )
     buses = PSY.get_components(PSY.Bus, sys)
     bus_count = length(buses)
@@ -15,17 +14,22 @@ end
 function construct_network!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    system_formulation::Type{StandardPTDFModel};
-    parameters::NetworkOperationsParameters,
-)
+    system_formulation::Type{StandardPTDFModel})
+
     buses = PSY.get_components(PSY.Bus, sys)
     ac_branches = PSY.get_components(PSY.ACBranch, sys)
+    ptdf = get_PTDF(psi_container)
+
+    if isnothing(ptdf)
+        throw(ArgumentError("no PTDF matrix supplied"))
+    end
+
     ptdf_networkflow(
         psi_container,
         ac_branches,
         buses,
         :nodal_balance_active,
-        get_ptdf(parameters),
+        ptdf,
     )
 
     dc_branches = PSY.get_components(PSY.DCBranch, sys)
@@ -45,8 +49,7 @@ end
 function construct_network!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    ::Type{T};
-    parameters::Union{Nothing, NetworkOperationsParameters} = nothing,
+    ::Type{T}
 ) where {T <: PM.AbstractPowerModel}
     incompat_list = [
         PM.SDPWRMPowerModel,
