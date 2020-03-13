@@ -51,7 +51,6 @@ end
                 TestOpProblem,
                 template,
                 sys;
-                parameters = NetworkOperationsParameters(PTDF_ref[sys]),
                 optimizer = OSQP_optimizer,
                 use_parameters = p,
             )
@@ -202,7 +201,6 @@ end
                 TestOpProblem,
                 template,
                 sys;
-                parameters = NetworkOperationsParameters(PTDF_ref[sys]),
                 optimizer = GLPK_optimizer,
                 use_parameters = p,
             )
@@ -334,7 +332,6 @@ function test_write_functions(file_path)
             TestOpProblem,
             template,
             c_sys5;
-            parameters = NetworkOperationsParameters(PTDF5),
         )
         set_services_template!(
             UC,
