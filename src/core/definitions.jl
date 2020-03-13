@@ -40,14 +40,10 @@ const OPERATIONS_ACCEPTED_KWARGS = [
     :initial_conditions,
     :use_forecast_data,
     :use_parameters,
-    :parameters,
-    :initial_time,
+    :PTDF,
     :JuMPmodel,
     :optimizer,
-    :initial_time,
 ]
-
-const PSICONTAINER_ACCEPTED_KWARGS = OPERATIONS_ACCEPTED_KWARGS
 
 const SIMULATION_BUILD_KWARGS = [:system_to_file]
 const SIMULATION_KWARGS = [:initial_time]
