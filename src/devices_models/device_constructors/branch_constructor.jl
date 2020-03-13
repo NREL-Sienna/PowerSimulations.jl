@@ -2,21 +2,21 @@ construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{B, Br},
-    ::Type{CopperPlatePowerModel}
+    ::Type{CopperPlatePowerModel},
 ) where {B <: PSY.DCBranch, Br <: AbstractBranchFormulation} = nothing
 
 construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{B, Br},
-    ::Type{CopperPlatePowerModel}
+    ::Type{CopperPlatePowerModel},
 ) where {B <: PSY.ACBranch, Br <: AbstractBranchFormulation} = nothing
 
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{B, Br},
-    ::Type{S}
+    ::Type{S},
 ) where {B <: PSY.Branch, Br <: AbstractBranchFormulation, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(B, sys)
 
@@ -34,7 +34,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
-    ::Type{S}
+    ::Type{S},
 ) where {S <: PM.AbstractPowerModel}
     devices = PSY.get_components(PSY.MonitoredLine, sys)
 
@@ -58,14 +58,14 @@ construct_device!(
         <:PSY.Branch,
         <:Union{Type{StaticLineUnbounded}, Type{StaticTransformerUnbounded}},
     },
-    ::Type{<:PM.AbstractPowerModel}
+    ::Type{<:PM.AbstractPowerModel},
 ) = nothing
 
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{B, Br},
-    ::Type{S}
+    ::Type{S},
 ) where {B <: PSY.DCBranch, Br <: AbstractBranchFormulation, S <: PM.AbstractPowerModel}
     devices = PSY.get_components(B, sys)
 

@@ -45,7 +45,7 @@ mutable struct Stage{M <: AbstractOperationsProblem}
         ::Type{M},
         template::OperationsProblemTemplate,
         sys::PSY.System,
-        optimizer::JuMP.MOI.OptimizerWithAttributes;
+        optimizer::JuMP.MOI.OptimizerWithAttributes;,
     ) where {M <: AbstractOperationsProblem}
         new{M}(template, sys, optimizer, nothing)
     end
