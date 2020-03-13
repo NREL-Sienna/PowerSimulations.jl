@@ -58,7 +58,7 @@ construct_device!(
         <:PSY.Branch,
         <:Union{Type{StaticLineUnbounded}, Type{StaticTransformerUnbounded}},
     },
-    ::Type{<:PM.AbstractPowerModel}
+    ::Type{<:PM.AbstractPowerModel},
 ) = nothing
 
 function construct_device!(

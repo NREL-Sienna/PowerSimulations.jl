@@ -378,7 +378,7 @@ function get_initial_conditions(
 end
 
 function build_op_problem!(
-    op_problem::OperationsProblem{M}
+    op_problem::OperationsProblem{M},
 ) where {M <: AbstractOperationsProblem}
     sys = get_system(op_problem)
     _build!(op_problem.psi_container, op_problem.template, sys)
