@@ -39,7 +39,6 @@ mutable struct Stage{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
     optimizer::JuMP.MOI.OptimizerWithAttributes
-    parameters::Union{Nothing, OperationsProblemParameters}
     internal::Union{Nothing, StageInternal}
 
     function Stage(
@@ -47,19 +46,16 @@ mutable struct Stage{M <: AbstractOperationsProblem}
         template::OperationsProblemTemplate,
         sys::PSY.System,
         optimizer::JuMP.MOI.OptimizerWithAttributes;
-        parameters::Union{Nothing, OperationsProblemParameters} = nothing,
     ) where {M <: AbstractOperationsProblem}
-        new{M}(template, sys, optimizer, parameters, nothing)
+        new{M}(template, sys, optimizer, nothing)
     end
 end
 
 function Stage(
     template::OperationsProblemTemplate,
     sys::PSY.System,
-    optimizer::JuMP.MOI.OptimizerWithAttributes;
-    parameters::Union{Nothing, OperationsProblemParameters} = nothing,
 ) where {M <: AbstractOperationsProblem}
-    return Stage(GenericOpProblem, template, sys, optimizer; parameters = parameters)
+    return Stage(GenericOpProblem, template)
 end
 
 get_execution_count(s::Stage) = s.internal.execution_count
