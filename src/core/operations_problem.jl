@@ -62,7 +62,7 @@ OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimiz
 - `optimizer::union{Nothing, JuMP.MOI.OptimizerWithAttributes} = GLPK_optimizer`: The optimizer gets passed
 into the optimization model the default is nothing.
 - `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
-- `parameters::OperationsProblemSettings`: parameters specific to the problem type
+- `parameters::PSISettings`: parameters specific to the problem type
 - `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
 if false it runs for one time step
 - `initial_time::Dates.DateTime`: initial time of forecast
@@ -75,7 +75,7 @@ function OperationsProblem(
 ) where {M <: AbstractOperationsProblem}
 
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
-    settings = OperationsProblemSettings(kwargs)
+    settings = PSISettings(sys; kwargs...)
 
     op_problem = OperationsProblem{M}(
         template,
@@ -125,7 +125,7 @@ function OperationsProblem(
     kwargs...,
 ) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
-    settings = OperationsProblemSettings(sys, kwargs)
+    settings = PSISettings(sys; kwargs...)
 
     return OperationsProblem{M}(
         OperationsProblemTemplate(T),
@@ -406,7 +406,7 @@ end
 function _build!(
     psi_container::PSIContainer,
     template::OperationsProblemTemplate,
-    sys::PSY.System;,
+    sys::PSY.System
 )
     transmission = template.transmission
 

@@ -74,6 +74,7 @@ end
             sys;
             optimizer = OSQP_optimizer,
             use_parameters = p,
+            PTDF = PTDF_ref[IS.get_uuid(sys)]
         )
         construct_device!(ps_model, :Thermal, thermal_model)
         construct_device!(ps_model, :Load, load_model)
