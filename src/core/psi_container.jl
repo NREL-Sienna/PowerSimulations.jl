@@ -21,20 +21,10 @@ end
 
 const InitialConditionsContainer = Dict{ICKey, Array{InitialCondition}}
 #Defined here because of dependencies in psi_container
-function _pass_abstract_jump(
+function _make_jump_model(
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
-    parameters::Bool,
-    JuMPmodel::Union{JuMP.AbstractModel, Nothing},
+    parameters::Bool
 )
-    if !isnothing(JuMPmodel)
-        if parameters
-            if !haskey(JuMPmodel.ext, :params)
-                @info("Model doesn't have Parameters enabled. Parameters will be enabled")
-            end
-            PJ.enable_parameters(JuMPmodel)
-        end
-        return JuMPmodel
-    end
     if isa(optimizer, Nothing)
         @debug "The optimization model has no optimizer attached"
     end
@@ -87,26 +77,66 @@ function _make_expressions_dict(
     )
 end
 
+mutable struct OperationsProblemSettings
+    horizon::Union{Nothing, Int}
+    initial_conditions::Union{Nothing, Dict{Any, Any}}
+    use_forecast_data::Bool
+    use_parameters::Bool
+    initial_time::Union{Nothing, Dates.DateTime}
+    PTDF::Union{Nothing, PSY.PTDF}
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
+    ext::Dict{String, Any}
+end
+
+function OperationsProblemSettings(sys, kwargs...)
+    initial_time = get(kwargs, :initial_time, PSY.get_forecasts_initial_time(sys))
+    use_parameters = get(kwargs, :use_parameters, false)
+    use_forecast_data = get(kwargs, :use_forecast_data, true)
+    # This will be improved once we implement proper manual passing of initial conditions
+    ini_con = get(kwargs, :initial_conditions, InitialConditionsContainer())
+    horizon = get(kwargs, :horizon, PSY.get_forecasts_horizon(sys))
+    PTDF = get(kwargs, :PTDF, nothing)
+    optimizer = get(kwargs, :optimizer, nothing)
+    ext = get(kwargs, :additional_settings, Dict{String, Any}())
+
+    return OperationsProblemSettings(
+        horizon,
+        ini_con,
+        use_forecast_data,
+        use_parameters,
+        PTDF,
+        optimizer,
+        ext,
+    )
+
+end
+
+get_horizon(settings::OperationsProblemSettings) = settings.horizon
+get_initial_conditions(settings::OperationsProblemSettings) = settings.initial_conditions
+get_use_forecast_data(settings::OperationsProblemSettings) = settings.use_forecast_data
+get_use_parameters(settings::OperationsProblemSettings) = settings.use_parameters
+get_initial_time(settings::OperationsProblemSettings) = settings.inital_time
+get_PTDF(settings::OperationsProblemSettings) = settings.PTDF
+get_optimizer(settings::OperationsProblemSettings) = settings.optimizer
+get_ext(settings::OperationsProblemSettings) = settings.ext
+
 function _psi_container_init(
     bus_numbers::Vector{Int},
     jump_model::JuMP.AbstractModel,
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
     transmission::Type{S},
     time_steps::UnitRange{Int},
     resolution::Dates.TimePeriod,
-    use_forecast_data::Bool,
-    initial_time::Dates.DateTime,
-    make_parameters_container::Bool,
-    ini_con::InitialConditionsContainer,
+    settings::OperationsProblemSettings
 ) where {S <: PM.AbstractPowerModel}
     V = JuMP.variable_type(jump_model)
+    make_parameters_container = get_use_parameters(settings)
     psi_container = PSIContainer(
         jump_model,
-        optimizer,
+        get_optimizer(settings),
         time_steps,
         resolution,
-        use_forecast_data,
-        initial_time,
+        get_use_forecast_data,
+        get_initial_time(settings),
         DenseAxisArrayContainer(),
         DenseAxisArrayContainer(),
         zero(JuMP.GenericAffExpr{Float64, V}),
@@ -118,7 +148,7 @@ function _psi_container_init(
             make_parameters_container,
         ),
         make_parameters_container ? ParametersContainer() : nothing,
-        ini_con,
+        get_initial_conditions(settings),
         nothing,
     )
     return psi_container
@@ -126,7 +156,6 @@ end
 
 mutable struct PSIContainer
     JuMPmodel::JuMP.AbstractModel
-    optimizer_factory::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
     time_steps::UnitRange{Int}
     resolution::Dates.TimePeriod
     use_forecast_data::Bool
@@ -141,11 +170,9 @@ mutable struct PSIContainer
 
     function PSIContainer(
         JuMPmodel::JuMP.AbstractModel,
-        optimizer_factory::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
         time_steps::UnitRange{Int},
         resolution::Dates.TimePeriod,
-        use_forecast_data::Bool,
-        initial_time::Dates.DateTime,
+        settings::OperationsProblemSettings,
         variables::Dict{Symbol, JuMP.Containers.DenseAxisArray},
         constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray},
         cost_function::JuMP.AbstractJuMPScalar,
@@ -157,11 +184,9 @@ mutable struct PSIContainer
         resolution = IS.time_period_conversion(resolution)
         new(
             JuMPmodel,
-            optimizer_factory,
             time_steps,
             resolution,
-            use_forecast_data,
-            initial_time,
+            settings,
             variables,
             constraints,
             cost_function,
@@ -176,22 +201,16 @@ end
 function PSIContainer(
     ::Type{T},
     sys::PSY.System,
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes};
-    kwargs...,
+    settings::OperationsProblemSettings
 ) where {T <: PM.AbstractPowerModel}
-    check_kwargs(kwargs, PSICONTAINER_ACCEPTED_KWARGS, "PSIContainer")
     PSY.check_forecast_consistency(sys)
-    user_defined_model = get(kwargs, :JuMPmodel, nothing)
-    ini_con = get(kwargs, :initial_conditions, InitialConditionsContainer())
-    make_parameters_container = get(kwargs, :use_parameters, false)
-    use_forecast_data = get(kwargs, :use_forecast_data, true)
-    jump_model =
-        _pass_abstract_jump(optimizer, make_parameters_container, user_defined_model)
-    initial_time = get(kwargs, :initial_time, PSY.get_forecasts_initial_time(sys))
-
-    if use_forecast_data
-        horizon = get(kwargs, :horizon, PSY.get_forecasts_horizon(sys))
-        time_steps = 1:horizon
+    #This will be improved with the implementation of inicond passing
+    ini_con = get_initial_conditions(settings)
+    optimizer = get_optimizer(settings)
+    use_parameters = get_use_parameters(settings)
+    jump_model = _make_jump_model(optimizer, use_parameters)
+    if get_use_forecast_data(settings)
+        time_steps = 1:get_horizon(settings)
         if length(time_steps) > 100
             @warn("The number of time steps in the model is over 100. This will result in
                   large multiperiod optimization problem")
@@ -207,13 +226,10 @@ function PSIContainer(
     return _psi_container_init(
         bus_numbers,
         jump_model,
-        optimizer,
         T,
         time_steps,
         resolution,
-        use_forecast_data,
-        initial_time,
-        make_parameters_container,
+        get_initial_time(settings),
         ini_con,
     )
 
@@ -309,6 +325,7 @@ get_constraints(psi_container::PSIContainer) = psi_container.constraints
 get_parameters(psi_container::PSIContainer) = psi_container.parameters
 get_expression(psi_container::PSIContainer, name::Symbol) = psi_container.expressions[name]
 get_initial_conditions(psi_container::PSIContainer) = psi_container.initial_conditions
+get_PTDF(psi_container::PSIContainer) = get_PTDF(psi_container.settings)
 
 function get_variable(
     psi_container::PSIContainer,
