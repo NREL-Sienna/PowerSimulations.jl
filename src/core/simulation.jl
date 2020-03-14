@@ -394,7 +394,8 @@ function build!(sim::Simulation; kwargs...)
                 throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
             end
             stage_interval = get_stage_interval(sim, stage_name)
-            stage.internal.executions = Int(get_step_resolution(sim.sequence) / stage_interval)
+            stage.internal.executions =
+                Int(get_step_resolution(sim.sequence) / stage_interval)
             stage.internal.number = stage_number
             _attach_feedforward!(sim, stage_name)
         end
