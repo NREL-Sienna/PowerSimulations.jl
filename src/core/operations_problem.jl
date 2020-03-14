@@ -670,7 +670,7 @@ function deserialize(::Type{OperationsProblem}, filename::AbstractString; kwargs
     end
 
     if !ispath(obj.sys)
-        throw(IS.DataFormatError("PowerSystem.System file $(obj.sys) does not exist"))
+        throw(IS.DataFormatError("PowerSystems.System file $(obj.sys) does not exist"))
     end
     sys = PSY.System(obj.sys)
 
