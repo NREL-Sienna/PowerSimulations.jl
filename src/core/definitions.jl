@@ -41,6 +41,7 @@ const OPERATIONS_ACCEPTED_KWARGS = [
     :initial_time,
     :use_forecast_data,
     :PTDF,
+    :use_parameters,
     :optimizer,
     :use_warm_start,
 ]
