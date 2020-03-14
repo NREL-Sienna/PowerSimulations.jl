@@ -24,7 +24,7 @@ const InitialConditionsContainer = Dict{ICKey, Array{InitialCondition}}
 function _make_jump_model(
     JuMPmodel::Union{Nothing, JuMP.AbstractModel},
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
-    parameters::Bool,
+    parameters::Bool
 )
    if !isnothing(JuMPmodel)
         if parameters
