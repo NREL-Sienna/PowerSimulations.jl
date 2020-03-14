@@ -22,9 +22,19 @@ end
 const InitialConditionsContainer = Dict{ICKey, Array{InitialCondition}}
 #Defined here because of dependencies in psi_container
 function _make_jump_model(
+    JuMPmodel::Union{Nothing, JuMP.AbstractModel},
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
-    parameters::Bool,
+    parameters::Bool
 )
+   if !isnothing(JuMPmodel)
+        if parameters
+            if !haskey(JuMPmodel.ext, :params)
+                @info("Model doesn't have Parameters enabled. Parameters will be enabled")
+            end
+            PJ.enable_parameters(JuMPmodel)
+        end
+        return JuMPmodel
+    end
     if isa(optimizer, Nothing)
         @debug "The optimization model has no optimizer attached"
     end
@@ -205,13 +215,14 @@ function PSIContainer(
     ::Type{T},
     sys::PSY.System,
     settings::PSISettings,
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing
 ) where {T <: PM.AbstractPowerModel}
     PSY.check_forecast_consistency(sys)
     #This will be improved with the implementation of inicond passing
     ini_con = get_initial_conditions(settings)
     optimizer = get_optimizer(settings)
     use_parameters = get_use_parameters(settings)
-    jump_model = _make_jump_model(optimizer, use_parameters)
+    jump_model = _make_jump_model(jump_model, optimizer, use_parameters)
     if get_use_forecast_data(settings)
         time_steps = 1:get_horizon(settings)
         if length(time_steps) > 100
