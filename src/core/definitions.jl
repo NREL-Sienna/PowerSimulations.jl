@@ -38,12 +38,14 @@ const MISSING_INITIAL_CONDITIONS_TIME_COUNT = 999.0
 const OPERATIONS_ACCEPTED_KWARGS = [
     :horizon,
     :initial_conditions,
+    :initial_time,
     :use_forecast_data,
-    :use_parameters,
     :PTDF,
-    :JuMPmodel,
     :optimizer,
+    :use_warm_start,
 ]
+
+const STAGE_ACCEPTED_KWARGS = [:initial_conditions, :PTDF, :optimizer, :use_warm_start]
 
 const SIMULATION_BUILD_KWARGS = [:system_to_file]
 const SIMULATION_KWARGS = [:initial_time]
