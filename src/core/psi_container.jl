@@ -324,7 +324,6 @@ get_expression(psi_container::PSIContainer, name::Symbol) = psi_container.expres
 get_initial_conditions(psi_container::PSIContainer) = psi_container.initial_conditions
 get_PTDF(psi_container::PSIContainer) = get_PTDF(psi_container.settings)
 
-
 function get_variable(
     psi_container::PSIContainer,
     var_type::AbstractString,
