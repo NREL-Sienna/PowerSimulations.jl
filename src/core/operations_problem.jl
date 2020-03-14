@@ -399,7 +399,7 @@ end
 function _build!(
     psi_container::PSIContainer,
     template::OperationsProblemTemplate,
-    sys::PSY.System
+    sys::PSY.System,
 )
     transmission = template.transmission
 
