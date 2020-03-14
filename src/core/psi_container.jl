@@ -82,6 +82,7 @@ mutable struct PSISettings
     initial_conditions::Union{Nothing, InitialConditionsContainer}
     use_forecast_data::Bool
     use_parameters::Bool
+    use_warm_start::Bool
     initial_time::Union{Nothing, Dates.DateTime}
     PTDF::Union{Nothing, PSY.PTDF}
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
@@ -94,6 +95,7 @@ function PSISettings(sys::PSY.System; kwargs...)
     use_forecast_data = get(kwargs, :use_forecast_data, true)
     # This will be improved once we implement proper manual passing of initial conditions
     ini_con = get(kwargs, :initial_conditions, InitialConditionsContainer())
+    use_warm_start = get(kwargs, :use_warm_start, true)
     horizon = get(kwargs, :horizon, PSY.get_forecasts_horizon(sys))
     PTDF = get(kwargs, :PTDF, nothing)
     optimizer = get(kwargs, :optimizer, nothing)
@@ -104,6 +106,7 @@ function PSISettings(sys::PSY.System; kwargs...)
         ini_con,
         use_forecast_data,
         use_parameters,
+        use_warm_start,
         initial_time,
         PTDF,
         optimizer,
@@ -127,7 +130,7 @@ function _psi_container_init(
     transmission::Type{S},
     time_steps::UnitRange{Int},
     resolution::Dates.TimePeriod,
-    settings::PSISettings
+    settings::PSISettings,
 ) where {S <: PM.AbstractPowerModel}
     V = JuMP.variable_type(jump_model)
     make_parameters_container = get_use_parameters(settings)
@@ -149,7 +152,7 @@ function _psi_container_init(
         make_parameters_container ? ParametersContainer() : nothing,
         #This will be improved with the implementation of inicond passing
         get_initial_conditions(settings),
-        nothing
+        nothing,
     )
     return psi_container
 end
@@ -222,14 +225,7 @@ function PSIContainer(
 
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
 
-    return _psi_container_init(
-        bus_numbers,
-        jump_model,
-        T,
-        time_steps,
-        resolution,
-        settings
-    )
+    return _psi_container_init(bus_numbers, jump_model, T, time_steps, resolution, settings)
 
 end
 
@@ -314,8 +310,10 @@ variable_name(var_type) = encode_symbol(var_type)
 _variable_type(cm::PSIContainer) = JuMP.variable_type(cm.JuMPmodel)
 model_time_steps(psi_container::PSIContainer) = psi_container.time_steps
 model_resolution(psi_container::PSIContainer) = psi_container.resolution
-model_has_parameters(psi_container::PSIContainer) = get_use_parameters(psi_container.settings)
-model_uses_forecasts(psi_container::PSIContainer) = get_use_forecast_data(psi_container.settings)
+model_has_parameters(psi_container::PSIContainer) =
+    get_use_parameters(psi_container.settings)
+model_uses_forecasts(psi_container::PSIContainer) =
+    get_use_forecast_data(psi_container.settings)
 model_initial_time(psi_container::PSIContainer) = get_initial_time(psi_container.settings)
 #Internal Variables, Constraints and Parameters accessors
 get_variables(psi_container::PSIContainer) = psi_container.variables
