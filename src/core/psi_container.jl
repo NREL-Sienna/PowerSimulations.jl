@@ -123,6 +123,7 @@ get_initial_time(settings::PSISettings) = settings.initial_time
 get_PTDF(settings::PSISettings) = settings.PTDF
 get_optimizer(settings::PSISettings) = settings.optimizer
 get_ext(settings::PSISettings) = settings.ext
+get_use_warm_start(settings) = settings.use_warm_start
 
 function _psi_container_init(
     bus_numbers::Vector{Int},
@@ -322,6 +323,7 @@ get_parameters(psi_container::PSIContainer) = psi_container.parameters
 get_expression(psi_container::PSIContainer, name::Symbol) = psi_container.expressions[name]
 get_initial_conditions(psi_container::PSIContainer) = psi_container.initial_conditions
 get_PTDF(psi_container::PSIContainer) = get_PTDF(psi_container.settings)
+
 
 function get_variable(
     psi_container::PSIContainer,
