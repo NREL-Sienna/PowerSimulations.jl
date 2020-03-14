@@ -4,11 +4,10 @@ mutable struct StageInternal
     executions::Int
     execution_count::Int
     end_of_interval_step::Int
-    warm_start_enabled::Bool
     # This line keeps track of the executions of a stage relative to other stages.
     # This might be needed in the future to run multiple stages. For now it is disabled
     #synchronized_executions::Dict{Int, Int} # Number of executions per upper level stage step
-    psi_container::Union{Nothing, PSIContainer}
+    psi_container::PSIContainer
     # Caches are stored in set because order isn't relevant and they should be unique
     caches::Set{CacheKey}
     chronolgy_dict::Dict{Int, <:FeedForwardChronology}
@@ -18,7 +17,6 @@ mutable struct StageInternal
             executions,
             execution_count,
             0,
-            true,
             psi_container,
             Set{CacheKey}(),
             Dict{Int, FeedForwardChronology}(),
@@ -38,24 +36,32 @@ end
 mutable struct Stage{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
-    optimizer::JuMP.MOI.OptimizerWithAttributes
     internal::Union{Nothing, StageInternal}
 
     function Stage(
         ::Type{M},
         template::OperationsProblemTemplate,
-        sys::PSY.System,
-        optimizer::JuMP.MOI.OptimizerWithAttributes;,
+        sys::PSY.System;
+        kwargs...,
     ) where {M <: AbstractOperationsProblem}
-        new{M}(template, sys, optimizer, nothing)
+        check_kwargs(kwargs, STAGE_ACCEPTED_KWARGS, "Stage")
+        settings = PSISettings(sys; kwargs...)
+        if isnothing(get_optimizer(settings))
+            throw(ArgumentError("The definition of a simulations stage requires setting the solver. Use the keyword optimizer in the arguments of the stage."))
+        end
+        settings.use_parameters = true
+        internal =
+            StageInternal(0, 0, 0, PSIContainer(template.transmission, sys, settings))
+        new{M}(template, sys, internal)
     end
 end
 
 function Stage(
     template::OperationsProblemTemplate,
-    sys::PSY.System,
+    sys::PSY.System;
+    kwargs...,
 ) where {M <: AbstractOperationsProblem}
-    return Stage(GenericOpProblem, template)
+    return Stage(GenericOpProblem, template, sys; kwargs...)
 end
 
 get_execution_count(s::Stage) = s.internal.execution_count
@@ -65,35 +71,28 @@ get_template(s::Stage) = s.template
 get_number(s::Stage) = s.internal.number
 get_psi_container(s::Stage) = s.internal.psi_container
 get_end_of_interval_step(s::Stage) = s.internal.end_of_interval_step
-warm_start_enabled(s::Stage) = s.internal.warm_start_enabled
+warm_start_enabled(s::Stage) = get_use_warm_start(s.internal.psi_container.settings)
 
 function build!(
     stage::Stage,
     initial_time::Dates.DateTime,
     horizon::Int,
-    stage_interval::Dates.Period;
-    kwargs...,
+    stage_interval::Dates.Period,
 )
-    stage.internal.psi_container = PSIContainer(
-        stage.template.transmission,
-        stage.sys,
-        stage.optimizer;
-        use_parameters = true,
-        initial_time = initial_time,
-        horizon = horizon,
-        kwargs...,
-    )
-    _build!(
-        stage.internal.psi_container,
-        stage.template,
-        stage.sys;
-        parameters = stage.parameters,
-    )
-    stage.internal.warm_start_enabled = MOI.supports(
+    psi_container = get_psi_container(stage)
+    psi_container.settings.horizon = horizon
+    psi_container.settings.initial_time = initial_time
+    _build!(psi_container, stage.template, stage.sys)
+    solver_supports_warm_start = MOI.supports(
         JuMP.backend(stage.internal.psi_container.JuMPmodel),
         MOI.VariablePrimalStart(),
         MOI.VariableIndex,
     )
+    if !solver_supports_warm_start
+        solver_name = JuMP.solver_name(psi_container.JuMPmodel)
+        @warn("$(solver_name) in stage $(stage.internal.number) does not support warm start")
+    end
+    psi_container.settings.use_warm_start = solver_supports_warm_start
     stage_resolution = PSY.get_forecasts_resolution(stage.sys)
     stage.internal.end_of_interval_step = Int(stage_interval / stage_resolution)
     return
