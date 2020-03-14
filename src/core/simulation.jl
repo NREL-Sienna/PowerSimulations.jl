@@ -331,7 +331,6 @@ function _populate_caches!(sim::Simulation, stage_name::String)
 end
 
 function _build_stages!(sim::Simulation; kwargs...)
-    system_to_file = get(kwargs, :system_to_file, true)
     for (stage_number, stage_name) in sim.sequence.order
         TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Stage $(stage_name)" begin
             @info("Building Stage $(stage_number)-$(stage_name)")
@@ -395,8 +394,8 @@ function build!(sim::Simulation; kwargs...)
                 throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
             end
             stage_interval = get_stage_interval(sim, stage_name)
-            executions = Int(get_step_resolution(sim.sequence) / stage_interval)
-            stage.internal = StageInternal(stage_number, executions, 0, nothing)
+            stage.internal.executions = Int(get_step_resolution(sim.sequence) / stage_interval)
+            stage.internal.number = stage_number
             _attach_feedforward!(sim, stage_name)
         end
         _assign_feedforward_chronologies(sim)
