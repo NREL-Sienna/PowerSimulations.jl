@@ -89,6 +89,16 @@ function OperationsProblem(
     return op_problem
 
 end
+
+function OperationsProblem{T}(
+    template::OperationsProblemTemplate,
+    sys::PSY.System;
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+    kwargs...,
+) where {T <: AbstractOperationsProblem}
+    return OperationsProblem(T, template, sys; optimizer = optimizer, kwargs...)
+end
+
 """
     OperationsProblem(op_problem::Type{M},
                     ::Type{T},
@@ -173,6 +183,15 @@ function OperationsProblem(
 
     return OperationsProblem(GenericOpProblem, T, sys; kwargs...)
 
+end
+
+"""
+    OperationsProblem(filename::AbstractString)
+
+Construct an OperationsProblem from a serialized file.
+"""
+function OperationsProblem(filename::AbstractString; kwargs...)
+    return deserialize(OperationsProblem, filename; kwargs...)
 end
 
 get_transmission_ref(op_problem::OperationsProblem) = op_problem.template.transmission
@@ -622,4 +641,38 @@ function get_var_index(op_problem::OperationsProblem, index::Int)
     end
     @info "Index not found"
     return
+end
+
+struct OperationsProblemSerializationWrapper
+    template::OperationsProblemTemplate
+    sys::String
+    op_problem_type::DataType
+end
+
+function serialize(op_problem::OperationsProblem, filename::AbstractString)
+    # A PowerSystem cannot be serialized in this format because of how it stores
+    # time series data. Use its specialized serialization method instead.
+    sys_filename = "$(basename(filename))-system-$(IS.get_uuid(op_problem.sys)).json"
+    PSY.to_json(op_problem.sys, sys_filename)
+    obj = OperationsProblemSerializationWrapper(
+        op_problem.template,
+        sys_filename,
+        typeof(op_problem),
+    )
+    Serialization.serialize(filename, obj)
+    @info "Serialized OperationsProblem to" filename
+end
+
+function deserialize(::Type{OperationsProblem}, filename::AbstractString; kwargs...)
+    obj = Serialization.deserialize(filename)
+    if !(obj isa OperationsProblemSerializationWrapper)
+        throw(IS.DataFormatError("deserialized object has incorrect type $(typeof(obj))"))
+    end
+
+    if !ispath(obj.sys)
+        throw(IS.DataFormatError("PowerSystem.System file $(obj.sys) does not exist"))
+    end
+    sys = PSY.System(obj.sys)
+
+    return obj.op_problem_type(obj.template, sys; kwargs...)
 end

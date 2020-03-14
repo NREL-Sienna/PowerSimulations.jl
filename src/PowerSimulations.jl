@@ -132,6 +132,7 @@ export get_var_index
 
 #################################################################################
 # Imports
+import Serialization
 #Modeling Imports
 import JuMP
 # so that users do not need to import JuMP to use a solver with PowerModels

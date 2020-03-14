@@ -11,6 +11,20 @@ branches = Dict{Symbol, DeviceModel}(
 )
 services = Dict{Symbol, ServiceModel}()
 
+function get_deserialized(op_problem::OperationsProblem; kwargs...)
+    orig = pwd()
+    path = mktempdir()
+    cd(path)
+
+    try
+        filename = "test_op_problem.bin"
+        PSI.serialize(op_problem, filename)
+        return OperationsProblem(filename; kwargs...)
+    finally
+        cd(orig)
+    end
+end
+
 @testset "Solving ED with CopperPlate" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     parameters_value = [true, false]
@@ -28,6 +42,9 @@ services = Dict{Symbol, ServiceModel}()
             )
             psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[sys], 10000)
 
+            # Serialize, deserialize, rebuild, re-run.
+            ED2 = get_deserialized(ED; optimizer = OSQP_optimizer, use_parameters = p)
+            psi_checksolve_test(ED2, [MOI.OPTIMAL], test_results[sys], 10000)
         end
     end
 end
