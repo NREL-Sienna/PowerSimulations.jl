@@ -163,7 +163,7 @@ function _psi_container_init(
         make_parameters_container ? ParametersContainer() : nothing,
         #This will be improved with the implementation of inicond passing
         get_initial_conditions(settings),
-        nothing
+        nothing,
     )
     return psi_container
 end
