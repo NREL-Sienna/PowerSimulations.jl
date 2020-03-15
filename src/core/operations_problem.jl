@@ -184,8 +184,7 @@ get_base_power(op_problem::OperationsProblem) = op_problem.sys.basepower
 
 function set_transmission_model!(
     op_problem::OperationsProblem{M},
-    transmission::Type{T};
-    kwargs...,
+    transmission::Type{T}
 ) where {T <: PM.AbstractPowerModel, M <: AbstractOperationsProblem}
 
     # Reset the psi_container
@@ -193,15 +192,14 @@ function set_transmission_model!(
     op_problem.psi_container =
         PSIContainer(transmission, op_problem.sys, op_problem.psi_container.settings)
 
-    build_op_problem!(op_problem; kwargs...)
+    build_op_problem!(op_problem)
 
     return
 end
 
 function set_devices_template!(
     op_problem::OperationsProblem{M},
-    devices::Dict{Symbol, DeviceModel};
-    kwargs...,
+    devices::Dict{Symbol, DeviceModel}
 ) where {M <: AbstractOperationsProblem}
 
     # Reset the psi_container
@@ -212,15 +210,14 @@ function set_devices_template!(
         op_problem.psi_container.settings,
     )
 
-    build_op_problem!(op_problem; kwargs...)
+    build_op_problem!(op_problem)
 
     return
 end
 
 function set_branches_template!(
     op_problem::OperationsProblem{M},
-    branches::Dict{Symbol, DeviceModel};
-    kwargs...,
+    branches::Dict{Symbol, DeviceModel}
 ) where {M <: AbstractOperationsProblem}
 
     # Reset the psi_container
@@ -231,15 +228,14 @@ function set_branches_template!(
         op_problem.psi_container.settings,
     )
 
-    build_op_problem!(op_problem; kwargs...)
+    build_op_problem!(op_problem)
 
     return
 end
 
 function set_services_template!(
     op_problem::OperationsProblem{M},
-    services::Dict{Symbol, <:ServiceModel};
-    kwargs...,
+    services::Dict{Symbol, <:ServiceModel}
 ) where {M <: AbstractOperationsProblem}
 
     # Reset the psi_container
@@ -250,7 +246,7 @@ function set_services_template!(
         op_problem.psi_container.settings,
     )
 
-    build_op_problem!(op_problem; kwargs...)
+    build_op_problem!(op_problem)
 
     return
 end
@@ -259,7 +255,6 @@ function set_device_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
     device::DeviceModel{D, B};
-    kwargs...,
 ) where {
     D <: PSY.StaticInjection,
     B <: AbstractDeviceFormulation,
@@ -272,9 +267,8 @@ function set_device_model!(
             op_problem.template.transmission,
             op_problem.sys,
             op_problem.psi_container.optimizer_factory;
-            kwargs...,
         )
-        build_op_problem!(op_problem; kwargs...)
+        build_op_problem!(op_problem)
     else
         throw(IS.ConflictingInputsError("Device Model with name $(name) doesn't exist in the model"))
     end
@@ -286,8 +280,7 @@ end
 function set_branch_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
-    branch::DeviceModel{D, B};
-    kwargs...,
+    branch::DeviceModel{D, B}
 ) where {D <: PSY.Branch, B <: AbstractDeviceFormulation, M <: AbstractOperationsProblem}
 
     if haskey(op_problem.template.branches, name)
@@ -310,8 +303,7 @@ end
 function set_services_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
-    service::DeviceModel;
-    kwargs...,
+    service::DeviceModel
 ) where {M <: AbstractOperationsProblem}
 
     if haskey(op_problem.template.devices, name)
@@ -319,10 +311,9 @@ function set_services_model!(
         op_problem.psi_container = PSIContainer(
             op_problem.template.transmission,
             op_problem.sys,
-            op_problem.psi_container.optimizer_factory;
-            kwargs...,
+            op_problem.psi_container.optimizer_factory
         )
-        build_op_problem!(op_problem; kwargs...)
+        build_op_problem!(op_problem)
     else
         throw(IS.ConflictingInputsError("Branch Model with name $(name) doesn't exist in the model"))
     end
@@ -335,7 +326,6 @@ function construct_device!(
     op_problem::OperationsProblem,
     name::Symbol,
     device_model::DeviceModel;
-    kwargs...,
 )
 
     if haskey(op_problem.template.devices, name)
@@ -350,7 +340,6 @@ function construct_device!(
         get_system(op_problem),
         device_model,
         get_transmission_ref(op_problem);
-        kwargs...,
     )
 
     JuMP.@objective(
@@ -396,7 +385,7 @@ function get_initial_conditions(
 end
 
 function build_op_problem!(
-    op_problem::OperationsProblem{M},
+    op_problem::OperationsProblem{M}
 ) where {M <: AbstractOperationsProblem}
     sys = get_system(op_problem)
     _build!(op_problem.psi_container, op_problem.template, sys)
@@ -409,27 +398,20 @@ function _build!(
     sys::PSY.System,
 )
     transmission = template.transmission
-
     # Order is required
-
     construct_services!(psi_container, sys, template.services, template.devices)
-
     for device_model in values(template.devices)
         @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
         construct_device!(psi_container, sys, device_model, transmission)
     end
-
     @debug "Building $(transmission) network formulation"
     construct_network!(psi_container, sys, transmission)
-
     for branch_model in values(template.branches)
         @debug "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
         construct_device!(psi_container, sys, branch_model, transmission)
     end
-
     @debug "Building Objective"
     JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
-
     return
 end
 
