@@ -62,9 +62,9 @@ end
         IS.get_uuid(c_sys14_dc) => PTDF14_dc,
     )
     test_results = Dict{UUIDs.UUID, Vector{Int}}(
-        IS.get_uuid(c_sys5) => [264, 0, 264, 264, 264],
-        IS.get_uuid(c_sys14) => [600, 0, 600, 600, 816],
-        IS.get_uuid(c_sys14_dc) => [600, 48, 552, 552, 768],
+        IS.get_uuid(c_sys5) => [264, 0, 408, 408, 264],
+        IS.get_uuid(c_sys14) => [600, 0, 1080, 1080, 816],
+        IS.get_uuid(c_sys14_dc) => [600, 48, 984, 984, 768],
     )
 
     for (ix, sys) in enumerate(systems), p in parameters
