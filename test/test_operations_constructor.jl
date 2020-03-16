@@ -84,7 +84,7 @@ end
         optimizer = GLPK_optimizer,
         use_parameters = true,
     )
-    @test haskey(my_model.ext, :PSI_Testing)
+    @test haskey(op_problem.psi_container.JuMPmodel.ext, :PSI_Testing)
     @test (:params in keys(op_problem.psi_container.JuMPmodel.ext)) == true
 end
 
