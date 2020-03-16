@@ -39,7 +39,7 @@ end
     PTDF_ref = Dict{UUIDs.UUID, PTDF}(
         IS.get_uuid(c_sys5) => PTDF5,
         IS.get_uuid(c_sys14) => PTDF14,
-        IS.get_uuid(c_sys14_dc) => PTDF14_dc
+        IS.get_uuid(c_sys14_dc) => PTDF14_dc,
     )
     test_results = Dict{UUIDs.UUID, Float64}(
         IS.get_uuid(c_sys5) => 340000.0,
@@ -56,7 +56,7 @@ end
                 sys;
                 optimizer = OSQP_optimizer,
                 use_parameters = p,
-                PTDF = PTDF_ref[IS.get_uuid(sys)]
+                PTDF = PTDF_ref[IS.get_uuid(sys)],
             )
             psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[IS.get_uuid(sys)], 10000)
         end
@@ -195,9 +195,10 @@ end
     parameters_value = [true, false]
     systems = [c_sys5, c_sys5_dc]
     networks = [DCPPowerModel, NFAPowerModel, StandardPTDFModel, CopperPlatePowerModel]
-        PTDF_ref = Dict{UUIDs.UUID, PTDF}(
+    PTDF_ref = Dict{UUIDs.UUID, PTDF}(
         IS.get_uuid(c_sys5) => PTDF5,
-        IS.get_uuid(c_sys5_dc) => PTDF5_dc)
+        IS.get_uuid(c_sys5_dc) => PTDF5_dc,
+    )
 
     for net in networks, p in parameters_value, sys in systems
         @info("Testing solve UC with $(net) network")
@@ -209,7 +210,7 @@ end
                 sys;
                 optimizer = GLPK_optimizer,
                 use_parameters = p,
-                PTDF = PTDF_ref[IS.get_uuid(sys)]
+                PTDF = PTDF_ref[IS.get_uuid(sys)],
             )
             psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
         end
