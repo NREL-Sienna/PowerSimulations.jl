@@ -330,7 +330,7 @@ function _populate_caches!(sim::Simulation, stage_name::String)
     return
 end
 
-function _build_stages!(sim::Simulation; kwargs...)
+function _build_stages!(sim::Simulation)
     for (stage_number, stage_name) in sim.sequence.order
         TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Stage $(stage_name)" begin
             @info("Building Stage $(stage_number)-$(stage_name)")
@@ -338,7 +338,7 @@ function _build_stages!(sim::Simulation; kwargs...)
             stage = get_stage(sim, stage_name)
             stage_interval = get_stage_interval(get_sequence(sim), stage_name)
             initial_time = get_initial_time(sim)
-            build!(stage, initial_time, horizon, stage_interval; kwargs...)
+            build!(stage, initial_time, horizon, stage_interval)
             _populate_caches!(sim, stage_name)
             sim.internal.date_ref[stage_number] = initial_time
         end
@@ -376,10 +376,9 @@ end
         build!(sim::Simulation;
                 kwargs...)
 """
-function build!(sim::Simulation; kwargs...)
+function build!(sim::Simulation)
     TimerOutputs.reset_timer!(BUILD_SIMULATION_TIMER)
     TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Simulation" begin
-        check_kwargs(kwargs, SIMULATION_BUILD_KWARGS, "build!")
         _check_forecasts_sequence(sim)
         _check_feedforward_chronologies(sim)
         _check_folder(sim.simulation_folder)
@@ -398,7 +397,7 @@ function build!(sim::Simulation; kwargs...)
         end
         _assign_feedforward_chronologies(sim)
         _check_steps(sim, stage_initial_times)
-        _build_stages!(sim; kwargs...)
+        _build_stages!(sim)
         sim.internal.compiled_status = true
     end
     @info ("\n$(BUILD_SIMULATION_TIMER)\n")

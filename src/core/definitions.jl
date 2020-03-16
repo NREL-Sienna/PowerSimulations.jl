@@ -47,8 +47,6 @@ const OPERATIONS_ACCEPTED_KWARGS = [
 ]
 
 const STAGE_ACCEPTED_KWARGS = [:initial_conditions, :PTDF, :use_warm_start]
-
-const SIMULATION_BUILD_KWARGS = [:system_to_file]
 const SIMULATION_KWARGS = [:initial_time]
 
 const PSI_NAME_DELIMITER = "__"

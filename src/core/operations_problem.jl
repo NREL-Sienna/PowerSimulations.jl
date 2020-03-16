@@ -353,6 +353,7 @@ function _build!(
     template::OperationsProblemTemplate,
     sys::PSY.System,
 )
+    @assert container_instantiated(psi_container)
     transmission = template.transmission
     # Order is required
     construct_services!(psi_container, sys, template.services, template.devices)
