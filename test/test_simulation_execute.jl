@@ -340,9 +340,9 @@ function test_load_simulation(file_path::String)
                 get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
             vars = results.variable_values[vars_names[ik]] # change to getter function
             for ic in initial_conditions
-                output = vars[horizon * (no_steps - 1), Symbol(PSI.device_name(ic))] # change to getter function
+                output = vars[ed_horizon * (no_steps - 1), Symbol(PSI.device_name(ic))] # change to getter function
                 initial_cond = value(PSI.get_value(ic))
-                @test_skip isapprox(output, initial_cond, atol = 1.0e-4)
+                @test isapprox(output, initial_cond, atol = 1.0e-4)
             end
         end
     end
