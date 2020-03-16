@@ -65,24 +65,22 @@ sim = Simulation("Test", 7, stages, "/Users/yourusername/Desktop/"; system_to_fi
 execute!(sim::Simulation; kwargs...)
 references = make_references(sim, "2019-10-03T09-18-00-test")
 ```
-
-# Accepted Key Words
-- `constraints_duals::Vector{Symbol}`: name of dual constraints to be added to results
 """
-function make_references(sim::Simulation, date_run::String; kwargs...)
+function make_references(sim::Simulation, date_run::String)
     sim.internal.date_ref[1] = sim.initial_time
     sim.internal.date_ref[2] = sim.initial_time
     references = Dict()
     for (stage_number, stage_name) in sim.sequence.order
+        stage = sim.stages[stage_name]
+        stage_container = get_psi_container(stage)
         variables = Dict{Symbol, Any}()
         interval = get_stage_interval(sim, stage_name)
         variable_names =
-            (collect(keys(get_psi_container(sim.stages[stage_name]).variables)))
-        if :constraints_duals in keys(kwargs) && !isnothing(kwargs[:constraints_duals])
-            if !is_milp(get_psi_container(sim.stages[stage_name]))
-                dual_cons = Symbol.(_concat_dual(kwargs[:constraints_duals]))
-                variable_names = vcat(variable_names, dual_cons)
-            end
+            (collect(keys(stage_container.variables)))
+        if !is_milp(get_psi_container(sim.stages[stage_name]))
+            constraint_duals = get_constraint_duals(stage_container.settings)
+            constraint_duals_names = Symbol.(_concat_dual(constraint_duals))
+            variable_names = vcat(variable_names, constraint_duals_names)
         end
         params =
             collect(keys(get_parameters_value(get_psi_container(sim.stages[stage_name]))))

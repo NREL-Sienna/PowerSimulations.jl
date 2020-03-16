@@ -347,8 +347,7 @@ function _build_stages!(sim::Simulation)
     return
 end
 
-function _build_stage_paths!(sim::Simulation; kwargs...)
-    system_to_file = get(kwargs, :system_to_file, true)
+function _build_stage_paths!(sim::Simulation, system_to_file::Bool)
     for (stage_number, stage_name) in sim.sequence.order
         stage = sim.stages[stage_name]
         stage_path = joinpath(sim.internal.models_dir, "stage_$(stage_name)_model")
@@ -623,10 +622,6 @@ each stage and step.
 sim = Simulation("Test", 7, stages, "/Users/folder")
 execute!!(sim::Simulation; kwargs...)
 ```
-
-# Accepted Key Words
-- `constraints_duals::Vector{Symbol}`: if dual variables are desired in the
-results, include a vector of the variable names to be included
 """
 
 function execute!(sim::Simulation; kwargs...)
@@ -635,7 +630,7 @@ function execute!(sim::Simulation; kwargs...)
     elseif sim.internal.reset == false
         error("Re-build the simulation")
     end
-
+    system_to_file = get(kwargs, :system_to_file, true)
     isnothing(sim.internal) &&
     error("Simulation not built, build the simulation to execute")
     TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
@@ -644,7 +639,7 @@ function execute!(sim::Simulation; kwargs...)
         folder = get_simulation_folder(sim)
         sim.internal.raw_dir, sim.internal.models_dir, sim.internal.results_dir =
             _prepare_workspace(name, folder)
-        _build_stage_paths!(sim; kwargs...)
+        _build_stage_paths!(sim, system_to_file)
         execution_order = get_execution_order(sim)
         for step in 1:get_steps(sim)
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
@@ -673,8 +668,7 @@ function execute!(sim::Simulation; kwargs...)
                             run_stage(
                                 stage,
                                 sim.internal.current_time,
-                                raw_results_path;
-                                kwargs...,
+                                raw_results_path
                             )
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
@@ -691,8 +685,7 @@ function execute!(sim::Simulation; kwargs...)
                 end
             end
         end
-        constraints_duals = get(kwargs, :constraints_duals, nothing)
-        sim_results = SimulationResultsReference(sim; constraints_duals = constraints_duals)
+        sim_results = SimulationResultsReference(sim)
     end
 
     @info ("\n$(RUN_SIMULATION_TIMER)\n")
