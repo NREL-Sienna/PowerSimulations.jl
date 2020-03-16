@@ -665,11 +665,7 @@ function execute!(sim::Simulation; kwargs...)
                             !(step == 1 && ix == 1) && update_stage!(stage, sim)
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run Stage $(stage_number)" begin
-                            run_stage(
-                                stage,
-                                sim.internal.current_time,
-                                raw_results_path
-                            )
+                            run_stage(stage, sim.internal.current_time, raw_results_path)
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
                             _update_caches!(sim, stage)

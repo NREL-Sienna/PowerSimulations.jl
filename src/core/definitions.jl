@@ -47,9 +47,7 @@ const OPERATIONS_ACCEPTED_KWARGS = [
     :constraint_duals,
 ]
 
-const OPERATIONS_SOLVE_KWARGS = [
-    :optimizer, :save_path
-]
+const OPERATIONS_SOLVE_KWARGS = [:optimizer, :save_path]
 
 const STAGE_ACCEPTED_KWARGS =
     [:initial_conditions, :PTDF, :use_warm_start, :constraint_duals]

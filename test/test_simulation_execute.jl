@@ -39,9 +39,15 @@ function test_load_simulation(file_path::String)
             template_hydro_basic_uc,
             c_sys5_hy_uc,
             GLPK_optimizer;
-            constraint_duals = duals
+            constraint_duals = duals,
         ),
-        "ED" =>     Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, ipopt_optimizer; constraint_duals = duals),
+        "ED" => Stage(
+            GenericOpProblem,
+            template_hydro_ed,
+            c_sys5_hy_ed,
+            ipopt_optimizer;
+            constraint_duals = duals,
+        ),
     )
 
     sequence = SimulationSequence(

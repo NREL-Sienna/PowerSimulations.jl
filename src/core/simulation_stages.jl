@@ -163,11 +163,7 @@ function build!(
     return
 end
 
-function run_stage(
-    stage::Stage,
-    start_time::Dates.DateTime,
-    results_path::String
-)
+function run_stage(stage::Stage, start_time::Dates.DateTime, results_path::String)
     @assert stage.internal.psi_container.JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
     timed_log = Dict{Symbol, Any}()
 
@@ -182,7 +178,7 @@ function run_stage(
         error("Stage $(stage.internal.number) status is $(model_status)")
     end
     # TODO: Add Fallback when optimization fails
-       # if is_milp(stage.internal.psi_container)
+    # if is_milp(stage.internal.psi_container)
     _export_model_result(stage, start_time, results_path)
     _export_optimizer_log(timed_log, stage.internal.psi_container, results_path)
     stage.internal.execution_count += 1
@@ -266,11 +262,7 @@ function write_data(stage::Stage, save_path::AbstractString; kwargs...)
 end
 
 # These functions are writing directly to the feather file and skipping printing to memory.
-function _export_model_result(
-    stage::Stage,
-    start_time::Dates.DateTime,
-    save_path::String
-)
+function _export_model_result(stage::Stage, start_time::Dates.DateTime, save_path::String)
     duals = Dict()
     if is_milp(stage.internal.psi_container)
         @warn("$(stage.internal.number) is a MILP, duals can't be exported")

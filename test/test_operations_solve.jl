@@ -225,7 +225,7 @@ op_problem = OperationsProblem(
     c_sys5_re;
     optimizer = OSQP_optimizer,
     use_parameters = true,
-    constraint_duals = duals
+    constraint_duals = duals,
 )
 res = solve!(op_problem)
 @testset "Test print methods" begin
