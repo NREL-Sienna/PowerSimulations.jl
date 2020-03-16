@@ -38,30 +38,74 @@ mutable struct Stage{M <: AbstractOperationsProblem}
     sys::PSY.System
     internal::Union{Nothing, StageInternal}
 
-    function Stage(
-        ::Type{M},
+    function Stage{M}(
         template::OperationsProblemTemplate,
-        sys::PSY.System;
+        sys::PSY.System,
+        optimizer::JuMP.MOI.OptimizerWithAttributes,
+        jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
         kwargs...,
     ) where {M <: AbstractOperationsProblem}
         check_kwargs(kwargs, STAGE_ACCEPTED_KWARGS, "Stage")
         settings = PSISettings(sys; kwargs...)
-        if isnothing(get_optimizer(settings))
-            throw(ArgumentError("The definition of a simulations stage requires setting the solver. Use the keyword optimizer in the arguments of the stage."))
-        end
+        settings.optimizer = optimizer
         settings.use_parameters = true
-        internal =
-            StageInternal(0, 0, 0, PSIContainer(template.transmission, sys, settings))
+        internal = StageInternal(
+            0,
+            0,
+            0,
+            PSIContainer(template.transmission, sys, settings, jump_model),
+        )
         new{M}(template, sys, internal)
     end
 end
 
-function Stage(
+"""
+    Stage(::Type{M},
     template::OperationsProblemTemplate,
-    sys::PSY.System;
+    sys::PSY.System,
+    optimizer::JuMP.MOI.OptimizerWithAttributes,
+    jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
+    kwargs...) where {M<:AbstractOperationsProblem}
+This builds the optimization problem of type M with the specific system and template for the simulation stage
+# Arguments
+- `::Type{M} where M<:AbstractOperationsProblem`: The abstract operation model type
+- `template::OperationsProblemTemplate`: The model reference made up of transmission, devices,
+                                          branches, and services.
+- `sys::PSY.System`: the system created using Power Systems
+- `jump_model::Union{Nothing, JuMP.AbstractModel}`: Enables passing a custom JuMP model. Use with care
+# Output
+- `Stage::Stage`: The operation model containing the model type, uninstantiated JuMP model, Power
+Systems system.
+# Example
+```julia
+template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+stage = Stage(MyOpProblemType template, system, optimizer)
+```
+# Accepted Key Words
+- `initial_time::Dates.DateTime`: Initial Time for the model solve
+- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
+- `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
+- `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
+"""
+function Stage(
+    ::Type{M},
+    template::OperationsProblemTemplate,
+    sys::PSY.System,
+    optimizer::JuMP.MOI.OptimizerWithAttributes,
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
     kwargs...,
 ) where {M <: AbstractOperationsProblem}
-    return Stage(GenericOpProblem, template, sys; kwargs...)
+    return Stage{M}(template, sys, optimizer, jump_model; kwargs...)
+end
+
+function Stage(
+    template::OperationsProblemTemplate,
+    sys::PSY.System,
+    optimizer::JuMP.MOI.OptimizerWithAttributes,
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    kwargs...,
+)
+    return Stage{GenericOpProblem}(template, sys, optimizer, jump_model; kwargs...)
 end
 
 get_execution_count(s::Stage) = s.internal.execution_count
@@ -72,6 +116,8 @@ get_number(s::Stage) = s.internal.number
 get_psi_container(s::Stage) = s.internal.psi_container
 get_end_of_interval_step(s::Stage) = s.internal.end_of_interval_step
 warm_start_enabled(s::Stage) = get_use_warm_start(s.internal.psi_container.settings)
+get_initial_time(s::Stage{T}) where {T <: AbstractOperationsProblem} =
+    get_initial_time(s.internal.psi_container.settings)
 
 function build!(
     stage::Stage,
