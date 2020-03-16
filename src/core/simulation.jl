@@ -373,8 +373,7 @@ function _check_folder(folder::String)
 end
 # TODO: Add DocString
 @doc raw"""
-        build!(sim::Simulation;
-                kwargs...)
+        build!(sim::Simulation)
 """
 function build!(sim::Simulation)
     TimerOutputs.reset_timer!(BUILD_SIMULATION_TIMER)
