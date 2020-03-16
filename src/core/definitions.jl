@@ -44,10 +44,11 @@ const OPERATIONS_ACCEPTED_KWARGS = [
     :use_parameters,
     :optimizer,
     #:use_warm_start, # Not implemented yet
-    :constraints_duals
+    :constraints_duals,
 ]
 
-const STAGE_ACCEPTED_KWARGS = [:initial_conditions, :PTDF, :use_warm_start, :constraints_duals]
+const STAGE_ACCEPTED_KWARGS =
+    [:initial_conditions, :PTDF, :use_warm_start, :constraints_duals]
 const SIMULATION_KWARGS = [:initial_time]
 
 const PSI_NAME_DELIMITER = "__"

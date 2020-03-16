@@ -48,9 +48,7 @@ mutable struct Stage{M <: AbstractOperationsProblem}
         kwargs...,
     ) where {M <: AbstractOperationsProblem}
         check_kwargs(kwargs, STAGE_ACCEPTED_KWARGS, "Stage")
-        settings = PSISettings(sys; kwargs...)
-        settings.optimizer = optimizer
-        settings.use_parameters = true
+        settings = PSISettings(sys; optimizer = optimizer, use_parameters = true, kwargs...)
         internal = StageInternal(
             0,
             0,
@@ -158,7 +156,7 @@ function build!(
         solver_name = JuMP.solver_name(psi_container.JuMPmodel)
         @warn("$(solver_name) in stage $(stage.internal.number) does not support warm start")
     end
-    psi_container.settings.use_warm_start = solver_supports_warm_start
+    set_use_warm_start!(psi_container.settings, solver_supports_warm_start)
     stage_resolution = PSY.get_forecasts_resolution(stage.sys)
     stage.internal.end_of_interval_step = Int(stage_interval / stage_resolution)
     stage.internal.built = true

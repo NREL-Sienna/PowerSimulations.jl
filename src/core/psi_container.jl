@@ -92,46 +92,48 @@ struct PSISettings
     initial_conditions::Union{Nothing, InitialConditionsContainer}
     use_forecast_data::Bool
     use_parameters::Bool
-    use_warm_start::Bool
+    use_warm_start::Base.RefValue{Bool}
     initial_time::Base.RefValue{Dates.DateTime}
     PTDF::Union{Nothing, PSY.PTDF}
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
     constraint_duals::Vector{Symbol}
     ext::Dict{String, Any}
 
-    function PSISettings(sys;
-                     initial_time::Union{Nothing, Dates.DateTime} = nothing,
-                     use_parameters::Bool = false,
-                     use_forecast_data::Bool = true,
-                     initial_conditions = InitialConditionsContainer(),
-                     use_warm_start::Bool = true,
-                     horizon::Int = 0,
-                     PTDF::Union{Nothing, PSY.PTDF} = nothing,
-                     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
-                     constraint_duals::Vector{Symbol} = Vector{Symbol}(),
-                     ext::Dict{String, Any} = Dict{String, Any}())
-
-    if isnothing(initial_time)
-        initial_time = PSY.get_forecasts_initial_time(sys)
-    end
-
-    if horizon == 0
-       horizon = PSY.get_forecasts_horizon(sys)
-    end
-
-    new(
-        Ref(horizon),
-        initial_conditions,
-        use_forecast_data,
-        use_parameters,
-        use_warm_start,
-        Ref(initial_time),
-        PTDF,
-        optimizer,
-        constraint_duals,
-        ext,
+    function PSISettings(
+        sys;
+        initial_time::Union{Nothing, Dates.DateTime} = nothing,
+        use_parameters::Bool = false,
+        use_forecast_data::Bool = true,
+        initial_conditions = InitialConditionsContainer(),
+        use_warm_start::Bool = true,
+        horizon::Int = 0,
+        PTDF::Union{Nothing, PSY.PTDF} = nothing,
+        optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+        constraint_duals::Vector{Symbol} = Vector{Symbol}(),
+        ext::Dict{String, Any} = Dict{String, Any}(),
     )
-end
+
+        if isnothing(initial_time)
+            initial_time = PSY.get_forecasts_initial_time(sys)
+        end
+
+        if horizon == 0
+            horizon = PSY.get_forecasts_horizon(sys)
+        end
+
+        new(
+            Ref(horizon),
+            initial_conditions,
+            use_forecast_data,
+            use_parameters,
+            Ref(use_warm_start),
+            Ref(initial_time),
+            PTDF,
+            optimizer,
+            constraint_duals,
+            ext,
+        )
+    end
 
 end
 
@@ -151,7 +153,11 @@ get_initial_time(settings::PSISettings)::Dates.DateTime = settings.initial_time[
 get_PTDF(settings::PSISettings) = settings.PTDF
 get_optimizer(settings::PSISettings) = settings.optimizer
 get_ext(settings::PSISettings) = settings.ext
-get_use_warm_start(settings) = settings.use_warm_start
+function set_use_warm_start!(settings::PSISettings, use_warm_start::Bool)
+    settings.use_warm_start[] = use_warm_start
+    return
+end
+get_use_warm_start(settings) = settings.use_warm_start[]
 
 function _psi_container_init(
     bus_numbers::Vector{Int},
