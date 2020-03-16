@@ -87,52 +87,67 @@ function _make_expressions_dict(
     )
 end
 
-mutable struct PSISettings
-    horizon::Union{Nothing, Int}
+struct PSISettings
+    horizon::Base.RefValue{Int}
     initial_conditions::Union{Nothing, InitialConditionsContainer}
     use_forecast_data::Bool
     use_parameters::Bool
     use_warm_start::Bool
-    initial_time::Union{Nothing, Dates.DateTime}
+    initial_time::Base.RefValue{Dates.DateTime}
     PTDF::Union{Nothing, PSY.PTDF}
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
     constraint_duals::Vector{Symbol}
     ext::Dict{String, Any}
-end
 
-function PSISettings(sys::PSY.System; kwargs...)
-    initial_time = get(kwargs, :initial_time, PSY.get_forecasts_initial_time(sys))
-    use_parameters = get(kwargs, :use_parameters, false)
-    use_forecast_data = get(kwargs, :use_forecast_data, true)
-    # This will be improved once we implement proper manual passing of initial conditions
-    ini_con = get(kwargs, :initial_conditions, InitialConditionsContainer())
-    use_warm_start = get(kwargs, :use_warm_start, true)
-    horizon = get(kwargs, :horizon, PSY.get_forecasts_horizon(sys))
-    PTDF = get(kwargs, :PTDF, nothing)
-    optimizer = get(kwargs, :optimizer, nothing)
-    constraint_duals = get(kwargs, :constraints_duals, Vector{Symbol}())
-    ext = get(kwargs, :additional_settings, Dict{String, Any}())
+    function PSISettings(sys;
+                     initial_time::Union{Nothing, Dates.DateTime} = nothing,
+                     use_parameters::Bool = false,
+                     use_forecast_data::Bool = true,
+                     initial_conditions = InitialConditionsContainer(),
+                     use_warm_start::Bool = true,
+                     horizon::Int = 0,
+                     PTDF::Union{Nothing, PSY.PTDF} = nothing,
+                     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+                     constraint_duals::Vector{Symbol} = Vector{Symbol}(),
+                     ext::Dict{String, Any} = Dict{String, Any}())
 
-    return PSISettings(
-        horizon,
-        ini_con,
+    if isnothing(initial_time)
+        initial_time = PSY.get_forecasts_initial_time(sys)
+    end
+
+    if horizon == 0
+       horizon = PSY.get_forecasts_horizon(sys)
+    end
+
+    new(
+        Ref(horizon),
+        initial_conditions,
         use_forecast_data,
         use_parameters,
         use_warm_start,
-        initial_time,
+        Ref(initial_time),
         PTDF,
         optimizer,
         constraint_duals,
         ext,
     )
+end
 
 end
 
-get_horizon(settings::PSISettings) = settings.horizon
+function set_horizon!(settings::PSISettings, horizon::Int)
+    settings.horizon[] = horizon
+    return
+end
+get_horizon(settings::PSISettings)::Int = settings.horizon[]
 get_initial_conditions(settings::PSISettings) = settings.initial_conditions
 get_use_forecast_data(settings::PSISettings) = settings.use_forecast_data
 get_use_parameters(settings::PSISettings) = settings.use_parameters
-get_initial_time(settings::PSISettings) = settings.initial_time
+function set_initial_time!(settings::PSISettings, initial_time::Dates.DateTime)
+    settings.initial_time[] = initial_time
+    return
+end
+get_initial_time(settings::PSISettings)::Dates.DateTime = settings.initial_time[]
 get_PTDF(settings::PSISettings) = settings.PTDF
 get_optimizer(settings::PSISettings) = settings.optimizer
 get_ext(settings::PSISettings) = settings.ext
@@ -183,7 +198,6 @@ mutable struct PSIContainer
     parameters::Union{Nothing, ParametersContainer}
     initial_conditions::InitialConditionsContainer
     pm::Union{Nothing, PM.AbstractPowerModel}
-    instantiated::Bool #used in simulations
 
     function PSIContainer(
         JuMPmodel::JuMP.AbstractModel,
@@ -211,7 +225,6 @@ mutable struct PSIContainer
             parameters,
             initial_conditions,
             pm,
-            true,
         )
     end
 end
@@ -339,7 +352,7 @@ get_parameters(psi_container::PSIContainer) = psi_container.parameters
 get_expression(psi_container::PSIContainer, name::Symbol) = psi_container.expressions[name]
 get_initial_conditions(psi_container::PSIContainer) = psi_container.initial_conditions
 get_PTDF(psi_container::PSIContainer) = get_PTDF(psi_container.settings)
-container_instantiated(psi_container::PSIContainer) = psi_container.instantiated
+container_built(psi_container::PSIContainer) = psi_container.built
 
 function get_variable(
     psi_container::PSIContainer,
