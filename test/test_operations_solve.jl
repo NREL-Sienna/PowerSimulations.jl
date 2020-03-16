@@ -226,7 +226,7 @@ op_problem = OperationsProblem(
     optimizer = OSQP_optimizer,
     use_parameters = true,
 )
-res = solve_op_problem!(op_problem; constraints_duals = duals)
+res = solve!(op_problem; constraints_duals = duals)
 @testset "Test print methods" begin
     list = [template, op_problem, op_problem.psi_container, res, services]
     _test_print_methods(list)
@@ -341,7 +341,7 @@ function test_write_functions(file_path)
             UC,
             Dict(:Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve)),
         )
-        res = solve_op_problem!(UC; optimizer = GLPK_optimizer)
+        res = solve!(UC; optimizer = GLPK_optimizer)
         @test isapprox(get_total_cost(res)[:OBJECTIVE_FUNCTION], 340000.0; atol = 100000.0)
     end
 end

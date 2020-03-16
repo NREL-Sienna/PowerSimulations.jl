@@ -369,14 +369,14 @@ function get_dual_values(op_m::OperationsProblem, constraints::Vector{Symbol})
 end
 
 """
-    solve_op_problem!(op_problem::OperationsProblem; kwargs...)
+    solve!(op_problem::OperationsProblem; kwargs...)
 This solves the operational model for a single instance and
 outputs results of type OperationsProblemResult
 # Arguments
 - `op_problem::OperationModel = op_problem`: operation model
 # Examples
 ```julia
-results = solve_op_problem!(OpModel)
+results = solve!(OpModel)
 ```
 # Accepted Key Words
 - `save_path::String`: If a file path is provided the results
@@ -384,7 +384,7 @@ automatically get written to feather files
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 - `constraints_duals::Array`: Array of the constraints duals to be in the results
 """
-function solve_op_problem!(
+function solve!(
     op_problem::OperationsProblem{T};
     kwargs...,
 ) where {T <: AbstractOperationsProblem}

@@ -93,7 +93,7 @@ export GenericOpProblem
 export construct_device!
 export construct_network!
 ## Op Model Exports
-export solve_op_problem!
+export solve!
 export get_initial_conditions
 export set_transmission_model!
 export set_devices_template!
