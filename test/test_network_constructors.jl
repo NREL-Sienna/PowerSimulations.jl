@@ -201,7 +201,7 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     p = true
     for network in networks, sys in systems
-        @info "Testing construction of a $(network) network"
+        @info "Test construction of a $(network) network"
         ps_model = OperationsProblem(
             TestOpProblem,
             network,
@@ -228,7 +228,7 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
 
     for network in networks, sys in systems
-        @info "Testing construction of a $(network) network"
+        @info "Test construction of a $(network) network"
         ps_model =
             OperationsProblem(TestOpProblem, network, sys; optimizer = fast_ipopt_optimizer)
         construct_device!(ps_model, :Thermal, thermal_model)
@@ -245,7 +245,7 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
 
     for network in networks, sys in systems
-        @info "Testing construction of a $(network) network"
+        @info "Test construction of a $(network) network"
         ps_model =
             OperationsProblem(TestOpProblem, network, sys; optimizer = fast_ipopt_optimizer)
         construct_device!(ps_model, :Thermal, thermal_model)
@@ -263,7 +263,7 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
 
     for network in networks, sys in systems
-        @info "Testing construction of a $(network) network"
+        @info "Test construction of a $(network) network"
         ps_model =
             OperationsProblem(TestOpProblem, network, sys; optimizer = fast_ipopt_optimizer)
         construct_device!(ps_model, :Thermal, thermal_model)

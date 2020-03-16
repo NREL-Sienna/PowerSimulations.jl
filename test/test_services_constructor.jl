@@ -1,4 +1,4 @@
-@testset "Testing Reserves from Thermal Dispatch" begin
+@testset "Test Reserves from Thermal Dispatch" begin
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
@@ -21,7 +21,7 @@
     end
 end
 
-@testset "Testing Reserves from Thermal Standard UC" begin
+@testset "Test Reserves from Thermal Standard UC" begin
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
@@ -44,7 +44,7 @@ end
     end
 end
 
-@testset "Testing Reserves from Renewable Dispatch" begin
+@testset "Test Reserves from Renewable Dispatch" begin
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(RenewableDispatch, RenewableFullDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
@@ -67,7 +67,7 @@ end
     end
 end
 
-@testset "Testing Reserves from Storage" begin
+@testset "Test Reserves from Storage" begin
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(RenewableDispatch, RenewableFullDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
@@ -90,7 +90,7 @@ end
     end
 end
 
-@testset "Testing Reserves from Hydro" begin
+@testset "Test Reserves from Hydro" begin
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
@@ -115,7 +115,7 @@ end
 
 #TODO: add test for DR Reserves
 #= These capabilities aren't currently supported
-@testset "Testing Reserves from DR" begin
+@testset "Test Reserves from DR" begin
     devices = Dict{Symbol, DeviceModel}(:Generators => DeviceModel(ThermalStandard, ThermalDispatch),
                                         :Loads =>  DeviceModel(InterruptibleLoad, PSI.DispatchablePowerLoad))
     branches = Dict{Symbol, DeviceModel}()

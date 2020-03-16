@@ -16,7 +16,7 @@ services = Dict{Symbol, ServiceModel}()
     parameters_value = [true, false]
     systems = [c_sys5, c_sys14]
     test_results = Dict{System, Float64}(c_sys5 => 240000.0, c_sys14 => 142000.0)
-    @info "Testing solve ED with CopperPlatePowerModel network"
+    @info "Test solve ED with CopperPlatePowerModel network"
     for sys in systems, p in parameters_value
         @testset "ED CopperPlatePowerModel model use_parameters = $(p)" begin
             ED = OperationsProblem(
@@ -47,7 +47,7 @@ end
         IS.get_uuid(c_sys14_dc) => 142000.0,
     )
 
-    @info "Testing solve ED with StandardPTDFModel network"
+    @info "Test solve ED with StandardPTDFModel network"
     for sys in systems, p in parameters_value
         @testset "ED StandardPTDFModel model use_parameters = $(p)" begin
             ED = OperationsProblem(
@@ -74,7 +74,7 @@ end
     )
 
     for net in networks, p in parameters_value, sys in systems
-        @info("Testing solve ED with $(net) network")
+        @info("Test solve ED with $(net) network")
         @testset "ED model $(net) and use_parameters = $(p)" begin
             template = OperationsProblemTemplate(net, devices, branches, services)
             ED = OperationsProblem(
@@ -107,7 +107,7 @@ end
     )
 
     for net in networks, p in parameters_value, sys in systems
-        @info("Testing solve ED with $(net) network")
+        @info("Test solve ED with $(net) network")
         @testset "ED model $(net) and use_parameters = $(p)" begin
             template = OperationsProblemTemplate(net, devices, branches, services)
             ED = OperationsProblem(
@@ -140,7 +140,7 @@ end
     test_results = Dict{System, Float64}(c_sys5 => 320000.0,
                                              c_sys14 => 142000.0)
     for  net in networks, p in parameters_value, sys in systems
-        @info("Testing solve ED with $(net) network")
+        @info("Test solve ED with $(net) network")
         @testset "ED model $(net) and use_parameters = $(p)" begin
         template = OperationsProblemTemplate(net, devices, branches, services);
         ED = OperationsProblem(TestOpProblem, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
@@ -166,7 +166,7 @@ end
     )
 
     for net in networks, p in parameters_value, sys in systems
-        @info("Testing solve ED with $(net) network")
+        @info("Test solve ED with $(net) network")
         @testset "ED model $(net) and use_parameters = $(p)" begin
             template = OperationsProblemTemplate(net, devices, branches, services)
             ED = OperationsProblem(
@@ -201,7 +201,7 @@ end
     )
 
     for net in networks, p in parameters_value, sys in systems
-        @info("Testing solve UC with $(net) network")
+        @info("Test solve UC with $(net) network")
         @testset "UC model $(net) and use_parameters = $(p)" begin
             template = OperationsProblemTemplate(net, devices, branches, services)
             UC = OperationsProblem(
