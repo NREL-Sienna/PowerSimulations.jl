@@ -68,16 +68,16 @@ mutable struct Simulation
     steps::Int
     stages::Dict{String, Stage{<:AbstractOperationsProblem}}
     initial_time::Union{Nothing, Dates.DateTime}
-    sequence::Union{Nothing, SimulationSequence}
+    sequence::SimulationSequence
     simulation_folder::String
     name::String
     internal::Union{Nothing, SimulationInternal}
 
     function Simulation(;
+        stages_sequence::SimulationSequence,
         name::String,
         steps::Int,
         stages = Dict{String, Stage{AbstractOperationsProblem}}(),
-        stages_sequence = nothing,
         simulation_folder::String,
         kwargs...,
     )
@@ -380,9 +380,6 @@ function build!(sim::Simulation; kwargs...)
     TimerOutputs.reset_timer!(BUILD_SIMULATION_TIMER)
     TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Simulation" begin
         check_kwargs(kwargs, SIMULATION_BUILD_KWARGS, "build!")
-        if isnothing(sim.sequence) || isempty(sim.stages)
-            throw(ArgumentError("The simulation object requires a valid definition of stages and SimulationSequence"))
-        end
         _check_forecasts_sequence(sim)
         _check_feedforward_chronologies(sim)
         _check_folder(sim.simulation_folder)
