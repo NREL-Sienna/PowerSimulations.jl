@@ -49,7 +49,7 @@ services = Dict{Symbol, ServiceModel}()
     moi_tests(op_problem, false, 5, 0, 5, 5, 1, false)
 end
 
-@testset "testing getter functions" begin
+@testset "Test getter functions" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     op_problem = OperationsProblem(
         TestOpProblem,
@@ -70,6 +70,22 @@ end
     var = op_problem.psi_container.variables[last(var_index)[1]].data[last(var_index)[2]]
     @test get_var_index(op_problem, length) == var
     @test get_var_index(op_problem, length + 1) == nothing
+end
+
+@testset "Test passing custom JuMP model" begin
+    my_model = JuMP.Model()
+    my_model.ext[:PSI_Testing] = 1
+    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        template,
+        c_sys5,
+        my_model;
+        optimizer = GLPK_optimizer,
+        use_parameters = true,
+    )
+    @test haskey(my_model.ext, :PSI_Testing)
+    @test (:params in keys(op_problem.psi_container.JuMPmodel.ext)) == true
 end
 
 @testset "Operation Model Constructors with Parameters" begin
