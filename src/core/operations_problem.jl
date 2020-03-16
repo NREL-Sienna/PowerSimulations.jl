@@ -73,8 +73,16 @@ function OperationsProblem(
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where  {M <: AbstractOperationsProblem}
+    return OperationsProblem{M}(template, sys, jump_model; kwargs...)
+end
 
+function OperationsProblem{M}(
+    template::OperationsProblemTemplate,
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    kwargs...,
+) where {M <: AbstractOperationsProblem}
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
     settings = PSISettings(sys; kwargs...)
 
@@ -83,12 +91,10 @@ function OperationsProblem(
         sys,
         PSIContainer(template.transmission, sys, settings, jump_model),
     )
-
     build!(op_problem)
-
     return op_problem
-
 end
+
 """
     OperationsProblem(op_problem::Type{M},
                     ::Type{T},
@@ -124,6 +130,15 @@ construct_device!(op_problem, :Thermal, model)
 """
 function OperationsProblem(
     ::Type{M},
+    ::Type{T},
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    kwargs...,
+) where  {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
+    return OperationsProblem{M}(T, sys, jump_model; kwargs...)
+end
+
+function OperationsProblem{M}(
     ::Type{T},
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
@@ -267,7 +282,7 @@ end
 function set_services_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
-    service::ServiceModel,
+    service::ServiceModel
 ) where {M <: AbstractOperationsProblem}
     if haskey(op_problem.template.services, name)
         op_problem.template.services[name] = service
@@ -282,7 +297,7 @@ end
 function construct_device!(
     op_problem::OperationsProblem,
     name::Symbol,
-    device_model::DeviceModel;,
+    device_model::DeviceModel
 )
     if haskey(op_problem.template.devices, name)
         throw(IS.ConflictingInputsError("Device with model name $(name) already exists in the Opertaion Model"))
@@ -293,7 +308,7 @@ function construct_device!(
         op_problem.psi_container,
         get_system(op_problem),
         device_model,
-        get_transmission_ref(op_problem);,
+        get_transmission_ref(op_problem)
     )
     JuMP.@objective(
         op_problem.psi_container.JuMPmodel,
@@ -319,7 +334,7 @@ end
 function get_initial_conditions(
     op_problem::OperationsProblem,
     ic::InitialConditionType,
-    device::PSY.Device,
+    device::PSY.Device
 )
     psi_container = op_problem.psi_container
     key = ICKey(ic, device)
@@ -336,7 +351,7 @@ end
 function _build!(
     psi_container::PSIContainer,
     template::OperationsProblemTemplate,
-    sys::PSY.System,
+    sys::PSY.System
 )
     transmission = template.transmission
     # Order is required
