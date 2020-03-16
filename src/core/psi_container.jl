@@ -24,9 +24,9 @@ const InitialConditionsContainer = Dict{ICKey, Array{InitialCondition}}
 function _make_jump_model(
     JuMPmodel::Union{Nothing, JuMP.AbstractModel},
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
-    parameters::Bool
+    parameters::Bool,
 )
-   if !isnothing(JuMPmodel)
+    if !isnothing(JuMPmodel)
         if parameters
             if !haskey(JuMPmodel.ext, :params)
                 @info("Model doesn't have Parameters enabled. Parameters will be enabled")
@@ -215,7 +215,7 @@ function PSIContainer(
     ::Type{T},
     sys::PSY.System,
     settings::PSISettings,
-    jump_model::Union{Nothing, JuMP.AbstractModel}
+    jump_model::Union{Nothing, JuMP.AbstractModel},
 ) where {T <: PM.AbstractPowerModel}
     PSY.check_forecast_consistency(sys)
     #This will be improved with the implementation of inicond passing

@@ -121,8 +121,13 @@ end
             )
             branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
             template = OperationsProblemTemplate(net, devices, branches, services)
-            op_problem =
-                OperationsProblem(TestOpProblem, template, system; use_parameters = p, PTDF = PTDF5)
+            op_problem = OperationsProblem(
+                TestOpProblem,
+                template,
+                system;
+                use_parameters = p,
+                PTDF = PTDF5,
+            )
             @test :nodal_balance_active in keys(op_problem.psi_container.expressions)
             @test (:params in keys(op_problem.psi_container.JuMPmodel.ext)) == p
         end
