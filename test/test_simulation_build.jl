@@ -171,7 +171,7 @@ function test_sequence_build(file_path::String)
         @test_throws IS.ConflictingInputsError PSI._get_simulation_initial_times!(sim)
     end
 
-    @testset "too many steps for forecast" begin
+    @testset "Test too many steps for forecast" begin
         sequence = SimulationSequence(
             step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
@@ -196,12 +196,10 @@ function test_sequence_build(file_path::String)
             stages_sequence = sequence,
             simulation_folder = file_path,
         )
-        sim.internal = PSI.SimulationInternal(sim.steps, keys(sim.sequence.order))
-        stage_initial_times = PSI._get_simulation_initial_times!(sim)
-        @test_throws IS.ConflictingInputsError PSI._check_steps(sim, stage_initial_times)
+        @test_throws IS.ConflictingInputsError build!(sim)
     end
 
-    @testset "Creation of Simulations with Cache" begin
+    @testset "Test Creation of Simulations with Cache" begin
 
         stages_definition_standard_uc = Dict(
             "UC" => Stage(

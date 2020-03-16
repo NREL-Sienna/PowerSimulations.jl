@@ -11,6 +11,7 @@ mutable struct StageInternal
     # Caches are stored in set because order isn't relevant and they should be unique
     caches::Set{CacheKey}
     chronolgy_dict::Dict{Int, <:FeedForwardChronology}
+    instantiated::Bool
     function StageInternal(number, executions, execution_count, psi_container)
         new(
             number,
@@ -20,6 +21,7 @@ mutable struct StageInternal
             psi_container,
             Set{CacheKey}(),
             Dict{Int, FeedForwardChronology}(),
+            false,
         )
     end
 end
@@ -108,6 +110,7 @@ function Stage(
     return Stage{GenericOpProblem}(template, sys, optimizer, jump_model; kwargs...)
 end
 
+stage_instantiated(s::Stage) = s.internal.instantiated
 get_execution_count(s::Stage) = s.internal.execution_count
 get_executions(s::Stage) = s.internal.executions
 get_sys(s::Stage) = s.sys
@@ -119,12 +122,29 @@ warm_start_enabled(s::Stage) = get_use_warm_start(s.internal.psi_container.setti
 get_initial_time(s::Stage{T}) where {T <: AbstractOperationsProblem} =
     get_initial_time(s.internal.psi_container.settings)
 
+function reset!(stage::Stage)
+    @warn("Stage $(stage.internal.number) is already instiated. Will be reset during this simulation build")
+    stage.internal = StageInternal(
+        0,
+        0,
+        0,
+        PSIContainer(
+            stage.template.transmission,
+            stage.sys,
+            stage.internal.psi_container.settings,
+            nothing,
+        ),
+    )
+    return
+end
+
 function build!(
     stage::Stage,
     initial_time::Dates.DateTime,
     horizon::Int,
     stage_interval::Dates.Period,
 )
+    stage_instantiated(stage) && reset!(stage)
     psi_container = get_psi_container(stage)
     psi_container.settings.horizon = horizon
     psi_container.settings.initial_time = initial_time
@@ -141,6 +161,7 @@ function build!(
     psi_container.settings.use_warm_start = solver_supports_warm_start
     stage_resolution = PSY.get_forecasts_resolution(stage.sys)
     stage.internal.end_of_interval_step = Int(stage_interval / stage_resolution)
+    stage.internal.instantiated = true
     return
 end
 
