@@ -31,6 +31,7 @@ devices = Dict(
     :ILoads => DeviceModel(InterruptibleLoad, DispatchablePowerLoad),
 )
 template_ed = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+template_ed_ptdf = OperationsProblemTemplate(StandardPTDFModel, devices, branches, services)
 
 ## UC with services Model Ref
 branches = Dict()

@@ -38,18 +38,17 @@ const MISSING_INITIAL_CONDITIONS_TIME_COUNT = 999.0
 const OPERATIONS_ACCEPTED_KWARGS = [
     :horizon,
     :initial_conditions,
+    :initial_time,
     :use_forecast_data,
-    :use_parameters,
-    :initial_time,
-    :JuMPmodel,
-    :optimizer,
     :PTDF,
-    :initial_time,
+    :use_parameters,
+    :optimizer,
+    #:use_warm_start, # Not implemented yet
+    :constraints_duals,
 ]
 
-const PSICONTAINER_ACCEPTED_KWARGS = OPERATIONS_ACCEPTED_KWARGS
-
-const SIMULATION_BUILD_KWARGS = [:system_to_file, :PTDF_matrices]
+const STAGE_ACCEPTED_KWARGS =
+    [:initial_conditions, :PTDF, :use_warm_start, :constraints_duals]
 const SIMULATION_KWARGS = [:initial_time]
 
 const PSI_NAME_DELIMITER = "__"

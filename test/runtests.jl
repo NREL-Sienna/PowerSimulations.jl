@@ -16,6 +16,7 @@ using TimeSeries
 using ParameterJuMP
 using TestSetExtensions
 using DataFrames
+import UUIDs
 
 import PowerSystems.UtilsData: TestData
 download(TestData; branch = "master")

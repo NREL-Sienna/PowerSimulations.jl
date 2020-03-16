@@ -167,14 +167,14 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "Test to verify length of time_stamp" begin
+    @testset "Test verify length of time_stamp" begin
         for name in keys(sim.stages)
             results = load_simulation_results(sim_results, name)
             @test size(unique(results.time_stamp), 1) == size(results.time_stamp, 1)
         end
     end
 
-    @testset "Test to verify no gaps in the time_stamp" begin
+    @testset "Test verify no gaps in the time_stamp" begin
         for name in keys(sim.stages)
             stage = sim.stages[name]
             results = load_simulation_results(sim_results, name)
@@ -198,7 +198,7 @@ function test_load_simulation(file_path::String)
         @test !isempty(res.results_folder)
     end
 
-    @testset "Test to verify parameter feedforward for consecutive UC to ED" begin
+    @testset "Test verify parameter feedforward for consecutive UC to ED" begin
         P_keys = [
             (PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
             #(PSI.ON, PSY.ThermalStandard),
@@ -227,7 +227,7 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "Test to verify time gap for Consecutive" begin
+    @testset "Test verify time gap for Consecutive" begin
         names = ["UC"]
         for name in names
             variable_list = PSI.get_variable_names(sim, name)
@@ -241,7 +241,7 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "Test to verify initial condition feedforward for consecutive ED to UC" begin
+    @testset "Test verify initial condition feedforward for consecutive ED to UC" begin
         ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
         vars_names = [PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
         for (ik, key) in enumerate(ic_keys)
@@ -256,6 +256,15 @@ function test_load_simulation(file_path::String)
         end
     end
     ####################
+    stages_definition = Dict(
+        "UC" => Stage(
+            GenericOpProblem,
+            template_hydro_basic_uc,
+            c_sys5_hy_uc,
+            GLPK_optimizer,
+        ),
+        "ED" =>     Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, ipopt_optimizer),
+    )
 
     sequence = SimulationSequence(
         order = Dict(1 => "UC", 2 => "ED"),
@@ -285,7 +294,7 @@ function test_load_simulation(file_path::String)
     build!(sim)
     sim_results = execute!(sim)
 
-    @testset "Test to verify time gap for Receding Horizon" begin
+    @testset "Test verify time gap for Receding Horizon" begin
         names = ["UC"] # TODO why doesn't this work for ED??
         for name in names
             variable_list = PSI.get_variable_names(sim, name)
@@ -301,7 +310,7 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "Test to verify parameter feedforward for Receding Horizon" begin
+    @testset "Test verify parameter feedforward for Receding Horizon" begin
         P_keys = [(PSI.ON, PSY.ThermalStandard)]
         vars_names = [PSI.variable_name(PSI.ON, PSY.ThermalStandard)]
         for (ik, key) in enumerate(P_keys)
@@ -320,18 +329,20 @@ function test_load_simulation(file_path::String)
         end
     end
 
-    @testset "Test to verify initial condition feedforward for Receding Horizon" begin
+    @testset "Test verify initial condition feedforward for Receding Horizon" begin
         results = load_simulation_results(sim_results, "ED")
         ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
         vars_names = [PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
+        ed_horizon = PSI.get_stage_horizon(sim.sequence, "ED")
+        no_steps = PSI.get_steps(sim)
         for (ik, key) in enumerate(ic_keys)
             initial_conditions =
                 get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
             vars = results.variable_values[vars_names[ik]] # change to getter function
             for ic in initial_conditions
-                output = vars[1, Symbol(PSI.device_name(ic))] # change to getter function
+                output = vars[ed_horizon * (no_steps - 1), Symbol(PSI.device_name(ic))] # change to getter function
                 initial_cond = value(PSI.get_value(ic))
-                @test_skip isapprox(output, initial_cond, atol = 1.0e-4)
+                @test isapprox(output, initial_cond, atol = 1.0e-4)
             end
         end
     end
@@ -450,7 +461,7 @@ function test_load_simulation(file_path::String)
             @test JuMP.value(var) == cache[:status]
         end
 
-        @testset "Testing to verify initial condition update using StoredEnergy cache" begin
+        @testset "Test verify initial condition update using StoredEnergy cache" begin
             ic_keys = [PSI.ICKey(PSI.EnergyLevel, PSY.HydroEnergyReservoir)]
             vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
             for (ik, key) in enumerate(ic_keys)
@@ -497,7 +508,7 @@ function test_load_simulation(file_path::String)
         build!(sim_single)
         sim_cache_results = execute!(sim_single)
 
-        @testset "Testing to verify initial condition update using StoredEnergy cache" begin
+        @testset "Test verify initial condition update using StoredEnergy cache" begin
             ic_keys = [PSI.ICKey(PSI.EnergyLevel, PSY.HydroEnergyReservoir)]
             vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
             for (ik, key) in enumerate(ic_keys)

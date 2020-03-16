@@ -43,7 +43,7 @@ function test_sequence_build(file_path::String)
         build!(sim)
 
         for stage in values(sim.stages)
-            @test stage.internal.psi_container.initial_time == second_day
+            @test PSI.get_initial_time(stage) == second_day
         end
     end
 
@@ -68,12 +68,12 @@ function test_sequence_build(file_path::String)
     end
 
     ###################### Negative Tests ########################################
-    @testset "Testing when a simulation has incorrect arguments" begin
-        sim = Simulation(name = "test", steps = 1, simulation_folder = file_path)
-        @test_throws ArgumentError build!(sim)
+    @testset "Test when a simulation has incorrect arguments" begin
+        @test_throws UndefKeywordError sim =
+            Simulation(name = "test", steps = 1, simulation_folder = file_path)
     end
 
-    @testset "Testing if a wrong initial time is provided" begin
+    @testset "Test if a wrong initial time is provided" begin
 
         sim = Simulation(
             name = "test",
@@ -86,7 +86,7 @@ function test_sequence_build(file_path::String)
         @test_throws IS.ConflictingInputsError build!(sim)
     end
 
-    @testset "Testing if file path is not writeable" begin
+    @testset "Test if file path is not writeable" begin
         sequence = SimulationSequence(
             step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
@@ -171,7 +171,7 @@ function test_sequence_build(file_path::String)
         @test_throws IS.ConflictingInputsError PSI._get_simulation_initial_times!(sim)
     end
 
-    @testset "too many steps for forecast" begin
+    @testset "Test too many steps for forecast" begin
         sequence = SimulationSequence(
             step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
@@ -196,12 +196,10 @@ function test_sequence_build(file_path::String)
             stages_sequence = sequence,
             simulation_folder = file_path,
         )
-        sim.internal = PSI.SimulationInternal(sim.steps, keys(sim.sequence.order))
-        stage_initial_times = PSI._get_simulation_initial_times!(sim)
-        @test_throws IS.ConflictingInputsError PSI._check_steps(sim, stage_initial_times)
+        @test_throws IS.ConflictingInputsError build!(sim)
     end
 
-    @testset "Creation of Simulations with Cache" begin
+    @testset "Test Creation of Simulations with Cache" begin
 
         stages_definition_standard_uc = Dict(
             "UC" => Stage(
@@ -299,6 +297,54 @@ function test_sequence_build(file_path::String)
         )
         @test_throws IS.InvalidValue build!(sim)
 
+    end
+
+    @testset "Create Stages with kwargs and custom models" begin
+        my_model = JuMP.Model()
+        my_model.ext[:PSI_Testing] = 1
+        stages_definition_kwargs = Dict(
+            "UC" => Stage(
+                GenericOpProblem,
+                template_basic_uc,
+                c_sys5_uc,
+                GLPK_optimizer,
+                my_model,
+            ),
+            "ED" => Stage(
+                GenericOpProblem,
+                template_ed_ptdf,
+                c_sys5_ed,
+                GLPK_optimizer;
+                PTDF = PTDF5,
+            ),
+        )
+
+        sequence = SimulationSequence(
+            step_resolution = Hour(24),
+            order = Dict(1 => "UC", 2 => "ED"),
+            feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+            horizons = Dict("UC" => 24, "ED" => 12),
+            intervals = Dict(
+                "UC" => (Hour(24), Consecutive()),
+                "ED" => (Hour(1), Consecutive()),
+            ),
+            feedforward = Dict(
+                ("ED", :devices, :Generators) => SemiContinuousFF(
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
+                ),
+            ),
+            ini_cond_chronology = InterStageChronology(),
+        )
+        sim = Simulation(
+            name = "test",
+            steps = 1,
+            stages = stages_definition_kwargs,
+            stages_sequence = sequence,
+            simulation_folder = file_path,
+        )
+        @test haskey(sim.stages["UC"].internal.psi_container.JuMPmodel.ext, :PSI_Testing)
+        @test !isnothing(sim.stages["ED"].internal.psi_container.settings.PTDF)
     end
 
 end

@@ -2,8 +2,7 @@ function construct_services!(
     psi_container::PSIContainer,
     sys::PSY.System,
     services_template::Dict{Symbol, ServiceModel},
-    devices_template::Dict{Symbol, DeviceModel};
-    kwargs...,
+    devices_template::Dict{Symbol, DeviceModel},
 )
     isempty(services_template) && return
     services_mapping = PSY.get_contributing_device_mapping(sys)
@@ -15,8 +14,7 @@ function construct_services!(
             services,
             services_mapping,
             service_model,
-            devices_template;
-            kwargs...,
+            devices_template,
         )
     end
     return
@@ -27,8 +25,7 @@ function construct_service!(
     services::IS.FlattenIteratorWrapper{SR},
     services_mapping::PSY.ServiceContributingDevicesMapping,
     model::ServiceModel{SR, RangeReserve},
-    devices_template::Dict{Symbol, DeviceModel};
-    kwargs...,
+    devices_template::Dict{Symbol, DeviceModel},
 ) where {SR <: PSY.Reserve}
 
     time_steps = model_time_steps(psi_container)

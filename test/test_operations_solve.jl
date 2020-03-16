@@ -16,7 +16,7 @@ services = Dict{Symbol, ServiceModel}()
     parameters_value = [true, false]
     systems = [c_sys5, c_sys14]
     test_results = Dict{System, Float64}(c_sys5 => 240000.0, c_sys14 => 142000.0)
-    @info "Testing solve ED with CopperPlatePowerModel network"
+    @info "Test solve ED with CopperPlatePowerModel network"
     for sys in systems, p in parameters_value
         @testset "ED CopperPlatePowerModel model use_parameters = $(p)" begin
             ED = OperationsProblem(
@@ -36,26 +36,29 @@ end
     template = OperationsProblemTemplate(StandardPTDFModel, devices, branches, services)
     parameters_value = [true, false]
     systems = [c_sys5, c_sys14, c_sys14_dc]
-    PTDF_ref =
-        Dict{System, PTDF}(c_sys5 => PTDF5, c_sys14 => PTDF14, c_sys14_dc => PTDF14_dc)
-    test_results = Dict{System, Float64}(
-        c_sys5 => 340000.0,
-        c_sys14 => 142000.0,
-        c_sys14_dc => 142000.0,
+    PTDF_ref = Dict{UUIDs.UUID, PTDF}(
+        IS.get_uuid(c_sys5) => PTDF5,
+        IS.get_uuid(c_sys14) => PTDF14,
+        IS.get_uuid(c_sys14_dc) => PTDF14_dc,
+    )
+    test_results = Dict{UUIDs.UUID, Float64}(
+        IS.get_uuid(c_sys5) => 340000.0,
+        IS.get_uuid(c_sys14) => 142000.0,
+        IS.get_uuid(c_sys14_dc) => 142000.0,
     )
 
-    @info "Testing solve ED with StandardPTDFModel network"
+    @info "Test solve ED with StandardPTDFModel network"
     for sys in systems, p in parameters_value
         @testset "ED StandardPTDFModel model use_parameters = $(p)" begin
             ED = OperationsProblem(
                 TestOpProblem,
                 template,
                 sys;
-                PTDF = PTDF_ref[sys],
                 optimizer = OSQP_optimizer,
                 use_parameters = p,
+                PTDF = PTDF_ref[IS.get_uuid(sys)],
             )
-            psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[sys], 10000)
+            psi_checksolve_test(ED, [MOI.OPTIMAL], test_results[IS.get_uuid(sys)], 10000)
         end
     end
 end
@@ -71,7 +74,7 @@ end
     )
 
     for net in networks, p in parameters_value, sys in systems
-        @info("Testing solve ED with $(net) network")
+        @info("Test solve ED with $(net) network")
         @testset "ED model $(net) and use_parameters = $(p)" begin
             template = OperationsProblemTemplate(net, devices, branches, services)
             ED = OperationsProblem(
@@ -104,7 +107,7 @@ end
     )
 
     for net in networks, p in parameters_value, sys in systems
-        @info("Testing solve ED with $(net) network")
+        @info("Test solve ED with $(net) network")
         @testset "ED model $(net) and use_parameters = $(p)" begin
             template = OperationsProblemTemplate(net, devices, branches, services)
             ED = OperationsProblem(
@@ -137,7 +140,7 @@ end
     test_results = Dict{System, Float64}(c_sys5 => 320000.0,
                                              c_sys14 => 142000.0)
     for  net in networks, p in parameters_value, sys in systems
-        @info("Testing solve ED with $(net) network")
+        @info("Test solve ED with $(net) network")
         @testset "ED model $(net) and use_parameters = $(p)" begin
         template = OperationsProblemTemplate(net, devices, branches, services);
         ED = OperationsProblem(TestOpProblem, template, sys; optimizer = ipopt_optimizer, use_parameters = p);
@@ -163,7 +166,7 @@ end
     )
 
     for net in networks, p in parameters_value, sys in systems
-        @info("Testing solve ED with $(net) network")
+        @info("Test solve ED with $(net) network")
         @testset "ED model $(net) and use_parameters = $(p)" begin
             template = OperationsProblemTemplate(net, devices, branches, services)
             ED = OperationsProblem(
@@ -192,19 +195,22 @@ end
     parameters_value = [true, false]
     systems = [c_sys5, c_sys5_dc]
     networks = [DCPPowerModel, NFAPowerModel, StandardPTDFModel, CopperPlatePowerModel]
-    PTDF_ref = Dict{System, PTDF}(c_sys5 => PTDF5, c_sys5_dc => PTDF5_dc)
+    PTDF_ref = Dict{UUIDs.UUID, PTDF}(
+        IS.get_uuid(c_sys5) => PTDF5,
+        IS.get_uuid(c_sys5_dc) => PTDF5_dc,
+    )
 
     for net in networks, p in parameters_value, sys in systems
-        @info("Testing solve UC with $(net) network")
+        @info("Test solve UC with $(net) network")
         @testset "UC model $(net) and use_parameters = $(p)" begin
             template = OperationsProblemTemplate(net, devices, branches, services)
             UC = OperationsProblem(
                 TestOpProblem,
                 template,
                 sys;
-                PTDF = PTDF_ref[sys],
                 optimizer = GLPK_optimizer,
                 use_parameters = p,
+                PTDF = PTDF_ref[IS.get_uuid(sys)],
             )
             psi_checksolve_test(UC, [MOI.OPTIMAL, MOI.LOCALLY_SOLVED], 340000, 100000)
         end
@@ -220,7 +226,7 @@ op_problem = OperationsProblem(
     optimizer = OSQP_optimizer,
     use_parameters = true,
 )
-res = solve_op_problem!(op_problem; constraints_duals = duals)
+res = solve!(op_problem; constraints_duals = duals)
 @testset "Test print methods" begin
     list = [template, op_problem, op_problem.psi_container, res, services]
     _test_print_methods(list)
@@ -330,12 +336,12 @@ function test_write_functions(file_path)
             :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
         )
         template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
-        UC = OperationsProblem(TestOpProblem, template, c_sys5; PTDF = PTDF5)
+        UC = OperationsProblem(TestOpProblem, template, c_sys5;)
         set_services_template!(
             UC,
             Dict(:Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve)),
         )
-        res = solve_op_problem!(UC; optimizer = GLPK_optimizer)
+        res = solve!(UC; optimizer = GLPK_optimizer)
         @test isapprox(get_total_cost(res)[:OBJECTIVE_FUNCTION], 340000.0; atol = 100000.0)
     end
 end

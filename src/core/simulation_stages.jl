@@ -4,27 +4,28 @@ mutable struct StageInternal
     executions::Int
     execution_count::Int
     end_of_interval_step::Int
-    warm_start_enabled::Bool
     # This line keeps track of the executions of a stage relative to other stages.
     # This might be needed in the future to run multiple stages. For now it is disabled
     #synchronized_executions::Dict{Int, Int} # Number of executions per upper level stage step
-    psi_container::Union{Nothing, PSIContainer}
+    psi_container::PSIContainer
     # Caches are stored in set because order isn't relevant and they should be unique
     caches::Set{CacheKey}
     chronolgy_dict::Dict{Int, <:FeedForwardChronology}
+    built::Bool
     function StageInternal(number, executions, execution_count, psi_container)
         new(
             number,
             executions,
             execution_count,
             0,
-            true,
             psi_container,
             Set{CacheKey}(),
             Dict{Int, FeedForwardChronology}(),
+            false,
         )
     end
 end
+
 # TODO: Add DocString
 @doc raw"""
     Stage({M<:AbstractOperationsProblem}
@@ -37,29 +38,77 @@ end
 mutable struct Stage{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
-    optimizer::JuMP.MOI.OptimizerWithAttributes
     internal::Union{Nothing, StageInternal}
 
-    function Stage(
-        ::Type{M},
+    function Stage{M}(
         template::OperationsProblemTemplate,
         sys::PSY.System,
         optimizer::JuMP.MOI.OptimizerWithAttributes,
+        jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+        kwargs...,
     ) where {M <: AbstractOperationsProblem}
-
-        new{M}(template, sys, optimizer, nothing)
-
+        check_kwargs(kwargs, STAGE_ACCEPTED_KWARGS, "Stage")
+        settings = PSISettings(sys; optimizer = optimizer, use_parameters = true, kwargs...)
+        internal = StageInternal(
+            0,
+            0,
+            0,
+            PSIContainer(template.transmission, sys, settings, jump_model),
+        )
+        new{M}(template, sys, internal)
     end
+end
+
+"""
+    Stage(::Type{M},
+    template::OperationsProblemTemplate,
+    sys::PSY.System,
+    optimizer::JuMP.MOI.OptimizerWithAttributes,
+    jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
+    kwargs...) where {M<:AbstractOperationsProblem}
+This builds the optimization problem of type M with the specific system and template for the simulation stage
+# Arguments
+- `::Type{M} where M<:AbstractOperationsProblem`: The abstract operation model type
+- `template::OperationsProblemTemplate`: The model reference made up of transmission, devices,
+                                          branches, and services.
+- `sys::PSY.System`: the system created using Power Systems
+- `jump_model::Union{Nothing, JuMP.AbstractModel}`: Enables passing a custom JuMP model. Use with care
+# Output
+- `Stage::Stage`: The operation model containing the model type, unbuilt JuMP model, Power
+Systems system.
+# Example
+```julia
+template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+stage = Stage(MyOpProblemType template, system, optimizer)
+```
+# Accepted Key Words
+- `initial_time::Dates.DateTime`: Initial Time for the model solve
+- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
+- `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
+- `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
+"""
+function Stage(
+    ::Type{M},
+    template::OperationsProblemTemplate,
+    sys::PSY.System,
+    optimizer::JuMP.MOI.OptimizerWithAttributes,
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    kwargs...,
+) where {M <: AbstractOperationsProblem}
+    return Stage{M}(template, sys, optimizer, jump_model; kwargs...)
 end
 
 function Stage(
     template::OperationsProblemTemplate,
     sys::PSY.System,
     optimizer::JuMP.MOI.OptimizerWithAttributes,
-) where {M <: AbstractOperationsProblem}
-    return Stage(GenericOpProblem, template, sys, optimizer)
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    kwargs...,
+)
+    return Stage{GenericOpProblem}(template, sys, optimizer, jump_model; kwargs...)
 end
 
+stage_built(s::Stage) = s.internal.built
 get_execution_count(s::Stage) = s.internal.execution_count
 get_executions(s::Stage) = s.internal.executions
 get_sys(s::Stage) = s.sys
@@ -67,31 +116,50 @@ get_template(s::Stage) = s.template
 get_number(s::Stage) = s.internal.number
 get_psi_container(s::Stage) = s.internal.psi_container
 get_end_of_interval_step(s::Stage) = s.internal.end_of_interval_step
-warm_start_enabled(s::Stage) = s.internal.warm_start_enabled
+warm_start_enabled(s::Stage) = get_use_warm_start(s.internal.psi_container.settings)
+get_initial_time(s::Stage{T}) where {T <: AbstractOperationsProblem} =
+    get_initial_time(s.internal.psi_container.settings)
+
+function reset!(stage::Stage)
+    @warn("Stage $(stage.internal.number) is already instiated. Will be reset during this simulation build")
+    stage.internal = StageInternal(
+        0,
+        0,
+        0,
+        PSIContainer(
+            stage.template.transmission,
+            stage.sys,
+            stage.internal.psi_container.settings,
+            nothing,
+        ),
+    )
+    return
+end
 
 function build!(
     stage::Stage,
     initial_time::Dates.DateTime,
     horizon::Int,
-    stage_interval::Dates.Period;
-    kwargs...,
+    stage_interval::Dates.Period,
 )
-    stage.internal.psi_container = PSIContainer(
-        stage.template.transmission,
-        stage.sys,
-        stage.optimizer;
-        use_parameters = true,
-        initial_time = initial_time,
-        horizon = horizon,
-    )
-    _build!(stage.internal.psi_container, stage.template, stage.sys; kwargs...)
-    stage.internal.warm_start_enabled = MOI.supports(
+    stage_built(stage) && reset!(stage)
+    psi_container = get_psi_container(stage)
+    set_horizon!(psi_container.settings, horizon)
+    set_initial_time!(psi_container.settings, initial_time)
+    _build!(psi_container, stage.template, stage.sys)
+    solver_supports_warm_start = MOI.supports(
         JuMP.backend(stage.internal.psi_container.JuMPmodel),
         MOI.VariablePrimalStart(),
         MOI.VariableIndex,
     )
+    if !solver_supports_warm_start
+        solver_name = JuMP.solver_name(psi_container.JuMPmodel)
+        @warn("$(solver_name) in stage $(stage.internal.number) does not support warm start")
+    end
+    set_use_warm_start!(psi_container.settings, solver_supports_warm_start)
     stage_resolution = PSY.get_forecasts_resolution(stage.sys)
     stage.internal.end_of_interval_step = Int(stage_interval / stage_resolution)
+    stage.internal.built = true
     return
 end
 

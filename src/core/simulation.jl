@@ -68,16 +68,16 @@ mutable struct Simulation
     steps::Int
     stages::Dict{String, Stage{<:AbstractOperationsProblem}}
     initial_time::Union{Nothing, Dates.DateTime}
-    sequence::Union{Nothing, SimulationSequence}
+    sequence::SimulationSequence
     simulation_folder::String
     name::String
     internal::Union{Nothing, SimulationInternal}
 
     function Simulation(;
+        stages_sequence::SimulationSequence,
         name::String,
         steps::Int,
         stages = Dict{String, Stage{AbstractOperationsProblem}}(),
-        stages_sequence = nothing,
         simulation_folder::String,
         kwargs...,
     )
@@ -330,8 +330,7 @@ function _populate_caches!(sim::Simulation, stage_name::String)
     return
 end
 
-function _build_stages!(sim::Simulation; kwargs...)
-    system_to_file = get(kwargs, :system_to_file, true)
+function _build_stages!(sim::Simulation)
     for (stage_number, stage_name) in sim.sequence.order
         TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Stage $(stage_name)" begin
             @info("Building Stage $(stage_number)-$(stage_name)")
@@ -339,7 +338,7 @@ function _build_stages!(sim::Simulation; kwargs...)
             stage = get_stage(sim, stage_name)
             stage_interval = get_stage_interval(get_sequence(sim), stage_name)
             initial_time = get_initial_time(sim)
-            build!(stage, initial_time, horizon, stage_interval; kwargs...)
+            build!(stage, initial_time, horizon, stage_interval)
             _populate_caches!(sim, stage_name)
             sim.internal.date_ref[stage_number] = initial_time
         end
@@ -374,16 +373,11 @@ function _check_folder(folder::String)
 end
 # TODO: Add DocString
 @doc raw"""
-        build!(sim::Simulation;
-                kwargs...)
+        build!(sim::Simulation)
 """
-function build!(sim::Simulation; kwargs...)
+function build!(sim::Simulation)
     TimerOutputs.reset_timer!(BUILD_SIMULATION_TIMER)
     TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Simulation" begin
-        check_kwargs(kwargs, SIMULATION_BUILD_KWARGS, "build!")
-        if isnothing(sim.sequence) || isempty(sim.stages)
-            throw(ArgumentError("The simulation object requires a valid definition of stages and SimulationSequence"))
-        end
         _check_forecasts_sequence(sim)
         _check_feedforward_chronologies(sim)
         _check_folder(sim.simulation_folder)
@@ -395,13 +389,14 @@ function build!(sim::Simulation; kwargs...)
                 throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
             end
             stage_interval = get_stage_interval(sim, stage_name)
-            executions = Int(get_step_resolution(sim.sequence) / stage_interval)
-            stage.internal = StageInternal(stage_number, executions, 0, nothing)
+            stage.internal.executions =
+                Int(get_step_resolution(sim.sequence) / stage_interval)
+            stage.internal.number = stage_number
             _attach_feedforward!(sim, stage_name)
         end
         _assign_feedforward_chronologies(sim)
         _check_steps(sim, stage_initial_times)
-        _build_stages!(sim; kwargs...)
+        _build_stages!(sim)
         sim.internal.compiled_status = true
     end
     @info ("\n$(BUILD_SIMULATION_TIMER)\n")

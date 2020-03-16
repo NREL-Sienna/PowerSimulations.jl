@@ -21,14 +21,12 @@ template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, s
 ```
 """
 function OperationsProblemTemplate(::Type{T}) where {T <: PM.AbstractPowerModel}
-
     return OperationsProblemTemplate(
         T,
         Dict{Symbol, DeviceModel}(),
         Dict{Symbol, DeviceModel}(),
         Dict{Symbol, ServiceModel}(),
     )
-
 end
 
 mutable struct OperationsProblem{M <: AbstractOperationsProblem}
@@ -40,139 +38,159 @@ end
 """
     OperationsProblem(::Type{M},
     template::OperationsProblemTemplate,
-    sys::PSY.System;
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}=nothing,
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
     kwargs...) where {M<:AbstractOperationsProblem,
                       T<:PM.AbstractPowerFormulation}
-This builds the optimization problem with the specific system and template.
+This builds the optimization problem of type M with the specific system and template.
 # Arguments
-- `::Type{M} where {M<:AbstractOperationsProblem, T<:PM.AbstractPowerFormulation} = TestOpProblem`:
-The abstract operation model type
+- `::Type{M} where M<:AbstractOperationsProblem`: The abstract operation model type
 - `template::OperationsProblemTemplate`: The model reference made up of transmission, devices,
                                           branches, and services.
 - `sys::PSY.System`: the system created using Power Systems
+- `jump_model::Union{Nothing, JuMP.AbstractModel}`: Enables passing a custom JuMP model. Use with care
 # Output
-- `op_problem::OperationsProblem`: The operation model contains the model type, model, Power
-Systems system, and optimization model.
+- `op_problem::OperationsProblem`: The operation model containing the model type, built JuMP model, Power
+Systems system.
 # Example
 ```julia
 template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
+OpModel = OperationsProblem(TestOpProblem, template, system)
 ```
 # Accepted Key Words
-- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
-- `optimizer::union{Nothing, JuMP.MOI.OptimizerWithAttributes} = GLPK_optimizer`: The optimizer gets passed
-into the optimization model the default is nothing.
+- `Horizon::Int`: Manually specify the length of the forecast Horizon
+- `initial_time::Dates.DateTime`: Initial Time for the model solve
+- `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
+- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
+- `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
 - `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
-- `parameters::Bool`: enable JuMP parameters
-- `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
-if false it runs for one time step
-- `initial_time::Dates.DateTime`: initial time of forecast
+- `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
+- `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 """
 function OperationsProblem(
     ::Type{M},
     template::OperationsProblemTemplate,
-    sys::PSY.System;
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
     kwargs...,
 ) where {M <: AbstractOperationsProblem}
+    return OperationsProblem{M}(template, sys, jump_model; kwargs...)
+end
 
+function OperationsProblem{M}(
+    template::OperationsProblemTemplate,
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    kwargs...,
+) where {M <: AbstractOperationsProblem}
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
+    settings = PSISettings(sys; kwargs...)
+
     op_problem = OperationsProblem{M}(
         template,
         sys,
-        PSIContainer(template.transmission, sys, optimizer; kwargs...),
+        PSIContainer(template.transmission, sys, settings, jump_model),
     )
-
-    build_op_problem!(op_problem; kwargs...)
-
+    build!(op_problem)
     return op_problem
-
 end
+
 """
     OperationsProblem(op_problem::Type{M},
                     ::Type{T},
-                    sys::PSY.System;
+                    sys::PSY.System,
+                    jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
                     kwargs...) where {M<:AbstractOperationsProblem,
-                                    T<:PM.AbstractPowerFormulation}
-This uses the Abstract Power Formulation to build the model reference and
-the optimization model and populates the operation model struct.
+                                      T<:PM.AbstractPowerFormulation}
+Return an unbuilt operation problem of type M with the specific system and network model T.
+    This constructor doesn't build any device model; it is meant to built device models individually using [`construct_device!`](@ref)
 # Arguments
-- `op_problem::Type{M} = where {M<:AbstractOperationsProblem`: Defines the type of the operation model
-- `::Type{T} where T<:PM.AbstractPowerFormulation`: The power formulation used for model ref & optimization model
-- `sys::PSY.System`: the system created in Power Systems
+- `::Type{M} where M<:AbstractOperationsProblem`: The abstract operation model type
+- `::Type{T} where T<:AbstractPowerModel`: The abstract network formulation
+- `sys::PSY.System`: the system created using Power Systems
+- `jump_model::Union{Nothing, JuMP.AbstractModel}`: Enables passing a custom JuMP model. Use with care
 # Output
-- `op_problem::OperationsProblem`: The operation model contains the model type, model, Power
-Systems system, and optimization model.
+- `op_problem::OperationsProblem`: The operation model containing the model type, unbuilt JuMP model, Power
+Systems system.
 # Example
 ```julia
-template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
+OpModel = OperationsProblem(MyCustomOpProblem, DCPPowerModel, system)
+model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
+construct_device!(op_problem, :Thermal, model)
 ```
 # Accepted Key Words
-- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
-- `optimizer::union{Nothing, JuMP.MOI.OptimizerWithAttributes}`: The optimizer gets passed
-into the optimization model the default is nothing.
+- `Horizon::Int`: Manually specify the length of the forecast Horizon
+- `initial_time::Dates.DateTime`: Initial Time for the model solve
+- `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
+- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
+- `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
 - `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
-- `parameters::Bool`: enable JuMP parameters
-- `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
-if false it runs for one time step
-- `initial_time::Dates.DateTime`: initial time of forecast
+- `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
+- `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 """
 function OperationsProblem(
     ::Type{M},
     ::Type{T},
-    sys::PSY.System;
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
     kwargs...,
 ) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
+    return OperationsProblem{M}(T, sys, jump_model; kwargs...)
+end
 
-    optimizer = get(kwargs, :optimizer, nothing)
+function OperationsProblem{M}(
+    ::Type{T},
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    kwargs...,
+) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
+    check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
+    settings = PSISettings(sys; kwargs...)
     return OperationsProblem{M}(
         OperationsProblemTemplate(T),
         sys,
-        PSIContainer(T, sys, optimizer; kwargs...),
+        PSIContainer(T, sys, settings, jump_model),
     )
-
 end
 
 """
     OperationsProblem(::Type{T},
-                    sys::PSY.System;
+                    sys::PSY.System,
+                    jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
                     kwargs...) where {M<:AbstractOperationsProblem,
                                       T<:PM.AbstractPowerFormulation}
-This uses the Abstract Power Formulation to build the model reference and
-the optimization model and populates the operation model struct.
-***Note:*** the abstract operation model is set to the default operation model
+Return an unbuilt operation problem of type GenericOpProblem with the specific system and network model T.
+    This constructor doesn't build any device model; it is meant to built device models individually using [`construct_device!`](@ref)
 # Arguments
-- `op_problem::Type{M}`: Defines the type of the operation model
-- `::Type{T} where T<:PM.AbstractPowerFormulation`: The power formulation used for model ref & optimization model
-- `sys::PSY.System`: the system created in Power Systems
+- `::Type{T} where T<:AbstractPowerModel`: The abstract network formulation
+- `sys::PSY.System`: the system created using Power Systems
+- `jump_model::Union{Nothing, JuMP.AbstractModel}`: Enables passing a custom JuMP model. Use with care
 # Output
-- `op_problem::OperationsProblem`: The operation model contains the model type, model, Power
-Systems system, and optimization model.
+- `op_problem::OperationsProblem`: The operation model containing the model type, unbuilt JuMP model, Power
+Systems system.
 # Example
 ```julia
-template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
+OpModel = OperationsProblem(DCPPowerModel, system)
+model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
+construct_device!(op_problem, :Thermal, model)
 ```
 # Accepted Key Words
-- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
-- `optimizer::union{Nothing, JuMP.MOI.OptimizerWithAttributes}`: The optimizer gets passed
-into the optimization model the default is nothing.
+- `Horizon::Int`: Manually specify the length of the forecast Horizon
+- `initial_time::Dates.DateTime`: Initial Time for the model solve
+- `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
+- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
+- `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
 - `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
-- `parameters::Bool`: enable JuMP parameters
-- `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
-if false it runs for one time step
-- `initial_time::Dates.DateTime`: initial time of forecast
+- `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
+- `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 """
 function OperationsProblem(
     ::Type{T},
-    sys::PSY.System;
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
     kwargs...,
 ) where {T <: PM.AbstractPowerModel}
-
-    return OperationsProblem(GenericOpProblem, T, sys; kwargs...)
-
+    return OperationsProblem{GenericOpProblem}(T, sys, jump_model; kwargs...)
 end
 
 get_transmission_ref(op_problem::OperationsProblem) = op_problem.template.transmission
@@ -181,206 +199,135 @@ get_system(op_problem::OperationsProblem) = op_problem.sys
 get_psi_container(op_problem::OperationsProblem) = op_problem.psi_container
 get_base_power(op_problem::OperationsProblem) = op_problem.sys.basepower
 
+function reset!(op_problem::OperationsProblem)
+    op_problem.psi_container = PSIContainer(
+        op_problem.template.transmission,
+        op_problem.sys,
+        op_problem.psi_container.settings,
+        nothing,
+    )
+    return
+end
+
 function set_transmission_model!(
     op_problem::OperationsProblem{M},
-    transmission::Type{T};
-    kwargs...,
+    transmission::Type{T},
 ) where {T <: PM.AbstractPowerModel, M <: AbstractOperationsProblem}
-
-    # Reset the psi_container
     op_problem.template.transmission = transmission
-    op_problem.psi_container = PSIContainer(
-        transmission,
-        op_problem.sys,
-        op_problem.psi_container.optimizer_factory;
-        kwargs...,
-    )
-
-    build_op_problem!(op_problem; kwargs...)
-
+    reset!(op_problem)
+    build!(op_problem)
     return
 end
 
 function set_devices_template!(
     op_problem::OperationsProblem{M},
-    devices::Dict{Symbol, DeviceModel};
-    kwargs...,
+    devices::Dict{Symbol, DeviceModel},
 ) where {M <: AbstractOperationsProblem}
-
-    # Reset the psi_container
     op_problem.template.devices = devices
-    op_problem.psi_container = PSIContainer(
-        op_problem.template.transmission,
-        op_problem.sys,
-        op_problem.psi_container.optimizer_factory;
-        kwargs...,
-    )
-
-    build_op_problem!(op_problem; kwargs...)
-
+    reset!(op_problem)
+    build!(op_problem)
     return
 end
 
 function set_branches_template!(
     op_problem::OperationsProblem{M},
-    branches::Dict{Symbol, DeviceModel};
-    kwargs...,
+    branches::Dict{Symbol, DeviceModel},
 ) where {M <: AbstractOperationsProblem}
-
-    # Reset the psi_container
     op_problem.template.branches = branches
-    op_problem.psi_container = PSIContainer(
-        op_problem.template.transmission,
-        op_problem.sys,
-        op_problem.psi_container.optimizer_factory;
-        kwargs...,
-    )
-
-    build_op_problem!(op_problem; kwargs...)
-
+    reset!(op_problem)
+    build!(op_problem)
     return
 end
 
 function set_services_template!(
     op_problem::OperationsProblem{M},
-    services::Dict{Symbol, <:ServiceModel};
-    kwargs...,
+    services::Dict{Symbol, <:ServiceModel},
 ) where {M <: AbstractOperationsProblem}
-
-    # Reset the psi_container
     op_problem.template.services = services
-    op_problem.psi_container = PSIContainer(
-        op_problem.template.transmission,
-        op_problem.sys,
-        op_problem.psi_container.optimizer_factory;
-        kwargs...,
-    )
-
-    build_op_problem!(op_problem; kwargs...)
-
+    reset!(op_problem)
+    build!(op_problem)
     return
 end
 
 function set_device_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
-    device::DeviceModel{D, B};
-    kwargs...,
-) where {
-    D <: PSY.StaticInjection,
-    B <: AbstractDeviceFormulation,
-    M <: AbstractOperationsProblem,
-}
-
+    device::DeviceModel{<:PSY.StaticInjection, <:AbstractDeviceFormulation},
+) where {M <: AbstractOperationsProblem}
     if haskey(op_problem.template.devices, name)
         op_problem.template.devices[name] = device
-        op_problem.psi_container = PSIContainer(
-            op_problem.template.transmission,
-            op_problem.sys,
-            op_problem.psi_container.optimizer_factory;
-            kwargs...,
-        )
-        build_op_problem!(op_problem; kwargs...)
+        reset!(op_problem)
+        build!(op_problem)
     else
         throw(IS.ConflictingInputsError("Device Model with name $(name) doesn't exist in the model"))
     end
-
     return
-
 end
 
 function set_branch_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
-    branch::DeviceModel{D, B};
-    kwargs...,
-) where {D <: PSY.Branch, B <: AbstractDeviceFormulation, M <: AbstractOperationsProblem}
-
+    branch::DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation},
+) where {M <: AbstractOperationsProblem}
     if haskey(op_problem.template.branches, name)
         op_problem.template.branches[name] = branch
-        op_problem.psi_container = PSIContainer(
-            op_problem.template.transmission,
-            op_problem.sys,
-            op_problem.psi_container.optimizer_factory;
-            kwargs...,
-        )
-        build_op_problem!(op_problem; kwargs...)
+        reset!(op_problem)
+        build!(op_problem)
     else
         throw(IS.ConflictingInputsError("Branch Model with name $(name) doesn't exist in the model"))
     end
-
     return
-
 end
 
 function set_services_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
-    service::ServiceModel;
-    kwargs...,
+    service::ServiceModel,
 ) where {M <: AbstractOperationsProblem}
     if haskey(op_problem.template.services, name)
         op_problem.template.services[name] = service
-        op_problem.psi_container = PSIContainer(
-            op_problem.template.transmission,
-            op_problem.sys,
-            op_problem.psi_container.optimizer_factory;
-            kwargs...,
-        )
-        build_op_problem!(op_problem; kwargs...)
+        reset!(op_problem)
+        build!(op_problem)
     else
         throw(IS.ConflictingInputsError("Branch Model with name $(name) doesn't exist in the model"))
     end
-
     return
-
 end
 
 function construct_device!(
     op_problem::OperationsProblem,
     name::Symbol,
-    device_model::DeviceModel;
-    kwargs...,
+    device_model::DeviceModel,
 )
-
     if haskey(op_problem.template.devices, name)
         throw(IS.ConflictingInputsError("Device with model name $(name) already exists in the Opertaion Model"))
     end
-
     devices_ref = get_devices_ref(op_problem)
     devices_ref[name] = device_model
-
     construct_device!(
         op_problem.psi_container,
         get_system(op_problem),
         device_model,
-        get_transmission_ref(op_problem);
-        kwargs...,
+        get_transmission_ref(op_problem),
     )
-
     JuMP.@objective(
         op_problem.psi_container.JuMPmodel,
         MOI.MIN_SENSE,
         op_problem.psi_container.cost_function
     )
-
     return
-
 end
 
-function construct_network!(op_problem::OperationsProblem; kwargs...)
-    construct_network!(op_problem, op_problem.template.transmission; kwargs...)
+function construct_network!(op_problem::OperationsProblem)
+    construct_network!(op_problem, op_problem.template.transmission)
     return
 end
 
 function construct_network!(
     op_problem::OperationsProblem,
-    system_formulation::Type{T};
-    kwargs...,
+    system_formulation::Type{T},
 ) where {T <: PM.AbstractPowerModel}
-
-    construct_network!(op_problem.psi_container, get_system(op_problem), T; kwargs...)
-
+    construct_network!(op_problem.psi_container, get_system(op_problem), T)
     return
 end
 
@@ -389,55 +336,38 @@ function get_initial_conditions(
     ic::InitialConditionType,
     device::PSY.Device,
 )
-
     psi_container = op_problem.psi_container
     key = ICKey(ic, device)
 
     return get_initial_conditions(psi_container, key)
-
 end
 
-function build_op_problem!(
-    op_problem::OperationsProblem{M};
-    kwargs...,
-) where {M <: AbstractOperationsProblem}
+function build!(op_problem::OperationsProblem{M}) where {M <: AbstractOperationsProblem}
     sys = get_system(op_problem)
-    _build!(op_problem.psi_container, op_problem.template, sys; kwargs...)
+    _build!(op_problem.psi_container, op_problem.template, sys)
     return
 end
 
 function _build!(
     psi_container::PSIContainer,
     template::OperationsProblemTemplate,
-    sys::PSY.System;
-    kwargs...,
+    sys::PSY.System,
 )
     transmission = template.transmission
-
     # Order is required
-    #Build Services
-    construct_services!(psi_container, sys, template.services, template.devices; kwargs...)
-
-    # Build Injection devices
+    construct_services!(psi_container, sys, template.services, template.devices)
     for device_model in values(template.devices)
         @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
-        construct_device!(psi_container, sys, device_model, transmission; kwargs...)
+        construct_device!(psi_container, sys, device_model, transmission)
     end
-
-    # Build Network
     @debug "Building $(transmission) network formulation"
-    construct_network!(psi_container, sys, transmission; kwargs...)
-
-    # Build Branches
+    construct_network!(psi_container, sys, transmission)
     for branch_model in values(template.branches)
         @debug "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
-        construct_device!(psi_container, sys, branch_model, transmission; kwargs...)
+        construct_device!(psi_container, sys, branch_model, transmission)
     end
-
-    # Objective Function
     @debug "Building Objective"
     JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
-
     return
 end
 
@@ -452,15 +382,16 @@ end
 function get_dual_values(op_m::OperationsProblem, constraints::Vector{Symbol})
     return get_dual_values(op_m.psi_container, constraints)
 end
+
 """
-    solve_op_problem!(op_problem::OperationsProblem; kwargs...)
+    solve!(op_problem::OperationsProblem; kwargs...)
 This solves the operational model for a single instance and
 outputs results of type OperationsProblemResult
 # Arguments
 - `op_problem::OperationModel = op_problem`: operation model
 # Examples
 ```julia
-results = solve_op_problem!(OpModel)
+results = solve!(OpModel)
 ```
 # Accepted Key Words
 - `save_path::String`: If a file path is provided the results
@@ -468,7 +399,7 @@ automatically get written to feather files
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
 - `constraints_duals::Array`: Array of the constraints duals to be in the results
 """
-function solve_op_problem!(
+function solve!(
     op_problem::OperationsProblem{T};
     kwargs...,
 ) where {T <: AbstractOperationsProblem}
@@ -524,7 +455,6 @@ function solve_op_problem!(
 end
 
 # Function to create a dictionary for the optimizer log of the simulation
-
 function get_optimizer_log(op_m::OperationsProblem)
     psi_container = op_m.psi_container
     optimizer_log = Dict{Symbol, Any}()
@@ -544,7 +474,6 @@ function get_optimizer_log(op_m::OperationsProblem)
 end
 
 # Function to create a dictionary for the time series of the simulation
-
 function get_time_stamps(op_problem::OperationsProblem)
     initial_time = PSY.get_forecasts_initial_time(op_problem.sys)
     interval = PSY.get_forecasts_resolution(op_problem.sys)

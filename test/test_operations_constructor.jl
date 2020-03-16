@@ -49,7 +49,7 @@ services = Dict{Symbol, ServiceModel}()
     moi_tests(op_problem, false, 5, 0, 5, 5, 1, false)
 end
 
-@testset "testing getter functions" begin
+@testset "Test getter functions" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     op_problem = OperationsProblem(
         TestOpProblem,
@@ -70,6 +70,22 @@ end
     var = op_problem.psi_container.variables[last(var_index)[1]].data[last(var_index)[2]]
     @test get_var_index(op_problem, length) == var
     @test get_var_index(op_problem, length + 1) == nothing
+end
+
+@testset "Test passing custom JuMP model" begin
+    my_model = JuMP.Model()
+    my_model.ext[:PSI_Testing] = 1
+    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        template,
+        c_sys5,
+        my_model;
+        optimizer = GLPK_optimizer,
+        use_parameters = true,
+    )
+    @test haskey(op_problem.psi_container.JuMPmodel.ext, :PSI_Testing)
+    @test (:params in keys(op_problem.psi_container.JuMPmodel.ext)) == true
 end
 
 @testset "Operation Model Constructors with Parameters" begin
@@ -99,7 +115,6 @@ end
     systems = [c_sys5, c_sys5_re, c_sys5_bat]
     for net in networks, thermal in thermal_gens, system in systems, p in [true, false]
         @testset "Operation Model $(net) - $(thermal) - $(system)" begin
-            thermal_model = DeviceModel(ThermalStandard, thermal)
             devices = Dict{Symbol, DeviceModel}(
                 :Generators => DeviceModel(ThermalStandard, thermal),
                 :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
@@ -110,8 +125,8 @@ end
                 TestOpProblem,
                 template,
                 system;
-                PTDF = PTDF5,
                 use_parameters = p,
+                PTDF = PTDF5,
             )
             @test :nodal_balance_active in keys(op_problem.psi_container.expressions)
             @test (:params in keys(op_problem.psi_container.JuMPmodel.ext)) == p
@@ -128,59 +143,4 @@ end
         @test ED.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
         @test UC.optimizer_log[:primal_status] == MOI.FEASIBLE_POINT
     end
-
-end
-
-@testset "AC Branch rate constraints" begin
-    thermal_model = DeviceModel(ThermalStandard, ThermalDispatch)
-    devices = Dict{Symbol, DeviceModel}(
-        :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
-        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-    )
-    branches = Dict{Symbol, DeviceModel}(
-        :L => DeviceModel(PSY.MonitoredLine, PSI.FlowMonitoredLine),
-    )
-    template = OperationsProblemTemplate(ACPPowerModel, devices, branches, services)
-    system = c_sys5_ml
-    line = PSY.get_component(Line, system, "1")
-    PSY.convert_component!(MonitoredLine, line, system)
-    limits = PSY.get_flowlimits(PSY.get_component(MonitoredLine, system, "1"))
-    op_problem_m = OperationsProblem(
-        TestOpProblem,
-        template,
-        system;
-        optimizer = ipopt_optimizer,
-        use_parameters = false,
-    )
-    monitored = solve_op_problem!(op_problem_m)
-    fq = monitored.variable_values[:FqFT__MonitoredLine][1, 1]
-    fp = monitored.variable_values[:FpFT__MonitoredLine][1, 1]
-    flow = sqrt((fp[1])^2 + (fq[1])^2)
-    @test isapprox(flow, limits.from_to, atol = 1e-3)
-end
-
-@testset "DC branch Branch rate constraints" begin
-    thermal_model = DeviceModel(ThermalStandard, ThermalDispatch)
-    devices = Dict{Symbol, DeviceModel}(
-        :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
-        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-    )
-    branches = Dict{Symbol, DeviceModel}(
-        :L => DeviceModel(PSY.MonitoredLine, PSI.FlowMonitoredLine),
-    )
-    template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
-    system = c_sys5_ml
-    limits = PSY.get_flowlimits(PSY.get_component(MonitoredLine, system, "1"))
-    rate = PSY.get_rate(PSY.get_component(MonitoredLine, system, "1"))
-    op_problem_m = OperationsProblem(
-        TestOpProblem,
-        template,
-        system;
-        optimizer = ipopt_optimizer,
-        use_parameters = false,
-    )
-    monitored = solve_op_problem!(op_problem_m)
-    fp = monitored.variable_values[:Fp__MonitoredLine][1, 1]
-    @test fp <= limits.from_to
-    @test fp <= rate
 end
