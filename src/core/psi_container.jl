@@ -180,6 +180,7 @@ mutable struct PSIContainer
     parameters::Union{Nothing, ParametersContainer}
     initial_conditions::InitialConditionsContainer
     pm::Union{Nothing, PM.AbstractPowerModel}
+    instantiated::Bool #used in simulations
 
     function PSIContainer(
         JuMPmodel::JuMP.AbstractModel,
@@ -207,6 +208,7 @@ mutable struct PSIContainer
             parameters,
             initial_conditions,
             pm,
+            true,
         )
     end
 end
@@ -334,6 +336,7 @@ get_parameters(psi_container::PSIContainer) = psi_container.parameters
 get_expression(psi_container::PSIContainer, name::Symbol) = psi_container.expressions[name]
 get_initial_conditions(psi_container::PSIContainer) = psi_container.initial_conditions
 get_PTDF(psi_container::PSIContainer) = get_PTDF(psi_container.settings)
+container_instantiated(psi_container::PSIContainer) = psi_container.instantiated
 
 function get_variable(
     psi_container::PSIContainer,
