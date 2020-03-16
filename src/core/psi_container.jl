@@ -96,6 +96,7 @@ mutable struct PSISettings
     initial_time::Union{Nothing, Dates.DateTime}
     PTDF::Union{Nothing, PSY.PTDF}
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
+    constraint_duals::Vector{Symbol}
     ext::Dict{String, Any}
 end
 
@@ -109,6 +110,7 @@ function PSISettings(sys::PSY.System; kwargs...)
     horizon = get(kwargs, :horizon, PSY.get_forecasts_horizon(sys))
     PTDF = get(kwargs, :PTDF, nothing)
     optimizer = get(kwargs, :optimizer, nothing)
+    constraint_duals = get(kwargs, :constraints_duals, Vector{Symbol}())
     ext = get(kwargs, :additional_settings, Dict{String, Any}())
 
     return PSISettings(
@@ -120,6 +122,7 @@ function PSISettings(sys::PSY.System; kwargs...)
         initial_time,
         PTDF,
         optimizer,
+        constraint_duals,
         ext,
     )
 
