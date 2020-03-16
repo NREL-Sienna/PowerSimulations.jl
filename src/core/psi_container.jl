@@ -215,7 +215,7 @@ function PSIContainer(
     ::Type{T},
     sys::PSY.System,
     settings::PSISettings,
-    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing
+    jump_model::Union{Nothing, JuMP.AbstractModel}
 ) where {T <: PM.AbstractPowerModel}
     PSY.check_forecast_consistency(sys)
     #This will be improved with the implementation of inicond passing
