@@ -333,12 +333,14 @@ function test_load_simulation(file_path::String)
         results = load_simulation_results(sim_results, "ED")
         ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
         vars_names = [PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
+        ed_horizon = PSI.get_stage_horizon(sim.sequence, "ED")
+        no_steps = PSI.get_steps(sim)
         for (ik, key) in enumerate(ic_keys)
             initial_conditions =
                 get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
             vars = results.variable_values[vars_names[ik]] # change to getter function
             for ic in initial_conditions
-                output = vars[1, Symbol(PSI.device_name(ic))] # change to getter function
+                output = vars[horizon * (no_steps - 1), Symbol(PSI.device_name(ic))] # change to getter function
                 initial_cond = value(PSI.get_value(ic))
                 @test_skip isapprox(output, initial_cond, atol = 1.0e-4)
             end
