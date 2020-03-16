@@ -38,40 +38,41 @@ end
 """
     OperationsProblem(::Type{M},
     template::OperationsProblemTemplate,
-    sys::PSY.System;
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}=nothing,
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
     kwargs...) where {M<:AbstractOperationsProblem,
                       T<:PM.AbstractPowerFormulation}
-This builds the optimization problem with the specific system and template.
+This builds the optimization problem of type M with the specific system and template.
 # Arguments
-- `::Type{M} where {M<:AbstractOperationsProblem, T<:PM.AbstractPowerFormulation} = TestOpProblem`:
-The abstract operation model type
+- `::Type{M} where M<:AbstractOperationsProblem`: The abstract operation model type
 - `template::OperationsProblemTemplate`: The model reference made up of transmission, devices,
                                           branches, and services.
 - `sys::PSY.System`: the system created using Power Systems
+- `jump_model::Union{Nothing, JuMP.AbstractModel}`: A custom JuMP model. Use with care
 # Output
-- `op_problem::OperationsProblem`: The operation model contains the model type, model, Power
-Systems system, and optimization model.
+- `op_problem::OperationsProblem`: The operation model containing the model type, instantiated JuMP model, Power
+Systems system.
 # Example
 ```julia
 template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
+OpModel = OperationsProblem(TestOpProblem, template, system)
 ```
 # Accepted Key Words
-- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
-- `optimizer::union{Nothing, JuMP.MOI.OptimizerWithAttributes} = GLPK_optimizer`: The optimizer gets passed
-into the optimization model the default is nothing.
+- `Horizon::Int`: Manually specify the length of the forecast Horizon
+- `initial_time::Dates.DateTime`: Initial Time for the model solve
+- `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
+- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
+- `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
 - `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
-- `parameters::PSISettings`: parameters specific to the problem type
-- `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
-if false it runs for one time step
-- `initial_time::Dates.DateTime`: initial time of forecast
+- `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
+- `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 """
 function OperationsProblem(
     ::Type{M},
     template::OperationsProblemTemplate,
-    sys::PSY.System;
-    kwargs...,
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
+    kwargs...
 ) where {M <: AbstractOperationsProblem}
 
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
@@ -80,7 +81,7 @@ function OperationsProblem(
     op_problem = OperationsProblem{M}(
         template,
         sys,
-        PSIContainer(template.transmission, sys, settings),
+        PSIContainer(template.transmission, sys, settings, jump_model),
     )
 
     build_op_problem!(op_problem)
@@ -91,37 +92,41 @@ end
 """
     OperationsProblem(op_problem::Type{M},
                     ::Type{T},
-                    sys::PSY.System;
+                    sys::PSY.System,
+                    jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
                     kwargs...) where {M<:AbstractOperationsProblem,
-                                    T<:PM.AbstractPowerFormulation}
-This uses the Abstract Power Formulation to build the model reference and
-the optimization model and populates the operation model struct.
+                                      T<:PM.AbstractPowerFormulation}
+This return an uninstantiated operation problem of type M with the specific system and network model T.
+    This constructor doesn't build any device model, is meant to built device models individually using [`construct_device!`](@ref)
 # Arguments
-- `op_problem::Type{M} = where {M<:AbstractOperationsProblem`: Defines the type of the operation model
-- `::Type{T} where T<:PM.AbstractPowerFormulation`: The power formulation used for model ref & optimization model
-- `sys::PSY.System`: the system created in Power Systems
+- `::Type{M} where M<:AbstractOperationsProblem`: The abstract operation model type
+- `::Type{T} where T<:AbstractPowerModel`: The abstract network formulation
+- `sys::PSY.System`: the system created using Power Systems
+- `jump_model::Union{Nothing, JuMP.AbstractModel}`: A custom JuMP model. Use with care
 # Output
-- `op_problem::OperationsProblem`: The operation model contains the model type, model, Power
-Systems system, and optimization model.
+- `op_problem::OperationsProblem`: The operation model containing the model type, uninstantiated JuMP model, Power
+Systems system.
 # Example
 ```julia
-template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
+OpModel = OperationsProblem(MyCustomOpProblem, DCPPowerModel, system)
+model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
+construct_device!(op_problem, :Thermal, model)
 ```
 # Accepted Key Words
-- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
-- `optimizer::union{Nothing, JuMP.MOI.OptimizerWithAttributes}`: The optimizer gets passed
-into the optimization model the default is nothing.
+- `Horizon::Int`: Manually specify the length of the forecast Horizon
+- `initial_time::Dates.DateTime`: Initial Time for the model solve
+- `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
+- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
+- `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
 - `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
-- `parameters::Bool`: enable JuMP parameters
-- `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
-if false it runs for one time step
-- `initial_time::Dates.DateTime`: initial time of forecast
+- `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
+- `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 """
 function OperationsProblem(
     ::Type{M},
     ::Type{T},
-    sys::PSY.System;
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.AbstractModel};
     kwargs...,
 ) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
@@ -129,46 +134,48 @@ function OperationsProblem(
     return OperationsProblem{M}(
         OperationsProblemTemplate(T),
         sys,
-        PSIContainer(T, sys, settings),
+        PSIContainer(T, sys, settings, jump_model),
     )
 end
 
 """
     OperationsProblem(::Type{T},
-                    sys::PSY.System;
+                    sys::PSY.System,
+                    jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
                     kwargs...) where {M<:AbstractOperationsProblem,
                                       T<:PM.AbstractPowerFormulation}
-This uses the Abstract Power Formulation to build the model reference and
-the optimization model and populates the operation model struct.
-***Note:*** the abstract operation model is set to the default operation model
+This return an uninstantiated operation problem of type GenericOpProblem with the specific system and network model T.
+    This constructor doesn't build any device model, is meant to built device models individually using [`construct_device!`](@ref)
 # Arguments
-- `op_problem::Type{M}`: Defines the type of the operation model
-- `::Type{T} where T<:PM.AbstractPowerFormulation`: The power formulation used for model ref & optimization model
-- `sys::PSY.System`: the system created in Power Systems
+- `::Type{T} where T<:AbstractPowerModel`: The abstract network formulation
+- `sys::PSY.System`: the system created using Power Systems
+- `jump_model::Union{Nothing, JuMP.AbstractModel}`: A custom JuMP model. Use with care
 # Output
-- `op_problem::OperationsProblem`: The operation model contains the model type, model, Power
-Systems system, and optimization model.
+- `op_problem::OperationsProblem`: The operation model containing the model type, uninstantiated JuMP model, Power
+Systems system.
 # Example
 ```julia
-template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-OpModel = OperationsProblem(TestOpProblem, template, system; optimizer = optimizer)
+OpModel = OperationsProblem(DCPPowerModel, system)
+model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
+construct_device!(op_problem, :Thermal, model)
 ```
 # Accepted Key Words
-- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model
-- `optimizer::union{Nothing, JuMP.MOI.OptimizerWithAttributes}`: The optimizer gets passed
-into the optimization model the default is nothing.
+- `Horizon::Int`: Manually specify the length of the forecast Horizon
+- `initial_time::Dates.DateTime`: Initial Time for the model solve
+- `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
+- `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
+- `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
 - `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
-- `parameters::Bool`: enable JuMP parameters
-- `use_forecast_data::Bool`: if true, forecast collects the time steps in Power Systems,
-if false it runs for one time step
-- `initial_time::Dates.DateTime`: initial time of forecast
+- `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
+- `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 """
 function OperationsProblem(
     ::Type{T},
-    sys::PSY.System;
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.AbstractModel};
     kwargs...,
 ) where {T <: PM.AbstractPowerModel}
-    return OperationsProblem(GenericOpProblem, T, sys; kwargs...)
+    return OperationsProblem{GenericOpProblem}(T, sys, jump_model; kwargs...)
 end
 
 get_transmission_ref(op_problem::OperationsProblem) = op_problem.template.transmission
