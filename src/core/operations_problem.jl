@@ -102,8 +102,8 @@ end
                     jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
                     kwargs...) where {M<:AbstractOperationsProblem,
                                       T<:PM.AbstractPowerFormulation}
-This return an uninstantiated operation problem of type M with the specific system and network model T.
-    This constructor doesn't build any device model, is meant to built device models individually using [`construct_device!`](@ref)
+This Return an uninstantiated operation problem of type M with the specific system and network model T.
+    This constructor doesn't build any device model; it is meant to built device models individually using [`construct_device!`](@ref)
 # Arguments
 - `::Type{M} where M<:AbstractOperationsProblem`: The abstract operation model type
 - `::Type{T} where T<:AbstractPowerModel`: The abstract network formulation
@@ -160,7 +160,7 @@ end
                     kwargs...) where {M<:AbstractOperationsProblem,
                                       T<:PM.AbstractPowerFormulation}
 This return an uninstantiated operation problem of type GenericOpProblem with the specific system and network model T.
-    This constructor doesn't build any device model, is meant to built device models individually using [`construct_device!`](@ref)
+    This constructor doesn't build any device model; it is meant to built device models individually using [`construct_device!`](@ref)
 # Arguments
 - `::Type{T} where T<:AbstractPowerModel`: The abstract network formulation
 - `sys::PSY.System`: the system created using Power Systems
