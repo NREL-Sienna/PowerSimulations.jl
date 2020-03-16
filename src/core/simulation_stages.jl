@@ -126,6 +126,11 @@ function build!(
     stage_interval::Dates.Period,
 )
     psi_container = get_psi_container(stage)
+    if container_instantiated(psi_container)
+        psi_container =
+            PSIContainer(stage.template.transmission, stage.sys, psi_container.settings, nothing)
+        @warn("The container is already instantiated in Stage $(stage.internal.number), the build call will result in a container reset")
+    end
     psi_container.settings.horizon = horizon
     psi_container.settings.initial_time = initial_time
     _build!(psi_container, stage.template, stage.sys)

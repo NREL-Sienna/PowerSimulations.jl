@@ -353,13 +353,6 @@ function _build!(
     template::OperationsProblemTemplate,
     sys::PSY.System,
 )
-
-    if container_instantiated(psi_container)
-        psi_container =
-            PSIContainer(template.transmission, sys, psi_container.settings, nothing)
-        @warn("The container is already instantiated, the build call will result in a container reset")
-    end
-
     transmission = template.transmission
     # Order is required
     construct_services!(psi_container, sys, template.services, template.devices)
