@@ -19,7 +19,7 @@
         optimizer = ipopt_optimizer,
         use_parameters = false,
     )
-    monitored = solve_op_problem!(op_problem_m)
+    monitored = solve!(op_problem_m)
     fq = monitored.variable_values[:FqFT__MonitoredLine][1, 1]
     fp = monitored.variable_values[:FpFT__MonitoredLine][1, 1]
     flow = sqrt((fp[1])^2 + (fq[1])^2)
@@ -45,7 +45,7 @@ end
         optimizer = ipopt_optimizer,
         use_parameters = false,
     )
-    monitored = solve_op_problem!(op_problem_m)
+    monitored = solve!(op_problem_m)
     fp = monitored.variable_values[:Fp__MonitoredLine][1, 1]
     @test fp <= limits.from_to
     @test fp <= rate

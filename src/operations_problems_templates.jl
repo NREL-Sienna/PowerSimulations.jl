@@ -175,7 +175,7 @@ results = run_unit_commitment(system; optimizer = optimizer)
 
 function run_unit_commitment(sys::PSY.System; kwargs...)
     op_problem = UnitCommitmentProblem(sys; kwargs...)
-    results = solve_op_problem!(op_problem; kwargs...)
+    results = solve!(op_problem; kwargs...)
     return results
 end
 
@@ -200,6 +200,6 @@ results = run_economic_dispatch(system; optimizer = optimizer)
 
 function run_economic_dispatch(sys::PSY.System; kwargs...)
     op_problem = EconomicDispatchProblem(sys; kwargs...)
-    results = solve_op_problem!(op_problem; kwargs...)
+    results = solve!(op_problem; kwargs...)
     return results
 end
