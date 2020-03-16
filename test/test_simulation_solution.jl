@@ -256,6 +256,15 @@ function test_load_simulation(file_path::String)
         end
     end
     ####################
+    stages_definition = Dict(
+        "UC" => Stage(
+            GenericOpProblem,
+            template_hydro_basic_uc,
+            c_sys5_hy_uc,
+            GLPK_optimizer,
+        ),
+        "ED" =>     Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, ipopt_optimizer),
+    )
 
     sequence = SimulationSequence(
         order = Dict(1 => "UC", 2 => "ED"),
