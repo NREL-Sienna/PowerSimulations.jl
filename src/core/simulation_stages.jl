@@ -11,7 +11,7 @@ mutable struct StageInternal
     # Caches are stored in set because order isn't relevant and they should be unique
     caches::Set{CacheKey}
     chronolgy_dict::Dict{Int, <:FeedForwardChronology}
-    instantiated::Bool
+    built::Bool
     function StageInternal(number, executions, execution_count, psi_container)
         new(
             number,
@@ -76,7 +76,7 @@ This builds the optimization problem of type M with the specific system and temp
 - `sys::PSY.System`: the system created using Power Systems
 - `jump_model::Union{Nothing, JuMP.AbstractModel}`: Enables passing a custom JuMP model. Use with care
 # Output
-- `Stage::Stage`: The operation model containing the model type, uninstantiated JuMP model, Power
+- `Stage::Stage`: The operation model containing the model type, unbuilt JuMP model, Power
 Systems system.
 # Example
 ```julia
@@ -110,7 +110,7 @@ function Stage(
     return Stage{GenericOpProblem}(template, sys, optimizer, jump_model; kwargs...)
 end
 
-stage_instantiated(s::Stage) = s.internal.instantiated
+stage_built(s::Stage) = s.internal.built
 get_execution_count(s::Stage) = s.internal.execution_count
 get_executions(s::Stage) = s.internal.executions
 get_sys(s::Stage) = s.sys
@@ -144,10 +144,10 @@ function build!(
     horizon::Int,
     stage_interval::Dates.Period,
 )
-    stage_instantiated(stage) && reset!(stage)
+    stage_built(stage) && reset!(stage)
     psi_container = get_psi_container(stage)
-    psi_container.settings.horizon = horizon
-    psi_container.settings.initial_time = initial_time
+    set_horizon!(psi_container.settings, horizon)
+    set_initial_time!(psi_container.settings, initial_time)
     _build!(psi_container, stage.template, stage.sys)
     solver_supports_warm_start = MOI.supports(
         JuMP.backend(stage.internal.psi_container.JuMPmodel),
@@ -161,7 +161,7 @@ function build!(
     psi_container.settings.use_warm_start = solver_supports_warm_start
     stage_resolution = PSY.get_forecasts_resolution(stage.sys)
     stage.internal.end_of_interval_step = Int(stage_interval / stage_resolution)
-    stage.internal.instantiated = true
+    stage.internal.built = true
     return
 end
 

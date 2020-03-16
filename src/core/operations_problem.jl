@@ -50,7 +50,7 @@ This builds the optimization problem of type M with the specific system and temp
 - `sys::PSY.System`: the system created using Power Systems
 - `jump_model::Union{Nothing, JuMP.AbstractModel}`: Enables passing a custom JuMP model. Use with care
 # Output
-- `op_problem::OperationsProblem`: The operation model containing the model type, instantiated JuMP model, Power
+- `op_problem::OperationsProblem`: The operation model containing the model type, built JuMP model, Power
 Systems system.
 # Example
 ```julia
@@ -102,7 +102,7 @@ end
                     jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
                     kwargs...) where {M<:AbstractOperationsProblem,
                                       T<:PM.AbstractPowerFormulation}
-This Return an uninstantiated operation problem of type M with the specific system and network model T.
+This Return an unbuilt operation problem of type M with the specific system and network model T.
     This constructor doesn't build any device model; it is meant to built device models individually using [`construct_device!`](@ref)
 # Arguments
 - `::Type{M} where M<:AbstractOperationsProblem`: The abstract operation model type
@@ -110,7 +110,7 @@ This Return an uninstantiated operation problem of type M with the specific syst
 - `sys::PSY.System`: the system created using Power Systems
 - `jump_model::Union{Nothing, JuMP.AbstractModel}`: Enables passing a custom JuMP model. Use with care
 # Output
-- `op_problem::OperationsProblem`: The operation model containing the model type, uninstantiated JuMP model, Power
+- `op_problem::OperationsProblem`: The operation model containing the model type, unbuilt JuMP model, Power
 Systems system.
 # Example
 ```julia
@@ -159,14 +159,14 @@ end
                     jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
                     kwargs...) where {M<:AbstractOperationsProblem,
                                       T<:PM.AbstractPowerFormulation}
-This return an uninstantiated operation problem of type GenericOpProblem with the specific system and network model T.
+This return an unbuilt operation problem of type GenericOpProblem with the specific system and network model T.
     This constructor doesn't build any device model; it is meant to built device models individually using [`construct_device!`](@ref)
 # Arguments
 - `::Type{T} where T<:AbstractPowerModel`: The abstract network formulation
 - `sys::PSY.System`: the system created using Power Systems
 - `jump_model::Union{Nothing, JuMP.AbstractModel}`: Enables passing a custom JuMP model. Use with care
 # Output
-- `op_problem::OperationsProblem`: The operation model containing the model type, uninstantiated JuMP model, Power
+- `op_problem::OperationsProblem`: The operation model containing the model type, unbuilt JuMP model, Power
 Systems system.
 # Example
 ```julia
@@ -353,7 +353,6 @@ function _build!(
     template::OperationsProblemTemplate,
     sys::PSY.System,
 )
-    @assert container_instantiated(psi_container)
     transmission = template.transmission
     # Order is required
     construct_services!(psi_container, sys, template.services, template.devices)
