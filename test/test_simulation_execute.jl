@@ -38,9 +38,16 @@ function test_load_simulation(file_path::String)
             GenericOpProblem,
             template_hydro_basic_uc,
             c_sys5_hy_uc,
-            GLPK_optimizer,
+            GLPK_optimizer;
+            constraint_duals = duals,
         ),
-        "ED" =>     Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, ipopt_optimizer),
+        "ED" => Stage(
+            GenericOpProblem,
+            template_hydro_ed,
+            c_sys5_hy_ed,
+            ipopt_optimizer;
+            constraint_duals = duals,
+        ),
     )
 
     sequence = SimulationSequence(
@@ -72,7 +79,7 @@ function test_load_simulation(file_path::String)
         simulation_folder = file_path,
     )
     build!(sim)
-    sim_results = execute!(sim; constraints_duals = duals)
+    sim_results = execute!(sim)
     stage_names = keys(sim.stages)
     step = ["step-1", "step-2"]
 

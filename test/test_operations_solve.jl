@@ -225,8 +225,9 @@ op_problem = OperationsProblem(
     c_sys5_re;
     optimizer = OSQP_optimizer,
     use_parameters = true,
+    constraint_duals = duals,
 )
-res = solve!(op_problem; constraints_duals = duals)
+res = solve!(op_problem)
 @testset "Test print methods" begin
     list = [template, op_problem, op_problem.psi_container, res, services]
     _test_print_methods(list)
@@ -237,7 +238,7 @@ end
         dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
         @test isapprox(dual, get_duals(res)[name][i, 1])
     end
-    dual_results = get_dual_values(op_problem, duals)
+    dual_results = get_dual_values(op_problem.psi_container, duals)
     @test dual_results == res.dual_values
 end
 
