@@ -265,7 +265,7 @@ end
 function _export_model_result(stage::Stage, start_time::Dates.DateTime, save_path::String)
     duals = Dict()
     if is_milp(stage.internal.psi_container)
-        @warn("$(stage.internal.number) is a MILP, duals can't be exported")
+        @warn("Stage $(stage.internal.number) is an MILP, duals can't be exported")
     else
         for c in get_constraint_duals(get_psi_container(stage).settings)
             v = get_constraint(get_psi_container(stage), c)
