@@ -205,8 +205,10 @@ function test_load_simulation(file_path::String)
             for name in keys(sim.stages)
                 stage = sim.stages[name]
                 results = load_simulation_results(sim_results, name)
-                resolution =
-                    convert(Dates.Millisecond, PSY.get_forecasts_resolution(PSI.get_sys(stage)))
+                resolution = convert(
+                    Dates.Millisecond,
+                    PSY.get_forecasts_resolution(PSI.get_sys(stage)),
+                )
                 time_stamp = results.time_stamp
                 length = size(time_stamp, 1)
                 test = results.time_stamp[1, 1]:resolution:results.time_stamp[length, 1]
@@ -219,7 +221,11 @@ function test_load_simulation(file_path::String)
             res = PSI.load_simulation_results(sim_results, "ED")
             dual =
                 JuMP.dual(sim.stages["ED"].internal.psi_container.constraints[:CopperPlateBalance][1])
-            @test isapprox(dual, res.dual_values[:dual_CopperPlateBalance][1, 1], atol = 1.0e-4)
+            @test isapprox(
+                dual,
+                res.dual_values[:dual_CopperPlateBalance][1, 1],
+                atol = 1.0e-4,
+            )
             !ispath(res.results_folder) && mkdir(res.results_folder)
             PSI.write_to_CSV(res)
             @test !isempty(res.results_folder)
@@ -276,7 +282,8 @@ function test_load_simulation(file_path::String)
                 initial_conditions =
                     get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
                 for ic in initial_conditions
-                    raw_result = Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
+                    raw_result =
+                        Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
                     initial_cond = value(PSI.get_value(ic))
                     @test isapprox(raw_result, initial_cond; atol = 1e-2)
                 end

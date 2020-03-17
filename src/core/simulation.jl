@@ -720,11 +720,9 @@ function serialize(simulation::Simulation; path = ".", force = false)
 
     orig = pwd()
     if isdir(directory) || ispath(directory) && !force
-        throw(ArgumentError(
-            "$directory already exists. Please delete it or pass force = true."
-        ))
+        throw(ArgumentError("$directory already exists. Please delete it or pass force = true."))
     end
-    rm(directory, recursive=true, force=true)
+    rm(directory, recursive = true, force = true)
     mkdir(directory)
     cd(directory)
 
@@ -784,7 +782,7 @@ function deserialize(
     ::Type{Simulation},
     directory::AbstractString,
     stage_info::Dict;
-    kwargs...
+    kwargs...,
 )
     orig = pwd()
     cd(directory)
@@ -827,7 +825,7 @@ function deserialize(
             stages = stages,
             stages_sequence = obj.sequence,
             simulation_folder = obj.simulation_folder,
-            kwargs...
+            kwargs...,
         )
         build!(sim)
         return sim

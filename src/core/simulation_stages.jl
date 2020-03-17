@@ -44,7 +44,7 @@ mutable struct Stage{M <: AbstractOperationsProblem}
         template::OperationsProblemTemplate,
         sys::PSY.System,
         settings::PSISettings,
-        jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+        jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;,
     ) where {M <: AbstractOperationsProblem}
         internal = StageInternal(
             0,

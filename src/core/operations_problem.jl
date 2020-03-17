@@ -85,12 +85,7 @@ function OperationsProblem{M}(
 ) where {M <: AbstractOperationsProblem}
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
     settings = PSISettings(sys; kwargs...)
-    return OperationsProblem{M}(
-        template,
-        sys,
-        jump_model,
-        settings,
-    )
+    return OperationsProblem{M}(template, sys, jump_model, settings)
 end
 
 function OperationsProblem{M}(
@@ -220,8 +215,8 @@ Construct an OperationsProblem from a serialized file.
 """
 function OperationsProblem(
     filename::AbstractString;
-    jump_model::Union{Nothing,JuMP.AbstractModel} = nothing,
-    optimizer::Union{Nothing,JuMP.MOI.OptimizerWithAttributes} = nothing,
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
 )
     return deserialize(
         OperationsProblem,
