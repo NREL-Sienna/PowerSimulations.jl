@@ -30,8 +30,8 @@ function _make_jump_model(
         if parameters
             if !haskey(JuMPmodel.ext, :params)
                 @info("Model doesn't have Parameters enabled. Parameters will be enabled")
+                PJ.enable_parameters(JuMPmodel)
             end
-            PJ.enable_parameters(JuMPmodel)
         end
         return JuMPmodel
     end
@@ -98,43 +98,76 @@ struct PSISettings
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
     constraint_duals::Vector{Symbol}
     ext::Dict{String, Any}
+end
 
-    function PSISettings(
-        sys;
-        initial_time::Union{Nothing, Dates.DateTime} = nothing,
-        use_parameters::Bool = false,
-        use_forecast_data::Bool = true,
-        initial_conditions = InitialConditionsContainer(),
-        use_warm_start::Bool = true,
-        horizon::Int = 0,
-        PTDF::Union{Nothing, PSY.PTDF} = nothing,
-        optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
-        constraint_duals::Vector{Symbol} = Vector{Symbol}(),
-        ext::Dict{String, Any} = Dict{String, Any}(),
-    )
+function PSISettings(
+    sys;
+    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    use_parameters::Bool = false,
+    use_forecast_data::Bool = true,
+    initial_conditions = InitialConditionsContainer(),
+    use_warm_start::Bool = true,
+    horizon::Int = 0,
+    PTDF::Union{Nothing, PSY.PTDF} = nothing,
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+    constraint_duals::Vector{Symbol} = Vector{Symbol}(),
+    ext::Dict{String, Any} = Dict{String, Any}(),
+)
 
-        if isnothing(initial_time)
-            initial_time = PSY.get_forecasts_initial_time(sys)
-        end
-
-        if horizon == 0
-            horizon = PSY.get_forecasts_horizon(sys)
-        end
-
-        new(
-            Ref(horizon),
-            initial_conditions,
-            use_forecast_data,
-            use_parameters,
-            Ref(use_warm_start),
-            Ref(initial_time),
-            PTDF,
-            optimizer,
-            constraint_duals,
-            ext,
-        )
+    if isnothing(initial_time)
+        initial_time = PSY.get_forecasts_initial_time(sys)
     end
 
+    if horizon == 0
+        horizon = PSY.get_forecasts_horizon(sys)
+    end
+
+    return PSISettings(
+        Ref(horizon),
+        initial_conditions,
+        use_forecast_data,
+        use_parameters,
+        Ref(use_warm_start),
+        Ref(initial_time),
+        PTDF,
+        optimizer,
+        constraint_duals,
+        ext,
+    )
+end
+
+function copy_for_serialization(settings::PSISettings)
+    vals = []
+    for name in fieldnames(PSISettings)
+        if name == :optimizer
+            # Cannot guarantee that the optimizer can be serialized.
+            val = nothing
+        else
+            val = getfield(settings, name)
+        end
+
+        push!(vals, val)
+    end
+
+    return deepcopy(PSISettings(vals...))
+end
+
+function restore_from_copy(
+    settings::PSISettings;
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
+)
+    vals = []
+    for name in fieldnames(PSISettings)
+        if name == :optimizer
+            val = optimizer
+        else
+            val = getfield(settings, name)
+        end
+
+        push!(vals, val)
+    end
+
+    return PSISettings(vals...)
 end
 
 function set_horizon!(settings::PSISettings, horizon::Int)
@@ -197,6 +230,7 @@ mutable struct PSIContainer
     time_steps::UnitRange{Int}
     resolution::Dates.TimePeriod
     settings::PSISettings
+    settings_copy::PSISettings
     variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     cost_function::JuMP.AbstractJuMPScalar
@@ -224,6 +258,7 @@ mutable struct PSIContainer
             time_steps,
             resolution,
             settings,
+            copy_for_serialization(settings),
             variables,
             constraints,
             cost_function,

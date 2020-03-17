@@ -1,3 +1,6 @@
+
+const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
+
 mutable struct SimulationInternal
     raw_dir::Union{String, Nothing}
     models_dir::Union{String, Nothing}
@@ -698,4 +701,148 @@ function execute!(sim::Simulation; kwargs...)
     @info ("\n$(RUN_SIMULATION_TIMER)\n")
     serialize_sim_output(sim_results)
     return sim_results
+end
+
+struct SimulationSerializationWrapper
+    steps::Int
+    stages::Dict{String, StageSerializationWrapper}
+    initial_time::Union{Nothing, Dates.DateTime}
+    sequence::Union{Nothing, SimulationSequence}
+    simulation_folder::String
+    name::String
+end
+
+"""
+    serialize(simulation::Simulation, path = ".")
+
+Serialize the simulation to a directory in path.
+
+Return the serialized simulation directory name that is created.
+
+# Arguments
+- `simulation::Simulation`: simulation to serialize
+- `path = "."`: path in which to create the serialzed directory
+- `force = false`: If true, delete the directory if it already exists. Otherwise, it will
+   throw an exception.
+"""
+function serialize(simulation::Simulation; path = ".", force = false)
+    directory = joinpath(path, "simulation-$(simulation.name)")
+    stages = Dict{String, StageSerializationWrapper}()
+
+    orig = pwd()
+    if isdir(directory) || ispath(directory) && !force
+        throw(ArgumentError(
+            "$directory already exists. Please delete it or pass force = true."
+        ))
+    end
+    rm(directory, recursive=true, force=true)
+    mkdir(directory)
+    cd(directory)
+
+    try
+        for (key, stage) in simulation.stages
+            if isnothing(stage.internal)
+                throw(ArgumentError("stage $(stage.number) has not been built"))
+            end
+            sys_filename = "system-$(IS.get_uuid(stage.sys)).json"
+            # Skip serialization if multiple stages have the same system.
+            if !ispath(sys_filename)
+                PSY.to_json(stage.sys, sys_filename)
+            end
+            stages[key] = StageSerializationWrapper(
+                stage.template,
+                sys_filename,
+                stage.internal.psi_container.settings_copy,
+                typeof(stage),
+            )
+        end
+    finally
+        cd(orig)
+    end
+
+    filename = joinpath(directory, SIMULATION_SERIALIZATION_FILENAME)
+    obj = SimulationSerializationWrapper(
+        simulation.steps,
+        stages,
+        simulation.initial_time,
+        simulation.sequence,
+        simulation.simulation_folder,
+        simulation.name,
+    )
+    Serialization.serialize(filename, obj)
+    @info "Serialized simulation" simulation.name directory
+    return directory
+end
+
+"""
+    Simulation(directory::AbstractString; kwargs...)
+
+Constructs Simulation from a serialized directory. Callers should pass any kwargs here that
+they passed to the original Simulation.
+
+# Arguments
+- `directory::AbstractString`: the directory returned from the call to serialize
+- `stage_info::Dict`: Two-level dictionary containing stage parameters that cannot be
+  serialized. The outer dict should be keyed by the stage name. The inner dict must contain
+  'optimizer' and may contain 'jump_model'. These should be the same values used for the
+  original simulation.
+"""
+function Simulation(directory::AbstractString, stage_info::Dict; kwargs...)
+    obj = deserialize(Simulation, directory, stage_info)
+end
+
+function deserialize(
+    ::Type{Simulation},
+    directory::AbstractString,
+    stage_info::Dict;
+    kwargs...
+)
+    orig = pwd()
+    cd(directory)
+
+    try
+        filename = SIMULATION_SERIALIZATION_FILENAME
+        if !ispath(filename)
+            throw(ArgumentError("$filename does not exist"))
+        end
+
+        obj = Serialization.deserialize(filename)
+        if !(obj isa SimulationSerializationWrapper)
+            throw(IS.DataFormatError("deserialized object has incorrect type $(typeof(obj))"))
+        end
+
+        stages = Dict{String, Stage{<:AbstractOperationsProblem}}()
+        for (key, wrapper) in obj.stages
+            sys_filename = wrapper.sys
+            if !ispath(sys_filename)
+                throw(ArgumentError("stage PowerSystems serialized file $sys_filename does not exist"))
+            end
+            sys = PSY.System(sys_filename)
+            if !haskey(stage_info[key], "optimizer")
+                throw(ArgumentError("stage_info must define 'optimizer'"))
+            end
+            stages[key] = wrapper.stage_type(
+                wrapper.template,
+                sys,
+                restore_from_copy(
+                    wrapper.settings;
+                    optimizer = stage_info[key]["optimizer"],
+                ),
+                get(stage_info[key], "jump_model", nothing),
+            )
+        end
+
+        sim = Simulation(;
+            name = obj.name,
+            steps = obj.steps,
+            stages = stages,
+            stages_sequence = obj.sequence,
+            simulation_folder = obj.simulation_folder,
+            kwargs...
+        )
+        build!(sim)
+        return sim
+    finally
+        cd(orig)
+    end
 end

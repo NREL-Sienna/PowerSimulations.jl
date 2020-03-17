@@ -1,5 +1,11 @@
-path = (joinpath(pwd(), "test_reading_results"))
-!isdir(path) && mkdir(path)
+g_test_path = (joinpath(pwd(), "test_reading_results"))
+!isdir(g_test_path) && mkdir(g_test_path)
+
+function get_deserialized(sim::Simulation, stage_info; kwargs...)
+    path = mktempdir()
+    directory = PSI.serialize(sim; path = path)
+    return Simulation(directory, stage_info; kwargs...)
+end
 
 function test_load_simulation(file_path::String)
 
@@ -31,6 +37,10 @@ function test_load_simulation(file_path::String)
 
     end
 
+    stage_info = Dict(
+        "UC" => Dict("optimizer" => GLPK_optimizer, "jump_model" => nothing),
+        "ED" => Dict("optimizer" => ipopt_optimizer),
+    )
     # Tests of a Simulation without Caches
     duals = [:CopperPlateBalance]
     stages_definition = Dict(
@@ -38,9 +48,14 @@ function test_load_simulation(file_path::String)
             GenericOpProblem,
             template_hydro_basic_uc,
             c_sys5_hy_uc,
-            GLPK_optimizer,
+            stage_info["UC"]["optimizer"],
         ),
-        "ED" =>     Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, ipopt_optimizer),
+        "ED" => Stage(
+            GenericOpProblem,
+            template_hydro_ed,
+            c_sys5_hy_ed,
+            stage_info["ED"]["optimizer"],
+        ),
     )
 
     sequence = SimulationSequence(
@@ -71,190 +86,202 @@ function test_load_simulation(file_path::String)
         stages_sequence = sequence,
         simulation_folder = file_path,
     )
-    build!(sim)
-    sim_results = execute!(sim; constraints_duals = duals)
-    stage_names = keys(sim.stages)
-    step = ["step-1", "step-2"]
 
-    @testset "All stages executed - No Cache" begin
-        for name in stage_names
-            stage = PSI.get_stage(sim, name)
-            @test JuMP.termination_status(stage.internal.psi_container.JuMPmodel) in
-                  [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+    # Run twice, once building normally, once after deserializing.
+    for i in 1:2
+        if i == 1
+            build!(sim)
+        else
+            rm(g_test_path, recursive = true)
+            mkdir(g_test_path)
+            sim = get_deserialized(sim, stage_info)
         end
-    end
+        sim_results = execute!(sim; constraints_duals = duals)
 
-    @testset "Test reading and writing to the results folder" begin
-        for name in stage_names
-            files = collect(readdir(sim_results.results_folder))
-            for f in files
-                rm("$(sim_results.results_folder)/$f")
-            end
-            rm(sim_results.results_folder)
-            res = load_simulation_results(sim_results, name)
-            !ispath(res.results_folder) && mkdir(res.results_folder)
-            write_results(res)
-            loaded_res = load_operation_results(sim_results.results_folder)
-            @test loaded_res.variable_values == res.variable_values
-            @test loaded_res.parameter_values == res.parameter_values
-        end
-    end
+        stage_names = keys(sim.stages)
+        step = ["step-1", "step-2"]
 
-    @testset "Test file names" begin
-        for name in stage_names
-            files = collect(readdir(sim_results.results_folder))
-            for f in files
-                rm("$(sim_results.results_folder)/$f")
-            end
-            res = load_simulation_results(sim_results, name)
-            write_results(res)
-            variable_list = String.(PSI.get_variable_names(sim, name))
-            variable_list = [
-                variable_list
-                "dual_CopperPlateBalance"
-                "optimizer_log"
-                "time_stamp"
-                "check"
-                "base_power"
-                "parameter_P_InterruptibleLoad"
-                "parameter_P_PowerLoad"
-                "parameter_P_RenewableDispatch"
-                "parameter_P_HydroEnergyReservoir"
-            ]
-            file_list = collect(readdir(sim_results.results_folder))
-            for name in file_list
-                variable = splitext(name)[1]
-                @test any(x -> x == variable, variable_list)
+        @testset "All stages executed - No Cache" begin
+            for name in stage_names
+                stage = PSI.get_stage(sim, name)
+                @test JuMP.termination_status(stage.internal.psi_container.JuMPmodel) in
+                      [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
             end
         end
-    end
 
-    @testset "Test argument errors" begin
-        for name in stage_names
-            res = load_simulation_results(sim_results, name)
-            if isdir(res.results_folder)
-                files = collect(readdir(res.results_folder))
+        @testset "Test reading and writing to the results folder" begin
+            for name in stage_names
+                files = collect(readdir(sim_results.results_folder))
                 for f in files
-                    rm("$(res.results_folder)/$f")
+                    rm("$(sim_results.results_folder)/$f")
                 end
-                rm("$(res.results_folder)")
-            end
-            @test_throws IS.ConflictingInputsError write_results(res)
-        end
-    end
-
-    @testset "Test simulation output serialization and deserialization" begin
-        output_path = joinpath(dirname(sim_results.results_folder), "output_references")
-        sim_output = collect(readdir(output_path))
-        @test sim_output == [
-            "base_power.json",
-            "chronologies.json",
-            "results_folder.json",
-            "stage-ED",
-            "stage-UC",
-        ]
-        sim_test = PSI.deserialize_sim_output(dirname(output_path))
-        @test sim_test.ref == sim_results.ref
-    end
-
-    @testset "Test load simulation results between the two methods of load simulation" begin
-        for name in stage_names
-            variable = PSI.get_variable_names(sim, name)
-            results = load_simulation_results(sim_results, name)
-            res = load_simulation_results(sim_results, name, step, variable)
-            @test results.variable_values == res.variable_values
-            @test results.parameter_values == res.parameter_values
-        end
-    end
-
-    @testset "Test verify length of time_stamp" begin
-        for name in keys(sim.stages)
-            results = load_simulation_results(sim_results, name)
-            @test size(unique(results.time_stamp), 1) == size(results.time_stamp, 1)
-        end
-    end
-
-    @testset "Test verify no gaps in the time_stamp" begin
-        for name in keys(sim.stages)
-            stage = sim.stages[name]
-            results = load_simulation_results(sim_results, name)
-            resolution =
-                convert(Dates.Millisecond, PSY.get_forecasts_resolution(PSI.get_sys(stage)))
-            time_stamp = results.time_stamp
-            length = size(time_stamp, 1)
-            test = results.time_stamp[1, 1]:resolution:results.time_stamp[length, 1]
-            @test time_stamp[!, :Range] == test
-        end
-    end
-    ###########################################################
-
-    @testset "Test dual constraints in results" begin
-        res = PSI.load_simulation_results(sim_results, "ED")
-        dual =
-            JuMP.dual(sim.stages["ED"].internal.psi_container.constraints[:CopperPlateBalance][1])
-        @test isapprox(dual, res.dual_values[:dual_CopperPlateBalance][1, 1], atol = 1.0e-4)
-        !ispath(res.results_folder) && mkdir(res.results_folder)
-        PSI.write_to_CSV(res)
-        @test !isempty(res.results_folder)
-    end
-
-    @testset "Test verify parameter feedforward for consecutive UC to ED" begin
-        P_keys = [
-            (PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
-            #(PSI.ON, PSY.ThermalStandard),
-            #(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
-        ]
-
-        vars_names = [
-            PSI.variable_name(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
-            #PSI.variable_name(PSI.ON, PSY.ThermalStandard),
-            #PSI.variable_name(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
-        ]
-        for (ik, key) in enumerate(P_keys)
-            variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1] # 1 is first step
-            array = PSI.get_parameter_array(PSI.get_parameter_container(
-                sim.stages["ED"].internal.psi_container,
-                Symbol(key[1]),
-                key[2],
-            ))
-            parameter = collect(values(value.(array.data)))  # [device, time] 1 is first execution
-            raw_result = Feather.read(variable_ref)
-            for i in 1:size(parameter, 1)
-                result = raw_result[end, i] # end is last result [time, device]
-                initial = parameter[1] # [device, time]
-                @test isapprox(initial, result)
+                rm(sim_results.results_folder)
+                res = load_simulation_results(sim_results, name)
+                !ispath(res.results_folder) && mkdir(res.results_folder)
+                write_results(res)
+                loaded_res = load_operation_results(sim_results.results_folder)
+                @test loaded_res.variable_values == res.variable_values
+                @test loaded_res.parameter_values == res.parameter_values
             end
         end
-    end
 
-    @testset "Test verify time gap for Consecutive" begin
-        names = ["UC"]
-        for name in names
-            variable_list = PSI.get_variable_names(sim, name)
-            reference_1 = PSI.get_reference(sim_results, name, 1, variable_list[1])[1]
-            reference_2 = PSI.get_reference(sim_results, name, 2, variable_list[1])[1]
-            time_file_path_1 = joinpath(dirname(reference_1), "time_stamp.feather") #first line, file path
-            time_file_path_2 = joinpath(dirname(reference_2), "time_stamp.feather")
-            time_1 = convert(Dates.DateTime, Feather.read(time_file_path_1)[end, 1]) # first time
-            time_2 = convert(Dates.DateTime, Feather.read(time_file_path_2)[1, 1])
-            @test time_2 == time_1
+        @testset "Test file names" begin
+            for name in stage_names
+                files = collect(readdir(sim_results.results_folder))
+                for f in files
+                    rm("$(sim_results.results_folder)/$f")
+                end
+                res = load_simulation_results(sim_results, name)
+                write_results(res)
+                variable_list = String.(PSI.get_variable_names(sim, name))
+                variable_list = [
+                    variable_list
+                    "dual_CopperPlateBalance"
+                    "optimizer_log"
+                    "time_stamp"
+                    "check"
+                    "base_power"
+                    "parameter_P_InterruptibleLoad"
+                    "parameter_P_PowerLoad"
+                    "parameter_P_RenewableDispatch"
+                    "parameter_P_HydroEnergyReservoir"
+                ]
+                file_list = collect(readdir(sim_results.results_folder))
+                for name in file_list
+                    variable = splitext(name)[1]
+                    @test any(x -> x == variable, variable_list)
+                end
+            end
         end
-    end
 
-    @testset "Test verify initial condition feedforward for consecutive ED to UC" begin
-        ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
-        vars_names = [PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
-        for (ik, key) in enumerate(ic_keys)
-            variable_ref = PSI.get_reference(sim_results, "ED", 1, vars_names[ik])[24]
-            initial_conditions =
-                get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
-            for ic in initial_conditions
-                raw_result = Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
-                initial_cond = value(PSI.get_value(ic))
-                @test isapprox(raw_result, initial_cond; atol = 1e-2)
+        @testset "Test argument errors" begin
+            for name in stage_names
+                res = load_simulation_results(sim_results, name)
+                if isdir(res.results_folder)
+                    files = collect(readdir(res.results_folder))
+                    for f in files
+                        rm("$(res.results_folder)/$f")
+                    end
+                    rm("$(res.results_folder)")
+                end
+                @test_throws IS.ConflictingInputsError write_results(res)
+            end
+        end
+
+        @testset "Test simulation output serialization and deserialization" begin
+            output_path = joinpath(dirname(sim_results.results_folder), "output_references")
+            sim_output = collect(readdir(output_path))
+            @test sim_output == [
+                "base_power.json",
+                "chronologies.json",
+                "results_folder.json",
+                "stage-ED",
+                "stage-UC",
+            ]
+            sim_test = PSI.deserialize_sim_output(dirname(output_path))
+            @test sim_test.ref == sim_results.ref
+        end
+
+        @testset "Test load simulation results between the two methods of load simulation" begin
+            for name in stage_names
+                variable = PSI.get_variable_names(sim, name)
+                results = load_simulation_results(sim_results, name)
+                res = load_simulation_results(sim_results, name, step, variable)
+                @test results.variable_values == res.variable_values
+                @test results.parameter_values == res.parameter_values
+            end
+        end
+
+        @testset "Test verify length of time_stamp" begin
+            for name in keys(sim.stages)
+                results = load_simulation_results(sim_results, name)
+                @test size(unique(results.time_stamp), 1) == size(results.time_stamp, 1)
+            end
+        end
+
+        @testset "Test verify no gaps in the time_stamp" begin
+            for name in keys(sim.stages)
+                stage = sim.stages[name]
+                results = load_simulation_results(sim_results, name)
+                resolution =
+                    convert(Dates.Millisecond, PSY.get_forecasts_resolution(PSI.get_sys(stage)))
+                time_stamp = results.time_stamp
+                length = size(time_stamp, 1)
+                test = results.time_stamp[1, 1]:resolution:results.time_stamp[length, 1]
+                @test time_stamp[!, :Range] == test
+            end
+        end
+        ###########################################################
+
+        @testset "Test dual constraints in results" begin
+            res = PSI.load_simulation_results(sim_results, "ED")
+            dual =
+                JuMP.dual(sim.stages["ED"].internal.psi_container.constraints[:CopperPlateBalance][1])
+            @test isapprox(dual, res.dual_values[:dual_CopperPlateBalance][1, 1], atol = 1.0e-4)
+            !ispath(res.results_folder) && mkdir(res.results_folder)
+            PSI.write_to_CSV(res)
+            @test !isempty(res.results_folder)
+        end
+
+        @testset "Test verify parameter feedforward for consecutive UC to ED" begin
+            P_keys = [
+                (PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
+                #(PSI.ON, PSY.ThermalStandard),
+                #(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
+            ]
+
+            vars_names = [
+                PSI.variable_name(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
+                #PSI.variable_name(PSI.ON, PSY.ThermalStandard),
+                #PSI.variable_name(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
+            ]
+            for (ik, key) in enumerate(P_keys)
+                variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1] # 1 is first step
+                array = PSI.get_parameter_array(PSI.get_parameter_container(
+                    sim.stages["ED"].internal.psi_container,
+                    Symbol(key[1]),
+                    key[2],
+                ))
+                parameter = collect(values(value.(array.data)))  # [device, time] 1 is first execution
+                raw_result = Feather.read(variable_ref)
+                for i in 1:size(parameter, 1)
+                    result = raw_result[end, i] # end is last result [time, device]
+                    initial = parameter[1] # [device, time]
+                    @test isapprox(initial, result)
+                end
+            end
+        end
+
+        @testset "Test verify time gap for Consecutive" begin
+            names = ["UC"]
+            for name in names
+                variable_list = PSI.get_variable_names(sim, name)
+                reference_1 = PSI.get_reference(sim_results, name, 1, variable_list[1])[1]
+                reference_2 = PSI.get_reference(sim_results, name, 2, variable_list[1])[1]
+                time_file_path_1 = joinpath(dirname(reference_1), "time_stamp.feather") #first line, file path
+                time_file_path_2 = joinpath(dirname(reference_2), "time_stamp.feather")
+                time_1 = convert(Dates.DateTime, Feather.read(time_file_path_1)[end, 1]) # first time
+                time_2 = convert(Dates.DateTime, Feather.read(time_file_path_2)[1, 1])
+                @test time_2 == time_1
+            end
+        end
+
+        @testset "Test verify initial condition feedforward for consecutive ED to UC" begin
+            ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
+            vars_names = [PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
+            for (ik, key) in enumerate(ic_keys)
+                variable_ref = PSI.get_reference(sim_results, "ED", 1, vars_names[ik])[24]
+                initial_conditions =
+                    get_initial_conditions(PSI.get_psi_container(sim, "UC"), key)
+                for ic in initial_conditions
+                    raw_result = Feather.read(variable_ref)[end, Symbol(PSI.device_name(ic))] # last value of last hour
+                    initial_cond = value(PSI.get_value(ic))
+                    @test isapprox(raw_result, initial_cond; atol = 1e-2)
+                end
             end
         end
     end
+
     ####################
     stages_definition = Dict(
         "UC" => Stage(
@@ -527,8 +554,8 @@ function test_load_simulation(file_path::String)
     end
 end
 try
-    test_load_simulation(path)
+    test_load_simulation(g_test_path)
 finally
     @info("removing test files")
-    rm(path, recursive = true)
+    rm(g_test_path, recursive = true)
 end
