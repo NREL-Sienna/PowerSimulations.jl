@@ -48,13 +48,15 @@ function test_load_simulation(file_path::String)
             GenericOpProblem,
             template_hydro_basic_uc,
             c_sys5_hy_uc,
-            stage_info["UC"]["optimizer"],
+            stage_info["UC"]["optimizer"];
+            constraint_duals = dual,
         ),
         "ED" => Stage(
             GenericOpProblem,
             template_hydro_ed,
             c_sys5_hy_ed,
-            stage_info["ED"]["optimizer"],
+            stage_info["ED"]["optimizer"];
+            constraint_duals = duals,
         ),
     )
 

@@ -1,4 +1,3 @@
-
 mutable struct InitialCondition{T <: Union{PJ.ParameterRef, Float64}}
     device::PSY.Device
     update_ref::UpdateRef
@@ -190,7 +189,8 @@ function set_use_warm_start!(settings::PSISettings, use_warm_start::Bool)
     settings.use_warm_start[] = use_warm_start
     return
 end
-get_use_warm_start(settings) = settings.use_warm_start[]
+get_use_warm_start(settings::PSISettings) = settings.use_warm_start[]
+get_constraint_duals(settings::PSISettings) = settings.constraint_duals
 
 function _psi_container_init(
     bus_numbers::Vector{Int},
@@ -636,6 +636,11 @@ function _write_psi_container(psi_container::PSIContainer, save_path::String)
     MOI.copy_to(MOF_model, JuMP.backend(psi_container.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)
     return
+end
+
+function get_dual_values(psi_container::PSIContainer)
+    cons = get_constraint_duals(psi_container.settings)
+    return get_dual_values(psi_container, cons)
 end
 
 function get_dual_values(op::PSIContainer, cons::Vector{Symbol})

@@ -172,12 +172,7 @@ function build!(
     return
 end
 
-function run_stage(
-    stage::Stage,
-    start_time::Dates.DateTime,
-    results_path::String;
-    kwargs...,
-)
+function run_stage(stage::Stage, start_time::Dates.DateTime, results_path::String)
     @assert stage.internal.psi_container.JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
     timed_log = Dict{Symbol, Any}()
 
@@ -192,17 +187,8 @@ function run_stage(
         error("Stage $(stage.internal.number) status is $(model_status)")
     end
     # TODO: Add Fallback when optimization fails
-    retrieve_duals = get(kwargs, :constraints_duals, nothing)
-    if !isnothing(retrieve_duals)
-        if is_milp(stage.internal.psi_container)
-            @warn("$(stage.internal.number) is a MILP, duals can't be exported")
-            _export_model_result(stage, start_time, results_path)
-        else
-            _export_model_result(stage, start_time, results_path, retrieve_duals)
-        end
-    else
-        _export_model_result(stage, start_time, results_path)
-    end
+    # if is_milp(stage.internal.psi_container)
+    _export_model_result(stage, start_time, results_path)
     _export_optimizer_log(timed_log, stage.internal.psi_container, results_path)
     stage.internal.execution_count += 1
     # Reset execution count
@@ -286,24 +272,14 @@ end
 
 # These functions are writing directly to the feather file and skipping printing to memory.
 function _export_model_result(stage::Stage, start_time::Dates.DateTime, save_path::String)
-    write_data(stage, save_path)
-    write_data(get_time_stamps(stage, start_time), save_path, "time_stamp")
-    write_data(get_parameters_value(get_psi_container(stage)), save_path; params = true)
-    files = collect(readdir(save_path))
-    compute_file_hash(save_path, files)
-    return
-end
-
-function _export_model_result(
-    stage::Stage,
-    start_time::Dates.DateTime,
-    save_path::String,
-    dual_con::Vector{Symbol},
-)
     duals = Dict()
-    for c in dual_con
-        v = get_constraint(get_psi_container(stage), c)
-        duals[c] = axis_array_to_dataframe(v)
+    if is_milp(stage.internal.psi_container)
+        @warn("Stage $(stage.internal.number) is an MILP, duals can't be exported")
+    else
+        for c in get_constraint_duals(get_psi_container(stage).settings)
+            v = get_constraint(get_psi_container(stage), c)
+            duals[c] = axis_array_to_dataframe(v)
+        end
     end
     write_data(stage, save_path)
     write_data(duals, save_path; duals = true)

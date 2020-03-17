@@ -115,7 +115,7 @@ end
                     jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
                     kwargs...) where {M<:AbstractOperationsProblem,
                                       T<:PM.AbstractPowerFormulation}
-This Return an unbuilt operation problem of type M with the specific system and network model T.
+Return an unbuilt operation problem of type M with the specific system and network model T.
     This constructor doesn't build any device model; it is meant to built device models individually using [`construct_device!`](@ref)
 # Arguments
 - `::Type{M} where M<:AbstractOperationsProblem`: The abstract operation model type
@@ -172,7 +172,7 @@ end
                     jump_model::Union{Nothing, JuMP.AbstractModel}=nothing;
                     kwargs...) where {M<:AbstractOperationsProblem,
                                       T<:PM.AbstractPowerFormulation}
-This return an unbuilt operation problem of type GenericOpProblem with the specific system and network model T.
+Return an unbuilt operation problem of type GenericOpProblem with the specific system and network model T.
     This constructor doesn't build any device model; it is meant to built device models individually using [`construct_device!`](@ref)
 # Arguments
 - `::Type{T} where T<:AbstractPowerModel`: The abstract network formulation
@@ -417,8 +417,8 @@ function get_variables_value(op_m::OperationsProblem)
     return results_dict
 end
 
-function get_dual_values(op_m::OperationsProblem, constraints::Vector{Symbol})
-    return get_dual_values(op_m.psi_container, constraints)
+function get_dual_values(op_m::OperationsProblem)
+    return get_dual_values(op_m.psi_container)
 end
 
 """
@@ -435,12 +435,12 @@ results = solve!(OpModel)
 - `save_path::String`: If a file path is provided the results
 automatically get written to feather files
 - `optimizer::MOI.OptimizerWithAttributes`: The optimizer that is used to solve the model
-- `constraints_duals::Array`: Array of the constraints duals to be in the results
 """
 function solve!(
     op_problem::OperationsProblem{T};
     kwargs...,
 ) where {T <: AbstractOperationsProblem}
+    check_kwargs(kwargs, OPERATIONS_SOLVE_KWARGS, "Solve")
     timed_log = Dict{Symbol, Any}()
     save_path = get(kwargs, :save_path, nothing)
 
@@ -469,8 +469,7 @@ function solve!(
     time_stamp = get_time_stamps(op_problem)
     time_stamp = shorten_time_stamp(time_stamp)
     base_power = PSY.get_basepower(op_problem.sys)
-    constraint_duals = get(kwargs, :constraints_duals, Vector{Symbol}())
-    dual_result = get_dual_values(op_problem, constraint_duals)
+    dual_result = get_dual_values(op_problem)
     obj_value = Dict(
         :OBJECTIVE_FUNCTION => JuMP.objective_value(op_problem.psi_container.JuMPmodel),
     )
