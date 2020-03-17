@@ -43,12 +43,9 @@ mutable struct Stage{M <: AbstractOperationsProblem}
     function Stage{M}(
         template::OperationsProblemTemplate,
         sys::PSY.System,
-        optimizer::JuMP.MOI.OptimizerWithAttributes,
-        jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
-        kwargs...,
+        settings::PSISettings,
+        jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
     ) where {M <: AbstractOperationsProblem}
-        check_kwargs(kwargs, STAGE_ACCEPTED_KWARGS, "Stage")
-        settings = PSISettings(sys; optimizer = optimizer, use_parameters = true, kwargs...)
         internal = StageInternal(
             0,
             0,
@@ -57,6 +54,18 @@ mutable struct Stage{M <: AbstractOperationsProblem}
         )
         new{M}(template, sys, internal)
     end
+end
+
+function Stage{M}(
+    template::OperationsProblemTemplate,
+    sys::PSY.System,
+    optimizer::JuMP.MOI.OptimizerWithAttributes,
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    kwargs...,
+) where {M <: AbstractOperationsProblem}
+    check_kwargs(kwargs, STAGE_ACCEPTED_KWARGS, "Stage")
+    settings = PSISettings(sys; optimizer = optimizer, use_parameters = true, kwargs...)
+    return Stage{M}(template, sys, settings, jump_model)
 end
 
 """
@@ -279,4 +288,11 @@ function _export_model_result(stage::Stage, start_time::Dates.DateTime, save_pat
     files = collect(readdir(save_path))
     compute_file_hash(save_path, files)
     return
+end
+
+struct StageSerializationWrapper
+    template::OperationsProblemTemplate
+    sys::String
+    settings::PSISettings
+    stage_type::DataType
 end

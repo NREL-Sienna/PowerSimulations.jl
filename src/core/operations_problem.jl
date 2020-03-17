@@ -85,7 +85,15 @@ function OperationsProblem{M}(
 ) where {M <: AbstractOperationsProblem}
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
     settings = PSISettings(sys; kwargs...)
+    return OperationsProblem{M}(template, sys, jump_model, settings)
+end
 
+function OperationsProblem{M}(
+    template::OperationsProblemTemplate,
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.AbstractModel},
+    settings::PSISettings,
+) where {M <: AbstractOperationsProblem}
     op_problem = OperationsProblem{M}(
         template,
         sys,
@@ -191,6 +199,31 @@ function OperationsProblem(
     kwargs...,
 ) where {T <: PM.AbstractPowerModel}
     return OperationsProblem{GenericOpProblem}(T, sys, jump_model; kwargs...)
+end
+
+"""
+    OperationsProblem(filename::AbstractString)
+
+Construct an OperationsProblem from a serialized file.
+
+# Arguments
+- `filename::AbstractString`: path to serialized file
+- `jump_model::Union{Nothing, JuMP.AbstractModel}` = nothing: The JuMP model does not get
+   serialized. Callers should pass whatever they passed to the original problem.
+- `optimizer::Union{Nothing,JuMP.MOI.OptimizerWithAttributes}` = nothing: The optimizer does
+   not get serialized. Callers should pass whatever they passed to the original problem.
+"""
+function OperationsProblem(
+    filename::AbstractString;
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+)
+    return deserialize(
+        OperationsProblem,
+        filename;
+        jump_model = jump_model,
+        optimizer = optimizer,
+    )
 end
 
 get_transmission_ref(op_problem::OperationsProblem) = op_problem.template.transmission
@@ -550,4 +583,45 @@ function get_var_index(op_problem::OperationsProblem, index::Int)
     end
     @info "Index not found"
     return
+end
+
+function serialize(op_problem::OperationsProblem, filename::AbstractString)
+    # A PowerSystem cannot be serialized in this format because of how it stores
+    # time series data. Use its specialized serialization method instead.
+    sys_filename = "$(basename(filename))-system-$(IS.get_uuid(op_problem.sys)).json"
+    PSY.to_json(op_problem.sys, sys_filename)
+    obj = OperationsProblemSerializationWrapper(
+        op_problem.template,
+        sys_filename,
+        op_problem.psi_container.settings_copy,
+        typeof(op_problem),
+    )
+    Serialization.serialize(filename, obj)
+    @info "Serialized OperationsProblem to" filename
+end
+
+function deserialize(::Type{OperationsProblem}, filename::AbstractString; kwargs...)
+    obj = Serialization.deserialize(filename)
+    if !(obj isa OperationsProblemSerializationWrapper)
+        throw(IS.DataFormatError("deserialized object has incorrect type $(typeof(obj))"))
+    end
+
+    if !ispath(obj.sys)
+        throw(IS.DataFormatError("PowerSystems.System file $(obj.sys) does not exist"))
+    end
+    sys = PSY.System(obj.sys)
+
+    return obj.op_problem_type(
+        obj.template,
+        sys,
+        kwargs[:jump_model],
+        restore_from_copy(obj.settings; optimizer = kwargs[:optimizer]),
+    )
+end
+
+struct OperationsProblemSerializationWrapper
+    template::OperationsProblemTemplate
+    sys::String
+    settings::PSISettings
+    op_problem_type::DataType
 end

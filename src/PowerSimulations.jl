@@ -134,6 +134,7 @@ export configure_logging
 #################################################################################
 # Imports
 import Logging
+import Serialization
 #Modeling Imports
 import JuMP
 # so that users do not need to import JuMP to use a solver with PowerModels
