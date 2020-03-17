@@ -1,10 +1,10 @@
 g_test_path = (joinpath(pwd(), "test_reading_results"))
 !isdir(g_test_path) && mkdir(g_test_path)
 
-function get_deserialized(sim::Simulation, stage_info; kwargs...)
+function get_deserialized(sim::Simulation, stage_info)
     path = mktempdir()
     directory = PSI.serialize(sim; path = path)
-    return Simulation(directory, stage_info; kwargs...)
+    return Simulation(directory, stage_info)
 end
 
 function test_load_simulation(file_path::String)
@@ -98,7 +98,7 @@ function test_load_simulation(file_path::String)
             mkdir(g_test_path)
             sim = get_deserialized(sim, stage_info)
         end
-        sim_results = execute!(sim; constraints_duals = duals)
+        sim_results = execute!(sim)
 
         stage_names = keys(sim.stages)
         step = ["step-1", "step-2"]

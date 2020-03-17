@@ -52,8 +52,6 @@ const OPERATIONS_SOLVE_KWARGS = [:optimizer, :save_path]
 const STAGE_ACCEPTED_KWARGS =
     [:initial_conditions, :PTDF, :use_warm_start, :constraint_duals]
 
-const SIMULATION_KWARGS = [:initial_time]
-
 const PSI_NAME_DELIMITER = "__"
 
 # The constants below are strings instead of enums because there is a requirement that users

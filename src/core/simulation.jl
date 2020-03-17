@@ -82,12 +82,27 @@ mutable struct Simulation
         steps::Int,
         stages = Dict{String, Stage{AbstractOperationsProblem}}(),
         simulation_folder::String,
-        kwargs...,
+        initial_time = nothing,
     )
-        check_kwargs(kwargs, SIMULATION_KWARGS, "Simulation")
-        initial_time = get(kwargs, :initial_time, nothing)
         new(steps, stages, initial_time, stages_sequence, simulation_folder, name, nothing)
     end
+end
+
+"""
+    Simulation(directory::AbstractString)
+
+Constructs Simulation from a serialized directory. Callers should pass any kwargs here that
+they passed to the original Simulation.
+
+# Arguments
+- `directory::AbstractString`: the directory returned from the call to serialize
+- `stage_info::Dict`: Two-level dictionary containing stage parameters that cannot be
+  serialized. The outer dict should be keyed by the stage name. The inner dict must contain
+  'optimizer' and may contain 'jump_model'. These should be the same values used for the
+  original simulation.
+"""
+function Simulation(directory::AbstractString, stage_info::Dict)
+    obj = deserialize(Simulation, directory, stage_info)
 end
 
 ################# accessor functions ####################
@@ -761,29 +776,7 @@ function serialize(simulation::Simulation; path = ".", force = false)
     return directory
 end
 
-"""
-    Simulation(directory::AbstractString; kwargs...)
-
-Constructs Simulation from a serialized directory. Callers should pass any kwargs here that
-they passed to the original Simulation.
-
-# Arguments
-- `directory::AbstractString`: the directory returned from the call to serialize
-- `stage_info::Dict`: Two-level dictionary containing stage parameters that cannot be
-  serialized. The outer dict should be keyed by the stage name. The inner dict must contain
-  'optimizer' and may contain 'jump_model'. These should be the same values used for the
-  original simulation.
-"""
-function Simulation(directory::AbstractString, stage_info::Dict; kwargs...)
-    obj = deserialize(Simulation, directory, stage_info)
-end
-
-function deserialize(
-    ::Type{Simulation},
-    directory::AbstractString,
-    stage_info::Dict;
-    kwargs...,
-)
+function deserialize(::Type{Simulation}, directory::AbstractString, stage_info::Dict)
     orig = pwd()
     cd(directory)
 
@@ -825,7 +818,6 @@ function deserialize(
             stages = stages,
             stages_sequence = obj.sequence,
             simulation_folder = obj.simulation_folder,
-            kwargs...,
         )
         build!(sim)
         return sim
