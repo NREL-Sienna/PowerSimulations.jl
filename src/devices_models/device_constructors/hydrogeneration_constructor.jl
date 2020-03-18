@@ -21,7 +21,9 @@ function construct_device!(
 
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    reactivepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    # since hydro generators don't currently have pf info, don't add any additional
+    # reactive power constraints other than the variable bounds.
+    # reactivepower_constraints!(psi_container, devices, model, S,get_feedforward(model))
     feedforward!(psi_container, H, get_feedforward(model))
 
     #Cost Function
