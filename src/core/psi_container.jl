@@ -1,24 +1,3 @@
-mutable struct InitialCondition{T <: Union{PJ.ParameterRef, Float64}}
-    device::PSY.Device
-    update_ref::UpdateRef
-    value::T
-    cache_type::Union{Nothing, Type{<:AbstractCache}}
-end
-
-function InitialCondition(
-    device::PSY.Device,
-    update_ref::UpdateRef,
-    value::T,
-) where {T <: Union{PJ.ParameterRef, Float64}}
-    return InitialCondition(device, update_ref, value, nothing)
-end
-
-struct ICKey{IC <: InitialConditionType, D <: PSY.Device}
-    ic_type::Type{IC}
-    device_type::Type{D}
-end
-
-const InitialConditionsContainer = Dict{ICKey, Array{InitialCondition}}
 #Defined here because of dependencies in psi_container
 function _make_jump_model(
     JuMPmodel::Union{Nothing, JuMP.AbstractModel},
@@ -104,7 +83,7 @@ function PSISettings(
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     use_parameters::Bool = false,
     use_forecast_data::Bool = true,
-    initial_conditions = InitialConditionsContainer(),
+    initial_conditions::Union{Nothing, InitialConditionsContainer} = nothing,
     use_warm_start::Bool = true,
     horizon::Int = 0,
     PTDF::Union{Nothing, PSY.PTDF} = nothing,
@@ -119,6 +98,10 @@ function PSISettings(
 
     if horizon == 0
         horizon = PSY.get_forecasts_horizon(sys)
+    end
+
+    if isnothing(initial_conditions)
+        initial_conditions = InitialConditionsContainer(use_parameters = use_parameters)
     end
 
     return PSISettings(
@@ -200,6 +183,9 @@ function _psi_container_init(
     resolution::Dates.TimePeriod,
     settings::PSISettings,
 ) where {S <: PM.AbstractPowerModel}
+    # TODO: If we want to support reset!(Stage) then this needs to be a deepcopy.
+    initial_conditions = get_initial_conditions(settings)
+
     V = JuMP.variable_type(jump_model)
     make_parameters_container = get_use_parameters(settings)
     psi_container = PSIContainer(
@@ -218,8 +204,7 @@ function _psi_container_init(
             make_parameters_container,
         ),
         make_parameters_container ? ParametersContainer() : nothing,
-        #This will be improved with the implementation of inicond passing
-        get_initial_conditions(settings),
+        initial_conditions,
         nothing,
     )
     return psi_container
@@ -238,6 +223,7 @@ mutable struct PSIContainer
     parameters::Union{Nothing, ParametersContainer}
     initial_conditions::InitialConditionsContainer
     pm::Union{Nothing, PM.AbstractPowerModel}
+    built::Bool
 
     function PSIContainer(
         JuMPmodel::JuMP.AbstractModel,
@@ -266,6 +252,7 @@ mutable struct PSIContainer
             parameters,
             initial_conditions,
             pm,
+            false,
         )
     end
 end
@@ -277,8 +264,6 @@ function PSIContainer(
     jump_model::Union{Nothing, JuMP.AbstractModel},
 ) where {T <: PM.AbstractPowerModel}
     PSY.check_forecast_consistency(sys)
-    #This will be improved with the implementation of inicond passing
-    ini_con = get_initial_conditions(settings)
     optimizer = get_optimizer(settings)
     use_parameters = get_use_parameters(settings)
     jump_model = _make_jump_model(jump_model, optimizer, use_parameters)
@@ -300,27 +285,55 @@ function PSIContainer(
 
 end
 
-function InitialCondition(
+function _build!(
     psi_container::PSIContainer,
-    device::T,
-    update_ref::UpdateRef,
-    value::Float64,
-    cache_type::Union{Nothing, Type{<:AbstractCache}} = nothing,
-) where {T <: PSY.Component}
-    if model_has_parameters(psi_container)
-        return InitialCondition(
-            device,
-            update_ref,
-            PJ.add_parameter(psi_container.JuMPmodel, value),
-            cache_type,
-        )
+    template::OperationsProblemTemplate,
+    sys::PSY.System,
+)
+    if psi_container.built
+        error("Rebuilding a PSIContainer is not supported")
+    end
+    transmission = template.transmission
+    # Order is required
+    construct_services!(psi_container, sys, template.services, template.devices)
+    for device_model in values(template.devices)
+        @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
+        construct_device!(psi_container, sys, device_model, transmission)
+    end
+    @debug "Building $(transmission) network formulation"
+    construct_network!(psi_container, sys, transmission)
+    for branch_model in values(template.branches)
+        @debug "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
+        construct_device!(psi_container, sys, branch_model, transmission)
     end
 
-    return InitialCondition(device, update_ref, value, cache_type)
+    if model_has_parameters(psi_container)
+        _add_initial_condition_parameters(psi_container)
+    end
+
+    @debug "Building Objective"
+    JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
+
+    psi_container.built = true
+    return
+end
+
+function _add_initial_condition_parameters(psi_container::PSIContainer)
+    @info "run _add_initial_condition_parameters"
+    for (_, initial_conditions) in iterate_initial_conditions(psi_container)
+        for (i, ic) in enumerate(initial_conditions)
+            val = PJ.add_parameter(psi_container.JuMPmodel, get_value(ic))
+            initial_conditions[i] = InitialCondition(ic.device, ic.update_ref, val, ic.cache_type)
+        end
+    end
 end
 
 function has_initial_conditions(psi_container::PSIContainer, key::ICKey)
-    return key in keys(psi_container.initial_conditions)
+    return has_initial_conditions(psi_container.initial_conditions, key)
+end
+
+function iterate_initial_conditions(psi_container::PSIContainer)
+    return iterate_initial_conditions(psi_container.initial_conditions)
 end
 
 function get_initial_conditions(
@@ -332,17 +345,11 @@ function get_initial_conditions(
 end
 
 function get_initial_conditions(psi_container::PSIContainer, key::ICKey)
-    initial_conditions = get(psi_container.initial_conditions, key, nothing)
-    if isnothing(initial_conditions)
-        throw(IS.InvalidValue("initial conditions are not stored for $(key)"))
-    end
-
-    return initial_conditions
+    return get_initial_conditions(psi_container.initial_conditions, key)
 end
 
 function set_initial_conditions!(psi_container::PSIContainer, key::ICKey, value)
-    @debug "set_initial_condition" key
-    psi_container.initial_conditions[key] = value
+    set_initial_conditions!(psi_container.initial_conditions, key, value)
 end
 
 function encode_symbol(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}

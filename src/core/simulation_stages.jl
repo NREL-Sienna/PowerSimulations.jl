@@ -151,7 +151,13 @@ function build!(
     horizon::Int,
     stage_interval::Dates.Period,
 )
-    stage_built(stage) && reset!(stage)
+    if stage_built(stage)
+        error("Rebuilding a Stage is not supported")
+    end
+    # Rebuilding is disabled because reset! will create a new PSIContainer from the
+    # saved PSISettings. The code does not currently handle its mutable objects
+    # appropriately.
+    #stage_built(stage) && reset!(stage)
     psi_container = get_psi_container(stage)
     set_horizon!(psi_container.settings, horizon)
     set_initial_time!(psi_container.settings, initial_time)

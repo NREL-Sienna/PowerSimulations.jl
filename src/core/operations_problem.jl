@@ -1,34 +1,5 @@
 struct GenericOpProblem <: AbstractOperationsProblem end
 
-mutable struct OperationsProblemTemplate
-    transmission::Type{<:PM.AbstractPowerModel}
-    devices::Dict{Symbol, DeviceModel}
-    branches::Dict{Symbol, DeviceModel}
-    services::Dict{Symbol, ServiceModel}
-end
-
-"""
-    OperationsProblemTemplate(::Type{T}) where {T<:PM.AbstractPowerFormulation}
-Creates a model reference of the Power Formulation, devices, branches, and services.
-# Arguments
-- `model::Type{T<:PM.AbstractPowerFormulation}`:
-- `devices::Dict{Symbol, DeviceModel}`: device dictionary
-- `branches::Dict{Symbol, BranchModel}`: branch dictionary
-- `services::Dict{Symbol, ServiceModel}`: service dictionary
-# Example
-```julia
-template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-```
-"""
-function OperationsProblemTemplate(::Type{T}) where {T <: PM.AbstractPowerModel}
-    return OperationsProblemTemplate(
-        T,
-        Dict{Symbol, DeviceModel}(),
-        Dict{Symbol, DeviceModel}(),
-        Dict{Symbol, ServiceModel}(),
-    )
-end
-
 mutable struct OperationsProblem{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
@@ -378,29 +349,6 @@ end
 function build!(op_problem::OperationsProblem{M}) where {M <: AbstractOperationsProblem}
     sys = get_system(op_problem)
     _build!(op_problem.psi_container, op_problem.template, sys)
-    return
-end
-
-function _build!(
-    psi_container::PSIContainer,
-    template::OperationsProblemTemplate,
-    sys::PSY.System,
-)
-    transmission = template.transmission
-    # Order is required
-    construct_services!(psi_container, sys, template.services, template.devices)
-    for device_model in values(template.devices)
-        @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
-        construct_device!(psi_container, sys, device_model, transmission)
-    end
-    @debug "Building $(transmission) network formulation"
-    construct_network!(psi_container, sys, transmission)
-    for branch_model in values(template.branches)
-        @debug "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
-        construct_device!(psi_container, sys, branch_model, transmission)
-    end
-    @debug "Building Objective"
-    JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
     return
 end
 

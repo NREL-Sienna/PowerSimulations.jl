@@ -458,9 +458,21 @@ end
 
     alta = gens_dur[1]
     init_cond = PSI.InitialConditionsContainer()
-    init_cond[PSI.ICKey(DeviceStatus, typeof(alta))] = build_init(gens_dur, status)
-    init_cond[PSI.ICKey(TimeDurationON, typeof(alta))] = build_init(gens_dur, up_time)
-    init_cond[PSI.ICKey(TimeDurationOFF, typeof(alta))] = build_init(gens_dur, down_time)
+    PSI.set_initial_conditions!(
+        init_cond,
+        PSI.ICKey(DeviceStatus, typeof(alta)),
+        build_init(gens_dur, status)
+    )
+    PSI.set_initial_conditions!(
+        init_cond,
+        PSI.ICKey(TimeDurationON, typeof(alta)),
+        build_init(gens_dur, up_time)
+    )
+    PSI.set_initial_conditions!(
+        init_cond,
+        PSI.ICKey(TimeDurationOFF, typeof(alta)),
+        build_init(gens_dur, down_time)
+    )
 
     template =
         OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)

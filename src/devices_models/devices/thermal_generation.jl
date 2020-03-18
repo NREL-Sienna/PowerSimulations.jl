@@ -259,9 +259,9 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     device_formulation::Type{D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment}
-    status_init(psi_container, devices)
-    output_init(psi_container, devices)
-    duration_init(psi_container, devices)
+    status_init(psi_container.initial_conditions, devices)
+    output_init(psi_container.initial_conditions, devices)
+    duration_init(psi_container.initial_conditions, devices)
     return
 end
 
@@ -270,8 +270,8 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     device_formulation::Type{ThermalBasicUnitCommitment},
 ) where {T <: PSY.ThermalGen}
-    status_init(psi_container, devices)
-    output_init(psi_container, devices)
+    status_init(psi_container.initial_conditions, devices)
+    output_init(psi_container.initial_conditions, devices)
     return
 end
 
@@ -280,7 +280,7 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     device_formulation::Type{D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchFormulation}
-    output_init(psi_container, devices)
+    output_init(psi_container.initial_conditions, devices)
     return
 end
 

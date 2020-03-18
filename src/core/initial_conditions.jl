@@ -20,18 +20,6 @@ struct TimeDurationON <: InitialConditionType end
 struct TimeDurationOFF <: InitialConditionType end
 struct EnergyLevel <: InitialConditionType end
 
-function get_condition(p::InitialCondition{Float64})
-    return p.value
-end
-
-function get_condition(p::InitialCondition{PJ.ParameterRef})
-    return PJ.value(p.value)
-end
-
-get_value(ic::InitialCondition) = ic.value
-
-device_name(ini_cond::InitialCondition) = PSY.get_name(ini_cond.device)
-
 #########################Initial Condition Updating#########################################
 # TODO: Consider when more than one UC model is used for the stages that the counts need
 # to be scaled.
@@ -121,11 +109,11 @@ contain binaries. For instance, looking back on an ED model to find the
 IC of the UC model
 """
 function status_init(
-    psi_container::PSIContainer,
+    container::InitialConditionsContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ThermalGen}
     _make_initial_conditions!(
-        psi_container,
+        container,
         devices,
         ICKey(DeviceStatus, T),
         _make_initial_condition_active_power,
@@ -136,11 +124,11 @@ function status_init(
 end
 
 function output_init(
-    psi_container::PSIContainer,
+    container::InitialConditionsContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ThermalGen}
     _make_initial_conditions!(
-        psi_container,
+        container,
         devices,
         ICKey(DevicePower, T),
         _make_initial_condition_active_power,
@@ -151,12 +139,12 @@ function output_init(
 end
 
 function duration_init(
-    psi_container::PSIContainer,
+    container::InitialConditionsContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ThermalGen}
     for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
         _make_initial_conditions!(
-            psi_container,
+            container,
             devices,
             key,
             _make_initial_condition_active_power,
@@ -171,12 +159,12 @@ end
 ######################### Initialize Functions for Storage #################################
 # TODO: This IC needs a cache for Simulation over long periods of tim
 function storage_energy_init(
-    psi_container::PSIContainer,
+    container::InitialConditionsContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.Storage}
     key = ICKey(EnergyLevel, T)
     _make_initial_conditions!(
-        psi_container,
+        container,
         devices,
         key,
         _make_initial_condition_energy,
@@ -188,11 +176,11 @@ end
 
 ######################### Initialize Functions for Hydro #################################
 function status_init(
-    psi_container::PSIContainer,
+    container::InitialConditionsContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.HydroGen}
     _make_initial_conditions!(
-        psi_container,
+        container,
         devices,
         ICKey(DeviceStatus, T),
         _make_initial_condition_active_power,
@@ -202,11 +190,11 @@ function status_init(
 end
 
 function output_init(
-    psi_container::PSIContainer,
+    container::InitialConditionsContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.HydroGen}
     _make_initial_conditions!(
-        psi_container,
+        container,
         devices,
         ICKey(DevicePower, T),
         _make_initial_condition_active_power,
@@ -218,12 +206,12 @@ function output_init(
 end
 
 function duration_init(
-    psi_container::PSIContainer,
+    container::InitialConditionsContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.HydroGen}
     for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
         _make_initial_conditions!(
-            psi_container,
+            container,
             devices,
             key,
             _make_initial_condition_active_power,
@@ -237,12 +225,12 @@ end
 
 # TODO: This IC needs a cache for Simulation over long periods of time
 function storage_energy_init(
-    psi_container::PSIContainer,
+    container::InitialConditionsContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.HydroGen}
     key = ICKey(EnergyLevel, T)
     _make_initial_conditions!(
-        psi_container,
+        container,
         devices,
         key,
         _make_initial_condition_reservoir_energy,
@@ -254,7 +242,7 @@ function storage_energy_init(
 end
 
 function _make_initial_conditions!(
-    psi_container::PSIContainer,
+    container::InitialConditionsContainer,
     devices::IS.FlattenIteratorWrapper{T},
     key::ICKey,
     make_ic_func::Function,
@@ -263,22 +251,22 @@ function _make_initial_conditions!(
 ) where {T <: PSY.Device}
     length_devices = length(devices)
 
-    if !has_initial_conditions(psi_container, key)
+    if !has_initial_conditions(container, key)
         @debug "Setting $(key.ic_type) initial conditions for the status of all devices $(T) based on system data"
         ini_conds = Vector{InitialCondition}(undef, length_devices)
-        set_initial_conditions!(psi_container, key, ini_conds)
+        set_initial_conditions!(container, key, ini_conds)
         for (ix, dev) in enumerate(devices)
-            ini_conds[ix] = make_ic_func(psi_container, dev, get_val_func(dev, key), cache)
+            ini_conds[ix] = make_ic_func(container, dev, get_val_func(dev, key), cache)
         end
     else
-        ini_conds = get_initial_conditions(psi_container, key)
+        ini_conds = get_initial_conditions(container, key)
         ic_devices = Set((IS.get_uuid(ic.device) for ic in ini_conds))
         for dev in devices
             IS.get_uuid(dev) in ic_devices && continue
             @debug "Setting $(key.ic_type) initial conditions for the status device $(PSY.get_name(dev)) based on system data"
             push!(
                 ini_conds,
-                make_ic_func(psi_container, dev, get_val_func(dev, key), cache),
+                make_ic_func(container, dev, get_val_func(dev, key), cache),
             )
         end
     end
@@ -288,45 +276,42 @@ function _make_initial_conditions!(
 end
 
 function _make_initial_condition_active_power(
-    psi_container,
+    container,
     device::T,
     value,
     cache = nothing,
 ) where {T <: PSY.Component}
     return InitialCondition(
-        psi_container,
         device,
-        _get_ref_active_power(T, psi_container),
+        _get_ref_active_power(T, container),
         value,
         cache,
     )
 end
 
 function _make_initial_condition_energy(
-    psi_container,
+    container,
     device::T,
     value,
     cache = nothing,
 ) where {T <: PSY.Component}
     return InitialCondition(
-        psi_container,
         device,
-        _get_ref_energy(T, psi_container),
+        _get_ref_energy(T, container),
         value,
         cache,
     )
 end
 
 function _make_initial_condition_reservoir_energy(
-    psi_container,
+    container,
     device::T,
     value,
     cache = nothing,
 ) where {T <: PSY.Component}
     return InitialCondition(
-        psi_container,
         device,
-        _get_ref_reservoir_energy(T, psi_container),
+        _get_ref_reservoir_energy(T, container),
         value,
         cache,
     )
@@ -361,23 +346,22 @@ end
 
 function _get_ref_active_power(
     ::Type{T},
-    psi_container::PSIContainer,
+    container::InitialConditionsContainer,
 ) where {T <: PSY.Component}
-    return model_has_parameters(psi_container) ?
+    return get_use_parameters(container) ?
            UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER) :
            UpdateRef{T}(ACTIVE_POWER, "get_activepower")
 end
 
-function _get_ref_energy(::Type{T}, psi_container::PSIContainer) where {T <: PSY.Component}
-    return model_has_parameters(psi_container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
+function _get_ref_energy(::Type{T}, container::InitialConditionsContainer) where {T <: PSY.Component}
+    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
            UpdateRef{T}(ENERGY, "get_energy")
 end
 
 function _get_ref_reservoir_energy(
     ::Type{T},
-    psi_container::PSIContainer,
+    container::InitialConditionsContainer,
 ) where {T <: PSY.Component}
-    # TODO: reviewers, is ENERGY correct here?
-    return model_has_parameters(psi_container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
+    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
            UpdateRef{T}(ENERGY, "get_storage_capacity")
 end

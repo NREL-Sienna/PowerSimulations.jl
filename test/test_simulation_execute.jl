@@ -562,9 +562,46 @@ function test_load_simulation(file_path::String)
         end
     end
 end
+
 try
     test_load_simulation(g_test_path)
 finally
     @info("removing test files")
     rm(g_test_path, recursive = true)
+end
+
+@testset "Test Simulation with external initial conditions" begin
+    path = mktempdir()
+
+    initial_conditions = PSI.InitialConditionsContainer()
+    # TODO: add initial_conditions
+
+    stage_definition = Dict(
+        "ED" => Stage(
+            GenericOpProblem,
+            template_ed,
+            c_sys5_uc,
+            ipopt_optimizer;
+            initial_conditions = initial_conditions,
+        )
+    )
+
+    sequence = SimulationSequence(
+        step_resolution = Hour(1),
+        order = Dict(1 => "ED"),
+        horizons = Dict("ED" => 12),
+        intervals = Dict("ED" => (Hour(1), Consecutive())),
+        ini_cond_chronology = IntraStageChronology(),
+    )
+
+    sim = Simulation(
+        name = "consecutive",
+        steps = 2,
+        stages = stage_definition,
+        stages_sequence = sequence,
+        simulation_folder = path,
+    )
+    build!(sim)
+    res = execute!(sim)
+    @show res
 end
