@@ -239,6 +239,8 @@ function construct_device!(
     return
 end
 
+# Currently no Hydro device supports a Unit commiment formulation
+#=
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
@@ -256,6 +258,7 @@ function construct_device!(
         kwargs...,
     )
 end
+=#
 
 function construct_device!(
     psi_container::PSIContainer,
