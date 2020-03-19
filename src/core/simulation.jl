@@ -501,22 +501,32 @@ function update_cache!(
     stage::Stage,
 ) where {D <: PSY.Device}
     c = get_cache(sim, key)
+    increment = get_increment(sim, stage, c)
     variable = get_variable(stage.internal.psi_container, c.ref)
     for t in 1:get_end_of_interval_step(stage), name in variable.axes[1]
         device_status = JuMP.value(variable[name, t])
         @debug name, device_status
         if c.value[name][:status] == device_status
-            c.value[name][:count] += 1.0
+            c.value[name][:count] += increment
             @debug("Cache value TimeStatus for device $name set to $device_status and count to $(c.value[name][:count])")
         else
             c.value[name][:status] != device_status
-            c.value[name][:count] = 1.0
+            c.value[name][:count] = increment
             c.value[name][:status] = device_status
             @debug("Cache value TimeStatus for device $name set to $device_status and count to 1.0")
         end
     end
 
     return
+end
+
+function get_increment(sim::Simulation, stage::Stage, cache::TimeStatusChange)
+    units = cache.units
+    stage_name = get_stage_name(sim, stage)
+    stage_interval = IS.time_period_conversion(get_stage_interval(sim, stage_name))
+    horizon = get_stage_horizon(sim.sequence, stage_name)
+    stage_resolution = stage_interval / horizon
+    return float(stage_resolution / units)
 end
 
 function update_cache!(
