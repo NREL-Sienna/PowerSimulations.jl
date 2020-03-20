@@ -49,9 +49,7 @@ function construct_device!(
 
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    # since hydro generators don't currently have pf info, don't add any additional
-    # reactive power constraints other than the variable bounds.
-    # reactivepower_constraints!(psi_container, devices, model, S,get_feedforward(model))
+    reactivepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
     energy_limit_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, H, get_feedforward(model))
 
@@ -237,6 +235,8 @@ function construct_device!(
     return
 end
 
+# Currently no Hydro device supports a Unit commiment formulation
+#=
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
@@ -254,6 +254,7 @@ function construct_device!(
         kwargs...,
     )
 end
+=#
 
 function construct_device!(
     psi_container::PSIContainer,
