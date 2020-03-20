@@ -264,10 +264,7 @@ function _make_initial_conditions!(
         for dev in devices
             IS.get_uuid(dev) in ic_devices && continue
             @debug "Setting $(key.ic_type) initial conditions for the status device $(PSY.get_name(dev)) based on system data"
-            push!(
-                ini_conds,
-                make_ic_func(container, dev, get_val_func(dev, key), cache),
-            )
+            push!(ini_conds, make_ic_func(container, dev, get_val_func(dev, key), cache))
         end
     end
 
@@ -281,12 +278,7 @@ function _make_initial_condition_active_power(
     value,
     cache = nothing,
 ) where {T <: PSY.Component}
-    return InitialCondition(
-        device,
-        _get_ref_active_power(T, container),
-        value,
-        cache,
-    )
+    return InitialCondition(device, _get_ref_active_power(T, container), value, cache)
 end
 
 function _make_initial_condition_energy(
@@ -295,12 +287,7 @@ function _make_initial_condition_energy(
     value,
     cache = nothing,
 ) where {T <: PSY.Component}
-    return InitialCondition(
-        device,
-        _get_ref_energy(T, container),
-        value,
-        cache,
-    )
+    return InitialCondition(device, _get_ref_energy(T, container), value, cache)
 end
 
 function _make_initial_condition_reservoir_energy(
@@ -309,12 +296,7 @@ function _make_initial_condition_reservoir_energy(
     value,
     cache = nothing,
 ) where {T <: PSY.Component}
-    return InitialCondition(
-        device,
-        _get_ref_reservoir_energy(T, container),
-        value,
-        cache,
-    )
+    return InitialCondition(device, _get_ref_reservoir_energy(T, container), value, cache)
 end
 
 function _get_active_power_status_value(device, key)
@@ -348,12 +330,14 @@ function _get_ref_active_power(
     ::Type{T},
     container::InitialConditionsContainer,
 ) where {T <: PSY.Component}
-    return get_use_parameters(container) ?
-           UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER) :
+    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER) :
            UpdateRef{T}(ACTIVE_POWER, "get_activepower")
 end
 
-function _get_ref_energy(::Type{T}, container::InitialConditionsContainer) where {T <: PSY.Component}
+function _get_ref_energy(
+    ::Type{T},
+    container::InitialConditionsContainer,
+) where {T <: PSY.Component}
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
            UpdateRef{T}(ENERGY, "get_energy")
 end

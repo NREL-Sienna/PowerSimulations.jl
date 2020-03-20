@@ -461,17 +461,17 @@ end
     PSI.set_initial_conditions!(
         init_cond,
         PSI.ICKey(DeviceStatus, typeof(alta)),
-        build_init(gens_dur, status)
+        build_init(gens_dur, status),
     )
     PSI.set_initial_conditions!(
         init_cond,
         PSI.ICKey(TimeDurationON, typeof(alta)),
-        build_init(gens_dur, up_time)
+        build_init(gens_dur, up_time),
     )
     PSI.set_initial_conditions!(
         init_cond,
         PSI.ICKey(TimeDurationOFF, typeof(alta)),
-        build_init(gens_dur, down_time)
+        build_init(gens_dur, down_time),
     )
 
     template =

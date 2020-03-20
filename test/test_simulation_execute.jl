@@ -583,7 +583,7 @@ end
             c_sys5_uc,
             ipopt_optimizer;
             initial_conditions = initial_conditions,
-        )
+        ),
     )
 
     sequence = SimulationSequence(
