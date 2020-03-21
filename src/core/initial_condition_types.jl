@@ -334,10 +334,7 @@ function _get_ref_active_power(
            UpdateRef{T}(ACTIVE_POWER, "get_activepower")
 end
 
-function _get_ref_energy(
-    ::Type{T},
-    container::InitialConditions,
-) where {T <: PSY.Component}
+function _get_ref_energy(::Type{T}, container::InitialConditions) where {T <: PSY.Component}
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
            UpdateRef{T}(ENERGY, "get_energy")
 end

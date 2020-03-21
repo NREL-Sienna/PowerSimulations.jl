@@ -36,6 +36,6 @@ function set_initial_conditions!(container::InitialConditions, key::ICKey, value
 end
 
 """
-Iterates over the keys and vectors of initial conditions.
+Iterate over the keys and vectors of initial conditions.
 """
 iterate_initial_conditions(container::InitialConditions) = pairs(container.data)
