@@ -1,6 +1,6 @@
 struct PSISettings
     horizon::Base.RefValue{Int}
-    initial_conditions::Union{Nothing, InitialConditionsContainer}
+    initial_conditions::Union{Nothing, InitialConditions}
     use_forecast_data::Bool
     use_parameters::Bool
     use_warm_start::Base.RefValue{Bool}
@@ -16,7 +16,7 @@ function PSISettings(
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     use_parameters::Bool = false,
     use_forecast_data::Bool = true,
-    initial_conditions::Union{Nothing, InitialConditionsContainer} = nothing,
+    initial_conditions::Union{Nothing, InitialConditions} = nothing,
     use_warm_start::Bool = true,
     horizon::Int = 0,
     PTDF::Union{Nothing, PSY.PTDF} = nothing,
@@ -34,7 +34,7 @@ function PSISettings(
     end
 
     if isnothing(initial_conditions)
-        initial_conditions = InitialConditionsContainer(use_parameters = use_parameters)
+        initial_conditions = InitialConditions(use_parameters = use_parameters)
     end
 
     return PSISettings(

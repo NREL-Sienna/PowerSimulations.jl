@@ -109,7 +109,7 @@ contain binaries. For instance, looking back on an ED model to find the
 IC of the UC model
 """
 function status_init(
-    container::InitialConditionsContainer,
+    container::InitialConditions,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ThermalGen}
     _make_initial_conditions!(
@@ -124,7 +124,7 @@ function status_init(
 end
 
 function output_init(
-    container::InitialConditionsContainer,
+    container::InitialConditions,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ThermalGen}
     _make_initial_conditions!(
@@ -139,7 +139,7 @@ function output_init(
 end
 
 function duration_init(
-    container::InitialConditionsContainer,
+    container::InitialConditions,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ThermalGen}
     for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
@@ -159,7 +159,7 @@ end
 ######################### Initialize Functions for Storage #################################
 # TODO: This IC needs a cache for Simulation over long periods of tim
 function storage_energy_init(
-    container::InitialConditionsContainer,
+    container::InitialConditions,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.Storage}
     key = ICKey(EnergyLevel, T)
@@ -176,7 +176,7 @@ end
 
 ######################### Initialize Functions for Hydro #################################
 function status_init(
-    container::InitialConditionsContainer,
+    container::InitialConditions,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.HydroGen}
     _make_initial_conditions!(
@@ -190,7 +190,7 @@ function status_init(
 end
 
 function output_init(
-    container::InitialConditionsContainer,
+    container::InitialConditions,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.HydroGen}
     _make_initial_conditions!(
@@ -206,7 +206,7 @@ function output_init(
 end
 
 function duration_init(
-    container::InitialConditionsContainer,
+    container::InitialConditions,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.HydroGen}
     for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
@@ -225,7 +225,7 @@ end
 
 # TODO: This IC needs a cache for Simulation over long periods of time
 function storage_energy_init(
-    container::InitialConditionsContainer,
+    container::InitialConditions,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.HydroGen}
     key = ICKey(EnergyLevel, T)
@@ -242,7 +242,7 @@ function storage_energy_init(
 end
 
 function _make_initial_conditions!(
-    container::InitialConditionsContainer,
+    container::InitialConditions,
     devices::IS.FlattenIteratorWrapper{T},
     key::ICKey,
     make_ic_func::Function,
@@ -328,7 +328,7 @@ end
 
 function _get_ref_active_power(
     ::Type{T},
-    container::InitialConditionsContainer,
+    container::InitialConditions,
 ) where {T <: PSY.Component}
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER) :
            UpdateRef{T}(ACTIVE_POWER, "get_activepower")
@@ -336,7 +336,7 @@ end
 
 function _get_ref_energy(
     ::Type{T},
-    container::InitialConditionsContainer,
+    container::InitialConditions,
 ) where {T <: PSY.Component}
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
            UpdateRef{T}(ENERGY, "get_energy")
@@ -344,7 +344,7 @@ end
 
 function _get_ref_reservoir_energy(
     ::Type{T},
-    container::InitialConditionsContainer,
+    container::InitialConditions,
 ) where {T <: PSY.Component}
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
            UpdateRef{T}(ENERGY, "get_storage_capacity")

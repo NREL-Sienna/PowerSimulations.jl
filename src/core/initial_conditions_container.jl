@@ -3,25 +3,25 @@ struct ICKey{IC <: InitialConditionType, D <: PSY.Device}
     device_type::Type{D}
 end
 
-struct InitialConditionsContainer
+struct InitialConditions
     use_parameters::Bool
     data::Dict{ICKey, Vector{InitialCondition}}
 end
 
-function InitialConditionsContainer(;
+function InitialConditions(;
     use_parameters = false,
     data = Dict{ICKey, Array{InitialCondition}}(),
 )
-    return InitialConditionsContainer(use_parameters, data)
+    return InitialConditions(use_parameters, data)
 end
 
-get_use_parameters(container::InitialConditionsContainer) = container.use_parameters
+get_use_parameters(container::InitialConditions) = container.use_parameters
 
-function has_initial_conditions(container::InitialConditionsContainer, key::ICKey)
+function has_initial_conditions(container::InitialConditions, key::ICKey)
     return key in keys(container.data)
 end
 
-function get_initial_conditions(container::InitialConditionsContainer, key::ICKey)
+function get_initial_conditions(container::InitialConditions, key::ICKey)
     initial_conditions = get(container.data, key, nothing)
     if isnothing(initial_conditions)
         throw(IS.InvalidValue("initial conditions are not stored for $(key)"))
@@ -30,7 +30,7 @@ function get_initial_conditions(container::InitialConditionsContainer, key::ICKe
     return initial_conditions
 end
 
-function set_initial_conditions!(container::InitialConditionsContainer, key::ICKey, value)
+function set_initial_conditions!(container::InitialConditions, key::ICKey, value)
     @debug "set_initial_condition" key
     container.data[key] = value
 end
@@ -38,4 +38,4 @@ end
 """
 Iterates over the keys and vectors of initial conditions.
 """
-iterate_initial_conditions(container::InitialConditionsContainer) = pairs(container.data)
+iterate_initial_conditions(container::InitialConditions) = pairs(container.data)

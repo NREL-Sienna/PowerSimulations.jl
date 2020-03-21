@@ -111,7 +111,7 @@ mutable struct PSIContainer
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     parameters::Union{Nothing, ParametersContainer}
-    initial_conditions::InitialConditionsContainer
+    initial_conditions::InitialConditions
     pm::Union{Nothing, PM.AbstractPowerModel}
     built::Bool
 
@@ -125,7 +125,7 @@ mutable struct PSIContainer
         cost_function::JuMP.AbstractJuMPScalar,
         expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray},
         parameters::Union{Nothing, ParametersContainer},
-        initial_conditions::InitialConditionsContainer,
+        initial_conditions::InitialConditions,
         pm::Union{Nothing, PM.AbstractPowerModel},
     )
         resolution = IS.time_period_conversion(resolution)

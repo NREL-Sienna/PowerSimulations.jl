@@ -573,7 +573,7 @@ end
 @testset "Test Simulation with external initial conditions" begin
     path = mktempdir()
 
-    initial_conditions = PSI.InitialConditionsContainer()
+    initial_conditions = PSI.InitialConditions()
     # TODO: add initial_conditions
 
     stage_definition = Dict(

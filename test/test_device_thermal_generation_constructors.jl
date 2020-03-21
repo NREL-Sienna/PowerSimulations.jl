@@ -457,7 +457,7 @@ end
     down_time = [0.0, 3.0]
 
     alta = gens_dur[1]
-    init_cond = PSI.InitialConditionsContainer()
+    init_cond = PSI.InitialConditions()
     PSI.set_initial_conditions!(
         init_cond,
         PSI.ICKey(DeviceStatus, typeof(alta)),

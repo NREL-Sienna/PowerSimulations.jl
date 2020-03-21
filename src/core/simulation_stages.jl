@@ -93,7 +93,7 @@ stage = Stage(MyOpProblemType template, system, optimizer)
 # Accepted Key Words
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
-- `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
+- `initial_conditions::InitialConditions`: default of Dict{ICKey, Array{InitialCondition}}
 - `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 """
 function Stage(
