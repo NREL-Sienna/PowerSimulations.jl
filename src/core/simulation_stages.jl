@@ -130,17 +130,17 @@ get_initial_time(s::Stage{T}) where {T <: AbstractOperationsProblem} =
     get_initial_time(s.internal.psi_container.settings)
 
 function reset!(stage::Stage)
-    stage.internal = StageInternal(
-        0,
-        0,
-        0,
+
+    if stage_built(stage)
+        @warn("Stage $(stage.internal.number) will be reset by the build call")
+    end
+    stage.internal.execution_count = 0
+    stage.internal.psi_container =
         PSIContainer(
             stage.template.transmission,
             stage.sys,
             stage.internal.psi_container.settings,
-            nothing,
-        ),
-    )
+            nothing)
     return
 end
 
