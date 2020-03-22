@@ -135,12 +135,12 @@ function reset!(stage::Stage)
         @warn("Stage $(stage.internal.number) will be reset by the build call")
     end
     stage.internal.execution_count = 0
-    stage.internal.psi_container =
-        PSIContainer(
-            stage.template.transmission,
-            stage.sys,
-            stage.internal.psi_container.settings,
-            nothing)
+    stage.internal.psi_container = PSIContainer(
+        stage.template.transmission,
+        stage.sys,
+        stage.internal.psi_container.settings,
+        nothing,
+    )
     return
 end
 

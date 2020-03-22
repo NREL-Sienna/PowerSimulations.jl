@@ -70,14 +70,10 @@ function PSISettings(
     )
 end
 
-
 function check_warm_start_support(JuMPmodel::JuMP.AbstractModel, warm_start_enabled::Bool)
     !warm_start_enabled && return warm_start_enabled
-    solver_supports_warm_start = MOI.supports(
-        JuMP.backend(JuMPmodel),
-        MOI.VariablePrimalStart(),
-        MOI.VariableIndex,
-    )
+    solver_supports_warm_start =
+        MOI.supports(JuMP.backend(JuMPmodel), MOI.VariablePrimalStart(), MOI.VariableIndex)
     if !solver_supports_warm_start
         solver_name = JuMP.solver_name(JuMPmodel)
         @warn("$(solver_name) does not support warm start")
@@ -85,7 +81,8 @@ function check_warm_start_support(JuMPmodel::JuMP.AbstractModel, warm_start_enab
     return solver_supports_warm_start
 end
 
-function _make_jump_model!(settings::PSISettings,
+function _make_jump_model!(
+    settings::PSISettings,
     JuMPmodel::Union{Nothing, JuMP.AbstractModel},
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
 )
@@ -96,7 +93,8 @@ function _make_jump_model!(settings::PSISettings,
                 @info("Model doesn't have Parameters enabled. Parameters will be enabled")
                 PJ.enable_parameters(JuMPmodel)
                 warm_start_enabled = get_use_warm_start(settings)
-                solver_supports_warm_start = check_warm_start_support(JuMPmodel, warm_start_enabled)
+                solver_supports_warm_start =
+                    check_warm_start_support(JuMPmodel, warm_start_enabled)
                 set_use_warm_start!(settings, solver_supports_warm_start)
             end
         end
