@@ -302,11 +302,13 @@ function PSIContainer(
     optimizer = get_optimizer(settings)
     use_parameters = get_use_parameters(settings)
     jump_model = _make_jump_model!(settings, jump_model, optimizer)
+    total_number_of_devices = length(PSY.get_components(PSY.Device, sys))
     if get_use_forecast_data(settings)
         time_steps = 1:get_horizon(settings)
-        if length(time_steps) > 100
-            @warn("The number of time steps in the model specification is over 100. This will result in
-                  large multiperiod optimization problem")
+        # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html The maximum numbers of constraints and variables in the benchmark provlems is 1,918,399 and 1,259,121, respectively. See also https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/2013/138847.pdf
+        variable_count_estimate = length(time_steps) * total_number_of_devices
+        if variable_count_estimate > 10e6
+            @warn("The estimated total number of variables that will be created in the model is $(variable_count_estimate). This amount is large and could lead to large build or solve times.")
         end
         resolution = PSY.get_forecasts_resolution(sys)
     else
