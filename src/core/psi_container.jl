@@ -20,71 +20,6 @@ end
 
 const InitialConditionsContainer = Dict{ICKey, Array{InitialCondition}}
 #Defined here because of dependencies in psi_container
-function _make_jump_model(
-    JuMPmodel::Union{Nothing, JuMP.AbstractModel},
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
-    parameters::Bool,
-)
-    if !isnothing(JuMPmodel)
-        if parameters
-            if !haskey(JuMPmodel.ext, :params)
-                @info("Model doesn't have Parameters enabled. Parameters will be enabled")
-                PJ.enable_parameters(JuMPmodel)
-            end
-        end
-        return JuMPmodel
-    end
-    if isa(optimizer, Nothing)
-        @debug "The optimization model has no optimizer attached"
-    end
-    @debug "Instantiating the JuMP model"
-    if !isnothing(optimizer)
-        JuMPmodel = JuMP.Model(optimizer)
-    else
-        JuMPmodel = JuMP.Model()
-    end
-    if parameters
-        PJ.enable_parameters(JuMPmodel)
-    end
-    return JuMPmodel
-end
-
-function _make_container_array(V::DataType, parameters::Bool, ax...)
-    if parameters
-        return JuMP.Containers.DenseAxisArray{PGAE{V}}(undef, ax...)
-    else
-        return JuMP.Containers.DenseAxisArray{GAE{V}}(undef, ax...)
-    end
-    return
-end
-
-function _make_expressions_dict(
-    transmission::Type{S},
-    V::DataType,
-    bus_numbers::Vector{Int},
-    time_steps::UnitRange{Int},
-    parameters::Bool,
-) where {S <: PM.AbstractPowerModel}
-    return DenseAxisArrayContainer(
-        :nodal_balance_active =>
-            _make_container_array(V, parameters, bus_numbers, time_steps),
-        :nodal_balance_reactive =>
-            _make_container_array(V, parameters, bus_numbers, time_steps),
-    )
-end
-
-function _make_expressions_dict(
-    transmission::Type{S},
-    V::DataType,
-    bus_numbers::Vector{Int},
-    time_steps::UnitRange{Int},
-    parameters::Bool,
-) where {S <: PM.AbstractActivePowerModel}
-    return DenseAxisArrayContainer(
-        :nodal_balance_active =>
-            _make_container_array(V, parameters, bus_numbers, time_steps),
-    )
-end
 
 struct PSISettings
     horizon::Base.RefValue{Int}
@@ -132,6 +67,91 @@ function PSISettings(
         optimizer,
         constraint_duals,
         ext,
+    )
+end
+
+function check_warm_start_support(JuMPmodel::JuMP.AbstractModel, warm_start_enabled::Bool)
+    !warm_start_enabled && return warm_start_enabled
+    solver_supports_warm_start =
+        MOI.supports(JuMP.backend(JuMPmodel), MOI.VariablePrimalStart(), MOI.VariableIndex)
+    if !solver_supports_warm_start
+        solver_name = JuMP.solver_name(JuMPmodel)
+        @warn("$(solver_name) does not support warm start")
+    end
+    return solver_supports_warm_start
+end
+
+function _make_jump_model!(
+    settings::PSISettings,
+    JuMPmodel::Union{Nothing, JuMP.AbstractModel},
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
+)
+    parameters = get_use_parameters(settings)
+    if !isnothing(JuMPmodel)
+        if parameters
+            if !haskey(JuMPmodel.ext, :params)
+                @info("Model doesn't have Parameters enabled. Parameters will be enabled")
+                PJ.enable_parameters(JuMPmodel)
+                warm_start_enabled = get_use_warm_start(settings)
+                solver_supports_warm_start =
+                    check_warm_start_support(JuMPmodel, warm_start_enabled)
+                set_use_warm_start!(settings, solver_supports_warm_start)
+            end
+        end
+        return JuMPmodel
+    end
+    if isa(optimizer, Nothing)
+        @debug "The optimization model has no optimizer attached"
+    end
+    @debug "Instantiating the JuMP model"
+    if !isnothing(optimizer)
+        JuMPmodel = JuMP.Model(optimizer)
+        warm_start_enabled = get_use_warm_start(settings)
+        solver_supports_warm_start = check_warm_start_support(JuMPmodel, warm_start_enabled)
+        set_use_warm_start!(settings, solver_supports_warm_start)
+    else
+        JuMPmodel = JuMP.Model()
+    end
+    if parameters
+        PJ.enable_parameters(JuMPmodel)
+    end
+    return JuMPmodel
+end
+
+function _make_container_array(V::DataType, parameters::Bool, ax...)
+    if parameters
+        return JuMP.Containers.DenseAxisArray{PGAE{V}}(undef, ax...)
+    else
+        return JuMP.Containers.DenseAxisArray{GAE{V}}(undef, ax...)
+    end
+    return
+end
+
+function _make_expressions_dict(
+    transmission::Type{S},
+    V::DataType,
+    bus_numbers::Vector{Int},
+    time_steps::UnitRange{Int},
+    parameters::Bool,
+) where {S <: PM.AbstractPowerModel}
+    return DenseAxisArrayContainer(
+        :nodal_balance_active =>
+            _make_container_array(V, parameters, bus_numbers, time_steps),
+        :nodal_balance_reactive =>
+            _make_container_array(V, parameters, bus_numbers, time_steps),
+    )
+end
+
+function _make_expressions_dict(
+    transmission::Type{S},
+    V::DataType,
+    bus_numbers::Vector{Int},
+    time_steps::UnitRange{Int},
+    parameters::Bool,
+) where {S <: PM.AbstractActivePowerModel}
+    return DenseAxisArrayContainer(
+        :nodal_balance_active =>
+            _make_container_array(V, parameters, bus_numbers, time_steps),
     )
 end
 
@@ -281,12 +301,14 @@ function PSIContainer(
     ini_con = get_initial_conditions(settings)
     optimizer = get_optimizer(settings)
     use_parameters = get_use_parameters(settings)
-    jump_model = _make_jump_model(jump_model, optimizer, use_parameters)
+    jump_model = _make_jump_model!(settings, jump_model, optimizer)
+    total_number_of_devices = length(PSY.get_components(PSY.Device, sys))
     if get_use_forecast_data(settings)
         time_steps = 1:get_horizon(settings)
-        if length(time_steps) > 100
-            @warn("The number of time steps in the model is over 100. This will result in
-                  large multiperiod optimization problem")
+        # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html The maximum numbers of constraints and variables in the benchmark provlems is 1,918,399 and 1,259,121, respectively. See also https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/2013/138847.pdf
+        variable_count_estimate = length(time_steps) * total_number_of_devices
+        if variable_count_estimate > 10e6
+            @warn("The estimated total number of variables that will be created in the model is $(variable_count_estimate). This amount is large and could lead to large build or solve times.")
         end
         resolution = PSY.get_forecasts_resolution(sys)
     else
@@ -393,7 +415,7 @@ get_parameters(psi_container::PSIContainer) = psi_container.parameters
 get_expression(psi_container::PSIContainer, name::Symbol) = psi_container.expressions[name]
 get_initial_conditions(psi_container::PSIContainer) = psi_container.initial_conditions
 get_PTDF(psi_container::PSIContainer) = get_PTDF(psi_container.settings)
-container_built(psi_container::PSIContainer) = psi_container.built
+get_settings(psi_container::PSIContainer) = psi_container.settings
 
 function get_variable(
     psi_container::PSIContainer,

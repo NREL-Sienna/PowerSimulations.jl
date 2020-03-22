@@ -130,17 +130,15 @@ get_initial_time(s::Stage{T}) where {T <: AbstractOperationsProblem} =
     get_initial_time(s.internal.psi_container.settings)
 
 function reset!(stage::Stage)
-    @warn("Stage $(stage.internal.number) is already instiated. Will be reset during this simulation build")
-    stage.internal = StageInternal(
-        0,
-        0,
-        0,
-        PSIContainer(
-            stage.template.transmission,
-            stage.sys,
-            stage.internal.psi_container.settings,
-            nothing,
-        ),
+    if stage_built(stage)
+        @info("Stage $(stage.internal.number) will be reset by the build call")
+    end
+    stage.internal.execution_count = 0
+    stage.internal.psi_container = PSIContainer(
+        stage.template.transmission,
+        stage.sys,
+        stage.internal.psi_container.settings,
+        nothing,
     )
     return
 end
@@ -151,21 +149,13 @@ function build!(
     horizon::Int,
     stage_interval::Dates.Period,
 )
-    stage_built(stage) && reset!(stage)
+    settings = get_settings(get_psi_container(stage))
+    set_horizon!(settings, horizon)
+    set_initial_time!(settings, initial_time)
+    reset!(stage)
     psi_container = get_psi_container(stage)
-    set_horizon!(psi_container.settings, horizon)
-    set_initial_time!(psi_container.settings, initial_time)
+    @assert get_horizon(psi_container.settings) == length(psi_container.time_steps)
     _build!(psi_container, stage.template, stage.sys)
-    solver_supports_warm_start = MOI.supports(
-        JuMP.backend(stage.internal.psi_container.JuMPmodel),
-        MOI.VariablePrimalStart(),
-        MOI.VariableIndex,
-    )
-    if !solver_supports_warm_start
-        solver_name = JuMP.solver_name(psi_container.JuMPmodel)
-        @warn("$(solver_name) in stage $(stage.internal.number) does not support warm start")
-    end
-    set_use_warm_start!(psi_container.settings, solver_supports_warm_start)
     stage_resolution = PSY.get_forecasts_resolution(stage.sys)
     stage.internal.end_of_interval_step = Int(stage_interval / stage_resolution)
     stage.internal.built = true

@@ -209,11 +209,24 @@ mutable struct SimulationSequence
     end
 end
 
-get_stage_horizon(s::SimulationSequence, stage::String) = get(s.horizons, stage, nothing)
+function get_stage_horizon(s::SimulationSequence, stage::String)
+    horizon = get(s.horizons, stage, nothing)
+    isnothing(horizon) &&
+    throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
+    return horizon
+end
+
 get_stage_interval(s::SimulationSequence, stage::String) = s.intervals[stage][1]
-get_stage_name(s::SimulationSequence, stage::Stage) =
-    get(s.order, get_number(stage), nothing)
+
+function get_stage_name(s::SimulationSequence, stage::Stage)
+    name = get(s.order, get_number(stage), nothing)
+    isnothing(name) &&
+    throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
+    return name
+end
+
 get_step_resolution(s::SimulationSequence) = s.step_resolution
+
 function get_stage_interval_chronology(s::SimulationSequence, stage::String)
     return s.intervals[stage][2]
 end
