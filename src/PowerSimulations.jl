@@ -147,7 +147,13 @@ import PowerSystems
 import InfrastructureSystems
 # so that users have access to IS.Results interfaces
 import InfrastructureSystems:
-    get_variables, get_total_cost, get_optimizer_log, get_time_stamp, write_results
+    get_base_power,
+    get_variables,
+    get_total_cost,
+    get_optimizer_log,
+    get_time_stamp,
+    write_results
+export get_base_power
 export get_variables
 export get_dual_values
 export get_total_cost
