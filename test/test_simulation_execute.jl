@@ -603,5 +603,4 @@ end
     )
     build!(sim)
     res = execute!(sim)
-    @show res
 end
