@@ -145,7 +145,7 @@ function _check_step_interval_consistency(
     return
 end
 
-function _check_cache_defination(cache::Dict{Tuple, <:AbstractCache})
+function _check_cache_defination(cache::Dict{<:Tuple, <:AbstractCache})
     for (stage_names, c) in cache
         if typeof(c) == TimeStatusChange && length(stage_names) > 1
             error("TimeStatusChange cache currently only supports single stage. Please consider changing your cache definations")
