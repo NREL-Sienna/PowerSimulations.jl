@@ -10,7 +10,7 @@ mutable struct StageInternal
     psi_container::PSIContainer
     # Caches are stored in set because order isn't relevant and they should be unique
     caches::Set{CacheKey}
-    chronolgy_dict::Dict{Int, <:FeedForwardChronology}
+    chronolgy_dict::Dict{Int,<:FeedForwardChronology}
     built::Bool
     function StageInternal(number, executions, execution_count, psi_container)
         new(
@@ -20,7 +20,7 @@ mutable struct StageInternal
             0,
             psi_container,
             Set{CacheKey}(),
-            Dict{Int, FeedForwardChronology}(),
+            Dict{Int,FeedForwardChronology}(),
             false,
         )
     end
@@ -35,23 +35,18 @@ end
         internal::Union{Nothing, StageInternal}
         )
 """
-mutable struct Stage{M <: AbstractOperationsProblem}
+mutable struct Stage{M<:AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
-    internal::Union{Nothing, StageInternal}
+    internal::Union{Nothing,StageInternal}
 
     function Stage{M}(
         template::OperationsProblemTemplate,
         sys::PSY.System,
         settings::PSISettings,
-        jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
-    ) where {M <: AbstractOperationsProblem}
-        internal = StageInternal(
-            0,
-            0,
-            0,
-            PSIContainer(template.transmission, sys, settings, jump_model),
-        )
+        jump_model::Union{Nothing,JuMP.AbstractModel} = nothing,
+    ) where {M<:AbstractOperationsProblem}
+        internal = StageInternal(0, 0, 0, PSIContainer(sys, settings, jump_model))
         new{M}(template, sys, internal)
     end
 end
@@ -60,9 +55,9 @@ function Stage{M}(
     template::OperationsProblemTemplate,
     sys::PSY.System,
     optimizer::JuMP.MOI.OptimizerWithAttributes,
-    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    jump_model::Union{Nothing,JuMP.AbstractModel} = nothing;
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
     check_kwargs(kwargs, STAGE_ACCEPTED_KWARGS, "Stage")
     settings = PSISettings(sys; optimizer = optimizer, use_parameters = true, kwargs...)
     return Stage{M}(template, sys, settings, jump_model)
@@ -93,7 +88,6 @@ stage = Stage(MyOpProblemType template, system, optimizer)
 # Accepted Key Words
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
-- `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
 - `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 """
 function Stage(
@@ -101,9 +95,9 @@ function Stage(
     template::OperationsProblemTemplate,
     sys::PSY.System,
     optimizer::JuMP.MOI.OptimizerWithAttributes,
-    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    jump_model::Union{Nothing,JuMP.AbstractModel} = nothing;
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
     return Stage{M}(template, sys, optimizer, jump_model; kwargs...)
 end
 
@@ -111,7 +105,7 @@ function Stage(
     template::OperationsProblemTemplate,
     sys::PSY.System,
     optimizer::JuMP.MOI.OptimizerWithAttributes,
-    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    jump_model::Union{Nothing,JuMP.AbstractModel} = nothing;
     kwargs...,
 )
     return Stage{GenericOpProblem}(template, sys, optimizer, jump_model; kwargs...)
@@ -126,7 +120,7 @@ get_number(s::Stage) = s.internal.number
 get_psi_container(s::Stage) = s.internal.psi_container
 get_end_of_interval_step(s::Stage) = s.internal.end_of_interval_step
 warm_start_enabled(s::Stage) = get_use_warm_start(s.internal.psi_container.settings)
-get_initial_time(s::Stage{T}) where {T <: AbstractOperationsProblem} =
+get_initial_time(s::Stage{T}) where {T<:AbstractOperationsProblem} =
     get_initial_time(s.internal.psi_container.settings)
 
 function reset!(stage::Stage)
@@ -134,12 +128,9 @@ function reset!(stage::Stage)
         @info("Stage $(stage.internal.number) will be reset by the build call")
     end
     stage.internal.execution_count = 0
-    stage.internal.psi_container = PSIContainer(
-        stage.template.transmission,
-        stage.sys,
-        stage.internal.psi_container.settings,
-        nothing,
-    )
+    stage.internal.psi_container =
+        PSIContainer(stage.sys, stage.internal.psi_container.settings, nothing)
+    stage.internal.built = false
     return
 end
 
@@ -149,13 +140,13 @@ function build!(
     horizon::Int,
     stage_interval::Dates.Period,
 )
+    stage_built(stage) && reset!(stage)
     settings = get_settings(get_psi_container(stage))
     set_horizon!(settings, horizon)
     set_initial_time!(settings, initial_time)
-    reset!(stage)
     psi_container = get_psi_container(stage)
-    @assert get_horizon(psi_container.settings) == length(psi_container.time_steps)
     _build!(psi_container, stage.template, stage.sys)
+    @assert get_horizon(psi_container.settings) == length(psi_container.time_steps)
     stage_resolution = PSY.get_forecasts_resolution(stage.sys)
     stage.internal.end_of_interval_step = Int(stage_interval / stage_resolution)
     stage.internal.built = true
@@ -164,8 +155,7 @@ end
 
 function run_stage(stage::Stage, start_time::Dates.DateTime, results_path::String)
     @assert stage.internal.psi_container.JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
-    timed_log = Dict{Symbol, Any}()
-
+    timed_log = Dict{Symbol,Any}()
     model = stage.internal.psi_container.JuMPmodel
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
         @timed JuMP.optimize!(model)
@@ -211,7 +201,7 @@ function get_initial_cache(cache::TimeStatusChange, stage::Stage)
     device_axes = Set((
         PSY.get_name(ic.device) for ic in Iterators.Flatten([ini_cond_on, ini_cond_off])
     ),)
-    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, device_axes)
+    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol,Float64}}(undef, device_axes)
 
     for ic in ini_cond_on
         device_name = PSY.get_name(ic.device)
@@ -249,7 +239,7 @@ end
 function get_time_stamps(stage::Stage, start_time::Dates.DateTime)
     resolution = PSY.get_forecasts_resolution(stage.sys)
     horizon = stage.internal.psi_container.time_steps[end]
-    range_time = collect(start_time:resolution:(start_time + resolution * horizon))
+    range_time = collect(start_time:resolution:(start_time+resolution*horizon))
     time_stamp = DataFrames.DataFrame(Range = range_time[:, 1])
 
     return time_stamp
