@@ -125,7 +125,7 @@ get_initial_time(s::Stage{T}) where {T <: AbstractOperationsProblem} =
 
 function reset!(stage::Stage)
     if stage_built(stage)
-        @info("Stage $(stage.internal.number) will be reset by the build call")
+        @info("Stage $(stage.internal.number) will be reset by the simulation build call")
     end
     stage.internal.execution_count = 0
     stage.internal.psi_container =
