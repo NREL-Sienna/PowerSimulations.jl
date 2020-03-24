@@ -142,6 +142,8 @@ function build!(
 )
     stage_built(stage) && reset!(stage)
     settings = get_settings(get_psi_container(stage))
+    # Horizon and initial time are set here because the information is specified in the
+    # Simulation Sequence object and not at the stage creation.
     set_horizon!(settings, horizon)
     set_initial_time!(settings, initial_time)
     psi_container = get_psi_container(stage)
