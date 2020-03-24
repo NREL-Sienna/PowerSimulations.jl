@@ -1,9 +1,9 @@
 #################################################################################
 #Type Alias for long type signatures
-const MinMax = NamedTuple{(:min, :max), NTuple{2, Float64}}
-const NamedMinMax = Tuple{String, MinMax}
-const UpDown = NamedTuple{(:up, :down), NTuple{2, Float64}}
-const InOut = NamedTuple{(:in, :out), NTuple{2, Float64}}
+const MinMax = NamedTuple{(:min, :max),NTuple{2,Float64}}
+const NamedMinMax = Tuple{String,MinMax}
+const UpDown = NamedTuple{(:up, :down),NTuple{2,Float64}}
+const InOut = NamedTuple{(:in, :out),NTuple{2,Float64}}
 
 # Type Alias From other Packages
 const PM = PowerModels
@@ -21,14 +21,17 @@ const RUN_SIMULATION_TIMER = TimerOutputs.TimerOutput()
 
 #Type Alias for JuMP and PJ containers
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
-const PGAE{V} =
-    PJ.ParametrizedGenericAffExpr{Float64, V} where {V <: JuMP.AbstractVariableRef}
-const GAE{V} = JuMP.GenericAffExpr{Float64, V} where {V <: JuMP.AbstractVariableRef}
-const JuMPAffineExpressionArray = Matrix{GAE{V}} where {V <: JuMP.AbstractVariableRef}
-const JuMPAffineExpressionVector = Vector{GAE{V}} where {V <: JuMP.AbstractVariableRef}
+const PGAE{V} = PJ.ParametrizedGenericAffExpr{Float64,V} where {V<:JuMP.AbstractVariableRef}
+const GAE{V} = JuMP.GenericAffExpr{Float64,V} where {V<:JuMP.AbstractVariableRef}
+const JuMPAffineExpressionArray = Matrix{GAE{V}} where {V<:JuMP.AbstractVariableRef}
+const JuMPAffineExpressionVector = Vector{GAE{V}} where {V<:JuMP.AbstractVariableRef}
 const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
-const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
+const DenseAxisArrayContainer = Dict{Symbol,JuMP.Containers.DenseAxisArray}
+
+# Settings constants
+const UNSET_HORIZON = 0
+const UNSET_INI_TIME = Dates.DateTime(0)
 
 # Tolerance of comparisons
 const ABSOLUTE_TOLERANCE = 1.0e-10
@@ -37,7 +40,6 @@ const MISSING_INITIAL_CONDITIONS_TIME_COUNT = 999.0
 
 const OPERATIONS_ACCEPTED_KWARGS = [
     :horizon,
-    :initial_conditions,
     :initial_time,
     :use_forecast_data,
     :PTDF,
@@ -49,8 +51,7 @@ const OPERATIONS_ACCEPTED_KWARGS = [
 
 const OPERATIONS_SOLVE_KWARGS = [:optimizer, :save_path]
 
-const STAGE_ACCEPTED_KWARGS =
-    [:initial_conditions, :PTDF, :use_warm_start, :constraint_duals]
+const STAGE_ACCEPTED_KWARGS = [:PTDF, :use_warm_start, :constraint_duals]
 
 const PSI_NAME_DELIMITER = "__"
 
