@@ -361,10 +361,10 @@ function check_problem_size(psi_container::PSIContainer)
     return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
 end
 
-        @debug check_problem_size(psi_container)
-    @debug check_problem_size(psi_container)
+@debug check_problem_size(psi_container)
+@debug check_problem_size(psi_container)
 
-        @debug check_problem_size(psi_container)
+@debug check_problem_size(psi_container)
 function get_variables_value(op_m::OperationsProblem)
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
     for (k, v) in get_variables(op_m.psi_container)
