@@ -87,7 +87,7 @@ function OperationsProblem{M}(
     return OperationsProblem{M}(template, sys, jump_model, settings)
 end
 
-# The init_psi_container is called at the build! call in this constructor. This is meant to
+# The psi_container_init is called at the build! call in this constructor. This is meant to
 # build an operation from a template.
 function OperationsProblem{M}(
     template::OperationsProblemTemplate,
