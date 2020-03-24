@@ -145,6 +145,15 @@ function _check_step_interval_consistency(
     return
 end
 
+function _check_cache_defination(cache::Dict{<:Tuple, <:AbstractCache})
+    for (stage_names, c) in cache
+        if typeof(c) == TimeStatusChange && length(stage_names) > 1
+            error("TimeStatusChange cache currently only supports single stage. Please consider changing your cache definations")
+        end
+    end
+    return
+end
+
 # TODO: Add DocString
 @doc raw"""
     SimulationSequence(initial_time::Union{Dates.DateTime, Nothing}
@@ -154,7 +163,7 @@ end
                         feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
                         feedforward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward}
                         ini_cond_chronology::Dict{String, <:FeedForwardChronology}
-                        cache::Dict{String, Vector{<:AbstractCache}}
+                        cache::Dict{String, AbstractCache}
                         )
 """
 mutable struct SimulationSequence
@@ -190,6 +199,7 @@ mutable struct SimulationSequence
         _check_step_interval_consistency(step_resolution, intervals[order[1]][1])
         _check_feedforward(feedforward, feedforward_chronologies)
         _check_chronology_consistency(order, feedforward_chronologies, ini_cond_chronology)
+        _check_cache_defination(cache)
         if length(order) == 1
             ini_cond_chronology = IntraStageChronology()
         end
