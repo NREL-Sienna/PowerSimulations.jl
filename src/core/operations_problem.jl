@@ -87,6 +87,8 @@ function OperationsProblem{M}(
     return OperationsProblem{M}(template, sys, jump_model, settings)
 end
 
+# The init_psi_container is called at the build! call in this constructor. This is meant to
+# build an operation from a template.
 function OperationsProblem{M}(
     template::OperationsProblemTemplate,
     sys::PSY.System,
@@ -141,22 +143,6 @@ function OperationsProblem(
     return OperationsProblem{M}(T, sys, jump_model; kwargs...)
 end
 
-function OperationsProblem{M}(
-    ::Type{T},
-    sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
-    kwargs...,
-) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
-    check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
-    settings = PSISettings(sys; kwargs...)
-    return OperationsProblem{M}(
-        OperationsProblemTemplate(T),
-        sys,
-        PSIContainer(T, sys, settings, jump_model),
-    )
-
-end
-
 """
     OperationsProblem(::Type{T},
                     sys::PSY.System,
@@ -194,6 +180,25 @@ function OperationsProblem(
     kwargs...,
 ) where {T <: PM.AbstractPowerModel}
     return OperationsProblem{GenericOpProblem}(T, sys, jump_model; kwargs...)
+end
+
+# This constructor calls PSI container including the the PowerModels type in order to initialize
+# the container and it is meant to construct operations problems using construct_device! function
+# calls
+function OperationsProblem{M}(
+    ::Type{T},
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    kwargs...,
+) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
+    check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
+    settings = PSISettings(sys; kwargs...)
+    return OperationsProblem{M}(
+        OperationsProblemTemplate(T),
+        sys,
+        PSIContainer(T, sys, settings, jump_model),
+    )
+
 end
 
 """
