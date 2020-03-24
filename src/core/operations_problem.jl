@@ -2,9 +2,9 @@ struct GenericOpProblem <: AbstractOperationsProblem end
 
 mutable struct OperationsProblemTemplate
     transmission::Type{<:PM.AbstractPowerModel}
-    devices::Dict{Symbol, DeviceModel}
-    branches::Dict{Symbol, DeviceModel}
-    services::Dict{Symbol, ServiceModel}
+    devices::Dict{Symbol,DeviceModel}
+    branches::Dict{Symbol,DeviceModel}
+    services::Dict{Symbol,ServiceModel}
 end
 
 """
@@ -20,16 +20,16 @@ Creates a model reference of the Power Formulation, devices, branches, and servi
 template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 ```
 """
-function OperationsProblemTemplate(::Type{T}) where {T <: PM.AbstractPowerModel}
+function OperationsProblemTemplate(::Type{T}) where {T<:PM.AbstractPowerModel}
     return OperationsProblemTemplate(
         T,
-        Dict{Symbol, DeviceModel}(),
-        Dict{Symbol, DeviceModel}(),
-        Dict{Symbol, ServiceModel}(),
+        Dict{Symbol,DeviceModel}(),
+        Dict{Symbol,DeviceModel}(),
+        Dict{Symbol,ServiceModel}(),
     )
 end
 
-mutable struct OperationsProblem{M <: AbstractOperationsProblem}
+mutable struct OperationsProblem{M<:AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
     psi_container::PSIContainer
@@ -63,7 +63,6 @@ OpModel = OperationsProblem(TestOpProblem, template, system)
 - `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
 - `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
-- `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
 - `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
 - `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 """
@@ -71,18 +70,18 @@ function OperationsProblem(
     ::Type{M},
     template::OperationsProblemTemplate,
     sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    jump_model::Union{Nothing,JuMP.AbstractModel} = nothing;
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
     return OperationsProblem{M}(template, sys, jump_model; kwargs...)
 end
 
 function OperationsProblem{M}(
     template::OperationsProblemTemplate,
     sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    jump_model::Union{Nothing,JuMP.AbstractModel} = nothing;
     kwargs...,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
     settings = PSISettings(sys; kwargs...)
     return OperationsProblem{M}(template, sys, jump_model, settings)
@@ -91,14 +90,11 @@ end
 function OperationsProblem{M}(
     template::OperationsProblemTemplate,
     sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.AbstractModel},
+    jump_model::Union{Nothing,JuMP.AbstractModel},
     settings::PSISettings,
-) where {M <: AbstractOperationsProblem}
-    op_problem = OperationsProblem{M}(
-        template,
-        sys,
-        PSIContainer(template.transmission, sys, settings, jump_model),
-    )
+) where {M<:AbstractOperationsProblem}
+    op_problem =
+        OperationsProblem{M}(template, sys, PSIContainer(sys, settings, jump_model))
     build!(op_problem)
     return op_problem
 end
@@ -132,7 +128,6 @@ construct_device!(op_problem, :Thermal, model)
 - `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
 - `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
-- `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
 - `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
 - `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 """
@@ -140,18 +135,18 @@ function OperationsProblem(
     ::Type{M},
     ::Type{T},
     sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    jump_model::Union{Nothing,JuMP.AbstractModel} = nothing;
     kwargs...,
-) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
+) where {M<:AbstractOperationsProblem,T<:PM.AbstractPowerModel}
     return OperationsProblem{M}(T, sys, jump_model; kwargs...)
 end
 
 function OperationsProblem{M}(
     ::Type{T},
     sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    jump_model::Union{Nothing,JuMP.AbstractModel} = nothing;
     kwargs...,
-) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
+) where {M<:AbstractOperationsProblem,T<:PM.AbstractPowerModel}
     check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
     settings = PSISettings(sys; kwargs...)
     return OperationsProblem{M}(
@@ -159,6 +154,7 @@ function OperationsProblem{M}(
         sys,
         PSIContainer(T, sys, settings, jump_model),
     )
+
 end
 
 """
@@ -188,16 +184,15 @@ construct_device!(op_problem, :Thermal, model)
 - `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
 - `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
-- `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
 - `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
 - `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 """
 function OperationsProblem(
     ::Type{T},
     sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    jump_model::Union{Nothing,JuMP.AbstractModel} = nothing;
     kwargs...,
-) where {T <: PM.AbstractPowerModel}
+) where {T<:PM.AbstractPowerModel}
     return OperationsProblem{GenericOpProblem}(T, sys, jump_model; kwargs...)
 end
 
@@ -215,8 +210,8 @@ Construct an OperationsProblem from a serialized file.
 """
 function OperationsProblem(
     filename::AbstractString;
-    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
+    jump_model::Union{Nothing,JuMP.AbstractModel} = nothing,
+    optimizer::Union{Nothing,JuMP.MOI.OptimizerWithAttributes} = nothing,
 )
     return deserialize(
         OperationsProblem,
@@ -233,19 +228,15 @@ get_psi_container(op_problem::OperationsProblem) = op_problem.psi_container
 get_base_power(op_problem::OperationsProblem) = op_problem.sys.basepower
 
 function reset!(op_problem::OperationsProblem)
-    op_problem.psi_container = PSIContainer(
-        op_problem.template.transmission,
-        op_problem.sys,
-        op_problem.psi_container.settings,
-        nothing,
-    )
+    op_problem.psi_container =
+        PSIContainer(op_problem.sys, op_problem.psi_container.settings, nothing)
     return
 end
 
 function set_transmission_model!(
     op_problem::OperationsProblem{M},
     transmission::Type{T},
-) where {T <: PM.AbstractPowerModel, M <: AbstractOperationsProblem}
+) where {T<:PM.AbstractPowerModel,M<:AbstractOperationsProblem}
     op_problem.template.transmission = transmission
     reset!(op_problem)
     build!(op_problem)
@@ -254,8 +245,8 @@ end
 
 function set_devices_template!(
     op_problem::OperationsProblem{M},
-    devices::Dict{Symbol, DeviceModel},
-) where {M <: AbstractOperationsProblem}
+    devices::Dict{Symbol,DeviceModel},
+) where {M<:AbstractOperationsProblem}
     op_problem.template.devices = devices
     reset!(op_problem)
     build!(op_problem)
@@ -264,8 +255,8 @@ end
 
 function set_branches_template!(
     op_problem::OperationsProblem{M},
-    branches::Dict{Symbol, DeviceModel},
-) where {M <: AbstractOperationsProblem}
+    branches::Dict{Symbol,DeviceModel},
+) where {M<:AbstractOperationsProblem}
     op_problem.template.branches = branches
     reset!(op_problem)
     build!(op_problem)
@@ -274,8 +265,8 @@ end
 
 function set_services_template!(
     op_problem::OperationsProblem{M},
-    services::Dict{Symbol, <:ServiceModel},
-) where {M <: AbstractOperationsProblem}
+    services::Dict{Symbol,<:ServiceModel},
+) where {M<:AbstractOperationsProblem}
     op_problem.template.services = services
     reset!(op_problem)
     build!(op_problem)
@@ -285,8 +276,8 @@ end
 function set_device_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
-    device::DeviceModel{<:PSY.StaticInjection, <:AbstractDeviceFormulation},
-) where {M <: AbstractOperationsProblem}
+    device::DeviceModel{<:PSY.StaticInjection,<:AbstractDeviceFormulation},
+) where {M<:AbstractOperationsProblem}
     if haskey(op_problem.template.devices, name)
         op_problem.template.devices[name] = device
         reset!(op_problem)
@@ -300,8 +291,8 @@ end
 function set_branch_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
-    branch::DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation},
-) where {M <: AbstractOperationsProblem}
+    branch::DeviceModel{<:PSY.Branch,<:AbstractDeviceFormulation},
+) where {M<:AbstractOperationsProblem}
     if haskey(op_problem.template.branches, name)
         op_problem.template.branches[name] = branch
         reset!(op_problem)
@@ -316,7 +307,7 @@ function set_services_model!(
     op_problem::OperationsProblem{M},
     name::Symbol,
     service::ServiceModel,
-) where {M <: AbstractOperationsProblem}
+) where {M<:AbstractOperationsProblem}
     if haskey(op_problem.template.services, name)
         op_problem.template.services[name] = service
         reset!(op_problem)
@@ -359,7 +350,7 @@ end
 function construct_network!(
     op_problem::OperationsProblem,
     system_formulation::Type{T},
-) where {T <: PM.AbstractPowerModel}
+) where {T<:PM.AbstractPowerModel}
     construct_network!(op_problem.psi_container, get_system(op_problem), T)
     return
 end
@@ -375,7 +366,7 @@ function get_initial_conditions(
     return get_initial_conditions(psi_container, key)
 end
 
-function build!(op_problem::OperationsProblem{M}) where {M <: AbstractOperationsProblem}
+function build!(op_problem::OperationsProblem{M}) where {M<:AbstractOperationsProblem}
     sys = get_system(op_problem)
     _build!(op_problem.psi_container, op_problem.template, sys)
     return
@@ -397,6 +388,7 @@ function _build!(
 )
     transmission = template.transmission
     # Order is required
+    psi_container_init!(psi_container, transmission, sys)
     construct_services!(psi_container, sys, template.services, template.devices)
     for device_model in values(template.devices)
         @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
@@ -418,7 +410,7 @@ function _build!(
 end
 
 function get_variables_value(op_m::OperationsProblem)
-    results_dict = Dict{Symbol, DataFrames.DataFrame}()
+    results_dict = Dict{Symbol,DataFrames.DataFrame}()
     for (k, v) in get_variables(op_m.psi_container)
         results_dict[k] = axis_array_to_dataframe(v)
     end
@@ -447,9 +439,9 @@ automatically get written to feather files
 function solve!(
     op_problem::OperationsProblem{T};
     kwargs...,
-) where {T <: AbstractOperationsProblem}
+) where {T<:AbstractOperationsProblem}
     check_kwargs(kwargs, OPERATIONS_SOLVE_KWARGS, "Solve")
-    timed_log = Dict{Symbol, Any}()
+    timed_log = Dict{Symbol,Any}()
     save_path = get(kwargs, :save_path, nothing)
 
     if op_problem.psi_container.JuMPmodel.moi_backend.state == MOIU.NO_OPTIMIZER
@@ -502,7 +494,7 @@ end
 # Function to create a dictionary for the optimizer log of the simulation
 function get_optimizer_log(op_m::OperationsProblem)
     psi_container = op_m.psi_container
-    optimizer_log = Dict{Symbol, Any}()
+    optimizer_log = Dict{Symbol,Any}()
     optimizer_log[:obj_value] = JuMP.objective_value(psi_container.JuMPmodel)
     optimizer_log[:termination_status] = JuMP.termination_status(psi_container.JuMPmodel)
     optimizer_log[:primal_status] = JuMP.primal_status(psi_container.JuMPmodel)
@@ -523,7 +515,7 @@ function get_time_stamps(op_problem::OperationsProblem)
     initial_time = PSY.get_forecasts_initial_time(op_problem.sys)
     interval = PSY.get_forecasts_resolution(op_problem.sys)
     horizon = PSY.get_forecasts_horizon(op_problem.sys)
-    range_time = collect(initial_time:interval:(initial_time + interval .* horizon))
+    range_time = collect(initial_time:interval:(initial_time+interval.*horizon))
     time_stamp = DataFrames.DataFrame(Range = range_time[:, 1])
 
     return time_stamp
@@ -555,7 +547,7 @@ end
 ################ Functions to debug optimization models#####################################
 """ "Each Tuple corresponds to (con_name, internal_index, moi_index)"""
 function get_all_constraint_index(op_problem::OperationsProblem)
-    con_index = Vector{Tuple{Symbol, Int, Int}}()
+    con_index = Vector{Tuple{Symbol,Int,Int}}()
     for (key, value) in op_problem.psi_container.constraints
         for (idx, constraint) in enumerate(value)
             moi_index = JuMP.optimizer_index(constraint)
@@ -567,7 +559,7 @@ end
 
 """ "Each Tuple corresponds to (con_name, internal_index, moi_index)"""
 function get_all_var_index(op_problem::OperationsProblem)
-    var_index = Vector{Tuple{Symbol, Int, Int}}()
+    var_index = Vector{Tuple{Symbol,Int,Int}}()
     for (key, value) in op_problem.psi_container.variables
         for (idx, variable) in enumerate(value)
             moi_index = JuMP.optimizer_index(variable)
