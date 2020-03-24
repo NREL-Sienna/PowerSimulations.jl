@@ -393,6 +393,9 @@ function _build!(
 )
     transmission = template.transmission
     # Order is required
+    # The container is initialized here because this build! call for psi_container takes the
+    # information from the template with cached PSISettings. It allows having the same build! call for operations problems
+    # specified with template and simulation stage.
     psi_container_init!(psi_container, transmission, sys)
     construct_services!(psi_container, sys, template.services, template.devices)
     for device_model in values(template.devices)
