@@ -1,24 +1,24 @@
-mutable struct InitialCondition{T<:Union{PJ.ParameterRef,Float64}}
+mutable struct InitialCondition{T <: Union{PJ.ParameterRef, Float64}}
     device::PSY.Device
     update_ref::UpdateRef
     value::T
-    cache_type::Union{Nothing,Type{<:AbstractCache}}
+    cache_type::Union{Nothing, Type{<:AbstractCache}}
 end
 
 function InitialCondition(
     device::PSY.Device,
     update_ref::UpdateRef,
     value::T,
-) where {T<:Union{PJ.ParameterRef,Float64}}
+) where {T <: Union{PJ.ParameterRef, Float64}}
     return InitialCondition(device, update_ref, value, nothing)
 end
 
-struct ICKey{IC<:InitialConditionType,D<:PSY.Device}
+struct ICKey{IC <: InitialConditionType, D <: PSY.Device}
     ic_type::Type{IC}
     device_type::Type{D}
 end
 
-const InitialConditionsContainer = Dict{ICKey,Array{InitialCondition}}
+const InitialConditionsContainer = Dict{ICKey, Array{InitialCondition}}
 #Defined here because of dependencies in psi_container
 
 struct PSISettings
@@ -27,10 +27,10 @@ struct PSISettings
     use_parameters::Bool
     use_warm_start::Base.RefValue{Bool}
     initial_time::Base.RefValue{Dates.DateTime}
-    PTDF::Union{Nothing,PSY.PTDF}
-    optimizer::Union{Nothing,JuMP.MOI.OptimizerWithAttributes}
+    PTDF::Union{Nothing, PSY.PTDF}
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
     constraint_duals::Vector{Symbol}
-    ext::Dict{String,Any}
+    ext::Dict{String, Any}
 end
 
 function PSISettings(
@@ -40,10 +40,10 @@ function PSISettings(
     use_forecast_data::Bool = true,
     use_warm_start::Bool = true,
     horizon::Int = UNSET_HORIZON,
-    PTDF::Union{Nothing,PSY.PTDF} = nothing,
-    optimizer::Union{Nothing,JuMP.MOI.OptimizerWithAttributes} = nothing,
+    PTDF::Union{Nothing, PSY.PTDF} = nothing,
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
     constraint_duals::Vector{Symbol} = Vector{Symbol}(),
-    ext::Dict{String,Any} = Dict{String,Any}(),
+    ext::Dict{String, Any} = Dict{String, Any}(),
 )
     return PSISettings(
         Ref(horizon),
@@ -57,7 +57,6 @@ function PSISettings(
         ext,
     )
 end
-
 
 function copy_for_serialization(settings::PSISettings)
     vals = []
@@ -77,7 +76,7 @@ end
 
 function restore_from_copy(
     settings::PSISettings;
-    optimizer::Union{Nothing,JuMP.MOI.OptimizerWithAttributes},
+    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
 )
     vals = []
     for name in fieldnames(PSISettings)
@@ -116,23 +115,23 @@ get_use_warm_start(settings::PSISettings) = settings.use_warm_start[]
 get_constraint_duals(settings::PSISettings) = settings.constraint_duals
 
 mutable struct PSIContainer
-    JuMPmodel::Union{Nothing,JuMP.AbstractModel}
+    JuMPmodel::Union{Nothing, JuMP.AbstractModel}
     time_steps::UnitRange{Int}
     resolution::Dates.TimePeriod
     settings::PSISettings
     settings_copy::PSISettings
-    variables::Dict{Symbol,JuMP.Containers.DenseAxisArray}
-    constraints::Dict{Symbol,JuMP.Containers.DenseAxisArray}
+    variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
+    constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     cost_function::JuMP.AbstractJuMPScalar
-    expressions::Dict{Symbol,JuMP.Containers.DenseAxisArray}
-    parameters::Union{Nothing,ParametersContainer}
+    expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
+    parameters::Union{Nothing, ParametersContainer}
     initial_conditions::InitialConditionsContainer
-    pm::Union{Nothing,PM.AbstractPowerModel}
+    pm::Union{Nothing, PM.AbstractPowerModel}
 
     function PSIContainer(
         sys::PSY.System,
         settings::PSISettings,
-        jump_model::Union{Nothing,JuMP.AbstractModel},
+        jump_model::Union{Nothing, JuMP.AbstractModel},
     )
         PSY.check_forecast_consistency(sys)
         resolution = PSY.get_forecasts_resolution(sys)
@@ -150,7 +149,7 @@ mutable struct PSIContainer
             copy_for_serialization(settings),
             DenseAxisArrayContainer(),
             DenseAxisArrayContainer(),
-            zero(JuMP.GenericAffExpr{Float64,V}),
+            zero(JuMP.GenericAffExpr{Float64, V}),
             DenseAxisArrayContainer(),
             nothing,
             InitialConditionsContainer(),
@@ -218,7 +217,7 @@ function _make_expressions_dict!(
     psi_container::PSIContainer,
     bus_numbers::Vector{Int},
     transmission::Type{S},
-) where {S<:PM.AbstractPowerModel}
+) where {S <: PM.AbstractPowerModel}
     settings = psi_container.settings
     parameters = get_use_parameters(settings)
     V = JuMP.variable_type(psi_container.JuMPmodel)
@@ -236,7 +235,7 @@ function _make_expressions_dict!(
     psi_container::PSIContainer,
     bus_numbers::Vector{Int},
     transmission::Type{S},
-) where {S<:PM.AbstractActivePowerModel}
+) where {S <: PM.AbstractActivePowerModel}
     settings = psi_container.settings
     parameters = get_use_parameters(settings)
     V = JuMP.variable_type(psi_container.JuMPmodel)
@@ -252,7 +251,7 @@ function psi_container_init!(
     psi_container::PSIContainer,
     ::Type{T},
     sys::PSY.System,
-) where {T<:PM.AbstractPowerModel}
+) where {T <: PM.AbstractPowerModel}
     # The order of operations matter
     settings = psi_container.settings
     _make_jump_model!(psi_container)
@@ -286,22 +285,21 @@ function PSIContainer(
     ::Type{T},
     sys::PSY.System,
     settings::PSISettings,
-    jump_model::Union{Nothing,JuMP.AbstractModel},
-) where {T<:PM.AbstractPowerModel}
+    jump_model::Union{Nothing, JuMP.AbstractModel},
+) where {T <: PM.AbstractPowerModel}
 
     container = PSIContainer(sys, settings, jump_model)
     psi_container_init!(container, T, sys)
     return container
 end
 
-
 function InitialCondition(
     psi_container::PSIContainer,
     device::T,
     update_ref::UpdateRef,
     value::Float64,
-    cache_type::Union{Nothing,Type{<:AbstractCache}} = nothing,
-) where {T<:PSY.Component}
+    cache_type::Union{Nothing, Type{<:AbstractCache}} = nothing,
+) where {T <: PSY.Component}
     if model_has_parameters(psi_container)
         return InitialCondition(
             device,
@@ -322,7 +320,7 @@ function get_initial_conditions(
     psi_container::PSIContainer,
     ::Type{T},
     ::Type{D},
-) where {T<:InitialConditionType,D<:PSY.Device}
+) where {T <: InitialConditionType, D <: PSY.Device}
     return get_initial_conditions(psi_container, ICKey(T, D))
 end
 
@@ -394,7 +392,7 @@ function get_variable(
     psi_container::PSIContainer,
     var_type::AbstractString,
     ::Type{T},
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     return get_variable(psi_container, variable_name(var_type, T))
 end
 
@@ -425,7 +423,7 @@ function assign_variable!(
     variable_type::AbstractString,
     ::Type{T},
     value,
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     assign_variable!(psi_container, variable_name(variable_type, T), value)
     return
 end
@@ -457,7 +455,7 @@ function get_constraint(
     psi_container::PSIContainer,
     constraint_type::AbstractString,
     ::Type{T},
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     return get_constraint(psi_container, constraint_name(constraint_type, T))
 end
 
@@ -484,7 +482,7 @@ function assign_constraint!(
     constraint_type::AbstractString,
     ::Type{T},
     value,
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     assign_constraint!(psi_container, constraint_name(constraint_type, T), value)
     return
 end
@@ -531,7 +529,7 @@ function get_parameter_container(
     psi_container::PSIContainer,
     name::Symbol,
     ::Type{T},
-) where {T<:PSY.Component}
+) where {T <: PSY.Component}
     return get_parameter_container(psi_container, encode_symbol(T, name))
 end
 
@@ -584,7 +582,7 @@ end
 function get_parameters_value(psi_container::PSIContainer)
     # TODO: Still not obvious implementation since it needs to get the multipliers from
     # the system
-    params_dict = Dict{Symbol,DataFrames.DataFrame}()
+    params_dict = Dict{Symbol, DataFrames.DataFrame}()
     parameters = get_parameters(psi_container)
     (isnothing(parameters) || isempty(parameters)) && return params_dict
     for (k, v) in parameters
@@ -606,7 +604,7 @@ function is_milp(container::PSIContainer)
 end
 
 function _export_optimizer_log(
-    optimizer_log::Dict{Symbol,Any},
+    optimizer_log::Dict{Symbol, Any},
     psi_container::PSIContainer,
     path::String,
 )
@@ -639,7 +637,7 @@ function get_dual_values(psi_container::PSIContainer)
 end
 
 function get_dual_values(op::PSIContainer, cons::Vector{Symbol})
-    results_dict = Dict{Symbol,DataFrames.DataFrame}()
+    results_dict = Dict{Symbol, DataFrames.DataFrame}()
     isempty(cons) && return results_dict
     for c in cons
         v = get_constraint(op, c)
