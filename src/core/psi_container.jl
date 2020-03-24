@@ -158,6 +158,18 @@ mutable struct PSIContainer
     end
 end
 
+function PSIContainer(
+    ::Type{T},
+    sys::PSY.System,
+    settings::PSISettings,
+    jump_model::Union{Nothing, JuMP.AbstractModel},
+) where {T <: PM.AbstractPowerModel}
+
+    container = PSIContainer(sys, settings, jump_model)
+    psi_container_init!(container, T, sys)
+    return container
+end
+
 function _check_warm_start_support(JuMPmodel::JuMP.AbstractModel, warm_start_enabled::Bool)
     !warm_start_enabled && return warm_start_enabled
     solver_supports_warm_start =
@@ -279,18 +291,6 @@ function psi_container_init!(
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
     _make_expressions_dict!(psi_container, bus_numbers, T)
     return
-end
-
-function PSIContainer(
-    ::Type{T},
-    sys::PSY.System,
-    settings::PSISettings,
-    jump_model::Union{Nothing, JuMP.AbstractModel},
-) where {T <: PM.AbstractPowerModel}
-
-    container = PSIContainer(sys, settings, jump_model)
-    psi_container_init!(container, T, sys)
-    return container
 end
 
 function InitialCondition(
