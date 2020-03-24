@@ -352,6 +352,19 @@ function build!(op_problem::OperationsProblem{M}) where {M <: AbstractOperations
     return
 end
 
+function check_problem_size(psi_container::PSIContainer)
+    vars = JuMP.num_variables(psi_container.JuMPmodel)
+    cons = 0
+    for (exp, c_type) in JuMP.list_of_constraint_types(psi_container.JuMPmodel)
+        cons += JuMP.num_constraints(psi_container.JuMPmodel, exp, c_type)
+    end
+    return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
+end
+
+        @debug check_problem_size(psi_container)
+    @debug check_problem_size(psi_container)
+
+        @debug check_problem_size(psi_container)
 function get_variables_value(op_m::OperationsProblem)
     results_dict = Dict{Symbol, DataFrames.DataFrame}()
     for (k, v) in get_variables(op_m.psi_container)

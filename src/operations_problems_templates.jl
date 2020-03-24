@@ -34,7 +34,7 @@ function _generic_template(; kwargs...)
         kwargs,
         :services,
         Dict(
-            :ReserveUp =>     ServiceModel(PSY.VariableReserve{PSY.ReserveUp}, RangeReserve),
+            :ReserveUp => ServiceModel(PSY.VariableReserve{PSY.ReserveUp}, RangeReserve),
             :ReserveDown =>
                 ServiceModel(PSY.VariableReserve{PSY.ReserveDown}, RangeReserve),
         ),
