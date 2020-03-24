@@ -381,6 +381,15 @@ function build!(op_problem::OperationsProblem{M}) where {M <: AbstractOperations
     return
 end
 
+function check_problem_size(psi_container::PSIContainer)
+    vars = JuMP.num_variables(psi_container.JuMPmodel)
+    cons = 0
+    for (exp, c_type) in JuMP.list_of_constraint_types(psi_container.JuMPmodel)
+        cons += JuMP.num_constraints(psi_container.JuMPmodel, exp, c_type)
+    end
+    return "The current total number of variables is $(vars) and total number of constraints is $(cons)"
+end
+
 function _build!(
     psi_container::PSIContainer,
     template::OperationsProblemTemplate,
@@ -392,12 +401,16 @@ function _build!(
     for device_model in values(template.devices)
         @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"
         construct_device!(psi_container, sys, device_model, transmission)
+        @debug check_problem_size(psi_container)
     end
     @debug "Building $(transmission) network formulation"
     construct_network!(psi_container, sys, transmission)
+    @debug check_problem_size(psi_container)
+
     for branch_model in values(template.branches)
         @debug "Building $(branch_model.device_type) with $(branch_model.formulation) formulation"
         construct_device!(psi_container, sys, branch_model, transmission)
+        @debug check_problem_size(psi_container)
     end
     @debug "Building Objective"
     JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)

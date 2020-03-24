@@ -67,6 +67,7 @@ function energy_variables!(
     return
 end
 
+#=
 function inflow_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
@@ -82,6 +83,7 @@ function inflow_variables!(
 
     return
 end
+=#
 
 function spillage_variables!(
     psi_container::PSIContainer,
@@ -101,6 +103,7 @@ end
 """
 This function add the variables for power generation commitment to the model
 """
+#=
 function commitment_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
@@ -115,7 +118,6 @@ function commitment_variables!(
     return
 end
 
-#=
 # All Hydro UC formulations are currently not supported
 ### Constraints for Thermal Generation without commitment variables ####
 """
@@ -146,7 +148,7 @@ function reactivepower_constraints!(
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HydroGen, D <: AbstractHydroDispatchFormulation}
-    constraint_data = Vector(DeviceRange)()
+    constraint_data = Vector{DeviceRange}()
     for d in devices
         limits = PSY.get_reactivepowerlimits(PSY.get_tech(d))
         name = PSY.get_name(d)
