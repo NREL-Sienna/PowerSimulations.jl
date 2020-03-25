@@ -32,6 +32,22 @@ function TimeStatusChange(::Type{T}, name::AbstractString) where {T <: PSY.Devic
     return TimeStatusChange(T, value_array, UpdateRef{JuMP.VariableRef}(T, name))
 end
 
+function TimeStatusChange(
+    ::Type{T},
+    name::AbstractString,
+    interval::Int64,
+    resolution::Dates.TimePeriod,
+) where {T <: PSY.Device}
+    value_array =
+        JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, 1, 1:interval)
+    return TimeStatusChange(
+        T,
+        value_array,
+        UpdateRef{JuMP.VariableRef}(T, name),
+        resolution,
+    )
+end
+
 mutable struct StoredEnergy <: AbstractCache
     device_type::Type{<:PSY.Device}
     value::JuMP.Containers.DenseAxisArray{Float64}
