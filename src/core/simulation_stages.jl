@@ -211,22 +211,32 @@ function get_initial_cache(cache::TimeStatusChange, stage::Stage)
     device_axes = Set((
         PSY.get_name(ic.device) for ic in Iterators.Flatten([ini_cond_on, ini_cond_off])
     ),)
-    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(undef, device_axes)
+    time_periods = size(cache.value, 2)
+    value_array = JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}(
+        undef,
+        device_axes,
+        1:time_periods,
+    )
 
     for ic in ini_cond_on
         device_name = PSY.get_name(ic.device)
         condition = get_condition(ic)
         status = (condition > 0.0) ? 1.0 : 0.0
-        value_array[device_name] = Dict(:count => condition, :status => status)
+        value_array[device_name, time_periods] =
+            Dict(:count => condition, :status => status)
     end
 
     for ic in ini_cond_off
         device_name = PSY.get_name(ic.device)
         condition = get_condition(ic)
         status = (condition > 0.0) ? 0.0 : 1.0
-        if value_array[device_name][:status] != status
+        if value_array[device_name, time_periods][:status] != status
             throw(IS.ConflictingInputsError("Initial Conditions for $(device_name) are not compatible. The values provided are invalid"))
         end
+    end
+
+    for t in 1:(time_periods - 1), d in device_axes
+        value_array[d, t] = Dict(:count => 0.0, :status => 0.0)
     end
 
     return value_array
