@@ -13,7 +13,18 @@ Tracks the last time status of a device changed in a simulation
 mutable struct TimeStatusChange <: AbstractCache
     device_type::Type{<:PSY.Device}
     value::JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}}
+    units::Dates.TimePeriod
     ref::UpdateRef
+
+    function TimeStatusChange(
+        device_type::Type{<:PSY.Device},
+        value::JuMP.Containers.DenseAxisArray{Dict{Symbol, Float64}},
+        ref::UpdateRef,
+        units::Dates.TimePeriod = Dates.Hour(1),
+    )
+        units = IS.time_period_conversion(units)
+        new(device_type, value, units, ref)
+    end
 end
 
 function TimeStatusChange(::Type{T}, name::AbstractString) where {T <: PSY.Device}

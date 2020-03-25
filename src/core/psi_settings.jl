@@ -1,6 +1,5 @@
 struct PSISettings
     horizon::Base.RefValue{Int}
-    initial_conditions::Union{Nothing, InitialConditions}
     use_forecast_data::Bool
     use_parameters::Bool
     use_warm_start::Base.RefValue{Bool}
@@ -13,33 +12,18 @@ end
 
 function PSISettings(
     sys;
-    initial_time::Union{Nothing, Dates.DateTime} = nothing,
+    initial_time::Dates.DateTime = UNSET_INI_TIME,
     use_parameters::Bool = false,
     use_forecast_data::Bool = true,
-    initial_conditions::Union{Nothing, InitialConditions} = nothing,
     use_warm_start::Bool = true,
-    horizon::Int = 0,
+    horizon::Int = UNSET_HORIZON,
     PTDF::Union{Nothing, PSY.PTDF} = nothing,
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
     constraint_duals::Vector{Symbol} = Vector{Symbol}(),
     ext::Dict{String, Any} = Dict{String, Any}(),
 )
-
-    if isnothing(initial_time)
-        initial_time = PSY.get_forecasts_initial_time(sys)
-    end
-
-    if horizon == 0
-        horizon = PSY.get_forecasts_horizon(sys)
-    end
-
-    if isnothing(initial_conditions)
-        initial_conditions = InitialConditions(use_parameters = use_parameters)
-    end
-
     return PSISettings(
         Ref(horizon),
-        initial_conditions,
         use_forecast_data,
         use_parameters,
         Ref(use_warm_start),
