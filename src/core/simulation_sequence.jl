@@ -199,7 +199,8 @@ mutable struct SimulationSequence
         _check_step_interval_consistency(step_resolution, intervals[order[1]][1])
         _check_feedforward(feedforward, feedforward_chronologies)
         _check_chronology_consistency(order, feedforward_chronologies, ini_cond_chronology)
-        _check_cache_defination(cache)
+        # disabled for testing Multi-stage cache
+        #_check_cache_defination(cache)
         if length(order) == 1
             ini_cond_chronology = IntraStageChronology()
         end
