@@ -40,9 +40,10 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     cache::TimeStatusChange,
+    cache_period::Int64,
 ) where {T <: PSY.Component}
     name = device_name(ic)
-    time_cache = cache_value(cache, name)
+    time_cache = cache_value(cache, name, cache_period)
 
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
@@ -57,9 +58,10 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     cache::TimeStatusChange,
+    cache_period::Int64,
 ) where {T <: PSY.Component}
     name = device_name(ic)
-    time_cache = cache_value(cache, name)
+    time_cache = cache_value(cache, name, cache_period)
 
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
@@ -74,6 +76,7 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     cache::Union{Nothing, AbstractCache},
+    cache_period::Int64,
 ) where {T <: PSY.Component}
     return isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
 end
@@ -83,6 +86,7 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     cache::Union{Nothing, AbstractCache},
+    cache_period::Int64,
 ) where {T <: PSY.ThermalGen}
     status_change_to_on =
         get_condition(ic) <= ABSOLUTE_TOLERANCE && var_value >= ABSOLUTE_TOLERANCE
@@ -104,10 +108,11 @@ function calculate_ic_quantity(
     ic::InitialCondition,
     var_value::Float64,
     cache::Union{Nothing, AbstractCache},
+    cache_period::Int64,
 ) where {T <: PSY.Component}
 
     name = device_name(ic)
-    energy_cache = cache_value(cache, name)
+    energy_cache = cache_value(cache, name, cache_period)
     if energy_cache != var_value
         return var_value
     end
