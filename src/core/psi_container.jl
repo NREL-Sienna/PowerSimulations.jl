@@ -36,7 +36,7 @@ mutable struct PSIContainer
             zero(JuMP.GenericAffExpr{Float64, V}),
             DenseAxisArrayContainer(),
             nothing,
-            InitialConditions(),
+            InitialConditions(use_parameters = get_use_parameters(settings)),
             nothing,
         )
     end
