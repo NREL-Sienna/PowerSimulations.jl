@@ -60,3 +60,4 @@ function StoredEnergy(::Type{T}, name::AbstractString) where {T <: PSY.Device}
 end
 
 cache_value(cache::AbstractCache, key) = cache.value[key]
+cache_value(cache::AbstractCache, row, col) = cache.value[row, col]
