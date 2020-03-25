@@ -63,7 +63,6 @@ OpModel = OperationsProblem(TestOpProblem, template, system)
 - `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
 - `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
-- `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
 - `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
 - `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 """
@@ -88,17 +87,16 @@ function OperationsProblem{M}(
     return OperationsProblem{M}(template, sys, jump_model, settings)
 end
 
+# The psi_container_init is called at the build! call in this constructor. This is meant to
+# build an operation from a template.
 function OperationsProblem{M}(
     template::OperationsProblemTemplate,
     sys::PSY.System,
     jump_model::Union{Nothing, JuMP.AbstractModel},
     settings::PSISettings,
 ) where {M <: AbstractOperationsProblem}
-    op_problem = OperationsProblem{M}(
-        template,
-        sys,
-        PSIContainer(template.transmission, sys, settings, jump_model),
-    )
+    op_problem =
+        OperationsProblem{M}(template, sys, PSIContainer(sys, settings, jump_model))
     build!(op_problem)
     return op_problem
 end
@@ -132,7 +130,6 @@ construct_device!(op_problem, :Thermal, model)
 - `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
 - `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
-- `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
 - `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
 - `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 """
@@ -144,21 +141,6 @@ function OperationsProblem(
     kwargs...,
 ) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
     return OperationsProblem{M}(T, sys, jump_model; kwargs...)
-end
-
-function OperationsProblem{M}(
-    ::Type{T},
-    sys::PSY.System,
-    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
-    kwargs...,
-) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
-    check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
-    settings = PSISettings(sys; kwargs...)
-    return OperationsProblem{M}(
-        OperationsProblemTemplate(T),
-        sys,
-        PSIContainer(T, sys, settings, jump_model),
-    )
 end
 
 """
@@ -188,7 +170,6 @@ construct_device!(op_problem, :Thermal, model)
 - `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
 - `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
-- `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
 - `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
 - `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 """
@@ -199,6 +180,25 @@ function OperationsProblem(
     kwargs...,
 ) where {T <: PM.AbstractPowerModel}
     return OperationsProblem{GenericOpProblem}(T, sys, jump_model; kwargs...)
+end
+
+# This constructor calls PSI container including the the PowerModels type in order to initialize
+# the container and it is meant to construct operations problems using construct_device! function
+# calls
+function OperationsProblem{M}(
+    ::Type{T},
+    sys::PSY.System,
+    jump_model::Union{Nothing, JuMP.AbstractModel} = nothing;
+    kwargs...,
+) where {M <: AbstractOperationsProblem, T <: PM.AbstractPowerModel}
+    check_kwargs(kwargs, OPERATIONS_ACCEPTED_KWARGS, "OperationsProblem")
+    settings = PSISettings(sys; kwargs...)
+    return OperationsProblem{M}(
+        OperationsProblemTemplate(T),
+        sys,
+        PSIContainer(T, sys, settings, jump_model),
+    )
+
 end
 
 """
@@ -233,12 +233,8 @@ get_psi_container(op_problem::OperationsProblem) = op_problem.psi_container
 get_base_power(op_problem::OperationsProblem) = op_problem.sys.basepower
 
 function reset!(op_problem::OperationsProblem)
-    op_problem.psi_container = PSIContainer(
-        op_problem.template.transmission,
-        op_problem.sys,
-        op_problem.psi_container.settings,
-        nothing,
-    )
+    op_problem.psi_container =
+        PSIContainer(op_problem.sys, op_problem.psi_container.settings, nothing)
     return
 end
 
@@ -397,6 +393,10 @@ function _build!(
 )
     transmission = template.transmission
     # Order is required
+    # The container is initialized here because this build! call for psi_container takes the
+    # information from the template with cached PSISettings. It allows having the same build! call for operations problems
+    # specified with template and simulation stage.
+    psi_container_init!(psi_container, transmission, sys)
     construct_services!(psi_container, sys, template.services, template.devices)
     for device_model in values(template.devices)
         @debug "Building $(device_model.device_type) with $(device_model.formulation) formulation"

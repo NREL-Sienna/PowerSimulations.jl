@@ -46,12 +46,7 @@ mutable struct Stage{M <: AbstractOperationsProblem}
         settings::PSISettings,
         jump_model::Union{Nothing, JuMP.AbstractModel} = nothing,
     ) where {M <: AbstractOperationsProblem}
-        internal = StageInternal(
-            0,
-            0,
-            0,
-            PSIContainer(template.transmission, sys, settings, jump_model),
-        )
+        internal = StageInternal(0, 0, 0, PSIContainer(sys, settings, jump_model))
         new{M}(template, sys, internal)
     end
 end
@@ -93,7 +88,6 @@ stage = Stage(MyOpProblemType template, system, optimizer)
 # Accepted Key Words
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
-- `initial_conditions::InitialConditionsContainer`: default of Dict{ICKey, Array{InitialCondition}}
 - `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
 """
 function Stage(
@@ -130,16 +124,14 @@ get_initial_time(s::Stage{T}) where {T <: AbstractOperationsProblem} =
     get_initial_time(s.internal.psi_container.settings)
 
 function reset!(stage::Stage)
+    @assert !stage_built(stage)
     if stage_built(stage)
-        @info("Stage $(stage.internal.number) will be reset by the build call")
+        @info("Stage $(stage.internal.number) will be reset by the simulation build call")
     end
     stage.internal.execution_count = 0
-    stage.internal.psi_container = PSIContainer(
-        stage.template.transmission,
-        stage.sys,
-        stage.internal.psi_container.settings,
-        nothing,
-    )
+    stage.internal.psi_container =
+        PSIContainer(stage.sys, stage.internal.psi_container.settings, nothing)
+    stage.internal.built = false
     return
 end
 
@@ -149,13 +141,15 @@ function build!(
     horizon::Int,
     stage_interval::Dates.Period,
 )
+    stage_built(stage) && reset!(stage)
     settings = get_settings(get_psi_container(stage))
+    # Horizon and initial time are set here because the information is specified in the
+    # Simulation Sequence object and not at the stage creation.
     set_horizon!(settings, horizon)
     set_initial_time!(settings, initial_time)
-    reset!(stage)
     psi_container = get_psi_container(stage)
-    @assert get_horizon(psi_container.settings) == length(psi_container.time_steps)
     _build!(psi_container, stage.template, stage.sys)
+    @assert get_horizon(psi_container.settings) == length(psi_container.time_steps)
     stage_resolution = PSY.get_forecasts_resolution(stage.sys)
     stage.internal.end_of_interval_step = Int(stage_interval / stage_resolution)
     stage.internal.built = true
@@ -165,7 +159,6 @@ end
 function run_stage(stage::Stage, start_time::Dates.DateTime, results_path::String)
     @assert stage.internal.psi_container.JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
     timed_log = Dict{Symbol, Any}()
-
     model = stage.internal.psi_container.JuMPmodel
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
         @timed JuMP.optimize!(model)
