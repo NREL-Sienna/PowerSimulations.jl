@@ -573,16 +573,12 @@ end
 @testset "Test Simulation with external initial conditions" begin
     path = mktempdir()
 
-    initial_conditions = PSI.InitialConditions()
-    # TODO: add initial_conditions
-
     stage_definition = Dict(
         "ED" => Stage(
             GenericOpProblem,
             template_ed,
             c_sys5_uc,
             ipopt_optimizer;
-            initial_conditions = initial_conditions,
         ),
     )
 
