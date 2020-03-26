@@ -143,7 +143,6 @@ end
         end
     end
 
-
     @testset "Operations template constructors" begin
         op_problem_ed = PSI.EconomicDispatchProblem(c_sys5)
         op_problem_uc = PSI.UnitCommitmentProblem(c_sys5)

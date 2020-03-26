@@ -157,35 +157,30 @@ end
 
 @testset "Operation Model Constructors with Slacks" begin
 
-    networks = [
-        StandardPTDFModel,
-        DCPPowerModel,
-        ACPPowerModel,
-    ]
+    networks = [StandardPTDFModel, DCPPowerModel, ACPPowerModel]
 
-    thermal_gens = [
-        ThermalDispatch,
-    ]
+    thermal_gens = [ThermalDispatch]
 
     systems = [c_sys5_re]
     for net in networks, thermal in thermal_gens, system in systems
-            devices = Dict{Symbol, DeviceModel}(
-                :Generators => DeviceModel(ThermalStandard, thermal),
-                :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-                :RE => DeviceModel(RenewableDispatch, RenewableFixed)
-            )
-            branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
-            template = OperationsProblemTemplate(net, devices, branches, services)
-            op_problem = OperationsProblem(
-                TestOpProblem,
-                template,
-                system;
-                slack_variables = true,
-                optimizer = ipopt_optimizer,
-                PTDF = PTDF5,
-            )
-            res = solve!(op_problem)
-            @test termination_status(op_problem.psi_container.JuMPmodel) in [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
+        devices = Dict{Symbol, DeviceModel}(
+            :Generators => DeviceModel(ThermalStandard, thermal),
+            :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+            :RE => DeviceModel(RenewableDispatch, RenewableFixed),
+        )
+        branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
+        template = OperationsProblemTemplate(net, devices, branches, services)
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            template,
+            system;
+            slack_variables = true,
+            optimizer = ipopt_optimizer,
+            PTDF = PTDF5,
+        )
+        res = solve!(op_problem)
+        @test termination_status(op_problem.psi_container.JuMPmodel) in
+              [MOI.OPTIMAL, MOI.LOCALLY_SOLVED]
     end
 end
 #=
