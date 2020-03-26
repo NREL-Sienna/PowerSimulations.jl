@@ -47,6 +47,16 @@ services = Dict{Symbol, ServiceModel}()
         optimizer = GLPK_optimizer,
     )
     moi_tests(op_problem, false, 5, 0, 5, 5, 1, false)
+
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        template,
+        c_sys5_re;
+        optimizer = GLPK_optimizer,
+        slack_variables = true
+    )
+    moi_tests(op_problem, false, 168, 0, 120, 120, 24, false)
+
 end
 
 @testset "Test getter functions" begin
