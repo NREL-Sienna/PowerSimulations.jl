@@ -91,18 +91,26 @@ function construct_device!(
     sys::PSY.System,
     model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
     ::Type{S},
-) where {S <: PM.AbstractPowerModel}
+) where {S <: PM.AbstractActivePowerModel}
     devices = PSY.get_components(PSY.MonitoredLine, sys)
-
     if validate_available_devices(devices, PSY.MonitoredLine)
         return
     end
-
-    branch_rate_bounds!(psi_container, devices, model.formulation, S)
-
-    branch_rate_constraints!(psi_container, devices, model, S, get_feedforward(model))
-
     branch_flow_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    return
+end
 
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
+    ::Type{S},
+) where {S <: PM.AbstractPowerModel}
+    devices = PSY.get_components(PSY.MonitoredLine, sys)
+    if validate_available_devices(devices, PSY.MonitoredLine)
+        return
+    end
+    branch_rate_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    branch_flow_constraints!(psi_container, devices, model, S, get_feedforward(model))
     return
 end
