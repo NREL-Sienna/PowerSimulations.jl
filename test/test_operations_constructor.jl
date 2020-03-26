@@ -53,7 +53,7 @@ services = Dict{Symbol, ServiceModel}()
         template,
         c_sys5_re;
         optimizer = GLPK_optimizer,
-        slack_variables = true
+        slack_variables = true,
     )
     moi_tests(op_problem, false, 168, 0, 120, 120, 24, false)
 

@@ -48,12 +48,12 @@ end
         end
     end
     ED = OperationsProblem(
-                TestOpProblem,
-                template,
-                c_sys5_re;
-                optimizer = GLPK_optimizer,
-                slack_variables = true
-            )
+        TestOpProblem,
+        template,
+        c_sys5_re;
+        optimizer = GLPK_optimizer,
+        slack_variables = true,
+    )
     psi_checksolve_test(ED, [MOI.OPTIMAL], 240000.0, 10000)
 end
 
