@@ -1,13 +1,15 @@
-path = joinpath(pwd(), "test_sequence_build")
-!isdir(path) && mkdir(path)
+g_test_path = joinpath(pwd(), "test_sequence_build")
+!isdir(g_test_path) && mkdir(g_test_path)
 
-function test_sequence_build(file_path::String)
-    stages_definition = Dict(
-        "UC" => Stage(GenericOpProblem, template_basic_uc, c_sys5_uc, GLPK_optimizer),
+function create_stages(template_uc)
+    return Dict(
+        "UC" => Stage(GenericOpProblem, template_uc, c_sys5_uc, GLPK_optimizer),
         "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer),
     )
+end
 
-    sequence = SimulationSequence(
+function create_sequence()
+    return SimulationSequence(
         step_resolution = Hour(24),
         order = Dict(1 => "UC", 2 => "ED"),
         feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
@@ -24,13 +26,18 @@ function test_sequence_build(file_path::String)
         ),
         ini_cond_chronology = InterStageChronology(),
     )
+end
 
+function test_sequence_build(file_path::String)
     @testset "Test Simulation Simulation Sequence Validation" begin
+        sequence = create_sequence()
         @test length(findall(x -> x == 2, sequence.execution_order)) == 24
         @test length(findall(x -> x == 1, sequence.execution_order)) == 1
     end
 
     @testset "Simulation with provided initial time" begin
+        stages_definition = create_stages(template_basic_uc)
+        sequence = create_sequence()
         second_day = DayAhead[24] + Hour(1)
         sim = Simulation(
             name = "test",
@@ -47,17 +54,18 @@ function test_sequence_build(file_path::String)
         end
     end
 
-    sim = Simulation(
-        name = "test",
-        steps = 1,
-        stages = stages_definition,
-        stages_sequence = sequence,
-        simulation_folder = file_path,
-    )
-    build!(sim)
-
     @testset "Simulation Build Tests" begin
+        stages_definition = create_stages(template_basic_uc)
+        sequence = create_sequence()
+        sim = Simulation(
+            name = "test",
+            steps = 1,
+            stages = stages_definition,
+            stages_sequence = sequence,
+            simulation_folder = file_path,
+        )
         build!(sim)
+
         @test isempty(values(sim.internal.simulation_cache))
         for field in fieldnames(SimulationSequence)
             if fieldtype(SimulationSequence, field) == Union{Dates.DateTime, Nothing}
@@ -67,14 +75,15 @@ function test_sequence_build(file_path::String)
         @test isa(sim.sequence, SimulationSequence)
     end
 
-    ###################### Negative Tests ########################################
+    ####################### Negative Tests ########################################
     @testset "Test when a simulation has incorrect arguments" begin
         @test_throws UndefKeywordError sim =
             Simulation(name = "test", steps = 1, simulation_folder = file_path)
     end
 
     @testset "Test if a wrong initial time is provided" begin
-
+        stages_definition = create_stages(template_basic_uc)
+        sequence = create_sequence()
         sim = Simulation(
             name = "test",
             steps = 1,
@@ -87,6 +96,7 @@ function test_sequence_build(file_path::String)
     end
 
     @testset "Test if file path is not writeable" begin
+        stages_definition = create_stages(template_basic_uc)
         sequence = SimulationSequence(
             step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
@@ -115,6 +125,7 @@ function test_sequence_build(file_path::String)
     end
 
     @testset "chronology look ahead length is too long for horizon" begin
+        stages_definition = create_stages(template_basic_uc)
         sequence = SimulationSequence(
             step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
@@ -143,6 +154,7 @@ function test_sequence_build(file_path::String)
     end
 
     @testset "too long of a horizon for forecast" begin
+        stages_definition = create_stages(template_basic_uc)
         sequence = SimulationSequence(
             step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
@@ -172,6 +184,7 @@ function test_sequence_build(file_path::String)
     end
 
     @testset "Test too many steps for forecast" begin
+        stages_definition = create_stages(template_basic_uc)
         sequence = SimulationSequence(
             step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
@@ -200,16 +213,7 @@ function test_sequence_build(file_path::String)
     end
 
     @testset "Test Creation of Simulations with Cache" begin
-
-        stages_definition_standard_uc = Dict(
-            "UC" => Stage(
-                GenericOpProblem,
-                template_standard_uc,
-                c_sys5_uc,
-                GLPK_optimizer,
-            ),
-            "ED" => Stage(GenericOpProblem, template_ed, c_sys5_ed, GLPK_optimizer),
-        )
+        stages_definition = create_stages(template_standard_uc)
 
         # Cache is not defined all together
         sequence_no_cache = SimulationSequence(
@@ -232,12 +236,13 @@ function test_sequence_build(file_path::String)
         sim = Simulation(
             name = "cache",
             steps = 1,
-            stages = stages_definition_standard_uc,
+            stages = stages_definition,
             stages_sequence = sequence_no_cache,
             simulation_folder = file_path,
         )
         @test_throws ArgumentError build!(sim)
 
+        stages_definition = create_stages(template_standard_uc)
         sequence = SimulationSequence(
             step_resolution = Hour(24),
             order = Dict(1 => "UC", 2 => "ED"),
@@ -259,7 +264,7 @@ function test_sequence_build(file_path::String)
         sim = Simulation(
             name = "caches",
             steps = 2,
-            stages = stages_definition_standard_uc,
+            stages = stages_definition,
             stages_sequence = sequence,
             simulation_folder = file_path,
         )
@@ -268,6 +273,7 @@ function test_sequence_build(file_path::String)
 
         @test !isempty(sim.internal.simulation_cache)
 
+        stages_definition = create_stages(template_standard_uc)
         # Uses IntraStage but the cache is defined in the wrong stage
         sequence_bad_cache = SimulationSequence(
             step_resolution = Hour(24),
@@ -291,7 +297,7 @@ function test_sequence_build(file_path::String)
         sim = Simulation(
             name = "test",
             steps = 1,
-            stages = stages_definition_standard_uc,
+            stages = stages_definition,
             stages_sequence = sequence_bad_cache,
             simulation_folder = file_path,
         )
@@ -350,8 +356,8 @@ function test_sequence_build(file_path::String)
 end
 
 try
-    test_sequence_build(path)
+    test_sequence_build(g_test_path)
 finally
     @info("removing test files")
-    rm(path, recursive = true)
+    rm(g_test_path, recursive = true)
 end

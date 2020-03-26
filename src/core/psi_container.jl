@@ -1,123 +1,3 @@
-mutable struct InitialCondition{T <: Union{PJ.ParameterRef, Float64}}
-    device::PSY.Device
-    update_ref::UpdateRef
-    value::T
-    cache_type::Union{Nothing, Type{<:AbstractCache}}
-end
-
-function InitialCondition(
-    device::PSY.Device,
-    update_ref::UpdateRef,
-    value::T,
-) where {T <: Union{PJ.ParameterRef, Float64}}
-    return InitialCondition(device, update_ref, value, nothing)
-end
-
-struct ICKey{IC <: InitialConditionType, D <: PSY.Device}
-    ic_type::Type{IC}
-    device_type::Type{D}
-end
-
-const InitialConditionsContainer = Dict{ICKey, Array{InitialCondition}}
-#Defined here because of dependencies in psi_container
-
-struct PSISettings
-    horizon::Base.RefValue{Int}
-    use_forecast_data::Bool
-    use_parameters::Bool
-    warm_start::Base.RefValue{Bool}
-    slack_variables::Bool
-    initial_time::Base.RefValue{Dates.DateTime}
-    PTDF::Union{Nothing, PSY.PTDF}
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
-    constraint_duals::Vector{Symbol}
-    ext::Dict{String, Any}
-end
-
-function PSISettings(
-    sys;
-    initial_time::Dates.DateTime = UNSET_INI_TIME,
-    use_parameters::Bool = false,
-    use_forecast_data::Bool = true,
-    warm_start::Bool = true,
-    slack_variables::Bool = false,
-    horizon::Int = UNSET_HORIZON,
-    PTDF::Union{Nothing, PSY.PTDF} = nothing,
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
-    constraint_duals::Vector{Symbol} = Vector{Symbol}(),
-    ext::Dict{String, Any} = Dict{String, Any}(),
-)
-    return PSISettings(
-        Ref(horizon),
-        use_forecast_data,
-        use_parameters,
-        Ref(warm_start),
-        slack_variables,
-        Ref(initial_time),
-        PTDF,
-        optimizer,
-        constraint_duals,
-        ext,
-    )
-end
-
-function copy_for_serialization(settings::PSISettings)
-    vals = []
-    for name in fieldnames(PSISettings)
-        if name == :optimizer
-            # Cannot guarantee that the optimizer can be serialized.
-            val = nothing
-        else
-            val = getfield(settings, name)
-        end
-
-        push!(vals, val)
-    end
-
-    return deepcopy(PSISettings(vals...))
-end
-
-function restore_from_copy(
-    settings::PSISettings;
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
-)
-    vals = []
-    for name in fieldnames(PSISettings)
-        if name == :optimizer
-            val = optimizer
-        else
-            val = getfield(settings, name)
-        end
-
-        push!(vals, val)
-    end
-
-    return PSISettings(vals...)
-end
-
-function set_horizon!(settings::PSISettings, horizon::Int)
-    settings.horizon[] = horizon
-    return
-end
-get_horizon(settings::PSISettings)::Int = settings.horizon[]
-get_use_forecast_data(settings::PSISettings) = settings.use_forecast_data
-get_use_parameters(settings::PSISettings) = settings.use_parameters
-function set_initial_time!(settings::PSISettings, initial_time::Dates.DateTime)
-    settings.initial_time[] = initial_time
-    return
-end
-get_initial_time(settings::PSISettings)::Dates.DateTime = settings.initial_time[]
-get_PTDF(settings::PSISettings) = settings.PTDF
-get_optimizer(settings::PSISettings) = settings.optimizer
-get_ext(settings::PSISettings) = settings.ext
-function set_warm_start!(settings::PSISettings, warm_start::Bool)
-    settings.warm_start[] = warm_start
-    return
-end
-get_warm_start(settings::PSISettings) = settings.warm_start[]
-get_constraint_duals(settings::PSISettings) = settings.constraint_duals
-get_slack_variables(settings::PSISettings) = settings.slack_variables
-
 mutable struct PSIContainer
     JuMPmodel::Union{Nothing, JuMP.AbstractModel}
     time_steps::UnitRange{Int}
@@ -129,7 +9,7 @@ mutable struct PSIContainer
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     parameters::Union{Nothing, ParametersContainer}
-    initial_conditions::InitialConditionsContainer
+    initial_conditions::InitialConditions
     pm::Union{Nothing, PM.AbstractPowerModel}
 
     function PSIContainer(
@@ -156,7 +36,7 @@ mutable struct PSIContainer
             zero(JuMP.GenericAffExpr{Float64, V}),
             DenseAxisArrayContainer(),
             nothing,
-            InitialConditionsContainer(),
+            InitialConditions(use_parameters = get_use_parameters(settings)),
             nothing,
         )
     end
@@ -297,27 +177,22 @@ function psi_container_init!(
     return
 end
 
-function InitialCondition(
-    psi_container::PSIContainer,
-    device::T,
-    update_ref::UpdateRef,
-    value::Float64,
-    cache_type::Union{Nothing, Type{<:AbstractCache}} = nothing,
-) where {T <: PSY.Component}
-    if model_has_parameters(psi_container)
-        return InitialCondition(
-            device,
-            update_ref,
-            PJ.add_parameter(psi_container.JuMPmodel, value),
-            cache_type,
-        )
+function add_initial_condition_parameters!(psi_container::PSIContainer)
+    for (_, initial_conditions) in iterate_initial_conditions(psi_container)
+        for (i, ic) in enumerate(initial_conditions)
+            val = PJ.add_parameter(psi_container.JuMPmodel, get_value(ic))
+            initial_conditions[i] =
+                InitialCondition(ic.device, ic.update_ref, val, ic.cache_type)
+        end
     end
-
-    return InitialCondition(device, update_ref, value, cache_type)
 end
 
 function has_initial_conditions(psi_container::PSIContainer, key::ICKey)
-    return key in keys(psi_container.initial_conditions)
+    return has_initial_conditions(psi_container.initial_conditions, key)
+end
+
+function iterate_initial_conditions(psi_container::PSIContainer)
+    return iterate_initial_conditions(psi_container.initial_conditions)
 end
 
 function get_initial_conditions(
@@ -329,17 +204,11 @@ function get_initial_conditions(
 end
 
 function get_initial_conditions(psi_container::PSIContainer, key::ICKey)
-    initial_conditions = get(psi_container.initial_conditions, key, nothing)
-    if isnothing(initial_conditions)
-        throw(IS.InvalidValue("initial conditions are not stored for $(key)"))
-    end
-
-    return initial_conditions
+    return get_initial_conditions(psi_container.initial_conditions, key)
 end
 
 function set_initial_conditions!(psi_container::PSIContainer, key::ICKey, value)
-    @debug "set_initial_condition" key
-    psi_container.initial_conditions[key] = value
+    set_initial_conditions!(psi_container.initial_conditions, key, value)
 end
 
 function encode_symbol(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}

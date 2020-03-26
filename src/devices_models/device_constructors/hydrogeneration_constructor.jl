@@ -170,7 +170,7 @@ function construct_device!(
     spillage_variables!(psi_container, devices)
 
     #Initial Conditions
-    storage_energy_init(psi_container, devices)
+    storage_energy_init(psi_container.initial_conditions, devices)
 
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))

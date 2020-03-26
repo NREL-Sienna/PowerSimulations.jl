@@ -462,7 +462,7 @@ function energy_balance_constraint!(
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    if !(key in keys(psi_container.initial_conditions))
+    if !has_initial_conditions(psi_container.initial_conditions, key)
         throw(IS.DataFormatError("Initial Conditions for $(H) Energy Constraints not in the model"))
     end
 
@@ -475,7 +475,7 @@ function energy_balance_constraint!(
     if parameters
         reservoir_energy_balance_param(
             psi_container,
-            psi_container.initial_conditions[key],
+            get_initial_conditions(psi_container, key),
             ts_data_inflow,
             constraint_name(ENERGY_CAPACITY, H),
             (
@@ -488,7 +488,7 @@ function energy_balance_constraint!(
     else
         reservoir_energy_balance(
             psi_container,
-            psi_container.initial_conditions[key],
+            get_initial_conditions(psi_container, key),
             ts_data_inflow,
             constraint_name(ENERGY_CAPACITY, H),
             (
@@ -507,9 +507,9 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{H},
     device_formulation::Type{<:AbstractHydroUnitCommitment},
 ) where {H <: PSY.HydroGen}
-    status_init(psi_container, devices)
-    output_init(psi_container, devices)
-    duration_init(psi_container, devices)
+    status_init(psi_container.initial_conditions, devices)
+    output_init(psi_container.initial_conditions, devices)
+    duration_init(psi_container.initial_conditions, devices)
 
     return
 end
@@ -519,7 +519,7 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{H},
     device_formulation::Type{D},
 ) where {H <: PSY.HydroGen, D <: AbstractHydroDispatchFormulation}
-    output_init(psi_container, devices)
+    output_init.initial_conditions_container(psi_container, devices)
 
     return
 end

@@ -148,6 +148,7 @@ function build!(
     # Simulation Sequence object and not at the stage creation.
     set_horizon!(settings, horizon)
     set_initial_time!(settings, initial_time)
+
     psi_container = get_psi_container(stage)
     _build!(psi_container, stage.template, stage.sys)
     @assert get_horizon(psi_container.settings) == length(psi_container.time_steps)

@@ -168,7 +168,7 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{St},
     ::Type{D},
 ) where {St <: PSY.Storage, D <: AbstractStorageFormulation}
-    storage_energy_init(psi_container, devices)
+    storage_energy_init(psi_container.initial_conditions, devices)
     return
 end
 

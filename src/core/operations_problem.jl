@@ -1,34 +1,5 @@
 struct GenericOpProblem <: AbstractOperationsProblem end
 
-mutable struct OperationsProblemTemplate
-    transmission::Type{<:PM.AbstractPowerModel}
-    devices::Dict{Symbol, DeviceModel}
-    branches::Dict{Symbol, DeviceModel}
-    services::Dict{Symbol, ServiceModel}
-end
-
-"""
-    OperationsProblemTemplate(::Type{T}) where {T<:PM.AbstractPowerFormulation}
-Creates a model reference of the Power Formulation, devices, branches, and services.
-# Arguments
-- `model::Type{T<:PM.AbstractPowerFormulation}`:
-- `devices::Dict{Symbol, DeviceModel}`: device dictionary
-- `branches::Dict{Symbol, BranchModel}`: branch dictionary
-- `services::Dict{Symbol, ServiceModel}`: service dictionary
-# Example
-```julia
-template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-```
-"""
-function OperationsProblemTemplate(::Type{T}) where {T <: PM.AbstractPowerModel}
-    return OperationsProblemTemplate(
-        T,
-        Dict{Symbol, DeviceModel}(),
-        Dict{Symbol, DeviceModel}(),
-        Dict{Symbol, ServiceModel}(),
-    )
-end
-
 mutable struct OperationsProblem{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate
     sys::PSY.System
@@ -415,6 +386,11 @@ function _build!(
         construct_device!(psi_container, sys, branch_model, transmission)
         @debug check_problem_size(psi_container)
     end
+
+    if model_has_parameters(psi_container)
+        add_initial_condition_parameters!(psi_container)
+    end
+
     @debug "Building Objective"
     JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
     return

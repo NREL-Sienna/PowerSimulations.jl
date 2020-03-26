@@ -562,6 +562,7 @@ function test_load_simulation(file_path::String)
         end
     end
 end
+
 try
     test_load_simulation(g_test_path)
 finally
