@@ -45,7 +45,7 @@ dc_line = DeviceModel(HVDCLine, HVDCDispatch)
         )
         psi_constraint_test(ps_model, constraint_names)
         psi_checkobjfun_test(ps_model, objfuncs[ix])
-        psi_checksolve_test(ps_model, [MOI.OPTIMAL])
+        psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
     end
 end
 
@@ -62,9 +62,9 @@ end
         IS.get_uuid(c_sys14_dc) => PTDF14_dc,
     )
     test_results = Dict{UUIDs.UUID, Vector{Int}}(
-        IS.get_uuid(c_sys5) => [264, 0, 408, 408, 264],
-        IS.get_uuid(c_sys14) => [600, 0, 1080, 1080, 816],
-        IS.get_uuid(c_sys14_dc) => [600, 48, 984, 984, 768],
+        IS.get_uuid(c_sys5) => [264, 0, 264, 264, 264],
+        IS.get_uuid(c_sys14) => [600, 0, 600, 600, 816],
+        IS.get_uuid(c_sys14_dc) => [600, 48, 552, 552, 768],
     )
 
     for (ix, sys) in enumerate(systems), p in parameters
@@ -96,7 +96,7 @@ end
         )
         psi_constraint_test(ps_model, constraint_names)
         psi_checkobjfun_test(ps_model, objfuncs[ix])
-        psi_checksolve_test(ps_model, [MOI.OPTIMAL])
+        psi_checksolve_test(ps_model, [MOI.ALMOST_OPTIMAL, MOI.OPTIMAL])
     end
 
     #PTDF input Error testing
@@ -112,9 +112,9 @@ end
     constraint_names = [:RateLimit_ub__Line, :RateLimit_lb__Line]
     parameters = [true, false]
     test_results = Dict{System, Vector{Int}}(
-        c_sys5 => [384, 0, 552, 552, 288],
-        c_sys14 => [936, 0, 1560, 1560, 840],
-        c_sys14_dc => [984, 48, 1416, 1416, 840],
+        c_sys5 => [384, 0, 408, 408, 288],
+        c_sys14 => [936, 0, 1080, 1080, 840],
+        c_sys14_dc => [984, 48, 984, 984, 840],
     )
 
     for (ix, sys) in enumerate(systems), p in parameters
@@ -145,7 +145,7 @@ end
         )
         psi_constraint_test(ps_model, constraint_names)
         psi_checkobjfun_test(ps_model, objfuncs[ix])
-        psi_checksolve_test(ps_model, [MOI.OPTIMAL])
+        psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
     end
 
 end
@@ -214,7 +214,7 @@ end
         construct_network!(ps_model, network)
         construct_device!(ps_model, :Line, line_model)
         construct_device!(ps_model, :DCLine, dc_line)
-        psi_checksolve_test(ps_model, [MOI.OPTIMAL])
+        psi_checksolve_test(ps_model, [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL])
 
     end
 
