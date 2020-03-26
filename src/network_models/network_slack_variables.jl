@@ -1,4 +1,4 @@
-function _add_slacks!(
+function _add_system_balance_slacks!(
     psi_container::PSIContainer,
     slack_name::String,
     expression::Symbol,
@@ -34,7 +34,7 @@ function _add_slacks!(
 end
 
 function add_slacks!(psi_container::PSIContainer, ::Type{CopperPlatePowerModel})
-    _add_slacks!(psi_container, ACTIVE_POWER, :nodal_balance_active, true)
+    _add_system_balance_slacks!(psi_container, ACTIVE_POWER, :nodal_balance_active, true)
     return
 end
 
@@ -42,7 +42,7 @@ function add_slacks!(
     psi_container::PSIContainer,
     ::Type{T},
 ) where {T <: PM.AbstractActivePowerModel}
-    _add_slacks!(psi_container, ACTIVE_POWER, :nodal_balance_active)
+    _add_system_balance_slacks!(psi_container, ACTIVE_POWER, :nodal_balance_active)
     return
 end
 
@@ -50,7 +50,7 @@ function add_slacks!(
     psi_container::PSIContainer,
     ::Type{T},
 ) where {T <: PM.AbstractPowerModel}
-    _add_slacks!(psi_container, ACTIVE_POWER, :nodal_balance_active)
-    _add_slacks!(psi_container, REACTIVE_POWER, :nodal_balance_reactive)
+    _add_system_balance_slacks!(psi_container, ACTIVE_POWER, :nodal_balance_active)
+    _add_system_balance_slacks!(psi_container, REACTIVE_POWER, :nodal_balance_reactive)
     return
 end
