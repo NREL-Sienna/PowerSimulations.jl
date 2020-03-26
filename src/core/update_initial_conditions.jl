@@ -201,7 +201,6 @@ function duration_init(
     return
 end
 
-# TODO: This IC needs a cache for Simulation over long periods of time
 function storage_energy_init(
     container::InitialConditions,
     devices::IS.FlattenIteratorWrapper{T},
