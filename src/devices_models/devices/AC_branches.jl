@@ -68,7 +68,7 @@ function branch_rate_bounds!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractBranchFormulation},
-    ::Type{<:Union{PM.AbstractPowerModel, PM.AbstractDCPLLModel}},
+    ::Type{<:PM.AbstractPowerModel},
 ) where {B <: PSY.ACBranch}
     constraint_data = _get_constraint_data(devices)
     set_variable_bounds!(psi_container, constraint_data, FLOW_ACTIVE_POWER_FROM_TO, B)
@@ -129,7 +129,7 @@ function branch_flow_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
     model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
-    ::Union{Type{PM.DCPPowerModel}, Type{StandardPTDFModel}},
+    ::Type{<:PM.DCPPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 )
     flow_range_data = Vector{PSI.DeviceRange}(undef, length(devices))
