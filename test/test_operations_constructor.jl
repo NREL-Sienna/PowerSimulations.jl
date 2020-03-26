@@ -59,7 +59,7 @@ services = Dict{Symbol, ServiceModel}()
 
 end
 
-@testset "Test getter functions" begin
+@testset "Test optimization debugging functions" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     op_problem = OperationsProblem(
         TestOpProblem,
@@ -142,6 +142,7 @@ end
             @test (:params in keys(op_problem.psi_container.JuMPmodel.ext)) == p
         end
     end
+
 
     @testset "Operations template constructors" begin
         op_problem_ed = PSI.EconomicDispatchProblem(c_sys5)
