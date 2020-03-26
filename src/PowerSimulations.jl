@@ -84,8 +84,8 @@ export StoredEnergy
 
 #operation_models
 export GenericOpProblem
-#export UnitCommitment
-#export EconomicDispatch
+export UnitCommitmentProblem
+export EconomicDispatchProblem
 #export OptimalPowerFlow
 
 # Functions
@@ -118,8 +118,6 @@ export get_duals
 
 ## Utils Exports
 export SimulationResultsReference
-#export get_sim_resolution
-export write_op_problem
 export write_results
 export check_file_integrity
 export load_operation_results
@@ -220,6 +218,7 @@ include("services_models/services_constructor.jl")
 include("network_models/copperplate_model.jl")
 include("network_models/powermodels_interface.jl")
 include("network_models/ptdf_model.jl")
+include("network_models/network_slack_variables.jl")
 
 #Device constructors
 include("devices_models/device_constructors/common/constructor_validations.jl")
