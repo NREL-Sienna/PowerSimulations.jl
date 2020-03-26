@@ -2,7 +2,8 @@ struct PSISettings
     horizon::Base.RefValue{Int}
     use_forecast_data::Bool
     use_parameters::Bool
-    use_warm_start::Base.RefValue{Bool}
+    warm_start::Base.RefValue{Bool}
+    slack_variables::Bool
     initial_time::Base.RefValue{Dates.DateTime}
     PTDF::Union{Nothing, PSY.PTDF}
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
@@ -15,7 +16,8 @@ function PSISettings(
     initial_time::Dates.DateTime = UNSET_INI_TIME,
     use_parameters::Bool = false,
     use_forecast_data::Bool = true,
-    use_warm_start::Bool = true,
+    warm_start::Bool = true,
+    slack_variables::Bool = false,
     horizon::Int = UNSET_HORIZON,
     PTDF::Union{Nothing, PSY.PTDF} = nothing,
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
@@ -26,7 +28,8 @@ function PSISettings(
         Ref(horizon),
         use_forecast_data,
         use_parameters,
-        Ref(use_warm_start),
+        Ref(warm_start),
+        slack_variables,
         Ref(initial_time),
         PTDF,
         optimizer,
@@ -74,7 +77,6 @@ function set_horizon!(settings::PSISettings, horizon::Int)
     return
 end
 get_horizon(settings::PSISettings)::Int = settings.horizon[]
-get_initial_conditions(settings::PSISettings) = settings.initial_conditions
 get_use_forecast_data(settings::PSISettings) = settings.use_forecast_data
 get_use_parameters(settings::PSISettings) = settings.use_parameters
 function set_initial_time!(settings::PSISettings, initial_time::Dates.DateTime)
@@ -85,9 +87,10 @@ get_initial_time(settings::PSISettings)::Dates.DateTime = settings.initial_time[
 get_PTDF(settings::PSISettings) = settings.PTDF
 get_optimizer(settings::PSISettings) = settings.optimizer
 get_ext(settings::PSISettings) = settings.ext
-function set_use_warm_start!(settings::PSISettings, use_warm_start::Bool)
-    settings.use_warm_start[] = use_warm_start
+function set_warm_start!(settings::PSISettings, warm_start::Bool)
+    settings.warm_start[] = warm_start
     return
 end
-get_use_warm_start(settings::PSISettings) = settings.use_warm_start[]
+get_warm_start(settings::PSISettings) = settings.warm_start[]
 get_constraint_duals(settings::PSISettings) = settings.constraint_duals
+get_slack_variables(settings::PSISettings) = settings.slack_variables

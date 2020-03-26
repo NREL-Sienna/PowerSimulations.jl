@@ -88,7 +88,8 @@ stage = Stage(MyOpProblemType template, system, optimizer)
 # Accepted Key Words
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
-- `use_warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
+- `warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
+- `slack_variables::Bool` True will add slacks to the system balance constraints
 """
 function Stage(
     ::Type{M},
@@ -119,7 +120,7 @@ get_template(s::Stage) = s.template
 get_number(s::Stage) = s.internal.number
 get_psi_container(s::Stage) = s.internal.psi_container
 get_end_of_interval_step(s::Stage) = s.internal.end_of_interval_step
-warm_start_enabled(s::Stage) = get_use_warm_start(s.internal.psi_container.settings)
+warm_start_enabled(s::Stage) = get_warm_start(s.internal.psi_container.settings)
 get_initial_time(s::Stage{T}) where {T <: AbstractOperationsProblem} =
     get_initial_time(s.internal.psi_container.settings)
 

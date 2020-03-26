@@ -74,10 +74,10 @@ function _make_jump_model!(psi_container::PSIContainer)
             if !haskey(psi_container.JuMPmodel.ext, :params)
                 @info("Model doesn't have Parameters enabled. Parameters will be enabled")
                 PJ.enable_parameters(psi_container.JuMPmodel)
-                warm_start_enabled = get_use_warm_start(settings)
+                warm_start_enabled = get_warm_start(settings)
                 solver_supports_warm_start =
                     _check_warm_start_support(psi_container.JuMPmodel, warm_start_enabled)
-                set_use_warm_start!(settings, solver_supports_warm_start)
+                set_warm_start!(settings, solver_supports_warm_start)
             end
         end
         return
@@ -85,10 +85,10 @@ function _make_jump_model!(psi_container::PSIContainer)
     @debug "Instantiating the JuMP model"
     if !isnothing(optimizer)
         JuMPmodel = JuMP.Model(optimizer)
-        warm_start_enabled = get_use_warm_start(settings)
+        warm_start_enabled = get_warm_start(settings)
         solver_supports_warm_start =
             _check_warm_start_support(JuMPmodel, warm_start_enabled)
-        set_use_warm_start!(settings, solver_supports_warm_start)
+        set_warm_start!(settings, solver_supports_warm_start)
         parameters && PJ.enable_parameters(JuMPmodel)
         psi_container.JuMPmodel = JuMPmodel
     else
@@ -229,6 +229,10 @@ end
 
 function encode_symbol(name::AbstractString)
     return Symbol(name)
+end
+
+function encode_symbol(name1::AbstractString, name2::AbstractString)
+    return Symbol(join((name1, name2), PSI_NAME_DELIMITER))
 end
 
 function encode_symbol(name::Symbol)
