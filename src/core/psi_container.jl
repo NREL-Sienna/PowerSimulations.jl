@@ -25,7 +25,8 @@ struct PSISettings
     horizon::Base.RefValue{Int}
     use_forecast_data::Bool
     use_parameters::Bool
-    use_warm_start::Base.RefValue{Bool}
+    warm_start::Base.RefValue{Bool}
+    slack_variables::Bool
     initial_time::Base.RefValue{Dates.DateTime}
     PTDF::Union{Nothing, PSY.PTDF}
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
@@ -38,7 +39,8 @@ function PSISettings(
     initial_time::Dates.DateTime = UNSET_INI_TIME,
     use_parameters::Bool = false,
     use_forecast_data::Bool = true,
-    use_warm_start::Bool = true,
+    warm_start::Bool = true,
+    slack_variables::Bool = false,
     horizon::Int = UNSET_HORIZON,
     PTDF::Union{Nothing, PSY.PTDF} = nothing,
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
@@ -49,7 +51,8 @@ function PSISettings(
         Ref(horizon),
         use_forecast_data,
         use_parameters,
-        Ref(use_warm_start),
+        Ref(warm_start),
+        slack_variables,
         Ref(initial_time),
         PTDF,
         optimizer,
@@ -107,12 +110,13 @@ get_initial_time(settings::PSISettings)::Dates.DateTime = settings.initial_time[
 get_PTDF(settings::PSISettings) = settings.PTDF
 get_optimizer(settings::PSISettings) = settings.optimizer
 get_ext(settings::PSISettings) = settings.ext
-function set_use_warm_start!(settings::PSISettings, use_warm_start::Bool)
-    settings.use_warm_start[] = use_warm_start
+function set_warm_start!(settings::PSISettings, warm_start::Bool)
+    settings.warm_start[] = warm_start
     return
 end
-get_use_warm_start(settings::PSISettings) = settings.use_warm_start[]
+get_warm_start(settings::PSISettings) = settings.warm_start[]
 get_constraint_duals(settings::PSISettings) = settings.constraint_duals
+get_slack_variables(settings::PSISettings) = settings.slack_variables
 
 mutable struct PSIContainer
     JuMPmodel::Union{Nothing, JuMP.AbstractModel}
@@ -190,10 +194,10 @@ function _make_jump_model!(psi_container::PSIContainer)
             if !haskey(psi_container.JuMPmodel.ext, :params)
                 @info("Model doesn't have Parameters enabled. Parameters will be enabled")
                 PJ.enable_parameters(psi_container.JuMPmodel)
-                warm_start_enabled = get_use_warm_start(settings)
+                warm_start_enabled = get_warm_start(settings)
                 solver_supports_warm_start =
                     _check_warm_start_support(psi_container.JuMPmodel, warm_start_enabled)
-                set_use_warm_start!(settings, solver_supports_warm_start)
+                set_warm_start!(settings, solver_supports_warm_start)
             end
         end
         return
@@ -201,10 +205,10 @@ function _make_jump_model!(psi_container::PSIContainer)
     @debug "Instantiating the JuMP model"
     if !isnothing(optimizer)
         JuMPmodel = JuMP.Model(optimizer)
-        warm_start_enabled = get_use_warm_start(settings)
+        warm_start_enabled = get_warm_start(settings)
         solver_supports_warm_start =
             _check_warm_start_support(JuMPmodel, warm_start_enabled)
-        set_use_warm_start!(settings, solver_supports_warm_start)
+        set_warm_start!(settings, solver_supports_warm_start)
         parameters && PJ.enable_parameters(JuMPmodel)
         psi_container.JuMPmodel = JuMPmodel
     else
@@ -356,6 +360,10 @@ end
 
 function encode_symbol(name::AbstractString)
     return Symbol(name)
+end
+
+function encode_symbol(name1::AbstractString, name2::AbstractString)
+    return Symbol(join((name1, name2), PSI_NAME_DELIMITER))
 end
 
 function encode_symbol(name::Symbol)
