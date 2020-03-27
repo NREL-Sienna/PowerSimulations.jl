@@ -23,12 +23,15 @@ export ServiceModel
 export RangeReserve
 ######## Branch Models ########
 export StaticLine
-export StaticTransformer
-export TapControl
+export StaticLineBounds
 export StaticLineUnbounded
-#export PhaseControl
+export StaticTransformer
+export StaticTransformerBounds
+export StaticTransformerUnbounded
+export FlowMonitoredLine
 export HVDCLossless
 export HVDCDispatch
+export HVDCUnbounded
 #export VoltageSourceDC
 ######## Load Models ########
 export StaticPowerLoad
