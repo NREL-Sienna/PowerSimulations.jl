@@ -129,12 +129,16 @@ function branch_flow_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
     model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
-    ::Type{<:PM.DCPPowerModel},
+    ::Type{T},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-)
+) where T <: PM.DCPPowerModel
     flow_range_data = Vector{PSI.DeviceRange}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        minmax = (min = PSY.get_flowlimits(d).to_from, max = PSY.get_flowlimits(d).from_to)
+        if PSY.get_flowlimits(d).to_from != PSY.get_flowlimits(d).from_to
+            @info("Flow limits in Line $(PSY.get_name(d)) aren't equal. The minimum will be used in formulation $(T)")
+        end
+        limit = min(PSY.get_rate(d), PSY.get_flowlimits(d).to_from, PSY.get_flowlimits(d).from_to)
+        minmax = (min = -1*limit, max = limit)
         flow_range_data[ix] = DeviceRange(PSY.get_name(d), minmax)
     end
     device_range(
