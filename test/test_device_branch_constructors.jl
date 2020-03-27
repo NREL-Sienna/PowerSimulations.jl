@@ -39,7 +39,7 @@ end
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
     branches = Dict{Symbol, DeviceModel}(
-        :ML => DeviceModel(MonitoredLine, StaticLineBounds),
+        :ML => DeviceModel(MonitoredLine, FlowMonitoredLine),
         :L => DeviceModel(Line, StaticLineBounds),
     )
     template = OperationsProblemTemplate(ACPPowerModel, devices, branches, services)
@@ -59,7 +59,7 @@ end
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
     branches = Dict{Symbol, DeviceModel}(
-        :ML => DeviceModel(MonitoredLine, StaticLineBounds),
+        :ML => DeviceModel(MonitoredLine, FlowMonitoredLine),
         :L => DeviceModel(Line, StaticLineBounds),
     )
     template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
