@@ -222,7 +222,7 @@ function get_initial_cache(cache::TimeStatusChange, stage::Stage)
         device_name = PSY.get_name(ic.device)
         condition = get_condition(ic)
         status = (condition > 0.0) ? 1.0 : 0.0
-        value_array[device_name, time_periods] =
+        value_array[device_name, 1] =
             Dict(:count => condition, :status => status)
     end
 
@@ -230,12 +230,12 @@ function get_initial_cache(cache::TimeStatusChange, stage::Stage)
         device_name = PSY.get_name(ic.device)
         condition = get_condition(ic)
         status = (condition > 0.0) ? 0.0 : 1.0
-        if value_array[device_name, time_periods][:status] != status
+        if value_array[device_name, 1][:status] != status
             throw(IS.ConflictingInputsError("Initial Conditions for $(device_name) are not compatible. The values provided are invalid"))
         end
     end
 
-    for t in 1:(time_periods - 1), d in device_axes
+    for t in 2:time_periods, d in device_axes
         value_array[d, t] = Dict(:count => 0.0, :status => 0.0)
     end
 
