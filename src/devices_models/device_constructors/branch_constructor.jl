@@ -20,7 +20,7 @@ construct_device!(
     ::Type{<:PM.AbstractPowerModel},
 ) = nothing
 
-# For DC Power only. Implements Bounds only
+# For DC Power only. Implements Bounds only and constraints
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
