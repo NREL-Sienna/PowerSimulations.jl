@@ -1,19 +1,21 @@
 #Generic Branch Models
 abstract type AbstractBranchFormulation <: AbstractDeviceFormulation end
+abstract type AbstractBoundedBranchFormulation <: AbstractBranchFormulation end
+
 #Abstract Line Models
-abstract type AbstractLineFormulation <: AbstractBranchFormulation end
-struct StaticLine <: AbstractLineFormulation end
-struct StaticLineUnbounded <: AbstractLineFormulation end
-struct FlowMonitoredLine <: AbstractLineFormulation end
+struct StaticLine <: AbstractBranchFormulation end
+struct StaticLineBounds <: AbstractBoundedBranchFormulation end
+struct StaticLineUnbounded <: AbstractBranchFormulation end
+struct FlowMonitoredLine <: AbstractBranchFormulation end
 
 #Abstract Transformer Models
-abstract type AbstractTransformerFormulation <: AbstractBranchFormulation end
-struct StaticTransformer <: AbstractTransformerFormulation end
-struct StaticTransformerUnbounded <: AbstractTransformerFormulation end
+struct StaticTransformer <: AbstractBranchFormulation end
+struct StaticTransformerBounds <: AbstractBoundedBranchFormulation end
+struct StaticTransformerUnbounded <: AbstractBranchFormulation end
 
 # Not implemented yet
-struct TapControl <: AbstractTransformerFormulation end
-struct PhaseControl <: AbstractTransformerFormulation end
+# struct TapControl <: AbstractBranchFormulation end
+# struct PhaseControl <: AbstractBranchFormulation end
 
 #################################### Branch Variables ##################################################
 # Because of the way we integrate with PowerModels, most of the time PowerSimulations will create variables
@@ -34,14 +36,11 @@ function flow_variables!(
 end
 
 #################################### Flow Variable Bounds ##################################################
-function branch_rate_bounds!(
-    psi_container::PSIContainer,
+function _get_constraint_data(
     devices::IS.FlattenIteratorWrapper{B},
-    ::Type{<:AbstractBranchFormulation},
-    ::Type{<:PM.AbstractDCPModel},
 ) where {B <: PSY.ACBranch}
-    constraint_data = Vector{DeviceRange}()
-    for d in devices
+    constraint_data = Vector{DeviceRange}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
         limit_values = (min = -1 * PSY.get_rate(d), max = PSY.get_rate(d))
         name = PSY.get_name(d)
         services_ub = Vector{Symbol}()
@@ -49,11 +48,18 @@ function branch_rate_bounds!(
             SR = typeof(service)
             push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
         end
-        push!(
-            constraint_data,
-            DeviceRange(name, limit_values, services_ub, Vector{Symbol}()),
-        )
+        constraint_data[ix] = DeviceRange(name, limit_values, services_ub, Vector{Symbol}())
     end
+    return constraint_data
+end
+
+function branch_rate_bounds!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{B},
+    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::Type{<:PM.AbstractDCPModel},
+) where {B <: PSY.ACBranch}
+    constraint_data = _get_constraint_data(devices)
     set_variable_bounds!(psi_container, constraint_data, FLOW_ACTIVE_POWER, B)
     return
 end
@@ -61,86 +67,24 @@ end
 function branch_rate_bounds!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{B},
-    ::Type{D},
-    ::Type{S},
-) where {B <: PSY.ACBranch, D <: AbstractBranchFormulation, S <: PM.AbstractPowerModel}
-    constraint_data = Vector{DeviceRange}()
-
-    for d in devices
-        limit_values = (min = -1 * PSY.get_rate(d), max = PSY.get_rate(d))
-        name = PSY.get_name(d)
-        services_ub = Vector{Symbol}()
-        for service in PSY.get_services(d)
-            SR = typeof(service)
-            push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
-        end
-        push!(
-            constraint_data,
-            DeviceRange(name, limit_values, services_ub, Vector{Symbol}()),
-        )
-    end
+    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+) where {B <: PSY.ACBranch}
+    constraint_data = _get_constraint_data(devices)
     set_variable_bounds!(psi_container, constraint_data, FLOW_ACTIVE_POWER_FROM_TO, B)
     set_variable_bounds!(psi_container, constraint_data, FLOW_ACTIVE_POWER_TO_FROM, B)
     return
 end
 
-#################################### Rate Limits Constraints ##################################################
-function branch_rate_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{B},
-    ::Type{<:AbstractBranchFormulation},
-    ::Type{<:PM.AbstractActivePowerModel},
-) where {B <: PSY.ACBranch}
-    constraint_data = Vector{DeviceRange}()
-    for d in devices
-        limit_values = (min = -1 * PSY.get_rate(d), max = PSY.get_rate(d))
-        name = PSY.get_name(d)
-        services_ub = Vector{Symbol}()
-        for service in PSY.get_services(d)
-            SR = typeof(service)
-            push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
-        end
-        push!(
-            constraint_data,
-            DeviceRange(name, limit_values, services_ub, Vector{Symbol}()),
-        )
-    end
-    device_range(
-        psi_container,
-        constraint_data,
-        constraint_name(RATE_LIMIT, B),
-        variable_name(FLOW_ACTIVE_POWER, B),
-    )
-    return
-end
+#################################### Rate Limits Constraints ###############################
 function branch_rate_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{<:PM.AbstractActivePowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    feedforward::Nothing,
 ) where {B <: PSY.ACBranch}
-    constraint_data = Vector{DeviceRange}()
-    for d in devices
-        limit_values = (min = -1 * PSY.get_rate(d), max = PSY.get_rate(d))
-        name = PSY.get_name(d)
-        services_ub = Vector{Symbol}()
-        for service in PSY.get_services(d)
-            SR = typeof(service)
-            push!(services_ub, Symbol("R$(PSY.get_name(service))_$SR"))
-        end
-        push!(
-            constraint_data,
-            DeviceRange(name, limit_values, services_ub, Vector{Symbol}()),
-        )
-    end
-    device_range(
-        psi_container,
-        constraint_data,
-        constraint_name(RATE_LIMIT, B),
-        variable_name(FLOW_ACTIVE_POWER, B),
-    )
-
+    constraint_data = _get_constraint_data(devices)
     device_range(
         psi_container,
         constraint_data,
@@ -155,7 +99,7 @@ function branch_rate_constraints!(
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    feedforward::Nothing,
 ) where {B <: PSY.ACBranch}
     range_data = [(PSY.get_name(h), PSY.get_rate(h)) for h in devices]
     rating_constraint!(
@@ -177,9 +121,7 @@ function branch_rate_constraints!(
             variable_name(FLOW_REACTIVE_POWER_TO_FROM, B),
         ),
     )
-
     return
-
 end
 
 #################################### Flow Limits Constraints ##################################################
@@ -187,12 +129,20 @@ function branch_flow_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.MonitoredLine},
     model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
-    ::Union{Type{PM.DCPPowerModel}, Type{StandardPTDFModel}},
+    ::Type{T},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-)
+) where {T <: PM.DCPPowerModel}
     flow_range_data = Vector{PSI.DeviceRange}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        minmax = (min = PSY.get_flowlimits(d).to_from, max = PSY.get_flowlimits(d).from_to)
+        if PSY.get_flowlimits(d).to_from != PSY.get_flowlimits(d).from_to
+            @info("Flow limits in Line $(PSY.get_name(d)) aren't equal. The minimum will be used in formulation $(T)")
+        end
+        limit = min(
+            PSY.get_rate(d),
+            PSY.get_flowlimits(d).to_from,
+            PSY.get_flowlimits(d).from_to,
+        )
+        minmax = (min = -1 * limit, max = limit)
         flow_range_data[ix] = DeviceRange(PSY.get_name(d), minmax)
     end
     device_range(

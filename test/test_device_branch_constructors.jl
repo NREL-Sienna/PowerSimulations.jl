@@ -1,24 +1,51 @@
 #Some of these tests require building the full system to have a valid PM object
-@testset "AC branch Branch rate constraints" begin
+system = c_sys5_ml
+line = PSY.get_component(Line, system, "1")
+PSY.convert_component!(MonitoredLine, line, system)
+@testset "AC Power Flow Monitored Line Flow Constraints and bounds" begin
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
     branches = Dict{Symbol, DeviceModel}(
-        :L => DeviceModel(PSY.MonitoredLine, PSI.FlowMonitoredLine),
+        :ML => DeviceModel(MonitoredLine, StaticLineBounds),
+        :L => DeviceModel(Line, StaticLineBounds),
     )
-    template = OperationsProblemTemplate(ACPPowerModel, devices, branches, services)
-    system = c_sys5_ml
-    line = PSY.get_component(Line, system, "1")
-    PSY.convert_component!(MonitoredLine, line, system)
+    template = OperationsProblemTemplate(StandardPTDFModel, devices, branches, services)
     limits = PSY.get_flowlimits(PSY.get_component(MonitoredLine, system, "1"))
     op_problem_m = OperationsProblem(
-        TestOpProblem,
+        PSI.GenericOpProblem,
         template,
         system;
-        optimizer = ipopt_optimizer,
-        use_parameters = false,
+        optimizer = OSQP_optimizer,
+        PTDF = PTDF5,
     )
+    for b in PSI.get_variable(op_problem_m.psi_container, :Fp__Line)
+        @test JuMP.has_lower_bound(b)
+        @test JuMP.has_upper_bound(b)
+    end
+    for b in PSI.get_variable(op_problem_m.psi_container, :Fp__MonitoredLine)
+        @test JuMP.has_lower_bound(b)
+        @test JuMP.has_upper_bound(b)
+    end
+    monitored = solve!(op_problem_m)
+    flow = monitored.variable_values[:Fp__MonitoredLine][1, 1]
+    @test isapprox(flow, limits.from_to, atol = 1e-3)
+end
+
+@testset "AC Power Flow Monitored Line Flow Constraints" begin
+    devices = Dict{Symbol, DeviceModel}(
+        :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+        :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+    )
+    branches = Dict{Symbol, DeviceModel}(
+        :ML => DeviceModel(MonitoredLine, FlowMonitoredLine),
+        :L => DeviceModel(Line, StaticLineBounds),
+    )
+    template = OperationsProblemTemplate(ACPPowerModel, devices, branches, services)
+    limits = PSY.get_flowlimits(PSY.get_component(MonitoredLine, system, "1"))
+    op_problem_m =
+        OperationsProblem(TestOpProblem, template, system; optimizer = ipopt_optimizer)
     monitored = solve!(op_problem_m)
     fq = monitored.variable_values[:FqFT__MonitoredLine][1, 1]
     fp = monitored.variable_values[:FpFT__MonitoredLine][1, 1]
@@ -26,27 +53,23 @@
     @test isapprox(flow, limits.from_to, atol = 1e-3)
 end
 
-@testset "DC branch Branch rate constraints" begin
+@testset "DC PowerFlow Monitored Line Branch Flow constraints" begin
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
     branches = Dict{Symbol, DeviceModel}(
-        :L => DeviceModel(PSY.MonitoredLine, PSI.FlowMonitoredLine),
+        :ML => DeviceModel(MonitoredLine, FlowMonitoredLine),
+        :L => DeviceModel(Line, StaticLineBounds),
     )
     template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
     system = c_sys5_ml
     limits = PSY.get_flowlimits(PSY.get_component(MonitoredLine, system, "1"))
     rate = PSY.get_rate(PSY.get_component(MonitoredLine, system, "1"))
-    op_problem_m = OperationsProblem(
-        TestOpProblem,
-        template,
-        system;
-        optimizer = ipopt_optimizer,
-        use_parameters = false,
-    )
+    op_problem_m =
+        OperationsProblem(TestOpProblem, template, system; optimizer = ipopt_optimizer)
     monitored = solve!(op_problem_m)
     fp = monitored.variable_values[:Fp__MonitoredLine][1, 1]
-    @test fp <= limits.from_to
-    @test fp <= rate
+    @test isapprox(fp, limits.from_to, atol = 1e-3)
+    @test isapprox(fp, rate, atol = 1e-3)
 end

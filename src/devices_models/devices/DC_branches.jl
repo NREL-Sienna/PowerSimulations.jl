@@ -1,7 +1,11 @@
 abstract type AbstractDCLineFormulation <: AbstractBranchFormulation end
+struct HVDCUnbounded <: AbstractDCLineFormulation end
 struct HVDCLossless <: AbstractDCLineFormulation end
 struct HVDCDispatch <: AbstractDCLineFormulation end
 struct VoltageSourceDC <: AbstractDCLineFormulation end
+
+const UnboundedBranches =
+    Union{HVDCUnbounded, StaticLineUnbounded, StaticTransformerUnbounded}
 
 #################################### Branch Variables ##################################################
 flow_variables!(
