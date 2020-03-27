@@ -384,8 +384,114 @@ function test_load_simulation(file_path::String)
     end
     @testset "Test print methods" begin
         list = [sim, sim_results, sim.sequence, sim_single.sequence, res, sim.stages["UC"]]
-        _test_print_methods(list)
+        _test_plain_print_methods(list)
+        _test_html_print_methods([res])
     end
+    @testset "Test print methods of sequence ascii art" begin
+
+        sequence_2 = SimulationSequence(
+            order = Dict(1 => "UC", 2 => "ED"),
+            step_resolution = Hour(1),
+            feedforward_chronologies = Dict(("UC" => "ED") => RecedingHorizon(periods = 2)),
+            horizons = Dict("UC" => 24, "ED" => 12),
+            intervals = Dict(
+                "UC" => (Hour(1), RecedingHorizon()),
+                "ED" => (Minute(5), RecedingHorizon()),
+            ),
+            feedforward = Dict(
+                ("ED", :devices, :Generators) => SemiContinuousFF(
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
+                ),
+            ),
+            ini_cond_chronology = InterStageChronology(),
+        )
+
+        sequence_4 = SimulationSequence(
+            order = Dict(1 => "UC", 2 => "ED"),
+            step_resolution = Hour(1),
+            feedforward_chronologies = Dict(("UC" => "ED") => RecedingHorizon(periods = 4)),
+            horizons = Dict("UC" => 24, "ED" => 12),
+            intervals = Dict(
+                "UC" => (Hour(1), RecedingHorizon()),
+                "ED" => (Minute(5), RecedingHorizon()),
+            ),
+            feedforward = Dict(
+                ("ED", :devices, :Generators) => SemiContinuousFF(
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
+                ),
+            ),
+            ini_cond_chronology = InterStageChronology(),
+        )
+
+        sequence_3 = SimulationSequence(
+            order = Dict(1 => "UC", 2 => "ED"),
+            step_resolution = Hour(1),
+            feedforward_chronologies = Dict(("UC" => "ED") => RecedingHorizon(periods = 3)),
+            horizons = Dict("UC" => 24, "ED" => 12),
+            intervals = Dict(
+                "UC" => (Hour(1), RecedingHorizon()),
+                "ED" => (Minute(5), RecedingHorizon()),
+            ),
+            feedforward = Dict(
+                ("ED", :devices, :Generators) => SemiContinuousFF(
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
+                ),
+            ),
+            ini_cond_chronology = InterStageChronology(),
+        )
+
+        sequence_5 = SimulationSequence(
+            order = Dict(1 => "UC", 2 => "ED"),
+            step_resolution = Hour(1),
+            feedforward_chronologies = Dict(("UC" => "ED") => RecedingHorizon(periods = 2)),
+            horizons = Dict("UC" => 24, "ED" => 12),
+            intervals = Dict(
+                "UC" => (Hour(1), RecedingHorizon()),
+                "ED" => (Minute(5), RecedingHorizon()),
+            ),
+            feedforward = Dict(
+                ("ED", :devices, :Generators) => RangeFF(
+                    variable_from_stage_ub = PSI.ON,
+                    variable_from_stage_lb = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
+                ),
+            ),
+            ini_cond_chronology = InterStageChronology(),
+        )
+
+        sequence_13 = SimulationSequence(
+            order = Dict(1 => "UC", 2 => "ED"),
+            step_resolution = Hour(1),
+            feedforward_chronologies = Dict(
+                ("UC" => "ED") => RecedingHorizon(periods = 13),
+            ),
+            horizons = Dict("UC" => 24, "ED" => 12),
+            intervals = Dict(
+                "UC" => (Hour(1), RecedingHorizon()),
+                "ED" => (Minute(5), RecedingHorizon()),
+            ),
+            feedforward = Dict(
+                ("ED", :devices, :Generators) => SemiContinuousFF(
+                    binary_from_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
+                ),
+            ),
+            ini_cond_chronology = InterStageChronology(),
+        )
+        list = [sequence_2, sequence_3, sequence_4, sequence_5, sequence_13]
+        _test_plain_print_methods(list)
+        stage_1 = FakeStagesStruct(Dict(1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5, 6 => 6)) # testing 5 stages
+        stage_3 = FakeStagesStruct(Dict(1 => 1, 2 => 100)) #testing 3 digits
+        stage_4 = FakeStagesStruct(Dict(1 => 1, 2 => 1000)) #testing 4 digits
+        stage_12 = FakeStagesStruct(Dict(1 => 1, 2 => 12, 3 => 5, 4 => 6))
+        list = [stage_1, stage_3, stage_4, stage_12]
+        _test_plain_print_methods(list)
+
+    end
+
     ####################
     @testset "negative test checking total sums" begin
         stage_names = keys(sim.stages)

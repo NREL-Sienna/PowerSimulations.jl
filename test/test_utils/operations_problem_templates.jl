@@ -1,6 +1,6 @@
 ## UC Model Ref
-branches = Dict()
-services = Dict()
+branches = Dict{Symbol, DeviceModel}()
+services = Dict{Symbol, ServiceModel}()
 devices = Dict(
     :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
     :Ren => DeviceModel(RenewableDispatch, RenewableFixed),
@@ -87,7 +87,7 @@ function PSI._jump_value(int::Int64)
     return int
 end
 
-function _test_print_methods(list::Array)
+function _test_plain_print_methods(list::Array)
     for object in list
         normal = repr(object)
         io = IOBuffer()
@@ -95,6 +95,25 @@ function _test_print_methods(list::Array)
         grabbed = String(take!(io))
         @test !isnothing(grabbed)
     end
+end
+
+function _test_html_print_methods(list::Array)
+    for object in list
+        normal = repr(object)
+        io = IOBuffer()
+        show(io, "text/html", object)
+        grabbed = String(take!(io))
+        @test !isnothing(grabbed)
+    end
+end
+
+struct FakeStagesStruct
+    stages::Dict{Int64, Int64}
+end
+function Base.show(io::IO, struct_stages::FakeStagesStruct)
+    PSI._print_inter_stages(io, struct_stages.stages)
+    println(io, "\n\n")
+    PSI._print_intra_stages(io, struct_stages.stages)
 end
 
 branches = Dict()
