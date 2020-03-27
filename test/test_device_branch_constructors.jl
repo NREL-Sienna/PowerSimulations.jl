@@ -1,5 +1,5 @@
 #Some of these tests require building the full system to have a valid PM object
-@testset "AC branch Branch rate constraints" begin
+@testset "AC Power Flow Monitored Line Flow Constraints" begin
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
@@ -26,7 +26,7 @@
     @test isapprox(flow, limits.from_to, atol = 1e-3)
 end
 
-@testset "DC branch Branch rate constraints" begin
+@testset "DC PowerFlow Monitored Line Branch Flow constraints" begin
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
@@ -47,6 +47,6 @@ end
     )
     monitored = solve!(op_problem_m)
     fp = monitored.variable_values[:Fp__MonitoredLine][1, 1]
-    @test fp <= limits.from_to
-    @test fp <= rate
+    @test isapprox(fp, limits.from_to, atol = 1e-3)
+    @test isapprox(fp, rate, atol = 1e-3)
 end
