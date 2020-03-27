@@ -481,7 +481,10 @@ function initial_condition_update!(
             execution_count = get_execution_count(stage)
             resolution_factor = get_resolution_factor(sim, stage, cache)
             if execution_count > 0
-                cache_period = get_stage_horizon(sim.sequence, get_stage_name(sim, stage)) * execution_count * resolution_factor
+                cache_period =
+                    get_stage_horizon(sim.sequence, get_stage_name(sim, stage)) *
+                    execution_count *
+                    resolution_factor
             else
                 cache_period = 1
             end
@@ -523,7 +526,7 @@ function update_cache!(
                     c.value[name, r][:count] = c.value[name, 1][:count] + r
                     c.value[name, r][:status] = device_status
                 else
-                    c.value[name, tp + r][:count] = c.value[name,tp][:count] + r
+                    c.value[name, tp + r][:count] = c.value[name, tp][:count] + r
                     c.value[name, tp + r][:status] = device_status
                 end
             end
@@ -546,14 +549,19 @@ function update_cache!(
     return
 end
 
-function get_previous_period(sim::Simulation, stage::Stage, cache::TimeStatusChange, t::Int64)
+function get_previous_period(
+    sim::Simulation,
+    stage::Stage,
+    cache::TimeStatusChange,
+    t::Int64,
+)
     resolution_factor = get_resolution_factor(sim, stage, cache)
     T = get_end_of_interval_step(stage)
     e = get_execution_count(stage)
     if (t == 1) && (e <= 1)
         return 1
     elseif (t > 1) && (e == 0)
-        return (t - 1) * resolution_factor 
+        return (t - 1) * resolution_factor
     else
         return (t - 1) * resolution_factor + (e - 1) * T
     end

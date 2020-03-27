@@ -388,14 +388,14 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel
 
     pm_var_map[PSY.Bus] = Dict(:va => THETA, :vm => VM)
     pm_var_map[PSY.ACBranch] = Dict(
-        :p => (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
+        :p =>     (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
         :q => (
             from_to = FLOW_REACTIVE_POWER_FROM_TO,
             to_from = FLOW_REACTIVE_POWER_TO_FROM,
         ),
     )
     pm_var_map[PSY.DCBranch] = Dict(
-        :p_dc => (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
+        :p_dc =>     (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
         :q_dc => (
             from_to = FLOW_REACTIVE_POWER_FROM_TO,
             to_from = FLOW_REACTIVE_POWER_TO_FROM,

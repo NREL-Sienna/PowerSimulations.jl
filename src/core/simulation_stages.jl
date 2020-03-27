@@ -222,8 +222,7 @@ function get_initial_cache(cache::TimeStatusChange, stage::Stage)
         device_name = PSY.get_name(ic.device)
         condition = get_condition(ic)
         status = (condition > 0.0) ? 1.0 : 0.0
-        value_array[device_name, 1] =
-            Dict(:count => condition, :status => status)
+        value_array[device_name, 1] = Dict(:count => condition, :status => status)
     end
 
     for ic in ini_cond_off
