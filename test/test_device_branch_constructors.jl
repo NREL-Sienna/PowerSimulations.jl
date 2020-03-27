@@ -3,13 +3,13 @@ system = c_sys5_ml
 line = PSY.get_component(Line, system, "1")
 PSY.convert_component!(MonitoredLine, line, system)
 @testset "AC Power Flow Monitored Line Flow Constraints and bounds" begin
-        devices = Dict{Symbol, DeviceModel}(
+    devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
     branches = Dict{Symbol, DeviceModel}(
         :ML => DeviceModel(MonitoredLine, StaticLineBounds),
-        :L => DeviceModel(Line, StaticLineBounds)
+        :L => DeviceModel(Line, StaticLineBounds),
     )
     template = OperationsProblemTemplate(StandardPTDFModel, devices, branches, services)
     limits = PSY.get_flowlimits(PSY.get_component(MonitoredLine, system, "1"))
@@ -18,7 +18,7 @@ PSY.convert_component!(MonitoredLine, line, system)
         template,
         system;
         optimizer = OSQP_optimizer,
-        PTDF = PTDF5
+        PTDF = PTDF5,
     )
     for b in PSI.get_variable(op_problem_m.psi_container, :Fp__Line)
         @test JuMP.has_lower_bound(b)
@@ -40,16 +40,12 @@ end
     )
     branches = Dict{Symbol, DeviceModel}(
         :ML => DeviceModel(MonitoredLine, StaticLineBounds),
-        :L => DeviceModel(Line, StaticLineBounds)
+        :L => DeviceModel(Line, StaticLineBounds),
     )
     template = OperationsProblemTemplate(ACPPowerModel, devices, branches, services)
     limits = PSY.get_flowlimits(PSY.get_component(MonitoredLine, system, "1"))
-    op_problem_m = OperationsProblem(
-        TestOpProblem,
-        template,
-        system;
-        optimizer = ipopt_optimizer,
-    )
+    op_problem_m =
+        OperationsProblem(TestOpProblem, template, system; optimizer = ipopt_optimizer)
     monitored = solve!(op_problem_m)
     fq = monitored.variable_values[:FqFT__MonitoredLine][1, 1]
     fp = monitored.variable_values[:FpFT__MonitoredLine][1, 1]
@@ -64,18 +60,14 @@ end
     )
     branches = Dict{Symbol, DeviceModel}(
         :ML => DeviceModel(MonitoredLine, StaticLineBounds),
-        :L => DeviceModel(Line, StaticLineBounds)
+        :L => DeviceModel(Line, StaticLineBounds),
     )
     template = OperationsProblemTemplate(DCPPowerModel, devices, branches, services)
     system = c_sys5_ml
     limits = PSY.get_flowlimits(PSY.get_component(MonitoredLine, system, "1"))
     rate = PSY.get_rate(PSY.get_component(MonitoredLine, system, "1"))
-    op_problem_m = OperationsProblem(
-        TestOpProblem,
-        template,
-        system;
-        optimizer = ipopt_optimizer,
-    )
+    op_problem_m =
+        OperationsProblem(TestOpProblem, template, system; optimizer = ipopt_optimizer)
     monitored = solve!(op_problem_m)
     fp = monitored.variable_values[:Fp__MonitoredLine][1, 1]
     @test isapprox(fp, limits.from_to, atol = 1e-3)
