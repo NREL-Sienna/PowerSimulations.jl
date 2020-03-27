@@ -174,7 +174,7 @@ function Base.show(io::IO, ::MIME"text/plain", sim_results::SimulationResultsRef
 end
 
 function _count_stages(sequence::Array)
-    stages = Dict()
+    stages = Dict{Int64, Int64}()
     stage = 1
     count = 0
     for i in 1:length(sequence)
@@ -208,7 +208,7 @@ function _print_feedforward(io::IO, feed_forward::Dict, to::Array, from::Any)
         end
         if times == 1
             line1 = "$stage1--┐ from : $from"
-            println("$line1\n$spaces|\n$spaces$line5\n")
+            println(io, "$line1\n$spaces|\n$spaces$line5\n")
         else
             if times == 2
                 line3 = string("┌", string(dashes, "┤"))
@@ -240,11 +240,11 @@ function _print_feedforward(io::IO, feed_forward::Dict, to::Array, from::Any)
             line1 = string("     "^(spacing), " $stage1--┐ from : $from")
             line2 = string("     "^(spacing), " "^length(stage1), "   |")
             line4 = string("|", string(spaces, "|")^(times - 2), "    |")
-            println("$line1\n$line2\n$line3\n$line4\n$line4\n$line5\n")
+            println(io, "$line1\n$line2\n$line3\n$line4\n$line4\n$line5\n")
         end
     end
 end
-function _print_inter_stages(io::IO, stages::Dict)
+function _print_inter_stages(io::IO, stages::Dict{Int64, Int64})
     list = sort!(collect(keys(stages)))
     for i in list
         num = stages[i]
@@ -294,7 +294,7 @@ function _print_inter_stages(io::IO, stages::Dict)
     end
 end
 
-function _print_intra_stages(io::IO, stages::Dict)
+function _print_intra_stages(io::IO, stages::Dict{Int64, Int64})
     list = sort!(collect(keys(stages)))
     for i in list
         num = stages[i]

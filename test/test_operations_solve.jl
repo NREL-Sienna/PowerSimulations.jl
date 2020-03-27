@@ -283,8 +283,11 @@ op_problem = OperationsProblem(
 res = solve!(op_problem)
 @testset "Test print methods" begin
     list = [template, op_problem, op_problem.psi_container, res, services]
-    _test_print_methods(list)
+    _test_plain_print_methods(list)
+    list = [services]
+    _test_html_print_methods(list)
 end
+
 @testset "test constraint duals in the operations problem" begin
     name = PSI.constraint_name("CopperPlateBalance")
     for i in 1:ncol(get_time_stamp(res))
