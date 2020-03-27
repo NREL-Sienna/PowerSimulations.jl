@@ -475,10 +475,18 @@ function initial_condition_update!(
         )
         if isnothing(ic.cache_type)
             cache = nothing
+            cache_period = 1
         else
             cache = get_cache(sim, ic.cache_type, ini_cond_key.device_type)
+            execution_count = get_execution_count(stage)
+            resolution_factor = get_resolution_factor(sim, stage, cache)
+            if execution_count > 0
+                cache_period = get_stage_horizon(sim.sequence, get_stage_name(sim, stage)) * execution_count * resolution_factor
+            else
+                cache_period = 1
+            end
         end
-        quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
+        quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache, cache_period)
         PJ.fix(ic.value, quantity)
     end
 
@@ -501,32 +509,34 @@ function update_cache!(
     stage::Stage,
 ) where {D <: PSY.Device}
     c = get_cache(sim, key)
-    increment = get_increment(sim, stage, c)
+    increment = get_resolution_factor(sim, stage, c)
     variable = get_variable(stage.internal.psi_container, c.ref)
     T = get_end_of_interval_step(stage)
+    e = get_execution_count(stage)
     for t in 1:T, name in variable.axes[1]
-        tp = get_previous_period(t, c)
+        tp = get_previous_period(sim, stage, c, t)
         device_status = JuMP.value(variable[name, t])
         @debug name, device_status
         if c.value[name, tp][:status] == device_status
             for r in 1:increment
-                if t > 1
-                    c.value[name, (tp) * r + r][:count] =
-                        c.value[name, tp][:count] + increment
+                if t == 1 && e == 1
+                    c.value[name, r][:count] = c.value[name, 1][:count] + r
+                    c.value[name, r][:status] = device_status
                 else
-                    c.value[name, r][:count] = c.value[name, end][:count] + increment
+                    c.value[name, tp + r][:count] = c.value[name,tp][:count] + r
+                    c.value[name, tp + r][:status] = device_status
                 end
             end
             @debug("Cache value TimeStatus for device $name set to $device_status and count to $(c.value[name][:count])")
         else
             c.value[name, tp][:status] != device_status
             for r in 1:increment
-                if t > 1
-                    c.value[name, (tp) * r + r][:count] = increment
-                    c.value[name, (tp) * r + r][:status] = device_status
-                else
-                    c.value[name, r][:count] = increment
+                if t == 1 && e == 1
+                    c.value[name, r][:count] = r
                     c.value[name, r][:status] = device_status
+                else
+                    c.value[name, tp + r][:count] = r
+                    c.value[name, tp + r][:status] = device_status
                 end
             end
             @debug("Cache value TimeStatus for device $name set to $device_status and count to 1.0")
@@ -536,15 +546,20 @@ function update_cache!(
     return
 end
 
-function get_previous_period(t::Int64, c::TimeStatusChange)
-    if t > 1
-        return t - 1
+function get_previous_period(sim::Simulation, stage::Stage, cache::TimeStatusChange, t::Int64)
+    resolution_factor = get_resolution_factor(sim, stage, cache)
+    T = get_end_of_interval_step(stage)
+    e = get_execution_count(stage)
+    if (t == 1) && (e <= 1)
+        return 1
+    elseif (t > 1) && (e == 0)
+        return (t - 1) * resolution_factor 
     else
-        return size(c.value, 2)
+        return (t - 1) * resolution_factor + (e - 1) * T
     end
 end
 
-function get_increment(sim::Simulation, stage::Stage, cache::TimeStatusChange)
+function get_resolution_factor(sim::Simulation, stage::Stage, cache::TimeStatusChange)
     units = cache.units
     stage_name = get_stage_name(sim, stage)
     stage_interval = IS.time_period_conversion(get_stage_interval(sim, stage_name))
@@ -721,6 +736,8 @@ function execute!(sim::Simulation; kwargs...)
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
                             _update_caches!(sim, stage)
+                            # TODO: Tried to do this but doesn't work for some reason. Need to be track which cache/global time period need to be updated
+                            # reset!(stage)
                         end
                         if warm_start_enabled(stage)
                             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Warm Start $(stage_number)" begin
