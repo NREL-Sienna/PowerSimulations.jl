@@ -726,16 +726,16 @@ function device_energy_limit_param_ub(
     variable = get_variable(psi_container, var_name)
     set_name = (r.name for r in energy_limit_data)
     constraint = add_cons_container!(psi_container, cons_name, set_name)
-    container = add_param_container!(psi_container, param_reference, set_name)
+    container = add_param_container!(psi_container, param_reference, set_name, 1)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
     for data in energy_limit_data
         name = data.name
-        multiplier[name] = data.multiplier
-        param[name] = PJ.add_parameter(psi_container.JuMPmodel, sum(data.timeseries))
+        multiplier[name, 1] = data.multiplier
+        param[name, 1] = PJ.add_parameter(psi_container.JuMPmodel, sum(data.timeseries))
         constraint[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            sum([variable[name, t] for t in time_steps]) <= multiplier[name] * param[name]
+            sum([variable[name, t] for t in time_steps]) <= multiplier[name, 1] * param[name, 1]
         )
     end
 
