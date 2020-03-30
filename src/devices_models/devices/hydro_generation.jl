@@ -560,12 +560,12 @@ function nodal_expression!(
     end
 
     for t in model_time_steps(psi_container)
-        for device_value in ts_data_active
+        for device in ts_data_active
             _add_to_expression!(
                 psi_container.expressions[:nodal_balance_active],
-                device_value[2],
+                device.bus_number,
                 t,
-                device_value[3] * device_value[4][t],
+                device.multiplier * device.timeseries[t],
             )
         end
     end
