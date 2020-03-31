@@ -23,7 +23,7 @@ makedocs(
 )=#
 
 deploydocs(
-    repo = "github.com/NREL/PowerSimulations.jl.git",
+    repo = "github.com/NREL-SIIP/PowerSimulations.jl.git",
     branch = "gh-pages",
     target = "build",
     deps = Deps.pip("pygments", "mkdocs", "python-markdown-math"),
