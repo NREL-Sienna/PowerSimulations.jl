@@ -208,7 +208,8 @@ function _read_references(
         for (ix, time) in enumerate(date_df.Date)
             file_path = date_df[ix, :File_Path]
             var = Feather.read(file_path)
-            results[name] = vcat(results[name], var[1:time_length, :])
+            var_length = min(time_length, size(var, 1))
+            results[name] = vcat(results[name], var[1:var_length, :])
         end
     end
     return results
