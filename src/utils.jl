@@ -64,7 +64,7 @@ function write_data(vars_results::Dict, save_path::String; kwargs...)
         for (k, v) in vars_results
             file_path = joinpath(save_path, "$name$k.$(lowercase("$file_type"))")
             if isempty(vars_results[k])
-                @debug "$name$k is an empty dataframe, not writing to $file_path"
+                @debug "$name$k is empty, not writing $file_path"
             else
                 file_type.write(file_path, vars_results[k])
             end
