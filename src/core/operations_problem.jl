@@ -514,7 +514,7 @@ function write_data(psi_container::PSIContainer, save_path::AbstractString; kwar
         for (k, v) in get_variables(psi_container)
             file_path = joinpath(save_path, "$(k).$(lowercase("$file_type"))")
             variable = axis_array_to_dataframe(v)
-            file_type.write(file_path, variable)
+            !isempty(variable) && file_type.write(file_path, variable)
         end
     end
     return

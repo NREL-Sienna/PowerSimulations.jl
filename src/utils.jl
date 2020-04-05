@@ -63,7 +63,7 @@ function write_data(vars_results::Dict, save_path::String; kwargs...)
     if file_type == Feather || file_type == CSV
         for (k, v) in vars_results
             file_path = joinpath(save_path, "$name$k.$(lowercase("$file_type"))")
-            file_type.write(file_path, vars_results[k])
+            !isempty(vars_results[k]) && file_type.write(file_path, vars_results[k])
         end
     end
 end
