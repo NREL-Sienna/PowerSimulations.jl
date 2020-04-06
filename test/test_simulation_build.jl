@@ -179,7 +179,12 @@ function test_sequence_build(file_path::String)
             stages_sequence = sequence,
             simulation_folder = file_path,
         )
-        sim.internal = PSI.SimulationInternal(sim.steps, keys(sim.sequence.order))
+        sim.internal = PSI.SimulationInternal(
+            sim.steps,
+            keys(sim.sequence.order),
+            mktempdir(),
+            PSI.get_name(sim),
+        )
         @test_throws IS.ConflictingInputsError PSI._get_simulation_initial_times!(sim)
     end
 
@@ -360,4 +365,16 @@ try
 finally
     @info("removing test files")
     rm(g_test_path, recursive = true)
+end
+
+@testset "Test simulation run directory output" begin
+    base_path = mktempdir()
+    @test PSI._get_output_dir_name(base_path, nothing) == "1"
+    mkdir(joinpath(base_path, "1"))
+    @test PSI._get_output_dir_name(base_path, nothing) == "2"
+    mkdir(joinpath(base_path, "5"))
+    @test PSI._get_output_dir_name(base_path, nothing) == "6"
+    mkdir(joinpath(base_path, "10"))
+    @test PSI._get_output_dir_name(base_path, nothing) == "11"
+    @test PSI._get_output_dir_name(base_path, "test") == "test"
 end

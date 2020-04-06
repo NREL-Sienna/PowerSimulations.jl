@@ -1,10 +1,13 @@
 
 const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
+const REQUIRED_RECORDERS = [:simulation_states]
 
 mutable struct SimulationInternal
-    raw_dir::Union{String, Nothing}
-    models_dir::Union{String, Nothing}
-    results_dir::Union{String, Nothing}
+    logs_dir::String
+    models_dir::String
+    raw_dir::String
+    recorder_dir::String
+    results_dir::String
     stages_count::Int
     run_count::Dict{Int, Dict{Int, Int}}
     date_ref::Dict{Int, Dates.DateTime}
@@ -13,9 +16,20 @@ mutable struct SimulationInternal
     reset::Bool
     compiled_status::Bool
     simulation_cache::Dict{<:CacheKey, AbstractCache}
+    recorders::Vector{Symbol}
+    logger::IS.MultiLogger
 end
 
-function SimulationInternal(steps::Int, stages_keys::Base.KeySet)
+function SimulationInternal(
+    steps::Int,
+    stages_keys::Base.KeySet,
+    sim_dir,
+    name;
+    output_dir = nothing,
+    recorders = [],
+    console_level = Logging.Error,
+    file_level = Logging.Info,
+)
     count_dict = Dict{Int, Dict{Int, Int}}()
 
     for s in 1:steps
@@ -25,10 +39,46 @@ function SimulationInternal(steps::Int, stages_keys::Base.KeySet)
         end
     end
 
+    base_dir = joinpath(sim_dir, name)
+    mkpath(base_dir)
+
+    output_dir = _get_output_dir_name(base_dir, output_dir)
+    simulation_dir = joinpath(base_dir, output_dir)
+    if isdir(simulation_dir)
+        error("$simulation_dir already exists. Delete it or pass a different output_dir.")
+    end
+
+    logs_dir = joinpath(simulation_dir, "logs")
+    models_dir = joinpath(simulation_dir, "models_json")
+    raw_dir = joinpath(simulation_dir, "raw_output")
+    recorder_dir = joinpath(simulation_dir, "recorder")
+    results_dir = joinpath(simulation_dir, "results")
+
+    for path in (simulation_dir, logs_dir, models_dir, raw_dir, recorder_dir, results_dir)
+        mkpath(path)
+    end
+
+    logger = IS.configure_logging(
+        console = true,
+        console_stream = stderr,
+        console_level = console_level,
+        file = true,
+        filename = joinpath(logs_dir, "simulation.log"),
+        file_level = file_level,
+        file_mode = "w+",
+        tracker = nothing,
+        set_global = false,
+    )
+
+    unique_recorders = Set(REQUIRED_RECORDERS)
+    foreach(x -> push!(unique_recorders, x), recorders)
+
     return SimulationInternal(
-        nothing,
-        nothing,
-        nothing,
+        logs_dir,
+        models_dir,
+        raw_dir,
+        recorder_dir,
+        results_dir,
         length(stages_keys),
         count_dict,
         Dict{Int, Dates.DateTime}(),
@@ -37,6 +87,8 @@ function SimulationInternal(steps::Int, stages_keys::Base.KeySet)
         true,
         false,
         Dict{CacheKey, AbstractCache}(),
+        collect(unique_recorders),
+        logger,
     )
 end
 
@@ -57,7 +109,25 @@ function _set_internal_caches(
     return
 end
 
-const DEFAULT_RECORDERS = [:simulation_states]
+function _get_output_dir_name(path, output_dir)
+    if !isnothing(output_dir)
+        # The user wants a custom name.
+        return output_dir
+    end
+
+    # Return the next highest integer.
+    output_dir = 1
+    for name in readdir(path)
+        if occursin(r"^\d+$", name)
+            num = parse(Int, name)
+            if num >= output_dir
+                output_dir = num + 1
+            end
+        end
+    end
+
+    return string(output_dir)
+end
 
 # TODO: Add DocString
 @doc raw"""
@@ -78,7 +148,6 @@ mutable struct Simulation
     simulation_folder::String
     name::String
     internal::Union{Nothing, SimulationInternal}
-    recorders::Vector{Symbol}
 
     function Simulation(;
         stages_sequence::SimulationSequence,
@@ -87,18 +156,8 @@ mutable struct Simulation
         stages = Dict{String, Stage{AbstractOperationsProblem}}(),
         simulation_folder::String,
         initial_time = nothing,
-        recorders = DEFAULT_RECORDERS,
     )
-        new(
-            steps,
-            stages,
-            initial_time,
-            stages_sequence,
-            simulation_folder,
-            name,
-            nothing,
-            recorders,
-        )
+        new(steps, stages, initial_time, stages_sequence, simulation_folder, name, nothing)
     end
 end
 
@@ -157,9 +216,10 @@ get_ini_cond_chronology(s::Simulation) = s.sequence.ini_cond_chronology
 get_stage_name(s::Simulation, stage::Stage) = get_stage_name(s.sequence, stage)
 get_name(s::Simulation) = s.name
 get_simulation_folder(s::Simulation) = s.simulation_folder
-get_results_folder(s::Simulation) = joinpath(s.simulation_folder, s.name)
 get_execution_order(s::Simulation) = s.sequence.execution_order
 get_current_execution_index(s::Simulation) = s.sequence.current_execution_index
+get_logs_folder(s::Simulation) = s.internal.logs_dir
+get_recorder_folder(s::Simulation) = s.internal.recorder_dir
 
 function get_stage_cache_definition(s::Simulation, stage::String)
     caches = s.sequence.cache
@@ -234,21 +294,6 @@ function _assign_feedforward_chronologies(sim::Simulation)
         end
     end
     return
-end
-
-function _prepare_workspace(base_name::AbstractString, folder::AbstractString)
-    global_path = joinpath(folder, "$(base_name)")
-    !isdir(global_path) && mkpath(global_path)
-    _sim_path = replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-")
-    simulation_path = joinpath(global_path, _sim_path)
-    raw_output = joinpath(simulation_path, "raw_output")
-    mkpath(raw_output)
-    models_json_ouput = joinpath(simulation_path, "models_json")
-    mkpath(models_json_ouput)
-    results_path = joinpath(simulation_path, "results")
-    mkpath(results_path)
-
-    return raw_output, models_json_ouput, results_path
 end
 
 function _get_simulation_initial_times!(sim::Simulation)
@@ -403,43 +448,78 @@ function _check_folder(sim::Simulation)
     catch e
         throw(IS.ConflictingInputsError("Specified folder does not have write access [$e]"))
     end
-
-    mkpath(get_results_folder(sim))
 end
 
-# TODO: Add DocString
-@doc raw"""
-        build!(sim::Simulation)
 """
-function build!(sim::Simulation)
+    build!(sim::Simulation)
+
+Build the Simulation and all stages.
+
+# Arguments
+- `sim::Simulation`: simulation object
+- `output_dir = nothing`: If nothing then generate a unique name.
+- `recorders::Vector{Symbol} = []`: recorder names to register
+- `console_level = Logging.Error`:
+- `file_level = Logging.Info`:
+
+Throws an exception if label is passed and the directory already exists.
+"""
+function build!(
+    sim::Simulation;
+    output_dir = nothing,
+    recorders = [],
+    console_level = Logging.Error,
+    file_level = Logging.Info,
+)
     TimerOutputs.reset_timer!(BUILD_SIMULATION_TIMER)
     TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Simulation" begin
         _check_forecasts_sequence(sim)
         _check_feedforward_chronologies(sim)
         _check_folder(sim)
-        for name in sim.recorders
-            IS.register_recorder!(name; directory = get_results_folder(sim))
-        end
-        sim.internal = SimulationInternal(sim.steps, keys(sim.sequence.order))
-        stage_initial_times = _get_simulation_initial_times!(sim)
-        for (stage_number, stage_name) in sim.sequence.order
-            stage = get_stage(sim, stage_name)
-            if isnothing(stage)
-                throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
+        sim.internal = SimulationInternal(
+            sim.steps,
+            keys(sim.sequence.order),
+            get_simulation_folder(sim),
+            get_name(sim);
+            output_dir = output_dir,
+            recorders = recorders,
+            console_level = console_level,
+            file_level = file_level,
+        )
+
+        # This will guarantee that all log messages produced during build! are flushed
+        # to the file. Leave the logger open for execute!().
+        try
+            Logging.with_logger(sim.internal.logger) do
+                for name in sim.internal.recorders
+                    IS.register_recorder!(name; directory = sim.internal.recorder_dir)
+                end
+                _build!(sim)
+                @info "\n$(BUILD_SIMULATION_TIMER)\n"
             end
-            stage_interval = get_stage_interval(sim, stage_name)
-            stage.internal.executions =
-                Int(get_step_resolution(sim.sequence) / stage_interval)
-            stage.internal.number = stage_number
-            _attach_feedforward!(sim, stage_name)
+        finally
+            flush(sim.internal.logger)
         end
-        _assign_feedforward_chronologies(sim)
-        _check_steps(sim, stage_initial_times)
-        _build_stages!(sim)
-        sim.internal.compiled_status = true
     end
-    @info ("\n$(BUILD_SIMULATION_TIMER)\n")
     return
+end
+
+function _build!(sim::Simulation)
+    stage_initial_times = _get_simulation_initial_times!(sim)
+    for (stage_number, stage_name) in sim.sequence.order
+        stage = get_stage(sim, stage_name)
+        if isnothing(stage)
+            throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
+        end
+        stage_interval = get_stage_interval(sim, stage_name)
+        stage.internal.executions = Int(get_step_resolution(sim.sequence) / stage_interval)
+        stage.internal.number = stage_number
+        _attach_feedforward!(sim, stage_name)
+    end
+    _assign_feedforward_chronologies(sim)
+    _check_steps(sim, stage_initial_times)
+    _build_stages!(sim)
+    sim.internal.compiled_status = true
 end
 
 #Defined here because it requires Stage and Simulation to defined
@@ -686,6 +766,19 @@ execute!!(sim::Simulation; kwargs...)
 """
 
 function execute!(sim::Simulation; kwargs...)
+    try
+        return Logging.with_logger(sim.internal.logger) do
+            _execute!(sim; kwargs...)
+        end
+    finally
+        close(sim.internal.logger)
+        for name in sim.internal.recorders
+            IS.unregister_recorder!(name)
+        end
+    end
+end
+
+function _execute!(sim::Simulation; kwargs...)
     if sim.internal.reset
         sim.internal.reset = false
     elseif sim.internal.reset == false
@@ -696,10 +789,6 @@ function execute!(sim::Simulation; kwargs...)
     error("Simulation not built, build the simulation to execute")
     TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
-        name = get_name(sim)
-        folder = get_simulation_folder(sim)
-        sim.internal.raw_dir, sim.internal.models_dir, sim.internal.results_dir =
-            _prepare_workspace(name, folder)
         _build_stage_paths!(sim, system_to_file)
         execution_order = get_execution_order(sim)
         for step in 1:get_steps(sim)
@@ -759,9 +848,6 @@ function execute!(sim::Simulation; kwargs...)
 
     @info ("\n$(RUN_SIMULATION_TIMER)\n")
     serialize_sim_output(sim_results)
-    for name in sim.recorders
-        IS.unregister_recorder!(name)
-    end
     return sim_results
 end
 
@@ -772,7 +858,6 @@ struct SimulationSerializationWrapper
     sequence::Union{Nothing, SimulationSequence}
     simulation_folder::String
     name::String
-    recorders::Vector{Symbol}
 end
 
 """
@@ -829,7 +914,6 @@ function serialize(simulation::Simulation; path = ".", force = false)
         simulation.sequence,
         simulation.simulation_folder,
         simulation.name,
-        simulation.recorders,
     )
     Serialization.serialize(filename, obj)
     @info "Serialized simulation" simulation.name directory
@@ -878,9 +962,7 @@ function deserialize(::Type{Simulation}, directory::AbstractString, stage_info::
             stages = stages,
             stages_sequence = obj.sequence,
             simulation_folder = obj.simulation_folder,
-            recorders = obj.recorders,
         )
-        build!(sim)
         return sim
     finally
         cd(orig)

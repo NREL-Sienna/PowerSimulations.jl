@@ -88,16 +88,16 @@ function _filter_by_type_range!(events::Vector{<:IS.AbstractRecorderEvent}, time
     )
 end
 
-function _get_recorder_filename(directory, sim_name, recorder_name)
-    return joinpath(directory, sim_name, recorder_name * "_recorder.log")
+function _get_recorder_filename(run_dir, recorder_name)
+    return joinpath(run_dir, "recorder", recorder_name * "_recorder.log")
 end
 
-function _get_simulation_states_recorder_filename(directory, sim_name)
-    return _get_recorder_filename(directory, sim_name, "simulation_states")
+function _get_simulation_states_recorder_filename(run_dir)
+    return _get_recorder_filename(run_dir, "simulation_states")
 end
 
-function _get_simulation_recorder_filename(directory, sim_name)
-    return _get_recorder_filename(directory, sim_name, "simulation")
+function _get_simulation_recorder_filename(run_dir)
+    return _get_recorder_filename(run_dir, "simulation")
 end
 
 """
@@ -105,20 +105,14 @@ List simulation events of type T that occur within the given step.
 """
 function list_simulation_events(
     ::Type{T},
-    results_directory::AbstractString,
-    simulation_name::AbstractString,
+    run_dir::AbstractString,
     step::Int,
     filter_func::Union{Nothing, Function} = nothing,
 ) where {T <: IS.AbstractRecorderEvent}
-    step_range = get_simulation_step_range(
-        _get_simulation_states_recorder_filename(results_directory, simulation_name),
-        step,
-    )
-    events = IS.list_recorder_events(
-        T,
-        _get_simulation_recorder_filename(results_directory, simulation_name),
-        filter_func,
-    )
+    step_range =
+        get_simulation_step_range(_get_simulation_states_recorder_filename(run_dir), step)
+    events =
+        IS.list_recorder_events(T, _get_simulation_recorder_filename(run_dir), filter_func)
     _filter_by_type_range!(events, step_range)
     return events
 end
@@ -128,22 +122,18 @@ List simulation events of type T that occur within the given step and stage.
 """
 function list_simulation_events(
     ::Type{T},
-    results_directory::AbstractString,
-    simulation_name::AbstractString,
+    run_dir::AbstractString,
     step::Int,
     stage::Int,
     filter_func::Union{Nothing, Function} = nothing,
 ) where {T <: IS.AbstractRecorderEvent}
     stage_range = get_simulation_stage_range(
-        _get_simulation_states_recorder_filename(results_directory, simulation_name),
+        _get_simulation_states_recorder_filename(run_dir),
         step,
         stage,
     )
-    events = IS.list_recorder_events(
-        T,
-        _get_simulation_recorder_filename(results_directory, simulation_name),
-        filter_func,
-    )
+    events =
+        IS.list_recorder_events(T, _get_simulation_recorder_filename(run_dir), filter_func)
     _filter_by_type_range!(events, stage_range)
     return events
 end
@@ -153,34 +143,23 @@ Show simulation events of type T that occur within the given step.
 """
 function show_simulation_events(
     ::Type{T},
-    results_directory::AbstractString,
-    simulation_name::AbstractString,
+    run_dir::AbstractString,
     step::Int,
     filter_func::Union{Nothing, Function} = nothing;
     kwargs...,
 ) where {T <: IS.AbstractRecorderEvent}
-    show_simulation_events(
-        stdout,
-        T,
-        results_directory,
-        simulation_name,
-        step,
-        filter_func;
-        kwargs...,
-    )
+    show_simulation_events(stdout, T, run_dir, step, filter_func; kwargs...)
 end
 
 function show_simulation_events(
     io::IO,
     ::Type{T},
-    results_directory::AbstractString,
-    simulation_name::AbstractString,
+    run_dir::AbstractString,
     step::Int,
     filter_func::Union{Nothing, Function} = nothing;
     kwargs...,
 ) where {T <: IS.AbstractRecorderEvent}
-    events =
-        list_simulation_events(T, results_directory, simulation_name, step, filter_func)
+    events = list_simulation_events(T, run_dir, step, filter_func)
     IS.show_recorder_events(io, events; kwargs...)
 end
 
@@ -189,42 +168,24 @@ Show simulation events of type T that occur within the given step and stage.
 """
 function show_simulation_events(
     ::Type{T},
-    results_directory::AbstractString,
-    simulation_name::AbstractString,
+    run_dir::AbstractString,
     step::Int,
     stage::Int,
     filter_func::Union{Nothing, Function} = nothing;
     kwargs...,
 ) where {T <: IS.AbstractRecorderEvent}
-    show_simulation_events(
-        stdout,
-        T,
-        results_directory,
-        simulation_name,
-        step,
-        stage,
-        filter_func;
-        kwargs...,
-    )
+    show_simulation_events(stdout, T, run_dir, step, stage, filter_func; kwargs...)
 end
 
 function show_simulation_events(
     io::IO,
     ::Type{T},
-    results_directory::AbstractString,
-    simulation_name::AbstractString,
+    run_dir::AbstractString,
     step::Int,
     stage::Int,
     filter_func::Union{Nothing, Function} = nothing;
     kwargs...,
 ) where {T <: IS.AbstractRecorderEvent}
-    events = list_simulation_events(
-        T,
-        results_directory,
-        simulation_name,
-        step,
-        stage,
-        filter_func,
-    )
+    events = list_simulation_events(T, run_dir, step, stage, filter_func)
     IS.show_recorder_events(io, events; kwargs...)
 end
