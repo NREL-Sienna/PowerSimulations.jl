@@ -87,6 +87,7 @@ function test_load_simulation(file_path::String)
         stages = stages_definition,
         stages_sequence = sequence,
         simulation_folder = file_path,
+        recorders = [:simulation_states, :simulation],
     )
 
     # Run twice, once building normally, once after deserializing.
@@ -288,6 +289,56 @@ function test_load_simulation(file_path::String)
                     @test isapprox(raw_result, initial_cond; atol = 1e-2)
                 end
             end
+        end
+
+        @testset "Verify simulation events" begin
+            file = joinpath(g_test_path, PSI.get_name(sim), "simulation_recorder.log")
+            @test isfile(file)
+            events = PSI.list_simulation_events(
+                PSI.InitialConditionUpdateEvent,
+                g_test_path,
+                "aggregation",
+                1,
+            )
+            @test length(events) == 0
+            events = PSI.list_simulation_events(
+                PSI.InitialConditionUpdateEvent,
+                g_test_path,
+                "aggregation",
+                2,
+            )
+            @test length(events) == 10
+            PSI.show_simulation_events(
+                devnull,
+                PSI.InitialConditionUpdateEvent,
+                g_test_path,
+                "aggregation",
+                2,
+            )
+            events = PSI.list_simulation_events(
+                PSI.InitialConditionUpdateEvent,
+                g_test_path,
+                "aggregation",
+                1,
+                1,
+            )
+            @test length(events) == 0
+            events = PSI.list_simulation_events(
+                PSI.InitialConditionUpdateEvent,
+                g_test_path,
+                "aggregation",
+                2,
+                1,
+            )
+            @test length(events) == 10
+            PSI.show_simulation_events(
+                devnull,
+                PSI.InitialConditionUpdateEvent,
+                g_test_path,
+                "aggregation",
+                2,
+                1,
+            )
         end
     end
 

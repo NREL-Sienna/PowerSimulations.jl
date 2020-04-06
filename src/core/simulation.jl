@@ -56,6 +56,9 @@ function _set_internal_caches(
     end
     return
 end
+
+const DEFAULT_RECORDERS = [:simulation_states]
+
 # TODO: Add DocString
 @doc raw"""
     Simulation(steps::Int
@@ -75,6 +78,7 @@ mutable struct Simulation
     simulation_folder::String
     name::String
     internal::Union{Nothing, SimulationInternal}
+    recorders::Vector{Symbol}
 
     function Simulation(;
         stages_sequence::SimulationSequence,
@@ -83,8 +87,18 @@ mutable struct Simulation
         stages = Dict{String, Stage{AbstractOperationsProblem}}(),
         simulation_folder::String,
         initial_time = nothing,
+        recorders = DEFAULT_RECORDERS,
     )
-        new(steps, stages, initial_time, stages_sequence, simulation_folder, name, nothing)
+        new(
+            steps,
+            stages,
+            initial_time,
+            stages_sequence,
+            simulation_folder,
+            name,
+            nothing,
+            recorders,
+        )
     end
 end
 
@@ -143,6 +157,7 @@ get_ini_cond_chronology(s::Simulation) = s.sequence.ini_cond_chronology
 get_stage_name(s::Simulation, stage::Stage) = get_stage_name(s.sequence, stage)
 get_name(s::Simulation) = s.name
 get_simulation_folder(s::Simulation) = s.simulation_folder
+get_results_folder(s::Simulation) = joinpath(s.simulation_folder, s.name)
 get_execution_order(s::Simulation) = s.sequence.execution_order
 get_current_execution_index(s::Simulation) = s.sequence.current_execution_index
 
@@ -379,7 +394,8 @@ function _build_stage_paths!(sim::Simulation, system_to_file::Bool)
     end
 end
 
-function _check_folder(folder::String)
+function _check_folder(sim::Simulation)
+    folder = get_simulation_folder(sim)
     !isdir(folder) && throw(IS.ConflictingInputsError("Specified folder is not valid"))
     try
         mkdir(joinpath(folder, "fake"))
@@ -387,7 +403,10 @@ function _check_folder(folder::String)
     catch e
         throw(IS.ConflictingInputsError("Specified folder does not have write access [$e]"))
     end
+
+    mkpath(get_results_folder(sim))
 end
+
 # TODO: Add DocString
 @doc raw"""
         build!(sim::Simulation)
@@ -397,7 +416,10 @@ function build!(sim::Simulation)
     TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Simulation" begin
         _check_forecasts_sequence(sim)
         _check_feedforward_chronologies(sim)
-        _check_folder(sim.simulation_folder)
+        _check_folder(sim)
+        for name in sim.recorders
+            IS.register_recorder!(name; directory = get_results_folder(sim))
+        end
         sim.internal = SimulationInternal(sim.steps, keys(sim.sequence.order))
         stage_initial_times = _get_simulation_initial_times!(sim)
         for (stage_number, stage_name) in sim.sequence.order
@@ -447,6 +469,12 @@ function initial_condition_update!(
         end
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
+        @IS.record :simulation InitialConditionUpdateEvent(
+            ini_cond_key,
+            ic,
+            quantity,
+            get_number(stage),
+        )
     end
 end
 
@@ -479,6 +507,12 @@ function initial_condition_update!(
         end
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
+        @IS.record :simulation InitialConditionUpdateEvent(
+            ini_cond_key,
+            ic,
+            quantity,
+            get_number(stage),
+        )
     end
 
     return
@@ -671,7 +705,13 @@ function execute!(sim::Simulation; kwargs...)
         for step in 1:get_steps(sim)
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
                 println("Executing Step $(step)")
+                @IS.record :simulation_states SimulationStepEvent(step, "start")
                 for (ix, stage_number) in enumerate(execution_order)
+                    @IS.record :simulation_states SimulationStageEvent(
+                        step,
+                        stage_number,
+                        "start",
+                    )
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Stage $(stage_number)" begin
                         # TODO: implement some efficient way of indexing with stage name.
                         stage = get_stage(sim, stage_number)
@@ -705,7 +745,13 @@ function execute!(sim::Simulation; kwargs...)
                         sim.internal.run_count[step][stage_number] += 1
                         sim.internal.date_ref[stage_number] += stage_interval
                     end
+                    @IS.record :simulation_states SimulationStageEvent(
+                        step,
+                        stage_number,
+                        "done",
+                    )
                 end
+                @IS.record :simulation_states SimulationStepEvent(step, "done")
             end
         end
         sim_results = SimulationResultsReference(sim)
@@ -713,6 +759,9 @@ function execute!(sim::Simulation; kwargs...)
 
     @info ("\n$(RUN_SIMULATION_TIMER)\n")
     serialize_sim_output(sim_results)
+    for name in sim.recorders
+        IS.unregister_recorder!(name)
+    end
     return sim_results
 end
 
@@ -723,6 +772,7 @@ struct SimulationSerializationWrapper
     sequence::Union{Nothing, SimulationSequence}
     simulation_folder::String
     name::String
+    recorders::Vector{Symbol}
 end
 
 """
@@ -779,6 +829,7 @@ function serialize(simulation::Simulation; path = ".", force = false)
         simulation.sequence,
         simulation.simulation_folder,
         simulation.name,
+        simulation.recorders,
     )
     Serialization.serialize(filename, obj)
     @info "Serialized simulation" simulation.name directory
@@ -827,6 +878,7 @@ function deserialize(::Type{Simulation}, directory::AbstractString, stage_info::
             stages = stages,
             stages_sequence = obj.sequence,
             simulation_folder = obj.simulation_folder,
+            recorders = obj.recorders,
         )
         build!(sim)
         return sim

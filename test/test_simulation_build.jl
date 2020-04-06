@@ -121,7 +121,7 @@ function test_sequence_build(file_path::String)
             stages_sequence = sequence,
             simulation_folder = "fake_path",
         )
-        @test_throws IS.ConflictingInputsError PSI._check_folder(sim.simulation_folder)
+        @test_throws IS.ConflictingInputsError PSI._check_folder(sim)
     end
 
     @testset "chronology look ahead length is too long for horizon" begin

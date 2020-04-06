@@ -233,7 +233,10 @@ function _make_initial_conditions!(
         ini_conds = Vector{InitialCondition}(undef, length_devices)
         set_initial_conditions!(container, key, ini_conds)
         for (ix, dev) in enumerate(devices)
-            ini_conds[ix] = make_ic_func(container, dev, get_val_func(dev, key), cache)
+            val = get_val_func(dev, key)
+            ic = make_ic_func(container, dev, val, cache)
+            ini_conds[ix] = ic
+            @IS.record :simulation InitialConditionUpdateEvent(key, ic, val, 0)
         end
     else
         ini_conds = get_initial_conditions(container, key)
@@ -241,7 +244,10 @@ function _make_initial_conditions!(
         for dev in devices
             IS.get_uuid(dev) in ic_devices && continue
             @debug "Setting $(key.ic_type) initial conditions for the status device $(PSY.get_name(dev)) based on system data"
-            push!(ini_conds, make_ic_func(container, dev, get_val_func(dev, key), cache))
+            val = get_val_func(dev, key)
+            ic = make_ic_func(container, dev, val, cache)
+            push!(ini_conds, ic)
+            @IS.record :simulation InitialConditionUpdateEvent(key, ic, val, 0)
         end
     end
 
