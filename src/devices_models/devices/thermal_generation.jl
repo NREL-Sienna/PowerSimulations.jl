@@ -16,6 +16,11 @@ function activepower_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ThermalGen}
+    if get_warm_start(psi_container.settings)
+        initial_value = d -> PSY.get_activepower(d)
+    else
+        initial_value = nothing
+    end
     add_variable(
         psi_container,
         devices,
@@ -24,7 +29,7 @@ function activepower_variables!(
         :nodal_balance_active;
         ub_value = d -> PSY.get_activepowerlimits(PSY.get_tech(d)).max,
         lb_value = d -> PSY.get_activepowerlimits(PSY.get_tech(d)).min,
-        init_value = d -> PSY.get_activepower(d),
+        init_value = initial_value,
     )
     return
 end
@@ -36,6 +41,11 @@ function reactivepower_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ThermalGen}
+    if get_warm_start(psi_container.settings)
+        initial_value = d -> PSY.get_activepower(d)
+    else
+        initial_value = nothing
+    end
     add_variable(
         psi_container,
         devices,
@@ -44,7 +54,7 @@ function reactivepower_variables!(
         :nodal_balance_reactive;
         ub_value = d -> PSY.get_reactivepowerlimits(PSY.get_tech(d)).max,
         lb_value = d -> PSY.get_reactivepowerlimits(PSY.get_tech(d)).min,
-        init_value = d -> PSY.get_reactivepower(d),
+        init_value = initial_value,
     )
     return
 end
@@ -57,11 +67,18 @@ function commitment_variables!(
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ThermalGen}
     time_steps = model_time_steps(psi_container)
-    var_names = (variable_name(ON, T), variable_name(START, T), variable_name(STOP, T))
-
-    for v in var_names
-        add_variable(psi_container, devices, v, true)
+    if get_warm_start(psi_container.settings)
+        initial_value = d -> (PSY.get_activepower(d) > 0 ? 1.0 : 0.0)
+    else
+        initial_value = nothing
     end
+
+    add_variable(psi_container, devices, variable_name(ON, T), true)
+    var_names = (variable_name(START, T), variable_name(STOP, T))
+    for v in var_names
+        add_variable(psi_container, devices, v, true; init_value = initial_value)
+    end
+
     return
 end
 
@@ -259,9 +276,9 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     device_formulation::Type{D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment}
-    status_init(psi_container, devices)
-    output_init(psi_container, devices)
-    duration_init(psi_container, devices)
+    status_init(psi_container.initial_conditions, devices)
+    output_init(psi_container.initial_conditions, devices)
+    duration_init(psi_container.initial_conditions, devices)
     return
 end
 
@@ -270,8 +287,8 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     device_formulation::Type{ThermalBasicUnitCommitment},
 ) where {T <: PSY.ThermalGen}
-    status_init(psi_container, devices)
-    output_init(psi_container, devices)
+    status_init(psi_container.initial_conditions, devices)
+    output_init(psi_container.initial_conditions, devices)
     return
 end
 
@@ -280,7 +297,7 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     device_formulation::Type{D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchFormulation}
-    output_init(psi_container, devices)
+    output_init(psi_container.initial_conditions, devices)
     return
 end
 
@@ -496,7 +513,7 @@ function cost_function(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
-    add_to_cost(psi_container, devices, Symbol("P_$(T)"), :variable)
+    add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
     return
 end
 

@@ -1,53 +1,103 @@
+mutable struct PSIContainer
+    JuMPmodel::Union{Nothing, JuMP.AbstractModel}
+    time_steps::UnitRange{Int}
+    resolution::Dates.TimePeriod
+    settings::PSISettings
+    settings_copy::PSISettings
+    variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
+    constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
+    cost_function::JuMP.AbstractJuMPScalar
+    expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
+    parameters::Union{Nothing, ParametersContainer}
+    initial_conditions::InitialConditions
+    pm::Union{Nothing, PM.AbstractPowerModel}
 
-mutable struct InitialCondition{T <: Union{PJ.ParameterRef, Float64}}
-    device::PSY.Device
-    update_ref::UpdateRef
-    value::T
-    cache_type::Union{Nothing, Type{<:AbstractCache}}
-end
-
-function InitialCondition(
-    device::PSY.Device,
-    update_ref::UpdateRef,
-    value::T,
-) where {T <: Union{PJ.ParameterRef, Float64}}
-    return InitialCondition(device, update_ref, value, nothing)
-end
-
-struct ICKey{IC <: InitialConditionType, D <: PSY.Device}
-    ic_type::Type{IC}
-    device_type::Type{D}
-end
-
-const InitialConditionsContainer = Dict{ICKey, Array{InitialCondition}}
-#Defined here because of dependencies in psi_container
-function _pass_abstract_jump(
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
-    parameters::Bool,
-    JuMPmodel::Union{JuMP.AbstractModel, Nothing},
-)
-    if !isnothing(JuMPmodel)
-        if parameters
-            if !haskey(JuMPmodel.ext, :params)
-                @info("Model doesn't have Parameters enabled. Parameters will be enabled")
-            end
-            PJ.enable_parameters(JuMPmodel)
+    function PSIContainer(
+        sys::PSY.System,
+        settings::PSISettings,
+        jump_model::Union{Nothing, JuMP.AbstractModel},
+    )
+        PSY.check_forecast_consistency(sys)
+        resolution = PSY.get_forecasts_resolution(sys)
+        resolution = IS.time_period_conversion(resolution)
+        if isnothing(jump_model)
+            V = JuMP.VariableRef
+        else
+            V = JuMP.variable_type(jump_model)
         end
-        return JuMPmodel
+        new(
+            jump_model,
+            1:1,
+            resolution,
+            settings,
+            copy_for_serialization(settings),
+            DenseAxisArrayContainer(),
+            DenseAxisArrayContainer(),
+            zero(JuMP.GenericAffExpr{Float64, V}),
+            DenseAxisArrayContainer(),
+            nothing,
+            InitialConditions(use_parameters = get_use_parameters(settings)),
+            nothing,
+        )
     end
-    if isa(optimizer, Nothing)
-        @debug "The optimization model has no optimizer attached"
+end
+
+function PSIContainer(
+    ::Type{T},
+    sys::PSY.System,
+    settings::PSISettings,
+    jump_model::Union{Nothing, JuMP.AbstractModel},
+) where {T <: PM.AbstractPowerModel}
+
+    container = PSIContainer(sys, settings, jump_model)
+    psi_container_init!(container, T, sys)
+    return container
+end
+
+function _check_warm_start_support(JuMPmodel::JuMP.AbstractModel, warm_start_enabled::Bool)
+    !warm_start_enabled && return warm_start_enabled
+    solver_supports_warm_start =
+        MOI.supports(JuMP.backend(JuMPmodel), MOI.VariablePrimalStart(), MOI.VariableIndex)
+    if !solver_supports_warm_start
+        solver_name = JuMP.solver_name(JuMPmodel)
+        @warn("$(solver_name) does not support warm start")
+    end
+    return solver_supports_warm_start
+end
+
+function _make_jump_model!(psi_container::PSIContainer)
+    settings = psi_container.settings
+    parameters = get_use_parameters(settings)
+    optimizer = get_optimizer(settings)
+    if !isnothing(psi_container.JuMPmodel)
+        if parameters
+            if !haskey(psi_container.JuMPmodel.ext, :params)
+                @info("Model doesn't have Parameters enabled. Parameters will be enabled")
+                PJ.enable_parameters(psi_container.JuMPmodel)
+                warm_start_enabled = get_warm_start(settings)
+                solver_supports_warm_start =
+                    _check_warm_start_support(psi_container.JuMPmodel, warm_start_enabled)
+                set_warm_start!(settings, solver_supports_warm_start)
+            end
+        end
+        return
     end
     @debug "Instantiating the JuMP model"
     if !isnothing(optimizer)
         JuMPmodel = JuMP.Model(optimizer)
+        warm_start_enabled = get_warm_start(settings)
+        solver_supports_warm_start =
+            _check_warm_start_support(JuMPmodel, warm_start_enabled)
+        set_warm_start!(settings, solver_supports_warm_start)
+        parameters && PJ.enable_parameters(JuMPmodel)
+        psi_container.JuMPmodel = JuMPmodel
     else
+        @debug "The optimization model has no optimizer attached"
         JuMPmodel = JuMP.Model()
+        parameters && PJ.enable_parameters(JuMPmodel)
+        psi_container.JuMPmodel = JuMPmodel
     end
-    if parameters
-        PJ.enable_parameters(JuMPmodel)
-    end
-    return JuMPmodel
+    return
 end
 
 function _make_container_array(V::DataType, parameters::Bool, ax...)
@@ -59,187 +109,90 @@ function _make_container_array(V::DataType, parameters::Bool, ax...)
     return
 end
 
-function _make_expressions_dict(
-    transmission::Type{S},
-    V::DataType,
+function _make_expressions_dict!(
+    psi_container::PSIContainer,
     bus_numbers::Vector{Int},
-    time_steps::UnitRange{Int},
-    parameters::Bool,
+    transmission::Type{S},
 ) where {S <: PM.AbstractPowerModel}
-    return DenseAxisArrayContainer(
+    settings = psi_container.settings
+    parameters = get_use_parameters(settings)
+    V = JuMP.variable_type(psi_container.JuMPmodel)
+    time_steps = 1:get_horizon(settings)
+    psi_container.expressions = DenseAxisArrayContainer(
         :nodal_balance_active =>
             _make_container_array(V, parameters, bus_numbers, time_steps),
         :nodal_balance_reactive =>
             _make_container_array(V, parameters, bus_numbers, time_steps),
     )
+    return
 end
 
-function _make_expressions_dict(
-    transmission::Type{S},
-    V::DataType,
+function _make_expressions_dict!(
+    psi_container::PSIContainer,
     bus_numbers::Vector{Int},
-    time_steps::UnitRange{Int},
-    parameters::Bool,
+    transmission::Type{S},
 ) where {S <: PM.AbstractActivePowerModel}
-    return DenseAxisArrayContainer(
+    settings = psi_container.settings
+    parameters = get_use_parameters(settings)
+    V = JuMP.variable_type(psi_container.JuMPmodel)
+    time_steps = 1:get_horizon(settings)
+    psi_container.expressions = DenseAxisArrayContainer(
         :nodal_balance_active =>
             _make_container_array(V, parameters, bus_numbers, time_steps),
     )
+    return
 end
 
-function _psi_container_init(
-    bus_numbers::Vector{Int},
-    jump_model::JuMP.AbstractModel,
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
-    transmission::Type{S},
-    time_steps::UnitRange{Int},
-    resolution::Dates.TimePeriod,
-    use_forecast_data::Bool,
-    initial_time::Dates.DateTime,
-    make_parameters_container::Bool,
-    ini_con::InitialConditionsContainer,
-) where {S <: PM.AbstractPowerModel}
-    V = JuMP.variable_type(jump_model)
-    psi_container = PSIContainer(
-        jump_model,
-        optimizer,
-        time_steps,
-        resolution,
-        use_forecast_data,
-        initial_time,
-        DenseAxisArrayContainer(),
-        DenseAxisArrayContainer(),
-        zero(JuMP.GenericAffExpr{Float64, V}),
-        _make_expressions_dict(
-            transmission,
-            V,
-            bus_numbers,
-            time_steps,
-            make_parameters_container,
-        ),
-        make_parameters_container ? ParametersContainer() : nothing,
-        ini_con,
-        nothing,
-    )
-    return psi_container
-end
-
-mutable struct PSIContainer
-    JuMPmodel::JuMP.AbstractModel
-    optimizer_factory::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
-    time_steps::UnitRange{Int}
-    resolution::Dates.TimePeriod
-    use_forecast_data::Bool
-    initial_time::Dates.DateTime
-    variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
-    constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
-    cost_function::JuMP.AbstractJuMPScalar
-    expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
-    parameters::Union{Nothing, ParametersContainer}
-    initial_conditions::InitialConditionsContainer
-    pm::Union{Nothing, PM.AbstractPowerModel}
-
-    function PSIContainer(
-        JuMPmodel::JuMP.AbstractModel,
-        optimizer_factory::Union{Nothing, JuMP.MOI.OptimizerWithAttributes},
-        time_steps::UnitRange{Int},
-        resolution::Dates.TimePeriod,
-        use_forecast_data::Bool,
-        initial_time::Dates.DateTime,
-        variables::Dict{Symbol, JuMP.Containers.DenseAxisArray},
-        constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray},
-        cost_function::JuMP.AbstractJuMPScalar,
-        expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray},
-        parameters::Union{Nothing, ParametersContainer},
-        initial_conditions::InitialConditionsContainer,
-        pm::Union{Nothing, PM.AbstractPowerModel},
-    )
-        resolution = IS.time_period_conversion(resolution)
-        new(
-            JuMPmodel,
-            optimizer_factory,
-            time_steps,
-            resolution,
-            use_forecast_data,
-            initial_time,
-            variables,
-            constraints,
-            cost_function,
-            expressions,
-            parameters,
-            initial_conditions,
-            pm,
-        )
-    end
-end
-
-function PSIContainer(
+function psi_container_init!(
+    psi_container::PSIContainer,
     ::Type{T},
     sys::PSY.System,
-    optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes};
-    kwargs...,
 ) where {T <: PM.AbstractPowerModel}
-    check_kwargs(kwargs, PSICONTAINER_ACCEPTED_KWARGS, "PSIContainer")
-    PSY.check_forecast_consistency(sys)
-    user_defined_model = get(kwargs, :JuMPmodel, nothing)
-    ini_con = get(kwargs, :initial_conditions, InitialConditionsContainer())
-    make_parameters_container = get(kwargs, :use_parameters, false)
-    use_forecast_data = get(kwargs, :use_forecast_data, true)
-    jump_model =
-        _pass_abstract_jump(optimizer, make_parameters_container, user_defined_model)
-    initial_time = get(kwargs, :initial_time, PSY.get_forecasts_initial_time(sys))
+    # The order of operations matter
+    settings = psi_container.settings
+    _make_jump_model!(psi_container)
+    @assert !isnothing(psi_container.JuMPmodel)
+    make_parameters_container = get_use_parameters(settings)
+    make_parameters_container && (psi_container.parameters = ParametersContainer())
+    if get_initial_time(settings) == UNSET_INI_TIME
+        set_initial_time!(settings, PSY.get_forecasts_initial_time(sys))
+    end
 
-    if use_forecast_data
-        horizon = get(kwargs, :horizon, PSY.get_forecasts_horizon(sys))
-        time_steps = 1:horizon
-        if length(time_steps) > 100
-            @warn("The number of time steps in the model is over 100. This will result in
-                  large multiperiod optimization problem")
+    if get_horizon(settings) == UNSET_HORIZON
+        set_horizon!(settings, PSY.get_forecasts_horizon(sys))
+    end
+
+    if get_use_forecast_data(settings)
+        total_number_of_devices = length(PSY.get_components(PSY.Device, sys))
+        psi_container.time_steps = 1:get_horizon(settings)
+        # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html The maximum numbers of constraints and variables in the benchmark provlems is 1,918,399 and 1,259,121, respectively. See also https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/2013/138847.pdf
+        variable_count_estimate = length(psi_container.time_steps) * total_number_of_devices
+        if variable_count_estimate > 10e6
+            @warn("The estimated total number of variables that will be created in the model is $(variable_count_estimate). The total number of variables might be larger than 10e6 and could lead to large build or solve times.")
         end
-        resolution = PSY.get_forecasts_resolution(sys)
-    else
-        resolution = PSY.get_forecasts_resolution(sys)
-        time_steps = 1:1
     end
 
     bus_numbers = sort([PSY.get_number(b) for b in PSY.get_components(PSY.Bus, sys)])
-
-    return _psi_container_init(
-        bus_numbers,
-        jump_model,
-        optimizer,
-        T,
-        time_steps,
-        resolution,
-        use_forecast_data,
-        initial_time,
-        make_parameters_container,
-        ini_con,
-    )
-
+    _make_expressions_dict!(psi_container, bus_numbers, T)
+    return
 end
 
-function InitialCondition(
-    psi_container::PSIContainer,
-    device::T,
-    update_ref::UpdateRef,
-    value::Float64,
-    cache_type::Union{Nothing, Type{<:AbstractCache}} = nothing,
-) where {T <: PSY.Component}
-    if model_has_parameters(psi_container)
-        return InitialCondition(
-            device,
-            update_ref,
-            PJ.add_parameter(psi_container.JuMPmodel, value),
-            cache_type,
-        )
+function add_initial_condition_parameters!(psi_container::PSIContainer)
+    for (_, initial_conditions) in iterate_initial_conditions(psi_container)
+        for (i, ic) in enumerate(initial_conditions)
+            val = PJ.add_parameter(psi_container.JuMPmodel, get_value(ic))
+            initial_conditions[i] =
+                InitialCondition(ic.device, ic.update_ref, val, ic.cache_type)
+        end
     end
-
-    return InitialCondition(device, update_ref, value, cache_type)
 end
 
 function has_initial_conditions(psi_container::PSIContainer, key::ICKey)
-    return key in keys(psi_container.initial_conditions)
+    return has_initial_conditions(psi_container.initial_conditions, key)
+end
+
+function iterate_initial_conditions(psi_container::PSIContainer)
+    return iterate_initial_conditions(psi_container.initial_conditions)
 end
 
 function get_initial_conditions(
@@ -251,63 +204,66 @@ function get_initial_conditions(
 end
 
 function get_initial_conditions(psi_container::PSIContainer, key::ICKey)
-    initial_conditions = get(psi_container.initial_conditions, key, nothing)
-    if isnothing(initial_conditions)
-        throw(IS.InvalidValue("initial conditions are not stored for $(key)"))
-    end
-
-    return initial_conditions
+    return get_initial_conditions(psi_container.initial_conditions, key)
 end
 
 function set_initial_conditions!(psi_container::PSIContainer, key::ICKey, value)
-    @debug "set_initial_condition" key
-    psi_container.initial_conditions[key] = value
+    set_initial_conditions!(psi_container.initial_conditions, key, value)
 end
 
-const _JUMP_NAME_DELIMITER = "_"
-
-function _encode_for_jump(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}
-    return Symbol(join((name1, name2, T), _JUMP_NAME_DELIMITER))
+function encode_symbol(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}
+    return Symbol(join((name1, name2, T), PSI_NAME_DELIMITER))
 end
 
-function _encode_for_jump(::Type{T}, name1::Symbol, name2::Symbol) where {T}
-    return _encode_for_jump(T, string(name1), string(name2))
+function encode_symbol(::Type{T}, name1::Symbol, name2::Symbol) where {T}
+    return encode_symbol(T, string(name1), string(name2))
 end
 
-function _encode_for_jump(::Type{T}, name::AbstractString) where {T}
-    return Symbol(join((name, T), _JUMP_NAME_DELIMITER))
+function encode_symbol(::Type{T}, name::AbstractString) where {T}
+    return Symbol(join((name, T), PSI_NAME_DELIMITER))
 end
 
-function _encode_for_jump(::Type{T}, name::Symbol) where {T}
-    return Symbol(join((string(name), T), _JUMP_NAME_DELIMITER))
+function encode_symbol(::Type{T}, name::Symbol) where {T}
+    return Symbol(join((string(name), T), PSI_NAME_DELIMITER))
 end
 
-function _encode_for_jump(name::AbstractString)
+function encode_symbol(name::AbstractString)
     return Symbol(name)
 end
 
-function _encode_for_jump(name::Symbol)
+function encode_symbol(name1::AbstractString, name2::AbstractString)
+    return Symbol(join((name1, name2), PSI_NAME_DELIMITER))
+end
+
+function encode_symbol(name::Symbol)
     return name
 end
 
-constraint_name(cons_type, device_type) = _encode_for_jump(device_type, cons_type)
-constraint_name(cons_type) = _encode_for_jump(cons_type)
-variable_name(var_type, device_type) = _encode_for_jump(device_type, var_type)
-variable_name(var_type) = _encode_for_jump(var_type)
+function decode_symbol(name::Symbol)
+    return split(String(name), PSI_NAME_DELIMITER)
+end
+
+constraint_name(cons_type, device_type) = encode_symbol(device_type, cons_type)
+constraint_name(cons_type) = encode_symbol(cons_type)
+variable_name(var_type, device_type) = encode_symbol(device_type, var_type)
+variable_name(var_type) = encode_symbol(var_type)
 
 _variable_type(cm::PSIContainer) = JuMP.variable_type(cm.JuMPmodel)
 model_time_steps(psi_container::PSIContainer) = psi_container.time_steps
 model_resolution(psi_container::PSIContainer) = psi_container.resolution
-model_has_parameters(psi_container::PSIContainer) = !isnothing(psi_container.parameters)
-model_uses_forecasts(psi_container::PSIContainer) = psi_container.use_forecast_data
-model_initial_time(psi_container::PSIContainer) = psi_container.initial_time
+model_has_parameters(psi_container::PSIContainer) =
+    get_use_parameters(psi_container.settings)
+model_uses_forecasts(psi_container::PSIContainer) =
+    get_use_forecast_data(psi_container.settings)
+model_initial_time(psi_container::PSIContainer) = get_initial_time(psi_container.settings)
 #Internal Variables, Constraints and Parameters accessors
 get_variables(psi_container::PSIContainer) = psi_container.variables
 get_constraints(psi_container::PSIContainer) = psi_container.constraints
-get_parameters(psi_container::PSIContainer, param_reference::UpdateRef) =
-    psi_container.parameters[param_reference]
+get_parameters(psi_container::PSIContainer) = psi_container.parameters
 get_expression(psi_container::PSIContainer, name::Symbol) = psi_container.expressions[name]
 get_initial_conditions(psi_container::PSIContainer) = psi_container.initial_conditions
+get_PTDF(psi_container::PSIContainer) = get_PTDF(psi_container.settings)
+get_settings(psi_container::PSIContainer) = psi_container.settings
 
 function get_variable(
     psi_container::PSIContainer,
@@ -367,7 +323,7 @@ function assign_variable!(psi_container::PSIContainer, name::Symbol, value)
 end
 
 function add_var_container!(psi_container::PSIContainer, var_name::Symbol, axs...)
-    container = _container_spec(psi_container.JuMPmodel, axs...)
+    container = container_spec(psi_container.JuMPmodel, axs...)
     assign_variable!(psi_container, var_name, container)
     return container
 end
@@ -451,7 +407,7 @@ function get_parameter_container(
     name::Symbol,
     ::Type{T},
 ) where {T <: PSY.Component}
-    return get_parameter_container(psi_container, _encode_for_jump(T, name))
+    return get_parameter_container(psi_container, encode_symbol(T, name))
 end
 
 function get_parameter_container(psi_container::PSIContainer, ref::UpdateRef)
@@ -486,9 +442,10 @@ function add_param_container!(
     container = ParameterContainer(
         param_reference,
         JuMP.Containers.DenseAxisArray{PJ.ParameterRef}(undef, axs...),
+        JuMP.Containers.DenseAxisArray{Float64}(undef, axs...),
     )
     assign_parameter!(psi_container, container)
-    return container.array
+    return container
 end
 
 function iterate_parameter_containers(psi_container::PSIContainer)
@@ -499,14 +456,28 @@ function iterate_parameter_containers(psi_container::PSIContainer)
     end
 end
 
-function get_model_duals(op::PSIContainer, cons::Vector{Symbol})
-    results_dict = Dict{Symbol, DataFrames.DataFrame}()
-
-    for c in cons
-        v = get_constraint(op, c)
-        results_dict[c] = _result_dataframe_duals(v)
+function get_parameters_value(psi_container::PSIContainer)
+    # TODO: Still not obvious implementation since it needs to get the multipliers from
+    # the system
+    params_dict = Dict{Symbol, DataFrames.DataFrame}()
+    parameters = get_parameters(psi_container)
+    (isnothing(parameters) || isempty(parameters)) && return params_dict
+    for (k, v) in parameters
+        !isa(v.update_ref, UpdateRef{<:PSY.Component}) && continue
+        params_key_tuple = decode_symbol(k)
+        params_dict_key = Symbol(params_key_tuple[1], "_", params_key_tuple[3])
+        param_array = axis_array_to_dataframe(get_parameter_array(v))
+        multiplier_array = axis_array_to_dataframe(get_multiplier_array(v))
+        params_dict[params_dict_key] = param_array .* multiplier_array
     end
-    return results_dict
+    return params_dict
+end
+
+function is_milp(container::PSIContainer)
+    type_of_optimizer = typeof(container.JuMPmodel.moi_backend.optimizer.model)
+    supports_milp = hasfield(type_of_optimizer, :last_solved_by_mip)
+    !supports_milp && return false
+    return container.JuMPmodel.moi_backend.optimizer.model.last_solved_by_mip
 end
 
 function _export_optimizer_log(
@@ -514,7 +485,6 @@ function _export_optimizer_log(
     psi_container::PSIContainer,
     path::String,
 )
-
     optimizer_log[:obj_value] = JuMP.objective_value(psi_container.JuMPmodel)
     optimizer_log[:termination_status] =
         Int(JuMP.termination_status(psi_container.JuMPmodel))
@@ -526,7 +496,7 @@ function _export_optimizer_log(
         @warn("SolveTime() property not supported by the Solver")
         optimizer_log[:solve_time] = NaN # "Not Supported by solver"
     end
-    _write_optimizer_log(optimizer_log, path)
+    write_optimizer_log(optimizer_log, path)
     return
 end
 
@@ -536,4 +506,19 @@ function _write_psi_container(psi_container::PSIContainer, save_path::String)
     MOI.copy_to(MOF_model, JuMP.backend(psi_container.JuMPmodel))
     MOI.write_to_file(MOF_model, save_path)
     return
+end
+
+function get_dual_values(psi_container::PSIContainer)
+    cons = get_constraint_duals(psi_container.settings)
+    return get_dual_values(psi_container, cons)
+end
+
+function get_dual_values(op::PSIContainer, cons::Vector{Symbol})
+    results_dict = Dict{Symbol, DataFrames.DataFrame}()
+    isempty(cons) && return results_dict
+    for c in cons
+        v = get_constraint(op, c)
+        results_dict[c] = axis_array_to_dataframe(v)
+    end
+    return results_dict
 end

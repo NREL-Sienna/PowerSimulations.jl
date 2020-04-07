@@ -58,7 +58,7 @@ function Base.show(io::IO, ::MIME"text/plain", template::OperationsProblemTempla
     println(io, "============================================")
 end
 
-function Base.show(io::IO, op_problem::PSIContainer)
+function Base.show(io::IO, psi_container::PSIContainer)
     println(io, "PSIContainer()")
 end
 #=
@@ -67,7 +67,7 @@ function Base.show(io::IO, op_problem::SimulationSequence)
     println(io, "SimulationSequence()")
 end
 =#
-function Base.show(io::IO, op_problem::Simulation)
+function Base.show(io::IO, sim::Simulation)
     println(io, "Simulation()")
 end
 #=
@@ -81,7 +81,7 @@ function Base.show(io::IO, ::MIME"text/plain", results::IS.Results)
     println(io, "\nResults")
     println(io, "===============\n")
 
-    for (k, v) in results.variables
+    for (k, v) in results.variable_values
         time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
         if size(time, 1) == size(v, 1)
             var = hcat(time, v)
@@ -107,7 +107,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/html", results::IS.Results)
     println(io, "<h1>Results</h1>")
-    for (k, v) in results.variables
+    for (k, v) in results.variable_values
         time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
         if size(time, 1) == size(v, 1)
             var = hcat(time, v)
@@ -174,7 +174,7 @@ function Base.show(io::IO, ::MIME"text/plain", sim_results::SimulationResultsRef
 end
 
 function _count_stages(sequence::Array)
-    stages = Dict()
+    stages = Dict{Int64, Int64}()
     stage = 1
     count = 0
     for i in 1:length(sequence)
@@ -206,34 +206,45 @@ function _print_feedforward(io::IO, feed_forward::Dict, to::Array, from::Any)
             times = 12
             line5 = string("└─$stage2 "^times, "... (x$period) to : $to")
         end
-        if iseven(times)
-            spacing = (Int(times / 2) - 2)
-            line3 = string(
-                "┌",
-                string(dashes, "┬")^spacing,
-                "----",
-                "┼",
-                string(dashes, "┬")^(spacing + 1),
-                "----┐",
-            )
+        if times == 1
+            line1 = "$stage1--┐ from : $from"
+            println(io, "$line1\n$spaces|\n$spaces$line5\n")
         else
-            spacing = Int((times / 2) - 1.5)
-            line3 = string(
-                "┌",
-                string(dashes, "┬")^spacing,
-                "----",
-                "┼",
-                string(dashes, "┬")^(spacing),
-                "----┐",
-            )
+            if times == 2
+                line3 = string("┌", string(dashes, "┤"))
+                spacing = 0
+            elseif times == 3
+                line3 = string("┌", string(dashes, "┼"), string(dashes, "┐"))
+                spacing = 0
+            elseif iseven(times)
+                spacing = (Int(times / 2) - 2)
+                line3 = string(
+                    "┌",
+                    string(dashes, "┬")^spacing,
+                    "----",
+                    "┼",
+                    string(dashes, "┬")^(spacing + 1),
+                    "----┐",
+                )
+            else
+                spacing = Int((times / 2) - 1.5)
+                line3 = string(
+                    "┌",
+                    string(dashes, "┬")^spacing,
+                    "----",
+                    "┼",
+                    string(dashes, "┬")^(spacing),
+                    "----┐",
+                )
+            end
+            line1 = string("     "^(spacing), " $stage1--┐ from : $from")
+            line2 = string("     "^(spacing), " "^length(stage1), "   |")
+            line4 = string("|", string(spaces, "|")^(times - 2), "    |")
+            println(io, "$line1\n$line2\n$line3\n$line4\n$line4\n$line5\n")
         end
-        line1 = string("     "^(spacing), " $stage1--┐ from : $from")
-        line2 = string("     "^(spacing), " "^length(stage1), "   |")
-        line4 = string("|", string(spaces, "|")^(times - 2), "    |")
-        println(io, "$line1\n$line2\n$line3\n$line4\n$line4\n$line5\n")
     end
 end
-function _print_inter_stages(io::IO, stages::Dict)
+function _print_inter_stages(io::IO, stages::Dict{Int64, Int64})
     list = sort!(collect(keys(stages)))
     for i in list
         num = stages[i]
@@ -283,7 +294,7 @@ function _print_inter_stages(io::IO, stages::Dict)
     end
 end
 
-function _print_intra_stages(io::IO, stages::Dict)
+function _print_intra_stages(io::IO, stages::Dict{Int64, Int64})
     list = sort!(collect(keys(stages)))
     for i in list
         num = stages[i]

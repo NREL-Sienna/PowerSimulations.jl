@@ -41,8 +41,8 @@ function device_linear_rateofchange(
     var_name::Symbol,
 )
     time_steps = model_time_steps(psi_container)
-    up_name = _middle_rename(cons_name, "_", "up")
-    down_name = _middle_rename(cons_name, "_", "dn")
+    up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
+    down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
 
     variable = get_variable(psi_container, var_name)
 
@@ -125,8 +125,8 @@ function device_mixedinteger_rateofchange(
     var_names::Tuple{Symbol, Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
-    up_name = _middle_rename(cons_name, "_", "up")
-    down_name = _middle_rename(cons_name, "_", "dn")
+    up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
+    down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
 
     variable = get_variable(psi_container, var_names[1])
     varstart = get_variable(psi_container, var_names[2])
@@ -141,12 +141,12 @@ function device_mixedinteger_rateofchange(
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             variable[name, 1] - initial_conditions[ix].value <=
-                rate_data[1][ix].up + rate_data[2][ix].max * varstart[name, 1]
+            rate_data[1][ix].up + rate_data[2][ix].max * varstart[name, 1]
         )
         con_down[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             initial_conditions[ix].value - variable[name, 1] <=
-                rate_data[1][ix].down + rate_data[2][ix].min * varstop[name, 1]
+            rate_data[1][ix].down + rate_data[2][ix].min * varstop[name, 1]
         )
     end
 
@@ -155,12 +155,12 @@ function device_mixedinteger_rateofchange(
         con_up[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
             variable[name, t] - variable[name, t - 1] <=
-                rate_data[1][ix].up + rate_data[2][ix].max * varstart[name, t]
+            rate_data[1][ix].up + rate_data[2][ix].max * varstart[name, t]
         )
         con_down[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
             variable[name, t - 1] - variable[name, t] <=
-                rate_data[1][ix].down + rate_data[2][ix].min * varstop[name, t]
+            rate_data[1][ix].down + rate_data[2][ix].min * varstop[name, t]
         )
     end
 

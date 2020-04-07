@@ -1,3 +1,6 @@
+
+const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
+
 mutable struct SimulationInternal
     raw_dir::Union{String, Nothing}
     models_dir::Union{String, Nothing}
@@ -68,23 +71,38 @@ mutable struct Simulation
     steps::Int
     stages::Dict{String, Stage{<:AbstractOperationsProblem}}
     initial_time::Union{Nothing, Dates.DateTime}
-    sequence::Union{Nothing, SimulationSequence}
+    sequence::SimulationSequence
     simulation_folder::String
     name::String
     internal::Union{Nothing, SimulationInternal}
 
     function Simulation(;
+        stages_sequence::SimulationSequence,
         name::String,
         steps::Int,
         stages = Dict{String, Stage{AbstractOperationsProblem}}(),
-        stages_sequence = nothing,
         simulation_folder::String,
-        kwargs...,
+        initial_time = nothing,
     )
-        check_kwargs(kwargs, SIMULATION_KWARGS, "Simulation")
-        initial_time = get(kwargs, :initial_time, nothing)
         new(steps, stages, initial_time, stages_sequence, simulation_folder, name, nothing)
     end
+end
+
+"""
+    Simulation(directory::AbstractString)
+
+Constructs Simulation from a serialized directory. Callers should pass any kwargs here that
+they passed to the original Simulation.
+
+# Arguments
+- `directory::AbstractString`: the directory returned from the call to serialize
+- `stage_info::Dict`: Two-level dictionary containing stage parameters that cannot be
+  serialized. The outer dict should be keyed by the stage name. The inner dict must contain
+  'optimizer' and may contain 'jump_model'. These should be the same values used for the
+  original simulation.
+"""
+function Simulation(directory::AbstractString, stage_info::Dict)
+    obj = deserialize(Simulation, directory, stage_info)
 end
 
 ################# accessor functions ####################
@@ -92,6 +110,14 @@ get_initial_time(s::Simulation) = s.initial_time
 get_sequence(s::Simulation) = s.sequence
 get_steps(s::Simulation) = s.steps
 get_date_range(s::Simulation) = s.internal.date_range
+
+function get_base_powers(s::Simulation)
+    base_powers = Dict()
+    for (k, v) in s.stages
+        base_powers[k] = v.sys.base_powers
+    end
+    return base_powers
+end
 
 function get_stage(s::Simulation, name::String)
     stage = get(s.stages, name, nothing)
@@ -119,8 +145,20 @@ get_name(s::Simulation) = s.name
 get_simulation_folder(s::Simulation) = s.simulation_folder
 get_execution_order(s::Simulation) = s.sequence.execution_order
 get_current_execution_index(s::Simulation) = s.sequence.current_execution_index
-get_stage_cache_definition(s::Simulation, stage::String) =
-    get(s.sequence.cache, stage, nothing)
+
+function get_stage_cache_definition(s::Simulation, stage::String)
+    caches = s.sequence.cache
+    cache_ref = Array{AbstractCache, 1}()
+    for stage_names in keys(caches)
+        if stage in stage_names
+            push!(cache_ref, caches[stage_names])
+        end
+    end
+    if isempty(cache_ref)
+        return nothing
+    end
+    return cache_ref
+end
 
 function get_cache(s::Simulation, key::CacheKey)
     c = get(s.internal.simulation_cache, key, nothing)
@@ -247,7 +285,7 @@ function _get_simulation_initial_times!(sim::Simulation)
 
     if isnothing(get_initial_time(sim))
         sim.initial_time = stage_initial_times[1][1]
-        @debug("Initial Simulation will be infered from the data.
+        @debug("Initial Simulation Time will be infered from the data.
                Initial Simulation Time set to $(sim.initial_time)")
     end
 
@@ -289,7 +327,7 @@ end
 function _check_required_ini_cond_caches(sim::Simulation)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get_stage(sim, stage_name)
-        for (k, v) in get_initial_conditions(stage.internal.psi_container)
+        for (k, v) in iterate_initial_conditions(stage.internal.psi_container)
             # No cache needed for the initial condition -> continue
             isnothing(v[1].cache_type) && continue
             c = get_cache(sim, v[1].cache_type, k.device_type)
@@ -310,8 +348,7 @@ function _populate_caches!(sim::Simulation, stage_name::String)
     return
 end
 
-function _build_stages!(sim::Simulation; kwargs...)
-    system_to_file = get(kwargs, :system_to_file, true)
+function _build_stages!(sim::Simulation)
     for (stage_number, stage_name) in sim.sequence.order
         TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Stage $(stage_name)" begin
             @info("Building Stage $(stage_number)-$(stage_name)")
@@ -319,7 +356,7 @@ function _build_stages!(sim::Simulation; kwargs...)
             stage = get_stage(sim, stage_name)
             stage_interval = get_stage_interval(get_sequence(sim), stage_name)
             initial_time = get_initial_time(sim)
-            build!(stage, initial_time, horizon, stage_interval; kwargs...)
+            build!(stage, initial_time, horizon, stage_interval)
             _populate_caches!(sim, stage_name)
             sim.internal.date_ref[stage_number] = initial_time
         end
@@ -328,8 +365,7 @@ function _build_stages!(sim::Simulation; kwargs...)
     return
 end
 
-function _build_stage_paths!(sim::Simulation; kwargs...)
-    system_to_file = get(kwargs, :system_to_file, true)
+function _build_stage_paths!(sim::Simulation, system_to_file::Bool)
     for (stage_number, stage_name) in sim.sequence.order
         stage = sim.stages[stage_name]
         stage_path = joinpath(sim.internal.models_dir, "stage_$(stage_name)_model")
@@ -354,17 +390,11 @@ function _check_folder(folder::String)
 end
 # TODO: Add DocString
 @doc raw"""
-        build!(sim::Simulation;
-                kwargs...)
-
+        build!(sim::Simulation)
 """
-function build!(sim::Simulation; kwargs...)
+function build!(sim::Simulation)
     TimerOutputs.reset_timer!(BUILD_SIMULATION_TIMER)
     TimerOutputs.@timeit BUILD_SIMULATION_TIMER "Build Simulation" begin
-        check_kwargs(kwargs, SIMULATION_BUILD_KWARGS, "build!")
-        if isnothing(sim.sequence) || isempty(sim.stages)
-            throw(ArgumentError("The simulation object requires a valid definition of stages and SimulationSequence"))
-        end
         _check_forecasts_sequence(sim)
         _check_feedforward_chronologies(sim)
         _check_folder(sim.simulation_folder)
@@ -376,13 +406,14 @@ function build!(sim::Simulation; kwargs...)
                 throw(IS.ConflictingInputsError("Stage $(stage_name) not found in the stages definitions"))
             end
             stage_interval = get_stage_interval(sim, stage_name)
-            executions = Int(get_step_resolution(sim.sequence) / stage_interval)
-            stage.internal = StageInternal(stage_number, executions, 0, nothing)
+            stage.internal.executions =
+                Int(get_step_resolution(sim.sequence) / stage_interval)
+            stage.internal.number = stage_number
             _attach_feedforward!(sim, stage_name)
         end
         _assign_feedforward_chronologies(sim)
         _check_steps(sim, stage_initial_times)
-        _build_stages!(sim; kwargs...)
+        _build_stages!(sim)
         sim.internal.compiled_status = true
     end
     @info ("\n$(BUILD_SIMULATION_TIMER)\n")
@@ -399,32 +430,36 @@ end
 function initial_condition_update!(
     stage::Stage,
     ini_cond_key::ICKey,
+    initial_conditions::Vector{InitialCondition},
     chronology::IntraStageChronology,
     sim::Simulation,
 )
-    ini_cond_vector = get_initial_conditions(stage.internal.psi_container)[ini_cond_key]
-    for ic in get_initial_conditions(stage.internal.psi_container)[ini_cond_key]
+    for ic in initial_conditions
         name = device_name(ic)
-        interval_chronology = get_stage_interval_chronology(sim, stage.name)
+        interval_chronology =
+            get_stage_interval_chronology(sim.sequence, get_stage_name(sim, stage))
         var_value =
             get_stage_variable(interval_chronology, (stage => stage), name, ic.update_ref)
-        cache = get_cache(stage, ic.cache_key)
+        if isnothing(ic.cache_type)
+            cache = nothing
+        else
+            cache = get_cache(sim, ic.cache_type, ini_cond_key.device_type)
+        end
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
     end
-    return
 end
 
 """ Updates the initial conditions of the stage"""
 function initial_condition_update!(
     stage::Stage,
     ini_cond_key::ICKey,
+    initial_conditions::Vector{InitialCondition},
     chronology::InterStageChronology,
     sim::Simulation,
 )
     execution_index = get_execution_order(sim)
-    ini_cond_vector = get_initial_conditions(stage.internal.psi_container)[ini_cond_key]
-    for ic in ini_cond_vector
+    for ic in initial_conditions
         name = device_name(ic)
         current_ix = get_current_execution_index(sim)
         source_stage_ix = current_ix == 1 ? length(execution_index) : current_ix - 1
@@ -465,19 +500,47 @@ function update_cache!(
     stage::Stage,
 ) where {D <: PSY.Device}
     c = get_cache(sim, key)
+    increment = get_increment(sim, stage, c)
     variable = get_variable(stage.internal.psi_container, c.ref)
     for t in 1:get_end_of_interval_step(stage), name in variable.axes[1]
         device_status = JuMP.value(variable[name, t])
         @debug name, device_status
         if c.value[name][:status] == device_status
-            c.value[name][:count] += 1.0
+            c.value[name][:count] += increment
             @debug("Cache value TimeStatus for device $name set to $device_status and count to $(c.value[name][:count])")
         else
             c.value[name][:status] != device_status
-            c.value[name][:count] = 1.0
+            c.value[name][:count] = increment
             c.value[name][:status] = device_status
             @debug("Cache value TimeStatus for device $name set to $device_status and count to 1.0")
         end
+    end
+
+    return
+end
+
+function get_increment(sim::Simulation, stage::Stage, cache::TimeStatusChange)
+    units = cache.units
+    stage_name = get_stage_name(sim, stage)
+    stage_interval = IS.time_period_conversion(get_stage_interval(sim, stage_name))
+    horizon = get_stage_horizon(sim.sequence, stage_name)
+    stage_resolution = stage_interval / horizon
+    return float(stage_resolution / units)
+end
+
+function update_cache!(
+    sim::Simulation,
+    key::CacheKey{StoredEnergy, D},
+    stage::Stage,
+) where {D <: PSY.Device}
+    c = get_cache(sim, key)
+    variable = get_variable(stage.internal.psi_container, c.ref)
+    t = get_end_of_interval_step(stage)
+    for name in variable.axes[1]
+        device_energy = JuMP.value(variable[name, t])
+        @debug name, device_energy
+        c.value[name] = device_energy
+        @debug("Cache value StoredEnergy for device $name set to $(c.value[name])")
     end
 
     return
@@ -503,7 +566,7 @@ function update_parameter!(
         )
         ts_vector = TS.values(PSY.get_data(forecast))
         device_name = PSY.get_name(d)
-        for (ix, val) in enumerate(container.array[device_name, :])
+        for (ix, val) in enumerate(get_parameter_array(container)[device_name, :])
             value = ts_vector[ix]
             JuMP.fix(val, value)
         end
@@ -529,8 +592,8 @@ end
 
 function _update_initial_conditions!(stage::Stage, sim::Simulation)
     ini_cond_chronology = sim.sequence.ini_cond_chronology
-    for (k, v) in get_initial_conditions(stage.internal.psi_container)
-        initial_condition_update!(stage, k, ini_cond_chronology, sim)
+    for (k, v) in iterate_initial_conditions(stage.internal.psi_container)
+        initial_condition_update!(stage, k, v, ini_cond_chronology, sim)
     end
     return
 end
@@ -541,9 +604,18 @@ function _update_parameters(stage::Stage, sim::Simulation)
     end
     return
 end
-# Is possible this function needs a better name
-""" Required update stage function call"""
 
+function _apply_warm_start!(stage::Stage)
+    for variable in values(stage.internal.psi_container.variables)
+        for e in variable
+            current_solution = JuMP.value(e)
+            JuMP.set_start_value(e, current_solution)
+        end
+    end
+    return
+end
+
+""" Required update stage function call"""
 function _update_stage!(stage::Stage, sim::Simulation)
     _update_parameters(stage, sim)
     _update_initial_conditions!(stage, sim)
@@ -574,13 +646,9 @@ each stage and step.
 
 # Example
 ```julia
-sim = Simulation("test", 7, stages, "/Users/folder")
+sim = Simulation("Test", 7, stages, "/Users/folder")
 execute!!(sim::Simulation; kwargs...)
 ```
-
-# Accepted Key Words
-- `constraints_duals::Vector{Symbol}`: if dual variables are desired in the
-results, include a vector of the variable names to be included
 """
 
 function execute!(sim::Simulation; kwargs...)
@@ -589,7 +657,7 @@ function execute!(sim::Simulation; kwargs...)
     elseif sim.internal.reset == false
         error("Re-build the simulation")
     end
-
+    system_to_file = get(kwargs, :system_to_file, true)
     isnothing(sim.internal) &&
     error("Simulation not built, build the simulation to execute")
     TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
@@ -598,7 +666,7 @@ function execute!(sim::Simulation; kwargs...)
         folder = get_simulation_folder(sim)
         sim.internal.raw_dir, sim.internal.models_dir, sim.internal.results_dir =
             _prepare_workspace(name, folder)
-        _build_stage_paths!(sim; kwargs...)
+        _build_stage_paths!(sim, system_to_file)
         execution_order = get_execution_order(sim)
         for step in 1:get_steps(sim)
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
@@ -624,25 +692,145 @@ function execute!(sim::Simulation; kwargs...)
                             !(step == 1 && ix == 1) && update_stage!(stage, sim)
                         end
                         TimerOutputs.@timeit RUN_SIMULATION_TIMER "Run Stage $(stage_number)" begin
-                            run_stage(
-                                stage,
-                                sim.internal.current_time,
-                                raw_results_path;
-                                kwargs...,
-                            )
+                            run_stage(stage, sim.internal.current_time, raw_results_path)
                         end
-                        _update_caches!(sim, stage)
+                        TimerOutputs.@timeit RUN_SIMULATION_TIMER "Update Cache $(stage_number)" begin
+                            _update_caches!(sim, stage)
+                        end
+                        if warm_start_enabled(stage)
+                            TimerOutputs.@timeit RUN_SIMULATION_TIMER "Warm Start $(stage_number)" begin
+                                _apply_warm_start!(stage)
+                            end
+                        end
                         sim.internal.run_count[step][stage_number] += 1
                         sim.internal.date_ref[stage_number] += stage_interval
                     end
                 end
             end
         end
-        constraints_duals = get(kwargs, :constraints_duals, nothing)
-        sim_results = SimulationResultsReference(sim; constraints_duals = constraints_duals)
+        sim_results = SimulationResultsReference(sim)
     end
 
     @info ("\n$(RUN_SIMULATION_TIMER)\n")
     serialize_sim_output(sim_results)
     return sim_results
+end
+
+struct SimulationSerializationWrapper
+    steps::Int
+    stages::Dict{String, StageSerializationWrapper}
+    initial_time::Union{Nothing, Dates.DateTime}
+    sequence::Union{Nothing, SimulationSequence}
+    simulation_folder::String
+    name::String
+end
+
+"""
+    serialize(simulation::Simulation, path = ".")
+
+Serialize the simulation to a directory in path.
+
+Return the serialized simulation directory name that is created.
+
+# Arguments
+- `simulation::Simulation`: simulation to serialize
+- `path = "."`: path in which to create the serialzed directory
+- `force = false`: If true, delete the directory if it already exists. Otherwise, it will
+   throw an exception.
+"""
+function serialize(simulation::Simulation; path = ".", force = false)
+    directory = joinpath(path, "simulation-$(simulation.name)")
+    stages = Dict{String, StageSerializationWrapper}()
+
+    orig = pwd()
+    if isdir(directory) || ispath(directory) && !force
+        throw(ArgumentError("$directory already exists. Please delete it or pass force = true."))
+    end
+    rm(directory, recursive = true, force = true)
+    mkdir(directory)
+    cd(directory)
+
+    try
+        for (key, stage) in simulation.stages
+            if isnothing(stage.internal)
+                throw(ArgumentError("stage $(stage.internal.number) has not been built"))
+            end
+            sys_filename = "system-$(IS.get_uuid(stage.sys)).json"
+            # Skip serialization if multiple stages have the same system.
+            if !ispath(sys_filename)
+                PSY.to_json(stage.sys, sys_filename)
+            end
+            stages[key] = StageSerializationWrapper(
+                stage.template,
+                sys_filename,
+                stage.internal.psi_container.settings_copy,
+                typeof(stage),
+            )
+        end
+    finally
+        cd(orig)
+    end
+
+    filename = joinpath(directory, SIMULATION_SERIALIZATION_FILENAME)
+    obj = SimulationSerializationWrapper(
+        simulation.steps,
+        stages,
+        simulation.initial_time,
+        simulation.sequence,
+        simulation.simulation_folder,
+        simulation.name,
+    )
+    Serialization.serialize(filename, obj)
+    @info "Serialized simulation" simulation.name directory
+    return directory
+end
+
+function deserialize(::Type{Simulation}, directory::AbstractString, stage_info::Dict)
+    orig = pwd()
+    cd(directory)
+
+    try
+        filename = SIMULATION_SERIALIZATION_FILENAME
+        if !ispath(filename)
+            throw(ArgumentError("$filename does not exist"))
+        end
+
+        obj = Serialization.deserialize(filename)
+        if !(obj isa SimulationSerializationWrapper)
+            throw(IS.DataFormatError("deserialized object has incorrect type $(typeof(obj))"))
+        end
+
+        stages = Dict{String, Stage{<:AbstractOperationsProblem}}()
+        for (key, wrapper) in obj.stages
+            sys_filename = wrapper.sys
+            if !ispath(sys_filename)
+                throw(ArgumentError("stage PowerSystems serialized file $sys_filename does not exist"))
+            end
+            sys = PSY.System(sys_filename)
+            if !haskey(stage_info[key], "optimizer")
+                throw(ArgumentError("stage_info must define 'optimizer'"))
+            end
+            stages[key] = wrapper.stage_type(
+                wrapper.template,
+                sys,
+                restore_from_copy(
+                    wrapper.settings;
+                    optimizer = stage_info[key]["optimizer"],
+                ),
+                get(stage_info[key], "jump_model", nothing),
+            )
+        end
+
+        sim = Simulation(;
+            name = obj.name,
+            steps = obj.steps,
+            stages = stages,
+            stages_sequence = obj.sequence,
+            simulation_folder = obj.simulation_folder,
+        )
+        build!(sim)
+        return sim
+    finally
+        cd(orig)
+    end
 end

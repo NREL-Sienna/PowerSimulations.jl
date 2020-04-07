@@ -27,6 +27,27 @@ for t in 1:2
     end
 end
 
+nodes = nodes5()
+c_sys5_ml = System(
+    nodes,
+    thermal_generators5(nodes),
+    loads5(nodes),
+    branches5(nodes),
+    nothing,
+    100.0,
+    nothing,
+    nothing,
+)
+for t in 1:2
+    for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_ml))
+        add_forecast!(
+            c_sys5_ml,
+            l,
+            Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+        )
+    end
+end
+
 nodes = nodes14()
 c_sys14 = System(
     nodes,
@@ -522,6 +543,13 @@ for t in 1:2
             Deterministic("get_storage_capacity", hydro_timeseries_DA[t][ix]),
         )
     end
+    for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
+        add_forecast!(
+            c_sys5_hy_uc,
+            h,
+            Deterministic("get_inflow", hydro_timeseries_DA[t][ix] .* 0.8),
+        )
+    end
     for (ix, h) in enumerate(get_components(HydroDispatch, c_sys5_hy_uc))
         add_forecast!(
             c_sys5_hy_uc,
@@ -591,6 +619,14 @@ for t in 1:2
             ini_time = timestamp(ta[i])
             data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
             add_forecast!(c_sys5_hy_ed, l, Deterministic("get_storage_capacity", data))
+        end
+    end
+    for (ix, l) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_ed))
+        ta = hydro_timeseries_DA[t][ix]
+        for i in 1:length(ta)
+            ini_time = timestamp(ta[i])
+            data = when(hydro_timeseries_RT[t][ix] .* 0.8, hour, hour(ini_time[1]))
+            add_forecast!(c_sys5_hy_ed, l, Deterministic("get_inflow", data))
         end
     end
     for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_hy_ed))

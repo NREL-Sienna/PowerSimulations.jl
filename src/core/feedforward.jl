@@ -17,9 +17,9 @@ end
     RecedingHorizon(period::Int)
 """
 struct RecedingHorizon <: FeedForwardChronology
-    period::Int
-    function RecedingHorizon(; period::Int = 1)
-        new(period)
+    periods::Int
+    function RecedingHorizon(; periods::Int = 1)
+        new(periods)
     end
 end
 
@@ -196,14 +196,15 @@ function ub_ff(
     var_name::Symbol,
 )
     time_steps = model_time_steps(psi_container)
-    ub_name = _middle_rename(cons_name, "_", "ub")
+    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
     variable = get_variable(psi_container, var_name)
 
     axes = JuMP.axes(variable)
     set_name = axes[1]
 
     @assert axes[2] == time_steps
-    param_ub = add_param_container!(psi_container, param_reference, set_name)
+    container = add_param_container!(psi_container, param_reference, set_name)
+    param_ub = get_parameter_array(container)
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
     for name in axes[1]
@@ -253,8 +254,8 @@ function range_ff(
     var_name::Symbol,
 )
     time_steps = model_time_steps(psi_container)
-    ub_name = _middle_rename(cons_name, "_", "ub")
-    lb_name = _middle_rename(cons_name, "_", "lb")
+    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
+    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
 
     variable = get_variable(psi_container, var_name)
     axes = JuMP.axes(variable)
@@ -262,8 +263,10 @@ function range_ff(
     @assert axes[2] == time_steps
 
     #Create containers for the constraints
-    param_lb = add_param_container!(psi_container, param_reference[1], set_name)
-    param_ub = add_param_container!(psi_container, param_reference[2], set_name)
+    container_lb = add_param_container!(psi_container, param_reference[1], set_name)
+    param_lb = get_parameter_array(container_lb)
+    container_ub = add_param_container!(psi_container, param_reference[2], set_name)
+    param_ub = get_parameter_array(container_ub)
 
     #Create containers for the parameters
     con_lb = add_cons_container!(psi_container, lb_name, set_name, time_steps)
@@ -329,15 +332,17 @@ function semicontinuousrange_ff(
     var_name::Symbol,
 )
     time_steps = model_time_steps(psi_container)
-    ub_name = _middle_rename(cons_name, "_", "ub")
-    lb_name = _middle_rename(cons_name, "_", "lb")
+    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
+    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
 
     variable = get_variable(psi_container, var_name)
 
     axes = JuMP.axes(variable)
     set_name = axes[1]
     @assert axes[2] == time_steps
-    param = add_param_container!(psi_container, param_reference, set_name)
+    container = add_param_container!(psi_container, param_reference, set_name)
+    multiplier = get_multiplier_array(container)
+    param = get_parameter_array(container)
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
     con_lb = add_cons_container!(psi_container, lb_name, set_name, time_steps)
 
@@ -396,14 +401,15 @@ function integral_limit_ff(
     var_name::Symbol,
 )
     time_steps = model_time_steps(psi_container)
-    ub_name = _middle_rename(cons_name, "_", "integral_limit")
+    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "integral_limit")
     variable = get_variable(psi_container, var_name)
 
     axes = JuMP.axes(variable)
     set_name = axes[1]
 
     @assert axes[2] == time_steps
-    param_ub = add_param_container!(psi_container, param_reference, set_name)
+    container_ub = add_param_container!(psi_container, param_reference, set_name)
+    param_ub = get_parameter_array(container_ub)
     con_ub = add_cons_container!(psi_container, ub_name, set_name)
 
     for name in axes[1]
@@ -413,7 +419,7 @@ function integral_limit_ff(
         con_ub[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
             sum(variable[name, t] for t in time_steps) / length(time_steps) <=
-                param_ub[name]
+            param_ub[name]
         )
     end
 end

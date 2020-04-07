@@ -16,6 +16,7 @@ using TimeSeries
 using ParameterJuMP
 using TestSetExtensions
 using DataFrames
+import UUIDs
 
 import PowerSystems.UtilsData: TestData
 download(TestData; branch = "master")
@@ -28,7 +29,8 @@ const IS = InfrastructureSystems
 const TEST_KWARGS = [:good_kwarg_1, :good_kwarg_2]
 abstract type TestOpProblem <: PSI.AbstractOperationsProblem end
 
-ipopt_optimizer = JuMP.optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0)
+ipopt_optimizer =
+    JuMP.optimizer_with_attributes(Ipopt.Optimizer, "tol" => 1e-6, "print_level" => 0)
 fast_ipopt_optimizer = JuMP.optimizer_with_attributes(
     Ipopt.Optimizer,
     "print_level" => 0,
@@ -37,7 +39,8 @@ fast_ipopt_optimizer = JuMP.optimizer_with_attributes(
 # use default print_level = 5 # set to 0 to disable
 GLPK_optimizer = JuMP.optimizer_with_attributes(GLPK.Optimizer, "msg_lev" => GLPK.MSG_OFF)
 Cbc_optimizer = JuMP.optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0)
-OSQP_optimizer = JuMP.optimizer_with_attributes(OSQP.Optimizer, "verbose" => false)
+OSQP_optimizer =
+    JuMP.optimizer_with_attributes(OSQP.Optimizer, "verbose" => false, "max_iter" => 50000)
 fast_lp_optimizer =
     JuMP.optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "seconds" => 3.0)
 
@@ -61,7 +64,7 @@ function get_logging_level(env_name::String, default)
 end
 
 function run_tests()
-    console_level = get_logging_level("SYS_CONSOLE_LOG_LEVEL", "Info")
+    console_level = get_logging_level("SYS_CONSOLE_LOG_LEVEL", "Error")
     console_logger = ConsoleLogger(stderr, console_level)
     file_level = get_logging_level("SYS_LOG_LEVEL", "Info")
 

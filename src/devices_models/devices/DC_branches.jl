@@ -1,7 +1,11 @@
 abstract type AbstractDCLineFormulation <: AbstractBranchFormulation end
+struct HVDCUnbounded <: AbstractDCLineFormulation end
 struct HVDCLossless <: AbstractDCLineFormulation end
 struct HVDCDispatch <: AbstractDCLineFormulation end
 struct VoltageSourceDC <: AbstractDCLineFormulation end
+
+const UnboundedBranches =
+    Union{HVDCUnbounded, StaticLineUnbounded, StaticTransformerUnbounded}
 
 #################################### Branch Variables ##################################################
 flow_variables!(
@@ -16,8 +20,8 @@ function flow_variables!(
     devices::IS.FlattenIteratorWrapper{B},
 ) where {B <: PSY.DCBranch}
     time_steps = model_time_steps(psi_container)
-    var_name = Symbol("Fp_$(B)")
-    container = _container_spec(
+    var_name = variable_name(FLOW_ACTIVE_POWER, B)
+    container = container_spec(
         psi_container.JuMPmodel,
         (PSY.get_name(d) for d in devices),
         time_steps,
@@ -65,7 +69,6 @@ function branch_rate_constraints!(
     constraint_val =
         JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
     assign_constraint!(psi_container, FLOW_ACTIVE_POWER, B, constraint_val)
-
     for t in time_steps, d in devices
         min_rate =
             max(PSY.get_activepowerlimits_from(d).min, PSY.get_activepowerlimits_to(d).min)
@@ -94,6 +97,7 @@ function branch_rate_constraints!(
         (RATE_LIMIT_FT, RATE_LIMIT_TF),
     )
         var = get_variable(psi_container, var_type, B)
+        time_steps = model_time_steps(psi_container)
         constraint_val =
             JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
         assign_constraint!(psi_container, cons_type, B, constraint_val)

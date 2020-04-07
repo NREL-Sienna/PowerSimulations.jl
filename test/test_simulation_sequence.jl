@@ -52,7 +52,7 @@
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
-        cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
+        cache = Dict(("ED",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
         ini_cond_chronology = InterStageChronology(),
     )
 
@@ -69,7 +69,7 @@
 
 end
 
-@testset "testing if Horizon and interval result in a discontinuous simulation" begin
+@testset "Test if Horizon and interval result in a discontinuous simulation" begin
     @test_throws IS.ConflictingInputsError SimulationSequence(
         step_resolution = Hour(24),
         order = Dict(1 => "UC", 2 => "ED"),
@@ -85,12 +85,12 @@ end
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
-        cache = Dict("ED" => [TimeStatusChange(PSY.ThermalStandard, PSI.ON)]),
+        cache = Dict(("ED",) => TimeStatusChange(PSY.ThermalStandard, PSI.ON)),
         ini_cond_chronology = InterStageChronology(),
     )
 end
 
-@testset "testing if interval is shorter than resolution" begin
+@testset "Test if interval is shorter than resolution" begin
     @test_throws IS.ConflictingInputsError sequence = SimulationSequence(
         step_resolution = Hour(24),
         order = Dict(1 => "UC", 2 => "ED"),

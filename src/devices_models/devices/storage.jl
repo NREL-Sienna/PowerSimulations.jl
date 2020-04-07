@@ -168,7 +168,7 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{St},
     ::Type{D},
 ) where {St <: PSY.Storage, D <: AbstractStorageFormulation}
-    storage_energy_init(psi_container, devices)
+    storage_energy_init(psi_container.initial_conditions, devices)
     return
 end
 
@@ -226,7 +226,7 @@ function energy_balance_constraint!(
     efficiency_data = make_efficiency_data(devices)
     energy_balance(
         psi_container,
-        get_initial_conditions(psi_container, ICKey(DeviceEnergy, St)),
+        get_initial_conditions(psi_container, ICKey(EnergyLevel, St)),
         efficiency_data,
         constraint_name(ENERGY_LIMIT, St),
         (

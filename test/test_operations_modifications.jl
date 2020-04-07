@@ -47,4 +47,22 @@ end
     op_problem = OperationsProblem(TestOpProblem, template, c_sys5)
     set_branch_model!(op_problem, :L, DeviceModel(Line, StaticLine))
     @test op_problem.template.branches[:L].formulation == StaticLine
+    services_filled = Dict{Symbol, ServiceModel}(
+        :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+    )
+    template_s =
+        OperationsProblemTemplate(DCPPowerModel, devices, branches, services_filled)
+    op_problem_s = OperationsProblem(TestOpProblem, template_s, c_sys5)
+    PSI.set_services_model!(
+        op_problem_s,
+        :Reserve,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+    )
+    @test op_problem_s.template.services[:Reserve].formulation == RangeReserve
+    @test_throws IS.ConflictingInputsError set_branch_model!(
+        op_problem,
+        :Reserve,
+        DeviceModel(Line, StaticLine),
+    )
+    #@test_throws IS.ConflictingInputsError set_services_model!(op_problem_s, collect(keys(branches))[1], ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
 end

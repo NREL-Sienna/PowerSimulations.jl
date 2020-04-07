@@ -145,6 +145,15 @@ function _check_step_interval_consistency(
     return
 end
 
+function _check_cache_defination(cache::Dict{<:Tuple, <:AbstractCache})
+    for (stage_names, c) in cache
+        if typeof(c) == TimeStatusChange && length(stage_names) > 1
+            error("TimeStatusChange cache currently only supports single stage. Please consider changing your cache definations")
+        end
+    end
+    return
+end
+
 # TODO: Add DocString
 @doc raw"""
     SimulationSequence(initial_time::Union{Dates.DateTime, Nothing}
@@ -154,7 +163,7 @@ end
                         feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
                         feedforward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward}
                         ini_cond_chronology::Dict{String, <:FeedForwardChronology}
-                        cache::Dict{String, Vector{<:AbstractCache}}
+                        cache::Dict{String, AbstractCache}
                         )
 """
 mutable struct SimulationSequence
@@ -166,7 +175,7 @@ mutable struct SimulationSequence
     feedforward_chronologies::Dict{Pair{String, String}, <:FeedForwardChronology}
     feedforward::Dict{Tuple{String, Symbol, Symbol}, <:AbstractAffectFeedForward}
     ini_cond_chronology::InitialConditionChronology
-    cache::Dict{String, Vector{<:AbstractCache}}
+    cache::Dict{Tuple, AbstractCache}
     execution_order::Vector{Int}
     current_execution_index::Int64
 
@@ -178,7 +187,7 @@ mutable struct SimulationSequence
         feedforward_chronologies = Dict{Pair{String, String}, FeedForwardChronology}(),
         feedforward = Dict{Tuple{String, Symbol, Symbol}, AbstractAffectFeedForward}(),
         ini_cond_chronology = InterStageChronology(),
-        cache = Dict{String, Vector{AbstractCache}}(),
+        cache = Dict{Tuple, AbstractCache}(),
     )
         _check_stage_order(order)
         _check_all_inputs_present(order, intervals, horizons)
@@ -190,6 +199,7 @@ mutable struct SimulationSequence
         _check_step_interval_consistency(step_resolution, intervals[order[1]][1])
         _check_feedforward(feedforward, feedforward_chronologies)
         _check_chronology_consistency(order, feedforward_chronologies, ini_cond_chronology)
+        _check_cache_defination(cache)
         if length(order) == 1
             ini_cond_chronology = IntraStageChronology()
         end
@@ -209,11 +219,24 @@ mutable struct SimulationSequence
     end
 end
 
-get_stage_horizon(s::SimulationSequence, stage::String) = get(s.horizons, stage, nothing)
+function get_stage_horizon(s::SimulationSequence, stage::String)
+    horizon = get(s.horizons, stage, nothing)
+    isnothing(horizon) &&
+    throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
+    return horizon
+end
+
 get_stage_interval(s::SimulationSequence, stage::String) = s.intervals[stage][1]
-get_stage_name(s::SimulationSequence, stage::Stage) =
-    get(s.order, get_number(stage), nothing)
+
+function get_stage_name(s::SimulationSequence, stage::Stage)
+    name = get(s.order, get_number(stage), nothing)
+    isnothing(name) &&
+    throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
+    return name
+end
+
 get_step_resolution(s::SimulationSequence) = s.step_resolution
+
 function get_stage_interval_chronology(s::SimulationSequence, stage::String)
     return s.intervals[stage][2]
 end

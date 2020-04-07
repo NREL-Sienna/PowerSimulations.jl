@@ -83,7 +83,7 @@ function get_branch_to_pm(ix::Int, branch::PSY.TapTransformer)
     return PM_branch
 end
 
-function get_branch_to_pm(ix::Int, branch::PSY.Line)
+function get_branch_to_pm(ix::Int, branch::PSY.ACBranch)
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "rate_a" => PSY.get_rate(branch),

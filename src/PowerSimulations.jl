@@ -23,12 +23,15 @@ export ServiceModel
 export RangeReserve
 ######## Branch Models ########
 export StaticLine
-export StaticTransformer
-export TapControl
+export StaticLineBounds
 export StaticLineUnbounded
-#export PhaseControl
+export StaticTransformer
+export StaticTransformerBounds
+export StaticTransformerUnbounded
+export FlowMonitoredLine
 export HVDCLossless
 export HVDCDispatch
+export HVDCUnbounded
 #export VoltageSourceDC
 ######## Load Models ########
 export StaticPowerLoad
@@ -76,15 +79,16 @@ export DevicePower
 export DeviceStatus
 export TimeDurationON
 export TimeDurationOFF
-export DeviceEnergy
+export EnergyLevel
 
 # cache_models
 export TimeStatusChange
+export StoredEnergy
 
 #operation_models
 export GenericOpProblem
-#export UnitCommitment
-#export EconomicDispatch
+export UnitCommitmentProblem
+export EconomicDispatchProblem
 #export OptimalPowerFlow
 
 # Functions
@@ -92,7 +96,7 @@ export GenericOpProblem
 export construct_device!
 export construct_network!
 ## Op Model Exports
-export solve_op_problem!
+export solve!
 export get_initial_conditions
 export set_transmission_model!
 export set_devices_template!
@@ -112,6 +116,8 @@ export EconomicDispatchProblem
 export UnitCommitmentProblem
 export run_economic_dispatch
 export run_unit_commitment
+## Results interfaces
+export get_duals
 
 ## Demand Response
 export demandconstraints
@@ -122,8 +128,6 @@ export demandconstraintstou
 
 ## Utils Exports
 export SimulationResultsReference
-#export get_sim_resolution
-export write_op_problem
 export write_results
 export check_file_integrity
 export load_operation_results
@@ -133,9 +137,12 @@ export get_all_constraint_index
 export get_all_var_index
 export get_con_index
 export get_var_index
+export configure_logging
 
 #################################################################################
 # Imports
+import Logging
+import Serialization
 #Modeling Imports
 import JuMP
 # so that users do not need to import JuMP to use a solver with PowerModels
@@ -146,6 +153,21 @@ import ParameterJuMP
 import LinearAlgebra
 import PowerSystems
 import InfrastructureSystems
+# so that users have access to IS.Results interfaces
+import InfrastructureSystems:
+    get_base_power,
+    get_variables,
+    get_total_cost,
+    get_optimizer_log,
+    get_time_stamp,
+    write_results
+export get_base_power
+export get_variables
+export get_dual_values
+export get_total_cost
+export get_optimizer_log
+export get_time_stamp
+export write_results
 import PowerModels
 import TimerOutputs
 
@@ -165,6 +187,7 @@ include("core/definitions.jl")
 ################################################################################
 # Includes
 
+include("logging.jl")
 include("utils.jl")
 
 #Models and constructors
@@ -177,8 +200,13 @@ include("network_models/networks.jl")
 
 include("core/parameters.jl")
 include("core/cache.jl")
-include("core/psi_container.jl")
+include("core/initial_condition_types.jl")
+include("core/initial_condition.jl")
 include("core/initial_conditions.jl")
+include("core/update_initial_conditions.jl")
+include("core/operations_problem_template.jl")
+include("core/psi_settings.jl")
+include("core/psi_container.jl")
 include("core/operations_problem_results.jl")
 include("core/operations_problem.jl")
 include("core/simulation_stages.jl")
@@ -186,7 +214,6 @@ include("core/simulation_sequence.jl")
 include("core/simulation.jl")
 include("core/feedforward.jl")
 include("core/simulation_results.jl")
-include("core/dual_results.jl")
 
 #Device Modeling components
 include("devices_models/devices/common.jl")
@@ -206,6 +233,7 @@ include("services_models/services_constructor.jl")
 include("network_models/copperplate_model.jl")
 include("network_models/powermodels_interface.jl")
 include("network_models/ptdf_model.jl")
+include("network_models/network_slack_variables.jl")
 
 #Device constructors
 include("devices_models/device_constructors/common/constructor_validations.jl")

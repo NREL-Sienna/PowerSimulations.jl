@@ -30,27 +30,33 @@ const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
+# Settings constants
+const UNSET_HORIZON = 0
+const UNSET_INI_TIME = Dates.DateTime(0)
+
 # Tolerance of comparisons
 const ABSOLUTE_TOLERANCE = 1.0e-10
+const SLACK_COST = 1e6
 
 const MISSING_INITIAL_CONDITIONS_TIME_COUNT = 999.0
 
 const OPERATIONS_ACCEPTED_KWARGS = [
     :horizon,
-    :initial_conditions,
+    :initial_time,
     :use_forecast_data,
-    :use_parameters,
-    :initial_time,
-    :JuMPmodel,
-    :optimizer,
     :PTDF,
-    :initial_time,
+    :use_parameters,
+    :optimizer,
+    :warm_start,
+    :slack_variables,
+    :constraint_duals,
 ]
 
-const PSICONTAINER_ACCEPTED_KWARGS = OPERATIONS_ACCEPTED_KWARGS
+const OPERATIONS_SOLVE_KWARGS = [:optimizer, :save_path]
 
-const SIMULATION_BUILD_KWARGS = [:system_to_file, :PTDF_matrices]
-const SIMULATION_KWARGS = [:initial_time]
+const STAGE_ACCEPTED_KWARGS = [:PTDF, :warm_start, :slack_variables, :constraint_duals]
+
+const PSI_NAME_DELIMITER = "__"
 
 # The constants below are strings instead of enums because there is a requirement that users
 # should be able to define their own without changing PowerSimulations.
@@ -72,6 +78,8 @@ const THETA = "theta"
 const VM = "Vm"
 const INFLOW = "In"
 const SPILLAGE = "Sp"
+const SLACK_UP = "γ⁺"
+const SLACK_DN = "γ⁻"
 
 # Constraints
 const ACTIVE = "active"
@@ -93,6 +101,8 @@ const FLOW_REACTIVE_POWER_FROM_TO = "FqFT"
 const FLOW_REACTIVE_POWER_TO_FROM = "FqTF"
 const FLOW_ACTIVE_POWER_FROM_TO = "FpFT"
 const FLOW_ACTIVE_POWER_TO_FROM = "FpTF"
+const FLOW_ACTIVE_POWER = "Fp"
+const FLOW_REACTIVE_POWER = "Fq"
 const INPUT_POWER_RANGE = "inputpower_range"
 const OUTPUT_POWER_RANGE = "outputpower_range"
 const RAMP = "ramp"

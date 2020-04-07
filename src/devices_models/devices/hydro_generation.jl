@@ -67,6 +67,7 @@ function energy_variables!(
     return
 end
 
+#=
 function inflow_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
@@ -82,6 +83,7 @@ function inflow_variables!(
 
     return
 end
+=#
 
 function spillage_variables!(
     psi_container::PSIContainer,
@@ -101,6 +103,7 @@ end
 """
 This function add the variables for power generation commitment to the model
 """
+#=
 function commitment_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
@@ -115,7 +118,6 @@ function commitment_variables!(
     return
 end
 
-#=
 # All Hydro UC formulations are currently not supported
 ### Constraints for Thermal Generation without commitment variables ####
 """
@@ -146,7 +148,7 @@ function reactivepower_constraints!(
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HydroGen, D <: AbstractHydroDispatchFormulation}
-    constraint_data = Vector(DeviceRange)()
+    constraint_data = Vector{DeviceRange}()
     for d in devices
         limits = PSY.get_reactivepowerlimits(PSY.get_tech(d))
         name = PSY.get_name(d)
@@ -456,11 +458,11 @@ function energy_balance_constraint!(
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HydroEnergyReservoir}
-    key = ICKey(DeviceEnergy, H)
+    key = ICKey(EnergyLevel, H)
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    if !(key in keys(psi_container.initial_conditions))
+    if !has_initial_conditions(psi_container.initial_conditions, key)
         throw(IS.DataFormatError("Initial Conditions for $(H) Energy Constraints not in the model"))
     end
 
@@ -473,7 +475,7 @@ function energy_balance_constraint!(
     if parameters
         reservoir_energy_balance_param(
             psi_container,
-            psi_container.initial_conditions[key],
+            get_initial_conditions(psi_container, key),
             ts_data_inflow,
             constraint_name(ENERGY_CAPACITY, H),
             (
@@ -486,7 +488,7 @@ function energy_balance_constraint!(
     else
         reservoir_energy_balance(
             psi_container,
-            psi_container.initial_conditions[key],
+            get_initial_conditions(psi_container, key),
             ts_data_inflow,
             constraint_name(ENERGY_CAPACITY, H),
             (
@@ -505,9 +507,9 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{H},
     device_formulation::Type{<:AbstractHydroUnitCommitment},
 ) where {H <: PSY.HydroGen}
-    status_init(psi_container, devices)
-    output_init(psi_container, devices)
-    duration_init(psi_container, devices)
+    status_init(psi_container.initial_conditions, devices)
+    output_init(psi_container.initial_conditions, devices)
+    duration_init(psi_container.initial_conditions, devices)
 
     return
 end
@@ -517,7 +519,7 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{H},
     device_formulation::Type{D},
 ) where {H <: PSY.HydroGen, D <: AbstractHydroDispatchFormulation}
-    output_init(psi_container, devices)
+    output_init.initial_conditions_container(psi_container, devices)
 
     return
 end
@@ -558,12 +560,12 @@ function nodal_expression!(
     end
 
     for t in model_time_steps(psi_container)
-        for device_value in ts_data_active
+        for device in ts_data_active
             _add_to_expression!(
                 psi_container.expressions[:nodal_balance_active],
-                device_value[2],
+                device.bus_number,
                 t,
-                device_value[3] * device_value[4][t],
+                device.multiplier * device.timeseries[t],
             )
         end
     end
@@ -724,15 +726,16 @@ function device_energy_limit_param_ub(
     variable = get_variable(psi_container, var_name)
     set_name = (r.name for r in energy_limit_data)
     constraint = add_cons_container!(psi_container, cons_name, set_name)
-    param = add_param_container!(psi_container, param_reference, set_name)
-
+    container = add_param_container!(psi_container, param_reference, set_name, 1)
+    multiplier = get_multiplier_array(container)
+    param = get_parameter_array(container)
     for data in energy_limit_data
         name = data.name
-        multiplier = data.multiplier
-        param[name] = PJ.add_parameter(psi_container.JuMPmodel, sum(data.timeseries))
+        multiplier[name, 1] = data.multiplier
+        param[name, 1] = PJ.add_parameter(psi_container.JuMPmodel, sum(data.timeseries))
         constraint[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            sum([variable[name, t] for t in time_steps]) <= multiplier * param[name]
+            sum([variable[name, t] for t in time_steps]) <= multiplier[name, 1] * param[name, 1]
         )
     end
 

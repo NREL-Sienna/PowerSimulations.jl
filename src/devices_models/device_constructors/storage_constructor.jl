@@ -20,13 +20,13 @@ function construct_device!(
     initial_conditions!(psi_container, devices, D)
 
     #Constraints
-    active_power_constraints!(psi_container, devices, model, S, model.feedforward)
-    reactive_power_constraints!(psi_container, devices, model, S, model.feedforward)
-    energy_capacity_constraints!(psi_container, devices, model, S, model.feedforward)
-    feedforward!(psi_container, St, model.feedforward)
+    active_power_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    reactive_power_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    feedforward!(psi_container, St, get_feedforward(model))
 
     # Energy Balanace limits
-    energy_balance_constraint!(psi_container, devices, D, S, model.feedforward)
+    energy_balance_constraint!(psi_container, devices, D, S, get_feedforward(model))
 
     return
 end
@@ -57,12 +57,12 @@ function construct_device!(
     initial_conditions!(psi_container, devices, D)
 
     #Constraints
-    active_power_constraints!(psi_container, devices, model, S, model.feedforward)
-    energy_capacity_constraints!(psi_container, devices, model, S, model.feedforward)
-    feedforward!(psi_container, St, model.feedforward)
+    active_power_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    feedforward!(psi_container, St, get_feedforward(model))
 
     # Energy Balanace limits
-    energy_balance_constraint!(psi_container, devices, D, S, model.feedforward)
+    energy_balance_constraint!(psi_container, devices, D, S, get_feedforward(model))
 
     return
 end
@@ -90,10 +90,10 @@ function construct_device!(
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    active_power_constraints!(psi_container, devices, model, S, model.feedforward)
-    reactive_power_constraints!(psi_container, devices, model, S, model.feedforward)
-    energy_capacity_constraints!(psi_container, devices, model, S, model.feedforward)
-    feedforward!(psi_container, St, model.feedforward)
+    active_power_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    reactive_power_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    feedforward!(psi_container, St, get_feedforward(model))
 
     # Energy Balanace limits
     energy_balance_constraint!(
@@ -101,7 +101,7 @@ function construct_device!(
         devices,
         model.formulation,
         S,
-        model.feedforward,
+        get_feedforward(model),
     )
 
     return
@@ -129,9 +129,9 @@ function construct_device!(
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    active_power_constraints!(psi_container, devices, model, S, model.feedforward)
-    energy_capacity_constraints!(psi_container, devices, model, S, model.feedforward)
-    feedforward!(psi_container, St, model.feedforward)
+    active_power_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    feedforward!(psi_container, St, get_feedforward(model))
 
     # Energy Balanace limits
     energy_balance_constraint!(
@@ -139,7 +139,7 @@ function construct_device!(
         devices,
         model.formulation,
         S,
-        model.feedforward,
+        get_feedforward(model),
     )
 
     return
