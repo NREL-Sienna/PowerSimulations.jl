@@ -73,6 +73,7 @@ function SimulationInternal(
     unique_recorders = Set(REQUIRED_RECORDERS)
     foreach(x -> push!(unique_recorders, x), recorders)
 
+    init_time = Dates.now()
     return SimulationInternal(
         logs_dir,
         models_dir,
@@ -82,8 +83,8 @@ function SimulationInternal(
         length(stages_keys),
         count_dict,
         Dict{Int, Dates.DateTime}(),
-        (Dates.now(), Dates.now()),
-        Dates.now(),
+        (init_time, init_time),
+        init_time,
         true,
         false,
         Dict{CacheKey, AbstractCache}(),
@@ -349,6 +350,7 @@ function _get_simulation_initial_times!(sim::Simulation)
                Initial Simulation Time set to $(sim.initial_time)")
     end
 
+    sim.internal.current_time = sim.initial_time
     return stage_initial_times
 end
 
@@ -550,6 +552,7 @@ function initial_condition_update!(
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
         @IS.record :simulation InitialConditionUpdateEvent(
+            sim.internal.current_time,
             ini_cond_key,
             ic,
             quantity,
@@ -588,6 +591,7 @@ function initial_condition_update!(
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
         @IS.record :simulation InitialConditionUpdateEvent(
+            sim.internal.current_time,
             ini_cond_key,
             ic,
             quantity,

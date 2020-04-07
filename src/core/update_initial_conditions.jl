@@ -236,7 +236,13 @@ function _make_initial_conditions!(
             val = get_val_func(dev, key)
             ic = make_ic_func(container, dev, val, cache)
             ini_conds[ix] = ic
-            @IS.record :simulation InitialConditionUpdateEvent(key, ic, val, 0)
+            @IS.record :simulation InitialConditionUpdateEvent(
+                Dates.DateTime(1970, 1, 1),
+                key,
+                ic,
+                val,
+                0,
+            )
         end
     else
         ini_conds = get_initial_conditions(container, key)
@@ -247,7 +253,13 @@ function _make_initial_conditions!(
             val = get_val_func(dev, key)
             ic = make_ic_func(container, dev, val, cache)
             push!(ini_conds, ic)
-            @IS.record :simulation InitialConditionUpdateEvent(key, ic, val, 0)
+            @IS.record :simulation InitialConditionUpdateEvent(
+                Dates.DateTime(1970, 1, 1),
+                key,
+                ic,
+                val,
+                0,
+            )
         end
     end
 

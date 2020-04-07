@@ -295,47 +295,47 @@ function test_load_simulation(file_path::String)
                 PSI.get_name(sim),
                 output_dir,
                 "recorder",
-                "simulation_recorder.log",
+                "simulation.log",
             )
             @test isfile(file)
             events = PSI.list_simulation_events(
                 PSI.InitialConditionUpdateEvent,
-                joinpath(g_test_path, "aggregation", output_dir),
-                1,
+                joinpath(g_test_path, "aggregation", output_dir);
+                step = 1,
             )
             @test length(events) == 0
             events = PSI.list_simulation_events(
                 PSI.InitialConditionUpdateEvent,
-                joinpath(g_test_path, "aggregation", output_dir),
-                2,
+                joinpath(g_test_path, "aggregation", output_dir);
+                step = 2,
             )
             @test length(events) == 10
             PSI.show_simulation_events(
                 devnull,
                 PSI.InitialConditionUpdateEvent,
-                joinpath(g_test_path, "aggregation", output_dir),
-                2,
+                joinpath(g_test_path, "aggregation", output_dir);
+                step = 2,
             )
             events = PSI.list_simulation_events(
                 PSI.InitialConditionUpdateEvent,
-                joinpath(g_test_path, "aggregation", output_dir),
-                1,
-                1,
+                joinpath(g_test_path, "aggregation", output_dir);
+                step = 1,
+                stage = 1,
             )
             @test length(events) == 0
             events = PSI.list_simulation_events(
                 PSI.InitialConditionUpdateEvent,
-                joinpath(g_test_path, "aggregation", output_dir),
-                2,
-                1,
+                joinpath(g_test_path, "aggregation", output_dir);
+                step = 2,
+                stage = 1,
             )
             @test length(events) == 10
             PSI.show_simulation_events(
                 devnull,
                 PSI.InitialConditionUpdateEvent,
-                joinpath(g_test_path, "aggregation", output_dir),
-                2,
-                1,
+                joinpath(g_test_path, "aggregation", output_dir);
+                step = 2,
+                stage = 1,
             )
         end
     end
