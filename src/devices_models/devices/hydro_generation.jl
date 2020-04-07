@@ -24,8 +24,8 @@ function activepower_variables!(
         variable_name(ACTIVE_POWER, H),
         false,
         :nodal_balance_active;
-        lb_value = d -> PSY.get_activepowerlimits(PSY.get_tech(d)).min,
-        ub_value = d -> PSY.get_activepowerlimits(PSY.get_tech(d)).max,
+        lb_value = d -> PSY.get_activepowerlimits(d).min,
+        ub_value = d -> PSY.get_activepowerlimits(d).max,
         init_value = d -> PSY.get_activepower(d),
     )
 
@@ -42,8 +42,8 @@ function reactivepower_variables!(
         variable_name(REACTIVE_POWER, H),
         false,
         :nodal_balance_reactive;
-        ub_value = d -> PSY.get_reactivepowerlimits(PSY.get_tech(d)).max,
-        lb_value = d -> PSY.get_reactivepowerlimits(PSY.get_tech(d)).min,
+        ub_value = d -> PSY.get_reactivepowerlimits(d).max,
+        lb_value = d -> PSY.get_reactivepowerlimits(d).min,
         init_value = d -> PSY.get_reactivepower(d),
     )
 
@@ -150,7 +150,7 @@ function reactivepower_constraints!(
 ) where {H <: PSY.HydroGen, D <: AbstractHydroDispatchFormulation}
     constraint_data = Vector{DeviceRange}()
     for d in devices
-        limits = PSY.get_reactivepowerlimits(PSY.get_tech(d))
+        limits = PSY.get_reactivepowerlimits(d)
         name = PSY.get_name(d)
         range_data = DeviceRange(name, limits)
         #_device_services!(range_data, d, model)
@@ -186,10 +186,8 @@ function _get_time_series(
     for device in devices
         bus_number = PSY.get_number(PSY.get_bus(device))
         name = PSY.get_name(device)
-        tech = PSY.get_tech(device)
-
         if use_forecast_data
-            active_power = PSY.get_rating(tech)
+            active_power = PSY.get_rating(device)
             ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
                 PSY.Deterministic,
                 device,
@@ -226,7 +224,7 @@ function activepower_constraints!(
         psi_container,
         devices,
         model,
-        x -> PSY.get_activepowerlimits(PSY.get_tech(x)),
+        x -> PSY.get_activepowerlimits(x),
     )
 
     if !parameters && !use_forecast_data
@@ -273,7 +271,7 @@ function activepower_constraints!(
         psi_container,
         devices,
         model,
-        x -> PSY.get_activepowerlimits(PSY.get_tech(x)),
+        x -> PSY.get_activepowerlimits(x),
     )
 
     device_range(
@@ -302,7 +300,7 @@ function activepower_constraints!(
         psi_container,
         devices,
         model,
-        x -> PSY.get_activepowerlimits(PSY.get_tech(x)),
+        x -> PSY.get_activepowerlimits(x),
     )
 
     if !parameters && !use_forecast_data
@@ -654,7 +652,6 @@ function _get_energy_limit(
     for (ix, device) in enumerate(devices)
         bus_number = PSY.get_number(PSY.get_bus(device))
         name = PSY.get_name(device)
-        tech = PSY.get_tech(device)
         # This is where you would get the water/energy storage capacity
         # which is then multiplied by the forecast value to get you the energy limit
         if use_forecast_data
