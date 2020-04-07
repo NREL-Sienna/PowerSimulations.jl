@@ -18,8 +18,8 @@ using TestSetExtensions
 using DataFrames
 import UUIDs
 
-import PowerSystems.UtilsData: TestData
-download(TestData; branch = "master")
+#import PowerSystems.UtilsData: TestData
+#download(TestData; branch = "master")
 
 const PM = PowerModels
 const PSY = PowerSystems

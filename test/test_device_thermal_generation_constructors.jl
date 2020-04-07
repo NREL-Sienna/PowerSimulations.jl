@@ -341,10 +341,10 @@ UC_devices = Dict{Symbol, DeviceModel}(
         ThermalStandard(
             "Alta",
             true,
+            true,
             node,
             0.20,
             0.010,
-            TechThermal(
                 0.5,
                 PrimeMovers.ST,
                 ThermalFuels.COAL,
@@ -352,16 +352,15 @@ UC_devices = Dict{Symbol, DeviceModel}(
                 nothing,
                 nothing,
                 nothing,
-            ),
             ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
         ),
         ThermalStandard(
             "Park City",
             true,
+            true,
             node,
             0.70,
             0.20,
-            TechThermal(
                 2.0,
                 PrimeMovers.ST,
                 ThermalFuels.COAL,
@@ -369,7 +368,6 @@ UC_devices = Dict{Symbol, DeviceModel}(
                 nothing,
                 (up = 0.010625, down = 0.010625),
                 nothing,
-            ),
             ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
         ),
     ]
@@ -410,10 +408,10 @@ end
         ThermalStandard(
             "Alta",
             true,
+            true,
             node,
             0.40,
             0.010,
-            TechThermal(
                 0.5,
                 PrimeMovers.ST,
                 ThermalFuels.COAL,
@@ -421,16 +419,15 @@ end
                 nothing,
                 nothing,
                 (up = 4, down = 2),
-            ),
             ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
         ),
         ThermalStandard(
             "Park City",
             true,
+            true,
             node,
             1.70,
             0.20,
-            TechThermal(
                 2.2125,
                 PrimeMovers.ST,
                 ThermalFuels.COAL,
@@ -438,7 +435,6 @@ end
                 nothing,
                 nothing,
                 (up = 6, down = 4),
-            ),
             ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
         ),
     ]
@@ -497,10 +493,10 @@ end
         ThermalStandard(
             "Alta",
             true,
+            true,
             node,
             0.52,
             0.010,
-            TechThermal(
                 0.5,
                 PrimeMovers.ST,
                 ThermalFuels.COAL,
@@ -508,7 +504,6 @@ end
                 nothing,
                 nothing,
                 nothing,
-            ),
             ThreePartCost(
                 [(589.99, 0.220), (884.99, 0.33), (1210.04, 0.44), (1543.44, 0.55)],
                 532.44,
@@ -519,10 +514,10 @@ end
         ThermalStandard(
             "Park City",
             true,
+            true,
             node,
             0.62,
             0.20,
-            TechThermal(
                 2.2125,
                 PrimeMovers.ST,
                 ThermalFuels.COAL,
@@ -530,7 +525,6 @@ end
                 nothing,
                 nothing,
                 nothing,
-            ),
             ThreePartCost(
                 [(1264.80, 0.62), (1897.20, 0.93), (2594.4787, 1.24), (3433.04, 1.55)],
                 235.397,
@@ -575,10 +569,10 @@ end
         ThermalStandard(
             "Alta",
             true,
+            true,
             node,
             0.52,
             0.010,
-            TechThermal(
                 0.5,
                 PrimeMovers.ST,
                 ThermalFuels.COAL,
@@ -586,7 +580,6 @@ end
                 nothing,
                 nothing,
                 nothing,
-            ),
             ThreePartCost(
                 [(1122.43, 0.22), (1417.43, 0.33), (1742.48, 0.44), (2075.88, 0.55)],
                 0.0,
@@ -597,10 +590,10 @@ end
         ThermalStandard(
             "Park City",
             true,
+            true,
             node,
             0.62,
             0.20,
-            TechThermal(
                 2.2125,
                 PrimeMovers.ST,
                 ThermalFuels.COAL,
@@ -608,7 +601,6 @@ end
                 nothing,
                 nothing,
                 nothing,
-            ),
             ThreePartCost(
                 [(1500.19, 0.62), (2132.59, 0.929), (2829.875, 1.24), (3668.444, 1.55)],
                 0.0,
