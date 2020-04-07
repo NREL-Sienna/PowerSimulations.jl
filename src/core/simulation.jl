@@ -1,6 +1,6 @@
 
 const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
-const REQUIRED_RECORDERS = [:simulation_states]
+const REQUIRED_RECORDERS = [:simulation_status]
 
 mutable struct SimulationInternal
     logs_dir::String
@@ -794,9 +794,14 @@ function _execute!(sim::Simulation; kwargs...)
         for step in 1:get_steps(sim)
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
                 println("Executing Step $(step)")
-                @IS.record :simulation_states SimulationStepEvent(step, "start")
+                @IS.record :simulation_status SimulationStepEvent(
+                    sim.internal.current_time,
+                    step,
+                    "start",
+                )
                 for (ix, stage_number) in enumerate(execution_order)
-                    @IS.record :simulation_states SimulationStageEvent(
+                    @IS.record :simulation_status SimulationStageEvent(
+                        sim.internal.current_time,
                         step,
                         stage_number,
                         "start",
@@ -834,13 +839,18 @@ function _execute!(sim::Simulation; kwargs...)
                         sim.internal.run_count[step][stage_number] += 1
                         sim.internal.date_ref[stage_number] += stage_interval
                     end
-                    @IS.record :simulation_states SimulationStageEvent(
+                    @IS.record :simulation_status SimulationStageEvent(
+                        sim.internal.current_time,
                         step,
                         stage_number,
                         "done",
                     )
                 end
-                @IS.record :simulation_states SimulationStepEvent(step, "done")
+                @IS.record :simulation_status SimulationStepEvent(
+                    sim.internal.current_time,
+                    step,
+                    "done",
+                )
             end
         end
         sim_results = SimulationResultsReference(sim)

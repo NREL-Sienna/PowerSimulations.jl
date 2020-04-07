@@ -1,26 +1,43 @@
 struct SimulationStepEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
+    simulation_time::Dates.DateTime
     step::Int
-    state::String
+    status::String
 end
 
-function SimulationStepEvent(step::Int, state::AbstractString)
-    return SimulationStepEvent(IS.RecorderEventCommon("SimulationStepEvent"), step, state)
+function SimulationStepEvent(
+    simulation_time::Dates.DateTime,
+    step::Int,
+    status::AbstractString,
+)
+    return SimulationStepEvent(
+        IS.RecorderEventCommon("SimulationStepEvent"),
+        simulation_time,
+        step,
+        status,
+    )
 end
 
 struct SimulationStageEvent <: IS.AbstractRecorderEvent
     common::IS.RecorderEventCommon
+    simulation_time::Dates.DateTime
     step::Int
     stage::Int
-    state::String
+    status::String
 end
 
-function SimulationStageEvent(step::Int, stage::Int, state::AbstractString)
+function SimulationStageEvent(
+    simulation_time::Dates.DateTime,
+    step::Int,
+    stage::Int,
+    status::AbstractString,
+)
     return SimulationStageEvent(
         IS.RecorderEventCommon("SimulationStageEvent"),
+        simulation_time,
         step,
         stage,
-        state,
+        status,
     )
 end
 
@@ -55,7 +72,7 @@ function get_simulation_step_range(filename::AbstractString, step::Int)
         throw(IS.DataFormatError("$filename does not have two SimulationStepEvents for step = $step"))
     end
 
-    if events[1].state != "start" || events[2].state != "done"
+    if events[1].status != "start" || events[2].status != "done"
         throw(IS.DataFormatError("$filename does not contain start and done events for step = $step"))
     end
 
@@ -72,7 +89,7 @@ function get_simulation_stage_range(filename::AbstractString, step::Int, stage::
         throw(IS.DataFormatError("$filename does not have two SimulationStageEvent for step = $step stage = $stage"))
     end
 
-    if events[1].state != "start" || events[2].state != "done"
+    if events[1].status != "start" || events[2].status != "done"
         throw(IS.DataFormatError("$filename does not contain start and done events for step = $step stage = $stage"))
     end
 
@@ -92,8 +109,8 @@ function _get_recorder_filename(run_dir, recorder_name)
     return joinpath(run_dir, "recorder", recorder_name * "_recorder.log")
 end
 
-function _get_simulation_states_recorder_filename(run_dir)
-    return _get_recorder_filename(run_dir, "simulation_states")
+function _get_simulation_status_recorder_filename(run_dir)
+    return _get_recorder_filename(run_dir, "simulation_status")
 end
 
 function _get_simulation_recorder_filename(run_dir)
@@ -110,7 +127,7 @@ function list_simulation_events(
     filter_func::Union{Nothing, Function} = nothing,
 ) where {T <: IS.AbstractRecorderEvent}
     step_range =
-        get_simulation_step_range(_get_simulation_states_recorder_filename(run_dir), step)
+        get_simulation_step_range(_get_simulation_status_recorder_filename(run_dir), step)
     events =
         IS.list_recorder_events(T, _get_simulation_recorder_filename(run_dir), filter_func)
     _filter_by_type_range!(events, step_range)
@@ -128,7 +145,7 @@ function list_simulation_events(
     filter_func::Union{Nothing, Function} = nothing,
 ) where {T <: IS.AbstractRecorderEvent}
     stage_range = get_simulation_stage_range(
-        _get_simulation_states_recorder_filename(run_dir),
+        _get_simulation_status_recorder_filename(run_dir),
         step,
         stage,
     )
