@@ -16,7 +16,7 @@ function activepower_variables!(
         false,
         :nodal_balance_active;
         lb_value = x -> 0.0,
-        ub_value = x -> PSY.get_rating(PSY.get_tech(x)),
+        ub_value = x -> PSY.get_rating(x),
     )
     return
 end
@@ -45,13 +45,12 @@ function reactivepower_constraints!(
 ) where {R <: PSY.RenewableGen}
     constraint_data = Vector{DeviceRange}()
     for (ix, d) in enumerate(devices)
-        tech = PSY.get_tech(d)
         name = PSY.get_name(d)
-        if isnothing(PSY.get_reactivepowerlimits(tech))
+        if isnothing(PSY.get_reactivepowerlimits(d))
             lims = (min = 0.0, max = 0.0)
             @warn("Reactive Power Limits of $(lims) are nothing. Q_$(lims) is set to 0.0")
         else
-            lims = PSY.get_reactivepowerlimits(tech)
+            lims = PSY.get_reactivepowerlimits(d)
         end
         push!(constraint_data, DeviceRange(name, lims))
     end
@@ -79,7 +78,7 @@ function reactivepower_constraints!(
     assign_constraint!(psi_container, REACTIVE_RANGE, R, constraint_val)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
-        pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(d))))
+        pf = sin(acos(PSY.get_powerfactor(d)))
         constraint_val[name, t] =
             JuMP.@constraint(psi_container.JuMPmodel, q_var[name, t] == p_var[name, t] * pf)
     end
@@ -106,12 +105,11 @@ function _get_time_series(
     for device in devices
         bus_number = PSY.get_number(PSY.get_bus(device))
         name = PSY.get_name(device)
-        tech = PSY.get_tech(device)
-        pf = sin(acos(PSY.get_powerfactor(PSY.get_tech(device))))
+        pf = sin(acos(PSY.get_powerfactor(device)))
 
         if use_forecast_data
-            active_power = PSY.get_rating(tech)
-            reactive_power = PSY.get_rating(tech) * pf
+            active_power = PSY.get_rating(device)
+            reactive_power = PSY.get_rating(device) * pf
             forecast = PSY.get_forecast(
                 PSY.Deterministic,
                 device,

@@ -27,8 +27,8 @@ function activepower_variables!(
         variable_name(ACTIVE_POWER, T),
         false,
         :nodal_balance_active;
-        ub_value = d -> PSY.get_activepowerlimits(PSY.get_tech(d)).max,
-        lb_value = d -> PSY.get_activepowerlimits(PSY.get_tech(d)).min,
+        ub_value = d -> PSY.get_activepowerlimits(d).max,
+        lb_value = d -> PSY.get_activepowerlimits(d).min,
         init_value = initial_value,
     )
     return
@@ -52,8 +52,8 @@ function reactivepower_variables!(
         variable_name(REACTIVE_POWER, T),
         false,
         :nodal_balance_reactive;
-        ub_value = d -> PSY.get_reactivepowerlimits(PSY.get_tech(d)).max,
-        lb_value = d -> PSY.get_reactivepowerlimits(PSY.get_tech(d)).min,
+        ub_value = d -> PSY.get_reactivepowerlimits(d).max,
+        lb_value = d -> PSY.get_reactivepowerlimits(d).min,
         init_value = initial_value,
     )
     return
@@ -111,7 +111,7 @@ function activepower_constraints!(
     constraint_data = Vector{DeviceRange}()
     for d in devices
         name = PSY.get_name(d)
-        limits = PSY.get_activepowerlimits(PSY.get_tech(d))
+        limits = PSY.get_activepowerlimits(d)
         range_data = DeviceRange(name, limits)
         _device_services!(range_data, d, model)
         push!(constraint_data, range_data)
@@ -137,7 +137,7 @@ function activepower_constraints!(
 ) where {T <: PSY.ThermalGen}
     constraint_data = Vector{DeviceRange}()
     for d in devices
-        limits = PSY.get_activepowerlimits(PSY.get_tech(d))
+        limits = PSY.get_activepowerlimits(d)
         name = PSY.get_name(d)
         range_data = DeviceRange(name, limits)
         _device_services!(range_data, d, model)
@@ -166,7 +166,7 @@ function activepower_constraints!(
 ) where {T <: PSY.ThermalGen}
     constraint_data = Vector{DeviceRange}()
     for d in devices
-        limits = (min = 0.0, max = PSY.get_activepowerlimits(PSY.get_tech(d)).max)
+        limits = (min = 0.0, max = PSY.get_activepowerlimits(d).max)
         name = PSY.get_name(d)
         range_data = DeviceRange(name, limits)
         _device_services!(range_data, d, model)
@@ -204,7 +204,7 @@ function reactivepower_constraints!(
     constraint_data = Vector{DeviceRange}()
     for d in devices
         name = PSY.get_name(d)
-        limits = PSY.get_reactivepowerlimits(PSY.get_tech(d))
+        limits = PSY.get_reactivepowerlimits(d)
         range_data = DeviceRange(name, limits)
         #_device_services!(range_data, d, model)
         # Uncomment when we implement reactive power services
@@ -232,7 +232,7 @@ function reactivepower_constraints!(
 ) where {T <: PSY.ThermalGen}
     constraint_data = Vector{DeviceRange}()
     for d in devices
-        limits = PSY.get_reactivepowerlimits(PSY.get_tech(d))
+        limits = PSY.get_reactivepowerlimits(d)
         name = PSY.get_name(d)
         range_data = DeviceRange(name, limits)
         #_device_services!(range_data, d, model)
@@ -321,14 +321,13 @@ function _get_data_for_rocc(
     idx = 0
     for ic in initial_conditions
         g = ic.device
-        gen_tech = PSY.get_tech(g)
         name = PSY.get_name(g)
         non_binding_up = false
         non_binding_down = false
-        ramplimits = PSY.get_ramplimits(gen_tech)
-        rating = PSY.get_rating(gen_tech)
+        ramplimits = PSY.get_ramplimits(g)
+        rating = PSY.get_rating(g)
         if !isnothing(ramplimits)
-            p_lims = PSY.get_activepowerlimits(gen_tech)
+            p_lims = PSY.get_activepowerlimits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
             if (ramplimits.up * rating >= max_rate) & (ramplimits.down * rating >= max_rate)
                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
@@ -442,10 +441,9 @@ function _get_data_for_tdc(
     for (ix, ic) in enumerate(initial_conditions_on)
         g = ic.device
         @assert g == initial_conditions_off[ix].device
-        tech = PSY.get_tech(g)
         non_binding_up = false
         non_binding_down = false
-        timelimits = PSY.get_timelimits(tech)
+        timelimits = PSY.get_timelimits(g)
         name = PSY.get_name(g)
         if !isnothing(timelimits)
             if (timelimits.up <= fraction_of_hour) & (timelimits.down <= fraction_of_hour)
