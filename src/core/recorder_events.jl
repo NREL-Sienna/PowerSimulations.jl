@@ -1,4 +1,9 @@
-struct SimulationStepEvent <: IS.AbstractRecorderEvent
+"""
+All events subtyped from this need to be recorded under :simulation_status.
+"""
+abstract type AbstractSimulationStatusEvent <: IS.AbstractRecorderEvent end
+
+struct SimulationStepEvent <: AbstractSimulationStatusEvent
     common::IS.RecorderEventCommon
     simulation_time::Dates.DateTime
     step::Int
@@ -18,7 +23,7 @@ function SimulationStepEvent(
     )
 end
 
-struct SimulationStageEvent <: IS.AbstractRecorderEvent
+struct SimulationStageEvent <: AbstractSimulationStatusEvent
     common::IS.RecorderEventCommon
     simulation_time::Dates.DateTime
     step::Int
@@ -164,6 +169,16 @@ function list_simulation_events(
     return events
 end
 
+function list_simulation_events(
+    ::Type{T},
+    output_dir::AbstractString,
+    filter_func::Union{Nothing, Function} = nothing;
+    kwargs...,
+) where {T <: AbstractSimulationStatusEvent}
+    recorder_file = _get_simulation_status_recorder_filename(output_dir)
+    return IS.list_recorder_events(T, recorder_file, filter_func)
+end
+
 """
     show_simulation_events(
         ::Type{T},
@@ -204,6 +219,35 @@ function show_simulation_events(
         wall_time = wall_time,
         kwargs...,
     )
+end
+
+function show_simulation_events(
+    ::Type{T},
+    output_dir::AbstractString,
+    filter_func::Union{Nothing, Function} = nothing;
+    wall_time = false,
+    kwargs...,
+) where {T <: AbstractSimulationStatusEvent}
+    show_simulation_events(
+        stdout,
+        T,
+        output_dir,
+        filter_func;
+        wall_time = wall_time,
+        kwargs...,
+    )
+end
+
+function show_simulation_events(
+    io::IO,
+    ::Type{T},
+    output_dir::AbstractString,
+    filter_func::Union{Nothing, Function} = nothing;
+    wall_time = false,
+    kwargs...,
+) where {T <: AbstractSimulationStatusEvent}
+    events = list_simulation_events(T, output_dir, filter_func)
+    show_recorder_events(io, events, filter_func; wall_time = wall_time, kwargs...)
 end
 
 function show_simulation_events(
