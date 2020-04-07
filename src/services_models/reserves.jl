@@ -11,10 +11,10 @@ function activeservice_variables!(
 ) where {SR <: PSY.Reserve}
 
     function get_ub_val(d::PSY.Device)
-        return d.tech.activepowerlimits.max
+        return d.activepowerlimits.max
     end
     function get_ub_val(d::PSY.RenewableGen)
-        return d.tech.rating
+        return d.rating
     end
     add_variable(
         psi_container,

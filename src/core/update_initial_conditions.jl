@@ -55,7 +55,7 @@ function calculate_ic_quantity(
     status_change_to_off =
         get_condition(ic) >= ABSOLUTE_TOLERANCE && var_value <= ABSOLUTE_TOLERANCE
     if status_change_to_on
-        return ic.device.tech.activepowerlimits.min
+        return ic.device.activepowerlimits.min
     end
 
     if status_change_to_off
