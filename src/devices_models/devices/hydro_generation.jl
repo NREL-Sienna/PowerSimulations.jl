@@ -220,12 +220,8 @@ function activepower_constraints!(
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    ts_data_active, constraint_data = _get_time_series(
-        psi_container,
-        devices,
-        model,
-        x -> PSY.get_activepowerlimits(x),
-    )
+    ts_data_active, constraint_data =
+        _get_time_series(psi_container, devices, model, x -> PSY.get_activepowerlimits(x))
 
     if !parameters && !use_forecast_data
         device_range(
@@ -267,12 +263,8 @@ function activepower_constraints!(
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    ts_data_active, constraint_data = _get_time_series(
-        psi_container,
-        devices,
-        model,
-        x -> PSY.get_activepowerlimits(x),
-    )
+    ts_data_active, constraint_data =
+        _get_time_series(psi_container, devices, model, x -> PSY.get_activepowerlimits(x))
 
     device_range(
         psi_container,

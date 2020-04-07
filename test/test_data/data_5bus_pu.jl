@@ -298,7 +298,6 @@ wind_ts_DA = [
     0.069569628
 ]
 
-
 thermal_generators5(nodes5) = [
     ThermalStandard(
         "Alta",
