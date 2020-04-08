@@ -348,7 +348,8 @@ function test_load_simulation(file_path::String)
             c_sys5_hy_uc,
             GLPK_optimizer,
         ),
-        "ED" => Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, ipopt_optimizer),
+        "ED" =>
+            Stage(GenericOpProblem, template_hydro_ed, c_sys5_hy_ed, ipopt_optimizer),
     )
 
     sequence = SimulationSequence(

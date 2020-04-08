@@ -551,7 +551,7 @@ function initial_condition_update!(
         end
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
-        @IS.record :simulation InitialConditionUpdateEvent(
+        IS.@record :simulation InitialConditionUpdateEvent(
             sim.internal.current_time,
             ini_cond_key,
             ic,
@@ -590,7 +590,7 @@ function initial_condition_update!(
         end
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
         PJ.fix(ic.value, quantity)
-        @IS.record :simulation InitialConditionUpdateEvent(
+        IS.@record :simulation InitialConditionUpdateEvent(
             sim.internal.current_time,
             ini_cond_key,
             ic,
@@ -798,13 +798,13 @@ function _execute!(sim::Simulation; kwargs...)
         for step in 1:get_steps(sim)
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
                 println("Executing Step $(step)")
-                @IS.record :simulation_status SimulationStepEvent(
+                IS.@record :simulation_status SimulationStepEvent(
                     sim.internal.current_time,
                     step,
                     "start",
                 )
                 for (ix, stage_number) in enumerate(execution_order)
-                    @IS.record :simulation_status SimulationStageEvent(
+                    IS.@record :simulation_status SimulationStageEvent(
                         sim.internal.current_time,
                         step,
                         stage_number,
@@ -843,14 +843,14 @@ function _execute!(sim::Simulation; kwargs...)
                         sim.internal.run_count[step][stage_number] += 1
                         sim.internal.date_ref[stage_number] += stage_interval
                     end
-                    @IS.record :simulation_status SimulationStageEvent(
+                    IS.@record :simulation_status SimulationStageEvent(
                         sim.internal.current_time,
                         step,
                         stage_number,
                         "done",
                     )
                 end
-                @IS.record :simulation_status SimulationStepEvent(
+                IS.@record :simulation_status SimulationStepEvent(
                     sim.internal.current_time,
                     step,
                     "done",
