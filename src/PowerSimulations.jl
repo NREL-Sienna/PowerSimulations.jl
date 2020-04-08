@@ -131,6 +131,9 @@ export get_all_var_index
 export get_con_index
 export get_var_index
 export configure_logging
+export show_recorder_events
+export list_simulation_events
+export show_simulation_events
 
 #################################################################################
 # Imports
@@ -207,6 +210,7 @@ include("core/simulation_sequence.jl")
 include("core/simulation.jl")
 include("core/feedforward.jl")
 include("core/simulation_results.jl")
+include("core/recorder_events.jl")
 
 #Device Modeling components
 include("devices_models/devices/common.jl")
