@@ -3,7 +3,7 @@ using PowerSimulations
 
 makedocs(
     sitename = "PowerSimulations.jl",
-    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
+    format = Documenter.HTML(mathengine = Documenter.MathJax()),
     modules = [PowerSimulations],
     strict = true,
     authors = "Jose Daniel Lara, Clayton Barrows and Dheepak Krishnamurthy",
@@ -26,6 +26,6 @@ deploydocs(
     repo = "github.com/NREL-SIIP/PowerSimulations.jl.git",
     branch = "gh-pages",
     target = "build",
-    deps = Deps.pip("pygments", "mkdocs", "python-markdown-math"),
+    #deps = Deps.pip("pygments", "mkdocs", "python-markdown-math"),
     make = nothing,
 )
