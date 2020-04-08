@@ -108,13 +108,13 @@ Sometimes you might want to see how the events line up with the wall time.
 
 ```julia
 show_simulation_events(
-           PSI.InitialConditionUpdateEvent,
-           "./output/aggregation/1",
-           x -> x.initial_condition_type == "DeviceStatus";
-           step = 2,
-           stage = 1,
-           wall_time = true
-       )
+    PSI.InitialConditionUpdateEvent,
+    "./output/aggregation/1",
+    x -> x.initial_condition_type == "DeviceStatus";
+    step = 2,
+    stage = 1,
+    wall_time = true
+)
 ┌─────────────────────────┬─────────────────────────────┬─────────────────────┬────────────────────────┬─────────────────┬─────────────┬─────┬──────────────┐
 │               timestamp │                        name │     simulation_time │ initial_condition_type │     device_type │ device_name │ val │ stage_number │
 ├─────────────────────────┼─────────────────────────────┼─────────────────────┼────────────────────────┼─────────────────┼─────────────┼─────┼──────────────┤
