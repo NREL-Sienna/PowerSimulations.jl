@@ -11,6 +11,7 @@ makedocs(
         "Introduction" => "index.md",
         #"Quick Start Guide" => "qs_guide.md",
         "Operation Model" => "man/op_problem.md",
+        "Simulation Recorder" => "man/simulation_recorder.md",
         "API" => Any["PowerSimulations" => "api/PowerSimulations.md"],
     ],
 )
