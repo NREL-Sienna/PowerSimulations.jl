@@ -17,8 +17,9 @@ function provided by PowerSimulations.  This example will log messages of level
 `power-simulations.log` in the current directory.
 
 ```julia
-import PowerSimulations
-logger = PowerSimulations.configure_logging(
+import Logging
+using PowerSimulations
+logger = configure_logging(
     console_level = Logging.Error,
     file_level = Logging.Info,
     filename = "power-simulations.log"
@@ -30,12 +31,10 @@ You can configure the logging level used by the simulation logger when you call
 `build!(simulation)`.  Here is an example that increases logging verbosity:
 
 ```julia
-import PowerSimulations
+import Logging
+using PowerSimulations
 simulation = Simulation(...)
-PowerSimulations.build!(
-    console_level = Logging.Info,
-    file_level = Logging.Debug,
-)
+build!(simulation, console_level = Logging.Info, file_level = Logging.Debug)
 ```
 
 The log file will be located at `<your-output-path>/<simulation-name>/<run-output-dir>/logs/simulation.log`.
