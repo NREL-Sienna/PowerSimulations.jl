@@ -188,7 +188,7 @@ end
         stage = nothing,
         wall_time = false,
         kwargs...,
-    ) where { T<: IS.AbstractRecorderEvent}
+    ) where { T <: IS.AbstractRecorderEvent}
 
 Show all simulation events of type T in a simulation output directory.
 
@@ -281,8 +281,6 @@ Show the events of type T in a recorder file.
 - `filter_func::Union{Nothing, Function} = nothing`: Optional function that accepts an event
    of type T and returns a Bool. Apply this function to each event and only return events
    where the result is true.
-- `step::Int = nothing`: Filter events by step. Required if stage is passed.
-- `stage::Int = nothing`: Filter events by stage.
 - `wall_time = false`: If true, show the wall_time timestamp.
 """
 function show_recorder_events(

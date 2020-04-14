@@ -10,6 +10,7 @@ makedocs(
     pages = Any[
         "Introduction" => "index.md",
         #"Quick Start Guide" => "qs_guide.md",
+        "Logging" => "man/logging.md",
         "Operation Model" => "man/op_problem.md",
         "Simulation Recorder" => "man/simulation_recorder.md",
         "API" => Any["PowerSimulations" => "api/PowerSimulations.md"],
