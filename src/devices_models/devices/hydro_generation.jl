@@ -2,7 +2,6 @@ abstract type AbstractHydroFormulation <: AbstractDeviceFormulation end
 abstract type AbstractHydroDispatchFormulation <: AbstractHydroFormulation end
 abstract type AbstractHydroUnitCommitment <: AbstractHydroFormulation end
 abstract type AbstractHydroReservoirFormulation <: AbstractHydroDispatchFormulation end
-struct HydroFixed <: AbstractHydroFormulation end
 struct HydroDispatchRunOfRiver <: AbstractHydroDispatchFormulation end
 struct HydroDispatchReservoirFlow <: AbstractHydroReservoirFormulation end
 struct HydroDispatchReservoirStorage <: AbstractHydroReservoirFormulation end
@@ -149,7 +148,7 @@ function reactivepower_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HydroGen, D <: AbstractHydroDispatchFormulation}
     constraint_data = Vector{DeviceRange}()
-    for d in devices
+    for d in available_devices(devices)
         limits = PSY.get_reactivepowerlimits(d)
         name = PSY.get_name(d)
         range_data = DeviceRange(name, limits)
@@ -526,7 +525,7 @@ function nodal_expression!(
     ts_data_active, _ = _get_time_series(
         psi_container,
         devices,
-        DeviceModel(H, HydroFixed),
+        DeviceModel(H, FixedOutput),
         x -> (min = 0.0, max = 0.0),
     )
 
@@ -572,7 +571,7 @@ function nodal_expression!(
     ts_data_active, _ = _get_time_series(
         psi_container,
         devices,
-        DeviceModel(H, HydroFixed),
+        DeviceModel(H, FixedOutput),
         x -> (min = 0.0, max = 0.0),
     )
 
