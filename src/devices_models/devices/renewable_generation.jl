@@ -75,7 +75,7 @@ function reactivepower_constraints!(
     q_var = get_variable(psi_container, REACTIVE_POWER, R)
     constraint_val = JuMPConstraintArray(undef, names, time_steps)
     assign_constraint!(psi_container, REACTIVE_RANGE, R, constraint_val)
-    for t in time_steps, d in devices
+    for t in time_steps, d in available_devices(devices)
         name = PSY.get_name(d)
         pf = sin(acos(PSY.get_powerfactor(d)))
         constraint_val[name, t] =
