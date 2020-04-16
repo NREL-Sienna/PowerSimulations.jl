@@ -1,4 +1,5 @@
 abstract type AbstractDeviceFormulation end
+struct FixedOutput <: AbstractDeviceFormulation end
 
 function _check_device_formulation(
     ::Type{D},

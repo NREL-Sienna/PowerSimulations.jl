@@ -3,7 +3,7 @@ branches = Dict{Symbol, DeviceModel}()
 services = Dict{Symbol, ServiceModel}()
 devices = Dict(
     :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
-    :Ren => DeviceModel(RenewableDispatch, RenewableFixed),
+    :Ren => DeviceModel(RenewableDispatch, FixedOutput),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     :ILoads => DeviceModel(InterruptibleLoad, StaticPowerLoad),
 )
@@ -14,7 +14,7 @@ branches = Dict()
 services = Dict()
 devices = Dict(
     :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
-    :Ren => DeviceModel(RenewableDispatch, RenewableFixed),
+    :Ren => DeviceModel(RenewableDispatch, FixedOutput),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     :ILoads => DeviceModel(InterruptibleLoad, StaticPowerLoad),
 )
@@ -41,7 +41,7 @@ services = Dict(
 )
 devices = Dict(
     :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
-    :Ren => DeviceModel(RenewableDispatch, RenewableFixed),
+    :Ren => DeviceModel(RenewableDispatch, FixedOutput),
     :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     :ILoads => DeviceModel(InterruptibleLoad, StaticPowerLoad),
 )
