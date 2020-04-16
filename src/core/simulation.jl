@@ -671,7 +671,7 @@ function update_parameter!(
     stage::Stage,
     sim::Simulation,
 ) where {T <: PSY.Component}
-    devices = PSY.get_components(T, stage.sys)
+    devices = get_available_components(T, stage.sys)
     initial_forecast_time = get_simulation_time(sim, get_number(stage))
     horizon = length(model_time_steps(stage.internal.psi_container))
     for d in devices
