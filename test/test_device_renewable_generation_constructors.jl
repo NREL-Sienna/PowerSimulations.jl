@@ -163,7 +163,7 @@ end
 end
 
 @testset "Renewable DCPLossLess FixedOutput" begin
-    model = DeviceModel(RenewableDispatch, RenewableFixed)
+    model = DeviceModel(RenewableDispatch, FixedOutput)
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re; use_parameters = p)
@@ -179,7 +179,7 @@ end
 end
 
 @testset "Renewable ACPPowerModel FixedOutput" begin
-    model = DeviceModel(RenewableDispatch, RenewableFixed)
+    model = DeviceModel(RenewableDispatch, FixedOutput)
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_re; use_parameters = p)

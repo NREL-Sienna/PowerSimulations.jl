@@ -18,6 +18,7 @@ export CopperPlatePowerModel
 
 ######## Device Models ########
 export DeviceModel
+export FixedOutput
 ######## Service Models ########
 export ServiceModel
 export RangeReserve
@@ -38,11 +39,9 @@ export StaticPowerLoad
 export InterruptiblePowerLoad
 export DispatchablePowerLoad
 ######## Renewable Formulations ########
-export RenewableFixed
 export RenewableFullDispatch
 export RenewableConstantPowerFactor
 ######## Hydro Formulations ########
-export HydroFixed
 export HydroDispatchRunOfRiver
 export HydroDispatchReservoirFlow
 export HydroDispatchReservoirStorage

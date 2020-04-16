@@ -63,7 +63,7 @@ end
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{R, RenewableFixed},
+    model::DeviceModel{R, FixedOutput},
     system_formulation::Type{S};
     kwargs...,
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel}
@@ -85,12 +85,12 @@ function construct_device!(
     system_formulation::Type{S};
     kwargs...,
 ) where {D <: AbstractRenewableDispatchFormulation, S <: PM.AbstractPowerModel}
-    @warn("The Formulation $(D) only applies to FormulationControllable Renewable Resources, \n Consider Changing the Device Formulation to RenewableFixed")
+    @warn("The Formulation $(D) only applies to FormulationControllable Renewable Resources, \n Consider Changing the Device Formulation to FixedOutput")
 
     construct_device!(
         psi_container,
         sys,
-        DeviceModel(PSY.RenewableFix, RenewableFixed),
+        DeviceModel(PSY.RenewableFix, FixedOutput),
         system_formulation;
         kwargs...,
     )
@@ -101,7 +101,7 @@ end
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{PSY.RenewableFix, RenewableFixed},
+    model::DeviceModel{PSY.RenewableFix, FixedOutput},
     system_formulation::Type{S};
     kwargs...,
 ) where {S <: PM.AbstractPowerModel}
