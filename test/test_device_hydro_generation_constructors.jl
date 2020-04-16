@@ -9,7 +9,7 @@
 end
 
 @testset "Hydro DCPLossLess FixedOutput" begin
-    model = DeviceModel(HydroDispatch, HydroFixed)
+    model = DeviceModel(HydroDispatch, FixedOutput)
 
     # Parameters Testing
     op_problem =
@@ -131,8 +131,8 @@ end
 
 end
 
-@testset "Hydro DCPLossLess HydroEnergyReservoir with HydroFixed formulations" begin
-    model = DeviceModel(HydroEnergyReservoir, HydroFixed)
+@testset "Hydro DCPLossLess HydroEnergyReservoir with FixedOutput formulations" begin
+    model = DeviceModel(HydroEnergyReservoir, FixedOutput)
 
     # Parameters Testing
     op_problem =

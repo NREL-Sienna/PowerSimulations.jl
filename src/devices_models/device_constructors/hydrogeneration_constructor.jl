@@ -220,7 +220,7 @@ end
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{H, HydroFixed},
+    model::DeviceModel{H, FixedOutput},
     ::Type{S};
     kwargs...,
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
@@ -245,11 +245,11 @@ function construct_device!(
     kwargs...,
 ) where {D <: AbstractHydroUnitCommitment, S <: PM.AbstractPowerModel}
     @warn("The Formulation $(D) only applies to Dispatchable Hydro, *
-               Consider Changing the Device Formulation to HydroFixed")
+               Consider Changing the Device Formulation to FixedOutput")
 
     construct_device!(
         psi_container,
-        DeviceModel(PSY.HydroDispatch, HydroFixed),
+        DeviceModel(PSY.HydroDispatch, FixedOutput),
         S;
         kwargs...,
     )
@@ -259,7 +259,7 @@ end
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{PSY.HydroDispatch, HydroFixed},
+    model::DeviceModel{PSY.HydroDispatch, FixedOutput},
     ::Type{S};
     kwargs...,
 ) where {S <: PM.AbstractPowerModel}

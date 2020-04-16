@@ -166,7 +166,7 @@ end
         devices = Dict{Symbol, DeviceModel}(
             :Generators => DeviceModel(ThermalStandard, thermal),
             :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
-            :RE => DeviceModel(RenewableDispatch, RenewableFixed),
+            :RE => DeviceModel(RenewableDispatch, FixedOutput),
         )
         branches = Dict{Symbol, DeviceModel}(:L => DeviceModel(Line, StaticLine))
         template = OperationsProblemTemplate(net, devices, branches, services)
