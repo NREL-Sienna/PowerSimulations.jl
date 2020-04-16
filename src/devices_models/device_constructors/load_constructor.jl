@@ -9,7 +9,7 @@ function construct_device!(
     D <: AbstractControllablePowerLoadFormulation,
     S <: PM.AbstractPowerModel,
 }
-    devices = PSY.get_components(L, sys)
+    devices = get_available_components(L, sys)
 
     if validate_available_devices(devices, L)
         return
@@ -42,7 +42,7 @@ function construct_device!(
     D <: AbstractControllablePowerLoadFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = PSY.get_components(L, sys)
+    devices = get_available_components(L, sys)
 
     if validate_available_devices(devices, L)
         return
@@ -68,7 +68,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(L, sys)
+    devices = get_available_components(L, sys)
 
     if validate_available_devices(devices, L)
         return
@@ -97,7 +97,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(L, sys)
+    devices = get_available_components(L, sys)
 
     if validate_available_devices(devices, L)
         return
@@ -124,7 +124,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(L, sys)
+    devices = get_available_components(L, sys)
 
     if validate_available_devices(devices, L)
         return

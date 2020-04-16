@@ -9,7 +9,7 @@ function construct_device!(
     D <: AbstractHydroDispatchFormulation,
     S <: PM.AbstractPowerModel,
 }
-    devices = PSY.get_components(H, sys)
+    devices = get_available_components(H, sys)
 
     if validate_available_devices(devices, H)
         return
@@ -37,7 +37,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(H, sys)
+    devices = get_available_components(H, sys)
 
     if validate_available_devices(devices, H)
         return
@@ -68,7 +68,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {H<:PSY.HydroGen,D<:AbstractHydroUnitCommitment,S<:PM.AbstractPowerModel}
-    devices = PSY.get_components(H, sys)
+    devices = get_available_components(H, sys)
 
     if validate_available_devices(devices, H)
         return
@@ -105,7 +105,7 @@ function construct_device!(
     D <: AbstractHydroDispatchFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = PSY.get_components(H, sys)
+    devices = get_available_components(H, sys)
 
     if validate_available_devices(devices, H)
         return
@@ -131,7 +131,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(H, sys)
+    devices = get_available_components(H, sys)
 
     if validate_available_devices(devices, H)
         return
@@ -158,7 +158,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(H, sys)
+    devices = get_available_components(H, sys)
 
     if validate_available_devices(devices, H)
         return
@@ -192,7 +192,7 @@ function construct_device!(
     kwargs...,
 ) where {H<:PSY.HydroGen,D<:AbstractHydroUnitCommitment,S<:PM.AbstractActivePowerModel}
 
-    devices = PSY.get_components(H, sys)
+    devices = get_available_components(H, sys)
 
     if validate_available_devices(devices, H)
         return
@@ -224,7 +224,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(H, sys)
+    devices = get_available_components(H, sys)
 
     if validate_available_devices(devices, H)
         return
@@ -263,7 +263,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(PSY.HydroDispatch, sys)
+    devices = get_available_components(PSY.HydroDispatch, sys)
 
     if validate_available_devices(devices, PSY.HydroDispatch)
         return

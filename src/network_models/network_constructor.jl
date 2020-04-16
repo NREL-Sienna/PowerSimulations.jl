@@ -19,7 +19,7 @@ function construct_network!(
     ::Type{StandardPTDFModel},
 )
     buses = PSY.get_components(PSY.Bus, sys)
-    ac_branches = PSY.get_components(PSY.ACBranch, sys)
+    ac_branches = get_available_components(PSY.ACBranch, sys)
     ptdf = get_PTDF(psi_container)
 
     if isnothing(ptdf)
@@ -31,7 +31,7 @@ function construct_network!(
 
     ptdf_networkflow(psi_container, ac_branches, buses, :nodal_balance_active, ptdf)
 
-    dc_branches = PSY.get_components(PSY.DCBranch, sys)
+    dc_branches = get_available_components(PSY.DCBranch, sys)
     dc_branch_types = typeof.(dc_branches)
     for btype in Set(dc_branch_types)
         typed_dc_branches = IS.FlattenIteratorWrapper(
