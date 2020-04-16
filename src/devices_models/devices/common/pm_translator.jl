@@ -152,7 +152,7 @@ function get_branches_to_pm(sys::PSY.System)
         t where t <: PSY.DCBranch,
     }()
 
-    for (ix, branch) in enumerate(PSY.get_components(PSY.Branch, sys))
+    for (ix, branch) in enumerate(get_available_components(PSY.Branch, sys))
         if isa(branch, PSY.DCBranch)
             PM_dc_branches["$(ix)"] = get_branch_to_pm(ix, branch)
             if PM_dc_branches["$(ix)"]["br_status"] == true

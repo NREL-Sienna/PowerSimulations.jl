@@ -8,7 +8,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     if validate_available_devices(devices, T)
         return
@@ -50,7 +50,7 @@ function construct_device!(
     D <: AbstractThermalFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     if validate_available_devices(devices, T)
         return
@@ -86,7 +86,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     if validate_available_devices(devices, T)
         return
@@ -122,7 +122,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     if validate_available_devices(devices, T)
         return
@@ -156,7 +156,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     if validate_available_devices(devices, T)
         return
@@ -191,7 +191,7 @@ function construct_device!(
     ::Type{S};
     kwargs...,
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     if validate_available_devices(devices, T)
         return
@@ -225,7 +225,7 @@ function construct_device!(
     D <: AbstractThermalDispatchFormulation,
     S <: PM.AbstractPowerModel,
 }
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     if validate_available_devices(devices, T)
         return
@@ -259,7 +259,7 @@ function construct_device!(
     D <: AbstractThermalDispatchFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
     if validate_available_devices(devices, T)
         return

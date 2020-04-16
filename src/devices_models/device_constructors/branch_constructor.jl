@@ -31,7 +31,7 @@ function construct_device!(
     Br <: AbstractBoundedBranchFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = PSY.get_components(B, sys)
+    devices = get_available_components(B, sys)
     if validate_available_devices(devices, B)
         return
     end
@@ -49,7 +49,7 @@ function construct_device!(
     model::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{S},
 ) where {B <: PSY.ACBranch, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(B, sys)
+    devices = get_available_components(B, sys)
     if validate_available_devices(devices, B)
         return
     end
@@ -64,7 +64,7 @@ function construct_device!(
     model::DeviceModel{B, <:AbstractBranchFormulation},
     ::Type{S},
 ) where {B <: PSY.ACBranch, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(B, sys)
+    devices = get_available_components(B, sys)
     if validate_available_devices(devices, B)
         return
     end
@@ -79,7 +79,7 @@ function construct_device!(
     model::DeviceModel{B, Br},
     ::Type{S},
 ) where {B <: PSY.DCBranch, Br <: AbstractDCLineFormulation, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(B, sys)
+    devices = get_available_components(B, sys)
     if validate_available_devices(devices, B)
         return
     end
@@ -93,7 +93,7 @@ function construct_device!(
     model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
     ::Type{S},
 ) where {S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(PSY.MonitoredLine, sys)
+    devices = get_available_components(PSY.MonitoredLine, sys)
     if validate_available_devices(devices, PSY.MonitoredLine)
         return
     end
@@ -107,7 +107,7 @@ function construct_device!(
     model::DeviceModel{PSY.MonitoredLine, FlowMonitoredLine},
     ::Type{S},
 ) where {S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(PSY.MonitoredLine, sys)
+    devices = get_available_components(PSY.MonitoredLine, sys)
     if validate_available_devices(devices, PSY.MonitoredLine)
         return
     end

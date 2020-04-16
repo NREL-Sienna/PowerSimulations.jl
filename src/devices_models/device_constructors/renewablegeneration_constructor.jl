@@ -9,7 +9,7 @@ function construct_device!(
     D <: AbstractRenewableDispatchFormulation,
     S <: PM.AbstractPowerModel,
 }
-    devices = PSY.get_components(R, sys)
+    devices = get_available_components(R, sys)
 
     if validate_available_devices(devices, R)
         return
@@ -41,7 +41,7 @@ function construct_device!(
     D <: AbstractRenewableDispatchFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = PSY.get_components(R, sys)
+    devices = get_available_components(R, sys)
 
     if validate_available_devices(devices, R)
         return
@@ -67,7 +67,7 @@ function construct_device!(
     system_formulation::Type{S};
     kwargs...,
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(R, sys)
+    devices = get_available_components(R, sys)
 
     if validate_available_devices(devices, R)
         return
@@ -105,7 +105,7 @@ function construct_device!(
     system_formulation::Type{S};
     kwargs...,
 ) where {S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(PSY.RenewableFix, sys)
+    devices = get_available_components(PSY.RenewableFix, sys)
 
     if validate_available_devices(devices, PSY.RenewableFix)
         return
