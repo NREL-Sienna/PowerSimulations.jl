@@ -271,3 +271,7 @@ end
 function remove_chars(s::String, char::String)
     return replace_chars(s::String, char::String, "")
 end
+
+function get_available_components(::Type{T}, sys::PSY.System) where {T <: PSY.Device}
+    return PSY.get_components(T, sys, x -> PSY.get_available(x))
+end
