@@ -148,7 +148,7 @@ function reactivepower_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HydroGen, D <: AbstractHydroDispatchFormulation}
     constraint_data = Vector{DeviceRange}()
-    for d in available_devices(devices)
+    for d in devices
         limits = PSY.get_reactivepowerlimits(d)
         name = PSY.get_name(d)
         range_data = DeviceRange(name, limits)
