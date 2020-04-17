@@ -2,8 +2,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{R, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {
     R <: PSY.RenewableGen,
     D <: AbstractRenewableDispatchFormulation,
@@ -34,8 +33,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{R, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {
     R <: PSY.RenewableGen,
     D <: AbstractRenewableDispatchFormulation,
@@ -64,8 +62,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{R, FixedOutput},
-    system_formulation::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(R, sys)
 
@@ -73,7 +70,7 @@ function construct_device!(
         return
     end
 
-    nodal_expression!(psi_container, devices, system_formulation)
+    nodal_expression!(psi_container, devices, S)
 
     return
 end
@@ -82,18 +79,11 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.RenewableFix, D},
-    system_formulation::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {D <: AbstractRenewableDispatchFormulation, S <: PM.AbstractPowerModel}
     @warn("The Formulation $(D) only applies to FormulationControllable Renewable Resources, \n Consider Changing the Device Formulation to FixedOutput")
 
-    construct_device!(
-        psi_container,
-        sys,
-        DeviceModel(PSY.RenewableFix, FixedOutput),
-        system_formulation;
-        kwargs...,
-    )
+    construct_device!(psi_container, sys, DeviceModel(PSY.RenewableFix, FixedOutput), S;)
 
     return
 end
@@ -102,8 +92,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{PSY.RenewableFix, FixedOutput},
-    system_formulation::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {S <: PM.AbstractPowerModel}
     devices = get_available_components(PSY.RenewableFix, sys)
 
@@ -111,7 +100,7 @@ function construct_device!(
         return
     end
 
-    nodal_expression!(psi_container, devices, system_formulation)
+    nodal_expression!(psi_container, devices, S)
 
     return
 end
