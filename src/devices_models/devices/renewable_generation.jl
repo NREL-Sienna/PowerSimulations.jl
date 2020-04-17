@@ -94,7 +94,7 @@ function activepower_constraints!(
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    ts_data_active, _, constraint_data = _get_time_series(
+    ts_data_active, _, constraint_data = get_time_series(
         psi_container,
         devices,
         model,
@@ -185,7 +185,7 @@ function nodal_expression!(
     system_formulation::Type{<:PM.AbstractActivePowerModel},
 ) where {R <: PSY.RenewableGen}
     parameters = model_has_parameters(psi_container)
-    ts_data_active, ts_data_reactive, _ = _get_time_series(
+    ts_data_active, ts_data_reactive, _ = get_time_series(
         psi_container,
         devices,
         DeviceModel(R, RenewableFullDispatch),

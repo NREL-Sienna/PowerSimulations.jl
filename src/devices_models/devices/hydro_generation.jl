@@ -166,49 +166,6 @@ function reactivepower_constraints!(
     return
 end
 
-######################## output constraints without Time Series ############################
-function _get_time_series(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{<:PSY.HydroGen},
-    model::DeviceModel,
-    get_constraint_values::Function,
-)
-    initial_time = model_initial_time(psi_container)
-    @debug initial_time
-    use_forecast_data = model_uses_forecasts(psi_container)
-    parameters = model_has_parameters(psi_container)
-    time_steps = model_time_steps(psi_container)
-
-    constraint_data = Vector{DeviceRange}()
-    active_timeseries = Vector{DeviceTimeSeries}()
-
-    for device in devices
-        bus_number = PSY.get_number(PSY.get_bus(device))
-        name = PSY.get_name(device)
-        if use_forecast_data
-            active_power = PSY.get_rating(device)
-            ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
-                PSY.Deterministic,
-                device,
-                initial_time,
-                "get_rating",
-                length(time_steps),
-            )))
-        else
-            active_power = PSY.get_activepower(device)
-            ts_vector = ones(time_steps[end])
-        end
-        range_data = DeviceRange(name, get_constraint_values(device))
-        _device_services!(range_data, device, model)
-        push!(constraint_data, range_data)
-        push!(
-            active_timeseries,
-            DeviceTimeSeries(name, bus_number, active_power, ts_vector, range_data),
-        )
-    end
-    return active_timeseries, constraint_data
-end
-
 function activepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
@@ -220,7 +177,7 @@ function activepower_constraints!(
     use_forecast_data = model_uses_forecasts(psi_container)
 
     ts_data_active, constraint_data =
-        _get_time_series(psi_container, devices, model, x -> PSY.get_activepowerlimits(x))
+        get_time_series(psi_container, devices, model, x -> PSY.get_activepowerlimits(x))
 
     if !parameters && !use_forecast_data
         device_range(
@@ -263,7 +220,7 @@ function activepower_constraints!(
     use_forecast_data = model_uses_forecasts(psi_container)
 
     ts_data_active, constraint_data =
-        _get_time_series(psi_container, devices, model, x -> PSY.get_activepowerlimits(x))
+        get_time_series(psi_container, devices, model, x -> PSY.get_activepowerlimits(x))
 
     device_range(
         psi_container,
@@ -287,7 +244,7 @@ function activepower_constraints!(
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    ts_data_active, constraint_data = _get_time_series(
+    ts_data_active, constraint_data = get_time_series(
         psi_container,
         devices,
         model,
@@ -522,7 +479,7 @@ function nodal_expression!(
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    ts_data_active, _ = _get_time_series(
+    ts_data_active, _ = get_time_series(
         psi_container,
         devices,
         DeviceModel(H, FixedOutput),
@@ -568,7 +525,7 @@ function nodal_expression!(
     system_formulation::Type{<:PM.AbstractActivePowerModel},
 ) where {H <: PSY.HydroGen}
     parameters = model_has_parameters(psi_container)
-    ts_data_active, _ = _get_time_series(
+    ts_data_active, _ = get_time_series(
         psi_container,
         devices,
         DeviceModel(H, FixedOutput),
