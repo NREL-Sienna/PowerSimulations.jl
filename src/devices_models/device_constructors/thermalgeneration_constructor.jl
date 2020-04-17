@@ -271,3 +271,20 @@ function construct_device!(
 
     return
 end
+
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{T, FixedOutput},
+    ::Type{S},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(T, sys)
+
+    if validate_available_devices(devices, T)
+        return
+    end
+
+    nodal_expression!(psi_container, devices, S)
+
+    return
+end

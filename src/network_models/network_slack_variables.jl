@@ -23,8 +23,8 @@ function _add_system_balance_slacks!(
             base_name = "$(var_name_dn)_{$(ix), $(jx)}",
             lower_bound = 0.0
         )
-        _add_to_expression!(expression_array, ix, jx, variable_up[ix, jx], 1.0)
-        _add_to_expression!(expression_array, ix, jx, variable_dn[ix, jx], -1.0)
+        add_to_expression!(expression_array, ix, jx, variable_up[ix, jx], 1.0)
+        add_to_expression!(expression_array, ix, jx, variable_dn[ix, jx], -1.0)
         JuMP.add_to_expression!(
             psi_container.cost_function,
             (variable_dn[ix, jx] + variable_up[ix, jx]) * SLACK_COST,
