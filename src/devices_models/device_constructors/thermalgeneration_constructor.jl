@@ -5,8 +5,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
@@ -43,8 +42,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractThermalFormulation,
@@ -83,8 +81,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
@@ -119,8 +116,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
@@ -153,8 +149,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalRampLimited},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
@@ -188,8 +183,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalRampLimited},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
@@ -218,8 +212,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractThermalDispatchFormulation,
@@ -252,8 +245,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractThermalDispatchFormulation,
