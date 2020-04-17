@@ -36,14 +36,14 @@ function flow_variables!(
                 base_name = "$(bus_fr), $(bus_to)_{$(PSY.get_name(d)), $(t)}",
             )
             container[PSY.get_name(d), t] = jvariable
-            _add_to_expression!(
+            add_to_expression!(
                 psi_container.expressions[:nodal_balance_active],
                 PSY.get_number(PSY.get_arc(d).from),
                 t,
                 jvariable,
                 -1.0,
             )
-            _add_to_expression!(
+            add_to_expression!(
                 psi_container.expressions[:nodal_balance_active],
                 PSY.get_number(PSY.get_arc(d).to),
                 t,
@@ -155,7 +155,7 @@ function branch_rate_constraints!(
                 psi_container.JuMPmodel,
                 min_rate <= var[PSY.get_name(d), t] <= max_rate
             )
-            _add_to_expression!(
+            add_to_expression!(
                 psi_container.expressions[:nodal_balance_active],
                 PSY.get_number(PSY.get_arc(d).to),
                 t,
