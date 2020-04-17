@@ -4,7 +4,7 @@ function include_parameters(psi_container::PSIContainer,
                             data::Array,
                             param_reference::UpdateRef,
                             axs...)
-                            
+
     if !model_has_parameters(psi_container)
         throw(IS.DataFormatError("Operational Model doesn't have parameters enabled. Include the keyword use_parameters=true"))
     end
@@ -39,7 +39,7 @@ function include_parameters(
     for t in time_steps, r in ts_data
         param[r.name, t] = PJ.add_parameter(psi_container.JuMPmodel, r.timeseries[t])
         mult[r.name, t] = r.multiplier * multiplier
-        _add_to_expression!(
+        add_to_expression!(
             expr,
             r.bus_number,
             t,

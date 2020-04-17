@@ -84,61 +84,6 @@ function reactivepower_constraints!(
     return
 end
 
-######################## output constraints without Time Series ############################
-function _get_time_series(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{<:PSY.RenewableGen},
-    model::Union{Nothing, DeviceModel},
-    get_constraint_values::Function,
-)
-    initial_time = model_initial_time(psi_container)
-    @debug initial_time
-    use_forecast_data = model_uses_forecasts(psi_container)
-    parameters = model_has_parameters(psi_container)
-    time_steps = model_time_steps(psi_container)
-
-    constraint_data = Vector{DeviceRange}()
-    active_timeseries = Vector{DeviceTimeSeries}()
-    reactive_timeseries = Vector{DeviceTimeSeries}()
-
-    for device in devices
-        bus_number = PSY.get_number(PSY.get_bus(device))
-        name = PSY.get_name(device)
-        pf = sin(acos(PSY.get_powerfactor(device)))
-
-        if use_forecast_data
-            active_power = PSY.get_rating(device)
-            reactive_power = PSY.get_rating(device) * pf
-            forecast = PSY.get_forecast(
-                PSY.Deterministic,
-                device,
-                initial_time,
-                "get_rating",
-                length(time_steps),
-            )
-            ts_vector = TS.values(PSY.get_data(forecast))
-        else
-            active_power = PSY.get_activepower(device)
-            reactive_power = PSY.get_reactivepower(device)
-            ts_vector = ones(time_steps[end])
-        end
-
-        range_data = DeviceRange(name, get_constraint_values(device))
-        _device_services!(range_data, device, model)
-        push!(constraint_data, range_data)
-        push!(
-            active_timeseries,
-            DeviceTimeSeries(name, bus_number, active_power, ts_vector, range_data),
-        )
-        push!(
-            reactive_timeseries,
-            DeviceTimeSeries(name, bus_number, reactive_power, ts_vector, range_data),
-        )
-
-    end
-    return active_timeseries, reactive_timeseries, constraint_data
-end
-
 function activepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{R},
@@ -191,7 +136,7 @@ function nodal_expression!(
     system_formulation::Type{<:PM.AbstractPowerModel},
 ) where {R <: PSY.RenewableGen}
     parameters = model_has_parameters(psi_container)
-    ts_data_active, ts_data_reactive, _ = _get_time_series(
+    ts_data_active, ts_data_reactive, _ = get_time_series(
         psi_container,
         devices,
         DeviceModel(R, RenewableFullDispatch),
@@ -215,7 +160,7 @@ function nodal_expression!(
     end
     for t in model_time_steps(psi_container)
         for device in ts_data_active
-            _add_to_expression!(
+            add_to_expression!(
                 psi_container.expressions[:nodal_balance_active],
                 device.bus_number,
                 t,
@@ -223,7 +168,7 @@ function nodal_expression!(
             )
         end
         for device in ts_data_reactive
-            _add_to_expression!(
+            add_to_expression!(
                 psi_container.expressions[:nodal_balance_reactive],
                 device.bus_number,
                 t,
@@ -258,7 +203,7 @@ function nodal_expression!(
     end
     for t in model_time_steps(psi_container)
         for device in ts_data_active
-            _add_to_expression!(
+            add_to_expression!(
                 psi_container.expressions[:nodal_balance_active],
                 device.bus_number,
                 t,
