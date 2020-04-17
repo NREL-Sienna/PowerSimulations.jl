@@ -2,8 +2,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{L, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {
     L <: PSY.ControllableLoad,
     D <: AbstractControllablePowerLoadFormulation,
@@ -35,8 +34,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{L, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {
     L <: PSY.ControllableLoad,
     D <: AbstractControllablePowerLoadFormulation,
@@ -65,8 +63,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{L, InterruptiblePowerLoad},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
 
@@ -94,8 +91,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{L, InterruptiblePowerLoad},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)
 
@@ -121,8 +117,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{L, StaticPowerLoad},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
 
@@ -139,8 +134,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{L, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {
     L <: PSY.StaticLoad,
     D <: AbstractControllablePowerLoadFormulation,

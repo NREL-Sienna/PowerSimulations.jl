@@ -2,8 +2,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{St, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
     devices = get_available_components(St, sys)
 
@@ -35,8 +34,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{St, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {
     St <: PSY.Storage,
     D <: AbstractStorageFormulation,
@@ -71,8 +69,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{St, BookKeepingwReservation},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
     devices = get_available_components(St, sys)
 
@@ -111,8 +108,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{St, BookKeepingwReservation},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {St <: PSY.Storage, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(St, sys)
 
