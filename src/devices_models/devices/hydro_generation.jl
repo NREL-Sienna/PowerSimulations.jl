@@ -187,8 +187,8 @@ function activepower_constraints!(
         device_range(
             psi_container,
             constraint_data,
-            constraint_name(ACTIVE_RANGE, R),
-            variable_name(ACTIVE_POWER, R),
+            constraint_name(ACTIVE_RANGE, H),
+            variable_name(ACTIVE_POWER, H),
         )
         return
     end
