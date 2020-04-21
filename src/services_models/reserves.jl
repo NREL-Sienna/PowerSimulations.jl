@@ -100,6 +100,17 @@ function modify_device_model!(
 end
 
 function include_service!(
+    constraint_data::DeviceTimeSeries,
+    services::Vector{<:PSY.Reserve},
+    SM::ServiceModel,
+)
+    range_data = constraint_data.range
+    isnothing(range_data) && return
+    include_service!(range_data, services, SM)
+    return
+end
+
+function include_service!(
     constraint_data::DeviceRange,
     services::Vector{SR},
     ::ServiceModel{SR, <:AbstractReservesFormulation},
@@ -128,7 +139,7 @@ function include_service!(
     return
 end
 
-function _device_services!(
+function add_device_services!(
     constraint_data::DeviceRange,
     device::D,
     model::DeviceModel,
