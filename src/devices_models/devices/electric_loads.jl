@@ -86,7 +86,7 @@ function activepower_constraints!(
         constraint_data = Vector{DeviceRange}(undef, length(devices))
         for (ix, d) in enumerate(devices)
             name = PSY.get_name(d)
-            ub = PSY.get_active(d)
+            ub = PSY.get_activepower(d)
             limits = (min = 0.0, max = ub)
             range_data = DeviceRange(name, limits)
             add_device_services!(range_data, d, model)
