@@ -81,7 +81,7 @@ function energy_balance(
 end
 
 @doc raw"""
-    reservoir_energy_balance(psi_container::PSIContainer,
+    energy_balance_external_input(psi_container::PSIContainer,
                         initial_conditions::Vector{InitialCondition},
                         efficiency_data::Tuple{Vector{String}, Vector{InOut}},
                         cons_name::Symbol,
@@ -106,7 +106,7 @@ If t > 1:
 - : var_names[3] : varenergy
 * param_reference::UpdateRef : UpdateRef to access the inflow parameter
 """
-function reservoir_energy_balance_param(
+function energy_balance_external_input_param(
     psi_container::PSIContainer,
     initial_conditions::Vector{InitialCondition},
     inflow_data::Vector{DeviceTimeSeries},
@@ -156,7 +156,7 @@ function reservoir_energy_balance_param(
 end
 
 @doc raw"""
-    reservoir_energy_balance(psi_container::PSIContainer,
+    energy_balance_external_input(psi_container::PSIContainer,
                         initial_conditions::Vector{InitialCondition},
                         efficiency_data::Tuple{Vector{String}, Vector{InOut}},
                         cons_name::Symbol,
@@ -180,7 +180,7 @@ If t > 1:
 - : var_names[2] : varout
 - : var_names[3] : varenergy
 """
-function reservoir_energy_balance(
+function energy_balance_external_input(
     psi_container::PSIContainer,
     initial_conditions::Vector{InitialCondition},
     inflow_data::Vector{DeviceTimeSeries},
