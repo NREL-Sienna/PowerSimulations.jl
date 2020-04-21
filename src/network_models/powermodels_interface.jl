@@ -7,17 +7,8 @@
 # Model Definitions
 
 ""
-function instantiate_nip_model(
-    data::Dict{String, Any},
-    model_constructor;
-    kwargs...,
-)
-    return PM.instantiate_model(
-        data,
-        model_constructor,
-        build_nip;
-        kwargs...,
-    )
+function instantiate_nip_model(data::Dict{String, Any}, model_constructor; kwargs...)
+    return PM.instantiate_model(data, model_constructor, build_nip; kwargs...)
 end
 
 ""
@@ -59,17 +50,8 @@ function build_nip(pm::PM.AbstractPowerModel)
 end
 
 ""
-function instantiate_nip_expr_model(
-    data::Dict{String, Any},
-    model_constructor;
-    kwargs...,
-)
-    return PM.instantiate_model(
-        data,
-        model_constructor,
-        instantiate_nip_expr;
-        kwargs...,
-    )
+function instantiate_nip_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
+    return PM.instantiate_model(data, model_constructor, instantiate_nip_expr; kwargs...)
 end
 
 ""
