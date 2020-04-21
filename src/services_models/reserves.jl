@@ -140,7 +140,7 @@ function include_service!(
 end
 
 function add_device_services!(
-    constraint_data::DeviceRange,
+    constraint_data::RangeConstraintsData,
     device::D,
     model::DeviceModel,
 ) where {D <: PSY.Device}

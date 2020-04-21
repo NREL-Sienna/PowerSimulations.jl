@@ -1,5 +1,7 @@
+abstract type RangeConstraintsData end
+
 """ Data Container to construct range constraints"""
-struct DeviceRange
+struct DeviceRange <: RangeConstraintsData
     name::String
     limits::MinMax
     additional_terms_ub::Vector{Symbol}
@@ -10,12 +12,16 @@ function DeviceRange(name::String, limits::MinMax)
     return DeviceRange(name, limits, Vector{Symbol}(), Vector{Symbol}())
 end
 
-struct DeviceTimeSeries
+function DeviceRange(name::String)
+    return DeviceRange(name, (min = -Inf, max = Inf), Vector{Symbol}(), Vector{Symbol}())
+end
+
+struct DeviceTimeSeries <: RangeConstraintsData
     name::String
     bus_number::Int
     multiplier::Float64
     timeseries::Vector{Float64}
-    range::Union{Nothing, DeviceRange}
+    range::DeviceRange
     function DeviceTimeSeries(name, bus_number, multiplier, timeseries, range)
         @assert isnothing(range) || name == range.name
         return new(name, bus_number, multiplier, timeseries, range)
@@ -32,7 +38,7 @@ function DeviceTimeSeries(
     bus_number = PSY.get_number(PSY.get_bus(device))
     multiplier = multiplier_function(device)
     if isnothing(get_constraint_values)
-        range_data = nothing
+        range_data = DeviceRange(name)
     else
         range_data = DeviceRange(name, get_constraint_values(device))
     end
