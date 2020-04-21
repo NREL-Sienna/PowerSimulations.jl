@@ -189,14 +189,14 @@ function activepower_constraints!(
         device_range(
             psi_container,
             constraint_data,
-            constraint_name(ACTIVE_RANGE, R),
-            variable_name(ACTIVE_POWER, R),
+            constraint_name(ACTIVE_RANGE, H),
+            variable_name(ACTIVE_POWER, H),
         )
         return
     end
 
     forecast_label = "get_rating"
-    constraint_data = Vector{DeviceTimeSeries}()
+    constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label)
         timeseries_data = DeviceTimeSeries(d, x -> PSY.get_rating(x), ts_vector)
@@ -538,7 +538,8 @@ function nodal_expression!(
     system_formulation::Type{<:PM.AbstractActivePowerModel},
 ) where {H <: PSY.HydroGen}
     parameters = model_has_parameters(psi_container)
-    if parameters
+    use_forecast_data = model_uses_forecasts(psi_container)
+    if use_forecast_data
         forecast_label = "get_rating"
         peak_value_function = x -> PSY.get_rating(x)
     else
@@ -636,7 +637,7 @@ function _get_energy_limit(
             ts_vector = ones(time_steps[end])
         end
         energy_limit_data[ix] =
-            DeviceTimeSeries(name, bus_number, energy_capacity, ts_vector, nothing)
+            DeviceTimeSeries(name, bus_number, energy_capacity, ts_vector)
     end
     return energy_limit_data
 end

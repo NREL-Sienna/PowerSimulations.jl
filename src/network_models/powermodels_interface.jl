@@ -105,7 +105,7 @@ function instantiate_nip_expr(pm::PM.AbstractPowerModel)
         end
 
         for i in PM.ids(pm, :dcline)
-            PM.constraint_dcline(pm, i, nw = n)
+            PM.constraint_dcline_power_losses(pm, i, nw = n)
         end
     end
 
