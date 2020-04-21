@@ -6,7 +6,7 @@ function include_parameters(
     expression_name::Symbol,
     multiplier::Float64 = 1.0,
 )
-    @assert !model_has_parameters(psi_container)
+    @assert model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
     ## TODO, replace multiplier
     names = [r.name for r in ts_data]
