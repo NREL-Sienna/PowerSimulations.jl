@@ -42,7 +42,7 @@ function reactivepower_constraints!(
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {R <: PSY.RenewableGen}
-    constraint_data = Vector{DeviceRange}()
+    constraint_data = Vector{DeviceRange}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         name = PSY.get_name(d)
         if isnothing(PSY.get_reactivepowerlimits(d))
@@ -51,7 +51,7 @@ function reactivepower_constraints!(
         else
             lims = PSY.get_reactivepowerlimits(d)
         end
-        push!(constraint_data, DeviceRange(name, lims))
+        constraint_data[ix] = DeviceRange(name, lims)
     end
     device_range(
         psi_container,
@@ -94,14 +94,16 @@ function activepower_constraints!(
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
 
-    ts_data_active, _, constraint_data = get_time_series(
-        psi_container,
-        devices,
-        model,
-        x -> (min = 0.0, max = PSY.get_activepower(x)),
-    )
-
     if !parameters && !use_forecast_data
+        constraint_data = Vector{DeviceRange}(undef, length(devices))
+        for (ix, d) in enumerate(devices)
+            name = PSY.get_name(d)
+            ub = PSY.get_activepower(d)
+            limits = (min = 0.0, max = ub)
+            range_data = DeviceRange(name, limits)
+            add_device_services!(range_data, d, model)
+            constraint_data[ix] = range_data
+        end
         device_range(
             psi_container,
             constraint_data,
@@ -110,19 +112,29 @@ function activepower_constraints!(
         )
         return
     end
+
+    forecast_label = "get_rating"
+    constraint_data = Vector{DeviceTimeSeries}()
+    for (ix, d) in enumerate(devices)
+        ts_vector = get_time_series(psi_container, d, forecast_label)
+        timeseries_data = DeviceTimeSeries(d, x -> PSY.get_rating(x), ts_vector)
+        add_device_services!(timeseries_data, d, model)
+        constraint_data[ix] = timeseries_data
+    end
+
     if parameters
         device_timeseries_param_ub(
             psi_container,
-            ts_data_active,
-            constraint_name(ACTIVE_RANGE, R),
-            UpdateRef{R}(ACTIVE_POWER, "get_rating"),
+            constraint_data,
+            constraint_name(ACTIVE, R),
+            UpdateRef{R}(ACTIVE_POWER, forecast_label),
             variable_name(ACTIVE_POWER, R),
         )
     else
         device_timeseries_ub(
             psi_container,
-            ts_data_active,
-            constraint_name(ACTIVE_RANGE, R),
+            constraint_data,
+            constraint_name(ACTIVE, R),
             variable_name(ACTIVE_POWER, R),
         )
     end
@@ -135,45 +147,41 @@ function nodal_expression!(
     devices::IS.FlattenIteratorWrapper{R},
     system_formulation::Type{<:PM.AbstractPowerModel},
 ) where {R <: PSY.RenewableGen}
+    nodal_expression!(psi_container, devices, PM.AbstractActivePowerModel)
     parameters = model_has_parameters(psi_container)
-    ts_data_active, ts_data_reactive, _ = get_time_series(
-        psi_container,
-        devices,
-        DeviceModel(R, RenewableFullDispatch),
-        x -> (min = 0.0, max = 0.0),
-    )
+    use_forecast_data = model_uses_forecasts(psi_container)
+    if parameters
+        forecast_label = "get_rating"
+        peak_value_function = x -> PSY.get_rating(x) * sin(acos(PSY.get_powerfactor(x)))
+    else
+        forecast_label = "get_rating"
+        peak_value_function = x -> PSY.get_rectivepower(x)
+    end
+    constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
+        ts_vector = get_time_series(psi_container, d, forecast_label)
+        timeseries_data = DeviceTimeSeries(d, peak_value_function, ts_vector)
+        constraint_data[ix] = timeseries_data
+    end
 
     if parameters
         include_parameters(
             psi_container,
-            ts_data_active,
-            UpdateRef{R}(ACTIVE_POWER, "get_rating"),
+            constraint_data,
+            UpdateRef{R}(REACTIVE_POWER, forecast_label),
             :nodal_balance_active,
         )
-        include_parameters(
-            psi_container,
-            ts_data_reactive,
-            UpdateRef{R}(REACTIVE_POWER, "get_reactivepower"),
-            :nodal_balance_reactive,
-        )
         return
-    end
-    for t in model_time_steps(psi_container)
-        for device in ts_data_active
-            add_to_expression!(
-                psi_container.expressions[:nodal_balance_active],
-                device.bus_number,
-                t,
-                device.multiplier * device.timeseries[t],
-            )
-        end
-        for device in ts_data_reactive
-            add_to_expression!(
-                psi_container.expressions[:nodal_balance_reactive],
-                device.bus_number,
-                t,
-                device.multiplier * device.timeseries[t],
-            )
+    else
+        for t in model_time_steps(psi_container)
+            for device in constraint_data
+                add_to_expression!(
+                    psi_container.expressions[:nodal_balance_reactive],
+                    device.bus_number,
+                    t,
+                    device.multiplier * device.timeseries[t],
+                )
+            end
         end
     end
     return
@@ -185,30 +193,38 @@ function nodal_expression!(
     system_formulation::Type{<:PM.AbstractActivePowerModel},
 ) where {R <: PSY.RenewableGen}
     parameters = model_has_parameters(psi_container)
-    ts_data_active, ts_data_reactive, _ = get_time_series(
-        psi_container,
-        devices,
-        DeviceModel(R, RenewableFullDispatch),
-        x -> (min = 0.0, max = 0.0),
-    )
+    if parameters
+        forecast_label = "get_rating"
+        peak_value_function = x -> PSY.get_rating(x) * PSY.get_powerfactor(x)
+    else
+        forecast_label = "get_rating"
+        peak_value_function = x -> PSY.get_activepower(x)
+    end
+    constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
+        ts_vector = get_time_series(psi_container, d, forecast_label)
+        timeseries_data = DeviceTimeSeries(d, peak_value_function, ts_vector)
+        constraint_data[ix] = timeseries_data
+    end
 
     if parameters
         include_parameters(
             psi_container,
-            ts_data_active,
-            UpdateRef{R}(ACTIVE_POWER, "get_rating"),
+            constraint_data,
+            UpdateRef{R}(ACTIVE_POWER, forecast_label),
             :nodal_balance_active,
         )
         return
-    end
-    for t in model_time_steps(psi_container)
-        for device in ts_data_active
-            add_to_expression!(
-                psi_container.expressions[:nodal_balance_active],
-                device.bus_number,
-                t,
-                device.multiplier * device.timeseries[t],
-            )
+    else
+        for t in model_time_steps(psi_container)
+            for device in constraint_data
+                add_to_expression!(
+                    psi_container.expressions[:nodal_balance_active],
+                    device.bus_number,
+                    t,
+                    device.multiplier * device.timeseries[t],
+                )
+            end
         end
     end
     return
