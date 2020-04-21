@@ -154,7 +154,7 @@ function nodal_expression!(
         forecast_label = "get_rating"
         peak_value_function = x -> PSY.get_rating(x) * sin(acos(PSY.get_powerfactor(x)))
     else
-        forecast_label = "get_rating"
+        forecast_label = ""
         peak_value_function = x -> PSY.get_reactivepower(x)
     end
     constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))
@@ -198,7 +198,7 @@ function nodal_expression!(
         forecast_label = "get_rating"
         peak_value_function = x -> PSY.get_rating(x) * PSY.get_powerfactor(x)
     else
-        forecast_label = "get_rating"
+        forecast_label = ""
         peak_value_function = x -> PSY.get_activepower(x)
     end
     constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))

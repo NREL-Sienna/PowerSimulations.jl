@@ -102,7 +102,7 @@ function activepower_constraints!(
     end
 
     forecast_label = "get_maxactivepower"
-    constraint_data = Vector{DeviceTimeSeries}()
+    constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label)
         timeseries_data = DeviceTimeSeries(d, x -> PSY.get_maxactivepower(x), ts_vector)
@@ -160,7 +160,7 @@ function activepower_constraints!(
     end
 
     forecast_label = "get_maxactivepower"
-    constraint_data = Vector{DeviceTimeSeries}()
+    constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label)
         timeseries_data = DeviceTimeSeries(d, x -> PSY.get_maxactivepower(x), ts_vector)
@@ -199,11 +199,11 @@ function nodal_expression!(
     nodal_expression!(psi_container, devices, PM.AbstractActivePowerModel)
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
-    if parameters
-        forecast_label = "get_maxreactivepower"
+    if use_forecast_data
+        forecast_label = "get_maxactivepower"
         peak_value_function = x -> PSY.get_maxreactivepower(x)
     else
-        forecast_label = "get_reactivepower"
+        forecast_label = ""
         peak_value_function = x -> PSY.get_reactivepower(x)
     end
     constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))
@@ -247,7 +247,7 @@ function nodal_expression!(
         forecast_label = "get_maxactivepower"
         peak_value_function = x -> PSY.get_maxactivepower(x)
     else
-        forecast_label = "get_activepower"
+        forecast_label = ""
         peak_value_function = x -> PSY.get_activepower(x)
     end
     constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))
