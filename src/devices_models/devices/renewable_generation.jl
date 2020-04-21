@@ -114,7 +114,7 @@ function activepower_constraints!(
     end
 
     forecast_label = "get_rating"
-    constraint_data = Vector{DeviceTimeSeries}()
+    constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label)
         timeseries_data = DeviceTimeSeries(d, x -> PSY.get_rating(x), ts_vector)
@@ -150,7 +150,7 @@ function nodal_expression!(
     nodal_expression!(psi_container, devices, PM.AbstractActivePowerModel)
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
-    if parameters
+    if use_forecast_data
         forecast_label = "get_rating"
         peak_value_function = x -> PSY.get_rating(x) * sin(acos(PSY.get_powerfactor(x)))
     else
@@ -193,7 +193,8 @@ function nodal_expression!(
     system_formulation::Type{<:PM.AbstractActivePowerModel},
 ) where {R <: PSY.RenewableGen}
     parameters = model_has_parameters(psi_container)
-    if parameters
+    use_forecast_data = model_uses_forecasts(psi_container)
+    if use_forecast_data
         forecast_label = "get_rating"
         peak_value_function = x -> PSY.get_rating(x) * PSY.get_powerfactor(x)
     else
