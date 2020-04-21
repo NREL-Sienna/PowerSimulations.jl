@@ -222,7 +222,7 @@ end
 function get_stage_horizon(s::SimulationSequence, stage::String)
     horizon = get(s.horizons, stage, nothing)
     isnothing(horizon) &&
-    throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
+        throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
     return horizon
 end
 
@@ -231,7 +231,7 @@ get_stage_interval(s::SimulationSequence, stage::String) = s.intervals[stage][1]
 function get_stage_name(s::SimulationSequence, stage::Stage)
     name = get(s.order, get_number(stage), nothing)
     isnothing(name) &&
-    throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
+        throw(ArgumentError("Stage $(stage.internal.number) not present in the simulation"))
     return name
 end
 
