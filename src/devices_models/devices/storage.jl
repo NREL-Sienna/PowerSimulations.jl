@@ -78,8 +78,8 @@ function active_power_constraints!(
         name = PSY.get_name(d)
         in_lims = PSY.get_inputactivepowerlimits(d)
         out_lims = PSY.get_outputactivepowerlimits(d)
-        push!(constraint_data_in, DeviceRange(name, in_lims)) #_device_services!(DeviceRange(name, in_lims), d, model)
-        push!(constraint_data_out, DeviceRange(name, out_lims)) #_device_services!(DeviceRange(name, out_lims), d, model)
+        push!(constraint_data_in, DeviceRange(name, in_lims)) #add_device_services!(DeviceRange(name, in_lims), d, model)
+        push!(constraint_data_out, DeviceRange(name, out_lims)) #add_device_services!(DeviceRange(name, out_lims), d, model)
     end
 
     device_range(
@@ -111,8 +111,8 @@ function active_power_constraints!(
         name = PSY.get_name(d)
         in_lims = PSY.get_inputactivepowerlimits(d)
         out_lims = PSY.get_outputactivepowerlimits(d)
-        push!(constraint_data_in, DeviceRange(name, in_lims)) #_device_services!(DeviceRange(name, in_lims), d, model)
-        push!(constraint_data_out, DeviceRange(name, out_lims)) #_device_services!(DeviceRange(name, out_lims), d, model)
+        push!(constraint_data_in, DeviceRange(name, in_lims)) #add_device_services!(DeviceRange(name, in_lims), d, model)
+        push!(constraint_data_out, DeviceRange(name, out_lims)) #add_device_services!(DeviceRange(name, out_lims), d, model)
 
     end
     reserve_device_semicontinuousrange(
@@ -148,7 +148,7 @@ function reactive_power_constraints!(
         name = PSY.get_name(d)
         limits = PSY.get_reactivepowerlimits(d)
         range_data = DeviceRange(name, limits)
-        #_device_services!(range_data, d, model)
+        #add_device_services!(range_data, d, model)
         # Uncomment when we implement reactive power services
         push!(constraint_data, range_data)
     end
@@ -186,7 +186,7 @@ function energy_capacity_constraints!(
         name = PSY.get_name(d)
         limits = PSY.get_capacity(d)
         range_data = DeviceRange(name, limits)
-        #_device_services!(range_data, d, model)
+        #add_device_services!(range_data, d, model)
         # Uncomment when we implement reactive power services
         push!(constraint_data, range_data)
     end
