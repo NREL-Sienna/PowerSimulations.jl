@@ -143,7 +143,7 @@ function reactive_power_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
-    constraint_data = Vector{DeviceRange}()
+    constraint_data = Vector{DeviceRange}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         name = PSY.get_name(d)
         limits = PSY.get_reactivepowerlimits(d)
@@ -181,7 +181,7 @@ function energy_capacity_constraints!(
     ::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {St <: PSY.Storage, D <: AbstractStorageFormulation, S <: PM.AbstractPowerModel}
-    constraint_data = Vector{DeviceRange}()
+    constraint_data = Vector{DeviceRange}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         name = PSY.get_name(d)
         limits = PSY.get_capacity(d)
