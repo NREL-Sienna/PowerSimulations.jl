@@ -155,7 +155,7 @@ function nodal_expression!(
         peak_value_function = x -> PSY.get_rating(x) * sin(acos(PSY.get_powerfactor(x)))
     else
         forecast_label = "get_rating"
-        peak_value_function = x -> PSY.get_rectivepower(x)
+        peak_value_function = x -> PSY.get_reactivepower(x)
     end
     constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))
     for (ix, d) in enumerate(devices)
