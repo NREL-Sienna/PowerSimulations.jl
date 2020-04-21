@@ -144,6 +144,6 @@ function construct_device!(
         @warn("The Formulation $(D) only applies to FormulationControllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad")
     end
 
-    construct_device!(psi_container, sys, DeviceModel(L, StaticPowerLoad), S; kwargs...)
+    construct_device!(psi_container, sys, DeviceModel(L, StaticPowerLoad), S)
     return
 end
