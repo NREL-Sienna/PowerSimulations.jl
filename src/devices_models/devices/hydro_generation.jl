@@ -300,45 +300,6 @@ function activepower_constraints!(
 end
 =#
 ######################## Inflow constraints ############################
-function _get_inflow_time_series(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.HydroEnergyReservoir},
-    model::DeviceModel{PSY.HydroEnergyReservoir, <:AbstractHydroFormulation},
-    get_constraint_values::Function = x -> (min = 0.0, max = 0.0),
-)
-    initial_time = model_initial_time(psi_container)
-    @debug initial_time
-    use_forecast_data = model_uses_forecasts(psi_container)
-    parameters = model_has_parameters(psi_container)
-    time_steps = model_time_steps(psi_container)
-
-    constraint_data = Vector{DeviceRange}(undef, length(devices))
-    inflow_timeseries = Vector{DeviceTimeSeries}(undef, length(devices))
-
-    for (ix, device) in enumerate(devices)
-        bus_number = PSY.get_number(PSY.get_bus(device))
-        name = PSY.get_name(device)
-        inflow_energy = PSY.get_inflow(device)
-        if use_forecast_data
-            ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
-                PSY.Deterministic,
-                device,
-                initial_time,
-                "get_inflow",
-                length(time_steps),
-            )))
-        else
-            ts_vector = ones(time_steps[end])
-        end
-        range_data = DeviceRange(name, get_constraint_values(device))
-        _device_spillage!(range_data, device, model)
-        constraint_data[ix] = range_data
-        inflow_timeseries[ix] =
-            DeviceTimeSeries(name, bus_number, inflow_energy, ts_vector, range_data)
-    end
-    return inflow_timeseries, constraint_data
-end
-
 #=
 # TODO: Determine if this is useful for ROR formulation ?
 function inflow_constraints!(
@@ -402,17 +363,6 @@ end
 function energy_balance_constraint!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {H <: PSY.HydroGen}
-
-    return
-end
-
-function energy_balance_constraint!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
     model::DeviceModel{H, HydroDispatchReservoirStorage},
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
@@ -425,30 +375,33 @@ function energy_balance_constraint!(
         throw(IS.DataFormatError("Initial Conditions for $(H) Energy Constraints not in the model"))
     end
 
-    ts_data_inflow, constraint_data = _get_inflow_time_series(
-        psi_container,
-        devices,
-        model,
-        x -> (min = 0.0, max = PSY.get_inflow(x)),
-    )
+    forecast_label = "get_inflow"
+    constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
+        ts_vector = get_time_series(psi_container, d, forecast_label)
+        timeseries_data = DeviceTimeSeries(d, x -> PSY.get_rating(x), ts_vector)
+        add_device_services!(timeseries_data, d, model)
+        constraint_data[ix] = timeseries_data
+    end
+
     if parameters
-        reservoir_energy_balance_param(
+        energy_balance_external_input_param(
             psi_container,
             get_initial_conditions(psi_container, key),
-            ts_data_inflow,
+            constraint_data,
             constraint_name(ENERGY_CAPACITY, H),
             (
                 variable_name(SPILLAGE, H),
                 variable_name(ACTIVE_POWER, H),
                 variable_name(ENERGY, H),
             ),
-            UpdateRef{H}(INFLOW, "get_inflow"),
+            UpdateRef{H}(INFLOW, forecast_label),
         )
     else
-        reservoir_energy_balance(
+        energy_balance_external_input(
             psi_container,
             get_initial_conditions(psi_container, key),
-            ts_data_inflow,
+            constraint_data,
             constraint_name(ENERGY_CAPACITY, H),
             (
                 variable_name(SPILLAGE, H),
@@ -659,19 +612,28 @@ function energy_limit_constraints!(
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {H <: PSY.HydroGen}
-    energy_limit_data = _get_energy_limit(psi_container, devices)
+
+    forecast_label = "get_storage_capacity"
+    constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
+        ts_vector = get_time_series(psi_container, d, forecast_label)
+        timeseries_data = DeviceTimeSeries(d, x -> PSY.get_rating(x), ts_vector)
+        add_device_services!(timeseries_data, d, model)
+        constraint_data[ix] = timeseries_data
+    end
+
     if model_has_parameters(psi_container)
         device_energy_limit_param_ub(
             psi_container,
-            energy_limit_data,
+            constraint_data,
             constraint_name(ENERGY_LIMIT, H),
-            UpdateRef{H}(ENERGY_BUDGET, "get_storage_capacity"),
+            UpdateRef{H}(ENERGY_BUDGET, forecast_label),
             variable_name(ACTIVE_POWER, H),
         )
     else
         device_energy_limit_ub(
             psi_container,
-            energy_limit_data,
+            constraint_data,
             constraint_name(ENERGY_LIMIT),
             variable_name(ACTIVE_POWER, H),
         )
@@ -728,23 +690,3 @@ function device_energy_limit_ub(
 
     return
 end
-
-function _device_spillage!(
-    range_data::DeviceRange,
-    device::H,
-    model::DeviceModel{H, <:AbstractHydroFormulation},
-) where {H <: PSY.HydroGen}
-    return
-end
-
-#=
-function _device_spillage!(
-    range_data::DeviceRange,
-    device::H,
-    model::DeviceModel{H,HydroDispatchReservoirStorage},
-) where {H<:PSY.HydroGen}
-
-    push!(range_data.additional_terms_ub, Symbol("Sp_$H"))
-    return
-end
-=#
