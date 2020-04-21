@@ -55,12 +55,7 @@ function add_to_expression!(
     return
 end
 
-function add_to_expression!(
-    expression_array::T,
-    ix::Int,
-    jx::Int,
-    value::Float64,
-) where {T}
+function add_to_expression!(expression_array::T, ix::Int, jx::Int, value::Float64) where {T}
     if isassigned(expression_array, ix, jx)
         expression_array[ix, jx].constant += value
     else
