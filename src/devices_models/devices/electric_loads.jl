@@ -242,7 +242,8 @@ function nodal_expression!(
     ::Type{<:PM.AbstractActivePowerModel},
 ) where {L <: PSY.ElectricLoad}
     parameters = model_has_parameters(psi_container)
-    if parameters
+    use_forecast_data = model_uses_forecasts(psi_container)
+    if use_forecast_data
         forecast_label = "get_maxactivepower"
         peak_value_function = x -> PSY.get_maxactivepower(x)
     else
