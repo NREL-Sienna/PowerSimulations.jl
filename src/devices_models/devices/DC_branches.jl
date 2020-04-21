@@ -27,7 +27,7 @@ function flow_variables!(
         time_steps,
     )
     assign_variable!(psi_container, FLOW_ACTIVE_POWER, B, container)
-    for d in devices
+    for (ix, d) in enumerate(devices)
         bus_fr = PSY.get_number(PSY.get_arc(d).from)
         bus_to = PSY.get_number(PSY.get_arc(d).to)
         for t in time_steps
