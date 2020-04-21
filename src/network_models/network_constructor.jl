@@ -7,7 +7,7 @@ function construct_network!(
     bus_count = length(buses)
 
     get_slack_variables(psi_container.settings) &&
-    add_slacks!(psi_container, CopperPlatePowerModel)
+        add_slacks!(psi_container, CopperPlatePowerModel)
     copper_plate(psi_container, :nodal_balance_active, bus_count)
 
     return
@@ -27,7 +27,7 @@ function construct_network!(
     end
 
     get_slack_variables(psi_container.settings) &&
-    add_slacks!(psi_container, StandardPTDFModel)
+        add_slacks!(psi_container, StandardPTDFModel)
 
     ptdf_networkflow(psi_container, ac_branches, buses, :nodal_balance_active, ptdf)
 

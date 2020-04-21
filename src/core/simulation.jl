@@ -239,7 +239,7 @@ end
 function get_cache(s::Simulation, key::CacheKey)
     c = get(s.internal.simulation_cache, key, nothing)
     isnothing(c) &&
-    throw(ArgumentError("Cache with key $(key) not present in the simulation"))
+        throw(ArgumentError("Cache with key $(key) not present in the simulation"))
     return c
 end
 
@@ -362,7 +362,7 @@ function _attach_feedforward!(sim::Simulation, stage_name::String)
         field_dict = getfield(stage.template, key[2])
         device_model = get(field_dict, key[3], nothing)
         isnothing(device_model) &&
-        throw(IS.ConflictingInputsError("Device model $(key[3]) not found in stage $(stage_name)"))
+            throw(IS.ConflictingInputsError("Device model $(key[3]) not found in stage $(stage_name)"))
         device_model.feedforward = ff
     end
     return
@@ -437,7 +437,7 @@ function _build_stage_paths!(sim::Simulation, system_to_file::Bool)
             joinpath(stage_path, "$(stage_name)_optimization_model.json"),
         )
         system_to_file &&
-        PSY.to_json(stage.sys, joinpath(stage_path, "$(stage_name)_sys_data.json"))
+            PSY.to_json(stage.sys, joinpath(stage_path, "$(stage_name)_sys_data.json"))
     end
 end
 
@@ -790,7 +790,7 @@ function _execute!(sim::Simulation; kwargs...)
     end
     system_to_file = get(kwargs, :system_to_file, true)
     isnothing(sim.internal) &&
-    error("Simulation not built, build the simulation to execute")
+        error("Simulation not built, build the simulation to execute")
     TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
         _build_stage_paths!(sim, system_to_file)
