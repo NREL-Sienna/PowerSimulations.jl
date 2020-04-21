@@ -31,11 +31,6 @@ function device_timeseries_ub(
     variable = get_variable(psi_container, var_name)
     ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
-    add_lower_bound = !all(isempty.((r.range.additional_terms_lb for r in ts_data)))
-    if add_lower_bound
-        lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
-        con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
-    end
 
     for data in ts_data
         for t in time_steps
@@ -50,21 +45,8 @@ function device_timeseries_ub(
                 psi_container.JuMPmodel,
                 expression_ub <= data.multiplier * data.timeseries[t]
             )
-            if add_lower_bound
-                expression_lb = JuMP.AffExpr(0.0, variable[data.name, t] => 1.0)
-                for val in data.range.additional_terms_lb
-                    JuMP.add_to_expression!(
-                        expression_lb,
-                        get_variable(psi_container, val)[data.name, t],
-                        -1.0,
-                    )
-                end
-                con_lb[data.name, t] =
-                    JuMP.@constraint(psi_container.JuMPmodel, expression_lb >= 0.0)
-            end
         end
     end
-
     return
 end
 
@@ -165,11 +147,6 @@ function device_timeseries_param_ub(
     container = add_param_container!(psi_container, param_reference, names, time_steps)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
-    add_lower_bound = !all(isempty.((r.range.additional_terms_lb for r in ts_data)))
-    if add_lower_bound
-        lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
-        con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
-    end
 
     for data in ts_data
         for t in time_steps
@@ -187,18 +164,6 @@ function device_timeseries_param_ub(
                 expression_ub <= data.multiplier * param[data.name, t]
             )
             multiplier[data.name, t] = data.multiplier
-            if add_lower_bound
-                expression_lb = JuMP.AffExpr(0.0, variable[data.name, t] => 1.0)
-                for val in data.range.additional_terms_lb
-                    JuMP.add_to_expression!(
-                        expression_lb,
-                        get_variable(psi_container, val)[data.name, t],
-                        -1.0,
-                    )
-                end
-                con_lb[data.name, t] =
-                    JuMP.@constraint(psi_container.JuMPmodel, expression_lb >= 0.0)
-            end
         end
     end
 
@@ -303,16 +268,12 @@ function device_timeseries_ub_bin(
     var_name::Symbol,
     binvar_name::Symbol,
 )
-
     time_steps = model_time_steps(psi_container)
     ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
-
     varcts = get_variable(psi_container, var_name)
     varbin = get_variable(psi_container, binvar_name)
-
     names = (d.name for d in ts_data)
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
-
     for data in ts_data
         for t in time_steps
             forecast = data.timeseries[t]
@@ -330,9 +291,7 @@ function device_timeseries_ub_bin(
             )
         end
     end
-
     return
-
 end
 
 @doc raw"""
@@ -413,6 +372,5 @@ function device_timeseries_ub_bigM(
             multiplier[data.name, t] = data.multiplier
         end
     end
-
     return
 end
