@@ -462,7 +462,6 @@ for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_bat
     add_forecast!(c_sys5_bat, serv, Deterministic("get_requirement", Reserve_ts[t]))
 end
 
-
 reserve_re = reserve5_re(get_components(RenewableDispatch, c_sys5_re))
 add_service!(c_sys5_re, reserve_re[1], get_components(RenewableDispatch, c_sys5_re))
 add_service!(
