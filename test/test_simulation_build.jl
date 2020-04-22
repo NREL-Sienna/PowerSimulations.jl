@@ -364,6 +364,7 @@ try
     test_sequence_build(g_test_path)
 finally
     @info("removing test files")
+    GC.gc()
     rm(g_test_path, force = true, recursive = true)
 end
 
