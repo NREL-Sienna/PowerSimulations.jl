@@ -723,5 +723,5 @@ try
     test_load_simulation(g_test_path)
 finally
     @info("removing test files")
-    rm(g_test_path, recursive = true)
+    rm(g_test_path, force = true, recursive = true)
 end
