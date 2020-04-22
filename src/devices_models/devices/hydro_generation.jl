@@ -152,8 +152,6 @@ function reactivepower_constraints!(
         limits = PSY.get_reactivepowerlimits(d)
         name = PSY.get_name(d)
         range_data = DeviceRange(name, limits)
-        #add_device_services!(range_data, d, model)
-        # Uncomment when we implement reactive power services
         constraint_data[ix] = range_data
     end
 
