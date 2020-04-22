@@ -556,43 +556,6 @@ function cost_function(
 end
 
 ##################################### Water/Energy Limit Constraint ############################
-function _get_energy_limit(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-) where {H <: PSY.HydroGen}
-    initial_time = model_initial_time(psi_container)
-    @debug initial_time
-    use_forecast_data = model_uses_forecasts(psi_container)
-    parameters = model_has_parameters(psi_container)
-    time_steps = model_time_steps(psi_container)
-    device_total = length(devices)
-    energy_limit_data = Vector{DeviceTimeSeries}(undef, length(devices))
-
-    for (ix, device) in enumerate(devices)
-        bus_number = PSY.get_number(PSY.get_bus(device))
-        name = PSY.get_name(device)
-        # This is where you would get the water/energy storage capacity
-        # which is then multiplied by the forecast value to get you the energy limit
-        if use_forecast_data
-            energy_capacity = PSY.get_storage_capacity(device)
-            forecast = PSY.get_forecast(
-                PSY.Deterministic,
-                device,
-                initial_time,
-                "get_storage_capacity",
-                length(time_steps),
-            )
-            ts_vector = TS.values(PSY.get_data(forecast))
-        else
-            energy_capacity = PSY.get_activepower(device)
-            ts_vector = ones(time_steps[end])
-        end
-        energy_limit_data[ix] =
-            DeviceTimeSeries(name, bus_number, energy_capacity, ts_vector)
-    end
-    return energy_limit_data
-end
-
 function energy_limit_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
