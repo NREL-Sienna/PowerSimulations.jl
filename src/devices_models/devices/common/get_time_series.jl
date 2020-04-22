@@ -7,8 +7,8 @@ function get_time_series(
     @debug initial_time
     use_forecast_data = model_uses_forecasts(psi_container)
     time_steps = model_time_steps(psi_container)
-    @debug "device $(PSY.get_name(device)) $(PSY.has_forecast(device)) forecast"
-    if use_forecast_data & PSY.has_forecast(device)
+    @debug "device $(PSY.get_name(device)) $(PSY.has_forecasts(device)) forecast"
+    if use_forecast_data & PSY.has_forecasts(device)
         forecast = PSY.get_forecast(
             PSY.Deterministic,
             device,
