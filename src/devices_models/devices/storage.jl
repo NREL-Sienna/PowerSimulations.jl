@@ -80,7 +80,7 @@ function active_power_constraints!(
         out_lims = PSY.get_outputactivepowerlimits(d)
         constraint_data_in[ix] = DeviceRange(name, in_lims)
         constraint_data_out[ix] = DeviceRange(name, out_lims)
-        add_device_services!(constraint_data_out[ix], constraint_data_out[ix], d, model)
+        add_device_services!(constraint_data_in[ix], constraint_data_out[ix], d, model)
     end
 
     device_range(
@@ -113,9 +113,8 @@ function active_power_constraints!(
         in_lims = PSY.get_inputactivepowerlimits(d)
         out_lims = PSY.get_outputactivepowerlimits(d)
         constraint_data_in[ix] = DeviceRange(name, in_lims)
-        add_device_services!(constraint_data_in, d, model)
         constraint_data_out[ix] = DeviceRange(name, out_lims)
-        add_device_services!(constraint_data_out, d, model)
+        add_device_services!(constraint_data_in[ix], constraint_data_out[ix], d, model)
     end
 
     reserve_device_semicontinuousrange(
