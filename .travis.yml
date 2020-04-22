@@ -26,8 +26,8 @@ jobs:
   allow_failures:
     - julia: nightly
     - os:
-      - osx
-      - windows
+        - osx
+        - windows
 after_success: julia -e '
   using Pkg;
   Pkg.add("Coverage");
