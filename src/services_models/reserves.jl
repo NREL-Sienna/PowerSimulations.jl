@@ -156,9 +156,25 @@ function add_device_services!(
         if PSY.has_service(device, service_model.service_type)
             services =
                 [s for s in PSY.get_services(device) if isa(s, service_model.service_type)]
-            @show service_model.service_type
-                @assert !isempty(services)
-            include_service!(constraint_data, services, service_model)
+            @assert !isempty(services)
+            if service_model.service_type <: PSY.Reserve{PSY.ReserveDown}
+                @show "here Down"
+                for (ix, service) in enumerate(services)
+                    push!(
+                    constraint_data_in.additional_terms_ub,
+                    constraint_name(PSY.get_name(service), service_model.service_type),
+                )
+                end
+            end
+            if service_model.service_type <: PSY.Reserve{PSY.ReserveUp}
+                @show "here Up"
+                for (ix, service) in enumerate(services)
+                    push!(
+                    constraint_data_out.additional_terms_ub,
+                    constraint_name(PSY.get_name(service), service_model.service_type),
+                )
+                end
+            end
         end
     end
     return
