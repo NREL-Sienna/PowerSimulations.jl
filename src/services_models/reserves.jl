@@ -150,7 +150,7 @@ function add_device_services!(
     constraint_data_in::RangeConstraintsData,
     constraint_data_out::RangeConstraintsData,
     device::D,
-    model::DeviceModel{D, <: AbstractStorageFormulation},
+    model::DeviceModel{D, <:AbstractStorageFormulation},
 ) where {D <: PSY.Storage}
     for service_model in get_services(model)
         if PSY.has_service(device, service_model.service_type)
@@ -158,21 +158,19 @@ function add_device_services!(
                 [s for s in PSY.get_services(device) if isa(s, service_model.service_type)]
             @assert !isempty(services)
             if service_model.service_type <: PSY.Reserve{PSY.ReserveDown}
-                @show "here Down"
                 for (ix, service) in enumerate(services)
                     push!(
-                    constraint_data_in.additional_terms_ub,
-                    constraint_name(PSY.get_name(service), service_model.service_type),
-                )
+                        constraint_data_in.additional_terms_ub,
+                        constraint_name(PSY.get_name(service), service_model.service_type),
+                    )
                 end
             end
             if service_model.service_type <: PSY.Reserve{PSY.ReserveUp}
-                @show "here Up"
                 for (ix, service) in enumerate(services)
                     push!(
-                    constraint_data_out.additional_terms_ub,
-                    constraint_name(PSY.get_name(service), service_model.service_type),
-                )
+                        constraint_data_out.additional_terms_ub,
+                        constraint_name(PSY.get_name(service), service_model.service_type),
+                    )
                 end
             end
         end

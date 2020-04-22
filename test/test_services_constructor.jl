@@ -70,7 +70,7 @@ end
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(RenewableDispatch, RenewableFullDispatch),
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
-        :Storage => DeviceModel(GenericBattery, BookKeeping)
+        :Storage => DeviceModel(GenericBattery, BookKeeping),
     )
     branches = Dict{Symbol, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
@@ -86,7 +86,7 @@ end
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_bat; use_parameters = p)
-        moi_tests(op_problem, p, 168, 0, 72, 120, 24, false)
+        moi_tests(op_problem, p, 120, 0, 72, 120, 48, false)
     end
 end
 

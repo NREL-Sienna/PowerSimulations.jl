@@ -1,3 +1,37 @@
+function lazy_lb(
+    psi_container::PSIContainer,
+    ts_data::Vector{DeviceTimeSeries},
+    cons_name::Symbol,
+    var_name::Symbol,
+)
+    time_steps = model_time_steps(psi_container)
+    names = (d.name for d in ts_data)
+    variable = get_variable(psi_container, var_name)
+    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
+    con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
+
+    for data in ts_data
+        if data.range.limits.min > -Inf && !isempty(data.range.additional_terms_lb)
+            con_lb[data.name, :].data .= JuMP.AffExpr(0.0)
+            continue
+        end
+        for t in time_steps
+            expression_lb = JuMP.AffExpr(0.0, variable[data.name, t] => 1.0)
+            for val in data.range.additional_terms_lb
+                JuMP.add_to_expression!(
+                    expression_lb,
+                    get_variable(psi_container, val)[data.name, t],
+                    -1.0,
+                )
+            end
+            lb_val = max(0.0, data.range.limits.min)
+            con_lb[data.name, t] =
+                JuMP.@constraint(psi_container.JuMPmodel, expression_lb >= lb_val)
+        end
+    end
+    return
+end
+
 @doc raw"""
     device_timeseries_ub(psi_container::PSIContainer,
                      ts_data::Vector{DeviceTimeSeries},
@@ -31,6 +65,7 @@ function device_timeseries_ub(
     variable = get_variable(psi_container, var_name)
     ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
+    lazy_add_lb = false
 
     for data in ts_data
         for t in time_steps
@@ -46,7 +81,12 @@ function device_timeseries_ub(
                 expression_ub <= data.multiplier * data.timeseries[t]
             )
         end
+        if data.range.limits.min > -Inf || !isempty(data.range.additional_terms_lb)
+            lazy_add_lb = true
+        end
     end
+    @debug lazy_add_lb
+    lazy_add_lb && lazy_lb(psi_container, ts_data, cons_name, var_name)
     return
 end
 
@@ -102,11 +142,9 @@ function device_timeseries_lb(
             )
         end
     end
-
     return
 end
 
-#NOTE: there is a floating, unnamed lower bound constraint in this function. This may need to be changed.
 @doc raw"""
     device_timeseries_param_ub(psi_container::PSIContainer,
                                     ts_data::Vector{DeviceTimeSeries},
@@ -147,6 +185,7 @@ function device_timeseries_param_ub(
     container = add_param_container!(psi_container, param_reference, names, time_steps)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
+    lazy_add_lb = false
 
     for data in ts_data
         for t in time_steps
@@ -165,8 +204,12 @@ function device_timeseries_param_ub(
             )
             multiplier[data.name, t] = data.multiplier
         end
+        if data.range.limits.min > -Inf || !isempty(data.range.additional_terms_lb)
+            lazy_add_lb = true
+        end
     end
-
+    @debug lazy_add_lb
+    lazy_add_lb && lazy_lb(psi_container, ts_data, cons_name, var_name)
     return
 end
 
