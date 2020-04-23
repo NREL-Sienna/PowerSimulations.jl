@@ -202,6 +202,8 @@ end
 
 get_transmission_ref(op_problem::OperationsProblem) = op_problem.template.transmission
 get_devices_ref(op_problem::OperationsProblem) = op_problem.template.devices
+get_branches_ref(op_problem::OperationsProblem) = op_problem.template.branches
+get_services_ref(op_problem::OperationsProblem) = op_problem.template.services
 get_system(op_problem::OperationsProblem) = op_problem.sys
 get_psi_container(op_problem::OperationsProblem) = op_problem.psi_container
 get_base_power(op_problem::OperationsProblem) = op_problem.sys.basepower
@@ -305,8 +307,17 @@ function construct_device!(
     if haskey(op_problem.template.devices, name)
         throw(IS.ConflictingInputsError("Device with model name $(name) already exists in the Opertaion Model"))
     end
-    devices_ref = get_devices_ref(op_problem)
-    devices_ref[name] = device_model
+    if device_model.device_type <: PSY.Branch
+        components_ref = get_branches_ref(op_problem)
+    elseif device_model.device_type <: PSY.StaticInjection
+        components_ref = get_devices_ref(op_problem)
+    elseif device_model.device_type <: PSY.Service
+        components_ref = get_services_ref(op_problem)
+    else
+        throw(IS.DataFormatError("Cannot construct device of type $(device_model.device_type)"))
+    end
+    components_ref[name] = device_model
+
     construct_device!(
         op_problem.psi_container,
         get_system(op_problem),
