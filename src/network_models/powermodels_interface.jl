@@ -7,29 +7,18 @@
 # Model Definitions
 
 ""
-function instantiate_nip_model(
-    data::Dict{String, Any},
-    model_constructor;
-    multinetwork = true,
-    kwargs...,
-)
-    return PM.instantiate_model(
-        data,
-        model_constructor,
-        build_nip;
-        multinetwork = multinetwork,
-        kwargs...,
-    )
+function instantiate_nip_model(data::Dict{String, Any}, model_constructor; kwargs...)
+    return PM.instantiate_model(data, model_constructor, build_nip; kwargs...)
 end
 
 ""
 function build_nip(pm::PM.AbstractPowerModel)
     for (n, network) in PM.nws(pm)
         @assert !PM.ismulticonductor(pm, nw = n)
-        PM.variable_voltage(pm, nw = n)
+        PM.variable_bus_voltage(pm, nw = n)
         variable_net_injection(pm, nw = n)
-        PM.variable_branch_flow(pm, nw = n, bounded = false)
-        PM.variable_dcline_flow(pm, nw = n)
+        PM.variable_branch_power(pm, nw = n, bounded = false)
+        PM.variable_dcline_power(pm, nw = n)
 
         PM.constraint_model_voltage(pm, nw = n)
 
@@ -52,7 +41,7 @@ function build_nip(pm::PM.AbstractPowerModel)
         end
 
         for i in PM.ids(pm, :dcline)
-            PM.constraint_dcline(pm, i, nw = n)
+            PM.constraint_dcline_power_losses(pm, i, nw = n)
         end
     end
 
@@ -61,28 +50,17 @@ function build_nip(pm::PM.AbstractPowerModel)
 end
 
 ""
-function instantiate_nip_expr_model(
-    data::Dict{String, Any},
-    model_constructor;
-    multinetwork = true,
-    kwargs...,
-)
-    return PM.instantiate_model(
-        data,
-        model_constructor,
-        instantiate_nip_expr;
-        multinetwork = multinetwork,
-        kwargs...,
-    )
+function instantiate_nip_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
+    return PM.instantiate_model(data, model_constructor, instantiate_nip_expr; kwargs...)
 end
 
 ""
 function instantiate_nip_expr(pm::PM.AbstractPowerModel)
     for (n, network) in PM.nws(pm)
         @assert !PM.ismulticonductor(pm, nw = n)
-        PM.variable_voltage(pm, nw = n)
-        PM.variable_branch_flow(pm, nw = n; bounded = false)
-        PM.variable_dcline_flow(pm, nw = n)
+        PM.variable_bus_voltage(pm, nw = n)
+        PM.variable_branch_power(pm, nw = n; bounded = false)
+        PM.variable_dcline_power(pm, nw = n)
 
         PM.constraint_model_voltage(pm, nw = n)
 
@@ -105,7 +83,7 @@ function instantiate_nip_expr(pm::PM.AbstractPowerModel)
         end
 
         for i in PM.ids(pm, :dcline)
-            PM.constraint_dcline(pm, i, nw = n)
+            PM.constraint_dcline_power_losses(pm, i, nw = n)
         end
     end
 
