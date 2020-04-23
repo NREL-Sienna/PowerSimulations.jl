@@ -1,5 +1,6 @@
 
 const SIMULATION_SERIALIZATION_FILENAME = "simulation.bin"
+const SIMULATION_LOG_FILENAME = "simulation.log"
 const REQUIRED_RECORDERS = [:simulation_status]
 
 mutable struct SimulationInternal
@@ -17,7 +18,8 @@ mutable struct SimulationInternal
     compiled_status::Bool
     simulation_cache::Dict{<:CacheKey, AbstractCache}
     recorders::Vector{Symbol}
-    logger::IS.MultiLogger
+    console_level::Base.CoreLogging.LogLevel
+    file_level::Base.CoreLogging.LogLevel
 end
 
 function SimulationInternal(
@@ -58,18 +60,6 @@ function SimulationInternal(
         mkpath(path)
     end
 
-    logger = IS.configure_logging(
-        console = true,
-        console_stream = stderr,
-        console_level = console_level,
-        file = true,
-        filename = joinpath(logs_dir, "simulation.log"),
-        file_level = file_level,
-        file_mode = "w+",
-        tracker = nothing,
-        set_global = false,
-    )
-
     unique_recorders = Set(REQUIRED_RECORDERS)
     foreach(x -> push!(unique_recorders, x), recorders)
 
@@ -89,8 +79,35 @@ function SimulationInternal(
         false,
         Dict{CacheKey, AbstractCache}(),
         collect(unique_recorders),
-        logger,
+        console_level,
+        file_level,
     )
+end
+
+function configure_logging(internal::SimulationInternal, file_mode)
+    return IS.configure_logging(
+        console = true,
+        console_stream = stderr,
+        console_level = internal.console_level,
+        file = true,
+        filename = joinpath(internal.logs_dir, SIMULATION_LOG_FILENAME),
+        file_level = internal.file_level,
+        file_mode = file_mode,
+        tracker = nothing,
+        set_global = false,
+    )
+end
+
+function register_recorders!(internal::SimulationInternal, file_mode)
+    for name in internal.recorders
+        IS.register_recorder!(name; mode = file_mode, directory = internal.recorder_dir)
+    end
+end
+
+function unregister_recorders!(internal::SimulationInternal)
+    for name in internal.recorders
+        IS.unregister_recorder!(name)
+    end
 end
 
 function _set_internal_caches(
@@ -489,18 +506,17 @@ function build!(
             file_level = file_level,
         )
 
-        # This will guarantee that all log messages produced during build! are flushed
-        # to the file. Leave the logger open for execute!().
+        file_mode = "w"
+        logger = configure_logging(sim.internal, file_mode)
+        register_recorders!(sim.internal, file_mode)
         try
-            Logging.with_logger(sim.internal.logger) do
-                for name in sim.internal.recorders
-                    IS.register_recorder!(name; directory = sim.internal.recorder_dir)
-                end
+            Logging.with_logger(logger) do
                 _build!(sim)
                 @info "\n$(BUILD_SIMULATION_TIMER)\n"
             end
         finally
-            flush(sim.internal.logger)
+            unregister_recorders!(sim.internal)
+            close(logger)
         end
     end
     return
@@ -770,15 +786,16 @@ execute!!(sim::Simulation; kwargs...)
 """
 
 function execute!(sim::Simulation; kwargs...)
+    file_mode = "a"
+    logger = configure_logging(sim.internal, file_mode)
+    register_recorders!(sim.internal, file_mode)
     try
-        return Logging.with_logger(sim.internal.logger) do
+        return Logging.with_logger(logger) do
             _execute!(sim; kwargs...)
         end
     finally
-        close(sim.internal.logger)
-        for name in sim.internal.recorders
-            IS.unregister_recorder!(name)
-        end
+        unregister_recorders!(sim.internal)
+        close(logger)
     end
 end
 
