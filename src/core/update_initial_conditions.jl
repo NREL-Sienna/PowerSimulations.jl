@@ -295,7 +295,7 @@ function _make_initial_condition_reservoir_energy(
 end
 
 function _get_status_value(device, key)
-    return PSY.get_status(device)
+    return PSY.get_status(device) ? 1.0 : 0.0
 end
 
 function _get_active_power_output_value(device, key)
