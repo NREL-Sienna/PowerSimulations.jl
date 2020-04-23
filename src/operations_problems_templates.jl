@@ -129,8 +129,8 @@ ed_problem = EconomicDispatchProblem(system)
 function EconomicDispatchProblem(system::PSY.System; kwargs...)
     kwargs = Dict(kwargs)
     template_kwargs = Dict()
-    for kw in (:network, :devices, :branches, :services)
-        if haskey(kwargs, kw)
+    for (kw, arg) in kwargs
+        if !(kw in OPERATIONS_ACCEPTED_KWARGS)
             template_kwargs[kw] = kwargs[kw]
             pop!(kwargs, kw)
         end
@@ -163,8 +163,8 @@ uc_problem = UnitCommitmentProblem(system)
 function UnitCommitmentProblem(system::PSY.System; kwargs...)
     kwargs = Dict(kwargs)
     template_kwargs = Dict()
-    for kw in (:network, :devices, :branches, :services)
-        if haskey(kwargs, kw)
+    for (kw, arg) in kwargs
+        if !(kw in OPERATIONS_ACCEPTED_KWARGS)
             template_kwargs[kw] = kwargs[kw]
             pop!(kwargs, kw)
         end
@@ -198,7 +198,7 @@ results = run_unit_commitment(system; optimizer = optimizer)
 
 function run_unit_commitment(sys::PSY.System; kwargs...)
     solve_kwargs = Dict()
-    for kw in (:savepath, :optimizer)
+    for kw in OPERATIONS_SOLVE_KWARGS
         haskey(kwargs, kw) && (solve_kwargs[kw] = kwargs[kw])
     end
     op_problem = UnitCommitmentProblem(sys; kwargs...)
@@ -229,7 +229,7 @@ results = run_economic_dispatch(system; optimizer = optimizer)
 
 function run_economic_dispatch(sys::PSY.System; kwargs...)
     solve_kwargs = Dict()
-    for kw in (:savepath, :optimizer)
+    for kw in OPERATIONS_SOLVE_KWARGS
         haskey(kwargs, kw) && (solve_kwargs[kw] = kwargs[kw])
     end
     op_problem = EconomicDispatchProblem(sys; kwargs...)
