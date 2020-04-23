@@ -299,6 +299,33 @@ function set_services_model!(
     return
 end
 
+function set_model!(
+    ::Type{D},
+    op_problem::OperationsProblem,
+    name::Symbol,
+    device_model::DeviceModel,
+) where {D <: PSY.Branch}
+    op_problem.template.branches[name] = device_model
+end
+
+function set_model!(
+    ::Type{D},
+    op_problem::OperationsProblem,
+    name::Symbol,
+    device_model::DeviceModel,
+) where {D <: PSY.StaticInjection}
+    op_problem.template.devices[name] = device_model
+end
+
+function set_model!(
+    ::Type{D},
+    op_problem::OperationsProblem,
+    name::Symbol,
+    device_model::DeviceModel,
+) where {D <: PSY.Service}
+    op_problem.template.services[name] = device_model
+end
+
 function construct_device!(
     op_problem::OperationsProblem,
     name::Symbol,
@@ -307,16 +334,7 @@ function construct_device!(
     if haskey(op_problem.template.devices, name)
         throw(IS.ConflictingInputsError("Device with model name $(name) already exists in the Opertaion Model"))
     end
-    if device_model.device_type <: PSY.Branch
-        components_ref = get_branches_ref(op_problem)
-    elseif device_model.device_type <: PSY.StaticInjection
-        components_ref = get_devices_ref(op_problem)
-    elseif device_model.device_type <: PSY.Service
-        components_ref = get_services_ref(op_problem)
-    else
-        throw(IS.DataFormatError("Cannot construct device of type $(device_model.device_type)"))
-    end
-    components_ref[name] = device_model
+    set_model!(device_model.device_type, op_problem, name, device_model)
 
     construct_device!(
         op_problem.psi_container,
