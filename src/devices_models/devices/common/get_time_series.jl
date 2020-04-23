@@ -21,7 +21,7 @@ function get_time_series(
         return ts_vector = ones(time_steps[end])
     end
 end
-#=
+
 function get_time_series(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{<:PSY.ElectricLoad},
@@ -59,7 +59,7 @@ function get_time_series(
             ts_vector = ones(time_steps[end])
         end
         range_data = DeviceRange(name, get_constraint_values(device))
-        _device_services!(range_data, device, model)
+        add_device_services!(range_data, device, model)
         push!(constraint_data, range_data)
         push!(
             ts_data_active,
@@ -108,7 +108,7 @@ function get_time_series(
             ts_vector = ones(time_steps[end])
         end
         range_data = DeviceRange(name, get_constraint_values(device))
-        _device_services!(range_data, device, model)
+        add_device_services!(range_data, device, model)
         push!(constraint_data, range_data)
         push!(
             active_timeseries,
@@ -117,4 +117,3 @@ function get_time_series(
     end
     return active_timeseries, constraint_data
 end
-=#
