@@ -123,10 +123,17 @@ ed_problem = EconomicDispatchProblem(system)
 - `devices::Dict{Symbol, DeviceModel}` : override default `DeviceModel` settings
 - `branches::Dict{Symbol, DeviceModel}` : override default `DeviceModel` settings
 - `services::Dict{Symbol, ServiceModel}` : override default `ServiceModel` settings
+- Key word arguments supported by `OperationsProblem`
 """
 
 function EconomicDispatchProblem(system::PSY.System; kwargs...)
-    template = template_economic_dispatch(; kwargs...)
+    kwargs = Dict(kwargs)
+    template_kwargs = Dict()
+    for kw in setdiff(keys(kwargs), OPERATIONS_ACCEPTED_KWARGS)
+        template_kwargs[kw] = pop!(kwargs, kw)
+    end
+
+    template = template_economic_dispatch(; template_kwargs...)
     op_problem = OperationsProblem(EconomicDispatchProblem, template, system; kwargs...)
     return op_problem
 end
@@ -147,10 +154,17 @@ uc_problem = UnitCommitmentProblem(system)
 - `devices::Dict{Symbol, DeviceModel}` : override default `DeviceModel` settings
 - `branches::Dict{Symbol, DeviceModel}` : override default `DeviceModel` settings
 - `services::Dict{Symbol, ServiceModel}` : override default `ServiceModel` settings
+- Key word arguments supported by `OperationsProblem`
 """
 
 function UnitCommitmentProblem(system::PSY.System; kwargs...)
-    template = template_unit_commitment(; kwargs...)
+    kwargs = Dict(kwargs)
+    template_kwargs = Dict()
+    for kw in setdiff(keys(kwargs), OPERATIONS_ACCEPTED_KWARGS)
+        template_kwargs[kw] = pop!(kwargs, kw)
+    end
+
+    template = template_unit_commitment(; template_kwargs...)
     op_problem = OperationsProblem(UnitCommitmentProblem, template, system; kwargs...)
     return op_problem
 end
@@ -172,11 +186,17 @@ results = run_unit_commitment(system; optimizer = optimizer)
 - `branches::Dict{Symbol, DeviceModel}` : override default `DeviceModel` settings
 - `services::Dict{Symbol, ServiceModel}` : override default `ServiceModel` settings
 - `optimizer::JuMP Optimizer` : An optimizer is a required key word
+- `savepath::AbstractString`  : Path to save results
+- Key word arguments supported by `OperationsProblem`
 """
 
 function run_unit_commitment(sys::PSY.System; kwargs...)
+    solve_kwargs = Dict()
+    for kw in OPERATIONS_SOLVE_KWARGS
+        haskey(kwargs, kw) && (solve_kwargs[kw] = kwargs[kw])
+    end
     op_problem = UnitCommitmentProblem(sys; kwargs...)
-    results = solve!(op_problem; kwargs...)
+    results = solve!(op_problem; solve_kwargs...)
     return results
 end
 
@@ -197,10 +217,16 @@ results = run_economic_dispatch(system; optimizer = optimizer)
 - `branches::Dict{Symbol, DeviceModel}` : override default `DeviceModel` settings
 - `services::Dict{Symbol, ServiceModel}` : override default `ServiceModel` settings
 - `optimizer::JuMP optimizer` : a JuMP optimizer is a required key word
+- `savepath::AbstractString`  : Path to save results
+- Key word arguments supported by `OperationsProblem`
 """
 
 function run_economic_dispatch(sys::PSY.System; kwargs...)
+    solve_kwargs = Dict()
+    for kw in OPERATIONS_SOLVE_KWARGS
+        haskey(kwargs, kw) && (solve_kwargs[kw] = kwargs[kw])
+    end
     op_problem = EconomicDispatchProblem(sys; kwargs...)
-    results = solve!(op_problem; kwargs...)
+    results = solve!(op_problem; solve_kwargs...)
     return results
 end

@@ -202,6 +202,8 @@ end
 
 get_transmission_ref(op_problem::OperationsProblem) = op_problem.template.transmission
 get_devices_ref(op_problem::OperationsProblem) = op_problem.template.devices
+get_branches_ref(op_problem::OperationsProblem) = op_problem.template.branches
+get_services_ref(op_problem::OperationsProblem) = op_problem.template.services
 get_system(op_problem::OperationsProblem) = op_problem.sys
 get_psi_container(op_problem::OperationsProblem) = op_problem.psi_container
 get_base_power(op_problem::OperationsProblem) = op_problem.sys.basepower
@@ -297,6 +299,33 @@ function set_services_model!(
     return
 end
 
+function set_model!(
+    ::Type{D},
+    op_problem::OperationsProblem,
+    name::Symbol,
+    device_model::DeviceModel,
+) where {D <: PSY.Branch}
+    op_problem.template.branches[name] = device_model
+end
+
+function set_model!(
+    ::Type{D},
+    op_problem::OperationsProblem,
+    name::Symbol,
+    device_model::DeviceModel,
+) where {D <: PSY.StaticInjection}
+    op_problem.template.devices[name] = device_model
+end
+
+function set_model!(
+    ::Type{D},
+    op_problem::OperationsProblem,
+    name::Symbol,
+    device_model::DeviceModel,
+) where {D <: PSY.Service}
+    op_problem.template.services[name] = device_model
+end
+
 function construct_device!(
     op_problem::OperationsProblem,
     name::Symbol,
@@ -305,8 +334,8 @@ function construct_device!(
     if haskey(op_problem.template.devices, name)
         throw(IS.ConflictingInputsError("Device with model name $(name) already exists in the Opertaion Model"))
     end
-    devices_ref = get_devices_ref(op_problem)
-    devices_ref[name] = device_model
+    set_model!(device_model.device_type, op_problem, name, device_model)
+
     construct_device!(
         op_problem.psi_container,
         get_system(op_problem),
