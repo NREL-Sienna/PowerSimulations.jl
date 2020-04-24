@@ -10,7 +10,7 @@ function construct_device!(
 }
     devices = get_available_components(H, sys)
 
-    if validate_available_devices(devices, H)
+    if !validate_available_devices(H, devices)
         return
     end
 
@@ -37,7 +37,7 @@ function construct_device!(
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
-    if validate_available_devices(devices, H)
+    if !validate_available_devices(H, devices)
         return
     end
 
@@ -52,7 +52,7 @@ function construct_device!(
     feedforward!(psi_container, H, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, HydroDispatchReservoirFlow, S)
+    cost_function(psi_container, H, devices, S)
 
     return
 end
@@ -68,7 +68,7 @@ function construct_device!(
 ) where {H<:PSY.HydroGen,D<:AbstractHydroUnitCommitment,S<:PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
-    if validate_available_devices(devices, H)
+    if !validate_available_devices(H, devices)
         return
     end
 
@@ -104,7 +104,7 @@ function construct_device!(
 }
     devices = get_available_components(H, sys)
 
-    if validate_available_devices(devices, H)
+    if !validate_available_devices(H, devices)
         return
     end
 
@@ -129,7 +129,7 @@ function construct_device!(
 ) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
-    if validate_available_devices(devices, H)
+    if !validate_available_devices(H, devices)
         return
     end
 
@@ -142,7 +142,7 @@ function construct_device!(
     feedforward!(psi_container, H, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, HydroDispatchReservoirFlow, S)
+    cost_function(psi_container, H, devices, S)
 
     return
 end
@@ -155,7 +155,7 @@ function construct_device!(
 ) where {H <: PSY.HydroGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(H, sys)
 
-    if validate_available_devices(devices, H)
+    if !validate_available_devices(H, devices)
         return
     end
 
@@ -173,7 +173,7 @@ function construct_device!(
     feedforward!(psi_container, H, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, devices, HydroDispatchReservoirStorage, S)
+    cost_function(psi_container, H, devicesydroDispatchReservoirStorage, S)
 
     return
 end
@@ -189,7 +189,7 @@ function construct_device!(
 
     devices = get_available_components(H, sys)
 
-    if validate_available_devices(devices, H)
+    if !validate_available_devices(H, devices)
         return
     end
 
@@ -220,7 +220,7 @@ function construct_device!(
 ) where {H <: PSY.HydroGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(H, sys)
 
-    if validate_available_devices(devices, H)
+    if !validate_available_devices(H, devices)
         return
     end
 
@@ -244,7 +244,7 @@ function construct_device!(
     construct_device!(
         psi_container,
         DeviceModel(PSY.HydroDispatch, FixedOutput),
-        S;
+        S
 
     )
 end
@@ -258,7 +258,7 @@ function construct_device!(
 ) where {S <: PM.AbstractPowerModel}
     devices = get_available_components(PSY.HydroDispatch, sys)
 
-    if validate_available_devices(devices, PSY.HydroDispatch)
+    if !validate_available_devices(PSY.HydroDispatch, devices)
         return
     end
 

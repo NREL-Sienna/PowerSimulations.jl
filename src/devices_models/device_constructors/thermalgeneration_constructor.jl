@@ -9,7 +9,7 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 
@@ -50,7 +50,7 @@ function construct_device!(
 }
     devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 
@@ -85,7 +85,7 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 
@@ -120,7 +120,7 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 
@@ -153,7 +153,7 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 
@@ -187,7 +187,7 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 
@@ -220,7 +220,7 @@ function construct_device!(
 }
     devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 
@@ -253,7 +253,7 @@ function construct_device!(
 }
     devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 
@@ -280,7 +280,7 @@ function construct_device!(
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 

@@ -10,7 +10,7 @@ function construct_device!(
 }
     devices = get_available_components(L, sys)
 
-    if validate_available_devices(devices, L)
+    if !validate_available_devices(L, devices)
         return
     end
 
@@ -42,7 +42,7 @@ function construct_device!(
 }
     devices = get_available_components(L, sys)
 
-    if validate_available_devices(devices, L)
+    if !validate_available_devices(L, devices)
         return
     end
 
@@ -67,7 +67,7 @@ function construct_device!(
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
 
-    if validate_available_devices(devices, L)
+    if !validate_available_devices(L, devices)
         return
     end
 
@@ -95,7 +95,7 @@ function construct_device!(
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(L, sys)
 
-    if validate_available_devices(devices, L)
+    if !validate_available_devices(L, devices)
         return
     end
 
@@ -121,7 +121,7 @@ function construct_device!(
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
     devices = get_available_components(L, sys)
 
-    if validate_available_devices(devices, L)
+    if !validate_available_devices(L, devices)
         return
     end
 

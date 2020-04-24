@@ -10,7 +10,7 @@ function construct_device!(
 }
     devices = get_available_components(R, sys)
 
-    if validate_available_devices(devices, R)
+    if !validate_available_devices(R, devices)
         return
     end
 
@@ -41,7 +41,7 @@ function construct_device!(
 }
     devices = get_available_components(R, sys)
 
-    if validate_available_devices(devices, R)
+    if !validate_available_devices(R, devices)
         return
     end
 
@@ -66,7 +66,7 @@ function construct_device!(
 ) where {R <: PSY.RenewableGen, S <: PM.AbstractPowerModel}
     devices = get_available_components(R, sys)
 
-    if validate_available_devices(devices, R)
+    if !validate_available_devices(R, devices)
         return
     end
 
@@ -83,7 +83,7 @@ function construct_device!(
 ) where {D <: AbstractRenewableDispatchFormulation, S <: PM.AbstractPowerModel}
     @warn("The Formulation $(D) only applies to FormulationControllable Renewable Resources, \n Consider Changing the Device Formulation to FixedOutput")
 
-    construct_device!(psi_container, sys, DeviceModel(PSY.RenewableFix, FixedOutput), S;)
+    construct_device!(psi_container, sys, DeviceModel(PSY.RenewableFix, FixedOutput), S)
 
     return
 end
@@ -96,7 +96,7 @@ function construct_device!(
 ) where {S <: PM.AbstractPowerModel}
     devices = get_available_components(PSY.RenewableFix, sys)
 
-    if validate_available_devices(devices, PSY.RenewableFix)
+    if !validate_available_devices(PSY.RenewableFix, devices)
         return
     end
 

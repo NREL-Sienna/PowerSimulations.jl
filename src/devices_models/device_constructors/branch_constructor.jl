@@ -32,7 +32,7 @@ function construct_device!(
     S <: PM.AbstractActivePowerModel,
 }
     devices = get_available_components(B, sys)
-    if validate_available_devices(devices, B)
+    if !validate_available_devices(B, devices)
         return
     end
     !isnothing(get_feedforward(model)) &&
@@ -50,7 +50,7 @@ function construct_device!(
     ::Type{S},
 ) where {B <: PSY.ACBranch, S <: PM.AbstractActivePowerModel}
     devices = get_available_components(B, sys)
-    if validate_available_devices(devices, B)
+    if !validate_available_devices(B, devices)
         return
     end
     branch_rate_constraints!(psi_container, devices, model, S, get_feedforward(model))
@@ -65,7 +65,7 @@ function construct_device!(
     ::Type{S},
 ) where {B <: PSY.ACBranch, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
-    if validate_available_devices(devices, B)
+    if !validate_available_devices(B, devices)
         return
     end
     branch_rate_bounds!(psi_container, devices, model, S)
@@ -80,7 +80,7 @@ function construct_device!(
     ::Type{S},
 ) where {B <: PSY.DCBranch, Br <: AbstractDCLineFormulation, S <: PM.AbstractPowerModel}
     devices = get_available_components(B, sys)
-    if validate_available_devices(devices, B)
+    if !validate_available_devices(B, devices)
         return
     end
     branch_rate_constraints!(psi_container, devices, model, S, get_feedforward(model))
@@ -94,7 +94,7 @@ function construct_device!(
     ::Type{S},
 ) where {S <: PM.AbstractActivePowerModel}
     devices = get_available_components(PSY.MonitoredLine, sys)
-    if validate_available_devices(devices, PSY.MonitoredLine)
+    if !validate_available_devices(PSY.MonitoredLine, devices)
         return
     end
     branch_flow_constraints!(psi_container, devices, model, S, get_feedforward(model))
@@ -108,7 +108,7 @@ function construct_device!(
     ::Type{S},
 ) where {S <: PM.AbstractPowerModel}
     devices = get_available_components(PSY.MonitoredLine, sys)
-    if validate_available_devices(devices, PSY.MonitoredLine)
+    if !validate_available_devices(PSY.MonitoredLine, devices)
         return
     end
     branch_rate_constraints!(psi_container, devices, model, S, get_feedforward(model))
