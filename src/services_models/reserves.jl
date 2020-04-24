@@ -91,11 +91,7 @@ function modify_device_model!(
     return
 end
 
-function include_service!(
-    constraint_data::DeviceTimeSeries,
-    services,
-    SM::ServiceModel,
-)
+function include_service!(constraint_data::DeviceTimeSeries, services, SM::ServiceModel)
     range_data = constraint_data.range
     isnothing(range_data) && return
     include_service!(range_data, services, SM)
