@@ -129,11 +129,8 @@ ed_problem = EconomicDispatchProblem(system)
 function EconomicDispatchProblem(system::PSY.System; kwargs...)
     kwargs = Dict(kwargs)
     template_kwargs = Dict()
-    for (kw, arg) in kwargs
-        if !(kw in OPERATIONS_ACCEPTED_KWARGS)
-            template_kwargs[kw] = kwargs[kw]
-            pop!(kwargs, kw)
-        end
+    for kw in setdiff(keys(kwargs), OPERATIONS_ACCEPTED_KWARGS)
+        template_kwargs[kw] = pop!(kwargs, kw)
     end
 
     template = template_economic_dispatch(; template_kwargs...)
@@ -163,11 +160,8 @@ uc_problem = UnitCommitmentProblem(system)
 function UnitCommitmentProblem(system::PSY.System; kwargs...)
     kwargs = Dict(kwargs)
     template_kwargs = Dict()
-    for (kw, arg) in kwargs
-        if !(kw in OPERATIONS_ACCEPTED_KWARGS)
-            template_kwargs[kw] = kwargs[kw]
-            pop!(kwargs, kw)
-        end
+    for kw in setdiff(keys(kwargs), OPERATIONS_ACCEPTED_KWARGS)
+        template_kwargs[kw] = pop!(kwargs, kw)
     end
 
     template = template_unit_commitment(; template_kwargs...)
