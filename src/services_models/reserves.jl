@@ -93,7 +93,7 @@ end
 
 function include_service!(
     constraint_data::DeviceTimeSeries,
-    services::Vector{<:PSY.Reserve},
+    services,
     SM::ServiceModel,
 )
     range_data = constraint_data.range
@@ -104,7 +104,7 @@ end
 
 function include_service!(
     constraint_data::DeviceRange,
-    services::Vector{SR},
+    services,
     ::ServiceModel{SR, <:AbstractReservesFormulation},
 ) where {SR <: PSY.Reserve{PSY.ReserveUp}}
     for (ix, service) in enumerate(services)
@@ -118,7 +118,7 @@ end
 
 function include_service!(
     constraint_data::DeviceRange,
-    services::Vector{SR},
+    services,
     ::ServiceModel{SR, <:AbstractReservesFormulation},
 ) where {SR <: PSY.Reserve{PSY.ReserveDown}}
     for (ix, service) in enumerate(services)
@@ -138,7 +138,7 @@ function add_device_services!(
     for service_model in get_services(model)
         if PSY.has_service(device, service_model.service_type)
             services =
-                [s for s in PSY.get_services(device) if isa(s, service_model.service_type)]
+                (s for s in PSY.get_services(device) if isa(s, service_model.service_type))
             @assert !isempty(services)
             include_service!(constraint_data, services, service_model)
         end
@@ -155,7 +155,7 @@ function add_device_services!(
     for service_model in get_services(model)
         if PSY.has_service(device, service_model.service_type)
             services =
-                [s for s in PSY.get_services(device) if isa(s, service_model.service_type)]
+                (s for s in PSY.get_services(device) if isa(s, service_model.service_type))
             @assert !isempty(services)
             if service_model.service_type <: PSY.Reserve{PSY.ReserveDown}
                 for service in services
@@ -164,8 +164,7 @@ function add_device_services!(
                         constraint_name(PSY.get_name(service), service_model.service_type),
                     )
                 end
-            end
-            if service_model.service_type <: PSY.Reserve{PSY.ReserveUp}
+            elseif service_model.service_type <: PSY.Reserve{PSY.ReserveUp}
                 for service in services
                     push!(
                         constraint_data_out.additional_terms_ub,
