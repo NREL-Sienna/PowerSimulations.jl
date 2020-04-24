@@ -11,9 +11,9 @@ function _generic_template(; kwargs...)
         Dict(
             :Generators => DeviceModel(PSY.ThermalStandard, ThermalBasicUnitCommitment),
             :RE => DeviceModel(PSY.RenewableDispatch, RenewableFullDispatch),
-            :DistRE => DeviceModel(PSY.RenewableFix, RenewableFixed),
+            :DistRE => DeviceModel(PSY.RenewableFix, FixedOutput),
             :Hydro => DeviceModel(PSY.HydroEnergyReservoir, HydroDispatchReservoirFlow),
-            :HydroROR => DeviceModel(PSY.HydroDispatch, HydroFixed),
+            :HydroROR => DeviceModel(PSY.HydroDispatch, FixedOutput),
             :Loads => DeviceModel(PSY.PowerLoad, StaticPowerLoad),
             :ILoads => DeviceModel(PSY.InterruptibleLoad, InterruptiblePowerLoad),
         ),
@@ -92,9 +92,9 @@ function template_economic_dispatch(; kwargs...)
         Dict(
             :Generators => DeviceModel(PSY.ThermalStandard, ThermalRampLimited),
             :RE => DeviceModel(PSY.RenewableDispatch, RenewableFullDispatch),
-            :DistRE => DeviceModel(PSY.RenewableFix, RenewableFixed),
+            :DistRE => DeviceModel(PSY.RenewableFix, FixedOutput),
             :Hydro => DeviceModel(PSY.HydroEnergyReservoir, HydroDispatchReservoirFlow),
-            :HydroROR => DeviceModel(PSY.HydroDispatch, HydroFixed),
+            :HydroROR => DeviceModel(PSY.HydroDispatch, FixedOutput),
             :Loads => DeviceModel(PSY.PowerLoad, StaticPowerLoad),
             :ILoads => DeviceModel(PSY.InterruptibleLoad, InterruptiblePowerLoad),
         ),

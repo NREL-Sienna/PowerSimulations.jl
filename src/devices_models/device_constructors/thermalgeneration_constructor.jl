@@ -5,12 +5,11 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 
@@ -43,16 +42,15 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractThermalFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 
@@ -83,12 +81,11 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 
@@ -119,12 +116,11 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalBasicUnitCommitment},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 
@@ -153,12 +149,11 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalRampLimited},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 
@@ -188,12 +183,11 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{T, ThermalRampLimited},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 
@@ -218,16 +212,15 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractThermalDispatchFormulation,
     S <: PM.AbstractPowerModel,
 }
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 
@@ -252,16 +245,15 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{T, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {
     T <: PSY.ThermalGen,
     D <: AbstractThermalDispatchFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = PSY.get_components(T, sys)
+    devices = get_available_components(T, sys)
 
-    if validate_available_devices(devices, T)
+    if !validate_available_devices(T, devices)
         return
     end
 
@@ -276,6 +268,23 @@ function construct_device!(
 
     #Cost Function
     cost_function(psi_container, devices, D, S, get_feedforward(model))
+
+    return
+end
+
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{T, FixedOutput},
+    ::Type{S},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractActivePowerModel}
+    devices = get_available_components(T, sys)
+
+    if !validate_available_devices(T, devices)
+        return
+    end
+
+    nodal_expression!(psi_container, devices, S)
 
     return
 end

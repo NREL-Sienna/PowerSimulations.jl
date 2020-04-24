@@ -73,7 +73,7 @@ function add_variable(
 
         if !(isnothing(expression_name))
             bus_number = PSY.get_number(PSY.get_bus(d))
-            _add_to_expression!(
+            add_to_expression!(
                 get_expression(psi_container, expression_name),
                 bus_number,
                 t,
