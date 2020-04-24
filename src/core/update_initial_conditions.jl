@@ -95,7 +95,7 @@ function status_init(
         devices,
         ICKey(DeviceStatus, T),
         _make_initial_condition_active_power,
-        _get_active_power_status_value,
+        _get_status_value,
     )
 
     return
@@ -126,7 +126,7 @@ function duration_init(
             devices,
             key,
             _make_initial_condition_active_power,
-            _get_active_power_duration_value,
+            _get_duration_value,
             TimeStatusChange,
         )
     end
@@ -162,7 +162,7 @@ function status_init(
         devices,
         ICKey(DeviceStatus, T),
         _make_initial_condition_active_power,
-        _get_active_power_status_value,
+        _get_status_value,
         # Doesn't require Cache
     )
 end
@@ -193,7 +193,7 @@ function duration_init(
             devices,
             key,
             _make_initial_condition_active_power,
-            _get_active_power_duration_value,
+            _get_duration_value,
             TimeStatusChange,
         )
     end
@@ -294,8 +294,8 @@ function _make_initial_condition_reservoir_energy(
     return InitialCondition(device, _get_ref_reservoir_energy(T, container), value, cache)
 end
 
-function _get_active_power_status_value(device, key)
-    return PSY.get_activepower(device) > 0 ? 1.0 : 0.0
+function _get_status_value(device, key)
+    return PSY.get_status(device) ? 1.0 : 0.0
 end
 
 function _get_active_power_output_value(device, key)
@@ -310,12 +310,12 @@ function _get_reservoir_energy_value(device, key)
     return PSY.get_initial_storage(device)
 end
 
-function _get_active_power_duration_value(dev, key)
+function _get_duration_value(dev, key)
     if key.ic_type == TimeDurationON
-        value = PSY.get_activepower(dev) > 0 ? MISSING_INITIAL_CONDITIONS_TIME_COUNT : 0.0
+        value = PSY.get_status(dev) > 0 ? PSY.get_time_at_status(dev) : 0.0
     else
         @assert key.ic_type == TimeDurationOFF
-        value = PSY.get_activepower(dev) <= 0 ? MISSING_INITIAL_CONDITIONS_TIME_COUNT : 0.0
+        value = PSY.get_status(dev) <= 0 ? PSY.get_time_at_status(dev) : 0.0
     end
 
     return value
