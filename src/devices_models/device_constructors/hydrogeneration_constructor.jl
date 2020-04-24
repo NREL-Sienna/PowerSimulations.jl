@@ -142,7 +142,7 @@ function construct_device!(
     feedforward!(psi_container, H, get_feedforward(model))
 
     #Cost Function
-    cost_function(psi_container, H, devices, S)
+    cost_function(psi_container, devices, HydroDispatchReservoirFlow, S)
 
     return
 end

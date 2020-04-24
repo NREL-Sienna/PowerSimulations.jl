@@ -235,8 +235,8 @@ end
 function cost_function(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.RenewableDispatch},
-    device_formulation::Type{D},
-    system_formulation::Type{<:PM.AbstractPowerModel},
+    ::Type{D},
+    ::Type{<:PM.AbstractPowerModel},
 ) where {D <: AbstractRenewableDispatchFormulation}
     add_to_cost(
         psi_container,
