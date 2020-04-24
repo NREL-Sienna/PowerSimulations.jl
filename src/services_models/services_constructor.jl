@@ -9,7 +9,7 @@ function construct_services!(
     for service_model in values(services_template)
         @debug "Building $(service_model.service_type) with $(service_model.formulation) formulation"
         services = PSY.get_components(service_model.service_type, sys)
-        if !validate_available_services(service_model.service_type, services)
+        if validate_available_services(service_model.service_type, services)
             construct_service!(
                 psi_container,
                 services,
