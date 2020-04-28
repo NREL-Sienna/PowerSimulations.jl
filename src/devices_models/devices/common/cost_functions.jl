@@ -131,12 +131,6 @@ Returns ```flag```
 """
 function _pwlparamcheck(cost_)
     flag = true
-    if abs(
-        cost_[1][1] / cost_[1][2] -
-        ((cost_[2][1] - cost_[1][1]) / (cost_[2][2] - cost_[1][2])),
-    ) > 1.0
-        flag = false
-    end
     l = length(cost_)
     for i in 1:(l - 2)
         if ((cost_[i + 1][1] - cost_[i][1]) / (cost_[i + 1][2] - cost_[i][2])) >
