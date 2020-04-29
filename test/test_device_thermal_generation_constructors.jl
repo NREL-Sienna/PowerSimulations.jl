@@ -625,6 +625,10 @@ end
     add_component!(cost_test_sos_sys, gens_cost_sos[2])
     add_forecast!(cost_test_sos_sys, load, load_forecast_cost_sos)
 
+    for g in gens_cost_sos
+        @test PSI._pwlparamcheck(PSY.get_op_cost(g).variable) == false
+    end
+
     template =
         OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
     UC = OperationsProblem(
