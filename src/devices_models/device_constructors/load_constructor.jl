@@ -2,16 +2,15 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{L, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {
     L <: PSY.ControllableLoad,
     D <: AbstractControllablePowerLoadFormulation,
     S <: PM.AbstractPowerModel,
 }
-    devices = PSY.get_components(L, sys)
+    devices = get_available_components(L, sys)
 
-    if validate_available_devices(devices, L)
+    if !validate_available_devices(L, devices)
         return
     end
 
@@ -35,16 +34,15 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{L, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {
     L <: PSY.ControllableLoad,
     D <: AbstractControllablePowerLoadFormulation,
     S <: PM.AbstractActivePowerModel,
 }
-    devices = PSY.get_components(L, sys)
+    devices = get_available_components(L, sys)
 
-    if validate_available_devices(devices, L)
+    if !validate_available_devices(L, devices)
         return
     end
 
@@ -65,12 +63,11 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{L, InterruptiblePowerLoad},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(L, sys)
+    devices = get_available_components(L, sys)
 
-    if validate_available_devices(devices, L)
+    if !validate_available_devices(L, devices)
         return
     end
 
@@ -94,12 +91,11 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{L, InterruptiblePowerLoad},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {L <: PSY.ControllableLoad, S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(L, sys)
+    devices = get_available_components(L, sys)
 
-    if validate_available_devices(devices, L)
+    if !validate_available_devices(L, devices)
         return
     end
 
@@ -121,12 +117,11 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{L, StaticPowerLoad},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {L <: PSY.ElectricLoad, S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(L, sys)
+    devices = get_available_components(L, sys)
 
-    if validate_available_devices(devices, L)
+    if !validate_available_devices(L, devices)
         return
     end
 
@@ -139,8 +134,7 @@ function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{L, D},
-    ::Type{S};
-    kwargs...,
+    ::Type{S},
 ) where {
     L <: PSY.StaticLoad,
     D <: AbstractControllablePowerLoadFormulation,
@@ -150,6 +144,6 @@ function construct_device!(
         @warn("The Formulation $(D) only applies to FormulationControllable Loads, \n Consider Changing the Device Formulation to StaticPowerLoad")
     end
 
-    construct_device!(psi_container, sys, DeviceModel(L, StaticPowerLoad), S; kwargs...)
+    construct_device!(psi_container, sys, DeviceModel(L, StaticPowerLoad), S)
     return
 end
