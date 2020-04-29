@@ -131,10 +131,7 @@ Returns ```flag```
 """
 function _pwlparamcheck(cost_)
     flag = true
-    if abs(
-        cost_[1][1] / cost_[1][2] -
-        ((cost_[2][1] - cost_[1][1]) / (cost_[2][2] - cost_[1][2])),
-    ) > 1.0
+    if (cost_[2][1] - cost_[1][1]) / (cost_[2][2] - cost_[1][2]) < 0.0
         flag = false
     end
     l = length(cost_)
@@ -207,7 +204,7 @@ function _pwlgencost_sos(
 end
 
 @doc raw"""
-    _pwlgencost_sos(psi_container::PSIContainer,
+    _pwlgencost_linear(psi_container::PSIContainer,
                 variable::JuMP.Containers.DenseAxisArray{JV},
                 cost_component::PSY.VariableCost{NTuple{2, Float64}}) where {JV <: JuMP.AbstractVariableRef}
 

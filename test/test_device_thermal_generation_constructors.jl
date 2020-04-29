@@ -581,7 +581,7 @@ end
             nothing,
             nothing,
             ThreePartCost(
-                [(1122.43, 0.22), (1417.43, 0.33), (1742.48, 0.44), (2075.88, 0.55)],
+                [(1122.43, 0.22), (1617.43, 0.33), (1742.48, 0.44), (2075.88, 0.55)],
                 0.0,
                 5665.23,
                 0.0,
@@ -602,7 +602,7 @@ end
             nothing,
             nothing,
             ThreePartCost(
-                [(1500.19, 0.62), (2132.59, 0.929), (2829.875, 1.24), (3668.444, 1.55)],
+                [(1500.19, 0.62), (2132.59, 0.929), (2829.875, 1.24), (2831.444, 1.55)],
                 0.0,
                 5665.23,
                 0.0,
@@ -625,6 +625,10 @@ end
     add_component!(cost_test_sos_sys, gens_cost_sos[2])
     add_forecast!(cost_test_sos_sys, load, load_forecast_cost_sos)
 
+    for g in gens_cost_sos
+        @test PSI._pwlparamcheck(PSY.get_op_cost(g).variable) == false
+    end
+
     template =
         OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
     UC = OperationsProblem(
@@ -634,6 +638,6 @@ end
         optimizer = Cbc_optimizer,
         use_parameters = true,
     )
-    psi_checksolve_test(UC, [MOI.OPTIMAL], 9336.736919, 10.0)
+    psi_checksolve_test(UC, [MOI.OPTIMAL], 8500.89716, 10.0)
     moi_tests(UC, true, 32, 0, 8, 4, 14, true)
 end
