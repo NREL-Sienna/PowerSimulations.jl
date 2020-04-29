@@ -1,7 +1,7 @@
 """
     configure_logging(;
-        console_level = Logging.Error,
-        file_level = Logging.Info,
+        console_level = Error,
+        file_level = Info,
         filename = "power-simulations.log",
     )
 
@@ -11,13 +11,13 @@ Creates console and file loggers.
 the returned logger.
 
 # Arguments
-- `console_level = Logging.Error`: level for console messages
-- `file_level = Logging.Info`: level for file messages
+- `console_level = Error`: level for console messages
+- `file_level = Info`: level for file messages
 - `filename::String = power-simulations.log`: log file
 
 # Example
 ```julia
-logger = configure_logging(console_level = Logging.Info)
+logger = configure_logging(console_level = Info)
 @info "log message"
 close(logger)
 ```
