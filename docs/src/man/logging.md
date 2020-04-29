@@ -1,9 +1,10 @@
 ## Logging
 PowerSimulations will output many log messages when building systems and
 running simulations. You may want to customize what gets logged to the console
-and, optionally, a file.
+and, optionally, a file. PowerSimulations automatically re-exports the `Logging` package
+levels `Warn`, `Info`, `Error`, `Debug`
 
-By default all log messages of level `Logging.Info` or higher will get
+By default all log messages of level `Info` or higher will get
 displayed to the console.  When you run a simulation a simulation-specific
 logger will take over and log its messages to a file in the `logs` directory in
 the simulation output directory. When finished it will relinquish control back
@@ -13,15 +14,14 @@ to the global logger.
 To configure the global logger in a Jupyter Notebook or REPL you may configure
 your own logger with the Julia Logging standard library or use the convenience
 function provided by PowerSimulations.  This example will log messages of level
-`Logging.Error` to console and `Logging.Info` and higher to the file
+`Error` to console and `Info` and higher to the file
 `power-simulations.log` in the current directory.
 
 ```julia
-import Logging
 using PowerSimulations
 logger = configure_logging(
-    console_level = Logging.Error,
-    file_level = Logging.Info,
+    console_level = Error,
+    file_level = Info,
     filename = "power-simulations.log"
 )
 ```
@@ -31,10 +31,9 @@ You can configure the logging level used by the simulation logger when you call
 `build!(simulation)`.  Here is an example that increases logging verbosity:
 
 ```julia
-import Logging
 using PowerSimulations
 simulation = Simulation(...)
-build!(simulation, console_level = Logging.Info, file_level = Logging.Debug)
+build!(simulation, console_level = Info, file_level = Debug)
 ```
 
 The log file will be located at `<your-output-path>/<simulation-name>/<run-output-dir>/logs/simulation.log`.
