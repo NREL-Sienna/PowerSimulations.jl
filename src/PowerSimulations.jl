@@ -138,11 +138,7 @@ export show_simulation_events
 #################################################################################
 # Imports
 import Logging
-import Logging:
-    Info,
-    Warn,
-    Error,
-    Debug
+import Logging: Info, Warn, Error, Debug
 export Info
 export Warn
 export Error
