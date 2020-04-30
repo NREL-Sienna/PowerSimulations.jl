@@ -502,3 +502,13 @@ end
 function write_to_CSV(results::SimulationResults)
     write_results(results; file_type = CSV)
 end
+
+function get_variable(results::IS.Results, sym::Symbol, data_type::PSY.DataType)
+    variable_name = encode_symbol(data_type, sym)
+    if variable_name in keys(IS.get_variables(results))
+        variable = IS.get_variables(results)[variable_name]
+        return variable
+    else
+        @info "Variable $variable_name not found in results."
+    end
+end
