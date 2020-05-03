@@ -502,3 +502,29 @@ end
 function write_to_CSV(results::SimulationResults)
     write_results(results; file_type = CSV)
 end
+
+"""
+    get_variable(IS.results, Symbol, PSY.DataType)
+
+Retrieve a specific variable dataframe from the results.
+
+# Arguments
+- `results::IS.Results`
+- `name::Symbol`: The prefix for a type of variable or parameter
+- `PSY.DataType`: The datatype of the variable from Power Systems
+
+# Example
+```julia
+variable = get_variable(results, :ON, ThermalStandard)
+```
+"""
+
+function get_variable(results::IS.Results, sym::Symbol, data_type::PSY.DataType)
+    variable_name = encode_symbol(data_type, sym)
+    if variable_name in keys(IS.get_variables(results))
+        variable = IS.get_variables(results)[variable_name]
+        return variable
+    else
+        @info "Variable $variable_name not found in results."
+    end
+end
