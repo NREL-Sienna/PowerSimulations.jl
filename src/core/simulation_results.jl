@@ -504,7 +504,7 @@ function write_to_CSV(results::SimulationResults)
 end
 
 """
-    get_variable(IS.results, Symbol, PSY.DataType)
+    get_result_variable(IS.results, Symbol, PSY.DataType)
 
 Retrieve a specific variable dataframe from the results.
 
@@ -515,11 +515,11 @@ Retrieve a specific variable dataframe from the results.
 
 # Example
 ```julia
-variable = get_variable(results, :ON, ThermalStandard)
+variable = get_result_variable(results, :ON, ThermalStandard)
 ```
 """
 
-function get_variable(results::IS.Results, sym::Symbol, data_type::PSY.DataType)
+function get_result_variable(results::IS.Results, sym::Symbol, data_type::PSY.DataType)
     variable_name = encode_symbol(data_type, sym)
     if variable_name in keys(IS.get_variables(results))
         variable = IS.get_variables(results)[variable_name]

@@ -403,7 +403,7 @@ function test_write_functions(file_path)
     end
 
     @testset "Test get_variable function" begin
-        variable = PSI.get_variable(res, :P, ThermalStandard)
+        variable = get_result_variable(res, :P, ThermalStandard)
         @test isa(variable, DataFrames.DataFrame)
     end
 end
