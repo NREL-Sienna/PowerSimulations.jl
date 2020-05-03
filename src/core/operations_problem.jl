@@ -530,7 +530,7 @@ end
 function get_time_stamps(op_problem::OperationsProblem)
     initial_time = PSY.get_forecasts_initial_time(op_problem.sys)
     interval = PSY.get_forecasts_resolution(op_problem.sys)
-    horizon = PSY.get_forecasts_horizon(op_problem.sys)
+    horizon = op_problem.psi_container.settings.horizon.x
     range_time = collect(initial_time:interval:(initial_time + interval .* horizon))
     time_stamp = DataFrames.DataFrame(Range = range_time[:, 1])
 
