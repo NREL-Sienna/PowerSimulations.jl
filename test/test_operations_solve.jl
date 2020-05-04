@@ -369,7 +369,7 @@ function test_write_functions(file_path)
 
     @testset "Test write result functions" begin
         new_path = joinpath(file_path, "seven")
-        PSI.write_results(res, mkdir(new_path))
+        IS.write_results(res, mkdir(new_path))
         @test !isempty(new_path)
     end
 
@@ -400,6 +400,11 @@ function test_write_functions(file_path)
         )
         res = solve!(UC; optimizer = GLPK_optimizer)
         @test isapprox(get_total_cost(res)[:OBJECTIVE_FUNCTION], 340000.0; atol = 100000.0)
+    end
+
+    @testset "Test get_variable function" begin
+        variable = get_result_variable(res, :P, ThermalStandard)
+        @test isa(variable, DataFrames.DataFrame)
     end
 end
 
