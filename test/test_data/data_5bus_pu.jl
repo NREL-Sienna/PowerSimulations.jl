@@ -571,33 +571,36 @@ interruptible(nodes5) = [InterruptibleLoad(
 reserve5(thermal_generators5) = [
     VariableReserve{ReserveUp}(
         "Reserve1",
+        true,
         0.6,
         maximum([gen.activepowerlimits[:max] for gen in thermal_generators5]) .* 0.001,
     ),
     VariableReserve{ReserveDown}(
         "Reserve2",
+        true,
         0.3,
         maximum([gen.activepowerlimits[:max] for gen in thermal_generators5]) .* 0.005,
     ),
     VariableReserve{ReserveUp}(
         "Reserve11",
+        true,
         0.8,
         maximum([gen.activepowerlimits[:max] for gen in thermal_generators5]) .* 0.001,
     ),
 ]
 
 reserve5_re(renewable_generators5) = [
-    VariableReserve{ReserveUp}("Reserve3", 30, 100),
-    VariableReserve{ReserveDown}("Reserve4", 5, 50),
+    VariableReserve{ReserveUp}("Reserve3", true, 30, 100),
+    VariableReserve{ReserveDown}("Reserve4", true, 5, 50),
 ]
 reserve5_hy(hydro_generators5) = [
-    VariableReserve{ReserveUp}("Reserve5", 30, 100),
-    VariableReserve{ReserveDown}("Reserve6", 5, 50),
+    VariableReserve{ReserveUp}("Reserve5", true, 30, 100),
+    VariableReserve{ReserveDown}("Reserve6", true, 5, 50),
 ]
 
 reserve5_il(interruptible_loads) = [
-    VariableReserve{ReserveUp}("Reserve7", 30, 100),
-    VariableReserve{ReserveDown}("Reserve8", 5, 50),
+    VariableReserve{ReserveUp}("Reserve7", true, 30, 100),
+    VariableReserve{ReserveDown}("Reserve8", true, 5, 50),
 ]
 
 Reserve_ts = [TimeArray(DayAhead, rand(24)), TimeArray(DayAhead + Day(1), rand(24))]
