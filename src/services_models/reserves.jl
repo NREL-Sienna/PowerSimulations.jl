@@ -1,6 +1,6 @@
 abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
 struct RangeReserve <: AbstractReservesFormulation end
-struct OperatingReserveDemandCurve <: AbstractReservesFormulation
+struct OperatingReserveDemandCurve <: AbstractReservesFormulation end
 ############################### Reserve Variables` #########################################
 """
 This function add the variables for reserves to the model
