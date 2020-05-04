@@ -390,7 +390,7 @@ function add_to_cost(
     var_name::Symbol,
     cost_symbol::Symbol,
     sign::Float64 = 1.0,
-) where {D <: IS.FlattenIteratorWrapper{<:PSY.Device}}
+) where {D <: IS.FlattenIteratorWrapper{<:PSY.Component}}
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Minute(resolution)) / 60
     variable = get_variable(psi_container, var_name)
