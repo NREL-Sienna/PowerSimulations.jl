@@ -58,3 +58,33 @@ function construct_service!(
     end
     return
 end
+
+function construct_service!(
+    psi_container::PSIContainer,
+    services::IS.FlattenIteratorWrapper{SR},
+    services_mapping::PSY.ServiceContributingDevicesMapping,
+    model::ServiceModel{SR, OperatingReserveDemandCurve},
+    devices_template::Dict{Symbol, DeviceModel},
+) where {SR <: PSY.Reserve}
+
+    time_steps = model_time_steps(psi_container)
+    names = (PSY.get_name(s) for s in services)
+    activerequirement_variables!(psi_container, services)
+
+    add_cons_container!(psi_container, constraint_name(REQUIREMENT, SR), names, time_steps)
+
+    for service in services
+        contributing_devices =
+            services_mapping[(
+                type = typeof(service),
+                name = PSY.get_name(service),
+            )].contributing_devices
+        #Variables
+        activeservice_variables!(psi_container, service, contributing_devices)
+        # Constraints
+        service_requirement_constraint!(psi_container, service, model)
+        modify_device_model!(devices_template, model, contributing_devices)
+    end
+    cost_function(psi_container, services, model.formulation)
+    return
+end
