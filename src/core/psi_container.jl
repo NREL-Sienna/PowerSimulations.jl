@@ -215,7 +215,11 @@ function encode_symbol(::Type{T}, name1::AbstractString, name2::AbstractString) 
     return Symbol(join((name1, name2, T), PSI_NAME_DELIMITER))
 end
 
-function encode_symbol(::Type{T}, name1::AbstractString, name2::AbstractString) where {T <: PSY.Reserve}
+function encode_symbol(
+    ::Type{T},
+    name1::AbstractString,
+    name2::AbstractString,
+) where {T <: PSY.Reserve}
     T_ = replace(string(T), "{" => "_")
     T_ = replace(T_, "}" => "")
     return Symbol(join((name1, name2, T_), PSI_NAME_DELIMITER))
