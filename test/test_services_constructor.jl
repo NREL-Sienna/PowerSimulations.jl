@@ -1,7 +1,7 @@
 @testset "Test Reserves from Thermal Dispatch" begin
     devices = Dict{Symbol, DeviceModel}(
         :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
-        :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad)
+        :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
     )
     branches = Dict{Symbol, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
@@ -72,7 +72,7 @@ end
         :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
         :Storage => DeviceModel(GenericBattery, BookKeeping),
         # Added here to test it doesn't add reserve variables
-        :Ren => DeviceModel(RenewableDispatch, FixedOutput)
+        :Ren => DeviceModel(RenewableDispatch, FixedOutput),
     )
     branches = Dict{Symbol, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(

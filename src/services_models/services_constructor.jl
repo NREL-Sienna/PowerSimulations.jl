@@ -60,7 +60,8 @@ function construct_service!(
                 name = PSY.get_name(service),
             )].contributing_devices
         if !isempty(incompatible_device_types)
-            contributing_devices = [d for d in contributing_devices if typeof(d) ∉ incompatible_device_types]
+            contributing_devices =
+                [d for d in contributing_devices if typeof(d) ∉ incompatible_device_types]
         end
 
         #Variables
