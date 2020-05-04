@@ -101,7 +101,8 @@ function service_requirement_constraint!(
     name = PSY.get_name(service)
     constraint = get_constraint(psi_container, constraint_name(REQUIREMENT, SR))
     reserve_variable = get_variable(psi_container, variable_name(name, SR))
-    requirement_variable = get_variable(psi_container, variable_name(SERVICE_REQUIREMENT, SR))
+    requirement_variable =
+        get_variable(psi_container, variable_name(SERVICE_REQUIREMENT, SR))
 
     for t in time_steps
         constraint[name, t] = JuMP.@constraint(
@@ -118,7 +119,13 @@ function cost_function(
     devices::IS.FlattenIteratorWrapper{SR},
     ::Type{OperatingReserveDemandCurve},
 ) where {SR <: PSY.Reserve}
-    add_to_cost(psi_container, devices, variable_name(SERVICE_REQUIREMENT, SR), :variable, -1.0)
+    add_to_cost(
+        psi_container,
+        devices,
+        variable_name(SERVICE_REQUIREMENT, SR),
+        :variable,
+        -1.0,
+    )
     return
 end
 
