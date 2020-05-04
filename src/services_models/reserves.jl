@@ -1,5 +1,6 @@
 abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
 struct RangeReserve <: AbstractReservesFormulation end
+struct OperatingReserveDemandCurve <: AbstractReservesFormulation
 ############################### Reserve Variables` #########################################
 """
 This function add the variables for reserves to the model
@@ -15,6 +16,20 @@ function activeservice_variables!(
         variable_name(PSY.get_name(service), SR),
         false;
         lb_value = d -> 0,
+    )
+    return
+end
+
+function activerequirement_variables!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{SR},
+) where {SR <: PSY.Reserve}
+    add_variable(
+        psi_container,
+        devices,
+        variable_name(SERVICE_REQUIREMENT, SR),
+        false;
+        lb_value = x -> 0.0,
     )
     return
 end
@@ -70,6 +85,40 @@ function service_requirement_constraint!(
             )
         end
     end
+    return
+end
+
+function service_requirement_constraint!(
+    psi_container::PSIContainer,
+    service::SR,
+    model::ServiceModel{SR, OperatingReserveDemandCurve},
+) where {SR <: PSY.Reserve}
+    parameters = model_has_parameters(psi_container)
+    use_forecast_data = model_uses_forecasts(psi_container)
+    initial_time = model_initial_time(psi_container)
+    @debug initial_time
+    time_steps = model_time_steps(psi_container)
+    name = PSY.get_name(service)
+    constraint = get_constraint(psi_container, constraint_name(REQUIREMENT, SR))
+    reserve_variable = get_variable(psi_container, variable_name(name, SR))
+    requirement_variable = get_variable(psi_container, variable_name(SERVICE_REQUIREMENT, SR))
+
+    for t in time_steps
+        constraint[name, t] = JuMP.@constraint(
+            psi_container.JuMPmodel,
+            sum(reserve_variable[:, t]) >= requirement_variable[name, t]
+        )
+    end
+
+    return
+end
+
+function cost_function(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{SR},
+    ::Type{OperatingReserveDemandCurve},
+) where {SR <: PSY.Reserve}
+    add_to_cost(psi_container, devices, variable_name(SERVICE_REQUIREMENT, SR), :variable, -1.0)
     return
 end
 
