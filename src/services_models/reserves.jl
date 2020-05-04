@@ -124,7 +124,7 @@ end
 
 function modify_device_model!(
     devices_template::Dict{Symbol, DeviceModel},
-    service_model::ServiceModel{<:PSY.Reserve, RangeReserve},
+    service_model::ServiceModel{<:PSY.Reserve, <:AbstractReservesFormulation},
     contributing_devices::Vector{<:PSY.Device},
 )
     device_types = unique(typeof.(contributing_devices))
