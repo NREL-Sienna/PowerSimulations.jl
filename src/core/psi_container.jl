@@ -216,7 +216,7 @@ function encode_symbol(::Type{T}, name1::AbstractString, name2::AbstractString) 
 end
 
 function encode_symbol(::Type{T}, name1::AbstractString, name2::AbstractString) where {T <: PSY.Reserve}
-    T_ = replace(string(T), "{" => "-")
+    T_ = replace(string(T), "{" => "_")
     T_ = replace(T_, "}" => "")
     return Symbol(join((name1, name2, T_), PSI_NAME_DELIMITER))
 end
@@ -230,7 +230,7 @@ function encode_symbol(::Type{T}, name::AbstractString) where {T}
 end
 
 function encode_symbol(::Type{T}, name::AbstractString) where {T <: PSY.Reserve}
-    T_ = replace(string(T), "{" => "-")
+    T_ = replace(string(T), "{" => "_")
     T_ = replace(T_, "}" => "")
     return Symbol(join((name, T_), PSI_NAME_DELIMITER))
 end
