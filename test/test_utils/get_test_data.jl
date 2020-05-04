@@ -190,7 +190,7 @@ end
 nodes = nodes5()
 c_sys5_bat = System(
     nodes,
-    thermal_generators5(nodes),
+    vcat(thermal_generators5(nodes), renewable_generators5(nodes)),
     loads5(nodes),
     branches5(nodes),
     battery5(nodes),
