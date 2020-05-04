@@ -22,12 +22,12 @@ end
 
 function activerequirement_variables!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{SR},
-) where {SR <: PSY.Reserve}
+    devices::IS.FlattenIteratorWrapper{PSY.ORDC},
+)
     add_variable(
         psi_container,
         devices,
-        variable_name(SERVICE_REQUIREMENT, SR),
+        variable_name(SERVICE_REQUIREMENT, PSY.ORDC),
         false;
         lb_value = x -> 0.0,
     )
