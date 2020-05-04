@@ -384,7 +384,7 @@ function test_write_functions(file_path)
             multiplier = hcat(multiplier, PSY.get_activepower(devices[d]))
         end
         extracted = -multiplier .* params
-        @test extracted == res.parameter_values[:P_PowerLoad]
+        @test IS.get_base_power(res) .* extracted == res.parameter_values[:P_PowerLoad]
     end
 
     @testset "Set optimizer at solve call" begin
