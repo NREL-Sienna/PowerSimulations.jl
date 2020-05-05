@@ -1,5 +1,4 @@
 struct EconomicDispatchProblem <: AbstractOperationsProblem end
-
 struct UnitCommitmentProblem <: AbstractOperationsProblem end
 
 function _generic_template(; kwargs...)
@@ -85,7 +84,6 @@ template = template_economic_dispatch()
 - `services::Dict{Symbol, ServiceModel}` : override default `ServiceModel` settings
 """
 function template_economic_dispatch(; kwargs...)
-
     devices = get(
         kwargs,
         :devices,
