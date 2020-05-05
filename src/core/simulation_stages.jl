@@ -12,8 +12,9 @@ mutable struct StageInternal
     caches::Set{CacheKey}
     chronolgy_dict::Dict{Int, <:FeedForwardChronology}
     built::Bool
-    ext::Dict{Symbol, Any}
-    function StageInternal(number, executions, execution_count, psi_container; ext = Dict{Symbol, Any}())
+    stage_path::String
+    ext::Dict{String, Any}
+    function StageInternal(number, executions, execution_count, psi_container; ext = Dict{String, Any}())
         new(
             number,
             executions,
@@ -23,6 +24,7 @@ mutable struct StageInternal
             Set{CacheKey}(),
             Dict{Int, FeedForwardChronology}(),
             false,
+            "",
             ext
         )
     end
@@ -150,12 +152,19 @@ function build!(
     # Simulation Sequence object and not at the stage creation.
     set_horizon!(settings, horizon)
     set_initial_time!(settings, initial_time)
-
     psi_container = get_psi_container(stage)
     _build!(psi_container, stage.template, stage.sys)
     @assert get_horizon(psi_container.settings) == length(psi_container.time_steps)
     stage_resolution = PSY.get_forecasts_resolution(stage.sys)
     stage.internal.end_of_interval_step = Int(stage_interval / stage_resolution)
+    stage_path = stage.internal.stage_path
+    _write_psi_container(
+            stage.internal.psi_container,
+            joinpath(stage_path, "Stage$(stage.internal.number)_optimization_model.json"),
+        )
+    if get_system_to_file(settings)
+        PSY.to_json(stage.sys, joinpath(stage_path, "Stage$(stage.internal.number)_sys_data.json"))
+    end
     stage.internal.built = true
     return
 end
