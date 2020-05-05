@@ -12,7 +12,8 @@ mutable struct StageInternal
     caches::Set{CacheKey}
     chronolgy_dict::Dict{Int, <:FeedForwardChronology}
     built::Bool
-    function StageInternal(number, executions, execution_count, psi_container)
+    ext::Dict{Symbol, Any}
+    function StageInternal(number, executions, execution_count, psi_container; ext = Dict{Symbol, Any}())
         new(
             number,
             executions,
@@ -22,6 +23,7 @@ mutable struct StageInternal
             Set{CacheKey}(),
             Dict{Int, FeedForwardChronology}(),
             false,
+            ext
         )
     end
 end
