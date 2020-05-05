@@ -35,7 +35,8 @@ const UNSET_HORIZON = 0
 const UNSET_INI_TIME = Dates.DateTime(0)
 
 # Tolerance of comparisons
-const ABSOLUTE_TOLERANCE = 1.0e-10
+# MIP gap tolerances in most solvers are set to 1e-4
+const ABSOLUTE_TOLERANCE = 1.0e-6
 const SLACK_COST = 1e6
 
 const MISSING_INITIAL_CONDITIONS_TIME_COUNT = 999.0
