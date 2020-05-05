@@ -124,7 +124,7 @@ warm_start_enabled(s::Stage) = get_warm_start(s.internal.psi_container.settings)
 get_initial_time(s::Stage{T}) where {T <: AbstractOperationsProblem} =
     get_initial_time(s.internal.psi_container.settings)
 
-function reset!(stage::Stage)
+function reset!(stage::Stage{M}) where {M <: AbstractOperationsProblem}
     @assert stage_built(stage)
     if stage_built(stage)
         @info("Stage $(stage.internal.number) will be reset by the simulation build call")
@@ -137,11 +137,11 @@ function reset!(stage::Stage)
 end
 
 function build!(
-    stage::Stage,
+    stage::Stage{M},
     initial_time::Dates.DateTime,
     horizon::Int,
     stage_interval::Dates.Period,
-)
+) where {M <: AbstractOperationsProblem}
     stage_built(stage) && reset!(stage)
     settings = get_settings(get_psi_container(stage))
     # Horizon and initial time are set here because the information is specified in the
@@ -158,7 +158,7 @@ function build!(
     return
 end
 
-function run_stage(stage::Stage, start_time::Dates.DateTime, results_path::String)
+function run_stage(stage::Stage{M}, start_time::Dates.DateTime, results_path::String) where {M <: AbstractOperationsProblem}
     @assert stage.internal.psi_container.JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
     timed_log = Dict{Symbol, Any}()
     model = stage.internal.psi_container.JuMPmodel
