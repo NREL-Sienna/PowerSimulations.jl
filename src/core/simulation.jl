@@ -435,6 +435,8 @@ function _build_stages!(sim::Simulation)
             stage = get_stage(sim, stage_name)
             stage_interval = get_stage_interval(get_sequence(sim), stage_name)
             initial_time = get_initial_time(sim)
+            stage.internal.stage_path = joinpath(sim.internal.models_dir, "stage_$(stage_name)_model")
+            mkpath(stage.internal.stage_path)
             build!(stage, initial_time, horizon, stage_interval)
             _populate_caches!(sim, stage_name)
             sim.internal.date_ref[stage_number] = initial_time
@@ -442,20 +444,6 @@ function _build_stages!(sim::Simulation)
     end
     _check_required_ini_cond_caches(sim)
     return
-end
-
-function _build_stage_paths!(sim::Simulation, system_to_file::Bool)
-    for (stage_number, stage_name) in sim.sequence.order
-        stage = sim.stages[stage_name]
-        stage_path = joinpath(sim.internal.models_dir, "stage_$(stage_name)_model")
-        mkpath(stage_path)
-        _write_psi_container(
-            stage.internal.psi_container,
-            joinpath(stage_path, "$(stage_name)_optimization_model.json"),
-        )
-        system_to_file &&
-            PSY.to_json(stage.sys, joinpath(stage_path, "$(stage_name)_sys_data.json"))
-    end
 end
 
 function _check_folder(sim::Simulation)
@@ -810,7 +798,6 @@ function _execute!(sim::Simulation; kwargs...)
         error("Simulation not built, build the simulation to execute")
     TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
-        _build_stage_paths!(sim, system_to_file)
         execution_order = get_execution_order(sim)
         for step in 1:get_steps(sim)
             TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execution Step $(step)" begin
