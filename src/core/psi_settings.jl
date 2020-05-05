@@ -8,6 +8,7 @@ struct PSISettings
     PTDF::Union{Nothing, PSY.PTDF}
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
     constraint_duals::Vector{Symbol}
+    system_to_file::Bool
     ext::Dict{String, Any}
 end
 
@@ -22,7 +23,8 @@ function PSISettings(
     PTDF::Union{Nothing, PSY.PTDF} = nothing,
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
     constraint_duals::Vector{Symbol} = Vector{Symbol}(),
-    ext::Dict{String, Any} = Dict{String, Any}(),
+    system_to_file = true,
+    ext = Dict{String, Any}(),
 )
     return PSISettings(
         Ref(horizon),
@@ -34,6 +36,7 @@ function PSISettings(
         PTDF,
         optimizer,
         constraint_duals,
+        system_to_file,
         ext,
     )
 end
@@ -94,3 +97,4 @@ end
 get_warm_start(settings::PSISettings) = settings.warm_start[]
 get_constraint_duals(settings::PSISettings) = settings.constraint_duals
 get_slack_variables(settings::PSISettings) = settings.slack_variables
+get_system_to_file(settings::PSISettings) = settings.system_to_file
