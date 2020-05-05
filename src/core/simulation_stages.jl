@@ -14,7 +14,13 @@ mutable struct StageInternal
     built::Bool
     stage_path::String
     ext::Dict{String, Any}
-    function StageInternal(number, executions, execution_count, psi_container; ext = Dict{String, Any}())
+    function StageInternal(
+        number,
+        executions,
+        execution_count,
+        psi_container;
+        ext = Dict{String, Any}(),
+    )
         new(
             number,
             executions,
@@ -25,7 +31,7 @@ mutable struct StageInternal
             Dict{Int, FeedForwardChronology}(),
             false,
             "",
-            ext
+            ext,
         )
     end
 end
@@ -159,17 +165,24 @@ function build!(
     stage.internal.end_of_interval_step = Int(stage_interval / stage_resolution)
     stage_path = stage.internal.stage_path
     _write_psi_container(
-            stage.internal.psi_container,
-            joinpath(stage_path, "Stage$(stage.internal.number)_optimization_model.json"),
-        )
+        stage.internal.psi_container,
+        joinpath(stage_path, "Stage$(stage.internal.number)_optimization_model.json"),
+    )
     if get_system_to_file(settings)
-        PSY.to_json(stage.sys, joinpath(stage_path, "Stage$(stage.internal.number)_sys_data.json"))
+        PSY.to_json(
+            stage.sys,
+            joinpath(stage_path, "Stage$(stage.internal.number)_sys_data.json"),
+        )
     end
     stage.internal.built = true
     return
 end
 
-function run_stage(stage::Stage{M}, start_time::Dates.DateTime, results_path::String) where {M <: AbstractOperationsProblem}
+function run_stage(
+    stage::Stage{M},
+    start_time::Dates.DateTime,
+    results_path::String,
+) where {M <: AbstractOperationsProblem}
     @assert stage.internal.psi_container.JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
     timed_log = Dict{Symbol, Any}()
     model = stage.internal.psi_container.JuMPmodel
