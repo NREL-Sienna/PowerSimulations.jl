@@ -141,6 +141,7 @@ IS.get_total_cost(result::SimulationResults) = result.total_cost
 IS.get_optimizer_log(results::SimulationResults) = results.optimizer_log
 IS.get_time_stamp(result::SimulationResults) = result.time_stamp
 get_duals(result::SimulationResults) = result.dual_values
+IS.get_parameters(result::SimulationResults) = result.parameter_values
 
 function deserialize_sim_output(file_path::String)
     path = joinpath(file_path, "output_references")
@@ -499,8 +500,40 @@ function serialize_sim_output(sim_results::SimulationResultsReference)
 end
 
 # writes the results to CSV files in a folder path, but they can't be read back
-function write_to_CSV(results::SimulationResults)
-    write_results(results; file_type = CSV)
+function write_to_CSV(res::SimulationResults; kwargs...)
+    folder_path = res.results_folder
+    if !isdir(folder_path)
+        throw(IS.ConflictingInputsError("Specified path is not valid. Set up results folder."))
+    end
+    for (k, v) in IS.get_variables(res)
+        if decode_symbol(k)[1] == "P"
+            IS.get_variables(res)[k] = IS.get_base_power(res) .* v
+        end
+    end
+    for (p, v) in IS.get_parameters(res)
+        IS.get_parameters(res)[p] = IS.get_base_power(res) .* v
+    end
+    write_data(
+        IS.get_variables(res),
+        res.time_stamp,
+        folder_path;
+        file_type = CSV,
+        kwargs...,
+    )
+    write_optimizer_log(IS.get_total_cost(res), folder_path)
+    write_data(
+        IS.get_time_stamp(res),
+        folder_path,
+        "time_stamp";
+        file_type = CSV,
+        kwargs...,
+    )
+    write_data(get_duals(res), folder_path; file_type = CSV, kwargs...)
+    write_data(IS.get_parameters(res), folder_path; file_type = CSV, kwargs...)
+    files = collect(readdir(folder_path))
+    compute_file_hash(folder_path, files)
+    @info("Files written to $folder_path folder.")
+    return
 end
 
 """

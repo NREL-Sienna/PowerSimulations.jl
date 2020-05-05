@@ -384,7 +384,7 @@ function test_write_functions(file_path)
             multiplier = hcat(multiplier, PSY.get_activepower(devices[d]))
         end
         extracted = -multiplier .* params
-        @test extracted == res.parameter_values[:P_PowerLoad]
+        @test IS.get_base_power(res) .* extracted == res.parameter_values[:P_PowerLoad]
     end
 
     @testset "Set optimizer at solve call" begin
@@ -403,7 +403,7 @@ function test_write_functions(file_path)
     end
 
     @testset "Test get_variable function" begin
-        variable = get_result_variable(res, :P, ThermalStandard)
+        variable = PSI.get_result_variable(res, :P, ThermalStandard)
         @test isa(variable, DataFrames.DataFrame)
     end
 end
