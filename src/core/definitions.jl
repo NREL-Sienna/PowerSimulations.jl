@@ -50,12 +50,14 @@ const OPERATIONS_ACCEPTED_KWARGS = [
     :optimizer,
     :warm_start,
     :slack_variables,
+    :system_to_file,
     :constraint_duals,
 ]
 
 const OPERATIONS_SOLVE_KWARGS = [:optimizer, :save_path]
 
-const STAGE_ACCEPTED_KWARGS = [:PTDF, :warm_start, :slack_variables, :constraint_duals]
+const STAGE_ACCEPTED_KWARGS =
+    [:PTDF, :warm_start, :slack_variables, :constraint_duals, :system_to_file]
 
 const PSI_NAME_DELIMITER = "__"
 
