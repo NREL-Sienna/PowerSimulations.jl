@@ -26,3 +26,5 @@ function OperationsProblemTemplate(::Type{T}) where {T <: PM.AbstractPowerModel}
         Dict{Symbol, ServiceModel}(),
     )
 end
+
+OperationsProblemTemplate() = OperationsProblemTemplate(PM.AbstractPowerModel)

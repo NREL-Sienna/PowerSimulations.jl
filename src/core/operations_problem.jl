@@ -207,7 +207,6 @@ get_services_ref(op_problem::OperationsProblem) = op_problem.template.services
 get_system(op_problem::OperationsProblem) = op_problem.sys
 get_psi_container(op_problem::OperationsProblem) = op_problem.psi_container
 get_base_power(op_problem::OperationsProblem) = op_problem.sys.basepower
-
 function reset!(op_problem::OperationsProblem)
     op_problem.psi_container =
         PSIContainer(op_problem.sys, op_problem.psi_container.settings, nothing)
@@ -528,7 +527,7 @@ end
 
 # Function to create a dictionary for the time series of the simulation
 function get_time_stamps(op_problem::OperationsProblem)
-    initial_time = PSY.get_forecasts_initial_time(op_problem.sys)
+    initial_time = model_initial_time(get_psi_container(op_problem))
     interval = PSY.get_forecasts_resolution(op_problem.sys)
     horizon = get_horizon(get_settings(get_psi_container(op_problem)))
     range_time = collect(initial_time:interval:(initial_time + interval .* horizon))

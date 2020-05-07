@@ -220,6 +220,7 @@ function _read_time(file_path::String, time_length::Number)
     time_file_path = joinpath(dirname(file_path), "time_stamp.feather")
     temp_time_stamp = Feather.read("$time_file_path")
     time_stamp = temp_time_stamp[(1:time_length), :]
+    time_stamp = convert.(Dates.DateTime, time_stamp)
     return time_stamp
 end
 
