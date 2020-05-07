@@ -568,7 +568,8 @@ interruptible(nodes5) = [InterruptibleLoad(
     TwoPartCost(150.0, 2400.0),
 )]
 
-const ORDC_cost = TwoPartCost([(0.0, 9000.0), (0.2, 6000.0), (0.4, 500.0), (0.6, 10.0), (0.8, 0.0)], 0.0)
+const ORDC_cost =
+    TwoPartCost([(0.0, 9000.0), (0.2, 6000.0), (0.4, 500.0), (0.6, 10.0), (0.8, 0.0)], 0.0)
 
 reserve5(thermal_generators5) = [
     VariableReserve{ReserveUp}(
@@ -589,12 +590,7 @@ reserve5(thermal_generators5) = [
         0.8,
         maximum([gen.activepowerlimits[:max] for gen in thermal_generators5]) .* 0.001,
     ),
-    ReserveDemandCurve{ReserveUp}(
-        "ORDC1",
-        true,
-        0.6,
-        ORDC_cost,
-    )
+    ReserveDemandCurve{ReserveUp}("ORDC1", true, 0.6, ORDC_cost),
 ]
 
 reserve5_re(renewable_generators5) = [
