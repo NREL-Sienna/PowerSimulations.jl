@@ -122,46 +122,47 @@ function _add_initial_condition_caches(
     return
 end
 
-function _create_cache(ic_key::ICKey,
-    caches::Union{Nothing, Vector{<:AbstractCache}},
-)
+function _create_cache(ic_key::ICKey, caches::Union{Nothing, Vector{<:AbstractCache}})
     return
 end
 
-function _create_cache(ic_key::ICKey{Type{T}, TimeDurationON}, 
+function _create_cache(
+    ic_key::ICKey{TimeDurationON, Type{T}},
     caches::Union{Nothing, Vector{<:AbstractCache}},
-) where {T<: PSY.Device}
+) where {T <: PSY.Device}
 
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, Type{T}), cache_keys)
         cache = TimeStatusChange(T, PSI.ON)
         push!(caches, cache)
     end
-    return 
+    return
 end
 
-function _create_cache(ic_key::ICKey{TimeDurationOFF, Type{T}}, 
+function _create_cache(
+    ic_key::ICKey{TimeDurationOFF, Type{T}},
     caches::Union{Nothing, Vector{<:AbstractCache}},
-) where {T<: PSY.Device}
+) where {T <: PSY.Device}
 
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, Type{T}), cache_keys)
         cache = TimeStatusChange(T, PSI.ON)
         push!(caches, cache)
     end
-    return 
+    return
 end
 
-function _create_cache(ic_key::ICKey{EnergyLevel, Type{T}}, 
+function _create_cache(
+    ic_key::ICKey{EnergyLevel, Type{T}},
     caches::Union{Nothing, Vector{<:AbstractCache}},
-) where {T<: PSY.Device}
+) where {T <: PSY.Device}
 
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(StoredEnergy, Type{T}), cache_keys)
         cache = TimeStatusChange(T, PSI.ENERGY)
         push!(caches, cache)
     end
-    return 
+    return
 end
 
 function _set_internal_caches(
