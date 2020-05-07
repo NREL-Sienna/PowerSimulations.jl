@@ -116,7 +116,7 @@ function _add_initial_condition_caches(
     caches::Union{Nothing, Vector{<:AbstractCache}},
 )
     initial_conditions = stage.internal.psi_container.initial_conditions
-    for (ic_key, init_conds) in initial_conditions
+    for (ic_key, init_conds) in initial_conditions.data
         _create_cache(ic_key, caches)
     end
     return
