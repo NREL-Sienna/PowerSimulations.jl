@@ -246,7 +246,7 @@ function test_sequence_build(file_path::String)
             simulation_folder = file_path,
         )
         build!(sim)
-        
+
         @test !isempty(sim.internal.simulation_cache)
 
         stages_definition = create_stages(template_standard_uc)
