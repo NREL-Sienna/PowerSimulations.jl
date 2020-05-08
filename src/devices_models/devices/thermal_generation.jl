@@ -537,7 +537,7 @@ function _check_variable_cost!(
     return
 end
 
-function _add_nomin_cost!(var_cost::PSY.VariableCost{D}, ::T) where {D, T<: PSY.ThermalGen}
+function _add_nomin_cost!(var_cost::PSY.VariableCost{D}, ::T) where {D, T <: PSY.ThermalGen}
     return
 end
 function _add_nomin_cost!(

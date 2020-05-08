@@ -188,10 +188,7 @@ function _pwlgencost_sos(
         pwlvars in MOI.SOS2(collect(1:length(pwlvars)))
     )
     for (ix, var) in enumerate(pwlvars)
-        JuMP.add_to_expression!(
-            gen_cost,
-            cost_component[ix][1] * var,
-        )
+        JuMP.add_to_expression!(gen_cost, cost_component[ix][1] * var)
     end
 
     JuMP.@constraint(
@@ -254,8 +251,7 @@ function _pwlgencost_linear(
 
     c = JuMP.@constraint(
         psi_container.JuMPmodel,
-        variable ==
-        sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars)])
+        variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars)])
     )
 
     return gen_cost
