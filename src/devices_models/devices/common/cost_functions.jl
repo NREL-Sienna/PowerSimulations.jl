@@ -131,14 +131,10 @@ Returns ```flag```
 """
 function _pwlparamcheck(cost_)
     flag = true
-    if (cost_[2][1] - cost_[1][1]) / (cost_[2][2] - cost_[1][2]) < 0.0
-        flag = false
-    end
-    l = length(cost_)
-    for i in 1:(l - 2)
-        if ((cost_[i + 1][1] - cost_[i][1]) / (cost_[i + 1][2] - cost_[i][2])) >
-           ((cost_[i + 2][1] - cost_[i + 1][1]) / (cost_[i + 2][2] - cost_[i + 1][2]))
-            flag = false
+    slopes = PSY.get_slopes(cost_)
+    for ix in 1:(length(slopes) - 1)
+        if slopes[ix] > slopes[ix + 1]
+            return flag = false
         end
     end
     return flag
@@ -192,7 +188,10 @@ function _pwlgencost_sos(
         pwlvars in MOI.SOS2(collect(1:length(pwlvars)))
     )
     for (ix, var) in enumerate(pwlvars)
-        JuMP.add_to_expression!(gen_cost, cost_component[ix][1] * var)
+        JuMP.add_to_expression!(
+            gen_cost,
+            cost_component[ix][1] * var,
+        )
     end
 
     JuMP.@constraint(
@@ -239,35 +238,24 @@ function _pwlgencost_linear(
     cost_component::Vector{NTuple{2, Float64}},
 ) where {JV <: JuMP.AbstractVariableRef}
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-    upperbound(i) =
-        (i == 1 ? cost_component[i][2] : (cost_component[i][2] - cost_component[i - 1][2]))
+
     pwlvars = JuMP.@variable(
         psi_container.JuMPmodel,
         [i = 1:length(cost_component)],
         base_name = "{$(variable)}_{pwl}",
         start = 0.0,
         lower_bound = 0.0,
-        upper_bound = upperbound(i)
+        upper_bound = PSY.get_breakpoint_upperbounds(cost_component)[i]
     )
 
     for (ix, pwlvar) in enumerate(pwlvars)
-        if ix == 1
-            JuMP.add_to_expression!(
-                gen_cost,
-                cost_component[ix][1] * (pwlvar / cost_component[ix][2]),
-            )
-        else
-            JuMP.add_to_expression!(
-                gen_cost,
-                (cost_component[ix][1] - cost_component[ix - 1][1]) *
-                (pwlvar / (cost_component[ix][2] - cost_component[ix - 1][2])),
-            )
-        end
+        JuMP.add_to_expression!(gen_cost, PSY.get_slopes(cost_component)[ix] * pwlvar)
     end
 
     c = JuMP.@constraint(
         psi_container.JuMPmodel,
-        variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars)])
+        variable ==
+        sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars)])
     )
 
     return gen_cost
