@@ -141,7 +141,7 @@ end
 
 function _create_cache(
     ic_key::ICKey{TimeDurationOFF, T},
-    caches::Union{Nothing, Vector{<:AbstractCache}},
+    caches::Vector{<:AbstractCache},
 ) where {T <: PSY.Device}
 
     cache_keys = CacheKey.(caches)
@@ -154,7 +154,7 @@ end
 
 function _create_cache(
     ic_key::ICKey{EnergyLevel, T},
-    caches::Union{Nothing, Vector{<:AbstractCache}},
+    caches::Vector{<:AbstractCache},
 ) where {T <: PSY.Device}
 
     cache_keys = CacheKey.(caches)
