@@ -245,7 +245,9 @@ function test_sequence_build(file_path::String)
             stages_sequence = sequence_no_cache,
             simulation_folder = file_path,
         )
-        @test_throws ArgumentError build!(sim)
+        build!(sim)
+
+        @test !isempty(sim.internal.simulation_cache)
 
         stages_definition = create_stages(template_standard_uc)
         sequence = SimulationSequence(
