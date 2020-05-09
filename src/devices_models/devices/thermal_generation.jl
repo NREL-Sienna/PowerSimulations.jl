@@ -518,6 +518,45 @@ end
 function cost_function(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
+    ::Type{ThermalDispatchNoMin},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.ThermalGen}
+    _check_variable_cost!(devices)
+    add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
+    return
+end
+
+function _check_variable_cost!(
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T <: PSY.ThermalGen}
+    for device in devices
+        var_cost = PSY.get_variable(PSY.get_op_cost(device))
+        _add_nomin_cost!(var_cost, device)
+    end
+    return
+end
+
+function _add_nomin_cost!(var_cost::PSY.VariableCost{D}, ::T) where {D, T <: PSY.ThermalGen}
+    return
+end
+function _add_nomin_cost!(
+    var_cost::PSY.VariableCost{Vector{NTuple{2, Float64}}},
+    ::T,
+) where {T <: PSY.ThermalGen}
+    if var_cost.cost[1][2] != 0.0
+        nomin_cost = (var_cost.cost[1][1], 0.0)
+        pushfirst!(var_cost.cost, nomin_cost)
+        @warn("Please consider changing cost curve for $T as it is incompatiable with 
+        the $ThermalDispatchNoMin formulation, a new breakpoint $nomin_cost will 
+        be added to cost curve")
+    end
+    return
+end
+
+function cost_function(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
     ::Type{<:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
