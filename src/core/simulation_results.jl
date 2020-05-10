@@ -72,67 +72,76 @@ function make_references(sim::Simulation, date_run::String)
     references = Dict()
     for (stage_number, stage_name) in sim.sequence.order
         stage = sim.stages[stage_name]
-        stage_container = get_psi_container(stage)
-        variables = Dict{Symbol, Any}()
-        interval = get_stage_interval(sim, stage_name)
-        variable_names = (collect(keys(stage_container.variables)))
-        if !is_milp(get_psi_container(sim.stages[stage_name]))
-            constraint_duals = get_constraint_duals(stage_container.settings)
-            constraint_duals_names = Symbol.(_concat_dual(constraint_duals))
-            variable_names = vcat(variable_names, constraint_duals_names)
-        end
-        params =
-            collect(keys(get_parameters_value(get_psi_container(sim.stages[stage_name]))))
-        param_keys = Symbol.(_concat_param(params))
-        variable_names = vcat(variable_names, param_keys)
-        for name in variable_names
-            variables[name] = DataFrames.DataFrame(
-                Date = Dates.DateTime[],
-                Step = String[],
-                File_Path = String[],
-            )
-        end
-        for s in 1:(sim.steps)
-            stage = get_stage(sim, stage_name)
-            for run in 1:(stage.internal.executions)
-                sim.internal.current_time = sim.internal.date_ref[stage_number]
-                for name in variable_names
-                    full_path = joinpath(
-                        sim.internal.raw_dir,
-                        "step-$(s)-stage-$(stage_name)",
-                        replace_chars("$(sim.internal.current_time)", ":", "-"),
-                        "$(name).feather",
-                    )
-                    if isfile(full_path)
-                        date_df = DataFrames.DataFrame(
-                            Date = sim.internal.current_time,
-                            Step = "step-$(s)",
-                            File_Path = full_path,
-                        )
-                        variables[name] = vcat(variables[name], date_df)
-                    else
-                        @error "$full_path, does not contain any simulation result raw data"
-                    end
-                end
-                sim.internal.run_count[s][stage_number] += 1
-                sim.internal.date_ref[stage_number] =
-                    sim.internal.date_ref[stage_number] + interval
-            end
-        end
-        references["stage-$stage_name"] = variables
+        references["stage-$stage_name"] = make_result_reference(stage, sim)
     end
     return references
 end
 
+function make_result_reference(
+    stage::Stage{T},
+    sim::Simulation,
+) where {T<:AbstractOperationsProblem}
+    stage_number = get_number(stage)
+    stage_name = get_stage_name(sim, stage)
+    stage_container = get_psi_container(stage)
+    variables = Dict{Symbol,Any}()
+    interval = get_stage_interval(sim, stage_name)
+    variable_names = (collect(keys(stage_container.variables)))
+    if !is_milp(get_psi_container(stage))
+        constraint_duals = get_constraint_duals(stage_container.settings)
+        constraint_duals_names = Symbol.(_concat_dual(constraint_duals))
+        variable_names = vcat(variable_names, constraint_duals_names)
+    end
+    params = collect(keys(get_parameters_value(get_psi_container(stage))))
+    param_keys = Symbol.(_concat_param(params))
+    variable_names = vcat(variable_names, param_keys)
+    for name in variable_names
+        variables[name] = DataFrames.DataFrame(
+            Date = Dates.DateTime[],
+            Step = String[],
+            File_Path = String[],
+        )
+    end
+    for s in 1:(sim.steps)
+        for run in 1:(stage.internal.executions)
+            sim.internal.current_time = sim.internal.date_ref[stage_number]
+            for name in variable_names
+                full_path = joinpath(
+                    sim.internal.raw_dir,
+                    "step-$(s)-stage-$(stage_name)",
+                    replace_chars("$(sim.internal.current_time)", ":", "-"),
+                    "$(name).feather",
+                )
+                if isfile(full_path)
+                    date_df = DataFrames.DataFrame(
+                        Date = sim.internal.current_time,
+                        Step = "step-$(s)",
+                        File_Path = full_path,
+                    )
+                    variables[name] = vcat(variables[name], date_df)
+                else
+                    @error "$full_path, does not contain any simulation result raw data"
+                end
+            end
+            sim.internal.run_count[s][stage_number] += 1
+            sim.internal.date_ref[stage_number] =
+                sim.internal.date_ref[stage_number] + interval
+        end
+    end
+    return variables
+end
+
+make_result_reference(stage::Stage{T}, sim::Simulation) where {T} = nothing
+
 struct SimulationResults <: IS.Results
     base_power::Float64
-    variable_values::Dict{Symbol, DataFrames.DataFrame}
+    variable_values::Dict{Symbol,DataFrames.DataFrame}
     total_cost::Dict
     optimizer_log::Dict
     time_stamp::DataFrames.DataFrame
-    dual_values::Dict{Symbol, Any}
-    results_folder::Union{Nothing, String}
-    parameter_values::Dict{Symbol, DataFrames.DataFrame}
+    dual_values::Dict{Symbol,Any}
+    results_folder::Union{Nothing,String}
+    parameter_values::Dict{Symbol,DataFrames.DataFrame}
 end
 
 IS.get_base_power(result::SimulationResults) = result.base_power
@@ -151,7 +160,7 @@ function deserialize_sim_output(file_path::String)
     )
     ref = Dict()
     for stage in list
-        ref[stage] = Dict{Symbol, Any}()
+        ref[stage] = Dict{Symbol,Any}()
         for variable in collect(readdir(joinpath(path, stage)))
             var = splitext(variable)[1]
             ref[stage][Symbol(var)] = Feather.read(joinpath(path, stage, variable))
@@ -160,8 +169,8 @@ function deserialize_sim_output(file_path::String)
         end
     end
     results_folder = read_json(joinpath(path, "results_folder.json"))
-    chronologies = Dict{Any, Any}(read_json(joinpath(path, "chronologies.json")))
-    base_powers = Dict{Any, Any}(read_json(joinpath(path, "base_power.json")))
+    chronologies = Dict{Any,Any}(read_json(joinpath(path, "chronologies.json")))
+    base_powers = Dict{Any,Any}(read_json(joinpath(path, "base_power.json")))
     sim_output = SimulationResultsReference(ref, results_folder, chronologies, base_powers)
     return sim_output
 end
@@ -184,7 +193,7 @@ function _read_references(
             File_Path = String[],
         )
         for n in 1:length(step)
-            step_df = vcat(step_df, date_df[date_df.Step .== step[n], :])
+            step_df = vcat(step_df, date_df[date_df.Step.==step[n], :])
         end
         results[name] = DataFrames.DataFrame()
         for (ix, time) in enumerate(step_df.Date)
@@ -269,9 +278,9 @@ function load_simulation_results(
     stage = "stage-$stage_name"
     references = sim_output.ref
     base_power = sim_output.base_powers[stage_name]
-    variables = Dict{Symbol, DataFrames.DataFrame}()
-    duals = Dict{Symbol, Any}()
-    params = Dict{Symbol, DataFrames.DataFrame}()
+    variables = Dict{Symbol,DataFrames.DataFrame}()
+    duals = Dict{Symbol,Any}()
+    params = Dict{Symbol,DataFrames.DataFrame}()
     time_stamp = DataFrames.DataFrame(Range = Dates.DateTime[])
     time_length = sim_output.chronologies[stage]
     dual = _find_duals(collect(keys(references[stage])))
@@ -285,7 +294,7 @@ function load_simulation_results(
             File_Path = String[],
         )
         for n in 1:length(step)
-            step_df = vcat(step_df, date_df[date_df.Step .== step[n], :])
+            step_df = vcat(step_df, date_df[date_df.Step.==step[n], :])
         end
         variables[(variable[l])] = DataFrames.DataFrame()
         for (ix, time) in enumerate(step_df.Date)
@@ -301,7 +310,7 @@ function load_simulation_results(
     time_stamp[!, :Range] = convert(Array{Dates.DateTime}, time_stamp[!, :Range])
     file_path = dirname(references[stage][variable[1]][1, :File_Path])
     optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
-    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
+    obj_value = Dict{Symbol,Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     duals = _read_references(duals, dual, stage, step, references, time_length)
     param_values = _read_references(params, param, stage, step, references, time_length)
     return SimulationResults(
@@ -363,9 +372,9 @@ function load_simulation_results(
     stage = "stage-$stage_name"
     references = sim_output.ref
     base_power = sim_output.base_powers[stage_name]
-    variables = Dict{Symbol, DataFrames.DataFrame}()
-    duals = Dict{Symbol, Any}()
-    params = Dict{Symbol, DataFrames.DataFrame}()
+    variables = Dict{Symbol,DataFrames.DataFrame}()
+    duals = Dict{Symbol,Any}()
+    params = Dict{Symbol,DataFrames.DataFrame}()
     variable = (collect(keys(references[stage])))
     dual = _find_duals(variable)
     param = _find_params(collect(keys(references[stage])))
@@ -389,7 +398,7 @@ function load_simulation_results(
     time_stamp[!, :Range] = convert(Array{Dates.DateTime}, time_stamp[!, :Range])
     file_path = dirname(references[stage][variable[1]][1, :File_Path])
     optimizer = read_json(joinpath(file_path, "optimizer_log.json"))
-    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
+    obj_value = Dict{Symbol,Any}(:OBJECTIVE_FUNCTION => optimizer["obj_value"])
     param_values = _read_references(params, param, stage, references, time_length)
     duals = _read_references(duals, dual, stage, references, time_length)
     return SimulationResults(
