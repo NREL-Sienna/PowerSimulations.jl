@@ -132,8 +132,10 @@ Returns ```flag```
 function _pwlparamcheck(cost_)
     flag = true
     slopes = PSY.get_slopes(cost_)
-    for ix in 1:(length(slopes) - 1)
+    # First element of the array is the average cost at P_min
+    for ix in 2:(length(slopes) - 1)
         if slopes[ix] > slopes[ix + 1]
+            @debug slopes
             return flag = false
         end
     end

@@ -522,35 +522,67 @@ function cost_function(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
-    _check_variable_cost!(devices)
-    add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
-    return
-end
+    resolution = model_resolution(psi_container)
+    dt = Dates.value(Dates.Minute(resolution)) / 60
+    variable = get_variable(psi_container, variable_name(ACTIVE_POWER, T))
 
-function _check_variable_cost!(
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.ThermalGen}
-    for device in devices
-        var_cost = PSY.get_variable(PSY.get_op_cost(device))
-        _add_nomin_cost!(var_cost, device)
+    function _ps_cost(d::PSY.ThermalGen, cost_component::PSY.VariableCost)
+        return ps_cost(
+            psi_container,
+            variable[PSY.get_name(d), :],
+            cost_component,
+            dt,
+            sign,
+        )
     end
-    return
-end
 
-function _add_nomin_cost!(var_cost::PSY.VariableCost{D}, ::T) where {D, T <: PSY.ThermalGen}
-    return
-end
-function _add_nomin_cost!(
-    var_cost::PSY.VariableCost{Vector{NTuple{2, Float64}}},
-    ::T,
-) where {T <: PSY.ThermalGen}
-    if var_cost.cost[1][2] != 0.0
-        nomin_cost = (var_cost.cost[1][1], 0.0)
-        pushfirst!(var_cost.cost, nomin_cost)
-        @warn("Please consider changing cost curve for $T as it is incompatiable with 
-        the $ThermalDispatchNoMin formulation, a new breakpoint $nomin_cost will 
-        be added to cost curve")
+    # This function modified the PWL cost data when present
+    function _ps_cost(
+        d::PSY.ThermalGen,
+        cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
+    )
+        gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
+        for var in variable
+            pwlvars = JuMP.@variable(
+                psi_container.JuMPmodel,
+                [i = 1:length(cost_component)],
+                base_name = "{$(variable)}_{pwl}",
+                start = 0.0,
+                lower_bound = 0.0,
+                upper_bound = PSY.get_breakpoint_upperbounds(cost_component)[i]
+            )
+
+            slopes = PSY.get_slopes(cost_component)
+            first_pair = cost_component.cost[1]
+            slopes[1] = (first_pair[1]^2 / first_pair[2]) - slopes[1]
+            @assert slopes[1] >= 0
+            @assert slopes[1] <= slopes[2]
+            for (ix, pwlvar) in enumerate(pwlvars)
+                JuMP.add_to_expression!(gen_cost, slopes[ix] * pwlvar)
+            end
+
+            c = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars)])
+            )
+            JuMP.add_to_expression!(gen_cost, c)
+        end
+        return sign * gen_cost * d
     end
+
+    for d in devices
+        cost_component = PSY.get_variable(PSY.get_op_cost(d))
+        cost_expression =
+            _ps_cost(psi_container, variable[PSY.get_name(d), :], cost_component, dt, sign)
+        T_ce = typeof(cost_expression)
+        T_cf = typeof(psi_container.cost_function)
+        if T_cf <: JuMP.GenericAffExpr && T_ce <: JuMP.GenericQuadExpr
+            psi_container.cost_function += cost_expression
+        else
+            JuMP.add_to_expression!(psi_container.cost_function, cost_expression)
+        end
+    end
+
     return
 end
 
