@@ -803,7 +803,7 @@ end
 function update_stage!(
     stage::Stage{M},
     sim::Simulation,
-) where {M <: AbstractOperationsProblem}
+) where {M <: PowerSimulationsOperationsProblem}
     _update_stage!(stage, sim)
     return
 end

@@ -1,4 +1,4 @@
-struct GenericOpProblem <: AbstractOperationsProblem end
+struct GenericOpProblem <: PowerSimulationsOperationsProblem end
 
 mutable struct OperationsProblem{M <: AbstractOperationsProblem}
     template::OperationsProblemTemplate

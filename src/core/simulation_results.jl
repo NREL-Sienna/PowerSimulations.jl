@@ -80,7 +80,7 @@ end
 function make_result_reference(
     stage::Stage{T},
     sim::Simulation,
-) where {T<:AbstractOperationsProblem}
+) where {T<:PowerSimulationsOperationsProblem}
     stage_number = get_number(stage)
     stage_name = get_stage_name(sim, stage)
     stage_container = get_psi_container(stage)
@@ -491,11 +491,15 @@ end
 function serialize_sim_output(sim_results::SimulationResultsReference)
     file_path = mkdir(joinpath(dirname(sim_results.results_folder), "output_references"))
     for (k, stage) in sim_results.ref
+       try
         for (i, v) in stage
             path = joinpath(file_path, "$k")
             !isdir(path) && mkdir(path)
             # TODO: Remove this line. There shouldn't be empties coming here.
             !isempty(v) && Feather.write(joinpath(path, "$i.feather"), v)
+        end
+        catch
+            @warn("Results Reference not compatible with serialization")
         end
     end
     JSON.write(
