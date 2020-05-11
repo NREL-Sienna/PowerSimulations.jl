@@ -159,7 +159,7 @@ function _create_cache(
 
     cache_keys = CacheKey.(caches)
     if isempty(cache_keys) || !in(CacheKey(StoredEnergy, T), cache_keys)
-        cache = TimeStatusChange(T, PSI.ENERGY)
+        cache = StoredEnergy(T, PSI.ENERGY)
         push!(caches, cache)
     end
     return
