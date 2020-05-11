@@ -518,6 +518,77 @@ end
 function cost_function(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
+    ::Type{ThermalDispatchNoMin},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.ThermalGen}
+    resolution = model_resolution(psi_container)
+    dt = Dates.value(Dates.Minute(resolution)) / 60
+    variable = get_variable(psi_container, variable_name(ACTIVE_POWER, T))
+
+    # uses the same cost function whenever there is NO PWL
+    function _ps_cost(d::PSY.ThermalGen, cost_component::PSY.VariableCost)
+        return ps_cost(psi_container, variable[PSY.get_name(d), :], cost_component, dt, 1.0)
+    end
+
+    # This function modified the PWL cost data when present
+    function _ps_cost(
+        d::PSY.ThermalGen,
+        cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
+    )
+        gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
+        for var in variable[PSY.get_name(d), :]
+            pwlvars = JuMP.@variable(
+                psi_container.JuMPmodel,
+                [i = 1:length(cost_component)],
+                base_name = "{$(variable)}_{pwl}",
+                start = 0.0,
+                lower_bound = 0.0,
+                upper_bound = PSY.get_breakpoint_upperbounds(cost_component)[i]
+            )
+            slopes = PSY.get_slopes(cost_component)
+            first_pair = cost_component.cost[1]
+            if slopes[1] != 0.0
+                slopes[1] =
+                    (
+                        first_pair[1]^2 - slopes[1] * first_pair[2] +
+                        COST_EPSILON * first_pair[2]
+                    ) / (first_pair[1] * first_pair[2])
+            end
+            if slopes[1] < 0 || slopes[1] <= slopes[2]
+                throw(IS.ConflictingInputsError("The PWL cost data provided for generator $(PSY.get_name(d)) is not compatible with a No Min Cost."))
+            end
+            for (ix, pwlvar) in enumerate(pwlvars)
+                JuMP.add_to_expression!(gen_cost, slopes[ix] * pwlvar)
+            end
+
+            c = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars)])
+            )
+            JuMP.add_to_expression!(gen_cost, c)
+        end
+        return sign * gen_cost * d
+    end
+
+    for d in devices
+        cost_component = PSY.get_variable(PSY.get_op_cost(d))
+        cost_expression = _ps_cost(d, cost_component)
+        T_ce = typeof(cost_expression)
+        T_cf = typeof(psi_container.cost_function)
+        if T_cf <: JuMP.GenericAffExpr && T_ce <: JuMP.GenericQuadExpr
+            psi_container.cost_function += cost_expression
+        else
+            JuMP.add_to_expression!(psi_container.cost_function, cost_expression)
+        end
+    end
+
+    return
+end
+
+function cost_function(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
     ::Type{<:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},

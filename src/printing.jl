@@ -163,8 +163,12 @@ function Base.show(io::IO, ::MIME"text/plain", sim_results::SimulationResultsRef
     println(io, "Reference Tables\n")
     for (k, v) in sim_results.ref
         println(io, "$(k)\n")
-        for (i, x) in v
-            println(io, "$(i): dataframe size $(size(x))\n")
+        try
+            for (i, x) in v
+                println(io, "$(i): dataframe size $(size(x))\n")
+            end
+        catch
+            print(io, "Custom Stage")
         end
     end
     for (k, v) in sim_results.chronologies
