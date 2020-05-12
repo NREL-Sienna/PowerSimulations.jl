@@ -110,6 +110,61 @@ function unregister_recorders!(internal::SimulationInternal)
     end
 end
 
+function _add_initial_condition_caches(
+    sim::SimulationInternal,
+    stage::Stage,
+    caches::Union{Nothing, Vector{<:AbstractCache}},
+)
+    initial_conditions = stage.internal.psi_container.initial_conditions
+    for (ic_key, init_conds) in initial_conditions.data
+        _create_cache(ic_key, caches)
+    end
+    return
+end
+
+function _create_cache(ic_key::ICKey, caches::Union{Nothing, Vector{<:AbstractCache}})
+    return
+end
+
+function _create_cache(
+    ic_key::ICKey{TimeDurationON, T},
+    caches::Union{Nothing, Vector{<:AbstractCache}},
+) where {T <: PSY.Device}
+
+    cache_keys = CacheKey.(caches)
+    if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, T), cache_keys)
+        cache = TimeStatusChange(T, PSI.ON)
+        push!(caches, cache)
+    end
+    return
+end
+
+function _create_cache(
+    ic_key::ICKey{TimeDurationOFF, T},
+    caches::Vector{<:AbstractCache},
+) where {T <: PSY.Device}
+
+    cache_keys = CacheKey.(caches)
+    if isempty(cache_keys) || !in(CacheKey(TimeStatusChange, T), cache_keys)
+        cache = TimeStatusChange(T, PSI.ON)
+        push!(caches, cache)
+    end
+    return
+end
+
+function _create_cache(
+    ic_key::ICKey{EnergyLevel, T},
+    caches::Vector{<:AbstractCache},
+) where {T <: PSY.Device}
+
+    cache_keys = CacheKey.(caches)
+    if isempty(cache_keys) || !in(CacheKey(StoredEnergy, T), cache_keys)
+        cache = StoredEnergy(T, PSI.ENERGY)
+        push!(caches, cache)
+    end
+    return
+end
+
 function _set_internal_caches(
     internal::SimulationInternal,
     stage::Stage,
@@ -246,9 +301,6 @@ function get_stage_cache_definition(s::Simulation, stage::String)
         if stage in stage_names
             push!(cache_ref, caches[stage_names])
         end
-    end
-    if isempty(cache_ref)
-        return nothing
     end
     return cache_ref
 end
@@ -421,8 +473,8 @@ end
 
 function _populate_caches!(sim::Simulation, stage_name::String)
     caches = get_stage_cache_definition(sim, stage_name)
-    isnothing(caches) && return
     stage = get_stage(sim, stage_name)
+    _add_initial_condition_caches(sim.internal, stage, caches)
     _set_internal_caches(sim.internal, stage, caches)
     return
 end
@@ -751,7 +803,7 @@ end
 function update_stage!(
     stage::Stage{M},
     sim::Simulation,
-) where {M <: AbstractOperationsProblem}
+) where {M <: PowerSimulationsOperationsProblem}
     _update_stage!(stage, sim)
     return
 end

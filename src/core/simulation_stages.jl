@@ -151,7 +151,7 @@ function build!(
     initial_time::Dates.DateTime,
     horizon::Int,
     stage_interval::Dates.Period,
-) where {M <: AbstractOperationsProblem}
+) where {M <: PowerSimulationsOperationsProblem}
     stage_built(stage) && reset!(stage)
     settings = get_settings(get_psi_container(stage))
     # Horizon and initial time are set here because the information is specified in the
@@ -182,7 +182,7 @@ function run_stage(
     stage::Stage{M},
     start_time::Dates.DateTime,
     results_path::String,
-) where {M <: AbstractOperationsProblem}
+) where {M <: PowerSimulationsOperationsProblem}
     @assert stage.internal.psi_container.JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
     timed_log = Dict{Symbol, Any}()
     model = stage.internal.psi_container.JuMPmodel

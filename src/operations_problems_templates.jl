@@ -1,5 +1,5 @@
-struct EconomicDispatchProblem <: AbstractOperationsProblem end
-struct UnitCommitmentProblem <: AbstractOperationsProblem end
+struct EconomicDispatchProblem <: PowerSimulationsOperationsProblem end
+struct UnitCommitmentProblem <: PowerSimulationsOperationsProblem end
 
 function _generic_template(; kwargs...)
     network = get(kwargs, :network, CopperPlatePowerModel)
