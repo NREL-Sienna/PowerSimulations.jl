@@ -22,7 +22,7 @@ export FixedOutput
 ######## Service Models ########
 export ServiceModel
 export RangeReserve
-export OperatingReserveDemandCurve
+export StepwiseCostReserve
 ######## Branch Models ########
 export StaticLine
 export StaticLineBounds

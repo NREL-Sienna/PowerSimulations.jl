@@ -8,7 +8,7 @@
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
         :ORDC =>
-            ServiceModel(ReserveDemandCurve{ReserveUp}, OperatingReserveDemandCurve),
+            ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -33,7 +33,7 @@ end
         :UpReserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
         :ORDC =>
-            ServiceModel(ReserveDemandCurve{ReserveUp}, OperatingReserveDemandCurve),
+            ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -57,7 +57,7 @@ end
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :ORDC =>
-            ServiceModel(ReserveDemandCurve{ReserveUp}, OperatingReserveDemandCurve),
+            ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -85,7 +85,7 @@ end
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
         :ORDC =>
-            ServiceModel(ReserveDemandCurve{ReserveUp}, OperatingReserveDemandCurve),
+            ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -110,7 +110,7 @@ end
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
         :ORDC =>
-            ServiceModel(ReserveDemandCurve{ReserveUp}, OperatingReserveDemandCurve),
+            ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,

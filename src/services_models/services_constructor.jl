@@ -77,7 +77,7 @@ function construct_service!(
     psi_container::PSIContainer,
     services::IS.FlattenIteratorWrapper{SR},
     services_mapping::PSY.ServiceContributingDevicesMapping,
-    model::ServiceModel{SR, OperatingReserveDemandCurve},
+    model::ServiceModel{SR, StepwiseCostReserve},
     devices_template::Dict{Symbol, DeviceModel},
 ) where {SR <: PSY.Reserve}
 
@@ -98,7 +98,9 @@ function construct_service!(
         # Constraints
         service_requirement_constraint!(psi_container, service, model)
         modify_device_model!(devices_template, model, contributing_devices)
+
+        # Cost Function
+        cost_function(psi_container, service, model.formulation)
     end
-    cost_function(psi_container, services, model.formulation)
     return
 end
