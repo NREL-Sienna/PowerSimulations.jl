@@ -338,8 +338,12 @@ function assign_variable!(psi_container::PSIContainer, name::Symbol, value)
     return
 end
 
-function add_var_container!(psi_container::PSIContainer, var_name::Symbol, axs...)
-    container = container_spec(psi_container.JuMPmodel, axs...)
+function add_var_container!(psi_container::PSIContainer, var_name::Symbol, axs...; sparse = false)
+    if sparse
+        container = sparse_container_spec(psi_container.JuMPmodel, axs...)
+    else
+        container = container_spec(psi_container.JuMPmodel, axs...)
+    end
     assign_variable!(psi_container, var_name, container)
     return container
 end
