@@ -7,8 +7,7 @@
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
-        :ORDC =>
-            ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -32,8 +31,7 @@ end
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :UpReserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
-        :ORDC =>
-            ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -56,8 +54,7 @@ end
     branches = Dict{Symbol, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
-        :ORDC =>
-            ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -84,8 +81,7 @@ end
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
-        :ORDC =>
-            ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -109,8 +105,7 @@ end
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
-        :ORDC =>
-            ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,

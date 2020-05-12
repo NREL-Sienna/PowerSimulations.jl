@@ -1,6 +1,6 @@
 abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
 struct RangeReserve <: AbstractReservesFormulation end
-struct StepwiseCostReserve  <: AbstractReservesFormulation end
+struct StepwiseCostReserve <: AbstractReservesFormulation end
 ############################### Reserve Variables` #########################################
 """
 This function add the variables for reserves to the model
@@ -124,7 +124,7 @@ function cost_function(
     initial_time = model_initial_time(psi_container)
     @debug initial_time
     time_steps = model_time_steps(psi_container)
-    
+
     if use_forecast_data
         ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
             PSY.Deterministic,
@@ -134,16 +134,16 @@ function cost_function(
             length(time_steps),
         )))
     else
-        ts_vector = repeat(get_variable(service),time_steps[end])
+        ts_vector = repeat(get_variable(service), time_steps[end])
     end
 
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Minute(resolution)) / 60
     variable = get_variable(psi_container, variable_name(SERVICE_REQUIREMENT, SR))
-    
+
     cost_component = getfield(PSY.get_op_cost(d), cost_symbol)
     cost_expression =
-    ps_cost(psi_container, variable[PSY.get_name(d), :], cost_component, dt, sign)
+        ps_cost(psi_container, variable[PSY.get_name(d), :], cost_component, dt, sign)
 
     add_to_cost(
         psi_container,
