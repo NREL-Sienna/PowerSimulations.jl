@@ -4,8 +4,8 @@ mutable struct PSIContainer
     resolution::Dates.TimePeriod
     settings::PSISettings
     settings_copy::PSISettings
-    variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
-    constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
+    variables::Dict{Symbol, AbstractArray}
+    constraints::Dict{Symbol, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     parameters::Union{Nothing, ParametersContainer}
@@ -31,8 +31,8 @@ mutable struct PSIContainer
             resolution,
             settings,
             copy_for_serialization(settings),
-            DenseAxisArrayContainer(),
-            DenseAxisArrayContainer(),
+            Dict{Symbol, AbstractArray}(),
+            Dict{Symbol, AbstractArray}(),
             zero(JuMP.GenericAffExpr{Float64, V}),
             DenseAxisArrayContainer(),
             nothing,
