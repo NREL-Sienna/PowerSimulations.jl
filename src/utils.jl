@@ -234,7 +234,7 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.DenseAxisArray{})
         return DataFrames.names!(result_df, names)
     else
         @warn("Dimension Number $(length(axes(input_array))) not Supported, returning empty DataFrame")
-        return DataFrames.DataFrame
+        return DataFrames.DataFrame()
     end
 
 end
