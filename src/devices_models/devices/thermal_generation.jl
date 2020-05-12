@@ -15,7 +15,7 @@ This function add the variables for power generation output to the model
 function activepower_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-) where {T<:PSY.ThermalGen}
+) where {T <: PSY.ThermalGen}
     if get_warm_start(psi_container.settings)
         initial_value = d -> PSY.get_activepower(d)
     else
@@ -40,7 +40,7 @@ This function add the variables for power generation output to the model
 function reactivepower_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-) where {T<:PSY.ThermalGen}
+) where {T <: PSY.ThermalGen}
     if get_warm_start(psi_container.settings)
         initial_value = d -> PSY.get_activepower(d)
     else
@@ -65,7 +65,7 @@ This function add the variables for power generation commitment to the model
 function commitment_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-) where {T<:PSY.ThermalGen}
+) where {T <: PSY.ThermalGen}
     time_steps = model_time_steps(psi_container)
     if get_warm_start(psi_container.settings)
         initial_value = d -> (PSY.get_activepower(d) > 0 ? 1.0 : 0.0)
@@ -85,7 +85,7 @@ end
 activepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{<:PSY.ThermalGen},
-    model::DeviceModel{<:PSY.ThermalGen,<:AbstractThermalFormulation},
+    model::DeviceModel{<:PSY.ThermalGen, <:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::SemiContinuousFF,
 ) = nothing
@@ -93,7 +93,7 @@ activepower_constraints!(
 activepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{<:PSY.ThermalGen},
-    model::DeviceModel{<:PSY.ThermalGen,ThermalDispatchNoMin},
+    model::DeviceModel{<:PSY.ThermalGen, ThermalDispatchNoMin},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::SemiContinuousFF,
 ) = nothing
@@ -104,10 +104,10 @@ This function adds the active power limits of generators when there are no Commi
 function activepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T,<:AbstractThermalDispatchFormulation},
+    model::DeviceModel{T, <:AbstractThermalDispatchFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
-) where {T<:PSY.ThermalGen}
+) where {T <: PSY.ThermalGen}
     constraint_data = Vector{DeviceRange}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         name = PSY.get_name(d)
@@ -131,10 +131,10 @@ This function adds the active power limits of generators when there are Commitme
 function activepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T,<:AbstractThermalFormulation},
+    model::DeviceModel{T, <:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
-) where {T<:PSY.ThermalGen}
+) where {T <: PSY.ThermalGen}
     constraint_data = Vector{DeviceRange}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         limits = PSY.get_activepowerlimits(d)
@@ -160,10 +160,10 @@ This function adds the active power limits of generators when there are
 function activepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T,ThermalDispatchNoMin},
+    model::DeviceModel{T, ThermalDispatchNoMin},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
-) where {T<:PSY.ThermalGen}
+) where {T <: PSY.ThermalGen}
     constraint_data = Vector{DeviceRange}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         limits = (min = 0.0, max = PSY.get_activepowerlimits(d).max)
@@ -197,10 +197,10 @@ This function adds the reactive  power limits of generators when there are Commi
 function reactivepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T,<:AbstractThermalDispatchFormulation},
+    model::DeviceModel{T, <:AbstractThermalDispatchFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing,AbstractAffectFeedForward},
-) where {T<:PSY.ThermalGen}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.ThermalGen}
     constraint_data = Vector{DeviceRange}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         name = PSY.get_name(d)
@@ -226,10 +226,10 @@ This function adds the reactive power limits of generators when there Commitment
 function reactivepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T,<:AbstractThermalFormulation},
+    model::DeviceModel{T, <:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing,AbstractAffectFeedForward},
-) where {T<:PSY.ThermalGen}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.ThermalGen}
     constraint_data = Vector{DeviceRange}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         limits = PSY.get_reactivepowerlimits(d)
@@ -257,10 +257,10 @@ This function adds the Commitment Status constraint when there are CommitmentVar
 function commitment_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T,D},
+    model::DeviceModel{T, D},
     ::Type{S},
-    feedforward::Union{Nothing,AbstractAffectFeedForward},
-) where {T<:PSY.ThermalGen,D<:AbstractThermalFormulation,S<:PM.AbstractPowerModel}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
     device_commitment(
         psi_container,
         get_initial_conditions(psi_container, ICKey(DeviceStatus, T)),
@@ -275,7 +275,7 @@ function initial_conditions!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     device_formulation::Type{D},
-) where {T<:PSY.ThermalGen,D<:AbstractThermalUnitCommitment}
+) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment}
     status_init(psi_container.initial_conditions, devices)
     output_init(psi_container.initial_conditions, devices)
     duration_init(psi_container.initial_conditions, devices)
@@ -286,7 +286,7 @@ function initial_conditions!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     device_formulation::Type{ThermalBasicUnitCommitment},
-) where {T<:PSY.ThermalGen}
+) where {T <: PSY.ThermalGen}
     status_init(psi_container.initial_conditions, devices)
     output_init(psi_container.initial_conditions, devices)
     return
@@ -296,7 +296,7 @@ function initial_conditions!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     device_formulation::Type{D},
-) where {T<:PSY.ThermalGen,D<:AbstractThermalDispatchFormulation}
+) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchFormulation}
     output_init(psi_container.initial_conditions, devices)
     return
 end
@@ -344,9 +344,9 @@ function _get_data_for_rocc(
         end
     end
     if idx < lenght_devices
-        deleteat!(ini_conds, (idx+1):lenght_devices)
-        deleteat!(ramp_params, (idx+1):lenght_devices)
-        deleteat!(minmax_params, (idx+1):lenght_devices)
+        deleteat!(ini_conds, (idx + 1):lenght_devices)
+        deleteat!(ramp_params, (idx + 1):lenght_devices)
+        deleteat!(minmax_params, (idx + 1):lenght_devices)
     end
     return ini_conds, ramp_params, minmax_params
 end
@@ -357,10 +357,10 @@ This function adds the ramping limits of generators when there are CommitmentVar
 function ramp_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T,D},
+    model::DeviceModel{T, D},
     system_formulation::Type{S},
-    feedforward::Union{Nothing,AbstractAffectFeedForward},
-) where {T<:PSY.ThermalGen,D<:AbstractThermalFormulation,S<:PM.AbstractPowerModel}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     key = ICKey(DevicePower, T)
@@ -390,10 +390,14 @@ end
 function ramp_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T,D},
+    model::DeviceModel{T, D},
     system_formulation::Type{S},
-    feedforward::Union{Nothing,AbstractAffectFeedForward},
-) where {T<:PSY.ThermalGen,D<:AbstractThermalDispatchFormulation,S<:PM.AbstractPowerModel}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {
+    T <: PSY.ThermalGen,
+    D <: AbstractThermalDispatchFormulation,
+    S <: PM.AbstractPowerModel,
+}
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     initial_conditions = get_initial_conditions(psi_container, ICKey(DevicePower, T))
@@ -456,7 +460,7 @@ function _get_data_for_tdc(
     end
     if idx < lenght_devices_on
         ini_conds = ini_conds[1:idx, :]
-        deleteat!(time_params, (idx+1):lenght_devices_on)
+        deleteat!(time_params, (idx + 1):lenght_devices_on)
     end
     return ini_conds, time_params
 end
@@ -464,10 +468,10 @@ end
 function time_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T,D},
+    model::DeviceModel{T, D},
     system_formulation::Type{S},
-    feedforward::Union{Nothing,AbstractAffectFeedForward},
-) where {T<:PSY.ThermalGen,D<:AbstractThermalFormulation,S<:PM.AbstractPowerModel}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.ThermalGen, D <: AbstractThermalFormulation, S <: PM.AbstractPowerModel}
     parameters = model_has_parameters(psi_container)
     resolution = model_resolution(psi_container)
     initial_conditions_on = get_initial_conditions(psi_container, ICKey(TimeDurationON, T))
@@ -505,8 +509,8 @@ function cost_function(
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{<:AbstractThermalDispatchFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing,AbstractAffectFeedForward},
-) where {T<:PSY.ThermalGen}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.ThermalGen}
     add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
     return
 end
@@ -516,8 +520,8 @@ function cost_function(
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{ThermalDispatchNoMin},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing,AbstractAffectFeedForward},
-) where {T<:PSY.ThermalGen}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.ThermalGen}
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Minute(resolution)) / 60
     variable = get_variable(psi_container, variable_name(ACTIVE_POWER, T))
@@ -537,17 +541,19 @@ function cost_function(
     # This function modified the PWL cost data when present
     function _ps_cost(
         d::PSY.ThermalGen,
-        cost_component::PSY.VariableCost{Vector{NTuple{2,Float64}}},
+        cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
     )
-        gen_cost = JuMP.GenericAffExpr{Float64,_variable_type(psi_container)}()
+        gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
         if !haskey(psi_container.variables, :PWL_cost_vars)
-        time_steps = model_time_steps(psi_container)
-        container = add_var_container!(psi_container,
-                                       :PWL_cost_vars,
-                                       PSY.get_name(d),
-                                       time_steps,
-                                       1:length(cost_component);
-                                       sparse = true)
+            time_steps = model_time_steps(psi_container)
+            container = add_var_container!(
+                psi_container,
+                :PWL_cost_vars,
+                PSY.get_name(d),
+                time_steps,
+                1:length(cost_component);
+                sparse = true,
+            )
         else
             container = get_variable(psi_container, :PWL_cost_vars)
         end
@@ -606,8 +612,8 @@ function cost_function(
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{<:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing,AbstractAffectFeedForward},
-) where {T<:PSY.ThermalGen}
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.ThermalGen}
     #Variable Cost component
     add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
     #Commitment Cost Components

@@ -68,7 +68,8 @@ function ps_cost(
     index::String,
     cost_component::PSY.VariableCost{Float64},
     dt::Float64,
-    sign::Float64)
+    sign::Float64,
+)
     return ps_cost(psi_container, var_name, index, PSY.get_cost(cost_component), dt, sign)
 end
 
@@ -327,16 +328,19 @@ function ps_cost(
     index::String,
     cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
     dt::Float64,
-    sign::Float64)
+    sign::Float64,
+)
     variable = get_variable(psi_container, var_name)[index, :]
     if !haskey(psi_container.variables, :PWL_cost_vars)
         time_steps = model_time_steps(psi_container)
-        container = add_var_container!(psi_container,
-                                       :PWL_cost_vars,
-                                       [index],
-                                       time_steps,
-                                       1:length(cost_component);
-                                       sparse = true)
+        container = add_var_container!(
+            psi_container,
+            :PWL_cost_vars,
+            [index],
+            time_steps,
+            1:length(cost_component);
+            sparse = true,
+        )
     else
         container = get_variable(psi_container, :PWL_cost_vars)
     end

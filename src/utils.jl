@@ -244,7 +244,7 @@ function axis_array_to_dataframe(input_array::JuMP.Containers.SparseAxisArray)
     result_df = DataFrames.DataFrame()
     array_values = Vector{Vector{Float64}}(undef, length(column_names))
     for (ix, col) in enumerate(column_names)
-        res = values(filter(v -> first(v)[[1,3]] == col, input_array.data))
+        res = values(filter(v -> first(v)[[1, 3]] == col, input_array.data))
         array_values[ix] = PSI._jump_value.(res)
     end
     return DataFrames.DataFrame(array_values, Symbol.(column_names))
