@@ -123,6 +123,7 @@ function Stage(
 end
 
 stage_built(s::Stage) = s.internal.built == BUILD_STATUS.BUILT
+stage_empty(s::Stage) = s.internal.built == BUILD_STATUS.EMPTY
 get_execution_count(s::Stage) = s.internal.execution_count
 get_executions(s::Stage) = s.internal.executions
 get_sys(s::Stage) = s.sys
@@ -152,7 +153,7 @@ function build!(
     horizon::Int,
     stage_interval::Dates.Period,
 ) where {M <: PowerSimulationsOperationsProblem}
-    stage_built(stage) && reset!(stage)
+    !stage_empty(stage) && reset!(stage)
     settings = get_settings(get_psi_container(stage))
     # Horizon and initial time are set here because the information is specified in the
     # Simulation Sequence object and not at the stage creation.
