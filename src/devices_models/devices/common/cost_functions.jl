@@ -1,9 +1,10 @@
 @doc raw"""
     ps_cost(psi_container::PSIContainer,
-                variable::JuMP.Containers.DenseAxisArray{JV},
+                var_name::Symbol,
+                index::String,
                 cost_component::Float64,
                 dt::Float64,
-                sign::Float64) where {JV <: JuMP.AbstractVariableRef}
+                sign::Float64)
 
 Returns linear cost terms for sum of variables with common factor to be used for cost expression for psi_container model.
 
@@ -22,7 +23,8 @@ Returns:
 # Arguments
 
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
+* var_name::Symbol: The variable name
+* index::String: The index of the variable container
 * cost_component::Float64 : cost to be associated with variable
 * dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
@@ -42,10 +44,11 @@ end
 
 @doc raw"""
     ps_cost(psi_container::PSIContainer,
-                variable::JuMP.Containers.DenseAxisArray{JV},
+                var_name::Symbol,
+                index::String,
                 cost_component::PSY.VariableCost{Float64},
                 dt::Float64,
-                sign::Float64) where {JV <: JuMP.AbstractVariableRef}
+                sign::Float64)
 
 Returns linear cost terms for sum of variables with common factor to be used for cost expression for psi_container model.
 Does this by calling ```ps_cost``` that has Float64 cost component input.
@@ -57,7 +60,8 @@ Returns:
 # Arguments
 
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
+* var_name::Symbol: The variable name
+* index::String: The index of the variable container
 * cost_component::PSY.VariableCost{Float64} : container for cost to be associated with variable
 * dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
@@ -75,10 +79,11 @@ end
 
 @doc raw"""
     ps_cost(psi_container::PSIContainer,
-                variable::JuMP.Containers.DenseAxisArray{JV},
+                var_name::Symbol,
+                index::String,
                 cost_component::PSY.VariableCost{NTuple{2, Float64}}
                 dt::Float64,
-                sign::Float64) where {JV <: JuMP.AbstractVariableRef}
+                sign::Float64)
 
 Returns quadratic cost terms for sum of variables with common factor to be used for cost expression for psi_container model.
 
@@ -99,7 +104,8 @@ Returns ```gen_cost```
 # Arguments
 
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
+* var_name::Symbol: The variable name
+* index::String: The index of the variable container
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 * sign::Float64 : positive or negative sign to be associated cost term
 """
@@ -260,7 +266,7 @@ function _pwlgencost_linear(
 end
 
 @doc raw"""
-    _gen_cost(cost_)
+    _pwl_cost(cost)
 
 Returns JuMP expression for a piecewise linear cost function depending on the data compatibility.
 
@@ -293,10 +299,11 @@ end
 
 @doc raw"""
     ps_cost(psi_container::PSIContainer,
-                 variable::JuMP.Containers.DenseAxisArray{JV},
-                 cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
-                 dt::Float64,
-                 sign::Float64) where {JV<:JuMP.AbstractVariableRef}
+                var_name::Symbol,
+                index::String,
+                cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
+                dt::Float64,
+                sign::Float64)
 
 Creates piecewise linear cost function using a sum of variables and expression with sign and time step included.
 
@@ -317,7 +324,8 @@ where ``c_v`` is given by
 # Arguments
 
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
+* var_name::Symbol: The variable name
+* index::String: The index of the variable container
 * cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}}
 * dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
