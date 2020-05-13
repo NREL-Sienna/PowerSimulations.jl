@@ -11,7 +11,7 @@ mutable struct StageInternal
     # Caches are stored in set because order isn't relevant and they should be unique
     caches::Set{CacheKey}
     chronolgy_dict::Dict{Int, <:FeedForwardChronology}
-    built::Bool
+    built::BUILD_STATUS
     stage_path::String
     ext::Dict{String, Any}
     function StageInternal(
@@ -122,7 +122,7 @@ function Stage(
     return Stage{GenericOpProblem}(template, sys, optimizer, jump_model; kwargs...)
 end
 
-stage_built(s::Stage) = s.internal.built
+stage_built(s::Stage) = s.internal.built == BUILD_STATUS.BUILD
 get_execution_count(s::Stage) = s.internal.execution_count
 get_executions(s::Stage) = s.internal.executions
 get_sys(s::Stage) = s.sys
@@ -142,7 +142,7 @@ function reset!(stage::Stage{M}) where {M <: AbstractOperationsProblem}
     stage.internal.execution_count = 0
     stage.internal.psi_container =
         PSIContainer(stage.sys, stage.internal.psi_container.settings, nothing)
-    stage.internal.built = false
+    stage.internal.built = BUILD_STATUS.UNBUILT
     return
 end
 
@@ -158,6 +158,7 @@ function build!(
     # Simulation Sequence object and not at the stage creation.
     set_horizon!(settings, horizon)
     set_initial_time!(settings, initial_time)
+    stage.internal.built = BUILD_STATUS.INCOMPLETE
     psi_container = get_psi_container(stage)
     _build!(psi_container, stage.template, stage.sys)
     @assert get_horizon(psi_container.settings) == length(psi_container.time_steps)
@@ -174,7 +175,7 @@ function build!(
             joinpath(stage_path, "Stage$(stage.internal.number)_sys_data.json"),
         )
     end
-    stage.internal.built = true
+    stage.internal.built = BUILD_STATUS.BUILT
     return
 end
 

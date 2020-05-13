@@ -30,6 +30,12 @@ const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
+@enum BUILD_STATUS begin
+    BUILT = 1
+    INCOMPLETE = -1
+    UNBUILT = 0
+end
+
 # Settings constants
 const UNSET_HORIZON = 0
 const UNSET_INI_TIME = Dates.DateTime(0)
