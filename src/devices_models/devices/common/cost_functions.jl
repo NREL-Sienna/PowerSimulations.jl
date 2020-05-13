@@ -337,7 +337,7 @@ function ps_cost(
 )
     cost_array = cost_component.cost
     # If array is full of tuples with zeros return 0.0
-    all(iszero.(last.(cost_array))) && return 0.0
+    all(iszero.(last.(cost_array))) && return JuMP.AffExpr(0.0)
     variable = get_variable(psi_container, var_name)[index, :]
     if !haskey(psi_container.variables, :PWL_cost_vars)
         time_steps = model_time_steps(psi_container)
