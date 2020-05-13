@@ -553,7 +553,7 @@ function build!(
         try
             Logging.with_logger(logger) do
                 _build!(sim)
-                @debug sim.internal.compiled_status = BUILD_STATUS.BUILT
+                sim.internal.compiled_status = BUILD_STATUS.BUILT
                 @info "\n$(BUILD_SIMULATION_TIMER)\n"
             end
         finally
@@ -565,7 +565,7 @@ function build!(
 end
 
 function _build!(sim::Simulation)
-    sim.internal.compiled_status = BUILD_STATUS.INCOMPLETE
+    sim.internal.compiled_status = BUILD_STATUS.IN_PROGRESS
     stage_initial_times = _get_simulation_initial_times!(sim)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get_stage(sim, stage_name)

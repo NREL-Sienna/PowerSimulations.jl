@@ -32,8 +32,8 @@ const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
 @enum BUILD_STATUS begin
     BUILT = 1
-    INCOMPLETE = -1
-    UNBUILT = 0
+    IN_PROGRESS = -1
+    EMPTY = 0
 end
 
 # Settings constants

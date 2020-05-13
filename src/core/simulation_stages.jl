@@ -142,7 +142,7 @@ function reset!(stage::Stage{M}) where {M <: AbstractOperationsProblem}
     stage.internal.execution_count = 0
     stage.internal.psi_container =
         PSIContainer(stage.sys, stage.internal.psi_container.settings, nothing)
-    stage.internal.built = BUILD_STATUS.UNBUILT
+    stage.internal.built = BUILD_STATUS.EMPTY
     return
 end
 
@@ -158,7 +158,7 @@ function build!(
     # Simulation Sequence object and not at the stage creation.
     set_horizon!(settings, horizon)
     set_initial_time!(settings, initial_time)
-    stage.internal.built = BUILD_STATUS.INCOMPLETE
+    stage.internal.built = BUILD_STATUS.IN_PROGRESS
     psi_container = get_psi_container(stage)
     _build!(psi_container, stage.template, stage.sys)
     @assert get_horizon(psi_container.settings) == length(psi_container.time_steps)
