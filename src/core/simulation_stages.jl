@@ -122,7 +122,7 @@ function Stage(
     return Stage{GenericOpProblem}(template, sys, optimizer, jump_model; kwargs...)
 end
 
-stage_built(s::Stage) = s.internal.built == BUILD_STATUS.BUILD
+stage_built(s::Stage) = s.internal.built == BUILD_STATUS.BUILT
 get_execution_count(s::Stage) = s.internal.execution_count
 get_executions(s::Stage) = s.internal.executions
 get_sys(s::Stage) = s.sys
