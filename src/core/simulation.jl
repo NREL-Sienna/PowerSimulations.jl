@@ -872,7 +872,8 @@ function _execute!(sim::Simulation; kwargs...)
                         # TODO: implement some efficient way of indexing with stage name.
                         stage = get_stage(sim, stage_number)
                         stage_name = get_stage_name(sim, stage)
-                        !stage_built(stage) && error("Stage $(stage_name) status is not BUILT")
+                        !stage_built(stage) &&
+                            error("Stage $(stage_name) status is not BUILT")
                         stage_interval = get_stage_interval(sim, stage_name)
                         run_name = "step-$(step)-stage-$(stage_name)"
                         sim.internal.current_time = sim.internal.date_ref[stage_number]
