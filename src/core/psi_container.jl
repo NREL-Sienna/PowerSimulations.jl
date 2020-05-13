@@ -4,8 +4,8 @@ mutable struct PSIContainer
     resolution::Dates.TimePeriod
     settings::PSISettings
     settings_copy::PSISettings
-    variables::Dict{Symbol, JuMP.Containers.DenseAxisArray}
-    constraints::Dict{Symbol, JuMP.Containers.DenseAxisArray}
+    variables::Dict{Symbol, AbstractArray}
+    constraints::Dict{Symbol, AbstractArray}
     cost_function::JuMP.AbstractJuMPScalar
     expressions::Dict{Symbol, JuMP.Containers.DenseAxisArray}
     parameters::Union{Nothing, ParametersContainer}
@@ -31,8 +31,8 @@ mutable struct PSIContainer
             resolution,
             settings,
             copy_for_serialization(settings),
-            DenseAxisArrayContainer(),
-            DenseAxisArrayContainer(),
+            Dict{Symbol, AbstractArray}(),
+            Dict{Symbol, AbstractArray}(),
             zero(JuMP.GenericAffExpr{Float64, V}),
             DenseAxisArrayContainer(),
             nothing,
@@ -338,8 +338,17 @@ function assign_variable!(psi_container::PSIContainer, name::Symbol, value)
     return
 end
 
-function add_var_container!(psi_container::PSIContainer, var_name::Symbol, axs...)
-    container = container_spec(psi_container.JuMPmodel, axs...)
+function add_var_container!(
+    psi_container::PSIContainer,
+    var_name::Symbol,
+    axs...;
+    sparse = false,
+)
+    if sparse
+        container = sparse_container_spec(psi_container.JuMPmodel, axs...)
+    else
+        container = container_spec(psi_container.JuMPmodel, axs...)
+    end
     assign_variable!(psi_container, var_name, container)
     return container
 end

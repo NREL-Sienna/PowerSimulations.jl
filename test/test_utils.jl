@@ -45,5 +45,5 @@ end
     @test three_df == test_df
     four = JuMP.Containers.DenseAxisArray{Int}(undef, [:a], 1:2, 1:3, 1:5)
     fill!(four, 2)
-    @test_throws ErrorException PSI.axis_array_to_dataframe(four)
+    @test isempty(PSI.axis_array_to_dataframe(four))
 end
