@@ -283,9 +283,6 @@ function _pwl_cost(
     variable::JV,
     cost_component::Vector{NTuple{2, Float64}},
 ) where {JV <: JuMP.AbstractVariableRef}
-    # If array is full of tuples with zeros return 0.0
-    all(iszero.(last.(cost_component))) && return 0.0
-
     if !_pwlparamcheck(cost_component)
         @warn("The cost function provided for $(variable) device is not compatible with a linear PWL cost function.
         An SOS-2 formulation will be added to the model.
@@ -338,6 +335,9 @@ function ps_cost(
     dt::Float64,
     sign::Float64,
 )
+    cost_array = cost_component.cost
+    # If array is full of tuples with zeros return 0.0
+    all(iszero.(last.(cost_array))) && return JuMP.AffExpr(0.0)
     variable = get_variable(psi_container, var_name)[index, :]
     if !haskey(psi_container.variables, :PWL_cost_vars)
         time_steps = model_time_steps(psi_container)
@@ -353,7 +353,6 @@ function ps_cost(
         container = get_variable(psi_container, :PWL_cost_vars)
     end
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-    cost_array = cost_component.cost
     for (t, var) in enumerate(variable)
         c, pwl_vars = _pwl_cost(psi_container, var, cost_array)
         for (ix, v) in enumerate(pwl_vars)
