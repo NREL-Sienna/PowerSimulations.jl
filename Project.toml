@@ -1,7 +1,7 @@
 name = "PowerSimulations"
 uuid = "e690365d-45e2-57bb-ac84-44ba829e73c4"
 authors = ["Jose Daniel Lara", "Dheepak Krishnamurthy", "Clayton Barrows"]
-version = "0.5.2"
+version = "0.5.3"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -33,7 +33,7 @@ JuMP = "~0.21"
 MathOptInterface = "~0.9"
 ParameterJuMP = "~v0.2"
 PowerModels = "~0.17"
-PowerSystems = "~0.18.3"
+PowerSystems = "~0.18.5"
 TimeSeries = "~v0.18"
 TimerOutputs = "~0.5"
 julia = "^1.2"
