@@ -2,6 +2,7 @@
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
     warn_message = "The data doesn't include devices of type ThermalStandard, consider changing the device models"
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
+    c_sys5_re_only = build_c_sys5_re_only()
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re_only)
     @test_logs (:warn, warn_message) construct_device!(op_problem, :Thermal, model)
 end
@@ -22,6 +23,7 @@ end
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
     @info "5-Bus testing"
+    c_sys5_uc = build_c_sys5_uc()
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc)
     construct_device!(op_problem, :Thermal, model)
     moi_tests(op_problem, false, 480, 0, 480, 120, 120, true)
@@ -38,6 +40,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
     @info "14-Bus testing"
+    c_sys14 = build_c_sys14()
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
@@ -63,6 +66,7 @@ end
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
     @info "5-Bus testing"
+    c_sys5_uc = build_c_sys5_uc()
     op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc)
     construct_device!(op_problem, :Thermal, model)
     moi_tests(op_problem, false, 600, 0, 600, 240, 120, true)
@@ -79,6 +83,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
     @info "14-Bus testing"
+    c_sys14 = build_c_sys14()
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
@@ -99,6 +104,7 @@ end
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
     @info "5-Bus testing"
+    c_sys5_uc = build_c_sys5_uc()
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc)
     construct_device!(op_problem, :Thermal, model)
     moi_tests(op_problem, false, 480, 0, 240, 120, 120, true)
@@ -113,6 +119,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
     @info "14-Bus testing"
+    c_sys14 = build_c_sys14()
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
@@ -132,6 +139,7 @@ end
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
     @info "5-Bus testing"
+    c_sys5_uc = build_c_sys5_uc()
     op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc)
     construct_device!(op_problem, :Thermal, model)
     moi_tests(op_problem, false, 600, 0, 360, 240, 120, true)
@@ -146,6 +154,7 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 
     @info "14-Bus testing"
+    c_sys14 = build_c_sys14()
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
@@ -160,6 +169,7 @@ end
 @testset "Thermal Dispatch With DC - PF" begin
     model = DeviceModel(ThermalStandard, ThermalDispatch)
     @info "5-Bus testing"
+    c_sys5 = build_c_sys5()
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
@@ -169,6 +179,7 @@ end
     end
 
     @info "14-Bus testing"
+    c_sys14 = build_c_sys14()
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
@@ -181,6 +192,7 @@ end
 @testset "Thermal Dispatch With AC - PF" begin
     model = DeviceModel(ThermalStandard, ThermalDispatch)
     @info "5-Bus testing"
+    c_sys5 = build_c_sys5()
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
@@ -190,6 +202,7 @@ end
     end
 
     @info "14-Bus testing"
+    c_sys14 = build_c_sys14()
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
@@ -204,6 +217,7 @@ end
 @testset "Thermal Dispatch NoMin With DC - PF" begin
     model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
     @info "5-Bus testing"
+    c_sys5 = build_c_sys5()
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
@@ -218,6 +232,7 @@ end
     end
 
     @info "14-Bus testing"
+    c_sys14 = build_c_sys14()
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
@@ -235,6 +250,7 @@ end
 @testset "Thermal Dispatch NoMin With AC - PF" begin
     model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
     @info "5-Bus testing"
+    c_sys5 = build_c_sys5()
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
@@ -249,6 +265,7 @@ end
     end
 
     @info "14-Bus testing"
+    c_sys14 = build_c_sys14()
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
@@ -271,6 +288,7 @@ end
     ]
     model = DeviceModel(ThermalStandard, ThermalRampLimited)
     @info "5-Bus testing"
+    c_sys5_uc = build_c_sys5_uc()
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_uc; use_parameters = p)
@@ -281,6 +299,7 @@ end
     end
 
     @info "14-Bus testing"
+    c_sys14 = build_c_sys14()
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
@@ -297,6 +316,7 @@ end
     ]
     model = DeviceModel(ThermalStandard, ThermalRampLimited)
     @info "5-Bus testing"
+    c_sys5_uc = build_c_sys5_uc()
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_uc; use_parameters = p)
@@ -307,6 +327,7 @@ end
     end
 
     @info "14-Bus testing"
+    c_sys14 = build_c_sys14()
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)

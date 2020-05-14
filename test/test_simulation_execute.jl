@@ -1,6 +1,3 @@
-g_test_path = (joinpath(pwd(), "test_reading_results"))
-!isdir(g_test_path) && mkdir(g_test_path)
-
 function get_deserialized(sim::Simulation, stage_info)
     path = mktempdir()
     directory = PSI.serialize(sim; path = path)
@@ -9,6 +6,7 @@ end
 
 function test_load_simulation(file_path::String)
 
+    c_sys5_uc = build_c_sys5_uc()
     single_stage_definition =
         Dict("ED" => Stage(GenericOpProblem, template_ed, c_sys5_uc, ipopt_optimizer))
 
@@ -43,6 +41,8 @@ function test_load_simulation(file_path::String)
     )
     # Tests of a Simulation without Caches
     duals = [:CopperPlateBalance]
+    c_sys5_hy_uc = build_c_sys5_hy_uc()
+    c_sys5_hy_ed = build_c_sys5_hy_ed()
     stages_definition = Dict(
         "UC" => Stage(
             GenericOpProblem,
@@ -291,7 +291,7 @@ function test_load_simulation(file_path::String)
 
         @testset "Verify simulation events" begin
             file = joinpath(
-                g_test_path,
+                file_path,
                 PSI.get_name(sim),
                 output_dir,
                 "recorder",
@@ -300,32 +300,32 @@ function test_load_simulation(file_path::String)
             @test isfile(file)
             events = PSI.list_simulation_events(
                 PSI.InitialConditionUpdateEvent,
-                joinpath(g_test_path, "aggregation", output_dir);
+                joinpath(file_path, "aggregation", output_dir);
                 step = 1,
             )
             @test length(events) == 0
             events = PSI.list_simulation_events(
                 PSI.InitialConditionUpdateEvent,
-                joinpath(g_test_path, "aggregation", output_dir);
+                joinpath(file_path, "aggregation", output_dir);
                 step = 2,
             )
             @test length(events) == 10
             PSI.show_simulation_events(
                 devnull,
                 PSI.InitialConditionUpdateEvent,
-                joinpath(g_test_path, "aggregation", output_dir);
+                joinpath(file_path, "aggregation", output_dir);
                 step = 2,
             )
             events = PSI.list_simulation_events(
                 PSI.InitialConditionUpdateEvent,
-                joinpath(g_test_path, "aggregation", output_dir);
+                joinpath(file_path, "aggregation", output_dir);
                 step = 1,
                 stage = 1,
             )
             @test length(events) == 0
             events = PSI.list_simulation_events(
                 PSI.InitialConditionUpdateEvent,
-                joinpath(g_test_path, "aggregation", output_dir);
+                joinpath(file_path, "aggregation", output_dir);
                 step = 2,
                 stage = 1,
             )
@@ -333,7 +333,7 @@ function test_load_simulation(file_path::String)
             PSI.show_simulation_events(
                 devnull,
                 PSI.InitialConditionUpdateEvent,
-                joinpath(g_test_path, "aggregation", output_dir);
+                joinpath(file_path, "aggregation", output_dir);
                 step = 2,
                 stage = 1,
             )
@@ -719,9 +719,14 @@ function test_load_simulation(file_path::String)
     end
 end
 
-try
-    test_load_simulation(g_test_path)
-finally
-    @info("removing test files")
-    rm(g_test_path, force = true, recursive = true)
+@testset "Test load simulation" begin
+    path = (joinpath(pwd(), "test_reading_results"))
+    !isdir(path) && mkdir(path)
+
+    try
+        test_load_simulation(path)
+    finally
+        @info("removing test files")
+        rm(path, force = true, recursive = true)
+    end
 end
