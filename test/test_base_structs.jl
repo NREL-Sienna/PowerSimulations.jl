@@ -4,13 +4,9 @@
 end
 
 @testset "OperationsProblem Tests" begin
+    sys = build_c_sys5()
     for p in [true, false]
-        t = OperationsProblem(
-            TestOpProblem,
-            CopperPlatePowerModel,
-            c_sys5;
-            use_parameters = p,
-        )
+        t = OperationsProblem(TestOpProblem, CopperPlatePowerModel, sys, use_parameters = p)
         @test PSI.model_has_parameters(t.psi_container) == p
     end
 end
