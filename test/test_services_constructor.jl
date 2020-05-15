@@ -14,7 +14,7 @@
         branches,
         services_template,
     )
-    c_sys5_uc = build_c_sys5_uc(; add_reserves = true)
+    c_sys5_uc = build_system("c_sys5_uc"; add_reserves = true)
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p)
@@ -38,7 +38,7 @@ end
         branches,
         services_template,
     )
-    c_sys5_uc = build_c_sys5_uc(; add_reserves = true)
+    c_sys5_uc = build_system("c_sys5_uc"; add_reserves = true)
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p)
@@ -61,7 +61,7 @@ end
         branches,
         services_template,
     )
-    c_sys5_re = build_c_sys5_re(; add_reserves = true)
+    c_sys5_re = build_system("c_sys5_re"; add_reserves = true)
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_re; use_parameters = p)
@@ -88,7 +88,7 @@ end
         branches,
         services_template,
     )
-    c_sys5_bat = build_c_sys5_bat(; add_reserves = true)
+    c_sys5_bat = build_system("c_sys5_bat"; add_reserves = true)
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_bat; use_parameters = p)
@@ -112,7 +112,7 @@ end
         branches,
         services_template,
     )
-    c_sys5_hyd = build_c_sys5_hyd(; add_reserves = true)
+    c_sys5_hyd = build_system("c_sys5_hyd"; add_reserves = true)
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_hyd; use_parameters = p)

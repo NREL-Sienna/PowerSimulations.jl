@@ -6,7 +6,7 @@ end
 
 function test_load_simulation(file_path::String)
 
-    c_sys5_uc = build_c_sys5_uc()
+    c_sys5_uc = build_system("c_sys5_uc")
     single_stage_definition =
         Dict("ED" => Stage(GenericOpProblem, template_ed, c_sys5_uc, ipopt_optimizer))
 
@@ -41,8 +41,8 @@ function test_load_simulation(file_path::String)
     )
     # Tests of a Simulation without Caches
     duals = [:CopperPlateBalance]
-    c_sys5_hy_uc = build_c_sys5_hy_uc()
-    c_sys5_hy_ed = build_c_sys5_hy_ed()
+    c_sys5_hy_uc = build_system("c_sys5_hy_uc")
+    c_sys5_hy_ed = build_system("c_sys5_hy_ed")
     stages_definition = Dict(
         "UC" => Stage(
             GenericOpProblem,

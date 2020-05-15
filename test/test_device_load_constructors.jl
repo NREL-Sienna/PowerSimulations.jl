@@ -1,6 +1,6 @@
 @testset "Load data misspecification" begin
     model = DeviceModel(InterruptibleLoad, DispatchablePowerLoad)
-    c_sys5 = build_c_sys5()
+    c_sys5 = build_system("c_sys5")
     warn_message = "The data doesn't include devices of type InterruptibleLoad, consider changing the device models"
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5)
     @test_logs (:warn, warn_message) construct_device!(op_problem, :Load, model)
@@ -12,7 +12,7 @@ end
 
 @testset "StaticPowerLoad" begin
     models = [StaticPowerLoad, DispatchablePowerLoad, InterruptiblePowerLoad]
-    c_sys5_il = build_c_sys5_il()
+    c_sys5_il = build_system("c_sys5_il")
     networks = [DCPPowerModel, ACPPowerModel]
     param_spec = [true, false]
     for m in models, n in networks, p in param_spec
@@ -26,7 +26,7 @@ end
 
 @testset "DispatchablePowerLoad DC- PF" begin
     models = [DispatchablePowerLoad]
-    c_sys5_il = build_c_sys5_il()
+    c_sys5_il = build_system("c_sys5_il")
     networks = [DCPPowerModel]
     param_spec = [true, false]
     for m in models, n in networks, p in param_spec
@@ -40,7 +40,7 @@ end
 
 @testset "DispatchablePowerLoad AC- PF" begin
     models = [DispatchablePowerLoad]
-    c_sys5_il = build_c_sys5_il()
+    c_sys5_il = build_system("c_sys5_il")
     networks = [ACPPowerModel]
     param_spec = [true, false]
     for m in models, n in networks, p in param_spec
@@ -54,7 +54,7 @@ end
 
 @testset "InterruptiblePowerLoad DC- PF" begin
     models = [InterruptiblePowerLoad]
-    c_sys5_il = build_c_sys5_il()
+    c_sys5_il = build_system("c_sys5_il")
     networks = [DCPPowerModel]
     param_spec = [true, false]
     for m in models, n in networks, p in param_spec
@@ -68,7 +68,7 @@ end
 
 @testset "InterruptiblePowerLoad AC- PF" begin
     models = [InterruptiblePowerLoad]
-    c_sys5_il = build_c_sys5_il()
+    c_sys5_il = build_system("c_sys5_il")
     networks = [ACPPowerModel]
     param_spec = [true, false]
     for m in models, n in networks, p in param_spec
