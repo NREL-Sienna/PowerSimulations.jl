@@ -60,7 +60,7 @@ function summarize_system_build_stats()
     for label in labels
         x = g_system_build_stats[label]
         system = "$(label.name) add_forecasts=$(label.add_forecasts) add_reserves=$(label.add_reserves)"
-        @info system x.count x.serialize_time x.min_deserialize_time x.max_deserialize_time avg_deserialize_time(
+        @info system x.count x.initial_construct_time x.serialize_time x.min_deserialize_time x.max_deserialize_time avg_deserialize_time(
             x,
         )
     end
