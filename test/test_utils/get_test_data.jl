@@ -3,9 +3,103 @@ const DATA_DIR = joinpath(BASE_DIR, "test/test_data")
 include(joinpath(DATA_DIR, "data_5bus_pu.jl"))
 include(joinpath(DATA_DIR, "data_14bus_pu.jl"))
 
-#Base Systems
+# Test Systems
 
-function build_c_sys5()
+# The code below provides a mechanism to optimally construct test systems. The first time a
+# test builds a particular system name, the code will construct the system from raw files
+# and then serialize it to storage.
+# When future tests ask for the same system the code will deserialize it from storage.
+#
+# If you add a new system then you need to add an entry to TEST_SYSTEMS.
+# The build function should accept `kwargs...` instead of specific named keyword arguments.
+# This will allow easy addition of new parameters in the future.
+
+struct TestSystemLabel
+    name::String
+    add_forecasts::Bool
+    add_reserves::Bool
+end
+
+mutable struct SystemBuildStats
+    count::Int
+    initial_construct_time::Float64
+    serialize_time::Float64
+    min_deserialize_time::Float64
+    max_deserialize_time::Float64
+    total_deserialize_time::Float64
+end
+
+function SystemBuildStats(initial_construct_time::Float64, serialize_time::Float64)
+    return SystemBuildStats(1, initial_construct_time, serialize_time, 0.0, 0.0, 0.0)
+end
+
+function update_stats!(stats::SystemBuildStats, deserialize_time::Float64)
+    stats.count += 1
+    if stats.min_deserialize_time == 0 || deserialize_time < stats.min_deserialize_time
+        stats.min_deserialize_time = deserialize_time
+    end
+    if deserialize_time > stats.max_deserialize_time
+        stats.max_deserialize_time = deserialize_time
+    end
+    stats.total_deserialize_time += deserialize_time
+end
+
+avg_deserialize_time(stats::SystemBuildStats) = stats.total_deserialize_time / stats.count
+
+g_system_serialized_files = Dict{TestSystemLabel, String}()
+g_system_build_stats = Dict{TestSystemLabel, SystemBuildStats}()
+
+function initialize_system_serialized_files()
+    empty!(g_system_serialized_files)
+    empty!(g_system_build_stats)
+end
+
+function summarize_system_build_stats()
+    @info "System Build Stats"
+    labels = sort!(collect(keys(g_system_build_stats)), by = x -> x.name)
+    for label in labels
+        x = g_system_build_stats[label]
+        system = "$(label.name) add_forecasts=$(label.add_forecasts) add_reserves=$(label.add_reserves)"
+        @info system x.count x.serialize_time x.min_deserialize_time x.max_deserialize_time avg_deserialize_time(
+            x,
+        )
+    end
+end
+
+function build_system(name::String; add_forecasts = true, add_reserves = false)
+    !haskey(TEST_SYSTEMS, name) && error("invalid system name: $name")
+    label = TestSystemLabel(name, add_forecasts, add_reserves)
+    sys_params = TEST_SYSTEMS[name]
+    if !haskey(g_system_serialized_files, label)
+        @debug "Build new system" label sys_params.description
+        build_func = sys_params.build
+        start = time()
+        sys = build_func(;
+            add_forecasts = add_forecasts,
+            add_reserves = add_reserves,
+            time_series_in_memory = sys_params.time_series_in_memory,
+        )
+        construct_time = time() - start
+        serialized_file = joinpath(mktempdir(), "sys.json")
+        start = time()
+        PSY.to_json(sys, serialized_file)
+        serialize_time = time() - start
+        g_system_build_stats[label] = SystemBuildStats(construct_time, serialize_time)
+        g_system_serialized_files[label] = serialized_file
+    else
+        @debug "Deserialize system from file" label
+        start = time()
+        sys = System(
+            g_system_serialized_files[label];
+            time_series_in_memory = sys_params.time_series_in_memory,
+        )
+        update_stats!(g_system_build_stats[label], time() - start)
+    end
+
+    return sys
+end
+
+function build_c_sys5(; kwargs...)
     nodes = nodes5()
     c_sys5 = System(
         nodes,
@@ -17,20 +111,23 @@ function build_c_sys5()
         nothing,
         nothing,
     )
-    for t in 1:2
-        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5))
-            add_forecast!(
-                c_sys5,
-                l,
-                Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
-            )
+
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5))
+                add_forecast!(
+                    c_sys5,
+                    l,
+                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                )
+            end
         end
     end
 
     return c_sys5
 end
 
-function build_c_sys5_ml()
+function build_c_sys5_ml(; kwargs...)
     nodes = nodes5()
     c_sys5_ml = System(
         nodes,
@@ -40,22 +137,26 @@ function build_c_sys5_ml()
         nothing,
         100.0,
         nothing,
-        nothing,
+        nothing;
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
-    for t in 1:2
-        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_ml))
-            add_forecast!(
-                c_sys5_ml,
-                l,
-                Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
-            )
+
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_ml))
+                add_forecast!(
+                    c_sys5_ml,
+                    l,
+                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                )
+            end
         end
     end
 
     return c_sys5_ml
 end
 
-function build_c_sys14()
+function build_c_sys14(; kwargs...)
     nodes = nodes14()
     c_sys14 = System(
         nodes,
@@ -65,17 +166,24 @@ function build_c_sys14()
         nothing,
         100.0,
         nothing,
-        nothing,
+        nothing;
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
-    for (ix, l) in enumerate(get_components(PowerLoad, c_sys14))
-        add_forecast!(c_sys14, l, Deterministic("get_maxactivepower", timeseries_DA14[ix]))
+
+    if get(kwargs, :add_forecasts, true)
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys14))
+            add_forecast!(
+                c_sys14,
+                l,
+                Deterministic("get_maxactivepower", timeseries_DA14[ix]),
+            )
+        end
     end
 
     return c_sys14
 end
 
-#System with Renewable Energy
-function build_c_sys5_re(; add_reserves = false)
+function build_c_sys5_re(; kwargs...)
     nodes = nodes5()
     c_sys5_re = System(
         nodes,
@@ -85,26 +193,30 @@ function build_c_sys5_re(; add_reserves = false)
         nothing,
         100.0,
         nothing,
-        nothing,
+        nothing;
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
-    for t in 1:2
-        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_re))
-            add_forecast!(
-                c_sys5_re,
-                l,
-                Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
-            )
-        end
-        for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_re))
-            add_forecast!(
-                c_sys5_re,
-                r,
-                Deterministic("get_rating", ren_timeseries_DA[t][ix]),
-            )
+
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_re))
+                add_forecast!(
+                    c_sys5_re,
+                    l,
+                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_re))
+                add_forecast!(
+                    c_sys5_re,
+                    r,
+                    Deterministic("get_rating", ren_timeseries_DA[t][ix]),
+                )
+            end
         end
     end
 
-    if add_reserves
+    if get(kwargs, :add_reserves, false)
         reserve_re = reserve5_re(get_components(RenewableDispatch, c_sys5_re))
         add_service!(c_sys5_re, reserve_re[1], get_components(RenewableDispatch, c_sys5_re))
         add_service!(
@@ -120,7 +232,7 @@ function build_c_sys5_re(; add_reserves = false)
     return c_sys5_re
 end
 
-function build_c_sys5_re_only()
+function build_c_sys5_re_only(; kwargs...)
     nodes = nodes5()
     c_sys5_re_only = System(
         nodes,
@@ -130,30 +242,33 @@ function build_c_sys5_re_only()
         nothing,
         100.0,
         nothing,
-        nothing,
+        nothing;
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
-    for t in 1:2
-        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_re_only))
-            add_forecast!(
-                c_sys5_re_only,
-                l,
-                Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
-            )
-        end
-        for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_re_only))
-            add_forecast!(
-                c_sys5_re_only,
-                r,
-                Deterministic("get_rating", ren_timeseries_DA[t][ix]),
-            )
+
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_re_only))
+                add_forecast!(
+                    c_sys5_re_only,
+                    l,
+                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_re_only))
+                add_forecast!(
+                    c_sys5_re_only,
+                    r,
+                    Deterministic("get_rating", ren_timeseries_DA[t][ix]),
+                )
+            end
         end
     end
 
     return c_sys5_re_only
 end
 
-# System with HydroPower Energy
-function build_c_sys5_hy()
+function build_c_sys5_hy(; kwargs...)
     nodes = nodes5()
     c_sys5_hy = System(
         nodes,
@@ -163,29 +278,33 @@ function build_c_sys5_hy()
         nothing,
         100.0,
         nothing,
-        nothing,
+        nothing;
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
-    for t in 1:2
-        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy))
-            add_forecast!(
-                c_sys5_hy,
-                l,
-                Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
-            )
-        end
-        for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hy))
-            add_forecast!(
-                c_sys5_hy,
-                h,
-                Deterministic("get_rating", hydro_timeseries_DA[t][ix]),
-            )
+
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy))
+                add_forecast!(
+                    c_sys5_hy,
+                    l,
+                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hy))
+                add_forecast!(
+                    c_sys5_hy,
+                    h,
+                    Deterministic("get_rating", hydro_timeseries_DA[t][ix]),
+                )
+            end
         end
     end
 
     return c_sys5_hy
 end
 
-function build_c_sys5_hyd(; add_reserves = false)
+function build_c_sys5_hyd(; kwargs...)
     nodes = nodes5()
     c_sys5_hyd = System(
         nodes,
@@ -195,40 +314,44 @@ function build_c_sys5_hyd(; add_reserves = false)
         nothing,
         100.0,
         nothing,
-        nothing,
+        nothing;
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
-    for t in 1:2
-        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hyd))
-            add_forecast!(
-                c_sys5_hyd,
-                l,
-                Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
-            )
-        end
-        for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hyd))
-            add_forecast!(
-                c_sys5_hyd,
-                h,
-                Deterministic("get_rating", hydro_timeseries_DA[t][ix]),
-            )
-        end
-        for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hyd))
-            add_forecast!(
-                c_sys5_hyd,
-                h,
-                Deterministic("get_storage_capacity", hydro_timeseries_DA[t][ix]),
-            )
-        end
-        for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hyd))
-            add_forecast!(
-                c_sys5_hyd,
-                h,
-                Deterministic("get_inflow", hydro_timeseries_DA[t][ix] .* 0.8),
-            )
+
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hyd))
+                add_forecast!(
+                    c_sys5_hyd,
+                    l,
+                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hyd))
+                add_forecast!(
+                    c_sys5_hyd,
+                    h,
+                    Deterministic("get_rating", hydro_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hyd))
+                add_forecast!(
+                    c_sys5_hyd,
+                    h,
+                    Deterministic("get_storage_capacity", hydro_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hyd))
+                add_forecast!(
+                    c_sys5_hyd,
+                    h,
+                    Deterministic("get_inflow", hydro_timeseries_DA[t][ix] .* 0.8),
+                )
+            end
         end
     end
 
-    if add_reserves
+    if get(kwargs, :add_reserves, false)
         reserve_hy = reserve5_hy(get_components(HydroEnergyReservoir, c_sys5_hyd))
         add_service!(
             c_sys5_hyd,
@@ -248,8 +371,8 @@ function build_c_sys5_hyd(; add_reserves = false)
     return c_sys5_hyd
 end
 
-#System with Storage Device
-function build_c_sys5_bat(; add_reserves = false)
+function build_c_sys5_bat(; kwargs...)
+    time_series_in_memory = get(kwargs, :time_series_in_memory, true)
     nodes = nodes5()
     c_sys5_bat = System(
         nodes,
@@ -259,20 +382,27 @@ function build_c_sys5_bat(; add_reserves = false)
         battery5(nodes),
         100.0,
         nothing,
-        nothing,
+        nothing;
+        time_series_in_memory = time_series_in_memory,
     )
-    for t in 1:2
-        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_bat))
-            add_forecast!(
-                c_sys5_bat,
-                l,
-                Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
-            )
+
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_bat))
+                add_forecast!(
+                    c_sys5_bat,
+                    l,
+                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                )
+            end
         end
     end
 
-    if add_reserves
-        reserve_bat = reserve5_re(get_components(RenewableDispatch, build_c_sys5_re()))
+    if get(kwargs, :add_reserves, false)
+        reserve_bat = reserve5_re(get_components(
+            RenewableDispatch,
+            build_c_sys5_re(; time_series_in_memory = time_series_in_memory),
+        ))
         add_service!(c_sys5_bat, reserve_bat[1], get_components(GenericBattery, c_sys5_bat))
         add_service!(c_sys5_bat, reserve_bat[2], get_components(GenericBattery, c_sys5_bat))
         for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_bat))
@@ -283,8 +413,7 @@ function build_c_sys5_bat(; add_reserves = false)
     return c_sys5_bat
 end
 
-#System with Interruptible Load
-function build_c_sys5_il(; add_reserves = false)
+function build_c_sys5_il(; kwargs...)
     nodes = nodes5()
     c_sys5_il = System(
         nodes,
@@ -294,26 +423,30 @@ function build_c_sys5_il(; add_reserves = false)
         nothing,
         100.0,
         nothing,
-        nothing,
+        nothing;
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
-    for t in 1:2
-        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_il))
-            add_forecast!(
-                c_sys5_il,
-                l,
-                Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
-            )
-        end
-        for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_il))
-            add_forecast!(
-                c_sys5_il,
-                i,
-                Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]),
-            )
+
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_il))
+                add_forecast!(
+                    c_sys5_il,
+                    l,
+                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_il))
+                add_forecast!(
+                    c_sys5_il,
+                    i,
+                    Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]),
+                )
+            end
         end
     end
 
-    if add_reserves
+    if get(kwargs, :add_reserves, false)
         reserve_il = reserve5_il(get_components(InterruptibleLoad, c_sys5_il))
         add_service!(c_sys5_il, reserve_il[1], get_components(InterruptibleLoad, c_sys5_il))
         add_service!(
@@ -329,8 +462,7 @@ function build_c_sys5_il(; add_reserves = false)
     return c_sys5_il
 end
 
-#Systems with HVDC data in the branches
-function build_c_sys5_dc()
+function build_c_sys5_dc(; kwargs...)
     nodes = nodes5()
     c_sys5_dc = System(
         nodes,
@@ -340,29 +472,33 @@ function build_c_sys5_dc()
         nothing,
         100.0,
         nothing,
-        nothing,
+        nothing;
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
-    for t in 1:2
-        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_dc))
-            add_forecast!(
-                c_sys5_dc,
-                l,
-                Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
-            )
-        end
-        for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_dc))
-            add_forecast!(
-                c_sys5_dc,
-                r,
-                Deterministic("get_rating", ren_timeseries_DA[t][ix]),
-            )
+
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_dc))
+                add_forecast!(
+                    c_sys5_dc,
+                    l,
+                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_dc))
+                add_forecast!(
+                    c_sys5_dc,
+                    r,
+                    Deterministic("get_rating", ren_timeseries_DA[t][ix]),
+                )
+            end
         end
     end
 
     return c_sys5_dc
 end
 
-function build_c_sys14_dc()
+function build_c_sys14_dc(; kwargs...)
     nodes = nodes14()
     c_sys14_dc = System(
         nodes,
@@ -372,14 +508,18 @@ function build_c_sys14_dc()
         nothing,
         100.0,
         nothing,
-        nothing,
+        nothing;
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
-    for (ix, l) in enumerate(get_components(PowerLoad, c_sys14_dc))
-        add_forecast!(
-            c_sys14_dc,
-            l,
-            Deterministic("get_maxactivepower", timeseries_DA14[ix]),
-        )
+
+    if get(kwargs, :add_forecasts, true)
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys14_dc))
+            add_forecast!(
+                c_sys14_dc,
+                l,
+                Deterministic("get_maxactivepower", timeseries_DA14[ix]),
+            )
+        end
     end
 
     return c_sys14_dc
@@ -474,7 +614,7 @@ thermal_generators5_uc_testing(nodes) = [
     ),
 ];
 
-function build_c_sys5_uc(; add_reserves = false)
+function build_c_sys5_uc(; kwargs...)
     nodes = nodes5()
     c_sys5_uc = System(
         nodes,
@@ -485,33 +625,36 @@ function build_c_sys5_uc(; add_reserves = false)
         100.0,
         nothing,
         nothing;
-        time_series_in_memory = true,
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
-    for t in 1:2
-        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_uc))
-            add_forecast!(
-                c_sys5_uc,
-                l,
-                Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
-            )
-        end
-        for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_uc))
-            add_forecast!(
-                c_sys5_uc,
-                r,
-                Deterministic("get_rating", ren_timeseries_DA[t][ix]),
-            )
-        end
-        for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_uc))
-            add_forecast!(
-                c_sys5_uc,
-                i,
-                Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]),
-            )
+
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_uc))
+                add_forecast!(
+                    c_sys5_uc,
+                    l,
+                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_uc))
+                add_forecast!(
+                    c_sys5_uc,
+                    r,
+                    Deterministic("get_rating", ren_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_uc))
+                add_forecast!(
+                    c_sys5_uc,
+                    i,
+                    Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]),
+                )
+            end
         end
     end
 
-    if add_reserves
+    if get(kwargs, :add_reserves, false)
         reserve_uc = reserve5(get_components(ThermalStandard, c_sys5_uc))
         add_service!(c_sys5_uc, reserve_uc[1], get_components(ThermalStandard, c_sys5_uc))
         add_service!(
@@ -528,7 +671,7 @@ function build_c_sys5_uc(; add_reserves = false)
     return c_sys5_uc
 end
 
-function build_c_sys5_ed()
+function build_c_sys5_ed(; kwargs...)
     nodes = nodes5()
     c_sys5_ed = System(
         nodes,
@@ -539,36 +682,38 @@ function build_c_sys5_ed()
         100.0,
         nothing,
         nothing;
-        time_series_in_memory = true,
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
 
-    for t in 1:2 # loop over days
-        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_ed))
-            ta = load_timeseries_DA[t][ix]
-            for i in 1:length(ta) # loop over hours
-                ini_time = timestamp(ta[i]) #get the hour
-                data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
-                add_forecast!(c_sys5_ed, l, Deterministic("get_maxactivepower", data))
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2 # loop over days
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_ed))
+                ta = load_timeseries_DA[t][ix]
+                for i in 1:length(ta) # loop over hours
+                    ini_time = timestamp(ta[i]) #get the hour
+                    data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
+                    add_forecast!(c_sys5_ed, l, Deterministic("get_maxactivepower", data))
+                end
             end
         end
-    end
-    for t in 1:2
-        for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_ed))
-            ta = load_timeseries_DA[t][ix]
-            for i in 1:length(ta) # loop over hours
-                ini_time = timestamp(ta[i]) #get the hour
-                data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
-                add_forecast!(c_sys5_ed, l, Deterministic("get_rating", data))
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_ed))
+                ta = load_timeseries_DA[t][ix]
+                for i in 1:length(ta) # loop over hours
+                    ini_time = timestamp(ta[i]) #get the hour
+                    data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
+                    add_forecast!(c_sys5_ed, l, Deterministic("get_rating", data))
+                end
             end
         end
-    end
-    for t in 1:2
-        for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_ed))
-            ta = load_timeseries_DA[t][ix]
-            for i in 1:length(ta) # loop over hours
-                ini_time = timestamp(ta[i]) #get the hour
-                data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
-                add_forecast!(c_sys5_ed, l, Deterministic("get_maxactivepower", data))
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_ed))
+                ta = load_timeseries_DA[t][ix]
+                for i in 1:length(ta) # loop over hours
+                    ini_time = timestamp(ta[i]) #get the hour
+                    data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
+                    add_forecast!(c_sys5_ed, l, Deterministic("get_maxactivepower", data))
+                end
             end
         end
     end
@@ -589,7 +734,7 @@ function build_init(gens, data)
     return init
 end
 
-function build_c_sys5_hy_uc()
+function build_c_sys5_hy_uc(; kwargs...)
     nodes = nodes5()
     c_sys5_hy_uc = System(
         nodes,
@@ -604,64 +749,67 @@ function build_c_sys5_hy_uc()
         100.0,
         nothing,
         nothing;
-        time_series_in_memory = true,
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
-    for t in 1:2
-        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy_uc))
-            add_forecast!(
-                c_sys5_hy_uc,
-                l,
-                Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
-            )
-        end
-        for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
-            add_forecast!(
-                c_sys5_hy_uc,
-                h,
-                Deterministic("get_rating", hydro_timeseries_DA[t][ix]),
-            )
-        end
-        for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
-            add_forecast!(
-                c_sys5_hy_uc,
-                h,
-                Deterministic("get_storage_capacity", hydro_timeseries_DA[t][ix]),
-            )
-        end
-        for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
-            add_forecast!(
-                c_sys5_hy_uc,
-                h,
-                Deterministic("get_inflow", hydro_timeseries_DA[t][ix] .* 0.8),
-            )
-        end
-        for (ix, h) in enumerate(get_components(HydroDispatch, c_sys5_hy_uc))
-            add_forecast!(
-                c_sys5_hy_uc,
-                h,
-                Deterministic("get_rating", hydro_timeseries_DA[t][ix]),
-            )
-        end
-        for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_hy_uc))
-            add_forecast!(
-                c_sys5_hy_uc,
-                r,
-                Deterministic("get_rating", ren_timeseries_DA[t][ix]),
-            )
-        end
-        for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_hy_uc))
-            add_forecast!(
-                c_sys5_hy_uc,
-                i,
-                Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]),
-            )
+
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy_uc))
+                add_forecast!(
+                    c_sys5_hy_uc,
+                    l,
+                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
+                add_forecast!(
+                    c_sys5_hy_uc,
+                    h,
+                    Deterministic("get_rating", hydro_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
+                add_forecast!(
+                    c_sys5_hy_uc,
+                    h,
+                    Deterministic("get_storage_capacity", hydro_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
+                add_forecast!(
+                    c_sys5_hy_uc,
+                    h,
+                    Deterministic("get_inflow", hydro_timeseries_DA[t][ix] .* 0.8),
+                )
+            end
+            for (ix, h) in enumerate(get_components(HydroDispatch, c_sys5_hy_uc))
+                add_forecast!(
+                    c_sys5_hy_uc,
+                    h,
+                    Deterministic("get_rating", hydro_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_hy_uc))
+                add_forecast!(
+                    c_sys5_hy_uc,
+                    r,
+                    Deterministic("get_rating", ren_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_hy_uc))
+                add_forecast!(
+                    c_sys5_hy_uc,
+                    i,
+                    Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]),
+                )
+            end
         end
     end
 
     return c_sys5_hy_uc
 end
 
-function build_c_sys5_hy_ed()
+function build_c_sys5_hy_ed(; kwargs...)
     nodes = nodes5()
     c_sys5_hy_ed = System(
         nodes,
@@ -676,63 +824,78 @@ function build_c_sys5_hy_ed()
         100.0,
         nothing,
         nothing;
-        time_series_in_memory = true,
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
     )
-    for t in 1:2
-        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy_ed))
-            ta = load_timeseries_DA[t][ix]
-            for i in 1:length(ta)
-                ini_time = timestamp(ta[i])
-                data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                add_forecast!(c_sys5_hy_ed, l, Deterministic("get_maxactivepower", data))
+
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_hy_ed))
+                ta = load_timeseries_DA[t][ix]
+                for i in 1:length(ta)
+                    ini_time = timestamp(ta[i])
+                    data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
+                    add_forecast!(
+                        c_sys5_hy_ed,
+                        l,
+                        Deterministic("get_maxactivepower", data),
+                    )
+                end
             end
-        end
-        for (ix, l) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_ed))
-            ta = hydro_timeseries_DA[t][ix]
-            for i in 1:length(ta)
-                ini_time = timestamp(ta[i])
-                data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                add_forecast!(c_sys5_hy_ed, l, Deterministic("get_rating", data))
+            for (ix, l) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_ed))
+                ta = hydro_timeseries_DA[t][ix]
+                for i in 1:length(ta)
+                    ini_time = timestamp(ta[i])
+                    data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
+                    add_forecast!(c_sys5_hy_ed, l, Deterministic("get_rating", data))
+                end
             end
-        end
-        for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_hy_ed))
-            ta = load_timeseries_DA[t][ix]
-            for i in 1:length(ta)
-                ini_time = timestamp(ta[i])
-                data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                add_forecast!(c_sys5_hy_ed, l, Deterministic("get_rating", data))
+            for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_hy_ed))
+                ta = load_timeseries_DA[t][ix]
+                for i in 1:length(ta)
+                    ini_time = timestamp(ta[i])
+                    data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
+                    add_forecast!(c_sys5_hy_ed, l, Deterministic("get_rating", data))
+                end
             end
-        end
-        for (ix, l) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_ed))
-            ta = hydro_timeseries_DA[t][ix]
-            for i in 1:length(ta)
-                ini_time = timestamp(ta[i])
-                data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                add_forecast!(c_sys5_hy_ed, l, Deterministic("get_storage_capacity", data))
+            for (ix, l) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_ed))
+                ta = hydro_timeseries_DA[t][ix]
+                for i in 1:length(ta)
+                    ini_time = timestamp(ta[i])
+                    data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
+                    add_forecast!(
+                        c_sys5_hy_ed,
+                        l,
+                        Deterministic("get_storage_capacity", data),
+                    )
+                end
             end
-        end
-        for (ix, l) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_ed))
-            ta = hydro_timeseries_DA[t][ix]
-            for i in 1:length(ta)
-                ini_time = timestamp(ta[i])
-                data = when(hydro_timeseries_RT[t][ix] .* 0.8, hour, hour(ini_time[1]))
-                add_forecast!(c_sys5_hy_ed, l, Deterministic("get_inflow", data))
+            for (ix, l) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_ed))
+                ta = hydro_timeseries_DA[t][ix]
+                for i in 1:length(ta)
+                    ini_time = timestamp(ta[i])
+                    data = when(hydro_timeseries_RT[t][ix] .* 0.8, hour, hour(ini_time[1]))
+                    add_forecast!(c_sys5_hy_ed, l, Deterministic("get_inflow", data))
+                end
             end
-        end
-        for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_hy_ed))
-            ta = load_timeseries_DA[t][ix]
-            for i in 1:length(ta)
-                ini_time = timestamp(ta[i])
-                data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                add_forecast!(c_sys5_hy_ed, l, Deterministic("get_maxactivepower", data))
+            for (ix, l) in enumerate(get_components(InterruptibleLoad, c_sys5_hy_ed))
+                ta = load_timeseries_DA[t][ix]
+                for i in 1:length(ta)
+                    ini_time = timestamp(ta[i])
+                    data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
+                    add_forecast!(
+                        c_sys5_hy_ed,
+                        l,
+                        Deterministic("get_maxactivepower", data),
+                    )
+                end
             end
-        end
-        for (ix, l) in enumerate(get_components(HydroDispatch, c_sys5_hy_ed))
-            ta = hydro_timeseries_DA[t][ix]
-            for i in 1:length(ta)
-                ini_time = timestamp(ta[i])
-                data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                add_forecast!(c_sys5_hy_ed, l, Deterministic("get_rating", data))
+            for (ix, l) in enumerate(get_components(HydroDispatch, c_sys5_hy_ed))
+                ta = hydro_timeseries_DA[t][ix]
+                for i in 1:length(ta)
+                    ini_time = timestamp(ta[i])
+                    data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
+                    add_forecast!(c_sys5_hy_ed, l, Deterministic("get_rating", data))
+                end
             end
         end
     end
@@ -740,7 +903,61 @@ function build_c_sys5_hy_ed()
     return c_sys5_hy_ed
 end
 
-build_PTDF5() = PTDF(build_c_sys5())
-build_PTDF14() = PTDF(build_c_sys14())
-build_PTDF5_dc() = PTDF(build_c_sys5_dc())
-build_PTDF14_dc() = PTDF(build_c_sys14_dc())
+TEST_SYSTEMS = Dict(
+    "c_sys14" => (
+        description = "14-bus system",
+        build = build_c_sys14,
+        time_series_in_memory = true,
+    ),
+    "c_sys14_dc" =>
+        (description = "", build = build_c_sys14_dc, time_series_in_memory = true),
+    "c_sys5" => (
+        description = "5-bus system",
+        build = build_c_sys5,
+        time_series_in_memory = true,
+    ),
+    "c_sys5_bat" => (
+        description = "5-bus system with Storage Device",
+        build = build_c_sys5_bat,
+        time_series_in_memory = true,
+    ),
+    "c_sys5_dc" => (
+        description = "Systems with HVDC data in the branches",
+        build = build_c_sys5_dc,
+        time_series_in_memory = true,
+    ),
+    "c_sys5_ed" =>
+        (description = "", build = build_c_sys5_ed, time_series_in_memory = true),
+    "c_sys5_hy" => (
+        description = "5-bus system with HydroPower Energy",
+        build = build_c_sys5_hy,
+        time_series_in_memory = true,
+    ),
+    "c_sys5_hy_ed" =>
+        (description = "", build = build_c_sys5_hy_ed, time_series_in_memory = true),
+    "c_sys5_hy_uc" =>
+        (description = "", build = build_c_sys5_hy_uc, time_series_in_memory = true),
+    "c_sys5_hyd" =>
+        (description = "", build = build_c_sys5_hyd, time_series_in_memory = true),
+    "c_sys5_il" => (
+        description = "System with Interruptible Load",
+        build = build_c_sys5_il,
+        time_series_in_memory = true,
+    ),
+    "c_sys5_ml" =>
+        (description = "", build = build_c_sys5_ml, time_series_in_memory = true),
+    "c_sys5_re" => (
+        description = "5-bus system with Renewable Energy",
+        build = build_c_sys5_re,
+        time_series_in_memory = true,
+    ),
+    "c_sys5_re_only" =>
+        (description = "", build = build_c_sys5_re_only, time_series_in_memory = true),
+    "c_sys5_uc" =>
+        (description = "", build = build_c_sys5_uc, time_series_in_memory = true),
+)
+
+build_PTDF5() = PTDF(build_system("c_sys5"))
+build_PTDF14() = PTDF(build_system("c_sys14"))
+build_PTDF5_dc() = PTDF(build_system("c_sys5_dc"))
+build_PTDF14_dc() = PTDF(build_system("c_sys14_dc"))

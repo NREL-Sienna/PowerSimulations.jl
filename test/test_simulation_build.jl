@@ -26,8 +26,8 @@ function create_sequence()
 end
 
 function test_sequence_build(file_path::String)
-    c_sys5_uc = build_c_sys5_uc()
-    c_sys5_ed = build_c_sys5_ed()
+    c_sys5_uc = build_system("c_sys5_uc")
+    c_sys5_ed = build_system("c_sys5_ed")
 
     @testset "Test Simulation Simulation Sequence Validation" begin
         sequence = create_sequence()

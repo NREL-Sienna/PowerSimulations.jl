@@ -12,9 +12,9 @@ services = Dict{Symbol, ServiceModel}()
 
 @testset "Operation Model kwargs with CopperPlatePowerModel base" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-    c_sys5 = build_c_sys5()
-    c_sys5_re = build_c_sys5_re()
-    c_sys14 = build_c_sys14()
+    c_sys5 = build_system("c_sys5")
+    c_sys5_re = build_system("c_sys5_re")
+    c_sys14 = build_system("c_sys14")
 
     @test_throws ArgumentError OperationsProblem(
         TestOpProblem,
@@ -64,7 +64,7 @@ end
 
 @testset "Test optimization debugging functions" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-    c_sys5 = build_c_sys5()
+    c_sys5 = build_system("c_sys5")
     op_problem = OperationsProblem(
         TestOpProblem,
         template,
@@ -90,7 +90,7 @@ end
     my_model = JuMP.Model()
     my_model.ext[:PSI_Testing] = 1
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
-    c_sys5 = build_c_sys5()
+    c_sys5 = build_system("c_sys5")
     op_problem = OperationsProblem(
         TestOpProblem,
         template,
@@ -127,9 +127,9 @@ end
         ThermalDispatchNoMin,
     ]
 
-    c_sys5 = build_c_sys5()
-    c_sys5_re = build_c_sys5_re()
-    c_sys5_bat = build_c_sys5_bat()
+    c_sys5 = build_system("c_sys5")
+    c_sys5_re = build_system("c_sys5_re")
+    c_sys5_bat = build_system("c_sys5_bat")
     systems = [c_sys5, c_sys5_re, c_sys5_bat]
     for net in networks, thermal in thermal_gens, system in systems, p in [true, false]
         @testset "Operation Model $(net) - $(thermal) - $(system)" begin
@@ -152,7 +152,7 @@ end
     end
 
     @testset "Operations template constructors" begin
-        c_sys5 = build_c_sys5()
+        c_sys5 = build_system("c_sys5")
         op_problem_ed = PSI.EconomicDispatchProblem(c_sys5)
         op_problem_uc = PSI.UnitCommitmentProblem(c_sys5)
         moi_tests(op_problem_uc, false, 480, 0, 240, 120, 144, true)

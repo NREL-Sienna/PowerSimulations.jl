@@ -2,8 +2,8 @@
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
     warn_message = "The data doesn't include devices of type RenewableDispatch, consider changing the device models"
     model = DeviceModel(RenewableDispatch, RenewableFullDispatch)
-    c_sys5 = build_c_sys5()
-    c_sys14 = build_c_sys14()
+    c_sys5 = build_system("c_sys5")
+    c_sys14 = build_system("c_sys14")
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5)
     @test_logs (:warn, warn_message) construct_device!(op_problem, :Renewable, model)
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14)
@@ -12,7 +12,7 @@ end
 
 @testset "Renewable DCPLossLess FullDispatch" begin
     model = DeviceModel(RenewableDispatch, RenewableFullDispatch)
-    c_sys5_re = build_c_sys5_re()
+    c_sys5_re = build_system("c_sys5_re")
 
     #5 Bus testing case
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re)
@@ -54,7 +54,7 @@ end
 
 @testset "Renewable ACPPower Full Dispatch" begin
     model = DeviceModel(RenewableDispatch, RenewableFullDispatch)
-    c_sys5_re = build_c_sys5_re()
+    c_sys5_re = build_system("c_sys5_re")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_re; use_parameters = p)
@@ -91,7 +91,7 @@ end
 
 @testset "Renewable DCPLossLess ConstantPowerFactor" begin
     model = DeviceModel(RenewableDispatch, RenewableConstantPowerFactor)
-    c_sys5_re = build_c_sys5_re()
+    c_sys5_re = build_system("c_sys5_re")
 
     #5 Bus testing case
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re)
@@ -133,7 +133,7 @@ end
 
 @testset "Renewable ACPPower ConstantPowerFactor" begin
     model = DeviceModel(RenewableDispatch, RenewableConstantPowerFactor)
-    c_sys5_re = build_c_sys5_re()
+    c_sys5_re = build_system("c_sys5_re")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_re; use_parameters = p)
@@ -170,7 +170,7 @@ end
 
 @testset "Renewable DCPLossLess FixedOutput" begin
     model = DeviceModel(RenewableDispatch, FixedOutput)
-    c_sys5_re = build_c_sys5_re()
+    c_sys5_re = build_system("c_sys5_re")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_re; use_parameters = p)
@@ -187,7 +187,7 @@ end
 
 @testset "Renewable ACPPowerModel FixedOutput" begin
     model = DeviceModel(RenewableDispatch, FixedOutput)
-    c_sys5_re = build_c_sys5_re()
+    c_sys5_re = build_system("c_sys5_re")
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_re; use_parameters = p)
