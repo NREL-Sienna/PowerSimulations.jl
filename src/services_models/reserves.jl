@@ -22,11 +22,11 @@ end
 
 function activerequirement_variables!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ReserveDemandCurve{D}},
+    services::IS.FlattenIteratorWrapper{PSY.ReserveDemandCurve{D}},
 ) where {D <: PSY.ReserveDirection}
     add_variable(
         psi_container,
-        devices,
+        services,
         variable_name(SERVICE_REQUIREMENT, PSY.ReserveDemandCurve{D}),
         false;
         lb_value = x -> 0.0,
@@ -140,18 +140,21 @@ function cost_function(
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Minute(resolution)) / 60
     variable = get_variable(psi_container, variable_name(SERVICE_REQUIREMENT, SR))
+    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
+    
+    for (ix, var) in enumerate(variable[PSY.get_name(service), :])
+        c = _pwlgencost_sos(psi_container, variable, ts_vector[ix])
+        JuMP.add_to_expression!(gen_cost, c)
+    end
 
-    cost_component = getfield(PSY.get_op_cost(d), cost_symbol)
-    cost_expression =
-        ps_cost(psi_container, variable[PSY.get_name(d), :], cost_component, dt, sign)
-
-    add_to_cost(
-        psi_container,
-        service,
-        variable_name(SERVICE_REQUIREMENT, SR),
-        :variable,
-        -1.0,
-    )
+    cost_expression = gen_cost * dt
+    T_ce = typeof(cost_expression)
+    T_cf = typeof(psi_container.cost_function)
+    if T_cf <: JuMP.GenericAffExpr && T_ce <: JuMP.GenericQuadExpr
+        psi_container.cost_function += cost_expression
+    else
+        JuMP.add_to_expression!(psi_container.cost_function, cost_expression)
+    end
     return
 end
 
