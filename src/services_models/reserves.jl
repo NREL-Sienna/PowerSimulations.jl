@@ -25,7 +25,7 @@ end
 function service_requirement_constraint!(
     psi_container::PSIContainer,
     service::SR,
-    model::ServiceModel{SR, RangeReserve},
+    ::ServiceModel{SR, RangeReserve},
 ) where {SR <: PSY.Reserve}
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
