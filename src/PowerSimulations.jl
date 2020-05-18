@@ -225,6 +225,7 @@ include("devices_models/devices/storage.jl")
 include("devices_models/devices/hydro_generation.jl")
 
 #Services Models
+include("services_models/agc.jl")
 include("services_models/reserves.jl")
 include("services_models/services_constructor.jl")
 
