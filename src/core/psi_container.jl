@@ -165,7 +165,9 @@ function psi_container_init!(
     if get_use_forecast_data(settings)
         total_number_of_devices = length(get_available_components(PSY.Device, sys))
         psi_container.time_steps = 1:get_horizon(settings)
-        # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html The maximum numbers of constraints and variables in the benchmark provlems is 1,918,399 and 1,259,121, respectively. See also https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/2013/138847.pdf
+        # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html
+        # The maximum numbers of constraints and variables in the benchmark problems is 1,918,399 and 1,259,121,
+        # respectively. See also https://prod-ng.sandia.gov/techlib-noauth/access-control.cgi/2013/138847.pdf
         variable_count_estimate = length(psi_container.time_steps) * total_number_of_devices
         if variable_count_estimate > 10e6
             @warn("The estimated total number of variables that will be created in the model is $(variable_count_estimate). The total number of variables might be larger than 10e6 and could lead to large build or solve times.")
