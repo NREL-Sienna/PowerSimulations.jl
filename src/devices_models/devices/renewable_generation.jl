@@ -34,7 +34,7 @@ function reactivepower_variables!(
     return
 end
 
-####################################### Reactive Power Constraints #########################
+####################################### Reactive Power constraint_infos #########################
 function reactivepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{R},
@@ -42,7 +42,7 @@ function reactivepower_constraints!(
     system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {R <: PSY.RenewableGen}
-    constraint_data = Vector{DeviceRange}(undef, length(devices))
+    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         name = PSY.get_name(d)
         if isnothing(PSY.get_reactivepowerlimits(d))
@@ -51,11 +51,11 @@ function reactivepower_constraints!(
         else
             lims = PSY.get_reactivepowerlimits(d)
         end
-        constraint_data[ix] = DeviceRange(name, lims)
+        constraint_infos[ix] = DeviceRangeConstraintInfo(name, lims)
     end
     device_range(
         psi_container,
-        constraint_data,
+        constraint_infos,
         constraint_name(REACTIVE_RANGE, R),
         variable_name(REACTIVE_POWER, R),
     )
@@ -95,18 +95,18 @@ function activepower_constraints!(
     use_forecast_data = model_uses_forecasts(psi_container)
 
     if !parameters && !use_forecast_data
-        constraint_data = Vector{DeviceRange}(undef, length(devices))
+        constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
         for (ix, d) in enumerate(devices)
             name = PSY.get_name(d)
             ub = PSY.get_activepower(d)
             limits = (min = 0.0, max = ub)
-            range_data = DeviceRange(name, limits)
-            add_device_services!(range_data, d, model)
-            constraint_data[ix] = range_data
+            constraint = DeviceRangeConstraintInfo(name, limits)
+            add_device_services!(constraint, d, model)
+            constraint_infos[ix] = constraint
         end
         device_range(
             psi_container,
-            constraint_data,
+            constraint_infos,
             constraint_name(ACTIVE_RANGE, R),
             variable_name(ACTIVE_POWER, R),
         )
@@ -114,18 +114,19 @@ function activepower_constraints!(
     end
 
     forecast_label = "get_rating"
-    constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))
+    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label)
-        timeseries_data = DeviceTimeSeries(d, x -> PSY.get_rating(x), ts_vector)
-        add_device_services!(timeseries_data, d, model)
-        constraint_data[ix] = timeseries_data
+        constraint_info =
+            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_rating(x), ts_vector)
+        add_device_services!(constraint_info.range, d, model)
+        constraint_infos[ix] = constraint_info
     end
 
     if parameters
         device_timeseries_param_ub(
             psi_container,
-            constraint_data,
+            constraint_infos,
             constraint_name(ACTIVE, R),
             UpdateRef{R}(ACTIVE_POWER, forecast_label),
             variable_name(ACTIVE_POWER, R),
@@ -133,7 +134,7 @@ function activepower_constraints!(
     else
         device_timeseries_ub(
             psi_container,
-            constraint_data,
+            constraint_infos,
             constraint_name(ACTIVE, R),
             variable_name(ACTIVE_POWER, R),
         )
@@ -157,29 +158,29 @@ function nodal_expression!(
         forecast_label = ""
         peak_value_function = x -> PSY.get_reactivepower(x)
     end
-    constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))
+    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label)
-        timeseries_data = DeviceTimeSeries(d, peak_value_function, ts_vector)
-        constraint_data[ix] = timeseries_data
+        constraint_infos[ix] =
+            DeviceTimeSeriesConstraintInfo(d, peak_value_function, ts_vector)
     end
 
     if parameters
         include_parameters(
             psi_container,
-            constraint_data,
+            constraint_infos,
             UpdateRef{R}(REACTIVE_POWER, forecast_label),
             :nodal_balance_active,
         )
         return
     else
         for t in model_time_steps(psi_container)
-            for device in constraint_data
+            for constraint_info in constraint_infos
                 add_to_expression!(
                     psi_container.expressions[:nodal_balance_reactive],
-                    device.bus_number,
+                    constraint_info.bus_number,
                     t,
-                    device.multiplier * device.timeseries[t],
+                    constraint_info.multiplier * constraint_info.timeseries[t],
                 )
             end
         end
@@ -201,29 +202,29 @@ function nodal_expression!(
         forecast_label = ""
         peak_value_function = x -> PSY.get_activepower(x)
     end
-    constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))
+    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label)
-        timeseries_data = DeviceTimeSeries(d, peak_value_function, ts_vector)
-        constraint_data[ix] = timeseries_data
+        constraint_infos[ix] =
+            DeviceTimeSeriesConstraintInfo(d, peak_value_function, ts_vector)
     end
 
     if parameters
         include_parameters(
             psi_container,
-            constraint_data,
+            constraint_infos,
             UpdateRef{R}(ACTIVE_POWER, forecast_label),
             :nodal_balance_active,
         )
         return
     else
         for t in model_time_steps(psi_container)
-            for device in constraint_data
+            for constraint_info in constraint_infos
                 add_to_expression!(
                     psi_container.expressions[:nodal_balance_active],
-                    device.bus_number,
+                    constraint_info.bus_number,
                     t,
-                    device.multiplier * device.timeseries[t],
+                    constraint_info.multiplier * constraint_info.timeseries[t],
                 )
             end
         end
