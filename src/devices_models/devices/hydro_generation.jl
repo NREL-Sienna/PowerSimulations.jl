@@ -435,15 +435,7 @@ function initial_conditions!(
     return
 end
 
-########################## Addition of to the nodal balances ###############################
-
-#function NodalExpressionInputs(::Type{<:PSY.HydroGen}, ::Type{<:PM.AbstractPowerModel}, use_forecasts::Bool)
-#    return NodalExpressionInputs(
-#        "get_rating",
-#        REACTIVE_POWER,
-#        use_forecasts ? x -> PSY.get_rating(x) * sin(acos(PSY.get_powerfactor(x))) : x -> PSY.get_reactivepower(x),
-#    )
-#end
+########################## Addition to the nodal balances #################################
 
 function NodalExpressionInputs(
     ::Type{<:PSY.HydroGen},
@@ -455,54 +447,6 @@ function NodalExpressionInputs(
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),
     )
-end
-
-function nodal_expression!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-) where {H <: PSY.HydroGen}
-    nodal_expression!(psi_container, devices, PM.AbstractActivePowerModel)
-    # Commented out since PF = 1.0 is the assumtion for RoR Hydro
-    #=
-     parameters = model_has_parameters(psi_container)
-    use_forecast_data = model_uses_forecasts(psi_container)
-    if parameters
-     forecast_label = "get_rating"
-     peak_value_function = x -> PSY.get_rating(x) * sin(acos(PSY.get_powerfactor(x)))
-    else
-     forecast_label = "get_rating"
-     peak_value_function = x -> PSY.get_reactivepower(x)
-    end
-    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-     ts_vector = get_time_series(psi_container, d, forecast_label)
-     timeseries_data = DeviceTimeSeriesConstraintInfo(d, peak_value_function, ts_vector)
-     constraint_infos[ix] = timeseries_data
-    end
-
-    if parameters
-     include_parameters(
-         psi_container,
-         constraint_infos,
-         UpdateRef{R}(REACTIVE_POWER, forecast_label),
-         :nodal_balance_active,
-     )
-     return
-    else
-     for t in model_time_steps(psi_container)
-         for device in constraint_infos
-             add_to_expression!(
-                 psi_container.expressions[:nodal_balance_reactive],
-                 device.bus_number,
-                 t,
-                 device.multiplier * device.timeseries[t],
-             )
-         end
-     end
-    end
-    return
-    =#
 end
 
 ##################################### Hydro generation cost ############################
