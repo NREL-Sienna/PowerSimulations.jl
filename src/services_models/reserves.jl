@@ -126,24 +126,40 @@ function cost_function(
     time_steps = model_time_steps(psi_container)
 
     if use_forecast_data
-        ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
-            PSY.Deterministic,
+        ts_vector = _convert_to_variablecost(PSY.get_data(PSY.get_forecast(
+            PSY.CostCoefficient,
             service,
             initial_time,
             "get_variable",
             length(time_steps),
         )))
-    else
-        ts_vector = repeat(get_variable(service), time_steps[end])
-    end
 
+    else
+        ts_vector = repeat(PSY.get_variable(PSY.get_op_cost(service)), time_steps[end])
+    end
+    
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Minute(resolution)) / 60
     variable = get_variable(psi_container, variable_name(SERVICE_REQUIREMENT, SR))
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-    
-    for (ix, var) in enumerate(variable[PSY.get_name(service), :])
-        c = _pwlgencost_sos(psi_container, variable, ts_vector[ix])
+    if !haskey(psi_container.variables, :PWL_cost_vars)
+        time_steps = model_time_steps(psi_container)
+        container = add_var_container!(
+            psi_container,
+            :PWL_cost_vars,
+            [PSY.get_name(service)],
+            time_steps,
+            1:length(ts_vector[1]);
+            sparse = true,
+        )
+    else
+        container = get_variable(psi_container, :PWL_cost_vars)
+    end
+    for (t, var) in enumerate(variable[PSY.get_name(service), :])
+        c, pwlvars = _pwlgencost_sos(psi_container, var, ts_vector[t])
+        for (ix, v) in enumerate(pwlvars)
+            container[(PSY.get_name(service), t, ix)] = v
+        end
         JuMP.add_to_expression!(gen_cost, c)
     end
 
@@ -156,6 +172,24 @@ function cost_function(
         JuMP.add_to_expression!(psi_container.cost_function, cost_expression)
     end
     return
+end
+
+function _convert_to_variablecost(val::TS.TimeArray)
+    cost_col = Vector{Symbol}()
+    load_col = Vector{Symbol}()
+    variable_costs = Vector{Array{NTuple{2, Float64}}}()
+    col_names = TS.colnames(val)
+    for c in col_names
+        if occursin("cost_bp", String(c))
+            push!(cost_col, c)
+        elseif occursin("load_bp", String(c))
+            push!(load_col, c)
+        end
+    end
+    for row in DataFrames.eachrow(DataFrames.DataFrame(val))
+        push!(variable_costs, [Tuple(row[[c,l]]) for (c,l) in zip(cost_col, load_col)])
+    end
+    return variable_costs
 end
 
 function modify_device_model!(
