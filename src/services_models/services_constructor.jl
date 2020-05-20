@@ -72,3 +72,32 @@ function construct_service!(
     end
     return
 end
+
+function construct_service!(
+    psi_container::PSIContainer,
+    services::IS.FlattenIteratorWrapper{PSY.AGC},
+    services_mapping::PSY.ServiceContributingDevicesMapping,
+    ::ServiceModel{PSY.AGC, T},
+    devices_template::Dict{Symbol, DeviceModel},
+) where {T <: AbstractAGCFormulation}
+    #Note: Frequency is a global variable
+    steady_state_frequency_variables!(psi_container)
+
+    for device_model in devices_template
+    end
+
+    for service in services
+        contributing_devices =
+            services_mapping[(
+                type = typeof(service),
+                name = PSY.get_name(service),
+            )].contributing_devices
+        #Variables
+        regulation_service_variables!(psi_container, service, contributing_devices)
+        # Constraints
+        smooth_ace_pid!(psi_container, service)
+        #steady_state_frequency_variables!(psi_container, service, model, )
+        #participation_assignment!(psi_container, service, model, contributing_devices)
+    end
+
+end
