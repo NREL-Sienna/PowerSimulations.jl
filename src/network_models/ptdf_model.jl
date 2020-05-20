@@ -14,7 +14,7 @@ function ptdf_networkflow(
 
     branch_types = typeof.(branches)
 
-    _remove_undef!(nodal_balance_expressions)
+    remove_undef!(nodal_balance_expressions)
 
     for btype in Set(branch_types)
         typed_branches = IS.FlattenIteratorWrapper(
