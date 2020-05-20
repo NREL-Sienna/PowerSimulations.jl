@@ -80,18 +80,17 @@ function smooth_ace_pid!(psi_container::PSIContainer, service::PSY.AGC)
         SACE_pid[t] = JuMP.@constraint(
             psi_container.JuMPmodel,
             SACE[t] ==
-            SACE[t-1] +
+            SACE[t - 1] +
             kp * (
                 (1 + 1 / (kp / ki) + (kd / kp) / Δt) * (RAW_ACE[t] - SACE[t]) +
                 (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[t] - SACE[t]) -
-                ((kd / kp) / Δt) * (RAW_ACE[t-1] - SACE[t-1])
+                ((kd / kp) / Δt) * (RAW_ACE[t - 1] - SACE[t - 1])
             )
         )
 
     end
     return
 end
-
 
 function participation_assignment!(psi_container::PSIContainer)
     JuMP.@constraint(zone_imbalance_pid, [k = 1:5, i = 1:N], ΔPg[k, i] == γ[k] * ΔP[i])
