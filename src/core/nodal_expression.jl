@@ -26,12 +26,7 @@ function nodal_expression!(
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{U},
 ) where {T <: PSY.Device, U <: PM.AbstractPowerModel}
-    _nodal_expression!(
-        psi_container,
-        devices,
-        PM.AbstractActivePowerModel,
-        :nodal_balance_active,
-    )
+    nodal_expression!(psi_container, devices, PM.AbstractActivePowerModel)
     _nodal_expression!(psi_container, devices, U, :nodal_balance_reactive)
     return
 end
