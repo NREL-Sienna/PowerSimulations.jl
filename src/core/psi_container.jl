@@ -20,11 +20,6 @@ mutable struct PSIContainer
         PSY.check_forecast_consistency(sys)
         resolution = PSY.get_forecasts_resolution(sys)
         resolution = IS.time_period_conversion(resolution)
-        if isnothing(jump_model)
-            V = JuMP.VariableRef
-        else
-            V = JuMP.variable_type(jump_model)
-        end
         new(
             jump_model,
             1:1,
@@ -33,7 +28,7 @@ mutable struct PSIContainer
             copy_for_serialization(settings),
             Dict{Symbol, AbstractArray}(),
             Dict{Symbol, AbstractArray}(),
-            zero(JuMP.GenericAffExpr{Float64, V}),
+            zero(JuMP.GenericAffExpr{Float64, JuMP.VariableRef}),
             DenseAxisArrayContainer(),
             nothing,
             InitialConditions(use_parameters = get_use_parameters(settings)),
@@ -100,11 +95,11 @@ function _make_jump_model!(psi_container::PSIContainer)
     return
 end
 
-function _make_container_array(V::DataType, parameters::Bool, ax...)
+function _make_container_array(parameters::Bool, ax...)
     if parameters
-        return JuMP.Containers.DenseAxisArray{PGAE{V}}(undef, ax...)
+        return JuMP.Containers.DenseAxisArray{PGAE}(undef, ax...)
     else
-        return JuMP.Containers.DenseAxisArray{GAE{V}}(undef, ax...)
+        return JuMP.Containers.DenseAxisArray{GAE}(undef, ax...)
     end
     return
 end
@@ -116,13 +111,12 @@ function _make_expressions_dict!(
 ) where {S <: PM.AbstractPowerModel}
     settings = psi_container.settings
     parameters = get_use_parameters(settings)
-    V = JuMP.variable_type(psi_container.JuMPmodel)
     time_steps = 1:get_horizon(settings)
     psi_container.expressions = DenseAxisArrayContainer(
         :nodal_balance_active =>
-            _make_container_array(V, parameters, bus_numbers, time_steps),
+            _make_container_array(parameters, bus_numbers, time_steps),
         :nodal_balance_reactive =>
-            _make_container_array(V, parameters, bus_numbers, time_steps),
+            _make_container_array(parameters, bus_numbers, time_steps),
     )
     return
 end
@@ -134,11 +128,10 @@ function _make_expressions_dict!(
 ) where {S <: PM.AbstractActivePowerModel}
     settings = psi_container.settings
     parameters = get_use_parameters(settings)
-    V = JuMP.variable_type(psi_container.JuMPmodel)
     time_steps = 1:get_horizon(settings)
     psi_container.expressions = DenseAxisArrayContainer(
         :nodal_balance_active =>
-            _make_container_array(V, parameters, bus_numbers, time_steps),
+            _make_container_array(parameters, bus_numbers, time_steps),
     )
     return
 end
@@ -498,6 +491,18 @@ function get_parameters_value(psi_container::PSIContainer)
         params_dict[params_dict_key] = param_array .* multiplier_array
     end
     return params_dict
+end
+
+function assign_expression!(psi_container::PSIContainer, name::Symbol, value)
+    @debug "set_expression" name
+    psi_container.expressions[name] = value
+    return
+end
+
+function add_expression_container!(psi_container::PSIContainer, exp_name::Symbol, axs...)
+    container = JuMP.Containers.DenseAxisArray{JuMP.GenericAffExpr}(undef, axs...)
+    assign_expression!(psi_container, exp_name, container)
+    return container
 end
 
 function is_milp(container::PSIContainer)
