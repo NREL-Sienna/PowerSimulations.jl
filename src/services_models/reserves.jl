@@ -137,7 +137,7 @@ function cost_function(
     else
         ts_vector = repeat(PSY.get_variable(PSY.get_op_cost(service)), time_steps[end])
     end
-    
+
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Minute(resolution)) / 60
     variable = get_variable(psi_container, variable_name(SERVICE_REQUIREMENT, SR))
@@ -187,7 +187,7 @@ function _convert_to_variablecost(val::TS.TimeArray)
         end
     end
     for row in DataFrames.eachrow(DataFrames.DataFrame(val))
-        push!(variable_costs, [Tuple(row[[c,l]]) for (c,l) in zip(cost_col, load_col)])
+        push!(variable_costs, [Tuple(row[[c, l]]) for (c, l) in zip(cost_col, load_col)])
     end
     return variable_costs
 end
