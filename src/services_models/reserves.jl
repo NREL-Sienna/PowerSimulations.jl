@@ -91,21 +91,14 @@ function modify_device_model!(
     return
 end
 
-function include_service!(constraint_data::DeviceTimeSeries, services, SM::ServiceModel)
-    range_data = constraint_data.range
-    isnothing(range_data) && return
-    include_service!(range_data, services, SM)
-    return
-end
-
 function include_service!(
-    constraint_data::DeviceRange,
+    constraint_info::DeviceRangeConstraintInfo,
     services,
     ::ServiceModel{SR, <:AbstractReservesFormulation},
 ) where {SR <: PSY.Reserve{PSY.ReserveUp}}
     for (ix, service) in enumerate(services)
         push!(
-            constraint_data.additional_terms_ub,
+            constraint_info.additional_terms_ub,
             constraint_name(PSY.get_name(service), SR),
         )
     end
@@ -113,13 +106,13 @@ function include_service!(
 end
 
 function include_service!(
-    constraint_data::DeviceRange,
+    constraint_info::DeviceRangeConstraintInfo,
     services,
     ::ServiceModel{SR, <:AbstractReservesFormulation},
 ) where {SR <: PSY.Reserve{PSY.ReserveDown}}
     for (ix, service) in enumerate(services)
         push!(
-            constraint_data.additional_terms_lb,
+            constraint_info.additional_terms_lb,
             constraint_name(PSY.get_name(service), SR),
         )
     end
@@ -127,7 +120,7 @@ function include_service!(
 end
 
 function add_device_services!(
-    constraint_data::RangeConstraintsData,
+    constraint_info::AbstractRangeConstraintInfo,
     device::D,
     model::DeviceModel,
 ) where {D <: PSY.Device}
@@ -136,15 +129,15 @@ function add_device_services!(
             services =
                 (s for s in PSY.get_services(device) if isa(s, service_model.service_type))
             @assert !isempty(services)
-            include_service!(constraint_data, services, service_model)
+            include_service!(constraint_info, services, service_model)
         end
     end
     return
 end
 
 function add_device_services!(
-    constraint_data_in::RangeConstraintsData,
-    constraint_data_out::RangeConstraintsData,
+    constraint_data_in::AbstractRangeConstraintInfo,
+    constraint_data_out::AbstractRangeConstraintInfo,
     device::D,
     model::DeviceModel{D, <:AbstractStorageFormulation},
 ) where {D <: PSY.Storage}

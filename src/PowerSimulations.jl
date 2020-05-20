@@ -212,6 +212,7 @@ include("core/simulation.jl")
 include("core/feedforward.jl")
 include("core/simulation_results.jl")
 include("core/recorder_events.jl")
+include("devices_models/devices/common/nodal_expression.jl")
 
 #Device Modeling components
 include("devices_models/devices/common.jl")
