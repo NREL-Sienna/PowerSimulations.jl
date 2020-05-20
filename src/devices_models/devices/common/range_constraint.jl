@@ -212,7 +212,7 @@ function reserve_device_semicontinuousrange(
 
     ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
     lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
-    names = [x.name for x in constraint_infos]
+    names = (x.name for x in constraint_infos)
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
