@@ -15,7 +15,7 @@ mutable struct SimulationInternal
     date_range::NTuple{2, Dates.DateTime} #Inital Time of the first forecast and Inital Time of the last forecast
     current_time::Dates.DateTime
     reset::Bool
-    compiled_status::Bool
+    compiled_status::BUILD_STATUS
     simulation_cache::Dict{<:CacheKey, AbstractCache}
     recorders::Vector{Symbol}
     console_level::Base.CoreLogging.LogLevel
@@ -553,6 +553,7 @@ function build!(
         try
             Logging.with_logger(logger) do
                 _build!(sim)
+                sim.internal.compiled_status = BUILT
                 @info "\n$(BUILD_SIMULATION_TIMER)\n"
             end
         finally
@@ -564,6 +565,7 @@ function build!(
 end
 
 function _build!(sim::Simulation)
+    sim.internal.compiled_status = IN_PROGRESS
     stage_initial_times = _get_simulation_initial_times!(sim)
     for (stage_number, stage_name) in sim.sequence.order
         stage = get_stage(sim, stage_name)
@@ -578,7 +580,6 @@ function _build!(sim::Simulation)
     _assign_feedforward_chronologies(sim)
     _check_steps(sim, stage_initial_times)
     _build_stages!(sim)
-    sim.internal.compiled_status = true
 end
 
 #Defined here because it requires Stage and Simulation to defined
@@ -871,6 +872,8 @@ function _execute!(sim::Simulation; kwargs...)
                         # TODO: implement some efficient way of indexing with stage name.
                         stage = get_stage(sim, stage_number)
                         stage_name = get_stage_name(sim, stage)
+                        !stage_built(stage) &&
+                            error("Stage $(stage_name) status is not BUILT")
                         stage_interval = get_stage_interval(sim, stage_name)
                         run_name = "step-$(step)-stage-$(stage_name)"
                         sim.internal.current_time = sim.internal.date_ref[stage_number]

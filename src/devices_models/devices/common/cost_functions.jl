@@ -1,9 +1,10 @@
 @doc raw"""
     ps_cost(psi_container::PSIContainer,
-                variable::JuMP.Containers.DenseAxisArray{JV},
+                var_name::Symbol,
+                index::String,
                 cost_component::Float64,
                 dt::Float64,
-                sign::Float64) where {JV <: JuMP.AbstractVariableRef}
+                sign::Float64)
 
 Returns linear cost terms for sum of variables with common factor to be used for cost expression for psi_container model.
 
@@ -22,30 +23,32 @@ Returns:
 # Arguments
 
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
+* var_name::Symbol: The variable name
+* index::String: The index of the variable container
 * cost_component::Float64 : cost to be associated with variable
 * dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
 """
 function ps_cost(
     psi_container::PSIContainer,
-    variable::JuMP.Containers.DenseAxisArray{JV},
+    var_name::Symbol,
+    index::String,
     cost_component::Float64,
     dt::Float64,
     sign::Float64,
-) where {JV <: JuMP.AbstractVariableRef}
+)
+    variable = get_variable(psi_container, var_name)[index, :]
     gen_cost = sum(variable) * cost_component
-
     return sign * gen_cost * dt
-
 end
 
 @doc raw"""
     ps_cost(psi_container::PSIContainer,
-                variable::JuMP.Containers.DenseAxisArray{JV},
+                var_name::Symbol,
+                index::String,
                 cost_component::PSY.VariableCost{Float64},
                 dt::Float64,
-                sign::Float64) where {JV <: JuMP.AbstractVariableRef}
+                sign::Float64)
 
 Returns linear cost terms for sum of variables with common factor to be used for cost expression for psi_container model.
 Does this by calling ```ps_cost``` that has Float64 cost component input.
@@ -57,27 +60,30 @@ Returns:
 # Arguments
 
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
+* var_name::Symbol: The variable name
+* index::String: The index of the variable container
 * cost_component::PSY.VariableCost{Float64} : container for cost to be associated with variable
 * dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
 """
 function ps_cost(
     psi_container::PSIContainer,
-    variable::JuMP.Containers.DenseAxisArray{JV},
+    var_name::Symbol,
+    index::String,
     cost_component::PSY.VariableCost{Float64},
     dt::Float64,
     sign::Float64,
-) where {JV <: JuMP.AbstractVariableRef}
-    return ps_cost(psi_container, variable, PSY.get_cost(cost_component), dt, sign)
+)
+    return ps_cost(psi_container, var_name, index, PSY.get_cost(cost_component), dt, sign)
 end
 
 @doc raw"""
     ps_cost(psi_container::PSIContainer,
-                variable::JuMP.Containers.DenseAxisArray{JV},
+                var_name::Symbol,
+                index::String,
                 cost_component::PSY.VariableCost{NTuple{2, Float64}}
                 dt::Float64,
-                sign::Float64) where {JV <: JuMP.AbstractVariableRef}
+                sign::Float64)
 
 Returns quadratic cost terms for sum of variables with common factor to be used for cost expression for psi_container model.
 
@@ -98,23 +104,26 @@ Returns ```gen_cost```
 # Arguments
 
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
+* var_name::Symbol: The variable name
+* index::String: The index of the variable container
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 * sign::Float64 : positive or negative sign to be associated cost term
 """
 function ps_cost(
     psi_container::PSIContainer,
-    variable::JuMP.Containers.DenseAxisArray{JV},
+    var_name::Symbol,
+    index::String,
     cost_component::PSY.VariableCost{NTuple{2, Float64}},
     dt::Float64,
     sign::Float64,
-) where {JV <: JuMP.AbstractVariableRef}
+)
     if cost_component[1] >= eps()
+        variable = get_variable(psi_container, var_name)[index, :]
         gen_cost =
             sum(variable .^ 2) * cost_component[1] + sum(variable) * cost_component[2]
         return sign * gen_cost * dt
     else
-        return ps_cost(psi_container, variable, cost_component[2], dt, 1.0)
+        return ps_cost(psi_container, var_name, index, cost_component[2], dt, 1.0)
     end
 end
 
@@ -177,7 +186,7 @@ function _pwlgencost_sos(
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
     pwlvars = JuMP.@variable(
         psi_container.JuMPmodel,
-        [i = 1:length(cost_component)],
+        [i in 1:length(cost_component)],
         base_name = "{$(variable)}_{sos}",
         start = 0.0,
         lower_bound = 0.0,
@@ -198,7 +207,7 @@ function _pwlgencost_sos(
         variable == sum([var * cost_component[ix][2] for (ix, var) in enumerate(pwlvars)])
     )
 
-    return gen_cost
+    return gen_cost, pwlvars
 end
 
 @doc raw"""
@@ -237,7 +246,6 @@ function _pwlgencost_linear(
     cost_component::Vector{NTuple{2, Float64}},
 ) where {JV <: JuMP.AbstractVariableRef}
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-
     pwlvars = JuMP.@variable(
         psi_container.JuMPmodel,
         [i = 1:length(cost_component)],
@@ -250,17 +258,15 @@ function _pwlgencost_linear(
     for (ix, pwlvar) in enumerate(pwlvars)
         JuMP.add_to_expression!(gen_cost, PSY.get_slopes(cost_component)[ix] * pwlvar)
     end
-
     c = JuMP.@constraint(
         psi_container.JuMPmodel,
         variable == sum([pwlvar for (ix, pwlvar) in enumerate(pwlvars)])
     )
-
-    return gen_cost
+    return gen_cost, pwlvars
 end
 
 @doc raw"""
-    _gen_cost(cost_)
+    _pwl_cost(cost)
 
 Returns JuMP expression for a piecewise linear cost function depending on the data compatibility.
 
@@ -277,26 +283,24 @@ function _pwl_cost(
     variable::JV,
     cost_component::Vector{NTuple{2, Float64}},
 ) where {JV <: JuMP.AbstractVariableRef}
-    # If array is full of tuples with zeros return 0.0
-    all(iszero.(last.(cost_component))) && return 0.0
-
     if !_pwlparamcheck(cost_component)
         @warn("The cost function provided for $(variable) device is not compatible with a linear PWL cost function.
         An SOS-2 formulation will be added to the model.
         This will result in additional binary variables added to the model.")
-        gen_cost = _pwlgencost_sos(psi_container, variable, cost_component)
+        gen_cost, vars = _pwlgencost_sos(psi_container, variable, cost_component)
     else
-        gen_cost = _pwlgencost_linear(psi_container, variable, cost_component)
+        gen_cost, vars = _pwlgencost_linear(psi_container, variable, cost_component)
     end
-    return gen_cost
+    return gen_cost, vars
 end
 
 @doc raw"""
     ps_cost(psi_container::PSIContainer,
-                 variable::JuMP.Containers.DenseAxisArray{JV},
-                 cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
-                 dt::Float64,
-                 sign::Float64) where {JV<:JuMP.AbstractVariableRef}
+                var_name::Symbol,
+                index::String,
+                cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
+                dt::Float64,
+                sign::Float64)
 
 Creates piecewise linear cost function using a sum of variables and expression with sign and time step included.
 
@@ -317,22 +321,43 @@ where ``c_v`` is given by
 # Arguments
 
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* variable::JuMP.Containers.DenseAxisArray{JV} : variable array
+* var_name::Symbol: The variable name
+* index::String: The index of the variable container
 * cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}}
 * dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
 """
 function ps_cost(
     psi_container::PSIContainer,
-    variable::JuMP.Containers.DenseAxisArray{JV},
+    var_name::Symbol,
+    index::String,
     cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
     dt::Float64,
     sign::Float64,
-) where {JV <: JuMP.AbstractVariableRef}
-    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
+)
     cost_array = cost_component.cost
-    for var in variable
-        c = _pwl_cost(psi_container, var, cost_array)
+    # If array is full of tuples with zeros return 0.0
+    all(iszero.(last.(cost_array))) && return JuMP.AffExpr(0.0)
+    variable = get_variable(psi_container, var_name)[index, :]
+    if !haskey(psi_container.variables, :PWL_cost_vars)
+        time_steps = model_time_steps(psi_container)
+        container = add_var_container!(
+            psi_container,
+            :PWL_cost_vars,
+            [index],
+            time_steps,
+            1:length(cost_component);
+            sparse = true,
+        )
+    else
+        container = get_variable(psi_container, :PWL_cost_vars)
+    end
+    gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
+    for (t, var) in enumerate(variable)
+        c, pwl_vars = _pwl_cost(psi_container, var, cost_array)
+        for (ix, v) in enumerate(pwl_vars)
+            container[(index, t, ix)] = v
+        end
         JuMP.add_to_expression!(gen_cost, c)
     end
 
@@ -379,12 +404,10 @@ function add_to_cost(
 ) where {D <: IS.FlattenIteratorWrapper{<:PSY.Component}}
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Minute(resolution)) / 60
-    variable = get_variable(psi_container, var_name)
-
     for d in devices
         cost_component = getfield(PSY.get_op_cost(d), cost_symbol)
         cost_expression =
-            ps_cost(psi_container, variable[PSY.get_name(d), :], cost_component, dt, sign)
+            ps_cost(psi_container, var_name, PSY.get_name(d), cost_component, dt, sign)
         T_ce = typeof(cost_expression)
         T_cf = typeof(psi_container.cost_function)
         if T_cf <: JuMP.GenericAffExpr && T_ce <: JuMP.GenericQuadExpr

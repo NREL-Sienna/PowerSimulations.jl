@@ -13,6 +13,7 @@ function calculate_ic_quantity(
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
     var_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
+    @debug last_status, var_status, abs(last_status - var_status)
     @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
     return last_status >= 1.0 ? current_counter : 0.0

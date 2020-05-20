@@ -2,14 +2,15 @@
     # See https://discourse.julialang.org/t/how-to-use-test-warn/15557/5 about testing for warning throwing
     warn_message = "The data doesn't include devices of type HydroEnergyReservoir, consider changing the device models"
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver)
-    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5)
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, build_system("c_sys5"))
     @test_logs (:warn, warn_message) construct_device!(op_problem, :Hydro, model)
-    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14)
+    op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, build_system("c_sys14"))
     @test_logs (:warn, warn_message) construct_device!(op_problem, :Hydro, model)
 end
 
 @testset "Hydro DCPLossLess FixedOutput" begin
     model = DeviceModel(HydroDispatch, FixedOutput)
+    c_sys5_hy = build_system("c_sys5_hy")
 
     # Parameters Testing
     op_problem =
@@ -51,6 +52,7 @@ end
 
 @testset "Hydro DCPLossLess HydroDispatch with HydroDispatchRunOfRiver formulations" begin
     model = DeviceModel(HydroDispatch, HydroDispatchRunOfRiver)
+    c_sys5_hyd = build_system("c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
@@ -92,6 +94,7 @@ end
 
 @testset "Hydro ACPPowerModel HydroDispatch with HydroDispatchRunOfRiver formulations" begin
     model = DeviceModel(HydroDispatch, HydroDispatchRunOfRiver)
+    c_sys5_hyd = build_system("c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
@@ -133,6 +136,7 @@ end
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with FixedOutput formulations" begin
     model = DeviceModel(HydroEnergyReservoir, FixedOutput)
+    c_sys5_hy = build_system("c_sys5_hy")
 
     # Parameters Testing
     op_problem =
@@ -174,6 +178,7 @@ end
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchRunOfRiver formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver)
+    c_sys5_hyd = build_system("c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
@@ -215,6 +220,7 @@ end
 
 @testset "Hydro ACPPowerModel HydroEnergyReservoir with HydroDispatchRunOfRiver formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver)
+    c_sys5_hyd = build_system("c_sys5_hyd")
 
     # Parameters Testing
     op_problem =
@@ -256,6 +262,7 @@ end
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchReservoirFlow Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirFlow)
+    c_sys5_hy_uc = build_system("c_sys5_hy_uc")
 
     # Parameters Testing
     op_problem =
@@ -297,6 +304,7 @@ end
 
 @testset "Hydro ACPPowerModel HydroEnergyReservoir with HydroDispatchReservoirFlow Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirFlow)
+    c_sys5_hy_uc = build_system("c_sys5_hy_uc")
 
     # Parameters Testing
     op_problem =
@@ -423,6 +431,7 @@ end
 
 @testset "Hydro DCPLossLess HydroEnergyReservoir with HydroDispatchReservoirStorage Formulations" begin
     model = DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirStorage)
+    c_sys5_hyd = build_system("c_sys5_hyd")
 
     # Parameters Testing
     op_problem =

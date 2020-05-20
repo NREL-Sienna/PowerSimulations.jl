@@ -28,6 +28,8 @@ end
 @testset "Solving ED with CopperPlate" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
     parameters_value = [true, false]
+    c_sys5 = build_system("c_sys5")
+    c_sys14 = build_system("c_sys14")
     systems = [c_sys5, c_sys14]
     test_results = Dict{System, Float64}(c_sys5 => 240000.0, c_sys14 => 142000.0)
     @info "Test solve ED with CopperPlatePowerModel network"
@@ -47,6 +49,7 @@ end
             psi_checksolve_test(ED2, [MOI.OPTIMAL], test_results[sys], 10000)
         end
     end
+    c_sys5_re = build_system("c_sys5_re")
     ED = OperationsProblem(
         TestOpProblem,
         template,
@@ -60,11 +63,14 @@ end
 @testset "Solving ED with PTDF Models" begin
     template = OperationsProblemTemplate(StandardPTDFModel, devices, branches, services)
     parameters_value = [true, false]
+    c_sys5 = build_system("c_sys5")
+    c_sys14 = build_system("c_sys14")
+    c_sys14_dc = build_system("c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     PTDF_ref = Dict{UUIDs.UUID, PTDF}(
-        IS.get_uuid(c_sys5) => PTDF5,
-        IS.get_uuid(c_sys14) => PTDF14,
-        IS.get_uuid(c_sys14_dc) => PTDF14_dc,
+        IS.get_uuid(c_sys5) => build_PTDF5(),
+        IS.get_uuid(c_sys14) => build_PTDF14(),
+        IS.get_uuid(c_sys14_dc) => build_PTDF14_dc(),
     )
     test_results = Dict{UUIDs.UUID, Float64}(
         IS.get_uuid(c_sys5) => 340000.0,
@@ -89,6 +95,9 @@ end
 end
 
 @testset "Solving ED With PowerModels with loss-less convex models" begin
+    c_sys5 = build_system("c_sys5")
+    c_sys14 = build_system("c_sys14")
+    c_sys14_dc = build_system("c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters_value = [true, false]
     networks = [DCPPowerModel, NFAPowerModel]
@@ -122,10 +131,13 @@ end
 end
 
 @testset "Solving ED With PowerModels with linear convex models" begin
+    c_sys5 = build_system("c_sys5")
+    c_sys14 = build_system("c_sys14")
+    c_sys14_dc = build_system("c_sys14_dc")
     systems = [c_sys5, c_sys14]
     parameters_value = [true, false]
     networks = [DCPLLPowerModel, LPACCPowerModel]
-    test_results = Dict{System, Float64}(
+    test_results = IdDict{System, Float64}(
         c_sys5 => 340000.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
@@ -161,6 +173,7 @@ end
 
     thermal_gens = [ThermalDispatch]
 
+    c_sys5_re = build_system("c_sys5_re")
     systems = [c_sys5_re]
     for net in networks, thermal in thermal_gens, system in systems
         devices = Dict{Symbol, DeviceModel}(
@@ -176,7 +189,7 @@ end
             system;
             slack_variables = true,
             optimizer = ipopt_optimizer,
-            PTDF = PTDF5,
+            PTDF = build_PTDF5(),
         )
         res = solve!(op_problem)
         @test termination_status(op_problem.psi_container.JuMPmodel) in
@@ -205,6 +218,9 @@ end
 =#
 
 @testset "Solving ED With PowerModels Non-Convex Networks" begin
+    c_sys5 = build_system("c_sys5")
+    c_sys14 = build_system("c_sys14")
+    c_sys14_dc = build_system("c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters_value = [true, false]
     networks = [
@@ -245,12 +261,14 @@ end
         :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
     )
+    c_sys5 = build_system("c_sys5")
+    c_sys5_dc = build_system("c_sys5_dc")
     parameters_value = [true, false]
     systems = [c_sys5, c_sys5_dc]
     networks = [DCPPowerModel, NFAPowerModel, StandardPTDFModel, CopperPlatePowerModel]
     PTDF_ref = Dict{UUIDs.UUID, PTDF}(
-        IS.get_uuid(c_sys5) => PTDF5,
-        IS.get_uuid(c_sys5_dc) => PTDF5_dc,
+        IS.get_uuid(c_sys5) => build_PTDF5(),
+        IS.get_uuid(c_sys5_dc) => build_PTDF5_dc(),
     )
 
     for net in networks, p in parameters_value, sys in systems
@@ -270,45 +288,8 @@ end
     end
 end
 ################################################################
-duals = [:CopperPlateBalance]
-template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
-op_problem = OperationsProblem(
-    TestOpProblem,
-    template,
-    c_sys5_re;
-    optimizer = OSQP_optimizer,
-    use_parameters = true,
-    constraint_duals = duals,
-)
-res = solve!(op_problem)
-@testset "Test print methods" begin
-    list = [template, op_problem, op_problem.psi_container, res, services]
-    _test_plain_print_methods(list)
-    list = [services]
-    _test_html_print_methods(list)
-end
 
-@testset "test constraint duals in the operations problem" begin
-    name = PSI.constraint_name("CopperPlateBalance")
-    for i in 1:ncol(get_time_stamp(res))
-        dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
-        @test isapprox(dual, get_duals(res)[name][i, 1])
-    end
-    dual_results = get_dual_values(op_problem.psi_container, duals)
-    @test dual_results == res.dual_values
-end
-
-@testset "test get variable function" begin
-    @test_throws IS.ConflictingInputsError PSI.get_variable(res, :fake)
-    @test res.variable_values[:P__ThermalStandard] ==
-          PSI.get_variable(res, :P__ThermalStandard)
-end
-
-path = joinpath(pwd(), "test_writing")
-!isdir(path) && mkdir(path)
-
-function test_write_functions(file_path)
-
+function test_write_functions(file_path, op_problem, res)
     @testset "Test write optimizer problem" begin
         path = mkdir(joinpath(file_path, "op_problem"))
         file = joinpath(path, "op_problem.json")
@@ -374,6 +355,7 @@ function test_write_functions(file_path)
     end
 
     @testset "Test parameter values" begin
+        c_sys5_re = build_system("c_sys5_re")
         system = op_problem.sys
         params =
             PSI.get_parameter_array(op_problem.psi_container.parameters[:P__get_maxactivepower__PowerLoad])
@@ -388,6 +370,7 @@ function test_write_functions(file_path)
     end
 
     @testset "Set optimizer at solve call" begin
+        c_sys5 = build_system("c_sys5")
         devices = Dict{Symbol, DeviceModel}(
             :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
             :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
@@ -408,9 +391,50 @@ function test_write_functions(file_path)
     end
 end
 
-try
-    test_write_functions(path)
-finally
-    @info("removing test files")
-    rm(path, recursive = true)
+@testset "Miscellaneous OperationsProblem" begin
+    duals = [:CopperPlateBalance]
+    template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+    c_sys5_re = build_system("c_sys5_re")
+    op_problem = OperationsProblem(
+        TestOpProblem,
+        template,
+        c_sys5_re;
+        optimizer = OSQP_optimizer,
+        use_parameters = true,
+        constraint_duals = duals,
+    )
+    res = solve!(op_problem)
+    @testset "Test print methods" begin
+        list = [template, op_problem, op_problem.psi_container, res, services]
+        _test_plain_print_methods(list)
+        list = [services]
+        _test_html_print_methods(list)
+    end
+
+    @testset "test constraint duals in the operations problem" begin
+        name = PSI.constraint_name("CopperPlateBalance")
+        for i in 1:ncol(get_time_stamp(res))
+            dual = JuMP.dual(op_problem.psi_container.constraints[name][i])
+            @test isapprox(dual, get_duals(res)[name][i, 1])
+        end
+        dual_results = get_dual_values(op_problem.psi_container, duals)
+        @test dual_results == res.dual_values
+    end
+
+    @testset "test get variable function" begin
+        @test_throws IS.ConflictingInputsError PSI.get_variable(res, :fake)
+        @test res.variable_values[:P__ThermalStandard] ==
+              PSI.get_variable(res, :P__ThermalStandard)
+    end
+
+    @testset "Test writing functions" begin
+        path = joinpath(pwd(), "test_writing")
+        try
+            !isdir(path) && mkdir(path)
+            test_write_functions(path, op_problem, res)
+        finally
+            @info("removing test files")
+            rm(path, recursive = true)
+        end
+    end
 end

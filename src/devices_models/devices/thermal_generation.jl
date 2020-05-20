@@ -447,7 +447,7 @@ function _get_data_for_tdc(
         name = PSY.get_name(g)
         if !isnothing(timelimits)
             if (timelimits.up <= fraction_of_hour) & (timelimits.down <= fraction_of_hour)
-                @info "Generator $(name) has a nonbinding time limits. Constraints Skipped"
+                @debug "Generator $(name) has a nonbinding time limits. Constraints Skipped"
             else
                 idx += 1
             end
@@ -528,7 +528,14 @@ function cost_function(
 
     # uses the same cost function whenever there is NO PWL
     function _ps_cost(d::PSY.ThermalGen, cost_component::PSY.VariableCost)
-        return ps_cost(psi_container, variable[PSY.get_name(d), :], cost_component, dt, 1.0)
+        return ps_cost(
+            psi_container,
+            variable_name(ACTIVE_POWER, T),
+            PSY.get_name(d),
+            cost_component,
+            dt,
+            1.0,
+        )
     end
 
     # This function modified the PWL cost data when present
@@ -537,7 +544,20 @@ function cost_function(
         cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
     )
         gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-        for var in variable[PSY.get_name(d), :]
+        if !haskey(psi_container.variables, :PWL_cost_vars)
+            time_steps = model_time_steps(psi_container)
+            container = add_var_container!(
+                psi_container,
+                :PWL_cost_vars,
+                PSY.get_name(d),
+                time_steps,
+                1:length(cost_component);
+                sparse = true,
+            )
+        else
+            container = get_variable(psi_container, :PWL_cost_vars)
+        end
+        for (t, var) in enumerate(variable[PSY.get_name(d), :])
             pwlvars = JuMP.@variable(
                 psi_container.JuMPmodel,
                 [i = 1:length(cost_component)],
@@ -560,6 +580,7 @@ function cost_function(
             end
             for (ix, pwlvar) in enumerate(pwlvars)
                 JuMP.add_to_expression!(gen_cost, slopes[ix] * pwlvar)
+                container[(PSY.get_name(d), t, ix)] = pwlvar
             end
 
             c = JuMP.@constraint(

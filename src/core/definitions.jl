@@ -30,13 +30,19 @@ const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
+@enum BUILD_STATUS begin
+    BUILT = 1
+    IN_PROGRESS = -1
+    EMPTY = 0
+end
+
 # Settings constants
 const UNSET_HORIZON = 0
 const UNSET_INI_TIME = Dates.DateTime(0)
 
 # Tolerance of comparisons
 # MIP gap tolerances in most solvers are set to 1e-4
-const ABSOLUTE_TOLERANCE = 1.0e-6
+const ABSOLUTE_TOLERANCE = 1.0e-3
 const SLACK_COST = 1e6
 const COST_EPSILON = 1e-3
 const MISSING_INITIAL_CONDITIONS_TIME_COUNT = 999.0

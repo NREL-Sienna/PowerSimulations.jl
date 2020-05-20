@@ -26,8 +26,12 @@ const PSY = PowerSystems
 const PSI = PowerSimulations
 const PJ = ParameterJuMP
 const IS = InfrastructureSystems
-const TEST_KWARGS = [:good_kwarg_1, :good_kwarg_2]
+TEST_KWARGS = [:good_kwarg_1, :good_kwarg_2]
 abstract type TestOpProblem <: PSI.AbstractOperationsProblem end
+
+include("test_utils/get_test_data.jl")
+include("test_utils/model_checks.jl")
+include("test_utils/operations_problem_templates.jl")
 
 ipopt_optimizer =
     JuMP.optimizer_with_attributes(Ipopt.Optimizer, "tol" => 1e-6, "print_level" => 0)
@@ -75,9 +79,7 @@ function run_tests()
         )
         global_logger(multi_logger)
 
-        include("test_utils/get_test_data.jl")
-        include("test_utils/model_checks.jl")
-        include("test_utils/operations_problem_templates.jl")
+        initialize_system_serialized_files()
 
         @time @testset "Begin PowerSimulations tests" begin
             @includetests ARGS
@@ -87,6 +89,7 @@ function run_tests()
         #@test length(IS.get_log_events(multi_logger.tracker, Logging.Error)) == 0
 
         @info IS.report_log_summary(multi_logger)
+        summarize_system_build_stats()
     end
 end
 

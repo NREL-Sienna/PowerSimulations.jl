@@ -7,6 +7,7 @@ services = Dict{Symbol, ServiceModel}()
 
 @testset "Operation set ref models" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+    c_sys5 = build_system("c_sys5")
     op_problem = OperationsProblem(TestOpProblem, template, c_sys5)
     set_transmission_model!(op_problem, DCPLLPowerModel)
     @test op_problem.template.transmission == DCPLLPowerModel
@@ -32,6 +33,7 @@ end
 
 @testset "Operation set models" begin
     template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+    c_sys5 = build_system("c_sys5")
     op_problem = OperationsProblem(TestOpProblem, template, c_sys5)
     set_device_model!(
         op_problem,

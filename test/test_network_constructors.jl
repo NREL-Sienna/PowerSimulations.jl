@@ -7,9 +7,12 @@ dc_line = DeviceModel(HVDCLine, HVDCDispatch)
 
 @testset "Network Copper Plate" begin
     network = CopperPlatePowerModel
+    c_sys5 = build_system("c_sys5")
+    c_sys14 = build_system("c_sys14")
+    c_sys14_dc = build_system("c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     parameters = [true, false]
-    test_results = Dict{System, Vector{Int}}(
+    test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [120, 0, 120, 120, 24],
         c_sys14 => [120, 0, 120, 120, 24],
         c_sys14_dc => [120, 0, 120, 120, 24],
@@ -51,15 +54,18 @@ end
 
 @testset "Network DC-PF with PTDF formulation" begin
     network = StandardPTDFModel
+    c_sys5 = build_system("c_sys5")
+    c_sys14 = build_system("c_sys14")
+    c_sys14_dc = build_system("c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names =
         [:RateLimit_lb__Line, :RateLimit_ub__Line, :nodal_balance, :network_flow]
     parameters = [true, false]
     PTDF_ref = Dict{UUIDs.UUID, PTDF}(
-        IS.get_uuid(c_sys5) => PTDF5,
-        IS.get_uuid(c_sys14) => PTDF14,
-        IS.get_uuid(c_sys14_dc) => PTDF14_dc,
+        IS.get_uuid(c_sys5) => build_PTDF5(),
+        IS.get_uuid(c_sys14) => build_PTDF14(),
+        IS.get_uuid(c_sys14_dc) => build_PTDF14_dc(),
     )
     test_results = Dict{UUIDs.UUID, Vector{Int}}(
         IS.get_uuid(c_sys5) => [264, 0, 264, 264, 264],
@@ -107,6 +113,9 @@ end
 
 @testset "Network DC lossless -PF network with PowerModels DCPlosslessForm" begin
     network = DCPPowerModel
+    c_sys5 = build_system("c_sys5")
+    c_sys14 = build_system("c_sys14")
+    c_sys14_dc = build_system("c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimit_ub__Line, :RateLimit_lb__Line]
@@ -152,6 +161,9 @@ end
 
 @testset "Network Solve AC-PF PowerModels StandardACPModel" begin
     network = ACPPowerModel
+    c_sys5 = build_system("c_sys5")
+    c_sys14 = build_system("c_sys14")
+    c_sys14_dc = build_system("c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names = [:RateLimitFT__Line, :RateLimitTF__Line]
@@ -198,6 +210,9 @@ end
 
 @testset "Network Solve AC-PF PowerModels linear approximation models" begin
     networks = [DCPPowerModel, NFAPowerModel]
+    c_sys5 = build_system("c_sys5")
+    c_sys14 = build_system("c_sys14")
+    c_sys14_dc = build_system("c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     p = true
     for network in networks, sys in systems
@@ -225,6 +240,9 @@ end
         ACRPowerModel,
         ACTPowerModel,
     ]
+    c_sys5 = build_system("c_sys5")
+    c_sys14 = build_system("c_sys14")
+    c_sys14_dc = build_system("c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
 
     for network in networks, sys in systems
@@ -242,6 +260,9 @@ end
 
 @testset "Network AC-PF PowerModels quadratic loss approximations models" begin
     networks = [DCPLLPowerModel, LPACCPowerModel]
+    c_sys5 = build_system("c_sys5")
+    c_sys14 = build_system("c_sys14")
+    c_sys14_dc = build_system("c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
 
     for network in networks, sys in systems
@@ -260,6 +281,9 @@ end
 
 @testset "Network AC-PF PowerModels quadratic relaxations models" begin
     networks = [SOCWRPowerModel, QCRMPowerModel, QCLSPowerModel]
+    c_sys5 = build_system("c_sys5")
+    c_sys14 = build_system("c_sys14")
+    c_sys14_dc = build_system("c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
 
     for network in networks, sys in systems
@@ -284,6 +308,7 @@ end
         PM.SOCBFConicPowerModel,
     ]
 
+    c_sys5 = build_system("c_sys5")
     for network in incompat_list
         ps_model =
             OperationsProblem(TestOpProblem, network, c_sys5; optimizer = ipopt_optimizer)
