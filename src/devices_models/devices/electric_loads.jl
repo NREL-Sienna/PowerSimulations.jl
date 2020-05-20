@@ -193,95 +193,29 @@ function activepower_constraints!(
 end
 
 ########################## Addition of to the nodal balances ###############################
-function nodal_expression!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{L},
+
+function NodalExpressionInputs(
+    ::Type{<:PSY.ElectricLoad},
     ::Type{<:PM.AbstractPowerModel},
-) where {L <: PSY.ElectricLoad}
-    #Run the Active Power Loop
-    nodal_expression!(psi_container, devices, PM.AbstractActivePowerModel)
-    parameters = model_has_parameters(psi_container)
-    use_forecast_data = model_uses_forecasts(psi_container)
-    if use_forecast_data
-        forecast_label = "get_maxactivepower"
-        peak_value_function = x -> PSY.get_maxreactivepower(x)
-    else
-        forecast_label = ""
-        peak_value_function = x -> PSY.get_reactivepower(x)
-    end
-    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(psi_container, d, forecast_label)
-        constraint_info = DeviceTimeSeriesConstraintInfo(d, peak_value_function, ts_vector)
-        constraint_infos[ix] = constraint_info
-    end
-    if parameters
-        include_parameters(
-            psi_container,
-            constraint_infos,
-            UpdateRef{L}(REACTIVE_POWER, forecast_label),
-            :nodal_balance_reactive,
-            -1.0,
-        )
-        return
-    else
-        for t in model_time_steps(psi_container)
-            for device in constraint_infos
-                add_to_expression!(
-                    psi_container.expressions[:nodal_balance_reactive],
-                    device.bus_number,
-                    t,
-                    -device.multiplier * device.timeseries[t],
-                )
-            end
-        end
-    end
-    return
+    use_forecasts::Bool,
+)
+    return NodalExpressionInputs(
+        "get_maxactivepower",
+        REACTIVE_POWER,
+        use_forecasts ? x -> PSY.get_maxreactivepower(x) : x -> PSY.get_reactivepower(x),
+    )
 end
 
-function nodal_expression!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{L},
+function NodalExpressionInputs(
+    ::Type{<:PSY.ElectricLoad},
     ::Type{<:PM.AbstractActivePowerModel},
-) where {L <: PSY.ElectricLoad}
-    parameters = model_has_parameters(psi_container)
-    use_forecast_data = model_uses_forecasts(psi_container)
-    if use_forecast_data
-        forecast_label = "get_maxactivepower"
-        peak_value_function = x -> PSY.get_maxactivepower(x)
-    else
-        forecast_label = ""
-        peak_value_function = x -> PSY.get_activepower(x)
-    end
-    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(psi_container, d, forecast_label)
-        constraint_info = DeviceTimeSeriesConstraintInfo(d, peak_value_function, ts_vector)
-        constraint_infos[ix] = constraint_info
-    end
-
-    if parameters
-        include_parameters(
-            psi_container,
-            constraint_infos,
-            UpdateRef{L}(ACTIVE_POWER, forecast_label),
-            :nodal_balance_active,
-            -1.0,
-        )
-        return
-    else
-        for t in model_time_steps(psi_container)
-            for device in constraint_infos
-                add_to_expression!(
-                    psi_container.expressions[:nodal_balance_active],
-                    device.bus_number,
-                    t,
-                    -device.multiplier * device.timeseries[t],
-                )
-            end
-        end
-    end
-    return
+    use_forecasts::Bool,
+)
+    return NodalExpressionInputs(
+        "get_maxactivepower",
+        ACTIVE_POWER,
+        use_forecasts ? x -> PSY.get_maxactivepower(x) : x -> PSY.get_activepower(x),
+    )
 end
 
 ############################## FormulationControllable Load Cost ###########################
