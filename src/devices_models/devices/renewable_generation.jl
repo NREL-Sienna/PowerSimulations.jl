@@ -142,7 +142,7 @@ function activepower_constraints!(
     return
 end
 
-########################## Addition of to the nodal balances ###############################
+########################## Addition to the nodal balances ##################################
 
 function NodalExpressionInputs(
     ::Type{<:PSY.RenewableGen},
