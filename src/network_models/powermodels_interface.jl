@@ -48,6 +48,90 @@ function instantiate_nip_expr(pm::PM.AbstractPowerModel)
 
 end
 
+function instantiate_bfp_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
+    return PM.instantiate_model(data, model_constructor, instantiate_bfp_expr; kwargs...)
+end
+
+""
+function instantiate_bfp_expr(pm::PM.AbstractPowerModel)
+    for (n, network) in PM.nws(pm)
+        @assert !PM.ismulticonductor(pm, nw = n)
+        PM.variable_bus_voltage(pm, nw = n)
+        PM.variable_branch_power(pm, nw = n; bounded = false)
+        PM.variable_dcline_power(pm, nw = n)
+
+        PM.constraint_model_current(pm, nw = n)
+
+        for i in PM.ids(pm, :ref_buses, nw = n)
+            PM.constraint_theta_ref(pm, i, nw = n)
+        end
+
+        for i in PM.ids(pm, :bus, nw = n)
+            constraint_power_balance_ni_expr(pm, i, nw = n)
+        end
+
+        for i in PM.ids(pm, :branch, nw = n)
+            PM.constraint_power_losses(pm, i, nw=n)
+            PM.constraint_voltage_magnitude_difference(pm, i, nw=n)
+
+            PM.constraint_voltage_angle_difference(pm, i, nw = n)
+
+            #PM.constraint_thermal_limit_from(pm, i, nw=n)
+            #PM.constraint_thermal_limit_to(pm, i, nw=n)
+        end
+
+        for i in PM.ids(pm, :dcline)
+            PM.constraint_dcline_power_losses(pm, i, nw = n)
+        end
+    end
+
+    return
+
+end
+
+
+function instantiate_vip_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
+    return PM.instantiate_model(data, model_constructor, instantiate_vip_expr; kwargs...)
+end
+
+""
+function instantiate_vip_expr(pm::PM.AbstractPowerModel)
+    for (n, network) in PM.nws(pm)
+        @assert !PM.ismulticonductor(pm, nw = n)
+        PM.variable_bus_voltage(pm, nw = n)
+        PM.variable_branch_current(pm, nw = n)
+        PM.variable_dcline_current(pm, nw = n)
+
+        # TODO: need a gen_current variable
+        for i in PM.ids(pm, :ref_buses, nw = n)
+            PM.constraint_theta_ref(pm, i, nw = n)
+        end
+
+        for i in PM.ids(pm, :bus, nw = n)
+            # TODO: need to make the following method
+            # constraint_current_balance_vi_expr(pm, i, nw = n)
+        end
+
+        for i in PM.ids(pm, :branch, nw = n)
+            PM.constraint_current_from(pm, i, nw = n)
+            PM.constraint_current_to(pm, i, nw = n)
+
+            PM.constraint_voltage_drop(pm, i, nw = n)
+            PM.constraint_voltage_angle_difference(pm, i, nw = n)
+
+            #PM.constraint_thermal_limit_from(pm, i, nw=n)
+            #PM.constraint_thermal_limit_to(pm, i, nw=n)
+        end
+
+        for i in PM.ids(pm, :dcline)
+            PM.constraint_dcline_power_losses(pm, i, nw = n)
+        end
+    end
+
+    return
+
+end
+
 #################################################################################
 # Model Extention Functions
 
@@ -137,6 +221,7 @@ function powermodels_network!(
     psi_container::PSIContainer,
     system_formulation::Type{S},
     sys::PSY.System,
+    instantiate_model = instantiate_nip_expr_model,
 ) where {S <: PM.AbstractPowerModel}
 
     time_steps = model_time_steps(psi_container)
@@ -153,7 +238,7 @@ function powermodels_network!(
             psi_container.expressions[:nodal_balance_reactive][bus.number, t]
     end
 
-    psi_container.pm = instantiate_nip_expr_model(
+    psi_container.pm = instantiate_model(
         pm_data,
         system_formulation,
         jump_model = psi_container.JuMPmodel,
@@ -169,6 +254,7 @@ function powermodels_network!(
     psi_container::PSIContainer,
     system_formulation::Type{S},
     sys::PSY.System,
+    instantiate_model = instantiate_nip_expr_model,
 ) where {S <: PM.AbstractActivePowerModel}
 
     time_steps = model_time_steps(psi_container)
@@ -183,7 +269,7 @@ function powermodels_network!(
         #pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
     end
 
-    psi_container.pm = instantiate_nip_expr_model(
+    psi_container.pm = instantiate_model(
         pm_data,
         system_formulation,
         jump_model = psi_container.JuMPmodel,

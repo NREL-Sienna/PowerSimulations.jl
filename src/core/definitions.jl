@@ -47,6 +47,7 @@ const SLACK_COST = 1e6
 const COST_EPSILON = 1e-3
 const MISSING_INITIAL_CONDITIONS_TIME_COUNT = 999.0
 
+# Interface limitations
 const OPERATIONS_ACCEPTED_KWARGS = [
     :horizon,
     :initial_time,
@@ -64,6 +65,8 @@ const OPERATIONS_SOLVE_KWARGS = [:optimizer, :save_path]
 
 const STAGE_ACCEPTED_KWARGS =
     [:PTDF, :warm_start, :slack_variables, :constraint_duals, :system_to_file]
+
+const UNSUPPORTED_POWERMODELS = [] #TODO: update list
 
 const PSI_NAME_DELIMITER = "__"
 

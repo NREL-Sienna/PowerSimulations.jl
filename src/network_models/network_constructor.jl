@@ -16,7 +16,8 @@ end
 function construct_network!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    ::Type{StandardPTDFModel},
+    ::Type{StandardPTDFModel};
+    kwargs...
 )
     buses = PSY.get_components(PSY.Bus, sys)
     ac_branches = get_available_components(PSY.ACBranch, sys)
@@ -46,21 +47,56 @@ end
 function construct_network!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    ::Type{T},
+    ::Type{T};
+    kwargs...
 ) where {T <: PM.AbstractPowerModel}
-    incompat_list = [
-        PM.SDPWRMPowerModel,
-        PM.SparseSDPWRMPowerModel,
-        PM.SOCBFPowerModel,
-        PM.SOCBFConicPowerModel,
-    ]
-    if T in incompat_list
+    instantiate_model = get(kwargs, :instantiate_model, instantiate_nip_expr_model)
+    if T in UNSUPPORTED_POWERMODELS
         throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
     end
 
     get_slack_variables(psi_container.settings) && add_slacks!(psi_container, T)
 
-    powermodels_network!(psi_container, T, sys)
+    @debug "Building the $T network with $instantiate_model method"
+    powermodels_network!(psi_container, T, sys, instantiate_model)
     add_pm_var_refs!(psi_container, T, sys)
+    return
+end
+
+function construct_network!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    ::Type{T};
+    kwargs...
+) where {T <: PM.AbstractBFModel}
+    instantiate_model = get(kwargs, :instantiate_model, instantiate_bfp_expr_model)
+    if T in UNSUPPORTED_POWERMODELS
+        throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
+    end
+
+    get_slack_variables(psi_container.settings) && add_slacks!(psi_container, T)
+
+    @debug "Building the $T network with $instantiate_model method"
+    powermodels_network!(psi_container, T, sys, instantiate_model)
+    add_pm_var_refs!(psi_container, T, sys)
+    return
+end
+
+function construct_network!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    ::Type{T};
+    kwargs...
+) where {T <: PM.AbstractIVRModel}
+    instantiate_model = get(kwargs, :instantiate_model, instantiate_vip_expr_model)
+    if T in UNSUPPORTED_POWERMODELS
+        throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
+    end
+
+    get_slack_variables(psi_container.settings) && add_slacks!(psi_container, T)
+
+    @debug "Building the $T network with $instantiate_model method"
+    powermodels_network!(psi_container, T, sys, instantiate_model)
+    #add_pm_var_refs!(psi_container, T, sys) #TODO: fix this for quadratic variables
     return
 end
