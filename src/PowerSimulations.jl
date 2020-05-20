@@ -128,9 +128,9 @@ export write_to_CSV
 export get_all_constraint_index
 export get_all_var_index
 export get_con_index
-export get_results_variable
 export get_var_index
 export get_result_variable
+export get_variable_names
 export configure_logging
 export show_recorder_events
 export list_simulation_events
@@ -225,6 +225,7 @@ include("devices_models/devices/storage.jl")
 include("devices_models/devices/hydro_generation.jl")
 
 #Services Models
+include("services_models/agc.jl")
 include("services_models/reserves.jl")
 include("services_models/services_constructor.jl")
 

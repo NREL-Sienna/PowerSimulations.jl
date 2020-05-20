@@ -569,9 +569,17 @@ variable = get_result_variable(results, :ON, ThermalStandard)
 function get_result_variable(results::IS.Results, sym::Symbol, data_type::PSY.DataType)
     variable_name = encode_symbol(data_type, sym)
     if variable_name in keys(IS.get_variables(results))
-        variable = IS.get_variables(results)[variable_name]
+        variable = get_result_variable(results, variable_name)
         return variable
     else
         @info "Variable $variable_name not found in results."
     end
+end
+
+function get_result_variable(results::IS.Results, variable_name::Symbol)
+    return IS.get_variables(results)[variable_name]
+end
+
+function get_variable_names(results::IS.Results)
+    return collect(keys(results.variable_values))
 end
