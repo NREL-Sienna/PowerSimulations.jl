@@ -66,7 +66,6 @@ function smooth_ace_pid!(psi_container::PSIContainer, service::PSY.AGC)
     time_steps = model_time_steps(psi_container)
     RAW_ACE = add_expression_container!(psi_container, :SACE, time_steps)
     SACE = add_var_container!(psi_container, variable_name("SACE", "AGC"), time_steps)
-
     remove_undef!(psi_container.expressions[:nodal_balance_active])
     for t in time_steps
         sys_bal = sum(psi_container.expressions[:nodal_balance_active].data[:, t])
@@ -90,7 +89,7 @@ function smooth_ace_pid!(psi_container::PSIContainer, service::PSY.AGC)
         )
 
     end
-
+    return
 end
 
 
