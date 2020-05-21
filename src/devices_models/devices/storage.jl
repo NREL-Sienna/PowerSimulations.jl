@@ -85,16 +85,20 @@ function active_power_constraints!(
 
     device_range(
         psi_container,
-        constraints_info_out,
-        constraint_name(OUTPUT_POWER_RANGE, St),
-        variable_name(ACTIVE_POWER_OUT, St),
+        RangeConstraintInputs(
+            constraints_info_out,
+            constraint_name(OUTPUT_POWER_RANGE, St),
+            variable_name(ACTIVE_POWER_OUT, St),
+        ),
     )
 
     device_range(
         psi_container,
-        constraints_info_in,
-        constraint_name(INPUT_POWER_RANGE, St),
-        variable_name(ACTIVE_POWER_IN, St),
+        RangeConstraintInputs(
+            constraints_info_in,
+            constraint_name(INPUT_POWER_RANGE, St),
+            variable_name(ACTIVE_POWER_IN, St),
+        ),
     )
     return
 end
@@ -119,18 +123,22 @@ function active_power_constraints!(
 
     reserve_device_semicontinuousrange(
         psi_container,
-        constraints_info_in,
-        constraint_name(INPUT_POWER_RANGE, St),
-        variable_name(ACTIVE_POWER_IN, St),
-        variable_name(RESERVE, St),
+        RangeConstraintInputs(
+            constraints_info_in,
+            constraint_name(INPUT_POWER_RANGE, St),
+            variable_name(ACTIVE_POWER_IN, St),
+            variable_name(RESERVE, St),
+        ),
     )
 
     reserve_device_semicontinuousrange(
         psi_container,
-        constraints_info_out,
-        constraint_name(OUTPUT_POWER_RANGE, St),
-        variable_name(ACTIVE_POWER_OUT, St),
-        variable_name(RESERVE, St),
+        RangeConstraintInputs(
+            constraints_info_out,
+            constraint_name(OUTPUT_POWER_RANGE, St),
+            variable_name(ACTIVE_POWER_OUT, St),
+            variable_name(RESERVE, St),
+        ),
     )
     return
 end
@@ -154,9 +162,11 @@ function reactive_power_constraints!(
 
     device_range(
         psi_container,
-        constraint_infos,
-        constraint_name(REACTIVE_RANGE, St),
-        variable_name(REACTIVE_POWER, St),
+        RangeConstraintInputs(
+            constraint_infos,
+            constraint_name(REACTIVE_RANGE, St),
+            variable_name(REACTIVE_POWER, St),
+        ),
     )
     return
 end
@@ -191,9 +201,11 @@ function energy_capacity_constraints!(
 
     device_range(
         psi_container,
-        constraint_infos,
-        constraint_name(ENERGY_CAPACITY, St),
-        variable_name(ENERGY, St),
+        RangeConstraintInputs(
+            constraint_infos,
+            constraint_name(ENERGY_CAPACITY, St),
+            variable_name(ENERGY, St),
+        ),
     )
     return
 end

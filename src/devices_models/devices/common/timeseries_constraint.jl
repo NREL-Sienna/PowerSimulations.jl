@@ -1,16 +1,21 @@
-function lazy_lb(
-    psi_container::PSIContainer,
-    constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-    cons_name::Symbol,
-    var_name::Symbol,
-)
+
+struct TimeSeriesConstraintInputs
+    constraint_infos::Vector{DeviceTimeSeriesConstraintInfo}
+    constraint_name::Symbol
+    variable_name::Symbol
+    bin_variable_name::Union{Nothing, Symbol}
+    param_reference::Union{Nothing, UpdateRef}
+    kwargs::Dict{Symbol, Any}
+end
+
+function lazy_lb(psi_container::PSIContainer, inputs::TimeSeriesConstraintInputs)
     time_steps = model_time_steps(psi_container)
-    names = (get_name(x) for x in constraint_infos)
-    variable = get_variable(psi_container, var_name)
-    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
+    names = (get_name(x) for x in inputs.constraint_infos)
+    variable = get_variable(psi_container, inputs.variable_name)
+    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
     con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
 
-    for constraint_info in constraint_infos
+    for constraint_info in inputs.constraint_infos
         ci_name = get_name(constraint_info)
         if constraint_info.range.limits.min > -Inf &&
            !isempty(constraint_info.range.additional_terms_lb)
@@ -58,18 +63,16 @@ Constructs upper bound for given variable and time series data and a multiplier.
 """
 function device_timeseries_ub(
     psi_container::PSIContainer,
-    constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-    cons_name::Symbol,
-    var_name::Symbol,
+    inputs::TimeSeriesConstraintInputs,
 )
     time_steps = model_time_steps(psi_container)
-    names = (get_name(x) for x in constraint_infos)
-    variable = get_variable(psi_container, var_name)
-    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
+    names = (get_name(x) for x in inputs.constraint_infos)
+    variable = get_variable(psi_container, inputs.variable_name)
+    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     lazy_add_lb = false
 
-    for constraint_info in constraint_infos
+    for constraint_info in inputs.constraint_infos
         ci_name = get_name(constraint_info)
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
@@ -89,8 +92,10 @@ function device_timeseries_ub(
             lazy_add_lb = true
         end
     end
+
     @debug lazy_add_lb
-    lazy_add_lb && lazy_lb(psi_container, constraint_infos, cons_name, var_name)
+    lazy_add_lb && lazy_lb(psi_container, inputs)
+
     return
 end
 
@@ -120,17 +125,15 @@ where (name, data) in range_data.
 """
 function device_timeseries_lb(
     psi_container::PSIContainer,
-    constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-    cons_name::Symbol,
-    var_name::Symbol,
+    inputs::TimeSeriesConstraintInputs,
 )
     time_steps = model_time_steps(psi_container)
-    variable = get_variable(psi_container, var_name)
-    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
-    names = (get_name(x) for x in constraint_infos)
+    variable = get_variable(psi_container, inputs.variable_name)
+    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
+    names = (get_name(x) for x in inputs.constraint_infos)
     constraint = add_cons_container!(psi_container, lb_name, names, time_steps)
 
-    for constraint_info in constraint_infos
+    for constraint_info in inputs.constraint_infos
         ci_name = get_name(constraint_info)
         for t in time_steps
             expression_lb = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
@@ -177,22 +180,20 @@ Constructs upper bound for given variable using a parameter. The constraint is
 """
 function device_timeseries_param_ub(
     psi_container::PSIContainer,
-    constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-    cons_name::Symbol,
-    param_reference::UpdateRef,
-    var_name::Symbol,
+    inputs::TimeSeriesConstraintInputs,
 )
     time_steps = model_time_steps(psi_container)
-    names = (get_name(x) for x in constraint_infos)
-    variable = get_variable(psi_container, var_name)
-    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
+    names = (get_name(x) for x in inputs.constraint_infos)
+    variable = get_variable(psi_container, inputs.variable_name)
+    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
-    container = add_param_container!(psi_container, param_reference, names, time_steps)
+    container =
+        add_param_container!(psi_container, inputs.param_reference, names, time_steps)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
     lazy_add_lb = false
 
-    for constraint_info in constraint_infos
+    for constraint_info in inputs.constraint_infos
         ci_name = get_name(constraint_info)
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
@@ -215,8 +216,9 @@ function device_timeseries_param_ub(
             lazy_add_lb = true
         end
     end
+
     @debug lazy_add_lb
-    lazy_add_lb && lazy_lb(psi_container, constraint_infos, cons_name, var_name)
+    lazy_add_lb && lazy_lb(psi_container, inputs)
     return
 end
 
@@ -247,21 +249,19 @@ Constructs lower bound for given variable using a parameter. The constraint is
 """
 function device_timeseries_param_lb(
     psi_container::PSIContainer,
-    constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-    cons_name::Symbol,
-    param_reference::UpdateRef,
-    var_name::Symbol,
+    inputs::TimeSeriesConstraintInputs,
 )
     time_steps = model_time_steps(psi_container)
-    variable = get_variable(psi_container, var_name)
-    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
-    names = (get_name(x) for x in constraint_infos)
+    variable = get_variable(psi_container, inputs.variable_name)
+    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
+    names = (get_name(x) for x in inputs.constraint_infos)
     constraint = add_cons_container!(psi_container, lb_name, names, time_steps)
-    container = add_param_container!(psi_container, param_reference, names, time_steps)
+    container =
+        add_param_container!(psi_container, inputs.param_reference, names, time_steps)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
 
-    for constraint_info in constraint_infos
+    for constraint_info in inputs.constraint_infos
         ci_name = get_name(constraint_info)
         for t in time_steps
             expression_lb = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
@@ -314,18 +314,15 @@ where (name, data) in range_data.
 """
 function device_timeseries_ub_bin(
     psi_container::PSIContainer,
-    constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-    cons_name::Symbol,
-    var_name::Symbol,
-    binvar_name::Symbol,
+    inputs::TimeSeriesConstraintInputs,
 )
     time_steps = model_time_steps(psi_container)
-    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
-    varcts = get_variable(psi_container, var_name)
-    varbin = get_variable(psi_container, binvar_name)
-    names = (get_name(x) for x in constraint_infos)
+    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
+    varcts = get_variable(psi_container, inputs.variable_name)
+    varbin = get_variable(psi_container, inputs.bin_variable_name)
+    names = (get_name(x) for x in inputs.constraint_infos)
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
-    for constraint_info in constraint_infos
+    for constraint_info in inputs.constraint_infos
         ci_name = get_name(constraint_info)
         for t in time_steps
             forecast = constraint_info.timeseries[t]
@@ -381,27 +378,24 @@ param_reference::UpdateRef : UpdateRef of access the parameters
 """
 function device_timeseries_ub_bigM(
     psi_container::PSIContainer,
-    constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-    cons_name::Symbol,
-    var_name::Symbol,
-    param_reference::UpdateRef,
-    binvar_name::Symbol,
-    M_value::Float64 = 1e6,
+    inputs::TimeSeriesConstraintInputs,
 )
+    M_value = get(inputs.kwargs, :M_value, 1e6)
     time_steps = model_time_steps(psi_container)
-    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
-    key_status = middle_rename(cons_name, PSI_NAME_DELIMITER, "status")
+    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
+    key_status = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "status")
 
-    varcts = get_variable(psi_container, var_name)
-    varbin = get_variable(psi_container, binvar_name)
-    names = (get_name(x) for x in constraint_infos)
+    varcts = get_variable(psi_container, inputs.variable_name)
+    varbin = get_variable(psi_container, inputs.bin_variable_name)
+    names = (get_name(x) for x in inputs.constraint_infos)
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     con_status = add_cons_container!(psi_container, key_status, names, time_steps)
-    container = add_param_container!(psi_container, param_reference, names, time_steps)
+    container =
+        add_param_container!(psi_container, inputs.param_reference, names, time_steps)
     multiplier = get_multiplier_array(container)
     param = get_parameter_array(container)
 
-    for constraint_info in constraint_infos
+    for constraint_info in inputs.constraint_infos
         ci_name = get_name(constraint_info)
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, varcts[ci_name, t] => 1.0)

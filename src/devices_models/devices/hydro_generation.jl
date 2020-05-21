@@ -156,69 +156,33 @@ function reactivepower_constraints!(
 
     device_range(
         psi_container,
-        constraint_infos,
-        constraint_name(REACTIVE_RANGE, H),
-        variable_name(REACTIVE_POWER, H),
+        RangeConstraintInputs(
+            constraint_infos,
+            constraint_name(REACTIVE_RANGE, H),
+            variable_name(REACTIVE_POWER, H),
+        ),
     )
     return
 end
 
-function activepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H, <:AbstractHydroDispatchFormulation},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {H <: PSY.HydroGen}
-    parameters = model_has_parameters(psi_container)
-    use_forecast_data = model_uses_forecasts(psi_container)
-
-    if !parameters && !use_forecast_data
-        constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-        for (ix, d) in enumerate(devices)
-            name = PSY.get_name(d)
-            ub = PSY.get_activepower(d)
-            limits = (min = 0.0, max = ub)
-            constraint_info = DeviceRangeConstraintInfo(name, limits)
-            add_device_services!(constraint_info, d, model)
-            constraint_infos[ix] = constraint_info
-        end
-        device_range(
-            psi_container,
-            constraint_infos,
-            constraint_name(ACTIVE_RANGE, H),
-            variable_name(ACTIVE_POWER, H),
-        )
-        return
-    end
-
-    forecast_label = "get_rating"
-    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(psi_container, d, forecast_label)
-        constraint_info =
-            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_rating(x), ts_vector)
-        add_device_services!(constraint_info.range, d, model)
-        constraint_infos[ix] = constraint_info
-    end
-
-    if parameters
-        device_timeseries_param_ub(
-            psi_container,
-            constraint_infos,
-            constraint_name(ACTIVE, H),
-            UpdateRef{H}(ACTIVE_POWER, forecast_label),
-            variable_name(ACTIVE_POWER, H),
-        )
-    else
-        device_timeseries_ub(
-            psi_container,
-            constraint_infos,
-            constraint_name(ACTIVE, H),
-            variable_name(ACTIVE_POWER, H),
-        )
-    end
-    return
+function ActivePowerConstraintsInputs(
+    ::Type{T},
+    ::Type{U},
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.HydroGen, U <: AbstractHydroDispatchFormulation}
+    return ActivePowerConstraintsInputs(;
+        limits = x -> (min = 0.0, max = PSY.get_activepower(x)),
+        range_constraint = device_range,
+        multiplier = x -> PSY.get_rating(x),
+        timeseries_func = use_parameters ? device_timeseries_param_ub :
+                          device_timeseries_ub,
+        parameter_name = use_parameters ? ACTIVE_POWER : nothing,
+        constraint_name = use_forecasts ? ACTIVE : ACTIVE_RANGE,
+        variable_name = ACTIVE_POWER,
+        bin_variable_name = nothing,
+        forecast_label = "get_rating",
+    )
 end
 
 function activepower_constraints!(
@@ -238,9 +202,11 @@ function activepower_constraints!(
     end
     device_range(
         psi_container,
-        constraint_infos,
-        constraint_name(ACTIVE_RANGE, H),
-        variable_name(ACTIVE_POWER, H),
+        RangeConstraintInputs(
+            constraint_infos,
+            constraint_name(ACTIVE_RANGE, H),
+            variable_name(ACTIVE_POWER, H),
+        ),
     )
     return
 end
@@ -266,11 +232,13 @@ function activepower_constraints!(
 
     if !parameters && !use_forecast_data
         device_semicontinuousrange(
-            psi_container,
-            constraint_infos,
-            constraint_name(ACTIVE_RANGE, H),
-            variable_name(ACTIVE_POWER, H),
-            variable_name(ON, H),
+            RangeConstraintInputs(
+                psi_container,
+                constraint_infos,
+                constraint_name(ACTIVE_RANGE, H),
+                variable_name(ACTIVE_POWER, H),
+                variable_name(ON, H),
+            )
         )
         return
     end
@@ -331,9 +299,11 @@ function inflow_constraints!(
     if !parameters && !use_forecast_data
         device_range(
             psi_container,
-            constraint_infos,
-            constraint_name(INFLOW_RANGE, H),
-            variable_name(INFLOW, H),
+            RangeConstraintInputs(
+                constraint_infos,
+                constraint_name(INFLOW_RANGE, H),
+                variable_name(INFLOW, H),
+            )
         )
         return
     end

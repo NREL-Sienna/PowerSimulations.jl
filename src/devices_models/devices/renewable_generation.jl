@@ -55,9 +55,11 @@ function reactivepower_constraints!(
     end
     device_range(
         psi_container,
-        constraint_infos,
-        constraint_name(REACTIVE_RANGE, R),
-        variable_name(REACTIVE_POWER, R),
+        RangeConstraintInputs(
+            constraint_infos,
+            constraint_name(REACTIVE_RANGE, R),
+            variable_name(REACTIVE_POWER, R),
+        ),
     )
     return
 end
@@ -84,62 +86,24 @@ function reactivepower_constraints!(
     return
 end
 
-function activepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{R},
-    model::DeviceModel{R, <:AbstractRenewableDispatchFormulation},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {R <: PSY.RenewableGen}
-    parameters = model_has_parameters(psi_container)
-    use_forecast_data = model_uses_forecasts(psi_container)
-
-    if !parameters && !use_forecast_data
-        constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-        for (ix, d) in enumerate(devices)
-            name = PSY.get_name(d)
-            ub = PSY.get_activepower(d)
-            limits = (min = 0.0, max = ub)
-            constraint = DeviceRangeConstraintInfo(name, limits)
-            add_device_services!(constraint, d, model)
-            constraint_infos[ix] = constraint
-        end
-        device_range(
-            psi_container,
-            constraint_infos,
-            constraint_name(ACTIVE_RANGE, R),
-            variable_name(ACTIVE_POWER, R),
-        )
-        return
-    end
-
-    forecast_label = "get_rating"
-    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(psi_container, d, forecast_label)
-        constraint_info =
-            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_rating(x), ts_vector)
-        add_device_services!(constraint_info.range, d, model)
-        constraint_infos[ix] = constraint_info
-    end
-
-    if parameters
-        device_timeseries_param_ub(
-            psi_container,
-            constraint_infos,
-            constraint_name(ACTIVE, R),
-            UpdateRef{R}(ACTIVE_POWER, forecast_label),
-            variable_name(ACTIVE_POWER, R),
-        )
-    else
-        device_timeseries_ub(
-            psi_container,
-            constraint_infos,
-            constraint_name(ACTIVE, R),
-            variable_name(ACTIVE_POWER, R),
-        )
-    end
-    return
+function ActivePowerConstraintsInputs(
+    ::Type{T},
+    ::Type{U},
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.RenewableGen, U <: AbstractRenewableDispatchFormulation}
+    return ActivePowerConstraintsInputs(;
+        limits = x -> (min = 0.0, max = PSY.get_activepower(x)),
+        range_constraint = device_range,
+        multiplier = x -> PSY.get_rating(x),
+        timeseries_func = use_parameters ? device_timeseries_param_ub :
+                          device_timeseries_ub,
+        parameter_name = use_parameters ? ACTIVE_POWER : nothing,
+        constraint_name = use_forecasts ? ACTIVE : ACTIVE_RANGE,
+        variable_name = ACTIVE_POWER,
+        bin_variable_name = nothing,
+        forecast_label = "get_rating",
+    )
 end
 
 ########################## Addition to the nodal balances ##################################

@@ -118,9 +118,11 @@ function activepower_constraints!(
     end
     device_range(
         psi_container,
-        constraint_infos,
-        constraint_name(ACTIVE_RANGE, T),
-        variable_name(ACTIVE_POWER, T),
+        RangeConstraintInputs(
+            constraint_infos,
+            constraint_name(ACTIVE_RANGE, T),
+            variable_name(ACTIVE_POWER, T),
+        ),
     )
     return
 end
@@ -145,10 +147,12 @@ function activepower_constraints!(
     end
     device_semicontinuousrange(
         psi_container,
-        constraint_infos,
-        constraint_name(ACTIVE_RANGE, T),
-        variable_name(ACTIVE_POWER, T),
-        variable_name(ON, T),
+        RangeConstraintInputs(
+            constraint_infos,
+            constraint_name(ACTIVE_RANGE, T),
+            variable_name(ACTIVE_POWER, T),
+            variable_name(ON, T),
+        ),
     )
     return
 end
@@ -184,9 +188,11 @@ function activepower_constraints!(
 
     device_range(
         psi_container,
-        constraint_infos,
-        constraint_name(ACTIVE_RANGE, T),
-        variable_name(ACTIVE_POWER, T),
+        RangeConstraintInputs(
+            constraint_infos,
+            constraint_name(ACTIVE_RANGE, T),
+            variable_name(ACTIVE_POWER, T),
+        ),
     )
     return
 end
@@ -213,9 +219,11 @@ function reactivepower_constraints!(
 
     device_range(
         psi_container,
-        constraint_infos,
-        constraint_name(REACTIVE_RANGE, T),
-        variable_name(REACTIVE_POWER, T),
+        RangeConstraintInputs(
+            constraint_infos,
+            constraint_name(REACTIVE_RANGE, T),
+            variable_name(REACTIVE_POWER, T),
+        ),
     )
     return
 end
@@ -242,10 +250,12 @@ function reactivepower_constraints!(
 
     device_semicontinuousrange(
         psi_container,
-        constraint_infos,
-        constraint_name(REACTIVE_RANGE, T),
-        variable_name(REACTIVE_POWER, T),
-        variable_name(ON, T),
+        RangeConstraintInputs(
+            constraint_infos,
+            constraint_name(REACTIVE_RANGE, T),
+            variable_name(REACTIVE_POWER, T),
+            variable_name(ON, T),
+        ),
     )
     return
 end

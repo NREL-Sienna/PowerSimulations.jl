@@ -1,0 +1,116 @@
+
+struct ActivePowerConstraintsInputs
+    limits::Function
+    range_constraint::Function
+    multiplier::Function
+    timeseries_func::Function
+    timeseries_func_kwargs::Dict{Symbol, Any}
+    parameter_name::Union{Nothing, String}
+    constraint_name::String
+    variable_name::String
+    bin_variable_name::Union{Nothing, String}
+    forecast_label::String
+
+    # Force using kwargs to avoid ordering mistakes.
+    function ActivePowerConstraintsInputs(;
+        limits,
+        range_constraint,
+        multiplier,
+        timeseries_func,
+        timeseries_func_kwargs = Dict{Symbol, Any}(),
+        parameter_name,
+        constraint_name,
+        variable_name,
+        bin_variable_name,
+        forecast_label,
+    )
+        return new(
+            limits,
+            range_constraint,
+            multiplier,
+            timeseries_func,
+            timeseries_func_kwargs,
+            parameter_name,
+            constraint_name,
+            variable_name,
+            bin_variable_name,
+            forecast_label,
+        )
+    end
+end
+
+function ActivePowerConstraintsInputs(
+    ::Type{T},
+    ::Type{U},
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
+    error("ActivePowerConstraintsInputs is not implemented for type $T/$U")
+end
+
+"""
+Default implementation to add activepower constraints.
+
+Users of this function must implement a method for [`ActivePowerConstraintsInputs`](@ref).
+Users may also implement custom activepower_constraints! methods.
+"""
+function activepower_constraints!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
+    use_parameters = model_has_parameters(psi_container)
+    use_forecasts = model_uses_forecasts(psi_container)
+    inputs = ActivePowerConstraintsInputs(T, U, use_parameters, use_forecasts)
+
+    # TODO
+    # Tests for RenewableGen violate this.
+    #if use_parameters && !use_forecasts
+    #    error("use_parameters && !use_forecasts is not supported")
+    #end
+
+    cons_name = constraint_name(inputs.constraint_name, T)
+    var_name = variable_name(inputs.variable_name, T)
+    bin_var_name = isnothing(inputs.bin_variable_name) ? inputs.bin_variable_name :
+        variable_name(inputs.bin_variable_name, T)
+    param_ref =
+        use_parameters ? UpdateRef{T}(inputs.parameter_name, inputs.forecast_label) :
+        nothing
+
+    if !use_parameters && !use_forecasts
+        constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
+        for (i, dev) in enumerate(devices)
+            name = PSY.get_name(dev)
+            limits = inputs.limits(dev)
+            constraint_info = DeviceRangeConstraintInfo(name, limits)
+            add_device_services!(constraint_info, dev, model)
+            constraint_infos[i] = constraint_info
+        end
+
+        rc_inputs =
+            RangeConstraintInputs(constraint_infos, cons_name, var_name, bin_var_name)
+        inputs.range_constraint(psi_container, rc_inputs)
+        return
+    end
+
+    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
+    for (i, dev) in enumerate(devices)
+        ts_vector = get_time_series(psi_container, dev, inputs.forecast_label)
+        constraint_info = DeviceTimeSeriesConstraintInfo(dev, inputs.multiplier, ts_vector)
+        add_device_services!(constraint_info.range, dev, model)
+        constraint_infos[i] = constraint_info
+    end
+
+    ts_inputs = TimeSeriesConstraintInputs(
+        constraint_infos,
+        cons_name,
+        var_name,
+        bin_var_name,
+        param_ref,
+        inputs.timeseries_func_kwargs,
+    )
+    inputs.timeseries_func(psi_container, ts_inputs)
+    return
+end

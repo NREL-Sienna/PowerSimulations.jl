@@ -1,3 +1,18 @@
+struct RangeConstraintInputs
+    constraint_infos::Vector{DeviceRangeConstraintInfo}
+    constraint_name::Symbol
+    variable_name::Symbol
+    bin_variable_name::Union{Nothing, Symbol}
+end
+
+function RangeConstraintInputs(
+    constraint_infos::Vector{DeviceRangeConstraintInfo},
+    constraint_name::Symbol,
+    variable_name::Symbol,
+)
+    return RangeConstraintInputs(constraint_infos, constraint_name, variable_name, nothing)
+end
+
 @doc raw"""
     device_range(psi_container::PSIContainer,
                  constraint_infos::Vector{DeviceRangeConstraintInfo},
@@ -29,21 +44,16 @@ where limits in constraint_infos.
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
 """
-function device_range(
-    psi_container::PSIContainer,
-    constraint_infos::Vector{DeviceRangeConstraintInfo},
-    cons_name::Symbol,
-    var_name::Symbol,
-)
+function device_range(psi_container::PSIContainer, inputs::RangeConstraintInputs)
     time_steps = model_time_steps(psi_container)
-    variable = get_variable(psi_container, var_name)
-    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
-    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
-    names = (get_name(x) for x in constraint_infos)
+    variable = get_variable(psi_container, inputs.variable_name)
+    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
+    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
+    names = (get_name(x) for x in inputs.constraint_infos)
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
 
-    for constraint_info in constraint_infos, t in time_steps
+    for constraint_info in inputs.constraint_infos, t in time_steps
         ci_name = get_name(constraint_info)
         expression_ub = JuMP.AffExpr(0.0, variable[ci_name, t] => 1.0)
         for val in constraint_info.additional_terms_ub
@@ -112,23 +122,20 @@ where limits in constraint_infos.
 """
 function device_semicontinuousrange(
     psi_container::PSIContainer,
-    constraint_infos::Vector{DeviceRangeConstraintInfo},
-    cons_name::Symbol,
-    var_name::Symbol,
-    binvar_name::Symbol,
+    inputs::RangeConstraintInputs,
 )
     time_steps = model_time_steps(psi_container)
-    varcts = get_variable(psi_container, var_name)
-    varbin = get_variable(psi_container, binvar_name)
-    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
-    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
-    names = (get_name(x) for x in constraint_infos)
+    varcts = get_variable(psi_container, inputs.variable_name)
+    varbin = get_variable(psi_container, inputs.bin_variable_name)
+    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
+    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
+    names = (get_name(x) for x in inputs.constraint_infos)
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
 
-    for constraint_info in constraint_infos, t in time_steps
+    for constraint_info in inputs.constraint_infos, t in time_steps
         ci_name = get_name(constraint_info)
         if JuMP.has_lower_bound(varcts[ci_name, t])
             JuMP.set_lower_bound(varcts[ci_name, t], 0.0)
@@ -200,25 +207,21 @@ where limits in constraint_infos.
 """
 function reserve_device_semicontinuousrange(
     psi_container::PSIContainer,
-    constraint_infos::Vector{DeviceRangeConstraintInfo},
-    cons_name::Symbol,
-    var_name::Symbol,
-    binvar_name::Symbol,
+    inputs::RangeConstraintInputs,
 )
-
     time_steps = model_time_steps(psi_container)
-    varcts = get_variable(psi_container, var_name)
-    varbin = get_variable(psi_container, binvar_name)
+    varcts = get_variable(psi_container, inputs.variable_name)
+    varbin = get_variable(psi_container, inputs.bin_variable_name)
 
-    ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
-    lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
-    names = (x.name for x in constraint_infos)
+    ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
+    lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
+    names = (x.name for x in inputs.constraint_infos)
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
     con_ub = add_cons_container!(psi_container, ub_name, names, time_steps)
     con_lb = add_cons_container!(psi_container, lb_name, names, time_steps)
 
-    for constraint_info in constraint_infos, t in time_steps
+    for constraint_info in inputs.constraint_infos, t in time_steps
         ci_name = get_name(constraint_info)
         if JuMP.has_lower_bound(varcts[ci_name, t])
             JuMP.set_lower_bound(varcts[ci_name, t], 0.0)
