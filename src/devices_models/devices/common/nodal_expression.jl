@@ -75,7 +75,9 @@ function _nodal_expression!(
                     psi_container.expressions[expression_name],
                     constraint_info.bus_number,
                     t,
-                    inputs.multiplier * constraint_info.multiplier * constraint_info.timeseries[t],
+                    inputs.multiplier *
+                    constraint_info.multiplier *
+                    constraint_info.timeseries[t],
                 )
             end
         end
