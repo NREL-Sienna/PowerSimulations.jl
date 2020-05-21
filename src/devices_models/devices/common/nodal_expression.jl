@@ -3,6 +3,7 @@ struct NodalExpressionInputs
     forecast_label::String
     parameter_name::String
     peak_value_function::Function
+    multiplier::Float64
 end
 
 function NodalExpressionInputs(
@@ -64,7 +65,7 @@ function _nodal_expression!(
             constraint_infos,
             UpdateRef{T}(inputs.parameter_name, forecast_label),
             expression_name,
-            -1.0,
+            inputs.multiplier,
         )
         return
     else
@@ -74,7 +75,7 @@ function _nodal_expression!(
                     psi_container.expressions[expression_name],
                     constraint_info.bus_number,
                     t,
-                    -constraint_info.multiplier * constraint_info.timeseries[t],
+                    inputs.multiplier * constraint_info.multiplier * constraint_info.timeseries[t],
                 )
             end
         end
