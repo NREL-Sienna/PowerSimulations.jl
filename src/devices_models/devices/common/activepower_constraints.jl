@@ -63,13 +63,8 @@ function activepower_constraints!(
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
     use_parameters = model_has_parameters(psi_container)
     use_forecasts = model_uses_forecasts(psi_container)
+    @assert !(use_parameters && !use_forecasts)
     inputs = ActivePowerConstraintsInputs(T, U, use_parameters, use_forecasts)
-
-    # TODO
-    # Tests for RenewableGen violate this.
-    #if use_parameters && !use_forecasts
-    #    error("use_parameters && !use_forecasts is not supported")
-    #end
 
     cons_name = constraint_name(inputs.constraint_name, T)
     var_name = variable_name(inputs.variable_name, T)

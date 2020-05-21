@@ -147,6 +147,12 @@ function psi_container_init!(
     @assert !isnothing(psi_container.JuMPmodel)
     make_parameters_container = get_use_parameters(settings)
     make_parameters_container && (psi_container.parameters = ParametersContainer())
+
+    use_forecasts = get_use_forecast_data(settings)
+    if make_parameters_container && !use_forecasts
+        error("enabling parameters without forecasts is not supported")
+    end
+
     if get_initial_time(settings) == UNSET_INI_TIME
         set_initial_time!(settings, PSY.get_forecasts_initial_time(sys))
     end
@@ -155,7 +161,7 @@ function psi_container_init!(
         set_horizon!(settings, PSY.get_forecasts_horizon(sys))
     end
 
-    if get_use_forecast_data(settings)
+    if use_forecasts
         total_number_of_devices = length(get_available_components(PSY.Device, sys))
         psi_container.time_steps = 1:get_horizon(settings)
         # The 10e6 limit is based on the sizes of the lp benchmark problems http://plato.asu.edu/ftp/lpcom.html
