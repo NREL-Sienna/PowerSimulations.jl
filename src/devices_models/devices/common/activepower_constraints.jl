@@ -36,6 +36,9 @@ struct ActivePowerConstraintsInputs
     end
 end
 
+"""
+Construct ActivePowerConstraintsInputs for specific types.
+"""
 function ActivePowerConstraintsInputs(
     ::Type{T},
     ::Type{U},
