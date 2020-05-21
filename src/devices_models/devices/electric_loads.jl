@@ -203,6 +203,7 @@ function NodalExpressionInputs(
         "get_maxactivepower",
         REACTIVE_POWER,
         use_forecasts ? x -> PSY.get_maxreactivepower(x) : x -> PSY.get_reactivepower(x),
+        -1.0,
     )
 end
 
@@ -215,6 +216,7 @@ function NodalExpressionInputs(
         "get_maxactivepower",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_maxactivepower(x) : x -> PSY.get_activepower(x),
+        -1.0,
     )
 end
 
