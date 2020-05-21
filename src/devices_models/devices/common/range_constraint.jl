@@ -14,11 +14,6 @@ function RangeConstraintInputs(
 end
 
 @doc raw"""
-    device_range(psi_container::PSIContainer,
-                 constraint_infos::Vector{DeviceRangeConstraintInfo},
-                 cons_name::Symbol,
-                 var_name::Symbol)
-
 Constructs min/max range constraint from device variable.
 
 # Constraints
@@ -37,12 +32,6 @@ where limits in constraint_infos.
 `` x = limits^{max}, \text{ for } |limits^{max} - limits^{min}| < \varepsilon ``
 
 `` limits^{min} \leq x \leq limits^{max}, \text{ otherwise } ``
-
-# Arguments
-* psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* constraint_infos::Vector{DeviceRangeConstraintInfo} : contains names and vector of min/max
-* cons_name::Symbol : name of the constraint
-* var_name::Symbol : the name of the continuous variable
 """
 function device_range(psi_container::PSIContainer, inputs::RangeConstraintInputs)
     time_steps = model_time_steps(psi_container)
@@ -84,12 +73,6 @@ function device_range(psi_container::PSIContainer, inputs::RangeConstraintInputs
 end
 
 @doc raw"""
-    device_semicontinuousrange(psi_container::PSIContainer,
-                               constraint_infos::Vector{DeviceRangeConstraintInfo},
-                               cons_name::Symbol,
-                               var_name::Symbol,
-                               binvar_name::Symbol)
-
 Constructs min/max range constraint from device variable and on/off decision variable.
 
 # Constraints
@@ -112,13 +95,6 @@ where limits in constraint_infos.
 `` 0 \leq x^{cts} \leq limits^{max} x^{bin}, \text{ for } limits^{min} = 0 ``
 
 `` limits^{min} x^{bin} \leq x^{cts} \leq limits^{max} x^{bin}, \text{ otherwise } ``
-
-# Arguments
-* psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* constraint_infos::Vector{DeviceRangeConstraintInfo} : contains names and vector of min/max
-* cons_name::Symbol : name of the constraint
-* var_name::Symbol : the name of the continuous variable
-* binvar_name::Symbol : the name of the binary variable
 """
 function device_semicontinuousrange(
     psi_container::PSIContainer,
@@ -167,14 +143,9 @@ function device_semicontinuousrange(
 
     return
 end
+
 #This function looks suspicious and repetitive. Needs verification
 @doc raw"""
-    reserve_device_semicontinuousrange(psi_container::PSIContainer,
-                                       constraint_infos::Vector{DeviceRangeConstraintInfo},
-                                       cons_name::Symbol,
-                                       var_name::Symbol,
-                                       binvar_name::Symbol)
-
 Constructs min/max range constraint from device variable and on/off decision variable.
 
 # Constraints
@@ -197,13 +168,6 @@ where limits in constraint_infos.
 `` 0 \leq x^{cts} \leq limits^{max} (1 - x^{bin} ), \text{ for } limits^{min} = 0 ``
 
 `` limits^{min} (1 - x^{bin} ) \leq x^{cts} \leq limits^{max} (1 - x^{bin} ), \text{ otherwise } ``
-
-# Arguments
-* psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* constraint_infos::Vector{DeviceRangeConstraintInfo} : contains names and vector of min/max
-* cons_name::Symbol : name of the constraint
-* var_name::Symbol : the name of the continuous variable
-* binvar_name::Symbol : the name of the binary variable
 """
 function reserve_device_semicontinuousrange(
     psi_container::PSIContainer,

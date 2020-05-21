@@ -14,6 +14,9 @@ function NodalExpressionInputs(
     error("NodalExpressionInputs is not implemented for type $T/$U")
 end
 
+"""
+Construct NodalExpressionInputs for specific types.
+"""
 function NodalExpressionInputs(
     ::Type{T},
     ::Type{U},
@@ -22,6 +25,13 @@ function NodalExpressionInputs(
     error("NodalExpressionInputs is not implemented for type $T/$U")
 end
 
+"""
+Default implementation to add nodal expressions.
+
+Users of this function must implement a method for [`NodalExpressionInputs`](@ref) for their
+specific types.
+Users may also implement custom nodal_expression! methods.
+"""
 function nodal_expression!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},

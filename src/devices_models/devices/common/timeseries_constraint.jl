@@ -41,11 +41,6 @@ function lazy_lb(psi_container::PSIContainer, inputs::TimeSeriesConstraintInputs
 end
 
 @doc raw"""
-    device_timeseries_ub(psi_container::PSIContainer,
-                         constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-                         cons_name::Symbol,
-                         var_name::Symbol)
-
 Constructs upper bound for given variable and time series data and a multiplier.
 
 # Constraint
@@ -55,12 +50,6 @@ Constructs upper bound for given variable and time series data and a multiplier.
 # LaTeX
 
 `` x_t \leq r^{val} r_t, \forall t ``
-
-# Arguments
-* psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* constraint_infos::Vector{DeviceTimeSeriesConstraintInfo} : container of device time series data and scaling factors
-* cons_name::Symbol : name of the constraint
-* var_name::Symbol : the name of the variable
 """
 function device_timeseries_ub(
     psi_container::PSIContainer,
@@ -101,11 +90,6 @@ function device_timeseries_ub(
 end
 
 @doc raw"""
-    device_timeseries_lb(psi_container::PSIContainer,
-                         constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-                         cons_name::Symbol,
-                         var_name::Symbol)
-
 Constructs lower bound for given variable subject to time series data and a multiplier.
 
 # Constraint
@@ -117,12 +101,6 @@ Constructs lower bound for given variable subject to time series data and a mult
 `` r^{val} r_t \leq x_t, \forall t ``
 
 where (name, data) in range_data.
-
-# Arguments
-* psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* constraint_infos::Vector{DeviceTimeSeriesConstraintInfo} : container of device time series data and scaling factors
-* cons_name::Symbol : name of the constraint
-* var_name::Symbol : the name of the variable
 """
 function device_timeseries_lb(
     psi_container::PSIContainer,
@@ -155,12 +133,6 @@ function device_timeseries_lb(
 end
 
 @doc raw"""
-    device_timeseries_param_ub(psi_container::PSIContainer,
-                               constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-                               cons_name::Symbol,
-                               param_reference::UpdateRef,
-                               var_name::Symbol)
-
 Constructs upper bound for given variable using a parameter. The constraint is
     built with a time series data vector and a multiplier
 
@@ -171,13 +143,6 @@ Constructs upper bound for given variable using a parameter. The constraint is
 # LaTeX
 
 `` x^{var}_t \leq r^{val} x^{param}_t, \forall t ``
-
-# Arguments
-* psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* constraint_infos::Vector{DeviceTimeSeriesConstraintInfo} : container of device time series data and scaling factors
-* cons_name::Symbol : name of the constraint
-* param_reference::UpdateRef : UpdateRef to access the parameter
-* var_name::Symbol : the name of the variable
 """
 function device_timeseries_param_ub(
     psi_container::PSIContainer,
@@ -224,12 +189,6 @@ function device_timeseries_param_ub(
 end
 
 @doc raw"""
-    device_timeseries_param_lb(psi_container::PSIContainer,
-                                    constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-                                    cons_name::Symbol,
-                                    param_reference::UpdateRef,
-                                    var_name::Symbol)
-
 Constructs lower bound for given variable using a parameter. The constraint is
     built with a time series data vector and a multiplier
 
@@ -240,13 +199,6 @@ Constructs lower bound for given variable using a parameter. The constraint is
 # LaTeX
 
 `` r^{val} x^{param}_t \leq x^{var}_t, \forall t ``
-
-# Arguments
-* psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* constraint_infos::Vector{DeviceTimeSeriesConstraintInfo} : container of device time series data and scaling factors
-* cons_name::Symbol : name of the constraint
-* param_reference::UpdateRef : UpdateRef to access the parameter
-* var_name::Symbol : the name of the variable
 """
 function device_timeseries_param_lb(
     psi_container::PSIContainer,
@@ -288,11 +240,6 @@ function device_timeseries_param_lb(
 end
 
 @doc raw"""
-    device_timeseries_ub_bin(psi_container::PSIContainer,
-                                    constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-                                    var_name::Symbol,
-                                    binvar_name::Symbol)
-
 Constructs upper bound for variable and time series or confines to 0 depending on binary variable.
     The upper bound is defined by a time series and a multiplier.
 
@@ -305,13 +252,6 @@ where (name, data) in range_data.
 # LaTeX
 
 `` x^{cts}_t \leq r^{val} r_t x^{bin}_t, \forall t ``
-
-# Arguments
-* psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* constraint_infos::Vector{DeviceTimeSeriesConstraintInfo} : container of device time series data and scaling factors
-* cons_name::Symbol : name of the constraint
-* var_name::Symbol :  name of the variable
-* binvar_name::Symbol : name of binary variable
 """
 function device_timeseries_ub_bin(
     psi_container::PSIContainer,
@@ -345,14 +285,6 @@ function device_timeseries_ub_bin(
 end
 
 @doc raw"""
-    device_timeseries_ub_bigM(psi_container::PSIContainer,
-                                    constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
-                                    cons_name::Symbol,
-                                    var_name::Symbol,
-                                    param_reference::UpdateRef,
-                                    binvar_name::Symbol,
-                                    M_value::Float64 = 1e6)
-
 Constructs upper bound for variable and time series and a multiplier or confines to 0 depending on binary variable.
     Uses BigM constraint type to allow for parameter since ParameterJuMP doesn't support var*parameter
 
@@ -367,15 +299,6 @@ Constructs upper bound for variable and time series and a multiplier or confines
 `` x^{cts}_t - r^{val} x^{param}_t \leq M(1 - x^{bin}_t ), forall t ``
 
 `` x^{cts}_t \leq M x^{bin}_t, \forall t ``
-
-# Arguments
-* psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* constraint_infos::Vector{DeviceTimeSeriesConstraintInfo} : container of device time series data and scaling factors
-* cons_name::Symbol : name of the constraint
-* var_name::Symbol :  name of the variable
-param_reference::UpdateRef : UpdateRef of access the parameters
-* binvar_name::Symbol : name of binary variable
-* M_value::Float64 : bigM
 """
 function device_timeseries_ub_bigM(
     psi_container::PSIContainer,

@@ -51,7 +51,8 @@ end
 """
 Default implementation to add activepower constraints.
 
-Users of this function must implement a method for [`ActivePowerConstraintsInputs`](@ref).
+Users of this function must implement a method for [`ActivePowerConstraintsInputs`](@ref)
+for their specific types.
 Users may also implement custom activepower_constraints! methods.
 """
 function activepower_constraints!(
