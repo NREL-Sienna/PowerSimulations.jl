@@ -1,11 +1,12 @@
 
+const M_VALUE = 1e6
+
 struct TimeSeriesConstraintInputs
     constraint_infos::Vector{DeviceTimeSeriesConstraintInfo}
     constraint_name::Symbol
     variable_name::Symbol
     bin_variable_name::Union{Nothing, Symbol}
     param_reference::Union{Nothing, UpdateRef}
-    kwargs::Dict{Symbol, Any}
 end
 
 function lazy_lb(psi_container::PSIContainer, inputs::TimeSeriesConstraintInputs)
@@ -380,7 +381,6 @@ function device_timeseries_ub_bigM(
     psi_container::PSIContainer,
     inputs::TimeSeriesConstraintInputs,
 )
-    M_value = get(inputs.kwargs, :M_value, 1e6)
     time_steps = model_time_steps(psi_container)
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
     key_status = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "status")
@@ -410,11 +410,11 @@ function device_timeseries_ub_bigM(
             con_ub[ci_name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 expression_ub - param[ci_name, t] * constraint_info.multiplier <=
-                (1 - varbin[ci_name, t]) * M_value
+                (1 - varbin[ci_name, t]) * M_VALUE
             )
             con_status[ci_name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                expression_ub <= varbin[ci_name, t] * M_value
+                expression_ub <= varbin[ci_name, t] * M_VALUE
             )
             multiplier[ci_name, t] = constraint_info.multiplier
         end

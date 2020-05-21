@@ -4,7 +4,6 @@ struct ActivePowerConstraintsInputs
     range_constraint::Function
     multiplier::Function
     timeseries_func::Function
-    timeseries_func_kwargs::Dict{Symbol, Any}
     parameter_name::Union{Nothing, String}
     constraint_name::String
     variable_name::String
@@ -17,7 +16,6 @@ struct ActivePowerConstraintsInputs
         range_constraint,
         multiplier,
         timeseries_func,
-        timeseries_func_kwargs = Dict{Symbol, Any}(),
         parameter_name,
         constraint_name,
         variable_name,
@@ -29,7 +27,6 @@ struct ActivePowerConstraintsInputs
             range_constraint,
             multiplier,
             timeseries_func,
-            timeseries_func_kwargs,
             parameter_name,
             constraint_name,
             variable_name,
@@ -104,7 +101,6 @@ function activepower_constraints!(
         var_name,
         bin_var_name,
         param_ref,
-        inputs.timeseries_func_kwargs,
     )
     inputs.timeseries_func(psi_container, ts_inputs)
     return
