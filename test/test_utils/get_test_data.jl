@@ -903,6 +903,63 @@ function build_c_sys5_hy_ed(; kwargs...)
     return c_sys5_hy_ed
 end
 
+function build_c_sys5_pglib(; kwargs...)
+    nodes = nodes5()
+    c_sys5_uc = System(
+        nodes,
+        vcat(thermal_generators5_uc_testing(nodes), thermal_pglib_generators5(nodes)),
+        loads5(nodes),
+        branches5(nodes),
+        nothing,
+        100.0,
+        nothing,
+        nothing;
+        time_series_in_memory = get(kwargs, :time_series_in_memory, true),
+    )
+
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_uc))
+                add_forecast!(
+                    c_sys5_uc,
+                    l,
+                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_uc))
+                add_forecast!(
+                    c_sys5_uc,
+                    r,
+                    Deterministic("get_rating", ren_timeseries_DA[t][ix]),
+                )
+            end
+            for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_uc))
+                add_forecast!(
+                    c_sys5_uc,
+                    i,
+                    Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]),
+                )
+            end
+        end
+    end
+
+    if get(kwargs, :add_reserves, false)
+        reserve_uc = reserve5(get_components(ThermalStandard, c_sys5_uc))
+        add_service!(c_sys5_uc, reserve_uc[1], get_components(ThermalStandard, c_sys5_uc))
+        add_service!(
+            c_sys5_uc,
+            reserve_uc[2],
+            [collect(get_components(ThermalStandard, c_sys5_uc))[end]],
+        )
+        add_service!(c_sys5_uc, reserve_uc[3], get_components(ThermalStandard, c_sys5_uc))
+        for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_uc))
+            add_forecast!(c_sys5_uc, serv, Deterministic("get_requirement", Reserve_ts[t]))
+        end
+    end
+
+    return c_sys5_uc
+end
+
 TEST_SYSTEMS = Dict(
     "c_sys14" => (
         description = "14-bus system",
@@ -955,6 +1012,11 @@ TEST_SYSTEMS = Dict(
         (description = "", build = build_c_sys5_re_only, time_series_in_memory = true),
     "c_sys5_uc" =>
         (description = "", build = build_c_sys5_uc, time_series_in_memory = true),
+    "c_sys5_pglib" => (
+        description = "5-bus with ThermalPGLIB",
+        build = build_c_sys5_pglib,
+        time_series_in_memory = true,
+    ),
 )
 
 build_PTDF5() = PTDF(build_system("c_sys5"))
