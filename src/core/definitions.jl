@@ -4,6 +4,7 @@ const MinMax = NamedTuple{(:min, :max), NTuple{2, Float64}}
 const NamedMinMax = Tuple{String, MinMax}
 const UpDown = NamedTuple{(:up, :down), NTuple{2, Float64}}
 const InOut = NamedTuple{(:in, :out), NTuple{2, Float64}}
+const StartUp = NamedTuple{(:cold, :warm, :hot), NTuple{3, Float64}}
 
 # Type Alias From other Packages
 const PM = PowerModels
@@ -89,6 +90,9 @@ const INFLOW = "In"
 const SPILLAGE = "Sp"
 const SLACK_UP = "γ⁺"
 const SLACK_DN = "γ⁻"
+const COLD_START = "δ_cold"
+const WARM_START = "δ_warm"
+const HOT_START = "δ_hot"
 
 # Constraints
 const ACTIVE = "active"
@@ -124,3 +128,8 @@ const REACTIVE = "reactive"
 const REACTIVE_RANGE = "reactiverange"
 const REQUIREMENT = "requirement"
 const INFLOW_RANGE = "inflowrange"
+const ACTIVE_RANGE_IC = "active_range_ic"
+const START_TIME = "starttime"
+const WARM_START_TIME = "warm_starttime"
+const HOT_START_TIME = "hot_starttime"
+const INITIAL_START_TIME = "initial_starttime"
