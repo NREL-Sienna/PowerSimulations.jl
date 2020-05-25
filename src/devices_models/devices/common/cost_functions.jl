@@ -193,7 +193,7 @@ function _pwlgencost_sos(
         upper_bound = 1.0
     )
 
-    JuMP.@constraint(psi_container.JuMPmodel, sum(pwlvars) == 1.0)
+    JuMP.@constraint(psi_container.JuMPmodel, sum(pwlvars) <= 1.0)
     JuMP.@constraint(
         psi_container.JuMPmodel,
         pwlvars in MOI.SOS2(collect(1:length(pwlvars)))
