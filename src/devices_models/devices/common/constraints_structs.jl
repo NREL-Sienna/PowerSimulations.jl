@@ -44,3 +44,40 @@ function DeviceTimeSeries(
     end
     return DeviceTimeSeries(name, bus_number, multiplier, ts_vector, range_data)
 end
+
+struct DeviceRangePGLIB <: PSI.RangeConstraintsData
+    name::String
+    limits::PSY.Min_Max
+    ramplimits::NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}
+    additional_terms_ub::Vector{Symbol}# [:R1, :R2]
+    additional_terms_lb::Vector{Symbol}
+end
+
+function DeviceRangePGLIB(name::String, limits::PSY.Min_Max, ramplimits::NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}})
+    return DeviceRangePGLIB(name, limits, ramplimits, Vector{Symbol}(), Vector{Symbol}())
+end
+
+function DeviceRangePGLIB(name::String)
+    return DeviceRangePGLIB(name, (min = -Inf, max = Inf), (startup = Inf, shutdown = Inf), Vector{Symbol}(), Vector{Symbol}())
+end
+
+struct DeviceRampPGLIB <: PSI.RangeConstraintsData
+    name::String
+    limits::PSI.MinMax
+    ramplimits::PSI.UpDown
+    additional_terms_ub::Vector{Symbol}
+    additional_terms_lb::Vector{Symbol}
+end
+
+function DeviceRampPGLIB(name::String, limits::PSY.Min_Max, ramplimits::PSI.UpDown)
+    return DeviceRangePGLIB(name, limits, ramplimits, Vector{Symbol}(), Vector{Symbol}())
+end
+
+function DeviceRampPGLIB(name::String)
+    return DeviceRangePGLIB(name, (min = -Inf, max = Inf), (up = Inf, down = Inf), Vector{Symbol}(), Vector{Symbol}())
+end
+
+struct StartTime 
+    name::String
+    starttime_limits::NamedTuple{(:cold, :warm, :hot), Tuple{Float64, Float64, Float64}}
+end
