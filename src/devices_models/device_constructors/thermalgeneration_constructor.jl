@@ -288,3 +288,77 @@ function construct_device!(
 
     return
 end
+
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{PSY.ThermalPGLIB, ThermalPGLIBUnitCommitment},
+    ::Type{S};
+    kwargs...,
+) where {S <: PM.AbstractPowerModel}
+    devices = PSY.get_components(PSY.ThermalPGLIB, sys)
+
+    if !validate_available_devices(PSY.ThermalPGLIB, devices)
+        return
+    end
+    @show "Custom PGLIB Thermal Constructor"
+    #Variables
+    activepower_variables!(psi_container, devices)
+    reactivepower_variables!(psi_container, devices)
+    commitment_variables!(psi_container, devices)
+    startup_variables!(psi_container, devices)
+        
+    #Initial Conditions
+    initial_conditions!(psi_container, devices, model.formulation)
+
+    #Constraints
+    activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    reactivepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    commitment_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    ramp_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    time_constraints!(psi_container, devices, model, S, get_feedforward(model)) 
+    startup_time_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    startup_type_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    startup_initial_condition_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    feedforward!(psi_container, PSY.ThermalPGLIB, get_feedforward(model))
+    #Cost Function
+    cost_function(psi_container, devices, model.formulation, S, get_feedforward(model))
+
+    return
+end
+
+function construct_device!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    model::DeviceModel{PSY.ThermalPGLIB, ThermalPGLIBUnitCommitment},
+    ::Type{S};
+    kwargs...,
+) where {S <: PM.AbstractActivePowerModel}
+    devices = PSY.get_components(PSY.ThermalPGLIB, sys)
+
+    if !validate_available_devices(PSY.ThermalPGLIB, devices)
+        return
+    end
+    @show "Custom PGLIB Thermal Constructor"
+    #Variables
+    activepower_variables!(psi_container, devices)
+    commitment_variables!(psi_container, devices)
+    startup_variables!(psi_container, devices)
+        
+    #Initial Conditions
+    initial_conditions!(psi_container, devices, model.formulation)
+
+    #Constraints
+    activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    commitment_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    ramp_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    time_constraints!(psi_container, devices, model, S, get_feedforward(model)) 
+    startup_time_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    startup_type_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    startup_initial_condition_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    feedforward!(psi_container, PSY.ThermalPGLIB, get_feedforward(model))
+    #Cost Function
+    cost_function(psi_container, devices, model.formulation, S, get_feedforward(model))
+
+    return
+end
