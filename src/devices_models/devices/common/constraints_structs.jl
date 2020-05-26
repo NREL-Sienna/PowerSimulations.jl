@@ -53,12 +53,22 @@ struct DeviceRangePGLIB <: PSI.RangeConstraintsData
     additional_terms_lb::Vector{Symbol}
 end
 
-function DeviceRangePGLIB(name::String, limits::PSY.Min_Max, ramplimits::NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}})
+function DeviceRangePGLIB(
+    name::String,
+    limits::PSY.Min_Max,
+    ramplimits::NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}},
+)
     return DeviceRangePGLIB(name, limits, ramplimits, Vector{Symbol}(), Vector{Symbol}())
 end
 
 function DeviceRangePGLIB(name::String)
-    return DeviceRangePGLIB(name, (min = -Inf, max = Inf), (startup = Inf, shutdown = Inf), Vector{Symbol}(), Vector{Symbol}())
+    return DeviceRangePGLIB(
+        name,
+        (min = -Inf, max = Inf),
+        (startup = Inf, shutdown = Inf),
+        Vector{Symbol}(),
+        Vector{Symbol}(),
+    )
 end
 
 struct DeviceRampPGLIB <: PSI.RangeConstraintsData
@@ -74,10 +84,16 @@ function DeviceRampPGLIB(name::String, limits::PSY.Min_Max, ramplimits::PSI.UpDo
 end
 
 function DeviceRampPGLIB(name::String)
-    return DeviceRangePGLIB(name, (min = -Inf, max = Inf), (up = Inf, down = Inf), Vector{Symbol}(), Vector{Symbol}())
+    return DeviceRangePGLIB(
+        name,
+        (min = -Inf, max = Inf),
+        (up = Inf, down = Inf),
+        Vector{Symbol}(),
+        Vector{Symbol}(),
+    )
 end
 
-struct StartTime 
+struct StartTime
     name::String
     starttime_limits::NamedTuple{(:cold, :warm, :hot), Tuple{Float64, Float64, Float64}}
 end

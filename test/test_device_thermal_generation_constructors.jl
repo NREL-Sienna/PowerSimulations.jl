@@ -349,8 +349,12 @@ end
     @info "5-Bus testing"
     c_sys5_pglib = build_system("c_sys5_pglib")
     for p in [true, false]
-        op_problem =
-            OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_pglib; use_parameters = p)
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            DCPPowerModel,
+            c_sys5_pglib;
+            use_parameters = p,
+        )
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 120, 0, 216, 120, 0, false)
         psi_constraint_test(op_problem, constraint_names)

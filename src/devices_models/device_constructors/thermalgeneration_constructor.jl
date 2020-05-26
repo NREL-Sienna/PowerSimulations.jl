@@ -307,7 +307,7 @@ function construct_device!(
     reactivepower_variables!(psi_container, devices)
     commitment_variables!(psi_container, devices)
     startup_variables!(psi_container, devices)
-        
+
     #Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)
 
@@ -316,10 +316,16 @@ function construct_device!(
     reactivepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
     commitment_constraints!(psi_container, devices, model, S, get_feedforward(model))
     ramp_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    time_constraints!(psi_container, devices, model, S, get_feedforward(model)) 
+    time_constraints!(psi_container, devices, model, S, get_feedforward(model))
     startup_time_constraints!(psi_container, devices, model, S, get_feedforward(model))
     startup_type_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    startup_initial_condition_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    startup_initial_condition_constraints!(
+        psi_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(psi_container, PSY.ThermalPGLIB, get_feedforward(model))
     #Cost Function
     cost_function(psi_container, devices, model.formulation, S, get_feedforward(model))
@@ -344,7 +350,7 @@ function construct_device!(
     activepower_variables!(psi_container, devices)
     commitment_variables!(psi_container, devices)
     startup_variables!(psi_container, devices)
-        
+
     #Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)
 
@@ -352,10 +358,16 @@ function construct_device!(
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
     commitment_constraints!(psi_container, devices, model, S, get_feedforward(model))
     ramp_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    time_constraints!(psi_container, devices, model, S, get_feedforward(model)) 
+    time_constraints!(psi_container, devices, model, S, get_feedforward(model))
     startup_time_constraints!(psi_container, devices, model, S, get_feedforward(model))
     startup_type_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    startup_initial_condition_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    startup_initial_condition_constraints!(
+        psi_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
     feedforward!(psi_container, PSY.ThermalPGLIB, get_feedforward(model))
     #Cost Function
     cost_function(psi_container, devices, model.formulation, S, get_feedforward(model))
