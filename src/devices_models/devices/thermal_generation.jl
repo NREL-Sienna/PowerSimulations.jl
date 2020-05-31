@@ -312,7 +312,7 @@ function _get_data_for_rocc(
     if resolution > Dates.Minute(1)
         minutes_per_period = Dates.value(Dates.Minute(resolution))
     else
-        minutes_per_period = Dates.value(Dates.Second(resolution)) / 60
+        minutes_per_period = Dates.value(Dates.Second(resolution)) / MINUTES_IN_HOUR
     end
     lenght_devices = length(initial_conditions)
     ini_conds = Vector{InitialCondition}(undef, lenght_devices)
@@ -523,7 +523,7 @@ function cost_function(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
     resolution = model_resolution(psi_container)
-    dt = Dates.value(Dates.Minute(resolution)) / 60
+    dt = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     variable = get_variable(psi_container, variable_name(ACTIVE_POWER, T))
 
     # uses the same cost function whenever there is NO PWL
