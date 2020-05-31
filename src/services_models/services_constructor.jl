@@ -95,8 +95,8 @@ function construct_service!(
     area_unbalance_variables!(psi_container, areas)
     #Note: Frequency is a global variable and phenomena
     steady_state_frequency_variables!(psi_container)
+    balancing_auxiliary_variable!(psi_container, sys)
     frequency_response_constraint!(psi_container, sys)
-
     for service in services
         contributing_devices =
             services_mapping[(
@@ -107,6 +107,6 @@ function construct_service!(
         regulation_service_variables!(psi_container, service, contributing_devices)
         #Service Specific Constraints
         smooth_ace_pid!(psi_container, service)
-        #participation_assignment!(psi_container, service, model, contributing_devices)
+        participation_assignment!(psi_container, service, contributing_devices, sys)
     end
 end

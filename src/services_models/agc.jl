@@ -14,6 +14,17 @@ function steady_state_frequency_variables!(psi_container::PSIContainer)
     return
 end
 
+function balancing_auxiliary_variable!(psi_container, sys)
+    area_names = (PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys))
+    time_steps = model_time_steps(psi_container)
+    variable = add_var_container!(psi_container, variable_name("AGC_aux"), area_names, time_steps)
+
+    for t in time_steps, a in area_names
+        variable[a, t] = JuMP.@variable(psi_container.JuMPmodel, base_name = "ΔP_{$(a),$(t)}")
+    end
+    return
+end
+
 """
 Expression for the power deviation given deviation in the frequency. This expression allows updating the response of the frequency depending on commitment decisions
 """
@@ -164,11 +175,38 @@ function smooth_ace_pid!(psi_container::PSIContainer, service::PSY.AGC)
     return
 end
 
-function participation_assignment!(psi_container::PSIContainer)
-    JuMP.@constraint(zone_imbalance_pid, [k = 1:5, i = 1:N], ΔPg[k, i] == γ[k] * ΔP[i])
-    JuMP.@constraint(
-        zone_imbalance_pid,
-        [i = 1:N],
-        SACE_pid[i] == ΔP[i] - ΔPω⁺[i] + ΔPω⁻[i]
-    )
+function participation_assignment!(psi_container::PSIContainer, service::PSY.AGC, contributing_devices, sys::PSY.System)
+    time_steps = model_time_steps(psi_container)
+    area_name = PSY.get_name(PSY.get_area(service))
+    regulation = get_expression(psi_container, :device_regulation_balance)
+    area_unbalance = get_expression(psi_container, :area_unbalance)
+    SACE = get_variable(psi_container, variable_name("SACE", area_name))
+    ΔP = get_variable(psi_container, variable_name("AGC_aux"))
+
+    aux_equation = JuMPConstraintArray(undef, time_steps)
+    assign_constraint!(psi_container, "balance_aux", aux_equation)
+    component_names = (get_name(d) for d in contributing_devices)
+    participation_assignment = JuMPConstraintArray(undef, component_names, time_steps)
+    assign_constraint!(psi_container, "participation_assignment", participation_assignment)
+
+    # Don't keep this code. This is for testing the model. In theory, the contributing contributing_devices for AGC should be regulation devices
+    sum_p_factors = 0.0
+    temp_values = Vector(undef, length(contributing_devices))
+    for (ix, d) in enumerate(contributing_devices)
+        name = get_name(d)
+        regulation_device = PSY.get_component(PSY.RegulationDevice, sys, name)
+        p_factor = PSY.get_participation
+        sum_p_factors += p_factor
+        temp_values[ix] = (name, p_factor)
+    end
+
+    for (ix, d) in enumerate(temp_values)
+        for t in time_steps
+            aux_equation[area_name, t] = JuMP.@constraint(psi_container.JuMPmodel,
+                ΔP[area_name, t] == SACE[t] - area_unbalance[t])
+            participation_assignment[d[1], t] = JuMP.@constraint(psi_container.JuMPmodel,
+                regulation[d[1], t] ==  (d[2]/sum_p_factors) * (ΔP[area_name, t]))
+        end
+    end
+    return
 end
