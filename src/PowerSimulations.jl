@@ -15,6 +15,7 @@ export SimulationSequence
 #Network Relevant Exports
 export StandardPTDFModel
 export CopperPlatePowerModel
+export AreaBalancePowerModel
 
 ######## Device Models ########
 export DeviceModel
@@ -22,6 +23,7 @@ export FixedOutput
 ######## Service Models ########
 export ServiceModel
 export RangeReserve
+export GeneratorLimitedAGC
 ######## Branch Models ########
 export StaticLine
 export StaticLineBounds
@@ -234,6 +236,7 @@ include("network_models/copperplate_model.jl")
 include("network_models/powermodels_interface.jl")
 include("network_models/ptdf_model.jl")
 include("network_models/network_slack_variables.jl")
+include("network_models/area_balance_model.jl")
 
 #Device constructors
 include("devices_models/device_constructors/common/constructor_validations.jl")
