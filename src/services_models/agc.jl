@@ -185,7 +185,7 @@ function participation_assignment!(psi_container::PSIContainer, service::PSY.AGC
 
     aux_equation = JuMPConstraintArray(undef, time_steps)
     assign_constraint!(psi_container, "balance_aux", aux_equation)
-    component_names = (get_name(d) for d in contributing_devices)
+    component_names = (PSY.get_name(d) for d in contributing_devices)
     participation_assignment = JuMPConstraintArray(undef, component_names, time_steps)
     assign_constraint!(psi_container, "participation_assignment", participation_assignment)
 
@@ -193,9 +193,9 @@ function participation_assignment!(psi_container::PSIContainer, service::PSY.AGC
     sum_p_factors = 0.0
     temp_values = Vector(undef, length(contributing_devices))
     for (ix, d) in enumerate(contributing_devices)
-        name = get_name(d)
+        name = PSY.get_name(d)
         regulation_device = PSY.get_component(PSY.RegulationDevice, sys, name)
-        p_factor = PSY.get_participation
+        p_factor = PSY.get_participation_factor(regulation_device)
         sum_p_factors += p_factor
         temp_values[ix] = (name, p_factor)
     end
