@@ -2,14 +2,14 @@ construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{<:PSY.ACBranch, <:AbstractBranchFormulation},
-    ::Union{Type{CopperPlatePowerModel}, Type{AreaBalancePowerModel}}
+    ::Union{Type{CopperPlatePowerModel}, Type{AreaBalancePowerModel}},
 ) = nothing
 
 construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
     model::DeviceModel{<:PSY.DCBranch, <:AbstractDCLineFormulation},
-    ::Union{Type{CopperPlatePowerModel}, Type{AreaBalancePowerModel}}
+    ::Union{Type{CopperPlatePowerModel}, Type{AreaBalancePowerModel}},
 ) = nothing
 
 # This method might be redundant but added for completness of the formulations

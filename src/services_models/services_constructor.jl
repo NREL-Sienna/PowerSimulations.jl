@@ -89,7 +89,7 @@ function construct_service!(
     areas = PSY.get_components(PSY.Area, sys)
     for area in areas
         if area ∉ agc_areas
-        #    throw(IS.ConflictingInputsError("All area most have an AGC service assigned in order to model the System's Frequency regulation"))
+            #    throw(IS.ConflictingInputsError("All area most have an AGC service assigned in order to model the System's Frequency regulation"))
         end
     end
     area_unbalance_variables!(psi_container, areas)
