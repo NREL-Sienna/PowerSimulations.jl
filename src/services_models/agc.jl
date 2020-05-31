@@ -17,10 +17,12 @@ end
 function balancing_auxiliary_variable!(psi_container, sys)
     area_names = (PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys))
     time_steps = model_time_steps(psi_container)
-    variable = add_var_container!(psi_container, variable_name("AGC_aux"), area_names, time_steps)
+    variable =
+        add_var_container!(psi_container, variable_name("AGC_aux"), area_names, time_steps)
 
     for t in time_steps, a in area_names
-        variable[a, t] = JuMP.@variable(psi_container.JuMPmodel, base_name = "ΔP_{$(a),$(t)}")
+        variable[a, t] =
+            JuMP.@variable(psi_container.JuMPmodel, base_name = "ΔP_{$(a),$(t)}")
     end
     return
 end
@@ -175,7 +177,12 @@ function smooth_ace_pid!(psi_container::PSIContainer, service::PSY.AGC)
     return
 end
 
-function participation_assignment!(psi_container::PSIContainer, service::PSY.AGC, contributing_devices, sys::PSY.System)
+function participation_assignment!(
+    psi_container::PSIContainer,
+    service::PSY.AGC,
+    contributing_devices,
+    sys::PSY.System,
+)
     time_steps = model_time_steps(psi_container)
     area_name = PSY.get_name(PSY.get_area(service))
     regulation = get_expression(psi_container, :device_regulation_balance)
@@ -202,10 +209,14 @@ function participation_assignment!(psi_container::PSIContainer, service::PSY.AGC
 
     for (ix, d) in enumerate(temp_values)
         for t in time_steps
-            aux_equation[area_name, t] = JuMP.@constraint(psi_container.JuMPmodel,
-                ΔP[area_name, t] == SACE[t] - area_unbalance[t])
-            participation_assignment[d[1], t] = JuMP.@constraint(psi_container.JuMPmodel,
-                regulation[d[1], t] ==  (d[2]/sum_p_factors) * (ΔP[area_name, t]))
+            aux_equation[area_name, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                ΔP[area_name, t] == SACE[t] - area_unbalance[t]
+            )
+            participation_assignment[d[1], t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                regulation[d[1], t] == (d[2] / sum_p_factors) * (ΔP[area_name, t])
+            )
         end
     end
     return
