@@ -28,7 +28,6 @@ function construct_network!(
     return
 end
 
-
 function construct_network!(
     psi_container::PSIContainer,
     sys::PSY.System,

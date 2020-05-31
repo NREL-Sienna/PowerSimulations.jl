@@ -25,23 +25,25 @@ function frequency_response_constraint!(psi_container::PSIContainer, sys::PSY.Sy
     end
     for g in PSY.get_components(PSY.RegulationDevice, sys)
         d = PSY.get_droop(g)
-        response = 1/d
+        response = 1 / d
         frequency_response += response
     end
 
     @assert frequency_response >= 0.0
     # This value is the one updated later in simulation
-    inv_frequency_reponse = 1/frequency_response
+    inv_frequency_reponse = 1 / frequency_response
     area_unbalance = get_expression(psi_container, :area_unbalance)
-    frequency  = get_variable(psi_container, variable_name("Δf", "AGC"))
+    frequency = get_variable(psi_container, variable_name("Δf", "AGC"))
     container = add_cons_container!(psi_container, :frequency_response, time_steps)
     for t in time_steps
         system_unbalance = JuMP.AffExpr(0.0)
-        for exp in area_unbalance[:,t].data
-           system_unbalance += exp
+        for exp in area_unbalance[:, t].data
+            system_unbalance += exp
         end
-        container[t] = JuMP.@constraint(psi_container.JuMPmodel,
-            frequency[t] == -inv_frequency_reponse*system_unbalance)
+        container[t] = JuMP.@constraint(
+            psi_container.JuMPmodel,
+            frequency[t] == -inv_frequency_reponse * system_unbalance
+        )
     end
     return
 end
@@ -51,21 +53,9 @@ function area_unbalance_variables!(psi_container::PSIContainer, areas)
     up_var_name = variable_name("UP", "Unbalance")
     dn_var_name = variable_name("DN", "Unbalance")
     # Upwards regulation
-    add_variable(
-        psi_container,
-        areas,
-        up_var_name,
-        false;
-        lb_value = x -> 0.0,
-    )
+    add_variable(psi_container, areas, up_var_name, false; lb_value = x -> 0.0)
     # Downwards regulation
-    add_variable(
-        psi_container,
-        areas,
-        dn_var_name,
-        false;
-        lb_value = x -> 0.0,
-    )
+    add_variable(psi_container, areas, dn_var_name, false; lb_value = x -> 0.0)
 
     up_var = get_variable(psi_container, up_var_name)
     dn_var = get_variable(psi_container, dn_var_name)
@@ -111,8 +101,12 @@ function regulation_service_variables!(
     dn_var = get_variable(psi_container, dn_var_name)
     time_steps = model_time_steps(psi_container)
     names = (PSY.get_name(d) for d in contributing_devices)
-    container =
-        add_expression_container!(psi_container, :device_regulation_balance, names, time_steps)
+    container = add_expression_container!(
+        psi_container,
+        :device_regulation_balance,
+        names,
+        time_steps,
+    )
 
     for t in time_steps, n in names
         container[n, t] = JuMP.AffExpr(0.0, up_var[n, t] => 1.0, dn_var[n, t] => -1.0)
@@ -120,7 +114,6 @@ function regulation_service_variables!(
 
     return
 end
-
 
 function smooth_ace_pid!(psi_container::PSIContainer, service::PSY.AGC)
     kp = PSY.get_K_p(service)
@@ -135,19 +128,27 @@ function smooth_ace_pid!(psi_container::PSIContainer, service::PSY.AGC)
     area_unbalance = get_expression(psi_container, :area_unbalance)
     RAW_ACE = add_expression_container!(psi_container, :RAW_ACE, time_steps)
     SACE = add_var_container!(psi_container, variable_name("SACE", area_name), time_steps)
-    area_balance = add_var_container!(psi_container, variable_name("area_balance", area_name), time_steps)
+    area_balance = add_var_container!(
+        psi_container,
+        variable_name("area_balance", area_name),
+        time_steps,
+    )
     SACE_pid = JuMPConstraintArray(undef, time_steps)
     assign_constraint!(psi_container, "SACE_pid", SACE_pid)
     Δf = get_variable(psi_container, variable_name("Δf", "AGC"))
     for t in time_steps
-        SACE[t] = JuMP.@variable(psi_container.JuMPmodel, base_name = "SACE_{$(area_name),$(t)}")
-        area_balance[t] = JuMP.@variable(psi_container.JuMPmodel, base_name = "balance_{$(area_name),$(t)}")
+        SACE[t] =
+            JuMP.@variable(psi_container.JuMPmodel, base_name = "SACE_{$(area_name),$(t)}")
+        area_balance[t] = JuMP.@variable(
+            psi_container.JuMPmodel,
+            base_name = "balance_{$(area_name),$(t)}"
+        )
         if t == 1
             RAW_ACE[t] = JuMP.AffExpr(0.0)
             continue
         end
 
-        RAW_ACE[t] = area_balance[t] - 10*B*Δf[t-1] + area_unbalance[area_name, t-1]
+        RAW_ACE[t] = area_balance[t] - 10 * B * Δf[t - 1] + area_unbalance[area_name, t - 1]
 
         SACE_pid[t] = JuMP.@constraint(
             psi_container.JuMPmodel,

@@ -1,4 +1,9 @@
-function area_balance(psi_container::PSIContainer, expression::Symbol, area_mapping::Dict{String,Array{PSY.Bus,1}}, branches)
+function area_balance(
+    psi_container::PSIContainer,
+    expression::Symbol,
+    area_mapping::Dict{String, Array{PSY.Bus, 1}},
+    branches,
+)
     time_steps = model_time_steps(psi_container)
     remove_undef!(psi_container.expressions[expression])
     nodal_net_balance = psi_container.expressions[expression]
@@ -11,10 +16,8 @@ function area_balance(psi_container::PSIContainer, expression::Symbol, area_mapp
             area_net = JuMP.AffExpr(0.0)
             for b in buses_in_area
                 JuMP.add_to_expression!(area_net, nodal_net_balance[PSY.get_number(b), t])
-                constraint_val[t] = JuMP.@constraint(
-                    psi_container.JuMPmodel,
-                    area_balance[t] == area_net
-                )
+                constraint_val[t] =
+                    JuMP.@constraint(psi_container.JuMPmodel, area_balance[t] == area_net)
             end
         end
     end
