@@ -284,7 +284,7 @@ function activepower_constraints!(
     for (ix, d) in enumerate(devices)
         limits = PSY.get_activepowerlimits(d)
         name = PSY.get_name(d)
-        startramplimits = PSY.get_powertrajectory(d)
+        startramplimits = PSY.get_power_trajectory(d)
         range_data = DeviceRangePGLIB(name, limits, startramplimits)
         add_device_services!(range_data, d, model)
         constraint_data[ix] = range_data
@@ -348,7 +348,7 @@ function initial_range_constraints!(
         limits = PSY.get_activepowerlimits(d)
         name = PSY.get_name(d)
         @assert name == PSY.get_name(ini_conds[ix, 1].device)
-        startramplimits = PSY.get_powertrajectory(d)
+        startramplimits = PSY.get_power_trajectory(d)
         range_data = DeviceRangePGLIB(name, limits, startramplimits)
         add_device_services!(range_data, d, model)
         constraint_data[ix] = range_data
@@ -697,31 +697,41 @@ end
 """
 function turbine_temperature(
     psi_container::PSIContainer,
-    starttime_data::Vector{StartTime},
+    startup_data::Vector{DeviceStartUp},
     cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol},
-    temp_symbol::Tuple{Symbol, Symbol},
+    var_stop::Symbol,
+    var_starts::Tuple{Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
-    varstart = get_variable(psi_container, var_names[2])
-    varstop = get_variable(psi_container, var_names[1])
+    start_vars = [
+        get_variable(psi_container, var_starts[1]),
+        get_variable(psi_container, var_starts[2]),
+    ]
+    varstop = get_variable(psi_container, var_stop)
 
-    set_name = (st.name for st in starttime_data)
-    con = add_cons_container!(psi_container, cons_name, set_name, time_steps)
+    hot_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "hot")
+    warm_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "warm")
 
-    for t in time_steps, st in starttime_data
-        if t >= st.starttime_limits[temp_symbol[2]]
-            name = st.name
-            # constraint (15)
-            con[name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                varstart[name, t] <= sum(
-                    varstop[name, t - i]
-                    for
-                    i in
-                    st.starttime_limits[temp_symbol[1]]:(st.starttime_limits[temp_symbol[2]] - 1)
+    names = (st.name for st in startup_data)
+
+    con = [
+        add_cons_container!(psi_container, hot_name, names, time_steps),
+        add_cons_container!(psi_container, warm_name, names, time_steps),
+    ]
+
+    # constraint (15)
+    for t in time_steps, st in startup_data
+        for ix in 1:(st.startup_types - 1)
+            if t >= st.time_limits[ix + 1]
+                name = st.name
+                con[ix][name, t] = JuMP.@constraint(
+                    psi_container.JuMPmodel,
+                    start_vars[ix][name, t] <= sum(
+                        varstop[name, t - i]
+                        for i in st.time_limits[ix]:(st.time_limits[ix + 1] - 1)
+                    )
                 )
-            )
+            end
         end
     end
     return
@@ -732,24 +742,29 @@ end
 """
 function device_start_type_constraint(
     psi_container::PSIContainer,
-    data::Vector{String},
+    data::Vector{DeviceStartTypes},
     cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol, Symbol},
+    var_start::Symbol,
+    var_names::Tuple{Symbol, Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
-    varstart = get_variable(psi_container, var_names[1])
-    varcold = get_variable(psi_container, var_names[2])
-    varwarm = get_variable(psi_container, var_names[3])
-    varhot = get_variable(psi_container, var_names[4])
+    varstart = get_variable(psi_container, var_start)
+    start_vars = [
+        get_variable(psi_container, var_names[1]),
+        get_variable(psi_container, var_names[2]),
+        get_variable(psi_container, var_names[3]),
+    ]
 
-    set_name = (st for st in data)
+    set_name = (d.name for d in data)
     con = add_cons_container!(psi_container, cons_name, set_name, time_steps)
 
-    for t in time_steps, name in data
+    for t in time_steps, d in data
         # constraint (16)
+        name = d.name
         con[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            varstart[name, t] <= varcold[name, t] + varwarm[name, t] + varhot[name, t]
+            varstart[name, t] <=
+            sum(start_vars[ix][name, t] for ix in 1:(d.startup_types))
         )
     end
     return
@@ -758,53 +773,33 @@ end
 """
 #TODO: Finish the doc string
 """
-function _get_data_ic_startup_pglib(initial_conditions::Vector{InitialCondition})
-    lenght_devices = length(initial_conditions)
-    ini_conds = Vector{InitialCondition}(undef, lenght_devices)
-    starttime_limits = Vector{StartUp}(undef, lenght_devices)
-    for (ix, ic) in enumerate(initial_conditions)
-        g = ic.device
-        name = PSY.get_name(g)
-        starttime_limits[ix] = PSY.get_powertrajectory(g)
-        ini_conds[ix] = ic
-    end
-    return ini_conds, starttime_limits
-end
-
-"""
-#TODO: Finish the doc string
-"""
 function device_startup_initial_condition(
     psi_container::PSIContainer,
-    data::Vector{StartUp},
+    data::Vector{DeviceStartUp},
     initial_conditions::Vector{InitialCondition},
     cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol, Symbol},
+    var_names::Tuple{Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
     T = length(time_steps)
-    varcold = get_variable(psi_container, var_names[1])
-    varwarm = get_variable(psi_container, var_names[2])
-    varhot = get_variable(psi_container, var_names[3])
 
     set_name = (device_name(ic) for ic in initial_conditions)
-    con = add_cons_container!(psi_container, cons_name, set_name, 1)
+    con = add_cons_container!(psi_container, cons_name, set_name)
 
-    for (ix, ic) in enumerate(initial_conditions[:, 1])
-        name = device_name(ic)
+    for (ix, d) in enumerate(data)
+        name = d.name
         # adds contraints (7)
-        con[name, 1] = JuMP.@constraint(
-            psi_container.JuMPmodel,
-            sum(
-                varwarm[name, t]
-                for
-                t in max(1, data[ix][:cold] - ic.value + 1):min(T, data[ix][:cold] - 1)
-            ) + sum(
-                varhot[name, t]
-                for
-                t in max(1, data[ix][:warm] - ic.value + 1):min(T, data[ix][:cold] - 1)
-            ) == 0
-        )
+        expression = JuMP.AffExpr(0.0)
+        ic = initial_conditions[ix]
+        for st in 1:(d.startup_types - 1)
+            for t in max(1, d.time_limits[st + 1] - ic.value + 1):min(T, d.time_limits[st + 1] - 1)
+                JuMP.add_to_expression!(
+                    expression,
+                    get_variable(psi_container, var_names[st])[name, t],
+                )
+            end
+        end
+        con[name] = JuMP.@constraint(psi_container.JuMPmodel, expression == 0)
     end
     return
 end
@@ -821,31 +816,24 @@ function startup_time_constraints!(
 ) where {S <: PM.AbstractPowerModel}
 
     time_steps = model_time_steps(psi_container)
-    constraint_data = Vector{StartTime}(undef, length(devices))
+    constraint_data = Vector{DeviceStartUp}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        starttime = PSY.get_powertrajectory(d)
+        starttime = PSY.get_start_time_limits(d)
         name = PSY.get_name(d)
-        range_data = StartTime(name, starttime)
+        start_types = PSY.get_start_types(d)
+        range_data = DeviceStartUp(name, starttime, start_types)
         constraint_data[ix] = range_data
     end
     # adds constraint(15)
     turbine_temperature(
         psi_container,
         constraint_data,
-        constraint_name(WARM_START_TIME, PSY.ThermalPGLIB),
+        constraint_name(STARTUP_TIMELIMIT, PSY.ThermalPGLIB),
+        variable_name(STOP, PSY.ThermalPGLIB),
         (
             variable_name(WARM_START, PSY.ThermalPGLIB),
-            variable_name(STOP, PSY.ThermalPGLIB),
+            variable_name(HOT_START, PSY.ThermalPGLIB),
         ),
-        (:warm, :cold),
-    )
-
-    turbine_temperature(
-        psi_container,
-        constraint_data,
-        constraint_name(HOT_START_TIME, PSY.ThermalPGLIB),
-        (variable_name(HOT_START, PSY.ThermalPGLIB), variable_name(STOP, PSY.ThermalPGLIB)),
-        (:hot, :warm),
     )
     return
 end
@@ -861,22 +849,46 @@ function startup_type_constraints!(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
     time_steps = model_time_steps(psi_container)
-    constraint_data = PSY.get_name.(devices)
+    constraint_data = Vector{DeviceStartTypes}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
+        name = PSY.get_name(d)
+        start_types = PSY.get_start_types(d)
+        range_data = DeviceStartTypes(name, start_types)
+        constraint_data[ix] = range_data
+    end
+
     # adds constraint (16)
     device_start_type_constraint(
         psi_container,
         constraint_data,
-        constraint_name(START_TIME, PSY.ThermalPGLIB),
+        constraint_name(START_TYPE, PSY.ThermalPGLIB),
+        variable_name(START, PSY.ThermalPGLIB),
         (
-            variable_name(START, PSY.ThermalPGLIB),
-            variable_name(COLD_START, PSY.ThermalPGLIB),
-            variable_name(WARM_START, PSY.ThermalPGLIB),
             variable_name(HOT_START, PSY.ThermalPGLIB),
+            variable_name(WARM_START, PSY.ThermalPGLIB),
+            variable_name(COLD_START, PSY.ThermalPGLIB),
         ),
     )
     return
 end
 
+"""
+#TODO: Finish the doc string
+"""
+function _get_data_startup_ic(initial_conditions::Vector{InitialCondition})
+    lenght_devices = length(initial_conditions)
+    data = Vector{DeviceStartUp}(undef, lenght_devices)
+    for (ix, ic) in enumerate(initial_conditions)
+        g = ic.device
+        name = PSY.get_name(g)
+        data[ix] = DeviceStartUp(name, PSY.get_start_time_limits(g), PSY.get_start_types(g))
+    end
+    return data
+end
+
+"""
+#TODO: Finish the doc string
+"""
 function startup_initial_condition_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.ThermalPGLIB},
@@ -889,17 +901,16 @@ function startup_initial_condition_constraints!(
     resolution = model_resolution(psi_container)
     key_off = ICKey(TimeDurationOFF, PSY.ThermalPGLIB)
     initial_conditions_offtime = get_initial_conditions(psi_container, key_off)
-    ini_conds, starttime_limits = _get_data_ic_startup_pglib(initial_conditions_offtime)
+    constraint_data = _get_data_startup_ic(initial_conditions_offtime)
     # adds constraint (7)
     device_startup_initial_condition(
         psi_container,
-        starttime_limits,
-        ini_conds,
-        constraint_name(INITIAL_START_TIME, PSY.ThermalPGLIB),
+        constraint_data,
+        initial_conditions_offtime,
+        constraint_name(STARTUP_INITIAL_CONDITION, PSY.ThermalPGLIB),
         (
-            variable_name(COLD_START, PSY.ThermalPGLIB),
-            variable_name(WARM_START, PSY.ThermalPGLIB),
             variable_name(HOT_START, PSY.ThermalPGLIB),
+            variable_name(WARM_START, PSY.ThermalPGLIB),
         ),
     )
     return
@@ -997,7 +1008,17 @@ function cost_function(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
-    add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
+    if isnothing(feedforward)
+        add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
+    else
+        add_to_cost(
+            psi_container,
+            devices,
+            variable_name(ACTIVE_POWER, T),
+            :variable;
+            parameter_on = variable_name(ON, T),
+        )
+    end
     return
 end
 
@@ -1101,7 +1122,14 @@ function cost_function(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
     #Variable Cost component
-    add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
+    add_to_cost(
+        psi_container,
+        devices,
+        variable_name(ACTIVE_POWER, T),
+        :variable;
+        variable_on = variable_name(ON, T),
+    )
+
     #Commitment Cost Components
     add_to_cost(psi_container, devices, variable_name(START, T), :startup)
     add_to_cost(psi_container, devices, variable_name(STOP, T), :shutdn)
@@ -1117,109 +1145,35 @@ function cost_function(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 )
     #Variable Cost component
+    add_to_cost(
+        psi_container,
+        devices,
+        variable_name(ACTIVE_POWER, PSY.ThermalPGLIB),
+        :variable;
+        variable_on = variable_name(ON, PSY.ThermalPGLIB),
+    )
+    add_to_cost(psi_container, devices, variable_name(ON, PSY.ThermalPGLIB), :no_load)
+
+    ## Start up cost 
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Minute(resolution)) / 60
-    varp = get_variable(psi_container, variable_name(ACTIVE_POWER, PSY.ThermalPGLIB))
-    varon = get_variable(psi_container, variable_name(ON, PSY.ThermalPGLIB))
-
-    # uses the same cost function whenever there is NO PWL
-    function _ps_cost(d::PSY.ThermalGen, cost_component::PSY.VariableCost)
-        return ps_cost(psi_container, varp[PSY.get_name(d), :], cost_component, dt, 1.0)
-    end
-
-    function _ps_cost(
-        d::PSY.ThermalGen,
-        cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
-    )
-        gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-        for (ix, variable) in enumerate(varp[PSY.get_name(d), :])
-            pwlvars = JuMP.@variable(
-                psi_container.JuMPmodel,
-                [i = 1:length(cost_component)],
-                base_name = "{$(variable)}_{sos}",
-                start = 0.0,
-                lower_bound = 0.0,
-                upper_bound = 1.0
-            )
-
-            # Constraint(23)
-            JuMP.@constraint(
-                psi_container.JuMPmodel,
-                sum(pwlvars) <= varon[PSY.get_name(d), ix]
-            )
-            JuMP.@constraint(
-                psi_container.JuMPmodel,
-                pwlvars in MOI.SOS2(collect(1:length(pwlvars)))
-            )
-            # Constraint(22)
-            for (ix, var) in enumerate(pwlvars)
-                JuMP.add_to_expression!(
-                    gen_cost,
-                    (cost_component[ix][1] - cost_component[1][1]) * var,
-                )
-            end
-
-            # Constraint(21)
-            JuMP.@constraint(
-                psi_container.JuMPmodel,
-                variable == sum([
-                    var * (cost_component[ix][2] - cost_component[1][2])
-                    for (ix, var) in enumerate(pwlvars)
-                ])
-            )
-        end
-
-        return gen_cost
-    end
-
-    for d in devices
-        cost_component = PSY.get_variable(PSY.get_op_cost(d))
-        cost_expression = _ps_cost(d, cost_component)
-        T_ce = typeof(cost_expression)
-        T_cf = typeof(psi_container.cost_function)
-        if T_cf <: JuMP.GenericAffExpr && T_ce <: JuMP.GenericQuadExpr
-            psi_container.cost_function += cost_expression
-        else
-            JuMP.add_to_expression!(psi_container.cost_function, cost_expression)
-        end
-    end
-    ## Start up cost 
 
     function _ps_cost(d::PSY.ThermalGen, cost_component::StartUp)
         gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-        JuMP.add_to_expression!(
-            gen_cost,
-            ps_cost(
-                psi_container,
-                variable_name(COLD_START, PSY.ThermalPGLIB),
-                PSY.get_name(d),
-                cost_component[:hot],
-                dt,
-                1.0,
-            ),
-        )
-        JuMP.add_to_expression!(
-            gen_cost,
-            ps_cost(
-                psi_container,
-                variable_name(WARM_START, PSY.ThermalPGLIB),
-                PSY.get_name(d),
-                cost_component[:warm],
-                dt,
-                1.0,
-            ),
-        )
-        JuMP.add_to_expression!(
-            gen_cost,
-            ps_cost(
-                psi_container,
-                variable_name(HOT_START, PSY.ThermalPGLIB),
-                PSY.get_name(d),
-                cost_component[:cold],
-                dt,
-                1.0,
-            ),
-        )
+        startup_var = (HOT_START, WARM_START, COLD_START)
+        for st in 1:PSY.get_start_types(d)
+            JuMP.add_to_expression!(
+                gen_cost,
+                ps_cost(
+                    psi_container,
+                    variable_name(startup_var[st], PSY.ThermalPGLIB),
+                    PSY.get_name(d),
+                    cost_component[st],
+                    dt,
+                    1.0,
+                ),
+            )
+        end
         return gen_cost
 
     end
