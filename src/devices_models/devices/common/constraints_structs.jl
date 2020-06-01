@@ -93,7 +93,13 @@ function DeviceRampPGLIB(name::String)
     )
 end
 
-struct StartTime
+struct DeviceStartUp
     name::String
-    starttime_limits::NamedTuple{(:cold, :warm, :hot), Tuple{Float64, Float64, Float64}}
+    time_limits::StartUp
+    startup_types::Int
+end
+
+struct DeviceStartTypes
+    name::String
+    startup_types::Int
 end
