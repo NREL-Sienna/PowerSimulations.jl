@@ -926,20 +926,6 @@ function build_c_sys5_pglib(; kwargs...)
                     Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
                 )
             end
-            for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_uc))
-                add_forecast!(
-                    c_sys5_uc,
-                    r,
-                    Deterministic("get_rating", ren_timeseries_DA[t][ix]),
-                )
-            end
-            for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_uc))
-                add_forecast!(
-                    c_sys5_uc,
-                    i,
-                    Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]),
-                )
-            end
         end
     end
 

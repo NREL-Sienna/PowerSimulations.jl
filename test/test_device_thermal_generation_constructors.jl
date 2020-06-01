@@ -338,12 +338,14 @@ end
     end
 end
 
-################################### Ramp Limited Testing ##################################
+################################### PGLIB Testing ##################################
 
-@testset "Thermal Ramp Limited Dispatch With DC - PF" begin
+@testset "Thermal PGLIB Dispatch With DC - PF" begin
     constraint_names = [
-        PSI.constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
+        PSI.constraint_name(PSI.ACTIVE_RANGE_IC, PSY.ThermalPGLIB),
+        PSI.constraint_name(PSI.START_TYPE, PSY.ThermalPGLIB),
+        # PSI.constraint_name(PSI.STARTUP_TIMELIMIT, PSY.ThermalPGLIB),
+        PSI.constraint_name(PSI.STARTUP_INITIAL_CONDITION, PSY.ThermalPGLIB),
     ]
     model = DeviceModel(PSY.ThermalPGLIB, PSI.ThermalPGLIBUnitCommitment)
     @info "5-Bus testing"
@@ -356,7 +358,7 @@ end
             use_parameters = p,
         )
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 120, 0, 216, 120, 0, false)
+        moi_tests(op_problem, p, 528, 0, 274, 0, 122, true)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
