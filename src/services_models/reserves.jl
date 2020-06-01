@@ -99,7 +99,7 @@ function include_service!(constraint_data::DeviceTimeSeries, services, SM::Servi
 end
 
 function include_service!(
-    constraint_data::{DeviceRange,DeviceRangePGLIB},
+    constraint_data::Union{DeviceRange,DeviceRangePGLIB},
     services,
     ::ServiceModel{SR, <:AbstractReservesFormulation},
 ) where {SR <: PSY.Reserve{PSY.ReserveUp}}
