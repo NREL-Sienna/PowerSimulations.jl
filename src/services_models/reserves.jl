@@ -171,6 +171,22 @@ function add_device_services!(
 end
 
 function add_device_services!(
+    constraint_data::RangeConstraintsData,
+    device::D,
+    model::DeviceModel,
+) where {D <: PSY.Device}
+    for service_model in get_services(model)
+        if PSY.has_service(device, service_model.service_type)
+            services =
+                (s for s in PSY.get_services(device) if isa(s, service_model.service_type))
+            @assert !isempty(services)
+            include_service!(constraint_data, services, service_model)
+        end
+    end
+    return
+end
+
+function add_device_services!(
     constraint_data_in::RangeConstraintsData,
     constraint_data_out::RangeConstraintsData,
     device::D,
