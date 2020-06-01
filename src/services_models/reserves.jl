@@ -99,7 +99,7 @@ function include_service!(constraint_data::DeviceTimeSeries, services, SM::Servi
 end
 
 function include_service!(
-    constraint_data::DeviceRange,
+    constraint_data::{DeviceRange,DeviceRangePGLIB},
     services,
     ::ServiceModel{SR, <:AbstractReservesFormulation},
 ) where {SR <: PSY.Reserve{PSY.ReserveUp}}
@@ -113,7 +113,35 @@ function include_service!(
 end
 
 function include_service!(
-    constraint_data::DeviceRange,
+    constraint_data::Union{DeviceRange,DeviceRangePGLIB},
+    services,
+    ::ServiceModel{SR, <:AbstractReservesFormulation},
+) where {SR <: PSY.Reserve{PSY.ReserveDown}}
+    for (ix, service) in enumerate(services)
+        push!(
+            constraint_data.additional_terms_lb,
+            constraint_name(PSY.get_name(service), SR),
+        )
+    end
+    return
+end
+
+function include_service!(
+    constraint_data::RampConstraintsData,
+    services,
+    ::ServiceModel{SR, <:AbstractReservesFormulation},
+) where {SR <: PSY.Reserve{PSY.ReserveUp}}
+    for (ix, service) in enumerate(services)
+        push!(
+            constraint_data.additional_terms_ub,
+            constraint_name(PSY.get_name(service), SR),
+        )
+    end
+    return
+end
+
+function include_service!(
+    constraint_data::RampConstraintsData,
     services,
     ::ServiceModel{SR, <:AbstractReservesFormulation},
 ) where {SR <: PSY.Reserve{PSY.ReserveDown}}
@@ -127,7 +155,7 @@ function include_service!(
 end
 
 function add_device_services!(
-    constraint_data::RangeConstraintsData,
+    constraint_data::RampConstraintsData,
     device::D,
     model::DeviceModel,
 ) where {D <: PSY.Device}

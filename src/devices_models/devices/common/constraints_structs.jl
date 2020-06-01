@@ -1,4 +1,5 @@
 abstract type RangeConstraintsData end
+abstract type RampConstraintsData end
 
 """ Data Container to construct range constraints"""
 struct DeviceRange <: RangeConstraintsData
@@ -71,7 +72,7 @@ function DeviceRangePGLIB(name::String)
     )
 end
 
-struct DeviceRampPGLIB <: PSI.RangeConstraintsData
+struct DeviceRampPGLIB <: PSI.RampConstraintsData
     name::String
     limits::PSI.MinMax
     ramplimits::PSI.UpDown
