@@ -57,6 +57,7 @@ export ThermalBasicUnitCommitment
 export ThermalDispatch
 export ThermalRampLimited
 export ThermalDispatchNoMin
+export ThermalPGLIBUnitCommitment
 
 # feedforward chrons
 export RecedingHorizon
