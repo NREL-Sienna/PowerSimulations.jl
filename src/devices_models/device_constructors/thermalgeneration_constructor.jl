@@ -301,7 +301,7 @@ function construct_device!(
     if !validate_available_devices(PSY.ThermalPGLIB, devices)
         return
     end
-    @show "Custom PGLIB Thermal Constructor"
+
     #Variables
     activepower_variables!(psi_container, devices)
     reactivepower_variables!(psi_container, devices)
@@ -326,6 +326,7 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
+    initial_range_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, PSY.ThermalPGLIB, get_feedforward(model))
     #Cost Function
     cost_function(psi_container, devices, model.formulation, S, get_feedforward(model))
@@ -345,7 +346,7 @@ function construct_device!(
     if !validate_available_devices(PSY.ThermalPGLIB, devices)
         return
     end
-    @show "Custom PGLIB Thermal Constructor"
+
     #Variables
     activepower_variables!(psi_container, devices)
     commitment_variables!(psi_container, devices)
@@ -368,6 +369,7 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
+    initial_range_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, PSY.ThermalPGLIB, get_feedforward(model))
     #Cost Function
     cost_function(psi_container, devices, model.formulation, S, get_feedforward(model))
