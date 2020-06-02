@@ -831,8 +831,8 @@ function startup_time_constraints!(
         constraint_name(STARTUP_TIMELIMIT, PSY.ThermalPGLIB),
         variable_name(STOP, PSY.ThermalPGLIB),
         (
-            variable_name(WARM_START, PSY.ThermalPGLIB),
             variable_name(HOT_START, PSY.ThermalPGLIB),
+            variable_name(WARM_START, PSY.ThermalPGLIB),
         ),
     )
     return
