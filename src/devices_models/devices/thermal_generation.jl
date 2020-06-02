@@ -939,7 +939,7 @@ function must_run_constraints!(
         psi_container,
         constraint_data,
         constraint_name(MUST_RUN, PSY.ThermalPGLIB),
-        variable_name(ON, PSY.ThermalPGLIBR),
+        variable_name(ON, PSY.ThermalPGLIB),
     )
     return
 end
