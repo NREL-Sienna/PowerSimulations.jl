@@ -279,7 +279,7 @@ function device_duration_parameters(
             # Minimum Up-time Constraint
             lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}(0)
             for i in (t - duration_data[ix].up + 1):t
-                if t <= duration_data[ix].up
+                if i <= duration_data[ix].up
                     if in(i, time_steps)
                         JuMP.add_to_expression!(lhs_on, varon[name, i])
                     end
@@ -306,7 +306,7 @@ function device_duration_parameters(
             # Minimum Down-time Constraint
             lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}(0)
             for i in (t - duration_data[ix].down + 1):t
-                if t <= duration_data[ix].down
+                if i <= duration_data[ix].down
                     if in(i, time_steps)
                         JuMP.add_to_expression!(lhs_off, (1 - varon[name, i]))
                     end
