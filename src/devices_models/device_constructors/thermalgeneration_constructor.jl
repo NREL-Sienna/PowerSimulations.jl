@@ -326,6 +326,7 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
+    must_run_constraints!(psi_container, devices, model, S, get_feedforward(model))
     initial_range_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, PSY.ThermalPGLIB, get_feedforward(model))
     #Cost Function
@@ -369,6 +370,7 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
+    must_run_constraints!(psi_container, devices, model, S, get_feedforward(model))
     initial_range_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, PSY.ThermalPGLIB, get_feedforward(model))
     #Cost Function

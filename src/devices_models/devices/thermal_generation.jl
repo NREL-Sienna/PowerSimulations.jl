@@ -916,6 +916,34 @@ function startup_initial_condition_constraints!(
     return
 end
 
+"""
+#TODO: Finish the doc string
+"""
+function must_run_constraints!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalPGLIB},
+    model::DeviceModel{PSY.ThermalPGLIB, ThermalPGLIBUnitCommitment},
+    system_formulation::Type{S},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {S <: PM.AbstractPowerModel}
+    time_steps = model_time_steps(psi_container)
+    forecast_label = "get_must_run"
+    constraint_data = Vector{DeviceTimeSeries}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
+        ts_vector = ones(time_steps[end])
+        timeseries_data = DeviceTimeSeries(d, x -> PSY.get_must_run(x), ts_vector)
+        constraint_data[ix] = timeseries_data
+    end
+    # adds constraint (11)
+    device_timeseries_lb(
+        psi_container,
+        constraint_data,
+        constraint_name(MUST_RUN, PSY.ThermalPGLIB),
+        variable_name(ON, PSY.ThermalPGLIBR),
+    )
+    return
+end
+
 ########################### time duration constraints ######################################
 """
 If the fraction of hours that a generator has a duration constraint is less than
