@@ -1153,6 +1153,7 @@ function cost_function(
         variable_on = variable_name(ON, PSY.ThermalPGLIB),
     )
     add_to_cost(psi_container, devices, variable_name(ON, PSY.ThermalPGLIB), :no_load)
+    add_to_cost(psi_container, devices, variable_name(ON, PSY.ThermalPGLIB), :fixed)
 
     ## Start up cost 
     resolution = model_resolution(psi_container)
