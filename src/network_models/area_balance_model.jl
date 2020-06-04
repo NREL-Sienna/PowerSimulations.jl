@@ -8,8 +8,8 @@ function area_balance(
     remove_undef!(psi_container.expressions[expression])
     nodal_net_balance = psi_container.expressions[expression]
     constraint_bal = JuMPConstraintArray(undef, keys(area_mapping), time_steps)
-    assign_constraint!(psi_container, "area_balance", constraint_bal)
-    area_balance = get_variable(psi_container, variable_name("area_balance"))
+    assign_constraint!(psi_container, "area_dispatch_balance", constraint_bal)
+    area_balance = get_variable(psi_container, variable_name("area_dispatch_balance"))
 
     for (k, buses_in_area) in area_mapping
         for t in time_steps
