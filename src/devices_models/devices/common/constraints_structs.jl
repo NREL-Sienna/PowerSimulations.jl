@@ -81,11 +81,11 @@ struct DeviceRampPGLIB <: PSI.RampConstraintsData
 end
 
 function DeviceRampPGLIB(name::String, limits::PSY.Min_Max, ramplimits::PSI.UpDown)
-    return DeviceRangePGLIB(name, limits, ramplimits, Vector{Symbol}(), Vector{Symbol}())
+    return DeviceRampPGLIB(name, limits, ramplimits, Vector{Symbol}(), Vector{Symbol}())
 end
 
 function DeviceRampPGLIB(name::String)
-    return DeviceRangePGLIB(
+    return DeviceRampPGLIB(
         name,
         (min = -Inf, max = Inf),
         (up = Inf, down = Inf),
