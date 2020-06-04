@@ -10,11 +10,11 @@ function construct_device!(
     T <: PSY.StaticInjection,
     S <: PM.AbstractPowerModel,
 }
-    if S != AbstractRegulationFormulation
+    if S != AreaBalancePowerModel
         throw(ArgumentError("AGC is only compatible with AreaBalancePowerModel"))
     end
 
-    devices = get_available_components(PSY.RegulationDevice, sys)
+    devices = get_available_components(PSY.RegulationDevice{T}, sys)
 
     #Variables
     regulation_service_variables!(psi_container, devices)
