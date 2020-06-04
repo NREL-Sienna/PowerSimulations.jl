@@ -562,17 +562,12 @@ function _get_data_for_rocc_pglib(
         if !isnothing(ramplimits)
             p_lims = PSY.get_activepowerlimits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramplimits.up * rating >= max_rate) & (ramplimits.down * rating >= max_rate)
-                @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
-                continue
-            else
-                idx += 1
-            end
+            idx += 1
             ini_conds[idx, 1] = ic
             ini_conds[idx, 2] = initial_conditions_status[ix]
             ramp = (
-                up = ramplimits.up * rating * minutes_per_period,
-                down = ramplimits.down * rating * minutes_per_period,
+                up = ramplimits.up *  minutes_per_period,
+                down = ramplimits.down *  minutes_per_period,
             )
             data[idx] = DeviceRampPGLIB(name, p_lims, ramp)
         end
@@ -763,7 +758,7 @@ function device_start_type_constraint(
         name = d.name
         con[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            varstart[name, t] <=
+            varstart[name, t] ==
             sum(start_vars[ix][name, t] for ix in 1:(d.startup_types))
         )
     end
@@ -1028,6 +1023,45 @@ function time_constraints!(
     return
 end
 
+function time_constraints!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, ThermalPGLIBUnitCommitment},
+    system_formulation::Type{S},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
+    parameters = model_has_parameters(psi_container)
+    resolution = model_resolution(psi_container)
+    initial_conditions_on = get_initial_conditions(psi_container, ICKey(TimeDurationON, T))
+    initial_conditions_off =
+        get_initial_conditions(psi_container, ICKey(TimeDurationOFF, T))
+    ini_conds, time_params =
+        _get_data_for_tdc(initial_conditions_on, initial_conditions_off, resolution)
+    if !(isempty(ini_conds))
+        if parameters
+            device_duration_parameters(
+                psi_container,
+                time_params,
+                ini_conds,
+                constraint_name(DURATION, T),
+                (variable_name(ON, T), variable_name(START, T), variable_name(STOP, T)),
+            )
+        else
+            device_duration_pglib(
+                psi_container,
+                time_params,
+                ini_conds,
+                constraint_name(DURATION, T),
+                (variable_name(ON, T), variable_name(START, T), variable_name(STOP, T)),
+            )
+        end
+    else
+        @warn "Data doesn't contain generators with time-up/down limits, consider adjusting your formulation"
+    end
+    return
+end
+
+
 ########################### Cost Function Calls#############################################
 function cost_function(
     psi_container::PSIContainer,
@@ -1172,22 +1206,68 @@ function cost_function(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 )
+    resolution = model_resolution(psi_container)
+    dt = Dates.value(Dates.Minute(resolution)) / 60
     #Variable Cost component
-    add_to_cost(
-        psi_container,
-        devices,
-        variable_name(ACTIVE_POWER, PSY.ThermalPGLIB),
-        :variable;
-        variable_on = variable_name(ON, PSY.ThermalPGLIB),
-    )
     add_to_cost(psi_container, devices, variable_name(ON, PSY.ThermalPGLIB), :no_load)
     add_to_cost(psi_container, devices, variable_name(ON, PSY.ThermalPGLIB), :fixed)
 
-    ## Start up cost 
-    resolution = model_resolution(psi_container)
-    dt = Dates.value(Dates.Minute(resolution)) / 60
+    function _ps_cost(d::PSY.ThermalPGLIB, 
+        cost_component::PSY.VariableCost, 
+        var_name::Symbol, 
+        dt::Float64,
+        sign::Float64 = 1.0;
+        kwargs...,
+    )
+        gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
+        index = PSY.get_name(d)
+        cost_array = cost_component.cost
+        all(iszero.(last.(cost_array))) && return JuMP.AffExpr(0.0)
+        variable = get_variable(psi_container, var_name)[index, :]
+        bin = get_variable(psi_container, kwargs[:variable_on])[index, :]
+        if !haskey(psi_container.variables, :PWL_cost_vars)
+            time_steps = model_time_steps(psi_container)
+            container = add_var_container!(
+                psi_container,
+                :PWL_cost_vars,
+                [index],
+                time_steps,
+                1:length(cost_component);
+                sparse = true,
+            )
+        else
+            container = get_variable(psi_container, :PWL_cost_vars)
+        end
+        for (t, var) in enumerate(variable)
+            c, pwl_vars = _pwlgencost_sos(psi_container, var, cost_array; on_status = bin[t])
+            for (ix, v) in enumerate(pwl_vars)
+                container[(index, t, ix)] = v
+            end
+            JuMP.add_to_expression!(gen_cost, c)
+        end
 
-    function _ps_cost(d::PSY.ThermalGen, cost_component::StartUp)
+        return sign * gen_cost * dt
+    end
+
+    for d in devices
+        cost_component = PSY.get_variable(PSY.get_op_cost(d))
+        cost_expression = _ps_cost(d, 
+            cost_component, 
+            variable_name(ACTIVE_POWER, PSY.ThermalPGLIB),
+            dt;
+            variable_on = variable_name(ON, PSY.ThermalPGLIB),
+        )
+        T_ce = typeof(cost_expression)
+        T_cf = typeof(psi_container.cost_function)
+        if T_cf <: JuMP.GenericAffExpr && T_ce <: JuMP.GenericQuadExpr
+            psi_container.cost_function += cost_expression
+        else
+            JuMP.add_to_expression!(psi_container.cost_function, cost_expression)
+        end
+    end
+
+    ## Start up cost 
+    function _ps_cost(d::PSY.ThermalPGLIB, cost_component::StartUp)
         gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
         startup_var = (HOT_START, WARM_START, COLD_START)
         for st in 1:PSY.get_start_types(d)
