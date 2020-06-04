@@ -222,7 +222,7 @@ function device_pglib_rateofchange(
     varstart = PSI.get_variable(psi_container, var_names[2])
     varstop = PSI.get_variable(psi_container, var_names[3])
 
-    set_name = (PSI.device_name(ic) for ic in initial_conditions)
+    set_name = (PSI.device_name(ic) for ic in initial_conditions[:, 1])
     con_up = PSI.add_cons_container!(psi_container, up_name, set_name, time_steps)
     con_down = PSI.add_cons_container!(psi_container, down_name, set_name, time_steps)
 
@@ -230,33 +230,33 @@ function device_pglib_rateofchange(
         name = PSI.device_name(ic)
         #constriant (8)
         expression_ub = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
-        for val in rate_data.additional_terms_ub
+        for val in rate_data[ix].additional_terms_ub
             JuMP.add_to_expression!(
                 expression_ub,
-                get_variable(psi_container, val)[rate_data.name, 1],
+                get_variable(psi_container, val)[name, 1],
             )
         end
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             expression_ub -
             initial_conditions[ix, 2].value *
-            (initial_conditions[ix, 1].value - rate_data[2][ix].min) <=
-            rate_data[1][ix].up
+            (initial_conditions[ix, 1].value - rate_data[ix].limits.min) <=
+            rate_data[ix].ramplimits.up
         )
         #constraint (9)
-        expression_lb = JuMP.AffExpr(0.0, variable[rate_data.name, 1] => 1.0)
-        for val in rate_data.additional_terms_lb
+        expression_lb = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
+        for val in rate_data[ix].additional_terms_lb
             JuMP.add_to_expression!(
                 expression_lb,
-                get_variable(psi_container, val)[rate_data.name, 1],
+                get_variable(psi_container, val)[name, 1],
                 1.0,
             )
         end
         con_down[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             initial_conditions[ix, 2].value *
-            (initial_conditions[ix, 1].value - rate_data[2][ix].min) - expression_lb <=
-            rate_data[1][ix].down
+            (initial_conditions[ix, 1].value - rate_data[ix].limits.min) - expression_lb <=
+            rate_data[ix].ramplimits.down
         )
     end
 
@@ -264,28 +264,28 @@ function device_pglib_rateofchange(
         name = d.name
         #constraint (19)
         expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
-        for val in rate_data.additional_terms_ub
+        for val in d.additional_terms_ub
             JuMP.add_to_expression!(
                 expression_ub,
-                get_variable(psi_container, val)[rate_data.name, t],
+                get_variable(psi_container, val)[name, t],
             )
         end
         con_up[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            expression_ub - variable[name, t - 1] <= rate_data[ix].ramplimits.up
+            expression_ub - variable[name, t - 1] <= d.ramplimits.up
         )
         #constraint (20)
-        expression_lb = JuMP.AffExpr(0.0, variable[rate_data.name, t] => 1.0)
-        for val in rate_data.additional_terms_lb
+        expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+        for val in d.additional_terms_lb
             JuMP.add_to_expression!(
                 expression_lb,
-                get_variable(psi_container, val)[rate_data.name, t],
+                get_variable(psi_container, val)[name, t],
                 1.0,
             )
         end
         con_down[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, t - 1] - expression_lb <= rate_data[1][ix].down
+            variable[name, t - 1] - expression_lb <= d.ramplimits.down
         )
     end
 
