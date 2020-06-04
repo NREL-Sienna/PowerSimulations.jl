@@ -220,6 +220,23 @@ function storage_energy_init(
     return
 end
 
+function area_control_init(
+    container::InitialConditions,
+    services::IS.FlattenIteratorWrapper{PSY.AGC},
+)
+    key = ICKey(AreaControlError, PSY.AGC)
+    _make_initial_conditions!(
+        container,
+        services,
+        key,
+        _make_initial_condition_area_control,
+        _get_ace_error,
+        # Doesn't require Cache
+    )
+
+    return
+end
+
 function _make_initial_conditions!(
     container::InitialConditions,
     devices::IS.FlattenIteratorWrapper{T},
@@ -227,7 +244,7 @@ function _make_initial_conditions!(
     make_ic_func::Function,
     get_val_func::Function,
     cache = nothing,
-) where {T <: PSY.Device}
+) where {T <: PSY.Component}
     length_devices = length(devices)
 
     if !has_initial_conditions(container, key)
@@ -296,6 +313,15 @@ function _make_initial_condition_reservoir_energy(
     return InitialCondition(device, _get_ref_reservoir_energy(T, container), value, cache)
 end
 
+function _make_initial_condition_area_control(
+    container,
+    device::PSY.AGC,
+    value,
+    cache = nothing,
+)
+    return InitialCondition(device, _get_ref_ace_error(PSY.AGC, container), value, cache)
+end
+
 function _get_status_value(device, key)
     return PSY.get_status(device) ? 1.0 : 0.0
 end
@@ -310,6 +336,10 @@ end
 
 function _get_reservoir_energy_value(device, key)
     return PSY.get_initial_storage(device)
+end
+
+function _get_ace_error(device, key)
+    return PSY.get_initial_ace(device)
 end
 
 function _get_duration_value(dev, key)
@@ -342,4 +372,12 @@ function _get_ref_reservoir_energy(
 ) where {T <: PSY.Component}
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
            UpdateRef{T}(ENERGY, "get_storage_capacity")
+end
+function _get_ref_ace_error(
+    ::Type{PSY.AGC},
+    container::InitialConditions,
+)
+    T = PSY.AGC
+    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, "ACE") :
+           UpdateRef{T}("ACE", "get_initial_ace")
 end
