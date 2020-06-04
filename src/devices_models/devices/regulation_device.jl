@@ -35,13 +35,14 @@ end
 
 function activepower_constraints!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
+    devices,
     model::DeviceModel{T, DeviceLimitedRegulation},
     ::Type{AreaBalancePowerModel},
     feedforward::Nothing,
-) where {T <: PSY.RegulationDevice}
+) where {T <: PSY.RegulationDevice{PSY.ThermalStandard}}
     constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
+        !PSY.has_service(d, PSY.AGC) && continue
         limits = (min = 0.0, max = PSY.get_activepowerlimits(d).max)
         name = PSY.get_name(d)
         constraint_info = DeviceRangeConstraintInfo(name, limits)
@@ -49,15 +50,43 @@ function activepower_constraints!(
         constraint_infos[ix] = constraint_info
     end
 
-    var_key = variable_name(ACTIVE_POWER, T)
-    variable = get_variable(psi_container, var_key)
+    #var_key = variable_name(ACTIVE_POWER, T)
+    #variable = get_variable(psi_container, var_key)
 
-    device_range(
-        psi_container,
-        constraint_infos,
-        constraint_name(ACTIVE_RANGE, T),
-        variable_name(ACTIVE_POWER, T),
-    )
+   # device_range(
+   #     psi_container,
+   #     constraint_infos,
+   #     constraint_name(ACTIVE_RANGE, T),
+   #     variable_name(ACTIVE_POWER, T),
+   # )
+    return
+end
+
+function activepower_constraints!(
+    psi_container::PSIContainer,
+    devices,
+    model::DeviceModel{T, DeviceLimitedRegulation},
+    ::Type{AreaBalancePowerModel},
+    feedforward::Nothing,
+) where {T <: PSY.RegulationDevice}
+   # constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
+   # for (ix, d) in enumerate(devices)
+   #     limits = (min = 0.0, max = PSY.get_activepowerlimits(d).max)
+   #     name = PSY.get_name(d)
+   #     constraint_info = DeviceRangeConstraintInfo(name, limits)
+   #     add_device_services!(constraint_info, d, model)
+   #     constraint_infos[ix] = constraint_info
+   # end
+
+    #var_key = variable_name(ACTIVE_POWER, T)
+    #variable = get_variable(psi_container, var_key)
+
+   # device_range(
+   #     psi_container,
+   #     constraint_infos,
+   #     constraint_name(ACTIVE_RANGE, T),
+   #     variable_name(ACTIVE_POWER, T),
+   # )
     return
 end
 
