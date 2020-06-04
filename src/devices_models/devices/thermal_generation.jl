@@ -622,3 +622,16 @@ function cost_function(
     add_to_cost(psi_container, devices, variable_name(ON, T), :fixed)
     return
 end
+
+function NodalExpressionInputs(
+    ::Type{<:PSY.ThermalGen},
+    ::Type{AreaBalancePowerModel},
+    use_forecasts::Bool,
+)
+    return NodalExpressionInputs(
+        "get_rating",
+        ACTIVE_POWER,
+        use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),
+        1.0,
+    )
+end
