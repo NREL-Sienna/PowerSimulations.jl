@@ -94,11 +94,9 @@ function construct_service!(
     end
     area_unbalance_variables!(psi_container, areas)
     steady_state_frequency_variables!(psi_container)
-    regulation_service_variables!(psi_container, services, services_mapping)
     balancing_auxiliary_variables!(psi_container, sys)
     frequency_response_constraint!(psi_container, sys)
     area_control_init(psi_container.initial_conditions, services)
     smooth_ace_pid!(psi_container, services)
     aux_constraints!(psi_container, sys)
-    participation_assignment!(psi_container, services, services_mapping, sys)
 end

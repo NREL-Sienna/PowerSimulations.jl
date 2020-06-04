@@ -87,58 +87,6 @@ function area_unbalance_variables!(psi_container::PSIContainer, areas)
     return
 end
 
-"""
-This function add the variables for reserves to the model
-"""
-function regulation_service_variables!(
-    psi_container::PSIContainer,
-    services::IS.FlattenIteratorWrapper{PSY.AGC},
-    services_mapping,
-)
-
-    for service in services
-        contributing_devices =
-           services_mapping[(
-                type = typeof(service),
-                name = PSY.get_name(service),
-            )].contributing_devices
-        up_var_name = variable_name(PSY.get_name(service), "ΔP_UP")
-        dn_var_name = variable_name(PSY.get_name(service), "ΔP_DN")
-        # Upwards regulation
-        add_variable(
-            psi_container,
-            contributing_devices,
-            up_var_name,
-            false;
-            lb_value = x -> 0.0,
-        )
-        # Downwards regulation
-        add_variable(
-            psi_container,
-            contributing_devices,
-            dn_var_name,
-            false;
-            lb_value = x -> 0.0,
-        )
-
-        up_var = get_variable(psi_container, up_var_name)
-        dn_var = get_variable(psi_container, dn_var_name)
-        time_steps = model_time_steps(psi_container)
-        names = (PSY.get_name(d) for d in contributing_devices)
-        container = add_expression_container!(
-            psi_container,
-            :device_regulation_balance,
-            names,
-            time_steps,
-        )
-
-        for t in time_steps, n in names
-            container[n, t] = JuMP.AffExpr(0.0, up_var[n, t] => 1.0, dn_var[n, t] => -1.0)
-        end
-    end
-    return
-end
-
 function smooth_ace_pid!(
     psi_container::PSIContainer,
     services::IS.FlattenIteratorWrapper{PSY.AGC},
@@ -171,37 +119,39 @@ function smooth_ace_pid!(
             area_balance[a, t] =
                 JuMP.@variable(psi_container.JuMPmodel, base_name = "balance_{$(a),$(t)}")
             if t == 1
-                SACE_ini = get_initial_conditions(psi_container, ICKey(AreaControlError, PSY.AGC))[ix]
+                SACE_ini =
+                    get_initial_conditions(psi_container, ICKey(AreaControlError, PSY.AGC))[ix]
                 RAW_ACE[a, t] = area_balance[a, t] + SACE_ini.value
                 SACE_pid[a, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                SACE[a, t] ==
-                SACE_ini.value +
-                kp * (
-                    (1 + 1 / (kp / ki) + (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t]) +
-                    (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t])
+                    psi_container.JuMPmodel,
+                    SACE[a, t] ==
+                    SACE_ini.value +
+                    kp * (
+                        (1 + 1 / (kp / ki) + (kd / kp) / Δt) *
+                        (RAW_ACE[a, t] - SACE[a, t]) +
+                        (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t])
+                    )
                 )
-            )
-            continue
+                continue
             end
 
-            RAW_ACE[a, t] = area_balance[a, t] - 10 * B * Δf[t-1] + area_unbalance[a, t-1]
+            RAW_ACE[a, t] =
+                area_balance[a, t] - 10 * B * Δf[t - 1] + area_unbalance[a, t - 1]
 
             SACE_pid[a, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 SACE[a, t] ==
-                SACE[a, t-1] +
+                SACE[a, t - 1] +
                 kp * (
                     (1 + 1 / (kp / ki) + (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t]) +
                     (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t]) -
-                    ((kd / kp) / Δt) * (RAW_ACE[a, t-1] - SACE[a, t-1])
+                    ((kd / kp) / Δt) * (RAW_ACE[a, t - 1] - SACE[a, t - 1])
                 )
             )
         end
     end
     return
 end
-
 
 function aux_constraints!(psi_container::PSIContainer, sys::PSY.System)
     time_steps = model_time_steps(psi_container)
@@ -219,51 +169,4 @@ function aux_constraints!(psi_container::PSIContainer, sys::PSY.System)
         )
     end
 
-end
-function participation_assignment!(
-    psi_container::PSIContainer,
-    services::IS.FlattenIteratorWrapper{PSY.AGC},
-    services_mapping,
-    # System shouldn't be needed in the future if the AGC contributing devices are all regulating
-    sys::PSY.System,
-)
-    time_steps = model_time_steps(psi_container)
-    regulation = get_expression(psi_container, :device_regulation_balance)
-    area_unbalance = get_expression(psi_container, :area_unbalance)
-    ΔP = get_variable(psi_container, variable_name("AGC_aux"))
-
-    for service in services
-        contributing_devices =
-            services_mapping[(
-                type = typeof(service),
-                name = PSY.get_name(service),
-            )].contributing_devices
-        # TODO: remove line once the issue is fixed
-        contributing_devices = [d for d in contributing_devices if isa(d, PSY.RegulationDevice)]
-        area_name = PSY.get_name(PSY.get_area(service))
-        component_names = (PSY.get_name(d) for d in contributing_devices)
-        sum_p_factors = 0.0
-        temp_values = Vector(undef, length(contributing_devices))
-        for (ix, d) in enumerate(contributing_devices)
-            name = PSY.get_name(d)
-            p_factor = PSY.get_participation_factor(d)
-            sum_p_factors += p_factor
-            temp_values[ix] = (name, p_factor)
-        end
-        participation_assignment = JuMPConstraintArray(undef, component_names, time_steps)
-        assign_constraint!(
-            psi_container,
-            "participation_$(area_name)",
-            participation_assignment,
-        )
-        for (ix, d) in enumerate(temp_values)
-            for t in time_steps
-                participation_assignment[d[1], t] = JuMP.@constraint(
-                    psi_container.JuMPmodel,
-                    regulation[d[1], t] == (d[2] / sum_p_factors) * (ΔP[area_name, t])
-                )
-            end
-        end
-    end
-    return
 end

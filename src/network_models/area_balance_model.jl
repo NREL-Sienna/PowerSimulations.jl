@@ -18,7 +18,7 @@ function area_balance(
                 JuMP.add_to_expression!(area_net, nodal_net_balance[PSY.get_number(b), t])
             end
             constraint_bal[k, t] =
-                    JuMP.@constraint(psi_container.JuMPmodel, area_balance[k, t] == area_net)
+                JuMP.@constraint(psi_container.JuMPmodel, area_balance[k, t] == area_net)
         end
     end
     return
