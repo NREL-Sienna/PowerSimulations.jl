@@ -44,15 +44,12 @@ function frequency_response_constraint!(psi_container::PSIContainer, sys::PSY.Sy
     @assert frequency_response >= 0.0
     # This value is the one updated later in simulation based on the UC result
     inv_frequency_reponse = 1 / frequency_response
-    area_unbalance = get_expression(psi_container, :area_unbalance)
+    area_unbalance = get_variable(psi_container, :area_unbalance)
     frequency = get_variable(psi_container, variable_name("Δf", "AGC"))
     container = JuMPConstraintArray(undef, time_steps)
     assign_constraint!(psi_container, "SACE_pid", container)
     for t in time_steps
-        system_unbalance = JuMP.AffExpr(0.0)
-        for exp in area_unbalance[:, t].data
-            system_unbalance += exp
-        end
+        system_unbalance = sum(area_balance.data)
         container[t] = JuMP.@constraint(
             psi_container.JuMPmodel,
             frequency[t] == -inv_frequency_reponse * system_unbalance
@@ -61,29 +58,30 @@ function frequency_response_constraint!(psi_container::PSIContainer, sys::PSY.Sy
     return
 end
 
-############################### Regulation Variables` ######################################
 function area_unbalance_variables!(psi_container::PSIContainer, areas)
-    up_var_name = variable_name("UP", "Unbalance")
-    dn_var_name = variable_name("DN", "Unbalance")
+    var_name = variable_name("area_unbalance")
+    z = variable_name("z")
     # Upwards regulation
-    add_variable(psi_container, areas, up_var_name, false; lb_value = x -> 0.0)
+    add_variable(psi_container, areas, var_name, false)
     # Downwards regulation
-    add_variable(psi_container, areas, dn_var_name, false; lb_value = x -> 0.0)
+    add_variable(psi_container, areas, z, false; lb_value = x -> 0.0)
+    return
+end
 
-    up_var = get_variable(psi_container, up_var_name)
-    dn_var = get_variable(psi_container, dn_var_name)
+function absolute_value_lift(psi_container::PSIContainer, areas)
     time_steps = model_time_steps(psi_container)
-    names = (PSY.get_name(d) for d in areas)
-    container = add_expression_container!(psi_container, :area_unbalance, names, time_steps)
+    area_names = (PSY.get_name(a) for a in areas)
+    container_lb = JuMPConstraintArray(undef, area_names, time_steps)
+    assign_constraint!(psi_container, "absolute_value_lb", container_lb)
+    container_ub = JuMPConstraintArray(undef, area_names, time_steps)
+    assign_constraint!(psi_container, "absolute_value_ub", container_ub)
+    unbalance = get_variable(psi_container, :area_unbalance)
+    z = get_variable(psi_container, :z)
 
-    for t in time_steps, n in names
-        container[n, t] = JuMP.AffExpr(0.0, up_var[n, t] => 1.0, dn_var[n, t] => -1.0)
-        JuMP.add_to_expression!(
-            psi_container.cost_function,
-            (up_var[n, t] + dn_var[n, t]) * SLACK_COST,
-        )
+    for t in time_steps, a in area_names
+        container_lb[a, t] = JuMP.@constraint(psi_container.JuMPmodel, unbalance[a,t] <= z[a,t])
+        container_ub[a, t] = JuMP.@constraint(psi_container.JuMPmodel, -1*unbalance[a,t] <= z[a,t])
     end
-
     return
 end
 

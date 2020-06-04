@@ -93,6 +93,7 @@ function construct_service!(
         end
     end
     area_unbalance_variables!(psi_container, areas)
+    absolute_value_lift(psi_container, areas)
     steady_state_frequency_variables!(psi_container)
     balancing_auxiliary_variables!(psi_container, sys)
     frequency_response_constraint!(psi_container, sys)
