@@ -78,6 +78,10 @@ function area_unbalance_variables!(psi_container::PSIContainer, areas)
 
     for t in time_steps, n in names
         container[n, t] = JuMP.AffExpr(0.0, up_var[n, t] => 1.0, dn_var[n, t] => -1.0)
+        JuMP.add_to_expression!(
+            psi_container.cost_function,
+            (up_var[n, t] + dn_var[n, t]) * SLACK_COST,
+        )
     end
 
     return
@@ -94,11 +98,10 @@ function regulation_service_variables!(
 
     for service in services
         contributing_devices =
-            services_mapping[(
+           services_mapping[(
                 type = typeof(service),
                 name = PSY.get_name(service),
             )].contributing_devices
-
         up_var_name = variable_name(PSY.get_name(service), "ΔP_UP")
         dn_var_name = variable_name(PSY.get_name(service), "ΔP_DN")
         # Upwards regulation
@@ -148,13 +151,13 @@ function smooth_ace_pid!(
     SACE = JuMPVariableArray(undef, area_names, time_steps)
     assign_variable!(psi_container, variable_name("SACE"), SACE)
     area_balance = JuMPVariableArray(undef, area_names, time_steps)
-    assign_variable!(psi_container, variable_name("area_balance"), area_balance)
+    assign_variable!(psi_container, variable_name("area_dispatch_balance"), area_balance)
     SACE_pid = JuMPConstraintArray(undef, area_names, time_steps)
     assign_constraint!(psi_container, "SACE_pid", SACE_pid)
 
     Δf = get_variable(psi_container, variable_name("Δf", "AGC"))
 
-    for service in services
+    for (ix, service) in enumerate(services)
         kp = PSY.get_K_p(service)
         ki = PSY.get_K_i(service)
         kd = PSY.get_K_d(service)
@@ -168,8 +171,18 @@ function smooth_ace_pid!(
             area_balance[a, t] =
                 JuMP.@variable(psi_container.JuMPmodel, base_name = "balance_{$(a),$(t)}")
             if t == 1
-                RAW_ACE[a, t] = JuMP.AffExpr(0.0)
-                continue
+                SACE_ini = get_initial_conditions(psi_container, ICKey(AreaControlError, PSY.AGC))[ix]
+                RAW_ACE[a, t] = area_balance[a, t] + SACE_ini.value
+                SACE_pid[a, t] = JuMP.@constraint(
+                psi_container.JuMPmodel,
+                SACE[a, t] ==
+                SACE_ini.value +
+                kp * (
+                    (1 + 1 / (kp / ki) + (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t]) +
+                    (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t])
+                )
+            )
+            continue
             end
 
             RAW_ACE[a, t] = area_balance[a, t] - 10 * B * Δf[t-1] + area_unbalance[a, t-1]
@@ -188,6 +201,7 @@ function smooth_ace_pid!(
     end
     return
 end
+
 
 function aux_constraints!(psi_container::PSIContainer, sys::PSY.System)
     time_steps = model_time_steps(psi_container)
@@ -224,16 +238,15 @@ function participation_assignment!(
                 type = typeof(service),
                 name = PSY.get_name(service),
             )].contributing_devices
+        # TODO: remove line once the issue is fixed
+        contributing_devices = [d for d in contributing_devices if isa(d, PSY.RegulationDevice)]
         area_name = PSY.get_name(PSY.get_area(service))
         component_names = (PSY.get_name(d) for d in contributing_devices)
-
-        # Don't keep this code. This is for testing the model. In theory, the contributing contributing_devices for AGC should be regulation devices
         sum_p_factors = 0.0
         temp_values = Vector(undef, length(contributing_devices))
         for (ix, d) in enumerate(contributing_devices)
             name = PSY.get_name(d)
-            regulation_device = PSY.get_component(PSY.RegulationDevice, sys, name)
-            p_factor = PSY.get_participation_factor(regulation_device)
+            p_factor = PSY.get_participation_factor(d)
             sum_p_factors += p_factor
             temp_values[ix] = (name, p_factor)
         end
