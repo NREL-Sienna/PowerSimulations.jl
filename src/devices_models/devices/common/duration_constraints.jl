@@ -279,7 +279,7 @@ function device_duration_parameters(
             # Minimum Up-time Constraint
             lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}(0)
             for i in (t - duration_data[ix].up + 1):t
-                if i <= duration_data[ix].up
+                if t <= duration_data[ix].up
                     if in(i, time_steps)
                         JuMP.add_to_expression!(lhs_on, varon[name, i])
                     end
@@ -306,7 +306,7 @@ function device_duration_parameters(
             # Minimum Down-time Constraint
             lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}(0)
             for i in (t - duration_data[ix].down + 1):t
-                if i <= duration_data[ix].down
+                if t <= duration_data[ix].down
                     if in(i, time_steps)
                         JuMP.add_to_expression!(lhs_off, (1 - varon[name, i]))
                     end
@@ -326,6 +326,68 @@ function device_duration_parameters(
                     lhs_off + varon[name, t] <= 1.0
                 )
             end
+        end
+    end
+    return
+end
+
+function device_duration_pglib(
+    psi_container::PSIContainer,
+    duration_data::Vector{UpDown},
+    initial_duration::Matrix{InitialCondition},
+    cons_name::Symbol,
+    var_names::Tuple{Symbol, Symbol, Symbol},
+)
+    time_steps = model_time_steps(psi_container)
+
+    varon = get_variable(psi_container, var_names[1])
+    varstart = get_variable(psi_container, var_names[2])
+    varstop = get_variable(psi_container, var_names[3])
+
+    name_up = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
+    name_down = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
+
+    set_names = (device_name(ic) for ic in initial_duration[:, 1])
+    con_up = add_cons_container!(psi_container, name_up, set_names, time_steps)
+    con_down = add_cons_container!(psi_container, name_down, set_names, time_steps)
+    T = length(time_steps)
+    for t in time_steps
+        for (ix, ic) in enumerate(initial_duration[:, 1])
+            name = device_name(ic)
+            # Minimum Up-time Constraint
+            lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}(0)
+            if t in min(duration_data[ix].up,T):T
+                for i in (t - duration_data[ix].up + 1):t
+                    if i in time_steps
+                        JuMP.add_to_expression!(lhs_on, varstart[name, i])
+                    end
+                end
+            elseif t <= max(0, duration_data[ix].up - ic.value) && ic.value > 0
+                JuMP.add_to_expression!(lhs_on, 1)
+            else
+                continue
+            end
+            con_up[name, t] =
+                JuMP.@constraint(psi_container.JuMPmodel, lhs_on - varon[name, t] <= 0.0)
+        end
+
+        for (ix, ic) in enumerate(initial_duration[:, 2])
+            name = device_name(ic)
+            # Minimum Down-time Constraint
+            lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}(0)
+            if t in min(duration_data[ix].down,T):T
+                for i in (t - duration_data[ix].down + 1):t
+                    if i in time_steps
+                        JuMP.add_to_expression!(lhs_off, varstop[name, i])
+                    end
+                end
+            elseif t <= max(0, duration_data[ix].down - ic.value) && ic.value > 0
+                JuMP.add_to_expression!(lhs_off, 1)
+            else
+                continue
+            end
+            con_down[name, t] =
+                JuMP.@constraint(psi_container.JuMPmodel, lhs_off + varon[name, t] <= 1.0)
         end
     end
     return
