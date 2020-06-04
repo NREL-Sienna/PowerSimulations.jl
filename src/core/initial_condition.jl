@@ -1,5 +1,5 @@
 struct InitialCondition{T <: Union{PJ.ParameterRef, Float64}}
-    device::PSY.Device
+    device::PSY.Component
     update_ref::UpdateRef
     value::T
     cache_type::Union{Nothing, Type{<:AbstractCache}}
