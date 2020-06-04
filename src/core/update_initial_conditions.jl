@@ -373,10 +373,7 @@ function _get_ref_reservoir_energy(
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
            UpdateRef{T}(ENERGY, "get_storage_capacity")
 end
-function _get_ref_ace_error(
-    ::Type{PSY.AGC},
-    container::InitialConditions,
-)
+function _get_ref_ace_error(::Type{PSY.AGC}, container::InitialConditions)
     T = PSY.AGC
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, "ACE") :
            UpdateRef{T}("ACE", "get_initial_ace")
