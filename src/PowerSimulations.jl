@@ -23,7 +23,7 @@ export FixedOutput
 ######## Service Models ########
 export ServiceModel
 export RangeReserve
-export GeneratorLimitedAGC
+export PIDSmoothACE
 ######## Branch Models ########
 export StaticLine
 export StaticLineBounds
@@ -59,6 +59,10 @@ export ThermalBasicUnitCommitment
 export ThermalDispatch
 export ThermalRampLimited
 export ThermalDispatchNoMin
+
+###### Regulation Device Formulation #######
+export DeviceLimitedRegulation
+export ReserveLimitedRegulation
 
 # feedforward chrons
 export RecedingHorizon
