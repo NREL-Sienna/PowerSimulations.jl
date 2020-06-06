@@ -1,5 +1,5 @@
 abstract type AbstractAGCFormulation <: AbstractServiceFormulation end
-struct GeneratorLimitedAGC <: AbstractAGCFormulation end
+struct PIDSmoothACE <: AbstractAGCFormulation end
 
 """
 Steady State deviation of the frequency
@@ -7,7 +7,7 @@ Steady State deviation of the frequency
 function steady_state_frequency_variables!(psi_container::PSIContainer)
     time_steps = model_time_steps(psi_container)
     variable = JuMPVariableArray(undef, time_steps)
-    assign_variable!(psi_container, variable_name("Δf", "AGC"), variable)
+    assign_variable!(psi_container, variable_name("Δf"), variable)
     for t in time_steps
         variable[t] = JuMP.@variable(psi_container.JuMPmodel, base_name = "ΔF_{$(t)}")
     end
@@ -18,11 +18,42 @@ function balancing_auxiliary_variables!(psi_container, sys)
     area_names = (PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys))
     time_steps = model_time_steps(psi_container)
     variable = JuMPVariableArray(undef, area_names, time_steps)
-    assign_variable!(psi_container, variable_name("AGC_aux"), variable)
+    assign_variable!(psi_container, variable_name("area_total_reserve"), variable)
     for t in time_steps, a in area_names
         variable[a, t] =
-            JuMP.@variable(psi_container.JuMPmodel, base_name = "ΔP_{$(a),$(t)}")
+            JuMP.@variable(psi_container.JuMPmodel, base_name = "R_{$(a),$(t)}")
     end
+    return
+end
+
+function area_mismatch_variables!(psi_container::PSIContainer, areas)
+    var_name = variable_name("area_mismatch")
+    add_variable(psi_container, areas, var_name, false)
+    add_variable(psi_container, areas, variable_name("z"), false; lb_value = x -> 0.0)
+    return
+end
+
+function absolute_value_lift(psi_container::PSIContainer, areas)
+    time_steps = model_time_steps(psi_container)
+    area_names = (PSY.get_name(a) for a in areas)
+    container_lb = JuMPConstraintArray(undef, area_names, time_steps)
+    assign_constraint!(psi_container, "absolute_value_lb", container_lb)
+    container_ub = JuMPConstraintArray(undef, area_names, time_steps)
+    assign_constraint!(psi_container, "absolute_value_ub", container_ub)
+    mismatch = get_variable(psi_container, :area_mismatch)
+    z = get_variable(psi_container, :z)
+
+    for t in time_steps, a in area_names
+        container_lb[a, t] =
+            JuMP.@constraint(psi_container.JuMPmodel, mismatch[a, t] <= z[a, t])
+        container_ub[a, t] =
+            JuMP.@constraint(psi_container.JuMPmodel, -1 * mismatch[a, t] <= z[a, t])
+    end
+
+    JuMP.add_to_expression!(
+        psi_container.cost_function,
+        sum(z[a, t] for t in time_steps, a in area_names) * SLACK_COST,
+    )
     return
 end
 
@@ -44,43 +75,16 @@ function frequency_response_constraint!(psi_container::PSIContainer, sys::PSY.Sy
     @assert frequency_response >= 0.0
     # This value is the one updated later in simulation based on the UC result
     inv_frequency_reponse = 1 / frequency_response
-    area_unbalance = get_variable(psi_container, :area_unbalance)
-    frequency = get_variable(psi_container, variable_name("Δf", "AGC"))
+    area_mismatch = get_variable(psi_container, :area_mismatch)
+    frequency = get_variable(psi_container, variable_name("Δf"))
     container = JuMPConstraintArray(undef, time_steps)
     assign_constraint!(psi_container, "SACE_pid", container)
     for t in time_steps
-        system_unbalance = sum(area_balance.data)
+        system_mismatch = sum(area_mismatch.data)
         container[t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            frequency[t] == -inv_frequency_reponse * system_unbalance
+            frequency[t] == -inv_frequency_reponse * system_mismatch
         )
-    end
-    return
-end
-
-function area_unbalance_variables!(psi_container::PSIContainer, areas)
-    var_name = variable_name("area_unbalance")
-    z = variable_name("z")
-    # Upwards regulation
-    add_variable(psi_container, areas, var_name, false)
-    # Downwards regulation
-    add_variable(psi_container, areas, z, false; lb_value = x -> 0.0)
-    return
-end
-
-function absolute_value_lift(psi_container::PSIContainer, areas)
-    time_steps = model_time_steps(psi_container)
-    area_names = (PSY.get_name(a) for a in areas)
-    container_lb = JuMPConstraintArray(undef, area_names, time_steps)
-    assign_constraint!(psi_container, "absolute_value_lb", container_lb)
-    container_ub = JuMPConstraintArray(undef, area_names, time_steps)
-    assign_constraint!(psi_container, "absolute_value_ub", container_ub)
-    unbalance = get_variable(psi_container, :area_unbalance)
-    z = get_variable(psi_container, :z)
-
-    for t in time_steps, a in area_names
-        container_lb[a, t] = JuMP.@constraint(psi_container.JuMPmodel, unbalance[a,t] <= z[a,t])
-        container_ub[a, t] = JuMP.@constraint(psi_container.JuMPmodel, -1*unbalance[a,t] <= z[a,t])
     end
     return
 end
@@ -91,8 +95,7 @@ function smooth_ace_pid!(
 )
     time_steps = model_time_steps(psi_container)
     area_names = (PSY.get_name(PSY.get_area(s)) for s in services)
-    remove_undef!(psi_container.expressions[:nodal_balance_active])
-    area_unbalance = get_expression(psi_container, :area_unbalance)
+    area_mismatch = get_variable(psi_container, :area_mismatch)
     RAW_ACE = add_expression_container!(psi_container, :RAW_ACE, area_names, time_steps)
     SACE = JuMPVariableArray(undef, area_names, time_steps)
     assign_variable!(psi_container, variable_name("SACE"), SACE)
@@ -101,7 +104,7 @@ function smooth_ace_pid!(
     SACE_pid = JuMPConstraintArray(undef, area_names, time_steps)
     assign_constraint!(psi_container, "SACE_pid", SACE_pid)
 
-    Δf = get_variable(psi_container, variable_name("Δf", "AGC"))
+    Δf = get_variable(psi_container, variable_name("Δf"))
 
     for (ix, service) in enumerate(services)
         kp = PSY.get_K_p(service)
@@ -119,11 +122,11 @@ function smooth_ace_pid!(
             if t == 1
                 SACE_ini =
                     get_initial_conditions(psi_container, ICKey(AreaControlError, PSY.AGC))[ix]
-                RAW_ACE[a, t] = area_balance[a, t] + SACE_ini.value
+                RAW_ACE[a, t] = area_balance[a, t] - 10 * B * Δf[t] + SACE_ini.value
                 SACE_pid[a, t] = JuMP.@constraint(
                     psi_container.JuMPmodel,
                     SACE[a, t] ==
-                    SACE_ini.value +
+                    RAW_ACE[a, t] +
                     kp * (
                         (1 + 1 / (kp / ki) + (kd / kp) / Δt) *
                         (RAW_ACE[a, t] - SACE[a, t]) +
@@ -134,7 +137,7 @@ function smooth_ace_pid!(
             end
 
             RAW_ACE[a, t] =
-                area_balance[a, t] - 10 * B * Δf[t - 1] + area_unbalance[a, t - 1]
+                area_balance[a, t] - 10 * B * Δf[t] + area_mismatch[a, t - 1]
 
             SACE_pid[a, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
@@ -156,15 +159,15 @@ function aux_constraints!(psi_container::PSIContainer, sys::PSY.System)
     area_names = (PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys))
     aux_equation = JuMPConstraintArray(undef, area_names, time_steps)
     assign_constraint!(psi_container, "balance_aux", aux_equation)
-    area_unbalance = get_expression(psi_container, :area_unbalance)
+    area_mismatch = get_variable(psi_container, :area_mismatch)
     SACE = get_variable(psi_container, variable_name("SACE"))
-    ΔP = get_variable(psi_container, variable_name("AGC_aux"))
+    R = get_variable(psi_container, variable_name("area_total_reserve"))
 
     for t in time_steps, a in area_names
         aux_equation[a, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            ΔP[a, t] == SACE[a, t] - area_unbalance[a, t]
+            -1*SACE[a, t] == R[a, t] - area_mismatch[a, t]
         )
     end
-
+    return
 end
