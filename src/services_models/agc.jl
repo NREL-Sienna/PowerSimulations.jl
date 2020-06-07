@@ -17,11 +17,15 @@ end
 function balancing_auxiliary_variables!(psi_container, sys)
     area_names = (PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys))
     time_steps = model_time_steps(psi_container)
-    variable = JuMPVariableArray(undef, area_names, time_steps)
-    assign_variable!(psi_container, variable_name("area_total_reserve"), variable)
+    R_up = JuMPVariableArray(undef, area_names, time_steps)
+    R_dn = JuMPVariableArray(undef, area_names, time_steps)
+    assign_variable!(psi_container, variable_name("area_total_reserve_up"), R_up)
+    assign_variable!(psi_container, variable_name("area_total_reserve_dn"), R_dn)
     for t in time_steps, a in area_names
-        variable[a, t] =
-            JuMP.@variable(psi_container.JuMPmodel, base_name = "R_{$(a),$(t)}")
+        R_up[a, t] =
+            JuMP.@variable(psi_container.JuMPmodel, base_name = "R_up_{$(a),$(t)}")
+        R_dn[a, t] =
+            JuMP.@variable(psi_container.JuMPmodel, base_name = "R_dn_{$(a),$(t)}")
     end
     return
 end
@@ -137,7 +141,7 @@ function smooth_ace_pid!(
             end
 
             RAW_ACE[a, t] =
-                area_balance[a, t] - 10 * B * Δf[t] + area_mismatch[a, t - 1]
+                area_balance[a, t] - 10 * B * Δf[t] - area_mismatch[a, t - 1]
 
             SACE_pid[a, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
@@ -161,12 +165,13 @@ function aux_constraints!(psi_container::PSIContainer, sys::PSY.System)
     assign_constraint!(psi_container, "balance_aux", aux_equation)
     area_mismatch = get_variable(psi_container, :area_mismatch)
     SACE = get_variable(psi_container, variable_name("SACE"))
-    R = get_variable(psi_container, variable_name("area_total_reserve"))
+    R_up = get_variable(psi_container, variable_name("area_total_reserve_up"))
+    R_dn = get_variable(psi_container, variable_name("area_total_reserve_dn"))
 
     for t in time_steps, a in area_names
         aux_equation[a, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            -1*SACE[a, t] == R[a, t] - area_mismatch[a, t]
+            -1*SACE[a, t] == (R_up[a, t] - R_dn[a,t]) + area_mismatch[a, t]
         )
     end
     return
