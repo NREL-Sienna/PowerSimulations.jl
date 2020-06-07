@@ -312,7 +312,7 @@ function _get_data_for_rocc(
     if resolution > Dates.Minute(1)
         minutes_per_period = Dates.value(Dates.Minute(resolution))
     else
-        minutes_per_period = Dates.value(Dates.Second(resolution)) / MINUTES_IN_HOUR
+        throw(ArgumentError("Resolutions values under 1-minute are not supported"))
     end
     lenght_devices = length(initial_conditions)
     ini_conds = Vector{InitialCondition}(undef, lenght_devices)
