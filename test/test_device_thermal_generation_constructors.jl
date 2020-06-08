@@ -342,12 +342,12 @@ end
 
 @testset "Thermal PGLIB Dispatch With DC - PF" begin
     constraint_names = [
-        PSI.constraint_name(PSI.ACTIVE_RANGE_IC, PSY.ThermalPGLIB),
-        PSI.constraint_name(PSI.START_TYPE, PSY.ThermalPGLIB),
-        # PSI.constraint_name(PSI.STARTUP_TIMELIMIT, PSY.ThermalPGLIB),
-        PSI.constraint_name(PSI.STARTUP_INITIAL_CONDITION, PSY.ThermalPGLIB),
+        PSI.constraint_name(PSI.ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
+        PSI.constraint_name(PSI.START_TYPE, PSY.ThermalMultiStart),
+        # PSI.constraint_name(PSI.STARTUP_TIMELIMIT, PSY.ThermalMultiStart),
+        PSI.constraint_name(PSI.STARTUP_INITIAL_CONDITION, PSY.ThermalMultiStart),
     ]
-    model = DeviceModel(PSY.ThermalPGLIB, PSI.ThermalPGLIBUnitCommitment)
+    model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
     @info "5-Bus testing"
     c_sys5_pglib = build_system("c_sys5_pglib")
     for p in [true, false]

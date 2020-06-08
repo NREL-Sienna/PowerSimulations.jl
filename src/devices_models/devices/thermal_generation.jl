@@ -7,7 +7,7 @@ struct ThermalStandardUnitCommitment <: AbstractThermalUnitCommitment end
 struct ThermalDispatch <: AbstractThermalDispatchFormulation end
 struct ThermalRampLimited <: AbstractThermalDispatchFormulation end
 struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
-struct ThermalPGLIBUnitCommitment <: AbstractThermalUnitCommitment end
+struct ThermalMultiStartUnitCommitment <: AbstractThermalUnitCommitment end
 
 ########################### Active Dispatch Variables ######################################
 """
@@ -40,7 +40,7 @@ This function add the variables for power generation output to the model
 """
 function activepower_variables!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalPGLIB},
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
 )
     if get_warm_start(psi_container.settings)
         initial_value = d -> PSY.get_activepower(d)
@@ -50,7 +50,7 @@ function activepower_variables!(
     add_variable(
         psi_container,
         devices,
-        variable_name(ACTIVE_POWER, PSY.ThermalPGLIB),
+        variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),
         false,
         :nodal_balance_active;
         ub_value = d -> PSY.get_activepowerlimits(d).max,
@@ -110,7 +110,7 @@ end
 
 function commitment_variables!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalPGLIB},
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
 )
     time_steps = model_time_steps(psi_container)
     if get_warm_start(psi_container.settings)
@@ -119,8 +119,8 @@ function commitment_variables!(
         initial_value = nothing
     end
 
-    add_variable(psi_container, devices, variable_name(ON, PSY.ThermalPGLIB), true)
-    varstatus = get_variable(psi_container, variable_name(ON, PSY.ThermalPGLIB))
+    add_variable(psi_container, devices, variable_name(ON, PSY.ThermalMultiStart), true)
+    varstatus = get_variable(psi_container, variable_name(ON, PSY.ThermalMultiStart))
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         bus_number = PSY.get_number(PSY.get_bus(d))
@@ -134,7 +134,7 @@ function commitment_variables!(
     end
 
     var_names =
-        (variable_name(START, PSY.ThermalPGLIB), variable_name(STOP, PSY.ThermalPGLIB))
+        (variable_name(START, PSY.ThermalMultiStart), variable_name(STOP, PSY.ThermalMultiStart))
     for v in var_names
         add_variable(psi_container, devices, v, true)
     end
@@ -144,14 +144,14 @@ end
 
 function startup_variables!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalPGLIB},
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
 )
 
     time_steps = model_time_steps(psi_container)
     var_names = (
-        variable_name(COLD_START, PSY.ThermalPGLIB),
-        variable_name(WARM_START, PSY.ThermalPGLIB),
-        variable_name(HOT_START, PSY.ThermalPGLIB),
+        variable_name(COLD_START, PSY.ThermalMultiStart),
+        variable_name(WARM_START, PSY.ThermalMultiStart),
+        variable_name(HOT_START, PSY.ThermalMultiStart),
     )
     for v in var_names
         add_variable(psi_container, devices, v, true)
@@ -274,8 +274,8 @@ This function adds the active power limits of generators. Constraint (17) & (18)
 """
 function activepower_constraints!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalPGLIB},
-    model::DeviceModel{PSY.ThermalPGLIB, ThermalPGLIBUnitCommitment},
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
 )
@@ -293,12 +293,12 @@ function activepower_constraints!(
     device_pglibrange(
         psi_container,
         constraint_data,
-        constraint_name(ACTIVE_RANGE, PSY.ThermalPGLIB),
-        variable_name(ACTIVE_POWER, PSY.ThermalPGLIB),
+        constraint_name(ACTIVE_RANGE, PSY.ThermalMultiStart),
+        variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),
         (
-            variable_name(ON, PSY.ThermalPGLIB),
-            variable_name(START, PSY.ThermalPGLIB),
-            variable_name(STOP, PSY.ThermalPGLIB),
+            variable_name(ON, PSY.ThermalMultiStart),
+            variable_name(START, PSY.ThermalMultiStart),
+            variable_name(STOP, PSY.ThermalMultiStart),
         ),
     )
 
@@ -329,16 +329,16 @@ This function adds range constraint for the first time period. Constraint (10) f
 """
 function initial_range_constraints!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalPGLIB},
-    model::DeviceModel{PSY.ThermalPGLIB, ThermalPGLIBUnitCommitment},
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     system_formulation::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
 
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
-    key_power = ICKey(DevicePower, PSY.ThermalPGLIB)
-    key_status = ICKey(DeviceStatus, PSY.ThermalPGLIB)
+    key_power = ICKey(DevicePower, PSY.ThermalMultiStart)
+    key_status = ICKey(DeviceStatus, PSY.ThermalMultiStart)
     initial_conditions_power = get_initial_conditions(psi_container, key_power)
     initial_conditions_status = get_initial_conditions(psi_container, key_status)
     ini_conds = _get_data_for_range_ic(initial_conditions_power, initial_conditions_status)
@@ -360,10 +360,10 @@ function initial_range_constraints!(
             psi_container,
             constraint_data,
             ini_conds,
-            constraint_name(ACTIVE_RANGE_IC, PSY.ThermalPGLIB),
+            constraint_name(ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
             (
-                variable_name(ACTIVE_POWER, PSY.ThermalPGLIB),
-                variable_name(STOP, PSY.ThermalPGLIB),
+                variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),
+                variable_name(STOP, PSY.ThermalMultiStart),
             ),
         )
     else
@@ -649,16 +649,16 @@ end
 
 function ramp_constraints!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalPGLIB},
-    model::DeviceModel{PSY.ThermalPGLIB, ThermalPGLIBUnitCommitment},
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     system_formulation::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
 
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
-    key_power = ICKey(DevicePower, PSY.ThermalPGLIB)
-    key_status = ICKey(DevicePower, PSY.ThermalPGLIB)
+    key_power = ICKey(DevicePower, PSY.ThermalMultiStart)
+    key_status = ICKey(DevicePower, PSY.ThermalMultiStart)
     initial_conditions = get_initial_conditions(psi_container, key_power)
     ic_power = get_initial_conditions(psi_container, key_power)
     ic_status = get_initial_conditions(psi_container, key_status)
@@ -673,11 +673,11 @@ function ramp_constraints!(
             psi_container,
             constaint_data,
             ini_conds,
-            constraint_name(RAMP, PSY.ThermalPGLIB),
+            constraint_name(RAMP, PSY.ThermalMultiStart),
             (
-                variable_name(ACTIVE_POWER, PSY.ThermalPGLIB),
-                variable_name(START, PSY.ThermalPGLIB),
-                variable_name(STOP, PSY.ThermalPGLIB),
+                variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),
+                variable_name(START, PSY.ThermalMultiStart),
+                variable_name(STOP, PSY.ThermalMultiStart),
             ),
         )
     else
@@ -804,8 +804,8 @@ This function adds the ramping limits of generators when there are CommitmentVar
 """
 function startup_time_constraints!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalPGLIB},
-    model::DeviceModel{PSY.ThermalPGLIB, ThermalPGLIBUnitCommitment},
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     system_formulation::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
@@ -823,11 +823,11 @@ function startup_time_constraints!(
     turbine_temperature(
         psi_container,
         constraint_data,
-        constraint_name(STARTUP_TIMELIMIT, PSY.ThermalPGLIB),
-        variable_name(STOP, PSY.ThermalPGLIB),
+        constraint_name(STARTUP_TIMELIMIT, PSY.ThermalMultiStart),
+        variable_name(STOP, PSY.ThermalMultiStart),
         (
-            variable_name(HOT_START, PSY.ThermalPGLIB),
-            variable_name(WARM_START, PSY.ThermalPGLIB),
+            variable_name(HOT_START, PSY.ThermalMultiStart),
+            variable_name(WARM_START, PSY.ThermalMultiStart),
         ),
     )
     return
@@ -838,8 +838,8 @@ end
 """
 function startup_type_constraints!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalPGLIB},
-    model::DeviceModel{PSY.ThermalPGLIB, ThermalPGLIBUnitCommitment},
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     system_formulation::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
@@ -856,12 +856,12 @@ function startup_type_constraints!(
     device_start_type_constraint(
         psi_container,
         constraint_data,
-        constraint_name(START_TYPE, PSY.ThermalPGLIB),
-        variable_name(START, PSY.ThermalPGLIB),
+        constraint_name(START_TYPE, PSY.ThermalMultiStart),
+        variable_name(START, PSY.ThermalMultiStart),
         (
-            variable_name(HOT_START, PSY.ThermalPGLIB),
-            variable_name(WARM_START, PSY.ThermalPGLIB),
-            variable_name(COLD_START, PSY.ThermalPGLIB),
+            variable_name(HOT_START, PSY.ThermalMultiStart),
+            variable_name(WARM_START, PSY.ThermalMultiStart),
+            variable_name(COLD_START, PSY.ThermalMultiStart),
         ),
     )
     return
@@ -886,15 +886,15 @@ end
 """
 function startup_initial_condition_constraints!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalPGLIB},
-    model::DeviceModel{PSY.ThermalPGLIB, ThermalPGLIBUnitCommitment},
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     system_formulation::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
 
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
-    key_off = ICKey(TimeDurationOFF, PSY.ThermalPGLIB)
+    key_off = ICKey(TimeDurationOFF, PSY.ThermalMultiStart)
     initial_conditions_offtime = get_initial_conditions(psi_container, key_off)
     constraint_data = _get_data_startup_ic(initial_conditions_offtime)
     # adds constraint (7)
@@ -902,10 +902,10 @@ function startup_initial_condition_constraints!(
         psi_container,
         constraint_data,
         initial_conditions_offtime,
-        constraint_name(STARTUP_INITIAL_CONDITION, PSY.ThermalPGLIB),
+        constraint_name(STARTUP_INITIAL_CONDITION, PSY.ThermalMultiStart),
         (
-            variable_name(HOT_START, PSY.ThermalPGLIB),
-            variable_name(WARM_START, PSY.ThermalPGLIB),
+            variable_name(HOT_START, PSY.ThermalMultiStart),
+            variable_name(WARM_START, PSY.ThermalMultiStart),
         ),
     )
     return
@@ -916,8 +916,8 @@ end
 """
 function must_run_constraints!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalPGLIB},
-    model::DeviceModel{PSY.ThermalPGLIB, ThermalPGLIBUnitCommitment},
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     system_formulation::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {S <: PM.AbstractPowerModel}
@@ -933,8 +933,8 @@ function must_run_constraints!(
     device_timeseries_lb(
         psi_container,
         constraint_data,
-        constraint_name(MUST_RUN, PSY.ThermalPGLIB),
-        variable_name(ON, PSY.ThermalPGLIB),
+        constraint_name(MUST_RUN, PSY.ThermalMultiStart),
+        variable_name(ON, PSY.ThermalMultiStart),
     )
     return
 end
@@ -1026,7 +1026,7 @@ end
 function time_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, ThermalPGLIBUnitCommitment},
+    model::DeviceModel{T, ThermalMultiStartUnitCommitment},
     system_formulation::Type{S},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen, S <: PM.AbstractPowerModel}
@@ -1201,18 +1201,18 @@ end
 
 function cost_function(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalPGLIB},
-    ::Type{ThermalPGLIBUnitCommitment},
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+    ::Type{ThermalMultiStartUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 )
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Minute(resolution)) / 60
     #Variable Cost component
-    add_to_cost(psi_container, devices, variable_name(ON, PSY.ThermalPGLIB), :no_load)
-    add_to_cost(psi_container, devices, variable_name(ON, PSY.ThermalPGLIB), :fixed)
+    add_to_cost(psi_container, devices, variable_name(ON, PSY.ThermalMultiStart), :no_load)
+    add_to_cost(psi_container, devices, variable_name(ON, PSY.ThermalMultiStart), :fixed)
 
-    function _ps_cost(d::PSY.ThermalPGLIB, 
+    function _ps_cost(d::PSY.ThermalMultiStart, 
         cost_component::PSY.VariableCost, 
         var_name::Symbol, 
         dt::Float64,
@@ -1253,9 +1253,9 @@ function cost_function(
         cost_component = PSY.get_variable(PSY.get_op_cost(d))
         cost_expression = _ps_cost(d, 
             cost_component, 
-            variable_name(ACTIVE_POWER, PSY.ThermalPGLIB),
+            variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),
             dt;
-            variable_on = variable_name(ON, PSY.ThermalPGLIB),
+            variable_on = variable_name(ON, PSY.ThermalMultiStart),
         )
         T_ce = typeof(cost_expression)
         T_cf = typeof(psi_container.cost_function)
@@ -1267,7 +1267,7 @@ function cost_function(
     end
 
     ## Start up cost 
-    function _ps_cost(d::PSY.ThermalPGLIB, cost_component::StartUp)
+    function _ps_cost(d::PSY.ThermalMultiStart, cost_component::StartUp)
         gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
         startup_var = (HOT_START, WARM_START, COLD_START)
         for st in 1:PSY.get_start_types(d)
@@ -1275,7 +1275,7 @@ function cost_function(
                 gen_cost,
                 ps_cost(
                     psi_container,
-                    variable_name(startup_var[st], PSY.ThermalPGLIB),
+                    variable_name(startup_var[st], PSY.ThermalMultiStart),
                     PSY.get_name(d),
                     cost_component[st],
                     dt,

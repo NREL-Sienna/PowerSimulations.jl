@@ -292,13 +292,13 @@ end
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{PSY.ThermalPGLIB, ThermalPGLIBUnitCommitment},
+    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S};
     kwargs...,
 ) where {S <: PM.AbstractPowerModel}
-    devices = PSY.get_components(PSY.ThermalPGLIB, sys)
+    devices = PSY.get_components(PSY.ThermalMultiStart, sys)
 
-    if !validate_available_devices(PSY.ThermalPGLIB, devices)
+    if !validate_available_devices(PSY.ThermalMultiStart, devices)
         return
     end
 
@@ -328,7 +328,7 @@ function construct_device!(
     )
     must_run_constraints!(psi_container, devices, model, S, get_feedforward(model))
     initial_range_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, PSY.ThermalPGLIB, get_feedforward(model))
+    feedforward!(psi_container, PSY.ThermalMultiStart, get_feedforward(model))
     #Cost Function
     cost_function(psi_container, devices, model.formulation, S, get_feedforward(model))
 
@@ -338,13 +338,13 @@ end
 function construct_device!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    model::DeviceModel{PSY.ThermalPGLIB, ThermalPGLIBUnitCommitment},
+    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
     ::Type{S};
     kwargs...,
 ) where {S <: PM.AbstractActivePowerModel}
-    devices = PSY.get_components(PSY.ThermalPGLIB, sys)
+    devices = PSY.get_components(PSY.ThermalMultiStart, sys)
 
-    if !validate_available_devices(PSY.ThermalPGLIB, devices)
+    if !validate_available_devices(PSY.ThermalMultiStart, devices)
         return
     end
 
@@ -372,7 +372,7 @@ function construct_device!(
     )
     must_run_constraints!(psi_container, devices, model, S, get_feedforward(model))
     initial_range_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, PSY.ThermalPGLIB, get_feedforward(model))
+    feedforward!(psi_container, PSY.ThermalMultiStart, get_feedforward(model))
     #Cost Function
     cost_function(psi_container, devices, model.formulation, S, get_feedforward(model))
 

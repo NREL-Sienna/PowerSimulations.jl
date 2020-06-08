@@ -382,7 +382,7 @@ thermal_generators5(nodes5) = [
 ];
 
 thermal_pglib_generators5(nodes5) = [
-    ThermalPGLIB(
+    ThermalMultiStart(
         "115_STEAM_1",
         true,
         true,
@@ -407,7 +407,7 @@ thermal_pglib_generators5(nodes5) = [
             0.0,
         ),
     ),
-    ThermalPGLIB(
+    ThermalMultiStart(
         "101_CT_1",
         true,
         true,

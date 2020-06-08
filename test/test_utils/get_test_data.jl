@@ -999,7 +999,7 @@ TEST_SYSTEMS = Dict(
     "c_sys5_uc" =>
         (description = "", build = build_c_sys5_uc, time_series_in_memory = true),
     "c_sys5_pglib" => (
-        description = "5-bus with ThermalPGLIB",
+        description = "5-bus with ThermalMultiStart",
         build = build_c_sys5_pglib,
         time_series_in_memory = true,
     ),
