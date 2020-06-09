@@ -120,6 +120,7 @@ export template_unit_commitment
 export template_agc_reserve_deployment
 export EconomicDispatchProblem
 export UnitCommitmentProblem
+export AGCReserveDeployment
 export run_economic_dispatch
 export run_unit_commitment
 ## Results interfaces
