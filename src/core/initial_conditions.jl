@@ -1,4 +1,4 @@
-struct ICKey{IC <: InitialConditionType, D <: PSY.Device}
+struct ICKey{IC <: InitialConditionType, D <: PSY.Component}
     ic_type::Type{IC}
     device_type::Type{D}
 end
@@ -31,7 +31,7 @@ function get_initial_conditions(container::InitialConditions, key::ICKey)
 end
 
 function set_initial_conditions!(container::InitialConditions, key::ICKey, value)
-    @debug "set_initial_condition" key
+    @debug "set_initial_condition_container" key
     container.data[key] = value
 end
 

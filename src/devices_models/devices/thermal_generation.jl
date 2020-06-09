@@ -322,7 +322,7 @@ function _get_data_for_rocc(
     if resolution > Dates.Minute(1)
         minutes_per_period = Dates.value(Dates.Minute(resolution))
     else
-        minutes_per_period = Dates.value(Dates.Second(resolution)) / 60
+        throw(ArgumentError("Resolutions values under 1-minute are not supported"))
     end
     lenght_devices = length(initial_conditions)
     ini_conds = Vector{InitialCondition}(undef, lenght_devices)
@@ -335,11 +335,11 @@ function _get_data_for_rocc(
         non_binding_up = false
         non_binding_down = false
         ramplimits = PSY.get_ramplimits(g)
-        rating = PSY.get_rating(g)
+        basepower = PSY.get_basepower(g)
         if !isnothing(ramplimits)
             p_lims = PSY.get_activepowerlimits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramplimits.up * rating >= max_rate) & (ramplimits.down * rating >= max_rate)
+            if (ramplimits.up * basepower >= max_rate) & (ramplimits.down * basepower >= max_rate)
                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
                 continue
             else
@@ -347,8 +347,8 @@ function _get_data_for_rocc(
             end
             ini_conds[idx] = ic
             ramp_params[idx] = (
-                up = ramplimits.up * rating * minutes_per_period,
-                down = ramplimits.down * rating * minutes_per_period,
+                up = ramplimits.up * basepower * minutes_per_period,
+                down = ramplimits.down * basepower * minutes_per_period,
             )
             minmax_params[idx] = p_lims
         end
@@ -533,7 +533,7 @@ function cost_function(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
     resolution = model_resolution(psi_container)
-    dt = Dates.value(Dates.Minute(resolution)) / 60
+    dt = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     variable = get_variable(psi_container, variable_name(ACTIVE_POWER, T))
 
     # uses the same cost function whenever there is NO PWL
@@ -631,4 +631,17 @@ function cost_function(
     add_to_cost(psi_container, devices, variable_name(STOP, T), :shutdn)
     add_to_cost(psi_container, devices, variable_name(ON, T), :fixed)
     return
+end
+
+function NodalExpressionInputs(
+    ::Type{<:PSY.ThermalGen},
+    ::Type{AreaBalancePowerModel},
+    use_forecasts::Bool,
+)
+    return NodalExpressionInputs(
+        "get_rating",
+        ACTIVE_POWER,
+        use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),
+        1.0,
+    )
 end

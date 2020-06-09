@@ -21,7 +21,7 @@ function construct_device!(
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
     reactivepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, L, get_feedforward(model))
+    feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
     cost_function(psi_container, devices, D, S)
@@ -51,7 +51,7 @@ function construct_device!(
 
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, L, get_feedforward(model))
+    feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
     cost_function(psi_container, devices, D, S)
@@ -79,7 +79,7 @@ function construct_device!(
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
     reactivepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, L, get_feedforward(model))
+    feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
     cost_function(psi_container, devices, model.formulation, S)
@@ -105,7 +105,7 @@ function construct_device!(
 
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, L, get_feedforward(model))
+    feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
     cost_function(psi_container, devices, model.formulation, S)

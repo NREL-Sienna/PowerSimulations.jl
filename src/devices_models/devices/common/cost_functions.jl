@@ -403,7 +403,7 @@ function add_to_cost(
     sign::Float64 = 1.0,
 ) where {D <: IS.FlattenIteratorWrapper{<:PSY.Device}}
     resolution = model_resolution(psi_container)
-    dt = Dates.value(Dates.Minute(resolution)) / 60
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     for d in devices
         cost_component = getfield(PSY.get_op_cost(d), cost_symbol)
         cost_expression =

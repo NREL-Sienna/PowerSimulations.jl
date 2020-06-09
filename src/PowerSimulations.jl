@@ -15,6 +15,7 @@ export SimulationSequence
 #Network Relevant Exports
 export StandardPTDFModel
 export CopperPlatePowerModel
+export AreaBalancePowerModel
 
 ######## Device Models ########
 export DeviceModel
@@ -22,6 +23,7 @@ export FixedOutput
 ######## Service Models ########
 export ServiceModel
 export RangeReserve
+export PIDSmoothACE
 ######## Branch Models ########
 export StaticLine
 export StaticLineBounds
@@ -57,6 +59,10 @@ export ThermalBasicUnitCommitment
 export ThermalDispatch
 export ThermalRampLimited
 export ThermalDispatchNoMin
+
+###### Regulation Device Formulation #######
+export DeviceLimitedRegulation
+export ReserveLimitedRegulation
 
 # feedforward chrons
 export RecedingHorizon
@@ -111,8 +117,10 @@ export make_references
 ## Template Exports
 export template_economic_dispatch
 export template_unit_commitment
+export template_agc_reserve_deployment
 export EconomicDispatchProblem
 export UnitCommitmentProblem
+export AGCReserveDeployment
 export run_economic_dispatch
 export run_unit_commitment
 ## Results interfaces
@@ -209,12 +217,12 @@ include("core/operations_problem.jl")
 include("core/simulation_stages.jl")
 include("core/simulation_sequence.jl")
 include("core/simulation.jl")
+include("devices_models/devices/common.jl")
 include("core/feedforward.jl")
 include("core/simulation_results.jl")
 include("core/recorder_events.jl")
 
 #Device Modeling components
-include("devices_models/devices/common.jl")
 include("devices_models/devices/common/activepower_constraints.jl")
 include("devices_models/devices/common/nodal_expression.jl")
 include("devices_models/devices/renewable_generation.jl")
@@ -224,6 +232,7 @@ include("devices_models/devices/AC_branches.jl")
 include("devices_models/devices/DC_branches.jl")
 include("devices_models/devices/storage.jl")
 include("devices_models/devices/hydro_generation.jl")
+include("devices_models/devices/regulation_device.jl")
 
 #Services Models
 include("services_models/agc.jl")
@@ -235,6 +244,7 @@ include("network_models/copperplate_model.jl")
 include("network_models/powermodels_interface.jl")
 include("network_models/ptdf_model.jl")
 include("network_models/network_slack_variables.jl")
+include("network_models/area_balance_model.jl")
 
 #Device constructors
 include("devices_models/device_constructors/common/constructor_validations.jl")
@@ -244,6 +254,7 @@ include("devices_models/device_constructors/branch_constructor.jl")
 include("devices_models/device_constructors/renewablegeneration_constructor.jl")
 include("devices_models/device_constructors/load_constructor.jl")
 include("devices_models/device_constructors/storage_constructor.jl")
+include("devices_models/device_constructors/regulationdevice_constructor.jl")
 
 #Network constructors
 include("network_models/network_constructor.jl")
