@@ -198,7 +198,6 @@ uc_problem = UnitCommitmentProblem(system)
 - `services::Dict{Symbol, ServiceModel}` : override default `ServiceModel` settings
 - Key word arguments supported by `OperationsProblem`
 """
-
 function UnitCommitmentProblem(system::PSY.System; kwargs...)
     kwargs = Dict(kwargs)
     template_kwargs = Dict()
@@ -212,6 +211,31 @@ function UnitCommitmentProblem(system::PSY.System; kwargs...)
 end
 
 
+"""
+    AGCReserveDeployment(system::PSY.System; kwargs...)
+
+Creates an `OperationsProblemTemplate` with default DeviceModels for an AGC Reserve Deplyoment Problem.
+Uses the template to create an `OperationsProblem`.
+
+# Example
+```julia
+agc_problem = AGCReserveDeployment(system)
+```
+
+# Accepted Key Words
+- Key word arguments supported by `OperationsProblem`
+"""
+function AGCReserveDeployment(system::PSY.System; kwargs...)
+    kwargs = Dict(kwargs)
+    template_kwargs = Dict()
+    for kw in setdiff(keys(kwargs), OPERATIONS_ACCEPTED_KWARGS)
+        template_kwargs[kw] = pop!(kwargs, kw)
+    end
+
+    template = template_agc_reserve_deployment(; template_kwargs...)
+    op_problem = OperationsProblem(AGCReserveDeployment, template, system; kwargs...)
+    return op_problem
+end
 
 
 """
