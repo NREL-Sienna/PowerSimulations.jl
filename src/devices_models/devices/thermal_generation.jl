@@ -325,11 +325,11 @@ function _get_data_for_rocc(
         non_binding_up = false
         non_binding_down = false
         ramplimits = PSY.get_ramplimits(g)
-        rating = PSY.get_rating(g)
+        basepower = PSY.get_basepower(g)
         if !isnothing(ramplimits)
             p_lims = PSY.get_activepowerlimits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramplimits.up * rating >= max_rate) & (ramplimits.down * rating >= max_rate)
+            if (ramplimits.up * basepower >= max_rate) & (ramplimits.down * basepower >= max_rate)
                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
                 continue
             else
@@ -337,8 +337,8 @@ function _get_data_for_rocc(
             end
             ini_conds[idx] = ic
             ramp_params[idx] = (
-                up = ramplimits.up * rating * minutes_per_period,
-                down = ramplimits.down * rating * minutes_per_period,
+                up = ramplimits.up * basepower * minutes_per_period,
+                down = ramplimits.down * basepower * minutes_per_period,
             )
             minmax_params[idx] = p_lims
         end
