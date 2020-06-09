@@ -31,7 +31,7 @@ function get_initial_conditions(container::InitialConditions, key::ICKey)
 end
 
 function set_initial_conditions!(container::InitialConditions, key::ICKey, value)
-    @debug "set_initial_condition" key
+    @debug "set_initial_condition_container" key
     container.data[key] = value
 end
 
