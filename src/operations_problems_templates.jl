@@ -1,5 +1,6 @@
 struct EconomicDispatchProblem <: PowerSimulationsOperationsProblem end
 struct UnitCommitmentProblem <: PowerSimulationsOperationsProblem end
+struct AGCReserveDeplyment <: PowerSimulationsOperationsProblem end
 
 function _generic_template(; kwargs...)
     network = get(kwargs, :network, CopperPlatePowerModel)
@@ -100,9 +101,52 @@ function template_economic_dispatch(; kwargs...)
 
     services = get(kwargs, :services, Dict())
 
-    template = _generic_template(devices = devices, services = services; kwargs...)
+    template = _generic_template(
+        devices = devices,
+        branches = Dict(),
+        services = services;
+        kwargs...,
+    )
 
     return template
+end
+
+"""
+    template_agc_reserve_deployment(; kwargs...)
+
+Creates an `OperationsProblemTemplate` with default DeviceModels for an AGC Reserve Deplyment Problem. This model doesn't support customization
+
+# Example
+```julia
+template = agc_reserve_deployment()
+```
+"""
+function template_agc_reserve_deployment(; kwargs...)
+    if !isempty(kwargs)
+        throw(ArgumentError("AGC Template doesn't currently support customization"))
+    end
+    devices = Dict(
+        :Generators => DeviceModel(PSY.ThermalStandard, FixedOutput),
+        :Ren => DeviceModel(PSY.RenewableDispatch, FixedOutput),
+        :Loads => DeviceModel(PSY.PowerLoad, StaticPowerLoad),
+        :HydroROR => DeviceModel(PSY.HydroDispatch, FixedOutput),
+        :RenFx => DeviceModel(PSY.RenewableFix, FixedOutput),
+        :Regulation_thermal => DeviceModel(
+            PSY.RegulationDevice{PSY.ThermalStandard},
+            DeviceLimitedRegulation,
+        ),
+        :Regulation_hydro => DeviceModel(
+            PSY.RegulationDevice{PSY.HydroDispatch},
+            ReserveLimitedRegulation,
+        ),
+    )
+    services = Dict(:AGC => ServiceModel(PSY.AGC, PIDSmoothACE))
+    template = _generic_template(
+        network = PSI.AreaBalancePowerModel,
+        devices = devices,
+        services = services;
+        kwargs...,
+    )
 end
 
 """
@@ -166,6 +210,9 @@ function UnitCommitmentProblem(system::PSY.System; kwargs...)
     op_problem = OperationsProblem(UnitCommitmentProblem, template, system; kwargs...)
     return op_problem
 end
+
+
+
 
 """
     run_unit_commitment(system::PSY.System; kwargs...)
