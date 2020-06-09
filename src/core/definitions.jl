@@ -21,8 +21,8 @@ const RUN_SIMULATION_TIMER = TimerOutputs.TimerOutput()
 
 #Type Alias for JuMP and PJ containers
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
-const PGAE{V} = PJ.ParametrizedGenericAffExpr{Float64, JuMP.VariableRef}
-const GAE{V} = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}
+const PGAE = PJ.ParametrizedGenericAffExpr{Float64, JuMP.VariableRef}
+const GAE = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}
 const JuMPAffineExpressionArray = Matrix{GAE}
 const JuMPAffineExpressionVector = Vector{GAE}
 const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}

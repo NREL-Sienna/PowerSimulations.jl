@@ -13,7 +13,7 @@ function area_balance(
 
     for (k, buses_in_area) in area_mapping
         for t in time_steps
-            area_net = JuMP.AffExpr(0.0)
+            area_net = model_has_parameters(psi_container) ? zero(PGAE) : zero(GAE)
             for b in buses_in_area
                 JuMP.add_to_expression!(area_net, nodal_net_balance[PSY.get_number(b), t])
             end
