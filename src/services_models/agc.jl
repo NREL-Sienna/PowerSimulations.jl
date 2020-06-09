@@ -22,10 +22,8 @@ function balancing_auxiliary_variables!(psi_container, sys)
     assign_variable!(psi_container, variable_name("area_total_reserve_up"), R_up)
     assign_variable!(psi_container, variable_name("area_total_reserve_dn"), R_dn)
     for t in time_steps, a in area_names
-        R_up[a, t] =
-            JuMP.@variable(psi_container.JuMPmodel, base_name = "R_up_{$(a),$(t)}")
-        R_dn[a, t] =
-            JuMP.@variable(psi_container.JuMPmodel, base_name = "R_dn_{$(a),$(t)}")
+        R_up[a, t] = JuMP.@variable(psi_container.JuMPmodel, base_name = "R_up_{$(a),$(t)}")
+        R_dn[a, t] = JuMP.@variable(psi_container.JuMPmodel, base_name = "R_dn_{$(a),$(t)}")
     end
     return
 end
@@ -140,8 +138,7 @@ function smooth_ace_pid!(
                 continue
             end
 
-            RAW_ACE[a, t] =
-                area_balance[a, t] - 10 * B * Δf[t] - area_mismatch[a, t - 1]
+            RAW_ACE[a, t] = area_balance[a, t] - 10 * B * Δf[t] - area_mismatch[a, t - 1]
 
             SACE_pid[a, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
@@ -171,7 +168,7 @@ function aux_constraints!(psi_container::PSIContainer, sys::PSY.System)
     for t in time_steps, a in area_names
         aux_equation[a, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            -1*SACE[a, t] == (R_up[a, t] - R_dn[a,t]) + area_mismatch[a, t]
+            -1 * SACE[a, t] == (R_up[a, t] - R_dn[a, t]) + area_mismatch[a, t]
         )
     end
     return

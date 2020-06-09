@@ -210,7 +210,6 @@ function UnitCommitmentProblem(system::PSY.System; kwargs...)
     return op_problem
 end
 
-
 """
     AGCReserveDeployment(system::PSY.System; kwargs...)
 
@@ -236,7 +235,6 @@ function AGCReserveDeployment(system::PSY.System; kwargs...)
     op_problem = OperationsProblem(AGCReserveDeployment, template, system; kwargs...)
     return op_problem
 end
-
 
 """
     run_unit_commitment(system::PSY.System; kwargs...)

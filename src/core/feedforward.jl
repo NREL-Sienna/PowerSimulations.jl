@@ -215,19 +215,14 @@ function ub_ff(
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_ub
-                JuMP.add_to_expression!(
-                    expression_ub,
-                    variable[name, t],
-                )
+                JuMP.add_to_expression!(expression_ub, variable[name, t])
             end
-            con_ub[name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                expression_ub  <= param_ub[name]
-            )
+            con_ub[name, t] =
+                JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= param_ub[name])
 
         end
     end
-   return
+    return
 end
 
 @doc raw"""
@@ -283,7 +278,7 @@ function range_ff(
     con_lb = add_cons_container!(psi_container, lb_name, set_name, time_steps)
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
-        for constraint_info in constraint_infos
+    for constraint_info in constraint_infos
         name = get_name(constraint_info)
         param_lb[name] =
             PJ.add_parameter(psi_container.JuMPmodel, JuMP.lower_bound(variable[name, 1]))
@@ -292,27 +287,16 @@ function range_ff(
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_ub
-                JuMP.add_to_expression!(
-                    expression_ub,
-                    variable[name, t],
-                )
+                JuMP.add_to_expression!(expression_ub, variable[name, t])
             end
             expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_lb
-                JuMP.add_to_expression!(
-                    expression_lb,
-                    variable[name, t],
-                    -1.0,
-                )
+                JuMP.add_to_expression!(expression_lb, variable[name, t], -1.0)
             end
-            con_ub[name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                expression_ub  <= param_ub[name]
-            )
-            con_lb[name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                expression_lb >=  param_lb[name]
-            )
+            con_ub[name, t] =
+                JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= param_ub[name])
+            con_lb[name, t] =
+                JuMP.@constraint(psi_container.JuMPmodel, expression_lb >= param_lb[name])
         end
     end
 
@@ -396,7 +380,7 @@ function semicontinuousrange_ff(
             end
             con_ub[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                expression_ub  <= ub_value * param[name]
+                expression_ub <= ub_value * param[name]
             )
             con_lb[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
@@ -494,7 +478,13 @@ function feedforward!(
     for prefix in get_affected_variables(ff_model)
         var_name = variable_name(prefix, T)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
-        ub_ff(psi_container, constraint_name(FEEDFORWARD_UB, T), constraint_infos, parameter_ref, var_name)
+        ub_ff(
+            psi_container,
+            constraint_name(FEEDFORWARD_UB, T),
+            constraint_infos,
+            parameter_ref,
+            var_name,
+        )
     end
 end
 

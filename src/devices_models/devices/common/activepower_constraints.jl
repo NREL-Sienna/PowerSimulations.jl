@@ -100,7 +100,8 @@ function activepower_constraints!(
         constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
         for (i, dev) in enumerate(devices)
             ts_vector = get_time_series(psi_container, dev, forecast_label)
-            constraint_info = DeviceTimeSeriesConstraintInfo(dev, multiplier_func, ts_vector)
+            constraint_info =
+                DeviceTimeSeriesConstraintInfo(dev, multiplier_func, ts_vector)
             add_device_services!(constraint_info.range, dev, model)
             constraint_infos[i] = constraint_info
         end

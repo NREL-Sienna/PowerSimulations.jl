@@ -33,15 +33,13 @@ function activepower_constraints!(
 
     up = Symbol("regulation_limits_up_$(T)")
     dn = Symbol("regulation_limits_dn_$(T)")
-    container_up =
-        add_cons_container!(psi_container, up, names, time_steps)
-    container_dn =
-        add_cons_container!(psi_container, dn, names, time_steps)
+    container_up = add_cons_container!(psi_container, up, names, time_steps)
+    container_dn = add_cons_container!(psi_container, dn, names, time_steps)
 
     for d in devices
         name = PSY.get_name(d)
         rating = PSY.get_rating(d)
-        base_points = get_time_series(psi_container, d, "get_rating")*rating
+        base_points = get_time_series(psi_container, d, "get_rating") * rating
         limits = PSY.get_activepowerlimits(d)
         for t in time_steps, d in devices
             container_up[name, t] = JuMP.@constraint(
@@ -74,10 +72,8 @@ function activepower_constraints!(
 
     up = Symbol("regulation_limits_up_$(T)")
     dn = Symbol("regulation_limits_dn_$(T)")
-    container_up =
-        add_cons_container!(psi_container, up, names, time_steps)
-    container_dn =
-        add_cons_container!(psi_container, dn, names, time_steps)
+    container_up = add_cons_container!(psi_container, up, names, time_steps)
+    container_dn = add_cons_container!(psi_container, dn, names, time_steps)
 
     for d in devices
         name = PSY.get_name(d)
@@ -154,8 +150,16 @@ function participation_assignment!(
     component_names = (PSY.get_name(d) for d in devices)
     participation_assignment_up = JuMPConstraintArray(undef, component_names, time_steps)
     participation_assignment_dn = JuMPConstraintArray(undef, component_names, time_steps)
-    assign_constraint!(psi_container, "participation_assignment_up", participation_assignment_up)
-    assign_constraint!(psi_container, "participation_assignment_dn", participation_assignment_dn)
+    assign_constraint!(
+        psi_container,
+        "participation_assignment_up",
+        participation_assignment_up,
+    )
+    assign_constraint!(
+        psi_container,
+        "participation_assignment_dn",
+        participation_assignment_dn,
+    )
 
     for d in devices
         name = PSY.get_name(d)
@@ -171,7 +175,8 @@ function participation_assignment!(
         for t in time_steps
             participation_assignment_up[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                regulation_up[name, t] == p_factor.up * (R_up[area_name, t]))
+                regulation_up[name, t] == p_factor.up * (R_up[area_name, t])
+            )
             participation_assignment_dn[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 regulation_dn[name, t] == p_factor.dn * (R_dn[area_name, t])
@@ -181,13 +186,22 @@ function participation_assignment!(
     return
 end
 
-function regulation_cost!(psi_container::PSIContainer, devices, ::DeviceModel{PSY.RegulationDevice{T}, <:AbstractRegulationFormulation}) where {T <: PSY.StaticInjection}
+function regulation_cost!(
+    psi_container::PSIContainer,
+    devices,
+    ::DeviceModel{PSY.RegulationDevice{T}, <:AbstractRegulationFormulation},
+) where {T <: PSY.StaticInjection}
     time_steps = model_time_steps(psi_container)
     regulation_up = get_variable(psi_container, variable_name("ΔP_up", T))
     regulation_dn = get_variable(psi_container, variable_name("ΔP_dn", T))
 
-        JuMP.add_to_expression!(
+    JuMP.add_to_expression!(
         psi_container.cost_function,
-        sum(PSY.get_cost(d) *(regulation_up[PSY.get_name(d), t] + regulation_up[PSY.get_name(d), t]) for t in time_steps, d in devices))
+        sum(
+            PSY.get_cost(d) *
+            (regulation_up[PSY.get_name(d), t] + regulation_up[PSY.get_name(d), t])
+            for t in time_steps, d in devices
+        ),
+    )
     return
 end
