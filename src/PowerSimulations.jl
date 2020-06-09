@@ -117,6 +117,7 @@ export make_references
 ## Template Exports
 export template_economic_dispatch
 export template_unit_commitment
+export template_agc_reserve_deployment
 export EconomicDispatchProblem
 export UnitCommitmentProblem
 export run_economic_dispatch
