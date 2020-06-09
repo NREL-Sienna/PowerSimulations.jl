@@ -127,7 +127,7 @@ function cost_function(
 
     if use_forecast_data
         ts_vector = _convert_to_variablecost(PSY.get_data(PSY.get_forecast(
-            PSY.CostCoefficient,
+            PSY.PiecewiseFunction,
             service,
             initial_time,
             "get_variable",
