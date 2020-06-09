@@ -185,30 +185,23 @@ function ActivePowerConstraintsInputs(
     )
 end
 
-function activepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H, <:AbstractHydroReservoirFormulation},
-    system_formulation::Type{<:PM.AbstractPowerModel},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {H <: PSY.HydroGen}
-    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        name = PSY.get_name(d)
-        limits = PSY.get_activepowerlimits(d)
-        constraint_info = DeviceRangeConstraintInfo(name, limits)
-        add_device_services!(constraint_info, d, model)
-        constraint_infos[ix] = constraint_info
-    end
-    device_range(
-        psi_container,
-        RangeConstraintInputs(
-            constraint_infos,
-            constraint_name(ACTIVE_RANGE, H),
-            variable_name(ACTIVE_POWER, H),
-        ),
+function ActivePowerConstraintsInputs(
+    ::Type{T},
+    ::Type{U},
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.HydroGen, U <: AbstractHydroReservoirFormulation}
+    return ActivePowerConstraintsInputs(;
+        limits = x -> PSY.get_activepowerlimits(x),
+        range_constraint = device_range,
+        multiplier = nothing,
+        timeseries_func = nothing,
+        parameter_name = nothing,
+        constraint_name = ACTIVE_RANGE,
+        variable_name = ACTIVE_POWER,
+        bin_variable_name = nothing,
+        forecast_label = "get_rating",
     )
-    return
 end
 
 #=

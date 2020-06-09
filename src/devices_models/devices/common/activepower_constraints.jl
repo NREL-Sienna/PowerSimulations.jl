@@ -2,8 +2,8 @@
 struct ActivePowerConstraintsInputs
     limits::Function
     range_constraint::Function
-    multiplier::Function
-    timeseries_func::Function
+    multiplier::Union{Nothing, Function}
+    timeseries_func::Union{Nothing, Function}
     parameter_name::Union{Nothing, String}
     constraint_name::String
     variable_name::String
@@ -74,12 +74,17 @@ function activepower_constraints!(
     param_ref =
         use_parameters ? UpdateRef{T}(inputs.parameter_name, inputs.forecast_label) :
         nothing
+    limits_func = inputs.limits
+    range_constraint_func = inputs.range_constraint
+    forecast_label = inputs.forecast_label
+    multiplier_func = inputs.multiplier
+    timeseries_func = inputs.timeseries_func
 
     if !use_parameters && !use_forecasts
         constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
         for (i, dev) in enumerate(devices)
             name = PSY.get_name(dev)
-            limits = inputs.limits(dev)
+            limits = limits_func(dev)
             constraint_info = DeviceRangeConstraintInfo(name, limits)
             add_device_services!(constraint_info, dev, model)
             constraint_infos[i] = constraint_info
@@ -87,25 +92,28 @@ function activepower_constraints!(
 
         rc_inputs =
             RangeConstraintInputs(constraint_infos, cons_name, var_name, bin_var_name)
-        inputs.range_constraint(psi_container, rc_inputs)
+        range_constraint_func(psi_container, rc_inputs)
         return
     end
 
-    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    for (i, dev) in enumerate(devices)
-        ts_vector = get_time_series(psi_container, dev, inputs.forecast_label)
-        constraint_info = DeviceTimeSeriesConstraintInfo(dev, inputs.multiplier, ts_vector)
-        add_device_services!(constraint_info.range, dev, model)
-        constraint_infos[i] = constraint_info
+    if !isnothing(timeseries_func)
+        constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
+        for (i, dev) in enumerate(devices)
+            ts_vector = get_time_series(psi_container, dev, forecast_label)
+            constraint_info = DeviceTimeSeriesConstraintInfo(dev, multiplier_func, ts_vector)
+            add_device_services!(constraint_info.range, dev, model)
+            constraint_infos[i] = constraint_info
+        end
+
+        ts_inputs = TimeSeriesConstraintInputs(
+            constraint_infos,
+            cons_name,
+            var_name,
+            bin_var_name,
+            param_ref,
+        )
+        timeseries_func(psi_container, ts_inputs)
     end
 
-    ts_inputs = TimeSeriesConstraintInputs(
-        constraint_infos,
-        cons_name,
-        var_name,
-        bin_var_name,
-        param_ref,
-    )
-    inputs.timeseries_func(psi_container, ts_inputs)
     return
 end
