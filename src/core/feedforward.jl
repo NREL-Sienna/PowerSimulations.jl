@@ -93,7 +93,7 @@ function UpperBoundFF(; variable_from_stage, affected_variables)
     return UpperBoundFF(variable_from_stage, affected_variables, nothing)
 end
 
-get_variable_from_stage(p::UpperBoundFF) = p.binary_from_stage
+get_variable_from_stage(p::UpperBoundFF) = p.variable_from_stage
 
 struct RangeFF <: AbstractAffectFeedForward
     variable_from_stage_ub::Symbol
@@ -170,6 +170,7 @@ get_variable_from_stage(p::IntegralLimitFF) = p.variable_from_stage
 @doc raw"""
         ub_ff(psi_container::PSIContainer,
               cons_name::Symbol,
+              constraint_infos::Vector{DeviceRangeConstraintInfo},
               param_reference::UpdateRef,
               var_name::Symbol)
 
@@ -192,6 +193,7 @@ The Parameters are initialized using the uppper boundary values of the provided 
 function ub_ff(
     psi_container::PSIContainer,
     cons_name::Symbol,
+    constraint_infos::Vector{DeviceRangeConstraintInfo},
     param_reference::UpdateRef,
     var_name::Symbol,
 )
@@ -201,24 +203,31 @@ function ub_ff(
 
     axes = JuMP.axes(variable)
     set_name = axes[1]
-
     @assert axes[2] == time_steps
     container = add_param_container!(psi_container, param_reference, set_name)
     param_ub = get_parameter_array(container)
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
-    for name in axes[1]
+    for constraint_info in constraint_infos
+        name = get_name(constraint_info)
         value = JuMP.upper_bound(variable[name, 1])
         param_ub[name] = PJ.add_parameter(psi_container.JuMPmodel, value)
-        for t in axes[2]
+        for t in time_steps
+            expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+            for val in constraint_info.additional_terms_ub
+                JuMP.add_to_expression!(
+                    expression_ub,
+                    variable[name, t],
+                )
+            end
             con_ub[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                variable[name, t] <= param_ub[name]
+                expression_ub  <= param_ub[name]
             )
+
         end
     end
-
-    return
+   return
 end
 
 @doc raw"""
@@ -250,6 +259,7 @@ where r in range_data.
 function range_ff(
     psi_container::PSIContainer,
     cons_name::Symbol,
+    constraint_infos::Vector{DeviceRangeConstraintInfo},
     param_reference::NTuple{2, UpdateRef},
     var_name::Symbol,
 )
@@ -258,6 +268,7 @@ function range_ff(
     lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
 
     variable = get_variable(psi_container, var_name)
+    # Used to make sure the names are consistent between the variable and the infos
     axes = JuMP.axes(variable)
     set_name = axes[1]
     @assert axes[2] == time_steps
@@ -272,19 +283,35 @@ function range_ff(
     con_lb = add_cons_container!(psi_container, lb_name, set_name, time_steps)
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
-    for name in axes[1]
+        for constraint_info in constraint_infos
+        name = get_name(constraint_info)
         param_lb[name] =
             PJ.add_parameter(psi_container.JuMPmodel, JuMP.lower_bound(variable[name, 1]))
         param_ub[name] =
             PJ.add_parameter(psi_container.JuMPmodel, JuMP.upper_bound(variable[name, 1]))
-        for t in axes[2]
+        for t in time_steps
+            expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+            for val in constraint_info.additional_terms_ub
+                JuMP.add_to_expression!(
+                    expression_ub,
+                    variable[name, t],
+                )
+            end
+            expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+            for val in constraint_info.additional_terms_lb
+                JuMP.add_to_expression!(
+                    expression_lb,
+                    variable[name, t],
+                    -1.0,
+                )
+            end
             con_ub[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                variable[name, t] <= param_ub[name]
+                expression_ub  <= param_ub[name]
             )
             con_lb[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                variable[name, t] >= param_lb[name]
+                expression_lb >=  param_lb[name]
             )
         end
     end
@@ -328,17 +355,17 @@ where r in range_data.
 function semicontinuousrange_ff(
     psi_container::PSIContainer,
     cons_name::Symbol,
+    constraint_infos::Vector{DeviceRangeConstraintInfo},
     param_reference::UpdateRef,
     var_name::Symbol,
 )
     time_steps = model_time_steps(psi_container)
     ub_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
     lb_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
-
     variable = get_variable(psi_container, var_name)
-
+    # Used to make sure the names are consistent between the variable and the infos
     axes = JuMP.axes(variable)
-    set_name = axes[1]
+    set_name = (get_name(ci) for ci in constraint_infos)
     @assert axes[2] == time_steps
     container = add_param_container!(psi_container, param_reference, set_name)
     multiplier = get_multiplier_array(container)
@@ -346,18 +373,34 @@ function semicontinuousrange_ff(
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
     con_lb = add_cons_container!(psi_container, lb_name, set_name, time_steps)
 
-    for name in axes[1]
+    for constraint_info in constraint_infos
+        name = get_name(constraint_info)
         ub_value = JuMP.upper_bound(variable[name, 1])
         lb_value = JuMP.lower_bound(variable[name, 1])
         param[name] = PJ.add_parameter(psi_container.JuMPmodel, 1.0)
-        for t in axes[2]
+        for t in time_steps
+            expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+            for val in constraint_info.additional_terms_ub
+                JuMP.add_to_expression!(
+                    expression_ub,
+                    get_variable(psi_container, val)[name, t],
+                )
+            end
+            expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
+            for val in constraint_info.additional_terms_lb
+                JuMP.add_to_expression!(
+                    expression_lb,
+                    get_variable(psi_container, val)[name, t],
+                    -1.0,
+                )
+            end
             con_ub[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                variable[name, t] <= ub_value * param[name]
+                expression_ub  <= ub_value * param[name]
             )
             con_lb[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                variable[name, t] >= lb_value * param[name]
+                expression_lb >= lb_value * param[name]
             )
         end
     end
@@ -427,7 +470,8 @@ end
 ########################## FeedForward Constraints #########################################
 function feedforward!(
     psi_container::PSIContainer,
-    device_type::Type{T},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, <:AbstractDeviceFormulation},
     ff_model::Nothing,
 ) where {T <: PSY.Component}
     return
@@ -435,28 +479,47 @@ end
 
 function feedforward!(
     psi_container::PSIContainer,
-    device_type::Type{I},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, <:AbstractDeviceFormulation},
     ff_model::UpperBoundFF,
-) where {I <: PSY.StaticInjection}
+) where {T <: PSY.StaticInjection}
+    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
+        name = PSY.get_name(d)
+        limits = PSY.get_activepowerlimits(d)
+        constraint_info = DeviceRangeConstraintInfo(name, limits)
+        add_device_services!(constraint_info, d, model)
+        constraint_infos[ix] = constraint_info
+    end
     for prefix in get_affected_variables(ff_model)
-        var_name = variable_name(prefix, I)
+        var_name = variable_name(prefix, T)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
-        ub_ff(psi_container, constraint_name(feedforward, I), parameter_ref, var_name)
+        ub_ff(psi_container, constraint_name(FEEDFORWARD_UB, T), constraint_infos, parameter_ref, var_name)
     end
 end
 
 function feedforward!(
     psi_container::PSIContainer,
-    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T, <:AbstractDeviceFormulation},
     ff_model::SemiContinuousFF,
 ) where {T <: PSY.StaticInjection}
     bin_var = variable_name(get_binary_from_stage(ff_model), T)
     parameter_ref = UpdateRef{JuMP.VariableRef}(bin_var)
+    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
+    for (ix, d) in enumerate(devices)
+        name = PSY.get_name(d)
+        limits = PSY.get_activepowerlimits(d)
+        constraint_info = DeviceRangeConstraintInfo(name, limits)
+        add_device_services!(constraint_info, d, model)
+        constraint_infos[ix] = constraint_info
+    end
     for prefix in get_affected_variables(ff_model)
         var_name = variable_name(prefix, T)
         semicontinuousrange_ff(
             psi_container,
             constraint_name(FEEDFORWARD_BIN, T),
+            constraint_infos,
             parameter_ref,
             var_name,
         )
@@ -465,7 +528,8 @@ end
 
 function feedforward!(
     psi_container::PSIContainer,
-    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, <:AbstractDeviceFormulation},
     ff_model::IntegralLimitFF,
 ) where {T <: PSY.StaticInjection}
     for prefix in get_affected_variables(ff_model)
@@ -473,7 +537,7 @@ function feedforward!(
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         integral_limit_ff(
             psi_container,
-            constraint_name(FEEDFORWARD, T),
+            constraint_name(FEEDFORWARD_INTEGRAL_LIMIT, T),
             parameter_ref,
             var_name,
         )
