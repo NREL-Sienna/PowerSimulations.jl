@@ -108,7 +108,7 @@ struct RangeFF <: AbstractAffectFeedForward
     )
         new(
             Symbol(variable_from_stage_ub),
-            Symbol(variable_from_stage_ub),
+            Symbol(variable_from_stage_lb),
             Symbol.(affected_variables),
             cache,
         )
@@ -164,6 +164,12 @@ function IntegralLimitFF(; variable_from_stage, affected_variables)
 end
 
 get_variable_from_stage(p::IntegralLimitFF) = p.variable_from_stage
+
+struct ParameterFF <: AbstractAffectFeedForward
+   variable_from_stage_ub::Symbol
+   affected_parameters::Vector{Symbol}
+end
+
 
 ####################### Feed Forward Affects ###############################################
 
