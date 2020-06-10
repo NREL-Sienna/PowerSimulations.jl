@@ -8,7 +8,7 @@ This function add the variables for reserves to the model
 function regulation_service_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
-) where {T <: PSY.StaticInjection}
+) where {T<:PSY.StaticInjection}
     var_name_up = variable_name("ΔP_up", T)
     var_name_dn = variable_name("ΔP_dn", T)
     add_variable(psi_container, devices, var_name_up, false; lb_value = x -> 0.0)
@@ -19,10 +19,11 @@ end
 function activepower_constraints!(
     psi_container::PSIContainer,
     devices,
-    ::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
+    ::DeviceModel{PSY.RegulationDevice{T},DeviceLimitedRegulation},
     ::Type{AreaBalancePowerModel},
     feedforward::Nothing,
-) where {T <: PSY.StaticInjection}
+) where {T<:PSY.StaticInjection}
+    parameters = model_has_parameters(psi_container)
     var_name_up = variable_name("ΔP_up", T)
     var_name_dn = variable_name("ΔP_dn", T)
     var_up = get_variable(psi_container, var_name_up)
@@ -33,24 +34,38 @@ function activepower_constraints!(
 
     up = Symbol("regulation_limits_up_$(T)")
     dn = Symbol("regulation_limits_dn_$(T)")
-    container_up =
-        add_cons_container!(psi_container, up, names, time_steps)
-    container_dn =
-        add_cons_container!(psi_container, dn, names, time_steps)
+    container_up = add_cons_container!(psi_container, up, names, time_steps)
+    container_dn = add_cons_container!(psi_container, dn, names, time_steps)
 
-    for d in devices
-        name = PSY.get_name(d)
-        rating = PSY.get_rating(d)
-        base_points = get_time_series(psi_container, d, "get_rating")*rating
-        limits = PSY.get_activepowerlimits(d)
-        for t in time_steps, d in devices
+    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
+    parameters && (rating = Vector{Float64}(undef, length(devices)))
+    for (ix, d) in enumerate(devices)
+        ts_vector = get_time_series(psi_container, d, "get_rating")
+        constraint_info =
+            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_basepower(x), ts_vector, x-> PSY.get_activepowerlimits(x))
+        constraint_infos[ix] = constraint_info
+        parameters && (rating[ix] = PSY.get_rating(d))
+    end
+
+    if parameters
+        base_points_param = include_parameters(psi_container, constraint_infos, UpdateRef{JuMP.VariableRef}(T, "P"))
+        multiplier = get_multiplier_array(base_points_param)
+        base_points = get_parameter_array(base_points_param)
+    end
+
+    for d in constraint_infos
+        name = get_name(d)
+        limits = get_limits(d)
+        for t in time_steps
+            rating = parameters ? multiplier[name, t] : d.multiplier
+            base_point = parameters ? base_points[name, t] : d.get_time_series[t]
             container_up[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                var_up[name, t] <= limits.max - base_points[t]
+                var_up[name, t] <= limits.max - base_point*rating
             )
             container_dn[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                var_dn[name, t] <= base_points[t] - limits.min
+                var_dn[name, t] <= base_point*rating- limits.min
             )
         end
     end
@@ -60,10 +75,10 @@ end
 function activepower_constraints!(
     psi_container::PSIContainer,
     devices,
-    ::DeviceModel{PSY.RegulationDevice{T}, ReserveLimitedRegulation},
+    ::DeviceModel{PSY.RegulationDevice{T},ReserveLimitedRegulation},
     ::Type{AreaBalancePowerModel},
     feedforward::Nothing,
-) where {T <: PSY.StaticInjection}
+) where {T<:PSY.StaticInjection}
     var_name_up = variable_name("ΔP_up", T)
     var_name_dn = variable_name("ΔP_dn", T)
     var_up = get_variable(psi_container, var_name_up)
@@ -74,16 +89,14 @@ function activepower_constraints!(
 
     up = Symbol("regulation_limits_up_$(T)")
     dn = Symbol("regulation_limits_dn_$(T)")
-    container_up =
-        add_cons_container!(psi_container, up, names, time_steps)
-    container_dn =
-        add_cons_container!(psi_container, dn, names, time_steps)
+    container_up = add_cons_container!(psi_container, up, names, time_steps)
+    container_dn = add_cons_container!(psi_container, dn, names, time_steps)
 
     for d in devices
         name = PSY.get_name(d)
         limit_up = PSY.get_reserve_limit_up(d)
         limit_dn = PSY.get_reserve_limit_dn(d)
-        for t in time_steps, d in devices
+        for t in time_steps
             container_up[name, t] =
                 JuMP.@constraint(psi_container.JuMPmodel, var_up[name, t] <= limit_up)
             container_dn[name, t] =
@@ -96,18 +109,18 @@ end
 ramp_constraints!(
     ::PSIContainer,
     ::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{T, <:AbstractRegulationFormulation},
+    ::DeviceModel{T,<:AbstractRegulationFormulation},
     ::Type{AreaBalancePowerModel},
     ::Nothing,
-) where {T <: PSY.RegulationDevice} = nothing
+) where {T<:PSY.RegulationDevice} = nothing
 
 function ramp_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
+    ::DeviceModel{PSY.RegulationDevice{T},DeviceLimitedRegulation},
     ::Type{AreaBalancePowerModel},
     feedforward::Nothing,
-) where {T <: PSY.ThermalStandard}
+) where {T<:PSY.ThermalStandard}
     regulation_up = get_variable(psi_container, variable_name("ΔP_up", T))
     regulation_dn = get_variable(psi_container, variable_name("ΔP_dn", T))
 
@@ -140,10 +153,10 @@ end
 function participation_assignment!(
     psi_container::PSIContainer,
     devices,
-    ::DeviceModel{PSY.RegulationDevice{T}, <:AbstractRegulationFormulation},
+    ::DeviceModel{PSY.RegulationDevice{T},<:AbstractRegulationFormulation},
     ::Type{AreaBalancePowerModel},
     feedforward::Nothing,
-) where {T <: PSY.StaticInjection}
+) where {T<:PSY.StaticInjection}
     time_steps = model_time_steps(psi_container)
     regulation_up = get_variable(psi_container, variable_name("ΔP_up", T))
     regulation_dn = get_variable(psi_container, variable_name("ΔP_dn", T))
@@ -154,8 +167,16 @@ function participation_assignment!(
     component_names = (PSY.get_name(d) for d in devices)
     participation_assignment_up = JuMPConstraintArray(undef, component_names, time_steps)
     participation_assignment_dn = JuMPConstraintArray(undef, component_names, time_steps)
-    assign_constraint!(psi_container, "participation_assignment_up", participation_assignment_up)
-    assign_constraint!(psi_container, "participation_assignment_dn", participation_assignment_dn)
+    assign_constraint!(
+        psi_container,
+        "participation_assignment_up",
+        participation_assignment_up,
+    )
+    assign_constraint!(
+        psi_container,
+        "participation_assignment_dn",
+        participation_assignment_dn,
+    )
 
     for d in devices
         name = PSY.get_name(d)
@@ -171,7 +192,8 @@ function participation_assignment!(
         for t in time_steps
             participation_assignment_up[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                regulation_up[name, t] == p_factor.up * (R_up[area_name, t]))
+                regulation_up[name, t] == p_factor.up * (R_up[area_name, t])
+            )
             participation_assignment_dn[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 regulation_dn[name, t] == p_factor.dn * (R_dn[area_name, t])
@@ -181,13 +203,29 @@ function participation_assignment!(
     return
 end
 
-function regulation_cost!(psi_container::PSIContainer, devices, ::DeviceModel{PSY.RegulationDevice{T}, <:AbstractRegulationFormulation}) where {T <: PSY.StaticInjection}
+function regulation_cost!(
+    psi_container::PSIContainer,
+    devices,
+    ::DeviceModel{PSY.RegulationDevice{T},<:AbstractRegulationFormulation},
+) where {T<:PSY.StaticInjection}
     time_steps = model_time_steps(psi_container)
     regulation_up = get_variable(psi_container, variable_name("ΔP_up", T))
     regulation_dn = get_variable(psi_container, variable_name("ΔP_dn", T))
 
-        JuMP.add_to_expression!(
-        psi_container.cost_function,
-        sum(PSY.get_cost(d) *(regulation_up[PSY.get_name(d), t] + regulation_up[PSY.get_name(d), t]) for t in time_steps, d in devices))
+    for d in devices
+        cost = PSY.get_cost(d)
+        for t in time_steps
+            JuMP.add_to_expression!(
+                psi_container.cost_function,
+                regulation_up[PSY.get_name(d), t],
+                cost,
+            )
+            JuMP.add_to_expression!(
+                psi_container.cost_function,
+                regulation_up[PSY.get_name(d), t],
+                cost,
+            )
+        end
+    end
     return
 end
