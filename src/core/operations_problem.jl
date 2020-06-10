@@ -421,6 +421,7 @@ function _build!(
 
     @debug "Building Objective"
     JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
+    @debug "Total operation count $(psi_container.JuMPmodel.operator_counter)"
     return
 end
 
