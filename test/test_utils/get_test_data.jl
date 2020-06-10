@@ -232,7 +232,7 @@ function build_c_sys5_re(; kwargs...)
             add_forecast!(
                 c_sys5_re,
                 serv,
-                CostCoefficient("get_variable", 10, ORDC_cost_ts[t]),
+                PiecewiseFunction("get_variable", 10, ORDC_cost_ts[t]),
             )
         end
     end
@@ -385,7 +385,7 @@ function build_c_sys5_hyd(; kwargs...)
             add_forecast!(
                 c_sys5_hyd,
                 serv,
-                CostCoefficient("get_variable", 10, ORDC_cost_ts[t]),
+                PiecewiseFunction("get_variable", 10, ORDC_cost_ts[t]),
             )
         end
     end
@@ -437,7 +437,7 @@ function build_c_sys5_bat(; kwargs...)
             add_forecast!(
                 c_sys5_bat,
                 serv,
-                CostCoefficient("get_variable", 10, ORDC_cost_ts[t]),
+                PiecewiseFunction("get_variable", 10, ORDC_cost_ts[t]),
             )
         end
     end
@@ -494,7 +494,7 @@ function build_c_sys5_il(; kwargs...)
             add_forecast!(
                 c_sys5_il,
                 serv,
-                CostCoefficient("get_variable", 10, ORDC_cost_ts[t]),
+                PiecewiseFunction("get_variable", 10, ORDC_cost_ts[t]),
             )
         end
     end
@@ -711,7 +711,7 @@ function build_c_sys5_uc(; kwargs...)
             add_forecast!(
                 c_sys5_uc,
                 serv,
-                CostCoefficient("get_variable", 10, ORDC_cost_ts[t]),
+                PiecewiseFunction("get_variable", 10, ORDC_cost_ts[t]),
             )
         end
 
