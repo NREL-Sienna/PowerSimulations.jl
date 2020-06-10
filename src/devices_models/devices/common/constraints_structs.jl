@@ -39,6 +39,7 @@ struct DeviceTimeSeriesConstraintInfo
 end
 
 get_name(d::DeviceTimeSeriesConstraintInfo) = d.range.name
+get_limits(d::DeviceTimeSeriesConstraintInfo) = d.range.limits
 
 function DeviceTimeSeriesConstraintInfo(
     device::PSY.Device,

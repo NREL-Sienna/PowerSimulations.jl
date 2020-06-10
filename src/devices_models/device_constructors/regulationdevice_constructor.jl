@@ -38,7 +38,7 @@ function construct_device!(
 
     devices = get_available_components(model.device_type, sys)
     #Variables
-    regulation_service_variables!(psi_container, devices)
+     regulation_service_variables!(psi_container, devices)
 
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
