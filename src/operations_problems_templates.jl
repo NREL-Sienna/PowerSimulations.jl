@@ -1,6 +1,6 @@
 struct EconomicDispatchProblem <: PowerSimulationsOperationsProblem end
 struct UnitCommitmentProblem <: PowerSimulationsOperationsProblem end
-struct AGCReserveDeplyment <: PowerSimulationsOperationsProblem end
+struct AGCReserveDeployment <: PowerSimulationsOperationsProblem end
 
 function _generic_template(; kwargs...)
     network = get(kwargs, :network, CopperPlatePowerModel)
