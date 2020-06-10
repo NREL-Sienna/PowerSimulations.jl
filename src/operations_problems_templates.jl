@@ -103,7 +103,6 @@ function template_economic_dispatch(; kwargs...)
 
     template = _generic_template(
         devices = devices,
-        branches = Dict(),
         services = services;
         kwargs...,
     )
@@ -144,6 +143,7 @@ function template_agc_reserve_deployment(; kwargs...)
     template = _generic_template(
         network = PSI.AreaBalancePowerModel,
         devices = devices,
+        branches = Dict(),
         services = services;
         kwargs...,
     )
