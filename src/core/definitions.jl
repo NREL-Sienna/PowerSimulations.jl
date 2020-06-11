@@ -4,6 +4,10 @@ const MinMax = NamedTuple{(:min, :max), NTuple{2, Float64}}
 const NamedMinMax = Tuple{String, MinMax}
 const UpDown = NamedTuple{(:up, :down), NTuple{2, Float64}}
 const InOut = NamedTuple{(:in, :out), NTuple{2, Float64}}
+const ConstraintNames = NamedTuple{
+    (:constraint, :variable, :bin_variable, :parameter),
+    NTuple{4, Union{Nothing, String}},
+}
 
 # Type Alias From other Packages
 const PM = PowerModels

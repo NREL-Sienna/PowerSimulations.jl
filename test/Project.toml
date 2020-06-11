@@ -23,5 +23,5 @@ TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [compat]
-PowerSystems = "~0.19"
+PowerSystems = "~0.20"
 julia = "^1.2"

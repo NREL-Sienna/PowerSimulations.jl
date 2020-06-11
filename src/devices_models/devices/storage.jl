@@ -65,82 +65,58 @@ end
 
 ################################## output power constraints#################################
 
-function active_power_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{St},
-    model::DeviceModel{St, BookKeeping},
-    ::Type{S},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
-    constraints_info_in = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    constraints_info_out = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        name = PSY.get_name(d)
-        in_lims = PSY.get_inputactivepowerlimits(d)
-        out_lims = PSY.get_outputactivepowerlimits(d)
-        constraints_info_in[ix] = DeviceRangeConstraintInfo(name, in_lims)
-        constraints_info_out[ix] = DeviceRangeConstraintInfo(name, out_lims)
-        add_device_services!(constraints_info_in[ix], constraints_info_out[ix], d, model)
-    end
-
-    device_range(
-        psi_container,
-        RangeConstraintInputs(
-            constraints_info_out,
-            constraint_name(OUTPUT_POWER_RANGE, St),
-            variable_name(ACTIVE_POWER_OUT, St),
-        ),
+function make_active_power_constraints_inputs(
+    ::Type{<:PSY.Storage},
+    ::Type{<:BookKeeping},
+    ::Type{<:PM.AbstractPowerModel},
+    _::Union{Nothing, AbstractAffectFeedForward},
+    __::Bool,
+    ___::Bool,
+)
+    return DeviceConstraintInputs(;
+        range_constraint_inputs = [
+            ModelRangeConstraintInputs(;
+                constraint_name = OUTPUT_POWER_RANGE,
+                variable_name = ACTIVE_POWER_OUT,
+                limits_func = x -> PSY.get_outputactivepowerlimits(x),
+                constraint_func = device_range,
+            ),
+            ModelRangeConstraintInputs(;
+                constraint_name = INPUT_POWER_RANGE,
+                variable_name = ACTIVE_POWER_IN,
+                limits_func = x -> PSY.get_inputactivepowerlimits(x),
+                constraint_func = device_range,
+            ),
+        ],
     )
-
-    device_range(
-        psi_container,
-        RangeConstraintInputs(
-            constraints_info_in,
-            constraint_name(INPUT_POWER_RANGE, St),
-            variable_name(ACTIVE_POWER_IN, St),
-        ),
-    )
-    return
 end
 
-function active_power_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{St},
-    model::DeviceModel{St, BookKeepingwReservation},
-    ::Type{S},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {St <: PSY.Storage, S <: PM.AbstractPowerModel}
-    constraints_info_in = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    constraints_info_out = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        name = PSY.get_name(d)
-        in_lims = PSY.get_inputactivepowerlimits(d)
-        out_lims = PSY.get_outputactivepowerlimits(d)
-        constraints_info_in[ix] = DeviceRangeConstraintInfo(name, in_lims)
-        constraints_info_out[ix] = DeviceRangeConstraintInfo(name, out_lims)
-        add_device_services!(constraints_info_in[ix], constraints_info_out[ix], d, model)
-    end
-
-    reserve_device_semicontinuousrange(
-        psi_container,
-        RangeConstraintInputs(
-            constraints_info_in,
-            constraint_name(INPUT_POWER_RANGE, St),
-            variable_name(ACTIVE_POWER_IN, St),
-            variable_name(RESERVE, St),
-        ),
+function make_active_power_constraints_inputs(
+    ::Type{<:PSY.Storage},
+    ::Type{<:BookKeepingwReservation},
+    ::Type{<:PM.AbstractPowerModel},
+    _::Union{Nothing, AbstractAffectFeedForward},
+    __::Bool,
+    ___::Bool,
+)
+    return DeviceConstraintInputs(;
+        range_constraint_inputs = [
+            ModelRangeConstraintInputs(;
+                constraint_name = OUTPUT_POWER_RANGE,
+                variable_name = ACTIVE_POWER_OUT,
+                bin_variable_name = RESERVE,
+                limits_func = x -> PSY.get_outputactivepowerlimits(x),
+                constraint_func = reserve_device_semicontinuousrange,
+            ),
+            ModelRangeConstraintInputs(;
+                constraint_name = INPUT_POWER_RANGE,
+                variable_name = ACTIVE_POWER_IN,
+                bin_variable_name = RESERVE,
+                limits_func = x -> PSY.get_inputactivepowerlimits(x),
+                constraint_func = reserve_device_semicontinuousrange,
+            ),
+        ],
     )
-
-    reserve_device_semicontinuousrange(
-        psi_container,
-        RangeConstraintInputs(
-            constraints_info_out,
-            constraint_name(OUTPUT_POWER_RANGE, St),
-            variable_name(ACTIVE_POWER_OUT, St),
-            variable_name(RESERVE, St),
-        ),
-    )
-    return
 end
 
 """

@@ -35,48 +35,49 @@ function reactivepower_variables!(
 end
 
 ####################################### Reactive Power constraint_infos #########################
-function reactivepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{R},
-    model::DeviceModel{R, RenewableFullDispatch},
-    system_formulation::Type{<:PM.AbstractPowerModel},
+function make_reactive_power_constraints_inputs(
+    ::Type{<:PSY.RenewableGen},
+    ::Type{<:AbstractDeviceFormulation},
+    ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {R <: PSY.RenewableGen}
-    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        name = PSY.get_name(d)
-        if isnothing(PSY.get_reactivepowerlimits(d))
-            lims = (min = 0.0, max = 0.0)
-            @warn("Reactive Power Limits of $(lims) are nothing. Q_$(lims) is set to 0.0")
-        else
-            lims = PSY.get_reactivepowerlimits(d)
-        end
-        constraint_infos[ix] = DeviceRangeConstraintInfo(name, lims)
-    end
-    device_range(
-        psi_container,
-        RangeConstraintInputs(
-            constraint_infos,
-            constraint_name(REACTIVE_RANGE, R),
-            variable_name(REACTIVE_POWER, R),
-        ),
+    use_parameters::Bool,
+    use_forecasts::Bool,
+)
+    # TODO: the old code had a warning if PSY.get_reactivepowerlimits returned nothing
+    return DeviceConstraintInputs(;
+        range_constraint_inputs = [ModelRangeConstraintInputs(;
+            constraint_name = REACTIVE_RANGE,
+            variable_name = REACTIVE_POWER,
+            limits_func = x -> PSY.get_reactivepowerlimits(x),
+            constraint_func = device_range,
+        )],
     )
-    return
 end
 
-function reactivepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{R},
-    model::DeviceModel{R, RenewableConstantPowerFactor},
-    system_formulation::Type{<:PM.AbstractPowerModel},
+function make_reactive_power_constraints_inputs(
+    ::Type{<:PSY.RenewableGen},
+    ::Type{<:RenewableConstantPowerFactor},
+    ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {R <: PSY.RenewableGen}
+    use_parameters::Bool,
+    use_forecasts::Bool,
+)
+    return DeviceConstraintInputs(;
+        custom_psi_container_func = custom_reactive_power_constraints!,
+    )
+end
+
+function custom_reactive_power_constraints!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::Type{RenewableConstantPowerFactor},
+) where {T <: PSY.RenewableGen}
     names = (PSY.get_name(d) for d in devices)
     time_steps = model_time_steps(psi_container)
-    p_var = get_variable(psi_container, ACTIVE_POWER, R)
-    q_var = get_variable(psi_container, REACTIVE_POWER, R)
+    p_var = get_variable(psi_container, ACTIVE_POWER, T)
+    q_var = get_variable(psi_container, REACTIVE_POWER, T)
     constraint_val = JuMPConstraintArray(undef, names, time_steps)
-    assign_constraint!(psi_container, REACTIVE_RANGE, R, constraint_val)
+    assign_constraint!(psi_container, REACTIVE_RANGE, T, constraint_val)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(acos(PSY.get_powerfactor(d)))
@@ -86,23 +87,35 @@ function reactivepower_constraints!(
     return
 end
 
-function ActivePowerConstraintsInputs(
-    ::Type{T},
-    ::Type{U},
+function make_active_power_constraints_inputs(
+    ::Type{<:PSY.RenewableGen},
+    ::Type{<:AbstractRenewableDispatchFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+    _::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
-) where {T <: PSY.RenewableGen, U <: AbstractRenewableDispatchFormulation}
-    return ActivePowerConstraintsInputs(;
-        limits = x -> (min = 0.0, max = PSY.get_activepower(x)),
-        range_constraint = device_range,
-        multiplier = x -> PSY.get_rating(x),
-        timeseries_func = use_parameters ? device_timeseries_param_ub :
-                          device_timeseries_ub,
-        parameter_name = use_parameters ? ACTIVE_POWER : nothing,
-        constraint_name = use_forecasts ? ACTIVE : ACTIVE_RANGE,
-        variable_name = ACTIVE_POWER,
-        bin_variable_name = nothing,
-        forecast_label = "get_rating",
+)
+    if (!use_parameters && !use_forecasts)
+        return DeviceConstraintInputs(;
+            range_constraint_inputs = [ModelRangeConstraintInputs(;
+                constraint_name = ACTIVE_RANGE,
+                variable_name = ACTIVE_POWER,
+                limits_func = x -> (min = 0.0, max = PSY.get_activepower(x)),
+                constraint_func = device_range,
+            )],
+        )
+    end
+
+    return DeviceConstraintInputs(;
+        timeseries_range_constraint_inputs = [ModelTimeSeriesConstraintInputs(
+            constraint_name = ACTIVE,
+            variable_name = ACTIVE_POWER,
+            parameter_name = use_parameters ? ACTIVE_POWER : nothing,
+            forecast_label = "get_rating",
+            multiplier_func = x -> PSY.get_rating(x),
+            constraint_func = use_parameters ? device_timeseries_param_ub :
+                              device_timeseries_ub,
+        )],
     )
 end
 

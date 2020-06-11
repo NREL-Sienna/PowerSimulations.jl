@@ -140,67 +140,71 @@ function commitment_constraints!(
 end
 =#
 ####################################### Reactive Power Constraints #########################
-function reactivepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-    model::DeviceModel{H, D},
-    system_formulation::Type{<:PM.AbstractPowerModel},
+function make_reactive_power_constraints_inputs(
+    ::Type{<:PSY.HydroGen},
+    ::Type{<:AbstractHydroDispatchFormulation},
+    ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {H <: PSY.HydroGen, D <: AbstractHydroDispatchFormulation}
-    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        limits = PSY.get_reactivepowerlimits(d)
-        name = PSY.get_name(d)
-        constraint_infos[ix] = DeviceRangeConstraintInfo(name, limits)
+    use_parameters::Bool,
+    use_forecasts::Bool,
+)
+    return DeviceConstraintInputs(;
+        range_constraint_inputs = [ModelRangeConstraintInputs(;
+            constraint_name = REACTIVE_RANGE,
+            variable_name = REACTIVE_POWER,
+            limits_func = x -> PSY.get_reactivepowerlimits(x),
+            constraint_func = device_range,
+        )],
+    )
+end
+
+function make_active_power_constraints_inputs(
+    ::Type{<:PSY.HydroGen},
+    ::Type{<:AbstractHydroDispatchFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+    _::Union{Nothing, AbstractAffectFeedForward},
+    use_parameters::Bool,
+    use_forecasts::Bool,
+)
+    if (!use_parameters && !use_forecasts)
+        return DeviceConstraintInputs(;
+            range_constraint_inputs = [ModelRangeConstraintInputs(;
+                constraint_name = ACTIVE_RANGE,
+                variable_name = ACTIVE_POWER,
+                limits_func = x -> (min = 0.0, max = PSY.get_activepower(x)),
+                constraint_func = device_range,
+            )],
+        )
     end
 
-    device_range(
-        psi_container,
-        RangeConstraintInputs(
-            constraint_infos,
-            constraint_name(REACTIVE_RANGE, H),
-            variable_name(REACTIVE_POWER, H),
-        ),
-    )
-    return
-end
-
-function ActivePowerConstraintsInputs(
-    ::Type{T},
-    ::Type{U},
-    use_parameters::Bool,
-    use_forecasts::Bool,
-) where {T <: PSY.HydroGen, U <: AbstractHydroDispatchFormulation}
-    return ActivePowerConstraintsInputs(;
-        limits = x -> (min = 0.0, max = PSY.get_activepower(x)),
-        range_constraint = device_range,
-        multiplier = x -> PSY.get_rating(x),
-        timeseries_func = use_parameters ? device_timeseries_param_ub :
-                          device_timeseries_ub,
-        parameter_name = use_parameters ? ACTIVE_POWER : nothing,
-        constraint_name = use_forecasts ? ACTIVE : ACTIVE_RANGE,
-        variable_name = ACTIVE_POWER,
-        bin_variable_name = nothing,
-        forecast_label = "get_rating",
+    return DeviceConstraintInputs(;
+        timeseries_range_constraint_inputs = [ModelTimeSeriesConstraintInputs(
+            constraint_name = ACTIVE,
+            variable_name = ACTIVE_POWER,
+            parameter_name = use_parameters ? ACTIVE_POWER : nothing,
+            forecast_label = "get_rating",
+            multiplier_func = x -> PSY.get_rating(x),
+            constraint_func = use_parameters ? device_timeseries_param_ub :
+                              device_timeseries_ub,
+        )],
     )
 end
 
-function ActivePowerConstraintsInputs(
-    ::Type{T},
-    ::Type{U},
-    use_parameters::Bool,
-    use_forecasts::Bool,
-) where {T <: PSY.HydroGen, U <: AbstractHydroReservoirFormulation}
-    return ActivePowerConstraintsInputs(;
-        limits = x -> PSY.get_activepowerlimits(x),
-        range_constraint = device_range,
-        multiplier = nothing,
-        timeseries_func = nothing,
-        parameter_name = nothing,
-        constraint_name = ACTIVE_RANGE,
-        variable_name = ACTIVE_POWER,
-        bin_variable_name = nothing,
-        forecast_label = "get_rating",
+function make_active_power_constraints_inputs(
+    ::Type{<:PSY.HydroGen},
+    ::Type{<:AbstractHydroReservoirFormulation},
+    ::Type{<:PM.AbstractPowerModel},
+    _::Union{Nothing, AbstractAffectFeedForward},
+    __::Bool,
+    ___::Bool,
+)
+    return DeviceConstraintInputs(;
+        range_constraint_inputs = [ModelRangeConstraintInputs(;
+            constraint_name = ACTIVE_RANGE,
+            variable_name = ACTIVE_POWER,
+            limits_func = x -> PSY.get_activepowerlimits(x),
+            constraint_func = device_range,
+        )],
     )
 end
 

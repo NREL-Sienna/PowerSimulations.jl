@@ -223,7 +223,9 @@ include("core/simulation_results.jl")
 include("core/recorder_events.jl")
 
 #Device Modeling components
+include("devices_models/devices/common/device_constraint_inputs.jl")
 include("devices_models/devices/common/activepower_constraints.jl")
+include("devices_models/devices/common/reactivepower_constraints.jl")
 include("devices_models/devices/common/nodal_expression.jl")
 include("devices_models/devices/renewable_generation.jl")
 include("devices_models/devices/thermal_generation.jl")

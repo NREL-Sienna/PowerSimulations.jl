@@ -82,101 +82,101 @@ function commitment_variables!(
     return
 end
 
-activepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{<:PSY.ThermalGen},
-    model::DeviceModel{<:PSY.ThermalGen, <:AbstractThermalFormulation},
+function make_active_power_constraints_inputs(
+    ::Type{<:PSY.ThermalGen},
+    ::Type{<:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::SemiContinuousFF,
-) = nothing
+    _::SemiContinuousFF,
+    use_parameters::Bool,
+    use_forecasts::Bool,
+)
+    return DeviceConstraintInputs()
+end
 
-activepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{<:PSY.ThermalGen},
-    model::DeviceModel{<:PSY.ThermalGen, ThermalDispatchNoMin},
+function make_active_power_constraints_inputs(
+    ::Type{<:PSY.ThermalGen},
+    ::Type{<:ThermalDispatchNoMin},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::SemiContinuousFF,
-) = nothing
+    _::SemiContinuousFF,
+    use_parameters::Bool,
+    use_forecasts::Bool,
+)
+    return DeviceConstraintInputs()
+end
 
 """
 This function adds the active power limits of generators when there are no CommitmentVariables
 """
-function activepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, <:AbstractThermalDispatchFormulation},
+function make_active_power_constraints_inputs(
+    ::Type{<:PSY.ThermalGen},
+    ::Type{<:AbstractThermalDispatchFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
-) where {T <: PSY.ThermalGen}
-    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        name = PSY.get_name(d)
-        limits = PSY.get_activepowerlimits(d)
-        constraint_info = DeviceRangeConstraintInfo(name, limits)
-        add_device_services!(constraint_info, d, model)
-        constraint_infos[ix] = constraint_info
-    end
-    device_range(
-        psi_container,
-        RangeConstraintInputs(
-            constraint_infos,
-            constraint_name(ACTIVE_RANGE, T),
-            variable_name(ACTIVE_POWER, T),
-        ),
+    _::Nothing,
+    __::Bool,
+    ___::Bool,
+)
+    return DeviceConstraintInputs(;
+        range_constraint_inputs = [ModelRangeConstraintInputs(;
+            constraint_name = ACTIVE_RANGE,
+            variable_name = ACTIVE_POWER,
+            limits_func = x -> PSY.get_activepowerlimits(x),
+            constraint_func = device_range,
+        )],
     )
-    return
 end
 
 """
 This function adds the active power limits of generators when there are CommitmentVariables
 """
-function activepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, <:AbstractThermalFormulation},
+function make_active_power_constraints_inputs(
+    ::Type{<:PSY.ThermalGen},
+    ::Type{<:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
-) where {T <: PSY.ThermalGen}
-    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        limits = PSY.get_activepowerlimits(d)
-        name = PSY.get_name(d)
-        constraint_info = DeviceRangeConstraintInfo(name, limits)
-        add_device_services!(constraint_info, d, model)
-        constraint_infos[ix] = constraint_info
-    end
-    device_semicontinuousrange(
-        psi_container,
-        RangeConstraintInputs(
-            constraint_infos,
-            constraint_name(ACTIVE_RANGE, T),
-            variable_name(ACTIVE_POWER, T),
-            variable_name(ON, T),
-        ),
+    _::Nothing,
+    __::Bool,
+    ___::Bool,
+)
+    return DeviceConstraintInputs(;
+        range_constraint_inputs = [
+            ModelRangeConstraintInputs(;
+                constraint_name = ACTIVE_RANGE,
+                variable_name = ACTIVE_POWER,
+                bin_variable_name = ON,
+                limits_func = x -> PSY.get_activepowerlimits(x),
+                constraint_func = device_semicontinuousrange,
+            ),
+        ],
     )
-    return
 end
 
 """
 This function adds the active power limits of generators when there are
     no CommitmentVariables
 """
-function activepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, ThermalDispatchNoMin},
+function make_active_power_constraints_inputs(
+    ::Type{<:PSY.ThermalGen},
+    ::Type{<:ThermalDispatchNoMin},
     ::Type{<:PM.AbstractPowerModel},
-    feedforward::Nothing,
-) where {T <: PSY.ThermalGen}
-    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        limits = (min = 0.0, max = PSY.get_activepowerlimits(d).max)
-        name = PSY.get_name(d)
-        constraint_info = DeviceRangeConstraintInfo(name, limits)
-        add_device_services!(constraint_info, d, model)
-        constraint_infos[ix] = constraint_info
-    end
+    _::Nothing,
+    __::Bool,
+    ___::Bool,
+)
+    return DeviceConstraintInputs(;
+        range_constraint_inputs = [ModelRangeConstraintInputs(;
+            constraint_name = ACTIVE_RANGE,
+            variable_name = ACTIVE_POWER,
+            limits_func = x -> (min = 0.0, max = PSY.get_activepowerlimits(x).max),
+            constraint_func = device_range,
+        )],
+        custom_psi_container_func = custom_active_power_constraints!,
+    )
+end
 
+function custom_active_power_constraints!(
+    psi_container::PSIContainer,
+    _::IS.FlattenIteratorWrapper{T},
+    ::Type{<:ThermalDispatchNoMin},
+) where {T <: PSY.ThermalGen}
     var_key = variable_name(ACTIVE_POWER, T)
     variable = get_variable(psi_container, var_key)
     # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
@@ -185,79 +185,49 @@ function activepower_constraints!(
             JuMP.set_lower_bound(v, 0.0)
         end
     end
-
-    device_range(
-        psi_container,
-        RangeConstraintInputs(
-            constraint_infos,
-            constraint_name(ACTIVE_RANGE, T),
-            variable_name(ACTIVE_POWER, T),
-        ),
-    )
-    return
 end
 
 """
 This function adds the reactive  power limits of generators when there are CommitmentVariables
 """
-function reactivepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, <:AbstractThermalDispatchFormulation},
+function make_reactive_power_constraints_inputs(
+    ::Type{<:PSY.ThermalGen},
+    ::Type{<:AbstractThermalDispatchFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen}
-    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        name = PSY.get_name(d)
-        limits = PSY.get_reactivepowerlimits(d)
-        constraint_info = DeviceRangeConstraintInfo(name, limits)
-        #add_device_services!(constraint_info, d, model)
-        # Uncomment when we implement reactive power services
-        constraint_infos[ix] = constraint_info
-    end
-
-    device_range(
-        psi_container,
-        RangeConstraintInputs(
-            constraint_infos,
-            constraint_name(REACTIVE_RANGE, T),
-            variable_name(REACTIVE_POWER, T),
-        ),
+    use_parameters::Bool,
+    use_forecasts::Bool,
+)
+    return DeviceConstraintInputs(;
+        range_constraint_inputs = [ModelRangeConstraintInputs(;
+            constraint_name = REACTIVE_RANGE,
+            variable_name = REACTIVE_POWER,
+            limits_func = x -> PSY.get_reactivepowerlimits(x),
+            constraint_func = device_range,
+        )],
     )
-    return
 end
 
 """
 This function adds the reactive power limits of generators when there CommitmentVariables
 """
-function reactivepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, <:AbstractThermalFormulation},
+function make_reactive_power_constraints_inputs(
+    ::Type{<:PSY.ThermalGen},
+    ::Type{<:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.ThermalGen}
-    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        limits = PSY.get_reactivepowerlimits(d)
-        name = PSY.get_name(d)
-        constraint_info = DeviceRangeConstraintInfo(name, limits)
-        #add_device_services!(constraint_info, d, model)
-        # Uncomment when we implement reactive power services
-        constraint_infos[ix] = constraint_info
-    end
-
-    device_semicontinuousrange(
-        psi_container,
-        RangeConstraintInputs(
-            constraint_infos,
-            constraint_name(REACTIVE_RANGE, T),
-            variable_name(REACTIVE_POWER, T),
-            variable_name(ON, T),
-        ),
+    use_parameters::Bool,
+    use_forecasts::Bool,
+)
+    return DeviceConstraintInputs(;
+        range_constraint_inputs = [ModelRangeConstraintInputs(;
+            constraint_name = REACTIVE_RANGE,
+            variable_name = REACTIVE_POWER,
+            bin_variable_name = ON,
+            limits_func = x -> PSY.get_reactivepowerlimits(x),
+            constraint_func = device_semicontinuousrange,
+        )],
     )
-    return
 end
 
 ### Constraints for Thermal Generation without commitment variables ####

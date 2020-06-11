@@ -1,7 +1,7 @@
 """
-Construct active power DeviceConstraintInputs for specific types.
+Construct reactive power DeviceConstraintInputs for specific types.
 """
-function make_active_power_constraints_inputs(
+function make_reactive_power_constraints_inputs(
     ::Type{T},
     ::Type{U},
     ::Type{V},
@@ -9,30 +9,30 @@ function make_active_power_constraints_inputs(
     use_parameters::Bool,
     use_forecasts::Bool,
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation, V <: PM.AbstractPowerModel}
-    error("make_active_power_constraints_inputs is not implemented for types $T / $U / $V")
+    error("make_reactive_power_constraints_inputs is not implemented for types $T / $U / $V")
 end
 
 """
-Default implementation to add active power constraints.
+Default implementation to add activepower constraints.
 
 Users of this function must implement a method for
-[`make_active_power_constraints_inputs`](@ref) for their specific types.
-Users may also implement custom activepower_constraints! methods.
+[`make_reactive_power_constraints_inputs`](@ref) for their specific types.
+Users may also implement custom reactivepower_constraints! methods.
 """
-function activepower_constraints!(
+function reactivepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
-    ::Type{V},
+    ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {T <: PSY.Device, U <: AbstractDeviceFormulation, V <: PM.AbstractPowerModel}
+) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
     use_parameters = model_has_parameters(psi_container)
     use_forecasts = model_uses_forecasts(psi_container)
     @assert !(use_parameters && !use_forecasts)
-    inputs = make_active_power_constraints_inputs(
+    inputs = make_reactive_power_constraints_inputs(
         T,
         U,
-        V,
+        PM.AbstractPowerModel,
         feedforward,
         use_parameters,
         use_forecasts,
