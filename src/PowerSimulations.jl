@@ -68,12 +68,15 @@ export ReserveLimitedRegulation
 export RecedingHorizon
 export Synchronize
 export Consecutive
+export FullHorizon
+export Range
 
 # feedforward models
 export UpperBoundFF
 export SemiContinuousFF
 export RangeFF
 export IntegralLimitFF
+export ParameterFF
 
 # InitialConditions chrons
 export InterStageChronology
