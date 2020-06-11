@@ -1,9 +1,10 @@
-
 struct NodalExpressionInputs
     forecast_label::String
-    parameter_name::String
+    # TODO: Remove this hack
+    parameter_name::Union{String, Symbol}
     peak_value_function::Function
     multiplier::Float64
+    update_ref::Type
 end
 
 function NodalExpressionInputs(
@@ -60,17 +61,18 @@ function _nodal_expression!(
         constraint_infos[ix] = constraint_info
     end
     if parameters
+        @show inputs.update_ref, inputs.parameter_name  forecast_label
         include_parameters(
             psi_container,
             constraint_infos,
-            UpdateRef{T}(inputs.parameter_name, forecast_label),
+            UpdateRef{inputs.update_ref}(inputs.parameter_name, forecast_label),
             expression_name,
             inputs.multiplier,
         )
         return
     else
-        for t in model_time_steps(psi_container)
-            for constraint_info in constraint_infos
+        for constraint_info in constraint_infos
+            for t in model_time_steps(psi_container)
                 add_to_expression!(
                     psi_container.expressions[expression_name],
                     constraint_info.bus_number,
