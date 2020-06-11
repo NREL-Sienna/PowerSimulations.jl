@@ -128,14 +128,19 @@ function template_agc_reserve_deployment(; kwargs...)
         :Generators => DeviceModel(PSY.ThermalStandard, FixedOutput),
         :Ren => DeviceModel(PSY.RenewableDispatch, FixedOutput),
         :Loads => DeviceModel(PSY.PowerLoad, StaticPowerLoad),
+        :Hydro => DeviceModel(PSY.HydroEnergyReservoir, FixedOutput),
         :HydroROR => DeviceModel(PSY.HydroDispatch, FixedOutput),
         :RenFx => DeviceModel(PSY.RenewableFix, FixedOutput),
         :Regulation_thermal => DeviceModel(
             PSY.RegulationDevice{PSY.ThermalStandard},
             DeviceLimitedRegulation,
         ),
-        :Regulation_hydro => DeviceModel(
+        :Regulation_hydro_dispatch => DeviceModel(
             PSY.RegulationDevice{PSY.HydroDispatch},
+            ReserveLimitedRegulation,
+        ),
+        :Regulation_hydro_reservoir => DeviceModel(
+            PSY.RegulationDevice{PSY.HydroEnergyReservoir},
             ReserveLimitedRegulation,
         ),
     )
