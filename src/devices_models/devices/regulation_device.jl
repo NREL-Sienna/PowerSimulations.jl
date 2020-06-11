@@ -46,7 +46,7 @@ function activepower_constraints!(
     end
 
     if parameters
-        base_points_param = get_parameter_container(psi_container, encode_symbol(PSY.RegulationDevice{T}, ACTIVE_POWER, "get_rating"))
+        base_points_param = get_parameter_container(psi_container, variable_name(ACTIVE_POWER, T))
         multiplier = get_multiplier_array(base_points_param)
         base_points = get_parameter_array(base_points_param)
     end
