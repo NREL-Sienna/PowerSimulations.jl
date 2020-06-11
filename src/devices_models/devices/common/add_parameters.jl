@@ -10,6 +10,7 @@ function include_parameters(
     time_steps = model_time_steps(psi_container)
     ## TODO, replace multiplier
     names = (get_name(r) for r in constraint_infos)
+    @debug "adding" param_reference "parameter"
     container = add_param_container!(psi_container, param_reference, names, time_steps)
     param = get_parameter_array(container)
     mult = get_multiplier_array(container)
