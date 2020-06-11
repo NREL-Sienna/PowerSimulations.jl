@@ -38,17 +38,15 @@ function activepower_constraints!(
     container_dn = add_cons_container!(psi_container, dn, names, time_steps)
 
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    parameters && (rating = Vector{Float64}(undef, length(devices)))
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, "get_rating")
         constraint_info =
             DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_basepower(x), ts_vector, x-> PSY.get_activepowerlimits(x))
         constraint_infos[ix] = constraint_info
-        parameters && (rating[ix] = PSY.get_rating(d))
     end
 
     if parameters
-        base_points_param = include_parameters(psi_container, constraint_infos, UpdateRef{JuMP.VariableRef}(T, "P"))
+        base_points_param = get_parameter_container(psi_container, encode_symbol(PSY.RegulationDevice{T}, ACTIVE_POWER, "get_rating"))
         multiplier = get_multiplier_array(base_points_param)
         base_points = get_parameter_array(base_points_param)
     end
@@ -58,7 +56,7 @@ function activepower_constraints!(
         limits = get_limits(d)
         for t in time_steps
             rating = parameters ? multiplier[name, t] : d.multiplier
-            base_point = parameters ? base_points[name, t] : d.get_time_series[t]
+            base_point = parameters ? base_points[name, t] : get_timeseries(d)[t]
             container_up[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 var_up[name, t] <= limits.max - base_point*rating
@@ -101,6 +99,36 @@ function activepower_constraints!(
                 JuMP.@constraint(psi_container.JuMPmodel, var_up[name, t] <= limit_up)
             container_dn[name, t] =
                 JuMP.@constraint(psi_container.JuMPmodel, var_dn[name, t] <= limit_dn)
+        end
+    end
+    return
+end
+
+function activepower_constraints!(
+    psi_container::PSIContainer,
+    devices,
+    ::DeviceModel{PSY.RegulationDevice{T},ReserveLimitedRegulation},
+    ::Type{AreaBalancePowerModel},
+    feedforward::UpperBoundFF,
+) where {T<:PSY.StaticInjection}
+    var_name = feedforward.affected_variables[1]
+    var_up = get_variable(psi_container, var_name)
+
+    names = (PSY.get_name(g) for g in devices)
+    time_steps = model_time_steps(psi_container)
+
+    var = Symbol("regulation_limits_$(var_name)")
+    container = add_cons_container!(psi_container, var, names, time_steps)
+    param_container = add_param_container!(psi_container, UpdateRef{JuMP.VariableRef}(feedforward.variable_source_stage), names, time_steps)
+    param = get_parameter_array(param_container)
+
+    for d in devices
+        name = PSY.get_name(d)
+        value = PSY.get_rating(d)
+        for t in time_steps
+            param[name,t] = PJ.add_parameter(psi_container.JuMPmodel, value)
+            container[name, t] =
+                JuMP.@constraint(psi_container.JuMPmodel, var_up[name, t] <= param[name, t])
         end
     end
     return
@@ -228,4 +256,18 @@ function regulation_cost!(
         end
     end
     return
+end
+
+function NodalExpressionInputs(
+    ::Type{<:PSY.RegulationDevice{T}},
+    ::Type{AreaBalancePowerModel},
+    use_forecasts::Bool,
+) where T <: PSY.StaticInjection
+    return NodalExpressionInputs(
+        "get_rating",
+        variable_name(ACTIVE_POWER, T),
+        use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),
+        1.0,
+        JuMP.VariableRef
+    )
 end
