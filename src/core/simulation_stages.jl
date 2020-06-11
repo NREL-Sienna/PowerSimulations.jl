@@ -134,6 +134,7 @@ get_end_of_interval_step(s::Stage) = s.internal.end_of_interval_step
 warm_start_enabled(s::Stage) = get_warm_start(s.internal.psi_container.settings)
 get_initial_time(s::Stage{T}) where {T <: AbstractOperationsProblem} =
     get_initial_time(s.internal.psi_container.settings)
+get_resolution(s::Stage) = IS.time_period_conversion(PSY.get_forecasts_resolution(s.sys))
 
 function reset!(stage::Stage{M}) where {M <: AbstractOperationsProblem}
     @assert stage_built(stage)
@@ -163,7 +164,7 @@ function build!(
     psi_container = get_psi_container(stage)
     _build!(psi_container, stage.template, stage.sys)
     @assert get_horizon(psi_container.settings) == length(psi_container.time_steps)
-    stage_resolution = PSY.get_forecasts_resolution(stage.sys)
+    stage_resolution = get_resolution(stage)
     stage.internal.end_of_interval_step = Int(stage_interval / stage_resolution)
     stage_path = stage.internal.stage_path
     _write_psi_container(
@@ -268,7 +269,7 @@ function get_initial_cache(cache::StoredEnergy, stage::Stage)
 end
 
 function get_time_stamps(stage::Stage, start_time::Dates.DateTime)
-    resolution = PSY.get_forecasts_resolution(stage.sys)
+    resolution = get_resolution(stage)
     horizon = stage.internal.psi_container.time_steps[end]
     range_time = collect(start_time:resolution:(start_time + resolution * horizon))
     time_stamp = DataFrames.DataFrame(Range = range_time[:, 1])
