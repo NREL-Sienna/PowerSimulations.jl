@@ -623,11 +623,13 @@ function cost_function(
     return
 end
 
+# TODO: Define for now just for Area Balance and reason about others later. This will
+# be needed and useful for PowerFlow
 function NodalExpressionInputs(
     ::Type{T},
     ::Type{AreaBalancePowerModel},
     use_forecasts::Bool,
-) where T <: PSY.RenewableGen
+) where T <: PSY.ThermalGen
     return NodalExpressionInputs(
         "get_rating",
         ACTIVE_POWER,
