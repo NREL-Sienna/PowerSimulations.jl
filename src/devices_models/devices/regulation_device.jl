@@ -180,7 +180,7 @@ end
 
 function participation_assignment!(
     psi_container::PSIContainer,
-    devices,
+    devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T},<:AbstractRegulationFormulation},
     ::Type{AreaBalancePowerModel},
     feedforward::Nothing,
@@ -214,7 +214,7 @@ function participation_assignment!(
             area_name = PSY.get_name.(PSY.get_area.(device_agc))[1]
         else
             device_agc = first(services)
-            area_name = PSY.get_name.(PSY.get_area.(device_agc))[1]
+            area_name = PSY.get_name(PSY.get_area(device_agc))
         end
         p_factor = PSY.get_participation_factor(d)
         for t in time_steps
