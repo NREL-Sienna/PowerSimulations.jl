@@ -135,6 +135,8 @@ warm_start_enabled(s::Stage) = get_warm_start(s.internal.psi_container.settings)
 get_initial_time(s::Stage{T}) where {T <: AbstractOperationsProblem} =
     get_initial_time(s.internal.psi_container.settings)
 get_resolution(s::Stage) = IS.time_period_conversion(PSY.get_forecasts_resolution(s.sys))
+get_settings(s::Stage) = get_psi_container(s).settings
+
 
 function reset!(stage::Stage{M}) where {M <: AbstractOperationsProblem}
     @assert stage_built(stage)
@@ -189,6 +191,7 @@ function run_stage(
     @assert stage.internal.psi_container.JuMPmodel.moi_backend.state != MOIU.NO_OPTIMIZER
     timed_log = Dict{Symbol, Any}()
     model = stage.internal.psi_container.JuMPmodel
+    settings = get_settings(stage)
     _, timed_log[:timed_solve_time], timed_log[:solve_bytes_alloc], timed_log[:sec_in_gc] =
         @timed JuMP.optimize!(model)
 
@@ -196,7 +199,11 @@ function run_stage(
 
     model_status = JuMP.primal_status(stage.internal.psi_container.JuMPmodel)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        error("Stage $(stage.internal.number) status is $(model_status)")
+        if !settings.allow_fails
+            @warn("Stage $(stage.internal.number) status is $(model_status)")
+        else
+            error("Stage $(stage.internal.number) status is $(model_status)")
+        end
     end
     # TODO: Add Fallback when optimization fails
     # if is_milp(stage.internal.psi_container)
