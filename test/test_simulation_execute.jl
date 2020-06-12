@@ -71,11 +71,11 @@ function test_load_simulation(file_path::String)
         ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_from_stage = PSI.ON,
+                binary_source_stage = PSI.ON,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
             ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                variable_from_stage = PSI.ACTIVE_POWER,
+                variable_source_stage = PSI.ACTIVE_POWER,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
@@ -206,7 +206,7 @@ function test_load_simulation(file_path::String)
                 results = load_simulation_results(sim_results, name)
                 resolution = convert(
                     Dates.Millisecond,
-                    PSY.get_forecasts_resolution(PSI.get_sys(stage)),
+                    PSI.get_resolution(stage),
                 )
                 time_stamp = results.time_stamp
                 length = size(time_stamp, 1)
@@ -363,7 +363,7 @@ function test_load_simulation(file_path::String)
         ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_from_stage = PSI.ON,
+                binary_source_stage = PSI.ON,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
@@ -450,7 +450,7 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
+                    binary_source_stage = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -468,7 +468,7 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
+                    binary_source_stage = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -486,7 +486,7 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
+                    binary_source_stage = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -504,8 +504,8 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => RangeFF(
-                    variable_from_stage_ub = PSI.ON,
-                    variable_from_stage_lb = PSI.ON,
+                    variable_source_stage_ub = PSI.ON,
+                    variable_source_stage_lb = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -525,7 +525,7 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
+                    binary_source_stage = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -615,11 +615,11 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
+                    binary_source_stage = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
                 ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                    variable_from_stage = PSI.ACTIVE_POWER,
+                    variable_source_stage = PSI.ACTIVE_POWER,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),

@@ -1,6 +1,6 @@
 struct EconomicDispatchProblem <: PowerSimulationsOperationsProblem end
 struct UnitCommitmentProblem <: PowerSimulationsOperationsProblem end
-struct AGCReserveDeplyment <: PowerSimulationsOperationsProblem end
+struct AGCReserveDeployment <: PowerSimulationsOperationsProblem end
 
 function _generic_template(; kwargs...)
     network = get(kwargs, :network, CopperPlatePowerModel)
@@ -103,7 +103,6 @@ function template_economic_dispatch(; kwargs...)
 
     template = _generic_template(
         devices = devices,
-        branches = Dict(),
         services = services;
         kwargs...,
     )
@@ -129,14 +128,19 @@ function template_agc_reserve_deployment(; kwargs...)
         :Generators => DeviceModel(PSY.ThermalStandard, FixedOutput),
         :Ren => DeviceModel(PSY.RenewableDispatch, FixedOutput),
         :Loads => DeviceModel(PSY.PowerLoad, StaticPowerLoad),
+        :Hydro => DeviceModel(PSY.HydroEnergyReservoir, FixedOutput),
         :HydroROR => DeviceModel(PSY.HydroDispatch, FixedOutput),
         :RenFx => DeviceModel(PSY.RenewableFix, FixedOutput),
         :Regulation_thermal => DeviceModel(
             PSY.RegulationDevice{PSY.ThermalStandard},
             DeviceLimitedRegulation,
         ),
-        :Regulation_hydro => DeviceModel(
+        :Regulation_hydro_dispatch => DeviceModel(
             PSY.RegulationDevice{PSY.HydroDispatch},
+            ReserveLimitedRegulation,
+        ),
+        :Regulation_hydro_reservoir => DeviceModel(
+            PSY.RegulationDevice{PSY.HydroEnergyReservoir},
             ReserveLimitedRegulation,
         ),
     )
@@ -144,6 +148,7 @@ function template_agc_reserve_deployment(; kwargs...)
     template = _generic_template(
         network = PSI.AreaBalancePowerModel,
         devices = devices,
+        branches = Dict(),
         services = services;
         kwargs...,
     )

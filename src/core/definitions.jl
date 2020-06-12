@@ -21,8 +21,8 @@ const RUN_SIMULATION_TIMER = TimerOutputs.TimerOutput()
 
 #Type Alias for JuMP and PJ containers
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
-const PGAE{V} = PJ.ParametrizedGenericAffExpr{Float64, JuMP.VariableRef}
-const GAE{V} = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}
+const PGAE = PJ.ParametrizedGenericAffExpr{Float64, JuMP.VariableRef}
+const GAE = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}
 const JuMPAffineExpressionArray = Matrix{GAE}
 const JuMPAffineExpressionVector = Vector{GAE}
 const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
@@ -61,12 +61,13 @@ const OPERATIONS_ACCEPTED_KWARGS = [
     :slack_variables,
     :system_to_file,
     :constraint_duals,
+    :export_pwl_variables
 ]
 
 const OPERATIONS_SOLVE_KWARGS = [:optimizer, :save_path]
 
 const STAGE_ACCEPTED_KWARGS =
-    [:PTDF, :warm_start, :slack_variables, :constraint_duals, :system_to_file]
+    [:PTDF, :warm_start, :slack_variables, :constraint_duals, :system_to_file, :export_pwl_variables, :allow_fails]
 
 const PSI_NAME_DELIMITER = "__"
 
