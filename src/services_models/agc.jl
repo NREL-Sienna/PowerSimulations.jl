@@ -23,9 +23,9 @@ function balancing_auxiliary_variables!(psi_container, sys)
     assign_variable!(psi_container, variable_name("area_total_reserve_dn"), R_dn)
     for t in time_steps, a in area_names
         R_up[a, t] =
-            JuMP.@variable(psi_container.JuMPmodel, base_name = "R_up_{$(a),$(t)}")
+            JuMP.@variable(psi_container.JuMPmodel, base_name = "R_up_{$(a),$(t)}", lower_bound = 0.0)
         R_dn[a, t] =
-            JuMP.@variable(psi_container.JuMPmodel, base_name = "R_dn_{$(a),$(t)}")
+            JuMP.@variable(psi_container.JuMPmodel, base_name = "R_dn_{$(a),$(t)}", lower_bound = 0.0)
     end
     return
 end
