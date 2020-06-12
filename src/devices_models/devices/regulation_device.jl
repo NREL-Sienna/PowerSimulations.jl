@@ -189,7 +189,6 @@ function participation_assignment!(
     time_steps = model_time_steps(psi_container)
     regulation_up = get_variable(psi_container, variable_name("ΔP_up", T))
     regulation_dn = get_variable(psi_container, variable_name("ΔP_dn", T))
-    area_mismatch = get_variable(psi_container, :area_mismatch)
 
     R_up = get_variable(psi_container, variable_name("area_total_reserve_up"))
     R_dn = get_variable(psi_container, variable_name("area_total_reserve_dn"))
