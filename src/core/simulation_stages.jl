@@ -201,7 +201,7 @@ function run_stage(
 
     model_status = JuMP.primal_status(stage.internal.psi_container.JuMPmodel)
     if model_status != MOI.FEASIBLE_POINT::MOI.ResultStatusCode
-        if !settings.allow_fails
+        if settings.allow_fails
             @warn("Stage $(stage.internal.number) status is $(model_status)")
         else
             error("Stage $(stage.internal.number) status is $(model_status)")
