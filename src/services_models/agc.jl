@@ -82,9 +82,9 @@ function frequency_response_constraint!(psi_container::PSIContainer, sys::PSY.Sy
     area_mismatch = get_variable(psi_container, :area_mismatch)
     frequency = get_variable(psi_container, variable_name("Δf"))
     container = JuMPConstraintArray(undef, time_steps)
-    assign_constraint!(psi_container, "SACE_pid", container)
+    assign_constraint!(psi_container, "freque_response", container)
     for t in time_steps
-        system_mismatch = sum(area_mismatch.data)
+        system_mismatch = sum(area_mismatch.data[:,t])
         container[t] = JuMP.@constraint(
             psi_container.JuMPmodel,
             frequency[t] == -inv_frequency_reponse * system_mismatch
@@ -99,7 +99,6 @@ function smooth_ace_pid!(
 )
     time_steps = model_time_steps(psi_container)
     area_names = (PSY.get_name(PSY.get_area(s)) for s in services)
-    area_mismatch = get_variable(psi_container, :area_mismatch)
     RAW_ACE = add_expression_container!(psi_container, :RAW_ACE, area_names, time_steps)
     SACE = JuMPVariableArray(undef, area_names, time_steps)
     assign_variable!(psi_container, variable_name("SACE", PSY.AGC), SACE)
@@ -126,13 +125,13 @@ function smooth_ace_pid!(
             if t == 1
                 SACE_ini =
                     get_initial_conditions(psi_container, ICKey(AreaControlError, PSY.AGC))[ix]
-                RAW_ACE[a, t] = area_balance[a, t] - 10 * B * Δf[t] + SACE_ini.value
+                RAW_ACE[a, t] = area_balance[a, t] - 10 * B * Δf[t]
                 SACE_pid[a, t] = JuMP.@constraint(
                     psi_container.JuMPmodel,
                     SACE[a, t] ==
-                    RAW_ACE[a, t] +
+                    SACE_ini.value +
                     kp * (
-                        (1 + 1 / (kp / ki) + (kd / kp) / Δt) *
+                        (1 + Δt / (kp / ki) + (kd / kp) / Δt) *
                         (RAW_ACE[a, t] - SACE[a, t]) +
                         (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t])
                     )
@@ -141,14 +140,14 @@ function smooth_ace_pid!(
             end
 
             RAW_ACE[a, t] =
-                area_balance[a, t] - 10 * B * Δf[t] - area_mismatch[a, t - 1]
+                area_balance[a, t] - 10 * B * Δf[t]
 
             SACE_pid[a, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 SACE[a, t] ==
                 SACE[a, t - 1] +
                 kp * (
-                    (1 + 1 / (kp / ki) + (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t]) +
+                    (1 + Δt / (kp / ki) + (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t]) +
                     (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t]) -
                     ((kd / kp) / Δt) * (RAW_ACE[a, t - 1] - SACE[a, t - 1])
                 )
