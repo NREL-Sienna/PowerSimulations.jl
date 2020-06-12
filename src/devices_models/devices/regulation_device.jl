@@ -163,10 +163,9 @@ function ramp_constraints!(
 
     for d in devices
         ramplimits(d) = PSY.get_ramplimits(d)
-        scaling_factor = PSY.get_rating(d) * resolution * SECONDS_IN_MINUTE
+        scaling_factor = PSY.get_basepower(d) * resolution * SECONDS_IN_MINUTE
         name = PSY.get_name(d)
-        limits = PSY.get_activepowerlimits(d)
-        for t in time_steps, d in devices
+        for t in time_steps
             container_up[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 regulation_up[name, t] <= ramplimits(d).up * scaling_factor
