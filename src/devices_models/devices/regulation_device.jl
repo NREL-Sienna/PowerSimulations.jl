@@ -18,7 +18,7 @@ end
 
 function activepower_constraints!(
     psi_container::PSIContainer,
-    devices,
+    devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T},DeviceLimitedRegulation},
     ::Type{AreaBalancePowerModel},
     feedforward::Nothing,
@@ -41,7 +41,7 @@ function activepower_constraints!(
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, "get_rating")
         constraint_info =
-            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_basepower(x), ts_vector, x-> PSY.get_activepowerlimits(x))
+            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_rating(x), ts_vector, x-> PSY.get_activepowerlimits(x))
         constraint_infos[ix] = constraint_info
     end
 
@@ -63,7 +63,7 @@ function activepower_constraints!(
             )
             container_dn[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                var_dn[name, t] <= base_point*rating- limits.min
+                var_dn[name, t] <= base_point*rating - limits.min
             )
         end
     end
@@ -72,7 +72,7 @@ end
 
 function activepower_constraints!(
     psi_container::PSIContainer,
-    devices,
+    devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T},ReserveLimitedRegulation},
     ::Type{AreaBalancePowerModel},
     feedforward::Nothing,
@@ -104,9 +104,10 @@ function activepower_constraints!(
     return
 end
 
+#=
 function activepower_constraints!(
     psi_container::PSIContainer,
-    devices,
+    devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T},ReserveLimitedRegulation},
     ::Type{AreaBalancePowerModel},
     feedforward::UpperBoundFF,
@@ -133,6 +134,7 @@ function activepower_constraints!(
     end
     return
 end
+=#
 
 ramp_constraints!(
     ::PSIContainer,
@@ -144,8 +146,8 @@ ramp_constraints!(
 
 function ramp_constraints!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    ::DeviceModel{PSY.RegulationDevice{T},DeviceLimitedRegulation},
+    devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
+    ::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
     ::Type{AreaBalancePowerModel},
     feedforward::Nothing,
 ) where {T<:PSY.ThermalStandard}
@@ -156,8 +158,8 @@ function ramp_constraints!(
     names = (PSY.get_name(g) for g in devices)
     time_steps = model_time_steps(psi_container)
 
-    container_up = add_cons_container!(psi_container, "ramp_limits_up", names, time_steps)
-    container_dn = add_cons_container!(psi_container, "ramp_limits_dn", names, time_steps)
+    container_up = add_cons_container!(psi_container, :ramp_limits_up, names, time_steps)
+    container_dn = add_cons_container!(psi_container, :ramp_limits_dn, names, time_steps)
 
     for d in devices
         ramplimits(d) = PSY.get_ramplimits(d)
@@ -167,11 +169,11 @@ function ramp_constraints!(
         for t in time_steps, d in devices
             container_up[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                regulation_up[name, t] <= ramplimits.up * scaling_factor
+                regulation_up[name, t] <= ramplimits(d).up * scaling_factor
             )
             container_dn[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                regulation_dn[name, t] <= ramplimits.dn * scaling_factor
+                regulation_dn[name, t] <= ramplimits(d).down * scaling_factor
             )
         end
     end
@@ -233,7 +235,7 @@ end
 
 function regulation_cost!(
     psi_container::PSIContainer,
-    devices,
+    devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T},<:AbstractRegulationFormulation},
 ) where {T<:PSY.StaticInjection}
     time_steps = model_time_steps(psi_container)
@@ -250,7 +252,7 @@ function regulation_cost!(
             )
             JuMP.add_to_expression!(
                 psi_container.cost_function,
-                regulation_up[PSY.get_name(d), t],
+                regulation_dn[PSY.get_name(d), t],
                 cost,
             )
         end
