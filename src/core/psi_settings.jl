@@ -10,6 +10,7 @@ struct PSISettings
     constraint_duals::Vector{Symbol}
     system_to_file::Bool
     export_pwl_vars::Bool
+    allow_fails::Bool
     ext::Dict{String, Any}
 end
 
@@ -26,6 +27,7 @@ function PSISettings(
     constraint_duals::Vector{Symbol} = Vector{Symbol}(),
     system_to_file = true,
     export_pwl_vars=false,
+    allow_fails = false,
     ext = Dict{String, Any}(),
 )
     return PSISettings(
@@ -40,6 +42,7 @@ function PSISettings(
         constraint_duals,
         system_to_file,
         export_pwl_vars,
+        allow_fails,
         ext,
     )
 end
