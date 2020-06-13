@@ -356,8 +356,7 @@ end
 
 function construct_network!(
     op_problem::OperationsProblem,
-    system_formulation::Type{T};
-    kwargs...,
+    system_formulation::Type{T},
 ) where {T <: PM.AbstractPowerModel}
     construct_network!(op_problem.psi_container, get_system(op_problem), T)
     return
