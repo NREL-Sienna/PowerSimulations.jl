@@ -16,8 +16,7 @@ end
 function construct_network!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    ::Type{StandardPTDFModel};
-    kwargs...
+    ::Type{StandardPTDFModel},
 )
     buses = PSY.get_components(PSY.Bus, sys)
     ac_branches = get_available_components(PSY.ACBranch, sys)
@@ -48,9 +47,8 @@ function construct_network!(
     psi_container::PSIContainer,
     sys::PSY.System,
     ::Type{T};
-    kwargs...
+    instantiate_model = instantiate_nip_expr_model,
 ) where {T <: PM.AbstractPowerModel}
-    instantiate_model = get(kwargs, :instantiate_model, instantiate_nip_expr_model)
     if T in UNSUPPORTED_POWERMODELS
         throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
     end
@@ -67,9 +65,8 @@ function construct_network!(
     psi_container::PSIContainer,
     sys::PSY.System,
     ::Type{T};
-    kwargs...
+    instantiate_model = instantiate_bfp_expr_model,
 ) where {T <: PM.AbstractBFModel}
-    instantiate_model = get(kwargs, :instantiate_model, instantiate_bfp_expr_model)
     if T in UNSUPPORTED_POWERMODELS
         throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
     end
@@ -86,9 +83,8 @@ function construct_network!(
     psi_container::PSIContainer,
     sys::PSY.System,
     ::Type{T};
-    kwargs...
+    instantiate_model = instantiate_vip_expr_model,
 ) where {T <: PM.AbstractIVRModel}
-    instantiate_model = get(kwargs, :instantiate_model, instantiate_vip_expr_model)
     if T in UNSUPPORTED_POWERMODELS
         throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
     end

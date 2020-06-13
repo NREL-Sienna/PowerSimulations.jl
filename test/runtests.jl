@@ -12,6 +12,7 @@ using Ipopt
 using GLPK
 using Cbc
 using OSQP
+using SCS
 using TimeSeries
 using ParameterJuMP
 using TestSetExtensions
@@ -47,6 +48,7 @@ OSQP_optimizer =
     JuMP.optimizer_with_attributes(OSQP.Optimizer, "verbose" => false, "max_iter" => 50000)
 fast_lp_optimizer =
     JuMP.optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "seconds" => 3.0)
+scs_solver = JuMP.with_optimizer(SCS.Optimizer, max_iters = 100000, eps = 1e-4, verbose = 0)
 
 const LOG_FILE = "power-simulations-test.log"
 

@@ -357,7 +357,7 @@ end
 function construct_network!(
     op_problem::OperationsProblem,
     system_formulation::Type{T};
-    kwargs...
+    kwargs...,
 ) where {T <: PM.AbstractPowerModel}
     construct_network!(op_problem.psi_container, get_system(op_problem), T; kwargs...)
     return
@@ -407,7 +407,7 @@ function _build!(
         @debug check_problem_size(psi_container)
     end
     @debug "Building $(transmission) network formulation"
-    construct_network!(psi_container, sys, transmission; kwargs...)
+    construct_network!(psi_container, sys, transmission)
     @debug check_problem_size(psi_container)
 
     for branch_model in values(template.branches)

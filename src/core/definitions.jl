@@ -66,7 +66,8 @@ const OPERATIONS_SOLVE_KWARGS = [:optimizer, :save_path]
 const STAGE_ACCEPTED_KWARGS =
     [:PTDF, :warm_start, :slack_variables, :constraint_duals, :system_to_file]
 
-const UNSUPPORTED_POWERMODELS = [] #TODO: update list
+const UNSUPPORTED_POWERMODELS =
+    [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
 
 const PSI_NAME_DELIMITER = "__"
 
