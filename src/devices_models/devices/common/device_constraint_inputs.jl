@@ -81,11 +81,20 @@ function device_constraints!(
     model_timeseries_range_constraints = inputs.timeseries_range_constraint_inputs
     custom_psi_container_func = inputs.custom_psi_container_func
 
-    # TODO: Could be faster if we iterate over the devices first.
+    if isnothing(feedforward)
+        ff_affected_variables = Set{Symbol}()
+    else
+        ff_affected_variables = Set(get_affected_variables(feedforward))
+    end
+
     for mrc in model_range_constraints
         constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
         cons_name = constraint_name(mrc.constraint_name, T)
         var_name = variable_name(mrc.variable_name, T)
+        if var_name in ff_affected_variables
+            @debug "Skip adding $var_name because it is handled by feedforward"
+            continue
+        end
         bin_var_name = isnothing(mrc.bin_variable_name) ? mrc.bin_variable_name :
             variable_name(mrc.bin_variable_name, T)
         for (i, dev) in enumerate(devices)
@@ -102,6 +111,11 @@ function device_constraints!(
     end
 
     for tsmrc in model_timeseries_range_constraints
+        var_name = variable_name(tsmrc.variable_name, T)
+        if var_name in ff_affected_variables
+            @debug "Skip adding $var_name because it is handled by feedforward"
+            continue
+        end
         constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
         for (i, dev) in enumerate(devices)
             ts_vector = get_time_series(psi_container, dev, tsmrc.forecast_label)
@@ -114,7 +128,7 @@ function device_constraints!(
         ts_inputs = TimeSeriesConstraintInputs(
             constraint_infos,
             constraint_name(tsmrc.constraint_name, T),
-            variable_name(tsmrc.variable_name, T),
+            var_name,
             isnothing(tsmrc.bin_variable_name) ? nothing :
                 variable_name(tsmrc.bin_variable_name, T),
             isnothing(tsmrc.parameter_name) ? nothing :
@@ -126,4 +140,5 @@ function device_constraints!(
     if !isnothing(custom_psi_container_func)
         custom_psi_container_func(psi_container, devices, U)
     end
+
 end

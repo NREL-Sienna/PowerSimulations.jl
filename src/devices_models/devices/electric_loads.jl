@@ -71,13 +71,13 @@ function custom_reactive_power_constraints!(
 ) where {T <: PSY.ElectricLoad}
     time_steps = model_time_steps(psi_container)
     constraint = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
-    assign_constraint!(psi_container, REACTIVE, L, constraint)
+    assign_constraint!(psi_container, REACTIVE, T, constraint)
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(atan((PSY.get_maxreactivepower(d) / PSY.get_maxactivepower(d))))
-        reactive = get_variable(psi_container, REACTIVE_POWER, L)[name, t]
-        real = get_variable(psi_container, ACTIVE_POWER, L)[name, t] * pf
+        reactive = get_variable(psi_container, REACTIVE_POWER, T)[name, t]
+        real = get_variable(psi_container, ACTIVE_POWER, T)[name, t] * pf
         constraint[name, t] = JuMP.@constraint(psi_container.JuMPmodel, reactive == real)
     end
 end

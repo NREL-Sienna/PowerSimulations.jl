@@ -107,7 +107,7 @@ function make_active_power_constraints_inputs(
     end
 
     return DeviceConstraintInputs(;
-        timeseries_range_constraint_inputs = [ModelTimeSeriesConstraintInputs(
+        timeseries_range_constraint_inputs = [ModelTimeSeriesConstraintInputs(;
             constraint_name = ACTIVE,
             variable_name = ACTIVE_POWER,
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
