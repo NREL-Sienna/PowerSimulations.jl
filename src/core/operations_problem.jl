@@ -349,8 +349,8 @@ function construct_device!(
     return
 end
 
-function construct_network!(op_problem::OperationsProblem; kwargs...)
-    construct_network!(op_problem, op_problem.template.transmission; kwargs...)
+function construct_network!(op_problem::OperationsProblem)
+    construct_network!(op_problem, op_problem.template.transmission)
     return
 end
 
@@ -359,7 +359,7 @@ function construct_network!(
     system_formulation::Type{T};
     kwargs...,
 ) where {T <: PM.AbstractPowerModel}
-    construct_network!(op_problem.psi_container, get_system(op_problem), T; kwargs...)
+    construct_network!(op_problem.psi_container, get_system(op_problem), T)
     return
 end
 
