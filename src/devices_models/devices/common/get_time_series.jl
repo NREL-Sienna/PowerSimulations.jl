@@ -9,37 +9,12 @@ function get_time_series(
     time_steps = model_time_steps(psi_container)
     has_forecasts = PSY.has_forecasts(device)
     if !has_forecasts
-        @warn("device $(PSY.get_name(device)) $(PSY.has_forecasts(device)) forecast")
+        @warn("device $(typeof(device)) $(PSY.get_name(device)) has forecasts = $(PSY.has_forecasts(device))")
     end
     if use_forecast_data && has_forecasts
         forecast = PSY.get_forecast(
             PSY.Deterministic,
             device,
-            initial_time,
-            forecast_label,
-            length(time_steps),
-        )
-        return ts_vector = TS.values(PSY.get_data(forecast))
-    else
-        return ts_vector = ones(time_steps[end])
-    end
-end
-
-function get_time_series(
-    psi_container::PSIContainer,
-    device::PSY.RegulationDevice,
-    forecast_label::String,
-)
-    internal_device = device.device
-    initial_time = model_initial_time(psi_container)
-    @debug initial_time
-    use_forecast_data = model_uses_forecasts(psi_container)
-    time_steps = model_time_steps(psi_container)
-    @debug "device $(PSY.get_name(device)) $(PSY.has_forecasts(internal_device)) forecast"
-    if use_forecast_data && PSY.has_forecasts(internal_device)
-        forecast = PSY.get_forecast(
-            PSY.Deterministic,
-            internal_device,
             initial_time,
             forecast_label,
             length(time_steps),

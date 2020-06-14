@@ -344,11 +344,11 @@ function Base.show(io::IO, sequence::SimulationSequence)
         println(io, "$(k[1]): $(typeof(v)) -> $(k[3])\n")
         to = String.(v.affected_variables)
         if isa(v, SemiContinuousFF)
-            from = String.(v.binary_from_stage)
+            from = String.(v.binary_source_stage)
         elseif isa(v, RangeFF)
-            from = String.([v.variable_from_stage_ub, v.variable_from_stage_lb])
+            from = String.([v.variable_source_stage_ub, v.variable_source_stage_lb])
         else
-            from = String.(v.variable_from_stage)
+            from = String.(v.variable_source_stage)
         end
         _print_feedforward(io, sequence.feedforward_chronologies, to, from)
     end

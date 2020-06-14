@@ -405,15 +405,16 @@ end
 ########################## Addition to the nodal balances #################################
 
 function NodalExpressionInputs(
-    ::Type{<:PSY.HydroGen},
+    ::Type{T},
     ::Type{<:PM.AbstractActivePowerModel},
     use_forecasts::Bool,
-)
+) where {T <: PSY.HydroGen}
     return NodalExpressionInputs(
         "get_rating",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),
         1.0,
+        T
     )
 end
 
