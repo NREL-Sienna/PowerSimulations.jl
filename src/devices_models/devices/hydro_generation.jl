@@ -458,7 +458,7 @@ function nodal_expression!(
      timeseries_data = DeviceTimeSeries(d, peak_value_function, ts_vector)
      constraint_data[ix] = timeseries_data
     end
-
+    
     if parameters
      include_parameters(
          psi_container,
