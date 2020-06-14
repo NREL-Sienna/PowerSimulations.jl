@@ -46,7 +46,8 @@ function check_chronology!(sim::Simulation, key::Pair, sync::Synchronize)
     @debug source_stage_resolution, destination_stage_interval
     # How many times the second stages executes per solution retireved from the source_stage.
     # E.g. source_stage_resolution = 1 Hour, destination_stage_interval = 5 minutes => 12 executions per solution
-    destination_stage_executions_per_solution = Int(source_stage_resolution / destination_stage_interval)
+    destination_stage_executions_per_solution =
+        Int(source_stage_resolution / destination_stage_interval)
     # Number of periods in the horizon that will be synchronized between the source_stage and the destination_stage
     source_stage_sync = sync.periods
 
@@ -135,7 +136,8 @@ function RangeFF(; variable_source_stage_ub, variable_source_stage_lb, affected_
     )
 end
 
-get_bounds_source_stage(p::RangeFF) = (p.variable_source_stage_lb, p.variable_source_stage_lb)
+get_bounds_source_stage(p::RangeFF) =
+    (p.variable_source_stage_lb, p.variable_source_stage_lb)
 
 struct SemiContinuousFF <: AbstractAffectFeedForward
     binary_source_stage::Symbol
@@ -177,17 +179,14 @@ end
 get_variable_source_stage(p::IntegralLimitFF) = p.variable_source_stage
 
 struct ParameterFF <: AbstractAffectFeedForward
-   variable_source_stage::Symbol
-   affected_parameters
-   function ParameterFF(
-        variable_source_stage::AbstractString,
-        affected_parameters
-   )
-    new(Symbol(variable_source_stage), affected_parameters)
-   end
+    variable_source_stage::Symbol
+    affected_parameters::Any
+    function ParameterFF(variable_source_stage::AbstractString, affected_parameters)
+        new(Symbol(variable_source_stage), affected_parameters)
+    end
 end
 
-function ParameterFF(;variable_source_stage, affected_parameters)
+function ParameterFF(; variable_source_stage, affected_parameters)
     return ParameterFF(variable_source_stage, affected_parameters)
 end
 
@@ -241,19 +240,14 @@ function ub_ff(
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_ub
-                JuMP.add_to_expression!(
-                    expression_ub,
-                    variable[name, t],
-                )
+                JuMP.add_to_expression!(expression_ub, variable[name, t])
             end
-            con_ub[name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                expression_ub  <= param_ub[name]
-            )
+            con_ub[name, t] =
+                JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= param_ub[name])
 
         end
     end
-   return
+    return
 end
 
 @doc raw"""
@@ -309,7 +303,7 @@ function range_ff(
     con_lb = add_cons_container!(psi_container, lb_name, set_name, time_steps)
     con_ub = add_cons_container!(psi_container, ub_name, set_name, time_steps)
 
-        for constraint_info in constraint_infos
+    for constraint_info in constraint_infos
         name = get_name(constraint_info)
         param_lb[name] =
             PJ.add_parameter(psi_container.JuMPmodel, JuMP.lower_bound(variable[name, 1]))
@@ -318,27 +312,16 @@ function range_ff(
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_ub
-                JuMP.add_to_expression!(
-                    expression_ub,
-                    variable[name, t],
-                )
+                JuMP.add_to_expression!(expression_ub, variable[name, t])
             end
             expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
             for val in constraint_info.additional_terms_lb
-                JuMP.add_to_expression!(
-                    expression_lb,
-                    variable[name, t],
-                    -1.0,
-                )
+                JuMP.add_to_expression!(expression_lb, variable[name, t], -1.0)
             end
-            con_ub[name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                expression_ub  <= param_ub[name]
-            )
-            con_lb[name, t] = JuMP.@constraint(
-                psi_container.JuMPmodel,
-                expression_lb >=  param_lb[name]
-            )
+            con_ub[name, t] =
+                JuMP.@constraint(psi_container.JuMPmodel, expression_ub <= param_ub[name])
+            con_lb[name, t] =
+                JuMP.@constraint(psi_container.JuMPmodel, expression_lb >= param_lb[name])
         end
     end
 
@@ -422,7 +405,7 @@ function semicontinuousrange_ff(
             end
             con_ub[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                expression_ub  <= ub_value * param[name]
+                expression_ub <= ub_value * param[name]
             )
             con_lb[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
@@ -520,7 +503,13 @@ function feedforward!(
     for prefix in get_affected_variables(ff_model)
         var_name = variable_name(prefix, T)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
-        ub_ff(psi_container, constraint_name(FEEDFORWARD_UB, T), constraint_infos, parameter_ref, var_name)
+        ub_ff(
+            psi_container,
+            constraint_name(FEEDFORWARD_UB, T),
+            constraint_infos,
+            parameter_ref,
+            var_name,
+        )
     end
 end
 
@@ -633,8 +622,12 @@ function feedforward_update!(
     param_array::JuMPParamArray,
 )
     for device_name in axes(param_array)[1]
-        var_value =
-            get_stage_variable(chronology, (source_stage => destination_stage), device_name, param_reference)
+        var_value = get_stage_variable(
+            chronology,
+            (source_stage => destination_stage),
+            device_name,
+            param_reference,
+        )
         PJ.fix(param_array[device_name], var_value)
     end
 end
