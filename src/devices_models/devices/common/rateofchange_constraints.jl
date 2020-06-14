@@ -52,13 +52,14 @@ function device_linear_rateofchange(
 
     for (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)
+        @assert typeof(get_value(initial_conditions[ix])) == PJ.ParameterRef
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, 1] - get_value(initial_conditions[ix]) <= rate_data[ix].up
+            variable[name, 1] - get_value(initial_conditions[ix]) <= rate_data[ix].up*1000
         )
         con_down[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            get_value(initial_conditions[ix]) - variable[name, 1] <= rate_data[ix].down
+            get_value(initial_conditions[ix]) - variable[name, 1] <= rate_data[ix].down*1000
         )
     end
 
@@ -138,14 +139,15 @@ function device_mixedinteger_rateofchange(
 
     for (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)
+        @assert typeof(get_value(initial_conditions[ix])) == PJ.ParameterRef
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, 1] - initial_conditions[ix].value <=
+            variable[name, 1] - get_value(initial_conditions[ix]) <=
             rate_data[1][ix].up + rate_data[2][ix].max * varstart[name, 1]
         )
         con_down[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            initial_conditions[ix].value - variable[name, 1] <=
+            get_value(initial_conditions[ix]) - variable[name, 1] <=
             rate_data[1][ix].down + rate_data[2][ix].min * varstop[name, 1]
         )
     end
