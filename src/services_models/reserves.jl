@@ -48,6 +48,7 @@ function service_requirement_constraint!(
         ts_vector = ones(time_steps[end])
     end
 
+    # TODO: create only if slack_variables option is used
     var_name_up = variable_name(name, SLACK_UP)
     variable_up = add_var_container!(psi_container, var_name_up, [name], time_steps)
 
