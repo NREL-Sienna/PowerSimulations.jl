@@ -83,7 +83,7 @@ function construct_network!(
     psi_container::PSIContainer,
     sys::PSY.System,
     ::Type{T};
-    instantiate_model = instantiate_vip_expr_model,
+    instantiate_model = instantiate_vip_expr_model, # Note that this function will error because these networks are currently unsupported
 ) where {T <: PM.AbstractIVRModel}
     if T in UNSUPPORTED_POWERMODELS
         throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
@@ -93,6 +93,6 @@ function construct_network!(
 
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(psi_container, T, sys, instantiate_model)
-    #add_pm_var_refs!(psi_container, T, sys) #TODO: fix this for quadratic variables
+    add_pm_var_refs!(psi_container, T, sys)
     return
 end
