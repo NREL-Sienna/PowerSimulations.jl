@@ -172,16 +172,6 @@ function psi_container_init!(
     return
 end
 
-function add_initial_condition_parameters!(psi_container::PSIContainer)
-    for (_, initial_conditions) in iterate_initial_conditions(psi_container)
-        for (i, ic) in enumerate(initial_conditions)
-            val = PJ.add_parameter(psi_container.JuMPmodel, get_value(ic))
-            initial_conditions[i] =
-                InitialCondition(ic.device, ic.update_ref, val, ic.cache_type)
-        end
-    end
-end
-
 function has_initial_conditions(psi_container::PSIContainer, key::ICKey)
     return has_initial_conditions(psi_container.initial_conditions, key)
 end

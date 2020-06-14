@@ -97,7 +97,7 @@ function construct_service!(
     steady_state_frequency_variables!(psi_container)
     balancing_auxiliary_variables!(psi_container, sys)
     frequency_response_constraint!(psi_container, sys)
-    area_control_init(psi_container.initial_conditions, services)
+    area_control_init(psi_container, services)
     smooth_ace_pid!(psi_container, services)
     aux_constraints!(psi_container, sys)
 end
