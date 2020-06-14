@@ -85,44 +85,7 @@ end
 
 function instantiate_vip_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
     throw(error("VI Models not currently supported"))
-    return PM.instantiate_model(data, model_constructor, instantiate_vip_expr; kwargs...)
 end
-
-""
-#= This is commented out until the constraint_current_balance_vi_expr method is developed
-function instantiate_vip_expr(pm::PM.AbstractPowerModel)
-    for (n, network) in PM.nws(pm)
-        @assert !PM.ismulticonductor(pm, nw = n)
-        PM.variable_bus_voltage(pm, nw = n)
-        PM.variable_branch_current(pm, nw = n)
-        PM.variable_dcline_current(pm, nw = n)
-
-        # TODO: need a gen_current variable
-        for i in PM.ids(pm, :ref_buses, nw = n)
-            PM.constraint_theta_ref(pm, i, nw = n)
-        end
-
-        for i in PM.ids(pm, :bus, nw = n)
-            # TODO: need to make the following method
-            # constraint_current_balance_vi_expr(pm, i, nw = n)
-        end
-
-        for i in PM.ids(pm, :branch, nw = n)
-            PM.constraint_current_from(pm, i, nw = n)
-            PM.constraint_current_to(pm, i, nw = n)
-
-            PM.constraint_voltage_drop(pm, i, nw = n)
-            PM.constraint_voltage_angle_difference(pm, i, nw = n)
-        end
-
-        for i in PM.ids(pm, :dcline)
-            PM.constraint_dcline_power_losses(pm, i, nw = n)
-        end
-    end
-
-    return
-end
-=#
 
 #################################################################################
 # Model Extention Functions
