@@ -2,7 +2,7 @@
 # TODO: Consider when more than one UC model is used for the stages that the counts need
 # to be scaled.
 function calculate_ic_quantity(
-    initial_condition_key::ICKey{TimeDurationON, T},
+    ::ICKey{TimeDurationON, T},
     ic::InitialCondition,
     var_value::Float64,
     cache::TimeStatusChange,
@@ -20,7 +20,7 @@ function calculate_ic_quantity(
 end
 
 function calculate_ic_quantity(
-    initial_condition_key::ICKey{TimeDurationOFF, T},
+    ::ICKey{TimeDurationOFF, T},
     ic::InitialCondition,
     var_value::Float64,
     cache::TimeStatusChange,
@@ -38,7 +38,7 @@ function calculate_ic_quantity(
 end
 
 function calculate_ic_quantity(
-    initial_condition_key::ICKey{DeviceStatus, T},
+    ::ICKey{DeviceStatus, T},
     ic::InitialCondition,
     var_value::Float64,
     cache::Union{Nothing, AbstractCache},
@@ -47,7 +47,7 @@ function calculate_ic_quantity(
 end
 
 function calculate_ic_quantity(
-    initial_condition_key::ICKey{DevicePower, T},
+    ::ICKey{DevicePower, T},
     ic::InitialCondition,
     var_value::Float64,
     cache::Union{Nothing, AbstractCache},
@@ -68,7 +68,7 @@ function calculate_ic_quantity(
 end
 
 function calculate_ic_quantity(
-    initial_condition_key::ICKey{EnergyLevel, T},
+    ::ICKey{EnergyLevel, T},
     ic::InitialCondition,
     var_value::Float64,
     cache::Union{Nothing, AbstractCache},
@@ -82,6 +82,46 @@ function calculate_ic_quantity(
     return energy_cache
 end
 
+############################# Initial Conditions Initialization ############################
+function _make_initial_conditions!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    key::ICKey,
+    make_ic_func::Function, # Function to make the initial condition object
+    get_val_func::Function, # Function to get the value from the device to intialize
+    cache = nothing,
+) where {T <: PSY.Component}
+    length_devices = length(devices)
+    parameters = model_has_parameters(psi_container)
+    ic_container = get_initial_conditions(psi_container)
+    if !has_initial_conditions(ic_container, key)
+        @debug "Setting $(key.ic_type) initial conditions for the status of all devices $(T) based on system data"
+        ini_conds = Vector{InitialCondition}(undef, length_devices)
+        set_initial_conditions!(ic_container, key, ini_conds)
+        for (ix, dev) in enumerate(devices)
+            val_ = get_val_func(dev, key)
+            val = parameters ? PJ.add_parameter(psi_container.JuMPmodel, val_) : val_
+            ic = make_ic_func(ic_container, dev, val, cache)
+            ini_conds[ix] = ic
+            @debug key, ic, val, 0
+        end
+    else
+        ini_conds = get_initial_conditions(ic_container, key)
+        ic_devices = Set((IS.get_uuid(ic.device) for ic in ini_conds))
+        for dev in devices
+            IS.get_uuid(dev) in ic_devices && continue
+            @debug "Setting $(key.ic_type) initial conditions for the status device $(PSY.get_name(dev)) based on system data"
+            val = get_val_func(dev, key)
+            ic = make_ic_func(ic_container, dev, val, cache)
+            push!(ini_conds, ic)
+            @debug key, ic, val, 0
+        end
+    end
+
+    @assert length(ini_conds) == length_devices
+    return
+end
+
 """
 Status Init is always calculated based on the Power Output of the device
 This is to make it easier to calculate when the previous model doesn't
@@ -89,11 +129,11 @@ contain binaries. For instance, looking back on an ED model to find the
 IC of the UC model
 """
 function status_init(
-    container::InitialConditions,
+    psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ThermalGen}
     _make_initial_conditions!(
-        container,
+        psi_container,
         devices,
         ICKey(DeviceStatus, T),
         _make_initial_condition_active_power,
@@ -104,11 +144,11 @@ function status_init(
 end
 
 function output_init(
-    container::InitialConditions,
+    psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ThermalGen}
     _make_initial_conditions!(
-        container,
+        psi_container,
         devices,
         ICKey(DevicePower, T),
         _make_initial_condition_active_power,
@@ -119,12 +159,12 @@ function output_init(
 end
 
 function duration_init(
-    container::InitialConditions,
+    psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ThermalGen}
     for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
         _make_initial_conditions!(
-            container,
+            psi_container,
             devices,
             key,
             _make_initial_condition_active_power,
@@ -139,12 +179,12 @@ end
 ######################### Initialize Functions for Storage #################################
 # TODO: This IC needs a cache for Simulation over long periods of tim
 function storage_energy_init(
-    container::InitialConditions,
+    psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.Storage}
     key = ICKey(EnergyLevel, T)
     _make_initial_conditions!(
-        container,
+        psi_container,
         devices,
         key,
         _make_initial_condition_energy,
@@ -156,11 +196,11 @@ end
 
 ######################### Initialize Functions for Hydro #################################
 function status_init(
-    container::InitialConditions,
+    psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.HydroGen}
     _make_initial_conditions!(
-        container,
+        psi_container,
         devices,
         ICKey(DeviceStatus, T),
         _make_initial_condition_active_power,
@@ -170,11 +210,11 @@ function status_init(
 end
 
 function output_init(
-    container::InitialConditions,
+    psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.HydroGen}
     _make_initial_conditions!(
-        container,
+        psi_container,
         devices,
         ICKey(DevicePower, T),
         _make_initial_condition_active_power,
@@ -186,12 +226,12 @@ function output_init(
 end
 
 function duration_init(
-    container::InitialConditions,
+    psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.HydroGen}
     for key in (ICKey(TimeDurationON, T), ICKey(TimeDurationOFF, T))
         _make_initial_conditions!(
-            container,
+            psi_container,
             devices,
             key,
             _make_initial_condition_active_power,
@@ -204,12 +244,12 @@ function duration_init(
 end
 
 function storage_energy_init(
-    container::InitialConditions,
+    psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.HydroGen}
     key = ICKey(EnergyLevel, T)
     _make_initial_conditions!(
-        container,
+        psi_container,
         devices,
         key,
         _make_initial_condition_reservoir_energy,
@@ -221,12 +261,12 @@ function storage_energy_init(
 end
 
 function area_control_init(
-    container::InitialConditions,
+    psi_container::PSIContainer,
     services::IS.FlattenIteratorWrapper{PSY.AGC},
 )
     key = ICKey(AreaControlError, PSY.AGC)
     _make_initial_conditions!(
-        container,
+        psi_container,
         services,
         key,
         _make_initial_condition_area_control,
@@ -234,43 +274,6 @@ function area_control_init(
         # Doesn't require Cache
     )
 
-    return
-end
-
-function _make_initial_conditions!(
-    container::InitialConditions,
-    devices::IS.FlattenIteratorWrapper{T},
-    key::ICKey,
-    make_ic_func::Function,
-    get_val_func::Function,
-    cache = nothing,
-) where {T <: PSY.Component}
-    length_devices = length(devices)
-
-    if !has_initial_conditions(container, key)
-        @debug "Setting $(key.ic_type) initial conditions for the status of all devices $(T) based on system data"
-        ini_conds = Vector{InitialCondition}(undef, length_devices)
-        set_initial_conditions!(container, key, ini_conds)
-        for (ix, dev) in enumerate(devices)
-            val = get_val_func(dev, key)
-            ic = make_ic_func(container, dev, val, cache)
-            ini_conds[ix] = ic
-            @debug key, ic, val, 0
-        end
-    else
-        ini_conds = get_initial_conditions(container, key)
-        ic_devices = Set((IS.get_uuid(ic.device) for ic in ini_conds))
-        for dev in devices
-            IS.get_uuid(dev) in ic_devices && continue
-            @debug "Setting $(key.ic_type) initial conditions for the status device $(PSY.get_name(dev)) based on system data"
-            val = get_val_func(dev, key)
-            ic = make_ic_func(container, dev, val, cache)
-            push!(ini_conds, ic)
-            @debug key, ic, val, 0
-        end
-    end
-
-    @assert length(ini_conds) == length_devices
     return
 end
 
