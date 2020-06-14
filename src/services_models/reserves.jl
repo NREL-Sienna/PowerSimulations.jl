@@ -48,6 +48,21 @@ function service_requirement_constraint!(
         ts_vector = ones(time_steps[end])
     end
 
+    var_name_up = variable_name(name, SLACK_UP)
+    variable_up = add_var_container!(psi_container, var_name_up, [name], time_steps)
+
+    for ix in [name], jx in time_steps
+        variable_up[ix, jx] = JuMP.@variable(
+            psi_container.JuMPmodel,
+            base_name = "$(var_name_up)_{$(ix), $(jx)}",
+            lower_bound = 0.0
+        )
+        JuMP.add_to_expression!(
+            psi_container.cost_function,
+            variable_up[ix, jx] * SLACK_COST,
+        )
+    end
+
     requirement = PSY.get_requirement(service)
     if parameters
         param = get_parameter_array(
@@ -59,7 +74,7 @@ function service_requirement_constraint!(
                 PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t] * requirement)
             constraint[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                sum(reserve_variable[:, t]) >= param[name, t]
+                sum(reserve_variable[:, t]) + variable_up[name, t] >= param[name, t]
             )
         end
     else
