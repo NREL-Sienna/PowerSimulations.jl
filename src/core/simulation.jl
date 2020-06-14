@@ -593,7 +593,7 @@ function initial_condition_update!(
     stage::Stage,
     ini_cond_key::ICKey,
     initial_conditions::Vector{InitialCondition},
-    chronology::IntraStageChronology,
+    ::IntraStageChronology,
     sim::Simulation,
 )
     for ic in initial_conditions
@@ -624,7 +624,7 @@ function initial_condition_update!(
     stage::Stage,
     ini_cond_key::ICKey,
     initial_conditions::Vector{InitialCondition},
-    chronology::InterStageChronology,
+    ::InterStageChronology,
     sim::Simulation,
 )
     execution_index = get_execution_order(sim)
