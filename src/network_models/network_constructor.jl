@@ -79,7 +79,6 @@ function construct_network!(
     return
 end
 
-# Note that this function will error because these networks are currently unsupported
 function construct_network!(
     psi_container::PSIContainer,
     sys::PSY.System,
