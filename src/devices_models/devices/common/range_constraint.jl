@@ -10,7 +10,12 @@ function RangeConstraintInputsInternal(
     constraint_name::Symbol,
     variable_name::Symbol,
 )
-    return RangeConstraintInputsInternal(constraint_infos, constraint_name, variable_name, nothing)
+    return RangeConstraintInputsInternal(
+        constraint_infos,
+        constraint_name,
+        variable_name,
+        nothing,
+    )
 end
 
 @doc raw"""

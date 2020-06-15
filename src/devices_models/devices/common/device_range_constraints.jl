@@ -106,7 +106,12 @@ function device_range_constraints!(
 
         rc.constraint_func(
             psi_container,
-            RangeConstraintInputsInternal(constraint_infos, cons_name, var_name, bin_var_name),
+            RangeConstraintInputsInternal(
+                constraint_infos,
+                cons_name,
+                var_name,
+                bin_var_name,
+            ),
         )
     end
 
