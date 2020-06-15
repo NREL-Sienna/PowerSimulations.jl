@@ -414,7 +414,7 @@ function NodalExpressionInputs(
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),
         1.0,
-        T
+        T,
     )
 end
 

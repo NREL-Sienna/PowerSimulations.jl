@@ -26,7 +26,7 @@ function PSISettings(
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
     constraint_duals::Vector{Symbol} = Vector{Symbol}(),
     system_to_file = true,
-    export_pwl_vars=false,
+    export_pwl_vars = false,
     allow_fails = false,
     ext = Dict{String, Any}(),
 )

@@ -204,10 +204,7 @@ function test_load_simulation(file_path::String)
             for name in keys(sim.stages)
                 stage = sim.stages[name]
                 results = load_simulation_results(sim_results, name)
-                resolution = convert(
-                    Dates.Millisecond,
-                    PSI.get_resolution(stage),
-                )
+                resolution = convert(Dates.Millisecond, PSI.get_resolution(stage))
                 time_stamp = results.time_stamp
                 length = size(time_stamp, 1)
                 test = results.time_stamp[1, 1]:resolution:results.time_stamp[length, 1]

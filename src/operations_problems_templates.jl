@@ -101,11 +101,7 @@ function template_economic_dispatch(; kwargs...)
 
     services = get(kwargs, :services, Dict())
 
-    template = _generic_template(
-        devices = devices,
-        services = services;
-        kwargs...,
-    )
+    template = _generic_template(devices = devices, services = services; kwargs...)
 
     return template
 end

@@ -347,7 +347,8 @@ end
 function _assign_feedforward_chronologies(sim::Simulation)
     for (key, chron) in sim.sequence.feedforward_chronologies
         destination_stage = get_stage(sim, key.second)
-        destination_stage_interval = IS.time_period_conversion(get_stage_interval(sim, key.second))
+        destination_stage_interval =
+            IS.time_period_conversion(get_stage_interval(sim, key.second))
         source_stage_number = find_key_with_value(sim.sequence.order, key.first)
         if isempty(source_stage_number)
             throw(ArgumentError("Stage $(key.first) not specified in the order dictionary"))

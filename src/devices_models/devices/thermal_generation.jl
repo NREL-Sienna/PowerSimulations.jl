@@ -610,12 +610,12 @@ function NodalExpressionInputs(
     ::Type{T},
     ::Type{AreaBalancePowerModel},
     use_forecasts::Bool,
-) where T <: PSY.ThermalGen
+) where {T <: PSY.ThermalGen}
     return NodalExpressionInputs(
         "get_rating",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),
         1.0,
-        T
+        T,
     )
 end

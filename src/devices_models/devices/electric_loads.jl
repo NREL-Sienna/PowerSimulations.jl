@@ -154,13 +154,13 @@ function NodalExpressionInputs(
     ::Type{T},
     ::Type{<:PM.AbstractPowerModel},
     use_forecasts::Bool,
-) where T <:PSY.ElectricLoad
+) where {T <: PSY.ElectricLoad}
     return NodalExpressionInputs(
         "get_maxactivepower",
         REACTIVE_POWER,
         use_forecasts ? x -> PSY.get_maxreactivepower(x) : x -> PSY.get_reactivepower(x),
         -1.0,
-        T
+        T,
     )
 end
 
@@ -168,13 +168,13 @@ function NodalExpressionInputs(
     ::Type{T},
     ::Type{<:PM.AbstractActivePowerModel},
     use_forecasts::Bool,
-) where T <: PSY.ElectricLoad
+) where {T <: PSY.ElectricLoad}
     return NodalExpressionInputs(
         "get_maxactivepower",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_maxactivepower(x) : x -> PSY.get_activepower(x),
         -1.0,
-        T
+        T,
     )
 end
 
