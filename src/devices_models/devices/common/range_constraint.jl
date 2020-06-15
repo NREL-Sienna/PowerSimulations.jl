@@ -1,16 +1,16 @@
-struct RangeConstraintInputs
+struct RangeConstraintInputsInternal
     constraint_infos::Vector{DeviceRangeConstraintInfo}
     constraint_name::Symbol
     variable_name::Symbol
     bin_variable_name::Union{Nothing, Symbol}
 end
 
-function RangeConstraintInputs(
+function RangeConstraintInputsInternal(
     constraint_infos::Vector{DeviceRangeConstraintInfo},
     constraint_name::Symbol,
     variable_name::Symbol,
 )
-    return RangeConstraintInputs(constraint_infos, constraint_name, variable_name, nothing)
+    return RangeConstraintInputsInternal(constraint_infos, constraint_name, variable_name, nothing)
 end
 
 @doc raw"""
@@ -33,7 +33,7 @@ where limits in constraint_infos.
 
 `` limits^{min} \leq x \leq limits^{max}, \text{ otherwise } ``
 """
-function device_range(psi_container::PSIContainer, inputs::RangeConstraintInputs)
+function device_range(psi_container::PSIContainer, inputs::RangeConstraintInputsInternal)
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, inputs.variable_name)
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
@@ -98,7 +98,7 @@ where limits in constraint_infos.
 """
 function device_semicontinuousrange(
     psi_container::PSIContainer,
-    inputs::RangeConstraintInputs,
+    inputs::RangeConstraintInputsInternal,
 )
     time_steps = model_time_steps(psi_container)
     varcts = get_variable(psi_container, inputs.variable_name)
@@ -171,7 +171,7 @@ where limits in constraint_infos.
 """
 function reserve_device_semicontinuousrange(
     psi_container::PSIContainer,
-    inputs::RangeConstraintInputs,
+    inputs::RangeConstraintInputsInternal,
 )
     time_steps = model_time_steps(psi_container)
     varcts = get_variable(psi_container, inputs.variable_name)

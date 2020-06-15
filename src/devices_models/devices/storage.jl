@@ -73,15 +73,15 @@ function make_active_power_constraints_inputs(
     __::Bool,
     ___::Bool,
 )
-    return DeviceConstraintInputs(;
+    return DeviceRangeConstraintInputs(;
         range_constraint_inputs = [
-            ModelRangeConstraintInputs(;
+            RangeConstraintInputs(;
                 constraint_name = OUTPUT_POWER_RANGE,
                 variable_name = ACTIVE_POWER_OUT,
                 limits_func = x -> PSY.get_outputactivepowerlimits(x),
                 constraint_func = device_range,
             ),
-            ModelRangeConstraintInputs(;
+            RangeConstraintInputs(;
                 constraint_name = INPUT_POWER_RANGE,
                 variable_name = ACTIVE_POWER_IN,
                 limits_func = x -> PSY.get_inputactivepowerlimits(x),
@@ -99,16 +99,16 @@ function make_active_power_constraints_inputs(
     __::Bool,
     ___::Bool,
 )
-    return DeviceConstraintInputs(;
+    return DeviceRangeConstraintInputs(;
         range_constraint_inputs = [
-            ModelRangeConstraintInputs(;
+            RangeConstraintInputs(;
                 constraint_name = OUTPUT_POWER_RANGE,
                 variable_name = ACTIVE_POWER_OUT,
                 bin_variable_name = RESERVE,
                 limits_func = x -> PSY.get_outputactivepowerlimits(x),
                 constraint_func = reserve_device_semicontinuousrange,
             ),
-            ModelRangeConstraintInputs(;
+            RangeConstraintInputs(;
                 constraint_name = INPUT_POWER_RANGE,
                 variable_name = ACTIVE_POWER_IN,
                 bin_variable_name = RESERVE,
@@ -138,7 +138,7 @@ function reactive_power_constraints!(
 
     device_range(
         psi_container,
-        RangeConstraintInputs(
+        RangeConstraintInputsInternal(
             constraint_infos,
             constraint_name(REACTIVE_RANGE, St),
             variable_name(REACTIVE_POWER, St),
@@ -177,7 +177,7 @@ function energy_capacity_constraints!(
 
     device_range(
         psi_container,
-        RangeConstraintInputs(
+        RangeConstraintInputsInternal(
             constraint_infos,
             constraint_name(ENERGY_CAPACITY, St),
             variable_name(ENERGY, St),

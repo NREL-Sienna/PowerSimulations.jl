@@ -148,8 +148,8 @@ function make_reactive_power_constraints_inputs(
     use_parameters::Bool,
     use_forecasts::Bool,
 )
-    return DeviceConstraintInputs(;
-        range_constraint_inputs = [ModelRangeConstraintInputs(;
+    return DeviceRangeConstraintInputs(;
+        range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = REACTIVE_RANGE,
             variable_name = REACTIVE_POWER,
             limits_func = x -> PSY.get_reactivepowerlimits(x),
@@ -167,8 +167,8 @@ function make_active_power_constraints_inputs(
     use_forecasts::Bool,
 )
     if (!use_parameters && !use_forecasts)
-        return DeviceConstraintInputs(;
-            range_constraint_inputs = [ModelRangeConstraintInputs(;
+        return DeviceRangeConstraintInputs(;
+            range_constraint_inputs = [RangeConstraintInputs(;
                 constraint_name = ACTIVE_RANGE,
                 variable_name = ACTIVE_POWER,
                 limits_func = x -> (min = 0.0, max = PSY.get_activepower(x)),
@@ -177,8 +177,8 @@ function make_active_power_constraints_inputs(
         )
     end
 
-    return DeviceConstraintInputs(;
-        timeseries_range_constraint_inputs = [ModelTimeSeriesConstraintInputs(
+    return DeviceRangeConstraintInputs(;
+        timeseries_range_constraint_inputs = [TimeSeriesConstraintInputs(
             constraint_name = ACTIVE,
             variable_name = ACTIVE_POWER,
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
@@ -198,8 +198,8 @@ function make_active_power_constraints_inputs(
     __::Bool,
     ___::Bool,
 )
-    return DeviceConstraintInputs(;
-        range_constraint_inputs = [ModelRangeConstraintInputs(;
+    return DeviceRangeConstraintInputs(;
+        range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = ACTIVE_RANGE,
             variable_name = ACTIVE_POWER,
             limits_func = x -> PSY.get_activepowerlimits(x),
@@ -229,7 +229,7 @@ function activepower_constraints!(
 
     if !parameters && !use_forecast_data
         device_semicontinuousrange(
-            RangeConstraintInputs(
+            RangeConstraintInputsInternal(
                 psi_container,
                 constraint_infos,
                 constraint_name(ACTIVE_RANGE, H),
@@ -296,7 +296,7 @@ function inflow_constraints!(
     if !parameters && !use_forecast_data
         device_range(
             psi_container,
-            RangeConstraintInputs(
+            RangeConstraintInputsInternal(
                 constraint_infos,
                 constraint_name(INFLOW_RANGE, H),
                 variable_name(INFLOW, H),

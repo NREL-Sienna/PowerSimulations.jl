@@ -88,7 +88,7 @@ function branch_rate_constraints!(
     constraint_infos = _get_constraint_data(devices)
     device_range(
         psi_container,
-        RangeConstraintInputs(
+        RangeConstraintInputsInternal(
             constraint_infos,
             constraint_name(RATE_LIMIT, B),
             variable_name(FLOW_ACTIVE_POWER, B),
@@ -150,7 +150,7 @@ function branch_flow_constraints!(
     end
     device_range(
         psi_container,
-        RangeConstraintInputs(
+        RangeConstraintInputsInternal(
             constraint_infos,
             constraint_name(FLOW_LIMIT, PSY.MonitoredLine),
             variable_name(FLOW_ACTIVE_POWER, PSY.MonitoredLine),
@@ -183,7 +183,7 @@ function branch_flow_constraints!(
 
     device_range(
         psi_container,
-        RangeConstraintInputs(
+        RangeConstraintInputsInternal(
             to,
             constraint_name(FLOW_LIMIT_FROM_TO, PSY.MonitoredLine),
             variable_name(FLOW_ACTIVE_POWER_FROM_TO, PSY.MonitoredLine),
@@ -191,7 +191,7 @@ function branch_flow_constraints!(
     )
     device_range(
         psi_container,
-        RangeConstraintInputs(
+        RangeConstraintInputsInternal(
             from,
             constraint_name(FLOW_LIMIT_TO_FROM, PSY.MonitoredLine),
             variable_name(FLOW_ACTIVE_POWER_TO_FROM, PSY.MonitoredLine),

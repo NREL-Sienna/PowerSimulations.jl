@@ -90,7 +90,7 @@ function make_active_power_constraints_inputs(
     use_parameters::Bool,
     use_forecasts::Bool,
 )
-    return DeviceConstraintInputs()
+    return DeviceRangeConstraintInputs()
 end
 
 function make_active_power_constraints_inputs(
@@ -101,7 +101,7 @@ function make_active_power_constraints_inputs(
     use_parameters::Bool,
     use_forecasts::Bool,
 )
-    return DeviceConstraintInputs()
+    return DeviceRangeConstraintInputs()
 end
 
 """
@@ -115,8 +115,8 @@ function make_active_power_constraints_inputs(
     __::Bool,
     ___::Bool,
 )
-    return DeviceConstraintInputs(;
-        range_constraint_inputs = [ModelRangeConstraintInputs(;
+    return DeviceRangeConstraintInputs(;
+        range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = ACTIVE_RANGE,
             variable_name = ACTIVE_POWER,
             limits_func = x -> PSY.get_activepowerlimits(x),
@@ -136,9 +136,9 @@ function make_active_power_constraints_inputs(
     __::Bool,
     ___::Bool,
 )
-    return DeviceConstraintInputs(;
+    return DeviceRangeConstraintInputs(;
         range_constraint_inputs = [
-            ModelRangeConstraintInputs(;
+            RangeConstraintInputs(;
                 constraint_name = ACTIVE_RANGE,
                 variable_name = ACTIVE_POWER,
                 bin_variable_name = ON,
@@ -161,8 +161,8 @@ function make_active_power_constraints_inputs(
     __::Bool,
     ___::Bool,
 )
-    return DeviceConstraintInputs(;
-        range_constraint_inputs = [ModelRangeConstraintInputs(;
+    return DeviceRangeConstraintInputs(;
+        range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = ACTIVE_RANGE,
             variable_name = ACTIVE_POWER,
             limits_func = x -> (min = 0.0, max = PSY.get_activepowerlimits(x).max),
@@ -198,8 +198,8 @@ function make_reactive_power_constraints_inputs(
     use_parameters::Bool,
     use_forecasts::Bool,
 )
-    return DeviceConstraintInputs(;
-        range_constraint_inputs = [ModelRangeConstraintInputs(;
+    return DeviceRangeConstraintInputs(;
+        range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = REACTIVE_RANGE,
             variable_name = REACTIVE_POWER,
             limits_func = x -> PSY.get_reactivepowerlimits(x),
@@ -219,8 +219,8 @@ function make_reactive_power_constraints_inputs(
     use_parameters::Bool,
     use_forecasts::Bool,
 )
-    return DeviceConstraintInputs(;
-        range_constraint_inputs = [ModelRangeConstraintInputs(;
+    return DeviceRangeConstraintInputs(;
+        range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = REACTIVE_RANGE,
             variable_name = REACTIVE_POWER,
             bin_variable_name = ON,

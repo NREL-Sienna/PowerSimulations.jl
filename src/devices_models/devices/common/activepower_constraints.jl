@@ -1,5 +1,5 @@
 """
-Construct active power DeviceConstraintInputs for specific types.
+Construct active power DeviceRangeConstraintInputs for specific types.
 """
 function make_active_power_constraints_inputs(
     ::Type{T},
@@ -37,5 +37,5 @@ function activepower_constraints!(
         use_parameters,
         use_forecasts,
     )
-    device_constraints!(psi_container, devices, model, feedforward, inputs)
+    device_range_constraints!(psi_container, devices, model, feedforward, inputs)
 end

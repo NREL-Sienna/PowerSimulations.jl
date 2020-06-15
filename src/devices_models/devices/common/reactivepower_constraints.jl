@@ -1,5 +1,5 @@
 """
-Construct reactive power DeviceConstraintInputs for specific types.
+Construct reactive power DeviceRangeConstraintInputs for specific types.
 """
 function make_reactive_power_constraints_inputs(
     ::Type{T},
@@ -37,5 +37,5 @@ function reactivepower_constraints!(
         use_parameters,
         use_forecasts,
     )
-    device_constraints!(psi_container, devices, model, feedforward, inputs)
+    device_range_constraints!(psi_container, devices, model, feedforward, inputs)
 end

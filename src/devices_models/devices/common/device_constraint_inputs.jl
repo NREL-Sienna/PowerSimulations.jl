@@ -1,4 +1,4 @@
-struct ModelRangeConstraintInputs
+struct RangeConstraintInputs
     constraint_name::String
     variable_name::String
     bin_variable_name::Union{Nothing, String}
@@ -6,14 +6,14 @@ struct ModelRangeConstraintInputs
     constraint_func::Function
 end
 
-function ModelRangeConstraintInputs(;
+function RangeConstraintInputs(;
     constraint_name,
     variable_name,
     bin_variable_name = nothing,
     limits_func,
     constraint_func,
 )
-    return ModelRangeConstraintInputs(
+    return RangeConstraintInputs(
         constraint_name,
         variable_name,
         bin_variable_name,
@@ -22,7 +22,7 @@ function ModelRangeConstraintInputs(;
     )
 end
 
-struct ModelTimeSeriesConstraintInputs
+struct TimeSeriesConstraintInputs
     constraint_name::String
     variable_name::String
     bin_variable_name::Union{Nothing, String}
@@ -32,7 +32,7 @@ struct ModelTimeSeriesConstraintInputs
     constraint_func::Function
 end
 
-function ModelTimeSeriesConstraintInputs(;
+function TimeSeriesConstraintInputs(;
     constraint_name,
     variable_name,
     bin_variable_name = nothing,
@@ -41,7 +41,7 @@ function ModelTimeSeriesConstraintInputs(;
     multiplier_func,
     constraint_func,
 )
-    return ModelTimeSeriesConstraintInputs(
+    return TimeSeriesConstraintInputs(
         constraint_name,
         variable_name,
         bin_variable_name,
@@ -52,33 +52,33 @@ function ModelTimeSeriesConstraintInputs(;
     )
 end
 
-struct DeviceConstraintInputs
-    range_constraint_inputs::Vector{ModelRangeConstraintInputs}
-    timeseries_range_constraint_inputs::Vector{ModelTimeSeriesConstraintInputs}
+struct DeviceRangeConstraintInputs
+    range_constraint_inputs::Vector{RangeConstraintInputs}
+    timeseries_range_constraint_inputs::Vector{TimeSeriesConstraintInputs}
     custom_psi_container_func::Union{Nothing, Function}
 end
 
-function DeviceConstraintInputs(;
-    range_constraint_inputs = Vector{ModelRangeConstraintInputs}(),
-    timeseries_range_constraint_inputs = Vector{ModelTimeSeriesConstraintInputs}(),
+function DeviceRangeConstraintInputs(;
+    range_constraint_inputs = Vector{RangeConstraintInputs}(),
+    timeseries_range_constraint_inputs = Vector{TimeSeriesConstraintInputs}(),
     custom_psi_container_func = nothing,
 )
-    return DeviceConstraintInputs(
+    return DeviceRangeConstraintInputs(
         range_constraint_inputs,
         timeseries_range_constraint_inputs,
         custom_psi_container_func,
     )
 end
 
-function device_constraints!(
+function device_range_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-    inputs::DeviceConstraintInputs,
+    inputs::DeviceRangeConstraintInputs,
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation}
-    model_range_constraints = inputs.range_constraint_inputs
-    model_timeseries_range_constraints = inputs.timeseries_range_constraint_inputs
+    range_constraints = inputs.range_constraint_inputs
+    timeseries_range_constraints = inputs.timeseries_range_constraint_inputs
     custom_psi_container_func = inputs.custom_psi_container_func
 
     if isnothing(feedforward)
@@ -87,58 +87,57 @@ function device_constraints!(
         ff_affected_variables = Set(get_affected_variables(feedforward))
     end
 
-    for mrc in model_range_constraints
+    for rc in range_constraints
         constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-        cons_name = constraint_name(mrc.constraint_name, T)
-        var_name = variable_name(mrc.variable_name, T)
+        cons_name = constraint_name(rc.constraint_name, T)
+        var_name = variable_name(rc.variable_name, T)
         if var_name in ff_affected_variables
             @debug "Skip adding $var_name because it is handled by feedforward"
             continue
         end
-        bin_var_name = isnothing(mrc.bin_variable_name) ? mrc.bin_variable_name :
-            variable_name(mrc.bin_variable_name, T)
+        bin_var_name = isnothing(rc.bin_variable_name) ? rc.bin_variable_name :
+            variable_name(rc.bin_variable_name, T)
         for (i, dev) in enumerate(devices)
             dev_name = PSY.get_name(dev)
-            constraint_info = DeviceRangeConstraintInfo(dev_name, mrc.limits_func(dev))
+            constraint_info = DeviceRangeConstraintInfo(dev_name, rc.limits_func(dev))
             add_device_services!(constraint_info, dev, model)
             constraint_infos[i] = constraint_info
         end
 
-        mrc.constraint_func(
+        rc.constraint_func(
             psi_container,
-            RangeConstraintInputs(constraint_infos, cons_name, var_name, bin_var_name),
+            RangeConstraintInputsInternal(constraint_infos, cons_name, var_name, bin_var_name),
         )
     end
 
-    for tsmrc in model_timeseries_range_constraints
-        var_name = variable_name(tsmrc.variable_name, T)
+    for tsrc in timeseries_range_constraints
+        var_name = variable_name(tsrc.variable_name, T)
         if var_name in ff_affected_variables
             @debug "Skip adding $var_name because it is handled by feedforward"
             continue
         end
         constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
         for (i, dev) in enumerate(devices)
-            ts_vector = get_time_series(psi_container, dev, tsmrc.forecast_label)
+            ts_vector = get_time_series(psi_container, dev, tsrc.forecast_label)
             constraint_info =
-                DeviceTimeSeriesConstraintInfo(dev, tsmrc.multiplier_func, ts_vector)
+                DeviceTimeSeriesConstraintInfo(dev, tsrc.multiplier_func, ts_vector)
             add_device_services!(constraint_info.range, dev, model)
             constraint_infos[i] = constraint_info
         end
 
-        ts_inputs = TimeSeriesConstraintInputs(
+        ts_inputs = TimeSeriesConstraintInputsInternal(
             constraint_infos,
-            constraint_name(tsmrc.constraint_name, T),
+            constraint_name(tsrc.constraint_name, T),
             var_name,
-            isnothing(tsmrc.bin_variable_name) ? nothing :
-                variable_name(tsmrc.bin_variable_name, T),
-            isnothing(tsmrc.parameter_name) ? nothing :
-                UpdateRef{T}(tsmrc.parameter_name, tsmrc.forecast_label),
+            isnothing(tsrc.bin_variable_name) ? nothing :
+                variable_name(tsrc.bin_variable_name, T),
+            isnothing(tsrc.parameter_name) ? nothing :
+                UpdateRef{T}(tsrc.parameter_name, tsrc.forecast_label),
         )
-        tsmrc.constraint_func(psi_container, ts_inputs)
+        tsrc.constraint_func(psi_container, ts_inputs)
     end
 
     if !isnothing(custom_psi_container_func)
         custom_psi_container_func(psi_container, devices, U)
     end
-
 end

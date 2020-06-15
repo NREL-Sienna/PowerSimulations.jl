@@ -59,7 +59,7 @@ function make_reactive_power_constraints_inputs(
     use_parameters::Bool,
     use_forecasts::Bool,
 )
-    return DeviceConstraintInputs(;
+    return DeviceRangeConstraintInputs(;
         custom_psi_container_func = custom_reactive_power_constraints!,
     )
 end
@@ -91,8 +91,8 @@ function make_active_power_constraints_inputs(
     use_forecasts::Bool,
 )
     if (!use_parameters && !use_forecasts)
-        return DeviceConstraintInputs(;
-            range_constraint_inputs = [ModelRangeConstraintInputs(;
+        return DeviceRangeConstraintInputs(;
+            range_constraint_inputs = [RangeConstraintInputs(;
                 constraint_name = ACTIVE_RANGE,
                 variable_name = ACTIVE_POWER,
                 limits_func = x -> (min = 0.0, max = PSY.get_activepower(x)),
@@ -101,8 +101,8 @@ function make_active_power_constraints_inputs(
         )
     end
 
-    return DeviceConstraintInputs(;
-        timeseries_range_constraint_inputs = [ModelTimeSeriesConstraintInputs(
+    return DeviceRangeConstraintInputs(;
+        timeseries_range_constraint_inputs = [TimeSeriesConstraintInputs(
             constraint_name = ACTIVE,
             variable_name = ACTIVE_POWER,
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
@@ -123,8 +123,8 @@ function make_active_power_constraints_inputs(
     use_forecasts::Bool,
 )
     if (!use_parameters && !use_forecasts)
-        return DeviceConstraintInputs(;
-            range_constraint_inputs = [ModelRangeConstraintInputs(;
+        return DeviceRangeConstraintInputs(;
+            range_constraint_inputs = [RangeConstraintInputs(;
                 constraint_name = ACTIVE_RANGE,
                 variable_name = ACTIVE_POWER,
                 bin_variable_name = ON,
@@ -134,8 +134,8 @@ function make_active_power_constraints_inputs(
         )
     end
 
-    return DeviceConstraintInputs(;
-        timeseries_range_constraint_inputs = [ModelTimeSeriesConstraintInputs(
+    return DeviceRangeConstraintInputs(;
+        timeseries_range_constraint_inputs = [TimeSeriesConstraintInputs(
             constraint_name = ACTIVE,
             variable_name = ACTIVE_POWER,
             bin_variable_name = ON,
