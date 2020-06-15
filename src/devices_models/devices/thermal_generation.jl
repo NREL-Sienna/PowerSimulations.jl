@@ -329,7 +329,8 @@ function _get_data_for_rocc(
         if !isnothing(ramplimits)
             p_lims = PSY.get_activepowerlimits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramplimits.up * basepower >= max_rate) & (ramplimits.down * basepower >= max_rate)
+            if (ramplimits.up * basepower >= max_rate) &
+               (ramplimits.down * basepower >= max_rate)
                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
                 continue
             else
@@ -629,12 +630,12 @@ function NodalExpressionInputs(
     ::Type{T},
     ::Type{AreaBalancePowerModel},
     use_forecasts::Bool,
-) where T <: PSY.ThermalGen
+) where {T <: PSY.ThermalGen}
     return NodalExpressionInputs(
         "get_rating",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),
         1.0,
-        T
+        T,
     )
 end
