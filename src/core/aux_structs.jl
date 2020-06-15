@@ -10,7 +10,7 @@ end
 
 function UpdateRef{T}(
     name::AbstractString,
-    accessor_func::Union{Nothing, String} = nothing
+    accessor_func::Union{Nothing, String} = nothing,
 ) where {T <: Union{JuMP.VariableRef, PJ.ParameterRef}}
     return UpdateRef{T}(Symbol(name), accessor_func)
 end

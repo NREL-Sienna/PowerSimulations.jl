@@ -139,7 +139,6 @@ get_initial_time(s::Stage{T}) where {T <: AbstractOperationsProblem} =
 get_resolution(s::Stage) = IS.time_period_conversion(PSY.get_forecasts_resolution(s.sys))
 get_settings(s::Stage) = get_psi_container(s).settings
 
-
 function reset!(stage::Stage{M}) where {M <: AbstractOperationsProblem}
     @assert stage_built(stage)
     if stage_built(stage)

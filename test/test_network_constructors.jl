@@ -301,12 +301,7 @@ end
 end
 
 @testset "Network Unsupported Power Model Formulations" begin
-    incompat_list = [
-        PM.SDPWRMPowerModel,
-        PM.SparseSDPWRMPowerModel,
-        PM.SOCBFPowerModel,
-        PM.SOCBFConicPowerModel,
-    ]
+    incompat_list = [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
 
     c_sys5 = build_system("c_sys5")
     for network in incompat_list
@@ -316,6 +311,45 @@ end
         construct_device!(ps_model, :Load, load_model)
 
         @test_throws ArgumentError construct_network!(ps_model, network)
+    end
+
+end
+
+@testset "All PowerModels models" begin
+
+    networks = [
+        (PM.ACPPowerModel, fast_ipopt_optimizer),
+        (PM.ACRPowerModel, fast_ipopt_optimizer),
+        (PM.ACTPowerModel, fast_ipopt_optimizer),
+        #(PM.IVRPowerModel, fast_ipopt_optimizer), #instantiate_ivp_expr_model not working
+        (PM.DCPPowerModel, fast_ipopt_optimizer),
+        (PM.DCMPPowerModel, fast_ipopt_optimizer),
+        (PM.NFAPowerModel, fast_ipopt_optimizer),
+        (PM.DCPLLPowerModel, fast_ipopt_optimizer),
+        (PM.LPACCPowerModel, fast_ipopt_optimizer),
+        (PM.SOCWRPowerModel, fast_ipopt_optimizer),
+        (PM.SOCWRConicPowerModel, scs_solver),
+        (PM.QCRMPowerModel, fast_ipopt_optimizer),
+        (PM.QCLSPowerModel, fast_ipopt_optimizer),
+        #(PM.SOCBFPowerModel, fast_ipopt_optimizer), # not working
+        (PM.BFAPowerModel, fast_ipopt_optimizer),
+        #(PM.SOCBFConicPowerModel, fast_ipopt_optimizer), # not working
+        (PM.SDPWRMPowerModel, scs_solver),
+        (PM.SparseSDPWRMPowerModel, scs_solver),
+    ]
+    c_sys5 = build_system("c_sys5")
+    c_sys14 = build_system("c_sys14")
+    c_sys14_dc = build_system("c_sys14_dc")
+    systems = [c_sys5]#, c_sys14, c_sys14_dc]
+    for (network, solver) in networks, sys in systems
+        @info "Test construction of a $(network) network"
+        ps_model = OperationsProblem(TestOpProblem, network, sys; optimizer = solver)
+        construct_device!(ps_model, :Thermal, thermal_model)
+        construct_device!(ps_model, :Load, load_model)
+        construct_network!(ps_model, network)
+        construct_device!(ps_model, :Line, line_model)
+        construct_device!(ps_model, :DCLine, dc_line)
+        @test !isnothing(ps_model.psi_container.pm)
     end
 
 end
