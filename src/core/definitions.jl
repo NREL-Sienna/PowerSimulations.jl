@@ -50,6 +50,7 @@ const SECONDS_IN_MINUTE = 60.0
 const MINUTES_IN_HOUR = 60.0
 const SECONDS_IN_HOUR = 3600.0
 
+# Interface limitations
 const OPERATIONS_ACCEPTED_KWARGS = [
     :horizon,
     :initial_time,
@@ -75,6 +76,10 @@ const STAGE_ACCEPTED_KWARGS = [
     :export_pwl_variables,
     :allow_fails,
 ]
+
+const UNSUPPORTED_POWERMODELS =
+    [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
+
 
 const PSI_NAME_DELIMITER = "__"
 
