@@ -1,5 +1,6 @@
 struct EconomicDispatchProblem <: PowerSimulationsOperationsProblem end
 struct UnitCommitmentProblem <: PowerSimulationsOperationsProblem end
+struct AGCReserveDeployment <: PowerSimulationsOperationsProblem end
 
 function _generic_template(; kwargs...)
     network = get(kwargs, :network, CopperPlatePowerModel)
@@ -100,9 +101,57 @@ function template_economic_dispatch(; kwargs...)
 
     services = get(kwargs, :services, Dict())
 
-    template = _generic_template(devices = devices, services = services; kwargs...)
+    template = _generic_template(
+        devices = devices,
+        services = services;
+        kwargs...,
+    )
 
     return template
+end
+
+"""
+    template_agc_reserve_deployment(; kwargs...)
+
+Creates an `OperationsProblemTemplate` with default DeviceModels for an AGC Reserve Deplyment Problem. This model doesn't support customization
+
+# Example
+```julia
+template = agc_reserve_deployment()
+```
+"""
+function template_agc_reserve_deployment(; kwargs...)
+    if !isempty(kwargs)
+        throw(ArgumentError("AGC Template doesn't currently support customization"))
+    end
+    devices = Dict(
+        :Generators => DeviceModel(PSY.ThermalStandard, FixedOutput),
+        :Ren => DeviceModel(PSY.RenewableDispatch, FixedOutput),
+        :Loads => DeviceModel(PSY.PowerLoad, StaticPowerLoad),
+        :Hydro => DeviceModel(PSY.HydroEnergyReservoir, FixedOutput),
+        :HydroROR => DeviceModel(PSY.HydroDispatch, FixedOutput),
+        :RenFx => DeviceModel(PSY.RenewableFix, FixedOutput),
+        :Regulation_thermal => DeviceModel(
+            PSY.RegulationDevice{PSY.ThermalStandard},
+            DeviceLimitedRegulation,
+        ),
+        :Regulation_hydro_dispatch => DeviceModel(
+            PSY.RegulationDevice{PSY.HydroDispatch},
+            ReserveLimitedRegulation,
+        ),
+        :Regulation_hydro_reservoir => DeviceModel(
+            PSY.RegulationDevice{PSY.HydroEnergyReservoir},
+            ReserveLimitedRegulation,
+        ),
+    )
+    services = Dict(:AGC => ServiceModel(PSY.AGC, PIDSmoothACE))
+    template = _generic_template(
+        network = PSI.AreaBalancePowerModel,
+        devices = devices,
+        branches = Dict(),
+        services = services;
+        kwargs...,
+    )
 end
 
 """
@@ -154,7 +203,6 @@ uc_problem = UnitCommitmentProblem(system)
 - `services::Dict{Symbol, ServiceModel}` : override default `ServiceModel` settings
 - Key word arguments supported by `OperationsProblem`
 """
-
 function UnitCommitmentProblem(system::PSY.System; kwargs...)
     kwargs = Dict(kwargs)
     template_kwargs = Dict()
@@ -166,6 +214,34 @@ function UnitCommitmentProblem(system::PSY.System; kwargs...)
     op_problem = OperationsProblem(UnitCommitmentProblem, template, system; kwargs...)
     return op_problem
 end
+
+
+"""
+    AGCReserveDeployment(system::PSY.System; kwargs...)
+
+Creates an `OperationsProblemTemplate` with default DeviceModels for an AGC Reserve Deplyoment Problem.
+Uses the template to create an `OperationsProblem`.
+
+# Example
+```julia
+agc_problem = AGCReserveDeployment(system)
+```
+
+# Accepted Key Words
+- Key word arguments supported by `OperationsProblem`
+"""
+function AGCReserveDeployment(system::PSY.System; kwargs...)
+    kwargs = Dict(kwargs)
+    template_kwargs = Dict()
+    for kw in setdiff(keys(kwargs), OPERATIONS_ACCEPTED_KWARGS)
+        template_kwargs[kw] = pop!(kwargs, kw)
+    end
+
+    template = template_agc_reserve_deployment(; template_kwargs...)
+    op_problem = OperationsProblem(AGCReserveDeployment, template, system; kwargs...)
+    return op_problem
+end
+
 
 """
     run_unit_commitment(system::PSY.System; kwargs...)

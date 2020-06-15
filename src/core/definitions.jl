@@ -21,12 +21,12 @@ const RUN_SIMULATION_TIMER = TimerOutputs.TimerOutput()
 
 #Type Alias for JuMP and PJ containers
 const JuMPExpressionMatrix = Matrix{<:JuMP.AbstractJuMPScalar}
-const PGAE{V} =
-    PJ.ParametrizedGenericAffExpr{Float64, V} where {V <: JuMP.AbstractVariableRef}
-const GAE{V} = JuMP.GenericAffExpr{Float64, V} where {V <: JuMP.AbstractVariableRef}
-const JuMPAffineExpressionArray = Matrix{GAE{V}} where {V <: JuMP.AbstractVariableRef}
-const JuMPAffineExpressionVector = Vector{GAE{V}} where {V <: JuMP.AbstractVariableRef}
+const PGAE = PJ.ParametrizedGenericAffExpr{Float64, JuMP.VariableRef}
+const GAE = JuMP.GenericAffExpr{Float64, JuMP.VariableRef}
+const JuMPAffineExpressionArray = Matrix{GAE}
+const JuMPAffineExpressionVector = Vector{GAE}
 const JuMPConstraintArray = JuMP.Containers.DenseAxisArray{JuMP.ConstraintRef}
+const JuMPVariableArray = JuMP.Containers.DenseAxisArray{JuMP.VariableRef}
 const JuMPParamArray = JuMP.Containers.DenseAxisArray{PJ.ParameterRef}
 const DenseAxisArrayContainer = Dict{Symbol, JuMP.Containers.DenseAxisArray}
 
@@ -46,6 +46,9 @@ const ABSOLUTE_TOLERANCE = 1.0e-3
 const SLACK_COST = 1e6
 const COST_EPSILON = 1e-3
 const MISSING_INITIAL_CONDITIONS_TIME_COUNT = 999.0
+const SECONDS_IN_MINUTE = 60.0
+const MINUTES_IN_HOUR = 60.0
+const SECONDS_IN_HOUR = 3600.0
 
 # Interface limitations
 const OPERATIONS_ACCEPTED_KWARGS = [
@@ -59,12 +62,13 @@ const OPERATIONS_ACCEPTED_KWARGS = [
     :slack_variables,
     :system_to_file,
     :constraint_duals,
+    :export_pwl_variables
 ]
 
 const OPERATIONS_SOLVE_KWARGS = [:optimizer, :save_path]
 
 const STAGE_ACCEPTED_KWARGS =
-    [:PTDF, :warm_start, :slack_variables, :constraint_duals, :system_to_file]
+    [:PTDF, :warm_start, :slack_variables, :constraint_duals, :system_to_file, :export_pwl_variables, :allow_fails]
 
 const UNSUPPORTED_POWERMODELS =
     [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
@@ -106,7 +110,9 @@ const DURATION_UP = "duration_up"
 const ENERGY_CAPACITY = "energy_capacity"
 const ENERGY_LIMIT = "energy_limit"
 const FEEDFORWARD = "FF"
+const FEEDFORWARD_UB = "FF_ub"
 const FEEDFORWARD_BIN = "FF_bin"
+const FEEDFORWARD_INTEGRAL_LIMIT = "FF_integral"
 const FLOW_LIMIT = "FlowLimit"
 const FLOW_LIMIT_FROM_TO = "FlowLimitFT"
 const FLOW_LIMIT_TO_FROM = "FlowLimitTF"

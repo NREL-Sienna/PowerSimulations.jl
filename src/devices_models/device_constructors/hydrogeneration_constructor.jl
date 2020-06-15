@@ -21,7 +21,7 @@ function construct_device!(
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
     reactivepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, H, get_feedforward(model))
+    feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
     cost_function(psi_container, devices, D, S)
@@ -49,7 +49,7 @@ function construct_device!(
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
     reactivepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
     energy_limit_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, H, get_feedforward(model))
+    feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
     cost_function(psi_container, devices, HydroDispatchReservoirStorage, S)
@@ -113,7 +113,7 @@ function construct_device!(
 
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, H, get_feedforward(model))
+    feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
     cost_function(psi_container, devices, D, S)
@@ -139,7 +139,7 @@ function construct_device!(
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
     energy_limit_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, H, get_feedforward(model))
+    feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
     cost_function(psi_container, devices, HydroDispatchReservoirFlow, S)
@@ -170,7 +170,7 @@ function construct_device!(
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
     energy_balance_constraint!(psi_container, devices, model, S, get_feedforward(model))
-    feedforward!(psi_container, H, get_feedforward(model))
+    feedforward!(psi_container, devices, model, get_feedforward(model))
 
     #Cost Function
     cost_function(psi_container, devices, HydroDispatchReservoirStorage, S)

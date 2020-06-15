@@ -46,7 +46,7 @@ function add_variable(
     expression_name::Union{Nothing, Symbol} = nothing,
     sign::Float64 = 1.0;
     kwargs...,
-) where {D <: Union{Vector{<:PSY.Device}, IS.FlattenIteratorWrapper{<:PSY.Device}}}
+) where {D <: Union{Vector{<:PSY.Component}, IS.FlattenIteratorWrapper{<:PSY.Component}}}
     time_steps = model_time_steps(psi_container)
     variable = add_var_container!(
         psi_container,
@@ -90,7 +90,7 @@ end
 @doc raw"""
     set_variable_bounds!(
         psi_container::PSIContainer,
-        bounds::DeviceRange,
+        bounds::DeviceRangeConstraintInfo,
         var_type::AbstractString,
         device_type::Type{PSY.Device},
     )
@@ -110,17 +110,17 @@ Adds a bounds to a variable in the optimization model.
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
-* bounds::DeviceRange : contains names and vector of min / max
+* bounds::DeviceRangeConstraintInfo : contains names and vector of min / max
 * var_type::AbstractString : type of the variable
 * T: type of the device
 
 """
 function set_variable_bounds!(
     psi_container::PSIContainer,
-    bounds::Vector{DeviceRange},
+    bounds::Vector{DeviceRangeConstraintInfo},
     var_type::AbstractString,
     ::Type{T},
-) where {T <: PSY.Device}
+) where {T <: PSY.Component}
     var = get_variable(psi_container, var_type, T)
     for t in model_time_steps(psi_container), bound in bounds
         _var = var[bound.name, t]

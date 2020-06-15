@@ -22,3 +22,4 @@ struct DeviceStatus <: InitialConditionType end
 struct TimeDurationON <: InitialConditionType end
 struct TimeDurationOFF <: InitialConditionType end
 struct EnergyLevel <: InitialConditionType end
+struct AreaControlError <: InitialConditionType end

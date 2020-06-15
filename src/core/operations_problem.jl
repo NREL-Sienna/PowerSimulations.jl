@@ -29,7 +29,7 @@ template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, s
 OpModel = OperationsProblem(TestOpProblem, template, system)
 ```
 # Accepted Key Words
-- `Horizon::Int`: Manually specify the length of the forecast Horizon
+- `horizon::Int`: Manually specify the length of the forecast Horizon
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
@@ -97,7 +97,7 @@ model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 construct_device!(op_problem, :Thermal, model)
 ```
 # Accepted Key Words
-- `Horizon::Int`: Manually specify the length of the forecast Horizon
+- `horizon::Int`: Manually specify the length of the forecast Horizon
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
@@ -138,7 +138,7 @@ model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 construct_device!(op_problem, :Thermal, model)
 ```
 # Accepted Key Words
-- `Horizon::Int`: Manually specify the length of the forecast Horizon
+- `horizon::Int`: Manually specify the length of the forecast Horizon
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
@@ -421,6 +421,7 @@ function _build!(
 
     @debug "Building Objective"
     JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
+    @debug "Total operation count $(psi_container.JuMPmodel.operator_counter)"
     return
 end
 

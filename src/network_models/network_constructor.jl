@@ -16,6 +16,21 @@ end
 function construct_network!(
     psi_container::PSIContainer,
     sys::PSY.System,
+    ::Type{AreaBalancePowerModel},
+)
+    area_mapping = PSY.get_aggregation_topology_mapping(PSY.Area, sys)
+    branches = get_available_components(PSY.Branch, sys)
+    if get_slack_variables(psi_container.settings)
+        @warn("Slack Variables are not compatible with AreaBalancePowerModel")
+    end
+
+    area_balance(psi_container, :nodal_balance_active, area_mapping, branches)
+    return
+end
+
+function construct_network!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
     ::Type{StandardPTDFModel},
 )
     buses = PSY.get_components(PSY.Bus, sys)

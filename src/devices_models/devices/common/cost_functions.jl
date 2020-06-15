@@ -339,24 +339,29 @@ function ps_cost(
     # If array is full of tuples with zeros return 0.0
     all(iszero.(last.(cost_array))) && return JuMP.AffExpr(0.0)
     variable = get_variable(psi_container, var_name)[index, :]
-    if !haskey(psi_container.variables, :PWL_cost_vars)
-        time_steps = model_time_steps(psi_container)
-        container = add_var_container!(
-            psi_container,
-            :PWL_cost_vars,
-            [index],
-            time_steps,
-            1:length(cost_component);
-            sparse = true,
-        )
-    else
-        container = get_variable(psi_container, :PWL_cost_vars)
+    export_pwl_vars = get_export_pwl_vars(psi_container.settings)
+    if export_pwl_vars
+        if !haskey(psi_container.variables, :PWL_cost_vars)
+            time_steps = model_time_steps(psi_container)
+            container = add_var_container!(
+                psi_container,
+                :PWL_cost_vars,
+                [index],
+                time_steps,
+                1:length(cost_component);
+                sparse = true,
+            )
+        else
+            container = get_variable(psi_container, :PWL_cost_vars)
+        end
     end
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
     for (t, var) in enumerate(variable)
         c, pwl_vars = _pwl_cost(psi_container, var, cost_array)
-        for (ix, v) in enumerate(pwl_vars)
-            container[(index, t, ix)] = v
+        if export_pwl_vars
+            for (ix, v) in enumerate(pwl_vars)
+                container[(index, t, ix)] = v
+            end
         end
         JuMP.add_to_expression!(gen_cost, c)
     end
@@ -403,7 +408,7 @@ function add_to_cost(
     sign::Float64 = 1.0,
 ) where {D <: IS.FlattenIteratorWrapper{<:PSY.Device}}
     resolution = model_resolution(psi_container)
-    dt = Dates.value(Dates.Minute(resolution)) / 60
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     for d in devices
         cost_component = getfield(PSY.get_op_cost(d), cost_symbol)
         cost_expression =
