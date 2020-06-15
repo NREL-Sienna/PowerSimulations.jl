@@ -165,11 +165,3 @@ function add_device_services!(
     end
     return
 end
-
-#function add_device_services!(
-#    constraint_info::AbstractRangeConstraintInfo,
-#    device::T,
-#    model::DeviceModel,
-#) where {T <: PSY.ThermalGen}
-#    # This does nothing because reactive power services are not implemented yet.
-#end
