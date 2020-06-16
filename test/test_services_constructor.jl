@@ -140,6 +140,6 @@ end
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p, slack_variables = true)
-        moi_tests(op_problem, p, 480, 0, 120, 192, 24, false)
+        moi_tests(op_problem, p, 504, 0, 120, 192, 24, false)
     end
 end
