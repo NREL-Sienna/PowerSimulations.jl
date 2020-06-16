@@ -404,7 +404,7 @@ end
 
 ########################## Addition to the nodal balances #################################
 
-function NodalExpressionInputs(
+function make_nodal_expression_inputs(
     ::Type{T},
     ::Type{<:PM.AbstractActivePowerModel},
     use_forecasts::Bool,

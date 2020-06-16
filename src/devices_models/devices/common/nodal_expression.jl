@@ -7,30 +7,22 @@ struct NodalExpressionInputs
     update_ref::Type
 end
 
-function NodalExpressionInputs(
+"""
+Construct NodalExpressionInputs for specific types.
+"""
+function make_nodal_expression_inputs(
     ::Type{T},
     ::Type{U},
     use_forecasts::Bool,
 ) where {T <: PSY.Device, U <: PM.AbstractPowerModel}
-    error("NodalExpressionInputs is not implemented for type $T/$U")
-end
-
-"""
-Construct NodalExpressionInputs for specific types.
-"""
-function NodalExpressionInputs(
-    ::Type{T},
-    ::Type{U},
-    use_forecasts::Bool,
-) where {T <: PSY.Device, U <: PM.AbstractActivePowerModel}
-    error("NodalExpressionInputs is not implemented for type $T/$U")
+    error("make_nodal_expression_inputs is not implemented for type $T/$U")
 end
 
 """
 Default implementation to add nodal expressions.
 
-Users of this function must implement a method for [`NodalExpressionInputs`](@ref) for their
-specific types.
+Users of this function must implement a method for [`make_nodal_expression_inputs`](@ref)
+for their specific types.
 Users may also implement custom nodal_expression! methods.
 """
 function nodal_expression!(
@@ -61,7 +53,7 @@ function _nodal_expression!(
     # Run the Active Power Loop.
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
-    inputs = NodalExpressionInputs(T, U, use_forecast_data)
+    inputs = make_nodal_expression_inputs(T, U, use_forecast_data)
     forecast_label = use_forecast_data ? inputs.forecast_label : ""
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)

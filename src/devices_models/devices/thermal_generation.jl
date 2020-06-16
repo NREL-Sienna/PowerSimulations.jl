@@ -606,7 +606,7 @@ end
 
 # TODO: Define for now just for Area Balance and reason about others later. This will
 # be needed and useful for PowerFlow
-function NodalExpressionInputs(
+function make_nodal_expression_inputs(
     ::Type{T},
     ::Type{AreaBalancePowerModel},
     use_forecasts::Bool,
