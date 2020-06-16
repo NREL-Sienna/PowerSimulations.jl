@@ -56,17 +56,32 @@ struct DeviceRangeConstraintInputs
     range_constraint_inputs::Vector{RangeConstraintInputs}
     timeseries_range_constraint_inputs::Vector{TimeSeriesConstraintInputs}
     custom_psi_container_func::Union{Nothing, Function}
+    devices_filter_func::Union{Nothing, Function}
 end
 
+"""
+Construct inputs for creating range constraints.
+
+# Arguments
+`range_constraint_inputs::Vector{RangeConstraintInputs}`: May be emtpy.
+`timeseries_range_constraint_inputs::Vector{TimeSeriesConstraintInputs}`: May be empty.
+`custom_psi_container_func::Union{Nothing, Function}`: Optional function to add custom
+ constraints to the internals of a PSIContainer. Must accept PSIContainer, devices iterable,
+ and a subtype of AbstractDeviceFormulation.
+`devices_filter_func::Union{Nothing, Function}`: Optional function to filter the devices on
+
+"""
 function DeviceRangeConstraintInputs(;
     range_constraint_inputs = Vector{RangeConstraintInputs}(),
     timeseries_range_constraint_inputs = Vector{TimeSeriesConstraintInputs}(),
     custom_psi_container_func = nothing,
+    devices_filter_func = nothing,
 )
     return DeviceRangeConstraintInputs(
         range_constraint_inputs,
         timeseries_range_constraint_inputs,
         custom_psi_container_func,
+        devices_filter_func,
     )
 end
 
@@ -80,6 +95,10 @@ function device_range_constraints!(
     range_constraints = inputs.range_constraint_inputs
     timeseries_range_constraints = inputs.timeseries_range_constraint_inputs
     custom_psi_container_func = inputs.custom_psi_container_func
+
+    if !isnothing(inputs.devices_filter_func)
+        devices = filter!(inputs.devices_filter_func, collect(devices))
+    end
 
     if isnothing(feedforward)
         ff_affected_variables = Set{Symbol}()
@@ -99,7 +118,12 @@ function device_range_constraints!(
             variable_name(rc.bin_variable_name, T)
         for (i, dev) in enumerate(devices)
             dev_name = PSY.get_name(dev)
-            constraint_info = DeviceRangeConstraintInfo(dev_name, rc.limits_func(dev))
+            limits = rc.limits_func(dev)
+            if isnothing(limits)
+                limits = (min = 0.0, max = 0.0)
+                @warn "Range constraint limits of $T $dev_name are nothing. Set to" limits
+            end
+            constraint_info = DeviceRangeConstraintInfo(dev_name, limits)
             add_device_services!(constraint_info, dev, model)
             constraint_infos[i] = constraint_info
         end

@@ -43,7 +43,6 @@ function make_reactive_power_constraints_inputs(
     use_parameters::Bool,
     use_forecasts::Bool,
 )
-    # TODO: the old code had a warning if PSY.get_reactivepowerlimits returned nothing
     return DeviceRangeConstraintInputs(;
         range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = REACTIVE_RANGE,
