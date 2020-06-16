@@ -609,12 +609,14 @@ function initial_condition_update!(
             cache = get_cache(sim, ic.cache_type, ini_cond_key.device_type)
         end
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
+        previous_value = get_condition(ic)
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
             sim.internal.current_time,
             ini_cond_key,
             ic,
             quantity,
+            previous_value,
             get_number(stage),
         )
     end
@@ -656,12 +658,14 @@ function initial_condition_update!(
             cache = get_cache(sim, ic.cache_type, ini_cond_key.device_type)
         end
         quantity = calculate_ic_quantity(ini_cond_key, ic, var_value, cache)
+        previous_value = get_condition(ic)
         PJ.fix(ic.value, quantity)
         IS.@record :simulation InitialConditionUpdateEvent(
             sim.internal.current_time,
             ini_cond_key,
             ic,
             quantity,
+            previous_value,
             get_number(stage),
         )
     end
