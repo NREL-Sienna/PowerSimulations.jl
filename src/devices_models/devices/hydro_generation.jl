@@ -385,9 +385,9 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{H},
     device_formulation::Type{<:AbstractHydroUnitCommitment},
 ) where {H <: PSY.HydroGen}
-    status_init(psi_container.initial_conditions, devices)
-    output_init(psi_container.initial_conditions, devices)
-    duration_init(psi_container.initial_conditions, devices)
+    status_init(psi_container, devices)
+    output_init(psi_container, devices)
+    duration_init(psi_container, devices)
 
     return
 end

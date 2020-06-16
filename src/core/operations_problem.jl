@@ -415,10 +415,6 @@ function _build!(
         @debug check_problem_size(psi_container)
     end
 
-    if model_has_parameters(psi_container)
-        add_initial_condition_parameters!(psi_container)
-    end
-
     @debug "Building Objective"
     JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
     @debug "Total operation count $(psi_container.JuMPmodel.operator_counter)"

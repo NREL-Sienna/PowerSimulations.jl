@@ -52,6 +52,7 @@ struct InitialConditionUpdateEvent <: IS.AbstractRecorderEvent
     initial_condition_type::String
     device_type::String
     device_name::String
+    previous_value::Float64
     val::Float64
     stage_number::Int
 end
@@ -61,6 +62,7 @@ function InitialConditionUpdateEvent(
     key::ICKey,
     ic::InitialCondition,
     val::Float64,
+    previous_value::Float64,
     stage_number::Int,
 )
     return InitialConditionUpdateEvent(
@@ -70,6 +72,7 @@ function InitialConditionUpdateEvent(
         string(key.device_type),
         device_name(ic),
         val,
+        previous_value,
         stage_number,
     )
 end

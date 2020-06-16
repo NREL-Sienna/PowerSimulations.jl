@@ -7,49 +7,6 @@
 # Model Definitions
 
 ""
-function instantiate_nip_model(data::Dict{String, Any}, model_constructor; kwargs...)
-    return PM.instantiate_model(data, model_constructor, build_nip; kwargs...)
-end
-
-""
-function build_nip(pm::PM.AbstractPowerModel)
-    for (n, network) in PM.nws(pm)
-        @assert !PM.ismulticonductor(pm, nw = n)
-        PM.variable_bus_voltage(pm, nw = n)
-        variable_net_injection(pm, nw = n)
-        PM.variable_branch_power(pm, nw = n, bounded = false)
-        PM.variable_dcline_power(pm, nw = n)
-
-        PM.constraint_model_voltage(pm, nw = n)
-
-        for i in PM.ids(pm, :ref_buses, nw = n)
-            PM.constraint_theta_ref(pm, i, nw = n)
-        end
-
-        for i in PM.ids(pm, :bus, nw = n)
-            constraint_power_balance_ni(pm, i, nw = n)
-        end
-
-        for i in PM.ids(pm, :branch, nw = n)
-            PM.constraint_ohms_yt_from(pm, i, nw = n)
-            PM.constraint_ohms_yt_to(pm, i, nw = n)
-
-            PM.constraint_voltage_angle_difference(pm, i, nw = n)
-
-            #PM.constraint_thermal_limit_from(pm, i, nw=n)
-            #PM.constraint_thermal_limit_to(pm, i, nw=n)
-        end
-
-        for i in PM.ids(pm, :dcline)
-            PM.constraint_dcline_power_losses(pm, i, nw = n)
-        end
-    end
-
-    return
-
-end
-
-""
 function instantiate_nip_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
     return PM.instantiate_model(data, model_constructor, instantiate_nip_expr; kwargs...)
 end
@@ -77,9 +34,6 @@ function instantiate_nip_expr(pm::PM.AbstractPowerModel)
             PM.constraint_ohms_yt_to(pm, i, nw = n)
 
             PM.constraint_voltage_angle_difference(pm, i, nw = n)
-
-            #PM.constraint_thermal_limit_from(pm, i, nw=n)
-            #PM.constraint_thermal_limit_to(pm, i, nw=n)
         end
 
         for i in PM.ids(pm, :dcline)
@@ -91,89 +45,50 @@ function instantiate_nip_expr(pm::PM.AbstractPowerModel)
 
 end
 
+function instantiate_bfp_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
+    return PM.instantiate_model(data, model_constructor, instantiate_bfp_expr; kwargs...)
+end
+
+""
+function instantiate_bfp_expr(pm::PM.AbstractPowerModel)
+    for (n, network) in PM.nws(pm)
+        @assert !PM.ismulticonductor(pm, nw = n)
+        PM.variable_bus_voltage(pm, nw = n)
+        PM.variable_branch_power(pm, nw = n; bounded = false)
+        PM.variable_dcline_power(pm, nw = n)
+
+        PM.constraint_model_current(pm, nw = n)
+
+        for i in PM.ids(pm, :ref_buses, nw = n)
+            PM.constraint_theta_ref(pm, i, nw = n)
+        end
+
+        for i in PM.ids(pm, :bus, nw = n)
+            constraint_power_balance_ni_expr(pm, i, nw = n)
+        end
+
+        for i in PM.ids(pm, :branch, nw = n)
+            PM.constraint_power_losses(pm, i, nw = n)
+            PM.constraint_voltage_magnitude_difference(pm, i, nw = n)
+
+            PM.constraint_voltage_angle_difference(pm, i, nw = n)
+        end
+
+        for i in PM.ids(pm, :dcline)
+            PM.constraint_dcline_power_losses(pm, i, nw = n)
+        end
+    end
+
+    return
+
+end
+
+function instantiate_vip_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
+    throw(error("VI Models not currently supported"))
+end
+
 #################################################################################
 # Model Extention Functions
-
-"generates variables for both `active` and `reactive` net injection"
-function variable_net_injection(pm::PM.AbstractPowerModel; kwargs...)
-    variable_active_net_injection(pm; kwargs...)
-    variable_reactive_net_injection(pm; kwargs...)
-
-    return
-
-end
-
-""
-function variable_active_net_injection(pm::PM.AbstractPowerModel; nw::Int = pm.cnw)
-    PM.var(pm, nw)[:pni] = JuMP.@variable(
-        pm.model,
-        [i in PM.ids(pm, nw, :bus)],
-        base_name = "$(nw)_pni",
-        start = 0.0
-    )
-
-    return
-
-end
-
-""
-function variable_reactive_net_injection(pm::PM.AbstractPowerModel; nw::Int = pm.cnw)
-    PM.var(pm, nw)[:qni] = JuMP.@variable(
-        pm.model,
-        [i in PM.ids(pm, nw, :bus)],
-        base_name = "$(nw)_qni",
-        start = 0.0
-    )
-
-    return
-end
-
-""
-function constraint_power_balance_ni(pm::PM.AbstractPowerModel, i::Int; nw::Int = pm.cnw)
-    if !haskey(PM.con(pm, nw), :power_balance_p)
-        PM.con(pm, nw)[:power_balance_p] = Dict{Int, JuMP.ConstraintRef}()
-    end
-    if !haskey(PM.con(pm, nw), :power_balance_q)
-        PM.con(pm, nw)[:power_balance_q] = Dict{Int, JuMP.ConstraintRef}()
-    end
-
-    bus = PM.ref(pm, nw, :bus, i)
-    bus_arcs = PM.ref(pm, nw, :bus_arcs, i)
-    bus_arcs_dc = PM.ref(pm, nw, :bus_arcs_dc, i)
-
-    constraint_power_balance_ni(pm, nw, i, bus_arcs, bus_arcs_dc)
-
-    return
-
-end
-
-""
-function constraint_power_balance_ni(
-    pm::PM.AbstractPowerModel,
-    n::Int,
-    i::Int,
-    bus_arcs,
-    bus_arcs_dc,
-)
-    p = PM.var(pm, n, :p)
-    q = PM.var(pm, n, :q)
-    pni = PM.var(pm, n, :pni, i)
-    qni = PM.var(pm, n, :qni, i)
-    p_dc = PM.var(pm, n, :p_dc)
-    q_dc = PM.var(pm, n, :q_dc)
-
-    PM.con(pm, n, :power_balance_p)[i] = JuMP.@constraint(
-        pm.model,
-        sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni
-    )
-    PM.con(pm, n, :power_balance_q)[i] = JuMP.@constraint(
-        pm.model,
-        sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) == qni
-    )
-
-    return
-
-end
 
 ""
 function constraint_power_balance_ni_expr(
@@ -229,30 +144,63 @@ function constraint_power_balance_ni_expr(
 
 end
 
-"active power only models ignore reactive power variables"
-function variable_reactive_net_injection(pm::PM.AbstractActivePowerModel; kwargs...)
+""
+function constraint_current_balance_ni_expr(
+    pm::PM.AbstractPowerModel,
+    i::Int;
+    nw::Int = pm.cnw,
+)
+    if !haskey(PM.con(pm, nw), :kcl_cr)
+        PM.con(pm, nw)[:kcl_cr] = Dict{Int, JuMP.ConstraintRef}()
+    end
+    if !haskey(PM.con(pm, nw), :kcl_ci)
+        PM.con(pm, nw)[:kcl_ci] = Dict{Int, JuMP.ConstraintRef}()
+    end
+
+    bus = PM.ref(pm, nw, :bus, i)
+    bus_arcs = PM.ref(pm, nw, :bus_arcs, i)
+    bus_arcs_dc = PM.ref(pm, nw, :bus_arcs_dc, i)
+
+    pni_expr = PM.ref(pm, nw, :bus, i, "pni")
+    qni_expr = PM.ref(pm, nw, :bus, i, "qni")
+
+    constraint_current_balance_ni_expr(pm, nw, i, bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
+
     return
+
 end
 
-"active power only models ignore reactive power flows"
-function constraint_power_balance_ni(
-    pm::PM.AbstractActivePowerModel,
+""
+function constraint_current_balance_ni_expr(
+    pm::PM.AbstractPowerModel,
     n::Int,
     i::Int,
     bus_arcs,
     bus_arcs_dc,
+    pni_expr,
+    qni_expr,
 )
     p = PM.var(pm, n, :p)
-    pni = PM.var(pm, n, :pni, i)
+    q = PM.var(pm, n, :q)
     p_dc = PM.var(pm, n, :p_dc)
+    q_dc = PM.var(pm, n, :q_dc)
 
     PM.con(pm, n, :power_balance_p)[i] = JuMP.@constraint(
         pm.model,
-        sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni
+        sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni_expr
+    )
+    PM.con(pm, n, :power_balance_q)[i] = JuMP.@constraint(
+        pm.model,
+        sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) == qni_expr
     )
 
     return
 
+end
+
+"active power only models ignore reactive power variables"
+function variable_reactive_net_injection(pm::PM.AbstractActivePowerModel; kwargs...)
+    return
 end
 
 ""
@@ -282,6 +230,7 @@ function powermodels_network!(
     psi_container::PSIContainer,
     system_formulation::Type{S},
     sys::PSY.System,
+    instantiate_model = instantiate_nip_expr_model,
 ) where {S <: PM.AbstractPowerModel}
 
     time_steps = model_time_steps(psi_container)
@@ -298,11 +247,8 @@ function powermodels_network!(
             psi_container.expressions[:nodal_balance_reactive][bus.number, t]
     end
 
-    psi_container.pm = instantiate_nip_expr_model(
-        pm_data,
-        system_formulation,
-        jump_model = psi_container.JuMPmodel,
-    )
+    psi_container.pm =
+        instantiate_model(pm_data, system_formulation, jump_model = psi_container.JuMPmodel)
     psi_container.pm.ext[:PMmap] = PM_map
 
     return
@@ -314,6 +260,7 @@ function powermodels_network!(
     psi_container::PSIContainer,
     system_formulation::Type{S},
     sys::PSY.System,
+    instantiate_model = instantiate_nip_expr_model,
 ) where {S <: PM.AbstractActivePowerModel}
 
     time_steps = model_time_steps(psi_container)
@@ -328,11 +275,8 @@ function powermodels_network!(
         #pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
     end
 
-    psi_container.pm = instantiate_nip_expr_model(
-        pm_data,
-        system_formulation,
-        jump_model = psi_container.JuMPmodel,
-    )
+    psi_container.pm =
+        instantiate_model(pm_data, system_formulation, jump_model = psi_container.JuMPmodel)
     psi_container.pm.ext[:PMmap] = PM_map
 
     return
