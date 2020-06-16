@@ -32,7 +32,6 @@ function balancing_auxiliary_variables!(psi_container, sys)
             base_name = "R_dn_{$(a),$(t)}",
             lower_bound = 0.0
         )
-        )
     end
     return
 end
