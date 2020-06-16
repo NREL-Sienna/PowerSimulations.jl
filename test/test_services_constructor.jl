@@ -119,3 +119,27 @@ end
         moi_tests(op_problem, p, 72, 0, 24, 72, 24, false)
     end
 end
+
+@testset "Test Reserves from with slack variables" begin
+    devices = Dict{Symbol, DeviceModel}(
+        :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+        :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
+    )
+    branches = Dict{Symbol, DeviceModel}()
+    services_template = Dict{Symbol, PSI.ServiceModel}(
+        :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+        :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+    )
+    model_template = OperationsProblemTemplate(
+        CopperPlatePowerModel,
+        devices,
+        branches,
+        services_template,
+    )
+    c_sys5_uc = build_system("c_sys5_uc"; add_reserves = true)
+    for p in [true, false]
+        op_problem =
+            OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p, slack_variables = true)
+        moi_tests(op_problem, p, 480, 0, 120, 192, 24, false)
+    end
+end
