@@ -375,7 +375,7 @@ UC_devices = Dict{Symbol, DeviceModel}(
             nothing,
             nothing,
             ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
-            1.0
+            1.0,
         ),
         ThermalStandard(
             "Park City",
@@ -392,7 +392,7 @@ UC_devices = Dict{Symbol, DeviceModel}(
             (up = 0.010625, down = 0.010625),
             nothing,
             ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
-            1.0
+            1.0,
         ),
     ]
     ramp_load = [0.9, 1.1, 2.485, 2.175, 0.9]
@@ -429,7 +429,7 @@ end
     )
     gens_dur = [
         ThermalStandard(
-            name  = "Alta",
+            name = "Alta",
             available = true,
             status = true,
             bus = node,
@@ -444,7 +444,7 @@ end
             timelimits = (up = 4, down = 2),
             op_cost = ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
             basepower = 1.0,
-            time_at_status = 2.0
+            time_at_status = 2.0,
         ),
         ThermalStandard(
             name = "Park City",
@@ -462,7 +462,7 @@ end
             timelimits = (up = 6, down = 4),
             op_cost = ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
             basepower = 1.0,
-            time_at_status = 3.0
+            time_at_status = 3.0,
         ),
     ]
 
@@ -514,7 +514,7 @@ end
                 5665.23,
                 0.0,
             ),
-            1.0
+            1.0,
         ),
         ThermalStandard(
             "Park City",
@@ -536,7 +536,7 @@ end
                 5665.23,
                 0.0,
             ),
-            1.0
+            1.0,
         ),
     ]
     DA_cost = collect(
@@ -592,7 +592,7 @@ end
                 5665.23,
                 0.0,
             ),
-            1.0
+            1.0,
         ),
         ThermalStandard(
             "Park City",
@@ -614,7 +614,7 @@ end
                 5665.23,
                 0.0,
             ),
-            1.0
+            1.0,
         ),
     ]
     DA_cost_sos = collect(

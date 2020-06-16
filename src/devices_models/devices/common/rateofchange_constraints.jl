@@ -53,7 +53,9 @@ function device_linear_rateofchange(
 
     for (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)
-        @assert (parameters && typeof(get_value(initial_conditions[ix])) == PJ.ParameterRef) || !parameters
+        @assert (
+            parameters && typeof(get_value(initial_conditions[ix])) == PJ.ParameterRef
+        ) || !parameters
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             variable[name, 1] - get_value(initial_conditions[ix]) <= rate_data[ix].up
@@ -140,7 +142,9 @@ function device_mixedinteger_rateofchange(
     con_down = add_cons_container!(psi_container, down_name, set_name, time_steps)
 
     for (ix, ic) in enumerate(initial_conditions)
-        @assert (parameters && typeof(get_value(initial_conditions[ix])) == PJ.ParameterRef) || !parameters
+        @assert (
+            parameters && typeof(get_value(initial_conditions[ix])) == PJ.ParameterRef
+        ) || !parameters
         name = device_name(ic)
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,

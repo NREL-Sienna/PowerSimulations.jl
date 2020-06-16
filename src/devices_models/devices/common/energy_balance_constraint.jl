@@ -57,13 +57,11 @@ function energy_balance(
         eff_in = efficiency_data[2][ix].in
         eff_out = efficiency_data[2][ix].out
         # Create the PGAE outside of the constraint definition
-        balance = initial_conditions[ix].value + varin[name, 1] * eff_in * fraction_of_hour -
+        balance =
+            initial_conditions[ix].value + varin[name, 1] * eff_in * fraction_of_hour -
             (varout[name, 1]) * fraction_of_hour / eff_out
-        constraint[name, 1] = JuMP.@constraint(
-            psi_container.JuMPmodel,
-            varenergy[name, 1] == balance
-
-        )
+        constraint[name, 1] =
+            JuMP.@constraint(psi_container.JuMPmodel, varenergy[name, 1] == balance)
 
     end
 
