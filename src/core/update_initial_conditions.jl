@@ -103,7 +103,7 @@ function _make_initial_conditions!(
             val = parameters ? PJ.add_parameter(psi_container.JuMPmodel, val_) : val_
             ic = make_ic_func(ic_container, dev, val, cache)
             ini_conds[ix] = ic
-            @debug "set initial conditoin" key ic val
+            @debug "set initial condition" key ic val
         end
     else
         ini_conds = get_initial_conditions(ic_container, key)
@@ -114,7 +114,7 @@ function _make_initial_conditions!(
             val = get_val_func(dev, key)
             ic = make_ic_func(ic_container, dev, val, cache)
             push!(ini_conds, ic)
-            @debug "set initial conditoin" key ic val
+            @debug "set initial condition" key ic val
         end
     end
 
