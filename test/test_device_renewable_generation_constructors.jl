@@ -38,19 +38,6 @@ end
     construct_device!(op_problem, :Renewable, model)
     moi_tests(op_problem, false, 3, 0, 3, 3, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Forecast Testing
-    op_problem = OperationsProblem(
-        TestOpProblem,
-        DCPPowerModel,
-        c_sys5_re;
-        use_parameters = false,
-        use_forecast_data = false,
-    )
-    construct_device!(op_problem, :Renewable, model)
-    # TODO: broken
-    #moi_tests(op_problem, false, 3, 0, 3, 0, 0, false)
-    #psi_checkobjfun_test(op_problem, GAEVF)
 end
 
 @testset "Renewable ACPPower Full Dispatch" begin
@@ -111,19 +98,6 @@ end
     construct_device!(op_problem, :Renewable, model)
     moi_tests(op_problem, false, 3, 0, 3, 3, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Forecast Testing
-    op_problem = OperationsProblem(
-        TestOpProblem,
-        DCPPowerModel,
-        c_sys5_re;
-        use_parameters = false,
-        use_forecast_data = false,
-    )
-    construct_device!(op_problem, :Renewable, model)
-    # TODO: broken
-    #moi_tests(op_problem, false, 3, 0, 3, 0, 0, false)
-    #psi_checkobjfun_test(op_problem, GAEVF)
 end
 
 @testset "Renewable ACPPower ConstantPowerFactor" begin
