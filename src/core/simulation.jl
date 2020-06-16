@@ -632,10 +632,17 @@ function initial_condition_update!(
     for ic in initial_conditions
         name = device_name(ic)
         current_ix = get_current_execution_index(sim)
-        source_stage_ix = current_ix == 1 ? length(execution_index) : current_ix - 1
+        source_stage_ix = current_ix == 1 ? last(execution_index) : current_ix - 1
         source_stage = get_stage(sim, execution_index[source_stage_ix])
         source_stage_name = get_stage_name(sim, source_stage)
-        interval_chronology = get_stage_interval_chronology(sim.sequence, source_stage_name)
+
+        # If the stage that ran before is lower in the order of execution the chronology needs to grab the first result as the initial condition
+        if get_number(source_stage) >= get_number(stage)
+            interval_chronology = get_stage_interval_chronology(sim.sequence, source_stage_name)
+        elseif get_number(source_stage) < get_number(stage)
+            interval_chronology = RecedingHorizon()
+        end
+
         var_value = get_stage_variable(
             interval_chronology,
             (source_stage => stage),
