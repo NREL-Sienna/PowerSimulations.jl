@@ -325,7 +325,7 @@ function _get_data_for_rocc(
         non_binding_up = false
         non_binding_down = false
         ramplimits = PSY.get_ramplimits(g)
-        basepower = PSY.get_basepower(g)
+        basepower = PSY.get_rating(g)
         if !isnothing(ramplimits)
             p_lims = PSY.get_activepowerlimits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
