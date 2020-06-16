@@ -41,6 +41,7 @@ function energy_balance(
     cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol},
 )
+    parameters = model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
     fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
@@ -55,13 +56,12 @@ function energy_balance(
     for (ix, name) in enumerate(name_index)
         eff_in = efficiency_data[2][ix].in
         eff_out = efficiency_data[2][ix].out
-
-        constraint[name, 1] = JuMP.@constraint(
-            psi_container.JuMPmodel,
-            varenergy[name, 1] ==
+        # Create the PGAE outside of the constraint definition
+        balance =
             initial_conditions[ix].value + varin[name, 1] * eff_in * fraction_of_hour -
             (varout[name, 1]) * fraction_of_hour / eff_out
-        )
+        constraint[name, 1] =
+            JuMP.@constraint(psi_container.JuMPmodel, varenergy[name, 1] == balance)
 
     end
 
