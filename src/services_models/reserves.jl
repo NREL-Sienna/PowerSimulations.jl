@@ -35,6 +35,7 @@ function service_requirement_constraint!(
     name = PSY.get_name(service)
     constraint = get_constraint(psi_container, constraint_name(REQUIREMENT, SR))
     reserve_variable = get_variable(psi_container, variable_name(name, SR))
+    use_slacks = get_slack_variables(psi_container.settings)
 
     if use_forecast_data
         ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
@@ -49,20 +50,8 @@ function service_requirement_constraint!(
     end
 
     # TODO: create only if slack_variables option is used
-    var_name_up = variable_name(name, SLACK_UP)
-    variable_up = add_var_container!(psi_container, var_name_up, [name], time_steps)
 
-    for ix in [name], jx in time_steps
-        variable_up[ix, jx] = JuMP.@variable(
-            psi_container.JuMPmodel,
-            base_name = "$(var_name_up)_{$(ix), $(jx)}",
-            lower_bound = 0.0
-        )
-        JuMP.add_to_expression!(
-            psi_container.cost_function,
-            variable_up[ix, jx] * SLACK_COST,
-        )
-    end
+    use_slacks && (slack_vars = reserve_slacks(psi_container, name))
 
     requirement = PSY.get_requirement(service)
     if parameters
@@ -73,9 +62,14 @@ function service_requirement_constraint!(
         for t in time_steps
             param[name, t] =
                 PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t] * requirement)
+            if use_slacks
+                resource_expression = sum(reserve_variable[:, t])
+            else
+                resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
+            end
             constraint[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                sum(reserve_variable[:, t]) + variable_up[name, t] >= param[name, t]
+                resource_expression >= param[name, t]
             )
         end
     else
