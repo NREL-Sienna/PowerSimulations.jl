@@ -1,4 +1,5 @@
 [deps]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 Cbc = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
@@ -16,6 +17,7 @@ PowerModels = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 PowerSimulations = "e690365d-45e2-57bb-ac84-44ba829e73c4"
 PowerSystems = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SCS = "c946c3f1-0d1f-5ce8-9dea-7daa1f7e2d13"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TestSetExtensions = "98d24dd4-01ad-11ea-1b02-c9a08f80db04"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
@@ -23,5 +25,5 @@ TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [compat]
-PowerSystems = "~0.19"
+PowerSystems = "~0.20"
 julia = "^1.2"

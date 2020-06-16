@@ -375,6 +375,7 @@ UC_devices = Dict{Symbol, DeviceModel}(
             nothing,
             nothing,
             ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
+            1.0,
         ),
         ThermalStandard(
             "Park City",
@@ -391,6 +392,7 @@ UC_devices = Dict{Symbol, DeviceModel}(
             (up = 0.010625, down = 0.010625),
             nothing,
             ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
+            1.0,
         ),
     ]
     ramp_load = [0.9, 1.1, 2.485, 2.175, 0.9]
@@ -415,7 +417,6 @@ UC_devices = Dict{Symbol, DeviceModel}(
     moi_tests(ED, true, 10, 0, 20, 10, 5, false)
 end
 
-#= Disabled temporarily due to the elimination of initial conditions passing
 # Testing Duration Constraints
 @testset "Solving UC with CopperPlate for testing Duration Constraints" begin
     node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
@@ -428,36 +429,40 @@ end
     )
     gens_dur = [
         ThermalStandard(
-            "Alta",
-            true,
-            true,
-            node,
-            0.40,
-            0.010,
-                0.5,
-                PrimeMovers.ST,
-                ThermalFuels.COAL,
-                (min = 0.3, max = 0.9),
-                nothing,
-                nothing,
-                (up = 4, down = 2),
-            ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
+            name = "Alta",
+            available = true,
+            status = true,
+            bus = node,
+            activepower = 0.40,
+            reactivepower = 0.010,
+            rating = 0.5,
+            primemover = PrimeMovers.ST,
+            fuel = ThermalFuels.COAL,
+            activepowerlimits = (min = 0.3, max = 0.9),
+            reactivepowerlimits = nothing,
+            ramplimits = nothing,
+            timelimits = (up = 4, down = 2),
+            op_cost = ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
+            basepower = 1.0,
+            time_at_status = 2.0,
         ),
         ThermalStandard(
-            "Park City",
-            true,
-            true,
-            node,
-            1.70,
-            0.20,
-                2.2125,
-                PrimeMovers.ST,
-                ThermalFuels.COAL,
-                (min = 0.7, max = 2.2),
-                nothing,
-                nothing,
-                (up = 6, down = 4),
-            ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
+            name = "Park City",
+            available = true,
+            status = false,
+            bus = node,
+            activepower = 1.70,
+            reactivepower = 0.20,
+            rating = 2.2125,
+            primemover = PrimeMovers.ST,
+            fuel = ThermalFuels.COAL,
+            activepowerlimits = (min = 0.7, max = 2.2),
+            reactivepowerlimits = nothing,
+            ramplimits = nothing,
+            timelimits = (up = 6, down = 4),
+            op_cost = ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
+            basepower = 1.0,
+            time_at_status = 3.0,
         ),
     ]
 
@@ -471,28 +476,6 @@ end
     add_component!(duration_test_sys, gens_dur[2])
     add_forecast!(duration_test_sys, load, load_forecast_dur)
 
-    status = [1.0, 0.0]
-    up_time = [2.0, 0.0]
-    down_time = [0.0, 3.0]
-
-    alta = gens_dur[1]
-    init_cond = PSI.InitialConditions()
-    PSI.set_initial_conditions!(
-        init_cond,
-        PSI.ICKey(DeviceStatus, typeof(alta)),
-        build_init(gens_dur, status),
-    )
-    PSI.set_initial_conditions!(
-        init_cond,
-        PSI.ICKey(TimeDurationON, typeof(alta)),
-        build_init(gens_dur, up_time),
-    )
-    PSI.set_initial_conditions!(
-        init_cond,
-        PSI.ICKey(TimeDurationOFF, typeof(alta)),
-        build_init(gens_dur, down_time),
-    )
-
     template =
         OperationsProblemTemplate(CopperPlatePowerModel, UC_devices, branches, services)
     UC = OperationsProblem(
@@ -505,7 +488,6 @@ end
     psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
     moi_tests(UC, true, 56, 0, 56, 14, 21, true)
 end
-=#
 
 ## PWL linear Cost implementation test
 @testset "Solving UC with CopperPlate testing Linear PWL" begin
@@ -532,6 +514,7 @@ end
                 5665.23,
                 0.0,
             ),
+            1.0,
         ),
         ThermalStandard(
             "Park City",
@@ -553,6 +536,7 @@ end
                 5665.23,
                 0.0,
             ),
+            1.0,
         ),
     ]
     DA_cost = collect(
@@ -608,6 +592,7 @@ end
                 5665.23,
                 0.0,
             ),
+            1.0,
         ),
         ThermalStandard(
             "Park City",
@@ -629,6 +614,7 @@ end
                 5665.23,
                 0.0,
             ),
+            1.0,
         ),
     ]
     DA_cost_sos = collect(

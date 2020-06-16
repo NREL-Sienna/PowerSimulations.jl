@@ -40,7 +40,7 @@ end
 function service_requirement_constraint!(
     psi_container::PSIContainer,
     service::SR,
-    model::ServiceModel{SR, RangeReserve},
+    ::ServiceModel{SR, RangeReserve},
 ) where {SR <: PSY.Reserve}
     parameters = model_has_parameters(psi_container)
     use_forecast_data = model_uses_forecasts(psi_container)
@@ -50,6 +50,7 @@ function service_requirement_constraint!(
     name = PSY.get_name(service)
     constraint = get_constraint(psi_container, constraint_name(REQUIREMENT, SR))
     reserve_variable = get_variable(psi_container, variable_name(name, SR))
+    use_slacks = get_slack_variables(psi_container.settings)
 
     if use_forecast_data
         ts_vector = TS.values(PSY.get_data(PSY.get_forecast(
@@ -63,6 +64,10 @@ function service_requirement_constraint!(
         ts_vector = ones(time_steps[end])
     end
 
+    # TODO: create only if slack_variables option is used
+
+    use_slacks && (slack_vars = reserve_slacks(psi_container, name))
+
     requirement = PSY.get_requirement(service)
     if parameters
         param = get_parameter_array(
@@ -72,9 +77,14 @@ function service_requirement_constraint!(
         for t in time_steps
             param[name, t] =
                 PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t] * requirement)
+            if use_slacks
+                resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
+            else
+                resource_expression = sum(reserve_variable[:, t])
+            end
             constraint[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                sum(reserve_variable[:, t]) >= param[name, t]
+                resource_expression >= param[name, t]
             )
         end
     else
@@ -210,21 +220,14 @@ function modify_device_model!(
     return
 end
 
-function include_service!(constraint_data::DeviceTimeSeries, services, SM::ServiceModel)
-    range_data = constraint_data.range
-    isnothing(range_data) && return
-    include_service!(range_data, services, SM)
-    return
-end
-
 function include_service!(
-    constraint_data::DeviceRange,
+    constraint_info::DeviceRangeConstraintInfo,
     services,
     ::ServiceModel{SR, <:AbstractReservesFormulation},
 ) where {SR <: PSY.Reserve{PSY.ReserveUp}}
     for (ix, service) in enumerate(services)
         push!(
-            constraint_data.additional_terms_ub,
+            constraint_info.additional_terms_ub,
             constraint_name(PSY.get_name(service), SR),
         )
     end
@@ -232,13 +235,13 @@ function include_service!(
 end
 
 function include_service!(
-    constraint_data::DeviceRange,
+    constraint_info::DeviceRangeConstraintInfo,
     services,
     ::ServiceModel{SR, <:AbstractReservesFormulation},
 ) where {SR <: PSY.Reserve{PSY.ReserveDown}}
     for (ix, service) in enumerate(services)
         push!(
-            constraint_data.additional_terms_lb,
+            constraint_info.additional_terms_lb,
             constraint_name(PSY.get_name(service), SR),
         )
     end
@@ -246,7 +249,7 @@ function include_service!(
 end
 
 function add_device_services!(
-    constraint_data::RangeConstraintsData,
+    constraint_info::AbstractRangeConstraintInfo,
     device::D,
     model::DeviceModel,
 ) where {D <: PSY.Device}
@@ -255,15 +258,15 @@ function add_device_services!(
             services =
                 (s for s in PSY.get_services(device) if isa(s, service_model.service_type))
             @assert !isempty(services)
-            include_service!(constraint_data, services, service_model)
+            include_service!(constraint_info, services, service_model)
         end
     end
     return
 end
 
 function add_device_services!(
-    constraint_data_in::RangeConstraintsData,
-    constraint_data_out::RangeConstraintsData,
+    constraint_data_in::AbstractRangeConstraintInfo,
+    constraint_data_out::AbstractRangeConstraintInfo,
     device::D,
     model::DeviceModel{D, <:AbstractStorageFormulation},
 ) where {D <: PSY.Storage}

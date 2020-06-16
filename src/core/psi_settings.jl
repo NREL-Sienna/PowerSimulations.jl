@@ -9,6 +9,8 @@ struct PSISettings
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes}
     constraint_duals::Vector{Symbol}
     system_to_file::Bool
+    export_pwl_vars::Bool
+    allow_fails::Bool
     ext::Dict{String, Any}
 end
 
@@ -24,6 +26,8 @@ function PSISettings(
     optimizer::Union{Nothing, JuMP.MOI.OptimizerWithAttributes} = nothing,
     constraint_duals::Vector{Symbol} = Vector{Symbol}(),
     system_to_file = true,
+    export_pwl_vars = false,
+    allow_fails = false,
     ext = Dict{String, Any}(),
 )
     return PSISettings(
@@ -37,6 +41,8 @@ function PSISettings(
         optimizer,
         constraint_duals,
         system_to_file,
+        export_pwl_vars,
+        allow_fails,
         ext,
     )
 end
@@ -98,3 +104,4 @@ get_warm_start(settings::PSISettings) = settings.warm_start[]
 get_constraint_duals(settings::PSISettings) = settings.constraint_duals
 get_slack_variables(settings::PSISettings) = settings.slack_variables
 get_system_to_file(settings::PSISettings) = settings.system_to_file
+get_export_pwl_vars(settings::PSISettings) = settings.export_pwl_vars

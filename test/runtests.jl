@@ -12,11 +12,16 @@ using Ipopt
 using GLPK
 using Cbc
 using OSQP
+using SCS
 using TimeSeries
 using ParameterJuMP
 using TestSetExtensions
 using DataFrames
 import UUIDs
+import Aqua
+Aqua.test_unbound_args(PowerSimulations)
+Aqua.test_undefined_exports(PowerSimulations)
+#Aqua.test_ambiguities(PowerSimulations)
 
 import PowerSystems.UtilsData: TestData
 download(TestData; branch = "master")
@@ -47,6 +52,12 @@ OSQP_optimizer =
     JuMP.optimizer_with_attributes(OSQP.Optimizer, "verbose" => false, "max_iter" => 50000)
 fast_lp_optimizer =
     JuMP.optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "seconds" => 3.0)
+scs_solver = JuMP.optimizer_with_attributes(
+    SCS.Optimizer,
+    "max_iters" => 100000,
+    "eps" => 1e-4,
+    "verbose" => 0,
+)
 
 const LOG_FILE = "power-simulations-test.log"
 

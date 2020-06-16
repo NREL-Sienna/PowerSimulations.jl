@@ -40,6 +40,7 @@ function device_linear_rateofchange(
     cons_name::Symbol,
     var_name::Symbol,
 )
+    parameters = model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
     up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
@@ -52,6 +53,9 @@ function device_linear_rateofchange(
 
     for (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)
+        @assert (
+            parameters && typeof(get_value(initial_conditions[ix])) == PJ.ParameterRef
+        ) || !parameters
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             variable[name, 1] - get_value(initial_conditions[ix]) <= rate_data[ix].up
@@ -124,6 +128,7 @@ function device_mixedinteger_rateofchange(
     cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol},
 )
+    parameters = model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
     up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
@@ -137,15 +142,18 @@ function device_mixedinteger_rateofchange(
     con_down = add_cons_container!(psi_container, down_name, set_name, time_steps)
 
     for (ix, ic) in enumerate(initial_conditions)
+        @assert (
+            parameters && typeof(get_value(initial_conditions[ix])) == PJ.ParameterRef
+        ) || !parameters
         name = device_name(ic)
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, 1] - initial_conditions[ix].value <=
+            variable[name, 1] - get_value(initial_conditions[ix]) <=
             rate_data[1][ix].up + rate_data[2][ix].max * varstart[name, 1]
         )
         con_down[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            initial_conditions[ix].value - variable[name, 1] <=
+            get_value(initial_conditions[ix]) - variable[name, 1] <=
             rate_data[1][ix].down + rate_data[2][ix].min * varstop[name, 1]
         )
     end

@@ -421,17 +421,13 @@ Checks the hash value for each file made with the file is written with the new h
 - `path::String`: this is the folder path that contains the results and the check.sha256 file
 """
 function check_file_integrity(path::String)
-    file_path = joinpath(path, "check.sha256")
-    text = open(file_path, "r") do io
-        return readlines(io)
-    end
-
     matched = true
-    for line in text
-        expected_hash, file_name = split(line)
-        actual_hash = compute_sha256(file_name)
+    for file_info in read_file_hashes(path)
+        filename = file_info["filename"]
+        expected_hash = file_info["hash"]
+        actual_hash = compute_sha256(filename)
         if expected_hash != actual_hash
-            @error "hash mismatch for file" file_name expected_hash actual_hash
+            @error "hash mismatch for file" filename expected_hash actual_hash
             matched = false
         end
     end
@@ -569,9 +565,17 @@ variable = get_result_variable(results, :ON, ThermalStandard)
 function get_result_variable(results::IS.Results, sym::Symbol, data_type::PSY.DataType)
     variable_name = encode_symbol(data_type, sym)
     if variable_name in keys(IS.get_variables(results))
-        variable = IS.get_variables(results)[variable_name]
+        variable = get_result_variable(results, variable_name)
         return variable
     else
         @info "Variable $variable_name not found in results."
     end
+end
+
+function get_result_variable(results::IS.Results, variable_name::Symbol)
+    return IS.get_variables(results)[variable_name]
+end
+
+function get_variable_names(results::IS.Results)
+    return collect(keys(results.variable_values))
 end

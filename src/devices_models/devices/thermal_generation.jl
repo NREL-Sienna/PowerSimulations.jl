@@ -108,17 +108,17 @@ function activepower_constraints!(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
 ) where {T <: PSY.ThermalGen}
-    constraint_data = Vector{DeviceRange}(undef, length(devices))
+    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         name = PSY.get_name(d)
         limits = PSY.get_activepowerlimits(d)
-        range_data = DeviceRange(name, limits)
-        add_device_services!(range_data, d, model)
-        constraint_data[ix] = range_data
+        constraint_info = DeviceRangeConstraintInfo(name, limits)
+        add_device_services!(constraint_info, d, model)
+        constraint_infos[ix] = constraint_info
     end
     device_range(
         psi_container,
-        constraint_data,
+        constraint_infos,
         constraint_name(ACTIVE_RANGE, T),
         variable_name(ACTIVE_POWER, T),
     )
@@ -135,17 +135,17 @@ function activepower_constraints!(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
 ) where {T <: PSY.ThermalGen}
-    constraint_data = Vector{DeviceRange}(undef, length(devices))
+    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         limits = PSY.get_activepowerlimits(d)
         name = PSY.get_name(d)
-        range_data = DeviceRange(name, limits)
-        add_device_services!(range_data, d, model)
-        constraint_data[ix] = range_data
+        constraint_info = DeviceRangeConstraintInfo(name, limits)
+        add_device_services!(constraint_info, d, model)
+        constraint_infos[ix] = constraint_info
     end
     device_semicontinuousrange(
         psi_container,
-        constraint_data,
+        constraint_infos,
         constraint_name(ACTIVE_RANGE, T),
         variable_name(ACTIVE_POWER, T),
         variable_name(ON, T),
@@ -164,13 +164,13 @@ function activepower_constraints!(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
 ) where {T <: PSY.ThermalGen}
-    constraint_data = Vector{DeviceRange}(undef, length(devices))
+    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         limits = (min = 0.0, max = PSY.get_activepowerlimits(d).max)
         name = PSY.get_name(d)
-        range_data = DeviceRange(name, limits)
-        add_device_services!(range_data, d, model)
-        constraint_data[ix] = range_data
+        constraint_info = DeviceRangeConstraintInfo(name, limits)
+        add_device_services!(constraint_info, d, model)
+        constraint_infos[ix] = constraint_info
     end
 
     var_key = variable_name(ACTIVE_POWER, T)
@@ -184,7 +184,7 @@ function activepower_constraints!(
 
     device_range(
         psi_container,
-        constraint_data,
+        constraint_infos,
         constraint_name(ACTIVE_RANGE, T),
         variable_name(ACTIVE_POWER, T),
     )
@@ -201,19 +201,19 @@ function reactivepower_constraints!(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
-    constraint_data = Vector{DeviceRange}(undef, length(devices))
+    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         name = PSY.get_name(d)
         limits = PSY.get_reactivepowerlimits(d)
-        range_data = DeviceRange(name, limits)
-        #add_device_services!(range_data, d, model)
+        constraint_info = DeviceRangeConstraintInfo(name, limits)
+        #add_device_services!(constraint_info, d, model)
         # Uncomment when we implement reactive power services
-        constraint_data[ix] = range_data
+        constraint_infos[ix] = constraint_info
     end
 
     device_range(
         psi_container,
-        constraint_data,
+        constraint_infos,
         constraint_name(REACTIVE_RANGE, T),
         variable_name(REACTIVE_POWER, T),
     )
@@ -230,19 +230,19 @@ function reactivepower_constraints!(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
-    constraint_data = Vector{DeviceRange}(undef, length(devices))
+    constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         limits = PSY.get_reactivepowerlimits(d)
         name = PSY.get_name(d)
-        range_data = DeviceRange(name, limits)
-        #add_device_services!(range_data, d, model)
+        constraint_info = DeviceRangeConstraintInfo(name, limits)
+        #add_device_services!(constraint_info, d, model)
         # Uncomment when we implement reactive power services
-        constraint_data[ix] = range_data
+        constraint_infos[ix] = constraint_info
     end
 
     device_semicontinuousrange(
         psi_container,
-        constraint_data,
+        constraint_infos,
         constraint_name(REACTIVE_RANGE, T),
         variable_name(REACTIVE_POWER, T),
         variable_name(ON, T),
@@ -276,9 +276,9 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     device_formulation::Type{D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalUnitCommitment}
-    status_init(psi_container.initial_conditions, devices)
-    output_init(psi_container.initial_conditions, devices)
-    duration_init(psi_container.initial_conditions, devices)
+    status_init(psi_container, devices)
+    output_init(psi_container, devices)
+    duration_init(psi_container, devices)
     return
 end
 
@@ -287,8 +287,8 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     device_formulation::Type{ThermalBasicUnitCommitment},
 ) where {T <: PSY.ThermalGen}
-    status_init(psi_container.initial_conditions, devices)
-    output_init(psi_container.initial_conditions, devices)
+    status_init(psi_container, devices)
+    output_init(psi_container, devices)
     return
 end
 
@@ -297,11 +297,11 @@ function initial_conditions!(
     devices::IS.FlattenIteratorWrapper{T},
     device_formulation::Type{D},
 ) where {T <: PSY.ThermalGen, D <: AbstractThermalDispatchFormulation}
-    output_init(psi_container.initial_conditions, devices)
+    output_init(psi_container, devices)
     return
 end
 
-########################### Ramp/Rate of Change constraints ################################
+########################### Ramp/Rate of Change Constraints ################################
 """
 This function gets the data for the generators
 """
@@ -312,7 +312,7 @@ function _get_data_for_rocc(
     if resolution > Dates.Minute(1)
         minutes_per_period = Dates.value(Dates.Minute(resolution))
     else
-        minutes_per_period = Dates.value(Dates.Second(resolution)) / 60
+        throw(ArgumentError("Resolutions values under 1-minute are not supported"))
     end
     lenght_devices = length(initial_conditions)
     ini_conds = Vector{InitialCondition}(undef, lenght_devices)
@@ -325,11 +325,12 @@ function _get_data_for_rocc(
         non_binding_up = false
         non_binding_down = false
         ramplimits = PSY.get_ramplimits(g)
-        rating = PSY.get_rating(g)
+        basepower = PSY.get_rating(g)
         if !isnothing(ramplimits)
             p_lims = PSY.get_activepowerlimits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramplimits.up * rating >= max_rate) & (ramplimits.down * rating >= max_rate)
+            if (ramplimits.up * basepower >= max_rate) &
+               (ramplimits.down * basepower >= max_rate)
                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
                 continue
             else
@@ -337,8 +338,8 @@ function _get_data_for_rocc(
             end
             ini_conds[idx] = ic
             ramp_params[idx] = (
-                up = ramplimits.up * rating * minutes_per_period,
-                down = ramplimits.down * rating * minutes_per_period,
+                up = ramplimits.up * basepower * minutes_per_period,
+                down = ramplimits.down * basepower * minutes_per_period,
             )
             minmax_params[idx] = p_lims
         end
@@ -523,7 +524,7 @@ function cost_function(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
     resolution = model_resolution(psi_container)
-    dt = Dates.value(Dates.Minute(resolution)) / 60
+    dt = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     variable = get_variable(psi_container, variable_name(ACTIVE_POWER, T))
 
     # uses the same cost function whenever there is NO PWL
@@ -621,4 +622,20 @@ function cost_function(
     add_to_cost(psi_container, devices, variable_name(STOP, T), :shutdn)
     add_to_cost(psi_container, devices, variable_name(ON, T), :fixed)
     return
+end
+
+# TODO: Define for now just for Area Balance and reason about others later. This will
+# be needed and useful for PowerFlow
+function NodalExpressionInputs(
+    ::Type{T},
+    ::Type{AreaBalancePowerModel},
+    use_forecasts::Bool,
+) where {T <: PSY.ThermalGen}
+    return NodalExpressionInputs(
+        "get_rating",
+        ACTIVE_POWER,
+        use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),
+        1.0,
+        T,
+    )
 end
