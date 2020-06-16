@@ -77,7 +77,8 @@ const STAGE_ACCEPTED_KWARGS = [
     :allow_fails,
 ]
 
-const UNSUPPORTED_POWERMODELS = [] #TODO: update list
+const UNSUPPORTED_POWERMODELS =
+    [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
 
 const PSI_NAME_DELIMITER = "__"
 

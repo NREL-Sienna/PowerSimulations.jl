@@ -34,9 +34,6 @@ function instantiate_nip_expr(pm::PM.AbstractPowerModel)
             PM.constraint_ohms_yt_to(pm, i, nw = n)
 
             PM.constraint_voltage_angle_difference(pm, i, nw = n)
-
-            #PM.constraint_thermal_limit_from(pm, i, nw=n)
-            #PM.constraint_thermal_limit_to(pm, i, nw=n)
         end
 
         for i in PM.ids(pm, :dcline)
@@ -71,13 +68,10 @@ function instantiate_bfp_expr(pm::PM.AbstractPowerModel)
         end
 
         for i in PM.ids(pm, :branch, nw = n)
-            PM.constraint_power_losses(pm, i, nw=n)
-            PM.constraint_voltage_magnitude_difference(pm, i, nw=n)
+            PM.constraint_power_losses(pm, i, nw = n)
+            PM.constraint_voltage_magnitude_difference(pm, i, nw = n)
 
             PM.constraint_voltage_angle_difference(pm, i, nw = n)
-
-            #PM.constraint_thermal_limit_from(pm, i, nw=n)
-            #PM.constraint_thermal_limit_to(pm, i, nw=n)
         end
 
         for i in PM.ids(pm, :dcline)
@@ -89,12 +83,13 @@ function instantiate_bfp_expr(pm::PM.AbstractPowerModel)
 
 end
 
-
 function instantiate_vip_expr_model(data::Dict{String, Any}, model_constructor; kwargs...)
+    throw(error("VI Models not currently supported"))
     return PM.instantiate_model(data, model_constructor, instantiate_vip_expr; kwargs...)
 end
 
 ""
+#= This is commented out until the constraint_current_balance_vi_expr method is developed
 function instantiate_vip_expr(pm::PM.AbstractPowerModel)
     for (n, network) in PM.nws(pm)
         @assert !PM.ismulticonductor(pm, nw = n)
@@ -118,9 +113,6 @@ function instantiate_vip_expr(pm::PM.AbstractPowerModel)
 
             PM.constraint_voltage_drop(pm, i, nw = n)
             PM.constraint_voltage_angle_difference(pm, i, nw = n)
-
-            #PM.constraint_thermal_limit_from(pm, i, nw=n)
-            #PM.constraint_thermal_limit_to(pm, i, nw=n)
         end
 
         for i in PM.ids(pm, :dcline)
@@ -129,8 +121,8 @@ function instantiate_vip_expr(pm::PM.AbstractPowerModel)
     end
 
     return
-
 end
+=#
 
 #################################################################################
 # Model Extention Functions
@@ -163,6 +155,60 @@ end
 
 ""
 function constraint_power_balance_ni_expr(
+    pm::PM.AbstractPowerModel,
+    n::Int,
+    i::Int,
+    bus_arcs,
+    bus_arcs_dc,
+    pni_expr,
+    qni_expr,
+)
+    p = PM.var(pm, n, :p)
+    q = PM.var(pm, n, :q)
+    p_dc = PM.var(pm, n, :p_dc)
+    q_dc = PM.var(pm, n, :q_dc)
+
+    PM.con(pm, n, :power_balance_p)[i] = JuMP.@constraint(
+        pm.model,
+        sum(p[a] for a in bus_arcs) + sum(p_dc[a_dc] for a_dc in bus_arcs_dc) == pni_expr
+    )
+    PM.con(pm, n, :power_balance_q)[i] = JuMP.@constraint(
+        pm.model,
+        sum(q[a] for a in bus_arcs) + sum(q_dc[a_dc] for a_dc in bus_arcs_dc) == qni_expr
+    )
+
+    return
+
+end
+
+""
+function constraint_current_balance_ni_expr(
+    pm::PM.AbstractPowerModel,
+    i::Int;
+    nw::Int = pm.cnw,
+)
+    if !haskey(PM.con(pm, nw), :kcl_cr)
+        PM.con(pm, nw)[:kcl_cr] = Dict{Int, JuMP.ConstraintRef}()
+    end
+    if !haskey(PM.con(pm, nw), :kcl_ci)
+        PM.con(pm, nw)[:kcl_ci] = Dict{Int, JuMP.ConstraintRef}()
+    end
+
+    bus = PM.ref(pm, nw, :bus, i)
+    bus_arcs = PM.ref(pm, nw, :bus_arcs, i)
+    bus_arcs_dc = PM.ref(pm, nw, :bus_arcs_dc, i)
+
+    pni_expr = PM.ref(pm, nw, :bus, i, "pni")
+    qni_expr = PM.ref(pm, nw, :bus, i, "qni")
+
+    constraint_current_balance_ni_expr(pm, nw, i, bus_arcs, bus_arcs_dc, pni_expr, qni_expr)
+
+    return
+
+end
+
+""
+function constraint_current_balance_ni_expr(
     pm::PM.AbstractPowerModel,
     n::Int,
     i::Int,
@@ -238,11 +284,8 @@ function powermodels_network!(
             psi_container.expressions[:nodal_balance_reactive][bus.number, t]
     end
 
-    psi_container.pm = instantiate_model(
-        pm_data,
-        system_formulation,
-        jump_model = psi_container.JuMPmodel,
-    )
+    psi_container.pm =
+        instantiate_model(pm_data, system_formulation, jump_model = psi_container.JuMPmodel)
     psi_container.pm.ext[:PMmap] = PM_map
 
     return
@@ -269,11 +312,8 @@ function powermodels_network!(
         #pm_data["nw"]["$(t)"]["bus"]["$(bus.number)"]["qni"] = 0.0
     end
 
-    psi_container.pm = instantiate_model(
-        pm_data,
-        system_formulation,
-        jump_model = psi_container.JuMPmodel,
-    )
+    psi_container.pm =
+        instantiate_model(pm_data, system_formulation, jump_model = psi_container.JuMPmodel)
     psi_container.pm.ext[:PMmap] = PM_map
 
     return
