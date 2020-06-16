@@ -63,9 +63,9 @@ function service_requirement_constraint!(
             param[name, t] =
                 PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t] * requirement)
             if use_slacks
-                resource_expression = sum(reserve_variable[:, t])
-            else
                 resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
+            else
+                resource_expression = sum(reserve_variable[:, t])
             end
             constraint[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
