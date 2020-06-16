@@ -80,7 +80,6 @@ const STAGE_ACCEPTED_KWARGS = [
 const UNSUPPORTED_POWERMODELS =
     [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
 
-
 const PSI_NAME_DELIMITER = "__"
 
 # The constants below are strings instead of enums because there is a requirement that users
