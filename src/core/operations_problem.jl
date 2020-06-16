@@ -349,16 +349,17 @@ function construct_device!(
     return
 end
 
-function construct_network!(op_problem::OperationsProblem)
-    construct_network!(op_problem, op_problem.template.transmission)
+function construct_network!(op_problem::OperationsProblem; kwargs...)
+    construct_network!(op_problem, op_problem.template.transmission; kwargs...)
     return
 end
 
 function construct_network!(
     op_problem::OperationsProblem,
-    system_formulation::Type{T},
+    system_formulation::Type{T};
+    kwargs...
 ) where {T <: PM.AbstractPowerModel}
-    construct_network!(op_problem.psi_container, get_system(op_problem), T)
+    construct_network!(op_problem.psi_container, get_system(op_problem), T; kwargs...)
     return
 end
 
@@ -406,7 +407,7 @@ function _build!(
         @debug check_problem_size(psi_container)
     end
     @debug "Building $(transmission) network formulation"
-    construct_network!(psi_container, sys, transmission)
+    construct_network!(psi_container, sys, transmission; kwargs...)
     @debug check_problem_size(psi_container)
 
     for branch_model in values(template.branches)

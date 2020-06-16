@@ -136,7 +136,7 @@ end
         )
         construct_device!(ps_model, :Thermal, thermal_model)
         construct_device!(ps_model, :Load, load_model)
-        construct_network!(ps_model, network)
+        construct_network!(ps_model, network, instantiate_model = PSI.instantiate_bfp_expr_model)
         construct_device!(ps_model, :Line, line_model)
         construct_device!(ps_model, :Tf, transformer_model)
         construct_device!(ps_model, :TTf, ttransformer_model)
@@ -316,6 +316,46 @@ end
         construct_device!(ps_model, :Load, load_model)
 
         @test_throws ArgumentError construct_network!(ps_model, network)
+    end
+
+end
+
+@testset "All PowerModels models" begin
+
+    networks = [
+        PM.ACPPowerModel,
+        PM.ACRPowerModel,
+        PM.ACTPowerModel,
+        #PM.IVRPowerModel, #instantiate_ivp_expr_modele not working
+        PM.DCPPowerModel,
+        PM.DCMPPowerModel,
+        PM.NFAPowerModel,
+        PM.DCPLLPowerModel,
+        PM.LPACCPowerModel,
+        PM.SOCWRPowerModel,
+        #PM.SOCWRConicPowerModel, #need a differentt solver
+        PM.QCRMPowerModel,
+        PM.QCLSPowerModel,
+        PM.SOCBFPowerModel,
+        PM.BFAPowerModel,
+        PM.SOCBFConicPowerModel, # not working
+        PM.SDPWRMPowerModel,
+        PM.SparseSDPWRMPowerModel,
+    ]
+    c_sys5 = build_system("c_sys5")
+    c_sys14 = build_system("c_sys14")
+    c_sys14_dc = build_system("c_sys14_dc")
+    systems = [c_sys5]#, c_sys14, c_sys14_dc]
+    for network in networks, sys in systems
+        @info "Test construction of a $(network) network"
+        ps_model =
+            OperationsProblem(TestOpProblem, network, sys; optimizer = fast_ipopt_optimizer)
+        construct_device!(ps_model, :Thermal, thermal_model)
+        construct_device!(ps_model, :Load, load_model)
+        construct_network!(ps_model, network)
+        construct_device!(ps_model, :Line, line_model)
+        construct_device!(ps_model, :DCLine, dc_line)
+        @test !isnothing(ps_model.psi_container.pm)
     end
 
 end
