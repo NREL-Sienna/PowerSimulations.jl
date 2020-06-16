@@ -638,7 +638,8 @@ function initial_condition_update!(
 
         # If the stage that ran before is lower in the order of execution the chronology needs to grab the first result as the initial condition
         if get_number(source_stage) >= get_number(stage)
-            interval_chronology = get_stage_interval_chronology(sim.sequence, source_stage_name)
+            interval_chronology =
+                get_stage_interval_chronology(sim.sequence, source_stage_name)
         elseif get_number(source_stage) < get_number(stage)
             interval_chronology = RecedingHorizon()
         end
