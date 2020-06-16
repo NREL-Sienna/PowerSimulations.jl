@@ -1,3 +1,5 @@
+const HASH_FILENAME = "check.sha256"
+
 """
 Return a decoded JSON file.
 """
@@ -27,13 +29,27 @@ function find_key_with_value(d, value)
 end
 
 function compute_file_hash(path::String, files::Vector{String})
-    open(joinpath(path, "check.sha256"), "w") do io
-        for file in files
-            file_path = joinpath(path, file)
-            hash_value = compute_sha256(file_path)
-            write(io, "$hash_value    $file_path\n")
-        end
+    data = Dict("files" => [])
+    for file in files
+        file_path = joinpath(path, file)
+        file_info = Dict(
+            "filename" => file_path,
+            "hash" => compute_sha256(file_path),
+        )
+        push!(data["files"], file_info)
     end
+
+    open(joinpath(path, HASH_FILENAME), "w") do io
+        write(io, JSON.json(data))
+    end
+end
+
+function read_file_hashes(path)
+    data = open(joinpath(path, HASH_FILENAME), "r") do io
+        JSON.parse(io)
+    end
+
+    return data["files"]
 end
 
 function check_kwargs(input_kwargs, valid_set::Array{Symbol}, function_name::String)
