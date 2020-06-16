@@ -720,7 +720,8 @@ function test_load_simulation(file_path::String)
 end
 
 @testset "Test load simulation" begin
-    path = (joinpath(pwd(), "test_reading_results"))
+    # Use spaces in this path because that has caused failures.
+    path = (joinpath(pwd(), "test reading results"))
     !isdir(path) && mkdir(path)
 
     try

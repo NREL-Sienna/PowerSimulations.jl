@@ -421,17 +421,13 @@ Checks the hash value for each file made with the file is written with the new h
 - `path::String`: this is the folder path that contains the results and the check.sha256 file
 """
 function check_file_integrity(path::String)
-    file_path = joinpath(path, "check.sha256")
-    text = open(file_path, "r") do io
-        return readlines(io)
-    end
-
     matched = true
-    for line in text
-        expected_hash, file_name = split(line)
-        actual_hash = compute_sha256(file_name)
+    for file_info = read_file_hashes(path)
+        filename = file_info["filename"]
+        expected_hash = file_info["hash"]
+        actual_hash = compute_sha256(filename)
         if expected_hash != actual_hash
-            @error "hash mismatch for file" file_name expected_hash actual_hash
+            @error "hash mismatch for file" filename expected_hash actual_hash
             matched = false
         end
     end
