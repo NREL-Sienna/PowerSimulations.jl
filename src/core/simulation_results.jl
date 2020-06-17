@@ -515,16 +515,21 @@ function write_to_CSV(res::SimulationResults; kwargs...)
     if !isdir(folder_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Set up results folder."))
     end
+    variables_export = Dict()
     for (k, v) in IS.get_variables(res)
-        if decode_symbol(k)[1] == "P"
-            IS.get_variables(res)[k] = IS.get_base_power(res) .* v
+        start = decode_symbol(k)[1]
+        if start !== "ON" || start !== "START" || start !== "STOP"
+           variables_export[k] = IS.get_base_power(res) .* v
+        else
+            variables_export[k] = v
         end
     end
+    parameters_export = Dict()
     for (p, v) in IS.get_parameters(res)
-        IS.get_parameters(res)[p] = IS.get_base_power(res) .* v
+        parameters_export[p] = IS.get_base_power(res) .* v
     end
     write_data(
-        IS.get_variables(res),
+        variables_export,
         res.time_stamp,
         folder_path;
         file_type = CSV,
@@ -539,7 +544,7 @@ function write_to_CSV(res::SimulationResults; kwargs...)
         kwargs...,
     )
     write_data(get_duals(res), folder_path; file_type = CSV, kwargs...)
-    write_data(IS.get_parameters(res), folder_path; file_type = CSV, kwargs...)
+    write_data(parameters_export, folder_path; file_type = CSV, kwargs...)
     files = collect(readdir(folder_path))
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")

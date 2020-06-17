@@ -148,12 +148,16 @@ function write_to_CSV(results::OperationsProblemResults, save_path::String; kwar
         save_path,
         replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-"),
     ))
+    export_variables = Dict()
     for (k, v) in IS.get_variables(results)
-        if decode_symbol(k)[1] == "P"
-            IS.get_variables(results)[k] = IS.get_base_power(results) .* v
+        start = decode_symbol(k)[1]
+        if start !== "ON" || start !== "START" || start != "STOP"
+            export_variables[k] = IS.get_base_power(results) .* v
+        else
+            export_variables[k] = v
         end
     end
-    write_data(get_variables(results), folder_path; file_type = CSV, kwargs...)
+    write_data(export_variables, folder_path; file_type = CSV, kwargs...)
     if !isempty(get_duals(results))
         write_data(
             get_duals(results),
@@ -163,12 +167,13 @@ function write_to_CSV(results::OperationsProblemResults, save_path::String; kwar
             kwargs...,
         )
     end
+    export_parameters = dict()
     if !isempty(IS.get_parameters(results))
         for (p, v) in IS.get_parameters(results)
-            IS.get_parameters(results)[p] = IS.get_base_power(results) .* v
+           export_parameters[p] = IS.get_base_power(results) .* v
         end
         write_data(
-            IS.get_parameters(results),
+            export_parameters,
             folder_path;
             params = true,
             file_type = CSV,
