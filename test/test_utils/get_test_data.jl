@@ -716,7 +716,7 @@ function build_c_sys5_uc(; kwargs...)
             add_forecast!(
                 c_sys5_uc,
                 serv,
-                PiecewiseFunction("get_variable", 10, ORDC_cost_ts[t]),
+                PiecewiseFunction("get_variable", 5, ORDC_cost_ts[t]),
             )
         end
 

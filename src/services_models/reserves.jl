@@ -152,18 +152,18 @@ function cost_function(
     dt = Dates.value(Dates.Minute(resolution)) / 60
     variable = get_variable(psi_container, variable_name(SERVICE_REQUIREMENT, SR))
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-    if !haskey(psi_container.variables, :PWL_cost_vars)
+    if !haskey(psi_container.variables, :PWL_ORDC_cost_vars)
         time_steps = model_time_steps(psi_container)
         container = add_var_container!(
             psi_container,
-            :PWL_cost_vars,
+            :PWL_ORDC_cost_vars,
             [PSY.get_name(service)],
             time_steps,
             1:length(ts_vector[1]);
             sparse = true,
         )
     else
-        container = get_variable(psi_container, :PWL_cost_vars)
+        container = get_variable(psi_container, :PWL_ORDC_cost_vars)
     end
     for (t, var) in enumerate(variable[PSY.get_name(service), :])
         c, pwlvars = _pwlgencost_sos(psi_container, var, ts_vector[t])
