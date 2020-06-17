@@ -37,7 +37,7 @@ function construct_service!(
         formulation = get_formulation(model)
         if formulation == FixedOutput
             if !isempty(get_services(model))
-            @info "$(formulation) for $(get_device_type(model)) is not compatible with the provision of reserve services"
+                @info "$(formulation) for $(get_device_type(model)) is not compatible with the provision of reserve services"
             end
             push!(incompatible_device_types, get_device_type(model))
         end
