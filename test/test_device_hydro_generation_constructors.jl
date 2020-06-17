@@ -25,18 +25,6 @@ end
     moi_tests(op_problem, false, 0, 0, 0, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
-    # No Forecast Testing
-    op_problem = OperationsProblem(
-        TestOpProblem,
-        DCPPowerModel,
-        c_sys5_hy;
-        use_parameters = true,
-        use_forecast_data = false,
-    )
-    construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, true, 0, 0, 0, 0, 0, false)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
     # No Forecast - No Parameters Testing
     op_problem = OperationsProblem(
         TestOpProblem,
@@ -66,30 +54,6 @@ end
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 0, 0, 0, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Forecast Testing
-    op_problem = OperationsProblem(
-        TestOpProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-        use_forecast_data = false,
-    )
-    construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, true, 0, 0, 0, 0, 0, false)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Forecast - No Parameters Testing
-    op_problem = OperationsProblem(
-        TestOpProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_forecast_data = false,
-    )
-    construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, false, 0, 0, 0, 0, 0, false)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
 end
 
 @testset "Hydro ACPPowerModel HydroDispatch with HydroDispatchRunOfRiver formulations" begin
@@ -107,18 +71,6 @@ end
     op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_hyd)
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 0, 0, 0, 0, 0, false)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Forecast Testing
-    op_problem = OperationsProblem(
-        TestOpProblem,
-        ACPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-        use_forecast_data = false,
-    )
-    construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, true, 0, 0, 0, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -151,18 +103,6 @@ end
     moi_tests(op_problem, false, 0, 0, 0, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
-    # No Forecast Testing
-    op_problem = OperationsProblem(
-        TestOpProblem,
-        DCPPowerModel,
-        c_sys5_hy;
-        use_parameters = true,
-        use_forecast_data = false,
-    )
-    construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, true, 0, 0, 0, 0, 0, false)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
     # No Forecast - No Parameters Testing
     op_problem = OperationsProblem(
         TestOpProblem,
@@ -191,18 +131,6 @@ end
     op_problem = OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5_hyd)
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 24, 0, 24, 0, 0, false)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Forecast Testing
-    op_problem = OperationsProblem(
-        TestOpProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-        use_forecast_data = false,
-    )
-    construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, true, 1, 0, 1, 0, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -235,18 +163,6 @@ end
     moi_tests(op_problem, false, 48, 0, 48, 24, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
-    # No Forecast Testing
-    op_problem = OperationsProblem(
-        TestOpProblem,
-        ACPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-        use_forecast_data = false,
-    )
-    construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, true, 2, 0, 2, 1, 0, false)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
     # No Forecast - No Parameters Testing
     op_problem = OperationsProblem(
         TestOpProblem,
@@ -277,18 +193,6 @@ end
     moi_tests(op_problem, false, 24, 0, 25, 24, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
-    # No Forecast Testing
-    op_problem = OperationsProblem(
-        TestOpProblem,
-        DCPPowerModel,
-        c_sys5_hy_uc;
-        use_parameters = true,
-        use_forecast_data = false,
-    )
-    construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, true, 1, 0, 2, 1, 0, false)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
     # No Forecast - No Parameters Testing
     op_problem = OperationsProblem(
         TestOpProblem,
@@ -317,18 +221,6 @@ end
     op_problem = OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5_hy_uc)
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 48, 0, 49, 48, 0, false)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Forecast Testing
-    op_problem = OperationsProblem(
-        TestOpProblem,
-        ACPPowerModel,
-        c_sys5_hy_uc;
-        use_parameters = true,
-        use_forecast_data = false,
-    )
-    construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, true, 2, 0, 3, 2, 0, false)
     psi_checkobjfun_test(op_problem, GAEVF)
 
     # No Forecast - No Parameters Testing
@@ -445,32 +337,6 @@ end
     construct_device!(op_problem, :Hydro, model)
     moi_tests(op_problem, false, 72, 0, 24, 24, 24, false)
     psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Forecast Testing
-    op_problem = OperationsProblem(
-        TestOpProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_parameters = true,
-        use_forecast_data = false,
-    )
-    construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, true, 3, 0, 1, 1, 1, false)
-    psi_checkobjfun_test(op_problem, GAEVF)
-
-    # No Forecast - No Parameters Testing
-    # not supported
-    #=
-    op_problem = OperationsProblem(
-        TestOpProblem,
-        DCPPowerModel,
-        c_sys5_hyd;
-        use_forecast_data = false,
-    )
-    construct_device!(op_problem, :Hydro, model)
-    moi_tests(op_problem, false, 4, 0, 2, 2, 1, false)
-    psi_checkobjfun_test(op_problem, GAEVF)
-    =#
 end
 
 #=

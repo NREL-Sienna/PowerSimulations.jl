@@ -301,10 +301,8 @@ end
 end
 
 @testset "Network Unsupported Power Model Formulations" begin
-    incompat_list = [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
-
     c_sys5 = build_system("c_sys5")
-    for network in incompat_list
+    for network in PSI.UNSUPPORTED_POWERMODELS
         ps_model =
             OperationsProblem(TestOpProblem, network, c_sys5; optimizer = ipopt_optimizer)
         construct_device!(ps_model, :Thermal, thermal_model)

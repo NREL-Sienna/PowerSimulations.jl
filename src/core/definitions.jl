@@ -62,7 +62,7 @@ const OPERATIONS_ACCEPTED_KWARGS = [
     :slack_variables,
     :system_to_file,
     :constraint_duals,
-    :export_pwl_variables,
+    :export_pwl_vars,
 ]
 
 const OPERATIONS_SOLVE_KWARGS = [:optimizer, :save_path]
@@ -73,7 +73,7 @@ const STAGE_ACCEPTED_KWARGS = [
     :slack_variables,
     :constraint_duals,
     :system_to_file,
-    :export_pwl_variables,
+    :export_pwl_vars,
     :allow_fails,
 ]
 
@@ -81,6 +81,8 @@ const UNSUPPORTED_POWERMODELS =
     [PM.SOCBFPowerModel, PM.SOCBFConicPowerModel, PM.IVRPowerModel]
 
 const PSI_NAME_DELIMITER = "__"
+
+const M_VALUE = 1e6
 
 # The constants below are strings instead of enums because there is a requirement that users
 # should be able to define their own without changing PowerSimulations.

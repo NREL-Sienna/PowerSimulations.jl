@@ -263,7 +263,7 @@ function regulation_cost!(
     return
 end
 
-function NodalExpressionInputs(
+function make_nodal_expression_inputs(
     ::Type{<:PSY.RegulationDevice{T}},
     ::Type{AreaBalancePowerModel},
     use_forecasts::Bool,
