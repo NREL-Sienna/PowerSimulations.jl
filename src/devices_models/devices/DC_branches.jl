@@ -86,10 +86,7 @@ function branch_rate_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, HVDCLossless},
-    system_formulation::Union{
-        Type{<:PM.AbstractActivePowerModel},
-        Type{<:PM.AbstractPowerModel},
-    },
+    system_formulation::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {B <: PSY.DCBranch}
     for (var_type, cons_type) in zip(

@@ -49,8 +49,6 @@ function service_requirement_constraint!(
         ts_vector = ones(time_steps[end])
     end
 
-    # TODO: create only if slack_variables option is used
-
     use_slacks && (slack_vars = reserve_slacks(psi_container, name))
 
     requirement = PSY.get_requirement(service)

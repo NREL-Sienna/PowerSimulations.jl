@@ -51,150 +51,106 @@ end
 """
 Reactive Power Constraints on Controllable Loads Assume Constant PowerFactor
 """
-function reactivepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{L},
-    model::DeviceModel{L, <:AbstractControllablePowerLoadFormulation},
+function make_reactive_power_constraints_inputs(
+    ::Type{<:PSY.ElectricLoad},
+    ::Type{<:AbstractControllablePowerLoadFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {L <: PSY.ElectricLoad}
+    use_parameters::Bool,
+    use_forecasts::Bool,
+)
+    return DeviceRangeConstraintInputs(;
+        custom_psi_container_func = custom_reactive_power_constraints!,
+    )
+end
+
+function custom_reactive_power_constraints!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::Type{<:AbstractControllablePowerLoadFormulation},
+) where {T <: PSY.ElectricLoad}
     time_steps = model_time_steps(psi_container)
     constraint = JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
-    assign_constraint!(psi_container, REACTIVE, L, constraint)
+    assign_constraint!(psi_container, REACTIVE, T, constraint)
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         pf = sin(atan((PSY.get_maxreactivepower(d) / PSY.get_maxactivepower(d))))
-        reactive = get_variable(psi_container, REACTIVE_POWER, L)[name, t]
-        real = get_variable(psi_container, ACTIVE_POWER, L)[name, t] * pf
+        reactive = get_variable(psi_container, REACTIVE_POWER, T)[name, t]
+        real = get_variable(psi_container, ACTIVE_POWER, T)[name, t] * pf
         constraint[name, t] = JuMP.@constraint(psi_container.JuMPmodel, reactive == real)
     end
-    return
 end
 
-function activepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{L},
-    model::DeviceModel{L, DispatchablePowerLoad},
+function make_active_power_constraints_inputs(
+    ::Type{<:PSY.ElectricLoad},
+    ::Type{<:DispatchablePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {L <: PSY.ElectricLoad}
-    parameters = model_has_parameters(psi_container)
-    use_forecast_data = model_uses_forecasts(psi_container)
-    @assert !(parameters && !use_forecast_data)
-
-    if !parameters && !use_forecast_data
-        constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-        for (ix, d) in enumerate(devices)
-            name = PSY.get_name(d)
-            ub = PSY.get_activepower(d)
-            limits = (min = 0.0, max = ub)
-            constraint_info = DeviceRangeConstraintInfo(name, limits)
-            add_device_services!(constraint_info, d, model)
-            constraint_infos[ix] = constraint_info
-        end
-        device_range(
-            psi_container,
-            constraint_infos,
-            constraint_name(ACTIVE_RANGE, L),
-            variable_name(ACTIVE_POWER, L),
-        )
-        return
-    end
-
-    forecast_label = "get_maxactivepower"
-    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(psi_container, d, forecast_label)
-        constraint_info =
-            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_maxactivepower(x), ts_vector)
-        add_device_services!(constraint_info.range, d, model)
-        constraint_infos[ix] = constraint_info
-    end
-
-    if parameters
-        device_timeseries_param_ub(
-            psi_container,
-            constraint_infos,
-            constraint_name(ACTIVE, L),
-            UpdateRef{L}(ACTIVE_POWER, forecast_label),
-            variable_name(ACTIVE_POWER, L),
-        )
-    else
-        device_timeseries_ub(
-            psi_container,
-            constraint_infos,
-            constraint_name(ACTIVE, L),
-            variable_name(ACTIVE_POWER, L),
+    use_parameters::Bool,
+    use_forecasts::Bool,
+)
+    if (!use_parameters && !use_forecasts)
+        return DeviceRangeConstraintInputs(;
+            range_constraint_inputs = [RangeConstraintInputs(;
+                constraint_name = ACTIVE_RANGE,
+                variable_name = ACTIVE_POWER,
+                limits_func = x -> (min = 0.0, max = PSY.get_activepower(x)),
+                constraint_func = device_range,
+            )],
         )
     end
-    return
+
+    return DeviceRangeConstraintInputs(;
+        timeseries_range_constraint_inputs = [TimeSeriesConstraintInputs(
+            constraint_name = ACTIVE,
+            variable_name = ACTIVE_POWER,
+            parameter_name = use_parameters ? ACTIVE_POWER : nothing,
+            forecast_label = "get_maxactivepower",
+            multiplier_func = x -> PSY.get_maxactivepower(x),
+            constraint_func = use_parameters ? device_timeseries_param_ub :
+                              device_timeseries_ub,
+        )],
+    )
 end
 
-function activepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{L},
-    model::DeviceModel{L, InterruptiblePowerLoad},
+function make_active_power_constraints_inputs(
+    ::Type{<:PSY.ElectricLoad},
+    ::Type{<:InterruptiblePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
-) where {L <: PSY.ElectricLoad}
-    parameters = model_has_parameters(psi_container)
-    use_forecast_data = model_uses_forecasts(psi_container)
-
-    if !parameters && !use_forecast_data
-        constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
-        for (ix, d) in enumerate(devices)
-            name = PSY.get_name(d)
-            ub = PSY.get_active(d)
-            limits = (min = 0.0, max = ub)
-            constraint_info = DeviceRangeConstraintInfo(name, limits)
-            add_device_services!(constraint_info, d, model)
-            constraint_infos[ix] = constraint_info
-        end
-        device_semicontinuousrange(
-            psi_container,
-            constraint_infos,
-            constraint_name(ACTIVE_RANGE, L),
-            variable_name(ACTIVE_POWER, L),
-            variable_name(ON, L),
-        )
-        return
-    end
-
-    forecast_label = "get_maxactivepower"
-    constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
-    for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(psi_container, d, forecast_label)
-        constraint_info =
-            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_maxactivepower(x), ts_vector)
-        add_device_services!(constraint_info.range, d, model)
-        constraint_infos[ix] = constraint_info
-    end
-
-    if parameters
-        device_timeseries_ub_bigM(
-            psi_container,
-            constraint_infos,
-            constraint_name(ACTIVE, L),
-            variable_name(ACTIVE_POWER, L),
-            UpdateRef{L}(ON, forecast_label),
-            constraint_name(ON, L),
-        )
-    else
-        device_timeseries_ub_bin(
-            psi_container,
-            constraint_infos,
-            constraint_name(ACTIVE, L),
-            variable_name(ACTIVE_POWER, L),
-            variable_name(ON, L),
+    use_parameters::Bool,
+    use_forecasts::Bool,
+)
+    if (!use_parameters && !use_forecasts)
+        return DeviceRangeConstraintInputs(;
+            range_constraint_inputs = [RangeConstraintInputs(;
+                constraint_name = ACTIVE_RANGE,
+                variable_name = ACTIVE_POWER,
+                bin_variable_name = ON,
+                limits_func = x -> (min = 0.0, max = PSY.get_activepower(x)),
+                constraint_func = device_semicontinuousrange,
+            )],
         )
     end
-    return
+
+    return DeviceRangeConstraintInputs(;
+        timeseries_range_constraint_inputs = [TimeSeriesConstraintInputs(
+            constraint_name = ACTIVE,
+            variable_name = ACTIVE_POWER,
+            bin_variable_name = ON,
+            parameter_name = use_parameters ? ON : nothing,
+            forecast_label = "get_maxactivepower",
+            multiplier_func = x -> PSY.get_maxactivepower(x),
+            constraint_func = use_parameters ? device_timeseries_ub_bigM :
+                              device_timeseries_ub_bin,
+        )],
+    )
 end
 
 ########################## Addition to the nodal balances ##################################
 
-function NodalExpressionInputs(
+function make_nodal_expression_inputs(
     ::Type{T},
     ::Type{<:PM.AbstractPowerModel},
     use_forecasts::Bool,
@@ -208,7 +164,7 @@ function NodalExpressionInputs(
     )
 end
 
-function NodalExpressionInputs(
+function make_nodal_expression_inputs(
     ::Type{T},
     ::Type{<:PM.AbstractActivePowerModel},
     use_forecasts::Bool,
