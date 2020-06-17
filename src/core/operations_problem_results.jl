@@ -170,7 +170,7 @@ function write_to_CSV(results::OperationsProblemResults, save_path::String; kwar
     export_parameters = dict()
     if !isempty(IS.get_parameters(results))
         for (p, v) in IS.get_parameters(results)
-           export_parameters[p] = IS.get_base_power(results) .* v
+            export_parameters[p] = IS.get_base_power(results) .* v
         end
         write_data(
             export_parameters,

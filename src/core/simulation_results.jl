@@ -519,7 +519,7 @@ function write_to_CSV(res::SimulationResults; kwargs...)
     for (k, v) in IS.get_variables(res)
         start = decode_symbol(k)[1]
         if start !== "ON" || start !== "START" || start !== "STOP"
-           variables_export[k] = IS.get_base_power(res) .* v
+            variables_export[k] = IS.get_base_power(res) .* v
         else
             variables_export[k] = v
         end
@@ -528,13 +528,7 @@ function write_to_CSV(res::SimulationResults; kwargs...)
     for (p, v) in IS.get_parameters(res)
         parameters_export[p] = IS.get_base_power(res) .* v
     end
-    write_data(
-        variables_export,
-        res.time_stamp,
-        folder_path;
-        file_type = CSV,
-        kwargs...,
-    )
+    write_data(variables_export, res.time_stamp, folder_path; file_type = CSV, kwargs...)
     write_optimizer_log(IS.get_total_cost(res), folder_path)
     write_data(
         IS.get_time_stamp(res),
