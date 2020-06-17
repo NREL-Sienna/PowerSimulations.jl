@@ -86,7 +86,7 @@ function make_active_power_constraints_inputs(
     ::Type{<:PSY.ElectricLoad},
     ::Type{<:DispatchablePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
-    _::Union{Nothing, AbstractAffectFeedForward},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
 )
@@ -118,7 +118,7 @@ function make_active_power_constraints_inputs(
     ::Type{<:PSY.ElectricLoad},
     ::Type{<:InterruptiblePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
-    _::Union{Nothing, AbstractAffectFeedForward},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
 )

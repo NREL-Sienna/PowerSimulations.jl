@@ -90,7 +90,7 @@ function make_active_power_constraints_inputs(
     ::Type{<:PSY.RenewableGen},
     ::Type{<:AbstractRenewableDispatchFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    _::Union{Nothing, AbstractAffectFeedForward},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
 )

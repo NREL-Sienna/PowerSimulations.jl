@@ -162,7 +162,7 @@ function make_active_power_constraints_inputs(
     ::Type{<:PSY.HydroGen},
     ::Type{<:AbstractHydroDispatchFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    _::Union{Nothing, AbstractAffectFeedForward},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
 )
@@ -194,9 +194,9 @@ function make_active_power_constraints_inputs(
     ::Type{<:PSY.HydroGen},
     ::Type{<:AbstractHydroReservoirFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    _::Union{Nothing, AbstractAffectFeedForward},
-    __::Bool,
-    ___::Bool,
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    use_parameters::Bool,
+    use_forecasts::Bool,
 )
     return DeviceRangeConstraintInputs(;
         range_constraint_inputs = [RangeConstraintInputs(;

@@ -1,6 +1,4 @@
 
-const M_VALUE = 1e6
-
 struct TimeSeriesConstraintInputsInternal
     constraint_infos::Vector{DeviceTimeSeriesConstraintInfo}
     constraint_name::Symbol

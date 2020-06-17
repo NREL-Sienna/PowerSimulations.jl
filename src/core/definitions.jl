@@ -82,6 +82,8 @@ const UNSUPPORTED_POWERMODELS =
 
 const PSI_NAME_DELIMITER = "__"
 
+const M_VALUE = 1e6
+
 # The constants below are strings instead of enums because there is a requirement that users
 # should be able to define their own without changing PowerSimulations.
 

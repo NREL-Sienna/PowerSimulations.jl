@@ -86,7 +86,7 @@ function make_active_power_constraints_inputs(
     ::Type{<:PSY.ThermalGen},
     ::Type{<:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    _::SemiContinuousFF,
+    feedforward::SemiContinuousFF,
     use_parameters::Bool,
     use_forecasts::Bool,
 )
@@ -97,7 +97,7 @@ function make_active_power_constraints_inputs(
     ::Type{<:PSY.ThermalGen},
     ::Type{<:ThermalDispatchNoMin},
     ::Type{<:PM.AbstractPowerModel},
-    _::SemiContinuousFF,
+    feedforward::SemiContinuousFF,
     use_parameters::Bool,
     use_forecasts::Bool,
 )
@@ -111,9 +111,9 @@ function make_active_power_constraints_inputs(
     ::Type{<:PSY.ThermalGen},
     ::Type{<:AbstractThermalDispatchFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    _::Nothing,
-    __::Bool,
-    ___::Bool,
+    feedforward::Nothing,
+    use_parameters::Bool,
+    use_forecasts::Bool,
 )
     return DeviceRangeConstraintInputs(;
         range_constraint_inputs = [RangeConstraintInputs(;
@@ -132,9 +132,9 @@ function make_active_power_constraints_inputs(
     ::Type{<:PSY.ThermalGen},
     ::Type{<:AbstractThermalFormulation},
     ::Type{<:PM.AbstractPowerModel},
-    _::Nothing,
-    __::Bool,
-    ___::Bool,
+    feedforward::Nothing,
+    use_parameters::Bool,
+    use_forecasts::Bool,
 )
     return DeviceRangeConstraintInputs(;
         range_constraint_inputs = [
@@ -157,9 +157,9 @@ function make_active_power_constraints_inputs(
     ::Type{<:PSY.ThermalGen},
     ::Type{<:ThermalDispatchNoMin},
     ::Type{<:PM.AbstractPowerModel},
-    _::Nothing,
-    __::Bool,
-    ___::Bool,
+    feedforward::Nothing,
+    use_parameters::Bool,
+    use_forecasts::Bool,
 )
     return DeviceRangeConstraintInputs(;
         range_constraint_inputs = [RangeConstraintInputs(;
@@ -174,7 +174,7 @@ end
 
 function custom_active_power_constraints!(
     psi_container::PSIContainer,
-    _::IS.FlattenIteratorWrapper{T},
+    devices::IS.FlattenIteratorWrapper{T},
     ::Type{<:ThermalDispatchNoMin},
 ) where {T <: PSY.ThermalGen}
     var_key = variable_name(ACTIVE_POWER, T)

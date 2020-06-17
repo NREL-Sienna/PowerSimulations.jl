@@ -69,9 +69,9 @@ function make_active_power_constraints_inputs(
     ::Type{<:PSY.Storage},
     ::Type{<:BookKeeping},
     ::Type{<:PM.AbstractPowerModel},
-    _::Union{Nothing, AbstractAffectFeedForward},
-    __::Bool,
-    ___::Bool,
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    use_parameters::Bool,
+    use_forecasts::Bool,
 )
     return DeviceRangeConstraintInputs(;
         range_constraint_inputs = [
@@ -95,9 +95,9 @@ function make_active_power_constraints_inputs(
     ::Type{<:PSY.Storage},
     ::Type{<:BookKeepingwReservation},
     ::Type{<:PM.AbstractPowerModel},
-    _::Union{Nothing, AbstractAffectFeedForward},
-    __::Bool,
-    ___::Bool,
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    use_parameters::Bool,
+    use_forecasts::Bool,
 )
     return DeviceRangeConstraintInputs(;
         range_constraint_inputs = [
