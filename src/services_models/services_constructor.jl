@@ -76,11 +76,11 @@ end
 function construct_service!(
     psi_container::PSIContainer,
     services::IS.FlattenIteratorWrapper{SR},
-    services_mapping::PSY.ServiceContributingDevicesMapping,
+    sys::PSY.System,
     model::ServiceModel{SR, StepwiseCostReserve},
     devices_template::Dict{Symbol, DeviceModel},
 ) where {SR <: PSY.Reserve}
-
+    services_mapping = PSY.get_contributing_device_mapping(sys)
     time_steps = model_time_steps(psi_container)
     names = (PSY.get_name(s) for s in services)
     activerequirement_variables!(psi_container, services)
