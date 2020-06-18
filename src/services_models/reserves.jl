@@ -101,8 +101,7 @@ function service_requirement_constraint!(
     service::SR,
     model::ServiceModel{SR, StepwiseCostReserve},
 ) where {SR <: PSY.Reserve}
-    parameters = model_has_parameters(psi_container)
-    use_forecast_data = model_uses_forecasts(psi_container)
+
     initial_time = model_initial_time(psi_container)
     @debug initial_time
     time_steps = model_time_steps(psi_container)
@@ -133,6 +132,14 @@ function cost_function(
     @debug initial_time
     time_steps = model_time_steps(psi_container)
 
+    function pwl_reserve_cost(
+        psi_container::PSIContainer,
+        variable::JV,
+        cost_component::Vector{NTuple{2, Float64}},
+    ) where {JV <: JuMP.AbstractVariableRef}
+        return _pwlgencost_sos(psi_container, variable, cost_component)
+    end
+
     if use_forecast_data
         ts_vector = _convert_to_variablecost(PSY.get_data(PSY.get_forecast(
             PSY.PiecewiseFunction,
@@ -147,26 +154,23 @@ function cost_function(
     end
 
     resolution = model_resolution(psi_container)
-    dt = Dates.value(Dates.Minute(resolution)) / 60
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     variable = get_variable(psi_container, variable_name(SERVICE_REQUIREMENT, SR))
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
-    if !haskey(psi_container.variables, :PWL_RDC_cost_vars)
-        time_steps = model_time_steps(psi_container)
-        container = add_var_container!(
-            psi_container,
-            :PWL_RDC_cost_vars,
-            [PSY.get_name(service)],
-            time_steps,
-            1:length(ts_vector[1]);
-            sparse = true,
-        )
-    else
-        container = get_variable(psi_container, :PWL_RDC_cost_vars)
-    end
-    for (t, var) in enumerate(variable[PSY.get_name(service), :])
-        c, pwlvars = _pwlgencost_sos(psi_container, var, ts_vector[t])
+    time_steps = model_time_steps(psi_container)
+    name = PSY.get_name(service)
+    container = add_var_container!(
+        psi_container,
+        variable_name("$(name)_pwl_cost_vars", SR),
+        [name],
+        time_steps,
+        1:length(ts_vector[1]);
+        sparse = true,
+    )
+    for (t, var) in enumerate(variable[name, :])
+        c, pwlvars = pwl_reserve_cost(psi_container, var, ts_vector[t])
         for (ix, v) in enumerate(pwlvars)
-            container[(PSY.get_name(service), t, ix)] = v
+            container[(name, t, ix)] = v
         end
         JuMP.add_to_expression!(gen_cost, c)
     end

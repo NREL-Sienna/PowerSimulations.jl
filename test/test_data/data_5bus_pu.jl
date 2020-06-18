@@ -579,7 +579,7 @@ interruptible(nodes5) = [InterruptibleLoad(
     TwoPartCost(150.0, 2400.0),
 )]
 
-const ORDC_cost =
+ORDC_cost =
     TwoPartCost([(9000.0, 0.0), (6000.0, 0.2), (500.0, 0.4), (10.0, 0.6), (0.0, 0.8)], 0.0)
 
 reserve5(thermal_generators5) = [

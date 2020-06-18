@@ -228,7 +228,7 @@ function build_c_sys5_re(; kwargs...)
         for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_re))
             add_forecast!(c_sys5_re, serv, Deterministic("get_requirement", Reserve_ts[t]))
         end
-        for t in 1:2, (ix, serv) in enumerate(get_components(ReserveDemandCurve, c_sys5_re))
+        for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_re)
             add_forecast!(
                 c_sys5_re,
                 serv,
