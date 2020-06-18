@@ -23,6 +23,7 @@ export FixedOutput
 ######## Service Models ########
 export ServiceModel
 export RangeReserve
+export StepwiseCostReserve
 export PIDSmoothACE
 ######## Branch Models ########
 export StaticLine

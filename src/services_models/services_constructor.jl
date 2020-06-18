@@ -37,7 +37,7 @@ function construct_service!(
         formulation = get_formulation(model)
         if formulation == FixedOutput
             if !isempty(get_services(model))
-            @info "$(formulation) for $(get_device_type(model)) is not compatible with the provision of reserve services"
+                @info "$(formulation) for $(get_device_type(model)) is not compatible with the provision of reserve services"
             end
             push!(incompatible_device_types, get_device_type(model))
         end
@@ -71,6 +71,38 @@ function construct_service!(
         # Constraints
         service_requirement_constraint!(psi_container, service, model)
         modify_device_model!(devices_template, model, contributing_devices)
+    end
+    return
+end
+
+function construct_service!(
+    psi_container::PSIContainer,
+    services::IS.FlattenIteratorWrapper{SR},
+    sys::PSY.System,
+    model::ServiceModel{SR, StepwiseCostReserve},
+    devices_template::Dict{Symbol, DeviceModel},
+) where {SR <: PSY.Reserve}
+    services_mapping = PSY.get_contributing_device_mapping(sys)
+    time_steps = model_time_steps(psi_container)
+    names = (PSY.get_name(s) for s in services)
+    activerequirement_variables!(psi_container, services)
+
+    add_cons_container!(psi_container, constraint_name(REQUIREMENT, SR), names, time_steps)
+
+    for service in services
+        contributing_devices =
+            services_mapping[(
+                type = typeof(service),
+                name = PSY.get_name(service),
+            )].contributing_devices
+        #Variables
+        activeservice_variables!(psi_container, service, contributing_devices)
+        # Constraints
+        service_requirement_constraint!(psi_container, service, model)
+        modify_device_model!(devices_template, model, contributing_devices)
+
+        # Cost Function
+        cost_function(psi_container, service, model.formulation)
     end
     return
 end

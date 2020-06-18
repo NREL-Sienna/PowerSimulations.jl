@@ -224,8 +224,16 @@ function build_c_sys5_re(; kwargs...)
             reserve_re[2],
             [collect(get_components(RenewableDispatch, c_sys5_re))[end]],
         )
+        add_service!(c_sys5_re, reserve_re[3], get_components(RenewableDispatch, c_sys5_re))
         for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_re))
             add_forecast!(c_sys5_re, serv, Deterministic("get_requirement", Reserve_ts[t]))
+        end
+        for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_re)
+            add_forecast!(
+                c_sys5_re,
+                serv,
+                PiecewiseFunction("get_variable", 10, ORDC_cost_ts[t]),
+            )
         end
     end
 
@@ -363,8 +371,22 @@ function build_c_sys5_hyd(; kwargs...)
             reserve_hy[2],
             [collect(get_components(HydroEnergyReservoir, c_sys5_hyd))[end]],
         )
+        add_service!(
+            c_sys5_hyd,
+            reserve_hy[3],
+            get_components(HydroEnergyReservoir, c_sys5_hyd),
+        )
         for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_hyd))
             add_forecast!(c_sys5_hyd, serv, Deterministic("get_requirement", Reserve_ts[t]))
+        end
+        for t in 1:2,
+            (ix, serv) in enumerate(get_components(ReserveDemandCurve, c_sys5_hyd))
+
+            add_forecast!(
+                c_sys5_hyd,
+                serv,
+                PiecewiseFunction("get_variable", 10, ORDC_cost_ts[t]),
+            )
         end
     end
 
@@ -405,8 +427,18 @@ function build_c_sys5_bat(; kwargs...)
         ))
         add_service!(c_sys5_bat, reserve_bat[1], get_components(GenericBattery, c_sys5_bat))
         add_service!(c_sys5_bat, reserve_bat[2], get_components(GenericBattery, c_sys5_bat))
+        add_service!(c_sys5_bat, reserve_bat[3], get_components(GenericBattery, c_sys5_bat))
         for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_bat))
             add_forecast!(c_sys5_bat, serv, Deterministic("get_requirement", Reserve_ts[t]))
+        end
+        for t in 1:2,
+            (ix, serv) in enumerate(get_components(ReserveDemandCurve, c_sys5_bat))
+
+            add_forecast!(
+                c_sys5_bat,
+                serv,
+                PiecewiseFunction("get_variable", 10, ORDC_cost_ts[t]),
+            )
         end
     end
 
@@ -454,8 +486,16 @@ function build_c_sys5_il(; kwargs...)
             reserve_il[2],
             [collect(get_components(InterruptibleLoad, c_sys5_il))[end]],
         )
+        add_service!(c_sys5_il, reserve_il[3], get_components(InterruptibleLoad, c_sys5_il))
         for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_il))
             add_forecast!(c_sys5_il, serv, Deterministic("get_requirement", Reserve_ts[t]))
+        end
+        for t in 1:2, (ix, serv) in enumerate(get_components(ReserveDemandCurve, c_sys5_il))
+            add_forecast!(
+                c_sys5_il,
+                serv,
+                PiecewiseFunction("get_variable", 10, ORDC_cost_ts[t]),
+            )
         end
     end
 
@@ -668,9 +708,18 @@ function build_c_sys5_uc(; kwargs...)
             [collect(get_components(ThermalStandard, c_sys5_uc))[end]],
         )
         add_service!(c_sys5_uc, reserve_uc[3], get_components(ThermalStandard, c_sys5_uc))
+        add_service!(c_sys5_uc, reserve_uc[4], get_components(ThermalStandard, c_sys5_uc))
         for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_uc))
             add_forecast!(c_sys5_uc, serv, Deterministic("get_requirement", Reserve_ts[t]))
         end
+        for t in 1:2, (ix, serv) in enumerate(get_components(ReserveDemandCurve, c_sys5_uc))
+            add_forecast!(
+                c_sys5_uc,
+                serv,
+                PiecewiseFunction("get_variable", 5, ORDC_cost_ts[t]),
+            )
+        end
+
     end
 
     return c_sys5_uc

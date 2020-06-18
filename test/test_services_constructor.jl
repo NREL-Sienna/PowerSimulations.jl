@@ -7,6 +7,7 @@
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -18,7 +19,7 @@
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p)
-        moi_tests(op_problem, p, 384, 0, 120, 192, 24, false)
+        moi_tests(op_problem, p, 648, 0, 120, 216, 72, false)
     end
 end
 
@@ -31,6 +32,7 @@ end
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :UpReserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -42,7 +44,7 @@ end
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p)
-        moi_tests(op_problem, p, 744, 0, 240, 192, 144, true)
+        moi_tests(op_problem, p, 1008, 0, 240, 216, 192, true)
     end
 end
 
@@ -54,6 +56,7 @@ end
     branches = Dict{Symbol, DeviceModel}()
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -65,7 +68,7 @@ end
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_re; use_parameters = p)
-        moi_tests(op_problem, p, 144, 0, 72, 24, 24, false)
+        moi_tests(op_problem, p, 360, 0, 72, 48, 72, false)
     end
 end
 
@@ -81,6 +84,7 @@ end
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -92,7 +96,7 @@ end
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_bat; use_parameters = p)
-        moi_tests(op_problem, p, 240, 0, 192, 240, 48, false)
+        moi_tests(op_problem, p, 408, 0, 192, 264, 96, false)
     end
 end
 
@@ -105,6 +109,7 @@ end
     services_template = Dict{Symbol, PSI.ServiceModel}(
         :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
         :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+        :ORDC => ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve),
     )
     model_template = OperationsProblemTemplate(
         CopperPlatePowerModel,
@@ -116,7 +121,7 @@ end
     for p in [true, false]
         op_problem =
             OperationsProblem(TestOpProblem, model_template, c_sys5_hyd; use_parameters = p)
-        moi_tests(op_problem, p, 72, 0, 24, 72, 24, false)
+        moi_tests(op_problem, p, 240, 0, 24, 96, 72, false)
     end
 end
 
