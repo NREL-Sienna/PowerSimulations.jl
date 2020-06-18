@@ -113,6 +113,7 @@ export set_services_template!
 export set_device_model!
 export set_branch_model!
 export set_device_model!
+export set_model!
 ## Sim Model Exports
 export build!
 export execute!
