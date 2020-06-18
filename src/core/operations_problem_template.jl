@@ -37,7 +37,10 @@ function set_model!(template::OperationsProblemTemplate, label::Symbol, model::D
     return
 end
 
-function set_model!(template::OperationsProblemTemplate, model::Type{<:PM.AbstractPowerModel})
+function set_model!(
+    template::OperationsProblemTemplate,
+    model::Type{<:PM.AbstractPowerModel},
+)
     template.transmission = model
     return
 end
