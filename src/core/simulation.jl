@@ -603,6 +603,8 @@ function initial_condition_update!(
             get_stage_interval_chronology(sim.sequence, get_stage_name(sim, stage))
         var_value =
             get_stage_variable(interval_chronology, (stage => stage), name, ic.update_ref)
+
+        @debug var_value, ic.update_ref
         if isnothing(ic.cache_type)
             cache = nothing
         else

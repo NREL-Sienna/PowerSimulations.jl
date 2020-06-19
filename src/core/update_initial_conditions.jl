@@ -13,7 +13,7 @@ function calculate_ic_quantity(
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
     var_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
-    @debug last_status, var_status, abs(last_status - var_status)
+    @debug "checking ON IC for $name: last_status: $last_status, var_status: $var_status"
     @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
     return last_status >= 1.0 ? current_counter : 0.0
@@ -31,7 +31,7 @@ function calculate_ic_quantity(
     current_counter = time_cache[:count]
     last_status = time_cache[:status]
     var_status = isapprox(var_value, 0.0, atol = ABSOLUTE_TOLERANCE) ? 0.0 : 1.0
-    @debug last_status, var_status, abs(last_status - var_status)
+    @debug "checking OFF IC for $name: last_status: $last_status, var_status: $var_status"
     @assert abs(last_status - var_status) < ABSOLUTE_TOLERANCE
 
     return last_status >= 1.0 ? 0.0 : current_counter
@@ -122,12 +122,6 @@ function _make_initial_conditions!(
     return
 end
 
-"""
-Status Init is always calculated based on the Power Output of the device
-This is to make it easier to calculate when the previous model doesn't
-contain binaries. For instance, looking back on an ED model to find the
-IC of the UC model
-"""
 function status_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
@@ -136,7 +130,7 @@ function status_init(
         psi_container,
         devices,
         ICKey(DeviceStatus, T),
-        _make_initial_condition_active_power,
+        _make_initial_condition_status,
         _get_status_value,
     )
 
@@ -167,7 +161,7 @@ function duration_init(
             psi_container,
             devices,
             key,
-            _make_initial_condition_active_power,
+            _make_initial_condition_status,
             _get_duration_value,
             TimeStatusChange,
         )
@@ -203,7 +197,7 @@ function status_init(
         psi_container,
         devices,
         ICKey(DeviceStatus, T),
-        _make_initial_condition_active_power,
+        _make_initial_condition_status,
         _get_status_value,
         # Doesn't require Cache
     )
@@ -234,7 +228,7 @@ function duration_init(
             psi_container,
             devices,
             key,
-            _make_initial_condition_active_power,
+            _make_initial_condition_status,
             _get_duration_value,
             TimeStatusChange,
         )
@@ -284,6 +278,15 @@ function _make_initial_condition_active_power(
     cache = nothing,
 ) where {T <: PSY.Component}
     return InitialCondition(device, _get_ref_active_power(T, container), value, cache)
+end
+
+function _make_initial_condition_status(
+    container,
+    device::T,
+    value,
+    cache = nothing,
+) where {T <: PSY.Component}
+    return InitialCondition(device, _get_ref_status(T, container), value, cache)
 end
 
 function _make_initial_condition_energy(
@@ -350,6 +353,14 @@ function _get_ref_active_power(
 ) where {T <: PSY.Component}
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER) :
            UpdateRef{T}(ACTIVE_POWER, "get_activepower")
+end
+
+function _get_ref_status(
+    ::Type{T},
+    container::InitialConditions,
+) where {T <: PSY.Component}
+    return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ON) :
+           UpdateRef{T}(ON, "get_status")
 end
 
 function _get_ref_energy(::Type{T}, container::InitialConditions) where {T <: PSY.Component}
