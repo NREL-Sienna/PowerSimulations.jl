@@ -337,7 +337,8 @@ function _get_active_power_output_value(device, key)
 end
 
 function _get_active_power_output_above_min_value(device, key)
-    return PSY.get_status(device) ? PSY.get_activepower(device) - PSY.get_activepowerlimits(device).min : 0.0
+    return PSY.get_status(device) ?
+           PSY.get_activepower(device) - PSY.get_activepowerlimits(device).min : 0.0
 end
 
 function _get_energy_value(device, key)

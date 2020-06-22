@@ -379,8 +379,7 @@ function build_c_sys5_hyd(; kwargs...)
         for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_hyd))
             add_forecast!(c_sys5_hyd, serv, Deterministic("get_requirement", Reserve_ts[t]))
         end
-        for t in 1:2,
-            serv in get_components(ReserveDemandCurve, c_sys5_hyd)
+        for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_hyd)
             add_forecast!(
                 c_sys5_hyd,
                 serv,
@@ -430,8 +429,7 @@ function build_c_sys5_bat(; kwargs...)
         for t in 1:2, (ix, serv) in enumerate(get_components(VariableReserve, c_sys5_bat))
             add_forecast!(c_sys5_bat, serv, Deterministic("get_requirement", Reserve_ts[t]))
         end
-        for t in 1:2,
-            serv in get_components(ReserveDemandCurve, c_sys5_bat)
+        for t in 1:2, serv in get_components(ReserveDemandCurve, c_sys5_bat)
             add_forecast!(
                 c_sys5_bat,
                 serv,

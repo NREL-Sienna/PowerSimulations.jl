@@ -375,7 +375,9 @@ function device_multistart_range_ic(
         val = max(data.limits.max - data.lag_ramp_limits.shutdown, 0)
         con[name] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            val * varstop[data.name, 1] <=  initial_conditions[ix, 2].value * (data.limits.max - data.limits.min) - ic.value  
+            val * varstop[data.name, 1] <=
+            initial_conditions[ix, 2].value * (data.limits.max - data.limits.min) -
+            ic.value
         )
     end
     return

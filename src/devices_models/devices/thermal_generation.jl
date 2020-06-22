@@ -759,12 +759,28 @@ function device_startup_initial_condition(
     up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
     varbin = get_variable(psi_container, bin_name)
-    varstarts = [get_variable(psi_container, var_names[1]),
-            get_variable(psi_container, var_names[2])]
+    varstarts = [
+        get_variable(psi_container, var_names[1]),
+        get_variable(psi_container, var_names[2]),
+    ]
 
     # con = add_cons_container!(psi_container, cons_name, set_name,)
-    con_up = add_cons_container!(psi_container, up_name, set_name, time_steps, 1:MAX_START_TYPES-1; sparse =true)
-    con_down = add_cons_container!(psi_container, down_name, set_name, time_steps, 1:MAX_START_TYPES-1; sparse =true)
+    con_up = add_cons_container!(
+        psi_container,
+        up_name,
+        set_name,
+        time_steps,
+        1:(MAX_START_TYPES - 1);
+        sparse = true,
+    )
+    con_down = add_cons_container!(
+        psi_container,
+        down_name,
+        set_name,
+        time_steps,
+        1:(MAX_START_TYPES - 1);
+        sparse = true,
+    )
     # @show collect(set_name)
 
     for t in time_steps, (ix, d) in enumerate(data)
@@ -773,16 +789,20 @@ function device_startup_initial_condition(
         for st in 1:(d.startup_types - 1)
             var = varstarts[st]
             if t < (d.time_limits[st + 1] - 1)
-                con_up[name, t, st] = JuMP.@constraint(psi_container.JuMPmodel, 
-                    (d.time_limits[st + 1]-1) * var[name, t] + (1-var[name, t]) 
-                    * M_VALUE
-                    >= sum((1-varbin[name, i]) for i in 1:t) + ic.value)
-                con_down[name, t, st] = JuMP.@constraint(psi_container.JuMPmodel, 
-                    d.time_limits[st] * var[name, t]  <= sum((1-varbin[name, i]) for i in 1:t) + ic.value )
+                con_up[name, t, st] = JuMP.@constraint(
+                    psi_container.JuMPmodel,
+                    (d.time_limits[st + 1] - 1) * var[name, t] +
+                    (1 - var[name, t]) * M_VALUE >=
+                    sum((1 - varbin[name, i]) for i in 1:t) + ic.value
+                )
+                con_down[name, t, st] = JuMP.@constraint(
+                    psi_container.JuMPmodel,
+                    d.time_limits[st] * var[name, t] <=
+                    sum((1 - varbin[name, i]) for i in 1:t) + ic.value
+                )
             end
         end
     end
-
 
     # for (ix, d) in enumerate(data)
     #     name = d.name
@@ -880,8 +900,8 @@ function _get_data_startup_ic(initial_conditions::Vector{InitialCondition})
     idx = 0
     for ic in initial_conditions
         g = ic.device
-        if  PSY.get_start_types(g) > 1
-            idx =+ 1
+        if PSY.get_start_types(g) > 1
+            idx = +1
             name = PSY.get_name(g)
             data[idx] = DeviceStartUpConstraintInfo(
                 name,
@@ -943,7 +963,8 @@ function must_run_constraints!(
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         ts_vector = ones(time_steps[end])
-        timeseries_data = DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_must_run(x), ts_vector)
+        timeseries_data =
+            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_must_run(x), ts_vector)
         constraint_infos[ix] = timeseries_data
     end
     ts_inputs = TimeSeriesConstraintInputsInternal(
@@ -954,10 +975,7 @@ function must_run_constraints!(
         nothing,
     )
     # adds constraint (11)
-    device_timeseries_lb(
-        psi_container,
-        ts_inputs,
-    )
+    device_timeseries_lb(psi_container, ts_inputs)
     return
 end
 

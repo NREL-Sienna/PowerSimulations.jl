@@ -246,9 +246,7 @@ function device_multistart_rateofchange(
         end
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            expression_ub -
-            ic.value <=
-            rate_data[ix].ramplimits.up
+            expression_ub - ic.value <= rate_data[ix].ramplimits.up
         )
         #constraint (9)
         expression_lb = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
@@ -261,8 +259,7 @@ function device_multistart_rateofchange(
         end
         con_down[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            ic.value -
-            expression_lb <= rate_data[ix].ramplimits.down
+            ic.value - expression_lb <= rate_data[ix].ramplimits.down
         )
     end
 
