@@ -1,40 +1,121 @@
-#=
-using PowerSystems
-using JuMP
-base_dir = dirname(dirname(pathof(PowerSystems)))
-include(joinpath(base_dir, "data/data_5bus_uc.jl"))
-sys5 = PSY.System(nodes5, generators5, loads5_DA, branches5, nothing, 100.0);
-using PowerSimulations
-const PS = PowerSimulations
+@testset "Test Reserves from Thermal Dispatch" begin
+    devices = Dict{Symbol, DeviceModel}(
+        :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+        :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
+    )
+    branches = Dict{Symbol, DeviceModel}()
+    services_template = Dict{Symbol, PSI.ServiceModel}(
+        :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+        :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+    )
+    model_template = OperationsProblemTemplate(
+        CopperPlatePowerModel,
+        devices,
+        branches,
+        services_template,
+    )
+    c_sys5_uc = build_system("c_sys5_uc"; add_reserves = true)
+    for p in [true, false]
+        op_problem =
+            OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p)
+        moi_tests(op_problem, p, 384, 0, 120, 192, 24, false)
+    end
+end
 
-simple_reserve = PSY.StaticReserve("test_reserve", vcat(sys5.generators.thermal, sys5.generators.renewable[2]), 60.0, [gen.tech for gen in sys5.generators.thermal])
-#simple_reserve = PSY.StaticReserve("test_reserve", sys5.generators.thermal, 60.0, [sys5.generators.thermal[1].tech])
+@testset "Test Reserves from Thermal Standard UC" begin
+    devices = Dict{Symbol, DeviceModel}(
+        :Generators => DeviceModel(ThermalStandard, ThermalBasicUnitCommitment),
+        :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
+    )
+    branches = Dict{Symbol, DeviceModel}()
+    services_template = Dict{Symbol, PSI.ServiceModel}(
+        :UpReserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+        :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+    )
+    model_template = OperationsProblemTemplate(
+        CopperPlatePowerModel,
+        devices,
+        branches,
+        services_template,
+    )
+    c_sys5_uc = build_system("c_sys5_uc"; add_reserves = true)
+    for p in [true, false]
+        op_problem =
+            OperationsProblem(TestOpProblem, model_template, c_sys5_uc; use_parameters = p)
+        moi_tests(op_problem, p, 744, 0, 240, 192, 144, true)
+    end
+end
 
-@test try
-    Net = PSI.CopperPlatePowerModel
-    m = Model();
-    netinjection = PSI.instantiate_network(Net, sys5);
-    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalDispatch, Net, sys5);
-    PSI.construct_device!(m, netinjection, RenewableGen, PSI.RenewableCurtail, Net, sys5);
-    PSI.construct_device!(m, netinjection, ElectricLoad, PSI.InterruptibleLoad, Net, sys5);
-    PSI.construct_network!(m, [(device=Branch, formulation=PSI.PiLine)], netinjection, Net, sys5)
-    PSI.construct_service!(m, simple_reserve, PSI.RampLimitedReserve, [(device = ThermalGen, formulation =PSI.ThermalDispatch),
-                                                              (device = RenewableGen, formulation = PSI.RenewableCurtail)],
-                                                              sys5)
-    m.obj_dict
-true finally end
+@testset "Test Upwards Reserves from Renewable Dispatch" begin
+    devices = Dict{Symbol, DeviceModel}(
+        :Generators => DeviceModel(RenewableDispatch, RenewableFullDispatch),
+        :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
+    )
+    branches = Dict{Symbol, DeviceModel}()
+    services_template = Dict{Symbol, PSI.ServiceModel}(
+        :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+    )
+    model_template = OperationsProblemTemplate(
+        CopperPlatePowerModel,
+        devices,
+        branches,
+        services_template,
+    )
+    c_sys5_re = build_system("c_sys5_re"; add_reserves = true)
+    for p in [true, false]
+        op_problem =
+            OperationsProblem(TestOpProblem, model_template, c_sys5_re; use_parameters = p)
+        moi_tests(op_problem, p, 144, 0, 72, 24, 24, false)
+    end
+end
 
-@test try
-    Net = PSI.CopperPlatePowerModel
-    m = Model();
-    netinjection = PSI.instantiate_network(Net, sys5);
-    PSI.construct_device!(m, netinjection, ThermalGen, PSI.ThermalStandardUnitCommitment , Net, sys5);
-    PSI.construct_device!(m, netinjection, RenewableGen, PSI.RenewableCurtail, Net, sys5);
-    PSI.construct_device!(m, netinjection, ElectricLoad, PSI.InterruptibleLoad, Net, sys5);
-    PSI.construct_network!(m, [(device=Branch, formulation=PSI.PiLine)], netinjection, Net, sys5)
-    PSI.construct_service!(m, simple_reserve, PSI.RampLimitedReserve, [(device = ThermalGen, formulation =PSI.ThermalStandardUnitCommitment ),
-                                                              (device = RenewableGen, formulation = PSI.RenewableCurtail)],
-                                                              sys5)
-    m.obj_dict
-true finally end
-=#
+@testset "Test Reserves from Storage" begin
+    devices = Dict{Symbol, DeviceModel}(
+        :Generators => DeviceModel(ThermalStandard, ThermalDispatch),
+        :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
+        :Storage => DeviceModel(GenericBattery, BookKeeping),
+        # Added here to test it doesn't add reserve variables
+        :Ren => DeviceModel(RenewableDispatch, FixedOutput),
+    )
+    branches = Dict{Symbol, DeviceModel}()
+    services_template = Dict{Symbol, PSI.ServiceModel}(
+        :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+        :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+    )
+    model_template = OperationsProblemTemplate(
+        CopperPlatePowerModel,
+        devices,
+        branches,
+        services_template,
+    )
+    c_sys5_bat = build_system("c_sys5_bat"; add_reserves = true)
+    for p in [true, false]
+        op_problem =
+            OperationsProblem(TestOpProblem, model_template, c_sys5_bat; use_parameters = p)
+        moi_tests(op_problem, p, 240, 0, 192, 240, 48, false)
+    end
+end
+
+@testset "Test Reserves from Hydro" begin
+    devices = Dict{Symbol, DeviceModel}(
+        :Generators => DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver),
+        :Loads => DeviceModel(PowerLoad, PSI.StaticPowerLoad),
+    )
+    branches = Dict{Symbol, DeviceModel}()
+    services_template = Dict{Symbol, PSI.ServiceModel}(
+        :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+        :DownReserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+    )
+    model_template = OperationsProblemTemplate(
+        CopperPlatePowerModel,
+        devices,
+        branches,
+        services_template,
+    )
+    c_sys5_hyd = build_system("c_sys5_hyd"; add_reserves = true)
+    for p in [true, false]
+        op_problem =
+            OperationsProblem(TestOpProblem, model_template, c_sys5_hyd; use_parameters = p)
+        moi_tests(op_problem, p, 72, 0, 24, 72, 24, false)
+    end
+end

@@ -1,75 +1,66 @@
-function _internal_network_constructor(canonical::CanonicalModel,
-                                        system_formulation::Type{CopperPlatePowerModel},
-                                        sys::PSY.System;
-                                        kwargs...)
-
+function construct_network!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    ::Type{CopperPlatePowerModel},
+)
     buses = PSY.get_components(PSY.Bus, sys)
     bus_count = length(buses)
 
-    copper_plate(canonical, :nodal_balance_active, bus_count)
+    get_slack_variables(psi_container.settings) &&
+        add_slacks!(psi_container, CopperPlatePowerModel)
+    copper_plate(psi_container, :nodal_balance_active, bus_count)
 
     return
 end
 
-function _internal_network_constructor(canonical::CanonicalModel,
-                                        system_formulation::Type{StandardPTDFForm},
-                                        sys::PSY.System;
-                                        kwargs...)
+function construct_network!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    ::Type{StandardPTDFModel},
+)
+    buses = PSY.get_components(PSY.Bus, sys)
+    ac_branches = get_available_components(PSY.ACBranch, sys)
+    ptdf = get_PTDF(psi_container)
 
-    if :PTDF in keys(kwargs)
-        buses = PSY.get_components(PSY.Bus, sys)
-        ac_branches = PSY.get_components(PSY.ACBranch, sys)
-        ptdf_networkflow(canonical,
-                         ac_branches,
-                         buses,
-                         :nodal_balance_active,
-                         kwargs[:PTDF])
-
-        dc_branches = PSY.get_components(PSY.DCBranch, sys)
-        dc_branch_types = typeof.(dc_branches)
-        for btype in Set(dc_branch_types)
-            typed_dc_branches = IS.FlattenIteratorWrapper(btype, Vector([[b for b in dc_branches if typeof(b) == btype]]))
-            flow_variables(canonical,
-                           StandardPTDFForm,
-                           typed_dc_branches)
-        end
-
-    else
+    if isnothing(ptdf)
         throw(ArgumentError("no PTDF matrix supplied"))
     end
 
-    return
+    get_slack_variables(psi_container.settings) &&
+        add_slacks!(psi_container, StandardPTDFModel)
 
+    ptdf_networkflow(psi_container, ac_branches, buses, :nodal_balance_active, ptdf)
+
+    dc_branches = get_available_components(PSY.DCBranch, sys)
+    dc_branch_types = typeof.(dc_branches)
+    for btype in Set(dc_branch_types)
+        typed_dc_branches = IS.FlattenIteratorWrapper(
+            btype,
+            Vector([[b for b in dc_branches if typeof(b) == btype]]),
+        )
+        flow_variables!(psi_container, StandardPTDFModel, typed_dc_branches)
+    end
+    return
 end
 
-function _internal_network_constructor(canonical::CanonicalModel,
-                                        system_formulation::Type{T},
-                                        sys::PSY.System;
-                                        kwargs...) where {T<:PM.AbstractPowerFormulation}
-
-    incompat_list = [PM.SDPWRMForm,
-                     PM.SparseSDPWRMForm,
-                     PM.SOCWRConicForm,
-                     PM.SOCBFForm,
-                     PM.SOCBFConicForm]
-
-    if system_formulation in incompat_list
-       throw(ArgumentError("$(sys) formulation is not currently supported in PowerSimulations"))
+function construct_network!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    ::Type{T},
+) where {T <: PM.AbstractPowerModel}
+    incompat_list = [
+        PM.SDPWRMPowerModel,
+        PM.SparseSDPWRMPowerModel,
+        PM.SOCBFPowerModel,
+        PM.SOCBFConicPowerModel,
+    ]
+    if T in incompat_list
+        throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
     end
 
-    powermodels_network!(canonical, system_formulation, sys)
-    add_pm_var_refs!(canonical, system_formulation, sys)
+    get_slack_variables(psi_container.settings) && add_slacks!(psi_container, T)
 
+    powermodels_network!(psi_container, T, sys)
+    add_pm_var_refs!(psi_container, T, sys)
     return
-
-end
-
-function construct_network!(op_model::OperationModel,
-                            system_formulation::Type{S}; kwargs...) where {S<:PM.AbstractPowerFormulation}
-
-    sys = get_system(op_model)
-    _internal_network_constructor(op_model.canonical, system_formulation, sys; kwargs... )
-
-    return
-
 end

@@ -1,57 +1,104 @@
+using Logging
 using PowerSimulations
 using PowerSystems
 using PowerModels
+using InfrastructureSystems
+using DataFrames
 using Dates
+using Feather
 using JuMP
 using Test
 using Ipopt
 using GLPK
+using Cbc
 using OSQP
+using TimeSeries
+using ParameterJuMP
+using TestSetExtensions
+using DataFrames
+import UUIDs
+
+import PowerSystems.UtilsData: TestData
+download(TestData; branch = "master")
 
 const PM = PowerModels
 const PSY = PowerSystems
 const PSI = PowerSimulations
-
-abstract type TestOptModel<:PSI.AbstractOperationModel end
-
-ipopt_optimizer = JuMP.with_optimizer(Ipopt.Optimizer, print_level = 0)
-ipopt_ws_solver = JuMP.with_optimizer(Ipopt.Optimizer, tol=1e-6, mu_init=1e-4, print_level=0)
-GLPK_optimizer = JuMP.with_optimizer(GLPK.Optimizer)
-OSQP_optimizer = JuMP.with_optimizer(OSQP.Optimizer, verbose = false)
+const PJ = ParameterJuMP
+const IS = InfrastructureSystems
+TEST_KWARGS = [:good_kwarg_1, :good_kwarg_2]
+abstract type TestOpProblem <: PSI.AbstractOperationsProblem end
 
 include("test_utils/get_test_data.jl")
 include("test_utils/model_checks.jl")
+include("test_utils/operations_problem_templates.jl")
 
-if !Sys.iswindows()
+ipopt_optimizer =
+    JuMP.optimizer_with_attributes(Ipopt.Optimizer, "tol" => 1e-6, "print_level" => 0)
+fast_ipopt_optimizer = JuMP.optimizer_with_attributes(
+    Ipopt.Optimizer,
+    "print_level" => 0,
+    "max_cpu_time" => 5.0,
+)
+# use default print_level = 5 # set to 0 to disable
+GLPK_optimizer = JuMP.optimizer_with_attributes(GLPK.Optimizer, "msg_lev" => GLPK.MSG_OFF)
+Cbc_optimizer = JuMP.optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0)
+OSQP_optimizer =
+    JuMP.optimizer_with_attributes(OSQP.Optimizer, "verbose" => false, "max_iter" => 50000)
+fast_lp_optimizer =
+    JuMP.optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "seconds" => 3.0)
 
-    @testset "Common Functionalities" begin
-        include("test_base_structs.jl")
-        include("test_PowerModels_interface.jl")
+const LOG_FILE = "power-simulations-test.log"
+
+LOG_LEVELS = Dict(
+    "Debug" => Logging.Debug,
+    "Info" => Logging.Info,
+    "Warn" => Logging.Warn,
+    "Error" => Logging.Error,
+)
+
+function get_logging_level(env_name::String, default)
+    level = get(ENV, env_name, default)
+    log_level = get(LOG_LEVELS, level, nothing)
+    if isnothing(log_level)
+        error("Invalid log level $level: Supported levels: $(values(LOG_LEVELS))")
     end
 
-    @testset "Device Constructors" begin
-        include("test_thermal_generation_constructors.jl")
-        include("test_renewable_generation_constructors.jl")
-        include("test_load_constructors.jl")
-        include("test_storage_constructors.jl")
-        include("test_hydro_generation_constructors.jl")
-    end
-
-    @testset "Network Constructors" begin
-        include("test_network_constructors.jl")
-    end
-
-    @testset "Services Constructors" begin
-        #include("test_services_constructor.jl")
-    end
-
+    return log_level
 end
 
-@testset "Operation Models" begin
-    include("test_operation_model_constructor.jl")
-    include("test_operation_model_solve.jl")
+function run_tests()
+    console_level = get_logging_level("SYS_CONSOLE_LOG_LEVEL", "Error")
+    console_logger = ConsoleLogger(stderr, console_level)
+    file_level = get_logging_level("SYS_LOG_LEVEL", "Info")
+
+    IS.open_file_logger(LOG_FILE, file_level) do file_logger
+        multi_logger = IS.MultiLogger(
+            [console_logger, file_logger],
+            IS.LogEventTracker((Logging.Info, Logging.Warn, Logging.Error)),
+        )
+        global_logger(multi_logger)
+
+        initialize_system_serialized_files()
+
+        @time @testset "Begin PowerSimulations tests" begin
+            @includetests ARGS
+        end
+
+        # TODO: Enable this once all expected errors are not logged.
+        #@test length(IS.get_log_events(multi_logger.tracker, Logging.Error)) == 0
+
+        @info IS.report_log_summary(multi_logger)
+        summarize_system_build_stats()
+    end
 end
 
-@testset "Simulation Models" begin
-    #include("test_simulation_models.jl")
+logger = global_logger()
+
+try
+    run_tests()
+finally
+    # Guarantee that the global logger is reset.
+    global_logger(logger)
+    nothing
 end

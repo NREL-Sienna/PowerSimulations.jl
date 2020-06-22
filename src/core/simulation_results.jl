@@ -274,10 +274,7 @@ function load_simulation_results(
     variable::Array;
     kwargs...,
 )
-    results_folder = joinpath(sim_output.results_folder, stage_name)
-    if !isdir(results_folder)
-        mkdir(results_folder)
-    end
+    results_folder = sim_output.results_folder
     stage = "stage-$stage_name"
     references = sim_output.ref
     base_power = sim_output.base_powers[stage_name]
@@ -371,10 +368,7 @@ function load_simulation_results(
     stage_name::String;
     kwargs...,
 )
-    results_folder = joinpath(sim_output.results_folder, stage_name)
-    if !isdir(results_folder)
-        mkdir(results_folder)
-    end
+    results_folder = sim_output.results_folder
     stage = "stage-$stage_name"
     references = sim_output.ref
     base_power = sim_output.base_powers[stage_name]
@@ -575,55 +569,4 @@ function get_result_variable(results::IS.Results, sym::Symbol, data_type::PSY.Da
     else
         @info "Variable $variable_name not found in results."
     end
-end
-
-function load_results(folder_path::String)
-    if isfile(folder_path)
-        throw(ArgumentError("Not a folder path."))
-    end
-    files_in_folder = collect(readdir(folder_path))
-    variable_list = setdiff(
-        files_in_folder,
-        ["time_stamp.feather", "base_power.json", "optimizer_log.json", "check.sha256"],
-    )
-    vars_result = Dict{Symbol, DataFrames.DataFrame}()
-    dual_result = Dict{Symbol, Any}()
-    dual_names = _find_duals(variable_list)
-    param_names = _find_params(variable_list)
-    variable_list = setdiff(variable_list, vcat(dual_names, param_names, ".DS_Store"))
-    param_values = Dict{Symbol, DataFrames.DataFrame}()
-    for name in variable_list
-        variable_name = splitext(name)[1]
-        file_path = joinpath(folder_path, name)
-        vars_result[Symbol(variable_name)] = Feather.read(file_path)
-    end
-    for name in dual_names
-        dual_name = splitext(name)[1]
-        file_path = joinpath(folder_path, name)
-        dual_result[Symbol(dual_name)] = Feather.read(file_path)
-    end
-    for name in param_names
-        param_name = splitext(name)[1]
-        file_path = joinpath(folder_path, name)
-        param_values[Symbol(param_name)] = Feather.read(file_path)
-    end
-    optimizer_log = read_json(joinpath(folder_path, "optimizer_log.json"))
-    time_stamp = Feather.read(joinpath(folder_path, "time_stamp.feather"))
-    base_power = JSON.read(joinpath(folder_path, "base_power.json"))[1]
-    if size(time_stamp, 1) > find_var_length(vars_result, variable_list)
-        time_stamp = shorten_time_stamp(time_stamp)
-    end
-    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer_log["obj_value"])
-    check_file_integrity(folder_path)
-    results = SimulationResults(
-        base_power,
-        vars_result,
-        obj_value,
-        optimizer_log,
-        time_stamp,
-        dual_result,
-        folder_path,
-        param_values,
-    )
-    return results
 end

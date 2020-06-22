@@ -115,10 +115,14 @@ Exports Operational Problem Results to a path
 # Accepted Key Words
 - `file_type = CSV`: only CSV and featherfile are accepted
 """
-function IS.write_results(results::IS.Results, folder_path::String; kwargs...)
-    if !isdir(folder_path)
+function IS.write_results(results::OperationsProblemResults, save_path::String; kwargs...)
+    if !isdir(save_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
+    folder_path = mkdir(joinpath(
+        save_path,
+        replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-"),
+    ))
     write_data(get_variables(results), folder_path; kwargs...)
     if !isempty(get_duals(results))
         write_data(get_duals(results), folder_path; duals = true, kwargs...)

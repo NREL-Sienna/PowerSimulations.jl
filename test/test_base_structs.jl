@@ -1,25 +1,12 @@
 @testset "DeviceModel Tests" begin
-    @test_throws ArgumentError DeviceModel(PSY.ThermalGen, PSI.ThermalStandardUnitCommitment)
-    @test_throws ArgumentError DeviceModel(PSY.ThermalStandard, PSI.AbstractDeviceFormulation)
-    @test_throws ArgumentError PSI.CanonicalModel(JuMP.Model(),
-                                                nothing,
-                                                false,
-                                                true,
-                                                1:24,
-                                                Dates.Hour(1),
-                                                Dates.now(),
-                                                Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
-                                                Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
-                                                JuMP.AffExpr(0),
-                                                Dict{Symbol, JuMP.Containers.DenseAxisArray}(),
-                                                nothing,
-                                                Dict{PSI.ICKey, Array{InitialCondition}}(),
-                                                nothing)
+    @test_throws ArgumentError DeviceModel(ThermalGen, ThermalStandardUnitCommitment)
+    @test_throws ArgumentError DeviceModel(ThermalStandard, PSI.AbstractDeviceFormulation)
 end
 
-@testset "OperationModel Tests" begin
+@testset "OperationsProblem Tests" begin
+    sys = build_system("c_sys5")
     for p in [true, false]
-        t = OperationModel(TestOptModel, CopperPlatePowerModel, c_sys5; parameters = p)
-        @test PSI.model_has_parameters(t.canonical) == p
+        t = OperationsProblem(TestOpProblem, CopperPlatePowerModel, sys, use_parameters = p)
+        @test PSI.model_has_parameters(t.psi_container) == p
     end
 end

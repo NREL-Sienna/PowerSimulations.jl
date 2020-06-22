@@ -1,12 +1,16 @@
-function copper_plate(canonical_model::CanonicalModel, expression::Symbol, bus_count::Int64)
+function copper_plate(psi_container::PSIContainer, expression::Symbol, bus_count::Int)
 
-    time_steps = model_time_steps(canonical_model)
-    devices_netinjection = _remove_undef!(canonical_model.expressions[expression])
+    time_steps = model_time_steps(psi_container)
+    devices_netinjection = _remove_undef!(psi_container.expressions[expression])
 
-    canonical_model.constraints[:CopperPlateBalance] = JuMPConstraintArray(undef, time_steps)
+    constraint_val = JuMPConstraintArray(undef, time_steps)
+    assign_constraint!(psi_container, "CopperPlateBalance", constraint_val)
 
     for t in time_steps
-        canonical_model.constraints[:CopperPlateBalance][t] = JuMP.@constraint(canonical_model.JuMPmodel, sum(canonical_model.expressions[expression].data[1:bus_count, t]) == 0)
+        constraint_val[t] = JuMP.@constraint(
+            psi_container.JuMPmodel,
+            sum(psi_container.expressions[expression].data[1:bus_count, t]) == 0
+        )
     end
 
     return
