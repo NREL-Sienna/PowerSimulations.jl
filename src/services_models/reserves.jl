@@ -73,8 +73,7 @@ function service_requirement_constraint!(
             UpdateRef{SR}(SERVICE_REQUIREMENT, "get_requirement"),
         )
         for t in time_steps
-            param[name, t] =
-                PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t])
+            param[name, t] = PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t])
             if use_slacks
                 resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
             else
