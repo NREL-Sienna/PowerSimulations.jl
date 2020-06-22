@@ -587,7 +587,12 @@ function get_stage_variable(
 ) where {T, U <: AbstractOperationsProblem}
     variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
     step = axes(variable)[2][get_end_of_interval_step(stages.first)]
-    return JuMP.value(variable[device_name, step])
+    var = variable[device_name, step]
+    if JuMP.is_binary(var)
+        return round(JuMP.value(var))
+    else
+        return JuMP.value(var)
+    end
 end
 
 function get_stage_variable(
@@ -598,7 +603,12 @@ function get_stage_variable(
 ) where {T, U <: AbstractOperationsProblem}
     variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
     step = axes(variable)[2][stages.second.internal.execution_count + 1]
-    return JuMP.value(variable[device_name, step])
+    var = variable[device_name, step]
+    if JuMP.is_binary(var)
+        return round(JuMP.value(var))
+    else
+        return JuMP.value(var)
+    end
 end
 
 function get_stage_variable(
@@ -608,7 +618,12 @@ function get_stage_variable(
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
     variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
-    return JuMP.value.(variable[device_name, :])
+    vars = variable[device_name, :]
+    if JuMP.is_binary(first(vars))
+        return round.(JuMP.value(vars))
+    else
+        return JuMP.value.(vars)
+    end
 end
 
 function get_stage_variable(
@@ -618,7 +633,12 @@ function get_stage_variable(
     var_ref::UpdateRef,
 ) where {T, U <: AbstractOperationsProblem}
     variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
-    return JuMP.value.(variable[device_name, chron.range])
+    vars = variable[device_name, chron.range]
+    if JuMP.is_binary(first(vars))
+        return round.(JuMP.value(vars))
+    else
+        return JuMP.value.(vars)
+    end
 end
 
 function feedforward_update!(
