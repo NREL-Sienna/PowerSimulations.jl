@@ -1,6 +1,6 @@
 ###### Operations for JuMPExpressionMatrix ######
 
-function _remove_undef!(expression_array::T) where {T <: JuMPExpressionMatrix}
+function remove_undef!(expression_array::T) where {T <: JuMPExpressionMatrix}
     for j in 1:size(expression_array)[2]
         for i in 1:size(expression_array)[1]
             if !isassigned(expression_array, i, j)
@@ -16,8 +16,8 @@ end
 
 ###### Operations for JuMPDenseAxisExpressionMatrix ######
 
-function _remove_undef!(axis_expression_array::JuMP.Containers.DenseAxisArray)
-    _remove_undef!(axis_expression_array.data)
+function remove_undef!(axis_expression_array::JuMP.Containers.DenseAxisArray)
+    remove_undef!(axis_expression_array.data)
     return
 end
 

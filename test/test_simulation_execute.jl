@@ -71,11 +71,11 @@ function test_load_simulation(file_path::String)
         ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_from_stage = PSI.ON,
+                binary_source_stage = PSI.ON,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
             ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                variable_from_stage = PSI.ACTIVE_POWER,
+                variable_source_stage = PSI.ACTIVE_POWER,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
@@ -204,10 +204,7 @@ function test_load_simulation(file_path::String)
             for name in keys(sim.stages)
                 stage = sim.stages[name]
                 results = load_simulation_results(sim_results, name)
-                resolution = convert(
-                    Dates.Millisecond,
-                    PSY.get_forecasts_resolution(PSI.get_sys(stage)),
-                )
+                resolution = convert(Dates.Millisecond, PSI.get_resolution(stage))
                 time_stamp = results.time_stamp
                 length = size(time_stamp, 1)
                 test = results.time_stamp[1, 1]:resolution:results.time_stamp[length, 1]
@@ -363,7 +360,7 @@ function test_load_simulation(file_path::String)
         ),
         feedforward = Dict(
             ("ED", :devices, :Generators) => SemiContinuousFF(
-                binary_from_stage = PSI.ON,
+                binary_source_stage = PSI.ON,
                 affected_variables = [PSI.ACTIVE_POWER],
             ),
         ),
@@ -450,7 +447,7 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
+                    binary_source_stage = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -468,7 +465,7 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
+                    binary_source_stage = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -486,7 +483,7 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
+                    binary_source_stage = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -504,8 +501,8 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => RangeFF(
-                    variable_from_stage_ub = PSI.ON,
-                    variable_from_stage_lb = PSI.ON,
+                    variable_source_stage_ub = PSI.ON,
+                    variable_source_stage_lb = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -525,7 +522,7 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
+                    binary_source_stage = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -615,11 +612,11 @@ function test_load_simulation(file_path::String)
             ),
             feedforward = Dict(
                 ("ED", :devices, :Generators) => SemiContinuousFF(
-                    binary_from_stage = PSI.ON,
+                    binary_source_stage = PSI.ON,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
                 ("ED", :devices, :HydroEnergyReservoir) => IntegralLimitFF(
-                    variable_from_stage = PSI.ACTIVE_POWER,
+                    variable_source_stage = PSI.ACTIVE_POWER,
                     affected_variables = [PSI.ACTIVE_POWER],
                 ),
             ),
@@ -720,7 +717,8 @@ function test_load_simulation(file_path::String)
 end
 
 @testset "Test load simulation" begin
-    path = (joinpath(pwd(), "test_reading_results"))
+    # Use spaces in this path because that has caused failures.
+    path = (joinpath(pwd(), "test reading results"))
     !isdir(path) && mkdir(path)
 
     try

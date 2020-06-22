@@ -16,6 +16,21 @@ end
 function construct_network!(
     psi_container::PSIContainer,
     sys::PSY.System,
+    ::Type{AreaBalancePowerModel},
+)
+    area_mapping = PSY.get_aggregation_topology_mapping(PSY.Area, sys)
+    branches = get_available_components(PSY.Branch, sys)
+    if get_slack_variables(psi_container.settings)
+        @warn("Slack Variables are not compatible with AreaBalancePowerModel")
+    end
+
+    area_balance(psi_container, :nodal_balance_active, area_mapping, branches)
+    return
+end
+
+function construct_network!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
     ::Type{StandardPTDFModel},
 )
     buses = PSY.get_components(PSY.Bus, sys)
@@ -46,21 +61,53 @@ end
 function construct_network!(
     psi_container::PSIContainer,
     sys::PSY.System,
-    ::Type{T},
+    ::Type{T};
+    instantiate_model = instantiate_nip_expr_model,
 ) where {T <: PM.AbstractPowerModel}
-    incompat_list = [
-        PM.SDPWRMPowerModel,
-        PM.SparseSDPWRMPowerModel,
-        PM.SOCBFPowerModel,
-        PM.SOCBFConicPowerModel,
-    ]
-    if T in incompat_list
+    if T in UNSUPPORTED_POWERMODELS
         throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
     end
 
     get_slack_variables(psi_container.settings) && add_slacks!(psi_container, T)
 
-    powermodels_network!(psi_container, T, sys)
+    @debug "Building the $T network with $instantiate_model method"
+    powermodels_network!(psi_container, T, sys, instantiate_model)
+    add_pm_var_refs!(psi_container, T, sys)
+    return
+end
+
+function construct_network!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    ::Type{T};
+    instantiate_model = instantiate_bfp_expr_model,
+) where {T <: PM.AbstractBFModel}
+    if T in UNSUPPORTED_POWERMODELS
+        throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
+    end
+
+    get_slack_variables(psi_container.settings) && add_slacks!(psi_container, T)
+
+    @debug "Building the $T network with $instantiate_model method"
+    powermodels_network!(psi_container, T, sys, instantiate_model)
+    add_pm_var_refs!(psi_container, T, sys)
+    return
+end
+
+function construct_network!(
+    psi_container::PSIContainer,
+    sys::PSY.System,
+    ::Type{T};
+    instantiate_model = instantiate_vip_expr_model,
+) where {T <: PM.AbstractIVRModel}
+    if T in UNSUPPORTED_POWERMODELS
+        throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
+    end
+
+    get_slack_variables(psi_container.settings) && add_slacks!(psi_container, T)
+
+    @debug "Building the $T network with $instantiate_model method"
+    powermodels_network!(psi_container, T, sys, instantiate_model)
     add_pm_var_refs!(psi_container, T, sys)
     return
 end

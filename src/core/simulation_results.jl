@@ -421,17 +421,13 @@ Checks the hash value for each file made with the file is written with the new h
 - `path::String`: this is the folder path that contains the results and the check.sha256 file
 """
 function check_file_integrity(path::String)
-    file_path = joinpath(path, "check.sha256")
-    text = open(file_path, "r") do io
-        return readlines(io)
-    end
-
     matched = true
-    for line in text
-        expected_hash, file_name = split(line)
-        actual_hash = compute_sha256(file_name)
+    for file_info in read_file_hashes(path)
+        filename = file_info["filename"]
+        expected_hash = file_info["hash"]
+        actual_hash = compute_sha256(filename)
         if expected_hash != actual_hash
-            @error "hash mismatch for file" file_name expected_hash actual_hash
+            @error "hash mismatch for file" filename expected_hash actual_hash
             matched = false
         end
     end
@@ -519,21 +515,20 @@ function write_to_CSV(res::SimulationResults; kwargs...)
     if !isdir(folder_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Set up results folder."))
     end
+    variables_export = Dict()
     for (k, v) in IS.get_variables(res)
-        if decode_symbol(k)[1] == "P"
-            IS.get_variables(res)[k] = IS.get_base_power(res) .* v
+        start = decode_symbol(k)[1]
+        if start !== "ON" || start !== "START" || start !== "STOP"
+            variables_export[k] = IS.get_base_power(res) .* v
+        else
+            variables_export[k] = v
         end
     end
+    parameters_export = Dict()
     for (p, v) in IS.get_parameters(res)
-        IS.get_parameters(res)[p] = IS.get_base_power(res) .* v
+        parameters_export[p] = IS.get_base_power(res) .* v
     end
-    write_data(
-        IS.get_variables(res),
-        res.time_stamp,
-        folder_path;
-        file_type = CSV,
-        kwargs...,
-    )
+    write_data(variables_export, res.time_stamp, folder_path; file_type = CSV, kwargs...)
     write_optimizer_log(IS.get_total_cost(res), folder_path)
     write_data(
         IS.get_time_stamp(res),
@@ -543,7 +538,7 @@ function write_to_CSV(res::SimulationResults; kwargs...)
         kwargs...,
     )
     write_data(get_duals(res), folder_path; file_type = CSV, kwargs...)
-    write_data(IS.get_parameters(res), folder_path; file_type = CSV, kwargs...)
+    write_data(parameters_export, folder_path; file_type = CSV, kwargs...)
     files = collect(readdir(folder_path))
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
@@ -569,9 +564,17 @@ variable = get_result_variable(results, :ON, ThermalStandard)
 function get_result_variable(results::IS.Results, sym::Symbol, data_type::PSY.DataType)
     variable_name = encode_symbol(data_type, sym)
     if variable_name in keys(IS.get_variables(results))
-        variable = IS.get_variables(results)[variable_name]
+        variable = get_result_variable(results, variable_name)
         return variable
     else
         @info "Variable $variable_name not found in results."
     end
+end
+
+function get_result_variable(results::IS.Results, variable_name::Symbol)
+    return IS.get_variables(results)[variable_name]
+end
+
+function get_variable_names(results::IS.Results)
+    return collect(keys(results.variable_values))
 end

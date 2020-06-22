@@ -41,9 +41,10 @@ function energy_balance(
     cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol},
 )
+    parameters = model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
-    fraction_of_hour = Dates.value(Dates.Minute(resolution)) / 60
+    fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
     name_index = efficiency_data[1]
 
     varin = get_variable(psi_container, var_names[1])
@@ -55,13 +56,12 @@ function energy_balance(
     for (ix, name) in enumerate(name_index)
         eff_in = efficiency_data[2][ix].in
         eff_out = efficiency_data[2][ix].out
-
-        constraint[name, 1] = JuMP.@constraint(
-            psi_container.JuMPmodel,
-            varenergy[name, 1] ==
+        # Create the PGAE outside of the constraint definition
+        balance =
             initial_conditions[ix].value + varin[name, 1] * eff_in * fraction_of_hour -
             (varout[name, 1]) * fraction_of_hour / eff_out
-        )
+        constraint[name, 1] =
+            JuMP.@constraint(psi_container.JuMPmodel, varenergy[name, 1] == balance)
 
     end
 
@@ -98,7 +98,7 @@ If t > 1:
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * initial_conditions::Vector{InitialCondition} : for time zero 'varenergy'
-* inflow_data::Vector{DeviceTimeSeries} :: Inflow energy forecast information
+* inflow_data::Vector{DeviceTimeSeriesConstraintInfo} :: Inflow energy forecast information
 * cons_name::Symbol : name of the constraint
 * var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
 - : var_names[1] : varspill
@@ -109,15 +109,15 @@ If t > 1:
 function energy_balance_external_input_param(
     psi_container::PSIContainer,
     initial_conditions::Vector{InitialCondition},
-    inflow_data::Vector{DeviceTimeSeries},
+    inflow_data::Vector{DeviceTimeSeriesConstraintInfo},
     cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol},
     param_reference::UpdateRef,
 )
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
-    fraction_of_hour = Dates.value(Dates.Minute(resolution)) / 60
-    name_index = (d.name for d in inflow_data)
+    fraction_of_hour = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
+    name_index = (get_name(d) for d in inflow_data)
 
     varspill = get_variable(psi_container, var_names[1])
     varout = get_variable(psi_container, var_names[2])
@@ -128,28 +128,29 @@ function energy_balance_external_input_param(
     constraint = add_cons_container!(psi_container, cons_name, name_index, time_steps)
 
     for (ix, d) in enumerate(inflow_data)
-        multiplier[d.name, 1] = d.multiplier
-        paraminflow[d.name, 1] = PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[1])
+        name = get_name(d)
+        multiplier[name, 1] = d.multiplier
+        paraminflow[name, 1] = PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[1])
         exp =
             initial_conditions[ix].value +
             (
-                multiplier[d.name, 1] * paraminflow[d.name, 1] - varspill[d.name, 1] -
-                varout[d.name, 1]
+                multiplier[name, 1] * paraminflow[name, 1] - varspill[name, 1] -
+                varout[name, 1]
             ) * fraction_of_hour
-        constraint[d.name, 1] =
-            JuMP.@constraint(psi_container.JuMPmodel, varenergy[d.name, 1] == exp)
+        constraint[name, 1] =
+            JuMP.@constraint(psi_container.JuMPmodel, varenergy[name, 1] == exp)
 
         for t in time_steps[2:end]
-            paraminflow[d.name, t] =
+            paraminflow[name, t] =
                 PJ.add_parameter(psi_container.JuMPmodel, d.timeseries[t])
             exp =
-                varenergy[d.name, t - 1] +
+                varenergy[name, t - 1] +
                 (
-                    d.multiplier * paraminflow[d.name, 1] - varspill[d.name, t] -
-                    varout[d.name, t]
+                    d.multiplier * paraminflow[name, 1] - varspill[name, t] -
+                    varout[name, t]
                 ) * fraction_of_hour
-            constraint[d.name, t] =
-                JuMP.@constraint(psi_container.JuMPmodel, varenergy[d.name, t] == exp)
+            constraint[name, t] =
+                JuMP.@constraint(psi_container.JuMPmodel, varenergy[name, t] == exp)
         end
     end
     return
@@ -173,7 +174,7 @@ If t > 1:
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * initial_conditions::Vector{InitialCondition} : for time zero 'varenergy'
-* inflow_data::TVector{DeviceTimeSeries} :: Inflow energy forecast information
+* inflow_data::TVector{DeviceTimeSeriesConstraintInfo} :: Inflow energy forecast information
 * cons_name::Symbol : name of the constraint
 * var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
 - : var_names[1] : varspill
@@ -183,14 +184,14 @@ If t > 1:
 function energy_balance_external_input(
     psi_container::PSIContainer,
     initial_conditions::Vector{InitialCondition},
-    inflow_data::Vector{DeviceTimeSeries},
+    inflow_data::Vector{DeviceTimeSeriesConstraintInfo},
     cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol},
 )
     time_steps = model_time_steps(psi_container)
     resolution = model_resolution(psi_container)
-    fraction_of_hour = Dates.value(Dates.Minute(resolution)) / 60
-    name_index = (d.name for d in inflow_data)
+    fraction_of_hour = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
+    name_index = (get_name(d) for d in inflow_data)
 
     varspill = get_variable(psi_container, var_names[1])
     varout = get_variable(psi_container, var_names[2])
@@ -199,20 +200,22 @@ function energy_balance_external_input(
     constraint = add_cons_container!(psi_container, cons_name, name_index, time_steps)
 
     for (ix, d) in enumerate(inflow_data)
-        constraint[d.name, 1] = JuMP.@constraint(
+        name = get_name(d)
+        constraint[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            varenergy[d.name, 1] ==
+            varenergy[name, 1] ==
             initial_conditions[ix].value +
-            (d.multiplier * d.timeseries[1] - varspill[d.name, 1] - varout[d.name, 1]) *
+            (d.multiplier * d.timeseries[1] - varspill[name, 1] - varout[name, 1]) *
             fraction_of_hour
         )
 
         for t in time_steps[2:end]
-            constraint[d.name, t] = JuMP.@constraint(
+            constraint[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                varenergy[d.name, t] ==
-                varenergy[d.name, t - 1] +
-                (d.multiplier * d.timeseries[t] - varspill[d.name, t] - varout[d.name, t]) * fraction_of_hour
+                varenergy[name, t] ==
+                varenergy[name, t - 1] +
+                (d.multiplier * d.timeseries[t] - varspill[name, t] - varout[name, t]) *
+                fraction_of_hour
             )
         end
     end

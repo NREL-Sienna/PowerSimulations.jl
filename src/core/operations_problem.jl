@@ -29,7 +29,7 @@ template = OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, s
 OpModel = OperationsProblem(TestOpProblem, template, system)
 ```
 # Accepted Key Words
-- `Horizon::Int`: Manually specify the length of the forecast Horizon
+- `horizon::Int`: Manually specify the length of the forecast Horizon
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
@@ -97,7 +97,7 @@ model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 construct_device!(op_problem, :Thermal, model)
 ```
 # Accepted Key Words
-- `Horizon::Int`: Manually specify the length of the forecast Horizon
+- `horizon::Int`: Manually specify the length of the forecast Horizon
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
@@ -138,7 +138,7 @@ model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 construct_device!(op_problem, :Thermal, model)
 ```
 # Accepted Key Words
-- `Horizon::Int`: Manually specify the length of the forecast Horizon
+- `horizon::Int`: Manually specify the length of the forecast Horizon
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `use_forecast_data::Bool` : If true uses the data in the system forecasts. If false uses the data for current operating point in the system.
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
@@ -207,6 +207,8 @@ get_services_ref(op_problem::OperationsProblem) = op_problem.template.services
 get_system(op_problem::OperationsProblem) = op_problem.sys
 get_psi_container(op_problem::OperationsProblem) = op_problem.psi_container
 get_base_power(op_problem::OperationsProblem) = op_problem.sys.basepower
+get_jump_model(op_problem::OperationsProblem) = get_jump_model(op_problem.psi_container)
+
 function reset!(op_problem::OperationsProblem)
     op_problem.psi_container =
         PSIContainer(op_problem.sys, op_problem.psi_container.settings, nothing)
@@ -313,7 +315,7 @@ function set_model!(
     name::Symbol,
     device_model::DeviceModel,
 ) where {D <: PSY.StaticInjection}
-    op_problem.template.devices[name] = device_model
+    set_model!(op_problem.template, name, device_model)
 end
 
 function set_model!(
@@ -330,9 +332,6 @@ function construct_device!(
     name::Symbol,
     device_model::DeviceModel,
 )
-    if haskey(op_problem.template.devices, name)
-        throw(IS.ConflictingInputsError("Device with model name $(name) already exists in the Opertaion Model"))
-    end
     set_model!(device_model.device_type, op_problem, name, device_model)
 
     construct_device!(
@@ -415,12 +414,9 @@ function _build!(
         @debug check_problem_size(psi_container)
     end
 
-    if model_has_parameters(psi_container)
-        add_initial_condition_parameters!(psi_container)
-    end
-
     @debug "Building Objective"
     JuMP.@objective(psi_container.JuMPmodel, MOI.MIN_SENSE, psi_container.cost_function)
+    @debug "Total operation count $(psi_container.JuMPmodel.operator_counter)"
     return
 end
 

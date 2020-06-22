@@ -189,13 +189,12 @@ function _pwlgencost_sos(
 ) where {JV <: JuMP.AbstractVariableRef}
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
     if haskey(kwargs, :on_status)
-        status =kwargs[:on_status]
+        status = kwargs[:on_status]
     else
         status = 1.0
         @warn("Using Piecewise Linear cost function 
             but no variable/parameter ref for ON status is passed. 
-            Default status will be set to online (1.0)"
-        )
+            Default status will be set to online (1.0)")
     end
     pwlvars = JuMP.@variable(
         psi_container.JuMPmodel,
@@ -359,25 +358,28 @@ function ps_cost(
     if haskey(kwargs, :variable_on)
         bin = get_variable(psi_container, kwargs[:variable_on])[index, :]
     elseif haskey(kwargs, :parameter_on)
-        bin = get_parameter_container(
-            psi_container,
-            kwargs[:parameter_on],
-        ).parameter_array[index, :]
+        bin = get_parameter_container(psi_container, kwargs[:parameter_on]).parameter_array[
+            index,
+            :,
+        ]
     else
         bin = nothing
     end
-    if !haskey(psi_container.variables, :PWL_cost_vars)
-        time_steps = model_time_steps(psi_container)
-        container = add_var_container!(
-            psi_container,
-            :PWL_cost_vars,
-            [index],
-            time_steps,
-            1:length(cost_component);
-            sparse = true,
-        )
-    else
-        container = get_variable(psi_container, :PWL_cost_vars)
+    export_pwl_vars = get_export_pwl_vars(psi_container.settings)
+    if export_pwl_vars
+        if !haskey(psi_container.variables, :PWL_cost_vars)
+            time_steps = model_time_steps(psi_container)
+            container = add_var_container!(
+                psi_container,
+                :PWL_cost_vars,
+                [index],
+                time_steps,
+                1:length(cost_component);
+                sparse = true,
+            )
+        else
+            container = get_variable(psi_container, :PWL_cost_vars)
+        end
     end
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
     for (t, var) in enumerate(variable)
@@ -386,8 +388,10 @@ function ps_cost(
         else
             c, pwl_vars = _pwl_cost(psi_container, var, cost_array)
         end
-        for (ix, v) in enumerate(pwl_vars)
-            container[(index, t, ix)] = v
+        if export_pwl_vars
+            for (ix, v) in enumerate(pwl_vars)
+                container[(index, t, ix)] = v
+            end
         end
         JuMP.add_to_expression!(gen_cost, c)
     end
@@ -435,7 +439,7 @@ function add_to_cost(
     kwargs...,
 ) where {D <: IS.FlattenIteratorWrapper{<:PSY.Device}}
     resolution = model_resolution(psi_container)
-    dt = Dates.value(Dates.Minute(resolution)) / 60
+    dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     for d in devices
         cost_component = getfield(PSY.get_op_cost(d), cost_symbol)
         cost_expression = ps_cost(

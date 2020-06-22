@@ -40,6 +40,7 @@ function device_linear_rateofchange(
     cons_name::Symbol,
     var_name::Symbol,
 )
+    parameters = model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
     up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
@@ -52,6 +53,9 @@ function device_linear_rateofchange(
 
     for (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)
+        @assert (
+            parameters && typeof(get_value(initial_conditions[ix])) == PJ.ParameterRef
+        ) || !parameters
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             variable[name, 1] - get_value(initial_conditions[ix]) <= rate_data[ix].up
@@ -124,6 +128,7 @@ function device_mixedinteger_rateofchange(
     cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol},
 )
+    parameters = model_has_parameters(psi_container)
     time_steps = model_time_steps(psi_container)
     up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
     down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
@@ -137,15 +142,18 @@ function device_mixedinteger_rateofchange(
     con_down = add_cons_container!(psi_container, down_name, set_name, time_steps)
 
     for (ix, ic) in enumerate(initial_conditions)
+        @assert (
+            parameters && typeof(get_value(initial_conditions[ix])) == PJ.ParameterRef
+        ) || !parameters
         name = device_name(ic)
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, 1] - initial_conditions[ix].value <=
+            variable[name, 1] - get_value(initial_conditions[ix]) <=
             rate_data[1][ix].up + rate_data[2][ix].max * varstart[name, 1]
         )
         con_down[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            initial_conditions[ix].value - variable[name, 1] <=
+            get_value(initial_conditions[ix]) - variable[name, 1] <=
             rate_data[1][ix].down + rate_data[2][ix].min * varstop[name, 1]
         )
     end
@@ -207,27 +215,27 @@ If t > 1:
 - : var_names[2] : 'varstart'
 - : var_names[3] : 'varstop'
 """
-function device_pglib_rateofchange(
+function device_multistart_rateofchange(
     psi_container::PSIContainer,
-    rate_data::Vector{DeviceRampPGLIB},
-    initial_conditions::Matrix{InitialCondition},
+    rate_data::Vector{DeviceRampConstraintInfo},
+    initial_conditions::Vector{InitialCondition},
     cons_name::Symbol,
     var_names::Tuple{Symbol, Symbol, Symbol},
 )
-    time_steps = PSI.model_time_steps(psi_container)
-    up_name = PSI.middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    down_name = PSI.middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
+    time_steps = model_time_steps(psi_container)
+    up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
+    down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
 
-    variable = PSI.get_variable(psi_container, var_names[1])
-    varstart = PSI.get_variable(psi_container, var_names[2])
-    varstop = PSI.get_variable(psi_container, var_names[3])
+    variable = get_variable(psi_container, var_names[1])
+    varstart = get_variable(psi_container, var_names[2])
+    varstop = get_variable(psi_container, var_names[3])
 
-    set_name = (PSI.device_name(ic) for ic in initial_conditions[:, 1])
-    con_up = PSI.add_cons_container!(psi_container, up_name, set_name, time_steps)
-    con_down = PSI.add_cons_container!(psi_container, down_name, set_name, time_steps)
+    set_name = (device_name(ic) for ic in initial_conditions[:, 1])
+    con_up = add_cons_container!(psi_container, up_name, set_name, time_steps)
+    con_down = add_cons_container!(psi_container, down_name, set_name, time_steps)
 
-    for (ix, ic) in enumerate(initial_conditions[:, 1])
-        name = PSI.device_name(ic)
+    for (ix, ic) in enumerate(initial_conditions)
+        name = device_name(ic)
         #constriant (8)
         expression_ub = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
         for val in rate_data[ix].additional_terms_ub
@@ -239,8 +247,7 @@ function device_pglib_rateofchange(
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
             expression_ub -
-            initial_conditions[ix, 2].value *
-            (initial_conditions[ix, 1].value - rate_data[ix].limits.min) <=
+            ic.value <=
             rate_data[ix].ramplimits.up
         )
         #constraint (9)
@@ -254,9 +261,8 @@ function device_pglib_rateofchange(
         end
         con_down[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            initial_conditions[ix, 2].value *
-            (initial_conditions[ix, 1].value - rate_data[ix].limits.min) - expression_lb <=
-            rate_data[ix].ramplimits.down
+            ic.value -
+            expression_lb <= rate_data[ix].ramplimits.down
         )
     end
 
