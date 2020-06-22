@@ -386,6 +386,7 @@ function semicontinuousrange_ff(
         name = get_name(constraint_info)
         ub_value = JuMP.upper_bound(variable[name, 1])
         lb_value = JuMP.lower_bound(variable[name, 1])
+        @debug "SemiContinuousFF" name ub_value lb_value
         param[name] = PJ.add_parameter(psi_container.JuMPmodel, 1.0)
         for t in time_steps
             expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
@@ -417,6 +418,7 @@ function semicontinuousrange_ff(
     # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
     for v in variable
         if JuMP.has_lower_bound(v)
+            @debug "lb reset" v
             JuMP.set_lower_bound(v, 0.0)
         end
     end
@@ -620,6 +622,7 @@ function feedforward_update!(
     chronology::FeedForwardChronology,
     param_reference::UpdateRef{JuMP.VariableRef},
     param_array::JuMPParamArray,
+    current_time::Dates.DateTime
 )
     for device_name in axes(param_array)[1]
         var_value = get_stage_variable(
@@ -628,6 +631,18 @@ function feedforward_update!(
             device_name,
             param_reference,
         )
+        previous_value = PJ.value(param_array[device_name])
         PJ.fix(param_array[device_name], var_value)
+        IS.@record :simulation ParameterUpdateEvent(
+            "FeedForward",
+            current_time,
+            param_reference,
+            device_name,
+            var_value,
+            previous_value,
+            destination_stage,
+            source_stage
+        )
+
     end
 end
