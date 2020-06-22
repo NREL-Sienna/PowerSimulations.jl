@@ -14,12 +14,7 @@ PG.stack_plot(re_results; save = path, display = false, title = "Example GR Plot
 # ## To make an interactive PlotlyJS plot, reset the backend
 #Plots.plotlyjs()
 path = mkdir(joinpath(pwd(), "plots-02"));
-PG.stack_plot(
-    re_results;
-    save = path,
-    display = false,
-    title = "Example PlotlyJS Plot",
-);
+PG.stack_plot(re_results; save = path, display = false, title = "Example PlotlyJS Plot");
 
 # 3.1
 
@@ -83,19 +78,8 @@ PG.bar_plot(re_results; save = path, title = title);
 Plots.gr();
 
 path = mkdir(joinpath(pwd(), "plots-3"));
-PG.fuel_plot(
-    re_results,
-    c_sys5_re;
-    save = path,
-    title = "Example Fuel Plot",
-);
-PG.fuel_plot(
-    re_results,
-    c_sys5_re;
-    save = path,
-    load = true,
-    title = "Fuel Plot with Load",
-);
+PG.fuel_plot(re_results, c_sys5_re; save = path, title = "Example Fuel Plot");
+PG.fuel_plot(re_results, c_sys5_re; save = path, load = true, title = "Fuel Plot with Load");
 PG.fuel_plot(
     re_results,
     c_sys5_re;
@@ -126,13 +110,9 @@ PG.fuel_plot(re_results, c_sys5_re; save = path, stair = true);
 
 # 3.4 FORECAST PLOTS
 path = mkdir(joinpath(pwd(), "plots-4"));
-PG.plot_reserves(op_results; save = path, );
+PG.plot_reserves(op_results; save = path);
 PG.plot_demand(op_results; save = path, title = "Example Demand Plot");
-PG.plot_demand(
-    system;
-    save = path,
-    title = "Example Demand Plot From System",
-);
+PG.plot_demand(system; save = path, title = "Example Demand Plot From System");
 initial_time = Dates.DateTime(2024, 01, 01, 02, 0, 0);
 horizon = 6;
 PG.plot_demand(
@@ -148,12 +128,7 @@ PG.plot_demand(
     save = path,
     title = "Example Demand Plot by Type",
 );
-PG.plot_demand(
-    system;
-    stair = true,
-    title = "Example Stair Demand Plot",
-    save = path,    
-);
+PG.plot_demand(system; stair = true, title = "Example Stair Demand Plot", save = path);
 
 colors = [:orange :pink :blue :red :grey]
 PG.plot_demand(
@@ -162,11 +137,7 @@ PG.plot_demand(
     save = path,
     title = "Example Demand Plot with Different Colors",
 );
-PG.plot_demand(
-    system;
-    title = "Example Demand Plot with Title",
-    save = path,
-);
+PG.plot_demand(system; title = "Example Demand Plot with Title", save = path);
 
 # 3.5
 
@@ -177,23 +148,14 @@ PG.plot_variable(op_results, "P__ThermalStandard"; save = path, format = "png");
 variables = [Symbol("P__ThermalStandard")]
 path = mkdir(joinpath(pwd(), "plots-51"));
 
-PG.stack_plot(
-    op_results,
-    variables;
-    save = path,
-    title = "Plot with Fewer Variables",
-);
+PG.stack_plot(op_results, variables; save = path, title = "Plot with Fewer Variables");
 #
 path = mkdir(joinpath(pwd(), "plots-52"));
 
 selected_variables = Dict(Symbol("P__ThermalStandard") => [:Brighton, :Solitude]);
 results_subset = PG.sort_data(op_results; Variables = selected_variables);
 
-PG.stack_plot(
-    results_subset;
-    save = path,
-    title = "Selected Variables Plot",
-);
+PG.stack_plot(results_subset; save = path, title = "Selected Variables Plot");
 
 # 3.6
 results_one =
@@ -205,12 +167,7 @@ path = mkdir(joinpath(pwd(), "plots-6"));
 PG.stack_plot([results_one, results_two]; save = path, title = "Comparison");
 Plots.gr()
 #
-PG.fuel_plot(
-    [results_one, results_two],
-    c_sys5_re;
-    save = path,
-    title = "Comparison",
-);
+PG.fuel_plot([results_one, results_two], c_sys5_re; save = path, title = "Comparison");
 #
 variables = [Symbol("P__ThermalStandard")]
 PG.stack_plot(
