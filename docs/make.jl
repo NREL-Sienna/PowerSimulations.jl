@@ -7,18 +7,18 @@ const PG = PowerGraphics
 folders = Dict(
     #  "Operations" => readdir("src/Operations"),
     #  "Simulations" => readdir("src/Simulations"),
-    "PowerGraphics" => readdir("src/PowerGraphics"),
+    "PowerGraphics" => readdir("docs/src/PowerGraphics"),
 )
 
 for (name, folder) in folders
     for file in folder
-        outputdir = joinpath(pwd(), "src/howto")
-        inputfile = joinpath(pwd(), "src/$name/$file")
+        outputdir = joinpath(pwd(), "docs/src/howto")
+        inputfile = joinpath(pwd(), "docs/src/$name/$file")
         Literate.markdown(inputfile, outputdir)
     end
 end
-if isfile("src/howto/.DS_Store.md")
-    rm("src/howto/.DS_Store.md")
+if isfile("docs/src/howto/.DS_Store.md")
+    rm("docs/src/howto/.DS_Store.md")
 end
 makedocs(
     sitename = "PowerSimulations.jl",
