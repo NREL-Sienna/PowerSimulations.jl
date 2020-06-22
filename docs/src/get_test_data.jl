@@ -251,3 +251,4 @@ set_services_template!(
 )
 
 op_results = solve!(operations_problem)
+re_results = PSI.run_economic_dispatch(c_sys5_re; optimizer = solver, use_parameters = true)

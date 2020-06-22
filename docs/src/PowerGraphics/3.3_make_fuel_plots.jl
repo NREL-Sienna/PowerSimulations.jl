@@ -21,6 +21,7 @@
 # ```julia
 # fuel_plot(results, system)
 # ```
+
 # ![this one](plots-3/Example_Fuel_Plot_Stack.png)
 # ![this one](plots-3/Example_Fuel_Plot_Bar.png)
 
@@ -72,10 +73,10 @@
 # ### For saving the plot with the PlotlyJS backend, you can set a different format for saving
 
 # ```julia
-# fuel_plot(results, system; save = path, format = "png")
+# fuel_plot(results, system; save = path, format = "html")
 # ```
 
-# Default format for saving is html.
+# Default format for saving is png.
 # Optional formats for saving include png, html, and svg.
 
 # ## Alternatively, set up a dictionary of the desired sorting method using `make_fuel_dictionary()`

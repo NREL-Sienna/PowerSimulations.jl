@@ -1,9 +1,10 @@
 import PowerGraphics
+using PowerSystems
 using Plots
 using PlotlyJS
 const PG = PowerGraphics
 include("../../src/get_test_data.jl")
-re_results = PSI.run_economic_dispatch(c_sys5_re; optimizer = solver, use_parameters = true);
+
 # 3.0
 Plots.gr()
 
@@ -17,16 +18,15 @@ PG.stack_plot(
     re_results;
     save = path,
     display = false,
-    format = "png",
     title = "Example PlotlyJS Plot",
 );
 
 # 3.1
 
 path = mkdir(joinpath(pwd(), "plots-10"));
-PG.stack_plot(re_results; save = path, format = "png", title = "Example Stack Plot");
+PG.stack_plot(re_results; save = path, title = "Example Stack Plot");
 path = mkdir(joinpath(pwd(), "plots-11"));
-PG.stack_plot(re_results; save = path, format = "png", title = "Example saved Stack Plot");
+PG.stack_plot(re_results; save = path, title = "Example saved Stack Plot");
 path = mkdir(joinpath(pwd(), "plots-12"));
 PG.stack_plot(
     re_results;
@@ -47,23 +47,22 @@ PG.stack_plot(
 );
 
 path = mkdir(joinpath(pwd(), "plots-14"));
-PG.stack_plot(re_results; stair = true, save = path, format = "png", title = "Stair Plot");
+PG.stack_plot(re_results; stair = true, save = path, title = "Stair Plot");
 path = mkdir(joinpath(pwd(), "plots-15"));
 title = "Example of a Title"
-PG.stack_plot(re_results; save = path, format = "png", title = title);
+PG.stack_plot(re_results; save = path, title = title);
 # 3.2
 path = mkdir(joinpath(pwd(), "plots-20"));
-PG.bar_plot(re_results; save = path, format = "png", title = "Example Bar Plot");
+PG.bar_plot(re_results; save = path, title = "Example Bar Plot");
 
 path = mkdir(joinpath(pwd(), "plots-21"));
-PG.bar_plot(re_results; save = path, format = "png", title = "Example saved Bar Plot");
+PG.bar_plot(re_results; save = path, title = "Example saved Bar Plot");
 
 path = mkdir(joinpath(pwd(), "plots-22"))
 PG.bar_plot(
     re_results;
     reserves = true,
     save = path,
-    format = "png",
     title = "Example Bar Plot with Reserves",
 );
 
@@ -72,14 +71,13 @@ PG.bar_plot(
     re_results;
     seriescolor = colors,
     save = path,
-    format = "png",
     title = "Example Bar Plot with Other Colors",
 );
 
 title = "Example of a Title"
 
 path = mkdir(joinpath(pwd(), "plots-24"));
-PG.bar_plot(re_results; save = path, format = "png", title = title);
+PG.bar_plot(re_results; save = path, title = title);
 
 # 3.3
 Plots.gr();
@@ -89,14 +87,12 @@ PG.fuel_plot(
     re_results,
     c_sys5_re;
     save = path,
-    format = "png",
     title = "Example Fuel Plot",
 );
 PG.fuel_plot(
     re_results,
     c_sys5_re;
     save = path,
-    format = "png",
     load = true,
     title = "Fuel Plot with Load",
 );
@@ -104,7 +100,6 @@ PG.fuel_plot(
     re_results,
     c_sys5_re;
     save = path,
-    format = "png",
     curtailment = true,
     title = "Fuel Plot with Curtailment",
 );
@@ -113,7 +108,6 @@ PG.fuel_plot(
     c_sys5_re;
     reserves = true,
     save = path,
-    format = "png",
     title = "Example Fuel Plot with Reserves",
 );
 
@@ -123,22 +117,20 @@ PG.fuel_plot(
     c_sys5_re;
     seriescolor = colors,
     save = path,
-    format = "png",
     title = "Example Fuel Plot with Other Colors",
 );
 
 title = "Example of a Title";
-PG.fuel_plot(re_results, c_sys5_re; save = path, format = "png", title = title);
-PG.fuel_plot(re_results, c_sys5_re; save = path, format = "png", stair = true);
+PG.fuel_plot(re_results, c_sys5_re; save = path, title = title);
+PG.fuel_plot(re_results, c_sys5_re; save = path, stair = true);
 
 # 3.4 FORECAST PLOTS
 path = mkdir(joinpath(pwd(), "plots-4"));
-PG.plot_reserves(op_results; save = path, format = "png");
-PG.plot_demand(op_results; save = path, format = "png", title = "Example Demand Plot");
+PG.plot_reserves(op_results; save = path, );
+PG.plot_demand(op_results; save = path, title = "Example Demand Plot");
 PG.plot_demand(
     system;
     save = path,
-    format = "png",
     title = "Example Demand Plot From System",
 );
 initial_time = Dates.DateTime(2024, 01, 01, 02, 0, 0);
@@ -148,22 +140,19 @@ PG.plot_demand(
     horizon = horizon,
     initial_time = initial_time,
     save = path,
-    format = "png",
     title = "Example Demand Plot Subsection",
 );
 PG.plot_demand(
     system;
     aggregate = PSY.System,
     save = path,
-    format = "png",
     title = "Example Demand Plot by Type",
 );
 PG.plot_demand(
     system;
     stair = true,
     title = "Example Stair Demand Plot",
-    save = path,
-    format = "png",
+    save = path,    
 );
 
 colors = [:orange :pink :blue :red :grey]
@@ -171,13 +160,11 @@ PG.plot_demand(
     system;
     seriescolor = colors,
     save = path,
-    format = "png",
     title = "Example Demand Plot with Different Colors",
 );
 PG.plot_demand(
     system;
     title = "Example Demand Plot with Title",
-    format = "png",
     save = path,
 );
 
@@ -194,7 +181,6 @@ PG.stack_plot(
     op_results,
     variables;
     save = path,
-    format = "png",
     title = "Plot with Fewer Variables",
 );
 #
@@ -206,7 +192,6 @@ results_subset = PG.sort_data(op_results; Variables = selected_variables);
 PG.stack_plot(
     results_subset;
     save = path,
-    format = "png",
     title = "Selected Variables Plot",
 );
 
@@ -217,14 +202,13 @@ results_two =
     PSI.run_economic_dispatch(c_sys5_re; optimizer = solver, use_parameters = true);
 
 path = mkdir(joinpath(pwd(), "plots-6"));
-PG.stack_plot([results_one, results_two]; save = path, format = "png", title = "Comparison");
+PG.stack_plot([results_one, results_two]; save = path, title = "Comparison");
 Plots.gr()
 #
 PG.fuel_plot(
     [results_one, results_two],
     c_sys5_re;
     save = path,
-    format = "png",
     title = "Comparison",
 );
 #
@@ -233,6 +217,5 @@ PG.stack_plot(
     [results_one, results_two],
     variables;
     save = path,
-    format = "png",
     title = "Comparison with fewer variables",
 );

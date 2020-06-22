@@ -83,7 +83,7 @@
 
 # ### For saving the plot with the PlotlyJS backend, you can set a different format for saving
 # ```julia
-# plot_demand(system; save = path, format = "png")
+# plot_demand(system; save = path, format = "html")
 # ```
-# Default format for saving is html.
+# Default format for saving is png.
 # Optional formats for saving include png, html, and svg.

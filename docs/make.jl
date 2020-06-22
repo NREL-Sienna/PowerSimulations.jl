@@ -1,4 +1,5 @@
 using Documenter
+using PowerSystems
 using PowerSimulations
 using Literate
 using PowerGraphics

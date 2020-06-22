@@ -71,7 +71,7 @@
 
 # ### For saving the plot with the PlotlyJS backend, you can set a different format for saving
 # ```julia
-# stack_plot(results; save = path, format = "png")
+# stack_plot(results; save = path, format = "html")
 # ```
-# Default format for saving is html.
+# Default format for saving is png.
 # Optional formats for saving include png, html, and svg.
