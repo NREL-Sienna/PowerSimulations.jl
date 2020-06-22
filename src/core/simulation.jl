@@ -774,9 +774,8 @@ function update_parameter!(
 )
     param_array = get_parameter_array(container)
     for (k, chronology) in stage.internal.chronolgy_dict
-        # RECORDER TODO: VariableRef feedforward update
         source_stage = get_stage(sim, k)
-        feedforward_update!(stage, source_stage, chronology, param_reference, param_array)
+        feedforward_update!(stage, source_stage, chronology, param_reference, param_array, sim.internal.current_time)
     end
 
     return

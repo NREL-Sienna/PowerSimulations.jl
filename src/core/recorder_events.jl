@@ -77,6 +77,41 @@ function InitialConditionUpdateEvent(
     )
 end
 
+struct ParameterUpdateEvent <: IS.AbstractRecorderEvent
+    common::IS.RecorderEventCommon
+    category::String
+    simulation_time::Dates.DateTime
+    parameter_type::String
+    device_name::String
+    previous_value::Float64
+    val::Float64
+    stage_number::Int
+    source::Int
+end
+
+function ParameterUpdateEvent(
+    category::String,
+    simulation_time::Dates.DateTime,
+    update_ref::UpdateRef{JuMP.VariableRef},
+    device_name::String,
+    val::Float64,
+    previous_value::Float64,
+    destination_stage::Stage,
+    source_stage::Stage
+)
+    return ParameterUpdateEvent(
+        IS.RecorderEventCommon("ParameterUpdateEvent"),
+        category,
+        simulation_time,
+        string(update_ref.access_ref),
+        device_name,
+        previous_value,
+        val,
+        get_number(destination_stage),
+        get_number(source_stage)
+    )
+end
+
 function get_simulation_step_range(filename::AbstractString, step::Int)
     events = IS.list_recorder_events(SimulationStepEvent, filename, x -> x.step == step)
     if length(events) != 2

@@ -74,7 +74,7 @@ function service_requirement_constraint!(
         )
         for t in time_steps
             param[name, t] =
-                PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t] * requirement)
+                PJ.add_parameter(psi_container.JuMPmodel, ts_vector[t])
             if use_slacks
                 resource_expression = sum(reserve_variable[:, t]) + slack_vars[t]
             else
@@ -82,7 +82,7 @@ function service_requirement_constraint!(
             end
             constraint[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                resource_expression >= param[name, t]
+                resource_expression >= param[name, t] * requirement
             )
         end
     else
@@ -96,10 +96,22 @@ function service_requirement_constraint!(
     return
 end
 
+function cost_function!(
+    psi_container::PSIContainer,
+    service::SR,
+    ::ServiceModel{SR, RangeReserve},
+) where {SR <: PSY.Reserve}
+    reserve = get_variable(psi_container, variable_name(PSY.get_name(service), SR))
+    for r in reserve
+        JuMP.add_to_expression!(psi_container.cost_function, r, 1.0)
+    end
+    return
+end
+
 function service_requirement_constraint!(
     psi_container::PSIContainer,
     service::SR,
-    model::ServiceModel{SR, StepwiseCostReserve},
+    ::ServiceModel{SR, StepwiseCostReserve},
 ) where {SR <: PSY.Reserve}
 
     initial_time = model_initial_time(psi_container)
@@ -121,7 +133,7 @@ function service_requirement_constraint!(
     return
 end
 
-function cost_function(
+function cost_function!(
     psi_container::PSIContainer,
     service::SR,
     ::Type{StepwiseCostReserve},

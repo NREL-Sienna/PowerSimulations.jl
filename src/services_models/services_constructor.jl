@@ -71,6 +71,9 @@ function construct_service!(
         # Constraints
         service_requirement_constraint!(psi_container, service, model)
         modify_device_model!(devices_template, model, contributing_devices)
+
+        # Cost Function
+        cost_function!(psi_container, service, model)
     end
     return
 end
@@ -102,7 +105,7 @@ function construct_service!(
         modify_device_model!(devices_template, model, contributing_devices)
 
         # Cost Function
-        cost_function(psi_container, service, model.formulation)
+        cost_function!(psi_container, service, model.formulation)
     end
     return
 end
