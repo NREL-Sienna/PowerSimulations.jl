@@ -571,7 +571,12 @@ function get_stage_variable(
 ) where {T, U <: AbstractOperationsProblem}
     variable = get_variable(stages.first.internal.psi_container, var_ref.access_ref)
     step = axes(variable)[2][1]
-    return JuMP.value(variable[device_name, step])
+    var = variable[device_name, step]
+    if JuMP.is_binary(var)
+        return round(JuMP.value(var))
+    else
+        return JuMP.value(var)
+    end
 end
 
 function get_stage_variable(
