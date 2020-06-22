@@ -85,9 +85,29 @@ PG.bar_plot(re_results; save = path, format = "png", title = title);
 Plots.gr();
 
 path = mkdir(joinpath(pwd(), "plots-3"));
-PG.fuel_plot(re_results, c_sys5_re; save = path, format = "png", title = "Example Fuel Plot");
-PG.fuel_plot(re_results, c_sys5_re; save = path, format = "png", load = true, title = "Fuel Plot with Load");
-PG.fuel_plot(re_results, c_sys5_re; save = path, format = "png", curtailment = true, title = "Fuel Plot with Curtailment");
+PG.fuel_plot(
+    re_results,
+    c_sys5_re;
+    save = path,
+    format = "png",
+    title = "Example Fuel Plot",
+);
+PG.fuel_plot(
+    re_results,
+    c_sys5_re;
+    save = path,
+    format = "png",
+    load = true,
+    title = "Fuel Plot with Load",
+);
+PG.fuel_plot(
+    re_results,
+    c_sys5_re;
+    save = path,
+    format = "png",
+    curtailment = true,
+    title = "Fuel Plot with Curtailment",
+);
 PG.fuel_plot(
     op_results,
     c_sys5_re;
@@ -111,24 +131,57 @@ title = "Example of a Title";
 PG.fuel_plot(re_results, c_sys5_re; save = path, format = "png", title = title);
 PG.fuel_plot(re_results, c_sys5_re; save = path, format = "png", stair = true);
 
-
 # 3.4 FORECAST PLOTS
 path = mkdir(joinpath(pwd(), "plots-4"));
 PG.plot_reserves(op_results; save = path, format = "png");
 PG.plot_demand(op_results; save = path, format = "png", title = "Example Demand Plot");
-PG.plot_demand(system; save = path, format = "png", title = "Example Demand Plot From System");
+PG.plot_demand(
+    system;
+    save = path,
+    format = "png",
+    title = "Example Demand Plot From System",
+);
 initial_time = Dates.DateTime(2024, 01, 01, 02, 0, 0);
 horizon = 6;
-PG.plot_demand(system; horizon = horizon, initial_time = initial_time, save = path, format = "png", title = "Example Demand Plot Subsection");
-PG.plot_demand(system; aggregate = PSY.System, save = path, format = "png", title = "Example Demand Plot by Type");
-PG.plot_demand(system; stair = true, title = "Example Stair Demand Plot",save = path, format = "png");
+PG.plot_demand(
+    system;
+    horizon = horizon,
+    initial_time = initial_time,
+    save = path,
+    format = "png",
+    title = "Example Demand Plot Subsection",
+);
+PG.plot_demand(
+    system;
+    aggregate = PSY.System,
+    save = path,
+    format = "png",
+    title = "Example Demand Plot by Type",
+);
+PG.plot_demand(
+    system;
+    stair = true,
+    title = "Example Stair Demand Plot",
+    save = path,
+    format = "png",
+);
 
 colors = [:orange :pink :blue :red :grey]
-PG.plot_demand(system; seriescolor = colors, save = path, format = "png", title = "Example Demand Plot with Different Colors");
-PG.plot_demand(system; title = "Example Demand Plot with Title", format = "png", save = path);
+PG.plot_demand(
+    system;
+    seriescolor = colors,
+    save = path,
+    format = "png",
+    title = "Example Demand Plot with Different Colors",
+);
+PG.plot_demand(
+    system;
+    title = "Example Demand Plot with Title",
+    format = "png",
+    save = path,
+);
 
 # 3.5
-
 
 path = mkdir(joinpath(pwd(), "plots-50"));
 
@@ -147,9 +200,7 @@ PG.stack_plot(
 #
 path = mkdir(joinpath(pwd(), "plots-52"));
 
-selected_variables = Dict(
-    Symbol("P__ThermalStandard") => [:Brighton, :Solitude],
-);
+selected_variables = Dict(Symbol("P__ThermalStandard") => [:Brighton, :Solitude]);
 results_subset = PG.sort_data(op_results; Variables = selected_variables);
 
 PG.stack_plot(
@@ -159,12 +210,11 @@ PG.stack_plot(
     title = "Selected Variables Plot",
 );
 
-
 # 3.6
 results_one =
-  PSI.run_economic_dispatch(c_sys5_re; optimizer = solver, use_parameters = true);
+    PSI.run_economic_dispatch(c_sys5_re; optimizer = solver, use_parameters = true);
 results_two =
-  PSI.run_economic_dispatch(c_sys5_re; optimizer = solver, use_parameters = true);
+    PSI.run_economic_dispatch(c_sys5_re; optimizer = solver, use_parameters = true);
 
 path = mkdir(joinpath(pwd(), "plots-6"));
 PG.stack_plot([results_one, results_two]; save = path, format = "png", title = "Comparison");
@@ -178,8 +228,7 @@ PG.fuel_plot(
     title = "Comparison",
 );
 #
-variables =
-    [Symbol("P__ThermalStandard")]
+variables = [Symbol("P__ThermalStandard")]
 PG.stack_plot(
     [results_one, results_two],
     variables;

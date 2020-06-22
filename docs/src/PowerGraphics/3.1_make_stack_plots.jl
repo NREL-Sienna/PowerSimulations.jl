@@ -51,6 +51,10 @@
 # ### Create a Stair Plot, instead of interpolating between values
 
 # ```julia
+# stair_plot(results)
+# ```
+# or
+# ```julia
 # stack_plot(results; stair = true)
 # ```
 # ![this one](plots-14/P__ThermalStandard_Stair.png)

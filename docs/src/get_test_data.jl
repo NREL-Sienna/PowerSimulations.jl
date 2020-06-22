@@ -234,13 +234,20 @@ services = Dict{Symbol, ServiceModel}();
 
 template = PSI.OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services);
 
-operations_problem =
-    PSI.OperationsProblem(TestOpProblem, template, system; optimizer = solver, use_parameters = true);
+operations_problem = PSI.OperationsProblem(
+    TestOpProblem,
+    template,
+    system;
+    optimizer = solver,
+    use_parameters = true,
+);
 
 set_services_template!(
     operations_problem,
-    Dict(:Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
-    :Down_Reserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve)),
+    Dict(
+        :Reserve => ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+        :Down_Reserve => ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+    ),
 )
 
 op_results = solve!(operations_problem)
