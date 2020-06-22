@@ -97,7 +97,7 @@ function ParameterUpdateEvent(
     val::Float64,
     previous_value::Float64,
     destination_stage::Stage,
-    source_stage::Stage
+    source_stage::Stage,
 )
     return ParameterUpdateEvent(
         IS.RecorderEventCommon("ParameterUpdateEvent"),
@@ -108,7 +108,7 @@ function ParameterUpdateEvent(
         previous_value,
         val,
         get_number(destination_stage),
-        get_number(source_stage)
+        get_number(source_stage),
     )
 end
 

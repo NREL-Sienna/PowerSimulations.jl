@@ -647,7 +647,7 @@ function feedforward_update!(
     chronology::FeedForwardChronology,
     param_reference::UpdateRef{JuMP.VariableRef},
     param_array::JuMPParamArray,
-    current_time::Dates.DateTime
+    current_time::Dates.DateTime,
 )
     for device_name in axes(param_array)[1]
         var_value = get_stage_variable(
@@ -666,7 +666,7 @@ function feedforward_update!(
             var_value,
             previous_value,
             destination_stage,
-            source_stage
+            source_stage,
         )
 
     end
