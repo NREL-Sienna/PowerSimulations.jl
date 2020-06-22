@@ -5,46 +5,30 @@ struct InterruptiblePowerLoad <: AbstractControllablePowerLoadFormulation end
 struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
 
 ########################### dispatchable load variables ####################################
-function activepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{L},
-) where {L <: PSY.ElectricLoad}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(ACTIVE_POWER, L),
-        false,
-        :nodal_balance_active,
-        -1.0;
-        ub_value = x -> PSY.get_maxactivepower(x),
-        lb_value = x -> 0.0,
+function make_active_power_add_variable_inputs(::Type{<:PSY.ElectricLoad}, ::PSIContainer)
+    return AddVariableInputs(;
+        variable_names = [ACTIVE_POWER],
+        binary = false,
+        expression_name = :nodal_balance_active,
+        sign = -1.0,
+        lb_value_func = x -> 0.0,
+        ub_value_func = x -> PSY.get_maxactivepower(x),
     )
-    return
 end
 
-function reactivepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{L},
-) where {L <: PSY.ElectricLoad}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(REACTIVE_POWER, L),
-        false,
-        :nodal_balance_reactive,
-        -1.0;
-        ub_value = x -> PSY.get_maxreactivepower(x),
-        lb_value = x -> 0.0,
+function make_reactive_power_add_variable_inputs(::Type{<:PSY.ElectricLoad}, ::PSIContainer)
+    return AddVariableInputs(;
+        variable_names = [REACTIVE_POWER],
+        binary = false,
+        expression_name = :nodal_balance_reactive,
+        sign = -1.0,
+        lb_value_func = x -> 0.0,
+        ub_value_func = x -> PSY.get_maxreactivepower(x),
     )
-    return
 end
 
-function commitment_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{L},
-) where {L <: PSY.ElectricLoad}
-    add_variable(psi_container, devices, variable_name(ON, L), true)
-    return
+function make_commitment_add_variable_inputs(::Type{<:PSY.ElectricLoad}, ::PSIContainer)
+    return AddVariableInputs(; variable_names = [ON], binary = true)
 end
 
 ####################################### Reactive Power Constraints #########################

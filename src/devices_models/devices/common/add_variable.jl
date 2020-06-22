@@ -1,3 +1,134 @@
+struct AddVariableInputs
+    variable_names::Vector{String}
+    binary::Bool
+    expression_name::Union{Nothing, Symbol}
+    sign::Float64
+    devices_filter_func::Union{Nothing, Function}
+    initial_value_func::Union{Nothing, Function}
+    lb_value_func::Union{Nothing, Function}
+    ub_value_func::Union{Nothing, Function}
+end
+
+function AddVariableInputs(;
+    variable_names,
+    binary,
+    expression_name = nothing,
+    sign = 1.0,
+    devices_filter_func = nothing,
+    initial_value_func = nothing,
+    lb_value_func = nothing,
+    ub_value_func = nothing,
+)
+    return AddVariableInputs(
+        variable_names,
+        binary,
+        expression_name,
+        sign,
+        devices_filter_func,
+        initial_value_func,
+        lb_value_func,
+        ub_value_func,
+    )
+end
+
+function make_active_power_add_variable_inputs(
+    ::Type{T},
+    ::PSIContainer,
+) where {T <: PSY.Device}
+    error("make_active_power_add_variable_inputs is not implemented for $T")
+end
+
+function make_reactive_power_add_variable_inputs(
+    ::Type{T},
+    ::PSIContainer,
+) where {T <: PSY.Device}
+    error("make_reactive_power_add_variable_inputs is not implemented for $T")
+end
+
+function make_commitment_add_variable_inputs(
+    ::Type{T},
+    ::PSIContainer,
+) where {T <: PSY.Device}
+    error("make_commitment_add_variable_inputs is not implemented for $T")
+end
+
+function activepower_variables!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T <: PSY.Component}
+    inputs = make_active_power_add_variable_inputs(T, psi_container)
+    add_variables!(psi_container, devices, inputs)
+end
+
+function reactivepower_variables!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T <: PSY.Component}
+    inputs = make_reactive_power_add_variable_inputs(T, psi_container)
+    add_variables!(psi_container, devices, inputs)
+end
+
+function commitment_variables!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+) where {T <: PSY.Component}
+    inputs = make_commitment_add_variable_inputs(T, psi_container)
+    add_variables!(psi_container, devices, inputs)
+end
+
+"""
+Add variables to the PSIContainer from type-specific inputs.
+"""
+function add_variables!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    inputs::AddVariableInputs,
+) where {T <: PSY.Component}
+    _add_variables!(psi_container, devices, inputs)
+end
+
+function add_variables!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    inputs::Vector{AddVariableInputs},
+) where {T <: PSY.Component}
+    for input in inputs
+        _add_variables!(psi_container, devices, input)
+    end
+end
+
+function _add_variables!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    inputs::AddVariableInputs,
+) where {T <: PSY.Component}
+    variable_names = inputs.variable_names
+    binary = inputs.binary
+    expression_name = inputs.expression_name
+    sign = inputs.sign
+    initial_value_func = inputs.initial_value_func
+    lb_value_func = inputs.lb_value_func
+    ub_value_func = inputs.ub_value_func
+
+    if !isnothing(inputs.devices_filter_func)
+        devices = filter!(inputs.devices_filter_func, collect(devices))
+    end
+
+    for var_name in variable_names
+        add_variable(
+            psi_container,
+            devices,
+            variable_name(var_name, T),
+            binary,
+            expression_name,
+            sign;
+            initial_value = initial_value_func,
+            lb_value = lb_value_func,
+            ub_value = ub_value_func,
+        )
+    end
+end
+
 @doc raw"""
     add_variable(psi_container::PSIContainer,
                       devices::D,
@@ -33,9 +164,9 @@ If binary = true:
 * sign::Float64 : sign of the addition of the variable to the expression_name. Default Value is 1.0
 
 # Accepted Keyword Arguments
-* ub_value_function : Provides the function over device to obtain the value for a upper_bound
-* lb_value_function : Provides the function over device to obtain the value for a lower_bound. If the variable is meant to be positive define lb = x -> 0.0
-* initial_value_function : Provides the function over device to obtain the warm start value
+* ub_value : Provides the function over device to obtain the value for a upper_bound
+* lb_value : Provides the function over device to obtain the value for a lower_bound. If the variable is meant to be positive define lb = x -> 0.0
+* initial_value : Provides the function over device to obtain the warm start value
 
 """
 function add_variable(

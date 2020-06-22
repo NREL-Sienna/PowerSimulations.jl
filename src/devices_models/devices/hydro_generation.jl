@@ -13,40 +13,26 @@ struct HydroCommitmentReservoirFlow <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 =#
 ########################### Hydro generation variables #################################
-function activepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-) where {H <: PSY.HydroGen}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(ACTIVE_POWER, H),
-        false,
-        :nodal_balance_active;
-        lb_value = d -> PSY.get_activepowerlimits(d).min,
-        ub_value = d -> PSY.get_activepowerlimits(d).max,
-        init_value = d -> PSY.get_activepower(d),
+function make_active_power_add_variable_inputs(::Type{<:PSY.HydroGen}, ::PSIContainer)
+    return AddVariableInputs(;
+        variable_names = [ACTIVE_POWER],
+        binary = false,
+        expression_name = :nodal_balance_active,
+        initial_value_func = x -> PSY.get_activepower(x),
+        lb_value_func = x -> PSY.get_activepowerlimits(x).min,
+        ub_value_func = x -> PSY.get_activepowerlimits(x).max,
     )
-
-    return
 end
 
-function reactivepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-) where {H <: PSY.HydroGen}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(REACTIVE_POWER, H),
-        false,
-        :nodal_balance_reactive;
-        ub_value = d -> PSY.get_reactivepowerlimits(d).max,
-        lb_value = d -> PSY.get_reactivepowerlimits(d).min,
-        init_value = d -> PSY.get_reactivepower(d),
+function make_reactive_power_add_variable_inputs(::Type{<:PSY.HydroGen}, ::PSIContainer)
+    return AddVariableInputs(;
+        variable_names = [REACTIVE_POWER],
+        binary = false,
+        expression_name = :nodal_balance_reactive,
+        initial_value_func = x -> PSY.get_reactivepower(x),
+        lb_value_func = x -> PSY.get_reactivepowerlimits(x).min,
+        ub_value_func = x -> PSY.get_reactivepowerlimits(x).max,
     )
-
-    return
 end
 
 function energy_variables!(

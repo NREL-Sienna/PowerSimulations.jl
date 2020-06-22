@@ -12,74 +12,69 @@ struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
 """
 This function add the variables for power generation output to the model
 """
-function activepower_variables!(
+function make_active_power_add_variable_inputs(
+    ::Type{<:PSY.ThermalGen},
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.ThermalGen}
+)
     if get_warm_start(psi_container.settings)
-        initial_value = d -> PSY.get_activepower(d)
+        initial_value_func = d -> PSY.get_activepower(d)
     else
-        initial_value = nothing
+        initial_value_func = nothing
     end
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(ACTIVE_POWER, T),
-        false,
-        :nodal_balance_active;
-        ub_value = d -> PSY.get_activepowerlimits(d).max,
-        lb_value = d -> PSY.get_activepowerlimits(d).min,
-        init_value = initial_value,
+    return AddVariableInputs(;
+        variable_names = [ACTIVE_POWER],
+        binary = false,
+        expression_name = :nodal_balance_active,
+        initial_value_func = initial_value_func,
+        lb_value_func = x -> PSY.get_activepowerlimits(x).min,
+        ub_value_func = x -> PSY.get_activepowerlimits(x).max,
     )
-    return
 end
 
 """
 This function add the variables for power generation output to the model
 """
-function reactivepower_variables!(
+function make_reactive_power_add_variable_inputs(
+    ::Type{<:PSY.ThermalGen},
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.ThermalGen}
+)
     if get_warm_start(psi_container.settings)
-        initial_value = d -> PSY.get_activepower(d)
+        initial_value_func = d -> PSY.get_activepower(d)
     else
-        initial_value = nothing
+        initial_value_func = nothing
     end
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(REACTIVE_POWER, T),
-        false,
-        :nodal_balance_reactive;
-        ub_value = d -> PSY.get_reactivepowerlimits(d).max,
-        lb_value = d -> PSY.get_reactivepowerlimits(d).min,
-        init_value = initial_value,
+    return AddVariableInputs(;
+        variable_names = [REACTIVE_POWER],
+        binary = false,
+        expression_name = :nodal_balance_reactive,
+        initial_value_func = initial_value_func,
+        lb_value_func = x -> PSY.get_reactivepowerlimits(x).min,
+        ub_value_func = x -> PSY.get_reactivepowerlimits(x).max,
     )
-    return
 end
 
 """
 This function add the variables for power generation commitment to the model
 """
-function commitment_variables!(
+function make_commitment_add_variable_inputs(
+    ::Type{<:PSY.ThermalGen},
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.ThermalGen}
+)
     time_steps = model_time_steps(psi_container)
     if get_warm_start(psi_container.settings)
-        initial_value = d -> (PSY.get_activepower(d) > 0 ? 1.0 : 0.0)
+        initial_value_func = x -> (PSY.get_activepower(x) > 0 ? 1.0 : 0.0)
     else
-        initial_value = nothing
+        initial_value_func = nothing
     end
 
-    add_variable(psi_container, devices, variable_name(ON, T), true)
-    var_names = (variable_name(START, T), variable_name(STOP, T))
-    for v in var_names
-        add_variable(psi_container, devices, v, true; init_value = initial_value)
-    end
-
-    return
+    return [
+        AddVariableInputs(; variable_names = [ON], binary = true),
+        AddVariableInputs(;
+            variable_names = [START, STOP],
+            binary = true,
+            initial_value_func = initial_value_func,
+        ),
+    ]
 end
 
 function make_active_power_constraints_inputs(

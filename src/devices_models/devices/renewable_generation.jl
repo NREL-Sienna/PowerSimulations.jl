@@ -4,34 +4,22 @@ struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
 struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
 ########################### renewable generation variables #################################
-function activepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{R},
-) where {R <: PSY.RenewableGen}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(ACTIVE_POWER, R),
-        false,
-        :nodal_balance_active;
-        lb_value = x -> 0.0,
-        ub_value = x -> PSY.get_rating(x),
+function make_active_power_add_variable_inputs(::Type{<:PSY.RenewableGen}, ::PSIContainer)
+    return AddVariableInputs(;
+        variable_names = [ACTIVE_POWER],
+        binary = false,
+        expression_name = :nodal_balance_active,
+        lb_value_func = x -> 0.0,
+        ub_value_func = x -> PSY.get_rating(x),
     )
-    return
 end
 
-function reactivepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{R},
-) where {R <: PSY.RenewableGen}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(REACTIVE_POWER, R),
-        false,
-        :nodal_balance_reactive,
+function make_reactive_power_add_variable_inputs(::Type{<:PSY.RenewableGen}, ::PSIContainer)
+    return AddVariableInputs(;
+        variable_names = [REACTIVE_POWER],
+        binary = false,
+        expression_name = :nodal_balance_reactive,
     )
-    return
 end
 
 ####################################### Reactive Power constraint_infos #########################
