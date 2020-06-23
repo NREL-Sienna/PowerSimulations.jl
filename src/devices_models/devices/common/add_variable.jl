@@ -47,32 +47,29 @@ function AddVariableInputs(;
     )
 end
 
-function make_active_power_add_variable_inputs(
+function make_active_power_variable_inputs(
     ::Type{T},
     ::PSIContainer,
 ) where {T <: PSY.Device}
-    error("make_active_power_add_variable_inputs is not implemented for $T")
+    error("make_active_power_variable_inputs is not implemented for $T")
 end
 
-function make_reactive_power_add_variable_inputs(
+function make_reactive_power_variable_inputs(
     ::Type{T},
     ::PSIContainer,
 ) where {T <: PSY.Device}
-    error("make_reactive_power_add_variable_inputs is not implemented for $T")
+    error("make_reactive_power_variable_inputs is not implemented for $T")
 end
 
-function make_commitment_add_variable_inputs(
-    ::Type{T},
-    ::PSIContainer,
-) where {T <: PSY.Device}
-    error("make_commitment_add_variable_inputs is not implemented for $T")
+function make_commitment_variable_inputs(::Type{T}, ::PSIContainer) where {T <: PSY.Device}
+    error("make_commitment_variable_inputs is not implemented for $T")
 end
 
 function activepower_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.Component}
-    inputs = make_active_power_add_variable_inputs(T, psi_container)
+    inputs = make_active_power_variable_inputs(T, psi_container)
     add_variables!(psi_container, devices, inputs)
 end
 
@@ -80,7 +77,7 @@ function reactivepower_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.Component}
-    inputs = make_reactive_power_add_variable_inputs(T, psi_container)
+    inputs = make_reactive_power_variable_inputs(T, psi_container)
     add_variables!(psi_container, devices, inputs)
 end
 
@@ -88,7 +85,7 @@ function commitment_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.Component}
-    inputs = make_commitment_add_variable_inputs(T, psi_container)
+    inputs = make_commitment_variable_inputs(T, psi_container)
     add_variables!(psi_container, devices, inputs)
 end
 
