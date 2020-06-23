@@ -12,7 +12,7 @@ function activeservice_variables!(
 ) where {SR <: PSY.Reserve}
     add_variable(
         psi_container,
-        contributing_devices,
+        (device ∈ contributing_devices if PSY.get_available(device)),
         variable_name(PSY.get_name(service), SR),
         false;
         lb_value = d -> 0,
