@@ -21,6 +21,7 @@ end
 if isfile("docs/src/howto/.DS_Store.md")
     rm("docs/src/howto/.DS_Store.md")
 end
+#=
 makedocs(
     sitename = "PowerSimulations.jl",
     format = Documenter.HTML(
@@ -57,3 +58,4 @@ deploydocs(
     devurl = "dev",
     versions = ["stable" => "v^", "v#.#"],
 )
+=#
