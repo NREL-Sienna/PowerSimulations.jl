@@ -359,7 +359,7 @@ function initial_range_constraints!(
             constraint_data,
             ini_conds,
             constraint_name(ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
-            (variable_name(STOP, PSY.ThermalMultiStart),),
+            variable_name(STOP, PSY.ThermalMultiStart),
         )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
@@ -1158,13 +1158,9 @@ function cost_function(
     if isnothing(feedforward)
         add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
     else
-        add_to_cost(
-            psi_container,
-            devices,
-            variable_name(ACTIVE_POWER, T),
-            :variable;
-            parameter_on = variable_name(ON, T),
-        )
+        #Setting kwarg for PWL
+        add_to_setting_ext!(psi_container, "parameter_on", variable_name(ON, T))
+        add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
     end
     return
 end
@@ -1268,14 +1264,11 @@ function cost_function(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
+    #Setting kwarg for PWL
+    add_to_setting_ext!(psi_container, "variable_on", variable_name(ON, T))
+
     #Variable Cost component
-    add_to_cost(
-        psi_container,
-        devices,
-        variable_name(ACTIVE_POWER, T),
-        :variable;
-        variable_on = variable_name(ON, T),
-    )
+    add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
 
     #Commitment Cost Components
     add_to_cost(psi_container, devices, variable_name(START, T), :startup)
@@ -1301,16 +1294,16 @@ function cost_function(
         d::PSY.ThermalMultiStart,
         cost_component::PSY.VariableCost,
         var_name::Symbol,
+        bin_var::Symbol,
         dt::Float64,
-        sign::Float64 = 1.0;
-        kwargs...,
+        sign::Float64 = 1.0,
     )
         gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
         index = PSY.get_name(d)
         cost_array = cost_component.cost
         all(iszero.(last.(cost_array))) && return JuMP.AffExpr(0.0)
         variable = get_variable(psi_container, var_name)[index, :]
-        bin = get_variable(psi_container, kwargs[:variable_on])[index, :]
+        bin = get_variable(psi_container, bin_var)[index, :]
         if !haskey(psi_container.variables, :PWL_cost_vars)
             time_steps = model_time_steps(psi_container)
             container = add_var_container!(
@@ -1325,8 +1318,7 @@ function cost_function(
             container = get_variable(psi_container, :PWL_cost_vars)
         end
         for (t, var) in enumerate(variable)
-            c, pwl_vars =
-                _pwlgencost_sos(psi_container, var, cost_array; on_status = bin[t])
+            c, pwl_vars = _pwlgencost_sos(psi_container, var, cost_array, bin[t])
             for (ix, v) in enumerate(pwl_vars)
                 container[(index, t, ix)] = v
             end
@@ -1342,8 +1334,8 @@ function cost_function(
             d,
             cost_component,
             variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),
-            dt;
-            variable_on = variable_name(ON, PSY.ThermalMultiStart),
+            variable_name(ON, PSY.ThermalMultiStart),
+            dt,
         )
         T_ce = typeof(cost_expression)
         T_cf = typeof(psi_container.cost_function)
@@ -1386,6 +1378,12 @@ function cost_function(
             JuMP.add_to_expression!(psi_container.cost_function, cost_expression)
         end
     end
+    return
+end
+
+function add_to_setting_ext!(psi_container::PSIContainer, key::String, value)
+    settings = get_settings(psi_container)
+    push!(get_ext(settings), key => value)
     return
 end
 
