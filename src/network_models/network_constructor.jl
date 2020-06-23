@@ -6,7 +6,7 @@ function construct_network!(
     buses = PSY.get_components(PSY.Bus, sys)
     bus_count = length(buses)
 
-    get_slack_variables(psi_container.settings) &&
+    get_balance_slack_variables(psi_container.settings) &&
         add_slacks!(psi_container, CopperPlatePowerModel)
     copper_plate(psi_container, :nodal_balance_active, bus_count)
 
@@ -20,7 +20,7 @@ function construct_network!(
 )
     area_mapping = PSY.get_aggregation_topology_mapping(PSY.Area, sys)
     branches = get_available_components(PSY.Branch, sys)
-    if get_slack_variables(psi_container.settings)
+    if get_balance_slack_variables(psi_container.settings)
         @warn("Slack Variables are not compatible with AreaBalancePowerModel")
     end
 
@@ -41,7 +41,7 @@ function construct_network!(
         throw(ArgumentError("no PTDF matrix supplied"))
     end
 
-    get_slack_variables(psi_container.settings) &&
+    get_balance_slack_variables(psi_container.settings) &&
         add_slacks!(psi_container, StandardPTDFModel)
 
     ptdf_networkflow(psi_container, ac_branches, buses, :nodal_balance_active, ptdf)
@@ -68,7 +68,7 @@ function construct_network!(
         throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
     end
 
-    get_slack_variables(psi_container.settings) && add_slacks!(psi_container, T)
+    get_balance_slack_variables(psi_container.settings) && add_slacks!(psi_container, T)
 
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(psi_container, T, sys, instantiate_model)
@@ -86,7 +86,7 @@ function construct_network!(
         throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
     end
 
-    get_slack_variables(psi_container.settings) && add_slacks!(psi_container, T)
+    get_balance_slack_variables(psi_container.settings) && add_slacks!(psi_container, T)
 
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(psi_container, T, sys, instantiate_model)
@@ -104,7 +104,7 @@ function construct_network!(
         throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
     end
 
-    get_slack_variables(psi_container.settings) && add_slacks!(psi_container, T)
+    get_balance_slack_variables(psi_container.settings) && add_slacks!(psi_container, T)
 
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(psi_container, T, sys, instantiate_model)

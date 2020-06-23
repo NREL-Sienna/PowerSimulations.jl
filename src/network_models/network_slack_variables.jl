@@ -27,7 +27,7 @@ function _add_system_balance_slacks!(
         add_to_expression!(expression_array, ix, jx, variable_dn[ix, jx], -1.0)
         JuMP.add_to_expression!(
             psi_container.cost_function,
-            (variable_dn[ix, jx] + variable_up[ix, jx]) * SLACK_COST,
+            (variable_dn[ix, jx] + variable_up[ix, jx]) * SYSTEM_SLACK_COST,
         )
     end
     return
