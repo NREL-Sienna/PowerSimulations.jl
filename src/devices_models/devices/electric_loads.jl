@@ -7,7 +7,7 @@ struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
 ########################### dispatchable load variables ####################################
 function make_active_power_add_variable_inputs(::Type{<:PSY.ElectricLoad}, ::PSIContainer)
     return AddVariableInputs(;
-        variable_names = [ACTIVE_POWER],
+        variable_name = ACTIVE_POWER,
         binary = false,
         expression_name = :nodal_balance_active,
         sign = -1.0,
@@ -18,7 +18,7 @@ end
 
 function make_reactive_power_add_variable_inputs(::Type{<:PSY.ElectricLoad}, ::PSIContainer)
     return AddVariableInputs(;
-        variable_names = [REACTIVE_POWER],
+        variable_name = REACTIVE_POWER,
         binary = false,
         expression_name = :nodal_balance_reactive,
         sign = -1.0,
@@ -28,7 +28,7 @@ function make_reactive_power_add_variable_inputs(::Type{<:PSY.ElectricLoad}, ::P
 end
 
 function make_commitment_add_variable_inputs(::Type{<:PSY.ElectricLoad}, ::PSIContainer)
-    return AddVariableInputs(; variable_names = [ON], binary = true)
+    return AddVariableInputs(; variable_name = ON, binary = true)
 end
 
 ####################################### Reactive Power Constraints #########################

@@ -22,7 +22,7 @@ function make_active_power_add_variable_inputs(
         initial_value_func = nothing
     end
     return AddVariableInputs(;
-        variable_names = [ACTIVE_POWER],
+        variable_name = ACTIVE_POWER,
         binary = false,
         expression_name = :nodal_balance_active,
         initial_value_func = initial_value_func,
@@ -44,7 +44,7 @@ function make_reactive_power_add_variable_inputs(
         initial_value_func = nothing
     end
     return AddVariableInputs(;
-        variable_names = [REACTIVE_POWER],
+        variable_name = REACTIVE_POWER,
         binary = false,
         expression_name = :nodal_balance_reactive,
         initial_value_func = initial_value_func,
@@ -68,7 +68,7 @@ function make_commitment_add_variable_inputs(
     end
 
     return [
-        AddVariableInputs(; variable_names = [ON], binary = true),
+        AddVariableInputs(; variable_name = ON, binary = true),
         AddVariableInputs(;
             variable_names = [START, STOP],
             binary = true,

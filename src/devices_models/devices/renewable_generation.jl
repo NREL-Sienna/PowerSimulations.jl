@@ -6,7 +6,7 @@ struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 ########################### renewable generation variables #################################
 function make_active_power_add_variable_inputs(::Type{<:PSY.RenewableGen}, ::PSIContainer)
     return AddVariableInputs(;
-        variable_names = [ACTIVE_POWER],
+        variable_name = ACTIVE_POWER,
         binary = false,
         expression_name = :nodal_balance_active,
         lb_value_func = x -> 0.0,
@@ -16,7 +16,7 @@ end
 
 function make_reactive_power_add_variable_inputs(::Type{<:PSY.RenewableGen}, ::PSIContainer)
     return AddVariableInputs(;
-        variable_names = [REACTIVE_POWER],
+        variable_name = REACTIVE_POWER,
         binary = false,
         expression_name = :nodal_balance_reactive,
     )

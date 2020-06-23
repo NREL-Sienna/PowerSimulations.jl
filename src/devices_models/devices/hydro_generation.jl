@@ -15,7 +15,7 @@ struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 ########################### Hydro generation variables #################################
 function make_active_power_add_variable_inputs(::Type{<:PSY.HydroGen}, ::PSIContainer)
     return AddVariableInputs(;
-        variable_names = [ACTIVE_POWER],
+        variable_name = ACTIVE_POWER,
         binary = false,
         expression_name = :nodal_balance_active,
         initial_value_func = x -> PSY.get_activepower(x),
@@ -26,7 +26,7 @@ end
 
 function make_reactive_power_add_variable_inputs(::Type{<:PSY.HydroGen}, ::PSIContainer)
     return AddVariableInputs(;
-        variable_names = [REACTIVE_POWER],
+        variable_name = REACTIVE_POWER,
         binary = false,
         expression_name = :nodal_balance_reactive,
         initial_value_func = x -> PSY.get_reactivepower(x),

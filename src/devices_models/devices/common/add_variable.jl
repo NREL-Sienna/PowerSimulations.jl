@@ -9,8 +9,14 @@ struct AddVariableInputs
     ub_value_func::Union{Nothing, Function}
 end
 
+"""
+Construct AddVariableInputs.
+
+Accepts a single variable_name or a vector variable_names. One must be passed but not both.
+"""
 function AddVariableInputs(;
-    variable_names,
+    variable_name = nothing,
+    variable_names = nothing,
     binary,
     expression_name = nothing,
     sign = 1.0,
@@ -19,6 +25,16 @@ function AddVariableInputs(;
     lb_value_func = nothing,
     ub_value_func = nothing,
 )
+    if isnothing(variable_name) && isnothing(variable_names)
+        throw(ArgumentError("either variable_name or variable_names must be set"))
+    end
+    if !isnothing(variable_name) && !isnothing(variable_names)
+        throw(ArgumentError("variable_name and variable_names cannot both be set"))
+    end
+    if !isnothing(variable_name)
+        variable_names = [variable_name]
+    end
+
     return AddVariableInputs(
         variable_names,
         binary,
