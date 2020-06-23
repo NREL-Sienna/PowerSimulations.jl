@@ -132,16 +132,15 @@ function smooth_ace_pid!(
             if t == 1
                 SACE_ini =
                     get_initial_conditions(psi_container, ICKey(AreaControlError, PSY.AGC))[ix]
-                sace_exp = SACE_ini.value +
+                sace_exp =
+                    SACE_ini.value +
                     kp * (
                         (1 + Δt / (kp / ki) + (kd / kp) / Δt) *
                         (RAW_ACE[a, t] - SACE[a, t]) +
                         (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t])
                     )
-                SACE_pid[a, t] = JuMP.@constraint(
-                    psi_container.JuMPmodel,
-                    SACE[a, t] == sace_exp
-                )
+                SACE_pid[a, t] =
+                    JuMP.@constraint(psi_container.JuMPmodel, SACE[a, t] == sace_exp)
                 continue
             end
 
