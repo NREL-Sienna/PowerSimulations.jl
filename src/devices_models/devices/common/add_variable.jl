@@ -123,8 +123,16 @@ function _add_variables!(
     lb_value_func = inputs.lb_value_func
     ub_value_func = inputs.ub_value_func
 
-    if !isnothing(inputs.devices_filter_func)
-        devices = filter!(inputs.devices_filter_func, collect(devices))
+    filter_func = nothing
+    if isnothing(inputs.devices_filter_func)
+        if T <: PSY.Device
+            filter_func = x -> PSY.get_available(x)
+        end
+    else
+        filter_func = inputs.filter_func
+    end
+    if !isnothing(filter_func)
+        devices = filter!(filter_func, collect(devices))
     end
 
     for var_name in variable_names
