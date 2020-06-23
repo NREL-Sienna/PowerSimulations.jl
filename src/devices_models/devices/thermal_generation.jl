@@ -359,9 +359,7 @@ function initial_range_constraints!(
             constraint_data,
             ini_conds,
             constraint_name(ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
-            (
-                variable_name(STOP, PSY.ThermalMultiStart),
-            ),
+            (variable_name(STOP, PSY.ThermalMultiStart),),
         )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
@@ -541,9 +539,9 @@ function _get_data_for_rocc_pglib(
             p_lims = PSY.get_activepowerlimits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
             if (ramplimits.up * basepower >= max_rate) &
-                (ramplimits.down * basepower >= max_rate)
-                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
-                 continue
+               (ramplimits.down * basepower >= max_rate)
+                @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
+                continue
             else
                 idx += 1
             end
@@ -656,9 +654,7 @@ function ramp_constraints!(
             constaint_data,
             ini_conds,
             constraint_name(RAMP, PSY.ThermalMultiStart),
-            (
-                variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),
-            ),
+            (variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),),
         )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
