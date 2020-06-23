@@ -267,50 +267,6 @@ function include_service!(
     return
 end
 
-# function include_service!(
-#     constraint_data::RampConstraintsData,
-#     services,
-#     ::ServiceModel{SR, <:AbstractReservesFormulation},
-# ) where {SR <: PSY.Reserve{PSY.ReserveUp}}
-#     for (ix, service) in enumerate(services)
-#         push!(
-#             constraint_data.additional_terms_ub,
-#             constraint_name(PSY.get_name(service), SR),
-#         )
-#     end
-#     return
-# end
-
-# function include_service!(
-#     constraint_data::RampConstraintsData,
-#     services,
-#     ::ServiceModel{SR, <:AbstractReservesFormulation},
-# ) where {SR <: PSY.Reserve{PSY.ReserveDown}}
-#     for (ix, service) in enumerate(services)
-#         push!(
-#             constraint_data.additional_terms_lb,
-#             constraint_name(PSY.get_name(service), SR),
-#         )
-#     end
-#     return
-# end
-
-# function add_device_services!(
-#     constraint_data::RampConstraintsData,
-#     device::D,
-#     model::DeviceModel,
-# ) where {D <: PSY.Device}
-#     for service_model in get_services(model)
-#         if PSY.has_service(device, service_model.service_type)
-#             services =
-#                 (s for s in PSY.get_services(device) if isa(s, service_model.service_type))
-#             @assert !isempty(services)
-#             include_service!(constraint_data, services, service_model)
-#         end
-#     end
-#     return
-# end
-
 function add_device_services!(
     constraint_info::T,
     device::D,
