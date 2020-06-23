@@ -222,64 +222,60 @@ function reserve_device_semicontinuousrange(
     return
 end
 
-@doc raw"""  #TODO: Finish the doc string
+@doc raw"""
     device_multistart_range(psi_container::PSIContainer,
                         range_data::Vector{DeviceRange},
                         cons_name::Symbol,
                         var_name::Symbol,
-                        binvar_name::Symbol)
+                        binvar_names::Tuple{Symbol, Symbol, Symbol},)
 
 Constructs min/max range constraint from device variable and on/off decision variable.
 
 # Constraints
-If device min = 0:
 
-``` varcts[name, t] <= limits.max*varbin[name, t]) ```
+``` varcts[name, t] <= (limits.max-limits.min)*varbin[name, t]) 
+        - max(limits.max - lag_ramp_limits.startup, 0) * var_on[name, t] ```
 
-``` varcts[name, t] >= 0.0 ```
+``` varcts[name, t] <= (limits.max-limits.min)*varbin[name, t]) 
+        - max(limits.max - lag_ramp_limits.shutdown, 0) * var_off[name, t] ```
 
-Otherwise:
-
-``` varcts[name, t] <= limits.max*varbin[name, t] ```
-
-``` varcts[name, t] >= limits.min*varbin[name, t] ```
-
-where limits in range_data.
+where limits and lag_ramp_limits is in range_data.
 
 # LaTeX
 
-`` 0 \leq x^{cts} \leq limits^{max} x^{bin}, \text{ for } limits^{min} = 0 ``
 
-`` limits^{min} x^{bin} \leq x^{cts} \leq limits^{max} x^{bin}, \text{ otherwise } ``
+`` x^{cts} \leq (limits^{max}-limits^{min}) x^{bin} - max(limits^{max} - lag^{startup}, 0) x^{on} ``
+
+`` x^{cts} \leq (limits^{max}-limits^{min}) x^{bin} - max(limits^{max} - lag^{shutdown}, 0) x^{off}``
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * range_data::Vector{DeviceRange} : contains names and vector of min/max
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : the name of the continuous variable
-* binvar_name::Symbol : the name of the binary variable
+* binvar_names::Symbol : the names of the binary variables
 """
 function device_multistart_range(
-    psi_container::PSI.PSIContainer,
+    psi_container::PSIContainer,
     range_data::Vector{DeviceMultiStartRangeConstraintsData},
     cons_name::Symbol,
     var_name::Symbol,
-    binvar_name::Tuple{Symbol, Symbol, Symbol},
+    binvar_names::Tuple{Symbol, Symbol, Symbol},
 )
-    time_steps = PSI.model_time_steps(psi_container)
-    varp = PSI.get_variable(psi_container, var_name)
+    time_steps = model_time_steps(psi_container)
+    varp = get_variable(psi_container, var_name)
 
-    varstatus = PSI.get_variable(psi_container, binvar_name[1])
-    varon = PSI.get_variable(psi_container, binvar_name[2])
-    varoff = PSI.get_variable(psi_container, binvar_name[3])
+    varstatus = get_variable(psi_container, binvar_names[1])
+    varon = get_variable(psi_container, binvar_names[2])
+    varoff = get_variable(psi_container, binvar_names[3])
 
-    on_name = PSI.middle_rename(cons_name, PSI.PSI_NAME_DELIMITER, "lb")
-    off_name = PSI.middle_rename(cons_name, PSI.PSI_NAME_DELIMITER, "ub")
+    on_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
+    off_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
     names = (d.name for d in range_data)
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
-    con_on = PSI.add_cons_container!(psi_container, on_name, names, time_steps)
-    con_off = PSI.add_cons_container!(psi_container, off_name, names, time_steps)
+    con_on = add_cons_container!(psi_container, on_name, names, time_steps)
+    con_off = add_cons_container!(psi_container, off_name, names, time_steps)
 
     for data in range_data, t in time_steps
         if JuMP.has_lower_bound(varp[data.name, t])
@@ -289,7 +285,7 @@ function device_multistart_range(
         for val in data.additional_terms_ub
             JuMP.add_to_expression!(
                 expression_products,
-                PSI.get_variable(psi_container, val)[data.name, t],
+                get_variable(psi_container, val)[data.name, t],
             )
         end
         con_on[data.name, t] = JuMP.@constraint(
@@ -299,11 +295,7 @@ function device_multistart_range(
             max(data.limits.max - data.lag_ramp_limits.startup, 0) * varon[data.name, t]
         )
         if t == length(time_steps)
-            #  TODO: Not sure if this is need 
-            # con_off[data.name, t] = JuMP.@constraint(
-            #     psi_container.JuMPmodel,
-            #     expression_products <= (data.limits.max - data.limits.min) * varstatus[data.name, t] 
-            # )
+            continue
         else
             con_off[data.name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
@@ -318,59 +310,48 @@ function device_multistart_range(
     return
 end
 
-@doc raw""" #TODO: Finish the doc string
+@doc raw"""
     device_multistart_range_ic(psi_container::PSIContainer,
                         range_data::Vector{DeviceRange},
-                        initial_conditions::Matrix{PSI.InitialCondition},
+                        initial_conditions::Matrix{InitialCondition},
                         cons_name::Symbol,
                         var_name::Tuple{Symbol, Symbol})
 
 Constructs min/max range constraint from device variable and on/off decision variable.
 
 # Constraints
-If device min = 0:
 
-``` varcts[name, t] <= limits.max*varbin[name, t]) ```
-
-``` varcts[name, t] >= 0.0 ```
-
-Otherwise:
-
-``` varcts[name, t] <= limits.max*varbin[name, t] ```
-
-``` varcts[name, t] >= limits.min*varbin[name, t] ```
+``` max(limits.max - lag_ramp_limits.shutdown, 0) var_off[name, 1] <= initial_power[ix].value 
+        - (limits.max - limits.min)initial_status[ix].value  ```
 
 where limits in range_data.
 
 # LaTeX
 
-`` 0 \leq x^{cts} \leq limits^{max} x^{bin}, \text{ for } limits^{min} = 0 ``
-
-`` limits^{min} x^{bin} \leq x^{cts} \leq limits^{max} x^{bin}, \text{ otherwise } ``
+`` max(limits^{max} - lag^{shutdown}, 0) x^{off} \leq initial_condition^{power} - (limits^{max} - limits^{min}) initial_condition^{status}``
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * range_data::Vector{DeviceRange} : contains names and vector of min/max
-* initial_conditions::Matrix{PSI.InitialCondition} : 
+* initial_conditions::Matrix{InitialCondition} : 
 * cons_name::Symbol : name of the constraint
-* var_name::Tuple{Symbol, Symbol} : the name of the continuous variable
+* var_name::Symbol : name of the shutdown variable
 """
 function device_multistart_range_ic(
-    psi_container::PSI.PSIContainer,
+    psi_container::PSIContainer,
     range_data::Vector{DeviceMultiStartRangeConstraintsData},
-    initial_conditions::Matrix{PSI.InitialCondition},## 1 is initial power, 2 is initial status
+    initial_conditions::Matrix{InitialCondition},## 1 is initial power, 2 is initial status
     cons_name::Symbol,
-    var_names::Tuple{Symbol, Symbol},
+    var_name::Symbol,
 )
-    time_steps = PSI.model_time_steps(psi_container)
-    variable = PSI.get_variable(psi_container, var_names[1])
-    varstop = PSI.get_variable(psi_container, var_names[2])
+    time_steps = model_time_steps(psi_container)
+    varstop = get_variable(psi_container, var_name)
 
-    set_name = (PSI.device_name(ic) for ic in initial_conditions[:, 1])
-    con = PSI.add_cons_container!(psi_container, cons_name, set_name)
+    set_name = (device_name(ic) for ic in initial_conditions[:, 1])
+    con = add_cons_container!(psi_container, cons_name, set_name)
 
     for (ix, ic) in enumerate(initial_conditions[:, 1])
-        name = PSI.device_name(ic)
+        name = device_name(ic)
         data = range_data[ix]
         val = max(data.limits.max - data.lag_ramp_limits.shutdown, 0)
         con[name] = JuMP.@constraint(

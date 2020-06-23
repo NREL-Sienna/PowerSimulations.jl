@@ -333,6 +333,40 @@ function device_duration_parameters(
     return
 end
 
+@doc raw"""
+    device_duration_pglib(psi_container::PSIContainer,
+                                        duration_data::Vector{UpDown},
+                                        initial_duration::Matrix{InitialCondition},
+                                        cons_name::Symbol,
+                                        var_names::Tuple{Symbol, Symbol, Symbol})
+
+This formulation of the duration constraints adds over the start times looking backwards.
+
+# LaTeX
+
+* Minimum up-time constraint:
+
+`` \sum_{i=t-min(d_{min}^{up}, T)+ 1}^t x_i^{start} - x_t^{on} \leq 0 ``
+
+for i in the set of time steps.
+
+* Minimum down-time constraint:
+
+`` \sum_{i=t-min(d_{min}^{down}, T) + 1}^t x_i^{stop} + x_t^{on} \leq 1 ``
+
+for i in the set of time steps.
+
+
+# Arguments
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
+* duration_data::Vector{UpDown} : gives how many time steps variable needs to be up or down
+* initial_duration::Matrix{InitialCondition} : gives initial conditions for up (column 1) and down (column 2)
+* cons_name::Symbol : name of the constraint
+* var_names::Tuple{Symbol, Symbol, Symbol}) : names of the variables
+- : var_names[1] : varon
+- : var_names[2] : varstart
+- : var_names[3] : varstop
+"""
 function device_duration_pglib(
     psi_container::PSIContainer,
     duration_data::Vector{UpDown},

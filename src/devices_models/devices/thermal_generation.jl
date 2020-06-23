@@ -360,7 +360,6 @@ function initial_range_constraints!(
             ini_conds,
             constraint_name(ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
             (
-                variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),
                 variable_name(STOP, PSY.ThermalMultiStart),
             ),
         )
@@ -537,15 +536,21 @@ function _get_data_for_rocc_pglib(
         non_binding_up = false
         non_binding_down = false
         ramplimits = PSY.get_ramplimits(g)
-        rating = PSY.get_rating(g)
+        basepower = PSY.get_rating(g)
         if !isnothing(ramplimits)
             p_lims = PSY.get_activepowerlimits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            idx += 1
+            if (ramplimits.up * basepower >= max_rate) &
+                (ramplimits.down * basepower >= max_rate)
+                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
+                 continue
+            else
+                idx += 1
+            end
             ini_conds[idx] = ic
             ramp = (
-                up = ramplimits.up * minutes_per_period,
-                down = ramplimits.down * minutes_per_period,
+                up = ramplimits.up * basepower * minutes_per_period,
+                down = ramplimits.down * basepower * minutes_per_period,
             )
             data[idx] = DeviceRampConstraintInfo(name, p_lims, ramp)
         end
@@ -653,8 +658,6 @@ function ramp_constraints!(
             constraint_name(RAMP, PSY.ThermalMultiStart),
             (
                 variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),
-                variable_name(START, PSY.ThermalMultiStart),
-                variable_name(STOP, PSY.ThermalMultiStart),
             ),
         )
     else
@@ -664,8 +667,31 @@ function ramp_constraints!(
 end
 
 ########################### start up trajectory constraints ######################################
-"""
-#TODO: Finish the doc string
+
+@doc raw"""
+    turbine_temperature(psi_container::PSIContainer,
+                            startup_data::Vector{DeviceStartUpConstraintInfo},
+                            cons_name::Symbol,
+                            var_stop::Symbol,
+                            var_starts::Tuple{Symbol, Symbol})
+
+Constructs contraints for different types of starts based on generator down-time
+
+# Equations
+for t in time_limits[s+1]:T
+
+``` var_starts[name, s, t] <= sum( var_stop[name, t-i] for i in time_limits[s]:(time_limits[s+1]-1)  ```
+
+# LaTeX
+
+``  δ^{s}(t)  \leq \sum_{i=TS^{s}_{g}}^{TS^{s+1}_{g}} x^{stop}(t-i) ``
+
+# Arguments
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
+* rate_data::Vector{DeviceStartUpConstraintInfo},
+* cons_name::Symbol : name of the constraint
+* var_stop::Symbol : name of the stop variable
+* var_starts::Tuple{Symbol, Symbol} : the names of the different start variables
 """
 function turbine_temperature(
     psi_container::PSIContainer,
@@ -709,8 +735,29 @@ function turbine_temperature(
     return
 end
 
-"""
-#TODO: Finish the doc string
+@doc raw"""
+    device_start_type_constraint(psi_container::PSIContainer,
+                            data::Vector{DeviceStartTypesConstraintInfo},
+                            cons_name::Symbol,
+                            var_start::Symbol,
+                            var_names::Tuple{Symbol, Symbol, Symbol},)
+
+Constructs contraints that restricts devices to one type of start at a time
+
+# Equations
+
+``` sum(var_starts[name, s, t] for s in starts) = var_start[name, t]  ```
+
+# LaTeX
+
+``  \sum^{S_g}_{s=1} δ^{s}(t)  \eq  x^{start}(t) ``
+
+# Arguments
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
+* data::Vector{DeviceStartTypesConstraintInfo},
+* cons_name::Symbol : name of the constraint
+* var_start::Symbol : name of the startup variable
+* var_starts::Tuple{Symbol, Symbol} : the names of the different start variables
 """
 function device_start_type_constraint(
     psi_container::PSIContainer,
@@ -741,8 +788,30 @@ function device_start_type_constraint(
     return
 end
 
-"""
-#TODO: Finish the doc string
+@doc raw"""
+    device_startup_initial_condition(psi_container::PSIContainer,
+                            data::Vector{DeviceStartUpConstraintInfo},
+                            initial_conditions::Vector{InitialCondition},
+                            cons_name::Symbol,
+                            var_names::Tuple{Symbol, Symbol},
+                            bin_name::Symbol,)
+
+Constructs contraints that restricts devices to one type of start at a time
+
+# Equations
+
+``` sum(var_starts[name, s, t] for s in starts) = var_start[name, t]  ```
+
+# LaTeX
+
+``  \sum^{S_g}_{s=1} δ^{s}(t)  \eq  x^{start}(t) ``
+
+# Arguments
+* psi_container::PSIContainer : the psi_container model built in PowerSimulations
+* data::Vector{DeviceStartTypesConstraintInfo},
+* cons_name::Symbol : name of the constraint
+* var_names::Tuple{Symbol, Symbol} : the names of the different start variables
+* bin_name::Symbol : name of the status variable
 """
 function device_startup_initial_condition(
     psi_container::PSIContainer,
@@ -764,7 +833,6 @@ function device_startup_initial_condition(
         get_variable(psi_container, var_names[2]),
     ]
 
-    # con = add_cons_container!(psi_container, cons_name, set_name,)
     con_up = add_cons_container!(
         psi_container,
         up_name,
@@ -781,7 +849,6 @@ function device_startup_initial_condition(
         1:(MAX_START_TYPES - 1);
         sparse = true,
     )
-    # @show collect(set_name)
 
     for t in time_steps, (ix, d) in enumerate(data)
         name = d.name
@@ -803,28 +870,11 @@ function device_startup_initial_condition(
             end
         end
     end
-
-    # for (ix, d) in enumerate(data)
-    #     name = d.name
-    #     # adds contraints (7)
-    #     expression = JuMP.AffExpr(0.0)
-    #     ic = initial_conditions[ix]
-    #     for st in 1:(d.startup_types - 1)
-    #         for t in
-    #             max(1, d.time_limits[st + 1] - ic.value + 1) : min(T, d.time_limits[st + 1] - 1)
-    #             JuMP.add_to_expression!(
-    #                 expression,
-    #                 get_variable(psi_container, var_names[st])[name, t],
-    #             )
-    #         end
-    #     end
-    #     con[name] = JuMP.@constraint(psi_container.JuMPmodel, expression == 0)
-    # end
     return
 end
 
-""" #TODO: Finish the doc string
-This function adds the ramping limits of generators when there are CommitmentVariables
+""" 
+This function creates the contraints for different types of starts based on generator down-time
 """
 function startup_time_constraints!(
     psi_container::PSIContainer,
@@ -858,7 +908,7 @@ function startup_time_constraints!(
 end
 
 """
-#TODO: Finish the doc string
+This function creates constraints to select a single type of startup based on off-time
 """
 function startup_type_constraints!(
     psi_container::PSIContainer,
@@ -892,7 +942,7 @@ function startup_type_constraints!(
 end
 
 """
-#TODO: Finish the doc string
+This function gets the data for startup initial condition
 """
 function _get_data_startup_ic(initial_conditions::Vector{InitialCondition})
     lenght_devices = length(initial_conditions)
@@ -918,7 +968,7 @@ function _get_data_startup_ic(initial_conditions::Vector{InitialCondition})
 end
 
 """
-#TODO: Finish the doc string
+This function creates the initial conditions for multi-start devices
 """
 function startup_initial_condition_constraints!(
     psi_container::PSIContainer,
@@ -949,7 +999,7 @@ function startup_initial_condition_constraints!(
 end
 
 """
-#TODO: Finish the doc string
+This function creates constraints that keep must run devices online
 """
 function must_run_constraints!(
     psi_container::PSIContainer,
