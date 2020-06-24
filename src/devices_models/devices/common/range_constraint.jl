@@ -1,8 +1,8 @@
 struct RangeConstraintInputsInternal
-    constraint_infos::Vector{DeviceRangeConstraintInfo}
+    constraint_infos::Vector{<:AbstractRangeConstraintInfo}
     constraint_name::Symbol
     variable_name::Symbol
-    bin_variable_name::Union{Nothing, Symbol}
+    bin_variable_name::Vector{Symbol}
 end
 
 function RangeConstraintInputsInternal(
@@ -14,7 +14,7 @@ function RangeConstraintInputsInternal(
         constraint_infos,
         constraint_name,
         variable_name,
-        nothing,
+        Vector{Symbol}(),
     )
 end
 
@@ -107,7 +107,7 @@ function device_semicontinuousrange(
 )
     time_steps = model_time_steps(psi_container)
     varcts = get_variable(psi_container, inputs.variable_name)
-    varbin = get_variable(psi_container, inputs.bin_variable_name)
+    varbin = get_variable(psi_container, inputs.bin_variable_name[1])
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
     lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
     names = (get_name(x) for x in inputs.constraint_infos)
@@ -180,7 +180,7 @@ function reserve_device_semicontinuousrange(
 )
     time_steps = model_time_steps(psi_container)
     varcts = get_variable(psi_container, inputs.variable_name)
-    varbin = get_variable(psi_container, inputs.bin_variable_name)
+    varbin = get_variable(psi_container, inputs.bin_variable_name[1])
 
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
     lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
@@ -257,52 +257,49 @@ where limits and lag_ramp_limits is in range_data.
 """
 function device_multistart_range(
     psi_container::PSIContainer,
-    range_data::Vector{DeviceMultiStartRangeConstraintsData},
-    cons_name::Symbol,
-    var_name::Symbol,
-    binvar_names::Tuple{Symbol, Symbol, Symbol},
+    inputs::RangeConstraintInputsInternal,
 )
     time_steps = model_time_steps(psi_container)
-    varp = get_variable(psi_container, var_name)
+    varp = get_variable(psi_container, inputs.variable_name)
 
-    varstatus = get_variable(psi_container, binvar_names[1])
-    varon = get_variable(psi_container, binvar_names[2])
-    varoff = get_variable(psi_container, binvar_names[3])
+    varstatus = get_variable(psi_container,inputs.bin_variable_name[1])
+    varon = get_variable(psi_container, inputs.bin_variable_name[2])
+    varoff = get_variable(psi_container, inputs.bin_variable_name[3])
 
-    on_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
-    off_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
-    names = (d.name for d in range_data)
+    on_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
+    off_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
+    names = (x.name for x in inputs.constraint_infos)
     #MOI has a semicontinous set, but after some tests is not clear most MILP solvers support it.
     #In the future this can be updated
     con_on = add_cons_container!(psi_container, on_name, names, time_steps)
     con_off = add_cons_container!(psi_container, off_name, names, time_steps)
 
-    for data in range_data, t in time_steps
-        if JuMP.has_lower_bound(varp[data.name, t])
-            JuMP.set_lower_bound(varp[data.name, t], 0.0)
+    for constraint_info in inputs.constraint_infos, t in time_steps
+        if JuMP.has_lower_bound(varp[constraint_info.name, t])
+            JuMP.set_lower_bound(varp[constraint_info.name, t], 0.0)
         end
-        expression_products = JuMP.AffExpr(0.0, varp[data.name, t] => 1.0)
-        for val in data.additional_terms_ub
+        expression_products = JuMP.AffExpr(0.0, varp[constraint_info.name, t] => 1.0)
+        for val in constraint_info.additional_terms_ub
             JuMP.add_to_expression!(
                 expression_products,
-                get_variable(psi_container, val)[data.name, t],
+                get_variable(psi_container, val)[constraint_info.name, t],
             )
         end
-        con_on[data.name, t] = JuMP.@constraint(
+        con_on[constraint_info.name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
             expression_products <=
-            (data.limits.max - data.limits.min) * varstatus[data.name, t] -
-            max(data.limits.max - data.lag_ramp_limits.startup, 0) * varon[data.name, t]
+            (constraint_info.limits.max - constraint_info.limits.min) * varstatus[constraint_info.name, t] -
+            max(constraint_info.limits.max - constraint_info.lag_ramp_limits.startup, 0) * varon[constraint_info.name, t]
         )
         if t == length(time_steps)
             continue
         else
-            con_off[data.name, t] = JuMP.@constraint(
+            con_off[constraint_info.name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 expression_products <=
-                (data.limits.max - data.limits.min) * varstatus[data.name, t] -
-                max(data.limits.max - data.lag_ramp_limits.shutdown, 0) *
-                varoff[data.name, t + 1]
+                (constraint_info.limits.max - constraint_info.limits.min) * varstatus[constraint_info.name, t] -
+                max(constraint_info.limits.max - constraint_info.lag_ramp_limits.shutdown, 0) *
+                varoff[constraint_info.name, t + 1]
             )
         end
     end
@@ -339,7 +336,7 @@ where limits in range_data.
 """
 function device_multistart_range_ic(
     psi_container::PSIContainer,
-    range_data::Vector{DeviceMultiStartRangeConstraintsData},
+    range_data::Vector{DeviceMultiStartRangeConstraintsInfo},
     initial_conditions::Matrix{InitialCondition},## 1 is initial power, 2 is initial status
     cons_name::Symbol,
     var_name::Symbol,
