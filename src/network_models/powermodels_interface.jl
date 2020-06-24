@@ -332,17 +332,17 @@ end
 function PMconmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowerModel}
     pm_con_map = Dict{Type, Dict{Symbol, Union{Symbol, NamedTuple}}}()
 
-    pm_con_map[PSY.Bus] = Dict(:power_balance_p => :nodal_balance_active, 
-        )
+    pm_con_map[PSY.Bus] = Dict(:power_balance_p => :nodal_balance_active)
     return pm_con_map
 end
 
 function PMconmap(system_formulation::Type{S}) where {S <: PM.AbstractDCPModel}
     pm_con_map = Dict{Type, Dict{Symbol, Union{Symbol, NamedTuple}}}()
 
-    pm_con_map[PSY.Bus] = Dict(:power_balance_p => :nodal_balance_active, 
-        :power_balance_q => :nodal_balance_reactive, 
-        )
+    pm_con_map[PSY.Bus] = Dict(
+        :power_balance_p => :nodal_balance_active,
+        :power_balance_q => :nodal_balance_reactive,
+    )
     return pm_con_map
 end
 
@@ -447,12 +447,17 @@ function add_pm_con_refs!(
     DCbranch_dict = psi_container.pm.ext[:PMmap].arcs_dc
     DCbranch_types = typeof.(values(DCbranch_dict))
 
-    pm_con_names = (k for k in keys(psi_container.pm.con[:nw][1]) if !isempty(PM.con(psi_container.pm, 1, k)))
+    pm_con_names = (
+        k for
+        k in keys(psi_container.pm.con[:nw][1]) if !isempty(PM.con(psi_container.pm, 1, k))
+    )
 
     pm_con_map = PMconmap(system_formulation)
     for (pm_v, ps_v) in pm_con_map[PSY.Bus]
         if pm_v in pm_con_names
-            container = PSI.add_cons_container!(psi_container, ps_v,
+            container = PSI.add_cons_container!(
+                psi_container,
+                ps_v,
                 (PSY.get_name(b) for b in values(bus_dict)),
                 time_steps,
             )
