@@ -5,9 +5,13 @@ struct InterruptiblePowerLoad <: AbstractControllablePowerLoadFormulation end
 struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
 
 ########################### dispatchable load variables ####################################
-function make_active_power_variable_inputs(::Type{<:PSY.ElectricLoad}, ::PSIContainer)
+function make_variable_inputs(
+    ::Type{ActivePowerVariable},
+    ::Type{T},
+    ::PSIContainer,
+) where {T <: PSY.ElectricLoad}
     return AddVariableInputs(;
-        variable_name = ACTIVE_POWER,
+        variable_name = make_variable_name(ACTIVE_POWER, T),
         binary = false,
         expression_name = :nodal_balance_active,
         sign = -1.0,
@@ -16,9 +20,13 @@ function make_active_power_variable_inputs(::Type{<:PSY.ElectricLoad}, ::PSICont
     )
 end
 
-function make_reactive_power_variable_inputs(::Type{<:PSY.ElectricLoad}, ::PSIContainer)
+function make_variable_inputs(
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
+    ::PSIContainer,
+) where {T <: PSY.ElectricLoad}
     return AddVariableInputs(;
-        variable_name = REACTIVE_POWER,
+        variable_name = make_variable_name(REACTIVE_POWER, T),
         binary = false,
         expression_name = :nodal_balance_reactive,
         sign = -1.0,
@@ -27,8 +35,12 @@ function make_reactive_power_variable_inputs(::Type{<:PSY.ElectricLoad}, ::PSICo
     )
 end
 
-function make_commitment_variable_inputs(::Type{<:PSY.ElectricLoad}, ::PSIContainer)
-    return AddVariableInputs(; variable_name = ON, binary = true)
+function make_variable_inputs(
+    ::Type{CommitmentVariable},
+    ::Type{T},
+    ::PSIContainer,
+) where {T <: PSY.ElectricLoad}
+    return AddVariableInputs(; variable_name = make_variable_name(ON, T), binary = true)
 end
 
 ####################################### Reactive Power Constraints #########################
@@ -169,7 +181,13 @@ function cost_function(
     ::Type{DispatchablePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
 ) where {L <: PSY.ControllableLoad}
-    add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, L), :variable, -1.0)
+    add_to_cost(
+        psi_container,
+        devices,
+        make_variable_name(ACTIVE_POWER, L),
+        :variable,
+        -1.0,
+    )
     return
 end
 
@@ -179,6 +197,6 @@ function cost_function(
     ::Type{InterruptiblePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
 ) where {L <: PSY.ControllableLoad}
-    add_to_cost(psi_container, devices, variable_name(ON, L), :fixed, -1.0)
+    add_to_cost(psi_container, devices, make_variable_name(ON, L), :fixed, -1.0)
     return
 end

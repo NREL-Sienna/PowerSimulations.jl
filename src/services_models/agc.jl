@@ -36,11 +36,22 @@ function balancing_auxiliary_variables!(psi_container, sys)
     return
 end
 
-function area_mismatch_variables!(psi_container::PSIContainer, areas)
-    var_name = variable_name("area_mismatch")
-    add_variable(psi_container, areas, var_name, false)
-    add_variable(psi_container, areas, variable_name("z"), false; lb_value = x -> 0.0)
-    return
+function make_variable_inputs(
+    ::Type{AreaMismatchVariable},
+    ::Type{PSY.Area},
+    ::PSIContainer,
+)
+    return [
+        AddVariableInputs(;
+            variable_name = make_variable_name("area_mismatch"),
+            binary = false,
+        ),
+        AddVariableInputs(;
+            variable_name = make_variable_name("z"),
+            binary = false,
+            lb_value_func = x -> 0.0,
+        ),
+    ]
 end
 
 function absolute_value_lift(psi_container::PSIContainer, areas)

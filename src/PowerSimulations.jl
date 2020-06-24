@@ -266,6 +266,7 @@ include("devices_models/device_model.jl")
 include("network_models/networks.jl")
 
 include("core/parameters.jl")
+include("core/variables.jl")
 include("core/cache.jl")
 include("core/initial_condition_types.jl")
 include("core/initial_condition.jl")

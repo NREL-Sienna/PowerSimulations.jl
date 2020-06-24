@@ -1,5 +1,5 @@
 struct AddVariableInputs
-    variable_names::Vector{String}
+    variable_names::Vector{Symbol}
     binary::Bool
     expression_name::Union{Nothing, Symbol}
     sign::Float64
@@ -47,62 +47,41 @@ function AddVariableInputs(;
     )
 end
 
-function make_active_power_variable_inputs(
-    ::Type{T},
+function make_variable_inputs(
+    ::Type{<:T},
+    ::Type{<:U},
     ::PSIContainer,
-) where {T <: PSY.Device}
-    error("make_active_power_variable_inputs is not implemented for $T")
-end
-
-function make_reactive_power_variable_inputs(
-    ::Type{T},
-    ::PSIContainer,
-) where {T <: PSY.Device}
-    error("make_reactive_power_variable_inputs is not implemented for $T")
-end
-
-function make_commitment_variable_inputs(::Type{T}, ::PSIContainer) where {T <: PSY.Device}
-    error("make_commitment_variable_inputs is not implemented for $T")
-end
-
-function activepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.Component}
-    inputs = make_active_power_variable_inputs(T, psi_container)
-    add_variables!(psi_container, devices, inputs)
-end
-
-function reactivepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.Component}
-    inputs = make_reactive_power_variable_inputs(T, psi_container)
-    add_variables!(psi_container, devices, inputs)
-end
-
-function commitment_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.Component}
-    inputs = make_commitment_variable_inputs(T, psi_container)
-    add_variables!(psi_container, devices, inputs)
+) where {T <: VariableType, U <: PSY.Component}
+    error("make_variable_inputs is not implemented for $T / $U")
 end
 
 """
-Add variables to the PSIContainer from type-specific inputs.
+Add variables to the PSIContainer for any component.
 """
 function add_variables!(
+    ::Type{T},
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-    inputs::AddVariableInputs,
-) where {T <: PSY.Component}
-    _add_variables!(psi_container, devices, inputs)
+    devices::IS.FlattenIteratorWrapper{U},
+) where {T <: VariableType, U <: PSY.Component}
+    _add_variables!(psi_container, devices, make_variable_inputs(T, U, psi_container))
 end
 
+"""
+Add variables to the PSIContainer for a service.
+"""
 function add_variables!(
+    ::Type{T},
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
+    service::U,
+    contributing_devices::Vector{V},
+) where {T <: VariableType, U <: PSY.Reserve, V <: PSY.Device}
+    inputs = make_variable_inputs(T, psi_container, service, V)
+    _add_variables!(psi_container, contributing_devices, inputs)
+end
+
+function _add_variables!(
+    psi_container::PSIContainer,
+    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
     inputs::Vector{AddVariableInputs},
 ) where {T <: PSY.Component}
     for input in inputs
@@ -112,7 +91,7 @@ end
 
 function _add_variables!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
+    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
     inputs::AddVariableInputs,
 ) where {T <: PSY.Component}
     variable_names = inputs.variable_names
@@ -129,7 +108,7 @@ function _add_variables!(
             filter_func = x -> PSY.get_available(x)
         end
     else
-        filter_func = inputs.filter_func
+        filter_func = inputs.devices_filter_func
     end
     if !isnothing(filter_func)
         devices = filter!(filter_func, collect(devices))
@@ -139,7 +118,7 @@ function _add_variables!(
         add_variable(
             psi_container,
             devices,
-            variable_name(var_name, T),
+            var_name,
             binary,
             expression_name,
             sign;

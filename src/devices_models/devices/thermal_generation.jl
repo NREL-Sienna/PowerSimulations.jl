@@ -12,17 +12,18 @@ struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
 """
 This function add the variables for power generation output to the model
 """
-function make_active_power_variable_inputs(
-    ::Type{<:PSY.ThermalGen},
+function make_variable_inputs(
+    ::Type{ActivePowerVariable},
+    ::Type{T},
     psi_container::PSIContainer,
-)
+) where {T <: PSY.ThermalGen}
     if get_warm_start(psi_container.settings)
         initial_value_func = d -> PSY.get_activepower(d)
     else
         initial_value_func = nothing
     end
     return AddVariableInputs(;
-        variable_name = ACTIVE_POWER,
+        variable_name = make_variable_name(ACTIVE_POWER, T),
         binary = false,
         expression_name = :nodal_balance_active,
         initial_value_func = initial_value_func,
@@ -34,17 +35,18 @@ end
 """
 This function add the variables for power generation output to the model
 """
-function make_reactive_power_variable_inputs(
-    ::Type{<:PSY.ThermalGen},
+function make_variable_inputs(
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
     psi_container::PSIContainer,
-)
+) where {T <: PSY.ThermalGen}
     if get_warm_start(psi_container.settings)
         initial_value_func = d -> PSY.get_activepower(d)
     else
         initial_value_func = nothing
     end
     return AddVariableInputs(;
-        variable_name = REACTIVE_POWER,
+        variable_name = make_variable_name(REACTIVE_POWER, T),
         binary = false,
         expression_name = :nodal_balance_reactive,
         initial_value_func = initial_value_func,
@@ -56,10 +58,11 @@ end
 """
 This function add the variables for power generation commitment to the model
 """
-function make_commitment_variable_inputs(
-    ::Type{<:PSY.ThermalGen},
+function make_variable_inputs(
+    ::Type{CommitmentVariable},
+    ::Type{T},
     psi_container::PSIContainer,
-)
+) where {T <: PSY.ThermalGen}
     time_steps = model_time_steps(psi_container)
     if get_warm_start(psi_container.settings)
         initial_value_func = x -> (PSY.get_activepower(x) > 0 ? 1.0 : 0.0)
@@ -68,9 +71,9 @@ function make_commitment_variable_inputs(
     end
 
     return [
-        AddVariableInputs(; variable_name = ON, binary = true),
+        AddVariableInputs(; variable_name = make_variable_name(ON, T), binary = true),
         AddVariableInputs(;
-            variable_names = [START, STOP],
+            variable_names = [make_variable_name(START, T), make_variable_name(STOP, T)],
             binary = true,
             initial_value_func = initial_value_func,
         ),
@@ -172,7 +175,7 @@ function custom_active_power_constraints!(
     devices::IS.FlattenIteratorWrapper{T},
     ::Type{<:ThermalDispatchNoMin},
 ) where {T <: PSY.ThermalGen}
-    var_key = variable_name(ACTIVE_POWER, T)
+    var_key = make_variable_name(ACTIVE_POWER, T)
     variable = get_variable(psi_container, var_key)
     # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
     for v in variable
@@ -240,7 +243,11 @@ function commitment_constraints!(
         psi_container,
         get_initial_conditions(psi_container, ICKey(DeviceStatus, T)),
         constraint_name(COMMITMENT, T),
-        (variable_name(START, T), variable_name(STOP, T), variable_name(ON, T)),
+        (
+            make_variable_name(START, T),
+            make_variable_name(STOP, T),
+            make_variable_name(ON, T),
+        ),
     )
     return
 end
@@ -352,9 +359,9 @@ function ramp_constraints!(
             ini_conds,
             constraint_name(RAMP, T),
             (
-                variable_name(ACTIVE_POWER, T),
-                variable_name(START, T),
-                variable_name(STOP, T),
+                make_variable_name(ACTIVE_POWER, T),
+                make_variable_name(START, T),
+                make_variable_name(STOP, T),
             ),
         )
     else
@@ -387,7 +394,7 @@ function ramp_constraints!(
             ramp_params,
             ini_conds,
             constraint_name(RAMP, T),
-            variable_name(ACTIVE_POWER, T),
+            make_variable_name(ACTIVE_POWER, T),
         )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
@@ -462,7 +469,11 @@ function time_constraints!(
                 time_params,
                 ini_conds,
                 constraint_name(DURATION, T),
-                (variable_name(ON, T), variable_name(START, T), variable_name(STOP, T)),
+                (
+                    make_variable_name(ON, T),
+                    make_variable_name(START, T),
+                    make_variable_name(STOP, T),
+                ),
             )
         else
             device_duration_retrospective(
@@ -470,7 +481,11 @@ function time_constraints!(
                 time_params,
                 ini_conds,
                 constraint_name(DURATION, T),
-                (variable_name(ON, T), variable_name(START, T), variable_name(STOP, T)),
+                (
+                    make_variable_name(ON, T),
+                    make_variable_name(START, T),
+                    make_variable_name(STOP, T),
+                ),
             )
         end
     else
@@ -487,7 +502,7 @@ function cost_function(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
-    add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
+    add_to_cost(psi_container, devices, make_variable_name(ACTIVE_POWER, T), :variable)
     return
 end
 
@@ -500,13 +515,13 @@ function cost_function(
 ) where {T <: PSY.ThermalGen}
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Minute(resolution)) / MINUTES_IN_HOUR
-    variable = get_variable(psi_container, variable_name(ACTIVE_POWER, T))
+    variable = get_variable(psi_container, make_variable_name(ACTIVE_POWER, T))
 
     # uses the same cost function whenever there is NO PWL
     function _ps_cost(d::PSY.ThermalGen, cost_component::PSY.VariableCost)
         return ps_cost(
             psi_container,
-            variable_name(ACTIVE_POWER, T),
+            make_variable_name(ACTIVE_POWER, T),
             PSY.get_name(d),
             cost_component,
             dt,
@@ -591,11 +606,11 @@ function cost_function(
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
     #Variable Cost component
-    add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
+    add_to_cost(psi_container, devices, make_variable_name(ACTIVE_POWER, T), :variable)
     #Commitment Cost Components
-    add_to_cost(psi_container, devices, variable_name(START, T), :startup)
-    add_to_cost(psi_container, devices, variable_name(STOP, T), :shutdn)
-    add_to_cost(psi_container, devices, variable_name(ON, T), :fixed)
+    add_to_cost(psi_container, devices, make_variable_name(START, T), :startup)
+    add_to_cost(psi_container, devices, make_variable_name(STOP, T), :shutdn)
+    add_to_cost(psi_container, devices, make_variable_name(ON, T), :fixed)
     return
 end
 

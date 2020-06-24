@@ -5,15 +5,23 @@ struct DeviceLimitedRegulation <: AbstractRegulationFormulation end
 """
 This function add the variables for reserves to the model
 """
-function regulation_service_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
-) where {T <: PSY.StaticInjection}
-    var_name_up = variable_name("ΔP_up", T)
-    var_name_dn = variable_name("ΔP_dn", T)
-    add_variable(psi_container, devices, var_name_up, false; lb_value = x -> 0.0)
-    add_variable(psi_container, devices, var_name_dn, false; lb_value = x -> 0.0)
-    return
+function make_variable_inputs(
+    ::Type{RegulationServiceVariable},
+    ::Type{T},
+    ::PSIContainer,
+) where {T <: PSY.Device}
+    return [
+        AddVariableInputs(;
+            variable_name = make_variable_name("ΔP_up", T),
+            binary = false,
+            lb_value_func = x -> 0.0,
+        ),
+        AddVariableInputs(;
+            variable_name = make_variable_name("ΔP_dn"),
+            binary = false,
+            lb_value_func = x -> 0.0,
+        ),
+    ]
 end
 
 function activepower_constraints!(
@@ -24,8 +32,8 @@ function activepower_constraints!(
     feedforward::Nothing,
 ) where {T <: PSY.StaticInjection}
     parameters = model_has_parameters(psi_container)
-    var_name_up = variable_name("ΔP_up", T)
-    var_name_dn = variable_name("ΔP_dn", T)
+    var_name_up = make_variable_name("ΔP_up", T)
+    var_name_dn = make_variable_name("ΔP_dn", T)
     var_up = get_variable(psi_container, var_name_up)
     var_dn = get_variable(psi_container, var_name_dn)
 
@@ -51,7 +59,7 @@ function activepower_constraints!(
 
     if parameters
         base_points_param =
-            get_parameter_container(psi_container, variable_name(ACTIVE_POWER, T))
+            get_parameter_container(psi_container, make_variable_name(ACTIVE_POWER, T))
         multiplier = get_multiplier_array(base_points_param)
         base_points = get_parameter_array(base_points_param)
     end
@@ -82,8 +90,8 @@ function activepower_constraints!(
     ::Type{AreaBalancePowerModel},
     feedforward::Nothing,
 ) where {T <: PSY.StaticInjection}
-    var_name_up = variable_name("ΔP_up", T)
-    var_name_dn = variable_name("ΔP_dn", T)
+    var_name_up = make_variable_name("ΔP_up", T)
+    var_name_dn = make_variable_name("ΔP_dn", T)
     var_up = get_variable(psi_container, var_name_up)
     var_dn = get_variable(psi_container, var_name_dn)
 
@@ -156,8 +164,8 @@ function ramp_constraints!(
     ::Type{AreaBalancePowerModel},
     feedforward::Nothing,
 ) where {T <: PSY.ThermalStandard}
-    regulation_up = get_variable(psi_container, variable_name("ΔP_up", T))
-    regulation_dn = get_variable(psi_container, variable_name("ΔP_dn", T))
+    regulation_up = get_variable(psi_container, make_variable_name("ΔP_up", T))
+    regulation_dn = get_variable(psi_container, make_variable_name("ΔP_dn", T))
 
     resolution = Dates.value(Dates.Second(model_resolution(psi_container)))
     names = (PSY.get_name(g) for g in devices)
@@ -192,11 +200,11 @@ function participation_assignment!(
     feedforward::Nothing,
 ) where {T <: PSY.StaticInjection}
     time_steps = model_time_steps(psi_container)
-    regulation_up = get_variable(psi_container, variable_name("ΔP_up", T))
-    regulation_dn = get_variable(psi_container, variable_name("ΔP_dn", T))
+    regulation_up = get_variable(psi_container, make_variable_name("ΔP_up", T))
+    regulation_dn = get_variable(psi_container, make_variable_name("ΔP_dn", T))
 
-    R_up = get_variable(psi_container, variable_name("area_total_reserve_up"))
-    R_dn = get_variable(psi_container, variable_name("area_total_reserve_dn"))
+    R_up = get_variable(psi_container, make_variable_name("area_total_reserve_up"))
+    R_dn = get_variable(psi_container, make_variable_name("area_total_reserve_dn"))
     component_names = (PSY.get_name(d) for d in devices)
     participation_assignment_up = JuMPConstraintArray(undef, component_names, time_steps)
     participation_assignment_dn = JuMPConstraintArray(undef, component_names, time_steps)
@@ -242,8 +250,8 @@ function regulation_cost!(
     ::DeviceModel{PSY.RegulationDevice{T}, <:AbstractRegulationFormulation},
 ) where {T <: PSY.StaticInjection}
     time_steps = model_time_steps(psi_container)
-    regulation_up = get_variable(psi_container, variable_name("ΔP_up", T))
-    regulation_dn = get_variable(psi_container, variable_name("ΔP_dn", T))
+    regulation_up = get_variable(psi_container, make_variable_name("ΔP_up", T))
+    regulation_dn = get_variable(psi_container, make_variable_name("ΔP_dn", T))
 
     for d in devices
         cost = PSY.get_cost(d)
@@ -270,7 +278,7 @@ function make_nodal_expression_inputs(
 ) where {T <: PSY.StaticInjection}
     return NodalExpressionInputs(
         "get_rating",
-        variable_name(ACTIVE_POWER, T),
+        make_variable_name(ACTIVE_POWER, T),
         use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),
         1.0,
         JuMP.VariableRef,

@@ -250,10 +250,16 @@ function decode_symbol(name::Symbol)
     return split(String(name), PSI_NAME_DELIMITER)
 end
 
+# TODO: remove once all references are changed
 constraint_name(cons_type, device_type) = encode_symbol(device_type, cons_type)
 constraint_name(cons_type) = encode_symbol(cons_type)
+make_constraint_name(cons_type, device_type) = encode_symbol(device_type, cons_type)
+make_constraint_name(cons_type) = encode_symbol(cons_type)
+# TODO: remove once all references are changed
 variable_name(var_type, device_type) = encode_symbol(device_type, var_type)
 variable_name(var_type) = encode_symbol(var_type)
+make_variable_name(var_type, device_type) = encode_symbol(device_type, var_type)
+make_variable_name(var_type) = encode_symbol(var_type)
 
 _variable_type(cm::PSIContainer) = JuMP.variable_type(cm.JuMPmodel)
 model_time_steps(psi_container::PSIContainer) = psi_container.time_steps
