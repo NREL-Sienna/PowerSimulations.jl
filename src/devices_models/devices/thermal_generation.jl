@@ -201,6 +201,7 @@ function make_active_power_constraints_inputs(
             variable_name = ACTIVE_POWER,
             limits_func = x -> PSY.get_activepowerlimits(x),
             constraint_func = device_range,
+            constraint_struct = DeviceRangeConstraintInfo,
         )],
     )
 end
@@ -221,9 +222,10 @@ function make_active_power_constraints_inputs(
             RangeConstraintInputs(;
                 constraint_name = ACTIVE_RANGE,
                 variable_name = ACTIVE_POWER,
-                bin_variable_name = ON,
+                bin_variable_name = [ON],
                 limits_func = x -> PSY.get_activepowerlimits(x),
                 constraint_func = device_semicontinuousrange,
+                constraint_struct = DeviceRangeConstraintInfo,
             ),
         ],
     )
@@ -247,6 +249,7 @@ function make_active_power_constraints_inputs(
             variable_name = ACTIVE_POWER,
             limits_func = x -> (min = 0.0, max = PSY.get_activepowerlimits(x).max),
             constraint_func = device_range,
+            constraint_struct = DeviceRangeConstraintInfo,
         )],
         custom_psi_container_func = custom_active_power_constraints!,
     )
@@ -270,37 +273,25 @@ end
 """
 This function adds the active power limits of generators. Constraint (17) & (18) from PGLIB
 """
-function activepower_constraints!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
-    model::DeviceModel{PSY.ThermalMultiStart, ThermalMultiStartUnitCommitment},
+function make_active_power_constraints_inputs!(
+    ::Type{<:PSY.ThermalMultiStart},
+    ::Type{<:ThermalMultiStartUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Nothing,
+    use_parameters::Bool,
+    use_forecasts::Bool,
 )
-    constraint_data = Vector{DeviceMultiStartRangeConstraintsData}(undef, length(devices))
-
-    for (ix, d) in enumerate(devices)
-        limits = PSY.get_activepowerlimits(d)
-        name = PSY.get_name(d)
-        lag_ramp_limits = PSY.get_power_trajectory(d)
-        range_data = DeviceMultiStartRangeConstraintsData(name, limits, lag_ramp_limits)
-        add_device_services!(range_data, d, model)
-        constraint_data[ix] = range_data
-    end
-
-    device_multistart_range(
-        psi_container,
-        constraint_data,
-        constraint_name(ACTIVE_RANGE, PSY.ThermalMultiStart),
-        variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),
-        (
-            variable_name(ON, PSY.ThermalMultiStart),
-            variable_name(START, PSY.ThermalMultiStart),
-            variable_name(STOP, PSY.ThermalMultiStart),
-        ),
+    return DeviceRangeConstraintInputs(;
+        range_constraint_inputs = [RangeConstraintInputs(;
+            constraint_name = ACTIVE_RANGE,
+            variable_name = ACTIVE_POWER,
+            limits_func = x -> (min = 0.0, max = PSY.get_activepowerlimits(x).max - PSY.get_activepowerlimits(x).min),
+            bin_variable_name = [ON, START, STOP],
+            constraint_func = device_multistart_range,
+            constraint_struct = DeviceMultiStartRangeConstraintsInfo,
+            lag_limits_func =  PSY.get_power_trajectory,
+        )],
     )
-
-    return
 end
 
 function _get_data_for_range_ic(
@@ -341,13 +332,13 @@ function initial_range_constraints!(
     initial_conditions_status = get_initial_conditions(psi_container, key_status)
     ini_conds = _get_data_for_range_ic(initial_conditions_power, initial_conditions_status)
 
-    constraint_data = Vector{DeviceMultiStartRangeConstraintsData}(undef, length(devices))
+    constraint_data = Vector{DeviceMultiStartRangeConstraintsInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         limits = PSY.get_activepowerlimits(d)
         name = PSY.get_name(d)
         @assert name == PSY.get_name(ini_conds[ix, 1].device)
         lag_ramp_limits = PSY.get_power_trajectory(d)
-        range_data = DeviceMultiStartRangeConstraintsData(name, limits, lag_ramp_limits)
+        range_data = DeviceMultiStartRangeConstraintsInfo(name, limits, lag_ramp_limits)
         add_device_services!(range_data, d, model)
         constraint_data[ix] = range_data
     end
@@ -384,6 +375,7 @@ function make_reactive_power_constraints_inputs(
             variable_name = REACTIVE_POWER,
             limits_func = x -> PSY.get_reactivepowerlimits(x),
             constraint_func = device_range,
+            constraint_struct = DeviceRangeConstraintInfo,
         )],
     )
 end
@@ -403,9 +395,10 @@ function make_reactive_power_constraints_inputs(
         range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = REACTIVE_RANGE,
             variable_name = REACTIVE_POWER,
-            bin_variable_name = ON,
+            bin_variable_name = [ON],
             limits_func = x -> PSY.get_reactivepowerlimits(x),
             constraint_func = device_semicontinuousrange,
+            constraint_struct = DeviceRangeConstraintInfo,
         )],
     )
 end

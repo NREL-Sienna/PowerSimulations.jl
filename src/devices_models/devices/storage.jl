@@ -80,12 +80,14 @@ function make_active_power_constraints_inputs(
                 variable_name = ACTIVE_POWER_OUT,
                 limits_func = x -> PSY.get_outputactivepowerlimits(x),
                 constraint_func = device_range,
+                constraint_struct = DeviceRangeConstraintInfo,
             ),
             RangeConstraintInputs(;
                 constraint_name = INPUT_POWER_RANGE,
                 variable_name = ACTIVE_POWER_IN,
                 limits_func = x -> PSY.get_inputactivepowerlimits(x),
                 constraint_func = device_range,
+                constraint_struct = DeviceRangeConstraintInfo,
             ),
         ],
     )
@@ -104,16 +106,18 @@ function make_active_power_constraints_inputs(
             RangeConstraintInputs(;
                 constraint_name = OUTPUT_POWER_RANGE,
                 variable_name = ACTIVE_POWER_OUT,
-                bin_variable_name = RESERVE,
+                bin_variable_name = [RESERVE],
                 limits_func = x -> PSY.get_outputactivepowerlimits(x),
                 constraint_func = reserve_device_semicontinuousrange,
+                constraint_struct = DeviceRangeConstraintInfo,
             ),
             RangeConstraintInputs(;
                 constraint_name = INPUT_POWER_RANGE,
                 variable_name = ACTIVE_POWER_IN,
-                bin_variable_name = RESERVE,
+                bin_variable_name = [RESERVE],
                 limits_func = x -> PSY.get_inputactivepowerlimits(x),
                 constraint_func = reserve_device_semicontinuousrange,
+                constraint_struct = DeviceRangeConstraintInfo,
             ),
         ],
     )

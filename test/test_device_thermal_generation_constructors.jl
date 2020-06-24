@@ -361,7 +361,7 @@ end
             use_parameters = p,
         )
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 528, 0, 238, 60, 192, true)
+        moi_tests(op_problem, p, 528, 0, 192, 108, 192, true)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
