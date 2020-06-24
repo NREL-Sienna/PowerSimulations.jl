@@ -9,7 +9,6 @@ function make_variable_inputs(
     ::Type{ServiceVariable},
     ::PSIContainer,
     service::T,
-    ::Type{<:PSY.Device},
 ) where {T <: PSY.Reserve}
     inputs = AddVariableInputs(;
         variable_name = make_variable_name(PSY.get_name(service), T),

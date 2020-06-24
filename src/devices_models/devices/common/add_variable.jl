@@ -75,7 +75,7 @@ function add_variables!(
     service::U,
     contributing_devices::Vector{V},
 ) where {T <: VariableType, U <: PSY.Reserve, V <: PSY.Device}
-    inputs = make_variable_inputs(T, psi_container, service, V)
+    inputs = make_variable_inputs(T, psi_container, service)
     _add_variables!(psi_container, contributing_devices, inputs)
 end
 
