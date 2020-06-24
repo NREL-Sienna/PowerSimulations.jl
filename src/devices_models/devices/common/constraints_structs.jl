@@ -68,7 +68,7 @@ function DeviceTimeSeriesConstraintInfo(
     )
 end
 
-struct DeviceMultiStartRangeConstraintsData <: AbstractRangeConstraintInfo
+struct DeviceMultiStartRangeConstraintsInfo <: AbstractRangeConstraintInfo
     name::String
     limits::PSY.Min_Max
     lag_ramp_limits::NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}
@@ -76,12 +76,12 @@ struct DeviceMultiStartRangeConstraintsData <: AbstractRangeConstraintInfo
     additional_terms_lb::Vector{Symbol}
 end
 
-function DeviceMultiStartRangeConstraintsData(
+function DeviceMultiStartRangeConstraintsInfo(
     name::String,
     limits::PSY.Min_Max,
     lag_ramp_limits::NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}},
 )
-    return DeviceMultiStartRangeConstraintsData(
+    return DeviceMultiStartRangeConstraintsInfo(
         name,
         limits,
         lag_ramp_limits,
@@ -90,8 +90,8 @@ function DeviceMultiStartRangeConstraintsData(
     )
 end
 
-function DeviceMultiStartRangeConstraintsData(name::String)
-    return DeviceMultiStartRangeConstraintsData(
+function DeviceMultiStartRangeConstraintsInfo(name::String)
+    return DeviceMultiStartRangeConstraintsInfo(
         name,
         (min = -Inf, max = Inf),
         (startup = Inf, shutdown = Inf),
