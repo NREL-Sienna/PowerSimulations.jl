@@ -134,7 +134,8 @@ function device_range_constraints!(
                 constraint_info = DeviceRangeConstraintInfo(dev_name, limits)
             elseif constraint_struct == DeviceMultiStartRangeConstraintsInfo
                 lag_limits = rc.lag_limits_func(dev)
-                constraint_info = DeviceMultiStartRangeConstraintsInfo(dev_name, limits, lag_limits)
+                constraint_info =
+                    DeviceMultiStartRangeConstraintsInfo(dev_name, limits, lag_limits)
             end
             add_device_services!(constraint_info, dev, model)
             constraint_infos[i] = constraint_info

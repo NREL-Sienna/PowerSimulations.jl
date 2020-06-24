@@ -262,7 +262,7 @@ function device_multistart_range(
     time_steps = model_time_steps(psi_container)
     varp = get_variable(psi_container, inputs.variable_name)
 
-    varstatus = get_variable(psi_container,inputs.bin_variable_name[1])
+    varstatus = get_variable(psi_container, inputs.bin_variable_name[1])
     varon = get_variable(psi_container, inputs.bin_variable_name[2])
     varoff = get_variable(psi_container, inputs.bin_variable_name[3])
 
@@ -288,7 +288,8 @@ function device_multistart_range(
         con_on[constraint_info.name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
             expression_products <=
-            (constraint_info.limits.max - constraint_info.limits.min) * varstatus[constraint_info.name, t] -
+            (constraint_info.limits.max - constraint_info.limits.min) *
+            varstatus[constraint_info.name, t] -
             max(constraint_info.limits.max - constraint_info.lag_ramp_limits.startup, 0) * varon[constraint_info.name, t]
         )
         if t == length(time_steps)
@@ -297,9 +298,12 @@ function device_multistart_range(
             con_off[constraint_info.name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 expression_products <=
-                (constraint_info.limits.max - constraint_info.limits.min) * varstatus[constraint_info.name, t] -
-                max(constraint_info.limits.max - constraint_info.lag_ramp_limits.shutdown, 0) *
-                varoff[constraint_info.name, t + 1]
+                (constraint_info.limits.max - constraint_info.limits.min) *
+                varstatus[constraint_info.name, t] -
+                max(
+                    constraint_info.limits.max - constraint_info.lag_ramp_limits.shutdown,
+                    0,
+                ) * varoff[constraint_info.name, t + 1]
             )
         end
     end

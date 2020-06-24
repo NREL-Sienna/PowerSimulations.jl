@@ -285,11 +285,14 @@ function make_active_power_constraints_inputs!(
         range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = ACTIVE_RANGE,
             variable_name = ACTIVE_POWER,
-            limits_func = x -> (min = 0.0, max = PSY.get_activepowerlimits(x).max - PSY.get_activepowerlimits(x).min),
+            limits_func = x -> (
+                min = 0.0,
+                max = PSY.get_activepowerlimits(x).max - PSY.get_activepowerlimits(x).min,
+            ),
             bin_variable_name = [ON, START, STOP],
             constraint_func = device_multistart_range,
             constraint_struct = DeviceMultiStartRangeConstraintsInfo,
-            lag_limits_func =  PSY.get_power_trajectory,
+            lag_limits_func = PSY.get_power_trajectory,
         )],
     )
 end
