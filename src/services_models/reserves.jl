@@ -12,7 +12,7 @@ function activeservice_variables!(
 ) where {SR <: PSY.Reserve}
     add_variable(
         psi_container,
-        contributing_devices,
+        [device for device ∈ contributing_devices if PSY.get_available(device)],
         variable_name(PSY.get_name(service), SR),
         false;
         lb_value = d -> 0,
@@ -50,7 +50,7 @@ function service_requirement_constraint!(
     name = PSY.get_name(service)
     constraint = get_constraint(psi_container, constraint_name(REQUIREMENT, SR))
     reserve_variable = get_variable(psi_container, variable_name(name, SR))
-    use_slacks = get_slack_variables(psi_container.settings)
+    use_slacks = get_services_slack_variables(psi_container.settings)
 
     if use_forecast_data
         ts_vector = TS.values(PSY.get_data(PSY.get_forecast(

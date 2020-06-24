@@ -148,7 +148,8 @@ end
             model_template,
             c_sys5_uc;
             use_parameters = p,
-            slack_variables = true,
+            services_slack_variables = true,
+            balance_slack_variables = true,
         )
         moi_tests(op_problem, p, 504, 0, 120, 192, 24, false)
     end

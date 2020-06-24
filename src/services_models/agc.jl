@@ -62,7 +62,7 @@ function absolute_value_lift(psi_container::PSIContainer, areas)
 
     JuMP.add_to_expression!(
         psi_container.cost_function,
-        sum(z[a, t] for t in time_steps, a in area_names) * SLACK_COST,
+        sum(z[a, t] for t in time_steps, a in area_names) * SERVICES_SLACK_COST,
     )
     return
 end
@@ -76,7 +76,7 @@ function frequency_response_constraint!(psi_container::PSIContainer, sys::PSY.Sy
     for area in PSY.get_components(PSY.Area, sys)
         frequency_response += PSY.get_load_response(area)
     end
-    for g in PSY.get_components(PSY.RegulationDevice, sys)
+    for g in PSY.get_components(PSY.RegulationDevice, sys, x -> PSY.get_available(x))
         d = PSY.get_droop(g)
         response = 1 / d
         frequency_response += response
@@ -128,24 +128,21 @@ function smooth_ace_pid!(
 
             area_balance[a, t] =
                 JuMP.@variable(psi_container.JuMPmodel, base_name = "balance_{$(a),$(t)}")
+            RAW_ACE[a, t] = area_balance[a, t] - 10 * B * Δf[t]
             if t == 1
                 SACE_ini =
                     get_initial_conditions(psi_container, ICKey(AreaControlError, PSY.AGC))[ix]
-                RAW_ACE[a, t] = area_balance[a, t] - 10 * B * Δf[t]
-                SACE_pid[a, t] = JuMP.@constraint(
-                    psi_container.JuMPmodel,
-                    SACE[a, t] ==
+                sace_exp =
                     SACE_ini.value +
                     kp * (
                         (1 + Δt / (kp / ki) + (kd / kp) / Δt) *
                         (RAW_ACE[a, t] - SACE[a, t]) +
                         (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t])
                     )
-                )
+                SACE_pid[a, t] =
+                    JuMP.@constraint(psi_container.JuMPmodel, SACE[a, t] == sace_exp)
                 continue
             end
-
-            RAW_ACE[a, t] = area_balance[a, t] - 10 * B * Δf[t]
 
             SACE_pid[a, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
