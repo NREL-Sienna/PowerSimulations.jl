@@ -13,7 +13,7 @@ function construct_device!(
 
     devices = get_available_components(model.device_type, sys)
     #Variables
-    regulation_service_variables!(psi_container, devices)
+    add_variables!(RegulationServiceVariable, psi_container, devices)
 
     #Constraints
     nodal_expression!(psi_container, devices, S)
@@ -38,7 +38,7 @@ function construct_device!(
 
     devices = get_available_components(model.device_type, sys)
     #Variables
-    regulation_service_variables!(psi_container, devices)
+    add_variables!(RegulationServiceVariable, psi_container, devices)
 
     #Constraints
     nodal_expression!(psi_container, devices, S)

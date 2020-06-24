@@ -5,15 +5,23 @@ struct DeviceLimitedRegulation <: AbstractRegulationFormulation end
 """
 This function add the variables for reserves to the model
 """
-function regulation_service_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
-) where {T <: PSY.StaticInjection}
-    var_name_up = variable_name("ΔP_up", T)
-    var_name_dn = variable_name("ΔP_dn", T)
-    add_variable(psi_container, devices, var_name_up, false; lb_value = x -> 0.0)
-    add_variable(psi_container, devices, var_name_dn, false; lb_value = x -> 0.0)
-    return
+function make_variable_inputs(
+    ::Type{RegulationServiceVariable},
+    ::Type{T},
+    ::PSIContainer,
+) where {T <: PSY.Device}
+    return [
+        AddVariableInputs(;
+            variable_name = "ΔP_up",
+            binary = false,
+            lb_value_func = x -> 0.0,
+        ),
+        AddVariableInputs(;
+            variable_name = "ΔP_dn",
+            binary = false,
+            lb_value_func = x -> 0.0,
+        ),
+    ]
 end
 
 function activepower_constraints!(

@@ -3,64 +3,58 @@ struct BookKeeping <: AbstractStorageFormulation end
 struct BookKeepingwReservation <: AbstractStorageFormulation end
 #################################################Storage Variables#################################
 
-function active_power_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{St},
-) where {St <: PSY.Storage}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(ACTIVE_POWER_IN, St),
-        false,
-        :nodal_balance_active,
-        -1.0;
-        lb_value = d -> 0.0,
-    )
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(ACTIVE_POWER_OUT, St),
-        false,
-        :nodal_balance_active;
-        lb_value = d -> 0.0,
-    )
-    return
+function make_variable_inputs(
+    ::Type{ActivePowerVariable},
+    ::Type{<:PSY.Storage},
+    ::PSIContainer,
+)
+    return [
+        AddVariableInputs(;
+            variable_name = ACTIVE_POWER_IN,
+            binary = false,
+            expression_name = :nodal_balance_active,
+            sign = -1.0,
+            lb_value_func = x -> 0.0,
+        ),
+        AddVariableInputs(;
+            variable_name = ACTIVE_POWER_OUT,
+            binary = false,
+            expression_name = :nodal_balance_active,
+            lb_value_func = x -> 0.0,
+        ),
+    ]
 end
 
-function reactive_power_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{St},
-) where {St <: PSY.Storage}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(REACTIVE_POWER, St),
-        false,
-        :nodal_balance_reactive,
+function make_variable_inputs(
+    ::Type{ReactivePowerVariable},
+    ::Type{<:PSY.Storage},
+    ::PSIContainer,
+)
+    return AddVariableInputs(;
+        variable_name = REACTIVE_POWER,
+        binary = false,
+        expression_name = :nodal_balance_reactive,
     )
-    return
 end
 
-function energy_storage_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{St},
-) where {St <: PSY.Storage}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(ENERGY, St),
-        false;
-        lb_value = d -> 0.0,
+function make_variable_inputs(
+    ::Type{EnergyStorageVariable},
+    ::Type{<:PSY.Storage},
+    ::PSIContainer,
+)
+    return AddVariableInputs(;
+        variable_name = ENERGY,
+        binary = false,
+        lb_value_func = x -> 0.0,
     )
-    return
 end
 
-function storage_reservation_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{St},
-) where {St <: PSY.Storage}
-    add_variable(psi_container, devices, variable_name(RESERVE, St), true)
-    return
+function make_variable_inputs(
+    ::Type{StorageReservationVariable},
+    ::Type{<:PSY.Storage},
+    ::PSIContainer,
+)
+    return AddVariableInputs(; variable_name = RESERVE, binary = true)
 end
 
 ################################## output power constraints#################################

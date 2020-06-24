@@ -12,7 +12,8 @@ struct ThermalDispatchNoMin <: AbstractThermalDispatchFormulation end
 """
 This function add the variables for power generation output to the model
 """
-function make_active_power_variable_inputs(
+function make_variable_inputs(
+    ::Type{ActivePowerVariable},
     ::Type{<:PSY.ThermalGen},
     psi_container::PSIContainer,
 )
@@ -34,7 +35,8 @@ end
 """
 This function add the variables for power generation output to the model
 """
-function make_reactive_power_variable_inputs(
+function make_variable_inputs(
+    ::Type{ReactivePowerVariable},
     ::Type{<:PSY.ThermalGen},
     psi_container::PSIContainer,
 )
@@ -56,7 +58,8 @@ end
 """
 This function add the variables for power generation commitment to the model
 """
-function make_commitment_variable_inputs(
+function make_variable_inputs(
+    ::Type{CommitmentVariable},
     ::Type{<:PSY.ThermalGen},
     psi_container::PSIContainer,
 )

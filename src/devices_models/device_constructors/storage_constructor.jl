@@ -11,9 +11,9 @@ function construct_device!(
     end
 
     #Variables
-    active_power_variables!(psi_container, devices)
-    reactive_power_variables!(psi_container, devices)
-    energy_storage_variables!(psi_container, devices)
+    add_variables!(ActivePowerVariable, psi_container, devices)
+    add_variables!(ReactivePowerVariable, psi_container, devices)
+    add_variables!(EnergyStorageVariable, psi_container, devices)
 
     #Initial Conditions
     initial_conditions!(psi_container, devices, D)
@@ -48,8 +48,8 @@ function construct_device!(
     end
 
     #Variables
-    active_power_variables!(psi_container, devices)
-    energy_storage_variables!(psi_container, devices)
+    add_variables!(ActivePowerVariable, psi_container, devices)
+    add_variables!(EnergyStorageVariable, psi_container, devices)
 
     #Initial Conditions
     initial_conditions!(psi_container, devices, D)
@@ -78,10 +78,10 @@ function construct_device!(
     end
 
     #Variables
-    active_power_variables!(psi_container, devices)
-    reactive_power_variables!(psi_container, devices)
-    energy_storage_variables!(psi_container, devices)
-    storage_reservation_variables!(psi_container, devices)
+    add_variables!(ActivePowerVariable, psi_container, devices)
+    add_variables!(ReactivePowerVariable, psi_container, devices)
+    add_variables!(EnergyStorageVariable, psi_container, devices)
+    add_variables!(StorageReservationVariable, psi_container, devices)
 
     #Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)
@@ -117,9 +117,9 @@ function construct_device!(
     end
 
     #Variables
-    active_power_variables!(psi_container, devices)
-    energy_storage_variables!(psi_container, devices)
-    storage_reservation_variables!(psi_container, devices)
+    add_variables!(ActivePowerVariable, psi_container, devices)
+    add_variables!(EnergyStorageVariable, psi_container, devices)
+    add_variables!(StorageReservationVariable, psi_container, devices)
 
     #Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)

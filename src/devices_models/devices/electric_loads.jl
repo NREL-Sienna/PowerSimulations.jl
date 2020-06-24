@@ -5,7 +5,11 @@ struct InterruptiblePowerLoad <: AbstractControllablePowerLoadFormulation end
 struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
 
 ########################### dispatchable load variables ####################################
-function make_active_power_variable_inputs(::Type{<:PSY.ElectricLoad}, ::PSIContainer)
+function make_variable_inputs(
+    ::Type{ActivePowerVariable},
+    ::Type{<:PSY.ElectricLoad},
+    ::PSIContainer,
+)
     return AddVariableInputs(;
         variable_name = ACTIVE_POWER,
         binary = false,
@@ -16,7 +20,11 @@ function make_active_power_variable_inputs(::Type{<:PSY.ElectricLoad}, ::PSICont
     )
 end
 
-function make_reactive_power_variable_inputs(::Type{<:PSY.ElectricLoad}, ::PSIContainer)
+function make_variable_inputs(
+    ::Type{ReactivePowerVariable},
+    ::Type{<:PSY.ElectricLoad},
+    ::PSIContainer,
+)
     return AddVariableInputs(;
         variable_name = REACTIVE_POWER,
         binary = false,
@@ -27,7 +35,11 @@ function make_reactive_power_variable_inputs(::Type{<:PSY.ElectricLoad}, ::PSICo
     )
 end
 
-function make_commitment_variable_inputs(::Type{<:PSY.ElectricLoad}, ::PSIContainer)
+function make_variable_inputs(
+    ::Type{CommitmentVariable},
+    ::Type{<:PSY.ElectricLoad},
+    ::PSIContainer,
+)
     return AddVariableInputs(; variable_name = ON, binary = true)
 end
 

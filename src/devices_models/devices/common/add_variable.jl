@@ -47,46 +47,20 @@ function AddVariableInputs(;
     )
 end
 
-function make_active_power_variable_inputs(
-    ::Type{T},
+function make_variable_inputs(
+    ::Type{<:T},
+    ::Type{<:U},
     ::PSIContainer,
-) where {T <: PSY.Device}
-    error("make_active_power_variable_inputs is not implemented for $T")
+) where {T <: VariableType, U <: PSY.Component}
+    error("make_variable_inputs is not implemented for $T / $U")
 end
 
-function make_reactive_power_variable_inputs(
+function add_variables!(
     ::Type{T},
-    ::PSIContainer,
-) where {T <: PSY.Device}
-    error("make_reactive_power_variable_inputs is not implemented for $T")
-end
-
-function make_commitment_variable_inputs(::Type{T}, ::PSIContainer) where {T <: PSY.Device}
-    error("make_commitment_variable_inputs is not implemented for $T")
-end
-
-function activepower_variables!(
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.Component}
-    inputs = make_active_power_variable_inputs(T, psi_container)
-    add_variables!(psi_container, devices, inputs)
-end
-
-function reactivepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.Component}
-    inputs = make_reactive_power_variable_inputs(T, psi_container)
-    add_variables!(psi_container, devices, inputs)
-end
-
-function commitment_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.Component}
-    inputs = make_commitment_variable_inputs(T, psi_container)
-    add_variables!(psi_container, devices, inputs)
+    devices::IS.FlattenIteratorWrapper{U},
+) where {T <: VariableType, U <: PSY.Component}
+    add_variables!(psi_container, devices, make_variable_inputs(T, U, psi_container))
 end
 
 """

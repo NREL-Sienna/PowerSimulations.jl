@@ -13,7 +13,11 @@ struct HydroCommitmentReservoirFlow <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 =#
 ########################### Hydro generation variables #################################
-function make_active_power_variable_inputs(::Type{<:PSY.HydroGen}, ::PSIContainer)
+function make_variable_inputs(
+    ::Type{ActivePowerVariable},
+    ::Type{<:PSY.HydroGen},
+    ::PSIContainer,
+)
     return AddVariableInputs(;
         variable_name = ACTIVE_POWER,
         binary = false,
@@ -24,7 +28,11 @@ function make_active_power_variable_inputs(::Type{<:PSY.HydroGen}, ::PSIContaine
     )
 end
 
-function make_reactive_power_variable_inputs(::Type{<:PSY.HydroGen}, ::PSIContainer)
+function make_variable_inputs(
+    ::Type{ReactivePowerVariable},
+    ::Type{<:PSY.HydroGen},
+    ::PSIContainer,
+)
     return AddVariableInputs(;
         variable_name = REACTIVE_POWER,
         binary = false,
@@ -35,21 +43,18 @@ function make_reactive_power_variable_inputs(::Type{<:PSY.HydroGen}, ::PSIContai
     )
 end
 
-function energy_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-) where {H <: PSY.HydroGen}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(ENERGY, H),
-        false;
-        ub_value = d -> PSY.get_storage_capacity(d),
-        lb_value = d -> 0.0,
-        init_value = d -> PSY.get_initial_storage(d),
+function make_variable_inputs(
+    ::Type{EnergyVariable},
+    ::Type{<:PSY.HydroGen},
+    ::PSIContainer,
+)
+    return AddVariableInputs(;
+        variable_name = ENERGY,
+        binary = false,
+        initial_value_func = x -> PSY.get_initial_storage(x),
+        lb_value_func = x -> 0.0,
+        ub_value_func = x -> PSY.get_storage_capacity(x),
     )
-
-    return
 end
 
 #=
@@ -70,19 +75,16 @@ function inflow_variables!(
 end
 =#
 
-function spillage_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-) where {H <: PSY.HydroGen}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(SPILLAGE, H),
-        false;
-        lb_value = d -> 0.0,
+function make_variable_inputs(
+    ::Type{SpillageVariable},
+    ::Type{<:PSY.HydroGen},
+    ::PSIContainer,
+)
+    return AddVariableInputs(;
+        variable_name = SPILLAGE,
+        binary = false,
+        lb_value_func = x -> 0.0,
     )
-
-    return
 end
 
 """
