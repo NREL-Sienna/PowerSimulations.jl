@@ -336,7 +336,7 @@ function PMconmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowe
     return pm_con_map
 end
 
-function PMconmap(system_formulation::Type{S}) where {S <: PM.AbstractDCPModel}
+function PMconmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel}
     pm_con_map = Dict{Type, Dict{Symbol, Union{Symbol, NamedTuple}}}()
 
     pm_con_map[PSY.Bus] = Dict(
