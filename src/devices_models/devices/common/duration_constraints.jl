@@ -386,13 +386,13 @@ function device_duration_pglib(
     set_names = (device_name(ic) for ic in initial_duration[:, 1])
     con_up = add_cons_container!(psi_container, name_up, set_names, time_steps)
     con_down = add_cons_container!(psi_container, name_down, set_names, time_steps)
-    T = length(time_steps)
+    total_time_steps = length(time_steps)
     for t in time_steps
         for (ix, ic) in enumerate(initial_duration[:, 1])
             name = device_name(ic)
             # Minimum Up-time Constraint
             lhs_on = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}(0)
-            if t in min(duration_data[ix].up, T):T
+            if t in min(duration_data[ix].up, total_time_steps):total_time_steps
                 for i in (t - duration_data[ix].up + 1):t
                     if i in time_steps
                         JuMP.add_to_expression!(lhs_on, varstart[name, i])
@@ -411,7 +411,7 @@ function device_duration_pglib(
             name = device_name(ic)
             # Minimum Down-time Constraint
             lhs_off = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}(0)
-            if t in min(duration_data[ix].down, T):T
+            if t in min(duration_data[ix].down, total_time_steps):total_time_steps
                 for i in (t - duration_data[ix].down + 1):t
                     if i in time_steps
                         JuMP.add_to_expression!(lhs_off, varstop[name, i])

@@ -2,7 +2,7 @@ struct RangeConstraintInputsInternal
     constraint_infos::Vector{<:AbstractRangeConstraintInfo}
     constraint_name::Symbol
     variable_name::Symbol
-    bin_variable_name::Vector{Symbol}
+    bin_variable_names::Vector{Symbol}
 end
 
 function RangeConstraintInputsInternal(
@@ -107,7 +107,8 @@ function device_semicontinuousrange(
 )
     time_steps = model_time_steps(psi_container)
     varcts = get_variable(psi_container, inputs.variable_name)
-    varbin = get_variable(psi_container, inputs.bin_variable_name[1])
+    @assert length(inputs.bin_variable_names) == 1
+    varbin = get_variable(psi_container, inputs.bin_variable_names[1])
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
     lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
     names = (get_name(x) for x in inputs.constraint_infos)
@@ -180,7 +181,8 @@ function reserve_device_semicontinuousrange(
 )
     time_steps = model_time_steps(psi_container)
     varcts = get_variable(psi_container, inputs.variable_name)
-    varbin = get_variable(psi_container, inputs.bin_variable_name[1])
+    @assert length(inputs.bin_variable_names) == 1
+    varbin = get_variable(psi_container, inputs.bin_variable_names[1])
 
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
     lb_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
@@ -261,10 +263,10 @@ function device_multistart_range(
 )
     time_steps = model_time_steps(psi_container)
     varp = get_variable(psi_container, inputs.variable_name)
-
-    varstatus = get_variable(psi_container, inputs.bin_variable_name[1])
-    varon = get_variable(psi_container, inputs.bin_variable_name[2])
-    varoff = get_variable(psi_container, inputs.bin_variable_name[3])
+    @assert length(inputs.bin_variable_names) == 3
+    varstatus = get_variable(psi_container, inputs.bin_variable_names[1])
+    varon = get_variable(psi_container, inputs.bin_variable_names[2])
+    varoff = get_variable(psi_container, inputs.bin_variable_names[3])
 
     on_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "lb")
     off_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")

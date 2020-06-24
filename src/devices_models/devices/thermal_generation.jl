@@ -222,7 +222,7 @@ function make_active_power_constraints_inputs(
             RangeConstraintInputs(;
                 constraint_name = ACTIVE_RANGE,
                 variable_name = ACTIVE_POWER,
-                bin_variable_name = [ON],
+                bin_variable_names = [ON],
                 limits_func = x -> PSY.get_activepowerlimits(x),
                 constraint_func = device_semicontinuousrange,
                 constraint_struct = DeviceRangeConstraintInfo,
@@ -289,7 +289,7 @@ function make_active_power_constraints_inputs!(
                 min = 0.0,
                 max = PSY.get_activepowerlimits(x).max - PSY.get_activepowerlimits(x).min,
             ),
-            bin_variable_name = [ON, START, STOP],
+            bin_variable_names = [ON, START, STOP],
             constraint_func = device_multistart_range,
             constraint_struct = DeviceMultiStartRangeConstraintsInfo,
             lag_limits_func = PSY.get_power_trajectory,
@@ -398,7 +398,7 @@ function make_reactive_power_constraints_inputs(
         range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = REACTIVE_RANGE,
             variable_name = REACTIVE_POWER,
-            bin_variable_name = [ON],
+            bin_variable_names = [ON],
             limits_func = x -> PSY.get_reactivepowerlimits(x),
             constraint_func = device_semicontinuousrange,
             constraint_struct = DeviceRangeConstraintInfo,

@@ -1,7 +1,7 @@
 struct RangeConstraintInputs
     constraint_name::String
     variable_name::String
-    bin_variable_name::Vector{String}
+    bin_variable_names::Vector{String}
     limits_func::Function
     constraint_func::Function
     constraint_struct::Type{<:AbstractRangeConstraintInfo}
@@ -11,7 +11,7 @@ end
 function RangeConstraintInputs(;
     constraint_name,
     variable_name,
-    bin_variable_name = Vector{String}(),
+    bin_variable_names = Vector{String}(),
     limits_func,
     constraint_func,
     constraint_struct,
@@ -20,7 +20,7 @@ function RangeConstraintInputs(;
     return RangeConstraintInputs(
         constraint_name,
         variable_name,
-        bin_variable_name,
+        bin_variable_names,
         limits_func,
         constraint_func,
         constraint_struct,
@@ -121,8 +121,8 @@ function device_range_constraints!(
             @debug "Skip adding $var_name because it is handled by feedforward"
             continue
         end
-        bin_var_name = isempty(rc.bin_variable_name) ? rc.bin_variable_name :
-            [variable_name(name, T) for name in rc.bin_variable_name]
+        bin_var_name = isempty(rc.bin_variable_names) ? rc.bin_variable_names :
+            [variable_name(name, T) for name in rc.bin_variable_names]
         for (i, dev) in enumerate(devices)
             dev_name = PSY.get_name(dev)
             limits = rc.limits_func(dev)
@@ -136,6 +136,8 @@ function device_range_constraints!(
                 lag_limits = rc.lag_limits_func(dev)
                 constraint_info =
                     DeviceMultiStartRangeConstraintsInfo(dev_name, limits, lag_limits)
+            else
+                error("Missing implementation for $constraint_struct")
             end
             add_device_services!(constraint_info, dev, model)
             constraint_infos[i] = constraint_info
