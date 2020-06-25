@@ -1151,13 +1151,11 @@ function cost_function(
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
 ) where {T <: PSY.ThermalGen}
-    if isnothing(feedforward)
-        add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
-    else
+    if !isnothing(feedforward)
         #Setting kwarg for PWL
         add_to_setting_ext!(psi_container, "parameter_on", variable_name(ON, T))
-        add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
     end
+    add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, T), :variable)
     return
 end
 
