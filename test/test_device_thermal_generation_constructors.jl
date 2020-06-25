@@ -347,8 +347,8 @@ end
         PSI.constraint_name(PSI.MUST_RUN_LB, PSY.ThermalMultiStart),
         PSI.constraint_name(PSI.STARTUP_TIMELIMIT_WARM, PSY.ThermalMultiStart),
         PSI.constraint_name(PSI.STARTUP_TIMELIMIT_HOT, PSY.ThermalMultiStart),
-        PSI.constraint_name(PSI.STARTUP_INITIAL_CONDITION_DOWN, PSY.ThermalMultiStart),
-        PSI.constraint_name(PSI.STARTUP_INITIAL_CONDITION_UP, PSY.ThermalMultiStart),
+        PSI.constraint_name(PSI.STARTUP_INITIAL_CONDITION_LB, PSY.ThermalMultiStart),
+        PSI.constraint_name(PSI.STARTUP_INITIAL_CONDITION_UB, PSY.ThermalMultiStart),
     ]
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
     @info "5-Bus testing"

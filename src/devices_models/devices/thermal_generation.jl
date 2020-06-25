@@ -791,12 +791,16 @@ end
 Constructs contraints that restricts devices to one type of start at a time
 
 # Equations
-
-``` sum(var_starts[name, s, t] for s in starts) = var_start[name, t]  ```
+ub:
+``` (time_limits[st+1]-1)*δ^{s}(t) + (1 - δ^{s}(t)) * M_VALUE >= sum(1-varbin[name, i]) for i in 1:t) + initial_condition_offtime  ```
+lb:
+``` (time_limits[st]-1)*δ^{s}(t) =< sum(1-varbin[name, i]) for i in 1:t) + initial_condition_offtime  ```
 
 # LaTeX
 
-``  \sum^{S_g}_{s=1} δ^{s}(t)  \eq  x^{start}(t) ``
+`` TS^{s+1}_{g} δ^{s}(t) + (1-δ^{s}(t)) M_VALUE   \geq  \sum^{t}_{i=1} x^{status}(i)  +  DT_{g}^{0}  \forall t in \{1, \ldots,  TS^{s+1}_{g}``
+
+`` TS^{s}_{g} δ^{s}(t) \leq  \sum^{t}_{i=1} x^{status}(i)  +  DT_{g}^{0}  \forall t in \{1, \ldots,  TS^{s+1}_{g}``
 
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
@@ -817,15 +821,15 @@ function device_startup_initial_condition(
     T = length(time_steps)
 
     set_name = (device_name(ic) for ic in initial_conditions)
-    up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "up")
-    down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "dn")
+    up_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "ub")
+    down_name = middle_rename(cons_name, PSI_NAME_DELIMITER, "lb")
     varbin = get_variable(psi_container, bin_name)
     varstarts = [
         get_variable(psi_container, var_names[1]),
         get_variable(psi_container, var_names[2]),
     ]
 
-    con_up = add_cons_container!(
+    con_ub = add_cons_container!(
         psi_container,
         up_name,
         set_name,
@@ -833,7 +837,7 @@ function device_startup_initial_condition(
         1:(MAX_START_TYPES - 1);
         sparse = true,
     )
-    con_down = add_cons_container!(
+    con_lb = add_cons_container!(
         psi_container,
         down_name,
         set_name,
@@ -848,13 +852,13 @@ function device_startup_initial_condition(
         for st in 1:(d.startup_types - 1)
             var = varstarts[st]
             if t < (d.time_limits[st + 1] - 1)
-                con_up[name, t, st] = JuMP.@constraint(
+                con_ub[name, t, st] = JuMP.@constraint(
                     psi_container.JuMPmodel,
                     (d.time_limits[st + 1] - 1) * var[name, t] +
                     (1 - var[name, t]) * M_VALUE >=
                     sum((1 - varbin[name, i]) for i in 1:t) + ic.value
                 )
-                con_down[name, t, st] = JuMP.@constraint(
+                con_lb[name, t, st] = JuMP.@constraint(
                     psi_container.JuMPmodel,
                     d.time_limits[st] * var[name, t] <=
                     sum((1 - varbin[name, i]) for i in 1:t) + ic.value
