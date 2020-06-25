@@ -130,7 +130,7 @@ end
 
 struct DeviceStartUpConstraintInfo <: AbstractStartConstraintInfo
     name::String
-    time_limits::StartUp
+    time_limits::StartUpStages
     startup_types::Int
 end
 

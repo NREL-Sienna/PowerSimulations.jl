@@ -27,18 +27,9 @@ A detailed description of this mathematical model is available here. This model 
 	\item[$g \in \cG$] Set of thermal generators.
 	\item[$g \in \cG_{\textit{on}}^0$] Set of thermal generators which are initially committed (on).
 	\item[$g \in \cG_{\textit{off}}^0$] Set of thermal generators which are not initially committed (off).
-	\item[$w \in \cW$] Set of renewable generators.
 	\item[$t \in \cT$] Hourly time steps: $1, \ldots, T$, $T$ = {\tt time\_periods}
 	\item[$l \in \cL_g$] Piecewise production cost intervals for thermal generator $g$: $1, \ldots, L_g$.
 	\item[$s \in \cS_g$] Startup categories for thermal generator $g$, from hottest ($1$) to coldest ($S_g$): $1, \ldots, S_g$.
-\end{itemize}
-```
-
-### System Parameters
-```math
-\begin{itemize}
-	\item[$D(t)$]    Load (demand) at time $t$ (MW), {\tt demand}.
-	\item[$R(t)$]    Spinning reserve at time $t$ (MW), {\tt reserves}.
 \end{itemize}
 ```
 
@@ -65,21 +56,12 @@ A detailed description of this mathematical model is available here. This model 
 \end{itemize}
 ```
 
-### Renewable Generator Parameters
-```math
-\begin{itemize}
-	\item[$\oP_w(t)$] Maximum renewable generation available from renewable generator $w$ at time $t$ (MW), {\tt power\_output\_maximum}.
-	\item[$\uP_w(t)$] Minimum renewable generation available from renewable generator $w$ at time $t$ (MW), {\tt power\_output\_minimum}.
-\end{itemize}
-```
-
 ### Variables
 ```math
 \begin{itemize}
 	\item[$c_g(t)$]    Cost of power produced above minimum for thermal generator $g$ at time $t$ (MW), $\in \bbR$.
 	\item[$p_g(t)$]    Power above minimum for thermal generator $g$ at time $t$ (MW), $\geq 0$.
 	\item[$p_w(t)$]  Renewable generation used from renewable generator $w$ at time $t$ (MW), $\geq 0$.
-	\item[$r_g(t)$]    Spinning reserves provided by thermal generator $g$ at time $t$ (MW), $\geq 0$.
 	\item[$u_g(t)$]    Commitment status of thermal generator $g$ at time $t$, $\in \{0,1\}$. 
 	\item[$v_g(t)$]    Startup status of thermal generator $g$ at time $t$, $\in \{0,1\}$. 
 	\item[$w_g(t)$]    Shutdown status of thermal generator $g$ at time $t$, $\in \{0,1\}$. \
@@ -101,13 +83,7 @@ The unit commitment problem can then be formulated as:\
 }%
 ```
 subject to:\
-*Demand and Reserve Balance constraints*
-```math
-\begin{align}
-		& \sum_{g \in \cG} \left( p_g(t) + \uP_g u_g(t) \right) + \sum_{w\in\cW} p_w(t) = D(t) & \hspace{5cm} \forall t \in \cT \label{eq:UCDemand} \\
-		& \sum_{g \in \cG} r_g(t) \geq R(t) &  \forall t \in \cT \label{eq:UCReserves}
-\end{align}
-```
+
 *Active power constraints with Startup/Shutdown lag*
 ```math
 \begin{align}

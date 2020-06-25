@@ -334,7 +334,7 @@ function device_duration_parameters(
 end
 
 @doc raw"""
-    device_duration_pglib(psi_container::PSIContainer,
+    device_duration_compact_retrospective(psi_container::PSIContainer,
                                         duration_data::Vector{UpDown},
                                         initial_duration::Matrix{InitialCondition},
                                         cons_name::Symbol,
@@ -367,7 +367,7 @@ for i in the set of time steps.
 - : var_names[2] : varstart
 - : var_names[3] : varstop
 """
-function device_duration_pglib(
+function device_duration_compact_retrospective(
     psi_container::PSIContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},

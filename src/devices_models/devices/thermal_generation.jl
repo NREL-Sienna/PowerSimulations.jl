@@ -347,7 +347,7 @@ function initial_range_constraints!(
     end
 
     if !isempty(ini_conds)
-        # adds constraint (10)
+
         device_multistart_range_ic(
             psi_container,
             constraint_data,
@@ -834,7 +834,7 @@ function device_startup_initial_condition(
         up_name,
         set_name,
         time_steps,
-        1:(MAX_START_TYPES - 1);
+        1:(MAX_START_STAGES - 1);
         sparse = true,
     )
     con_lb = add_cons_container!(
@@ -842,7 +842,7 @@ function device_startup_initial_condition(
         down_name,
         set_name,
         time_steps,
-        1:(MAX_START_TYPES - 1);
+        1:(MAX_START_STAGES - 1);
         sparse = true,
     )
 
@@ -889,7 +889,7 @@ function startup_time_constraints!(
         range_data = DeviceStartUpConstraintInfo(name, starttime, start_types)
         constraint_data[ix] = range_data
     end
-    # adds constraint(15)
+
     turbine_temperature(
         psi_container,
         constraint_data,
@@ -922,7 +922,6 @@ function startup_type_constraints!(
         constraint_data[ix] = range_data
     end
 
-    # adds constraint (16)
     device_start_type_constraint(
         psi_container,
         constraint_data,
@@ -979,7 +978,7 @@ function startup_initial_condition_constraints!(
     key_off = ICKey(TimeDurationOFF, PSY.ThermalMultiStart)
     initial_conditions_offtime = get_initial_conditions(psi_container, key_off)
     constraint_data = _get_data_startup_ic(initial_conditions_offtime)
-    # adds constraint (7)
+
     device_startup_initial_condition(
         psi_container,
         constraint_data,
@@ -1020,7 +1019,7 @@ function must_run_constraints!(
         nothing,
         nothing,
     )
-    # adds constraint (11)
+
     device_timeseries_lb(psi_container, ts_inputs)
     return
 end
@@ -1133,7 +1132,7 @@ function time_constraints!(
                 (variable_name(ON, T), variable_name(START, T), variable_name(STOP, T)),
             )
         else
-            device_duration_pglib(
+            device_duration_compact_retrospective(
                 psi_container,
                 time_params,
                 ini_conds,
@@ -1345,7 +1344,7 @@ function cost_function(
     end
 
     ## Start up cost 
-    function _ps_cost(d::PSY.ThermalMultiStart, cost_component::StartUp)
+    function _ps_cost(d::PSY.ThermalMultiStart, cost_component::StartUpStages)
         gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
         startup_var = (HOT_START, WARM_START, COLD_START)
         for st in 1:PSY.get_start_types(d)

@@ -232,7 +232,6 @@ function device_multistart_rateofchange(
 
     for (ix, ic) in enumerate(initial_conditions)
         name = device_name(ic)
-        #constriant (8)
         expression_ub = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
         for val in rate_data[ix].additional_terms_ub
             JuMP.add_to_expression!(
@@ -244,7 +243,6 @@ function device_multistart_rateofchange(
             psi_container.JuMPmodel,
             expression_ub - ic.value <= rate_data[ix].ramplimits.up
         )
-        #constraint (9)
         expression_lb = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
         for val in rate_data[ix].additional_terms_lb
             JuMP.add_to_expression!(
@@ -261,7 +259,6 @@ function device_multistart_rateofchange(
 
     for t in time_steps[2:end], (ix, d) in enumerate(rate_data)
         name = d.name
-        #constraint (19)
         expression_ub = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
         for val in d.additional_terms_ub
             JuMP.add_to_expression!(
@@ -273,7 +270,6 @@ function device_multistart_rateofchange(
             psi_container.JuMPmodel,
             expression_ub - variable[name, t - 1] <= d.ramplimits.up
         )
-        #constraint (20)
         expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
         for val in d.additional_terms_lb
             JuMP.add_to_expression!(
