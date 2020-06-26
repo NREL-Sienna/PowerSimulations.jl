@@ -135,9 +135,7 @@ function smooth_ace_pid!(
                 sace_exp =
                     SACE_ini.value +
                     kp * (
-                        (1 + Δt / (kp / ki) + (kd / kp) / Δt) *
-                        (RAW_ACE[a, t] - SACE[a, t]) +
-                        (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t])
+                        (1 + Δt / (kp / ki)) * (RAW_ACE[a, t] - SACE[a, t])
                     )
                 SACE_pid[a, t] =
                     JuMP.@constraint(psi_container.JuMPmodel, SACE[a, t] == sace_exp)
@@ -150,8 +148,7 @@ function smooth_ace_pid!(
                 SACE[a, t - 1] +
                 kp * (
                     (1 + Δt / (kp / ki) + (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t]) +
-                    (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t]) -
-                    ((kd / kp) / Δt) * (RAW_ACE[a, t - 1] - SACE[a, t - 1])
+                    (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[a, t - 1] - SACE[a, t - 1])
                 )
             )
         end
