@@ -20,6 +20,7 @@ function construct_device!(
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
     ramp_constraints!(psi_container, devices, model, S, get_feedforward(model))
     participation_assignment!(psi_container, devices, model, S, nothing)
+    regulation_cost!(psi_container, devices, model)
     return
 end
 
