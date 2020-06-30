@@ -340,8 +340,8 @@ function PMconmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel
     pm_con_map = Dict{Type, Dict{Symbol, Union{Symbol, NamedTuple}}}()
 
     pm_con_map[PSY.Bus] = Dict(
-        :power_balance_p => :nodal_balance_active,
-        :power_balance_q => :nodal_balance_reactive,
+        :power_balance_p => :Bus_active_power_balance,
+        :power_balance_q => :Bus_reactive_power_balance,
     )
     return pm_con_map
 end
