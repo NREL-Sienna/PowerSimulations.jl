@@ -81,11 +81,11 @@ function Base.show(io::IO, ::MIME"text/plain", results::IS.Results)
     println(io, "\nResults")
     println(io, "========\n")
     println(io, "Variables")
-    println(io, "---------\n")
+    println(io, "=========\n")
+    times = IS.get_time_stamp(results)
     for (k, v) in IS.get_variables(results)
-        time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
-        if size(time, 1) == size(v, 1)
-            var = hcat(time, v)
+        if size(times, 1) == size(v, 1)
+            var = hcat(times, v)
         else
             var = v
         end
@@ -101,11 +101,10 @@ function Base.show(io::IO, ::MIME"text/plain", results::IS.Results)
     parameters = IS.get_parameters(results)
     if !isempty(parameters)
         println(io, "Parameters")
-        println(io, "----------\n")
-        for (p, v) in 
-            time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
-            if size(time, 1) == size(v, 1)
-                var = hcat(time, v)
+        println(io, "==========\n")
+        for (p, v) in parameters
+            if size(times, 1) == size(v, 1)
+                var = hcat(times, v)
             else
                 var = v
             end
@@ -135,10 +134,10 @@ end
 function Base.show(io::IO, ::MIME"text/html", results::IS.Results)
     println(io, "<h1>Results</h1>")
     println(io, "<h2>Variables</h2>")
+    times = IS.get_time_stamp(results)
     for (k, v) in IS.get_variables(results)
-        time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
-        if size(time, 1) == size(v, 1)
-            var = hcat(time, v)
+        if size(times, 1) == size(v, 1)
+            var = hcat(times, v)
         else
             var = v
         end
@@ -155,9 +154,8 @@ function Base.show(io::IO, ::MIME"text/html", results::IS.Results)
     if !isempty(parameters)
     println(io, "<h2>Parameters</h2>")
         for (k, v) in parameters
-            time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
-            if size(time, 1) == size(v, 1)
-                var = hcat(time, v)
+            if size(times, 1) == size(v, 1)
+                var = hcat(times, v)
             else
                 var = v
             end
