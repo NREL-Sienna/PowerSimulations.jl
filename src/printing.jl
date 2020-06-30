@@ -83,19 +83,27 @@ function Base.show(io::IO, ::MIME"text/plain", results::IS.Results)
     println(io, "Variables")
     println(io, "=========\n")
     times = IS.get_time_stamp(results)
-    for (k, v) in IS.get_variables(results)
-        if size(times, 1) == size(v, 1)
-            var = hcat(times, v)
-        else
-            var = v
+    variables = IS.get_variables(results)
+    if (length(keys(variables)) > 5)
+        for (k, v) in variables
+            println(io, "$k: $(size(v))")
         end
-        (l, w) = size(var)
-        if w < 6
-            println(io, "$(k)")
-            println(io, "$("-" ^ length("$k"))\n")
-            println(io, "$(var)\n")
-        else 
-            println(io, "$(k)  size ($l, $w)\n")
+        println(io, "\n")
+    else
+        for (k, v) in IS.get_variables(results)
+            if size(times, 1) == size(v, 1)
+                var = hcat(times, v)
+            else
+                var = v
+            end
+            (l, w) = size(var)
+            if w < 6
+                println(io, "$(k)")
+                println(io, "$("-" ^ length("$k"))\n")
+                println(io, "$(var)\n")
+            else
+                println(io, "$(k)  size ($l, $w)\n")
+            end
         end
     end
     parameters = IS.get_parameters(results)
@@ -111,9 +119,9 @@ function Base.show(io::IO, ::MIME"text/plain", results::IS.Results)
             l, w = size(var)
             if w < 6
                 println(io, "$(p)")
-                println(io, "-" ^ length("$p"))
+                println(io, "-"^length("$p"))
                 println(io, "$(var)\n")
-            else 
+            else
                 println(io, "$(p)  size ($l, $w)\n")
             end
         end
@@ -130,29 +138,35 @@ function Base.show(io::IO, ::MIME"text/plain", results::IS.Results)
         println(io, "Total Cost: $(k) = $(v)")
     end
 end
-
 function Base.show(io::IO, ::MIME"text/html", results::IS.Results)
     println(io, "<h1>Results</h1>")
     println(io, "<h2>Variables</h2>")
     times = IS.get_time_stamp(results)
-    for (k, v) in IS.get_variables(results)
-        if size(times, 1) == size(v, 1)
-            var = hcat(times, v)
-        else
-            var = v
+    variables = IS.get_variables(results)
+    if (length(keys(variables)) > 5)
+        for (k, v) in variables
+            println(io, "<p>$k: $(size(v))</p>")
         end
-        (l, w) = size(var)
-        if w < 6
-            println(io, "<b>$(k)</b>")
-            println(io, "<p>$("-" ^ length("$k"))</p>")
-            show(io, MIME"text/html"(), var)
-        else 
-            println(io, "<p>$(k)  size ($l, $w)</p>")
+    else
+        for (k, v) in IS.get_variables(results)
+            if size(times, 1) == size(v, 1)
+                var = hcat(times, v)
+            else
+                var = v
+            end
+            (l, w) = size(var)
+            if w < 6
+                println(io, "<b>$(k)</b>")
+                println(io, "<p>$("-" ^ length("$k"))</p>")
+                show(io, MIME"text/html"(), var)
+            else
+                println(io, "<p>$(k)  size ($l, $w)</p>")
+            end
         end
     end
     parameters = IS.get_parameters(results)
     if !isempty(parameters)
-    println(io, "<h2>Parameters</h2>")
+        println(io, "<h2>Parameters</h2>")
         for (k, v) in parameters
             if size(times, 1) == size(v, 1)
                 var = hcat(times, v)
@@ -164,7 +178,7 @@ function Base.show(io::IO, ::MIME"text/html", results::IS.Results)
                 println(io, "<b>$(k)</b>")
                 println(io, "<p>$("-" ^ length("$k"))</p>")
                 show(io, MIME"text/html"(), var)
-            else 
+            else
                 println(io, "<p>$(k)  size ($l, $w)</p>")
             end
         end
