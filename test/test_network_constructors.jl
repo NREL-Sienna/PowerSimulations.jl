@@ -60,7 +60,7 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_names =
-        [:RateLimit_lb__Line, :RateLimit_ub__Line, :Bus_active_power_balance, :network_flow]
+        [:RateLimit_lb__Line, :RateLimit_ub__Line, :nodal_balance, :network_flow]
     parameters = [true, false]
     PTDF_ref = Dict{UUIDs.UUID, PTDF}(
         IS.get_uuid(c_sys5) => build_PTDF5(),
