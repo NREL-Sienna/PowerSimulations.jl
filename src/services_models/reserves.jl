@@ -234,10 +234,13 @@ function modify_device_model!(
 end
 
 function include_service!(
-    constraint_info::DeviceRangeConstraintInfo,
+    constraint_info::T,
     services,
     ::ServiceModel{SR, <:AbstractReservesFormulation},
-) where {SR <: PSY.Reserve{PSY.ReserveUp}}
+) where {
+    T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
+    SR <: PSY.Reserve{PSY.ReserveUp},
+}
     for (ix, service) in enumerate(services)
         push!(
             constraint_info.additional_terms_ub,
@@ -248,10 +251,13 @@ function include_service!(
 end
 
 function include_service!(
-    constraint_info::DeviceRangeConstraintInfo,
+    constraint_info::T,
     services,
     ::ServiceModel{SR, <:AbstractReservesFormulation},
-) where {SR <: PSY.Reserve{PSY.ReserveDown}}
+) where {
+    T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
+    SR <: PSY.Reserve{PSY.ReserveDown},
+}
     for (ix, service) in enumerate(services)
         push!(
             constraint_info.additional_terms_lb,
@@ -262,10 +268,13 @@ function include_service!(
 end
 
 function add_device_services!(
-    constraint_info::AbstractRangeConstraintInfo,
+    constraint_info::T,
     device::D,
     model::DeviceModel,
-) where {D <: PSY.Device}
+) where {
+    T <: Union{AbstractRangeConstraintInfo, AbstractRampConstraintInfo},
+    D <: PSY.Device,
+}
     for service_model in get_services(model)
         if PSY.has_service(device, service_model.service_type)
             services =

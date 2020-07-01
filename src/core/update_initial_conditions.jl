@@ -158,6 +158,21 @@ function output_init(
     return
 end
 
+function output_init(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{PSY.ThermalMultiStart},
+)
+    _make_initial_conditions!(
+        psi_container,
+        devices,
+        ICKey(DevicePower, PSY.ThermalMultiStart),
+        _make_initial_condition_active_power,
+        _get_active_power_output_above_min_value,
+    )
+
+    return
+end
+
 function duration_init(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
@@ -319,6 +334,11 @@ end
 
 function _get_active_power_output_value(device, key)
     return PSY.get_activepower(device)
+end
+
+function _get_active_power_output_above_min_value(device, key)
+    return PSY.get_status(device) ?
+           PSY.get_activepower(device) - PSY.get_activepowerlimits(device).min : 0.0
 end
 
 function _get_energy_value(device, key)

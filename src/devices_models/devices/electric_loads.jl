@@ -97,6 +97,7 @@ function make_active_power_constraints_inputs(
                 variable_name = ACTIVE_POWER,
                 limits_func = x -> (min = 0.0, max = PSY.get_activepower(x)),
                 constraint_func = device_range,
+                constraint_struct = DeviceRangeConstraintInfo,
             )],
         )
     end
@@ -127,9 +128,10 @@ function make_active_power_constraints_inputs(
             range_constraint_inputs = [RangeConstraintInputs(;
                 constraint_name = ACTIVE_RANGE,
                 variable_name = ACTIVE_POWER,
-                bin_variable_name = ON,
+                bin_variable_names = [ON],
                 limits_func = x -> (min = 0.0, max = PSY.get_activepower(x)),
                 constraint_func = device_semicontinuousrange,
+                constraint_struct = DeviceRangeConstraintInfo,
             )],
         )
     end

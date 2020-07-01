@@ -386,6 +386,61 @@ thermal_generators5(nodes5) = [
     ),
 ];
 
+thermal_pglib_generators5(nodes5) = [
+    ThermalMultiStart(
+        "115_STEAM_1",
+        true,
+        true,
+        nodes5[1],
+        0.05,
+        0.010,
+        0.12,
+        PrimeMovers.ST,
+        ThermalFuels.COAL,
+        (min = 0.05, max = 0.12),
+        (min = -0.30, max = 0.30),
+        (up = 0.2, down = 0.2),
+        (startup = 0.05, shutdown = 0.05),
+        (up = 4.0, down = 2.0),
+        (hot = 2.0, warm = 4.0, cold = 12.0),
+        3,
+        MultiStartCost(
+            VariableCost([(0.0, 0.05), (290.1, 0.0733), (582.72, 0.0967), (894.1, 0.120)]),
+            897.29,
+            0.0,
+            (hot = 393.28, warm = 455.37, cold = 703.76),
+            0.0,
+        ),
+        1.0,
+    ),
+    ThermalMultiStart(
+        "101_CT_1",
+        true,
+        true,
+        nodes5[1],
+        0.08,
+        0.020,
+        0.12,
+        PrimeMovers.ST,
+        ThermalFuels.COAL,
+        (min = 0.08, max = 0.20),
+        (min = -0.30, max = 0.30),
+        (up = 0.2, down = 0.2),
+        (startup = 0.08, shutdown = 0.08),
+        (up = 1.0, down = 1.0),
+        (hot = 1.0, warm = 999.0, cold = 999.0),
+        1,
+        MultiStartCost(
+            VariableCost([(0.0, 0.08), (391.45, 0.012), (783.74, 0.016), (1212.28, 0.20)]),
+            1085.78,
+            0.0,
+            (hot = 51.75, warm = PSY.START_COST, cold = PSY.START_COST),
+            0.0,
+        ),
+        1.0,
+    ),
+];
+
 renewable_generators5(nodes5) = [
     RenewableDispatch(
         "WindBusA",

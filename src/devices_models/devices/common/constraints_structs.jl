@@ -1,4 +1,7 @@
-abstract type AbstractRangeConstraintInfo end
+abstract type AbstractConstraintInfo end
+abstract type AbstractRangeConstraintInfo <: AbstractConstraintInfo end
+abstract type AbstractRampConstraintInfo <: AbstractConstraintInfo end
+abstract type AbstractStartConstraintInfo <: AbstractConstraintInfo end
 
 """ Data Container to construct range constraints"""
 struct DeviceRangeConstraintInfo <: AbstractRangeConstraintInfo
@@ -63,4 +66,75 @@ function DeviceTimeSeriesConstraintInfo(
         ts_vector,
         range_constraint_info,
     )
+end
+
+struct DeviceMultiStartRangeConstraintsInfo <: AbstractRangeConstraintInfo
+    name::String
+    limits::PSY.Min_Max
+    lag_ramp_limits::NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}}
+    additional_terms_ub::Vector{Symbol}# [:R1, :R2]
+    additional_terms_lb::Vector{Symbol}
+end
+
+function DeviceMultiStartRangeConstraintsInfo(
+    name::String,
+    limits::PSY.Min_Max,
+    lag_ramp_limits::NamedTuple{(:startup, :shutdown), Tuple{Float64, Float64}},
+)
+    return DeviceMultiStartRangeConstraintsInfo(
+        name,
+        limits,
+        lag_ramp_limits,
+        Vector{Symbol}(),
+        Vector{Symbol}(),
+    )
+end
+
+function DeviceMultiStartRangeConstraintsInfo(name::String)
+    return DeviceMultiStartRangeConstraintsInfo(
+        name,
+        (min = -Inf, max = Inf),
+        (startup = Inf, shutdown = Inf),
+        Vector{Symbol}(),
+        Vector{Symbol}(),
+    )
+end
+
+struct DeviceRampConstraintInfo <: AbstractRampConstraintInfo
+    name::String
+    limits::PSI.MinMax
+    ramplimits::PSI.UpDown
+    additional_terms_ub::Vector{Symbol}
+    additional_terms_lb::Vector{Symbol}
+end
+
+function DeviceRampConstraintInfo(name::String, limits::PSY.Min_Max, ramplimits::PSI.UpDown)
+    return DeviceRampConstraintInfo(
+        name,
+        limits,
+        ramplimits,
+        Vector{Symbol}(),
+        Vector{Symbol}(),
+    )
+end
+
+function DeviceRampConstraintInfo(name::String)
+    return DeviceRampConstraintInfo(
+        name,
+        (min = -Inf, max = Inf),
+        (up = Inf, down = Inf),
+        Vector{Symbol}(),
+        Vector{Symbol}(),
+    )
+end
+
+struct DeviceStartUpConstraintInfo <: AbstractStartConstraintInfo
+    name::String
+    time_limits::StartUpStages
+    startup_types::Int
+end
+
+struct DeviceStartTypesConstraintInfo <: AbstractStartConstraintInfo
+    name::String
+    startup_types::Int
 end
