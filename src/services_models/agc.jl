@@ -87,7 +87,7 @@ function frequency_response_constraint!(psi_container::PSIContainer, sys::PSY.Sy
     for area in PSY.get_components(PSY.Area, sys)
         frequency_response += PSY.get_load_response(area)
     end
-    for g in PSY.get_components(PSY.RegulationDevice, sys)
+    for g in PSY.get_components(PSY.RegulationDevice, sys, x -> PSY.get_available(x))
         d = PSY.get_droop(g)
         response = 1 / d
         frequency_response += response
@@ -146,9 +146,7 @@ function smooth_ace_pid!(
                 sace_exp =
                     SACE_ini.value +
                     kp * (
-                        (1 + Δt / (kp / ki) + (kd / kp) / Δt) *
-                        (RAW_ACE[a, t] - SACE[a, t]) +
-                        (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t])
+                        (1 + Δt / (kp / ki)) * (RAW_ACE[a, t] - SACE[a, t])
                     )
                 SACE_pid[a, t] =
                     JuMP.@constraint(psi_container.JuMPmodel, SACE[a, t] == sace_exp)
@@ -161,8 +159,7 @@ function smooth_ace_pid!(
                 SACE[a, t - 1] +
                 kp * (
                     (1 + Δt / (kp / ki) + (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t]) +
-                    (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t]) -
-                    ((kd / kp) / Δt) * (RAW_ACE[a, t - 1] - SACE[a, t - 1])
+                    (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[a, t - 1] - SACE[a, t - 1])
                 )
             )
         end

@@ -338,6 +338,35 @@ end
     end
 end
 
+################################### PGLIB Testing ##################################
+
+@testset "Thermal PGLIB Dispatch With DC - PF" begin
+    constraint_names = [
+        PSI.constraint_name(PSI.ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
+        PSI.constraint_name(PSI.START_TYPE, PSY.ThermalMultiStart),
+        PSI.constraint_name(PSI.MUST_RUN_LB, PSY.ThermalMultiStart),
+        PSI.constraint_name(PSI.STARTUP_TIMELIMIT_WARM, PSY.ThermalMultiStart),
+        PSI.constraint_name(PSI.STARTUP_TIMELIMIT_HOT, PSY.ThermalMultiStart),
+        PSI.constraint_name(PSI.STARTUP_INITIAL_CONDITION_LB, PSY.ThermalMultiStart),
+        PSI.constraint_name(PSI.STARTUP_INITIAL_CONDITION_UB, PSY.ThermalMultiStart),
+    ]
+    model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
+    @info "5-Bus testing"
+    c_sys5_pglib = build_system("c_sys5_pglib")
+    for p in [true, false]
+        op_problem = OperationsProblem(
+            TestOpProblem,
+            DCPPowerModel,
+            c_sys5_pglib;
+            use_parameters = p,
+        )
+        construct_device!(op_problem, :Thermal, model)
+        moi_tests(op_problem, p, 528, 0, 192, 108, 192, true)
+        psi_constraint_test(op_problem, constraint_names)
+        psi_checkobjfun_test(op_problem, GAEVF)
+    end
+end
+
 ############################# UC validation tests ##########################################
 branches = Dict{Symbol, DeviceModel}()
 services = Dict{Symbol, ServiceModel}()

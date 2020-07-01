@@ -142,6 +142,7 @@ function make_reactive_power_constraints_inputs(
             variable_name = REACTIVE_POWER,
             limits_func = x -> PSY.get_reactivepowerlimits(x),
             constraint_func = device_range,
+            constraint_struct = DeviceRangeConstraintInfo,
         )],
     )
 end
@@ -161,6 +162,7 @@ function make_active_power_constraints_inputs(
                 variable_name = ACTIVE_POWER,
                 limits_func = x -> (min = 0.0, max = PSY.get_activepower(x)),
                 constraint_func = device_range,
+                constraint_struct = DeviceRangeConstraintInfo,
             )],
         )
     end
@@ -192,6 +194,7 @@ function make_active_power_constraints_inputs(
             variable_name = ACTIVE_POWER,
             limits_func = x -> PSY.get_activepowerlimits(x),
             constraint_func = device_range,
+            constraint_struct = DeviceRangeConstraintInfo,
         )],
     )
 end

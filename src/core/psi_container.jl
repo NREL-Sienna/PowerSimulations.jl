@@ -402,8 +402,17 @@ function assign_constraint!(psi_container::PSIContainer, name::Symbol, value)
     return
 end
 
-function add_cons_container!(psi_container::PSIContainer, cons_name::Symbol, axs...)
-    container = JuMPConstraintArray(undef, axs...)
+function add_cons_container!(
+    psi_container::PSIContainer,
+    cons_name::Symbol,
+    axs...;
+    sparse = false,
+)
+    if sparse
+        container = sparse_container_spec(psi_container.JuMPmodel, axs...)
+    else
+        container = JuMPConstraintArray(undef, axs...)
+    end
     assign_constraint!(psi_container, cons_name, container)
     return container
 end

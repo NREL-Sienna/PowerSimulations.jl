@@ -182,18 +182,25 @@ function _pwlgencost_sos(
     psi_container::PSIContainer,
     variable::JV,
     cost_component::Vector{NTuple{2, Float64}},
+    status::Union{Nothing, JV} = nothing,
 ) where {JV <: JuMP.AbstractVariableRef}
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
+    if isnothing(status)
+        status = 1.0
+        @warn("Using Piecewise Linear cost function 
+            but no variable/parameter ref for ON status is passed. 
+            Default status will be set to online (1.0)")
+    end
     pwlvars = JuMP.@variable(
         psi_container.JuMPmodel,
-        [i in 1:length(cost_component)],
+        [i = 1:length(cost_component)],
         base_name = "{$(variable)}_{sos}",
         start = 0.0,
         lower_bound = 0.0,
         upper_bound = 1.0
     )
 
-    JuMP.@constraint(psi_container.JuMPmodel, sum(pwlvars) == 1.0)
+    JuMP.@constraint(psi_container.JuMPmodel, sum(pwlvars) == status)
     JuMP.@constraint(
         psi_container.JuMPmodel,
         pwlvars in MOI.SOS2(collect(1:length(pwlvars)))
@@ -282,12 +289,13 @@ function _pwl_cost(
     psi_container::PSIContainer,
     variable::JV,
     cost_component::Vector{NTuple{2, Float64}},
+    on_status::Union{Nothing, JV} = nothing,
 ) where {JV <: JuMP.AbstractVariableRef}
     if !_pwlparamcheck(cost_component)
         @warn("The cost function provided for $(variable) device is not compatible with a linear PWL cost function.
         An SOS-2 formulation will be added to the model.
         This will result in additional binary variables added to the model.")
-        gen_cost, vars = _pwlgencost_sos(psi_container, variable, cost_component)
+        gen_cost, vars = _pwlgencost_sos(psi_container, variable, cost_component, on_status)
     else
         gen_cost, vars = _pwlgencost_linear(psi_container, variable, cost_component)
     end
@@ -339,6 +347,16 @@ function ps_cost(
     # If array is full of tuples with zeros return 0.0
     all(iszero.(last.(cost_array))) && return JuMP.AffExpr(0.0)
     variable = get_variable(psi_container, var_name)[index, :]
+    settings_ext = get_ext(get_settings(psi_container))
+    if haskey(settings_ext, "variable_on")
+        var_name = settings_ext["variable_on"]
+        bin = get_variable(psi_container, var_name)[index, :]
+    elseif haskey(settings_ext, "parameter_on")
+        param_name = settings_ext["parameter_on"]
+        bin = get_parameter_container(psi_container, param_name).parameter_array[index, :]
+    else
+        bin = nothing
+    end
     export_pwl_vars = get_export_pwl_vars(psi_container.settings)
     if export_pwl_vars
         if !haskey(psi_container.variables, :PWL_cost_vars)
@@ -357,7 +375,11 @@ function ps_cost(
     end
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
     for (t, var) in enumerate(variable)
-        c, pwl_vars = _pwl_cost(psi_container, var, cost_array)
+        if !isnothing(bin)
+            c, pwl_vars = _pwl_cost(psi_container, var, cost_array, bin[t])
+        else
+            c, pwl_vars = _pwl_cost(psi_container, var, cost_array)
+        end
         if export_pwl_vars
             for (ix, v) in enumerate(pwl_vars)
                 container[(index, t, ix)] = v

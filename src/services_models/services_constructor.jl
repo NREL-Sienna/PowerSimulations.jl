@@ -120,7 +120,6 @@ function construct_service!(
     for device_model in devices_template
         #TODO: make a check for the devices' models
     end
-    services_mapping = PSY.get_contributing_device_mapping(sys)
     agc_areas = [PSY.get_area(agc) for agc in services]
     areas = PSY.get_components(PSY.Area, sys)
     for area in areas
