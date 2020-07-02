@@ -395,12 +395,12 @@ end
 
 ########################## Addition to the nodal balances #################################
 
-function make_nodal_expression_inputs(
+function NodalExpressionSpec(
     ::Type{T},
     ::Type{<:PM.AbstractActivePowerModel},
     use_forecasts::Bool,
 ) where {T <: PSY.HydroGen}
-    return NodalExpressionInputs(
+    return NodalExpressionSpec(
         "get_rating",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),

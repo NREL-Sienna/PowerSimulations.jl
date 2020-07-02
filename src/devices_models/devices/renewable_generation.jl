@@ -118,12 +118,12 @@ end
 
 ########################## Addition to the nodal balances ##################################
 
-function make_nodal_expression_inputs(
+function NodalExpressionSpec(
     ::Type{T},
     ::Type{<:PM.AbstractPowerModel},
     use_forecasts::Bool,
 ) where {T <: PSY.RenewableGen}
-    return NodalExpressionInputs(
+    return NodalExpressionSpec(
         "get_rating",
         REACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) * sin(acos(PSY.get_powerfactor(x))) :
@@ -133,12 +133,12 @@ function make_nodal_expression_inputs(
     )
 end
 
-function make_nodal_expression_inputs(
+function NodalExpressionSpec(
     ::Type{T},
     ::Type{<:PM.AbstractActivePowerModel},
     use_forecasts::Bool,
 ) where {T <: PSY.RenewableGen}
-    return NodalExpressionInputs(
+    return NodalExpressionSpec(
         "get_rating",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) * PSY.get_powerfactor(x) :

@@ -276,12 +276,12 @@ function regulation_cost!(
     return
 end
 
-function make_nodal_expression_inputs(
+function NodalExpressionSpec(
     ::Type{<:PSY.RegulationDevice{T}},
     ::Type{AreaBalancePowerModel},
     use_forecasts::Bool,
 ) where {T <: PSY.StaticInjection}
-    return NodalExpressionInputs(
+    return NodalExpressionSpec(
         "get_rating",
         make_variable_name(ACTIVE_POWER, T),
         use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),

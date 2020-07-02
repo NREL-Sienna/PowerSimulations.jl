@@ -148,12 +148,12 @@ end
 
 ########################## Addition to the nodal balances ##################################
 
-function make_nodal_expression_inputs(
+function NodalExpressionSpec(
     ::Type{T},
     ::Type{<:PM.AbstractPowerModel},
     use_forecasts::Bool,
 ) where {T <: PSY.ElectricLoad}
-    return NodalExpressionInputs(
+    return NodalExpressionSpec(
         "get_maxactivepower",
         REACTIVE_POWER,
         use_forecasts ? x -> PSY.get_maxreactivepower(x) : x -> PSY.get_reactivepower(x),
@@ -162,12 +162,12 @@ function make_nodal_expression_inputs(
     )
 end
 
-function make_nodal_expression_inputs(
+function NodalExpressionSpec(
     ::Type{T},
     ::Type{<:PM.AbstractActivePowerModel},
     use_forecasts::Bool,
 ) where {T <: PSY.ElectricLoad}
-    return NodalExpressionInputs(
+    return NodalExpressionSpec(
         "get_maxactivepower",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_maxactivepower(x) : x -> PSY.get_activepower(x),

@@ -1405,12 +1405,12 @@ end
 
 # TODO: Define for now just for Area Balance and reason about others later. This will
 # be needed and useful for PowerFlow
-function make_nodal_expression_inputs(
+function NodalExpressionSpec(
     ::Type{T},
     ::Type{AreaBalancePowerModel},
     use_forecasts::Bool,
 ) where {T <: PSY.ThermalGen}
-    return NodalExpressionInputs(
+    return NodalExpressionSpec(
         "get_rating",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),
