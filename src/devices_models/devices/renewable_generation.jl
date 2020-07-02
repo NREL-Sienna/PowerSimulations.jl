@@ -4,13 +4,13 @@ struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
 struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
 ########################### renewable generation variables #################################
-function make_variable_inputs(
-    ::Type{ActivePowerVariable},
+function AddVariableSpec(
     ::Type{T},
+    ::Type{U},
     ::PSIContainer,
-) where {T <: PSY.RenewableGen}
-    return AddVariableInputs(;
-        variable_name = make_variable_name(ACTIVE_POWER, T),
+) where {T <: ActivePowerVariable, U <: PSY.RenewableGen}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
         binary = false,
         expression_name = :nodal_balance_active,
         lb_value_func = x -> 0.0,
@@ -18,13 +18,13 @@ function make_variable_inputs(
     )
 end
 
-function make_variable_inputs(
-    ::Type{ReactivePowerVariable},
+function AddVariableSpec(
     ::Type{T},
+    ::Type{U},
     ::PSIContainer,
-) where {T <: PSY.RenewableGen}
-    return AddVariableInputs(;
-        variable_name = make_variable_name(REACTIVE_POWER, T),
+) where {T <: ReactivePowerVariable, U <: PSY.RenewableGen}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
         binary = false,
         expression_name = :nodal_balance_reactive,
     )

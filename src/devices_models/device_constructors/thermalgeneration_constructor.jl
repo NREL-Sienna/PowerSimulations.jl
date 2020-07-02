@@ -16,7 +16,9 @@ function construct_device!(
     #Variables
     add_variables!(ActivePowerVariable, psi_container, devices)
     add_variables!(ReactivePowerVariable, psi_container, devices)
-    add_variables!(CommitmentVariable, psi_container, devices)
+    add_variables!(OnVariable, psi_container, devices)
+    add_variables!(StartVariable, psi_container, devices)
+    add_variables!(StopVariable, psi_container, devices)
 
     #Initial Conditions
     initial_conditions!(psi_container, devices, D)
@@ -56,7 +58,9 @@ function construct_device!(
 
     #Variables
     add_variables!(ActivePowerVariable, psi_container, devices)
-    add_variables!(CommitmentVariable, psi_container, devices)
+    add_variables!(OnVariable, psi_container, devices)
+    add_variables!(StartVariable, psi_container, devices)
+    add_variables!(StopVariable, psi_container, devices)
 
     #Initial Conditions
     initial_conditions!(psi_container, devices, D)
@@ -92,7 +96,9 @@ function construct_device!(
     #Variables
     add_variables!(ActivePowerVariable, psi_container, devices)
     add_variables!(ReactivePowerVariable, psi_container, devices)
-    add_variables!(CommitmentVariable, psi_container, devices)
+    add_variables!(OnVariable, psi_container, devices)
+    add_variables!(StartVariable, psi_container, devices)
+    add_variables!(StopVariable, psi_container, devices)
 
     #Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)
@@ -126,7 +132,9 @@ function construct_device!(
 
     #Variables
     add_variables!(ActivePowerVariable, psi_container, devices)
-    add_variables!(CommitmentVariable, psi_container, devices)
+    add_variables!(OnVariable, psi_container, devices)
+    add_variables!(StartVariable, psi_container, devices)
+    add_variables!(StopVariable, psi_container, devices)
 
     #Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)
@@ -303,10 +311,12 @@ function construct_device!(
     end
 
     #Variables
-    activepower_variables!(psi_container, devices)
-    reactivepower_variables!(psi_container, devices)
+    add_variables!(ActivePowerVariable, psi_container, devices)
+    add_variables!(ReactivePowerVariable, psi_container, devices)
     commitment_variables!(psi_container, devices)
-    startup_variables!(psi_container, devices)
+    add_variables!(ColdStartVariable, psi_container, devices)
+    add_variables!(WarmStartVariable, psi_container, devices)
+    add_variables!(HotStartVariable, psi_container, devices)
 
     #Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)
@@ -349,9 +359,11 @@ function construct_device!(
     end
 
     #Variables
-    activepower_variables!(psi_container, devices)
+    add_variables!(ActivePowerVariable, psi_container, devices)
     commitment_variables!(psi_container, devices)
-    startup_variables!(psi_container, devices)
+    add_variables!(ColdStartVariable, psi_container, devices)
+    add_variables!(WarmStartVariable, psi_container, devices)
+    add_variables!(HotStartVariable, psi_container, devices)
 
     #Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)

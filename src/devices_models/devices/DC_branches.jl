@@ -20,7 +20,7 @@ function flow_variables!(
     devices::IS.FlattenIteratorWrapper{B},
 ) where {B <: PSY.DCBranch}
     time_steps = model_time_steps(psi_container)
-    var_name = variable_name(FLOW_ACTIVE_POWER, B)
+    var_name = make_variable_name(FLOW_ACTIVE_POWER, B)
     container = container_spec(
         psi_container.JuMPmodel,
         (PSY.get_name(d) for d in devices),

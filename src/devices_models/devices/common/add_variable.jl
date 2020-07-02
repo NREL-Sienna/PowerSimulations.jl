@@ -1,5 +1,5 @@
-struct AddVariableInputs
-    variable_names::Vector{Symbol}
+struct AddVariableSpec
+    variable_name::Symbol
     binary::Bool
     expression_name::Union{Nothing, Symbol}
     sign::Float64
@@ -10,13 +10,12 @@ struct AddVariableInputs
 end
 
 """
-Construct AddVariableInputs.
+Construct AddVariableSpec.
 
 Accepts a single variable_name or a vector variable_names. One must be passed but not both.
 """
-function AddVariableInputs(;
-    variable_name = nothing,
-    variable_names = nothing,
+function AddVariableSpec(;
+    variable_name,
     binary,
     expression_name = nothing,
     sign = 1.0,
@@ -25,18 +24,8 @@ function AddVariableInputs(;
     lb_value_func = nothing,
     ub_value_func = nothing,
 )
-    if isnothing(variable_name) && isnothing(variable_names)
-        throw(ArgumentError("either variable_name or variable_names must be set"))
-    end
-    if !isnothing(variable_name) && !isnothing(variable_names)
-        throw(ArgumentError("variable_name and variable_names cannot both be set"))
-    end
-    if !isnothing(variable_name)
-        variable_names = [variable_name]
-    end
-
-    return AddVariableInputs(
-        variable_names,
+    return AddVariableSpec(
+        variable_name,
         binary,
         expression_name,
         sign,
@@ -47,12 +36,12 @@ function AddVariableInputs(;
     )
 end
 
-function make_variable_inputs(
+function AddVariableSpec(
     ::Type{<:T},
     ::Type{<:U},
     ::PSIContainer,
 ) where {T <: VariableType, U <: PSY.Component}
-    error("make_variable_inputs is not implemented for $T / $U")
+    error("AddVariableSpec is not implemented for $T / $U")
 end
 
 """
@@ -63,7 +52,7 @@ function add_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{U},
 ) where {T <: VariableType, U <: PSY.Component}
-    _add_variables!(psi_container, devices, make_variable_inputs(T, U, psi_container))
+    _add_variables!(psi_container, devices, AddVariableSpec(T, U, psi_container))
 end
 
 """
@@ -75,58 +64,46 @@ function add_variables!(
     service::U,
     contributing_devices::Vector{V},
 ) where {T <: VariableType, U <: PSY.Reserve, V <: PSY.Device}
-    inputs = make_variable_inputs(T, psi_container, service)
-    _add_variables!(psi_container, contributing_devices, inputs)
+    spec = AddVariableSpec(T, psi_container, service)
+    _add_variables!(psi_container, contributing_devices, spec)
 end
 
 function _add_variables!(
     psi_container::PSIContainer,
     devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
-    inputs::Vector{AddVariableInputs},
+    spec::AddVariableSpec,
 ) where {T <: PSY.Component}
-    for input in inputs
-        _add_variables!(psi_container, devices, input)
-    end
-end
-
-function _add_variables!(
-    psi_container::PSIContainer,
-    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
-    inputs::AddVariableInputs,
-) where {T <: PSY.Component}
-    variable_names = inputs.variable_names
-    binary = inputs.binary
-    expression_name = inputs.expression_name
-    sign = inputs.sign
-    initial_value_func = inputs.initial_value_func
-    lb_value_func = inputs.lb_value_func
-    ub_value_func = inputs.ub_value_func
+    variable_name = spec.variable_name
+    binary = spec.binary
+    expression_name = spec.expression_name
+    sign = spec.sign
+    initial_value_func = spec.initial_value_func
+    lb_value_func = spec.lb_value_func
+    ub_value_func = spec.ub_value_func
 
     filter_func = nothing
-    if isnothing(inputs.devices_filter_func)
+    if isnothing(spec.devices_filter_func)
         if T <: PSY.Device
             filter_func = x -> PSY.get_available(x)
         end
     else
-        filter_func = inputs.devices_filter_func
+        filter_func = spec.devices_filter_func
     end
     if !isnothing(filter_func)
         devices = filter!(filter_func, collect(devices))
     end
 
-    for var_name in variable_names
-        add_variable(
-            psi_container,
-            devices,
-            var_name,
-            binary,
-            expression_name,
-            sign;
-            initial_value = initial_value_func,
-            lb_value = lb_value_func,
-            ub_value = ub_value_func,
-        )
-    end
+    add_variable(
+        psi_container,
+        devices,
+        variable_name,
+        binary,
+        expression_name,
+        sign;
+        initial_value = initial_value_func,
+        lb_value = lb_value_func,
+        ub_value = ub_value_func,
+    )
 end
 
 @doc raw"""

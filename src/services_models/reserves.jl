@@ -5,12 +5,12 @@ struct StepwiseCostReserve <: AbstractReservesFormulation end
 """
 This function add the variables for reserves to the model
 """
-function make_variable_inputs(
-    ::Type{ServiceVariable},
+function AddVariableSpec(
+    ::Type{ActiveServiceVariable},
     ::PSIContainer,
     service::T,
 ) where {T <: PSY.Reserve}
-    inputs = AddVariableInputs(;
+    inputs = AddVariableSpec(;
         variable_name = make_variable_name(PSY.get_name(service), T),
         binary = false,
         lb_value_func = x -> 0,
@@ -19,13 +19,13 @@ function make_variable_inputs(
     return inputs
 end
 
-function make_variable_inputs(
-    ::Type{ActiveRequirementVariable},
+function AddVariableSpec(
     ::Type{T},
+    ::Type{U},
     ::PSIContainer,
-) where {T <: PSY.ReserveDemandCurve}
-    return AddVariableInputs(;
-        variable_name = make_variable_name(SERVICE_REQUIREMENT, T),
+) where {T <: ServiceRequirementVariable, U <: PSY.ReserveDemandCurve}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
         binary = false,
         lb_value_func = x -> 0.0,
     )

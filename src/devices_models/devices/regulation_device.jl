@@ -5,23 +5,28 @@ struct DeviceLimitedRegulation <: AbstractRegulationFormulation end
 """
 This function add the variables for reserves to the model
 """
-function make_variable_inputs(
-    ::Type{RegulationServiceVariable},
+function AddVariableSpec(
     ::Type{T},
+    ::Type{U},
     ::PSIContainer,
-) where {T <: PSY.Device}
-    return [
-        AddVariableInputs(;
-            variable_name = make_variable_name("ΔP_up", T),
-            binary = false,
-            lb_value_func = x -> 0.0,
-        ),
-        AddVariableInputs(;
-            variable_name = make_variable_name("ΔP_dn"),
-            binary = false,
-            lb_value_func = x -> 0.0,
-        ),
-    ]
+) where {T <: DeltaActivePowerUpVariable, U <: PSY.Device}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
+        binary = false,
+        lb_value_func = x -> 0.0,
+    )
+end
+
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: DeltaActivePowerDownVariable, U <: PSY.Device}
+    AddVariableSpec(;
+        variable_name = make_name(T, U),
+        binary = false,
+        lb_value_func = x -> 0.0,
+    )
 end
 
 function activepower_constraints!(

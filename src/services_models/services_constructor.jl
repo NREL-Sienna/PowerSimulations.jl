@@ -67,7 +67,7 @@ function construct_service!(
         end
 
         #Variables
-        add_variables!(ServiceVariable, psi_container, service, contributing_devices)
+        add_variables!(ActiveServiceVariable, psi_container, service, contributing_devices)
         # Constraints
         service_requirement_constraint!(psi_container, service, model)
         modify_device_model!(devices_template, model, contributing_devices)
@@ -88,7 +88,7 @@ function construct_service!(
     services_mapping = PSY.get_contributing_device_mapping(sys)
     time_steps = model_time_steps(psi_container)
     names = (PSY.get_name(s) for s in services)
-    add_variables!(ActiveRequirementVariable, psi_container, services)
+    add_variables!(ServiceRequirementVariable, psi_container, services)
     add_cons_container!(psi_container, constraint_name(REQUIREMENT, SR), names, time_steps)
 
     for service in services
@@ -98,7 +98,7 @@ function construct_service!(
                 name = PSY.get_name(service),
             )].contributing_devices
         #Variables
-        add_variables!(ServiceVariable, psi_container, service, contributing_devices)
+        add_variables!(ActiveServiceVariable, psi_container, service, contributing_devices)
         # Constraints
         service_requirement_constraint!(psi_container, service, model)
         modify_device_model!(devices_template, model, contributing_devices)
@@ -128,6 +128,7 @@ function construct_service!(
         end
     end
     add_variables!(AreaMismatchVariable, PSY.Area, psi_container, areas)
+    add_variables!(LiftVariable, PSY.Area, psi_container, areas)
     absolute_value_lift(psi_container, areas)
     steady_state_frequency_variables!(psi_container)
     balancing_auxiliary_variables!(psi_container, sys)

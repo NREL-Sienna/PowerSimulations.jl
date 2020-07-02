@@ -23,8 +23,8 @@ Aqua.test_unbound_args(PowerSimulations)
 Aqua.test_undefined_exports(PowerSimulations)
 #Aqua.test_ambiguities(PowerSimulations)
 
-import PowerSystems.UtilsData: TestData
-download(TestData; branch = "master")
+#import PowerSystems.UtilsData: TestData
+#download(TestData; branch = "master")
 
 const PM = PowerModels
 const PSY = PowerSystems

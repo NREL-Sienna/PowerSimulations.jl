@@ -5,13 +5,13 @@ struct InterruptiblePowerLoad <: AbstractControllablePowerLoadFormulation end
 struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
 
 ########################### dispatchable load variables ####################################
-function make_variable_inputs(
-    ::Type{ActivePowerVariable},
+function AddVariableSpec(
     ::Type{T},
+    ::Type{U},
     ::PSIContainer,
-) where {T <: PSY.ElectricLoad}
-    return AddVariableInputs(;
-        variable_name = make_variable_name(ACTIVE_POWER, T),
+) where {T <: ActivePowerVariable, U <: PSY.ElectricLoad}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
         binary = false,
         expression_name = :nodal_balance_active,
         sign = -1.0,
@@ -20,13 +20,13 @@ function make_variable_inputs(
     )
 end
 
-function make_variable_inputs(
-    ::Type{ReactivePowerVariable},
+function AddVariableSpec(
     ::Type{T},
+    ::Type{U},
     ::PSIContainer,
-) where {T <: PSY.ElectricLoad}
-    return AddVariableInputs(;
-        variable_name = make_variable_name(REACTIVE_POWER, T),
+) where {T <: ReactivePowerVariable, U <: PSY.ElectricLoad}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
         binary = false,
         expression_name = :nodal_balance_reactive,
         sign = -1.0,
@@ -35,12 +35,12 @@ function make_variable_inputs(
     )
 end
 
-function make_variable_inputs(
-    ::Type{CommitmentVariable},
+function AddVariableSpec(
     ::Type{T},
+    ::Type{U},
     ::PSIContainer,
-) where {T <: PSY.ElectricLoad}
-    return AddVariableInputs(; variable_name = make_variable_name(ON, T), binary = true)
+) where {T <: OnVariable, U <: PSY.ElectricLoad}
+    return AddVariableSpec(; variable_name = make_name(T, U), binary = true)
 end
 
 ####################################### Reactive Power Constraints #########################

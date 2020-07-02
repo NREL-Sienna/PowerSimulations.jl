@@ -74,7 +74,7 @@ function construct_device!(
     #Variables
     add_variables!(ActivePowerVariable, psi_container, devices)
     add_variables!(ReactivePowerVariable, psi_container, devices)
-    add_variables!(CommitmentVariable, psi_container, devices)
+    add_variables!(OnVariable, psi_container, devices)
 
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
@@ -101,7 +101,7 @@ function construct_device!(
 
     #Variables
     add_variables!(ActivePowerVariable, psi_container, devices)
-    add_variables!(CommitmentVariable, psi_container, devices)
+    add_variables!(OnVariable, psi_container, devices)
 
     #Constraints
     activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))

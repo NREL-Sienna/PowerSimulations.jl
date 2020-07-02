@@ -235,9 +235,9 @@ function test_load_simulation(file_path::String)
             ]
 
             vars_names = [
-                PSI.variable_name(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
-                #PSI.variable_name(PSI.ON, PSY.ThermalStandard),
-                #PSI.variable_name(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
+                PSI.make_variable_name(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
+                #PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
+                #PSI.make_variable_name(PSI.ACTIVE_POWER, PSY.HydroEnergyReservoir),
             ]
             for (ik, key) in enumerate(P_keys)
                 variable_ref = PSI.get_reference(sim_results, "UC", 1, vars_names[ik])[1] # 1 is first step
@@ -272,7 +272,7 @@ function test_load_simulation(file_path::String)
 
         @testset "Test verify initial condition feedforward for consecutive ED to UC" begin
             ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
-            vars_names = [PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
+            vars_names = [PSI.make_variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
             for (ik, key) in enumerate(ic_keys)
                 variable_ref = PSI.get_reference(sim_results, "ED", 1, vars_names[ik])[24]
                 initial_conditions =
@@ -395,7 +395,7 @@ function test_load_simulation(file_path::String)
 
     @testset "Test verify parameter feedforward for Receding Horizon" begin
         P_keys = [(PSI.ON, PSY.ThermalStandard)]
-        vars_names = [PSI.variable_name(PSI.ON, PSY.ThermalStandard)]
+        vars_names = [PSI.make_variable_name(PSI.ON, PSY.ThermalStandard)]
         for (ik, key) in enumerate(P_keys)
             variable_ref = PSI.get_reference(sim_results, "UC", 2, vars_names[ik])[1]
             raw_result = Feather.read(variable_ref)
@@ -415,7 +415,7 @@ function test_load_simulation(file_path::String)
     @testset "Test verify initial condition feedforward for Receding Horizon" begin
         results = load_simulation_results(sim_results, "ED")
         ic_keys = [PSI.ICKey(PSI.DevicePower, PSY.ThermalStandard)]
-        vars_names = [PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
+        vars_names = [PSI.make_variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)]
         ed_horizon = PSI.get_stage_horizon(sim.sequence, "ED")
         no_steps = PSI.get_steps(sim)
         for (ik, key) in enumerate(ic_keys)
@@ -652,7 +652,7 @@ function test_load_simulation(file_path::String)
 
         @testset "Test verify initial condition update using StoredEnergy cache" begin
             ic_keys = [PSI.ICKey(PSI.EnergyLevel, PSY.HydroEnergyReservoir)]
-            vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
+            vars_names = [PSI.make_variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
             for (ik, key) in enumerate(ic_keys)
                 variable_ref =
                     PSI.get_reference(sim_cache_results, "ED", 1, vars_names[ik])[end]
@@ -699,7 +699,7 @@ function test_load_simulation(file_path::String)
 
         @testset "Test verify initial condition update using StoredEnergy cache" begin
             ic_keys = [PSI.ICKey(PSI.EnergyLevel, PSY.HydroEnergyReservoir)]
-            vars_names = [PSI.variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
+            vars_names = [PSI.make_variable_name(PSI.ENERGY, PSY.HydroEnergyReservoir)]
             for (ik, key) in enumerate(ic_keys)
                 variable_ref =
                     PSI.get_reference(sim_cache_results, "ED", 1, vars_names[ik])[1]

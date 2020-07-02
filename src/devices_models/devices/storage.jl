@@ -3,61 +3,63 @@ struct BookKeeping <: AbstractStorageFormulation end
 struct BookKeepingwReservation <: AbstractStorageFormulation end
 #################################################Storage Variables#################################
 
-function make_variable_inputs(
-    ::Type{ActivePowerVariable},
+function AddVariableSpec(
     ::Type{T},
+    ::Type{U},
     ::PSIContainer,
-) where {T <: PSY.Storage}
-    return [
-        AddVariableInputs(;
-            variable_name = make_variable_name(ACTIVE_POWER_IN, T),
-            binary = false,
-            expression_name = :nodal_balance_active,
-            sign = -1.0,
-            lb_value_func = x -> 0.0,
-        ),
-        AddVariableInputs(;
-            variable_name = make_variable_name(ACTIVE_POWER_OUT, T),
-            binary = false,
-            expression_name = :nodal_balance_active,
-            lb_value_func = x -> 0.0,
-        ),
-    ]
+) where {T <: ActivePowerInVariable, U <: PSY.Storage}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
+        binary = false,
+        expression_name = :nodal_balance_active,
+        sign = -1.0,
+        lb_value_func = x -> 0.0,
+    )
 end
 
-function make_variable_inputs(
-    ::Type{ReactivePowerVariable},
+function AddVariableSpec(
     ::Type{T},
+    ::Type{U},
     ::PSIContainer,
-) where {T <: PSY.Storage}
-    return AddVariableInputs(;
-        variable_name = make_variable_name(REACTIVE_POWER, T),
+) where {T <: ActivePowerOutVariable, U <: PSY.Storage}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
+        binary = false,
+        expression_name = :nodal_balance_active,
+        lb_value_func = x -> 0.0,
+    )
+end
+
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: ReactivePowerVariable, U <: PSY.Storage}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
         binary = false,
         expression_name = :nodal_balance_reactive,
     )
 end
 
-function make_variable_inputs(
-    ::Type{EnergyStorageVariable},
+function AddVariableSpec(
     ::Type{T},
+    ::Type{U},
     ::PSIContainer,
-) where {T <: PSY.Storage}
-    return AddVariableInputs(;
-        variable_name = make_variable_name(ENERGY, T),
+) where {T <: EnergyVariable, U <: PSY.Storage}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
         binary = false,
         lb_value_func = x -> 0.0,
     )
 end
 
-function make_variable_inputs(
-    ::Type{StorageReservationVariable},
+function AddVariableSpec(
     ::Type{T},
+    ::Type{U},
     ::PSIContainer,
-) where {T <: PSY.Storage}
-    return AddVariableInputs(;
-        variable_name = make_variable_name(RESERVE, T),
-        binary = true,
-    )
+) where {T <: ReserveVariable, U <: PSY.Storage}
+    return AddVariableSpec(; variable_name = make_name(T, U), binary = true)
 end
 
 ################################## output power constraints#################################

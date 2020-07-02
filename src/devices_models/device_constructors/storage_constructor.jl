@@ -11,9 +11,10 @@ function construct_device!(
     end
 
     #Variables
-    add_variables!(ActivePowerVariable, psi_container, devices)
+    add_variables!(ActivePowerInVariable, psi_container, devices)
+    add_variables!(ActivePowerOutVariable, psi_container, devices)
     add_variables!(ReactivePowerVariable, psi_container, devices)
-    add_variables!(EnergyStorageVariable, psi_container, devices)
+    add_variables!(EnergyVariable, psi_container, devices)
 
     #Initial Conditions
     initial_conditions!(psi_container, devices, D)
@@ -48,8 +49,9 @@ function construct_device!(
     end
 
     #Variables
-    add_variables!(ActivePowerVariable, psi_container, devices)
-    add_variables!(EnergyStorageVariable, psi_container, devices)
+    add_variables!(ActivePowerInVariable, psi_container, devices)
+    add_variables!(ActivePowerOutVariable, psi_container, devices)
+    add_variables!(EnergyVariable, psi_container, devices)
 
     #Initial Conditions
     initial_conditions!(psi_container, devices, D)
@@ -78,10 +80,11 @@ function construct_device!(
     end
 
     #Variables
-    add_variables!(ActivePowerVariable, psi_container, devices)
+    add_variables!(ActivePowerInVariable, psi_container, devices)
+    add_variables!(ActivePowerOutVariable, psi_container, devices)
     add_variables!(ReactivePowerVariable, psi_container, devices)
-    add_variables!(EnergyStorageVariable, psi_container, devices)
-    add_variables!(StorageReservationVariable, psi_container, devices)
+    add_variables!(EnergyVariable, psi_container, devices)
+    add_variables!(ReserveVariable, psi_container, devices)
 
     #Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)
@@ -117,9 +120,10 @@ function construct_device!(
     end
 
     #Variables
-    add_variables!(ActivePowerVariable, psi_container, devices)
-    add_variables!(EnergyStorageVariable, psi_container, devices)
-    add_variables!(StorageReservationVariable, psi_container, devices)
+    add_variables!(ActivePowerInVariable, psi_container, devices)
+    add_variables!(ActivePowerOutVariable, psi_container, devices)
+    add_variables!(EnergyVariable, psi_container, devices)
+    add_variables!(ReserveVariable, psi_container, devices)
 
     #Initial Conditions
     initial_conditions!(psi_container, devices, model.formulation)

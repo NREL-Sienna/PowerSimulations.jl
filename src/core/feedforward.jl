@@ -503,7 +503,7 @@ function feedforward!(
         constraint_infos[ix] = constraint_info
     end
     for prefix in get_affected_variables(ff_model)
-        var_name = variable_name(prefix, T)
+        var_name = make_variable_name(prefix, T)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         ub_ff(
             psi_container,
@@ -521,7 +521,7 @@ function feedforward!(
     model::DeviceModel{T, <:AbstractDeviceFormulation},
     ff_model::SemiContinuousFF,
 ) where {T <: PSY.StaticInjection}
-    bin_var = variable_name(get_binary_source_stage(ff_model), T)
+    bin_var = make_variable_name(get_binary_source_stage(ff_model), T)
     parameter_ref = UpdateRef{JuMP.VariableRef}(bin_var)
     constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
@@ -532,7 +532,7 @@ function feedforward!(
         constraint_infos[ix] = constraint_info
     end
     for prefix in get_affected_variables(ff_model)
-        var_name = variable_name(prefix, T)
+        var_name = make_variable_name(prefix, T)
         semicontinuousrange_ff(
             psi_container,
             constraint_name(FEEDFORWARD_BIN, T),
@@ -550,7 +550,7 @@ function feedforward!(
     ff_model::IntegralLimitFF,
 ) where {T <: PSY.StaticInjection}
     for prefix in get_affected_variables(ff_model)
-        var_name = variable_name(prefix, T)
+        var_name = make_variable_name(prefix, T)
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         integral_limit_ff(
             psi_container,

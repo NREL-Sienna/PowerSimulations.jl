@@ -1,6 +1,6 @@
 function reserve_slacks(psi_container::PSIContainer, reserve_name::String)
     time_steps = model_time_steps(psi_container)
-    var_name = variable_name(reserve_name, SLACK_UP)
+    var_name = make_variable_name(reserve_name, SLACK_UP)
     variable = add_var_container!(psi_container, var_name, time_steps)
 
     for jx in time_steps
