@@ -1173,6 +1173,7 @@ function cost_function(
         #Setting kwarg for PWL
         add_to_setting_ext!(psi_container, "parameter_on", make_variable_name(ON, T))
     end
+    add_to_cost(psi_container, devices, make_variable_name(ACTIVE_POWER, T), :variable)
     return
 end
 
