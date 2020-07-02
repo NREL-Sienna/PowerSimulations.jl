@@ -513,3 +513,10 @@ function get_dual_values(op::PSIContainer, cons::Vector{Symbol})
     end
     return results_dict
 end
+
+function add_to_setting_ext!(psi_container::PSIContainer, key::String, value)
+    settings = get_settings(psi_container)
+    push!(get_ext(settings), key => value)
+    @debug "Add to settings ext" key value
+    return
+end

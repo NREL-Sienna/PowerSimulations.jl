@@ -1403,12 +1403,6 @@ function cost_function(
     return
 end
 
-function add_to_setting_ext!(psi_container::PSIContainer, key::String, value)
-    settings = get_settings(psi_container)
-    push!(get_ext(settings), key => value)
-    return
-end
-
 # TODO: Define for now just for Area Balance and reason about others later. This will
 # be needed and useful for PowerFlow
 function make_nodal_expression_inputs(
