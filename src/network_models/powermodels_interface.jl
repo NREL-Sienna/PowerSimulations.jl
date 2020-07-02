@@ -290,7 +290,8 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractDCPModel}
 
     pm_var_map[PSY.Bus] = Dict(:va => THETA)
     pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = FLOW_ACTIVE_POWER, to_from = nothing))
-    pm_var_map[PSY.DCBranch] = Dict(:p_dc => (from_to = FLOW_ACTIVE_POWER, to_from = nothing))
+    pm_var_map[PSY.DCBranch] =
+        Dict(:p_dc => (from_to = FLOW_ACTIVE_POWER, to_from = nothing))
 
     return pm_var_map
 end
@@ -299,8 +300,14 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowe
     pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta)
-    pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM))
-    pm_var_map[PSY.DCBranch] = Dict(:p_dc => (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM))
+    pm_var_map[PSY.ACBranch] = Dict(
+        :p =>
+            (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
+    )
+    pm_var_map[PSY.DCBranch] = Dict(
+        :p_dc =>
+            (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
+    )
 
     return pm_var_map
 end

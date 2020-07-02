@@ -118,8 +118,11 @@ end
     c_sys14_dc = build_system("c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
-    constraint_names = [:RateLimit_ub__Line, :RateLimit_lb__Line,
-        PSI.constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus)]
+    constraint_names = [
+        :RateLimit_ub__Line,
+        :RateLimit_lb__Line,
+        PSI.constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus),
+    ]
     parameters = [true, false]
     test_results = Dict{System, Vector{Int}}(
         c_sys5 => [384, 0, 408, 408, 288],
