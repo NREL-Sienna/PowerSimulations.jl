@@ -329,6 +329,23 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel
     return pm_var_map
 end
 
+function PMconmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowerModel}
+    pm_con_map = Dict{Type, Dict{Symbol, Union{Symbol, NamedTuple}}}()
+
+    pm_con_map[PSY.Bus] = Dict(:power_balance_p => :Bus_active_power_balance)
+    return pm_con_map
+end
+
+function PMconmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel}
+    pm_con_map = Dict{Type, Dict{Symbol, Union{Symbol, NamedTuple}}}()
+
+    pm_con_map[PSY.Bus] = Dict(
+        :power_balance_p => :Bus_active_power_balance,
+        :power_balance_q => :Bus_reactive_power_balance,
+    )
+    return pm_con_map
+end
+
 function add_pm_var_refs!(
     psi_container::PSIContainer,
     system_formulation::Type{S},
@@ -412,6 +429,41 @@ function add_pm_var_refs!(
                             PM.var(psi_container.pm, t, pm_v, getfield(pm_d, dir))
                     end
                 end
+            end
+        end
+    end
+end
+
+function add_pm_con_refs!(
+    psi_container::PSIContainer,
+    system_formulation::Type{S},
+    sys::PSY.System,
+) where {S <: PM.AbstractPowerModel}
+
+    time_steps = model_time_steps(psi_container)
+    bus_dict = psi_container.pm.ext[:PMmap].bus
+    ACbranch_dict = psi_container.pm.ext[:PMmap].arcs
+    ACbranch_types = typeof.(values(ACbranch_dict))
+    DCbranch_dict = psi_container.pm.ext[:PMmap].arcs_dc
+    DCbranch_types = typeof.(values(DCbranch_dict))
+
+    pm_con_names = (
+        k for
+        k in keys(psi_container.pm.con[:nw][1]) if !isempty(PM.con(psi_container.pm, 1, k))
+    )
+
+    pm_con_map = PMconmap(system_formulation)
+    for (pm_v, ps_v) in pm_con_map[PSY.Bus]
+        if pm_v in pm_con_names
+            container = PSI.add_cons_container!(
+                psi_container,
+                ps_v,
+                (PSY.get_name(b) for b in values(bus_dict)),
+                time_steps,
+            )
+            for t in time_steps, (pm_bus, bus) in bus_dict
+                name = PSY.get_name(bus)
+                container[name, t] = PM.con(psi_container.pm, t, pm_v)[pm_bus]
             end
         end
     end

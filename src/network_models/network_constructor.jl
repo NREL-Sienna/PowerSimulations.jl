@@ -73,6 +73,7 @@ function construct_network!(
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(psi_container, T, sys, instantiate_model)
     add_pm_var_refs!(psi_container, T, sys)
+    add_pm_con_refs!(psi_container, T, sys)
     return
 end
 
@@ -91,6 +92,7 @@ function construct_network!(
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(psi_container, T, sys, instantiate_model)
     add_pm_var_refs!(psi_container, T, sys)
+    add_pm_con_refs!(psi_container, T, sys)
     return
 end
 
@@ -109,5 +111,6 @@ function construct_network!(
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(psi_container, T, sys, instantiate_model)
     add_pm_var_refs!(psi_container, T, sys)
+    add_pm_con_refs!(psi_container, T, sys)
     return
 end
