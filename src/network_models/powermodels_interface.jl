@@ -299,7 +299,7 @@ end
 function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowerModel}
     pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
 
-    pm_var_map[PSY.Bus] = Dict(:va => :theta)
+    pm_var_map[PSY.Bus] = Dict(:va => THETA)
     pm_var_map[PSY.ACBranch] = Dict(
         :p =>
             (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM),
