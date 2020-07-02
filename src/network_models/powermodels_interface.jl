@@ -286,21 +286,21 @@ end
 #### PM accessor functions ########
 
 function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractDCPModel}
-    pm_var_map = Dict{Type, Dict{Symbol, Union{Symbol, NamedTuple}}}()
+    pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
 
-    pm_var_map[PSY.Bus] = Dict(:va => :theta)
-    pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = :Fp, to_from = nothing))
-    pm_var_map[PSY.DCBranch] = Dict(:p_dc => (from_to = :Fp, to_from = nothing))
+    pm_var_map[PSY.Bus] = Dict(:va => THETA)
+    pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = FLOW_ACTIVE_POWER, to_from = nothing))
+    pm_var_map[PSY.DCBranch] = Dict(:p_dc => (from_to = FLOW_ACTIVE_POWER, to_from = nothing))
 
     return pm_var_map
 end
 
 function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowerModel}
-    pm_var_map = Dict{Type, Dict{Symbol, Union{Symbol, NamedTuple}}}()
+    pm_var_map = Dict{Type, Dict{Symbol, Union{String, NamedTuple}}}()
 
     pm_var_map[PSY.Bus] = Dict(:va => :theta)
-    pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = :FpFT, to_from = :FpTF))
-    pm_var_map[PSY.DCBranch] = Dict(:p_dc => (from_to = :FpFT, to_from = :FpTF))
+    pm_var_map[PSY.ACBranch] = Dict(:p => (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM))
+    pm_var_map[PSY.DCBranch] = Dict(:p_dc => (from_to = FLOW_ACTIVE_POWER_FROM_TO, to_from = FLOW_ACTIVE_POWER_TO_FROM))
 
     return pm_var_map
 end
@@ -330,18 +330,18 @@ function PMvarmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel
 end
 
 function PMconmap(system_formulation::Type{S}) where {S <: PM.AbstractActivePowerModel}
-    pm_con_map = Dict{Type, Dict{Symbol, Union{Symbol, NamedTuple}}}()
+    pm_con_map = Dict{Type, Dict{Symbol, String}}()
 
-    pm_con_map[PSY.Bus] = Dict(:power_balance_p => :Bus_active_power_balance)
+    pm_con_map[PSY.Bus] = Dict(:power_balance_p => NODAL_BALANCE_ACTIVE)
     return pm_con_map
 end
 
 function PMconmap(system_formulation::Type{S}) where {S <: PM.AbstractPowerModel}
-    pm_con_map = Dict{Type, Dict{Symbol, Union{Symbol, NamedTuple}}}()
+    pm_con_map = Dict{Type, Dict{Symbol, String}}()
 
     pm_con_map[PSY.Bus] = Dict(
-        :power_balance_p => :Bus_active_power_balance,
-        :power_balance_q => :Bus_reactive_power_balance,
+        :power_balance_p => NODAL_BALANCE_ACTIVE,
+        :power_balance_q => NODAL_BALANCE_REACTIVE,
     )
     return pm_con_map
 end
@@ -370,7 +370,7 @@ function add_pm_var_refs!(
                 (PSY.get_name(b) for b in values(bus_dict)),
                 time_steps,
             )
-            assign_variable!(psi_container, ps_v, container)
+            assign_variable!(psi_container, ps_v, PSY.Bus, container)
             for t in time_steps, (pm_bus, bus) in bus_dict
                 name = PSY.get_name(bus)
                 container[name, t] = PM.var(psi_container.pm, t, pm_v)[pm_bus] #pm_vars[pm_v][pm_bus]
@@ -416,14 +416,13 @@ function add_pm_var_refs!(
                 for dir in fieldnames(typeof(ps_v))
                     isnothing(getfield(ps_v, dir)) && continue
                     # TODO: make a better mapping with the var names in the definitions file
-                    var_name =
-                        Symbol("$(getfield(ps_v, dir))$(PSI_NAME_DELIMITER)$(d_type)")
+                    var_name = getfield(ps_v, dir)
                     container = PSI.container_spec(
                         psi_container.JuMPmodel,
                         (PSY.get_name(d[2]) for d in devices),
                         time_steps,
                     )
-                    assign_variable!(psi_container, var_name, container)
+                    assign_variable!(psi_container, var_name, d_type, container)
                     for t in time_steps, (pm_d, d) in devices
                         container[PSY.get_name(d), t] =
                             PM.var(psi_container.pm, t, pm_v, getfield(pm_d, dir))
@@ -442,10 +441,6 @@ function add_pm_con_refs!(
 
     time_steps = model_time_steps(psi_container)
     bus_dict = psi_container.pm.ext[:PMmap].bus
-    ACbranch_dict = psi_container.pm.ext[:PMmap].arcs
-    ACbranch_types = typeof.(values(ACbranch_dict))
-    DCbranch_dict = psi_container.pm.ext[:PMmap].arcs_dc
-    DCbranch_types = typeof.(values(DCbranch_dict))
 
     pm_con_names = (
         k for
@@ -457,7 +452,7 @@ function add_pm_con_refs!(
         if pm_v in pm_con_names
             container = PSI.add_cons_container!(
                 psi_container,
-                ps_v,
+                PSI.constraint_name(ps_v, PSY.Bus),
                 (PSY.get_name(b) for b in values(bus_dict)),
                 time_steps,
             )
