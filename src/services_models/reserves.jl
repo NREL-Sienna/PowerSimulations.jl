@@ -10,13 +10,12 @@ function AddVariableSpec(
     ::PSIContainer,
     service::T,
 ) where {T <: PSY.Reserve}
-    inputs = AddVariableSpec(;
+    return AddVariableSpec(;
         variable_name = make_variable_name(PSY.get_name(service), T),
         binary = false,
         lb_value_func = x -> 0,
         devices_filter_func = x -> PSY.get_available(x),
     )
-    return inputs
 end
 
 function AddVariableSpec(

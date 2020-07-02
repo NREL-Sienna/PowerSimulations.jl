@@ -92,7 +92,6 @@ function AddVariableSpec(
     ::Type{U},
     psi_container::PSIContainer,
 ) where {T <: Union{StartVariable, StopVariable}, U <: PSY.ThermalGen}
-    time_steps = model_time_steps(psi_container)
     if get_warm_start(psi_container.settings)
         initial_value_func = x -> (PSY.get_activepower(x) > 0 ? 1.0 : 0.0)
     else
