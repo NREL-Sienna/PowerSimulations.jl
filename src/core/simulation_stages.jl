@@ -99,7 +99,8 @@ stage = Stage(MyOpProblemType template, system, optimizer)
 - `initial_time::Dates.DateTime`: Initial Time for the model solve
 - `PTDF::PTDF`: Passes the PTDF matrix into the optimization model for StandardPTDFModel networks.
 - `warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-- `slack_variables::Bool` True will add slacks to the system balance constraints
+- `balance_slack_variables::Bool` True will add slacks to the system balance constraints
+- `services_slack_variables::Bool` True will add slacks to the services requirement constraints
 - `export_pwl_vars::Bool` True will write the results of the piece-wise-linear intermediate variables. Slows down the simulation process significantly
 - `allow_fails::Bool`  True will allow the simulation to continue if the optimizer can't find a solution. Use with care, can lead to unwanted behaviour or results
 """
