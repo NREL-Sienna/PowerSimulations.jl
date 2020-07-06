@@ -79,18 +79,52 @@ function Base.show(io::IO, results::OperationsProblemResults)
 
 function Base.show(io::IO, ::MIME"text/plain", results::IS.Results)
     println(io, "\nResults")
-    println(io, "===============\n")
-
-    for (k, v) in results.variable_values
-        time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
-        if size(time, 1) == size(v, 1)
-            var = hcat(time, v)
-        else
-            var = v
+    println(io, "========\n")
+    println(io, "Variables")
+    println(io, "=========\n")
+    times = IS.get_time_stamp(results)
+    variables = IS.get_variables(results)
+    if (length(keys(variables)) > 5)
+        for (k, v) in variables
+            println(io, "$k: $(size(v))")
         end
-        println(io, "$(k)")
-        println(io, "==================")
-        println(io, "$(var)\n")
+        println(io, "\n")
+    else
+        for (k, v) in IS.get_variables(results)
+            if size(times, 1) == size(v, 1)
+                var = hcat(times, v)
+            else
+                var = v
+            end
+            (l, w) = size(var)
+            if w < 6
+                println(io, "$(k)")
+                println(io, "$("-" ^ length("$k"))\n")
+                println(io, "$(var)\n")
+            else
+                println(io, "$(k)  size ($l, $w)\n")
+            end
+        end
+    end
+    parameters = IS.get_parameters(results)
+    if !isempty(parameters)
+        println(io, "Parameters")
+        println(io, "==========\n")
+        for (p, v) in parameters
+            if size(times, 1) == size(v, 1)
+                var = hcat(times, v)
+            else
+                var = v
+            end
+            l, w = size(var)
+            if w < 6
+                println(io, "$(p)")
+                println(io, "-"^length("$p"))
+                println(io, "$(var)\n")
+            else
+                println(io, "$(p)  size ($l, $w)\n")
+            end
+        end
     end
     println(io, "Optimizer Log")
     println(io, "-------------")
@@ -104,18 +138,50 @@ function Base.show(io::IO, ::MIME"text/plain", results::IS.Results)
         println(io, "Total Cost: $(k) = $(v)")
     end
 end
-
 function Base.show(io::IO, ::MIME"text/html", results::IS.Results)
     println(io, "<h1>Results</h1>")
-    for (k, v) in results.variable_values
-        time = DataFrames.DataFrame(Time = results.time_stamp[!, :Range])
-        if size(time, 1) == size(v, 1)
-            var = hcat(time, v)
-        else
-            var = v
+    println(io, "<h2>Variables</h2>")
+    times = IS.get_time_stamp(results)
+    variables = IS.get_variables(results)
+    if (length(keys(variables)) > 5)
+        for (k, v) in variables
+            println(io, "<p>$k: $(size(v))</p>")
         end
-        println(io, "<b>$(k)</b>")
-        show(io, MIME"text/html"(), var)
+    else
+        for (k, v) in IS.get_variables(results)
+            if size(times, 1) == size(v, 1)
+                var = hcat(times, v)
+            else
+                var = v
+            end
+            (l, w) = size(var)
+            if w < 6
+                println(io, "<b>$(k)</b>")
+                println(io, "<p>$("-" ^ length("$k"))</p>")
+                show(io, MIME"text/html"(), var)
+            else
+                println(io, "<p>$(k)  size ($l, $w)</p>")
+            end
+        end
+    end
+    parameters = IS.get_parameters(results)
+    if !isempty(parameters)
+        println(io, "<h2>Parameters</h2>")
+        for (k, v) in parameters
+            if size(times, 1) == size(v, 1)
+                var = hcat(times, v)
+            else
+                var = v
+            end
+            (l, w) = size(var)
+            if w < 6
+                println(io, "<b>$(k)</b>")
+                println(io, "<p>$("-" ^ length("$k"))</p>")
+                show(io, MIME"text/html"(), var)
+            else
+                println(io, "<p>$(k)  size ($l, $w)</p>")
+            end
+        end
     end
     println(io, "<p><b>Optimizer Log</b></p>")
     for (k, v) in results.optimizer_log
@@ -161,6 +227,7 @@ function Base.show(io::IO, ::MIME"text/plain", sim_results::SimulationResultsRef
     println(io, "Simulation Results Reference\n")
     println(io, "Results Folder: $(sim_results.results_folder)\n")
     println(io, "Reference Tables\n")
+    println(io, "________________\n")
     for (k, v) in sim_results.ref
         println(io, "$(k)\n")
         try
