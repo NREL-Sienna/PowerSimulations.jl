@@ -182,7 +182,7 @@ function _pwlgencost_sos(
     psi_container::PSIContainer,
     variable::JV,
     cost_component::Vector{NTuple{2, Float64}},
-    status::Union{Nothing, JV} = nothing,
+    status::Union{Nothing, JuMP.AbstractVariableRef} = nothing,
 ) where {JV <: JuMP.AbstractVariableRef}
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
     if isnothing(status)
@@ -289,7 +289,7 @@ function _pwl_cost(
     psi_container::PSIContainer,
     variable::JV,
     cost_component::Vector{NTuple{2, Float64}},
-    on_status::Union{Nothing, JV} = nothing,
+    on_status::Union{Nothing, JuMP.AbstractVariableRef} = nothing,
 ) where {JV <: JuMP.AbstractVariableRef}
     if !_pwlparamcheck(cost_component)
         @warn("The cost function provided for $(variable) device is not compatible with a linear PWL cost function.
@@ -353,7 +353,7 @@ function ps_cost(
         bin = get_variable(psi_container, var_name)[index, :]
     elseif haskey(settings_ext, "parameter_on")
         param_name = settings_ext["parameter_on"]
-        bin = get_parameter_container(psi_container, param_name).parameter_array[index, :]
+        bin = get_parameter_container(psi_container, param_name).parameter_array[index]
     else
         bin = nothing
     end
@@ -376,7 +376,11 @@ function ps_cost(
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
     for (t, var) in enumerate(variable)
         if !isnothing(bin)
-            c, pwl_vars = _pwl_cost(psi_container, var, cost_array, bin[t])
+            if typeof(bin) <: ParameterJuMP.ParameterRef
+                c, pwl_vars = _pwl_cost(psi_container, var, cost_array, bin)
+            else
+                c, pwl_vars = _pwl_cost(psi_container, var, cost_array, bin[t])
+            end
         else
             c, pwl_vars = _pwl_cost(psi_container, var, cost_array)
         end
