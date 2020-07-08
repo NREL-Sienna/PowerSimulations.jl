@@ -376,7 +376,7 @@ function ps_cost(
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
     for (t, var) in enumerate(variable)
         if !isnothing(bin)
-            if typeof(bin) <: ParameterJuMP.ParameterRef
+            if bin isa ParameterJuMP.ParameterRef
                 c, pwl_vars = _pwl_cost(psi_container, var, cost_array, bin)
             else
                 c, pwl_vars = _pwl_cost(psi_container, var, cost_array, bin[t])
