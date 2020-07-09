@@ -273,7 +273,7 @@ end
 """
 This function adds the active power limits of generators. Constraint (17) & (18) from PGLIB
 """
-function make_active_power_constraints_inputs!(
+function make_active_power_constraints_inputs(
     ::Type{<:PSY.ThermalMultiStart},
     ::Type{<:ThermalMultiStartUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
@@ -650,7 +650,7 @@ function ramp_constraints!(
             constaint_data,
             ini_conds,
             constraint_name(RAMP, PSY.ThermalMultiStart),
-            (variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),),
+            variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),
         )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
