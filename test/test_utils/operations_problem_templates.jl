@@ -83,6 +83,31 @@ devices = Dict(
 template_hydro_ed =
     OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
 
+# UC with Hydro Model Ref
+branches = Dict()
+services = Dict()
+devices = Dict(
+    :Generators => DeviceModel(ThermalStandard, ThermalStandardUnitCommitment),
+    :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+    :HydroEnergyReservoir => DeviceModel(HydroEnergyReservoir, HydroDispatchRunOfRiver),
+)
+template_pwl_standard_uc =
+    OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+
+## ED with Hydro Model Ref
+branches = Dict()
+services = Dict()
+devices = Dict(
+    :Generators => DeviceModel(ThermalStandard, ThermalRampLimited),
+    :Ren => DeviceModel(RenewableDispatch, RenewableFullDispatch),
+    :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
+    :ILoads => DeviceModel(InterruptibleLoad, DispatchablePowerLoad),
+    :HydroEnergyReservoir =>
+        DeviceModel(HydroEnergyReservoir, HydroDispatchReservoirFlow),
+)
+template_pwl_ed =
+    OperationsProblemTemplate(CopperPlatePowerModel, devices, branches, services)
+
 function PSI._jump_value(int::Int64)
     @warn("This is for testing purposes only.")
     return int
