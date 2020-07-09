@@ -36,7 +36,8 @@ OpModel = OperationsProblem(TestOpProblem, template, system)
 - `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
 - `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
 - `warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-- `slack_variables::Bool` True will add slacks to the system balance constraints
+- `balance_slack_variables::Bool` True will add slacks to the system balance constraints
+- `services_slack_variables::Bool` True will add slacks to the services requirement constraints
 """
 function OperationsProblem(
     ::Type{M},
@@ -104,7 +105,8 @@ construct_device!(op_problem, :Thermal, model)
 - `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
 - `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
 - `warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-- `slack_variables::Bool` True will add slacks to the system balance constraints
+- `balance_slack_variables::Bool` True will add slacks to the system balance constraints
+- `services_slack_variables::Bool` True will add slacks to the services requirement constraints
 """
 function OperationsProblem(
     ::Type{M},
@@ -145,7 +147,8 @@ construct_device!(op_problem, :Thermal, model)
 - `optimizer::JuMP.MOI.OptimizerWithAttributes`: The optimizer that will be used in the optimization model.
 - `use_parameters::Bool`: True will substitute will implement formulations using ParameterJuMP parameters. Defatul is false.
 - `warm_start::Bool` True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-- `slack_variables::Bool` True will add slacks to the system balance constraints
+- `balance_slack_variables::Bool` True will add slacks to the system balance constraints
+- `services_slack_variables::Bool` True will add slacks to the services requirement constraints
 """
 function OperationsProblem(
     ::Type{T},
