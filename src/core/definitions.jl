@@ -92,29 +92,6 @@ const M_VALUE = 1e6
 # The constants below are strings instead of enums because there is a requirement that users
 # should be able to define their own without changing PowerSimulations.
 
-# Variables / Parameters
-const ACTIVE_POWER = "P"
-const ENERGY = "E"
-const ENERGY_BUDGET = "energy_budget"
-const FLOW_ACTIVE_POWER = "Fp"
-const ON = "On"
-const REACTIVE_POWER = "Q"
-const ACTIVE_POWER_IN = "Pin"
-const ACTIVE_POWER_OUT = "Pout"
-const RESERVE = "R"
-const SERVICE_REQUIREMENT = "service_requirement"
-const START = "Start"
-const STOP = "Stop"
-const THETA = "theta"
-const VM = "Vm"
-const INFLOW = "In"
-const SPILLAGE = "Sp"
-const SLACK_UP = "γ⁺"
-const SLACK_DN = "γ⁻"
-const COLD_START = "start_cold"
-const WARM_START = "start_warm"
-const HOT_START = "start_hot"
-
 # Constraints
 const ACTIVE = "active"
 const ACTIVE_RANGE = "activerange"

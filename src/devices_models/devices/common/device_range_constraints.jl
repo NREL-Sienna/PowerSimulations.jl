@@ -116,13 +116,13 @@ function device_range_constraints!(
         constraint_struct = rc.constraint_struct
         constraint_infos = Vector{constraint_struct}(undef, length(devices))
         cons_name = constraint_name(rc.constraint_name, T)
-        var_name = variable_name(rc.variable_name, T)
+        var_name = make_variable_name(rc.variable_name, T)
         if var_name in ff_affected_variables
             @debug "Skip adding $var_name because it is handled by feedforward"
             continue
         end
         bin_var_name = isempty(rc.bin_variable_names) ? rc.bin_variable_names :
-            [variable_name(name, T) for name in rc.bin_variable_names]
+            [make_variable_name(name, T) for name in rc.bin_variable_names]
         for (i, dev) in enumerate(devices)
             dev_name = PSY.get_name(dev)
             limits = rc.limits_func(dev)
@@ -155,7 +155,7 @@ function device_range_constraints!(
     end
 
     for tsrc in timeseries_range_constraints
-        var_name = variable_name(tsrc.variable_name, T)
+        var_name = make_variable_name(tsrc.variable_name, T)
         if var_name in ff_affected_variables
             @debug "Skip adding $var_name because it is handled by feedforward"
             continue
@@ -174,7 +174,7 @@ function device_range_constraints!(
             constraint_name(tsrc.constraint_name, T),
             var_name,
             isnothing(tsrc.bin_variable_name) ? nothing :
-                variable_name(tsrc.bin_variable_name, T),
+                make_variable_name(tsrc.bin_variable_name, T),
             isnothing(tsrc.parameter_name) ? nothing :
                 UpdateRef{T}(tsrc.parameter_name, tsrc.forecast_label),
         )

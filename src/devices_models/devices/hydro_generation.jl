@@ -13,57 +13,48 @@ struct HydroCommitmentReservoirFlow <: AbstractHydroUnitCommitment end
 struct HydroCommitmentReservoirStorage <: AbstractHydroUnitCommitment end
 =#
 ########################### Hydro generation variables #################################
-function activepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-) where {H <: PSY.HydroGen}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(ACTIVE_POWER, H),
-        false,
-        :nodal_balance_active;
-        lb_value = d -> PSY.get_activepowerlimits(d).min,
-        ub_value = d -> PSY.get_activepowerlimits(d).max,
-        init_value = d -> PSY.get_activepower(d),
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: ActivePowerVariable, U <: PSY.HydroGen}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
+        binary = false,
+        expression_name = :nodal_balance_active,
+        initial_value_func = x -> PSY.get_activepower(x),
+        lb_value_func = x -> PSY.get_activepowerlimits(x).min,
+        ub_value_func = x -> PSY.get_activepowerlimits(x).max,
     )
-
-    return
 end
 
-function reactivepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-) where {H <: PSY.HydroGen}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(REACTIVE_POWER, H),
-        false,
-        :nodal_balance_reactive;
-        ub_value = d -> PSY.get_reactivepowerlimits(d).max,
-        lb_value = d -> PSY.get_reactivepowerlimits(d).min,
-        init_value = d -> PSY.get_reactivepower(d),
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: ReactivePowerVariable, U <: PSY.HydroGen}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
+        binary = false,
+        expression_name = :nodal_balance_reactive,
+        initial_value_func = x -> PSY.get_reactivepower(x),
+        lb_value_func = x -> PSY.get_reactivepowerlimits(x).min,
+        ub_value_func = x -> PSY.get_reactivepowerlimits(x).max,
     )
-
-    return
 end
 
-function energy_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-) where {H <: PSY.HydroGen}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(ENERGY, H),
-        false;
-        ub_value = d -> PSY.get_storage_capacity(d),
-        lb_value = d -> 0.0,
-        init_value = d -> PSY.get_initial_storage(d),
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: EnergyVariable, U <: PSY.HydroGen}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
+        binary = false,
+        initial_value_func = x -> PSY.get_initial_storage(x),
+        lb_value_func = x -> 0.0,
+        ub_value_func = x -> PSY.get_storage_capacity(x),
     )
-
-    return
 end
 
 #=
@@ -74,7 +65,7 @@ function inflow_variables!(
     add_variable(
         psi_container,
         devices,
-        variable_name(INFLOW, H),
+        make_variable_name(INFLOW, H),
         false;
         ub_value = d -> PSY.get_inflow(d),
         lb_value = d -> 0.0,
@@ -84,19 +75,16 @@ function inflow_variables!(
 end
 =#
 
-function spillage_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{H},
-) where {H <: PSY.HydroGen}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(SPILLAGE, H),
-        false;
-        lb_value = d -> 0.0,
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: SpillageVariable, U <: PSY.HydroGen}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
+        binary = false,
+        lb_value_func = x -> 0.0,
     )
-
-    return
 end
 
 """
@@ -108,7 +96,7 @@ function commitment_variables!(
     devices::IS.FlattenIteratorWrapper{H},
 ) where {H <: PSY.HydroGen}
     time_steps = model_time_steps(psi_container)
-    var_names = [variable_name(ON, H), variable_name(START, H), variable_name(STOP, H)]
+    var_names = [make_variable_name(ON, H), make_variable_name(START, H), make_variable_name(STOP, H)]
 
     for v in var_names
         add_variable(psi_container, devices, v, true)
@@ -133,7 +121,7 @@ function commitment_constraints!(
         psi_container,
         get_initial_conditions(psi_container, ICKey(DeviceStatus, H)),
         constraint_name(COMMITMENT, H),
-        (variable_name(START, H), variable_name(STOP, H), variable_name(ON, H)),
+        (make_variable_name(START, H), make_variable_name(STOP, H), make_variable_name(ON, H)),
     )
 
     return
@@ -236,8 +224,8 @@ function activepower_constraints!(
                 psi_container,
                 constraint_infos,
                 constraint_name(ACTIVE_RANGE, H),
-                variable_name(ACTIVE_POWER, H),
-                variable_name(ON, H),
+                make_variable_name(ACTIVE_POWER, H),
+                make_variable_name(ON, H),
             )
         )
         return
@@ -248,17 +236,17 @@ function activepower_constraints!(
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE_RANGE, H),
-            variable_name(ACTIVE_POWER, H),
+            make_variable_name(ACTIVE_POWER, H),
             UpdateRef{H}(ON, "get_rating"),
-            variable_name(ON, H),
+            make_variable_name(ON, H),
         )
     else
         device_timeseries_ub_bin(
             psi_container,
             ts_data_active,
             constraint_name(ACTIVE_RANGE, H),
-            variable_name(ACTIVE_POWER, H),
-            variable_name(ON, H),
+            make_variable_name(ACTIVE_POWER, H),
+            make_variable_name(ON, H),
         )
     end
 
@@ -302,7 +290,7 @@ function inflow_constraints!(
             RangeConstraintInputsInternal(
                 constraint_infos,
                 constraint_name(INFLOW_RANGE, H),
-                variable_name(INFLOW, H),
+                make_variable_name(INFLOW, H),
             )
         )
         return
@@ -313,13 +301,13 @@ function inflow_constraints!(
                             ts_data_inflow,
                             constraint_name(INFLOW_RANGE, H),
                             UpdateRef{H}(INFLOW_RANGE, "get_inflow"),
-                            variable_name(INFLOW, H))
+                            make_variable_name(INFLOW, H))
     else
         device_timeseries_ub(
             psi_container,
             ts_data_inflow,
             constraint_name(INFLOW_RANGE, H),
-            variable_name(INFLOW, H),
+            make_variable_name(INFLOW, H),
         )
     end
 
@@ -360,9 +348,9 @@ function energy_balance_constraint!(
             constraint_infos,
             constraint_name(ENERGY_CAPACITY, H),
             (
-                variable_name(SPILLAGE, H),
-                variable_name(ACTIVE_POWER, H),
-                variable_name(ENERGY, H),
+                make_variable_name(SPILLAGE, H),
+                make_variable_name(ACTIVE_POWER, H),
+                make_variable_name(ENERGY, H),
             ),
             UpdateRef{H}(INFLOW, forecast_label),
         )
@@ -373,9 +361,9 @@ function energy_balance_constraint!(
             constraint_infos,
             constraint_name(ENERGY_CAPACITY, H),
             (
-                variable_name(SPILLAGE, H),
-                variable_name(ACTIVE_POWER, H),
-                variable_name(ENERGY, H),
+                make_variable_name(SPILLAGE, H),
+                make_variable_name(ACTIVE_POWER, H),
+                make_variable_name(ENERGY, H),
             ),
         )
     end
@@ -407,12 +395,12 @@ end
 
 ########################## Addition to the nodal balances #################################
 
-function make_nodal_expression_inputs(
+function NodalExpressionSpec(
     ::Type{T},
     ::Type{<:PM.AbstractActivePowerModel},
     use_forecasts::Bool,
 ) where {T <: PSY.HydroGen}
-    return NodalExpressionInputs(
+    return NodalExpressionSpec(
         "get_rating",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),
@@ -431,7 +419,7 @@ function cost_function(
     add_to_cost(
         psi_container,
         devices,
-        variable_name(ACTIVE_POWER, PSY.HydroEnergyReservoir),
+        make_variable_name(ACTIVE_POWER, PSY.HydroEnergyReservoir),
         :fixed,
         -1.0,
     )
@@ -484,14 +472,14 @@ function energy_limit_constraints!(
             constraint_infos,
             constraint_name(ENERGY_LIMIT, H),
             UpdateRef{H}(ENERGY_BUDGET, forecast_label),
-            variable_name(ACTIVE_POWER, H),
+            make_variable_name(ACTIVE_POWER, H),
         )
     else
         device_energy_limit_ub(
             psi_container,
             constraint_infos,
             constraint_name(ENERGY_LIMIT),
-            variable_name(ACTIVE_POWER, H),
+            make_variable_name(ACTIVE_POWER, H),
         )
     end
 end

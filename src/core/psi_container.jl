@@ -202,58 +202,11 @@ function set_initial_conditions!(psi_container::PSIContainer, key::ICKey, value)
     set_initial_conditions!(psi_container.initial_conditions, key, value)
 end
 
-function encode_symbol(::Type{T}, name1::AbstractString, name2::AbstractString) where {T}
-    return Symbol(join((name1, name2, T), PSI_NAME_DELIMITER))
-end
-
-function encode_symbol(
-    ::Type{T},
-    name1::AbstractString,
-    name2::AbstractString,
-) where {T <: PSY.Reserve}
-    T_ = replace(string(T), "{" => "_")
-    T_ = replace(T_, "}" => "")
-    return Symbol(join((name1, name2, T_), PSI_NAME_DELIMITER))
-end
-
-function encode_symbol(::Type{T}, name1::Symbol, name2::Symbol) where {T}
-    return encode_symbol(T, string(name1), string(name2))
-end
-
-function encode_symbol(::Type{T}, name::AbstractString) where {T}
-    return Symbol(join((name, T), PSI_NAME_DELIMITER))
-end
-
-function encode_symbol(::Type{T}, name::AbstractString) where {T <: PSY.Reserve}
-    T_ = replace(string(T), "{" => "_")
-    T_ = replace(T_, "}" => "")
-    return Symbol(join((name, T_), PSI_NAME_DELIMITER))
-end
-
-function encode_symbol(::Type{T}, name::Symbol) where {T}
-    return encode_symbol(T, string(name))
-end
-
-function encode_symbol(name::AbstractString)
-    return Symbol(name)
-end
-
-function encode_symbol(name1::AbstractString, name2::AbstractString)
-    return Symbol(join((name1, name2), PSI_NAME_DELIMITER))
-end
-
-function encode_symbol(name::Symbol)
-    return name
-end
-
-function decode_symbol(name::Symbol)
-    return split(String(name), PSI_NAME_DELIMITER)
-end
-
+# TODO: remove once all references are changed
 constraint_name(cons_type, device_type) = encode_symbol(device_type, cons_type)
 constraint_name(cons_type) = encode_symbol(cons_type)
-variable_name(var_type, device_type) = encode_symbol(device_type, var_type)
-variable_name(var_type) = encode_symbol(var_type)
+make_constraint_name(cons_type, device_type) = encode_symbol(device_type, cons_type)
+make_constraint_name(cons_type) = encode_symbol(cons_type)
 
 _variable_type(cm::PSIContainer) = JuMP.variable_type(cm.JuMPmodel)
 model_time_steps(psi_container::PSIContainer) = psi_container.time_steps
@@ -278,11 +231,11 @@ function get_variable(
     var_type::AbstractString,
     ::Type{T},
 ) where {T <: PSY.Component}
-    return get_variable(psi_container, variable_name(var_type, T))
+    return get_variable(psi_container, make_variable_name(var_type, T))
 end
 
 function get_variable(psi_container::PSIContainer, var_type::AbstractString)
-    return get_variable(psi_container, variable_name(var_type))
+    return get_variable(psi_container, make_variable_name(var_type))
 end
 
 function get_variable(psi_container::PSIContainer, update_ref::UpdateRef)
@@ -309,12 +262,12 @@ function assign_variable!(
     ::Type{T},
     value,
 ) where {T <: PSY.Component}
-    assign_variable!(psi_container, variable_name(variable_type, T), value)
+    assign_variable!(psi_container, make_variable_name(variable_type, T), value)
     return
 end
 
 function assign_variable!(psi_container::PSIContainer, variable_type::AbstractString, value)
-    assign_variable!(psi_container, variable_name(variable_type), value)
+    assign_variable!(psi_container, make_variable_name(variable_type), value)
     return
 end
 
@@ -559,4 +512,11 @@ function get_dual_values(op::PSIContainer, cons::Vector{Symbol})
         results_dict[c] = axis_array_to_dataframe(v)
     end
     return results_dict
+end
+
+function add_to_setting_ext!(psi_container::PSIContainer, key::String, value)
+    settings = get_settings(psi_container)
+    push!(get_ext(settings), key => value)
+    @debug "Add to settings ext" key value
+    return
 end
