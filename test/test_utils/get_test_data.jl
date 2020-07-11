@@ -721,6 +721,15 @@ function build_c_sys5_uc(; kwargs...)
     return c_sys5_uc
 end
 
+function build_c_sys5_pwl_uc(; kwargs...)
+    c_sys5_uc = build_c_sys5_uc(; kwargs...)
+    thermal = thermal_generators5_pwl(nodes5())
+    for d in thermal
+        PSY.add_component!(c_sys5_uc, d)
+    end
+    return c_sys5_uc
+end
+
 function build_c_sys5_ed(; kwargs...)
     nodes = nodes5()
     c_sys5_ed = System(
@@ -768,6 +777,15 @@ function build_c_sys5_ed(; kwargs...)
         end
     end
 
+    return c_sys5_ed
+end
+
+function build_c_sys5_pwl_ed(; kwargs...)
+    c_sys5_ed = build_c_sys5_ed(; kwargs...)
+    thermal = thermal_generators5_pwl(nodes5())
+    for d in thermal
+        PSY.add_component!(c_sys5_ed, d)
+    end
     return c_sys5_ed
 end
 
@@ -1051,6 +1069,16 @@ TEST_SYSTEMS = Dict(
     "c_sys5_pglib" => (
         description = "5-bus with ThermalMultiStart",
         build = build_c_sys5_pglib,
+        time_series_in_memory = true,
+    ),
+    "c_sys5_pwl_uc" => (
+        description = "5-bus with SOS cost function",
+        build = build_c_sys5_pwl_uc,
+        time_series_in_memory = true,
+    ),
+    "c_sys5_pwl_ed" => (
+        description = "5-bus with SOS cost function",
+        build = build_c_sys5_pwl_ed,
         time_series_in_memory = true,
     ),
 )

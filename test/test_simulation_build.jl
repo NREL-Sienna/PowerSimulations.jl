@@ -359,7 +359,44 @@ function test_sequence_build(file_path::String)
         @test haskey(sim.stages["UC"].internal.psi_container.JuMPmodel.ext, :PSI_Testing)
         @test !isnothing(sim.stages["ED"].internal.psi_container.settings.PTDF)
     end
-
+    @testset "Create Simulation using SOS-PWL cost function" begin
+        c_sys5_uc = build_system("c_sys5_pwl_uc")
+        c_sys5_ed = build_system("c_sys5_pwl_ed")
+        stages_definition_kwargs = Dict(
+            "UC" => Stage(
+                GenericOpProblem,
+                template_pwl_standard_uc,
+                c_sys5_uc,
+                Cbc_optimizer,
+            ),
+            "ED" => Stage(GenericOpProblem, template_pwl_ed, c_sys5_ed, Cbc_optimizer),
+        )
+        sequence = SimulationSequence(
+            step_resolution = Hour(24),
+            order = Dict(1 => "UC", 2 => "ED"),
+            feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(periods = 24)),
+            horizons = Dict("UC" => 24, "ED" => 12),
+            intervals = Dict(
+                "UC" => (Hour(24), Consecutive()),
+                "ED" => (Hour(1), Consecutive()),
+            ),
+            feedforward = Dict(
+                ("ED", :devices, :Generators) => SemiContinuousFF(
+                    binary_source_stage = PSI.ON,
+                    affected_variables = [PSI.ACTIVE_POWER],
+                ),
+            ),
+            ini_cond_chronology = InterStageChronology(),
+        )
+        sim = Simulation(
+            name = "test",
+            steps = 2,
+            stages = stages_definition_kwargs,
+            stages_sequence = sequence,
+            simulation_folder = file_path,
+        )
+        build!(sim)
+    end
 end
 
 @testset "Test sequence build" begin
