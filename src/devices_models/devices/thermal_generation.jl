@@ -1052,6 +1052,7 @@ function _get_data_for_tdc(
         if !isnothing(timelimits)
             if (timelimits.up <= fraction_of_hour) & (timelimits.down <= fraction_of_hour)
                 @debug "Generator $(name) has a nonbinding time limits. Constraints Skipped"
+                continue
             else
                 idx += 1
             end
