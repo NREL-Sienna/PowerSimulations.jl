@@ -1,3 +1,111 @@
+struct AddVariableSpec
+    variable_name::Symbol
+    binary::Bool
+    expression_name::Union{Nothing, Symbol}
+    sign::Float64
+    devices_filter_func::Union{Nothing, Function}
+    initial_value_func::Union{Nothing, Function}
+    lb_value_func::Union{Nothing, Function}
+    ub_value_func::Union{Nothing, Function}
+end
+
+"""
+Construct AddVariableSpec.
+
+Accepts a single variable_name or a vector variable_names. One must be passed but not both.
+"""
+function AddVariableSpec(;
+    variable_name,
+    binary,
+    expression_name = nothing,
+    sign = 1.0,
+    devices_filter_func = nothing,
+    initial_value_func = nothing,
+    lb_value_func = nothing,
+    ub_value_func = nothing,
+)
+    return AddVariableSpec(
+        variable_name,
+        binary,
+        expression_name,
+        sign,
+        devices_filter_func,
+        initial_value_func,
+        lb_value_func,
+        ub_value_func,
+    )
+end
+
+function AddVariableSpec(
+    ::Type{<:T},
+    ::Type{<:U},
+    ::PSIContainer,
+) where {T <: VariableType, U <: PSY.Component}
+    error("AddVariableSpec is not implemented for $T / $U")
+end
+
+"""
+Add variables to the PSIContainer for any component.
+"""
+function add_variables!(
+    ::Type{T},
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{U},
+) where {T <: VariableType, U <: PSY.Component}
+    _add_variables!(psi_container, devices, AddVariableSpec(T, U, psi_container))
+end
+
+"""
+Add variables to the PSIContainer for a service.
+"""
+function add_variables!(
+    ::Type{T},
+    psi_container::PSIContainer,
+    service::U,
+    contributing_devices::Vector{V},
+) where {T <: VariableType, U <: PSY.Reserve, V <: PSY.Device}
+    spec = AddVariableSpec(T, psi_container, service)
+    _add_variables!(psi_container, contributing_devices, spec)
+end
+
+function _add_variables!(
+    psi_container::PSIContainer,
+    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
+    spec::AddVariableSpec,
+) where {T <: PSY.Component}
+    variable_name = spec.variable_name
+    binary = spec.binary
+    expression_name = spec.expression_name
+    sign = spec.sign
+    initial_value_func = spec.initial_value_func
+    lb_value_func = spec.lb_value_func
+    ub_value_func = spec.ub_value_func
+
+    filter_func = nothing
+    if isnothing(spec.devices_filter_func)
+        if T <: PSY.Device
+            filter_func = x -> PSY.get_available(x)
+        end
+    else
+        filter_func = spec.devices_filter_func
+    end
+    if !isnothing(filter_func)
+        devices = filter!(filter_func, collect(devices))
+    end
+
+    add_variable(
+        psi_container,
+        devices,
+        variable_name,
+        binary,
+        expression_name,
+        sign;
+        initial_value = initial_value_func,
+        lb_value = lb_value_func,
+        ub_value = ub_value_func,
+    )
+end
+
 @doc raw"""
     add_variable(psi_container::PSIContainer,
                       devices::D,
@@ -33,9 +141,9 @@ If binary = true:
 * sign::Float64 : sign of the addition of the variable to the expression_name. Default Value is 1.0
 
 # Accepted Keyword Arguments
-* ub_value_function : Provides the function over device to obtain the value for a upper_bound
-* lb_value_function : Provides the function over device to obtain the value for a lower_bound. If the variable is meant to be positive define lb = x -> 0.0
-* initial_value_function : Provides the function over device to obtain the warm start value
+* ub_value : Provides the function over device to obtain the value for a upper_bound
+* lb_value : Provides the function over device to obtain the value for a lower_bound. If the variable is meant to be positive define lb = x -> 0.0
+* initial_value : Provides the function over device to obtain the warm start value
 
 """
 function add_variable(

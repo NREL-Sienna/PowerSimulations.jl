@@ -5,46 +5,42 @@ struct InterruptiblePowerLoad <: AbstractControllablePowerLoadFormulation end
 struct DispatchablePowerLoad <: AbstractControllablePowerLoadFormulation end
 
 ########################### dispatchable load variables ####################################
-function activepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{L},
-) where {L <: PSY.ElectricLoad}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(ACTIVE_POWER, L),
-        false,
-        :nodal_balance_active,
-        -1.0;
-        ub_value = x -> PSY.get_maxactivepower(x),
-        lb_value = x -> 0.0,
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: ActivePowerVariable, U <: PSY.ElectricLoad}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
+        binary = false,
+        expression_name = :nodal_balance_active,
+        sign = -1.0,
+        lb_value_func = x -> 0.0,
+        ub_value_func = x -> PSY.get_maxactivepower(x),
     )
-    return
 end
 
-function reactivepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{L},
-) where {L <: PSY.ElectricLoad}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(REACTIVE_POWER, L),
-        false,
-        :nodal_balance_reactive,
-        -1.0;
-        ub_value = x -> PSY.get_maxreactivepower(x),
-        lb_value = x -> 0.0,
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: ReactivePowerVariable, U <: PSY.ElectricLoad}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
+        binary = false,
+        expression_name = :nodal_balance_reactive,
+        sign = -1.0,
+        lb_value_func = x -> 0.0,
+        ub_value_func = x -> PSY.get_maxreactivepower(x),
     )
-    return
 end
 
-function commitment_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{L},
-) where {L <: PSY.ElectricLoad}
-    add_variable(psi_container, devices, variable_name(ON, L), true)
-    return
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: OnVariable, U <: PSY.ElectricLoad}
+    return AddVariableSpec(; variable_name = make_name(T, U), binary = true)
 end
 
 ####################################### Reactive Power Constraints #########################
@@ -152,12 +148,12 @@ end
 
 ########################## Addition to the nodal balances ##################################
 
-function make_nodal_expression_inputs(
+function NodalExpressionSpec(
     ::Type{T},
     ::Type{<:PM.AbstractPowerModel},
     use_forecasts::Bool,
 ) where {T <: PSY.ElectricLoad}
-    return NodalExpressionInputs(
+    return NodalExpressionSpec(
         "get_maxactivepower",
         REACTIVE_POWER,
         use_forecasts ? x -> PSY.get_maxreactivepower(x) : x -> PSY.get_reactivepower(x),
@@ -166,12 +162,12 @@ function make_nodal_expression_inputs(
     )
 end
 
-function make_nodal_expression_inputs(
+function NodalExpressionSpec(
     ::Type{T},
     ::Type{<:PM.AbstractActivePowerModel},
     use_forecasts::Bool,
 ) where {T <: PSY.ElectricLoad}
-    return NodalExpressionInputs(
+    return NodalExpressionSpec(
         "get_maxactivepower",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_maxactivepower(x) : x -> PSY.get_activepower(x),
@@ -187,7 +183,13 @@ function cost_function(
     ::Type{DispatchablePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
 ) where {L <: PSY.ControllableLoad}
-    add_to_cost(psi_container, devices, variable_name(ACTIVE_POWER, L), :variable, -1.0)
+    add_to_cost(
+        psi_container,
+        devices,
+        make_variable_name(ACTIVE_POWER, L),
+        :variable,
+        -1.0,
+    )
     return
 end
 
@@ -197,6 +199,6 @@ function cost_function(
     ::Type{InterruptiblePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
 ) where {L <: PSY.ControllableLoad}
-    add_to_cost(psi_container, devices, variable_name(ON, L), :fixed, -1.0)
+    add_to_cost(psi_container, devices, make_variable_name(ON, L), :fixed, -1.0)
     return
 end

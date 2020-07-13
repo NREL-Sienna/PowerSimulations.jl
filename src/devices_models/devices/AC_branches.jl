@@ -31,7 +31,7 @@ function flow_variables!(
     ::Type{<:StandardPTDFModel},
     devices::IS.FlattenIteratorWrapper{B},
 ) where {B <: PSY.ACBranch}
-    add_variable(psi_container, devices, variable_name(FLOW_ACTIVE_POWER, B), false)
+    add_variable(psi_container, devices, make_variable_name(FLOW_ACTIVE_POWER, B), false)
     return
 end
 
@@ -91,7 +91,7 @@ function branch_rate_constraints!(
         RangeConstraintInputsInternal(
             constraint_infos,
             constraint_name(RATE_LIMIT, B),
-            variable_name(FLOW_ACTIVE_POWER, B),
+            make_variable_name(FLOW_ACTIVE_POWER, B),
         ),
     )
     return
@@ -110,8 +110,8 @@ function branch_rate_constraints!(
         range_data,
         constraint_name(RATE_LIMIT_FT, B),
         (
-            variable_name(FLOW_ACTIVE_POWER_FROM_TO, B),
-            variable_name(FLOW_REACTIVE_POWER_FROM_TO, B),
+            make_variable_name(FLOW_ACTIVE_POWER_FROM_TO, B),
+            make_variable_name(FLOW_REACTIVE_POWER_FROM_TO, B),
         ),
     )
 
@@ -120,8 +120,8 @@ function branch_rate_constraints!(
         range_data,
         constraint_name(RATE_LIMIT_TF, B),
         (
-            variable_name(FLOW_ACTIVE_POWER_TO_FROM, B),
-            variable_name(FLOW_REACTIVE_POWER_TO_FROM, B),
+            make_variable_name(FLOW_ACTIVE_POWER_TO_FROM, B),
+            make_variable_name(FLOW_REACTIVE_POWER_TO_FROM, B),
         ),
     )
     return
@@ -153,7 +153,7 @@ function branch_flow_constraints!(
         RangeConstraintInputsInternal(
             constraint_infos,
             constraint_name(FLOW_LIMIT, PSY.MonitoredLine),
-            variable_name(FLOW_ACTIVE_POWER, PSY.MonitoredLine),
+            make_variable_name(FLOW_ACTIVE_POWER, PSY.MonitoredLine),
         ),
     )
     return
@@ -186,7 +186,7 @@ function branch_flow_constraints!(
         RangeConstraintInputsInternal(
             to,
             constraint_name(FLOW_LIMIT_FROM_TO, PSY.MonitoredLine),
-            variable_name(FLOW_ACTIVE_POWER_FROM_TO, PSY.MonitoredLine),
+            make_variable_name(FLOW_ACTIVE_POWER_FROM_TO, PSY.MonitoredLine),
         ),
     )
     device_range(
@@ -194,7 +194,7 @@ function branch_flow_constraints!(
         RangeConstraintInputsInternal(
             from,
             constraint_name(FLOW_LIMIT_TO_FROM, PSY.MonitoredLine),
-            variable_name(FLOW_ACTIVE_POWER_TO_FROM, PSY.MonitoredLine),
+            make_variable_name(FLOW_ACTIVE_POWER_TO_FROM, PSY.MonitoredLine),
         ),
     )
     return

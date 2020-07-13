@@ -325,7 +325,7 @@ function test_write_functions(file_path, op_problem, res)
             @test isfile(joinpath(file_path, "three", "$k.feather"))
         end
 
-        var_name = PSI.variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)
+        var_name = PSI.make_variable_name(PSI.ACTIVE_POWER, PSY.ThermalStandard)
         PSI.write_data(
             get_variables(res)[var_name],
             mkdir(joinpath(file_path, "four")),

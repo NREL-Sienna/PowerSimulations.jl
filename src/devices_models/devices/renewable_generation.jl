@@ -4,34 +4,30 @@ struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
 struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
 ########################### renewable generation variables #################################
-function activepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{R},
-) where {R <: PSY.RenewableGen}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(ACTIVE_POWER, R),
-        false,
-        :nodal_balance_active;
-        lb_value = x -> 0.0,
-        ub_value = x -> PSY.get_rating(x),
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: ActivePowerVariable, U <: PSY.RenewableGen}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
+        binary = false,
+        expression_name = :nodal_balance_active,
+        lb_value_func = x -> 0.0,
+        ub_value_func = x -> PSY.get_rating(x),
     )
-    return
 end
 
-function reactivepower_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{R},
-) where {R <: PSY.RenewableGen}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(REACTIVE_POWER, R),
-        false,
-        :nodal_balance_reactive,
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: ReactivePowerVariable, U <: PSY.RenewableGen}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
+        binary = false,
+        expression_name = :nodal_balance_reactive,
     )
-    return
 end
 
 ####################################### Reactive Power constraint_infos #########################
@@ -122,12 +118,12 @@ end
 
 ########################## Addition to the nodal balances ##################################
 
-function make_nodal_expression_inputs(
+function NodalExpressionSpec(
     ::Type{T},
     ::Type{<:PM.AbstractPowerModel},
     use_forecasts::Bool,
 ) where {T <: PSY.RenewableGen}
-    return NodalExpressionInputs(
+    return NodalExpressionSpec(
         "get_rating",
         REACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) * sin(acos(PSY.get_powerfactor(x))) :
@@ -137,12 +133,12 @@ function make_nodal_expression_inputs(
     )
 end
 
-function make_nodal_expression_inputs(
+function NodalExpressionSpec(
     ::Type{T},
     ::Type{<:PM.AbstractActivePowerModel},
     use_forecasts::Bool,
 ) where {T <: PSY.RenewableGen}
-    return NodalExpressionInputs(
+    return NodalExpressionSpec(
         "get_rating",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) * PSY.get_powerfactor(x) :
@@ -162,7 +158,7 @@ function cost_function(
     add_to_cost(
         psi_container,
         devices,
-        variable_name(ACTIVE_POWER, PSY.RenewableDispatch),
+        make_variable_name(ACTIVE_POWER, PSY.RenewableDispatch),
         :fixed,
         -1.0,
     )

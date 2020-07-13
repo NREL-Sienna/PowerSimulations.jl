@@ -386,6 +386,31 @@ thermal_generators5(nodes5) = [
     ),
 ];
 
+thermal_generators5_pwl(nodes5) = [
+    ThermalStandard(
+        "Test PWL",
+        true,
+        true,
+        nodes5[1],
+        1.70,
+        0.20,
+        2.2125,
+        PrimeMovers.ST,
+        ThermalFuels.COAL,
+        (min = 0.0, max = 1.70),
+        (min = -1.275, max = 1.275),
+        (up = 0.02, down = 0.02),
+        (up = 2.0, down = 1.0),
+        ThreePartCost(
+            VariableCost([(0.0, 0.5), (290.1, 0.8), (582.72, 1.2), (894.1, 1.70)]),
+            0.0,
+            1.5,
+            0.75,
+        ),
+        1.0,
+    ),
+];
+
 thermal_pglib_generators5(nodes5) = [
     ThermalMultiStart(
         "115_STEAM_1",

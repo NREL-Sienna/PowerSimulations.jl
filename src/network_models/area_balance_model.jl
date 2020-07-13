@@ -9,7 +9,7 @@ function area_balance(
     nodal_net_balance = psi_container.expressions[expression]
     constraint_bal = JuMPConstraintArray(undef, keys(area_mapping), time_steps)
     assign_constraint!(psi_container, "area_dispatch_balance", constraint_bal)
-    area_balance = get_variable(psi_container, variable_name("area_dispatch_balance"))
+    area_balance = get_variable(psi_container, make_variable_name("area_dispatch_balance"))
     for (k, buses_in_area) in area_mapping
         for t in time_steps
             area_net = model_has_parameters(psi_container) ? zero(PGAE) : JuMP.AffExpr(0.0)

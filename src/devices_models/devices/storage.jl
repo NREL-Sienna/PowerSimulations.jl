@@ -3,64 +3,63 @@ struct BookKeeping <: AbstractStorageFormulation end
 struct BookKeepingwReservation <: AbstractStorageFormulation end
 #################################################Storage Variables#################################
 
-function active_power_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{St},
-) where {St <: PSY.Storage}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(ACTIVE_POWER_IN, St),
-        false,
-        :nodal_balance_active,
-        -1.0;
-        lb_value = d -> 0.0,
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: ActivePowerInVariable, U <: PSY.Storage}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
+        binary = false,
+        expression_name = :nodal_balance_active,
+        sign = -1.0,
+        lb_value_func = x -> 0.0,
     )
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(ACTIVE_POWER_OUT, St),
-        false,
-        :nodal_balance_active;
-        lb_value = d -> 0.0,
-    )
-    return
 end
 
-function reactive_power_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{St},
-) where {St <: PSY.Storage}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(REACTIVE_POWER, St),
-        false,
-        :nodal_balance_reactive,
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: ActivePowerOutVariable, U <: PSY.Storage}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
+        binary = false,
+        expression_name = :nodal_balance_active,
+        lb_value_func = x -> 0.0,
     )
-    return
 end
 
-function energy_storage_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{St},
-) where {St <: PSY.Storage}
-    add_variable(
-        psi_container,
-        devices,
-        variable_name(ENERGY, St),
-        false;
-        lb_value = d -> 0.0,
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: ReactivePowerVariable, U <: PSY.Storage}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
+        binary = false,
+        expression_name = :nodal_balance_reactive,
     )
-    return
 end
 
-function storage_reservation_variables!(
-    psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{St},
-) where {St <: PSY.Storage}
-    add_variable(psi_container, devices, variable_name(RESERVE, St), true)
-    return
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: EnergyVariable, U <: PSY.Storage}
+    return AddVariableSpec(;
+        variable_name = make_name(T, U),
+        binary = false,
+        lb_value_func = x -> 0.0,
+    )
+end
+
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{U},
+    ::PSIContainer,
+) where {T <: ReserveVariable, U <: PSY.Storage}
+    return AddVariableSpec(; variable_name = make_name(T, U), binary = true)
 end
 
 ################################## output power constraints#################################
@@ -145,7 +144,7 @@ function reactive_power_constraints!(
         RangeConstraintInputsInternal(
             constraint_infos,
             constraint_name(REACTIVE_RANGE, St),
-            variable_name(REACTIVE_POWER, St),
+            make_variable_name(REACTIVE_POWER, St),
         ),
     )
     return
@@ -184,7 +183,7 @@ function energy_capacity_constraints!(
         RangeConstraintInputsInternal(
             constraint_infos,
             constraint_name(ENERGY_CAPACITY, St),
-            variable_name(ENERGY, St),
+            make_variable_name(ENERGY, St),
         ),
     )
     return
@@ -220,9 +219,9 @@ function energy_balance_constraint!(
         efficiency_data,
         constraint_name(ENERGY_LIMIT, St),
         (
-            variable_name(ACTIVE_POWER_OUT, St),
-            variable_name(ACTIVE_POWER_IN, St),
-            variable_name(ENERGY, St),
+            make_variable_name(ACTIVE_POWER_OUT, St),
+            make_variable_name(ACTIVE_POWER_IN, St),
+            make_variable_name(ENERGY, St),
         ),
     )
     return

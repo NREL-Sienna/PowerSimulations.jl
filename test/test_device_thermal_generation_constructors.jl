@@ -11,9 +11,9 @@ end
 ################################### Unit Commitment tests ##################################
 @testset "Thermal UC With DC - PF" begin
     bin_variable_names = [
-        PSI.variable_name(PSI.ON, PSY.ThermalStandard),
-        PSI.variable_name(PSI.START, PSY.ThermalStandard),
-        PSI.variable_name(PSI.STOP, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
     ]
     uc_constraint_names = [
         PSI.constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
@@ -54,9 +54,9 @@ end
 
 @testset "Thermal UC With AC - PF" begin
     bin_variable_names = [
-        PSI.variable_name(PSI.ON, PSY.ThermalStandard),
-        PSI.variable_name(PSI.START, PSY.ThermalStandard),
-        PSI.variable_name(PSI.STOP, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
     ]
     uc_constraint_names = [
         PSI.constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
@@ -98,9 +98,9 @@ end
 ################################### Basic Unit Commitment tests ############################
 @testset "Thermal Basic UC With DC - PF" begin
     bin_variable_names = [
-        PSI.variable_name(PSI.ON, PSY.ThermalStandard),
-        PSI.variable_name(PSI.START, PSY.ThermalStandard),
-        PSI.variable_name(PSI.STOP, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
@@ -133,9 +133,9 @@ end
 
 @testset "Thermal Basic UC With AC - PF" begin
     bin_variable_names = [
-        PSI.variable_name(PSI.ON, PSY.ThermalStandard),
-        PSI.variable_name(PSI.START, PSY.ThermalStandard),
-        PSI.variable_name(PSI.STOP, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.ON, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.START, PSY.ThermalStandard),
+        PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
