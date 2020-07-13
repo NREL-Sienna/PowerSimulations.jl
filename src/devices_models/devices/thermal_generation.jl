@@ -268,7 +268,7 @@ end
 """
 This function adds the active power limits of generators. Constraint (17) & (18) from PGLIB
 """
-function make_active_power_constraints_inputs!(
+function make_active_power_constraints_inputs(
     ::Type{<:PSY.ThermalMultiStart},
     ::Type{<:ThermalMultiStartUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
@@ -643,13 +643,12 @@ function ramp_constraints!(
         add_device_services!(constaint_data[ix], ic.device, model)
     end
     if !isempty(ini_conds)
-        # Adds constraints (8-9) & (19-20) 
         device_multistart_rateofchange(
             psi_container,
             constaint_data,
             ini_conds,
             constraint_name(RAMP, PSY.ThermalMultiStart),
-            (make_variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),),
+            make_variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),
         )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
