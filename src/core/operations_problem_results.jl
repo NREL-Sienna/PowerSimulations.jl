@@ -69,7 +69,6 @@ function load_operation_results(folder_path::AbstractString)
     for name in variable_list
         variable_name = splitext(name)[1]
         file_path = joinpath(folder_path, name)
-        @show file_path
         vars_result[Symbol(variable_name)] = Feather.read(file_path)
     end
     for name in dual_names
