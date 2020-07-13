@@ -351,6 +351,7 @@ end
         PSI.constraint_name(PSI.STARTUP_INITIAL_CONDITION_UB, PSY.ThermalMultiStart),
     ]
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
+    no_less_than = Dict(true => 238, false => 234)
     @info "5-Bus testing"
     c_sys5_pglib = build_system("c_sys5_pglib")
     for p in [true, false]
@@ -361,7 +362,7 @@ end
             use_parameters = p,
         )
         construct_device!(op_problem, :Thermal, model)
-        moi_tests(op_problem, p, 528, 0, 238, 60, 192, true)
+        moi_tests(op_problem, p, 528, 0, no_less_than[p], 60, 192, true)
         psi_constraint_test(op_problem, constraint_names)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
