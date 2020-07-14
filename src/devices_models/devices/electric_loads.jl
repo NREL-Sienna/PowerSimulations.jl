@@ -16,7 +16,7 @@ function AddVariableSpec(
         expression_name = :nodal_balance_active,
         sign = -1.0,
         lb_value_func = x -> 0.0,
-        ub_value_func = x -> PSY.get_maxactivepower(x),
+        ub_value_func = x -> PSY.get_max_active_power(x),
     )
 end
 
@@ -31,7 +31,7 @@ function AddVariableSpec(
         expression_name = :nodal_balance_reactive,
         sign = -1.0,
         lb_value_func = x -> 0.0,
-        ub_value_func = x -> PSY.get_maxreactivepower(x),
+        ub_value_func = x -> PSY.get_max_reactive_power(x),
     )
 end
 
@@ -71,7 +71,7 @@ function custom_reactive_power_constraints!(
 
     for t in time_steps, d in devices
         name = PSY.get_name(d)
-        pf = sin(atan((PSY.get_maxreactivepower(d) / PSY.get_maxactivepower(d))))
+        pf = sin(atan((PSY.get_max_reactive_power(d) / PSY.get_max_active_power(d))))
         reactive = get_variable(psi_container, REACTIVE_POWER, T)[name, t]
         real = get_variable(psi_container, ACTIVE_POWER, T)[name, t] * pf
         constraint[name, t] = JuMP.@constraint(psi_container.JuMPmodel, reactive == real)
@@ -91,7 +91,7 @@ function make_active_power_constraints_inputs(
             range_constraint_inputs = [RangeConstraintInputs(;
                 constraint_name = ACTIVE_RANGE,
                 variable_name = ACTIVE_POWER,
-                limits_func = x -> (min = 0.0, max = PSY.get_activepower(x)),
+                limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_range,
                 constraint_struct = DeviceRangeConstraintInfo,
             )],
@@ -103,8 +103,8 @@ function make_active_power_constraints_inputs(
             constraint_name = ACTIVE,
             variable_name = ACTIVE_POWER,
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
-            forecast_label = "get_maxactivepower",
-            multiplier_func = x -> PSY.get_maxactivepower(x),
+            forecast_label = "get_max_active_power",
+            multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub :
                               device_timeseries_ub,
         )],
@@ -125,7 +125,7 @@ function make_active_power_constraints_inputs(
                 constraint_name = ACTIVE_RANGE,
                 variable_name = ACTIVE_POWER,
                 bin_variable_names = [ON],
-                limits_func = x -> (min = 0.0, max = PSY.get_activepower(x)),
+                limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_semicontinuousrange,
                 constraint_struct = DeviceRangeConstraintInfo,
             )],
@@ -138,8 +138,8 @@ function make_active_power_constraints_inputs(
             variable_name = ACTIVE_POWER,
             bin_variable_name = ON,
             parameter_name = use_parameters ? ON : nothing,
-            forecast_label = "get_maxactivepower",
-            multiplier_func = x -> PSY.get_maxactivepower(x),
+            forecast_label = "get_max_active_power",
+            multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_ub_bigM :
                               device_timeseries_ub_bin,
         )],
@@ -154,9 +154,9 @@ function NodalExpressionSpec(
     use_forecasts::Bool,
 ) where {T <: PSY.ElectricLoad}
     return NodalExpressionSpec(
-        "get_maxactivepower",
+        "get_max_active_power",
         REACTIVE_POWER,
-        use_forecasts ? x -> PSY.get_maxreactivepower(x) : x -> PSY.get_reactivepower(x),
+        use_forecasts ? x -> PSY.get_max_reactive_power(x) : x -> PSY.get_reactive_power(x),
         -1.0,
         T,
     )
@@ -168,9 +168,9 @@ function NodalExpressionSpec(
     use_forecasts::Bool,
 ) where {T <: PSY.ElectricLoad}
     return NodalExpressionSpec(
-        "get_maxactivepower",
+        "get_max_active_power",
         ACTIVE_POWER,
-        use_forecasts ? x -> PSY.get_maxactivepower(x) : x -> PSY.get_activepower(x),
+        use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         -1.0,
         T,
     )

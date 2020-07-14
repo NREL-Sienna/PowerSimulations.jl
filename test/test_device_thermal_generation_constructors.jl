@@ -426,7 +426,7 @@ UC_devices = Dict{Symbol, DeviceModel}(
         ),
     ]
     ramp_load = [0.9, 1.1, 2.485, 2.175, 0.9]
-    load_forecast_ramp = Deterministic("get_maxactivepower", TimeArray(DA_ramp, ramp_load))
+    load_forecast_ramp = Deterministic("get_max_active_power", TimeArray(DA_ramp, ramp_load))
     ramp_test_sys = System(100.0)
     add_component!(ramp_test_sys, node)
     add_component!(ramp_test_sys, load)
@@ -463,13 +463,13 @@ end
             available = true,
             status = true,
             bus = node,
-            activepower = 0.40,
-            reactivepower = 0.010,
+            active_power = 0.40,
+            reactive_power = 0.010,
             rating = 0.5,
             primemover = PrimeMovers.ST,
             fuel = ThermalFuels.COAL,
-            activepowerlimits = (min = 0.3, max = 0.9),
-            reactivepowerlimits = nothing,
+            active_power_limits = (min = 0.3, max = 0.9),
+            reactive_power_limits = nothing,
             ramplimits = nothing,
             timelimits = (up = 4, down = 2),
             op_cost = ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
@@ -481,13 +481,13 @@ end
             available = true,
             status = false,
             bus = node,
-            activepower = 1.70,
-            reactivepower = 0.20,
+            active_power = 1.70,
+            reactive_power = 0.20,
             rating = 2.2125,
             primemover = PrimeMovers.ST,
             fuel = ThermalFuels.COAL,
-            activepowerlimits = (min = 0.7, max = 2.2),
-            reactivepowerlimits = nothing,
+            active_power_limits = (min = 0.7, max = 2.2),
+            reactive_power_limits = nothing,
             ramplimits = nothing,
             timelimits = (up = 6, down = 4),
             op_cost = ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
@@ -498,7 +498,7 @@ end
 
     duration_load = [0.3, 0.6, 0.8, 0.7, 1.7, 0.9, 0.7]
     load_forecast_dur =
-        Deterministic("get_maxactivepower", TimeArray(DA_dur, duration_load))
+        Deterministic("get_max_active_power", TimeArray(DA_dur, duration_load))
     duration_test_sys = System(100.0)
     add_component!(duration_test_sys, node)
     add_component!(duration_test_sys, load)
@@ -576,7 +576,7 @@ end
         ),
     )
     cost_load = [1.3, 2.1]
-    load_forecast_cost = Deterministic("get_maxactivepower", TimeArray(DA_cost, cost_load))
+    load_forecast_cost = Deterministic("get_max_active_power", TimeArray(DA_cost, cost_load))
     cost_test_sys = System(100.0)
     add_component!(cost_test_sys, node)
     add_component!(cost_test_sys, load)
@@ -655,7 +655,7 @@ end
     )
     cost_sos_load = [1.3, 2.1]
     load_forecast_cost_sos =
-        Deterministic("get_maxactivepower", TimeArray(DA_cost_sos, cost_sos_load))
+        Deterministic("get_max_active_power", TimeArray(DA_cost_sos, cost_sos_load))
     cost_test_sos_sys = System(100.0)
     add_component!(cost_test_sos_sys, node)
     add_component!(cost_test_sos_sys, load)

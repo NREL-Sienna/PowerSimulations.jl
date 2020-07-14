@@ -43,7 +43,7 @@ function make_reactive_power_constraints_inputs(
         range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = REACTIVE_RANGE,
             variable_name = REACTIVE_POWER,
-            limits_func = x -> PSY.get_reactivepowerlimits(x),
+            limits_func = x -> PSY.get_reactive_power_limits(x),
             constraint_func = device_range,
             constraint_struct = DeviceRangeConstraintInfo,
         )],
@@ -96,7 +96,7 @@ function make_active_power_constraints_inputs(
             range_constraint_inputs = [RangeConstraintInputs(;
                 constraint_name = ACTIVE_RANGE,
                 variable_name = ACTIVE_POWER,
-                limits_func = x -> (min = 0.0, max = PSY.get_activepower(x)),
+                limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_range,
                 constraint_struct = DeviceRangeConstraintInfo,
             )],
@@ -127,7 +127,7 @@ function NodalExpressionSpec(
         "get_rating",
         REACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) * sin(acos(PSY.get_powerfactor(x))) :
-        x -> PSY.get_reactivepower(x),
+        x -> PSY.get_reactive_power(x),
         1.0,
         T,
     )
@@ -142,7 +142,7 @@ function NodalExpressionSpec(
         "get_rating",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) * PSY.get_powerfactor(x) :
-        x -> PSY.get_activepower(x),
+        x -> PSY.get_active_power(x),
         1.0,
         T,
     )

@@ -13,13 +13,13 @@ function make_reactive_power_constraints_inputs(
 end
 
 """
-Default implementation to add activepower constraints.
+Default implementation to add active_power constraints.
 
 Users of this function must implement a method for
 [`make_reactive_power_constraints_inputs`](@ref) for their specific types.
-Users may also implement custom reactivepower_constraints! methods.
+Users may also implement custom reactive_power_constraints! methods.
 """
-function reactivepower_constraints!(
+function reactive_power_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},

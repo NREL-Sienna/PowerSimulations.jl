@@ -57,7 +57,7 @@ function calculate_ic_quantity(
     status_change_to_off =
         get_condition(ic) >= ABSOLUTE_TOLERANCE && var_value <= ABSOLUTE_TOLERANCE
     if status_change_to_on
-        return ic.device.activepowerlimits.min
+        return ic.device.active_power_limits.min
     end
 
     if status_change_to_off
@@ -333,12 +333,12 @@ function _get_status_value(device, key)
 end
 
 function _get_active_power_output_value(device, key)
-    return PSY.get_activepower(device)
+    return PSY.get_active_power(device)
 end
 
 function _get_active_power_output_above_min_value(device, key)
     return PSY.get_status(device) ?
-           PSY.get_activepower(device) - PSY.get_activepowerlimits(device).min : 0.0
+           PSY.get_active_power(device) - PSY.get_active_power_limits(device).min : 0.0
 end
 
 function _get_energy_value(device, key)
@@ -369,7 +369,7 @@ function _get_ref_active_power(
     container::InitialConditions,
 ) where {T <: PSY.Component}
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ACTIVE_POWER) :
-           UpdateRef{T}(ACTIVE_POWER, "get_activepower")
+           UpdateRef{T}(ACTIVE_POWER, "get_active_power")
 end
 
 function _get_ref_energy(::Type{T}, container::InitialConditions) where {T <: PSY.Component}

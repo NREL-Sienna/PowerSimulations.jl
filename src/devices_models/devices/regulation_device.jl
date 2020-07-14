@@ -29,7 +29,7 @@ function AddVariableSpec(
     )
 end
 
-function activepower_constraints!(
+function active_power_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
@@ -57,7 +57,7 @@ function activepower_constraints!(
             d,
             x -> PSY.get_rating(x),
             ts_vector,
-            x -> PSY.get_activepowerlimits(x),
+            x -> PSY.get_active_power_limits(x),
         )
         constraint_infos[ix] = constraint_info
     end
@@ -88,7 +88,7 @@ function activepower_constraints!(
     return
 end
 
-function activepower_constraints!(
+function active_power_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T}, ReserveLimitedRegulation},
@@ -123,7 +123,7 @@ function activepower_constraints!(
 end
 
 #=
-function activepower_constraints!(
+function active_power_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T},ReserveLimitedRegulation},
@@ -308,7 +308,7 @@ function NodalExpressionSpec(
     return NodalExpressionSpec(
         "get_rating",
         make_variable_name(ACTIVE_POWER, T),
-        use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),
+        use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_active_power(x),
         1.0,
         JuMP.VariableRef,
     )
