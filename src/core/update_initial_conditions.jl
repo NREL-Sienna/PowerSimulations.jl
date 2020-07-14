@@ -203,7 +203,7 @@ function storage_energy_init(
         devices,
         key,
         _make_initial_condition_energy,
-        _get_energy_value,
+        _get_initial_energy_value,
     )
 
     return
@@ -341,8 +341,8 @@ function _get_active_power_output_above_min_value(device, key)
            PSY.get_active_power(device) - PSY.get_active_power_limits(device).min : 0.0
 end
 
-function _get_energy_value(device, key)
-    return PSY.get_energy(device)
+function _get_initial_energy_value(device, key)
+    return PSY.get_initial_energy(device)
 end
 
 function _get_reservoir_energy_value(device, key)
@@ -374,7 +374,7 @@ end
 
 function _get_ref_energy(::Type{T}, container::InitialConditions) where {T <: PSY.Component}
     return get_use_parameters(container) ? UpdateRef{JuMP.VariableRef}(T, ENERGY) :
-           UpdateRef{T}(ENERGY, "get_energy")
+           UpdateRef{T}(ENERGY, "get_initial_energy")
 end
 
 function _get_ref_reservoir_energy(
