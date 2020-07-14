@@ -473,7 +473,7 @@ end
             ramplimits = nothing,
             timelimits = (up = 4, down = 2),
             op_cost = ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
-            basepower = 1.0,
+            base_power = 100.0,
             time_at_status = 2.0,
         ),
         ThermalStandard(
@@ -491,7 +491,7 @@ end
             ramplimits = nothing,
             timelimits = (up = 6, down = 4),
             op_cost = ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
-            basepower = 1.0,
+            base_power = 100.0,
             time_at_status = 3.0,
         ),
     ]

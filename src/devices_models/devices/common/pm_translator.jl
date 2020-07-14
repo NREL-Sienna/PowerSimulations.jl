@@ -218,7 +218,7 @@ function pass_to_pm(sys::PSY.System, time_periods::Int)
     PM_translation = Dict{String, Any}(
         "bus" => pm_buses,
         "branch" => ac_lines,
-        "baseMVA" => sys.basepower,
+        "baseMVA" => sys.base_power,
         "per_unit" => true,
         "storage" => Dict{String, Any}(),
         "dcline" => dc_lines,

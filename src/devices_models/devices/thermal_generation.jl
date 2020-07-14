@@ -480,12 +480,12 @@ function _get_data_for_rocc(
         non_binding_up = false
         non_binding_down = false
         ramplimits = PSY.get_ramplimits(g)
-        basepower = PSY.get_rating(g)
+        base_power = PSY.get_rating(g)
         if !isnothing(ramplimits)
             p_lims = PSY.get_activepowerlimits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramplimits.up * basepower >= max_rate) &
-               (ramplimits.down * basepower >= max_rate)
+            if (ramplimits.up * base_power >= max_rate) &
+               (ramplimits.down * base_power >= max_rate)
                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
                 continue
             else
@@ -493,8 +493,8 @@ function _get_data_for_rocc(
             end
             ini_conds[idx] = ic
             ramp_params[idx] = (
-                up = ramplimits.up * basepower * minutes_per_period,
-                down = ramplimits.down * basepower * minutes_per_period,
+                up = ramplimits.up * base_power * minutes_per_period,
+                down = ramplimits.down * base_power * minutes_per_period,
             )
             minmax_params[idx] = p_lims
         end
@@ -529,12 +529,12 @@ function _get_data_for_rocc_pglib(
         non_binding_up = false
         non_binding_down = false
         ramplimits = PSY.get_ramplimits(g)
-        basepower = PSY.get_rating(g)
+        base_power = PSY.get_rating(g)
         if !isnothing(ramplimits)
             p_lims = PSY.get_activepowerlimits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramplimits.up * basepower >= max_rate) &
-               (ramplimits.down * basepower >= max_rate)
+            if (ramplimits.up * base_power >= max_rate) &
+               (ramplimits.down * base_power >= max_rate)
                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
                 continue
             else
@@ -542,8 +542,8 @@ function _get_data_for_rocc_pglib(
             end
             ini_conds[idx] = ic
             ramp = (
-                up = ramplimits.up * basepower * minutes_per_period,
-                down = ramplimits.down * basepower * minutes_per_period,
+                up = ramplimits.up * base_power * minutes_per_period,
+                down = ramplimits.down * base_power * minutes_per_period,
             )
             data[idx] = DeviceRampConstraintInfo(name, p_lims, ramp)
         end
@@ -867,7 +867,7 @@ function device_startup_initial_condition(
     return
 end
 
-""" 
+"""
 This function creates the contraints for different types of starts based on generator down-time
 """
 function startup_time_constraints!(
@@ -1368,7 +1368,7 @@ function cost_function(
         end
     end
 
-    ## Start up cost 
+    ## Start up cost
     function _ps_cost(d::PSY.ThermalMultiStart, cost_component::StartUpStages)
         gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
         startup_var = (HOT_START, WARM_START, COLD_START)

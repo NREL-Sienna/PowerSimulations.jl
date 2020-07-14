@@ -551,7 +551,7 @@ battery5(nodes5) = [GenericBattery(
     energy = 5.0,
     capacity = (min = 5.0, max = 100.0),
     rating = 70,
-    basepower = 1.0,
+    base_power = 100.0,
     activepower = 10.0,
     inputactivepowerlimits = (min = 0.0, max = 50.0),
     outputactivepowerlimits = (min = 0.0, max = 50.0),
