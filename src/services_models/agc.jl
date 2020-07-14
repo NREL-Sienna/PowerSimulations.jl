@@ -138,12 +138,18 @@ function frequency_response_constraint!(psi_container::PSIContainer, sys::PSY.Sy
         [a in area_names, t in time_steps],
         base_name = "balance_{$(a),$(t)}"
     )
-    assign_variable!(psi_container, make_variable_name("area_dispatch_balance"), area_balance)
+    assign_variable!(
+        psi_container,
+        make_variable_name("area_dispatch_balance"),
+        area_balance,
+    )
     frequency = get_variable(psi_container, make_variable_name("Δf"))
     R_up = get_variable(psi_container, make_variable_name("area_total_reserve_up"))
     R_dn = get_variable(psi_container, make_variable_name("area_total_reserve_dn"))
-    R_up_emergency = get_variable(psi_container, make_variable_name("area_emergency_reserve_up"))
-    R_dn_emergency = get_variable(psi_container, make_variable_name("area_emergency_reserve_dn"))
+    R_up_emergency =
+        get_variable(psi_container, make_variable_name("area_emergency_reserve_up"))
+    R_dn_emergency =
+        get_variable(psi_container, make_variable_name("area_emergency_reserve_dn"))
 
     container = JuMPConstraintArray(undef, time_steps)
     assign_constraint!(psi_container, "freque_response", container)
@@ -199,9 +205,7 @@ function smooth_ace_pid!(
             if t == 1
                 SACE_ini =
                     get_initial_conditions(psi_container, ICKey(AreaControlError, PSY.AGC))[ix]
-                sace_exp =
-                    SACE_ini.value +
-                    kp * ((1 + Δt / (kp / ki)) * (RAW_ACE[a, t]))
+                sace_exp = SACE_ini.value + kp * ((1 + Δt / (kp / ki)) * (RAW_ACE[a, t]))
                 SACE_pid[a, t] =
                     JuMP.@constraint(psi_container.JuMPmodel, SACE[a, t] == sace_exp)
                 continue
@@ -229,8 +233,10 @@ function aux_constraints!(psi_container::PSIContainer, sys::PSY.System)
     SACE = get_variable(psi_container, make_variable_name("SACE", PSY.AGC))
     R_up = get_variable(psi_container, make_variable_name("area_total_reserve_up"))
     R_dn = get_variable(psi_container, make_variable_name("area_total_reserve_dn"))
-    R_up_emergency = get_variable(psi_container, make_variable_name("area_emergency_reserve_up"))
-    R_dn_emergency = get_variable(psi_container, make_variable_name("area_emergency_reserve_dn"))
+    R_up_emergency =
+        get_variable(psi_container, make_variable_name("area_emergency_reserve_up"))
+    R_dn_emergency =
+        get_variable(psi_container, make_variable_name("area_emergency_reserve_dn"))
 
     for t in time_steps, a in area_names
         aux_equation[a, t] = JuMP.@constraint(
