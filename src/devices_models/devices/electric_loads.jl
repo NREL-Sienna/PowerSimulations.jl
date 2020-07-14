@@ -45,7 +45,7 @@ end
 
 ####################################### Reactive Power Constraints #########################
 """
-Reactive Power Constraints on Controllable Loads Assume Constant PowerFactor
+Reactive Power Constraints on Controllable Loads Assume Constant power_factor
 """
 function make_reactive_power_constraints_inputs(
     ::Type{<:PSY.ElectricLoad},

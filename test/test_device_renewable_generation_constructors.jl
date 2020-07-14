@@ -70,8 +70,8 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
-@testset "Renewable DCPLossLess ConstantPowerFactor" begin
-    model = DeviceModel(RenewableDispatch, RenewableConstantPowerFactor)
+@testset "Renewable DCPLossLess Constantpower_factor" begin
+    model = DeviceModel(RenewableDispatch, RenewableConstantpower_factor)
     c_sys5_re = build_system("c_sys5_re")
 
     #5 Bus testing case
@@ -100,8 +100,8 @@ end
     psi_checkobjfun_test(op_problem, GAEVF)
 end
 
-@testset "Renewable ACPPower ConstantPowerFactor" begin
-    model = DeviceModel(RenewableDispatch, RenewableConstantPowerFactor)
+@testset "Renewable ACPPower Constantpower_factor" begin
+    model = DeviceModel(RenewableDispatch, RenewableConstantpower_factor)
     c_sys5_re = build_system("c_sys5_re")
     for p in [true, false]
         op_problem =

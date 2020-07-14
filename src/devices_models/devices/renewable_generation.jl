@@ -1,7 +1,7 @@
 abstract type AbstractRenewableFormulation <: AbstractDeviceFormulation end
 abstract type AbstractRenewableDispatchFormulation <: AbstractRenewableFormulation end
 struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
-struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
+struct RenewableConstantpower_factor <: AbstractRenewableDispatchFormulation end
 
 ########################### renewable generation variables #################################
 function AddVariableSpec(
@@ -52,7 +52,7 @@ end
 
 function make_reactive_power_constraints_inputs(
     ::Type{<:PSY.RenewableGen},
-    ::Type{<:RenewableConstantPowerFactor},
+    ::Type{<:RenewableConstantpower_factor},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
@@ -66,7 +66,7 @@ end
 function custom_reactive_power_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::Type{RenewableConstantPowerFactor},
+    ::Type{RenewableConstantpower_factor},
 ) where {T <: PSY.RenewableGen}
     names = (PSY.get_name(d) for d in devices)
     time_steps = model_time_steps(psi_container)
@@ -76,7 +76,7 @@ function custom_reactive_power_constraints!(
     assign_constraint!(psi_container, REACTIVE_RANGE, T, constraint_val)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
-        pf = sin(acos(PSY.get_powerfactor(d)))
+        pf = sin(acos(PSY.get_power_factor(d)))
         constraint_val[name, t] =
             JuMP.@constraint(psi_container.JuMPmodel, q_var[name, t] == p_var[name, t] * pf)
     end
@@ -126,7 +126,7 @@ function NodalExpressionSpec(
     return NodalExpressionSpec(
         "get_rating",
         REACTIVE_POWER,
-        use_forecasts ? x -> PSY.get_rating(x) * sin(acos(PSY.get_powerfactor(x))) :
+        use_forecasts ? x -> PSY.get_rating(x) * sin(acos(PSY.get_power_factor(x))) :
         x -> PSY.get_reactive_power(x),
         1.0,
         T,
@@ -141,7 +141,7 @@ function NodalExpressionSpec(
     return NodalExpressionSpec(
         "get_rating",
         ACTIVE_POWER,
-        use_forecasts ? x -> PSY.get_rating(x) * PSY.get_powerfactor(x) :
+        use_forecasts ? x -> PSY.get_rating(x) * PSY.get_power_factor(x) :
         x -> PSY.get_active_power(x),
         1.0,
         T,

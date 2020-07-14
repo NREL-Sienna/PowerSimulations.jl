@@ -43,7 +43,7 @@ export InterruptiblePowerLoad
 export DispatchablePowerLoad
 ######## Renewable Formulations ########
 export RenewableFullDispatch
-export RenewableConstantPowerFactor
+export RenewableConstantpower_factor
 ######## Hydro Formulations ########
 export HydroDispatchRunOfRiver
 export HydroDispatchReservoirFlow
