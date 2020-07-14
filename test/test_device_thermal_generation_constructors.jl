@@ -382,7 +382,7 @@ UC_devices = Dict{Symbol, DeviceModel}(
 # Testing Ramping Constraint
 @testset "Solving ED with CopperPlate for testing Ramping Constraints" begin
     node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
-    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 1.0, 2.0)
+    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 100.0, 1.0, 2.0)
     DA_ramp = collect(
         DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
             "1/1/2024  4:00:00",
@@ -405,7 +405,7 @@ UC_devices = Dict{Symbol, DeviceModel}(
             nothing,
             nothing,
             ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
-            1.0,
+            100.0,
         ),
         ThermalStandard(
             "Park City",
@@ -422,7 +422,7 @@ UC_devices = Dict{Symbol, DeviceModel}(
             (up = 0.010625, down = 0.010625),
             nothing,
             ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
-            1.0,
+            100.0,
         ),
     ]
     ramp_load = [0.9, 1.1, 2.485, 2.175, 0.9]
@@ -450,7 +450,7 @@ end
 # Testing Duration Constraints
 @testset "Solving UC with CopperPlate for testing Duration Constraints" begin
     node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
-    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 1.0, 2.0)
+    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 100.0, 1.0, 2.0)
     DA_dur = collect(
         DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
             "1/1/2024  6:00:00",
@@ -466,13 +466,13 @@ end
             active_power = 0.40,
             reactive_power = 0.010,
             rating = 0.5,
-            primemover = PrimeMovers.ST,
+            prime_mover = PrimeMovers.ST,
             fuel = ThermalFuels.COAL,
             active_power_limits = (min = 0.3, max = 0.9),
             reactive_power_limits = nothing,
-            ramplimits = nothing,
-            timelimits = (up = 4, down = 2),
-            op_cost = ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
+            ramp_limits = nothing,
+            time_limits = (up = 4, down = 2),
+            operation_cost = ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
             base_power = 100.0,
             time_at_status = 2.0,
         ),
@@ -484,13 +484,13 @@ end
             active_power = 1.70,
             reactive_power = 0.20,
             rating = 2.2125,
-            primemover = PrimeMovers.ST,
+            prime_mover = PrimeMovers.ST,
             fuel = ThermalFuels.COAL,
             active_power_limits = (min = 0.7, max = 2.2),
             reactive_power_limits = nothing,
-            ramplimits = nothing,
-            timelimits = (up = 6, down = 4),
-            op_cost = ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
+            ramp_limits = nothing,
+            time_limits = (up = 6, down = 4),
+            operation_cost = ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
             base_power = 100.0,
             time_at_status = 3.0,
         ),
@@ -522,7 +522,7 @@ end
 ## PWL linear Cost implementation test
 @testset "Solving UC with CopperPlate testing Linear PWL" begin
     node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
-    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 1.0, 2.0)
+    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 100.0, 1.0, 2.0)
     gens_cost = [
         ThermalStandard(
             "Alta",
@@ -544,7 +544,7 @@ end
                 5665.23,
                 0.0,
             ),
-            1.0,
+            100.0,
         ),
         ThermalStandard(
             "Park City",
@@ -553,7 +553,7 @@ end
             node,
             0.62,
             0.20,
-            2.2125,
+            221.25,
             PrimeMovers.ST,
             ThermalFuels.COAL,
             (min = 0.62, max = 1.55),
@@ -566,7 +566,7 @@ end
                 5665.23,
                 0.0,
             ),
-            1.0,
+            100.0,
         ),
     ]
     DA_cost = collect(
@@ -600,7 +600,7 @@ end
 ## PWL SOS-2 Cost implementation test
 @testset "Solving UC with CopperPlate testing SOS2 implementation" begin
     node = Bus(1, "nodeA", "PV", 0, 1.0, (min = 0.9, max = 1.05), 230, nothing, nothing)
-    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 1.0, 2.0)
+    load = PowerLoad("Bus1", true, node, nothing, 0.4, 0.9861, 100.0, 1.0, 2.0)
     gens_cost_sos = [
         ThermalStandard(
             "Alta",
@@ -622,7 +622,7 @@ end
                 5665.23,
                 0.0,
             ),
-            1.0,
+            100.0,
         ),
         ThermalStandard(
             "Park City",
@@ -644,7 +644,7 @@ end
                 5665.23,
                 0.0,
             ),
-            1.0,
+            100.0,
         ),
     ]
     DA_cost_sos = collect(
@@ -664,7 +664,7 @@ end
     add_forecast!(cost_test_sos_sys, load, load_forecast_cost_sos)
 
     for g in gens_cost_sos
-        @test PSI._pwlparamcheck(PSY.get_op_cost(g).variable) == false
+        @test PSI._pwlparamcheck(PSY.get_operation_cost(g).variable) == false
     end
 
     template =

@@ -479,13 +479,13 @@ function _get_data_for_rocc(
         name = PSY.get_name(g)
         non_binding_up = false
         non_binding_down = false
-        ramplimits = PSY.get_ramplimits(g)
+        ramp_limits = PSY.get_ramp_limits(g)
         base_power = PSY.get_rating(g)
-        if !isnothing(ramplimits)
+        if !isnothing(ramp_limits)
             p_lims = PSY.get_active_power_limits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramplimits.up * base_power >= max_rate) &
-               (ramplimits.down * base_power >= max_rate)
+            if (ramp_limits.up * base_power >= max_rate) &
+               (ramp_limits.down * base_power >= max_rate)
                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
                 continue
             else
@@ -493,8 +493,8 @@ function _get_data_for_rocc(
             end
             ini_conds[idx] = ic
             ramp_params[idx] = (
-                up = ramplimits.up * base_power * minutes_per_period,
-                down = ramplimits.down * base_power * minutes_per_period,
+                up = ramp_limits.up * base_power * minutes_per_period,
+                down = ramp_limits.down * base_power * minutes_per_period,
             )
             minmax_params[idx] = p_lims
         end
@@ -528,13 +528,13 @@ function _get_data_for_rocc_pglib(
         name = PSY.get_name(g)
         non_binding_up = false
         non_binding_down = false
-        ramplimits = PSY.get_ramplimits(g)
+        ramp_limits = PSY.get_ramp_limits(g)
         base_power = PSY.get_rating(g)
-        if !isnothing(ramplimits)
+        if !isnothing(ramp_limits)
             p_lims = PSY.get_active_power_limits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramplimits.up * base_power >= max_rate) &
-               (ramplimits.down * base_power >= max_rate)
+            if (ramp_limits.up * base_power >= max_rate) &
+               (ramp_limits.down * base_power >= max_rate)
                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
                 continue
             else
@@ -542,8 +542,8 @@ function _get_data_for_rocc_pglib(
             end
             ini_conds[idx] = ic
             ramp = (
-                up = ramplimits.up * base_power * minutes_per_period,
-                down = ramplimits.down * base_power * minutes_per_period,
+                up = ramp_limits.up * base_power * minutes_per_period,
+                down = ramp_limits.down * base_power * minutes_per_period,
             )
             data[idx] = DeviceRampConstraintInfo(name, p_lims, ramp)
         end
@@ -1046,10 +1046,10 @@ function _get_data_for_tdc(
         @assert g == initial_conditions_off[ix].device
         non_binding_up = false
         non_binding_down = false
-        timelimits = PSY.get_timelimits(g)
+        time_limits = PSY.get_time_limits(g)
         name = PSY.get_name(g)
-        if !isnothing(timelimits)
-            if (timelimits.up <= fraction_of_hour) & (timelimits.down <= fraction_of_hour)
+        if !isnothing(time_limits)
+            if (time_limits.up <= fraction_of_hour) & (time_limits.down <= fraction_of_hour)
                 @debug "Generator $(name) has a nonbinding time limits. Constraints Skipped"
                 continue
             else
@@ -1057,8 +1057,8 @@ function _get_data_for_tdc(
             end
             ini_conds[idx, 1] = ic
             ini_conds[idx, 2] = initial_conditions_off[ix]
-            up_val = round(timelimits.up * steps_per_hour, RoundUp)
-            down_val = round(timelimits.down * steps_per_hour, RoundUp)
+            up_val = round(time_limits.up * steps_per_hour, RoundUp)
+            down_val = round(time_limits.down * steps_per_hour, RoundUp)
             time_params[idx] = time_params[idx] = (up = up_val, down = down_val)
         end
     end
@@ -1255,7 +1255,7 @@ function cost_function(
     end
 
     for d in devices
-        cost_component = PSY.get_variable(PSY.get_op_cost(d))
+        cost_component = PSY.get_variable(PSY.get_operation_cost(d))
         cost_expression = _ps_cost(d, cost_component)
         T_ce = typeof(cost_expression)
         T_cf = typeof(psi_container.cost_function)
@@ -1351,7 +1351,7 @@ function cost_function(
     end
 
     for d in devices
-        cost_component = PSY.get_variable(PSY.get_op_cost(d))
+        cost_component = PSY.get_variable(PSY.get_operation_cost(d))
         cost_expression = _ps_cost(
             d,
             cost_component,
@@ -1390,7 +1390,7 @@ function cost_function(
     end
 
     for d in devices
-        cost_component = PSY.get_startup(PSY.get_op_cost(d))
+        cost_component = PSY.get_startup(PSY.get_operation_cost(d))
         cost_expression = _ps_cost(d, cost_component)
         T_ce = typeof(cost_expression)
         T_cf = typeof(psi_container.cost_function)
