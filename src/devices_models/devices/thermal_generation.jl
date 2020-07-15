@@ -282,7 +282,8 @@ function make_active_power_constraints_inputs(
             variable_name = ACTIVE_POWER,
             limits_func = x -> (
                 min = 0.0,
-                max = PSY.get_active_power_limits(x).max - PSY.get_active_power_limits(x).min,
+                max = PSY.get_active_power_limits(x).max -
+                      PSY.get_active_power_limits(x).min,
             ),
             bin_variable_names = [ON, START, STOP],
             constraint_func = device_multistart_range,

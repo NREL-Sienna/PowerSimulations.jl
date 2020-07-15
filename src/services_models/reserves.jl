@@ -157,7 +157,8 @@ function cost_function!(
         )))
 
     else
-        ts_vector = repeat(PSY.get_variable(PSY.get_operation_cost(service)), time_steps[end])
+        ts_vector =
+            repeat(PSY.get_variable(PSY.get_operation_cost(service)), time_steps[end])
     end
 
     resolution = model_resolution(psi_container)

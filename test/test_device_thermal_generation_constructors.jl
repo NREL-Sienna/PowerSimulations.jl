@@ -426,7 +426,8 @@ UC_devices = Dict{Symbol, DeviceModel}(
         ),
     ]
     ramp_load = [0.9, 1.1, 2.485, 2.175, 0.9]
-    load_forecast_ramp = Deterministic("get_max_active_power", TimeArray(DA_ramp, ramp_load))
+    load_forecast_ramp =
+        Deterministic("get_max_active_power", TimeArray(DA_ramp, ramp_load))
     ramp_test_sys = System(100.0)
     add_component!(ramp_test_sys, node)
     add_component!(ramp_test_sys, load)
@@ -576,7 +577,8 @@ end
         ),
     )
     cost_load = [1.3, 2.1]
-    load_forecast_cost = Deterministic("get_max_active_power", TimeArray(DA_cost, cost_load))
+    load_forecast_cost =
+        Deterministic("get_max_active_power", TimeArray(DA_cost, cost_load))
     cost_test_sys = System(100.0)
     add_component!(cost_test_sys, node)
     add_component!(cost_test_sys, load)

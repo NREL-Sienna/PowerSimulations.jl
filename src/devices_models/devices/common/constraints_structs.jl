@@ -108,7 +108,11 @@ struct DeviceRampConstraintInfo <: AbstractRampConstraintInfo
     additional_terms_lb::Vector{Symbol}
 end
 
-function DeviceRampConstraintInfo(name::String, limits::PSY.Min_Max, ramp_limits::PSI.UpDown)
+function DeviceRampConstraintInfo(
+    name::String,
+    limits::PSY.Min_Max,
+    ramp_limits::PSI.UpDown,
+)
     return DeviceRampConstraintInfo(
         name,
         limits,
