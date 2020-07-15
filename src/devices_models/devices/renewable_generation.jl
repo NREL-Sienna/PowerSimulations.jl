@@ -1,7 +1,7 @@
 abstract type AbstractRenewableFormulation <: AbstractDeviceFormulation end
 abstract type AbstractRenewableDispatchFormulation <: AbstractRenewableFormulation end
 struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
-struct RenewableConstantpower_factor <: AbstractRenewableDispatchFormulation end
+struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
 
 ########################### renewable generation variables #################################
 function AddVariableSpec(
