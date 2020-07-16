@@ -43,7 +43,7 @@ function make_reactive_power_constraints_inputs(
         range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = REACTIVE_RANGE,
             variable_name = REACTIVE_POWER,
-            limits_func = x -> PSY.get_reactivepowerlimits(x),
+            limits_func = x -> PSY.get_reactive_power_limits(x),
             constraint_func = device_range,
             constraint_struct = DeviceRangeConstraintInfo,
         )],
@@ -76,7 +76,7 @@ function custom_reactive_power_constraints!(
     assign_constraint!(psi_container, REACTIVE_RANGE, T, constraint_val)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
-        pf = sin(acos(PSY.get_powerfactor(d)))
+        pf = sin(acos(PSY.get_power_factor(d)))
         constraint_val[name, t] =
             JuMP.@constraint(psi_container.JuMPmodel, q_var[name, t] == p_var[name, t] * pf)
     end
@@ -96,7 +96,7 @@ function make_active_power_constraints_inputs(
             range_constraint_inputs = [RangeConstraintInputs(;
                 constraint_name = ACTIVE_RANGE,
                 variable_name = ACTIVE_POWER,
-                limits_func = x -> (min = 0.0, max = PSY.get_activepower(x)),
+                limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_range,
                 constraint_struct = DeviceRangeConstraintInfo,
             )],
@@ -126,8 +126,8 @@ function NodalExpressionSpec(
     return NodalExpressionSpec(
         "get_rating",
         REACTIVE_POWER,
-        use_forecasts ? x -> PSY.get_rating(x) * sin(acos(PSY.get_powerfactor(x))) :
-        x -> PSY.get_reactivepower(x),
+        use_forecasts ? x -> PSY.get_rating(x) * sin(acos(PSY.get_power_factor(x))) :
+        x -> PSY.get_reactive_power(x),
         1.0,
         T,
     )
@@ -141,8 +141,8 @@ function NodalExpressionSpec(
     return NodalExpressionSpec(
         "get_rating",
         ACTIVE_POWER,
-        use_forecasts ? x -> PSY.get_rating(x) * PSY.get_powerfactor(x) :
-        x -> PSY.get_activepower(x),
+        use_forecasts ? x -> PSY.get_rating(x) * PSY.get_power_factor(x) :
+        x -> PSY.get_active_power(x),
         1.0,
         T,
     )

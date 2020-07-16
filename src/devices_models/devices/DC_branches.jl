@@ -70,10 +70,14 @@ function branch_rate_constraints!(
         JuMPConstraintArray(undef, (PSY.get_name(d) for d in devices), time_steps)
     assign_constraint!(psi_container, FLOW_ACTIVE_POWER, B, constraint_val)
     for t in time_steps, d in devices
-        min_rate =
-            max(PSY.get_activepowerlimits_from(d).min, PSY.get_activepowerlimits_to(d).min)
-        max_rate =
-            min(PSY.get_activepowerlimits_from(d).max, PSY.get_activepowerlimits_to(d).max)
+        min_rate = max(
+            PSY.get_active_power_limits_from(d).min,
+            PSY.get_active_power_limits_to(d).min,
+        )
+        max_rate = min(
+            PSY.get_active_power_limits_from(d).max,
+            PSY.get_active_power_limits_to(d).max,
+        )
         constraint_val[PSY.get_name(d), t] = JuMP.@constraint(
             psi_container.JuMPmodel,
             min_rate <= var[PSY.get_name(d), t] <= max_rate
@@ -102,12 +106,12 @@ function branch_rate_constraints!(
 
         for t in time_steps, d in devices
             min_rate = max(
-                PSY.get_activepowerlimits_from(d).min,
-                PSY.get_activepowerlimits_to(d).min,
+                PSY.get_active_power_limits_from(d).min,
+                PSY.get_active_power_limits_to(d).min,
             )
             max_rate = min(
-                PSY.get_activepowerlimits_from(d).max,
-                PSY.get_activepowerlimits_to(d).max,
+                PSY.get_active_power_limits_from(d).max,
+                PSY.get_active_power_limits_to(d).max,
             )
             name = PSY.get_name(d)
             constraint_val[name, t] = JuMP.@constraint(
@@ -141,12 +145,12 @@ function branch_rate_constraints!(
 
         for t in time_steps, d in devices
             min_rate = max(
-                PSY.get_activepowerlimits_from(d).min,
-                PSY.get_activepowerlimits_to(d).min,
+                PSY.get_active_power_limits_from(d).min,
+                PSY.get_active_power_limits_to(d).min,
             )
             max_rate = min(
-                PSY.get_activepowerlimits_from(d).max,
-                PSY.get_activepowerlimits_to(d).max,
+                PSY.get_active_power_limits_from(d).max,
+                PSY.get_active_power_limits_to(d).max,
             )
             constraint_val[PSY.get_name(d), t] = JuMP.@constraint(
                 psi_container.JuMPmodel,

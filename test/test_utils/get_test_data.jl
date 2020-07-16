@@ -118,7 +118,7 @@ function build_c_sys5(; kwargs...)
                 add_forecast!(
                     c_sys5,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -147,7 +147,7 @@ function build_c_sys5_ml(; kwargs...)
                 add_forecast!(
                     c_sys5_ml,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -175,7 +175,7 @@ function build_c_sys14(; kwargs...)
             add_forecast!(
                 c_sys14,
                 l,
-                Deterministic("get_maxactivepower", timeseries_DA14[ix]),
+                Deterministic("get_max_active_power", timeseries_DA14[ix]),
             )
         end
     end
@@ -203,7 +203,7 @@ function build_c_sys5_re(; kwargs...)
                 add_forecast!(
                     c_sys5_re,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_re))
@@ -260,7 +260,7 @@ function build_c_sys5_re_only(; kwargs...)
                 add_forecast!(
                     c_sys5_re_only,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_re_only))
@@ -296,7 +296,7 @@ function build_c_sys5_hy(; kwargs...)
                 add_forecast!(
                     c_sys5_hy,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hy))
@@ -332,7 +332,7 @@ function build_c_sys5_hyd(; kwargs...)
                 add_forecast!(
                     c_sys5_hyd,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, h) in enumerate(get_components(HydroGen, c_sys5_hyd))
@@ -412,7 +412,7 @@ function build_c_sys5_bat(; kwargs...)
                 add_forecast!(
                     c_sys5_bat,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -461,14 +461,14 @@ function build_c_sys5_il(; kwargs...)
                 add_forecast!(
                     c_sys5_il,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, i) in enumerate(get_components(InterruptibleLoad, c_sys5_il))
                 add_forecast!(
                     c_sys5_il,
                     i,
-                    Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", Iload_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -518,7 +518,7 @@ function build_c_sys5_dc(; kwargs...)
                 add_forecast!(
                     c_sys5_dc,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_dc))
@@ -553,7 +553,7 @@ function build_c_sys14_dc(; kwargs...)
             add_forecast!(
                 c_sys14_dc,
                 l,
-                Deterministic("get_maxactivepower", timeseries_DA14[ix]),
+                Deterministic("get_max_active_power", timeseries_DA14[ix]),
             )
         end
     end
@@ -583,7 +583,7 @@ thermal_generators5_uc_testing(nodes) = [
         nothing,
         nothing,
         ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
-        1.0,
+        100.0,
     ),
     ThermalStandard(
         "Park City",
@@ -600,7 +600,7 @@ thermal_generators5_uc_testing(nodes) = [
         (up = 0.02, down = 0.02),
         nothing,
         ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
-        1.0,
+        100.0,
     ),
     ThermalStandard(
         "Solitude",
@@ -617,7 +617,7 @@ thermal_generators5_uc_testing(nodes) = [
         (up = 0.0012, down = 0.0012),
         (up = 5.0, down = 3.0),
         ThreePartCost((0.0, 3000.0), 0.0, 3.0, 1.5),
-        1.0,
+        100.0,
     ),
     ThermalStandard(
         "Sundance",
@@ -634,7 +634,7 @@ thermal_generators5_uc_testing(nodes) = [
         (up = 0.015, down = 0.015),
         (up = 2.0, down = 1.0),
         ThreePartCost((0.0, 4000.0), 0.0, 4.0, 2.0),
-        1.0,
+        100.0,
     ),
     ThermalStandard(
         "Brighton",
@@ -651,7 +651,7 @@ thermal_generators5_uc_testing(nodes) = [
         (up = 0.0015, down = 0.0015),
         (up = 5.0, down = 3.0),
         ThreePartCost((0.0, 1000.0), 0.0, 1.5, 0.75),
-        1.0,
+        100.0,
     ),
 ];
 
@@ -675,7 +675,7 @@ function build_c_sys5_uc(; kwargs...)
                 add_forecast!(
                     c_sys5_uc,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, r) in enumerate(get_components(RenewableGen, c_sys5_uc))
@@ -689,7 +689,7 @@ function build_c_sys5_uc(; kwargs...)
                 add_forecast!(
                     c_sys5_uc,
                     i,
-                    Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", Iload_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -751,7 +751,7 @@ function build_c_sys5_ed(; kwargs...)
                 for i in 1:length(ta) # loop over hours
                     ini_time = timestamp(ta[i]) #get the hour
                     data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
-                    add_forecast!(c_sys5_ed, l, Deterministic("get_maxactivepower", data))
+                    add_forecast!(c_sys5_ed, l, Deterministic("get_max_active_power", data))
                 end
             end
         end
@@ -771,7 +771,7 @@ function build_c_sys5_ed(; kwargs...)
                 for i in 1:length(ta) # loop over hours
                     ini_time = timestamp(ta[i]) #get the hour
                     data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1])) # get the subset ts for that hour
-                    add_forecast!(c_sys5_ed, l, Deterministic("get_maxactivepower", data))
+                    add_forecast!(c_sys5_ed, l, Deterministic("get_max_active_power", data))
                 end
             end
         end
@@ -826,7 +826,7 @@ function build_c_sys5_hy_uc(; kwargs...)
                 add_forecast!(
                     c_sys5_hy_uc,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
             for (ix, h) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_uc))
@@ -868,7 +868,7 @@ function build_c_sys5_hy_uc(; kwargs...)
                 add_forecast!(
                     c_sys5_hy_uc,
                     i,
-                    Deterministic("get_maxactivepower", Iload_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", Iload_timeseries_DA[t][ix]),
                 )
             end
         end
@@ -905,7 +905,7 @@ function build_c_sys5_hy_ed(; kwargs...)
                     add_forecast!(
                         c_sys5_hy_ed,
                         l,
-                        Deterministic("get_maxactivepower", data),
+                        Deterministic("get_max_active_power", data),
                     )
                 end
             end
@@ -953,7 +953,7 @@ function build_c_sys5_hy_ed(; kwargs...)
                     add_forecast!(
                         c_sys5_hy_ed,
                         l,
-                        Deterministic("get_maxactivepower", data),
+                        Deterministic("get_max_active_power", data),
                     )
                 end
             end
@@ -991,7 +991,7 @@ function build_c_sys5_pglib(; kwargs...)
                 add_forecast!(
                     c_sys5_uc,
                     l,
-                    Deterministic("get_maxactivepower", load_timeseries_DA[t][ix]),
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
         end

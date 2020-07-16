@@ -29,7 +29,7 @@ function AddVariableSpec(
     )
 end
 
-function activepower_constraints!(
+function active_power_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
@@ -57,7 +57,7 @@ function activepower_constraints!(
             d,
             x -> PSY.get_rating(x),
             ts_vector,
-            x -> PSY.get_activepowerlimits(x),
+            x -> PSY.get_active_power_limits(x),
         )
         constraint_infos[ix] = constraint_info
     end
@@ -88,7 +88,7 @@ function activepower_constraints!(
     return
 end
 
-function activepower_constraints!(
+function active_power_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T}, ReserveLimitedRegulation},
@@ -123,7 +123,7 @@ function activepower_constraints!(
 end
 
 #=
-function activepower_constraints!(
+function active_power_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T},ReserveLimitedRegulation},
@@ -180,17 +180,17 @@ function ramp_constraints!(
     container_dn = add_cons_container!(psi_container, :ramp_limits_dn, names, time_steps)
 
     for d in devices
-        ramplimits(d) = PSY.get_ramplimits(d)
-        scaling_factor = PSY.get_basepower(d) * resolution * SECONDS_IN_MINUTE
+        ramp_limits(d) = PSY.get_ramp_limits(d)
+        scaling_factor = PSY.get_base_power(d) * resolution * SECONDS_IN_MINUTE
         name = PSY.get_name(d)
         for t in time_steps
             container_up[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                regulation_up[name, t] <= ramplimits(d).up * scaling_factor
+                regulation_up[name, t] <= ramp_limits(d).up * scaling_factor
             )
             container_dn[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                regulation_dn[name, t] <= ramplimits(d).down * scaling_factor
+                regulation_dn[name, t] <= ramp_limits(d).down * scaling_factor
             )
         end
     end
@@ -210,6 +210,9 @@ function participation_assignment!(
 
     R_up = get_variable(psi_container, make_variable_name("area_total_reserve_up"))
     R_dn = get_variable(psi_container, make_variable_name("area_total_reserve_dn"))
+    regulation_up = get_variable(psi_container, make_variable_name("ΔP_up", T))
+    regulation_dn = get_variable(psi_container, make_variable_name("ΔP_dn", T))
+
     component_names = (PSY.get_name(d) for d in devices)
     participation_assignment_up = JuMPConstraintArray(undef, component_names, time_steps)
     participation_assignment_dn = JuMPConstraintArray(undef, component_names, time_steps)
@@ -224,6 +227,8 @@ function participation_assignment!(
         participation_assignment_dn,
     )
 
+    expr_up = get_expression(psi_container, :emergency_up)
+    expr_dn = get_expression(psi_container, :emergency_dn)
     for d in devices
         name = PSY.get_name(d)
         services = PSY.get_services(d)
@@ -238,14 +243,26 @@ function participation_assignment!(
         for t in time_steps
             participation_assignment_up[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                regulation_up[name, t] == p_factor.up * (R_up[area_name, t])
+                regulation_up[name, t] ==
+                (p_factor.up * R_up[area_name, t]) + emergency_regulation_up[name, t]
             )
             participation_assignment_dn[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
-                regulation_dn[name, t] == p_factor.dn * (R_dn[area_name, t])
+                regulation_dn[name, t] ==
+                (p_factor.dn * R_dn[area_name, t]) + emergency_regulation_dn[name, t]
+            )
+            JuMP.add_to_expression!(
+                expr_up[area_name, t],
+                -1 * emergency_regulation_up[name, t],
+            )
+            JuMP.add_to_expression!(
+                expr_dn[area_name, t],
+                -1 * emergency_regulation_dn[name, t],
             )
         end
+
     end
+
     return
 end
 
@@ -257,19 +274,26 @@ function regulation_cost!(
     time_steps = model_time_steps(psi_container)
     regulation_up = get_variable(psi_container, make_variable_name("ΔP_up", T))
     regulation_dn = get_variable(psi_container, make_variable_name("ΔP_dn", T))
+    emergency_regulation_up = get_variable(psi_container, make_variable_name("ΔPe_up", T))
+    emergency_regulation_dn = get_variable(psi_container, make_variable_name("ΔPe_dn", T))
 
     for d in devices
         cost = PSY.get_cost(d)
+        p_factor = PSY.get_participation_factor(d)
+        up_cost =
+            isapprox(p_factor.up, 0.0; atol = 1e-2) ? SERVICES_SLACK_COST : 1 / p_factor.up
+        dn_cost =
+            isapprox(p_factor.dn, 0.0; atol = 1e-2) ? SERVICES_SLACK_COST : 1 / p_factor.dn
         for t in time_steps
             JuMP.add_to_expression!(
                 psi_container.cost_function,
-                regulation_up[PSY.get_name(d), t],
-                cost,
+                emergency_regulation_up[PSY.get_name(d), t],
+                up_cost,
             )
             JuMP.add_to_expression!(
                 psi_container.cost_function,
-                regulation_dn[PSY.get_name(d), t],
-                cost,
+                emergency_regulation_dn[PSY.get_name(d), t],
+                dn_cost,
             )
         end
     end
@@ -284,7 +308,7 @@ function NodalExpressionSpec(
     return NodalExpressionSpec(
         "get_rating",
         make_variable_name(ACTIVE_POWER, T),
-        use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),
+        use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_active_power(x),
         1.0,
         JuMP.VariableRef,
     )

@@ -241,7 +241,7 @@ function device_multistart_rateofchange(
         end
         con_up[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            expression_ub - ic.value <= rate_data[ix].ramplimits.up
+            expression_ub - ic.value <= rate_data[ix].ramp_limits.up
         )
         expression_lb = JuMP.AffExpr(0.0, variable[name, 1] => 1.0)
         for val in rate_data[ix].additional_terms_lb
@@ -253,7 +253,7 @@ function device_multistart_rateofchange(
         end
         con_down[name, 1] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            ic.value - expression_lb <= rate_data[ix].ramplimits.down
+            ic.value - expression_lb <= rate_data[ix].ramp_limits.down
         )
     end
 
@@ -268,7 +268,7 @@ function device_multistart_rateofchange(
         end
         con_up[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            expression_ub - variable[name, t - 1] <= d.ramplimits.up
+            expression_ub - variable[name, t - 1] <= d.ramp_limits.up
         )
         expression_lb = JuMP.AffExpr(0.0, variable[name, t] => 1.0)
         for val in d.additional_terms_lb
@@ -280,7 +280,7 @@ function device_multistart_rateofchange(
         end
         con_down[name, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            variable[name, t - 1] - expression_lb <= d.ramplimits.down
+            variable[name, t - 1] - expression_lb <= d.ramp_limits.down
         )
     end
 

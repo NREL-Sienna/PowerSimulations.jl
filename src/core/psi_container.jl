@@ -141,6 +141,7 @@ function psi_container_init!(
     ::Type{T},
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
+    PSY.set_units_base_system!(sys, "system_base")
     # The order of operations matter
     settings = psi_container.settings
     _make_jump_model!(psi_container)
