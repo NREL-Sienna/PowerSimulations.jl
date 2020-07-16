@@ -64,7 +64,7 @@ function load_operation_results(folder_path::AbstractString)
     dual_result = Dict{Symbol, Any}()
     dual_names = _find_duals(variable_list)
     param_names = _find_params(variable_list)
-    variable_list = setdiff(variable_list, vcat(dual_names, param_names))
+    variable_list = setdiff(variable_list, vcat(dual_names, param_names, ".DS_Store"))
     param_values = Dict{Symbol, DataFrames.DataFrame}()
     for name in variable_list
         variable_name = splitext(name)[1]
@@ -115,14 +115,10 @@ Exports Operational Problem Results to a path
 # Accepted Key Words
 - `file_type = CSV`: only CSV and featherfile are accepted
 """
-function IS.write_results(results::OperationsProblemResults, save_path::String; kwargs...)
-    if !isdir(save_path)
+function IS.write_results(results::IS.Results, folder_path::String; kwargs...)
+    if !isdir(folder_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
-    folder_path = mkdir(joinpath(
-        save_path,
-        replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-"),
-    ))
     write_data(get_variables(results), folder_path; kwargs...)
     if !isempty(get_duals(results))
         write_data(get_duals(results), folder_path; duals = true, kwargs...)
