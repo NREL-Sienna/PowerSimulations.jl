@@ -116,7 +116,7 @@ function test_load_simulation(file_path::String)
         @testset "Test reading and writing to the results folder" begin
             for name in stage_names
                 results_folder = joinpath(sim_results.results_folder, name)
-                files = collect(readdir(results_folder))
+                files = readdir(results_folder)
                 for f in files
                     rm("$(results_folder)/$f")
                 end
@@ -133,7 +133,7 @@ function test_load_simulation(file_path::String)
         @testset "Test file names" begin
             for name in stage_names
                 results_folder = joinpath(sim_results.results_folder, name)
-                files = collect(readdir(results_folder))
+                files = readdir(results_folder)
                 for f in files
                     rm("$(results_folder)/$f")
                 end
@@ -152,7 +152,7 @@ function test_load_simulation(file_path::String)
                     "parameter_P_RenewableDispatch"
                     "parameter_P_HydroEnergyReservoir"
                 ]
-                file_list = collect(readdir(results_folder))
+                file_list = readdir(results_folder)
                 for name in file_list
                     variable = splitext(name)[1]
                     @test any(x -> x == variable, variable_list)
@@ -164,7 +164,7 @@ function test_load_simulation(file_path::String)
             for name in stage_names
                 res = load_simulation_results(sim_results, name)
                 if isdir(res.results_folder)
-                    files = collect(readdir(res.results_folder))
+                    files = readdir(res.results_folder)
                     for f in files
                         rm("$(res.results_folder)/$f")
                     end
@@ -176,7 +176,7 @@ function test_load_simulation(file_path::String)
 
         @testset "Test simulation output serialization and deserialization" begin
             output_path = joinpath(dirname(sim_results.results_folder), "output_references")
-            sim_output = collect(readdir(output_path))
+            sim_output = readdir(output_path)
             @test sim_output == [
                 "base_power.json",
                 "chronologies.json",
@@ -551,7 +551,7 @@ function test_load_simulation(file_path::String)
         stage_names = keys(sim.stages)
         for name in stage_names
             results_folder = joinpath(sim_results.results_folder, name)
-            files = collect(readdir(results_folder))
+            files = readdir(results_folder)
             for f in files
                 rm("$(results_folder)/$f")
             end
@@ -726,9 +726,7 @@ end
 
 @testset "Test load simulation" begin
     # Use spaces in this path because that has caused failures.
-    path = (joinpath(pwd(), "test_reading_results"))
-    !isdir(path) && mkdir(path)
-
+    path = mkpath(joinpath(pwd(), "test_reading_results"))
     try
         test_load_simulation(path)
     finally

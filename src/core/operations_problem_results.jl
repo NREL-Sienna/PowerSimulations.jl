@@ -55,7 +55,7 @@ function load_operation_results(folder_path::AbstractString)
     if isfile(folder_path)
         throw(ArgumentError("Not a folder path."))
     end
-    files_in_folder = collect(readdir(folder_path))
+    files_in_folder = readdir(folder_path)
     variable_list = setdiff(
         files_in_folder,
         ["time_stamp.feather", "base_power.json", "optimizer_log.json", "check.sha256"],
@@ -129,7 +129,7 @@ function IS.write_results(results::IS.Results, folder_path::String; kwargs...)
     write_data(IS.get_base_power(results), folder_path)
     write_optimizer_log(results.optimizer_log, folder_path)
     write_data(IS.get_time_stamp(results), folder_path, "time_stamp"; kwargs...)
-    files = collect(readdir(folder_path))
+    files = readdir(folder_path)
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
     return
@@ -184,7 +184,7 @@ function write_to_CSV(results::OperationsProblemResults, save_path::String; kwar
         file_type = CSV,
         kwargs...,
     )
-    files = collect(readdir(folder_path))
+    files = readdir(folder_path)
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
     return
