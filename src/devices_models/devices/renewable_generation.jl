@@ -52,7 +52,7 @@ end
 
 function make_reactive_power_constraints_inputs(
     ::Type{<:PSY.RenewableGen},
-    ::Type{<:RenewableConstantpower_factor},
+    ::Type{<:RenewableConstantPowerFactor},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
@@ -66,7 +66,7 @@ end
 function custom_reactive_power_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{T},
-    ::Type{RenewableConstantpower_factor},
+    ::Type{RenewableConstantPowerFactor},
 ) where {T <: PSY.RenewableGen}
     names = (PSY.get_name(d) for d in devices)
     time_steps = model_time_steps(psi_container)

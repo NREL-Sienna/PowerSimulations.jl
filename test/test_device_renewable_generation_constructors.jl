@@ -71,7 +71,7 @@ end
 end
 
 @testset "Renewable DCPLossLess Constantpower_factor" begin
-    model = DeviceModel(RenewableDispatch, RenewableConstantpower_factor)
+    model = DeviceModel(RenewableDispatch, RenewableConstantPowerFactor)
     c_sys5_re = build_system("c_sys5_re")
 
     #5 Bus testing case
@@ -101,7 +101,7 @@ end
 end
 
 @testset "Renewable ACPPower Constantpower_factor" begin
-    model = DeviceModel(RenewableDispatch, RenewableConstantpower_factor)
+    model = DeviceModel(RenewableDispatch, RenewableConstantPowerFactor)
     c_sys5_re = build_system("c_sys5_re")
     for p in [true, false]
         op_problem =
