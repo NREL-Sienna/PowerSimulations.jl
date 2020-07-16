@@ -583,7 +583,7 @@ thermal_generators5_uc_testing(nodes) = [
         nothing,
         nothing,
         ThreePartCost((0.0, 1400.0), 0.0, 4.0, 2.0),
-        1.0,
+        100.0,
     ),
     ThermalStandard(
         "Park City",
@@ -600,7 +600,7 @@ thermal_generators5_uc_testing(nodes) = [
         (up = 0.02, down = 0.02),
         nothing,
         ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
-        1.0,
+        100.0,
     ),
     ThermalStandard(
         "Solitude",
@@ -617,7 +617,7 @@ thermal_generators5_uc_testing(nodes) = [
         (up = 0.0012, down = 0.0012),
         (up = 5.0, down = 3.0),
         ThreePartCost((0.0, 3000.0), 0.0, 3.0, 1.5),
-        1.0,
+        100.0,
     ),
     ThermalStandard(
         "Sundance",
@@ -634,7 +634,7 @@ thermal_generators5_uc_testing(nodes) = [
         (up = 0.015, down = 0.015),
         (up = 2.0, down = 1.0),
         ThreePartCost((0.0, 4000.0), 0.0, 4.0, 2.0),
-        1.0,
+        100.0,
     ),
     ThermalStandard(
         "Brighton",
@@ -651,7 +651,7 @@ thermal_generators5_uc_testing(nodes) = [
         (up = 0.0015, down = 0.0015),
         (up = 5.0, down = 3.0),
         ThreePartCost((0.0, 1000.0), 0.0, 1.5, 0.75),
-        1.0,
+        100.0,
     ),
 ];
 
