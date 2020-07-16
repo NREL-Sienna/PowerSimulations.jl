@@ -19,8 +19,8 @@ This formulation is from the benchmark library maintained by the IEEE PES Task F
 - Optional renewable generators with time series for minimum and maximum production.
 
 
-# Formultions
-A detailed description of this mathematical model is available here. This model does have some aaugmentation to constraints but is mathematically equivalent to the formulation found [here](https://github.com/power-grid-lib/pglib-uc/blob/master/MODEL.pdf).
+# Formultions 
+A detailed description of this mathematical model is available here. This model does have some aaugmentation to constraints but is mathematically equivalent to the formulation found [here](https://github.com/power-grid-lib/pglib-uc/blob/master/MODEL.pdf). 
 ### Indices and Sets
 ```math
 \begin{itemize}
@@ -62,8 +62,8 @@ A detailed description of this mathematical model is available here. This model 
 	\item[$c_g(t)$]    Cost of power produced above minimum for thermal generator $g$ at time $t$ (MW), $\in \bbR$.
 	\item[$p_g(t)$]    Power above minimum for thermal generator $g$ at time $t$ (MW), $\geq 0$.
 	\item[$p_w(t)$]  Renewable generation used from renewable generator $w$ at time $t$ (MW), $\geq 0$.
-	\item[$u_g(t)$]    Commitment status of thermal generator $g$ at time $t$, $\in \{0,1\}$.
-	\item[$v_g(t)$]    Startup status of thermal generator $g$ at time $t$, $\in \{0,1\}$.
+	\item[$u_g(t)$]    Commitment status of thermal generator $g$ at time $t$, $\in \{0,1\}$. 
+	\item[$v_g(t)$]    Startup status of thermal generator $g$ at time $t$, $\in \{0,1\}$. 
 	\item[$w_g(t)$]    Shutdown status of thermal generator $g$ at time $t$, $\in \{0,1\}$. \
 	\item[$\delta^s_g(t)$] Startup in category $s$ for thermal generator $g$ at time $t$, $\in \{0,1\}$.
 	\item[$\lambda_g^l(t)$]  Fraction of power from piecewise generation point $l$ for generator $g$ at time $t$ (MW), $\in [0,1]$.
@@ -131,7 +131,7 @@ subject to:\
 		& u_g(t) \geq U_g & \hspace{1cm} \forall t \in \cT, \, \forall g \in \cG \label{eq:MustRun}
 \end{align}
 ```
-*Start-up time_limits constraints*
+*Start-up timelimits constraints*
 ```math
 \begin{align}
 		& \delta^s_g(t) \leq \sum_{i = TS^s_g}^{TS^{s+1}_g-1} w_g(t-i) & \forall t \in \{TS^{s+1}_g,\ldots,T\},\,\forall s \in \cS_g\!\setminus\!\{S_g\},\,  \forall g \in \cG \label{eq:STISelect}

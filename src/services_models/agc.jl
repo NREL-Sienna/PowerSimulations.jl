@@ -21,22 +21,6 @@ function balancing_auxiliary_variables!(psi_container, sys)
     R_dn = JuMPVariableArray(undef, area_names, time_steps)
     assign_variable!(psi_container, make_variable_name("area_total_reserve_up"), R_up)
     assign_variable!(psi_container, make_variable_name("area_total_reserve_dn"), R_dn)
-    R_up_emergency = JuMPVariableArray(undef, area_names, time_steps)
-    R_dn_emergency = JuMPVariableArray(undef, area_names, time_steps)
-    assign_variable!(
-        psi_container,
-        make_variable_name("area_emergency_reserve_up"),
-        R_up_emergency,
-    )
-    assign_variable!(
-        psi_container,
-        make_variable_name("area_emergency_reserve_dn"),
-        R_dn_emergency,
-    )
-    emergency_up =
-        add_expression_container!(psi_container, :emergency_up, area_names, time_steps)
-    emergency_dn =
-        add_expression_container!(psi_container, :emergency_dn, area_names, time_steps)
     for t in time_steps, a in area_names
         R_up[a, t] = JuMP.@variable(
             psi_container.JuMPmodel,
@@ -48,20 +32,7 @@ function balancing_auxiliary_variables!(psi_container, sys)
             base_name = "R_dn_{$(a),$(t)}",
             lower_bound = 0.0
         )
-        R_up_emergency[a, t] = JuMP.@variable(
-            psi_container.JuMPmodel,
-            base_name = "Re_up_{$(a),$(t)}",
-            lower_bound = 0.0
-        )
-        emergency_up[a, t] = R_up_emergency[a, t] + 0.0
-        R_dn_emergency[a, t] = JuMP.@variable(
-            psi_container.JuMPmodel,
-            base_name = "Re_dn_{$(a),$(t)}",
-            lower_bound = 0.0
-        )
-        emergency_dn[a, t] = R_dn_emergency[a, t] + 0.0
     end
-
     return
 end
 
@@ -117,8 +88,6 @@ Expression for the power deviation given deviation in the frequency. This expres
 """
 function frequency_response_constraint!(psi_container::PSIContainer, sys::PSY.System)
     time_steps = model_time_steps(psi_container)
-    services = PSY.get_components(PSY.AGC, sys)
-    area_names = (PSY.get_name(PSY.get_area(s)) for s in services)
     frequency_response = 0.0
     for area in PSY.get_components(PSY.Area, sys)
         frequency_response += PSY.get_load_response(area)
@@ -132,45 +101,15 @@ function frequency_response_constraint!(psi_container::PSIContainer, sys::PSY.Sy
     @assert frequency_response >= 0.0
     # This value is the one updated later in simulation based on the UC result
     inv_frequency_reponse = 1 / frequency_response
-    #TODO: Update unconventional way to add variables
-    area_balance = JuMP.@variable(
-        psi_container.JuMPmodel,
-        [a in area_names, t in time_steps],
-        base_name = "balance_{$(a),$(t)}"
-    )
-    assign_variable!(
-        psi_container,
-        make_variable_name("area_dispatch_balance"),
-        area_balance,
-    )
+    area_mismatch = get_variable(psi_container, :area_mismatch)
     frequency = get_variable(psi_container, make_variable_name("Δf"))
-    R_up = get_variable(psi_container, make_variable_name("area_total_reserve_up"))
-    R_dn = get_variable(psi_container, make_variable_name("area_total_reserve_dn"))
-    R_up_emergency =
-        get_variable(psi_container, make_variable_name("area_emergency_reserve_up"))
-    R_dn_emergency =
-        get_variable(psi_container, make_variable_name("area_emergency_reserve_dn"))
-
     container = JuMPConstraintArray(undef, time_steps)
     assign_constraint!(psi_container, "freque_response", container)
-
-    #container[1] = JuMP.@constraint(
-    #        psi_container.JuMPmodel,
-    #        frequency[1] == -inv_frequency_reponse * (sum(area_balance.data[:, 1]))
-    #    )
-
     for t in time_steps
-        system_balance = sum(area_balance.data[:, t])
-        total_reg = JuMP.AffExpr(0.0)
-        for a in area_names
-            JuMP.add_to_expression!(total_reg, R_up[a, t])
-            JuMP.add_to_expression!(total_reg, -1 * R_dn[a, t])
-            JuMP.add_to_expression!(total_reg, R_up_emergency[a, t])
-            JuMP.add_to_expression!(total_reg, -1 * R_dn_emergency[a, t])
-        end
+        system_mismatch = sum(area_mismatch.data[:, t])
         container[t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            frequency[t] == -inv_frequency_reponse * (system_balance + total_reg)
+            frequency[t] == -inv_frequency_reponse * system_mismatch
         )
     end
     return
@@ -184,7 +123,13 @@ function smooth_ace_pid!(
     area_names = (PSY.get_name(PSY.get_area(s)) for s in services)
     RAW_ACE = add_expression_container!(psi_container, :RAW_ACE, area_names, time_steps)
     SACE = JuMPVariableArray(undef, area_names, time_steps)
-    assign_variable!(psi_container, variable_name("SACE", PSY.AGC), SACE)
+    assign_variable!(psi_container, make_variable_name("SACE", PSY.AGC), SACE)
+    area_balance = JuMPVariableArray(undef, area_names, time_steps)
+    assign_variable!(
+        psi_container,
+        make_variable_name("area_dispatch_balance"),
+        area_balance,
+    )
     SACE_pid = JuMPConstraintArray(undef, area_names, time_steps)
     assign_constraint!(psi_container, "SACE_pid", SACE_pid)
 
@@ -198,25 +143,30 @@ function smooth_ace_pid!(
         Δt = convert(Dates.Second, psi_container.resolution).value
         a = PSY.get_name(PSY.get_area(service))
         for t in time_steps
-            # Todo: Add initial Frequency Deviation
-            RAW_ACE[a, t] = -10 * B * Δf[t] + 0.0
             SACE[a, t] =
                 JuMP.@variable(psi_container.JuMPmodel, base_name = "SACE_{$(a),$(t)}")
+
+            area_balance[a, t] =
+                JuMP.@variable(psi_container.JuMPmodel, base_name = "balance_{$(a),$(t)}")
+            RAW_ACE[a, t] = area_balance[a, t] - 10 * B * Δf[t]
             if t == 1
                 SACE_ini =
                     get_initial_conditions(psi_container, ICKey(AreaControlError, PSY.AGC))[ix]
-                sace_exp = SACE_ini.value + kp * ((1 + Δt / (kp / ki)) * (RAW_ACE[a, t]))
+                sace_exp =
+                    SACE_ini.value +
+                    kp * ((1 + Δt / (kp / ki)) * (RAW_ACE[a, t] - SACE[a, t]))
                 SACE_pid[a, t] =
                     JuMP.@constraint(psi_container.JuMPmodel, SACE[a, t] == sace_exp)
                 continue
             end
+
             SACE_pid[a, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 SACE[a, t] ==
                 SACE[a, t - 1] +
                 kp * (
-                    (1 + Δt / (kp / ki) + (kd / kp) / Δt) * (RAW_ACE[a, t]) +
-                    (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[a, t - 1])
+                    (1 + Δt / (kp / ki) + (kd / kp) / Δt) * (RAW_ACE[a, t] - SACE[a, t]) +
+                    (-1 - 2 * (kd / kp) / Δt) * (RAW_ACE[a, t - 1] - SACE[a, t - 1])
                 )
             )
         end
@@ -233,18 +183,11 @@ function aux_constraints!(psi_container::PSIContainer, sys::PSY.System)
     SACE = get_variable(psi_container, make_variable_name("SACE", PSY.AGC))
     R_up = get_variable(psi_container, make_variable_name("area_total_reserve_up"))
     R_dn = get_variable(psi_container, make_variable_name("area_total_reserve_dn"))
-    R_up_emergency =
-        get_variable(psi_container, make_variable_name("area_emergency_reserve_up"))
-    R_dn_emergency =
-        get_variable(psi_container, make_variable_name("area_emergency_reserve_dn"))
 
     for t in time_steps, a in area_names
         aux_equation[a, t] = JuMP.@constraint(
             psi_container.JuMPmodel,
-            -1 * SACE[a, t] ==
-            (R_up[a, t] - R_dn[a, t]) +
-            (R_up_emergency[a, t] - R_dn_emergency[a, t]) +
-            area_mismatch[a, t]
+            -1 * SACE[a, t] == (R_up[a, t] - R_dn[a, t]) + area_mismatch[a, t]
         )
     end
     return

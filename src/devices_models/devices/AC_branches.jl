@@ -137,13 +137,13 @@ function branch_flow_constraints!(
 ) where {T <: PM.DCPPowerModel}
     constraint_infos = Vector{PSI.DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        if PSY.get_flow_limits(d).to_from != PSY.get_flow_limits(d).from_to
+        if PSY.get_flowlimits(d).to_from != PSY.get_flowlimits(d).from_to
             @info("Flow limits in Line $(PSY.get_name(d)) aren't equal. The minimum will be used in formulation $(T)")
         end
         limit = min(
             PSY.get_rate(d),
-            PSY.get_flow_limits(d).to_from,
-            PSY.get_flow_limits(d).from_to,
+            PSY.get_flowlimits(d).to_from,
+            PSY.get_flowlimits(d).from_to,
         )
         minmax = (min = -1 * limit, max = limit)
         constraint_infos[ix] = DeviceRangeConstraintInfo(PSY.get_name(d), minmax)
@@ -172,14 +172,10 @@ function branch_flow_constraints!(
     to = Vector{PSI.DeviceRangeConstraintInfo}(undef, length(devices))
     from = Vector{PSI.DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        limit_values_FT[ix] = (
-            min = -1 * PSY.get_flow_limits(d).from_to,
-            max = PSY.get_flow_limits(d).from_to,
-        )
-        limit_values_TF[ix] = (
-            min = -1 * PSY.get_flow_limits(d).to_from,
-            max = PSY.get_flow_limits(d).to_from,
-        )
+        limit_values_FT[ix] =
+            (min = -1 * PSY.get_flowlimits(d).from_to, max = PSY.get_flowlimits(d).from_to)
+        limit_values_TF[ix] =
+            (min = -1 * PSY.get_flowlimits(d).to_from, max = PSY.get_flowlimits(d).to_from)
         names[ix] = PSY.get_name(d)
         to[ix] = DeviceRangeConstraintInfo(names[ix], limit_values_FT[ix])
         from[ix] = DeviceRangeConstraintInfo(names[ix], limit_values_TF[ix])

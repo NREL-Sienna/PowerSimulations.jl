@@ -19,7 +19,7 @@ function AddVariableSpec(
     psi_container::PSIContainer,
 ) where {T <: ActivePowerVariable, U <: PSY.ThermalGen}
     if get_warm_start(psi_container.settings)
-        initial_value_func = d -> PSY.get_active_power(d)
+        initial_value_func = d -> PSY.get_activepower(d)
     else
         initial_value_func = nothing
     end
@@ -28,8 +28,8 @@ function AddVariableSpec(
         binary = false,
         expression_name = :nodal_balance_active,
         initial_value_func = initial_value_func,
-        lb_value_func = x -> PSY.get_active_power_limits(x).min,
-        ub_value_func = x -> PSY.get_active_power_limits(x).max,
+        lb_value_func = x -> PSY.get_activepowerlimits(x).min,
+        ub_value_func = x -> PSY.get_activepowerlimits(x).max,
     )
 end
 
@@ -39,7 +39,7 @@ function AddVariableSpec(
     psi_container::PSIContainer,
 ) where {T <: ActivePowerVariable, U <: PSY.ThermalMultiStart}
     if get_warm_start(psi_container.settings)
-        initial_value_func = d -> PSY.get_active_power(d)
+        initial_value_func = d -> PSY.get_activepower(d)
     else
         initial_value_func = nothing
     end
@@ -49,7 +49,7 @@ function AddVariableSpec(
         expression_name = :nodal_balance_active,
         initial_value_func = initial_value_func,
         lb_value_func = x -> 0,
-        ub_value_func = x -> PSY.get_active_power_limits(x).max,
+        ub_value_func = x -> PSY.get_activepowerlimits(x).max,
     )
 end
 
@@ -62,7 +62,7 @@ function AddVariableSpec(
     psi_container::PSIContainer,
 ) where {T <: ReactivePowerVariable, U <: PSY.ThermalGen}
     if get_warm_start(psi_container.settings)
-        initial_value_func = d -> PSY.get_active_power(d)
+        initial_value_func = d -> PSY.get_activepower(d)
     else
         initial_value_func = nothing
     end
@@ -71,8 +71,8 @@ function AddVariableSpec(
         binary = false,
         expression_name = :nodal_balance_reactive,
         initial_value_func = initial_value_func,
-        lb_value_func = x -> PSY.get_reactive_power_limits(x).min,
-        ub_value_func = x -> PSY.get_reactive_power_limits(x).max,
+        lb_value_func = x -> PSY.get_reactivepowerlimits(x).min,
+        ub_value_func = x -> PSY.get_reactivepowerlimits(x).max,
     )
 end
 
@@ -93,7 +93,7 @@ function AddVariableSpec(
     psi_container::PSIContainer,
 ) where {T <: Union{StartVariable, StopVariable}, U <: PSY.ThermalGen}
     if get_warm_start(psi_container.settings)
-        initial_value_func = x -> (PSY.get_active_power(x) > 0 ? 1.0 : 0.0)
+        initial_value_func = x -> (PSY.get_activepower(x) > 0 ? 1.0 : 0.0)
     else
         initial_value_func = nothing
     end
@@ -111,7 +111,7 @@ function commitment_variables!(
 )
     time_steps = model_time_steps(psi_container)
     if get_warm_start(psi_container.settings)
-        initial_value = d -> (PSY.get_active_power(d) > 0 ? 1.0 : 0.0)
+        initial_value = d -> (PSY.get_activepower(d) > 0 ? 1.0 : 0.0)
     else
         initial_value = nothing
     end
@@ -131,7 +131,7 @@ function commitment_variables!(
             bus_number,
             t,
             varstatus[name, t],
-            PSY.get_active_power_limits(d).min,
+            PSY.get_activepowerlimits(d).min,
         )
     end
 
@@ -194,7 +194,7 @@ function make_active_power_constraints_inputs(
         range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = ACTIVE_RANGE,
             variable_name = ACTIVE_POWER,
-            limits_func = x -> PSY.get_active_power_limits(x),
+            limits_func = x -> PSY.get_activepowerlimits(x),
             constraint_func = device_range,
             constraint_struct = DeviceRangeConstraintInfo,
         )],
@@ -218,7 +218,7 @@ function make_active_power_constraints_inputs(
                 constraint_name = ACTIVE_RANGE,
                 variable_name = ACTIVE_POWER,
                 bin_variable_names = [ON],
-                limits_func = x -> PSY.get_active_power_limits(x),
+                limits_func = x -> PSY.get_activepowerlimits(x),
                 constraint_func = device_semicontinuousrange,
                 constraint_struct = DeviceRangeConstraintInfo,
             ),
@@ -242,7 +242,7 @@ function make_active_power_constraints_inputs(
         range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = ACTIVE_RANGE,
             variable_name = ACTIVE_POWER,
-            limits_func = x -> (min = 0.0, max = PSY.get_active_power_limits(x).max),
+            limits_func = x -> (min = 0.0, max = PSY.get_activepowerlimits(x).max),
             constraint_func = device_range,
             constraint_struct = DeviceRangeConstraintInfo,
         )],
@@ -268,7 +268,7 @@ end
 """
 This function adds the active power limits of generators. Constraint (17) & (18) from PGLIB
 """
-function make_active_power_constraints_inputs(
+function make_active_power_constraints_inputs!(
     ::Type{<:PSY.ThermalMultiStart},
     ::Type{<:ThermalMultiStartUnitCommitment},
     ::Type{<:PM.AbstractPowerModel},
@@ -282,8 +282,7 @@ function make_active_power_constraints_inputs(
             variable_name = ACTIVE_POWER,
             limits_func = x -> (
                 min = 0.0,
-                max = PSY.get_active_power_limits(x).max -
-                      PSY.get_active_power_limits(x).min,
+                max = PSY.get_activepowerlimits(x).max - PSY.get_activepowerlimits(x).min,
             ),
             bin_variable_names = [ON, START, STOP],
             constraint_func = device_multistart_range,
@@ -333,7 +332,7 @@ function initial_range_constraints!(
 
     constraint_data = Vector{DeviceMultiStartRangeConstraintsInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        limits = PSY.get_active_power_limits(d)
+        limits = PSY.get_activepowerlimits(d)
         name = PSY.get_name(d)
         @assert name == PSY.get_name(ini_conds[ix, 1].device)
         lag_ramp_limits = PSY.get_power_trajectory(d)
@@ -372,7 +371,7 @@ function make_reactive_power_constraints_inputs(
         range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = REACTIVE_RANGE,
             variable_name = REACTIVE_POWER,
-            limits_func = x -> PSY.get_reactive_power_limits(x),
+            limits_func = x -> PSY.get_reactivepowerlimits(x),
             constraint_func = device_range,
             constraint_struct = DeviceRangeConstraintInfo,
         )],
@@ -395,7 +394,7 @@ function make_reactive_power_constraints_inputs(
             constraint_name = REACTIVE_RANGE,
             variable_name = REACTIVE_POWER,
             bin_variable_names = [ON],
-            limits_func = x -> PSY.get_reactive_power_limits(x),
+            limits_func = x -> PSY.get_reactivepowerlimits(x),
             constraint_func = device_semicontinuousrange,
             constraint_struct = DeviceRangeConstraintInfo,
         )],
@@ -480,13 +479,13 @@ function _get_data_for_rocc(
         name = PSY.get_name(g)
         non_binding_up = false
         non_binding_down = false
-        ramp_limits = PSY.get_ramp_limits(g)
-        base_power = PSY.get_rating(g)
-        if !isnothing(ramp_limits)
-            p_lims = PSY.get_active_power_limits(g)
+        ramplimits = PSY.get_ramplimits(g)
+        basepower = PSY.get_rating(g)
+        if !isnothing(ramplimits)
+            p_lims = PSY.get_activepowerlimits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramp_limits.up * base_power >= max_rate) &
-               (ramp_limits.down * base_power >= max_rate)
+            if (ramplimits.up * basepower >= max_rate) &
+               (ramplimits.down * basepower >= max_rate)
                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
                 continue
             else
@@ -494,8 +493,8 @@ function _get_data_for_rocc(
             end
             ini_conds[idx] = ic
             ramp_params[idx] = (
-                up = ramp_limits.up * base_power * minutes_per_period,
-                down = ramp_limits.down * base_power * minutes_per_period,
+                up = ramplimits.up * basepower * minutes_per_period,
+                down = ramplimits.down * basepower * minutes_per_period,
             )
             minmax_params[idx] = p_lims
         end
@@ -529,13 +528,13 @@ function _get_data_for_rocc_pglib(
         name = PSY.get_name(g)
         non_binding_up = false
         non_binding_down = false
-        ramp_limits = PSY.get_ramp_limits(g)
-        base_power = PSY.get_rating(g)
-        if !isnothing(ramp_limits)
-            p_lims = PSY.get_active_power_limits(g)
+        ramplimits = PSY.get_ramplimits(g)
+        basepower = PSY.get_rating(g)
+        if !isnothing(ramplimits)
+            p_lims = PSY.get_activepowerlimits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramp_limits.up * base_power >= max_rate) &
-               (ramp_limits.down * base_power >= max_rate)
+            if (ramplimits.up * basepower >= max_rate) &
+               (ramplimits.down * basepower >= max_rate)
                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
                 continue
             else
@@ -543,8 +542,8 @@ function _get_data_for_rocc_pglib(
             end
             ini_conds[idx] = ic
             ramp = (
-                up = ramp_limits.up * base_power * minutes_per_period,
-                down = ramp_limits.down * base_power * minutes_per_period,
+                up = ramplimits.up * basepower * minutes_per_period,
+                down = ramplimits.down * basepower * minutes_per_period,
             )
             data[idx] = DeviceRampConstraintInfo(name, p_lims, ramp)
         end
@@ -644,12 +643,13 @@ function ramp_constraints!(
         add_device_services!(constaint_data[ix], ic.device, model)
     end
     if !isempty(ini_conds)
+        # Adds constraints (8-9) & (19-20) 
         device_multistart_rateofchange(
             psi_container,
             constaint_data,
             ini_conds,
             constraint_name(RAMP, PSY.ThermalMultiStart),
-            make_variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),
+            (make_variable_name(ACTIVE_POWER, PSY.ThermalMultiStart),),
         )
     else
         @warn "Data doesn't contain generators with ramp limits, consider adjusting your formulation"
@@ -868,7 +868,7 @@ function device_startup_initial_condition(
     return
 end
 
-"""
+""" 
 This function creates the contraints for different types of starts based on generator down-time
 """
 function startup_time_constraints!(
@@ -1047,19 +1047,18 @@ function _get_data_for_tdc(
         @assert g == initial_conditions_off[ix].device
         non_binding_up = false
         non_binding_down = false
-        time_limits = PSY.get_time_limits(g)
+        timelimits = PSY.get_timelimits(g)
         name = PSY.get_name(g)
-        if !isnothing(time_limits)
-            if (time_limits.up <= fraction_of_hour) & (time_limits.down <= fraction_of_hour)
+        if !isnothing(timelimits)
+            if (timelimits.up <= fraction_of_hour) & (timelimits.down <= fraction_of_hour)
                 @debug "Generator $(name) has a nonbinding time limits. Constraints Skipped"
-                continue
             else
                 idx += 1
             end
             ini_conds[idx, 1] = ic
             ini_conds[idx, 2] = initial_conditions_off[ix]
-            up_val = round(time_limits.up * steps_per_hour, RoundUp)
-            down_val = round(time_limits.down * steps_per_hour, RoundUp)
+            up_val = round(timelimits.up * steps_per_hour, RoundUp)
+            down_val = round(timelimits.down * steps_per_hour, RoundUp)
             time_params[idx] = time_params[idx] = (up = up_val, down = down_val)
         end
     end
@@ -1256,7 +1255,7 @@ function cost_function(
     end
 
     for d in devices
-        cost_component = PSY.get_variable(PSY.get_operation_cost(d))
+        cost_component = PSY.get_variable(PSY.get_op_cost(d))
         cost_expression = _ps_cost(d, cost_component)
         T_ce = typeof(cost_expression)
         T_cf = typeof(psi_container.cost_function)
@@ -1352,7 +1351,7 @@ function cost_function(
     end
 
     for d in devices
-        cost_component = PSY.get_variable(PSY.get_operation_cost(d))
+        cost_component = PSY.get_variable(PSY.get_op_cost(d))
         cost_expression = _ps_cost(
             d,
             cost_component,
@@ -1369,7 +1368,7 @@ function cost_function(
         end
     end
 
-    ## Start up cost
+    ## Start up cost 
     function _ps_cost(d::PSY.ThermalMultiStart, cost_component::StartUpStages)
         gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
         startup_var = (HOT_START, WARM_START, COLD_START)
@@ -1391,7 +1390,7 @@ function cost_function(
     end
 
     for d in devices
-        cost_component = PSY.get_startup(PSY.get_operation_cost(d))
+        cost_component = PSY.get_startup(PSY.get_op_cost(d))
         cost_expression = _ps_cost(d, cost_component)
         T_ce = typeof(cost_expression)
         T_cf = typeof(psi_container.cost_function)
@@ -1414,7 +1413,7 @@ function NodalExpressionSpec(
     return NodalExpressionSpec(
         "get_rating",
         ACTIVE_POWER,
-        use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_active_power(x),
+        use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),
         1.0,
         T,
     )

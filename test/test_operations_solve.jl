@@ -358,12 +358,12 @@ function test_write_functions(file_path, op_problem, res)
         c_sys5_re = build_system("c_sys5_re")
         system = op_problem.sys
         params =
-            PSI.get_parameter_array(op_problem.psi_container.parameters[:P__get_max_active_power__PowerLoad])
+            PSI.get_parameter_array(op_problem.psi_container.parameters[:P__get_maxactivepower__PowerLoad])
         params = PSI.axis_array_to_dataframe(params)
         devices = collect(PSY.get_components(PSY.PowerLoad, c_sys5_re))
-        multiplier = [PSY.get_active_power(devices[1])]
+        multiplier = [PSY.get_activepower(devices[1])]
         for d in 2:length(devices)
-            multiplier = hcat(multiplier, PSY.get_active_power(devices[d]))
+            multiplier = hcat(multiplier, PSY.get_activepower(devices[d]))
         end
         extracted = -multiplier .* params
         @test extracted == res.parameter_values[:P_PowerLoad]

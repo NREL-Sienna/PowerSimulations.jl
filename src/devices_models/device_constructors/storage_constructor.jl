@@ -20,7 +20,7 @@ function construct_device!(
     initial_conditions!(psi_container, devices, D)
 
     #Constraints
-    active_power_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
     reactive_power_constraints!(psi_container, devices, model, S, get_feedforward(model))
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
@@ -57,7 +57,7 @@ function construct_device!(
     initial_conditions!(psi_container, devices, D)
 
     #Constraints
-    active_power_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 
@@ -90,7 +90,7 @@ function construct_device!(
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    active_power_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
     reactive_power_constraints!(psi_container, devices, model, S, get_feedforward(model))
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
@@ -129,7 +129,7 @@ function construct_device!(
     initial_conditions!(psi_container, devices, model.formulation)
 
     #Constraints
-    active_power_constraints!(psi_container, devices, model, S, get_feedforward(model))
+    activepower_constraints!(psi_container, devices, model, S, get_feedforward(model))
     energy_capacity_constraints!(psi_container, devices, model, S, get_feedforward(model))
     feedforward!(psi_container, devices, model, get_feedforward(model))
 

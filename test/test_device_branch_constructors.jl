@@ -12,7 +12,7 @@
         :L => DeviceModel(Line, StaticLineBounds),
     )
     template = OperationsProblemTemplate(StandardPTDFModel, devices, branches, services)
-    limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
+    limits = PSY.get_flowlimits(PSY.get_component(MonitoredLine, system, "1"))
     op_problem_m = OperationsProblem(
         PSI.GenericOpProblem,
         template,
@@ -47,7 +47,7 @@ end
     line = PSY.get_component(Line, system, "1")
     PSY.convert_component!(MonitoredLine, line, system)
     line = PSY.get_component(MonitoredLine, system, "1")
-    limits = PSY.get_flow_limits(line)
+    limits = PSY.get_flowlimits(line)
     op_problem_m =
         OperationsProblem(TestOpProblem, template, system; optimizer = ipopt_optimizer)
     monitored = solve!(op_problem_m)
@@ -71,7 +71,7 @@ end
     line = PSY.get_component(Line, system, "1")
     PSY.convert_component!(MonitoredLine, line, system)
     line = PSY.get_component(MonitoredLine, system, "1")
-    limits = PSY.get_flow_limits(PSY.get_component(MonitoredLine, system, "1"))
+    limits = PSY.get_flowlimits(PSY.get_component(MonitoredLine, system, "1"))
     rate = PSY.get_rate(PSY.get_component(MonitoredLine, system, "1"))
     op_problem_m =
         OperationsProblem(TestOpProblem, template, system; optimizer = ipopt_optimizer)

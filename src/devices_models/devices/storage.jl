@@ -77,14 +77,14 @@ function make_active_power_constraints_inputs(
             RangeConstraintInputs(;
                 constraint_name = OUTPUT_POWER_RANGE,
                 variable_name = ACTIVE_POWER_OUT,
-                limits_func = x -> PSY.get_output_active_power_limits(x),
+                limits_func = x -> PSY.get_outputactivepowerlimits(x),
                 constraint_func = device_range,
                 constraint_struct = DeviceRangeConstraintInfo,
             ),
             RangeConstraintInputs(;
                 constraint_name = INPUT_POWER_RANGE,
                 variable_name = ACTIVE_POWER_IN,
-                limits_func = x -> PSY.get_input_active_power_limits(x),
+                limits_func = x -> PSY.get_inputactivepowerlimits(x),
                 constraint_func = device_range,
                 constraint_struct = DeviceRangeConstraintInfo,
             ),
@@ -106,7 +106,7 @@ function make_active_power_constraints_inputs(
                 constraint_name = OUTPUT_POWER_RANGE,
                 variable_name = ACTIVE_POWER_OUT,
                 bin_variable_names = [RESERVE],
-                limits_func = x -> PSY.get_output_active_power_limits(x),
+                limits_func = x -> PSY.get_outputactivepowerlimits(x),
                 constraint_func = reserve_device_semicontinuousrange,
                 constraint_struct = DeviceRangeConstraintInfo,
             ),
@@ -114,7 +114,7 @@ function make_active_power_constraints_inputs(
                 constraint_name = INPUT_POWER_RANGE,
                 variable_name = ACTIVE_POWER_IN,
                 bin_variable_names = [RESERVE],
-                limits_func = x -> PSY.get_input_active_power_limits(x),
+                limits_func = x -> PSY.get_inputactivepowerlimits(x),
                 constraint_func = reserve_device_semicontinuousrange,
                 constraint_struct = DeviceRangeConstraintInfo,
             ),
@@ -135,7 +135,7 @@ function reactive_power_constraints!(
     constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         name = PSY.get_name(d)
-        limits = PSY.get_reactive_power_limits(d)
+        limits = PSY.get_reactivepowerlimits(d)
         constraint_infos[ix] = DeviceRangeConstraintInfo(name, limits)
     end
 
@@ -172,7 +172,7 @@ function energy_capacity_constraints!(
     constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         name = PSY.get_name(d)
-        limits = PSY.get_state_of_charge_limits(d)
+        limits = PSY.get_capacity(d)
         constraint_info = DeviceRangeConstraintInfo(name, limits)
         add_device_services!(constraint_info, d, model)
         constraint_infos[ix] = constraint_info

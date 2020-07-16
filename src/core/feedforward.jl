@@ -497,7 +497,7 @@ function feedforward!(
     constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         name = PSY.get_name(d)
-        limits = PSY.get_active_power_limits(d)
+        limits = PSY.get_activepowerlimits(d)
         constraint_info = DeviceRangeConstraintInfo(name, limits)
         add_device_services!(constraint_info, d, model)
         constraint_infos[ix] = constraint_info
@@ -526,7 +526,7 @@ function feedforward!(
     constraint_infos = Vector{DeviceRangeConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
         name = PSY.get_name(d)
-        limits = PSY.get_active_power_limits(d)
+        limits = PSY.get_activepowerlimits(d)
         constraint_info = DeviceRangeConstraintInfo(name, limits)
         add_device_services!(constraint_info, d, model)
         constraint_infos[ix] = constraint_info

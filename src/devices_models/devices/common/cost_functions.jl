@@ -187,8 +187,8 @@ function _pwlgencost_sos(
     gen_cost = JuMP.GenericAffExpr{Float64, _variable_type(psi_container)}()
     if isnothing(status)
         status = 1.0
-        @warn("Using Piecewise Linear cost function
-            but no variable/parameter ref for ON status is passed.
+        @warn("Using Piecewise Linear cost function 
+            but no variable/parameter ref for ON status is passed. 
             Default status will be set to online (1.0)")
     end
     pwlvars = JuMP.@variable(
@@ -410,7 +410,7 @@ for d in devices
 
 ```    cost_expression = ps_cost(psi_container,
                               variable[PSY.get_name(d), :],
-                              getfield(PSY.get_operation_cost(d), cost_symbol),
+                              getfield(PSY.get_op_cost(d), cost_symbol),
                               dt,
                               sign) ```
 ``` psi_container.cost_function += cost_expression ```
@@ -436,7 +436,7 @@ function add_to_cost(
     resolution = model_resolution(psi_container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
     for d in devices
-        cost_component = getfield(PSY.get_operation_cost(d), cost_symbol)
+        cost_component = getfield(PSY.get_op_cost(d), cost_symbol)
         cost_expression =
             ps_cost(psi_container, var_name, PSY.get_name(d), cost_component, dt, sign)
         T_ce = typeof(cost_expression)

@@ -22,9 +22,9 @@ function AddVariableSpec(
         variable_name = make_name(T, U),
         binary = false,
         expression_name = :nodal_balance_active,
-        initial_value_func = x -> PSY.get_active_power(x),
-        lb_value_func = x -> PSY.get_active_power_limits(x).min,
-        ub_value_func = x -> PSY.get_active_power_limits(x).max,
+        initial_value_func = x -> PSY.get_activepower(x),
+        lb_value_func = x -> PSY.get_activepowerlimits(x).min,
+        ub_value_func = x -> PSY.get_activepowerlimits(x).max,
     )
 end
 
@@ -37,9 +37,9 @@ function AddVariableSpec(
         variable_name = make_name(T, U),
         binary = false,
         expression_name = :nodal_balance_reactive,
-        initial_value_func = x -> PSY.get_reactive_power(x),
-        lb_value_func = x -> PSY.get_reactive_power_limits(x).min,
-        ub_value_func = x -> PSY.get_reactive_power_limits(x).max,
+        initial_value_func = x -> PSY.get_reactivepower(x),
+        lb_value_func = x -> PSY.get_reactivepowerlimits(x).min,
+        ub_value_func = x -> PSY.get_reactivepowerlimits(x).max,
     )
 end
 
@@ -140,7 +140,7 @@ function make_reactive_power_constraints_inputs(
         range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = REACTIVE_RANGE,
             variable_name = REACTIVE_POWER,
-            limits_func = x -> PSY.get_reactive_power_limits(x),
+            limits_func = x -> PSY.get_reactivepowerlimits(x),
             constraint_func = device_range,
             constraint_struct = DeviceRangeConstraintInfo,
         )],
@@ -160,7 +160,7 @@ function make_active_power_constraints_inputs(
             range_constraint_inputs = [RangeConstraintInputs(;
                 constraint_name = ACTIVE_RANGE,
                 variable_name = ACTIVE_POWER,
-                limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
+                limits_func = x -> (min = 0.0, max = PSY.get_activepower(x)),
                 constraint_func = device_range,
                 constraint_struct = DeviceRangeConstraintInfo,
             )],
@@ -192,7 +192,7 @@ function make_active_power_constraints_inputs(
         range_constraint_inputs = [RangeConstraintInputs(;
             constraint_name = ACTIVE_RANGE,
             variable_name = ACTIVE_POWER,
-            limits_func = x -> PSY.get_active_power_limits(x),
+            limits_func = x -> PSY.get_activepowerlimits(x),
             constraint_func = device_range,
             constraint_struct = DeviceRangeConstraintInfo,
         )],
@@ -201,7 +201,7 @@ end
 
 #=
 # All Hydro UC formulations are currently not supported
-function active_power_constraints!(
+function activepower_constraints!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
     model::DeviceModel{H,<:AbstractHydroUnitCommitment},
@@ -215,7 +215,7 @@ function active_power_constraints!(
         psi_container,
         devices,
         model,
-        x -> PSY.get_active_power_limits(x),
+        x -> PSY.get_activepowerlimits(x),
     )
 
     if !parameters && !use_forecast_data
@@ -403,7 +403,7 @@ function NodalExpressionSpec(
     return NodalExpressionSpec(
         "get_rating",
         ACTIVE_POWER,
-        use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_active_power(x),
+        use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_activepower(x),
         1.0,
         T,
     )
