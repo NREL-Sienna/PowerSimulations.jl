@@ -55,7 +55,7 @@ function load_operation_results(folder_path::AbstractString)
     if isfile(folder_path)
         throw(ArgumentError("Not a folder path."))
     end
-    files_in_folder = collect(readdir(folder_path))
+    files_in_folder = readdir(folder_path)
     variable_list = setdiff(
         files_in_folder,
         ["time_stamp.feather", "base_power.json", "optimizer_log.json", "check.sha256"],
@@ -64,7 +64,7 @@ function load_operation_results(folder_path::AbstractString)
     dual_result = Dict{Symbol, Any}()
     dual_names = _find_duals(variable_list)
     param_names = _find_params(variable_list)
-    variable_list = setdiff(variable_list, vcat(dual_names, param_names))
+    variable_list = setdiff(variable_list, vcat(dual_names, param_names, ".DS_Store"))
     param_values = Dict{Symbol, DataFrames.DataFrame}()
     for name in variable_list
         variable_name = splitext(name)[1]
@@ -115,14 +115,10 @@ Exports Operational Problem Results to a path
 # Accepted Key Words
 - `file_type = CSV`: only CSV and featherfile are accepted
 """
-function IS.write_results(results::OperationsProblemResults, save_path::String; kwargs...)
-    if !isdir(save_path)
+function IS.write_results(results::IS.Results, folder_path::String; kwargs...)
+    if !isdir(folder_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end
-    folder_path = mkdir(joinpath(
-        save_path,
-        replace_chars("$(round(Dates.now(), Dates.Minute))", ":", "-"),
-    ))
     write_data(get_variables(results), folder_path; kwargs...)
     if !isempty(get_duals(results))
         write_data(get_duals(results), folder_path; duals = true, kwargs...)
@@ -133,7 +129,7 @@ function IS.write_results(results::OperationsProblemResults, save_path::String; 
     write_data(IS.get_base_power(results), folder_path)
     write_optimizer_log(results.optimizer_log, folder_path)
     write_data(IS.get_time_stamp(results), folder_path, "time_stamp"; kwargs...)
-    files = collect(readdir(folder_path))
+    files = readdir(folder_path)
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
     return
@@ -188,7 +184,7 @@ function write_to_CSV(results::OperationsProblemResults, save_path::String; kwar
         file_type = CSV,
         kwargs...,
     )
-    files = collect(readdir(folder_path))
+    files = readdir(folder_path)
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
     return
