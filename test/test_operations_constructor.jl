@@ -73,17 +73,21 @@ end
         use_parameters = true,
     )
     MOIU.attach_optimizer(op_problem.psi_container.JuMPmodel)
-    con_index = collect(get_all_constraint_index(op_problem))
-    length = size(con_index, 1)
-    constraint =
-        op_problem.psi_container.constraints[last(con_index)[1]].data[last(con_index)[2]]
-    @test get_con_index(op_problem, length) == constraint
-    @test get_con_index(op_problem, length + 1) == nothing
-    var_index = collect(get_all_var_index(op_problem))
-    length = size(var_index, 1)
-    var = op_problem.psi_container.variables[last(var_index)[1]].data[last(var_index)[2]]
-    @test get_var_index(op_problem, length) == var
-    @test get_var_index(op_problem, length + 1) == nothing
+    constraint_indices = get_all_constraint_index(op_problem)
+    for (key, index, moi_index) in constraint_indices
+        val1 = get_con_index(op_problem, moi_index)
+        val2 = op_problem.psi_container.constraints[key].data[index]
+        @test val1 == val2
+    end
+    @test isnothing(get_con_index(op_problem, length(constraint_indices) + 1))
+
+    var_indices = get_all_var_index(op_problem)
+    for (key, index, moi_index) in var_indices
+        val1 = get_var_index(op_problem, moi_index)
+        val2 = op_problem.psi_container.variables[key].data[index]
+        @test val1 == val2
+    end
+    @test isnothing(get_var_index(op_problem, length(var_indices) + 1))
 end
 
 @testset "Test passing custom JuMP model" begin
