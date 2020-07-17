@@ -136,6 +136,7 @@ export get_duals
 export SimulationResultsReference
 export write_results
 export check_file_integrity
+export load_results
 export load_operation_results
 export load_simulation_results
 export write_to_CSV

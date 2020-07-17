@@ -597,7 +597,7 @@ thermal_generators5_uc_testing(nodes) = [
         ThermalFuels.COAL,
         (min = 0.65, max = 1.70),
         (min = -1.275, max = 1.275),
-        (up = 0.02*2.2125, down = 0.02*2.2125),
+        (up = 0.02 * 2.2125, down = 0.02 * 2.2125),
         nothing,
         ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
         100.0,
@@ -614,7 +614,7 @@ thermal_generators5_uc_testing(nodes) = [
         ThermalFuels.COAL,
         (min = 1.0, max = 5.20),
         (min = -3.90, max = 3.90),
-        (up = 0.0012*5.2, down = 0.0012*5.2),
+        (up = 0.0012 * 5.2, down = 0.0012 * 5.2),
         (up = 5.0, down = 3.0),
         ThreePartCost((0.0, 3000.0), 0.0, 3.0, 1.5),
         100.0,
@@ -631,7 +631,7 @@ thermal_generators5_uc_testing(nodes) = [
         ThermalFuels.COAL,
         (min = 1.0, max = 2.0),
         (min = -1.5, max = 1.5),
-        (up = 0.015*2.5, down = 0.015*2.5),
+        (up = 0.015 * 2.5, down = 0.015 * 2.5),
         (up = 2.0, down = 1.0),
         ThreePartCost((0.0, 4000.0), 0.0, 4.0, 2.0),
         100.0,
@@ -648,7 +648,7 @@ thermal_generators5_uc_testing(nodes) = [
         ThermalFuels.COAL,
         (min = 3.0, max = 6.0),
         (min = -4.50, max = 4.50),
-        (up = 0.0015*7.5, down = 0.0015*7.5),
+        (up = 0.0015 * 7.5, down = 0.0015 * 7.5),
         (up = 5.0, down = 3.0),
         ThreePartCost((0.0, 1000.0), 0.0, 1.5, 0.75),
         100.0,
@@ -914,7 +914,11 @@ function build_c_sys5_hy_ed(; kwargs...)
                 for i in 1:length(ta)
                     ini_time = timestamp(ta[i])
                     data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(c_sys5_hy_ed, l, Deterministic("get_max_active_power", data))
+                    add_forecast!(
+                        c_sys5_hy_ed,
+                        l,
+                        Deterministic("get_max_active_power", data),
+                    )
                 end
             end
             for (ix, l) in enumerate(get_components(RenewableGen, c_sys5_hy_ed))
@@ -922,7 +926,11 @@ function build_c_sys5_hy_ed(; kwargs...)
                 for i in 1:length(ta)
                     ini_time = timestamp(ta[i])
                     data = when(load_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(c_sys5_hy_ed, l, Deterministic("get_max_active_power", data))
+                    add_forecast!(
+                        c_sys5_hy_ed,
+                        l,
+                        Deterministic("get_max_active_power", data),
+                    )
                 end
             end
             for (ix, l) in enumerate(get_components(HydroEnergyReservoir, c_sys5_hy_ed))
@@ -962,7 +970,11 @@ function build_c_sys5_hy_ed(; kwargs...)
                 for i in 1:length(ta)
                     ini_time = timestamp(ta[i])
                     data = when(hydro_timeseries_RT[t][ix], hour, hour(ini_time[1]))
-                    add_forecast!(c_sys5_hy_ed, l, Deterministic("get_max_active_power", data))
+                    add_forecast!(
+                        c_sys5_hy_ed,
+                        l,
+                        Deterministic("get_max_active_power", data),
+                    )
                 end
             end
         end

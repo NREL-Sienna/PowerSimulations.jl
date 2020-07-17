@@ -155,13 +155,13 @@ IS.get_parameters(result::SimulationResults) = result.parameter_values
 function deserialize_sim_output(file_path::String)
     path = joinpath(file_path, "output_references")
     list = setdiff(
-        collect(readdir(path)),
+        readdir(path),
         ["results_folder.json", "chronologies.json", "base_power.json"],
     )
     ref = Dict()
     for stage in list
         ref[stage] = Dict{Symbol, Any}()
-        for variable in collect(readdir(joinpath(path, stage)))
+        for variable in readdir(joinpath(path, stage))
             var = splitext(variable)[1]
             ref[stage][Symbol(var)] = Feather.read(joinpath(path, stage, variable))
             ref[stage][Symbol(var)][!, :Date] =
@@ -274,7 +274,7 @@ function load_simulation_results(
     variable::Array;
     kwargs...,
 )
-    results_folder = sim_output.results_folder
+    results_folder = mkpath(joinpath(sim_output.results_folder, stage_name))
     stage = "stage-$stage_name"
     references = sim_output.ref
     base_power = sim_output.base_powers[stage_name]
@@ -368,7 +368,7 @@ function load_simulation_results(
     stage_name::String;
     kwargs...,
 )
-    results_folder = sim_output.results_folder
+    results_folder = mkpath(joinpath(sim_output.results_folder, stage_name))
     stage = "stage-$stage_name"
     references = sim_output.ref
     base_power = sim_output.base_powers[stage_name]
@@ -478,7 +478,7 @@ function IS.write_results(res::SimulationResults; kwargs...)
     write_data(res.base_power, folder_path)
     write_data(res.dual_values, folder_path; kwargs...)
     write_data(res.parameter_values, folder_path; kwargs...)
-    files = collect(readdir(folder_path))
+    files = readdir(folder_path)
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
     return
@@ -489,9 +489,7 @@ function serialize_sim_output(sim_results::SimulationResultsReference)
     for (k, stage) in sim_results.ref
         try
             for (i, v) in stage
-                path = joinpath(file_path, "$k")
-                !isdir(path) && mkdir(path)
-                # TODO: Remove this line. There shouldn't be empties coming here.
+                path = mkpath(joinpath(file_path, "$k"))
                 !isempty(v) && Feather.write(joinpath(path, "$i.feather"), v)
             end
         catch
@@ -539,7 +537,7 @@ function write_to_CSV(res::SimulationResults; kwargs...)
     )
     write_data(get_duals(res), folder_path; file_type = CSV, kwargs...)
     write_data(parameters_export, folder_path; file_type = CSV, kwargs...)
-    files = collect(readdir(folder_path))
+    files = readdir(folder_path)
     compute_file_hash(folder_path, files)
     @info("Files written to $folder_path folder.")
     return
@@ -564,17 +562,60 @@ variable = get_result_variable(results, :ON, ThermalStandard)
 function get_result_variable(results::IS.Results, sym::Symbol, data_type::PSY.DataType)
     variable_name = encode_symbol(data_type, sym)
     if variable_name in keys(IS.get_variables(results))
-        variable = get_result_variable(results, variable_name)
+        variable = IS.get_variables(results)[variable_name]
         return variable
     else
         @info "Variable $variable_name not found in results."
     end
 end
 
-function get_result_variable(results::IS.Results, variable_name::Symbol)
-    return IS.get_variables(results)[variable_name]
-end
-
-function get_variable_names(results::IS.Results)
-    return collect(keys(results.variable_values))
+function load_results(folder_path::String)
+    if isfile(folder_path)
+        throw(ArgumentError("Not a folder path."))
+    end
+    files_in_folder = readdir(folder_path)
+    variable_list = setdiff(
+        files_in_folder,
+        ["time_stamp.feather", "base_power.json", "optimizer_log.json", "check.sha256"],
+    )
+    vars_result = Dict{Symbol, DataFrames.DataFrame}()
+    dual_result = Dict{Symbol, Any}()
+    dual_names = _find_duals(variable_list)
+    param_names = _find_params(variable_list)
+    variable_list = setdiff(variable_list, vcat(dual_names, param_names, ".DS_Store"))
+    param_values = Dict{Symbol, DataFrames.DataFrame}()
+    for name in variable_list
+        variable_name = splitext(name)[1]
+        file_path = joinpath(folder_path, name)
+        vars_result[Symbol(variable_name)] = Feather.read(file_path)
+    end
+    for name in dual_names
+        dual_name = splitext(name)[1]
+        file_path = joinpath(folder_path, name)
+        dual_result[Symbol(dual_name)] = Feather.read(file_path)
+    end
+    for name in param_names
+        param_name = splitext(name)[1]
+        file_path = joinpath(folder_path, name)
+        param_values[Symbol(param_name)] = Feather.read(file_path)
+    end
+    optimizer_log = read_json(joinpath(folder_path, "optimizer_log.json"))
+    time_stamp = Feather.read(joinpath(folder_path, "time_stamp.feather"))
+    base_power = JSON.read(joinpath(folder_path, "base_power.json"))[1]
+    if size(time_stamp, 1) > find_var_length(vars_result, variable_list)
+        time_stamp = shorten_time_stamp(time_stamp)
+    end
+    obj_value = Dict{Symbol, Any}(:OBJECTIVE_FUNCTION => optimizer_log["obj_value"])
+    check_file_integrity(folder_path)
+    results = SimulationResults(
+        base_power,
+        vars_result,
+        obj_value,
+        optimizer_log,
+        time_stamp,
+        dual_result,
+        folder_path,
+        param_values,
+    )
+    return results
 end
