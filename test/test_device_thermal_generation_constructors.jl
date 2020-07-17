@@ -226,7 +226,7 @@ end
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         moi_lbvalue_test(
             op_problem,
-            PSI.constraint_name(PSI.ACTIVE_RANGE_LB, PSY.ThermalStandard),
+            :P_lb__ThermalStandard__RangeConstraint,
             0.0,
         )
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -241,7 +241,7 @@ end
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
         moi_lbvalue_test(
             op_problem,
-            PSI.constraint_name(PSI.ACTIVE_RANGE_LB, PSY.ThermalStandard),
+            :P_lb__ThermalStandard__RangeConstraint,
             0.0,
         )
         psi_checkobjfun_test(op_problem, GQEVF)
@@ -259,7 +259,7 @@ end
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         moi_lbvalue_test(
             op_problem,
-            PSI.constraint_name(PSI.ACTIVE_RANGE_LB, PSY.ThermalStandard),
+            :P_lb__ThermalStandard__RangeConstraint,
             0.0,
         )
         psi_checkobjfun_test(op_problem, GAEVF)
@@ -274,7 +274,7 @@ end
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
         moi_lbvalue_test(
             op_problem,
-            PSI.constraint_name(PSI.ACTIVE_RANGE_LB, PSY.ThermalStandard),
+            :P_lb__ThermalStandard__RangeConstraint,
             0.0,
         )
         psi_checkobjfun_test(op_problem, GQEVF)

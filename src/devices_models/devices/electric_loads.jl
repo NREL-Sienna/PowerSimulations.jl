@@ -11,7 +11,7 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: ActivePowerVariable, U <: PSY.ElectricLoad}
     return AddVariableSpec(;
-        variable_name = make_name(T, U),
+        variable_name = make_variable_name(T, U),
         binary = false,
         expression_name = :nodal_balance_active,
         sign = -1.0,
@@ -26,7 +26,7 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: ReactivePowerVariable, U <: PSY.ElectricLoad}
     return AddVariableSpec(;
-        variable_name = make_name(T, U),
+        variable_name = make_variable_name(T, U),
         binary = false,
         expression_name = :nodal_balance_reactive,
         sign = -1.0,
@@ -40,14 +40,16 @@ function AddVariableSpec(
     ::Type{U},
     ::PSIContainer,
 ) where {T <: OnVariable, U <: PSY.ElectricLoad}
-    return AddVariableSpec(; variable_name = make_name(T, U), binary = true)
+    return AddVariableSpec(; variable_name = make_variable_name(T, U), binary = true)
 end
 
 ####################################### Reactive Power Constraints #########################
 """
 Reactive Power Constraints on Controllable Loads Assume Constant power_factor
 """
-function make_reactive_power_constraints_inputs(
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
     ::Type{<:PSY.ElectricLoad},
     ::Type{<:AbstractControllablePowerLoadFormulation},
     ::Type{<:PM.AbstractPowerModel},
@@ -55,7 +57,7 @@ function make_reactive_power_constraints_inputs(
     use_parameters::Bool,
     use_forecasts::Bool,
 )
-    return DeviceRangeConstraintInputs(;
+    return DeviceRangeConstraintSpec(;
         custom_psi_container_func = custom_reactive_power_constraints!,
     )
 end
@@ -78,71 +80,83 @@ function custom_reactive_power_constraints!(
     end
 end
 
-function make_active_power_constraints_inputs(
-    ::Type{<:PSY.ElectricLoad},
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ActivePowerVariable},
+    ::Type{T},
     ::Type{<:DispatchablePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
-)
+) where {T <: PSY.ElectricLoad}
     if (!use_parameters && !use_forecasts)
-        return DeviceRangeConstraintInputs(;
-            range_constraint_inputs = [RangeConstraintInputs(;
-                constraint_name = ACTIVE_RANGE,
-                variable_name = ACTIVE_POWER,
+        return DeviceRangeConstraintSpec(;
+            range_constraint_spec = RangeConstraintSpec(;
+                constraint_name = make_constraint_name(
+                    RangeConstraint,
+                    ActivePowerVariable,
+                    T,
+                ),
+                variable_name = make_variable_name(ActivePowerVariable, T),
                 limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_range,
                 constraint_struct = DeviceRangeConstraintInfo,
-            )],
+            ),
         )
     end
 
-    return DeviceRangeConstraintInputs(;
-        timeseries_range_constraint_inputs = [TimeSeriesConstraintInputs(
-            constraint_name = ACTIVE,
-            variable_name = ACTIVE_POWER,
+    return DeviceRangeConstraintSpec(;
+        timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
+            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
+            variable_name = make_variable_name(ActivePowerVariable, T),
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
             forecast_label = "get_max_active_power",
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub :
                               device_timeseries_ub,
-        )],
+        ),
     )
 end
 
-function make_active_power_constraints_inputs(
-    ::Type{<:PSY.ElectricLoad},
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ActivePowerVariable},
+    ::Type{T},
     ::Type{<:InterruptiblePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
-)
+) where {T <: PSY.ElectricLoad}
     if (!use_parameters && !use_forecasts)
-        return DeviceRangeConstraintInputs(;
-            range_constraint_inputs = [RangeConstraintInputs(;
-                constraint_name = ACTIVE_RANGE,
-                variable_name = ACTIVE_POWER,
-                bin_variable_names = [ON],
+        return DeviceRangeConstraintSpec(;
+            range_constraint_spec = RangeConstraintSpec(;
+                constraint_name = make_constraint_name(
+                    RangeConstraint,
+                    ActivePowerVariable,
+                    T,
+                ),
+                variable_name = make_variable_name(ActivePowerVariable, T),
+                bin_variable_names = [make_variable_name(OnVariable, T)],
                 limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_semicontinuousrange,
                 constraint_struct = DeviceRangeConstraintInfo,
-            )],
+            ),
         )
     end
 
-    return DeviceRangeConstraintInputs(;
-        timeseries_range_constraint_inputs = [TimeSeriesConstraintInputs(
-            constraint_name = ACTIVE,
-            variable_name = ACTIVE_POWER,
-            bin_variable_name = ON,
+    return DeviceRangeConstraintSpec(;
+        timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
+            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
+            variable_name = make_variable_name(ActivePowerVariable, T),
+            bin_variable_name = make_variable_name(OnVariable, T),
             parameter_name = use_parameters ? ON : nothing,
             forecast_label = "get_max_active_power",
             multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_ub_bigM :
                               device_timeseries_ub_bin,
-        )],
+        ),
     )
 end
 

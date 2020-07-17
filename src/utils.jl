@@ -287,7 +287,8 @@ end
 
 function middle_rename(original::Symbol, split_char::String, addition::String)
     parts = split(String(original), split_char)
-    return Symbol(parts[1], "_", addition, PSI_NAME_DELIMITER, parts[2])
+    parts[1] = parts[1] * "_" * addition
+    return Symbol(join(parts, split_char))
 end
 
 "Replaces the string in `char` with the string`replacement`"

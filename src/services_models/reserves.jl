@@ -24,7 +24,7 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: ServiceRequirementVariable, U <: PSY.ReserveDemandCurve}
     return AddVariableSpec(;
-        variable_name = make_name(T, U),
+        variable_name = make_variable_name(T, U),
         binary = false,
         lb_value_func = x -> 0.0,
     )

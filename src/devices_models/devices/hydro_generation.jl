@@ -19,7 +19,7 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: ActivePowerVariable, U <: PSY.HydroGen}
     return AddVariableSpec(;
-        variable_name = make_name(T, U),
+        variable_name = make_variable_name(T, U),
         binary = false,
         expression_name = :nodal_balance_active,
         initial_value_func = x -> PSY.get_active_power(x),
@@ -34,7 +34,7 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: ReactivePowerVariable, U <: PSY.HydroGen}
     return AddVariableSpec(;
-        variable_name = make_name(T, U),
+        variable_name = make_variable_name(T, U),
         binary = false,
         expression_name = :nodal_balance_reactive,
         initial_value_func = x -> PSY.get_reactive_power(x),
@@ -49,7 +49,7 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: EnergyVariable, U <: PSY.HydroGen}
     return AddVariableSpec(;
-        variable_name = make_name(T, U),
+        variable_name = make_variable_name(T, U),
         binary = false,
         initial_value_func = x -> PSY.get_initial_storage(x),
         lb_value_func = x -> 0.0,
@@ -81,7 +81,7 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: SpillageVariable, U <: PSY.HydroGen}
     return AddVariableSpec(;
-        variable_name = make_name(T, U),
+        variable_name = make_variable_name(T, U),
         binary = false,
         lb_value_func = x -> 0.0,
     )
@@ -128,74 +128,88 @@ function commitment_constraints!(
 end
 =#
 ####################################### Reactive Power Constraints #########################
-function make_reactive_power_constraints_inputs(
-    ::Type{<:PSY.HydroGen},
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
     ::Type{<:AbstractHydroDispatchFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
-)
-    return DeviceRangeConstraintInputs(;
-        range_constraint_inputs = [RangeConstraintInputs(;
-            constraint_name = REACTIVE_RANGE,
-            variable_name = REACTIVE_POWER,
+) where {T <: PSY.HydroGen}
+    return DeviceRangeConstraintSpec(;
+        range_constraint_spec = RangeConstraintSpec(;
+            constraint_name = make_constraint_name(
+                RangeConstraint,
+                ReactivePowerVariable,
+                T,
+            ),
+            variable_name = make_variable_name(ReactivePowerVariable, T),
             limits_func = x -> PSY.get_reactive_power_limits(x),
             constraint_func = device_range,
             constraint_struct = DeviceRangeConstraintInfo,
-        )],
+        ),
     )
 end
 
-function make_active_power_constraints_inputs(
-    ::Type{<:PSY.HydroGen},
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ActivePowerVariable},
+    ::Type{T},
     ::Type{<:AbstractHydroDispatchFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
-)
-    if (!use_parameters && !use_forecasts)
-        return DeviceRangeConstraintInputs(;
-            range_constraint_inputs = [RangeConstraintInputs(;
-                constraint_name = ACTIVE_RANGE,
-                variable_name = ACTIVE_POWER,
+) where {T <: PSY.HydroGen}
+    if !use_parameters && !use_forecasts
+        return DeviceRangeConstraintSpec(;
+            range_constraint_spec = RangeConstraintSpec(;
+                constraint_name = make_constraint_name(
+                    RangeConstraint,
+                    ActivePowerVariable,
+                    T,
+                ),
+                variable_name = make_variable_name(ActivePowerVariable, T),
                 limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_range,
                 constraint_struct = DeviceRangeConstraintInfo,
-            )],
+            ),
         )
     end
 
-    return DeviceRangeConstraintInputs(;
-        timeseries_range_constraint_inputs = [TimeSeriesConstraintInputs(
-            constraint_name = ACTIVE,
-            variable_name = ACTIVE_POWER,
+    return DeviceRangeConstraintSpec(;
+        timeseries_range_constraint_spec = TimeSeriesConstraintSpec(
+            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
+            variable_name = make_variable_name(ActivePowerVariable, T),
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
             forecast_label = "get_rating",
             multiplier_func = x -> PSY.get_rating(x),
             constraint_func = use_parameters ? device_timeseries_param_ub :
                               device_timeseries_ub,
-        )],
+        ),
     )
 end
 
-function make_active_power_constraints_inputs(
-    ::Type{<:PSY.HydroGen},
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ActivePowerVariable},
+    ::Type{T},
     ::Type{<:AbstractHydroReservoirFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
-)
-    return DeviceRangeConstraintInputs(;
-        range_constraint_inputs = [RangeConstraintInputs(;
-            constraint_name = ACTIVE_RANGE,
-            variable_name = ACTIVE_POWER,
+) where {T <: PSY.HydroGen}
+    return DeviceRangeConstraintSpec(;
+        range_constraint_spec = RangeConstraintSpec(;
+            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
+            variable_name = make_variable_name(ActivePowerVariable, T),
             limits_func = x -> PSY.get_active_power_limits(x),
             constraint_func = device_range,
             constraint_struct = DeviceRangeConstraintInfo,
-        )],
+        ),
     )
 end
 
@@ -220,7 +234,7 @@ function active_power_constraints!(
 
     if !parameters && !use_forecast_data
         device_semicontinuousrange(
-            RangeConstraintInputsInternal(
+            RangeConstraintSpecInternal(
                 psi_container,
                 constraint_infos,
                 constraint_name(ACTIVE_RANGE, H),
@@ -287,7 +301,7 @@ function inflow_constraints!(
     if !parameters && !use_forecast_data
         device_range(
             psi_container,
-            RangeConstraintInputsInternal(
+            RangeConstraintSpecInternal(
                 constraint_infos,
                 constraint_name(INFLOW_RANGE, H),
                 make_variable_name(INFLOW, H),

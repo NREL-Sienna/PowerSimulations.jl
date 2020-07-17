@@ -1,5 +1,5 @@
 
-struct TimeSeriesConstraintInputsInternal
+struct TimeSeriesConstraintSpecInternal
     constraint_infos::Vector{DeviceTimeSeriesConstraintInfo}
     constraint_name::Symbol
     variable_name::Symbol
@@ -7,7 +7,7 @@ struct TimeSeriesConstraintInputsInternal
     param_reference::Union{Nothing, UpdateRef}
 end
 
-function lazy_lb(psi_container::PSIContainer, inputs::TimeSeriesConstraintInputsInternal)
+function lazy_lb(psi_container::PSIContainer, inputs::TimeSeriesConstraintSpecInternal)
     time_steps = model_time_steps(psi_container)
     names = (get_name(x) for x in inputs.constraint_infos)
     variable = get_variable(psi_container, inputs.variable_name)
@@ -51,7 +51,7 @@ Constructs upper bound for given variable and time series data and a multiplier.
 """
 function device_timeseries_ub(
     psi_container::PSIContainer,
-    inputs::TimeSeriesConstraintInputsInternal,
+    inputs::TimeSeriesConstraintSpecInternal,
 )
     time_steps = model_time_steps(psi_container)
     names = (get_name(x) for x in inputs.constraint_infos)
@@ -102,7 +102,7 @@ where (name, data) in range_data.
 """
 function device_timeseries_lb(
     psi_container::PSIContainer,
-    inputs::TimeSeriesConstraintInputsInternal,
+    inputs::TimeSeriesConstraintSpecInternal,
 )
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, inputs.variable_name)
@@ -144,7 +144,7 @@ Constructs upper bound for given variable using a parameter. The constraint is
 """
 function device_timeseries_param_ub(
     psi_container::PSIContainer,
-    inputs::TimeSeriesConstraintInputsInternal,
+    inputs::TimeSeriesConstraintSpecInternal,
 )
     time_steps = model_time_steps(psi_container)
     names = (get_name(x) for x in inputs.constraint_infos)
@@ -200,7 +200,7 @@ Constructs lower bound for given variable using a parameter. The constraint is
 """
 function device_timeseries_param_lb(
     psi_container::PSIContainer,
-    inputs::TimeSeriesConstraintInputsInternal,
+    inputs::TimeSeriesConstraintSpecInternal,
 )
     time_steps = model_time_steps(psi_container)
     variable = get_variable(psi_container, inputs.variable_name)
@@ -253,7 +253,7 @@ where (name, data) in range_data.
 """
 function device_timeseries_ub_bin(
     psi_container::PSIContainer,
-    inputs::TimeSeriesConstraintInputsInternal,
+    inputs::TimeSeriesConstraintSpecInternal,
 )
     time_steps = model_time_steps(psi_container)
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")
@@ -300,7 +300,7 @@ Constructs upper bound for variable and time series and a multiplier or confines
 """
 function device_timeseries_ub_bigM(
     psi_container::PSIContainer,
-    inputs::TimeSeriesConstraintInputsInternal,
+    inputs::TimeSeriesConstraintSpecInternal,
 )
     time_steps = model_time_steps(psi_container)
     ub_name = middle_rename(inputs.constraint_name, PSI_NAME_DELIMITER, "ub")

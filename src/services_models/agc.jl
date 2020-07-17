@@ -71,7 +71,7 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: AreaMismatchVariable}
     return AddVariableSpec(;
-        variable_name = make_name(AreaMismatchVariable),
+        variable_name = make_variable_name(AreaMismatchVariable),
         binary = false,
     )
 end
@@ -82,7 +82,7 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: LiftVariable}
     AddVariableSpec(;
-        variable_name = make_name(LiftVariable),
+        variable_name = make_variable_name(LiftVariable),
         binary = false,
         lb_value_func = x -> 0.0,
     )
