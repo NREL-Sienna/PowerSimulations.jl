@@ -44,7 +44,7 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = model_time_steps(psi_container)
     name = PSY.get_name(service)
-    constraint = get_constraint(psi_container, constraint_name(REQUIREMENT, SR))
+    constraint = get_constraint(psi_container, make_constraint_name(REQUIREMENT, SR))
     reserve_variable = get_variable(psi_container, make_variable_name(name, SR))
     use_slacks = get_services_slack_variables(psi_container.settings)
 
@@ -113,7 +113,7 @@ function service_requirement_constraint!(
     @debug initial_time
     time_steps = model_time_steps(psi_container)
     name = PSY.get_name(service)
-    constraint = get_constraint(psi_container, constraint_name(REQUIREMENT, SR))
+    constraint = get_constraint(psi_container, make_constraint_name(REQUIREMENT, SR))
     reserve_variable = get_variable(psi_container, make_variable_name(name, SR))
     requirement_variable =
         get_variable(psi_container, make_variable_name(SERVICE_REQUIREMENT, SR))
@@ -241,7 +241,7 @@ function include_service!(
     for (ix, service) in enumerate(services)
         push!(
             constraint_info.additional_terms_ub,
-            constraint_name(PSY.get_name(service), SR),
+            make_constraint_name(PSY.get_name(service), SR),
         )
     end
     return
@@ -258,7 +258,7 @@ function include_service!(
     for (ix, service) in enumerate(services)
         push!(
             constraint_info.additional_terms_lb,
-            constraint_name(PSY.get_name(service), SR),
+            make_constraint_name(PSY.get_name(service), SR),
         )
     end
     return
@@ -298,14 +298,20 @@ function add_device_services!(
                 for service in services
                     push!(
                         constraint_data_in.additional_terms_ub,
-                        constraint_name(PSY.get_name(service), service_model.service_type),
+                        make_constraint_name(
+                            PSY.get_name(service),
+                            service_model.service_type,
+                        ),
                     )
                 end
             elseif service_model.service_type <: PSY.Reserve{PSY.ReserveUp}
                 for service in services
                     push!(
                         constraint_data_out.additional_terms_ub,
-                        constraint_name(PSY.get_name(service), service_model.service_type),
+                        make_constraint_name(
+                            PSY.get_name(service),
+                            service_model.service_type,
+                        ),
                     )
                 end
             end

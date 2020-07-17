@@ -360,7 +360,7 @@ function energy_balance_constraint!(
             psi_container,
             get_initial_conditions(psi_container, key),
             constraint_infos,
-            constraint_name(ENERGY_CAPACITY, H),
+            make_constraint_name(ENERGY_CAPACITY, H),
             (
                 make_variable_name(SPILLAGE, H),
                 make_variable_name(ACTIVE_POWER, H),
@@ -373,7 +373,7 @@ function energy_balance_constraint!(
             psi_container,
             get_initial_conditions(psi_container, key),
             constraint_infos,
-            constraint_name(ENERGY_CAPACITY, H),
+            make_constraint_name(ENERGY_CAPACITY, H),
             (
                 make_variable_name(SPILLAGE, H),
                 make_variable_name(ACTIVE_POWER, H),
@@ -484,7 +484,7 @@ function energy_limit_constraints!(
         device_energy_limit_param_ub(
             psi_container,
             constraint_infos,
-            constraint_name(ENERGY_LIMIT, H),
+            make_constraint_name(ENERGY_LIMIT, H),
             UpdateRef{H}(ENERGY_BUDGET, forecast_label),
             make_variable_name(ACTIVE_POWER, H),
         )
@@ -492,7 +492,7 @@ function energy_limit_constraints!(
         device_energy_limit_ub(
             psi_container,
             constraint_infos,
-            constraint_name(ENERGY_LIMIT),
+            make_constraint_name(ENERGY_LIMIT),
             make_variable_name(ACTIVE_POWER, H),
         )
     end

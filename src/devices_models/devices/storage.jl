@@ -228,7 +228,7 @@ function energy_capacity_constraints!(
         psi_container,
         RangeConstraintSpecInternal(
             constraint_infos,
-            constraint_name(ENERGY_CAPACITY, St),
+            make_constraint_name(ENERGY_CAPACITY, St),
             make_variable_name(ENERGY, St),
         ),
     )
@@ -263,7 +263,7 @@ function energy_balance_constraint!(
         psi_container,
         get_initial_conditions(psi_container, ICKey(EnergyLevel, St)),
         efficiency_data,
-        constraint_name(ENERGY_LIMIT, St),
+        make_constraint_name(ENERGY_LIMIT, St),
         (
             make_variable_name(ACTIVE_POWER_OUT, St),
             make_variable_name(ACTIVE_POWER_IN, St),

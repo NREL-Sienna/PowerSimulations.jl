@@ -53,7 +53,12 @@ function construct_service!(
         get_parameter_array(container)
     end
 
-    add_cons_container!(psi_container, constraint_name(REQUIREMENT, SR), names, time_steps)
+    add_cons_container!(
+        psi_container,
+        make_constraint_name(REQUIREMENT, SR),
+        names,
+        time_steps,
+    )
 
     for service in services
         contributing_devices =
@@ -89,7 +94,12 @@ function construct_service!(
     time_steps = model_time_steps(psi_container)
     names = (PSY.get_name(s) for s in services)
     add_variables!(ServiceRequirementVariable, psi_container, services)
-    add_cons_container!(psi_container, constraint_name(REQUIREMENT, SR), names, time_steps)
+    add_cons_container!(
+        psi_container,
+        make_constraint_name(REQUIREMENT, SR),
+        names,
+        time_steps,
+    )
 
     for service in services
         contributing_devices =

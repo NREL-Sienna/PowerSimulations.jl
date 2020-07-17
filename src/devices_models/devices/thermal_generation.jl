@@ -362,7 +362,7 @@ function initial_range_constraints!(
             psi_container,
             constraint_data,
             ini_conds,
-            constraint_name(ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
+            make_constraint_name(ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
             make_variable_name(StopVariable, PSY.ThermalMultiStart),
         )
     else
@@ -442,7 +442,7 @@ function commitment_constraints!(
     device_commitment(
         psi_container,
         get_initial_conditions(psi_container, ICKey(DeviceStatus, T)),
-        constraint_name(COMMITMENT, T),
+        make_constraint_name(COMMITMENT, T),
         (
             make_variable_name(StartVariable, T),
             make_variable_name(StopVariable, T),
@@ -510,8 +510,7 @@ function _get_data_for_rocc(
         if !isnothing(ramp_limits)
             p_lims = PSY.get_active_power_limits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramp_limits.up >= max_rate) &
-               (ramp_limits.down >= max_rate)
+            if (ramp_limits.up >= max_rate) & (ramp_limits.down >= max_rate)
                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
                 continue
             else
@@ -558,8 +557,7 @@ function _get_data_for_rocc_pglib(
         if !isnothing(ramp_limits)
             p_lims = PSY.get_active_power_limits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramp_limits.up >= max_rate) &
-               (ramp_limits.down >= max_rate)
+            if (ramp_limits.up >= max_rate) & (ramp_limits.down >= max_rate)
                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
                 continue
             else
@@ -603,7 +601,7 @@ function ramp_constraints!(
             psi_container,
             (ramp_params, minmax_params),
             ini_conds,
-            constraint_name(RAMP, T),
+            make_constraint_name(RAMP, T),
             (
                 make_variable_name(ActivePowerVariable, T),
                 make_variable_name(StartVariable, T),
@@ -639,7 +637,7 @@ function ramp_constraints!(
             psi_container,
             ramp_params,
             ini_conds,
-            constraint_name(RAMP, T),
+            make_constraint_name(RAMP, T),
             make_variable_name(ActivePowerVariable, T),
         )
     else
@@ -672,7 +670,7 @@ function ramp_constraints!(
             psi_container,
             constaint_data,
             ini_conds,
-            constraint_name(RAMP, PSY.ThermalMultiStart),
+            make_constraint_name(RAMP, PSY.ThermalMultiStart),
             make_variable_name(ActivePowerVariable, PSY.ThermalMultiStart),
         )
     else
@@ -916,7 +914,7 @@ function startup_time_constraints!(
     turbine_temperature(
         psi_container,
         constraint_data,
-        constraint_name(STARTUP_TIMELIMIT, PSY.ThermalMultiStart),
+        make_constraint_name(STARTUP_TIMELIMIT, PSY.ThermalMultiStart),
         make_variable_name(StopVariable, PSY.ThermalMultiStart),
         (
             make_variable_name(HotStartVariable, PSY.ThermalMultiStart),
@@ -948,7 +946,7 @@ function startup_type_constraints!(
     device_start_type_constraint(
         psi_container,
         constraint_data,
-        constraint_name(START_TYPE, PSY.ThermalMultiStart),
+        make_constraint_name(START_TYPE, PSY.ThermalMultiStart),
         make_variable_name(START, PSY.ThermalMultiStart),
         (
             make_variable_name(HotStartVariable, PSY.ThermalMultiStart),
@@ -1006,7 +1004,7 @@ function startup_initial_condition_constraints!(
         psi_container,
         constraint_data,
         initial_conditions_offtime,
-        constraint_name(STARTUP_INITIAL_CONDITION, PSY.ThermalMultiStart),
+        make_constraint_name(STARTUP_INITIAL_CONDITION, PSY.ThermalMultiStart),
         (
             make_variable_name(HotStartVariable, PSY.ThermalMultiStart),
             make_variable_name(WarmStartVariable, PSY.ThermalMultiStart),
@@ -1037,7 +1035,7 @@ function must_run_constraints!(
     end
     ts_inputs = TimeSeriesConstraintSpecInternal(
         constraint_infos,
-        constraint_name(MUST_RUN, PSY.ThermalMultiStart),
+        make_constraint_name(MUST_RUN, PSY.ThermalMultiStart),
         make_variable_name(OnVariable, PSY.ThermalMultiStart),
         nothing,
         nothing,
@@ -1114,7 +1112,7 @@ function time_constraints!(
                 psi_container,
                 time_params,
                 ini_conds,
-                constraint_name(DURATION, T),
+                make_constraint_name(DURATION, T),
                 (
                     make_variable_name(OnVariable, T),
                     make_variable_name(StartVariable, T),
@@ -1126,7 +1124,7 @@ function time_constraints!(
                 psi_container,
                 time_params,
                 ini_conds,
-                constraint_name(DURATION, T),
+                make_constraint_name(DURATION, T),
                 (
                     make_variable_name(OnVariable, T),
                     make_variable_name(StartVariable, T),
@@ -1160,7 +1158,7 @@ function time_constraints!(
                 psi_container,
                 time_params,
                 ini_conds,
-                constraint_name(DURATION, T),
+                make_constraint_name(DURATION, T),
                 (
                     make_variable_name(OnVariable, T),
                     make_variable_name(StartVariable, T),
@@ -1172,7 +1170,7 @@ function time_constraints!(
                 psi_container,
                 time_params,
                 ini_conds,
-                constraint_name(DURATION, T),
+                make_constraint_name(DURATION, T),
                 (
                     make_variable_name(OnVariable, T),
                     make_variable_name(StartVariable, T),

@@ -459,7 +459,7 @@ function add_pm_con_refs!(
         if pm_v in pm_con_names
             container = PSI.add_cons_container!(
                 psi_container,
-                PSI.constraint_name(ps_v, PSY.Bus),
+                make_constraint_name(ps_v, PSY.Bus),
                 (PSY.get_name(b) for b in values(bus_dict)),
                 time_steps,
             )
