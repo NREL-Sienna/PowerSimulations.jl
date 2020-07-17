@@ -172,7 +172,7 @@ function make_active_power_constraints_inputs(
             constraint_name = ACTIVE,
             variable_name = ACTIVE_POWER,
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
-            forecast_label = "get_rating",
+            forecast_label = "get_max_active_power",
             multiplier_func = x -> PSY.get_rating(x),
             constraint_func = use_parameters ? device_timeseries_param_ub :
                               device_timeseries_ub,
@@ -237,7 +237,7 @@ function active_power_constraints!(
             ts_data_active,
             constraint_name(ACTIVE_RANGE, H),
             make_variable_name(ACTIVE_POWER, H),
-            UpdateRef{H}(ON, "get_rating"),
+            UpdateRef{H}(ON, "get_max_active_power"),
             make_variable_name(ON, H),
         )
     else
@@ -401,7 +401,7 @@ function NodalExpressionSpec(
     use_forecasts::Bool,
 ) where {T <: PSY.HydroGen}
     return NodalExpressionSpec(
-        "get_rating",
+        "get_max_active_power",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_active_power(x),
         1.0,

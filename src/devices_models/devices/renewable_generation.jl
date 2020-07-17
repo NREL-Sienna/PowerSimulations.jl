@@ -108,7 +108,7 @@ function make_active_power_constraints_inputs(
             constraint_name = ACTIVE,
             variable_name = ACTIVE_POWER,
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
-            forecast_label = "get_rating",
+            forecast_label = "get_max_active_power",
             multiplier_func = x -> PSY.get_rating(x),
             constraint_func = use_parameters ? device_timeseries_param_ub :
                               device_timeseries_ub,
@@ -124,7 +124,7 @@ function NodalExpressionSpec(
     use_forecasts::Bool,
 ) where {T <: PSY.RenewableGen}
     return NodalExpressionSpec(
-        "get_rating",
+        "get_max_active_power",
         REACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) * sin(acos(PSY.get_power_factor(x))) :
         x -> PSY.get_reactive_power(x),
@@ -139,7 +139,7 @@ function NodalExpressionSpec(
     use_forecasts::Bool,
 ) where {T <: PSY.RenewableGen}
     return NodalExpressionSpec(
-        "get_rating",
+        "get_max_active_power",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) * PSY.get_power_factor(x) :
         x -> PSY.get_active_power(x),

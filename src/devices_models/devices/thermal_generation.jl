@@ -1410,7 +1410,7 @@ function NodalExpressionSpec(
     use_forecasts::Bool,
 ) where {T <: PSY.ThermalGen}
     return NodalExpressionSpec(
-        "get_rating",
+        "get_max_active_power",
         ACTIVE_POWER,
         use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_active_power(x),
         1.0,

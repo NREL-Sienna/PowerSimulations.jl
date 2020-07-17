@@ -52,7 +52,7 @@ function active_power_constraints!(
 
     constraint_infos = Vector{DeviceTimeSeriesConstraintInfo}(undef, length(devices))
     for (ix, d) in enumerate(devices)
-        ts_vector = get_time_series(psi_container, d, "get_rating")
+        ts_vector = get_time_series(psi_container, d, "get_max_active_power")
         constraint_info = DeviceTimeSeriesConstraintInfo(
             d,
             x -> PSY.get_rating(x),
@@ -306,7 +306,7 @@ function NodalExpressionSpec(
     use_forecasts::Bool,
 ) where {T <: PSY.StaticInjection}
     return NodalExpressionSpec(
-        "get_rating",
+        "get_max_active_power",
         make_variable_name(ACTIVE_POWER, T),
         use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_active_power(x),
         1.0,
