@@ -419,7 +419,7 @@ UC_devices = Dict{Symbol, DeviceModel}(
             ThermalFuels.COAL,
             (min = 0.7, max = 2.20),
             nothing,
-            (up = 0.010625*2.0, down = 0.010625*2.0),
+            (up = 0.010625 * 2.0, down = 0.010625 * 2.0),
             nothing,
             ThreePartCost((0.0, 1500.0), 0.0, 1.5, 0.75),
             100.0,
