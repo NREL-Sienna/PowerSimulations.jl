@@ -481,12 +481,11 @@ function _get_data_for_rocc(
         non_binding_up = false
         non_binding_down = false
         ramp_limits = PSY.get_ramp_limits(g)
-        base_power = PSY.get_rating(g)
         if !isnothing(ramp_limits)
             p_lims = PSY.get_active_power_limits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramp_limits.up * base_power >= max_rate) &
-               (ramp_limits.down * base_power >= max_rate)
+            if (ramp_limits.up >= max_rate) &
+               (ramp_limits.down >= max_rate)
                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
                 continue
             else
@@ -494,8 +493,8 @@ function _get_data_for_rocc(
             end
             ini_conds[idx] = ic
             ramp_params[idx] = (
-                up = ramp_limits.up * base_power * minutes_per_period,
-                down = ramp_limits.down * base_power * minutes_per_period,
+                up = ramp_limits.up * minutes_per_period,
+                down = ramp_limits.down * minutes_per_period,
             )
             minmax_params[idx] = p_lims
         end
@@ -530,12 +529,11 @@ function _get_data_for_rocc_pglib(
         non_binding_up = false
         non_binding_down = false
         ramp_limits = PSY.get_ramp_limits(g)
-        base_power = PSY.get_rating(g)
         if !isnothing(ramp_limits)
             p_lims = PSY.get_active_power_limits(g)
             max_rate = abs(p_lims.min - p_lims.max) / minutes_per_period
-            if (ramp_limits.up * base_power >= max_rate) &
-               (ramp_limits.down * base_power >= max_rate)
+            if (ramp_limits.up >= max_rate) &
+               (ramp_limits.down >= max_rate)
                 @debug "Generator $(name) has a nonbinding ramp limits. Constraints Skipped"
                 continue
             else
@@ -543,8 +541,8 @@ function _get_data_for_rocc_pglib(
             end
             ini_conds[idx] = ic
             ramp = (
-                up = ramp_limits.up * base_power * minutes_per_period,
-                down = ramp_limits.down * base_power * minutes_per_period,
+                up = ramp_limits.up * minutes_per_period,
+                down = ramp_limits.down * minutes_per_period,
             )
             data[idx] = DeviceRampConstraintInfo(name, p_lims, ramp)
         end
