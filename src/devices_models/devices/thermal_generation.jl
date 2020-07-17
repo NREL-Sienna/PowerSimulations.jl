@@ -1210,7 +1210,7 @@ function cost_function(
             container = add_var_container!(
                 psi_container,
                 :PWL_cost_vars,
-                PSY.get_name(d),
+                [PSY.get_name(d)],
                 time_steps,
                 1:length(cost_component);
                 sparse = true,
