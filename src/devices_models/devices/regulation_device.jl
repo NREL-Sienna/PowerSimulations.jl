@@ -11,7 +11,7 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: DeltaActivePowerUpVariable, U <: PSY.Device}
     return AddVariableSpec(;
-        variable_name = make_name(T, U),
+        variable_name = make_variable_name(T, U),
         binary = false,
         lb_value_func = x -> 0.0,
     )
@@ -23,13 +23,15 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: DeltaActivePowerDownVariable, U <: PSY.Device}
     AddVariableSpec(;
-        variable_name = make_name(T, U),
+        variable_name = make_variable_name(T, U),
         binary = false,
         lb_value_func = x -> 0.0,
     )
 end
 
-function active_power_constraints!(
+function add_constraints!(
+    ::Type{RangeConstraint},
+    ::Type{ActivePowerVariable},
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
@@ -88,7 +90,9 @@ function active_power_constraints!(
     return
 end
 
-function active_power_constraints!(
+function add_constraints!(
+    ::Type{RangeConstraint},
+    ::Type{ActivePowerVariable},
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T}, ReserveLimitedRegulation},

@@ -121,7 +121,7 @@ end
     constraint_names = [
         :RateLimit_ub__Line,
         :RateLimit_lb__Line,
-        PSI.constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus),
+        PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus),
     ]
     parameters = [true, false]
     test_results = Dict{System, Vector{Int}}(
@@ -173,8 +173,8 @@ end
     constraint_names = [
         :RateLimitFT__Line,
         :RateLimitTF__Line,
-        PSI.constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus),
-        PSI.constraint_name(PSI.NODAL_BALANCE_REACTIVE, PSY.Bus),
+        PSI.make_constraint_name(PSI.NODAL_BALANCE_ACTIVE, PSY.Bus),
+        PSI.make_constraint_name(PSI.NODAL_BALANCE_REACTIVE, PSY.Bus),
     ]
     parameters = [true, false]
     test_results = Dict{System, Vector{Int}}(

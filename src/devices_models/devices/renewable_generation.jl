@@ -10,7 +10,7 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: ActivePowerVariable, U <: PSY.RenewableGen}
     return AddVariableSpec(;
-        variable_name = make_name(T, U),
+        variable_name = make_variable_name(T, U),
         binary = false,
         expression_name = :nodal_balance_active,
         lb_value_func = x -> 0.0,
@@ -24,41 +24,49 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: ReactivePowerVariable, U <: PSY.RenewableGen}
     return AddVariableSpec(;
-        variable_name = make_name(T, U),
+        variable_name = make_variable_name(T, U),
         binary = false,
         expression_name = :nodal_balance_reactive,
     )
 end
 
 ####################################### Reactive Power constraint_infos #########################
-function make_reactive_power_constraints_inputs(
-    ::Type{<:PSY.RenewableGen},
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
     ::Type{<:AbstractDeviceFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
-)
-    return DeviceRangeConstraintInputs(;
-        range_constraint_inputs = [RangeConstraintInputs(;
-            constraint_name = REACTIVE_RANGE,
-            variable_name = REACTIVE_POWER,
+) where {T <: PSY.RenewableGen}
+    return DeviceRangeConstraintSpec(;
+        range_constraint_spec = RangeConstraintSpec(;
+            constraint_name = make_constraint_name(
+                RangeConstraint,
+                ReactivePowerVariable,
+                T,
+            ),
+            variable_name = make_variable_name(ReactivePowerVariable, T),
             limits_func = x -> PSY.get_reactive_power_limits(x),
             constraint_func = device_range,
             constraint_struct = DeviceRangeConstraintInfo,
-        )],
+        ),
     )
 end
 
-function make_reactive_power_constraints_inputs(
-    ::Type{<:PSY.RenewableGen},
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
+    ::Type{T},
     ::Type{<:RenewableConstantPowerFactor},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
-)
-    return DeviceRangeConstraintInputs(;
+) where {T <: PSY.RenewableGen}
+    return DeviceRangeConstraintSpec(;
         custom_psi_container_func = custom_reactive_power_constraints!,
     )
 end
@@ -83,36 +91,42 @@ function custom_reactive_power_constraints!(
     return
 end
 
-function make_active_power_constraints_inputs(
-    ::Type{<:PSY.RenewableGen},
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ActivePowerVariable},
+    ::Type{T},
     ::Type{<:AbstractRenewableDispatchFormulation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
-)
-    if (!use_parameters && !use_forecasts)
-        return DeviceRangeConstraintInputs(;
-            range_constraint_inputs = [RangeConstraintInputs(;
-                constraint_name = ACTIVE_RANGE,
-                variable_name = ACTIVE_POWER,
+) where {T <: PSY.RenewableGen}
+    if !use_parameters && !use_forecasts
+        return DeviceRangeConstraintSpec(;
+            range_constraint_spec = RangeConstraintSpec(;
+                constraint_name = make_constraint_name(
+                    RangeConstraint,
+                    ActivePowerVariable,
+                    T,
+                ),
+                variable_name = make_variable_name(ActivePowerVariable, T),
                 limits_func = x -> (min = 0.0, max = PSY.get_active_power(x)),
                 constraint_func = device_range,
                 constraint_struct = DeviceRangeConstraintInfo,
-            )],
+            ),
         )
     end
 
-    return DeviceRangeConstraintInputs(;
-        timeseries_range_constraint_inputs = [TimeSeriesConstraintInputs(;
-            constraint_name = ACTIVE,
-            variable_name = ACTIVE_POWER,
+    return DeviceRangeConstraintSpec(;
+        timeseries_range_constraint_spec = TimeSeriesConstraintSpec(;
+            constraint_name = make_constraint_name(RangeConstraint, ActivePowerVariable, T),
+            variable_name = make_variable_name(ActivePowerVariable, T),
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
             forecast_label = "get_max_active_power",
             multiplier_func = x -> PSY.get_rating(x),
             constraint_func = use_parameters ? device_timeseries_param_ub :
                               device_timeseries_ub,
-        )],
+        ),
     )
 end
 

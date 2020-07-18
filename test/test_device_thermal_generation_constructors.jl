@@ -16,10 +16,10 @@ end
         PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
     ]
     uc_constraint_names = [
-        PSI.constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.DURATION_UP, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.DURATION_DOWN, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.DURATION_UP, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.DURATION_DOWN, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
@@ -59,10 +59,10 @@ end
         PSI.make_variable_name(PSI.STOP, PSY.ThermalStandard),
     ]
     uc_constraint_names = [
-        PSI.constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.DURATION_UP, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.DURATION_DOWN, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.DURATION_UP, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.DURATION_DOWN, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
@@ -224,11 +224,7 @@ end
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
-        moi_lbvalue_test(
-            op_problem,
-            PSI.constraint_name(PSI.ACTIVE_RANGE_LB, PSY.ThermalStandard),
-            0.0,
-        )
+        moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
@@ -239,11 +235,7 @@ end
             OperationsProblem(TestOpProblem, DCPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 120, 0, 120, 120, 0, false)
-        moi_lbvalue_test(
-            op_problem,
-            PSI.constraint_name(PSI.ACTIVE_RANGE_LB, PSY.ThermalStandard),
-            0.0,
-        )
+        moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
@@ -257,11 +249,7 @@ end
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys5; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
-        moi_lbvalue_test(
-            op_problem,
-            PSI.constraint_name(PSI.ACTIVE_RANGE_LB, PSY.ThermalStandard),
-            0.0,
-        )
+        moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
         psi_checkobjfun_test(op_problem, GAEVF)
     end
 
@@ -272,11 +260,7 @@ end
             OperationsProblem(TestOpProblem, ACPPowerModel, c_sys14; use_parameters = p)
         construct_device!(op_problem, :Thermal, model)
         moi_tests(op_problem, p, 240, 0, 240, 240, 0, false)
-        moi_lbvalue_test(
-            op_problem,
-            PSI.constraint_name(PSI.ACTIVE_RANGE_LB, PSY.ThermalStandard),
-            0.0,
-        )
+        moi_lbvalue_test(op_problem, :P_lb__ThermalStandard__RangeConstraint, 0.0)
         psi_checkobjfun_test(op_problem, GQEVF)
     end
 end
@@ -284,8 +268,8 @@ end
 ################################### Ramp Limited Testing ##################################
 @testset "Thermal Ramp Limited Dispatch With DC - PF" begin
     constraint_names = [
-        PSI.constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalRampLimited)
     @info "5-Bus testing"
@@ -312,8 +296,8 @@ end
 
 @testset "Thermal Ramp Limited Dispatch With AC - PF" begin
     constraint_names = [
-        PSI.constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
-        PSI.constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.RAMP_UP, PSY.ThermalStandard),
+        PSI.make_constraint_name(PSI.RAMP_DOWN, PSY.ThermalStandard),
     ]
     model = DeviceModel(ThermalStandard, ThermalRampLimited)
     @info "5-Bus testing"
@@ -342,13 +326,13 @@ end
 
 @testset "Thermal MultiStart Dispatch With DC - PF" begin
     constraint_names = [
-        PSI.constraint_name(PSI.ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
-        PSI.constraint_name(PSI.START_TYPE, PSY.ThermalMultiStart),
-        PSI.constraint_name(PSI.MUST_RUN_LB, PSY.ThermalMultiStart),
-        PSI.constraint_name(PSI.STARTUP_TIMELIMIT_WARM, PSY.ThermalMultiStart),
-        PSI.constraint_name(PSI.STARTUP_TIMELIMIT_HOT, PSY.ThermalMultiStart),
-        PSI.constraint_name(PSI.STARTUP_INITIAL_CONDITION_LB, PSY.ThermalMultiStart),
-        PSI.constraint_name(PSI.STARTUP_INITIAL_CONDITION_UB, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.ACTIVE_RANGE_IC, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.START_TYPE, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.MUST_RUN_LB, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.STARTUP_TIMELIMIT_WARM, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.STARTUP_TIMELIMIT_HOT, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.STARTUP_INITIAL_CONDITION_LB, PSY.ThermalMultiStart),
+        PSI.make_constraint_name(PSI.STARTUP_INITIAL_CONDITION_UB, PSY.ThermalMultiStart),
     ]
     model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
     no_less_than = Dict(true => 238, false => 234)

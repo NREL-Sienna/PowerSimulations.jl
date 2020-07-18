@@ -88,9 +88,9 @@ function branch_rate_constraints!(
     constraint_infos = _get_constraint_data(devices)
     device_range(
         psi_container,
-        RangeConstraintInputsInternal(
+        RangeConstraintSpecInternal(
             constraint_infos,
-            constraint_name(RATE_LIMIT, B),
+            make_constraint_name(RATE_LIMIT, B),
             make_variable_name(FLOW_ACTIVE_POWER, B),
         ),
     )
@@ -108,7 +108,7 @@ function branch_rate_constraints!(
     rating_constraint!(
         psi_container,
         range_data,
-        constraint_name(RATE_LIMIT_FT, B),
+        make_constraint_name(RATE_LIMIT_FT, B),
         (
             make_variable_name(FLOW_ACTIVE_POWER_FROM_TO, B),
             make_variable_name(FLOW_REACTIVE_POWER_FROM_TO, B),
@@ -118,7 +118,7 @@ function branch_rate_constraints!(
     rating_constraint!(
         psi_container,
         range_data,
-        constraint_name(RATE_LIMIT_TF, B),
+        make_constraint_name(RATE_LIMIT_TF, B),
         (
             make_variable_name(FLOW_ACTIVE_POWER_TO_FROM, B),
             make_variable_name(FLOW_REACTIVE_POWER_TO_FROM, B),
@@ -150,9 +150,9 @@ function branch_flow_constraints!(
     end
     device_range(
         psi_container,
-        RangeConstraintInputsInternal(
+        RangeConstraintSpecInternal(
             constraint_infos,
-            constraint_name(FLOW_LIMIT, PSY.MonitoredLine),
+            make_constraint_name(FLOW_LIMIT, PSY.MonitoredLine),
             make_variable_name(FLOW_ACTIVE_POWER, PSY.MonitoredLine),
         ),
     )
@@ -187,17 +187,17 @@ function branch_flow_constraints!(
 
     device_range(
         psi_container,
-        RangeConstraintInputsInternal(
+        RangeConstraintSpecInternal(
             to,
-            constraint_name(FLOW_LIMIT_FROM_TO, PSY.MonitoredLine),
+            make_constraint_name(FLOW_LIMIT_FROM_TO, PSY.MonitoredLine),
             make_variable_name(FLOW_ACTIVE_POWER_FROM_TO, PSY.MonitoredLine),
         ),
     )
     device_range(
         psi_container,
-        RangeConstraintInputsInternal(
+        RangeConstraintSpecInternal(
             from,
-            constraint_name(FLOW_LIMIT_TO_FROM, PSY.MonitoredLine),
+            make_constraint_name(FLOW_LIMIT_TO_FROM, PSY.MonitoredLine),
             make_variable_name(FLOW_ACTIVE_POWER_TO_FROM, PSY.MonitoredLine),
         ),
     )

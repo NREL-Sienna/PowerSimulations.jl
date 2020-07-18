@@ -269,6 +269,7 @@ include("network_models/networks.jl")
 
 include("core/parameters.jl")
 include("core/variables.jl")
+include("core/constraints.jl")
 include("core/cache.jl")
 include("core/initial_condition_types.jl")
 include("core/initial_condition.jl")
@@ -289,8 +290,6 @@ include("core/recorder_events.jl")
 
 #Device Modeling components
 include("devices_models/devices/common/device_range_constraints.jl")
-include("devices_models/devices/common/activepower_constraints.jl")
-include("devices_models/devices/common/reactivepower_constraints.jl")
 include("devices_models/devices/common/nodal_expression.jl")
 include("devices_models/devices/renewable_generation.jl")
 include("devices_models/devices/thermal_generation.jl")

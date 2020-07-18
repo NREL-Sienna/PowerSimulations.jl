@@ -535,7 +535,7 @@ function feedforward!(
         var_name = make_variable_name(prefix, T)
         semicontinuousrange_ff(
             psi_container,
-            constraint_name(FEEDFORWARD_BIN, T),
+            make_constraint_name(FEEDFORWARD_BIN, T),
             constraint_infos,
             parameter_ref,
             var_name,
@@ -554,7 +554,7 @@ function feedforward!(
         parameter_ref = UpdateRef{JuMP.VariableRef}(var_name)
         integral_limit_ff(
             psi_container,
-            constraint_name(FEEDFORWARD_INTEGRAL_LIMIT, T),
+            make_constraint_name(FEEDFORWARD_INTEGRAL_LIMIT, T),
             parameter_ref,
             var_name,
         )

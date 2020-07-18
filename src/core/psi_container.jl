@@ -203,12 +203,6 @@ function set_initial_conditions!(psi_container::PSIContainer, key::ICKey, value)
     set_initial_conditions!(psi_container.initial_conditions, key, value)
 end
 
-# TODO: remove once all references are changed
-constraint_name(cons_type, device_type) = encode_symbol(device_type, cons_type)
-constraint_name(cons_type) = encode_symbol(cons_type)
-make_constraint_name(cons_type, device_type) = encode_symbol(device_type, cons_type)
-make_constraint_name(cons_type) = encode_symbol(cons_type)
-
 _variable_type(cm::PSIContainer) = JuMP.variable_type(cm.JuMPmodel)
 model_time_steps(psi_container::PSIContainer) = psi_container.time_steps
 model_resolution(psi_container::PSIContainer) = psi_container.resolution
@@ -304,11 +298,11 @@ function get_constraint(
     constraint_type::AbstractString,
     ::Type{T},
 ) where {T <: PSY.Component}
-    return get_constraint(psi_container, constraint_name(constraint_type, T))
+    return get_constraint(psi_container, make_constraint_name(constraint_type, T))
 end
 
 function get_constraint(psi_container::PSIContainer, constraint_type::AbstractString)
-    return get_constraint(psi_container, constraint_name(constraint_type))
+    return get_constraint(psi_container, make_constraint_name(constraint_type))
 end
 
 function get_constraint(psi_container::PSIContainer, name::Symbol)
@@ -331,7 +325,7 @@ function assign_constraint!(
     ::Type{T},
     value,
 ) where {T <: PSY.Component}
-    assign_constraint!(psi_container, constraint_name(constraint_type, T), value)
+    assign_constraint!(psi_container, make_constraint_name(constraint_type, T), value)
     return
 end
 
@@ -340,7 +334,7 @@ function assign_constraint!(
     constraint_type::AbstractString,
     value,
 )
-    assign_constraint!(psi_container, constraint_name(constraint_type), value)
+    assign_constraint!(psi_container, make_constraint_name(constraint_type), value)
     return
 end
 

@@ -9,7 +9,7 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: ActivePowerInVariable, U <: PSY.Storage}
     return AddVariableSpec(;
-        variable_name = make_name(T, U),
+        variable_name = make_variable_name(T, U),
         binary = false,
         expression_name = :nodal_balance_active,
         sign = -1.0,
@@ -23,7 +23,7 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: ActivePowerOutVariable, U <: PSY.Storage}
     return AddVariableSpec(;
-        variable_name = make_name(T, U),
+        variable_name = make_variable_name(T, U),
         binary = false,
         expression_name = :nodal_balance_active,
         lb_value_func = x -> 0.0,
@@ -36,7 +36,7 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: ReactivePowerVariable, U <: PSY.Storage}
     return AddVariableSpec(;
-        variable_name = make_name(T, U),
+        variable_name = make_variable_name(T, U),
         binary = false,
         expression_name = :nodal_balance_reactive,
     )
@@ -48,7 +48,7 @@ function AddVariableSpec(
     ::PSIContainer,
 ) where {T <: EnergyVariable, U <: PSY.Storage}
     return AddVariableSpec(;
-        variable_name = make_name(T, U),
+        variable_name = make_variable_name(T, U),
         binary = false,
         lb_value_func = x -> 0.0,
     )
@@ -59,73 +59,119 @@ function AddVariableSpec(
     ::Type{U},
     ::PSIContainer,
 ) where {T <: ReserveVariable, U <: PSY.Storage}
-    return AddVariableSpec(; variable_name = make_name(T, U), binary = true)
+    return AddVariableSpec(; variable_name = make_variable_name(T, U), binary = true)
 end
 
 ################################## output power constraints#################################
 
-function make_active_power_constraints_inputs(
-    ::Type{<:PSY.Storage},
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ActivePowerOutVariable},
+    ::Type{T},
     ::Type{<:BookKeeping},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
-)
-    return DeviceRangeConstraintInputs(;
-        range_constraint_inputs = [
-            RangeConstraintInputs(;
-                constraint_name = OUTPUT_POWER_RANGE,
-                variable_name = ACTIVE_POWER_OUT,
-                limits_func = x -> PSY.get_output_active_power_limits(x),
-                constraint_func = device_range,
-                constraint_struct = DeviceRangeConstraintInfo,
+) where {T <: PSY.Storage}
+    return DeviceRangeConstraintSpec(;
+        range_constraint_spec = RangeConstraintSpec(;
+            constraint_name = make_constraint_name(
+                RangeConstraint,
+                ActivePowerOutVariable,
+                T,
             ),
-            RangeConstraintInputs(;
-                constraint_name = INPUT_POWER_RANGE,
-                variable_name = ACTIVE_POWER_IN,
-                limits_func = x -> PSY.get_input_active_power_limits(x),
-                constraint_func = device_range,
-                constraint_struct = DeviceRangeConstraintInfo,
-            ),
-        ],
+            variable_name = make_variable_name(ActivePowerOutVariable, T),
+            limits_func = x -> PSY.get_output_active_power_limits(x),
+            constraint_func = device_range,
+            constraint_struct = DeviceRangeConstraintInfo,
+        ),
     )
 end
 
-function make_active_power_constraints_inputs(
-    ::Type{<:PSY.Storage},
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ActivePowerInVariable},
+    ::Type{T},
+    ::Type{<:BookKeeping},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.Storage}
+    return DeviceRangeConstraintSpec(;
+        range_constraint_spec = RangeConstraintSpec(;
+            constraint_name = make_constraint_name(
+                RangeConstraint,
+                ActivePowerInVariable,
+                T,
+            ),
+            variable_name = make_variable_name(ActivePowerInVariable, T),
+            limits_func = x -> PSY.get_input_active_power_limits(x),
+            constraint_func = device_range,
+            constraint_struct = DeviceRangeConstraintInfo,
+        ),
+    )
+end
+
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ActivePowerOutVariable},
+    ::Type{T},
     ::Type{<:BookKeepingwReservation},
     ::Type{<:PM.AbstractPowerModel},
     feedforward::Union{Nothing, AbstractAffectFeedForward},
     use_parameters::Bool,
     use_forecasts::Bool,
-)
-    return DeviceRangeConstraintInputs(;
-        range_constraint_inputs = [
-            RangeConstraintInputs(;
-                constraint_name = OUTPUT_POWER_RANGE,
-                variable_name = ACTIVE_POWER_OUT,
-                bin_variable_names = [RESERVE],
-                limits_func = x -> PSY.get_output_active_power_limits(x),
-                constraint_func = reserve_device_semicontinuousrange,
-                constraint_struct = DeviceRangeConstraintInfo,
+) where {T <: PSY.Storage}
+    return DeviceRangeConstraintSpec(;
+        range_constraint_spec = RangeConstraintSpec(;
+            constraint_name = make_constraint_name(
+                RangeConstraint,
+                ActivePowerOutVariable,
+                T,
             ),
-            RangeConstraintInputs(;
-                constraint_name = INPUT_POWER_RANGE,
-                variable_name = ACTIVE_POWER_IN,
-                bin_variable_names = [RESERVE],
-                limits_func = x -> PSY.get_input_active_power_limits(x),
-                constraint_func = reserve_device_semicontinuousrange,
-                constraint_struct = DeviceRangeConstraintInfo,
+            variable_name = make_variable_name(ActivePowerOutVariable, T),
+            bin_variable_names = [make_variable_name(ReserveVariable, T)],
+            limits_func = x -> PSY.get_output_active_power_limits(x),
+            constraint_func = reserve_device_semicontinuousrange,
+            constraint_struct = DeviceRangeConstraintInfo,
+        ),
+    )
+end
+
+function DeviceRangeConstraintSpec(
+    ::Type{<:RangeConstraint},
+    ::Type{ActivePowerInVariable},
+    ::Type{T},
+    ::Type{<:BookKeepingwReservation},
+    ::Type{<:PM.AbstractPowerModel},
+    feedforward::Union{Nothing, AbstractAffectFeedForward},
+    use_parameters::Bool,
+    use_forecasts::Bool,
+) where {T <: PSY.Storage}
+    return DeviceRangeConstraintSpec(;
+        range_constraint_spec = RangeConstraintSpec(;
+            constraint_name = make_constraint_name(
+                RangeConstraint,
+                ActivePowerInVariable,
+                T,
             ),
-        ],
+            variable_name = make_variable_name(ActivePowerInVariable, T),
+            bin_variable_names = [make_variable_name(ReserveVariable, T)],
+            limits_func = x -> PSY.get_input_active_power_limits(x),
+            constraint_func = reserve_device_semicontinuousrange,
+            constraint_struct = DeviceRangeConstraintInfo,
+        ),
     )
 end
 
 """
 This function adds the reactive  power limits of generators when there are CommitmentVariables
 """
-function reactive_power_constraints!(
+function add_constraints!(
+    ::Type{<:RangeConstraint},
+    ::Type{ReactivePowerVariable},
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{St},
     model::DeviceModel{St, D},
@@ -141,10 +187,10 @@ function reactive_power_constraints!(
 
     device_range(
         psi_container,
-        RangeConstraintInputsInternal(
+        RangeConstraintSpecInternal(
             constraint_infos,
-            constraint_name(REACTIVE_RANGE, St),
-            make_variable_name(REACTIVE_POWER, St),
+            make_constraint_name(RangeConstraint, ReactivePowerVariable, St),
+            make_variable_name(ReactivePowerVariable, St),
         ),
     )
     return
@@ -180,9 +226,9 @@ function energy_capacity_constraints!(
 
     device_range(
         psi_container,
-        RangeConstraintInputsInternal(
+        RangeConstraintSpecInternal(
             constraint_infos,
-            constraint_name(ENERGY_CAPACITY, St),
+            make_constraint_name(ENERGY_CAPACITY, St),
             make_variable_name(ENERGY, St),
         ),
     )
@@ -217,7 +263,7 @@ function energy_balance_constraint!(
         psi_container,
         get_initial_conditions(psi_container, ICKey(EnergyLevel, St)),
         efficiency_data,
-        constraint_name(ENERGY_LIMIT, St),
+        make_constraint_name(ENERGY_LIMIT, St),
         (
             make_variable_name(ACTIVE_POWER_OUT, St),
             make_variable_name(ACTIVE_POWER_IN, St),
