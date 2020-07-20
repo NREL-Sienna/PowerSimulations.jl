@@ -1,4 +1,4 @@
-struct OperationsProblemResults <: IS.Results
+struct OperationsProblemResults <: PSIResults
     base_power::Float64
     variable_values::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict
@@ -104,7 +104,7 @@ end
 
 # This method is also used by OperationsProblemResults
 """
-    write_results(results::IS.Results, save_path::String)
+    write_results(results::PSIResults, save_path::String)
 
 Exports Operational Problem Results to a path
 
@@ -115,7 +115,7 @@ Exports Operational Problem Results to a path
 # Accepted Key Words
 - `file_type = CSV`: only CSV and featherfile are accepted
 """
-function IS.write_results(results::IS.Results, folder_path::String; kwargs...)
+function IS.write_results(results::PSIResults, folder_path::String; kwargs...)
     if !isdir(folder_path)
         throw(IS.ConflictingInputsError("Specified path is not valid. Run write_results to save results."))
     end

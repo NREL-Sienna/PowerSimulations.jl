@@ -133,7 +133,7 @@ end
 
 make_result_reference(stage::Stage{T}, sim::Simulation) where {T} = nothing
 
-struct SimulationResults <: IS.Results
+struct SimulationResults <: PSIResults
     base_power::Float64
     variable_values::Dict{Symbol, DataFrames.DataFrame}
     total_cost::Dict
@@ -549,7 +549,7 @@ end
 Retrieve a specific variable dataframe from the results.
 
 # Arguments
-- `results::IS.Results`
+- `results::PSIResults`
 - `name::Symbol`: The prefix for a type of variable or parameter
 - `PSY.DataType`: The datatype of the variable from Power Systems
 
@@ -559,7 +559,7 @@ variable = get_result_variable(results, :ON, ThermalStandard)
 ```
 """
 
-function get_result_variable(results::IS.Results, sym::Symbol, data_type::PSY.DataType)
+function get_result_variable(results::PSIResults, sym::Symbol, data_type::PSY.DataType)
     variable_name = encode_symbol(data_type, sym)
     if variable_name in keys(IS.get_variables(results))
         variable = IS.get_variables(results)[variable_name]

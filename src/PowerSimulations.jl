@@ -260,6 +260,7 @@ include("logging.jl")
 include("utils.jl")
 
 #Models and constructors
+include("core/results.jl")
 include("core/abstract_types.jl")
 include("core/aux_structs.jl")
 

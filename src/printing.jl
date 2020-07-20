@@ -77,7 +77,7 @@ function Base.show(io::IO, results::OperationsProblemResults)
 
 =#
 
-function Base.show(io::IO, ::MIME"text/plain", results::IS.Results)
+function Base.show(io::IO, ::MIME"text/plain", results::PSIResults)
     println(io, "\nResults")
     println(io, "========\n")
     println(io, "Variables")
@@ -138,7 +138,7 @@ function Base.show(io::IO, ::MIME"text/plain", results::IS.Results)
         println(io, "Total Cost: $(k) = $(v)")
     end
 end
-function Base.show(io::IO, ::MIME"text/html", results::IS.Results)
+function Base.show(io::IO, ::MIME"text/html", results::PSIResults)
     println(io, "<h1>Results</h1>")
     println(io, "<h2>Variables</h2>")
     times = IS.get_time_stamp(results)
