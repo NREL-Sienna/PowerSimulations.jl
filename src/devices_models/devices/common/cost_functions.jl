@@ -262,7 +262,8 @@ function _pwl_cost!(
         @warn("The cost function provided for $(variable) device is not compatible with a linear PWL cost function.
         An SOS-2 formulation will be added to the model.
         This will result in additional binary variables added to the model.")
-        gen_cost, vars = _pwlgencost_sos!(psi_container, variable, cost_component, on_status)
+        gen_cost, vars =
+            _pwlgencost_sos!(psi_container, variable, cost_component, on_status)
     else
         gen_cost, vars = _pwlgencost_linear!(psi_container, variable, cost_component)
     end
