@@ -126,10 +126,45 @@ function include_service!(
     return
 end
 
+function include_service!(
+    constraint_data::DeviceRange,
+    services,
+    ::ServiceModel{SR, <:AbstractReservesFormulation};
+    add_supplemental::Bool=false
+) where {SR <: PSY.Reserve{PSY.ReserveSupplementaryUp}}
+    if add_supplemental
+        for (ix, service) in enumerate(services)
+            push!(
+                constraint_data.additional_terms_ub,
+                constraint_name(PSY.get_name(service), SR),
+            )
+        end
+    end
+    return
+end
+
+function include_service!(
+    constraint_data::DeviceRange,
+    services,
+    ::ServiceModel{SR, <:AbstractReservesFormulation};
+    add_supplemental::Bool=false
+) where {SR <: PSY.Reserve{PSY.ReserveSupplementaryDown}}
+    if add_supplemental
+        for (ix, service) in enumerate(services)
+            push!(
+                constraint_data.additional_terms_lb,
+                constraint_name(PSY.get_name(service), SR),
+            )
+        end
+    end
+    return
+end
+
 function add_device_services!(
     constraint_data::RangeConstraintsData,
     device::D,
-    model::DeviceModel,
+    model::DeviceModel;
+    add_supplemental::Bool=false
 ) where {D <: PSY.Device}
     for service_model in get_services(model)
         if PSY.has_service(device, service_model.service_type)
