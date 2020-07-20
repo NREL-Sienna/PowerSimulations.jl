@@ -19,7 +19,7 @@ This formulation is from the benchmark library maintained by the IEEE PES Task F
 - Optional renewable generators with time series for minimum and maximum production.
 
 
-# Formultions
+# Formulations
 A detailed description of this mathematical model is available here. This model does have some aaugmentation to constraints but is mathematically equivalent to the formulation found [here](https://github.com/power-grid-lib/pglib-uc/blob/master/MODEL.pdf).
 ### Indices and Sets
 ```math
