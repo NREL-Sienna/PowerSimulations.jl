@@ -21,7 +21,7 @@ function construct_network!(
     area_mapping = PSY.get_aggregation_topology_mapping(PSY.Area, sys)
     branches = get_available_components(PSY.Branch, sys)
     if get_balance_slack_variables(psi_container.settings)
-        @warn("Slack Variables are not compatible with AreaBalancePowerModel")
+        throw(IS.ConflictingInputsError(""))
     end
 
     area_balance(psi_container, :nodal_balance_active, area_mapping, branches)
