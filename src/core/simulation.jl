@@ -845,7 +845,7 @@ each stage and step.
 # Example
 ```julia
 sim = Simulation("Test", 7, stages, "/Users/folder")
-execute!!(sim::Simulation; kwargs...)
+execute!(sim::Simulation; kwargs...)
 ```
 """
 
