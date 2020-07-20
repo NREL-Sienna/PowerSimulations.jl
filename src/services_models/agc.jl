@@ -154,11 +154,6 @@ function frequency_response_constraint!(psi_container::PSIContainer, sys::PSY.Sy
     container = JuMPConstraintArray(undef, time_steps)
     assign_constraint!(psi_container, "freque_response", container)
 
-    #container[1] = JuMP.@constraint(
-    #        psi_container.JuMPmodel,
-    #        frequency[1] == -inv_frequency_reponse * (sum(area_balance.data[:, 1]))
-    #    )
-
     for t in time_steps
         system_balance = sum(area_balance.data[:, t])
         total_reg = JuMP.AffExpr(0.0)
