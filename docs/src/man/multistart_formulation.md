@@ -10,7 +10,7 @@ This formulation is from the benchmark library maintained by the IEEE PES Task F
   - Hourly ramp-up and ramp-down rates
   - Start-up and shut-down ramp rates
   - Minimum run-times and off-times
-  - Upto 3 types of startup types (hot, warm, cold)
+  - Up to 3 types of startup types (hot, warm, cold)
   - Off time dependent start-up costs
   - Startup & Shutdown lag/power trajectory constraint
   - Piecewise linear convex production costs
