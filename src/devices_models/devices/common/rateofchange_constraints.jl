@@ -1,10 +1,4 @@
 @doc raw"""
-    device_linear_rateofchange(psi_container::PSIContainer,
-                                    rate_data::Tuple{Vector{String}, Vector{UpDown}},
-                                    initial_conditions::Vector{InitialCondition},
-                                    cons_name::Symbol,
-                                    var_name::Symbol)
-
 Constructs allowed rate-of-change constraints from variables, initial condtions, and rate data.
 
 # Constraints
@@ -33,7 +27,7 @@ If t > 1:
 * cons_name::Symbol : name of the constraint
 * var_name::Tuple{Symbol, Symbol, Symbol} : the name of the variable
 """
-function device_linear_rateofchange(
+function device_linear_rateofchange!(
     psi_container::PSIContainer,
     rate_data::Vector{UpDown},
     initial_conditions::Vector{InitialCondition},
@@ -82,12 +76,6 @@ function device_linear_rateofchange(
 end
 
 @doc raw"""
-    device_mixedinteger_rateofchange(psi_container::PSIContainer,
-                                          rate_data::Tuple{Vector{String}, Vector{UpDown}, Vector{MinMax}},
-                                          initial_conditions::Vector{InitialCondition},
-                                          cons_name::Symbol,
-                                          var_names::Tuple{Symbol, Symbol, Symbol})
-
 Constructs allowed rate-of-change constraints from variables, initial condtions, start/stop status, and rate data
 
 # Equations
@@ -121,7 +109,7 @@ If t > 1:
 - : var_names[2] : 'varstart'
 - : var_names[3] : 'varstop'
 """
-function device_mixedinteger_rateofchange(
+function device_mixedinteger_rateofchange!(
     psi_container::PSIContainer,
     rate_data::Tuple{Vector{UpDown}, Vector{MinMax}},
     initial_conditions::Vector{InitialCondition},
@@ -176,12 +164,6 @@ function device_mixedinteger_rateofchange(
 end
 
 @doc raw"""
-    device_multistart_rateofchange(psi_container::PSIContainer,
-                                          rate_data::Vector{DeviceRampConstraintInfo},
-                                          initial_conditions::Vector{InitialCondition},
-                                          cons_name::Symbol,
-                                          var_names::Tuple{Symbol, Symbol, Symbol})
-
 Constructs allowed rate-of-change constraints from variables, initial condtions, start/stop status, and rate data
 
 # Equations
@@ -213,7 +195,7 @@ If t > 1:
 * var_names::Tuple{Symbol, Symbol, Symbol} : the names of the variables
 - : var_name : 'variable'
 """
-function device_multistart_rateofchange(
+function device_multistart_rateofchange!(
     psi_container::PSIContainer,
     rate_data::Vector{DeviceRampConstraintInfo},
     initial_conditions::Vector{InitialCondition},

@@ -144,7 +144,7 @@ function cost_function!(
         variable::JV,
         cost_component::Vector{NTuple{2, Float64}},
     ) where {JV <: JuMP.AbstractVariableRef}
-        return _pwlgencost_sos(psi_container, variable, cost_component)
+        return _pwlgencost_sos!(psi_container, variable, cost_component)
     end
 
     if use_forecast_data

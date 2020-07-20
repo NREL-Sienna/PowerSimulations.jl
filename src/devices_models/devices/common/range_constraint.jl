@@ -225,20 +225,14 @@ function reserve_device_semicontinuousrange(
 end
 
 @doc raw"""
-    device_multistart_range(psi_container::PSIContainer,
-                        range_data::Vector{DeviceRange},
-                        cons_name::Symbol,
-                        var_name::Symbol,
-                        binvar_names::Tuple{Symbol, Symbol, Symbol},)
-
 Constructs min/max range constraint from device variable and on/off decision variable.
 
 # Constraints
 
-``` varcts[name, t] <= (limits.max-limits.min)*varbin[name, t]) 
+``` varcts[name, t] <= (limits.max-limits.min)*varbin[name, t])
         - max(limits.max - lag_ramp_limits.startup, 0) * var_on[name, t] ```
 
-``` varcts[name, t] <= (limits.max-limits.min)*varbin[name, t]) 
+``` varcts[name, t] <= (limits.max-limits.min)*varbin[name, t])
         - max(limits.max - lag_ramp_limits.shutdown, 0) * var_off[name, t] ```
 
 where limits and lag_ramp_limits is in range_data.
@@ -312,17 +306,11 @@ function device_multistart_range(
 end
 
 @doc raw"""
-    device_multistart_range_ic(psi_container::PSIContainer,
-                        range_data::Vector{DeviceRange},
-                        initial_conditions::Matrix{InitialCondition},
-                        cons_name::Symbol,
-                        var_name::Tuple{Symbol, Symbol})
-
 Constructs min/max range constraint from device variable and on/off decision variable.
 
 # Constraints
 
-``` max(limits.max - lag_ramp_limits.shutdown, 0) var_off[name, 1] <= initial_power[ix].value 
+``` max(limits.max - lag_ramp_limits.shutdown, 0) var_off[name, 1] <= initial_power[ix].value
         - (limits.max - limits.min)initial_status[ix].value  ```
 
 where limits in range_data.
@@ -334,7 +322,7 @@ where limits in range_data.
 # Arguments
 * psi_container::PSIContainer : the psi_container model built in PowerSimulations
 * range_data::Vector{DeviceRange} : contains names and vector of min/max
-* initial_conditions::Matrix{InitialCondition} : 
+* initial_conditions::Matrix{InitialCondition} :
 * cons_name::Symbol : name of the constraint
 * var_name::Symbol : name of the shutdown variable
 """

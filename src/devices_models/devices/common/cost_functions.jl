@@ -1,11 +1,4 @@
 @doc raw"""
-    ps_cost(psi_container::PSIContainer,
-                var_name::Symbol,
-                index::String,
-                cost_component::Float64,
-                dt::Float64,
-                sign::Float64)
-
 Returns linear cost terms for sum of variables with common factor to be used for cost expression for psi_container model.
 
 # Equation
@@ -29,7 +22,7 @@ Returns:
 * dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
 """
-function ps_cost(
+function ps_cost!(
     psi_container::PSIContainer,
     var_name::Symbol,
     index::String,
@@ -43,13 +36,6 @@ function ps_cost(
 end
 
 @doc raw"""
-    ps_cost(psi_container::PSIContainer,
-                var_name::Symbol,
-                index::String,
-                cost_component::PSY.VariableCost{Float64},
-                dt::Float64,
-                sign::Float64)
-
 Returns linear cost terms for sum of variables with common factor to be used for cost expression for psi_container model.
 Does this by calling ```ps_cost``` that has Float64 cost component input.
 
@@ -66,7 +52,7 @@ Returns:
 * dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
 """
-function ps_cost(
+function ps_cost!(
     psi_container::PSIContainer,
     var_name::Symbol,
     index::String,
@@ -74,17 +60,10 @@ function ps_cost(
     dt::Float64,
     sign::Float64,
 )
-    return ps_cost(psi_container, var_name, index, PSY.get_cost(cost_component), dt, sign)
+    return ps_cost!(psi_container, var_name, index, PSY.get_cost(cost_component), dt, sign)
 end
 
 @doc raw"""
-    ps_cost(psi_container::PSIContainer,
-                var_name::Symbol,
-                index::String,
-                cost_component::PSY.VariableCost{NTuple{2, Float64}}
-                dt::Float64,
-                sign::Float64)
-
 Returns quadratic cost terms for sum of variables with common factor to be used for cost expression for psi_container model.
 
 # Equation
@@ -109,7 +88,7 @@ Returns ```gen_cost```
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 * sign::Float64 : positive or negative sign to be associated cost term
 """
-function ps_cost(
+function ps_cost!(
     psi_container::PSIContainer,
     var_name::Symbol,
     index::String,
@@ -123,13 +102,11 @@ function ps_cost(
             sum(variable .^ 2) * cost_component[1] + sum(variable) * cost_component[2]
         return sign * gen_cost * dt
     else
-        return ps_cost(psi_container, var_name, index, cost_component[2], dt, 1.0)
+        return ps_cost!(psi_container, var_name, index, cost_component[2], dt, 1.0)
     end
 end
 
 @doc raw"""
-    _pwlparamcheck(cost_)
-
 Returns True/False depending on compatibility of the cost data with the linear implementation method
 
 Returns ```flag```
@@ -152,10 +129,6 @@ function _pwlparamcheck(cost_)
 end
 
 @doc raw"""
-    _pwlgencost_sos(psi_container::PSIContainer,
-                variable::JuMP.Containers.DenseAxisArray{JV},
-                cost_component::PSY.VariableCost{NTuple{2, Float64}}) where {JV <: JuMP.AbstractVariableRef}
-
 Returns piecewise cost expression using SOS Type-2 implementation for psi_container model.
 
 # Equations
@@ -178,7 +151,7 @@ Returns ```gen_cost```
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 """
-function _pwlgencost_sos(
+function _pwlgencost_sos!(
     psi_container::PSIContainer,
     variable::JV,
     cost_component::Vector{NTuple{2, Float64}},
@@ -218,10 +191,6 @@ function _pwlgencost_sos(
 end
 
 @doc raw"""
-    _pwlgencost_linear(psi_container::PSIContainer,
-                variable::JuMP.Containers.DenseAxisArray{JV},
-                cost_component::PSY.VariableCost{NTuple{2, Float64}}) where {JV <: JuMP.AbstractVariableRef}
-
 Returns piecewise cost expression using linear implementation for psi_container model.
 
 # Equations
@@ -247,7 +216,7 @@ Returns ```gen_cost```
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 """
-function _pwlgencost_linear(
+function _pwlgencost_linear!(
     psi_container::PSIContainer,
     variable::JV,
     cost_component::Vector{NTuple{2, Float64}},
@@ -273,8 +242,6 @@ function _pwlgencost_linear(
 end
 
 @doc raw"""
-    _pwl_cost(cost)
-
 Returns JuMP expression for a piecewise linear cost function depending on the data compatibility.
 
 Returns ```gen_cost```
@@ -285,7 +252,7 @@ Returns ```gen_cost```
 * variable::JuMP.Containers.DenseAxisArray{JV} : variable array
 * cost_component::PSY.VariableCost{NTuple{2, Float64}} : container for quadratic and linear factors
 """
-function _pwl_cost(
+function _pwl_cost!(
     psi_container::PSIContainer,
     variable::JV,
     cost_component::Vector{NTuple{2, Float64}},
@@ -295,21 +262,14 @@ function _pwl_cost(
         @warn("The cost function provided for $(variable) device is not compatible with a linear PWL cost function.
         An SOS-2 formulation will be added to the model.
         This will result in additional binary variables added to the model.")
-        gen_cost, vars = _pwlgencost_sos(psi_container, variable, cost_component, on_status)
+        gen_cost, vars = _pwlgencost_sos!(psi_container, variable, cost_component, on_status)
     else
-        gen_cost, vars = _pwlgencost_linear(psi_container, variable, cost_component)
+        gen_cost, vars = _pwlgencost_linear!(psi_container, variable, cost_component)
     end
     return gen_cost, vars
 end
 
 @doc raw"""
-    ps_cost(psi_container::PSIContainer,
-                var_name::Symbol,
-                index::String,
-                cost_component::PSY.VariableCost{Vector{NTuple{2, Float64}}},
-                dt::Float64,
-                sign::Float64)
-
 Creates piecewise linear cost function using a sum of variables and expression with sign and time step included.
 
 # Expression
@@ -335,7 +295,7 @@ where ``c_v`` is given by
 * dt::Float64 : fraction of hour
 * sign::Float64 : positive or negative sign to be associated cost term
 """
-function ps_cost(
+function ps_cost!(
     psi_container::PSIContainer,
     var_name::Symbol,
     index::String,
@@ -377,12 +337,12 @@ function ps_cost(
     for (t, var) in enumerate(variable)
         if !isnothing(bin)
             if bin isa ParameterJuMP.ParameterRef
-                c, pwl_vars = _pwl_cost(psi_container, var, cost_array, bin)
+                c, pwl_vars = _pwl_cost!(psi_container, var, cost_array, bin)
             else
-                c, pwl_vars = _pwl_cost(psi_container, var, cost_array, bin[t])
+                c, pwl_vars = _pwl_cost!(psi_container, var, cost_array, bin[t])
             end
         else
-            c, pwl_vars = _pwl_cost(psi_container, var, cost_array)
+            c, pwl_vars = _pwl_cost!(psi_container, var, cost_array)
         end
         if export_pwl_vars
             for (ix, v) in enumerate(pwl_vars)
@@ -396,19 +356,13 @@ function ps_cost(
 end
 
 @doc raw"""
-    add_to_cost(psi_container::PSIContainer,
-                     devices::D,
-                     var_name::Symbol,
-                     cost_symbol::Symbol,
-                     sign::Float64 = 1.0) where {D<:IS.FlattenIteratorWrapper{<:PSY.Device}}
-
 Adds cost expression for each device using appropriate call to ```ps_cost```.
 
 # Expression
 
 for d in devices
 
-```    cost_expression = ps_cost(psi_container,
+```    cost_expression = ps_cost!(psi_container,
                               variable[PSY.get_name(d), :],
                               getfield(PSY.get_operation_cost(d), cost_symbol),
                               dt,
@@ -426,7 +380,7 @@ for d in devices
 * var_name::Symbol : name of variable
 * cost_symbol::Symbol : symbol associated with costx
 """
-function add_to_cost(
+function add_to_cost!(
     psi_container::PSIContainer,
     devices::D,
     var_name::Symbol,
@@ -438,7 +392,7 @@ function add_to_cost(
     for d in devices
         cost_component = getfield(PSY.get_operation_cost(d), cost_symbol)
         cost_expression =
-            ps_cost(psi_container, var_name, PSY.get_name(d), cost_component, dt, sign)
+            ps_cost!(psi_container, var_name, PSY.get_name(d), cost_component, dt, sign)
         T_ce = typeof(cost_expression)
         T_cf = typeof(psi_container.cost_function)
         if T_cf <: JuMP.GenericAffExpr && T_ce <: JuMP.GenericQuadExpr

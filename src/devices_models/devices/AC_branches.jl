@@ -31,7 +31,7 @@ function flow_variables!(
     ::Type{<:StandardPTDFModel},
     devices::IS.FlattenIteratorWrapper{B},
 ) where {B <: PSY.ACBranch}
-    add_variable(psi_container, devices, make_variable_name(FLOW_ACTIVE_POWER, B), false)
+    add_variable!(psi_container, devices, make_variable_name(FLOW_ACTIVE_POWER, B), false)
     return
 end
 

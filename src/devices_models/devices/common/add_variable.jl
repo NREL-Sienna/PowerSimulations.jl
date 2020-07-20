@@ -93,7 +93,7 @@ function _add_variables!(
         devices = filter!(filter_func, collect(devices))
     end
 
-    add_variable(
+    add_variable!(
         psi_container,
         devices,
         variable_name,
@@ -107,13 +107,6 @@ function _add_variables!(
 end
 
 @doc raw"""
-    add_variable(psi_container::PSIContainer,
-                      devices::D,
-                      var_name::Symbol,
-                      binary::Bool,
-                      expression_name::Symbol,
-                      sign::Float64)
-
 Adds a variable to the optimization model and to the affine expressions contained
 in the psi_container model according to the specified sign. Based on the inputs, the variable can
 be specified as binary.
@@ -146,7 +139,7 @@ If binary = true:
 * initial_value : Provides the function over device to obtain the warm start value
 
 """
-function add_variable(
+function add_variable!(
     psi_container::PSIContainer,
     devices::D,
     var_name::Symbol,
@@ -196,13 +189,6 @@ function add_variable(
 end
 
 @doc raw"""
-    set_variable_bounds!(
-        psi_container::PSIContainer,
-        bounds::DeviceRangeConstraintInfo,
-        var_type::AbstractString,
-        device_type::Type{PSY.Device},
-    )
-
 Adds a bounds to a variable in the optimization model.
 
 # Bounds

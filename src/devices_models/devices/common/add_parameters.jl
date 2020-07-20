@@ -1,5 +1,5 @@
 
-function include_parameters(
+function include_parameters!(
     psi_container::PSIContainer,
     constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
     param_reference::UpdateRef,
@@ -29,7 +29,7 @@ function include_parameters(
     return container
 end
 
-function include_parameters(
+function include_parameters!(
     psi_container::PSIContainer,
     constraint_infos::Vector{DeviceTimeSeriesConstraintInfo},
     param_reference::UpdateRef,

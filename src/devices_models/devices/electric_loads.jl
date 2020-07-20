@@ -113,8 +113,8 @@ function DeviceRangeConstraintSpec(
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
             forecast_label = "get_max_active_power",
             multiplier_func = x -> PSY.get_max_active_power(x),
-            constraint_func = use_parameters ? device_timeseries_param_ub :
-                              device_timeseries_ub,
+            constraint_func = use_parameters ? device_timeseries_param_ub! :
+                              device_timeseries_ub!,
         ),
     )
 end
@@ -154,8 +154,8 @@ function DeviceRangeConstraintSpec(
             parameter_name = use_parameters ? ON : nothing,
             forecast_label = "get_max_active_power",
             multiplier_func = x -> PSY.get_max_active_power(x),
-            constraint_func = use_parameters ? device_timeseries_ub_bigM :
-                              device_timeseries_ub_bin,
+            constraint_func = use_parameters ? device_timeseries_ub_bigM! :
+                              device_timeseries_ub_bin!,
         ),
     )
 end
@@ -197,7 +197,7 @@ function cost_function(
     ::Type{DispatchablePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
 ) where {L <: PSY.ControllableLoad}
-    add_to_cost(
+    add_to_cost!(
         psi_container,
         devices,
         make_variable_name(ACTIVE_POWER, L),
@@ -213,6 +213,6 @@ function cost_function(
     ::Type{InterruptiblePowerLoad},
     ::Type{<:PM.AbstractPowerModel},
 ) where {L <: PSY.ControllableLoad}
-    add_to_cost(psi_container, devices, make_variable_name(ON, L), :fixed, -1.0)
+    add_to_cost!(psi_container, devices, make_variable_name(ON, L), :fixed, -1.0)
     return
 end

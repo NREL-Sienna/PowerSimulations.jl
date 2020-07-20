@@ -124,8 +124,8 @@ function DeviceRangeConstraintSpec(
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
             forecast_label = "get_max_active_power",
             multiplier_func = x -> PSY.get_rating(x),
-            constraint_func = use_parameters ? device_timeseries_param_ub :
-                              device_timeseries_ub,
+            constraint_func = use_parameters ? device_timeseries_param_ub! :
+                              device_timeseries_ub!,
         ),
     )
 end
@@ -169,7 +169,7 @@ function cost_function(
     ::Type{D},
     ::Type{<:PM.AbstractPowerModel},
 ) where {D <: AbstractRenewableDispatchFormulation}
-    add_to_cost(
+    add_to_cost!(
         psi_container,
         devices,
         make_variable_name(ACTIVE_POWER, PSY.RenewableDispatch),

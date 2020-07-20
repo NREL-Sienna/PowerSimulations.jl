@@ -5,9 +5,9 @@ function make_active_power_constraints_inputs(
     ::Type{T},
     ::Type{U},
     ::Type{V},
-    feedforward::Union{Nothing, AbstractAffectFeedForward},
-    use_parameters::Bool,
-    use_forecasts::Bool,
+    ::Union{Nothing, AbstractAffectFeedForward},
+    ::Bool,
+    ::Bool,
 ) where {T <: PSY.Device, U <: AbstractDeviceFormulation, V <: PM.AbstractPowerModel}
     error("make_active_power_constraints_inputs is not implemented for types $T / $U / $V")
 end

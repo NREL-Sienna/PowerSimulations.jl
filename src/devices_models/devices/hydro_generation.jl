@@ -62,7 +62,7 @@ function inflow_variables!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{H},
 ) where {H <: PSY.HydroGen}
-    add_variable(
+    add_variable!(
         psi_container,
         devices,
         make_variable_name(INFLOW, H),
@@ -99,7 +99,7 @@ function commitment_variables!(
     var_names = [make_variable_name(ON, H), make_variable_name(START, H), make_variable_name(STOP, H)]
 
     for v in var_names
-        add_variable(psi_container, devices, v, true)
+        add_variable!(psi_container, devices, v, true)
     end
 
     return
@@ -117,7 +117,7 @@ function commitment_constraints!(
     system_formulation::Type{S},
     feedforward::Union{Nothing,AbstractAffectFeedForward},
 ) where {H<:PSY.HydroGen,D<:AbstractHydroUnitCommitment,S<:PM.AbstractPowerModel}
-    device_commitment(
+    device_commitment!(
         psi_container,
         get_initial_conditions(psi_container, ICKey(DeviceStatus, H)),
         constraint_name(COMMITMENT, H),
@@ -186,8 +186,8 @@ function DeviceRangeConstraintSpec(
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
             forecast_label = "get_max_active_power",
             multiplier_func = x -> PSY.get_rating(x),
-            constraint_func = use_parameters ? device_timeseries_param_ub :
-                              device_timeseries_ub,
+            constraint_func = use_parameters ? device_timeseries_param_ub! :
+                              device_timeseries_ub!,
         ),
     )
 end
@@ -311,7 +311,7 @@ function inflow_constraints!(
     end
 
     if parameters
-        device_timeseries_param_ub(psi_container,
+        device_timeseries_param_ub!(psi_container,
                             ts_data_inflow,
                             constraint_name(INFLOW_RANGE, H),
                             UpdateRef{H}(INFLOW_RANGE, "get_inflow"),
@@ -356,7 +356,7 @@ function energy_balance_constraint!(
     end
 
     if parameters
-        energy_balance_external_input_param(
+        energy_balance_external_input_param!(
             psi_container,
             get_initial_conditions(psi_container, key),
             constraint_infos,
@@ -369,7 +369,7 @@ function energy_balance_constraint!(
             UpdateRef{H}(INFLOW, forecast_label),
         )
     else
-        energy_balance_external_input(
+        energy_balance_external_input!(
             psi_container,
             get_initial_conditions(psi_container, key),
             constraint_infos,
@@ -430,7 +430,7 @@ function cost_function(
     device_formulation::Type{D},
     system_formulation::Type{<:PM.AbstractPowerModel},
 ) where {D <: AbstractHydroFormulation}
-    add_to_cost(
+    add_to_cost!(
         psi_container,
         devices,
         make_variable_name(ACTIVE_POWER, PSY.HydroEnergyReservoir),

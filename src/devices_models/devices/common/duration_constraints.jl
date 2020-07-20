@@ -1,10 +1,4 @@
 @doc raw"""
-    device_duration_retrospective(psi_container::PSIContainer,
-                                        duration_data::Vector{UpDown},
-                                        initial_duration::Matrix{InitialCondition},
-                                        cons_name::Symbol,
-                                        var_names::Tuple{Symbol, Symbol, Symbol})
-
 This formulation of the duration constraints adds over the start times looking backwards.
 
 # LaTeX
@@ -44,7 +38,7 @@ for i in the set of time steps.
 - : var_names[2] : varstart
 - : var_names[3] : varstop
 """
-function device_duration_retrospective(
+function device_duration_retrospective!(
     psi_container::PSIContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
@@ -100,12 +94,6 @@ function device_duration_retrospective(
     return
 end
 @doc raw"""
-    device_duration_look_ahead(psi_container::PSIContainer,
-                                duration_data::Vector{UpDown},
-                                initial_duration::Matrix{InitialCondition},
-                                cons_name::Symbol,
-                                var_names::Tuple{Symbol, Symbol, Symbol})
-
 This formulation of the duration constraints looks ahead in the time frame of the model.
 
 # LaTeX
@@ -145,7 +133,7 @@ for i in the set of time steps.
 - : var_names[2] : varstart
 - : var_names[3] : varstop
 """
-function device_duration_look_ahead(
+function device_duration_look_ahead!(
     psi_container::PSIContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
@@ -206,15 +194,7 @@ function device_duration_look_ahead(
 end
 
 @doc raw"""
-    device_duration_parameters(psi_container::PSIContainer,
-                             duration_data::Vector{UpDown},
-                             initial_duration_on::Vector{InitialCondition},
-                             initial_duration_off::Vector{InitialCondition},
-                             cons_name::Symbol,
-                             var_names::Tuple{Symbol, Symbol, Symbol})
-
 This formulation of the duration constraints considers parameters.
-
 
 # LaTeX
 
@@ -253,7 +233,7 @@ for i in the set of time steps.
 - : var_names[2] : varstart
 - : var_names[3] : varstop
 """
-function device_duration_parameters(
+function device_duration_parameters!(
     psi_container::PSIContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},
@@ -334,12 +314,6 @@ function device_duration_parameters(
 end
 
 @doc raw"""
-    device_duration_compact_retrospective(psi_container::PSIContainer,
-                                        duration_data::Vector{UpDown},
-                                        initial_duration::Matrix{InitialCondition},
-                                        cons_name::Symbol,
-                                        var_names::Tuple{Symbol, Symbol, Symbol})
-
 This formulation of the duration constraints adds over the start times looking backwards.
 
 # LaTeX
@@ -367,7 +341,7 @@ for i in the set of time steps.
 - : var_names[2] : varstart
 - : var_names[3] : varstop
 """
-function device_duration_compact_retrospective(
+function device_duration_compact_retrospective!(
     psi_container::PSIContainer,
     duration_data::Vector{UpDown},
     initial_duration::Matrix{InitialCondition},

@@ -7,7 +7,7 @@ struct TimeSeriesConstraintSpecInternal
     param_reference::Union{Nothing, UpdateRef}
 end
 
-function lazy_lb(psi_container::PSIContainer, inputs::TimeSeriesConstraintSpecInternal)
+function lazy_lb!(psi_container::PSIContainer, inputs::TimeSeriesConstraintSpecInternal)
     time_steps = model_time_steps(psi_container)
     names = (get_name(x) for x in inputs.constraint_infos)
     variable = get_variable(psi_container, inputs.variable_name)
@@ -49,7 +49,7 @@ Constructs upper bound for given variable and time series data and a multiplier.
 
 `` x_t \leq r^{val} r_t, \forall t ``
 """
-function device_timeseries_ub(
+function device_timeseries_ub!(
     psi_container::PSIContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
@@ -82,7 +82,7 @@ function device_timeseries_ub(
     end
 
     @debug lazy_add_lb
-    lazy_add_lb && lazy_lb(psi_container, inputs)
+    lazy_add_lb && lazy_lb!(psi_container, inputs)
 
     return
 end
@@ -100,7 +100,7 @@ Constructs lower bound for given variable subject to time series data and a mult
 
 where (name, data) in range_data.
 """
-function device_timeseries_lb(
+function device_timeseries_lb!(
     psi_container::PSIContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
@@ -142,7 +142,7 @@ Constructs upper bound for given variable using a parameter. The constraint is
 
 `` x^{var}_t \leq r^{val} x^{param}_t, \forall t ``
 """
-function device_timeseries_param_ub(
+function device_timeseries_param_ub!(
     psi_container::PSIContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
@@ -182,7 +182,7 @@ function device_timeseries_param_ub(
     end
 
     @debug lazy_add_lb
-    lazy_add_lb && lazy_lb(psi_container, inputs)
+    lazy_add_lb && lazy_lb!(psi_container, inputs)
     return
 end
 
@@ -198,7 +198,7 @@ Constructs lower bound for given variable using a parameter. The constraint is
 
 `` r^{val} x^{param}_t \leq x^{var}_t, \forall t ``
 """
-function device_timeseries_param_lb(
+function device_timeseries_param_lb!(
     psi_container::PSIContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
@@ -251,7 +251,7 @@ where (name, data) in range_data.
 
 `` x^{cts}_t \leq r^{val} r_t x^{bin}_t, \forall t ``
 """
-function device_timeseries_ub_bin(
+function device_timeseries_ub_bin!(
     psi_container::PSIContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )
@@ -298,7 +298,7 @@ Constructs upper bound for variable and time series and a multiplier or confines
 
 `` x^{cts}_t \leq M x^{bin}_t, \forall t ``
 """
-function device_timeseries_ub_bigM(
+function device_timeseries_ub_bigM!(
     psi_container::PSIContainer,
     inputs::TimeSeriesConstraintSpecInternal,
 )

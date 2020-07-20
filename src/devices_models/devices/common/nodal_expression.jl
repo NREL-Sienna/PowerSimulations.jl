@@ -64,7 +64,7 @@ function _nodal_expression!(
     end
     if parameters
         @debug spec.update_ref, spec.parameter_name forecast_label
-        include_parameters(
+        include_parameters!(
             psi_container,
             constraint_infos,
             UpdateRef{spec.update_ref}(spec.parameter_name, forecast_label),
