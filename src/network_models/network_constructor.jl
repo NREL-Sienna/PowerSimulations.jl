@@ -6,10 +6,10 @@ function construct_network!(
     buses = PSY.get_components(PSY.Bus, sys)
     bus_count = length(buses)
 
-    get_balance_slack_variables(psi_container.settings) &&
+    if get_balance_slack_variables(psi_container.settings)
         add_slacks!(psi_container, CopperPlatePowerModel)
+    end
     copper_plate(psi_container, :nodal_balance_active, bus_count)
-
     return
 end
 
@@ -41,8 +41,9 @@ function construct_network!(
         throw(ArgumentError("no PTDF matrix supplied"))
     end
 
-    get_balance_slack_variables(psi_container.settings) &&
+    if get_balance_slack_variables(psi_container.settings)
         add_slacks!(psi_container, StandardPTDFModel)
+    end
 
     ptdf_networkflow(psi_container, ac_branches, buses, :nodal_balance_active, ptdf)
 
@@ -68,7 +69,9 @@ function construct_network!(
         throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
     end
 
-    get_balance_slack_variables(psi_container.settings) && add_slacks!(psi_container, T)
+    if get_balance_slack_variables(psi_container.settings)
+        add_slacks!(psi_container, T)
+    end
 
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(psi_container, T, sys, instantiate_model)
@@ -106,7 +109,9 @@ function construct_network!(
         throw(ArgumentError("$(T) formulation is not currently supported in PowerSimulations"))
     end
 
-    get_balance_slack_variables(psi_container.settings) && add_slacks!(psi_container, T)
+    if get_balance_slack_variables(psi_container.settings)
+        add_slacks!(psi_container, T)
+    end
 
     @debug "Building the $T network with $instantiate_model method"
     powermodels_network!(psi_container, T, sys, instantiate_model)
