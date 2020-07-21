@@ -8,7 +8,7 @@ function get_time_series(
     use_forecast_data = model_uses_forecasts(psi_container)
     time_steps = model_time_steps(psi_container)
     has_forecasts = PSY.has_forecasts(device)
-    if !has_forecasts
+    if use_forecast_data && !has_forecasts
         @warn "$(summary(device)) does not have forecasts)"
     end
     if use_forecast_data && has_forecasts
