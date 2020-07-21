@@ -185,7 +185,7 @@ function DeviceRangeConstraintSpec(
             variable_name = make_variable_name(ActivePowerVariable, T),
             parameter_name = use_parameters ? ACTIVE_POWER : nothing,
             forecast_label = "get_max_active_power",
-            multiplier_func = x -> PSY.get_rating(x),
+            multiplier_func = x -> PSY.get_max_active_power(x),
             constraint_func = use_parameters ? device_timeseries_param_ub! :
                               device_timeseries_ub!,
         ),
@@ -350,7 +350,7 @@ function energy_balance_constraint!(
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label)
         constraint_info =
-            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_rating(x), ts_vector)
+            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_max_active_power(x), ts_vector)
         add_device_services!(constraint_info.range, d, model)
         constraint_infos[ix] = constraint_info
     end
@@ -417,7 +417,7 @@ function NodalExpressionSpec(
     return NodalExpressionSpec(
         "get_max_active_power",
         ACTIVE_POWER,
-        use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_active_power(x),
+        use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         1.0,
         T,
     )
@@ -475,7 +475,7 @@ function energy_limit_constraints!(
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label)
         constraint_info =
-            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_rating(x), ts_vector)
+            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_storage_capacity(x), ts_vector)
         add_device_services!(constraint_info.range, d, model)
         constraint_infos[ix] = constraint_info
     end

@@ -57,7 +57,7 @@ function add_constraints!(
         ts_vector = get_time_series(psi_container, d, "get_max_active_power")
         constraint_info = DeviceTimeSeriesConstraintInfo(
             d,
-            x -> PSY.get_rating(x),
+            x -> PSY.get_max_active_power(x),
             ts_vector,
             x -> PSY.get_active_power_limits(x),
         )
@@ -312,7 +312,7 @@ function NodalExpressionSpec(
     return NodalExpressionSpec(
         "get_max_active_power",
         make_variable_name(ACTIVE_POWER, T),
-        use_forecasts ? x -> PSY.get_rating(x) : x -> PSY.get_active_power(x),
+        use_forecasts ? x -> PSY.get_max_active_power(x) : x -> PSY.get_active_power(x),
         1.0,
         JuMP.VariableRef,
     )
