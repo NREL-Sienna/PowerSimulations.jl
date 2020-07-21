@@ -350,7 +350,7 @@ function energy_balance_constraint!(
     for (ix, d) in enumerate(devices)
         ts_vector = get_time_series(psi_container, d, forecast_label)
         constraint_info =
-            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_max_active_power(x), ts_vector)
+            DeviceTimeSeriesConstraintInfo(d, x -> PSY.get_inflow(x), ts_vector)
         add_device_services!(constraint_info.range, d, model)
         constraint_infos[ix] = constraint_info
     end
