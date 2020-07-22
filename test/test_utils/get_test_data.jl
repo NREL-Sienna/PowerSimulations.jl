@@ -576,18 +576,18 @@ function build_c_sys5_reg(; kwargs...)
     )
 
     area = Area("1")
-    add_component!(c_sys5_reg, area,)
+    add_component!(c_sys5_reg, area)
     [set_area!(b, area) for b in get_components(Bus, c_sys5_reg)]
     AGC_service = PSY.AGC(
-    name = "AGC_Area1",
-    available = true,
-    bias = 739.0,
-    K_p = 2.5,
-    K_i = 0.1,
-    K_d = 0.0,
-    delta_t = 4,
-    area = first(get_components(Area, c_sys5_reg)),
-)
+        name = "AGC_Area1",
+        available = true,
+        bias = 739.0,
+        K_p = 2.5,
+        K_i = 0.1,
+        K_d = 0.0,
+        delta_t = 4,
+        area = first(get_components(Area, c_sys5_reg)),
+    )
 
     if get(kwargs, :add_forecasts, true)
         for t in 1:2
@@ -598,7 +598,7 @@ function build_c_sys5_reg(; kwargs...)
                     Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
                 )
             end
-           for (_, l) in enumerate(get_components(ThermalStandard, c_sys5_reg))
+            for (_, l) in enumerate(get_components(ThermalStandard, c_sys5_reg))
                 add_forecast!(
                     c_sys5_reg,
                     l,
@@ -609,7 +609,8 @@ function build_c_sys5_reg(; kwargs...)
     end
 
     for g in get_components(Generator, c_sys5_reg)
-        droop = isa(g, ThermalStandard) ? 0.04*PSY.get_base_power(g) : 0.05*PSY.get_base_power(g)
+        droop = isa(g, ThermalStandard) ? 0.04 * PSY.get_base_power(g) :
+            0.05 * PSY.get_base_power(g)
         p_factor = (up = 1.0, dn = 1.0)
         t = RegulationDevice(g, participation_factor = p_factor, droop = droop)
         add_component!(c_sys5_reg, t)
@@ -618,8 +619,6 @@ function build_c_sys5_reg(; kwargs...)
     end
     return c_sys5_reg
 end
-
-
 
 # System to test UC Forms
 #Park City and Sundance Have non-binding Ramp Limitst at an Hourly Resolution
