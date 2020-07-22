@@ -561,6 +561,66 @@ function build_c_sys14_dc(; kwargs...)
     return c_sys14_dc
 end
 
+function build_c_sys5_reg(; kwargs...)
+    nodes = nodes5()
+
+    c_sys5_reg = System(
+        nodes,
+        thermal_generators5(nodes),
+        loads5(nodes),
+        branches5(nodes),
+        nothing,
+        100.0,
+        nothing,
+        nothing,
+    )
+
+    area = Area("1")
+    add_component!(c_sys5_reg, area,)
+    [set_area!(b, area) for b in get_components(Bus, c_sys5_reg)]
+    AGC_service = PSY.AGC(
+    name = "AGC_Area1",
+    available = true,
+    bias = 739.0,
+    K_p = 2.5,
+    K_i = 0.1,
+    K_d = 0.0,
+    delta_t = 4,
+    area = first(get_components(Area, c_sys5_reg)),
+)
+
+    if get(kwargs, :add_forecasts, true)
+        for t in 1:2
+            for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_reg))
+                add_forecast!(
+                    c_sys5_reg,
+                    l,
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
+                )
+            end
+           for (_, l) in enumerate(get_components(ThermalStandard, c_sys5_reg))
+                add_forecast!(
+                    c_sys5_reg,
+                    l,
+                    Deterministic("get_max_active_power", load_timeseries_DA[t][1]),
+                )
+            end
+        end
+    end
+
+    for g in get_components(Generator, c_sys5_reg)
+        droop = isa(g, ThermalStandard) ? 0.04*PSY.get_base_power(g) : 0.05*PSY.get_base_power(g)
+        p_factor = (up = 1.0, dn = 1.0)
+        t = RegulationDevice(g, participation_factor = p_factor, droop = droop)
+        add_component!(c_sys5_reg, t)
+        add_service!(t, AGC_service)
+        @assert has_forecasts(t)
+    end
+    return c_sys5_reg
+end
+
+
+
 # System to test UC Forms
 #Park City and Sundance Have non-binding Ramp Limitst at an Hourly Resolution
 # Solitude, Sundance and Brighton have binding time_up constraints.
@@ -1091,6 +1151,11 @@ TEST_SYSTEMS = Dict(
     "c_sys5_pwl_ed" => (
         description = "5-bus with SOS cost function",
         build = build_c_sys5_pwl_ed,
+        time_series_in_memory = true,
+    ),
+    "c_sys5_reg" => (
+        description = "5-bus with regulation devices and AGC",
+        build = build_c_sys5_reg,
         time_series_in_memory = true,
     ),
 )
