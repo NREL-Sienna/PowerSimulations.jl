@@ -4,16 +4,10 @@ struct PIDSmoothACE <: AbstractAGCFormulation end
 """
 Steady State deviation of the frequency
 """
-function add_variables!(
-    ::Type{SteadyStateFrequencyDeviation},
-    psi_container::PSIContainer)
+function add_variables!(::Type{SteadyStateFrequencyDeviation}, psi_container::PSIContainer)
     variable_name = make_variable_name(SteadyStateFrequencyDeviation)
     time_steps = model_time_steps(psi_container)
-    variable = add_var_container!(
-        psi_container,
-        variable_name,
-        time_steps,
-    )
+    variable = add_var_container!(psi_container, variable_name, time_steps)
     for t in time_steps
         variable[t] = JuMP.@variable(psi_container.JuMPmodel, base_name = "ΔF_{$(t)}")
     end
@@ -32,7 +26,6 @@ function AddVariableSpec(
         binary = false,
     )
 end
-
 
 """
 This function adds the smooth ACE Variable
@@ -216,12 +209,25 @@ function frequency_response_constraint!(psi_container::PSIContainer, sys::PSY.Sy
     @assert frequency_response >= 0.0
     # This value is the one updated later in simulation based on the UC result
     inv_frequency_reponse = 1 / frequency_response
-    area_balance = get_variable(psi_container, make_variable_name(ActivePowerVariable, PSY.Area))
+    area_balance =
+        get_variable(psi_container, make_variable_name(ActivePowerVariable, PSY.Area))
     frequency = get_variable(psi_container, make_variable_name("Δf"))
-    R_up = get_variable(psi_container, make_variable_name(DeltaActivePowerUpVariable, PSY.Area))
-    R_dn = get_variable(psi_container, make_variable_name(DeltaActivePowerDownVariable, PSY.Area))
-    R_up_emergency = get_variable(psi_container, make_variable_name(AdditionalDeltaActivePowerUpVariable, PSY.Area))
-    R_dn_emergency = get_variable(psi_container, make_variable_name(AdditionalDeltaActivePowerUpVariable, PSY.Area))
+    R_up = get_variable(
+        psi_container,
+        make_variable_name(DeltaActivePowerUpVariable, PSY.Area),
+    )
+    R_dn = get_variable(
+        psi_container,
+        make_variable_name(DeltaActivePowerDownVariable, PSY.Area),
+    )
+    R_up_emergency = get_variable(
+        psi_container,
+        make_variable_name(AdditionalDeltaActivePowerUpVariable, PSY.Area),
+    )
+    R_dn_emergency = get_variable(
+        psi_container,
+        make_variable_name(AdditionalDeltaActivePowerUpVariable, PSY.Area),
+    )
 
     container = JuMPConstraintArray(undef, time_steps)
     assign_constraint!(psi_container, "frequency_response", container)
@@ -297,10 +303,22 @@ function aux_constraints!(psi_container::PSIContainer, sys::PSY.System)
     assign_constraint!(psi_container, "balance_aux", aux_equation)
     area_mismatch = get_variable(psi_container, :area_mismatch)
     SACE = get_variable(psi_container, make_variable_name(SmoothACE, PSY.Area))
-    R_up = get_variable(psi_container, make_variable_name(DeltaActivePowerUpVariable, PSY.Area))
-    R_dn = get_variable(psi_container, make_variable_name(DeltaActivePowerDownVariable, PSY.Area))
-    R_up_emergency = get_variable(psi_container, make_variable_name(AdditionalDeltaActivePowerUpVariable, PSY.Area))
-    R_dn_emergency = get_variable(psi_container, make_variable_name(AdditionalDeltaActivePowerUpVariable, PSY.Area))
+    R_up = get_variable(
+        psi_container,
+        make_variable_name(DeltaActivePowerUpVariable, PSY.Area),
+    )
+    R_dn = get_variable(
+        psi_container,
+        make_variable_name(DeltaActivePowerDownVariable, PSY.Area),
+    )
+    R_up_emergency = get_variable(
+        psi_container,
+        make_variable_name(AdditionalDeltaActivePowerUpVariable, PSY.Area),
+    )
+    R_dn_emergency = get_variable(
+        psi_container,
+        make_variable_name(AdditionalDeltaActivePowerUpVariable, PSY.Area),
+    )
 
     for t in time_steps, a in area_names
         aux_equation[a, t] = JuMP.@constraint(

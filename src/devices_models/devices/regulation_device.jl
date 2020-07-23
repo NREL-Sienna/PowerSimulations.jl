@@ -262,7 +262,6 @@ function ramp_constraints!(
     return
 end
 
-
 function participation_assignment!(
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
@@ -273,8 +272,14 @@ function participation_assignment!(
     time_steps = model_time_steps(psi_container)
     R_up = get_variable(psi_container, make_variable_name(DeltaActivePowerUpVariable, T))
     R_dn = get_variable(psi_container, make_variable_name(DeltaActivePowerDownVariable, T))
-    R_up_emergency = get_variable(psi_container, make_variable_name(AdditionalDeltaActivePowerUpVariable, T))
-    R_dn_emergency = get_variable(psi_container, make_variable_name(AdditionalDeltaActivePowerUpVariable, T))
+    R_up_emergency = get_variable(
+        psi_container,
+        make_variable_name(AdditionalDeltaActivePowerUpVariable, T),
+    )
+    R_dn_emergency = get_variable(
+        psi_container,
+        make_variable_name(AdditionalDeltaActivePowerUpVariable, T),
+    )
 
     component_names = (PSY.get_name(d) for d in devices)
     participation_assignment_up = JuMPConstraintArray(undef, component_names, time_steps)
@@ -314,14 +319,8 @@ function participation_assignment!(
                 R_dn[name, t] ==
                 (p_factor.dn * R_dn[area_name, t]) + R_dn_emergency[name, t]
             )
-            JuMP.add_to_expression!(
-                expr_up[area_name, t],
-                -1 * R_up_emergency[name, t],
-            )
-            JuMP.add_to_expression!(
-                expr_dn[area_name, t],
-                -1 * R_dn_emergency[name, t],
-            )
+            JuMP.add_to_expression!(expr_up[area_name, t], -1 * R_up_emergency[name, t])
+            JuMP.add_to_expression!(expr_dn[area_name, t], -1 * R_dn_emergency[name, t])
         end
 
     end
@@ -337,8 +336,14 @@ function regulation_cost!(
     time_steps = model_time_steps(psi_container)
     R_up = get_variable(psi_container, make_variable_name(DeltaActivePowerUpVariable, T))
     R_dn = get_variable(psi_container, make_variable_name(DeltaActivePowerDownVariable, T))
-    R_up_emergency = get_variable(psi_container, make_variable_name(AdditionalDeltaActivePowerUpVariable, T))
-    R_dn_emergency = get_variable(psi_container, make_variable_name(AdditionalDeltaActivePowerUpVariable, T))
+    R_up_emergency = get_variable(
+        psi_container,
+        make_variable_name(AdditionalDeltaActivePowerUpVariable, T),
+    )
+    R_dn_emergency = get_variable(
+        psi_container,
+        make_variable_name(AdditionalDeltaActivePowerUpVariable, T),
+    )
 
     for d in devices
         cost = PSY.get_cost(d)

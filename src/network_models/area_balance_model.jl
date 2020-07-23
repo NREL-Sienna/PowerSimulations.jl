@@ -11,7 +11,8 @@ function area_balance(
     participation_assignment_up = JuMPConstraintArray(undef, keys(area_mapping), time_steps)
     participation_assignment_dn = JuMPConstraintArray(undef, keys(area_mapping), time_steps)
     assign_constraint!(psi_container, "area_dispatch_balance", constraint_bal)
-    area_balance = get_variable(psi_container, make_variable_name(ActivePowerVariable, PSY.Area))
+    area_balance =
+        get_variable(psi_container, make_variable_name(ActivePowerVariable, PSY.Area))
     for (k, buses_in_area) in area_mapping
         for t in time_steps
             area_net = model_has_parameters(psi_container) ? zero(PGAE) : JuMP.AffExpr(0.0)
