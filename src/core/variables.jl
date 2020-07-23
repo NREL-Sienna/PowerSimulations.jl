@@ -40,7 +40,7 @@ Struct to dispatch the creation of Active Power Variables
 """
 struct ActivePowerVariable <: VariableType end
 
-function make_variable_name(::Type{ActivePowerVariable}, ::Type{T}) where {T <: PSY.Device}
+function make_variable_name(::Type{ActivePowerVariable}, ::Type{T}) where {T <: PSY.Component}
     return encode_symbol(T, "P")
 end
 
