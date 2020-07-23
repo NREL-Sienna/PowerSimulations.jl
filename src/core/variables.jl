@@ -110,7 +110,7 @@ function make_variable_name(
     ::Type{ReactivePowerVariable},
     ::Type{T},
 ) where {T <: PSY.Device}
-    return encode_symbol(T, "reactive_power")
+    return encode_symbol(T, "Q")
 end
 
 struct ReserveVariable <: VariableType end
