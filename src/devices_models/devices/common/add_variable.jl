@@ -50,7 +50,7 @@ Add variables to the PSIContainer for any component.
 function add_variables!(
     ::Type{T},
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{U},
+    devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
 ) where {T <: VariableType, U <: PSY.Component}
     _add_variables!(psi_container, devices, AddVariableSpec(T, U, psi_container))
 end
