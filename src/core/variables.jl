@@ -101,7 +101,7 @@ end
 struct OnVariable <: VariableType end
 
 function make_variable_name(::Type{OnVariable}, ::Type{T}) where {T <: PSY.Device}
-    return encode_symbol(T, "on")
+    return encode_symbol(T, "On")
 end
 
 struct ReactivePowerVariable <: VariableType end
