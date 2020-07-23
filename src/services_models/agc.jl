@@ -4,14 +4,78 @@ struct PIDSmoothACE <: AbstractAGCFormulation end
 """
 Steady State deviation of the frequency
 """
-function steady_state_frequency_variables!(psi_container::PSIContainer)
-    time_steps = model_time_steps(psi_container)
-    variable = JuMPVariableArray(undef, time_steps)
-    assign_variable!(psi_container, make_variable_name("Δf"), variable)
-    for t in time_steps
-        variable[t] = JuMP.@variable(psi_container.JuMPmodel, base_name = "ΔF_{$(t)}")
-    end
-    return
+function AddVariableSpec(
+    ::Type{T},
+    ::Type{PSY.AGC},
+    ::PSIContainer,
+) where {T <: SteadyStateFrequencyDeviation}
+    AddVariableSpec(;
+        variable_name = make_variable_name(T),
+        binary = false,
+    )
+end
+
+
+"""
+This function add the upwards scheduled regulation variables for power generation output to the model
+"""
+function AddVariableSpec(
+    ::Type{DeltaActivePowerUpVariable},
+    ::Type{PSY.Area},
+    psi_container::PSIContainer
+)
+    return AddVariableSpec(;
+        variable_name = make_variable_name(DeltaActivePowerUpVariable, PSY.Area),
+        binary = false,
+        lb_value_func = x -> 0.0,
+    )
+end
+
+"""
+This function add the downwards scheduled regulation variables for power generation output to the model
+"""
+function AddVariableSpec(
+    ::Type{DeltaActivePowerDownVariable},
+    ::Type{U},
+    psi_container::PSIContainer,
+) where {U <: PSY.Area}
+    return AddVariableSpec(;
+        variable_name = make_variable_name(DeltaActivePowerDownVariable, U),
+        binary = false,
+        lb_value_func = x -> 0.0,
+    )
+end
+
+"""
+This function add the upwards scheduled regulation variables for power generation output to the model
+"""
+function AddVariableSpec(
+    ::Type{AdditionalDeltaActivePowerUpVariable},
+    ::Type{U},
+    psi_container::PSIContainer,
+) where {U <: PSY.Area}
+    return AddVariableSpec(;
+        variable_name = make_variable_name(AdditionalDeltaActivePowerUpVariable, U),
+        binary = false,
+        lb_value_func = x -> 0.0,
+        expression_name = :emergency_up,
+    )
+end
+
+"""
+This function add the variables for power generation output to the model
+"""
+function AddVariableSpec(
+    ::Type{AdditionalDeltaActivePowerDownVariable},
+    ::Type{U},
+    psi_container::PSIContainer,
+) where {U <: PSY.Area}
+    return AddVariableSpec(;
+        variable_name = make_variable_name(AdditionalDeltaActivePowerDownVariable, U),
+        binary = false,
+        lb_value_func = x -> 0.0,
+        expression_name = :emergency_dn,
+    )
 end
 
 function balancing_auxiliary_variables!(psi_container, sys)
