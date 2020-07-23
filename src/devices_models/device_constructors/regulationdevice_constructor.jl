@@ -13,8 +13,10 @@ function construct_device!(
 
     devices = get_available_components(model.device_type, sys)
     #Variables
-    add_variables!(ΔUpVariable, psi_container, devices)
-    add_variables!(ΔDownVariable, psi_container, devices)
+    add_variables!(DeltaActivePowerUpVariable, psi_container, devices)
+    add_variables!(DeltaActivePowerDownVariable, psi_container, devices)
+    add_variables!(AdditionalDeltaActivePowerUpVariable, psi_container, devices)
+    add_variables!(AdditionalDeltaActivePowerDownVariable, psi_container, devices)
 
     #Constraints
     nodal_expression!(psi_container, devices, S)
@@ -28,7 +30,7 @@ function construct_device!(
         get_feedforward(model),
     )
     ramp_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    participation_assignment!(psi_container, devices, model, S, nothing)
+    #participation_assignment!(psi_container, devices, model, S, nothing)
     regulation_cost!(psi_container, devices, model)
     return
 end
@@ -48,8 +50,9 @@ function construct_device!(
 
     devices = get_available_components(model.device_type, sys)
     #Variables
-    add_variables!(ΔUpVariable, psi_container, devices)
-    add_variables!(ΔDownVariable, psi_container, devices)
+    add_variables!(DeltaActivePowerUpVariable, psi_container, devices)
+    add_variables!(DeltaActivePowerDownVariable, psi_container, devices)
+    #balancing_auxiliary_variables!(psi_container, sys)
 
     #Constraints
     nodal_expression!(psi_container, devices, S)
@@ -62,7 +65,7 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    participation_assignment!(psi_container, devices, model, S, nothing)
+    #participation_assignment!(psi_container, devices, model, S, nothing)
     regulation_cost!(psi_container, devices, model)
     return
 end

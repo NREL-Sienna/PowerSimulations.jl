@@ -5,25 +5,76 @@ struct DeviceLimitedRegulation <: AbstractRegulationFormulation end
 """
 This function add the variables for reserves to the model
 """
+function regulation_service_variables!(
+    psi_container::PSIContainer,
+    devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
+) where {T <: PSY.StaticInjection}
+    var_name_up = make_variable_name("ΔP_up", T)
+    var_name_dn = make_variable_name("ΔP_dn", T)
+    emergency_var_name_up = make_variable_name("ΔPe_up", T)
+    emergency_var_name_dn = make_variable_name("ΔPe_dn", T)
+    add_variable!(psi_container, devices, var_name_up, false; lb_value = x -> 0.0)
+    add_variable!(psi_container, devices, var_name_dn, false; lb_value = x -> 0.0)
+    add_variable!(psi_container, devices, emergency_var_name_up, false; lb_value = x -> 0.0)
+    add_variable!(psi_container, devices, emergency_var_name_dn, false; lb_value = x -> 0.0)
+    return
+end
+
+"""
+This function add the upwards scheduled regulation variables for power generation output to the model
+"""
 function AddVariableSpec(
-    ::Type{T},
+    ::Type{DeltaActivePowerUpVariable},
     ::Type{U},
-    ::PSIContainer,
-) where {T <: DeltaActivePowerUpVariable, U <: PSY.Device}
+    psi_container::PSIContainer,
+) where {U <: PSY.RegulationDevice}
     return AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
+        variable_name = make_variable_name(DeltaActivePowerUpVariable, U),
         binary = false,
         lb_value_func = x -> 0.0,
     )
 end
 
+"""
+This function add the downwards scheduled regulation variables for power generation output to the model
+"""
 function AddVariableSpec(
-    ::Type{T},
+    ::Type{DeltaActivePowerDownVariable},
     ::Type{U},
-    ::PSIContainer,
-) where {T <: DeltaActivePowerDownVariable, U <: PSY.Device}
-    AddVariableSpec(;
-        variable_name = make_variable_name(T, U),
+    psi_container::PSIContainer,
+) where {U <: PSY.RegulationDevice}
+    return AddVariableSpec(;
+        variable_name = make_variable_name(DeltaActivePowerDownVariable, U),
+        binary = false,
+        lb_value_func = x -> 0.0,
+    )
+end
+
+"""
+This function add the upwards scheduled regulation variables for power generation output to the model
+"""
+function AddVariableSpec(
+    ::Type{AdditionalDeltaActivePowerUpVariable},
+    ::Type{U},
+    psi_container::PSIContainer,
+) where {U <: PSY.RegulationDevice}
+    return AddVariableSpec(;
+        variable_name = make_variable_name(AdditionalDeltaActivePowerUpVariable, U),
+        binary = false,
+        lb_value_func = x -> 0.0,
+    )
+end
+
+"""
+This function add the variables for power generation output to the model
+"""
+function AddVariableSpec(
+    ::Type{AdditionalDeltaActivePowerDownVariable},
+    ::Type{U},
+    psi_container::PSIContainer,
+) where {U <: PSY.RegulationDevice}
+    return AddVariableSpec(;
+        variable_name = make_variable_name(AdditionalDeltaActivePowerDownVariable, U),
         binary = false,
         lb_value_func = x -> 0.0,
     )
@@ -31,7 +82,7 @@ end
 
 function add_constraints!(
     ::Type{RangeConstraint},
-    ::Type{ActivePowerVariable},
+    ::Type{DeltaActivePowerUpVariable},
     psi_container::PSIContainer,
     devices::IS.FlattenIteratorWrapper{PSY.RegulationDevice{T}},
     ::DeviceModel{PSY.RegulationDevice{T}, DeviceLimitedRegulation},
