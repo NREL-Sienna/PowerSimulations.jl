@@ -12,15 +12,31 @@ function construct_device!(
     end
 
     devices = get_available_components(model.device_type, sys)
+
+    if !validate_available_devices(T, devices)
+        return
+    end
+
     #Variables
-    add_variables!(ΔUpVariable, psi_container, devices)
-    add_variables!(ΔDownVariable, psi_container, devices)
+    add_variables!(DeltaActivePowerUpVariable, psi_container, devices)
+    add_variables!(DeltaActivePowerDownVariable, psi_container, devices)
+    add_variables!(AdditionalDeltaActivePowerUpVariable, psi_container, devices)
+    add_variables!(AdditionalDeltaActivePowerDownVariable, psi_container, devices)
 
     #Constraints
     nodal_expression!(psi_container, devices, S)
     add_constraints!(
         RangeConstraint,
-        ActivePowerVariable,
+        DeltaActivePowerUpVariable,
+        psi_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        RangeConstraint,
+        DeltaActivePowerDownVariable,
         psi_container,
         devices,
         model,
@@ -47,15 +63,31 @@ function construct_device!(
     end
 
     devices = get_available_components(model.device_type, sys)
+
+    if !validate_available_devices(T, devices)
+        return
+    end
+
     #Variables
-    add_variables!(ΔUpVariable, psi_container, devices)
-    add_variables!(ΔDownVariable, psi_container, devices)
+    add_variables!(DeltaActivePowerUpVariable, psi_container, devices)
+    add_variables!(DeltaActivePowerDownVariable, psi_container, devices)
+    add_variables!(AdditionalDeltaActivePowerUpVariable, psi_container, devices)
+    add_variables!(AdditionalDeltaActivePowerDownVariable, psi_container, devices)
 
     #Constraints
     nodal_expression!(psi_container, devices, S)
     add_constraints!(
         RangeConstraint,
-        ActivePowerVariable,
+        DeltaActivePowerUpVariable,
+        psi_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        RangeConstraint,
+        DeltaActivePowerDownVariable,
         psi_container,
         devices,
         model,
@@ -81,6 +113,9 @@ function construct_device!(
     end
 
     devices = get_available_components(model.device_type, sys)
+    if !validate_available_devices(T, devices)
+        return
+    end
     nodal_expression!(psi_container, devices, S)
     return
 end

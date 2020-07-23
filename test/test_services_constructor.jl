@@ -156,6 +156,61 @@ end
 end
 
 @testset "Test AGC" begin
+    # Temporary creation of system here until world of age problem is resolved
+    nodes = nodes5()
+
+    c_sys5_reg = System(
+        nodes,
+        thermal_generators5(nodes),
+        loads5(nodes),
+        branches5(nodes),
+        nothing,
+        100.0,
+        nothing,
+        nothing,
+    )
+
+    area = Area("1")
+    add_component!(c_sys5_reg, area)
+    [set_area!(b, area) for b in get_components(Bus, c_sys5_reg)]
+    AGC_service = PSY.AGC(
+        name = "AGC_Area1",
+        available = true,
+        bias = 739.0,
+        K_p = 2.5,
+        K_i = 0.1,
+        K_d = 0.0,
+        delta_t = 4,
+        area = first(get_components(Area, c_sys5_reg)),
+    )
+    add_component!(c_sys5_reg, AGC_service)
+    for t in 1:2
+        for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_reg))
+            add_forecast!(
+                c_sys5_reg,
+                l,
+                Deterministic("get_max_active_power", load_timeseries_DA[t][ix]),
+            )
+        end
+        for (_, l) in enumerate(get_components(ThermalStandard, c_sys5_reg))
+            add_forecast!(
+                c_sys5_reg,
+                l,
+                Deterministic("get_max_active_power", load_timeseries_DA[t][1]),
+            )
+        end
+    end
+
+    for g in get_components(Generator, c_sys5_reg)
+        droop = isa(g, ThermalStandard) ? 0.04 * PSY.get_base_power(g) :
+            0.05 * PSY.get_base_power(g)
+        p_factor = (up = 1.0, dn = 1.0)
+        t = RegulationDevice(g, participation_factor = p_factor, droop = droop)
+        add_component!(c_sys5_reg, t)
+        add_service!(t, AGC_service)
+        @assert has_forecasts(t)
+    end
+    # End of the system creation code.
     devices = Dict(
         :Loads => DeviceModel(PowerLoad, StaticPowerLoad),
         :Regulation_thermal =>
@@ -166,6 +221,7 @@ end
     @test_throws ArgumentError template_agc_reserve_deployment(devices = devices)
 
     template_agc = template_agc_reserve_deployment()
-    c_sys5_reg = build_c_sys5_reg()
     agc_problem = OperationsProblem(AGCReserveDeployment, template_agc, c_sys5_reg)
+    # These values might change as the AGC model is refined
+    moi_tests(agc_problem, false, 720, 0, 480, 0, 384, false)
 end

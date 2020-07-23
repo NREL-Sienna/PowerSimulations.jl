@@ -50,7 +50,7 @@ Add variables to the PSIContainer for any component.
 function add_variables!(
     ::Type{T},
     psi_container::PSIContainer,
-    devices::IS.FlattenIteratorWrapper{U},
+    devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
 ) where {T <: VariableType, U <: PSY.Component}
     _add_variables!(psi_container, devices, AddVariableSpec(T, U, psi_container))
 end
@@ -148,6 +148,7 @@ function add_variable!(
     sign::Float64 = 1.0;
     kwargs...,
 ) where {D <: Union{Vector{<:PSY.Component}, IS.FlattenIteratorWrapper{<:PSY.Component}}}
+    @assert !isempty(devices)
     time_steps = model_time_steps(psi_container)
     variable = add_var_container!(
         psi_container,

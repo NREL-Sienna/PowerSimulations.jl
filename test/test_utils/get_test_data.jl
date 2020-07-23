@@ -588,7 +588,7 @@ function build_c_sys5_reg(; kwargs...)
         delta_t = 4,
         area = first(get_components(Area, c_sys5_reg)),
     )
-
+    add_component!(c_sys5_reg, AGC_service)
     if get(kwargs, :add_forecasts, true)
         for t in 1:2
             for (ix, l) in enumerate(get_components(PowerLoad, c_sys5_reg))
