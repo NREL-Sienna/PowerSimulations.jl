@@ -148,6 +148,7 @@ function add_variable!(
     sign::Float64 = 1.0;
     kwargs...,
 ) where {D <: Union{Vector{<:PSY.Component}, IS.FlattenIteratorWrapper{<:PSY.Component}}}
+    @assert !isempty(devices)
     time_steps = model_time_steps(psi_container)
     variable = add_var_container!(
         psi_container,
