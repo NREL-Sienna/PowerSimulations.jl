@@ -22,7 +22,16 @@ function construct_device!(
     nodal_expression!(psi_container, devices, S)
     add_constraints!(
         RangeConstraint,
-        ActivePowerVariable,
+        DeltaActivePowerUpVariable,
+        psi_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        RangeConstraint,
+        DeltaActivePowerDownVariable,
         psi_container,
         devices,
         model,
@@ -52,13 +61,23 @@ function construct_device!(
     #Variables
     add_variables!(DeltaActivePowerUpVariable, psi_container, devices)
     add_variables!(DeltaActivePowerDownVariable, psi_container, devices)
-    #balancing_auxiliary_variables!(psi_container, sys)
+    add_variables!(AdditionalDeltaActivePowerUpVariable, psi_container, devices)
+    add_variables!(AdditionalDeltaActivePowerDownVariable, psi_container, devices)
 
     #Constraints
     nodal_expression!(psi_container, devices, S)
     add_constraints!(
         RangeConstraint,
-        ActivePowerVariable,
+        DeltaActivePowerUpVariable,
+        psi_container,
+        devices,
+        model,
+        S,
+        get_feedforward(model),
+    )
+    add_constraints!(
+        RangeConstraint,
+        DeltaActivePowerDownVariable,
         psi_container,
         devices,
         model,
