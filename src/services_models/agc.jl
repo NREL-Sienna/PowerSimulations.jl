@@ -4,28 +4,45 @@ struct PIDSmoothACE <: AbstractAGCFormulation end
 """
 Steady State deviation of the frequency
 """
+function add_variables!(
+    ::Type{SteadyStateFrequencyDeviation},
+    psi_container::PSIContainer)
+    variable_name = make_variable_name(SteadyStateFrequencyDeviation)
+    time_steps = model_time_steps(psi_container)
+    variable = add_var_container!(
+        psi_container,
+        variable_name,
+        time_steps,
+    )
+    for t in time_steps
+        variable[t] = JuMP.@variable(psi_container.JuMPmodel, base_name = "ΔF_{$(t)}")
+    end
+end
+
+"""
+This function add the upwards scheduled regulation variables for power generation output to the model
+"""
 function AddVariableSpec(
-    ::Type{T},
-    ::Type{PSY.AGC},
-    ::PSIContainer,
-) where {T <: SteadyStateFrequencyDeviation}
-    AddVariableSpec(;
-        variable_name = make_variable_name(T),
+    ::Type{ActivePowerVariable},
+    ::Type{U},
+    psi_container::PSIContainer,
+) where {U <: PSY.Area}
+    return AddVariableSpec(;
+        variable_name = make_variable_name(ActivePowerVariable, U),
         binary = false,
     )
 end
-
 
 """
 This function add the upwards scheduled regulation variables for power generation output to the model
 """
 function AddVariableSpec(
     ::Type{DeltaActivePowerUpVariable},
-    ::Type{PSY.Area},
-    psi_container::PSIContainer
-)
+    ::Type{U},
+    psi_container::PSIContainer,
+) where {U <: PSY.Area}
     return AddVariableSpec(;
-        variable_name = make_variable_name(DeltaActivePowerUpVariable, PSY.Area),
+        variable_name = make_variable_name(DeltaActivePowerUpVariable, U),
         binary = false,
         lb_value_func = x -> 0.0,
     )
@@ -78,57 +95,6 @@ function AddVariableSpec(
     )
 end
 
-function balancing_auxiliary_variables!(psi_container, sys)
-    area_names = (PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys))
-    time_steps = model_time_steps(psi_container)
-    R_up = JuMPVariableArray(undef, area_names, time_steps)
-    R_dn = JuMPVariableArray(undef, area_names, time_steps)
-    assign_variable!(psi_container, make_variable_name("area_total_reserve_up"), R_up)
-    assign_variable!(psi_container, make_variable_name("area_total_reserve_dn"), R_dn)
-    R_up_emergency = JuMPVariableArray(undef, area_names, time_steps)
-    R_dn_emergency = JuMPVariableArray(undef, area_names, time_steps)
-    assign_variable!(
-        psi_container,
-        make_variable_name("area_emergency_reserve_up"),
-        R_up_emergency,
-    )
-    assign_variable!(
-        psi_container,
-        make_variable_name("area_emergency_reserve_dn"),
-        R_dn_emergency,
-    )
-    emergency_up =
-        add_expression_container!(psi_container, :emergency_up, area_names, time_steps)
-    emergency_dn =
-        add_expression_container!(psi_container, :emergency_dn, area_names, time_steps)
-    for t in time_steps, a in area_names
-        R_up[a, t] = JuMP.@variable(
-            psi_container.JuMPmodel,
-            base_name = "R_up_{$(a),$(t)}",
-            lower_bound = 0.0
-        )
-        R_dn[a, t] = JuMP.@variable(
-            psi_container.JuMPmodel,
-            base_name = "R_dn_{$(a),$(t)}",
-            lower_bound = 0.0
-        )
-        R_up_emergency[a, t] = JuMP.@variable(
-            psi_container.JuMPmodel,
-            base_name = "Re_up_{$(a),$(t)}",
-            lower_bound = 0.0
-        )
-        emergency_up[a, t] = R_up_emergency[a, t] + 0.0
-        R_dn_emergency[a, t] = JuMP.@variable(
-            psi_container.JuMPmodel,
-            base_name = "Re_dn_{$(a),$(t)}",
-            lower_bound = 0.0
-        )
-        emergency_dn[a, t] = R_dn_emergency[a, t] + 0.0
-    end
-
-    return
-end
-
 function AddVariableSpec(
     ::Type{T},
     ::Type{PSY.Area},
@@ -152,6 +118,43 @@ function AddVariableSpec(
     )
 end
 
+function balancing_auxiliary_variables!(psi_container, sys)
+    area_names = (PSY.get_name(a) for a in PSY.get_components(PSY.Area, sys))
+    time_steps = model_time_steps(psi_container)
+    R_up_emergency = JuMPVariableArray(undef, area_names, time_steps)
+    R_dn_emergency = JuMPVariableArray(undef, area_names, time_steps)
+    assign_variable!(
+        psi_container,
+        make_variable_name(AdditionalDeltaActivePowerUpVariable, PSY.Area),
+        R_up_emergency,
+    )
+    assign_variable!(
+        psi_container,
+        make_variable_name(AdditionalDeltaActivePowerDownVariable, PSY.Area),
+        R_dn_emergency,
+    )
+    emergency_up =
+        add_expression_container!(psi_container, :emergency_up, area_names, time_steps)
+    emergency_dn =
+        add_expression_container!(psi_container, :emergency_dn, area_names, time_steps)
+    for t in time_steps, a in area_names
+        R_up_emergency[a, t] = JuMP.@variable(
+            psi_container.JuMPmodel,
+            base_name = "Re_up_{$(a),$(t)}",
+            lower_bound = 0.0
+        )
+        emergency_up[a, t] = R_up_emergency[a, t] + 0.0
+        R_dn_emergency[a, t] = JuMP.@variable(
+            psi_container.JuMPmodel,
+            base_name = "Re_dn_{$(a),$(t)}",
+            lower_bound = 0.0
+        )
+        emergency_dn[a, t] = R_dn_emergency[a, t] + 0.0
+    end
+
+    return
+end
+
 function absolute_value_lift(psi_container::PSIContainer, areas)
     time_steps = model_time_steps(psi_container)
     area_names = (PSY.get_name(a) for a in areas)
@@ -160,7 +163,7 @@ function absolute_value_lift(psi_container::PSIContainer, areas)
     container_ub = JuMPConstraintArray(undef, area_names, time_steps)
     assign_constraint!(psi_container, "absolute_value_ub", container_ub)
     mismatch = get_variable(psi_container, :area_mismatch)
-    z = get_variable(psi_container, :z)
+    z = get_variable(psi_container, :lift)
 
     for t in time_steps, a in area_names
         container_lb[a, t] =
@@ -196,29 +199,17 @@ function frequency_response_constraint!(psi_container::PSIContainer, sys::PSY.Sy
     @assert frequency_response >= 0.0
     # This value is the one updated later in simulation based on the UC result
     inv_frequency_reponse = 1 / frequency_response
-    #TODO: Update unconventional way to add variables
-    area_balance = JuMP.@variable(
-        psi_container.JuMPmodel,
-        [a in area_names, t in time_steps],
-        base_name = "balance_{$(a),$(t)}"
-    )
-    assign_variable!(
-        psi_container,
-        make_variable_name("area_dispatch_balance"),
-        area_balance,
-    )
+    area_balance = get_variable(psi_container, make_variable_name(ActivePowerVariable, PSY.Area))
     frequency = get_variable(psi_container, make_variable_name("Δf"))
-    R_up = get_variable(psi_container, make_variable_name("area_total_reserve_up"))
-    R_dn = get_variable(psi_container, make_variable_name("area_total_reserve_dn"))
-    R_up_emergency =
-        get_variable(psi_container, make_variable_name("area_emergency_reserve_up"))
-    R_dn_emergency =
-        get_variable(psi_container, make_variable_name("area_emergency_reserve_dn"))
+    R_up = get_variable(psi_container, make_variable_name(DeltaActivePowerUpVariable, PSY.Area))
+    R_dn = get_variable(psi_container, make_variable_name(DeltaActivePowerDownVariable, PSY.Area))
+    R_up_emergency = get_variable(psi_container, make_variable_name(AdditionalDeltaActivePowerUpVariable, PSY.Area))
+    R_dn_emergency = get_variable(psi_container, make_variable_name(AdditionalDeltaActivePowerUpVariable, PSY.Area))
 
     container = JuMPConstraintArray(undef, time_steps)
-    assign_constraint!(psi_container, "freque_response", container)
+    assign_constraint!(psi_container, "frequency_response", container)
 
-    for t in time_steps
+    for s in services, t in time_steps
         system_balance = sum(area_balance.data[:, t])
         total_reg = JuMP.AffExpr(0.0)
         for a in area_names
