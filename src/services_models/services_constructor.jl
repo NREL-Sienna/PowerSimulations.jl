@@ -137,16 +137,17 @@ function construct_service!(
             #    throw(IS.ConflictingInputsError("All area most have an AGC service assigned in order to model the System's Frequency regulation"))
         end
     end
-    add_variables!(SteadyStateFrequencyDeviation, psi_container, services)
+    add_variables!(SteadyStateFrequencyDeviation, psi_container)
     add_variables!(AreaMismatchVariable, psi_container, areas)
     add_variables!(LiftVariable, psi_container, areas)
+    add_variables!(ActivePowerVariable, psi_container, areas)
     add_variables!(DeltaActivePowerUpVariable, psi_container, areas)
     add_variables!(DeltaActivePowerDownVariable, psi_container, areas)
-    add_variables!(AdditionalDeltaActivePowerUpVariable, psi_container, areas)
-    add_variables!(AdditionalDeltaActivePowerDownVariable, psi_container, areas)
+    #add_variables!(AdditionalDeltaActivePowerUpVariable, psi_container, areas)
+    #add_variables!(AdditionalDeltaActivePowerDownVariable, psi_container, areas)
+    balancing_auxiliary_variables!(psi_container, sys)
 
     absolute_value_lift(psi_container, areas)
-    balancing_auxiliary_variables!(psi_container, sys)
     frequency_response_constraint!(psi_container, sys)
     area_control_init(psi_container, services)
     smooth_ace_pid!(psi_container, services)
