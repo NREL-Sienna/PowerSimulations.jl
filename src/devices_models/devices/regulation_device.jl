@@ -280,6 +280,8 @@ function participation_assignment!(
         psi_container,
         make_variable_name(AdditionalDeltaActivePowerUpVariable, T),
     )
+    area_reserve_up = get_variable(psi_container, make_variable_name(DeltaActivePowerUpVariable, PSY.Area))
+    area_reserve_dn = get_variable(psi_container, make_variable_name(DeltaActivePowerDownVariable, PSY.Area))
 
     component_names = (PSY.get_name(d) for d in devices)
     participation_assignment_up = JuMPConstraintArray(undef, component_names, time_steps)
@@ -312,12 +314,12 @@ function participation_assignment!(
             participation_assignment_up[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 R_up[name, t] ==
-                (p_factor.up * R_up[area_name, t]) + R_up_emergency[name, t]
+                (p_factor.up * area_reserve_up[area_name, t]) + R_up_emergency[name, t]
             )
             participation_assignment_dn[name, t] = JuMP.@constraint(
                 psi_container.JuMPmodel,
                 R_dn[name, t] ==
-                (p_factor.dn * R_dn[area_name, t]) + R_dn_emergency[name, t]
+                (p_factor.dn * area_reserve_dn[area_name, t]) + R_dn_emergency[name, t]
             )
             JuMP.add_to_expression!(expr_up[area_name, t], -1 * R_up_emergency[name, t])
             JuMP.add_to_expression!(expr_dn[area_name, t], -1 * R_dn_emergency[name, t])

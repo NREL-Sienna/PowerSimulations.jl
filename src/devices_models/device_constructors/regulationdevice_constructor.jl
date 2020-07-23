@@ -39,7 +39,7 @@ function construct_device!(
         get_feedforward(model),
     )
     ramp_constraints!(psi_container, devices, model, S, get_feedforward(model))
-    #participation_assignment!(psi_container, devices, model, S, nothing)
+    participation_assignment!(psi_container, devices, model, S, nothing)
     regulation_cost!(psi_container, devices, model)
     return
 end
@@ -84,7 +84,7 @@ function construct_device!(
         S,
         get_feedforward(model),
     )
-    #participation_assignment!(psi_container, devices, model, S, nothing)
+    participation_assignment!(psi_container, devices, model, S, nothing)
     regulation_cost!(psi_container, devices, model)
     return
 end

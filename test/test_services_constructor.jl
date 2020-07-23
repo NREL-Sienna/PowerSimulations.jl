@@ -223,5 +223,5 @@ end
     template_agc = template_agc_reserve_deployment()
     agc_problem = OperationsProblem(AGCReserveDeployment, template_agc, c_sys5_reg)
     # These values might change as the AGC model is refined
-    moi_tests(agc_problem, false, 720, 0, 480, 0, 144, false)
+    moi_tests(agc_problem, false, 720, 0, 480, 0, 384, false)
 end
